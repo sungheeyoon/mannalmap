@@ -1,5 +1,5 @@
 import { MATCHING_INTRO_AGE, MATCHING_INTRO_EXAMPLE, MATCHING_INTRO_START, MATCHING_INTRO_TITLE } from '@brand/guide';
-import { MATCH_ACCEPT_HIDDEN, MATCH_ACCEPT_OPENS } from '@consent/disclosure';
+import { CHAT_USES_NO_CREDIT, MATCH_ACCEPT_HIDDEN, MATCH_ACCEPT_OPENS, RECEIVER_USES_NO_CREDIT } from '@consent/disclosure';
 import { withReturnPath } from '@consent/return-path';
 import { SIGNUP_NOTICE_DISCOVERY } from '@consent/signup';
 import { REQUEST_RESERVES_NOTE } from '@reading/notes';
@@ -18,9 +18,9 @@ const SUPPLIES: readonly Element[] = ['金', '水'];
 /** 실제 규칙 그대로다 — 풀이권은 약관 제14조 · `REQUEST_RESERVES_NOTE`, 수락 뒤 열리는 것은 요청 창과 같은 `MATCH_ACCEPT_*` */
 const STEPS: readonly { title: string; body: string }[] = [
   { title: '추천 이유', body: `사주로 어울리는 참여자를 소개하고, ${MATCHING_INTRO_EXAMPLE.supply}을 함께 보여 드려요.` },
-  { title: '서로 수락', body: `궁합을 요청하면 풀이권 1장이 예약돼요. ${REQUEST_RESERVES_NOTE} 요청을 받은 쪽은 풀이권을 쓰지 않아요.` },
+  { title: '서로 수락', body: `궁합을 요청하면 풀이권 1장이 예약돼요. ${REQUEST_RESERVES_NOTE} ${RECEIVER_USES_NO_CREDIT}` },
   { title: '궁합', body: `수락하면 예약한 풀이권으로 ${MATCH_ACCEPT_OPENS[1]} ${MATCH_ACCEPT_OPENS[0]} ${MATCH_ACCEPT_HIDDEN}` },
-  { title: '무료 채팅', body: `수락하면 ${MATCH_ACCEPT_OPENS[2]} 채팅은 풀이권을 쓰지 않아요.` },
+  { title: '무료 채팅', body: `수락하면 ${MATCH_ACCEPT_OPENS[2]} ${CHAT_USES_NO_CREDIT}` },
 ];
 
 /**

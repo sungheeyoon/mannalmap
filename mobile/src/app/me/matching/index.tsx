@@ -4,6 +4,8 @@ import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { accountFailureOf, accountNoticeOf, isBlocked, selfPersonIdOf, type AccountState } from '@account/index';
 import { SUPPORT_EMAIL } from '@brand';
+import { SIGNUP_NOTICE_DISCOVERY } from '@consent/signup';
+import { SELF_NEEDED } from '@matching/copy';
 import { historySummary, type HistorySummary } from '@matching/history';
 import type { InboxMatch, Requests } from '@matching/inbox';
 import { receivedOf } from '@matching/requests';
@@ -13,6 +15,7 @@ import { RequestsBand } from '@/matching/requests';
 import { CardSheet, DeckButtons, EmptyDeck, Feedback, PassedConnections, QuietPlace, RequestConfirm, TodayCard, useCreditsNotice } from '@/matching/today';
 import { useDeck } from '@/matching/use-deck';
 import { Icon } from '@/ui/icons';
+import { LoadingMark } from '@/ui/loading';
 import { COLOR, FONT, RADIUS, TYPE } from '@/ui/tokens';
 import { CardFrame, RowCard } from '@/ui/surfaces';
 
@@ -40,12 +43,20 @@ export default function MatchingScreen() {
     }, [load]),
   );
 
-  const again = () => {
+  /* 읽은 뒤에 덱을 새로 세운다 — 앞서 세우면 옛 값으로 서고, 다시 읽은 값은 그 덱에 안 들어간다 */
+  const reread = async () => {
+    await load();
     setRound((now) => now + 1);
-    void load();
   };
+  const again = () => void reread();
 
-  if (loaded === null) return <View style={styles.screen} />;
+  if (loaded === null) {
+    return (
+      <View style={styles.screen}>
+        <LoadingMark />
+      </View>
+    );
+  }
 
   const { account } = loaded;
   if (isBlocked(account)) return <Blocked state={account} onRetry={again} />;
@@ -80,10 +91,10 @@ export default function MatchingScreen() {
         <Title />
         {lead}
         <QuietPlace
-          title="먼저 내 사주와 이름이 필요해요"
-          line="나와 맞는 인연을 찾으려면 내 사주의 오행 구성이 있어야 해요. 내 사주를 저장하고 닉네임을 지으면 오늘의 인연을 볼 수 있어요."
-          href="/me"
-          action="내 사주로 가기"
+          title={SELF_NEEDED.title}
+          line={`${SELF_NEEDED.why} ${SIGNUP_NOTICE_DISCOVERY}`}
+          href={`/me?next=${encodeURIComponent('/me/matching')}`}
+          action={SELF_NEEDED.action}
         />
         {tail}
       </Frame>
@@ -106,12 +117,12 @@ export default function MatchingScreen() {
   }
 
   /* 덱은 다시 세우지 않는다 — 다만 앱은 응답이 화면을 다시 그려 주지 않으니, 다시 읽은 그때 덱을 그 값으로 새로 세운다 */
-  return <Deck key={round} place={place} lead={lead} tail={tail} />;
+  return <Deck key={round} place={place} lead={lead} tail={tail} onRecheck={again} onRequested={() => void load()} />;
 }
 
-function Deck({ place, lead, tail }: { place: Extract<DeckPlace, { kind: 'deck' }>; lead: React.ReactNode; tail: React.ReactNode }) {
+function Deck({ place, lead, tail, onRecheck, onRequested }: { place: Extract<DeckPlace, { kind: 'deck' }>; lead: React.ReactNode; tail: React.ReactNode; onRecheck: () => void; onRequested: () => void }) {
   const credits = useCreditsNotice();
-  const deck = useDeck({ cards: place.cards, passedFromServer: place.passed, summary: place.summary, onOutOfCredits: () => void credits.offer() });
+  const deck = useDeck({ cards: place.cards, passedFromServer: place.passed, summary: place.summary, onOutOfCredits: () => void credits.offer(), onRequested });
   const [view, setView] = useState<'today' | 'passed'>('today');
   const [info, setInfo] = useState(false);
   const { profile } = deck;
@@ -151,7 +162,7 @@ function Deck({ place, lead, tail }: { place: Extract<DeckPlace, { kind: 'deck' 
       ) : profile === undefined ? (
         <>
           {place.notice !== null && <Text style={styles.date}>{place.notice}</Text>}
-          <EmptyDeck />
+          <EmptyDeck onRecheck={onRecheck} />
           {feedback}
         </>
       ) : (

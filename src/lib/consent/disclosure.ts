@@ -45,6 +45,10 @@ export const MATCH_DISCLOSURE = {
  * 비공개 한 줄은 같다. 처리방침의 줄(`MATCH_PILLARS_DISCLOSURE`, `notice.ts`)은 첫 줄과 비공개 줄을 이어 쓴다 — 그 글이 바뀌어
  * 판본이 `notice-v11` 이 됐다(표현 개정, 기준은 그대로).
  */
+/** 풀이권이 드는 자리와 안 드는 자리의 구분 — 요청 창 · 받은 카드 · 인연 소개가 같은 글자를 읽는다(대장 matching-17). 요청자의 1장은 `REQUEST_RESERVES_NOTE` 쪽이 말한다 */
+export const CHAT_USES_NO_CREDIT = '채팅은 풀이권을 쓰지 않아요.';
+export const RECEIVER_USES_NO_CREDIT = '요청을 받은 쪽은 풀이권을 쓰지 않아요.';
+
 export const MATCH_ACCEPT_OPENS = [
   '서로의 사주팔자 여덟 글자가 공개돼요.',
   '두 사람이 함께 볼 궁합풀이가 만들어져요.',

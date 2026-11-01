@@ -1,10 +1,11 @@
+import { MATCHING_INTRO_TITLE } from '@brand/guide';
 import type { Query } from '@input/query';
 import type { SameChart } from '@input/same-chart';
 import { noRoomToSave, type PersonSlots } from '@people';
 import { withReturnPath } from '@consent/return-path';
 import { router, useFocusEffect } from 'expo-router';
 import { useCallback, useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { chartPath, type ChartWant } from '@consent/app-destination';
 import { supabase } from '@/auth/client';
@@ -13,6 +14,7 @@ import { goHome } from '@/info/go-home';
 import { addPerson, readSlots } from '@/people/data';
 import { SameChartAsk, type SameChartQuestion } from '@/people/same-chart-ask';
 import { settled } from '@/ui/settled';
+import { Icon } from '@/ui/icons';
 import { Card } from '@/ui/surfaces';
 import { PrimaryButton, SecondaryButton, TextButton } from '@/ui/parts';
 import { COLOR, FONT, RADIUS, TYPE } from '@/ui/tokens';
@@ -73,7 +75,18 @@ export function SavePersonForReading({ query, want }: { query: Query; want: Char
 
   if (savedHere) return <SavedCard />;
   if (context === null) return null;
-  if (context.state === 'out') return <SignInCard query={query} />;
+  if (context.state === 'out') {
+    return (
+      <>
+        <SignInCard query={query} />
+        {/* 로그인한 사람에게는 인연 탭이 있어 안 선다 */}
+        <Pressable accessibilityRole="link" onPress={() => router.push('/matching-intro')} style={styles.intro}>
+          <Text style={styles.introText}>{MATCHING_INTRO_TITLE}</Text>
+          <Icon name="arrow" size={16} color={COLOR.secondary} />
+        </Pressable>
+      </>
+    );
+  }
   if (context.self !== null && !context.self.saved && !someoneElse) {
     return <SelfConfirm query={query} want={want} name={context.self.nickname ?? query.name.trim()} onSomeoneElse={() => setSomeoneElse(true)} onSavedHere={() => setSavedHere(true)} />;
   }
@@ -221,6 +234,8 @@ function SelfConfirm({ query, want, name, onSomeoneElse, onSavedHere }: { query:
 }
 
 const styles = StyleSheet.create({
+  intro: { minHeight: 44, flexDirection: 'row', alignItems: 'center', gap: 4, marginHorizontal: 4 },
+  introText: { fontFamily: FONT.bold, fontSize: TYPE.body, color: COLOR.secondary },
   card: { gap: 12 },
   head: { gap: 4 },
   answers: { gap: 8 },

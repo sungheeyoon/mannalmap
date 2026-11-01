@@ -1,7 +1,8 @@
-import { useFocusEffect } from 'expo-router';
+import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
 import { AppState, ScrollView, StyleSheet, Text, View } from 'react-native';
 
+import { safeReturnPath } from '@consent/return-path';
 import { DEFAULT_QUERY, missingAnswer } from '@input/query';
 import { ELEMENTS } from '@saju';
 
@@ -63,6 +64,7 @@ export default function HomeScreen() {
 }
 
 function Body({ home, retry }: { home: Home; retry: () => void }) {
+  const { next } = useLocalSearchParams<{ next?: string }>();
   switch (home.kind) {
     case 'failed':
       return (
@@ -86,7 +88,8 @@ function Body({ home, retry }: { home: Home; retry: () => void }) {
         </CardFrame>
       );
     case 'no-self':
-      return <NoSelf nickname={home.nickname} onSaved={retry} />;
+      /* 인연 탭의 안내에서 왔으면 저장한 뒤 그 인연 탭으로 돌아간다 — 스택에 있는 그 화면이라 겹치지 않고, 돌아가며 덱을 다시 읽는다 */
+      return <NoSelf nickname={home.nickname} onSaved={next !== undefined && safeReturnPath(next) === '/me/matching' ? () => router.dismissTo('/me/matching' as never) : retry} />;
     case 'home':
       break;
   }

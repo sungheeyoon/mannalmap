@@ -152,6 +152,10 @@ export const matchingStartSteps = (done: readonly MatchingStartStep[]) => MATCHI
  * 앱의 인연 소개(`mobile/src/app/matching-intro.tsx`) — 로그인 전에 인연이 어떻게 이어지는지 말한다. 서버를 안 부르고 실제 회원이 없다.
  * 예시 카드는 사람이 아니라 카드의 모양을 보이는 그림이다 — 사진 · 닉네임 · 활동 표시 · 요청 단추가 없다. 대장 matching 「확인 전」
  */
+/** 앱에서 궁합으로 가려다 로그인에 선 사람의 제목(대장 public 17, 웹은 `app/auth/page.tsx` 의 글자) · 앱 입구의 궁합 입구 */
+export const COMPAT_SIGN_IN_TITLE = '궁합풀이는 로그인하면 볼 수 있어요';
+export const COMPAT_ENTRY = '궁합 보기';
+
 export const MATCHING_INTRO_TITLE = '인연은 어떻게 찾나요?';
 export const MATCHING_INTRO_EXAMPLE = {
   stamp: '예시',

@@ -13,6 +13,7 @@ import {
   REQUEST_STATUS_TEXT,
   type RequestStatus,
 } from '@consent/index';
+import { CHAT_USES_NO_CREDIT, RECEIVER_USES_NO_CREDIT } from '@consent/disclosure';
 import type { DecidedRequest, PastRequests } from '@matching/history';
 import type { InboxRequest } from '@matching/inbox';
 import { CANCEL_REQUEST_LABEL, CANCEL_REQUEST_NOTE } from '@matching/index';
@@ -143,7 +144,7 @@ function RequestHead({ request, large = false }: { request: InboxRequest; large?
  * 받은 요청에 답한다 — 동의 문장은 카드가 열릴 때부터 단추 위에 있다. 거절은 한 번 더 묻는다(ADR 0166).
  * 수락이 성립하면 그 Match 의 방으로 간다(ADR 0130). 무효로 끝났으면 그렇게 말한다.
  */
-function RespondButtons({ requestId, nickname, onChanged }: { requestId: string; nickname: string; onChanged: () => void }) {
+function RespondButtons({ requestId, nickname, onChanged, onSettled }: { requestId: string; nickname: string; onChanged: () => void; onSettled: () => void }) {
   const [failure, setFailure] = useState<string | null>(null);
   const [settled, setSettled] = useState<RequestStatus | null>(null);
   const [asking, setAsking] = useState(false);
@@ -159,7 +160,12 @@ function RespondButtons({ requestId, nickname, onChanged }: { requestId: string;
       return;
     }
     setAsking(false);
-    if (result.status !== 'accepted' && result.status !== 'rejected') setSettled(result.status);
+    /* 무효로 끝났으면 그 줄을 읽을 때까지 카드를 둔다 — 지금 다시 읽으면 카드가 빠져 까닭 없이 사라진다. 시트를 닫을 때 다시 읽는다 */
+    if (result.status !== 'accepted' && result.status !== 'rejected') {
+      setSettled(result.status);
+      onSettled();
+      return;
+    }
     if (result.status === 'accepted' && result.matchId !== undefined) router.push(`/me/chat/${result.matchId}` as never);
     onChanged();
   };
@@ -302,6 +308,14 @@ export function ConsentGuide() {
 /** 인연 탭 맨 위의 「받은 요청 N」 띠 — 누르면 그 자리에서 카드 시트가 올라온다. 동의는 시트 안의 카드가 받는다 */
 export function RequestsBand({ received, onChanged }: { received: readonly InboxRequest[]; onChanged: () => void }) {
   const [open, setOpen] = useState(false);
+  const [stale, setStale] = useState(false);
+  const close = () => {
+    setOpen(false);
+    if (stale) {
+      setStale(false);
+      onChanged();
+    }
+  };
   if (received.length === 0) return null;
   return (
     <>
@@ -314,12 +328,15 @@ export function RequestsBand({ received, onChanged }: { received: readonly Inbox
         </View>
         <Icon name="chevron" size={16} color={COLOR.onAccent} />
       </Tile>
-      <DetailSheet open={open} title="받은 요청" onClose={() => setOpen(false)}>
+      <DetailSheet open={open} title="받은 요청" onClose={close}>
         {received.map((request) => (
           <Card key={request.requestId} style={styles.card}>
             <RequestHead request={request} large />
             <MatchAcceptNotice side="received" />
-            <RespondButtons requestId={request.requestId} nickname={request.nickname} onChanged={onChanged} />
+            <Text style={styles.small}>
+              {RECEIVER_USES_NO_CREDIT} {CHAT_USES_NO_CREDIT}
+            </Text>
+            <RespondButtons requestId={request.requestId} nickname={request.nickname} onChanged={onChanged} onSettled={() => setStale(true)} />
             <View style={styles.quietRow}>
               <BlockButton userId={request.counterpartUserId} nickname={request.nickname} onChanged={onChanged} />
               <ReportButton userId={request.counterpartUserId} nickname={request.nickname} />

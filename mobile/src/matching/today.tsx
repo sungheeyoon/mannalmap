@@ -2,6 +2,7 @@ import { router } from 'expo-router';
 import { useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
+import { CHAT_USES_NO_CREDIT } from '@consent/disclosure';
 import { DISCOVERY_EMPTY, DISCOVERY_TEASER } from '@discovery/copy';
 import { elementOf, supplyOf, type DeckCard } from '@matching/deck-card';
 import { PASSED_LIMIT } from '@matching/deck-state';
@@ -11,6 +12,7 @@ import { REQUEST_RESERVES_NOTE, CREDITS_AVAILABLE_LABEL, CREDITS_REQUIRED_LABEL,
 import { ELEMENT_PICTURE_KO, type Element } from '@saju';
 
 import { ElementSymbol } from '@/ui/element-symbol';
+import { goTab } from '@/ui/go-tab';
 import { Icon } from '@/ui/icons';
 import { PrimaryButton } from '@/ui/parts';
 import { ConfirmDialog, DialogStrong, DialogText } from '@/ui/confirm-dialog';
@@ -242,6 +244,7 @@ export function RequestConfirm({ card, open, onClose, onConfirm, busy }: { card:
         요청하면 <DialogStrong>풀이권 1장</DialogStrong>이 임시로 차감되고, 상대가 수락하면 확정돼요. {REQUEST_RESERVES_NOTE}
       </DialogText>
       <MatchAcceptNotice side="sent" />
+      <DialogText>{CHAT_USES_NO_CREDIT}</DialogText>
     </ConfirmDialog>
   );
 }
@@ -294,18 +297,22 @@ export function Feedback({ failure, flash }: { failure: string | null; flash: st
   );
 }
 
-/** 소개할 사람이 없다 — 궤도 그림은 앱에 아직 없다(G-123). 두 줄과 갈 길 둘 */
-export function EmptyDeck() {
-  const links: readonly { href: string; label: string }[] = [
-    { href: '/', label: '다른 사람 사주 보기' },
-    { href: '/me/compat', label: '궁합 보러 가기' },
+/**
+ * 소개할 사람이 없다 — 궤도 그림은 앱에 아직 없다(G-123). 두 줄 · 다시 읽는 단추 · 갈 길 둘.
+ * 덱은 탭에 돌아와도 다시 서지 않아 단추가 없으면 「다시 확인해 주세요」를 할 길이 없다. 「다른 사람 사주」는 `another` 를 든다 — 없으면 입구가 로그인한 사람을 홈으로 되돌린다.
+ */
+export function EmptyDeck({ onRecheck }: { onRecheck: () => void }) {
+  const links: readonly { open: () => void; label: string }[] = [
+    { open: () => router.push('/?another=1' as never), label: '다른 사람 사주 보기' },
+    { open: () => goTab('/me/compat'), label: '궁합 보러 가기' },
   ];
   return (
     <Paper style={styles.quiet}>
       <Text style={styles.quietTitle}>{DISCOVERY_EMPTY.title}</Text>
       <Text style={styles.body}>{DISCOVERY_EMPTY.line}</Text>
+      <PrimaryButton label={DISCOVERY_EMPTY.recheck} onPress={onRecheck} />
       {links.map((link) => (
-        <CardFrame key={link.href} accessibilityRole="link" onPress={() => router.push(link.href as never)} style={styles.quietLink}>
+        <CardFrame key={link.label} accessibilityRole="link" onPress={link.open} style={styles.quietLink}>
           <Text style={[styles.quietLinkText, styles.flex]}>{link.label}</Text>
           <Icon name="arrow" size={16} color={COLOR.secondary} />
         </CardFrame>
