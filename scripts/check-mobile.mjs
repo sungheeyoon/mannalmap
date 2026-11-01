@@ -654,7 +654,11 @@ try {
     request_match: () => unsigned.client.rpc('request_match', { p_candidate_user_id: b.id }),
     add_my_photo: () => unsigned.client.rpc('add_my_photo', { p_content_type: 'image/png', p_base64: PNG }),
   };
-  for (const [name, write] of Object.entries(unsignedWrites)) note(name, '미가입', shapeOf(await write()));
+  for (const [name, write] of Object.entries(unsignedWrites)) {
+    const answer = await write();
+    note(name, '미가입', shapeOf(answer));
+    if (name !== 'request_match') check(`미가입: ${name} 를 DB 가 거절한다`, answer.error?.code === '42501' && answer.error.message === '가입을 먼저 끝내 주세요.', shapeOf(answer));
+  }
   for (const [method, path, json] of doors) {
     const answer = await door(path, { token: unsignedToken, method, json });
     check(`미가입: ${method} ${path} → 403 signup`, answer.status === 403 && answer.body?.refused === 'signup', said(answer));
@@ -723,6 +727,12 @@ try {
       request_match: () => c.client.rpc('request_match', { p_candidate_user_id: b.id }),
       send_chat_message: () => a.client.rpc('send_chat_message', { p_match_id: matchId, p_body: '끝', p_client_id: randomUUID() }),
     })) note(name, '베타 종료', shapeOf(await write()));
+    const closedManaged = await c.client.rpc('create_managed_person', momArgs);
+    check('종료: 사람을 못 만든다', closedManaged.error?.code === '42501' && closedManaged.error.message === '비공개 테스트가 끝났습니다.', shapeOf(closedManaged));
+    const cSelf = sql(`select self_person_id from public.app_user where id = '${c.id}'`);
+    const { p_local_label: _label, p_note: _note, ...momInput } = momArgs;
+    const closedEdit = await keyed.rpc('edit_person_input', { p_user_id: c.id, p_person_id: cSelf, ...momInput });
+    check('종료: 입력을 못 고친다', closedEdit.error?.code === '42501' && closedEdit.error.message === '비공개 테스트가 끝났습니다.', shapeOf(closedEdit));
   } finally {
     sql(`delete from public.beta_schedule where id = ${endedId}`);
   }
