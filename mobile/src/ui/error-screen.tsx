@@ -1,6 +1,8 @@
 import { router } from 'expo-router';
 import { View } from 'react-native';
 
+import { SUPPORT_MAIL_LINE } from '@/info/copy';
+
 import { NoticeLine, NoticeScreen } from './notice-screen';
 import { PrimaryButton, SecondaryButton } from './parts';
 
@@ -15,6 +17,7 @@ export function ErrorScreen({ retry }: { retry: () => void }) {
       description={
         <View accessibilityRole="alert">
           <NoticeLine>잠시 후 다시 시도해 주세요.</NoticeLine>
+          <NoticeLine>{SUPPORT_MAIL_LINE}</NoticeLine>
         </View>
       }
       actions={

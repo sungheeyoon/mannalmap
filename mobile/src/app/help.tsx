@@ -4,6 +4,7 @@ import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { HELP_GROUPS } from '@brand/guide';
 
+import { CONTACT_LABEL } from '@/info/copy';
 import { InfoScreen } from '@/info/frame';
 import { Icon } from '@/ui/icons';
 import { SecondaryButton } from '@/ui/parts';
@@ -126,7 +127,7 @@ export default function HelpScreen() {
         </View>
       ))}
 
-      <SecondaryButton label="서비스 소개" onPress={() => router.push('/about')} />
+      <SecondaryButton label={CONTACT_LABEL} onPress={() => router.push('/support' as never)} />
     </InfoScreen>
   );
 }
