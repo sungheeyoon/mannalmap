@@ -21,3 +21,10 @@
  * 없다는 줄(`CANCEL_REQUEST_NOTE`)은 확인 창의 프롭으로 넘어가 이 파일 밖(`src/lib/matching/index.ts`)에 산다(#852).
  */
 export const CANCEL_REQUEST_TITLE = '보낸 요청을 취소할까요?';
+
+/** 앱의 내 사주 안내(대장 matching-17) — 앱은 가입이 닉네임을 받아 이름은 이미 있다. 웹은 `app/me/matching/page.tsx` 의 글자다 */
+export const SELF_NEEDED = {
+  title: '먼저 내 사주가 필요해요',
+  why: '나와 맞는 인연을 찾으려면 내 사주의 오행 구성이 있어야 해요.',
+  action: '내 사주 등록하기',
+} as const;

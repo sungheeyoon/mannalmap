@@ -4,13 +4,14 @@ import { Keyboard, KeyboardAvoidingView, Pressable, ScrollView, StyleSheet, Text
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { SERVICE_NAME } from '@brand';
-import { ABOUT_LEAD, MATCHING_INTRO_TITLE } from '@brand/guide';
+import { ABOUT_LEAD, COMPAT_ENTRY, MATCHING_INTRO_TITLE } from '@brand/guide';
 import { calculateChart, dateRefusal } from '@input/chart';
 import { convertedLine, dateOfParts, limitsOf, timeOfParts } from '@input/entry';
 import { DEFAULT_QUERY, HOUR_UNKNOWN_CHOICE, NAME_MAX, TIME_BASES, TIME_BASIS, type Query } from '@input/query';
 import { CALENDARS, CALENDAR_KO, CITY_LONGITUDES, GENDERS, GENDER_KO, SUPPORTED_YEAR_RANGE, type CityName, type LateNightRule } from '@saju';
 
 import { chartPath } from '@consent/app-destination';
+import { withReturnPath } from '@consent/return-path';
 import { readGate } from '@/home/gate';
 import { POLICY_TITLE, SUPPORT_TITLE } from '@/info/copy';
 import { Choices, DigitField, Field, FieldLabel, KeyboardDoneBar, PrimaryButton, Select } from '@/ui/parts';
@@ -148,10 +149,17 @@ function BirthScreen({ signedOut }: { signedOut: boolean }) {
               <View style={styles.head}>
                 <Text accessibilityRole="header" style={styles.title}>나는 어떤 사람일까?</Text>
                 <Text style={styles.lead}>{ABOUT_LEAD[0]}</Text>
-                <Pressable accessibilityRole="link" onPress={() => router.push('/matching-intro')} style={styles.intro}>
-                  <Text style={styles.introText}>{MATCHING_INTRO_TITLE}</Text>
-                  <Mark name="arrow" size={16} color={COLOR.secondary} />
-                </Pressable>
+                <View style={styles.doors}>
+                  <Pressable accessibilityRole="link" onPress={() => router.push('/matching-intro')} style={styles.intro}>
+                    <Text style={styles.introText}>{MATCHING_INTRO_TITLE}</Text>
+                    <Mark name="arrow" size={16} color={COLOR.secondary} />
+                  </Pressable>
+                  {/* 궁합은 로그인 뒤 궁합 탭이다 — 앱에는 로그인 전 궁합 결과가 없다(ADR 0213 의 11) */}
+                  <Pressable accessibilityRole="link" onPress={() => router.push(withReturnPath('/auth', '/me/compat') as never)} style={styles.intro}>
+                    <Text style={styles.introText}>{COMPAT_ENTRY}</Text>
+                    <Mark name="arrow" size={16} color={COLOR.secondary} />
+                  </Pressable>
+                </View>
               </View>
             ) : (
               <Text style={[styles.title, styles.titleAlone]}>출생 정보를 입력해 주세요</Text>
@@ -276,6 +284,7 @@ const styles = StyleSheet.create({
   titleAlone: { marginHorizontal: 4 },
   head: { gap: 4, marginHorizontal: 4 },
   lead: { fontSize: TYPE.body, lineHeight: 24, fontFamily: FONT.medium, color: COLOR.creamInk },
+  doors: { flexDirection: 'row', flexWrap: 'wrap', columnGap: 16 },
   intro: { minHeight: 44, flexDirection: 'row', alignItems: 'center', gap: 4 },
   introText: { fontSize: TYPE.body, fontFamily: FONT.bold, color: COLOR.secondary },
   title: { fontSize: TYPE.title, lineHeight: 35, fontFamily: FONT.bold, color: COLOR.foreground },

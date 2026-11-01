@@ -40,6 +40,7 @@
 | 기계가 바쁠 때(빌드 · 다른 워크트리의 시험과 겹칠 때) `npm test` 의 엔진 시험이 `Test timed out in 5000ms` 로 붉다 | 로컬 `testTimeout` 은 5초다(`vitest.config.mts`, CI 는 30초) — 코드가 아니라 일꾼 수가 부하를 키운다(2026-10-22). CI 에서는 안 난다 — `calibration` · `seoul-date` · `lunar` 를 포함해 verify 의 실패 실행 200개(2026-09-11~10-30)에 든 붉은 `core` · `policy` job 49개에 시간 초과가 0건이라 시한을 안 고쳤다(2026-10-31, 옛 이름 `fast` 의 job 은 안 셌다) | `npx vitest run --maxWorkers=4` 로 다시. 그래도 붉으면 그때 코드를 본다 |
 | `timeout` 이 없다 | macOS | coreutils 의 `gtimeout` |
 | `pkill -f <글자>` 를 부르자 명령이 결과 없이 죽는다 | 그 글자가 제 셸의 명령줄에도 들어 있어 셸이 저를 죽인다(2026-10-30 Expo 라운드) | 띄울 때 받은 PID 로 끈다. 글자로 찾아야 하면 첫 글자를 묶는다 — `pkill -f '[e]xpo start'`. 남이 띄운 프로세스는 끄지 않는다 |
+| 넓은 `pkill -f` 뒤 다른 에이전트의 재기가 갑자기 끊긴다 · 가짜 서버가 응답하지 않는다 | 나란히 도는 에이전트의 가짜 서버(`fake-server.mjs`) · Metro 까지 글자가 맞아 함께 죽었다(2026-11-02) | 띄울 때 받은 PID 나 제 포트의 PID 로만 끈다. 포트도 저마다 잡는다(`FAKE_PORT` · `--port`) |
 | 가지들을 임시로 합쳐 본 뒤, 진짜 머지의 충돌이 묻지 않고 풀린다(`Resolved '…' using previous resolution`) | 이 저장소는 `rerere.enabled=true` 이고 `rr-cache` 는 워크트리끼리 함께 쓴다 — 임시 합침에서 고른 해결을 다른 가지 · 다른 워크트리의 머지가 되풀이한다(2026-10-30 Expo 라운드) | 임시 합침은 시험하는 데만 쓰고 그 가지를 PR 에 올리지 않는다. 머지에서 그 문장이 보이면 그 파일을 읽어 보고, 틀렸으면 `git rerere forget <파일>` 뒤 `git checkout -m <파일>` 로 충돌을 되살려 다시 푼다 |
 | 맥에서만 `scripts/aws-wizard.test.ts` 가 붉다 · 마법사가 「bash 4.4 이상」이라며 멈춘다 | macOS 의 `/bin/bash` 는 3.2 다 — 마법사는 `inherit_errexit` · 연관 배열을 쓴다. 시험은 PATH 의 bash 를 쓴다(CI 는 ubuntu 라 초록, 2026-10-24) | `brew install bash` — `/opt/homebrew/bin` 이 PATH 에서 `/bin` 앞이면 된다 |
 | `db query --linked` 를 여럿이 동시에 부르면 `Initialising login role...` 뒤에 실패한다 | CLI 가 부를 때마다 로그인 역할을 세운다 — 나란히 부르면 서로 부딪힌다 | `npm run db:remote -- --purpose "<목적>" "<sql>"` 로 부른다 — 기계 전체에서 한 번에 하나만 돌고 나머지는 기다린다(ADR 0096) |
@@ -60,7 +61,8 @@
 3. Supabase 응답은 Playwright 의 가로채기로 가짜를 끼운다 — 운영 DB 를 밟지 않는다(개발 빌드도 운영 Supabase 를 본다). 로그인은 `__DEV__` 가 건너뛴다.
 4. 부품을 웹과 나란히 보려면 띄운 채 `APP_URL=http://localhost:<포트> node scripts/design-compare.mjs <폴더>` — 웹 상수와 앱의 `/dev-parts` 를 같은 차례로 찍어 `compare.png` 한 장을 낸다.
    데이터가 찬 화면은 `localStorage` 에 가짜 세션(`sb-<주소의 첫 토막>-auth-token`)을 넣는다. 가짜 값의 함정 — `late_night_rule` 은 `jo` · `ya`, `time_basis` 는 `record` 등 진짜 값이어야 명식이 선다. 관문은 `current_beta_schedule` 을 못 읽으면 가입을 마친 사람을 들여보낸다(500 을 주면 빠르다). `EXPO_PUBLIC_SITE_URL` 쪽 앱용 문도 가로챈다.
-5. **이것은 네이티브가 아니다** — 구글 로그인 창 · 사진 고르기와 굽기 · 딥 링크 · 키보드는 안 돈다. PR 의 「안 돌린 것」에 적는다.
+5. 코드를 고친 뒤 번들이 옛 글자를 주면 Metro 를 끄고 `--clear` 로 다시 띄운다 — 워크트리에서 파일 감시가 안 잡은 적이 있다(2026-11-02).
+6. **이것은 네이티브가 아니다** — 구글 로그인 창 · 사진 고르기와 굽기 · 딥 링크 · 키보드는 안 돈다. PR 의 「안 돌린 것」에 적는다.
 
 ## 앱을 네이티브로 재기
 
@@ -78,6 +80,7 @@
 
 | 증상 | 원인 | 하는 일 |
 | --- | --- | --- |
+| 에뮬레이터의 Expo Go 에서 앱이 `ExpoCrypto` 를 못 찾아 선다 | 깔린 Expo Go 판에 그 네이티브 모듈이 없다(2026-11-02) | 개발 빌드나 맞는 판이 없으면 웹 번들 + 가짜 서버로 잰다 — 브라우저는 `--disable-web-security`(가짜 서버에 CORS 답이 없다). 네이티브에서만 도는 것은 PR 의 「안 돌린 것」에 적는다 |
 | API 37 에서 Expo Go 가 Metro 에 못 붙는다 | 로컬 네트워크 권한(`ACCESS_LOCAL_NETWORK`)이 없다 | 1 의 `pm grant` |
 | 딥 링크가 앱으로 안 간다 | `am start` 에 패키지 인자를 붙였다 | `am start -a android.intent.action.VIEW -d 'exp://127.0.0.1:8081/--/<경로>'` 까지만(`device.py link`) |
 | 붉은 화면의 스택 줄을 누르자 PC 에 VS Code 가 뜬다 | Metro 가 편집기를 연다 | `REACT_EDITOR=none` 으로 띄운다 |

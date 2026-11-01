@@ -19,11 +19,14 @@ export function useDeck({
   passedFromServer,
   summary,
   onOutOfCredits,
+  onRequested,
 }: {
   cards: readonly DeckCard[];
   passedFromServer: readonly DeckCard[];
   summary: ElementSummary;
   onOutOfCredits: () => void;
+  /** 요청이 갔다 — 보낸 요청이 선 「인연 기록」을 다시 읽는다. 덱은 그대로다 */
+  onRequested: () => void;
 }) {
   const [deck, dispatch] = useReducer(deckReducer, {
     remaining: cards,
@@ -91,6 +94,7 @@ export function useDeck({
       else {
         dispatch({ type: 'leave', id: sending.candidateUserId });
         setFlash(`${sending.nickname} 님에게 상세 궁합을 요청했어요.`);
+        onRequested();
       }
     } catch {
       setFailure(REQUEST_UNSURE);

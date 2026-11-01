@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
 import { SERVICE_NAME } from '@brand';
-import { CHART_SIGN_IN, SIGN_IN_UNLOCKS, SIGNED_OUT_EXIT } from '@brand/guide';
+import { CHART_SIGN_IN, SIGN_IN_UNLOCKS, SIGNED_OUT_EXIT, COMPAT_SIGN_IN_TITLE } from '@brand/guide';
 import { chartWantOf, isChartPath } from '@consent/app-destination';
 import { safeReturnPath, withReturnPath } from '@consent/return-path';
 
@@ -54,7 +54,7 @@ export default function SignInScreen() {
 
   return (
     <NoticeScreen
-      title={want !== null ? CHART_SIGN_IN[want].title : `${SERVICE_NAME} 시작하기`}
+      title={want !== null ? CHART_SIGN_IN[want].title : destination === '/me/compat' ? COMPAT_SIGN_IN_TITLE : `${SERVICE_NAME} 시작하기`}
       description={
         <NoticeLine>
           {want !== null ? CHART_SIGN_IN[want].note : '로그인하면 저장한 사람과 사주풀이를 다음에도 이어서 볼 수 있어요.'}{' '}

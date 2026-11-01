@@ -35,6 +35,8 @@ export const DISCOVERY_EMPTY = {
   /** 제목이라 마침표가 없다(`docs/context/copy.md` 의 문구 규칙) */
   title: '아직 소개해 드릴 인연이 없어요',
   line: '지금은 소개할 인연을 찾지 못했어요. 잠시 후 다시 확인해 주세요.',
+  /** 앱만 — 덱이 탭에 돌아와도 다시 서지 않아 단추가 든다(대장 matching-17) */
+  recheck: '다시 확인하기',
 } as const;
 
 /**
