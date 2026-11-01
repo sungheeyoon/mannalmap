@@ -31,8 +31,8 @@ create or replace function pg_temp.manage() returns uuid language sql as $$
     'jo', 'localMean', tests.chart(), 'chart-for-tests')
 $$;
 
-create or replace function pg_temp.edit() returns integer language sql as $$
-  select tests.edit_person_input((select person_id from who), 'solar', '1990-05-16', '1990-05-16', '14:30', 'female', '서울',
+create or replace function pg_temp.edit(born date) returns integer language sql as $$
+  select tests.edit_person_input((select person_id from who), 'solar', born, born, '14:30', 'female', '서울',
     'jo', 'localMean', tests.chart('丙'), 'chart-for-tests')
 $$;
 
@@ -45,7 +45,7 @@ set local role authenticated;
 select pg_temp.acting((select joined from who));
 
 select lives_ok($$select pg_temp.manage()$$, '1. 가입을 마친 사람은 관리 사람을 만든다');
-select lives_ok($$select pg_temp.edit()$$, '1. 입력을 고친다');
+select lives_ok($$select pg_temp.edit('1990-05-16')$$, '1. 입력을 고친다');
 select lives_ok($$select public.save_my_profile('가입마침', '소개')$$, '1. 프로필을 저장한다');
 select is(public.add_my_photo('image/png', 'QQ=='), 1, '1. 사진을 올린다');
 
@@ -85,7 +85,7 @@ select pg_temp.acting((select joined from who));
 
 select throws_ok($$select pg_temp.manage()$$,
   '42501', '비공개 테스트가 끝났습니다.', '3. 관리 사람을 못 만든다');
-select throws_ok($$select pg_temp.edit()$$,
+select throws_ok($$select pg_temp.edit('1990-05-17')$$,
   '42501', '비공개 테스트가 끝났습니다.', '3. 입력을 못 고친다');
 select throws_ok($$select public.save_my_profile('끝난뒤', null)$$,
   '42501', '이용이 정지된 계정입니다.', '3. 프로필은 이미 막혀 있었다');
