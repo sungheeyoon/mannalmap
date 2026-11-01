@@ -66,11 +66,17 @@ async function askGate(): Promise<Settled> {
 }
 
 /** 앱을 다시 앞으로 가져올 때도 다시 본다 — 웹은 요청마다 보고, 레이아웃은 화면을 옮겨도 다시 안 돈다 */
-export function useGate(): { gate: Gate; retry: () => void } {
+export function useGate(): { gate: Gate; retry: () => void; held: Extract<Gate, { kind: 'in' }> | null } {
   const [gate, setGate] = useState<Gate>({ kind: 'checking' });
+  /* 이 실행에서 들어온 적이 있나 — 다시 보다 못 읽어도 관문은 닫히지만, 껍데기가 그 아래 스택을 걷지 않게 알린다. 세션이 끊기면 지운다 */
+  const [held, setHeld] = useState<Extract<Gate, { kind: 'in' }> | null>(null);
 
   const check = useCallback(() => {
-    void readGate().then(setGate);
+    void readGate().then((next) => {
+      setGate(next);
+      if (next.kind === 'in') setHeld(next);
+      else if (next.kind !== 'failed') setHeld(null);
+    });
   }, []);
 
   useEffect(() => {
@@ -79,7 +85,9 @@ export function useGate(): { gate: Gate; retry: () => void } {
       if (state === 'active') check();
     });
     const auth = supabase?.auth.onAuthStateChange((event) => {
-      if (event === 'SIGNED_OUT') setGate({ kind: 'out', left: true });
+      if (event !== 'SIGNED_OUT') return;
+      setHeld(null);
+      setGate({ kind: 'out', left: true });
     });
     return () => {
       foreground.remove();
@@ -87,5 +95,5 @@ export function useGate(): { gate: Gate; retry: () => void } {
     };
   }, [check]);
 
-  return { gate, retry: check };
+  return { gate, retry: check, held };
 }

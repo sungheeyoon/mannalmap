@@ -7,7 +7,8 @@ import { findStatus, findsInList, pickable } from '@people/pick';
 
 import { readPeopleList, type MyReading, type PeopleList, type Read } from '@/people/data';
 import { AddPerson } from '@/people/manage';
-import { AccountNotice, FailureLine, ScreenFrame, go, styles as shared } from '@/people/parts';
+import { AccountNotice, FailureLine, ScreenFrame, styles as shared } from '@/people/parts';
+import { goTab } from '@/ui/go-tab';
 import { PersonCard } from '@/people/person-card';
 import { EmptyState } from '@/ui/empty-state';
 import { Field, SecondaryButton } from '@/ui/parts';
@@ -25,7 +26,8 @@ export default function PeopleScreen() {
   const load = useCallback(() => {
     void settled(readPeopleList(), 'readPeopleList', () => ({ kind: 'failed', message: UNREACHABLE }) as const).then((next) => {
       if (next.kind === 'signed-out') router.replace('/');
-      else setRead(next);
+      /* 선 화면을 다시 읽다 못 읽으면 가진 것을 그대로 둔다 — 다음에 돌아올 때 메운다(채팅 목록과 같다) */
+      else setRead((now) => (now?.kind === 'ok' && next.kind === 'failed' ? now : next));
     });
   }, []);
   /* 다른 화면을 다녀오면 다시 읽는다 — 거기서 사람이 빠졌거나 풀이가 났을 수 있다 */
@@ -62,7 +64,7 @@ export default function PeopleScreen() {
   const status = findStatus(wanted, shown.length);
 
   return (
-    <ScreenFrame keyboard bar={<TopBar title="저장한 사람" fallback="/me" right={<SecondaryButton label="궁합 보러 가기" onPress={() => go('/me/compat')} />} />}>
+    <ScreenFrame keyboard bar={<TopBar title="저장한 사람" fallback="/me" right={<SecondaryButton label="궁합 보러 가기" onPress={() => goTab('/me/compat')} />} />}>
       <Text style={shared.body}>
         가족이나 친구의 출생 정보를 저장하고 관리하세요.
         {slots !== null && <Text style={shared.bodyStrong}>{`  ${slots.used}/${slots.limit}명`}</Text>}

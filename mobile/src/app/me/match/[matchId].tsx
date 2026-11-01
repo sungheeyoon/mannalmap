@@ -11,6 +11,7 @@ import { Face, PartnerSheet, ReportBlock } from '@/matching/people';
 import type { ReadingTarget } from '@/reading/api';
 import { ReadFailure, ReadingPanel, useReadingView } from '@/reading/panel';
 import { Icon } from '@/ui/icons';
+import { LoadingMark } from '@/ui/loading';
 import { PrimaryButton } from '@/ui/parts';
 import { TopBar, goBack } from '@/ui/top-bar';
 import { COLOR, ELEMENT_TONE, FONT, RADIUS, TYPE } from '@/ui/tokens';
@@ -46,6 +47,7 @@ export default function MatchScreen() {
     return (
       <View style={styles.screen}>
         <TopBar fallback={fallback} />
+        <LoadingMark />
       </View>
     );
   }

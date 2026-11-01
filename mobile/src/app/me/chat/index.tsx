@@ -14,6 +14,7 @@ import { AccountNotice, FailureLine } from '@/chat/notices';
 import { settled } from '@/ui/settled';
 import { noteActivity, readRoomListScreen, type ChatRoom, type RoomListScreen } from '@/chat/reads';
 import { Icon } from '@/ui/icons';
+import { LoadingMark } from '@/ui/loading';
 import { COLOR, FONT, RADIUS, TYPE } from '@/ui/tokens';
 
 /** 한 물결의 변경을 묶어 다시 읽는 간격 — 웹의 `REDRAW_AFTER_MS` 와 같다 */
@@ -65,6 +66,7 @@ export default function ChatRoomsScreen() {
       <Text accessibilityRole="header" style={styles.title}>
         {CHAT_TAB_LABEL}
       </Text>
+      {screen === null && <LoadingMark />}
       {screen !== null && screen.kind === 'failed' && (
         <View style={styles.pad}>
           <FailureLine onRetry={load}>{screen.message}</FailureLine>

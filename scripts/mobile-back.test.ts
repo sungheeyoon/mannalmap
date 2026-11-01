@@ -3,7 +3,7 @@ import { join, relative } from 'node:path';
 
 import { describe, expect, it } from 'vitest';
 
-import { appHeadStands, dockStands } from '../src/lib/app-shell';
+import { appHeadStands, dockStands, tabRouteId } from '../src/lib/app-shell';
 
 /**
  * **앱의 뒤로가기는 부품 하나다**(운영자 2026-10-31) — `<` 아이콘만, 맨 위 왼쪽 고정. 화면마다 제 뒤로가기를 다시 지으면
@@ -85,6 +85,17 @@ describe('앱의 뒤로가기', () => {
     }
     expect(appHeadStands('/me/compat', { a: '1', b: '2' })).toBe(false);
     expect(appHeadStands('/me/compat', { pickA: '1' } as never)).toBe(true);
+  });
+
+  it('탭 첫 화면으로 가는 길은 goTab 하나다 — 그냥 부르면 새 화면이 쌓여 입력 · 스크롤을 잃는다', () => {
+    const direct = sources.filter(({ text }) => /router\.(push|navigate)\(\s*['"`]\/me(\/compat|\/matching|\/chat)?['"`]/.test(text));
+    expect(direct.map(({ file }) => file)).toEqual([]);
+  });
+
+  it('탭 자리는 궁합의 고르기와 결과를 가른다', () => {
+    expect(tabRouteId('compat/index')).toBe(tabRouteId('compat/index', { pickA: '1' } as never));
+    expect(tabRouteId('compat/index', { a: '1', b: '2' })).not.toBe(tabRouteId('compat/index'));
+    expect(tabRouteId('compat/index', { a: '1', b: '2' })).not.toBe(tabRouteId('compat/index', { a: '1', b: '3' }));
   });
 
   it('탭 막대는 대화방에서만 걷힌다', () => {

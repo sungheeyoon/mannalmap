@@ -69,12 +69,12 @@
 1. 에뮬레이터를 띄우고 Expo Go(SDK 와 맞는 판)를 깐다 — `adb.exe install -r -g <Windows 경로의 apk>`. API 37 은 권한도 준다 — `adb shell pm grant host.exp.exponent android.permission.ACCESS_LOCAL_NETWORK`.
 2. 포트를 잇는다 — `adb reverse tcp:8081 tcp:8081` · `adb reverse tcp:18999 tcp:18999`.
 3. `mobile/.env.local` 을 가짜로 둔다 — `EXPO_PUBLIC_SUPABASE_URL` · `EXPO_PUBLIC_SITE_URL` 은 `http://localhost:18999`, `EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY` 는 아무 글자. **운영 값을 넣지 않는다.**
-4. `node mobile/scripts/measure/fake-server.mjs` — 상태는 `curl 'localhost:18999/__set?m=<상태>'`(`reset` · `empty` · `unsigned` · `closed` · `suspended` · `warning` · `no-credits` · `no-self`).
+4. `node mobile/scripts/measure/fake-server.mjs` — 상태는 `curl 'localhost:18999/__set?m=<상태>'`(`reset` · `empty` · `unsigned` · `closed` · `suspended` · `warning` · `no-credits` · `no-self`). 망 흉내는 `down` · `broken` · `slow` · `up`, 관문을 지나 화면 하나의 실패 · 로딩만 보려면 `screens-down` · `screens-slow` — 끊긴 읽기는 재시도로 수십 초 뒤에 실패한다.
 5. `mobile/` 에서 `REACT_EDITOR=none EXPO_NO_TELEMETRY=1 npx expo start --clear --port 8081 --go > "$MEASURE_DIR/metro.log" 2>&1`.
 6. `mobile/scripts/measure/dev-seed.tsx.txt` 를 `mobile/src/app/dev-seed.tsx` 로 잠시 복사하고 `python3 mobile/scripts/measure/device.py link /dev-seed` 로 세션을 넣는다. **이 복사본과 `.env.local` 은 끝나면 지운다 — 커밋하지 않는다.**
 7. 라우트를 쓴다 — `python3 mobile/scripts/measure/sweep.py me=/me chat=/me/chat …` 가 그림 · 글자 · 새 로그를 모은다. 누르는 흐름은 `device.py` 의 `tap` · `input` · `type` · `key` 로 스크립트 파일에 적는다.
 
-환경값은 `ADB`(WSL 은 Windows SDK 의 `adb.exe` 전체 경로) · `MEASURE_DIR`(기본은 임시 폴더의 `saju-measure`) · `FAKE_PORT` 다. 앱이 새 DB 함수를 부르면 가짜 서버 기록에 `!! 없는 rpc` 가 찍힌다 — 그 답을 `fake-server.mjs` 에 더한다.
+환경값은 `ADB`(WSL 은 Windows SDK 의 `adb.exe` 전체 경로) · `MEASURE_DIR`(기본은 임시 폴더의 `saju-measure`) · `FAKE_PORT` · `METRO_PORT` 다. 에이전트가 나란히 쓰면 포트를 저마다 잡고 기기는 잠금으로 차례를 지킨다 — 개발 번들의 홈은 명식 계산으로 수십 초 걸리니(2026-11-02 에 34~49초) 고정 대기가 아니라 글자를 기다린다. 앱이 새 DB 함수를 부르면 가짜 서버 기록에 `!! 없는 rpc` 가 찍힌다 — 그 답을 `fake-server.mjs` 에 더한다.
 
 | 증상 | 원인 | 하는 일 |
 | --- | --- | --- |

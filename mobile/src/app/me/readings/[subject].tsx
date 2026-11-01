@@ -7,6 +7,7 @@ import type { Element } from '@saju';
 
 import type { ReadingTarget } from '@/reading/api';
 import { ReadFailure, ReadingPanel, useReadingView } from '@/reading/panel';
+import { LoadingMark } from '@/ui/loading';
 import { TopBar } from '@/ui/top-bar';
 import { COLOR, FONT, TYPE } from '@/ui/tokens';
 import { Card } from '@/ui/surfaces';
@@ -33,6 +34,7 @@ export default function ReadingScreen() {
     <SafeAreaView style={styles.screen} edges={['left', 'right']}>
       <TopBar title={view?.view === 'reading' ? view.subject?.name : undefined} fallback={from === 'shelf' ? '/me/readings' : '/me'} />
       <ScrollView contentContainerStyle={styles.content}>
+        {answer === null && <LoadingMark />}
         {answer !== null && 'refused' in answer && <ReadFailure refused={answer.refused} onRetry={reload} />}
 
         {view?.view === 'blocked' && (

@@ -13,4 +13,10 @@ export function appHeadStands(pathname: string, params: { a?: unknown; b?: unkno
 }
 
 /** 대화방 하나에서는 독이 안 선다 — 폰의 방은 화면 전체다(웹의 `dockStandsOn`, PRD 「앱 내 채팅」) */
+/**
+ * 탭으로 갈 때 스택의 어느 자리를 다시 쓰나 — 같은 값이면 새로 쌓지 않고 있던 화면을 맨 앞으로 옮겨 입력 · 스크롤이 남는다(`ui/go-tab.ts`).
+ * `/me/compat` 은 고르기와 결과를 한 라우트가 들어 두 사람(`a` · `b`)까지 갈라야 결과가 탭 첫 화면으로 덮이지 않는다.
+ */
+export const tabRouteId = (name: string, params: { a?: unknown; b?: unknown } = {}) => `${name}:${String(params.a ?? '')}:${String(params.b ?? '')}`;
+
 export const dockStands = (pathname: string) => !/^\/me\/chat\/[^/]+\/?$/.test(pathname);

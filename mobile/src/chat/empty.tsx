@@ -1,9 +1,9 @@
-import { router } from 'expo-router';
 import { StyleSheet, Text, View } from 'react-native';
 import Svg, { Circle, G, Path } from 'react-native-svg';
 
 import { CHAT_EMPTY_DETAIL, CHAT_EMPTY_TITLE } from '@chat/copy';
 
+import { goTab } from '@/ui/go-tab';
 import { Paper } from '@/ui/surfaces';
 import { PrimaryButton } from '@/ui/parts';
 import { COLOR, ELEMENT_TONE, FONT, TYPE } from '@/ui/tokens';
@@ -18,9 +18,9 @@ export function EmptyChat({ hasSelf }: { hasSelf: boolean }) {
         <Text style={styles.detail}>{CHAT_EMPTY_DETAIL}</Text>
       </View>
       {hasSelf ? (
-        <PrimaryButton label="오늘의 인연 보기" onPress={() => router.push('/me/matching' as never)} />
+        <PrimaryButton label="오늘의 인연 보기" onPress={() => goTab('/me/matching')} />
       ) : (
-        <PrimaryButton label="내 사주 등록하기" onPress={() => router.push('/me' as never)} />
+        <PrimaryButton label="내 사주 등록하기" onPress={() => goTab('/me')} />
       )}
     </Paper>
   );

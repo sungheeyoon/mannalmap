@@ -8,6 +8,8 @@ import { readShelf, type DoorRefusal, type ShelfView } from '@/reading/api';
 import { followRefusal, ReadFailure } from '@/reading/panel';
 import { BlankBook, BookRow, MakingRow, SHELF_CHIPS, SHELF_TITLE, type ShelfChip } from '@/reading/shelf';
 import { EmptyState } from '@/ui/empty-state';
+import { goTab } from '@/ui/go-tab';
+import { LoadingMark } from '@/ui/loading';
 import { COLOR, FONT, RADIUS, TYPE } from '@/ui/tokens';
 import { settled } from '@/ui/settled';
 import { UNREACHABLE } from '@/auth/signup';
@@ -31,7 +33,8 @@ export default function ReadingsScreen() {
       if (read.ok) setAnswer({ view: read.value });
       else {
         followRefusal(read.refused);
-        setAnswer({ refused: read.refused });
+        /* 선 화면을 다시 읽다 못 읽으면 가진 것을 그대로 둔다 — 다음에 돌아올 때 메운다(채팅 목록과 같다) */
+        setAnswer((now) => (now !== null && 'view' in now && read.refused.refused === 'unavailable' ? now : { refused: read.refused }));
       }
     });
   }, []);
@@ -43,6 +46,7 @@ export default function ReadingsScreen() {
     <SafeAreaView style={styles.screen} edges={['left', 'right']}>
       <TopBar title={SHELF_TITLE} fallback="/me" />
       <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
+        {answer === null && <LoadingMark />}
         {answer !== null && 'refused' in answer && <ReadFailure refused={answer.refused} onRetry={load} />}
         {answer !== null && 'view' in answer && answer.view.view === 'blocked' && (
           <Card>
@@ -78,7 +82,7 @@ function ShelfBody({
       <EmptyState
         icon="reading"
         title="아직 만든 풀이가 없어요"
-        action={hasSelf ? { label: '사주풀이 받기', onPress: () => router.push('/me/readings/self' as never) } : { label: '내 사주 등록하기', onPress: () => router.push('/me' as never) }}
+        action={hasSelf ? { label: '사주풀이 받기', onPress: () => router.push('/me/readings/self' as never) } : { label: '내 사주 등록하기', onPress: () => goTab('/me') }}
       >
         내 사주와 저장한 사람의 풀이는 홈 탭에서,{'\n'}두 사람의 궁합은 궁합 탭에서 시작할 수 있어요.
       </EmptyState>
@@ -104,15 +108,15 @@ function ShelfBody({
   const label = (slot: ShelfChip) => SHELF_CHIPS.find((one) => one.chip === slot)?.label;
 
   const sajuBlank = wanted !== '' ? null : !hasSelf ? (
-    <BlankBook element="木" label="내 사주 등록하기" onPress={() => router.push('/me' as never)} />
+    <BlankBook element="木" label="내 사주 등록하기" onPress={() => goTab('/me')} />
   ) : (
     !hasSelfReading && !makingSelf && <BlankBook element="木" label="사주풀이 받기" onPress={() => router.push('/me/readings/self' as never)} />
   );
   const compatBlank = wanted === '' && privates.length === 0 && !makingOf('compat') && (
-    <BlankBook element="火" label="궁합 보러 가기" onPress={() => router.push('/me/compat' as never)} />
+    <BlankBook element="火" label="궁합 보러 가기" onPress={() => goTab('/me/compat')} />
   );
   const matchBlank = wanted === '' && fated.length === 0 && !makingOf('match') && (
-    <BlankBook element="水" label="오늘의 인연" onPress={() => router.push('/me/matching' as never)} />
+    <BlankBook element="水" label="오늘의 인연" onPress={() => goTab('/me/matching')} />
   );
 
   return (

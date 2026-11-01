@@ -10,6 +10,7 @@ import { AccountNotice, FailureLine, NoRoom } from '@/chat/notices';
 import { settled } from '@/ui/settled';
 import { noteActivity, readRoomScreen, type RoomScreen } from '@/chat/reads';
 import { ChatRoomView } from '@/chat/room';
+import { LoadingMark } from '@/ui/loading';
 import { TopBar } from '@/ui/top-bar';
 import { COLOR } from '@/ui/tokens';
 
@@ -62,7 +63,14 @@ export default function ChatRoomScreen() {
 
   /* 첫 읽기 동안은 판만 — 방이 선 뒤 다시 읽다 실패하면 가진 방을 그대로 둔다(쓰던 글과 스크롤이 그대로다) */
   const bar = <TopBar title={CHAT_TAB_LABEL} fallback="/me/chat" />;
-  if (screen === null) return <View style={styles.screen}>{bar}</View>;
+  if (screen === null) {
+    return (
+      <View style={styles.screen}>
+        {bar}
+        <LoadingMark />
+      </View>
+    );
+  }
   if (screen.kind === 'ready') return <ChatRoomView key={matchId} room={screen.view} onChanged={load} />;
   return (
     <SafeAreaView style={styles.screen} edges={['left', 'right', 'bottom']}>
