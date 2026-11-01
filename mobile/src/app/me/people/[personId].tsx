@@ -30,7 +30,8 @@ export default function PersonScreen() {
   const load = useCallback(() => {
     void settled(readPersonDetail(params.personId), 'readPersonDetail', () => ({ kind: 'failed', message: UNREACHABLE }) as const).then((next) => {
       if (next.kind === 'signed-out') router.replace('/');
-      else setRead(next);
+      /* 선 화면을 다시 읽다 못 읽으면 가진 것을 그대로 둔다 — 다음에 돌아올 때 메운다(채팅 목록과 같다) */
+      else setRead((now) => (now?.kind === 'ok' && next.kind === 'failed' ? now : next));
     });
   }, [params.personId]);
   useFocusEffect(load);

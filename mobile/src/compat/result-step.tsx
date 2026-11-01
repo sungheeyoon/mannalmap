@@ -31,7 +31,7 @@ export function CompatResultStep({ a, b, back: to }: { a: string; b: string; bac
   const load = useCallback(() => {
     void settled(readPair(a, b), 'readPair', () => ({ kind: 'failed', message: UNREACHABLE }) as const).then((next) => {
       if (next.kind === 'signed-out') router.replace('/');
-      else setRead(next);
+      else setRead((now) => (now?.kind === 'ok' && next.kind === 'failed' ? now : next));
     });
   }, [a, b]);
   useFocusEffect(load);

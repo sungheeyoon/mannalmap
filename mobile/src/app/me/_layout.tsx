@@ -13,6 +13,7 @@ import { useGate } from '@/home/gate';
 import { useAdultCheckGuard } from '@/matching/adult-check';
 import { appHeadStands, dockStands } from '@app-shell';
 import { WarningNotice } from '@/home/warning-notice';
+import { goTab } from '@/ui/go-tab';
 import { Icon } from '@/ui/icons';
 import { Logo } from '@/ui/logo';
 import { SecondaryButton } from '@/ui/parts';
@@ -43,7 +44,7 @@ function isActive(pathname: string, href: string): boolean {
  * 탭 막대는 웹의 하단 독처럼 주소를 보고 불을 켠다.
  */
 export default function MeLayout() {
-  const { gate, retry } = useGate();
+  const { gate, retry, held } = useGate();
   const pathname = usePathname();
   const search = useGlobalSearchParams<{ a?: string; b?: string }>();
   const insets = useSafeAreaInsets();
@@ -63,14 +64,15 @@ export default function MeLayout() {
       </View>
     );
   }
-  if (gate.kind === 'failed') {
-    return (
-      <SafeAreaView style={[styles.screen, styles.failed]}>
+  const failure =
+    gate.kind === 'failed' ? (
+      <SafeAreaView style={[styles.screen, styles.failed, held && styles.over]}>
         <Text style={styles.failure}>{gate.message}</Text>
         <SecondaryButton label="다시 시도하기" onPress={retry} />
       </SafeAreaView>
-    );
-  }
+    ) : null;
+  /* 한 번도 못 들어온 사람은 안내만 본다. 들어와 있던 사람은 안내가 화면을 가릴 뿐 아래 스택은 살아 있다 — 다시 시도하면 쓰던 글과 스크롤이 그대로다 */
+  if (gate.kind === 'failed' && !held) return failure;
 
   const badges: Record<string, number> = { '/me/chat': counts.chat, '/me/matching': counts.requests };
 
@@ -79,7 +81,7 @@ export default function MeLayout() {
       <LiveChannel />
       {appHeadStands(pathname, search) && (
       <View style={[styles.header, { paddingTop: insets.top }]}>
-        <Pressable accessibilityRole="link" accessibilityLabel={`${SERVICE_NAME} 홈`} onPress={() => router.navigate('/me' as never)} style={styles.logo}>
+        <Pressable accessibilityRole="link" accessibilityLabel={`${SERVICE_NAME} 홈`} onPress={() => goTab('/me')} style={styles.logo}>
           <Logo size={32} />
         </Pressable>
         <View style={styles.tools}>
@@ -126,7 +128,7 @@ export default function MeLayout() {
                 key={tab.href}
                 accessibilityRole="tab"
                 accessibilityState={{ selected: active }}
-                onPress={() => router.navigate(tab.href as never)}
+                onPress={() => goTab(tab.href)}
                 style={styles.tab}
               >
                 <View style={[styles.tabMark, active && styles.tabMarkOn]}>
@@ -143,12 +145,15 @@ export default function MeLayout() {
           })}
         </View>
       )}
+
+      {failure}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: COLOR.background },
+  over: StyleSheet.absoluteFill,
   failed: { alignItems: 'center', justifyContent: 'center', gap: 12, padding: 24 },
   failure: { fontFamily: FONT.medium, fontSize: TYPE.small, color: COLOR.danger, textAlign: 'center' },
   header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingLeft: 16, paddingRight: 4, backgroundColor: COLOR.background },

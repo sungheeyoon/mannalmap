@@ -10,6 +10,8 @@ import { readMatchBooks, readMatches, readRequests, type MatchBook, type Read } 
 import { PastRequestList } from '@/matching/requests';
 import { Icon } from '@/ui/icons';
 import { EmptyState } from '@/ui/empty-state';
+import { goTab } from '@/ui/go-tab';
+import { LoadingMark } from '@/ui/loading';
 import { COLOR, FONT, RADIUS, TYPE } from '@/ui/tokens';
 import { TopBar } from '@/ui/top-bar';
 import { CardFrame } from '@/ui/surfaces';
@@ -23,7 +25,12 @@ export default function MatchHistoryScreen() {
 
   const load = useCallback(async () => {
     const [books, matches, requests] = await Promise.all([readMatchBooks(), readMatches(), readRequests()]);
-    setLoaded({ books, matches, requests });
+    /* 칸마다 — 선 칸을 다시 읽다 못 읽으면 가진 것을 그대로 둔다 */
+    setLoaded((now) => ({
+      books: books.ok || !now?.books.ok ? books : now.books,
+      matches: matches.ok || !now?.matches.ok ? matches : now.matches,
+      requests: requests.ok || !now?.requests.ok ? requests : now.requests,
+    }));
   }, []);
 
   useFocusEffect(
@@ -39,7 +46,14 @@ export default function MatchHistoryScreen() {
   }, [note]);
 
   const bar = <TopBar title="인연 기록" fallback="/me/matching" />;
-  if (loaded === null) return <View style={styles.screen}>{bar}</View>;
+  if (loaded === null) {
+    return (
+      <View style={styles.screen}>
+        {bar}
+        <LoadingMark />
+      </View>
+    );
+  }
 
   const { books, matches, requests } = loaded;
   const shelf = books.ok ? books.value : [];
@@ -64,7 +78,7 @@ export default function MatchHistoryScreen() {
         )}
 
         {empty && (
-          <EmptyState icon="people" title="아직 인연 기록이 없어요" action={{ label: '오늘의 인연 보기', onPress: () => router.navigate('/me/matching') }}>
+          <EmptyState icon="people" title="아직 인연 기록이 없어요" action={{ label: '오늘의 인연 보기', onPress: () => goTab('/me/matching') }}>
             인연 요청을 주고받으면 여기에 기록이 남아요.
           </EmptyState>
         )}
