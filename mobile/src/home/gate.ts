@@ -16,7 +16,7 @@ export type Gate =
   | { kind: 'signup' }
   /** 테스트가 끝났다 — 주소마다 `gateFor` 를 다시 묻는다. 열린 것은 설정(철회 · 탈퇴 신청)뿐이다 */
   | { kind: 'closed'; account: GateAccount; notice: GateNotice | null | typeof NOTICE_UNREAD }
-  | { kind: 'in'; email: string | null }
+  | { kind: 'in' }
   | { kind: 'failed'; message: string };
 
 /**
@@ -61,7 +61,7 @@ async function askGate(): Promise<Settled> {
   const notice = schedule.ok ? schedule.value : NOTICE_UNREAD;
 
   const to = gateFor('/me', account, notice, new Date());
-  if (to === null) return { kind: 'in', email: data.session.user.email ?? null };
+  if (to === null) return { kind: 'in' };
   return to === '/closed' ? { kind: 'closed', account, notice } : { kind: 'signup' };
 }
 

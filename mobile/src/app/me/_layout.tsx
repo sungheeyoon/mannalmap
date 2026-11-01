@@ -1,5 +1,4 @@
 import { Redirect, Stack, router, useGlobalSearchParams, usePathname } from 'expo-router';
-import { useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -12,7 +11,6 @@ import { LiveChannel } from '@/chat/live';
 import { useCounts } from '@/home/counts';
 import { useGate } from '@/home/gate';
 import { appHeadStands, dockStands } from '@app-shell';
-import { SettingsMenu } from '@/home/settings-menu';
 import { WarningNotice } from '@/home/warning-notice';
 import { Icon } from '@/ui/icons';
 import { Logo } from '@/ui/logo';
@@ -48,7 +46,6 @@ export default function MeLayout() {
   const pathname = usePathname();
   const search = useGlobalSearchParams<{ a?: string; b?: string }>();
   const insets = useSafeAreaInsets();
-  const [menuOpen, setMenuOpen] = useState(false);
   const counts = useCounts(pathname, gate.kind === 'in');
 
   if (gate.kind === 'checking') return <View style={styles.screen} />;
@@ -97,7 +94,7 @@ export default function MeLayout() {
               </View>
             )}
           </Pressable>
-          <Pressable accessibilityRole="button" accessibilityLabel="설정 메뉴" onPress={() => setMenuOpen(true)} style={styles.tool}>
+          <Pressable accessibilityRole="link" accessibilityLabel="설정" onPress={() => router.push('/me/settings' as never)} style={styles.tool}>
             <Icon name="gear" size={20} />
           </Pressable>
         </View>
@@ -144,8 +141,6 @@ export default function MeLayout() {
           })}
         </View>
       )}
-
-      <SettingsMenu email={gate.email} open={menuOpen} onClose={() => setMenuOpen(false)} />
     </View>
   );
 }

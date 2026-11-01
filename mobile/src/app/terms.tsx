@@ -3,8 +3,8 @@ import { termsFor } from '@brand/terms';
 
 import { appBusinessInfo } from '@/info/business';
 import { InfoLine, InfoScreen, LegalHead } from '@/info/frame';
-import { HomeButton } from '@/info/home-button';
 import { LegalBody } from '@/info/legal-body';
+import { PoliciesLink } from '@/info/policy-links';
 import { Card } from '@/ui/surfaces';
 
 const SITE_URL = process.env.EXPO_PUBLIC_SITE_URL;
@@ -22,7 +22,7 @@ export default function TermsScreen() {
       ) : (
         <LegalBody document={terms} />
       )}
-      <HomeButton />
+      <PoliciesLink />
     </InfoScreen>
   );
 }
