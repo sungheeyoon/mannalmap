@@ -6,7 +6,7 @@ import { PRIVACY_INTRO, PRIVACY_OPTIONAL_TITLE, PRIVACY_RIGHTS_LINES, PRIVACY_RI
 
 import { readSchedule, type ScheduleRead } from '@/auth/schedule';
 import { Clause, Dot, FinePrint, InfoLine, InfoScreen, LegalHead } from '@/info/frame';
-import { HomeButton } from '@/info/home-button';
+import { PoliciesLink } from '@/info/policy-links';
 import { COLOR, FONT, TYPE } from '@/ui/tokens';
 import { Card, Tile } from '@/ui/surfaces';
 import { settled } from '@/ui/settled';
@@ -103,7 +103,7 @@ export default function PrivacyScreen() {
         </>
       )}
 
-      <HomeButton />
+      <PoliciesLink />
     </InfoScreen>
   );
 }

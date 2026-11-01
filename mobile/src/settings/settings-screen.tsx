@@ -5,11 +5,14 @@ import { ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { isBlocked } from '@account/index';
 import { SIGN_OUT_PENDING } from '@account/copy';
+import { GUIDE_LINKS } from '@brand/links';
 import { OPTIONAL_CONSENT_NOTE } from '@consent/notice';
 import { asKoreanDay, noticeAckHolds } from '@consent/index';
 import { initialOf } from '@profile';
 
 import { signOut } from '@/auth/sign-in';
+import { readGate } from '@/home/gate';
+import { CONTACT_LABEL, POLICY_TITLE, SUPPORT_TITLE, SURVEY_LABEL } from '@/info/copy';
 import { COLOR, FONT, RADIUS, TYPE } from '@/ui/tokens';
 import { settled } from '@/ui/settled';
 import { TopBar } from '@/ui/top-bar';
@@ -24,15 +27,19 @@ import { readSettings, settingsUnreachable, type SettingsData } from './settings
 const SIGN_OUT_FAILED = '로그아웃하지 못했어요. 다시 시도해 주세요.';
 
 /**
- * 설정 — 웹 `app/me/settings/view.tsx` 와 같은 차례다: 나 → 인연 → 동의 → 계정 → 탈퇴하기. 자주 바꾸는 것이 위, 되돌리기 어려운 것이 맨 아래.
+ * 설정 — 나 → 인연 → 동의 → 고객센터 → 약관 및 정책 · 소개 → 계정 → 탈퇴하기. 자주 바꾸는 것이 위, 되돌리기 어려운 것이 맨 아래.
+ * 고객센터와 약관은 계정 상태와 무관하게 선다 — 정지되었거나 못 읽었을 때도 닿아야 하는 고지다.
  * 알림 무리는 없다 — 푸시는 옮기지 않는다. 프로필에서 돌아오면 이름 · 사진이 바뀌었을 수 있어 화면에 설 때마다 다시 읽는다.
  */
 export function SettingsScreen() {
   const [data, setData] = useState<SettingsData | null>(null);
   const [face, setFace] = useState<string | null>(null);
+  /* 테스트가 끝나면 관문이 설정만 연다 — 눌러도 종료 안내로 되돌아올 줄(프로필 · 설문)은 세우지 않는다 */
+  const [ended, setEnded] = useState(false);
 
   const load = useCallback(() => {
     void settled(readSettings(), 'readSettings', settingsUnreachable).then(setData);
+    void readGate().then((gate) => setEnded(gate.kind === 'closed'));
     /* 사진이 없거나 못 읽었으면 첫 글자가 선다 — 첫 글자는 사진이 있는 사람에게 거짓말이 아니라 자리다(웹 `Avatar`) */
     void settled(
       myPhotos().then((photos) => (photos[0] === undefined ? null : photoSource(photos[0]))),
@@ -63,7 +70,7 @@ export function SettingsScreen() {
           </View>
         )}
 
-        {active && account !== null && (
+        {active && account !== null && !ended && (
           <SettingsGroup>
             <LinkRow
               big
@@ -103,6 +110,17 @@ export function SettingsScreen() {
           </SettingsGroup>
         )}
 
+        <SettingsGroup title={SUPPORT_TITLE}>
+          {goRow(guide('/help'))}
+          {goRow({ href: '/support', label: CONTACT_LABEL })}
+          {!ended && goRow({ href: '/me/survey', label: SURVEY_LABEL })}
+        </SettingsGroup>
+
+        <SettingsGroup>
+          {goRow({ href: '/policies', label: POLICY_TITLE })}
+          {goRow(guide('/about'))}
+        </SettingsGroup>
+
         <SettingsGroup title="계정">
           {!active && email !== undefined && <Text style={styles.email}>{email}</Text>}
           <SignOutRow />
@@ -112,6 +130,12 @@ export function SettingsScreen() {
       </ScrollView>
     </View>
   );
+}
+
+const guide = (href: string) => GUIDE_LINKS.find((link) => link.href === href)!;
+
+function goRow(link: { href: string; label: string }) {
+  return <LinkRow key={link.href} label={link.label} onPress={() => router.push(link.href as never)} />;
 }
 
 /** 처리 안내 — 전문은 앱의 `/privacy` 다 */

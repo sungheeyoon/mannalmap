@@ -13,6 +13,7 @@
 | Person | `person` · `user_person_access` | 표 · 엣지 표 |
 | User | `app_user` · `AccountState` | 표 · `src/lib/account` |
 | selfPerson | `self_person_id` · `create_self_person` | `app_user` 칸 · 함수 |
+| 성인 확인 | `adult_check` · `adult_check_switch` · `adult_check_passed` · `my_adult_check` · `confirm_adult_check` | 표 · 판정 · 문(ADR 0214) |
 | localLabel | `local_label` | `user_person_access` 칸 |
 | 닉네임 | `nickname` · `nicknameKey` | `app_user` 칸 · `src/lib/profile` |
 | 프로필 사진 | `profile_photo` · `photo_at` | 표 · 함수 |

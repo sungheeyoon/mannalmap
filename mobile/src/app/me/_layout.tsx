@@ -1,5 +1,4 @@
 import { Redirect, Stack, router, useGlobalSearchParams, usePathname } from 'expo-router';
-import { useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -11,8 +10,8 @@ import { currentPath } from '@consent/app-destination';
 import { LiveChannel } from '@/chat/live';
 import { useCounts } from '@/home/counts';
 import { useGate } from '@/home/gate';
+import { useAdultCheckGuard } from '@/matching/adult-check';
 import { appHeadStands, dockStands } from '@app-shell';
-import { SettingsMenu } from '@/home/settings-menu';
 import { WarningNotice } from '@/home/warning-notice';
 import { goTab } from '@/ui/go-tab';
 import { Icon } from '@/ui/icons';
@@ -49,8 +48,8 @@ export default function MeLayout() {
   const pathname = usePathname();
   const search = useGlobalSearchParams<{ a?: string; b?: string }>();
   const insets = useSafeAreaInsets();
-  const [menuOpen, setMenuOpen] = useState(false);
   const counts = useCounts(pathname, gate.kind === 'in');
+  useAdultCheckGuard(pathname, currentPath(pathname, search), gate.kind === 'in');
 
   if (gate.kind === 'checking') return <View style={styles.screen} />;
   /* 이 주소로 바로 들어온 사람은 로그인 · 가입 뒤 여기로 돌아온다(ADR 0213). 로그아웃한 사람은 돌아올 뜻이 없다 */
@@ -67,13 +66,13 @@ export default function MeLayout() {
   }
   const failure =
     gate.kind === 'failed' ? (
-      <SafeAreaView style={[styles.screen, styles.failed, held !== null && styles.over]}>
+      <SafeAreaView style={[styles.screen, styles.failed, held && styles.over]}>
         <Text style={styles.failure}>{gate.message}</Text>
         <SecondaryButton label="다시 시도하기" onPress={retry} />
       </SafeAreaView>
     ) : null;
   /* 한 번도 못 들어온 사람은 안내만 본다. 들어와 있던 사람은 안내가 화면을 가릴 뿐 아래 스택은 살아 있다 — 다시 시도하면 쓰던 글과 스크롤이 그대로다 */
-  if (gate.kind === 'failed' && held === null) return failure;
+  if (gate.kind === 'failed' && !held) return failure;
 
   const badges: Record<string, number> = { '/me/chat': counts.chat, '/me/matching': counts.requests };
 
@@ -99,7 +98,7 @@ export default function MeLayout() {
               </View>
             )}
           </Pressable>
-          <Pressable accessibilityRole="button" accessibilityLabel="설정 메뉴" onPress={() => setMenuOpen(true)} style={styles.tool}>
+          <Pressable accessibilityRole="link" accessibilityLabel="설정" onPress={() => router.push('/me/settings' as never)} style={styles.tool}>
             <Icon name="gear" size={20} />
           </Pressable>
         </View>
@@ -148,7 +147,6 @@ export default function MeLayout() {
       )}
 
       {failure}
-      <SettingsMenu email={gate.kind === 'in' ? gate.email : (held?.email ?? null)} open={menuOpen} onClose={() => setMenuOpen(false)} />
     </View>
   );
 }

@@ -47,6 +47,7 @@ select set_eq(
            ('match_reading_source(p_match_id uuid)'),
            ('match_request_ttl()'),
            ('move_my_photo(p_from integer, p_to integer, p_version bigint)'),
+           ('my_adult_check()'),
            ('my_chat_messages(p_match_id uuid, p_before_seq bigint, p_limit integer)'),
            ('my_chat_rooms()'),
            ('my_discovery_board()'),
