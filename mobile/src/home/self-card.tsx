@@ -20,14 +20,27 @@ import { SelfProfile } from './self-profile';
 type Ok = Extract<SelfCardData, { kind: 'ok' }>;
 
 /** 내 사주 카드(줄인 판) — 홈에서 오행 면을 입는 것은 이 판 하나다. 일간은 원 · 딱지 · 뒤의 그림이 든다 */
-export function SelfCard({ card, actions }: { card: Ok; /** 단추 자리를 바꿔 세운다 — 아직 저장 안 된 사주에 「이 사주가 내 사주 맞나요?」를 물을 때 */ actions?: ReactNode }) {
+export function SelfCard({
+  card,
+  actions,
+  label = '내 사주',
+  pillars,
+}: {
+  card: Ok;
+  /** 단추 자리를 바꿔 세운다 — 아직 저장 안 된 사주를 결과 화면에 세울 때. `false` 면 단추가 없다 */
+  actions?: ReactNode;
+  /** 읽는 이름 — 결과 화면의 사주는 내 사주인지 아직 모른다 */
+  label?: string;
+  /** 오행 위에 서는 네 기둥 — 결과 화면이 든다 */
+  pillars?: ReactNode;
+}) {
   const { saju, query } = card;
   const dayElement = STEM_INFO[saju.pillars.dayMaster].element;
   const tone = ELEMENT_TONE[dayElement];
   const counts = saju.analysis.elements.counts;
 
   return (
-    <Tile tone={tone.soft} accessibilityLabel="내 사주" style={styles.card}>
+    <Tile tone={tone.soft} accessibilityLabel={label} style={styles.card}>
       <View pointerEvents="none" style={styles.watermark}>
         <StemSymbol stem={saju.pillars.dayMaster} size={160} opacity={0.15} />
       </View>
@@ -43,7 +56,7 @@ export function SelfCard({ card, actions }: { card: Ok; /** 단추 자리를 바
           </View>
         )}
         <View style={styles.who}>
-          <Text style={[styles.name, styles.nameRoom]}>{card.label}</Text>
+          {card.label !== '' && <Text style={[styles.name, styles.nameRoom]}>{card.label}</Text>}
           <Text style={styles.birth}>
             {query.date}
             {query.hourKnown === false ? '' : ` ${query.time}`} · {query.city}
@@ -59,6 +72,8 @@ export function SelfCard({ card, actions }: { card: Ok; /** 단추 자리를 바
           <Text style={{ color: tone.ink }}>”</Text>
         </Text>
       )}
+
+      {pillars}
 
       <View accessibilityLabel="오행 분포" style={styles.elements}>
         {ELEMENTS.map((element) => {

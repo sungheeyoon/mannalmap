@@ -540,3 +540,5 @@ export const STEM_PICTURE: Record<Stem, string> = {
   壬: '바다',
   癸: '빗물',
 };
+
+export { elementsFirstLine } from './firstLine';
