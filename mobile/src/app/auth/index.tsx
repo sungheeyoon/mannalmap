@@ -17,6 +17,7 @@ import { NoticeLine, NoticeScreen } from '@/ui/notice-screen';
 import { PrimaryButton, SecondaryButton, TextButton } from '@/ui/parts';
 import { COLOR, FONT, RADIUS, TYPE } from '@/ui/tokens';
 import { goBack } from '@/ui/top-bar';
+import { WordText } from '@/ui/word-text';
 
 /**
  * 로그인 — 웹의 `/auth` 와 같은 글자이고 로그인은 네이티브 구글이다. 돌아갈 곳은 앱에 있는 `/me` 아래와 결과 화면이다 —
@@ -58,7 +59,7 @@ export default function SignInScreen() {
       description={
         <NoticeLine>
           {want !== null ? CHART_SIGN_IN[want].note : '로그인하면 저장한 사람과 사주풀이를 다음에도 이어서 볼 수 있어요.'}{' '}
-          지금은 비공개 베타라, 처음 오셨다면 로그인 뒤에 <Text style={styles.strong}>테스트 코드</Text>가 필요해요.
+          지금은 비공개 베타라, 처음 오셨다면 로그인 뒤에 <WordText style={styles.strong}>테스트 코드</WordText>가 필요해요.
         </NoticeLine>
       }
       actions={

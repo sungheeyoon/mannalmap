@@ -8,6 +8,7 @@ import { readSchedule, type ScheduleRead } from '@/auth/schedule';
 import { Clause, Dot, FinePrint, InfoLine, InfoScreen, LegalHead } from '@/info/frame';
 import { PoliciesLink } from '@/info/policy-links';
 import { COLOR, FONT, TYPE } from '@/ui/tokens';
+import { SecondaryButton } from '@/ui/parts';
 import { Card, Tile } from '@/ui/surfaces';
 import { settled } from '@/ui/settled';
 import { UNREACHABLE } from '@/auth/signup';
@@ -18,6 +19,8 @@ export default function PrivacyScreen() {
   const scroller = useRef<ComponentRef<typeof ScrollView>>(null);
   const tops = useRef<Record<number, number>>({});
 
+  const [attempt, setAttempt] = useState(0);
+
   useEffect(() => {
     let live = true;
     void settled(readSchedule(), 'current_beta_schedule', () => ({ ok: false, reason: UNREACHABLE }) as const).then((next) => {
@@ -26,7 +29,12 @@ export default function PrivacyScreen() {
     return () => {
       live = false;
     };
-  }, []);
+  }, [attempt]);
+
+  const retry = () => {
+    setSchedule(null);
+    setAttempt((now) => now + 1);
+  };
 
   const ready = schedule?.ok ? schedule.value : null;
   const sections = ready === null ? [] : noticeFor(ready.dates, ready.operator);
@@ -44,8 +52,9 @@ export default function PrivacyScreen() {
       <LegalHead title="개인정보 처리방침" note={PRIVACY_INTRO} />
 
       {schedule === null ? null : !schedule.ok ? (
-        <Card>
+        <Card style={styles.failed}>
           <InfoLine>{schedule.reason}</InfoLine>
+          <SecondaryButton label="다시 시도하기" onPress={retry} />
         </Card>
       ) : ready === null ? (
         <Card>
@@ -109,6 +118,7 @@ export default function PrivacyScreen() {
 }
 
 const styles = StyleSheet.create({
+  failed: { gap: 12 },
   toc: { gap: 8 },
   tocHead: { fontFamily: FONT.bold, fontSize: TYPE.small, color: COLOR.secondary },
   tocRow: { minHeight: 44, flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 8 },

@@ -83,7 +83,7 @@ function BirthScreen({ signedOut }: { signedOut: boolean }) {
   const [rule, setRule] = useState<LateNightRule>(DEFAULT_QUERY.rule);
   const [basis, setBasis] = useState<Query['basis']>(DEFAULT_QUERY.basis);
   const [saeunFrom, setSaeunFrom] = useState(String(DEFAULT_QUERY.saeunFrom));
-  const [failure, setFailure] = useState<string | null>(null);
+  const [refusal, setRefusal] = useState<{ message: string; of: string } | null>(null);
 
   const monthRef = useRef<ComponentRef<typeof TextInput>>(null);
   const dayRef = useRef<ComponentRef<typeof TextInput>>(null);
@@ -108,6 +108,9 @@ function BirthScreen({ signedOut }: { signedOut: boolean }) {
   const { years, maxDay } = limitsOf(calendar, year, month);
   const refused = dateRefusal(query)?.part ?? null;
   const converted = convertedLine(query);
+  /* 거절 문구는 그때 낸 값의 것이다 — 값을 고치면 걷힌다. 연도만 적은 날짜는 `query` 에 아직 안 서서 칸의 글자도 함께 본다 */
+  const typed = JSON.stringify([query, year, month, day, hour, minute]);
+  const failure = refusal?.of === typed ? refusal.message : null;
 
   const chooseHour = (next: 'known' | 'unknown') => {
     /* 「모름」이면 적어 둔 시각도 지운다 — 다시 「직접 입력」을 골랐을 때 지운 줄 안 값으로 계산되지 않게 */
@@ -122,10 +125,10 @@ function BirthScreen({ signedOut }: { signedOut: boolean }) {
   const submit = () => {
     const result = calculateChart(query);
     if (!result.ok) {
-      setFailure(result.message);
+      setRefusal({ message: result.message, of: typed });
       return;
     }
-    setFailure(null);
+    setRefusal(null);
     router.push(chartPath(query) as never);
   };
 
@@ -169,7 +172,7 @@ function BirthScreen({ signedOut }: { signedOut: boolean }) {
               <View style={styles.pair}>
                 <View style={styles.half}>
                   <FieldLabel>이름</FieldLabel>
-                  <Field value={name} onChange={setName} maxLength={NAME_MAX} />
+                  <Field value={name} onChange={setName} maxLength={NAME_MAX} label="이름" />
                 </View>
                 <View style={styles.half}>
                   <FieldLabel>성별</FieldLabel>
