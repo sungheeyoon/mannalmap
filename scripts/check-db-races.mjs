@@ -425,6 +425,8 @@ const accessRow = (actor, outcome = 'allowed') => `
   const uid = sql(`insert into auth.users (instance_id, id, aud, role, email, created_at, updated_at)
     values ('00000000-0000-0000-0000-000000000000', gen_random_uuid(), 'authenticated', 'authenticated',
             'race-photo-switch-${Date.now()}@example.com', now(), now()) returning id`);
+  /* 사진의 문은 가입을 묻는다(`20270104090000`) */
+  sql(`update public.app_user set nickname = '경합${String(Date.now()).slice(-4)}', signed_up_at = now() where id = '${uid}'`);
   sql(`insert into public.beta_schedule (ends_on, note, operator_name, operator_officer, operator_contact)
     select (now() at time zone 'Asia/Seoul')::date + 30, '경합 검사', '만세력 운영자', '시험 담당', 'ops@example.com'
     where not exists (select 1 from public.beta_schedule)`);

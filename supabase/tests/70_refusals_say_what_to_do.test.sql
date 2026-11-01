@@ -62,7 +62,8 @@ select tests.schedule_beta();
 
 create temporary table folks as
 select tests.signup_raw('refusal-kim@example.com') as kim,
-       tests.signup_raw('refusal-lee@example.com') as lee;
+       tests.signup_raw('refusal-lee@example.com') as lee,
+       tests.signup('refusal-han@example.com') as han;
 grant select on folks to authenticated;
 
 update public.app_user set nickname = '이미있음' where id = (select lee from folks);
@@ -97,6 +98,8 @@ select throws_ok(
   '23505', '이미 사용 중인 닉네임이에요. 다른 닉네임을 입력해 주세요.',
   '2. 가입에서 겹친 닉네임');
 
+/** 프로필은 가입을 마친 사람의 문이다(`20270104090000`) */
+select pg_temp.acting((select han from folks));
 select throws_ok(
   $$select public.save_my_profile('이미있음', null)$$,
   '23505', '이미 사용 중인 닉네임이에요. 다른 닉네임을 입력해 주세요.',

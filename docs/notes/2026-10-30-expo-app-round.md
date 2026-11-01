@@ -47,7 +47,7 @@
   로그는 Metro 로 안 왔다 — `adb.exe logcat`(Windows SDK 의 `platform-tools`)으로 읽는다.
 - `mobile/.env.local` 은 git 에 없다. `.env.example` 을 보고 뿌리의 `.env.development.local` 공개 값으로 채운다.
   웹 클라이언트 ID 는 `<Supabase 주소>/auth/v1/authorize?provider=google` 의 리디렉션에서 읽힌다.
-- **EAS 빌드는 `.env.local` 을 못 본다** — 같은 값을 `npx eas-cli@latest env:create` 로 그 프로필의 environment(`development` · `production`)에 넣는다.
+- **EAS 빌드는 `.env.local` 을 못 본다** — 같은 값을 `npx eas-cli@latest env:set` 으로 그 프로필의 environment(`development` · `preview` · `production`)에 넣는다 — `docs/ops/runbook/mobile-release.md`.
 - **네이티브 모듈을 더한 PR 뒤에는 개발 빌드를 다시 굽는다** — `npx eas-cli@latest build --profile development --platform android`. 옛 빌드에는 그 모듈이 없다.
 - 개발 빌드도 **운영 Supabase** 를 본다.
 - Expo Go 에서 가입 화면만 보려면 터널 주소 뒤에 `/--/signup` 을 붙여 연다 — 세션이 없으면 처음 가입하는 폼이 선다(`__DEV__`). 제출은 세션이 없어 거절된다.

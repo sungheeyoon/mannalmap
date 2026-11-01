@@ -184,3 +184,11 @@ describe('Git 배포는 꺼져 있고 문서가 그것을 말한다', () => {
     expect(delegation).toMatch(/머지는 배포가 아니다/);
   });
 });
+
+describe('.vercelignore', () => {
+  it('뿌리의 앱만 뺀다 — 앞에 / 가 없으면 `app/api/mobile` 까지 배포에서 빠져 운영이 404 를 답한다', () => {
+    const lines = readFileSync('.vercelignore', 'utf8').split('\n');
+    expect(lines).toContain('/mobile/');
+    expect(lines).not.toContain('mobile/');
+  });
+});
