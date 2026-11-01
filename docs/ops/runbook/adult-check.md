@@ -32,10 +32,14 @@ select count(*) from public.adult_check;
 ## 되돌리기
 
 ```sql
-update public.adult_check_switch set required = false, changed_at = now() returning required, changed_at;
+insert into public.adult_check_switch (id, required) values (true, false)
+on conflict (id) do update set required = false, changed_at = now()
+returning required, changed_at;
 ```
 
-지운 것이 없어 숨었던 인연 · 방이 그대로 돌아온다. 스위치 줄을 지우지 않는다 — 줄이 없으면 닫힌다.
+지운 것이 없어 숨었던 인연 · 방이 그대로 돌아온다. 줄이 없어져 닫혔을 때도 이 문장이 연다. 스위치 줄을 지우지 않는다 — 줄이 없으면 닫힌다.
+
+**걷어낼 때는** 인연 문 14개의 본문을 먼저 판정 호출 없이 되쓰고, 그 뒤에 판정 함수와 표를 지운다 — 먼저 지우면 그 문의 호출이 오류가 난다.
 
 ## 심사 · 시험 계정을 표시한다
 

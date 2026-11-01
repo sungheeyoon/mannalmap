@@ -18,7 +18,12 @@ describe('성인 확인의 스위치', () => {
   });
 
   it('어느 마이그레이션도 스위치를 고치지 않는다', () => {
-    expect(migrations.filter(({ text }) => /update\s+public\.adult_check_switch/i.test(text)).map(({ name }) => name)).toEqual([]);
+    expect(migrations.filter(({ text }) => /(update|delete\s+from|truncate(\s+table)?)\s+public\.adult_check_switch/i.test(text)).map(({ name }) => name)).toEqual([]);
+  });
+
+  it('스위치에 넣는 문장은 꺼진 첫 줄 하나뿐이다', () => {
+    const inserts = migrations.flatMap(({ text }) => text.match(/insert\s+into\s+public\.adult_check_switch[^;]*;/gi) ?? []);
+    expect(inserts).toEqual(['insert into public.adult_check_switch (id, required) values (true, false);']);
   });
 
   it('상태 표에는 계정 · 시각 말고 칸이 없다 — CI · 생일을 두지 않는다', () => {
