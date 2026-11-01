@@ -1,10 +1,11 @@
 import type { ReactNode } from 'react';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Logo } from './logo';
 import { COLOR, FONT, RADIUS, TYPE } from './tokens';
 import { Paper } from './surfaces';
+import { WordText } from './word-text';
 
 /** 안내 화면의 틀 하나 — 웹의 `app/ui/notice-screen.tsx`: 가운데 크림 판에 로고 · 제목 · 설명 · 단추 · 보조 줄 */
 export function NoticeScreen({
@@ -29,7 +30,7 @@ export function NoticeScreen({
             <View style={styles.badge}>
               <Logo size={40} />
             </View>
-            <Text style={styles.title}>{title}</Text>
+            <WordText style={styles.title}>{title}</WordText>
             {description !== undefined && <View style={styles.description}>{description}</View>}
           </View>
           {children}
@@ -42,11 +43,11 @@ export function NoticeScreen({
 }
 
 export function NoticeLine({ children }: { children: ReactNode }) {
-  return <Text style={styles.line}>{children}</Text>;
+  return <WordText style={styles.line}>{children}</WordText>;
 }
 
 export function NoticeNote({ children }: { children: ReactNode }) {
-  return <Text style={styles.noteLine}>{children}</Text>;
+  return <WordText style={styles.noteLine}>{children}</WordText>;
 }
 
 const styles = StyleSheet.create({

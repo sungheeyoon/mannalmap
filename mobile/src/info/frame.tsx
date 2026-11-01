@@ -5,6 +5,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { TopBar } from '@/ui/top-bar';
 import { COLOR, FONT, RADIUS, TYPE } from '@/ui/tokens';
 import { Card, Paper } from '@/ui/surfaces';
+import { WordText } from '@/ui/word-text';
 
 /** 안내 화면의 판 — 내려 읽는 한 장 */
 export const InfoScreen = forwardRef<ComponentRef<typeof ScrollView>, { children: ReactNode; gap?: number; title: string; fallback: string }>(function InfoScreen({ children, gap = 16, title, fallback }, ref) {
@@ -45,17 +46,17 @@ export function Dot({ children }: { children: ReactNode }) {
   return (
     <View style={styles.dotRow}>
       <View style={styles.dot} />
-      <Text style={styles.dotText}>{children}</Text>
+      <WordText style={styles.dotText}>{children}</WordText>
     </View>
   );
 }
 
 export function InfoLine({ children }: { children: ReactNode }) {
-  return <Text style={styles.line}>{children}</Text>;
+  return <WordText style={styles.line}>{children}</WordText>;
 }
 
 export function FinePrint({ children }: { children: ReactNode }) {
-  return <Text style={styles.fine}>{children}</Text>;
+  return <WordText style={styles.fine}>{children}</WordText>;
 }
 
 const styles = StyleSheet.create({

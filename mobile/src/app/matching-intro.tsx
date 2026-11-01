@@ -12,6 +12,7 @@ import { ElementSymbol } from '@/ui/element-symbol';
 import { PrimaryButton } from '@/ui/parts';
 import { CardFrame, Tile } from '@/ui/surfaces';
 import { COLOR, ELEMENT_TONE, FONT, RADIUS, TYPE } from '@/ui/tokens';
+import { WordText } from '@/ui/word-text';
 
 const SUPPLIES: readonly Element[] = ['金', '水'];
 
@@ -65,14 +66,14 @@ export default function MatchingIntroScreen() {
             </View>
             <View style={styles.flex}>
               <Text style={styles.stepTitle}>{step.title}</Text>
-              <Text style={styles.stepBody}>{step.body}</Text>
+              <WordText style={styles.stepBody}>{step.body}</WordText>
             </View>
           </View>
         ))}
       </CardFrame>
 
       <View style={styles.notes}>
-        <Text style={styles.line}>{SIGNUP_NOTICE_DISCOVERY}</Text>
+        <WordText style={styles.line}>{SIGNUP_NOTICE_DISCOVERY}</WordText>
         <Text style={styles.line}>{MATCHING_INTRO_AGE}</Text>
       </View>
 

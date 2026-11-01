@@ -1,5 +1,6 @@
 import { useFonts } from 'expo-font';
 import { Stack } from 'expo-router';
+import { StatusBar } from 'expo-status-bar';
 
 import { ErrorScreen } from '@/ui/error-screen';
 import { COLOR, FONT } from '@/ui/tokens';
@@ -16,5 +17,11 @@ export default function RootLayout() {
   /* 글꼴을 못 받아도 화면은 선다 — 기기 서체로 그려진다 */
   if (!loaded && failed === null) return null;
 
-  return <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: COLOR.background } }} />;
+  return (
+    <>
+      {/* 앱은 라이트만이다 — 안 적으면 안드로이드 출시 빌드의 상태바 글자가 밝은 면 위에서 흰색으로 선다 */}
+      <StatusBar style="dark" />
+      <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: COLOR.background } }} />
+    </>
+  );
 }

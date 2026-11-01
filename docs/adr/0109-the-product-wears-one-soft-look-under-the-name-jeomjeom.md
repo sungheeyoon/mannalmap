@@ -349,3 +349,9 @@ Navigation) · 토스 TDS(Toast · Result) · Material 3 Snackbar 다(확인 202
 - **약속 표** — `src/lib/design/contract.ts` 가 공용 부품의 이름 · 변형 · 속성을 들고 `scripts/design-contract.test.ts` 가 두 쪽 파일을 글자로 읽어 잰다. 이름이 다르면 앱을 웹에 맞춘다. NativeWind · Tamagui 는 안 들인다(NativeWind v5 는 아직 RC).
 - **나란히 재는 그림** — `node scripts/design-compare.mjs <폴더>` 가 웹 상수를 390px 로 그린 것과 앱의 `/dev-parts`(개발 빌드에서만)를 같은 차례로 찍어 한 장에 놓는다. 값은 시험이, 눈은 이 그림이 맡는다.
 - **앱 화면은 면을 손으로 못 쓴다**(같은 날 쓸기가 끝난 뒤) — `mobile/src/ui/` 밖에서 모서리 날값 · `RADIUS.card` · 그림자 직접 · `Panel` 을 쓰면 `scripts/mobile-surfaces.test.ts` 가 붉다. 칸(`RADIUS.cell`) · 알약(`RADIUS.pill`)은 면이 아니라 허락한다. 예외는 `src/lib/design/contract.ts` 의 `SURFACE_EXCEPTIONS` 가 사유와 함께 든다. 부품은 자리마다 웹 코드를 보고 고른다 — 웹이 `CARD` 면 `Card`, 그림자 없는 `rounded-card border` 면 `CardFrame` 에 그 자리 여백이다(색과 테로 고르지 않는다). 옛 `Panel` · `RADIUS.panel` · `RADIUS.control` · `TYPE.sm` · `SheetModal` · `ConfirmModal` · `chat/icons` 는 걷었다 — 시트는 `ui/sheet.tsx` 의 `DetailSheet`, 확인 창은 `ui/confirm-dialog.tsx`, 빈 상태는 `ui/empty-state.tsx`, 아이콘은 `ui/icons.tsx` 한 벌이다.
+
+## 추기 — 앱의 어절 줄바꿈과 상태바 (2026-11-02, 출시 APK 검증)
+
+- **어절 단위 줄바꿈은 `mobile/src/ui/word-text.tsx` 의 `WordText` 다** — 웹 `word-break: keep-all` 의 앱 쪽. iOS 는 `lineBreakStrategyIOS="hangul-word"`, 안드로이드는 어절 안에 U+2060 을 끼운다(`src/lib/brand/keep-words.ts`). RN 0.88 의 안드로이드 `StaticLayout` 에는 어절 설정을 넘기는 속성이 없어 `textBreakStrategy` · `android_hyphenationFrequency` 로는 안 된다. 읽어 주는 글자(`accessibilityLabel`)는 원문이다.
+- **지금 쓰는 자리** — 안내 틀(`NoticeScreen` · `NoticeLine` · `NoticeNote`), 안내 글(`Dot` · `InfoLine` · `FinePrint`), 인연 소개의 단계 글. 나머지 화면은 아직 RN `Text` 다 — 고르는 입력의 값이나 복사되는 글(채팅)에는 넣지 않는다.
+- **상태바는 어두운 글자 하나다** — 앱이 라이트만이라 `_layout.tsx` 의 `StatusBar` 와 `app.json` 플러그인이 `dark` 로 고정한다.

@@ -37,7 +37,8 @@ export function Field({
   onChange: (next: string) => void;
   maxLength?: number;
   placeholder?: string;
-  label?: string;
+  /** 읽어 주는 이름 — 칸 위 글자는 칸에 안 붙는다 */
+  label: string;
   autoCapitalize?: 'none' | 'characters';
   refused?: boolean;
   inputRef?: Ref<ComponentRef<typeof TextInput>>;
