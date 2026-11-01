@@ -5,6 +5,7 @@ import { isChartPath } from '@consent/app-destination';
 import { safeReturnPath, withReturnPath } from '@consent/return-path';
 
 import { arriveAt } from '@/auth/arrive';
+import { SUPPORT_MAIL_LINE } from '@/info/copy';
 import { goHome } from '@/info/go-home';
 import { NoticeLine, NoticeScreen } from '@/ui/notice-screen';
 import { PrimaryButton, SecondaryButton } from '@/ui/parts';
@@ -16,7 +17,12 @@ export default function DeniedScreen() {
   return (
     <NoticeScreen
       title="로그인하지 못했어요"
-      description={<NoticeLine>구글 로그인을 마치지 못했어요. 중간에 취소했거나 연결이 끊겼을 수 있어요. 아래 「다시 로그인」을 눌러 주세요.</NoticeLine>}
+      description={
+        <>
+          <NoticeLine>구글 로그인을 마치지 못했어요. 중간에 취소했거나 연결이 끊겼을 수 있어요. 아래 「다시 로그인」을 눌러 주세요.</NoticeLine>
+          <NoticeLine>{SUPPORT_MAIL_LINE}</NoticeLine>
+        </>
+      }
       actions={
         <>
           <PrimaryButton label="다시 로그인" onPress={() => router.replace(withReturnPath('/auth', next) as never)} />

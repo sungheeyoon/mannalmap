@@ -1,11 +1,11 @@
-import { readdirSync, readFileSync } from 'node:fs';
+import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
 import { describe, expect, it } from 'vitest';
 
 import { chartPath, chartWantOf, currentPath } from '../src/lib/consent/app-destination';
 import { safeReturnPath, withReturnPath } from '../src/lib/consent/return-path';
-import { CHART_SIGN_IN, matchingStartSteps } from '../src/lib/brand/guide';
+import { CHART_SIGN_IN, MATCHING_INTRO_EXAMPLE, matchingStartSteps } from '../src/lib/brand/guide';
 import { DEFAULT_QUERY, queryFromJson, type Query } from '../src/lib/input/query';
 
 /**
@@ -17,16 +17,54 @@ const read = (file: string) => readFileSync(join(import.meta.dirname, '..', file
 describe('앱 입구', () => {
   const entry = read('mobile/src/app/index.tsx');
 
-  it('로그인 글자는 웹 머리글의 그것이고 안내 링크는 웹 바닥글과 같은 상수다', () => {
+  it('로그인 글자는 웹 머리글의 그것이다', () => {
     expect(read('app/site-header.tsx')).toMatch(/^\s*로그인\s*$/m);
     expect(entry).toMatch(/<Text[^>]*>로그인<\/Text>/);
-    expect(read('app/site-footer.tsx')).toContain('GUIDE_LINKS');
-    expect(entry).toContain("from '@brand/links'");
   });
 
-  it('입력 없이 들어가는 길과 소개로 가는 길이 있다', () => {
+  it('입력 없이 들어가는 길 · 인연 소개 · 서비스 소개 · 고객센터 · 약관 및 정책이 로그인 없이 닿는다', () => {
     expect(entry).toContain("router.push('/auth'");
-    expect(entry).toContain("href: '/landing'");
+    expect(entry).toContain("router.push('/matching-intro'");
+    expect(entry).toContain("router.push('/about'");
+    expect(entry).toContain("router.push('/support'");
+    expect(entry).toContain("router.push('/policies'");
+  });
+
+  it('입구는 바닥글 나열을 옮기지 않고, 소개 판 없이 입력 화면 하나다', () => {
+    expect(entry).not.toContain('GUIDE_LINKS');
+    expect(entry).not.toContain('/landing');
+    expect(existsSync(join(import.meta.dirname, '../mobile/src/app/landing.tsx'))).toBe(false);
+  });
+});
+
+describe('인연 소개 (#940)', () => {
+  const intro = read('mobile/src/app/matching-intro.tsx');
+
+  it('정적 화면이다 — 서버 · 세션 · 회원을 안 읽는다', () => {
+    expect(intro).not.toMatch(/supabase|fetch\(|readGate|\.rpc\(|useDeck|@\/matching|PersonPhoto/);
+  });
+
+  it('예시 카드에는 사람도 누를 자리도 없다 — 눌러도 아무에게도 안 간다', () => {
+    const card = intro.slice(intro.indexOf('<Tile'), intro.indexOf('</Tile>'));
+    expect(card).not.toMatch(/Pressable|onPress|nickname|activity|photo/i);
+    expect(MATCHING_INTRO_EXAMPLE.stamp).toBe('예시');
+    expect(MATCHING_INTRO_EXAMPLE.note).toContain('실제 회원이 아니에요');
+  });
+
+  it('예시의 판정은 그 점수 칸의 실제 글자다', () => {
+    const table = read('src/lib/discovery/index.ts');
+    expect(table).toContain(`[75, '${MATCHING_INTRO_EXAMPLE.verdict}']`);
+    expect(MATCHING_INTRO_EXAMPLE.score).toBeGreaterThanOrEqual(75);
+  });
+
+  it('규칙은 요청 창 · 약관과 같은 상수를 읽고, 없는 본인인증을 약속하지 않는다', () => {
+    for (const name of ['REQUEST_RESERVES_NOTE', 'MATCH_ACCEPT_OPENS', 'MATCH_ACCEPT_HIDDEN', 'SIGNUP_NOTICE_DISCOVERY']) expect(intro).toContain(name);
+    expect(read('src/lib/brand/terms.ts')).toContain('만 19세 이상만 가입할 수 있습니다');
+    expect(intro).not.toMatch(/본인인증|본인확인|성인 확인/);
+  });
+
+  it('참여는 로그인 화면의 단계 안내로 잇는다', () => {
+    expect(intro).toContain("withReturnPath('/auth', '/me/matching')");
   });
 });
 

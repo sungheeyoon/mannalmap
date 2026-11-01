@@ -1,5 +1,4 @@
 import { Redirect, Stack, router, useGlobalSearchParams, usePathname } from 'expo-router';
-import { useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -11,9 +10,10 @@ import { currentPath } from '@consent/app-destination';
 import { LiveChannel } from '@/chat/live';
 import { useCounts } from '@/home/counts';
 import { useGate } from '@/home/gate';
+import { useAdultCheckGuard } from '@/matching/adult-check';
 import { appHeadStands, dockStands } from '@app-shell';
-import { SettingsMenu } from '@/home/settings-menu';
 import { WarningNotice } from '@/home/warning-notice';
+import { goTab } from '@/ui/go-tab';
 import { Icon } from '@/ui/icons';
 import { Logo } from '@/ui/logo';
 import { SecondaryButton } from '@/ui/parts';
@@ -44,12 +44,12 @@ function isActive(pathname: string, href: string): boolean {
  * 탭 막대는 웹의 하단 독처럼 주소를 보고 불을 켠다.
  */
 export default function MeLayout() {
-  const { gate, retry } = useGate();
+  const { gate, retry, held } = useGate();
   const pathname = usePathname();
   const search = useGlobalSearchParams<{ a?: string; b?: string }>();
   const insets = useSafeAreaInsets();
-  const [menuOpen, setMenuOpen] = useState(false);
   const counts = useCounts(pathname, gate.kind === 'in');
+  useAdultCheckGuard(pathname, currentPath(pathname, search), gate.kind === 'in');
 
   if (gate.kind === 'checking') return <View style={styles.screen} />;
   /* 이 주소로 바로 들어온 사람은 로그인 · 가입 뒤 여기로 돌아온다(ADR 0213). 로그아웃한 사람은 돌아올 뜻이 없다 */
@@ -64,14 +64,15 @@ export default function MeLayout() {
       </View>
     );
   }
-  if (gate.kind === 'failed') {
-    return (
-      <SafeAreaView style={[styles.screen, styles.failed]}>
+  const failure =
+    gate.kind === 'failed' ? (
+      <SafeAreaView style={[styles.screen, styles.failed, held && styles.over]}>
         <Text style={styles.failure}>{gate.message}</Text>
         <SecondaryButton label="다시 시도하기" onPress={retry} />
       </SafeAreaView>
-    );
-  }
+    ) : null;
+  /* 한 번도 못 들어온 사람은 안내만 본다. 들어와 있던 사람은 안내가 화면을 가릴 뿐 아래 스택은 살아 있다 — 다시 시도하면 쓰던 글과 스크롤이 그대로다 */
+  if (gate.kind === 'failed' && !held) return failure;
 
   const badges: Record<string, number> = { '/me/chat': counts.chat, '/me/matching': counts.requests };
 
@@ -80,7 +81,7 @@ export default function MeLayout() {
       <LiveChannel />
       {appHeadStands(pathname, search) && (
       <View style={[styles.header, { paddingTop: insets.top }]}>
-        <Pressable accessibilityRole="link" accessibilityLabel={`${SERVICE_NAME} 홈`} onPress={() => router.navigate('/me' as never)} style={styles.logo}>
+        <Pressable accessibilityRole="link" accessibilityLabel={`${SERVICE_NAME} 홈`} onPress={() => goTab('/me')} style={styles.logo}>
           <Logo size={32} />
         </Pressable>
         <View style={styles.tools}>
@@ -97,7 +98,7 @@ export default function MeLayout() {
               </View>
             )}
           </Pressable>
-          <Pressable accessibilityRole="button" accessibilityLabel="설정 메뉴" onPress={() => setMenuOpen(true)} style={styles.tool}>
+          <Pressable accessibilityRole="link" accessibilityLabel="설정" onPress={() => router.push('/me/settings' as never)} style={styles.tool}>
             <Icon name="gear" size={20} />
           </Pressable>
         </View>
@@ -127,7 +128,7 @@ export default function MeLayout() {
                 key={tab.href}
                 accessibilityRole="tab"
                 accessibilityState={{ selected: active }}
-                onPress={() => router.navigate(tab.href as never)}
+                onPress={() => goTab(tab.href)}
                 style={styles.tab}
               >
                 <View style={[styles.tabMark, active && styles.tabMarkOn]}>
@@ -145,13 +146,14 @@ export default function MeLayout() {
         </View>
       )}
 
-      <SettingsMenu email={gate.email} open={menuOpen} onClose={() => setMenuOpen(false)} />
+      {failure}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: COLOR.background },
+  over: StyleSheet.absoluteFill,
   failed: { alignItems: 'center', justifyContent: 'center', gap: 12, padding: 24 },
   failure: { fontFamily: FONT.medium, fontSize: TYPE.small, color: COLOR.danger, textAlign: 'center' },
   header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingLeft: 16, paddingRight: 4, backgroundColor: COLOR.background },

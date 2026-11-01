@@ -39,13 +39,11 @@ function PickStep({ pickA, pickB }: { pickA?: string; pickB?: string }) {
   const load = useCallback(() => {
     void settled(readPicker(), 'readPicker', () => ({ kind: 'failed', message: UNREACHABLE }) as const).then((next) => {
       if (next.kind === 'signed-out') router.replace('/');
-      else setRead(next);
+      else setRead((now) => (now?.kind === 'ok' && next.kind === 'failed' ? now : next));
     });
   }, []);
-  /* 고르는 칸의 값이 날아가지 않게 처음 한 번만 — 저장한 사람이 늘어도 칸을 다시 세우지 않는다 */
-  useFocusEffect(useCallback(() => {
-    if (read === null) load();
-  }, [load, read]));
+  /* 탭을 옮겨도 이 화면이 남으니 돌아올 때마다 다시 읽는다 — 저장한 사람이 늘면 고를 수 있다. 고르는 칸의 값은 칸이 들고 있어 안 날아간다 */
+  useFocusEffect(load);
 
   if (read === null || read.kind === 'signed-out') return <Loading />;
   if (read.kind === 'failed') {

@@ -41,7 +41,7 @@ describe('앱 풀이 화면의 글자', () => {
       'src/lib/home/making.ts',
       'app/ui/confirm-dialog.tsx',
       'app/save-for-reading.tsx',
-      /* 앱의 결과에서 내 사주를 저장한 뒤의 「저장했어요」(대장 first-01) */
+      /* 앱의 결과에서 내 사주를 저장한 뒤의 「저장했어요」(대장 first-02) */
       'app/me/profile/form.tsx',
       'src/lib/account/index.ts',
     ]

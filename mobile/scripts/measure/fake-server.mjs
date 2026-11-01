@@ -2,6 +2,7 @@
 // 사람 · 값은 모두 지어낸 것이다. 띄우는 차례는 `docs/agents/delegation/local-env.md` 「앱을 네이티브로 재기」.
 // `node mobile/scripts/measure/fake-server.mjs` — 포트는 `FAKE_PORT`(기본 18999), 요청 기록은 `MEASURE_DIR/fake.log`.
 // 상태 바꾸기: `curl 'localhost:18999/__set?m=<reset|empty|unsigned|closed|suspended|warning|no-credits|no-self>'`
+// 망 흉내: `m=down`(읽기 · 앱용 문의 소켓을 끊는다) · `m=broken`(503) · `m=slow`(3초 늦게) · `m=up`(되돌림). 세션과 `/__` 는 안 걸린다. `m=screens-down` · `m=screens-slow` 는 관문의 두 읽기를 빼고 건다
 import { Buffer } from 'node:buffer';
 import http from 'node:http';
 import zlib from 'node:zlib';
@@ -122,6 +123,9 @@ const fresh = () => ({
 });
 
 let db = fresh();
+let net = 'up';
+/** 앱 관문이 묻는 둘 — `screens-*` 는 이것을 지나게 두어 화면 하나의 실패 · 로딩을 잰다 */
+const gateRead = (url) => url.pathname.endsWith('/current_beta_schedule') || (url.pathname.endsWith('/app_user') && (url.searchParams.get('select') ?? '').includes('signed_up_at'));
 const scopeOf = (id) => {
   const m = db.matches.find((one) => one.match_id === id);
   return m ? [{ match_id: id, created_at: m.created_at, my_chart: chart, partner_chart: chart2, partner_has_photo: m.partner_has_photo, partner_intro: m.partner_intro, partner_nickname: m.partner_nickname, partner_user_id: m.partner_user_id, balance_band: m.balance_band, supplied_to_me: m.supplied_to_me, supplied_to_them: ['火'] }] : [];
@@ -264,7 +268,7 @@ const server = http.createServer((req, res) => {
   const url = new URL(req.url, 'http://x');
   const chunks = [];
   req.on('data', (c) => chunks.push(c));
-  req.on('end', () => {
+  const answer = () => {
     const text = Buffer.concat(chunks).toString();
     const body = text ? (() => { try { return JSON.parse(text); } catch { return {}; } })() : {};
     const path = url.pathname;
@@ -279,6 +283,7 @@ const server = http.createServer((req, res) => {
       if (mode === 'warning') db.warning = [{ category: 'harassment', warned_on: '2026-10-30', note: '가짜 경고' }];
       if (mode === 'no-credits') db.credits[0].available = 0;
       if (mode === 'no-self') db.account.self_person_id = null;
+      if (['up', 'down', 'broken', 'slow', 'screens-down', 'screens-slow'].includes(mode)) net = mode;
       log(`SET ${mode}`);
       return send(res, 200, { ok: true });
     }
@@ -287,6 +292,9 @@ const server = http.createServer((req, res) => {
       res.writeHead(200, { 'content-type': 'image/png' });
       return res.end(png);
     }
+    const read = (path.startsWith('/rest/') || path.startsWith('/api/mobile/')) && !(net.startsWith('screens-') && gateRead(url));
+    if (read && net.endsWith('down')) return void req.socket.destroy();
+    if (read && net === 'broken') return send(res, 503, { message: 'fake: unavailable', code: 'PGRST000' });
     log(`${req.method} ${path}${url.search.length > 110 ? url.search.slice(0, 110) + '…' : url.search} ${text.slice(0, 120)}`);
 
     if (path === '/auth/v1/user') return send(res, 200, user);
@@ -332,7 +340,9 @@ const server = http.createServer((req, res) => {
     }
     log(`!! 모름 ${path}`);
     send(res, 404, { message: 'fake: not found' });
-  });
+  };
+  const late = net === 'slow' || (net === 'screens-slow' && !gateRead(url));
+  req.on('end', () => (late && !url.pathname.startsWith('/__') ? setTimeout(answer, 3000) : answer()));
 });
 
 /* 실시간 — 접속만 받아 join 에 답한다 */

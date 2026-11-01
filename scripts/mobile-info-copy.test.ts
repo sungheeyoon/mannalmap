@@ -34,7 +34,7 @@ const WEB = flat(
 );
 
 const SCREENS = [
-  ...['privacy', 'terms', 'refund', 'about', 'help', 'closed', 'auth/index', 'auth/denied'].map((name) => `mobile/src/app/${name}.tsx`),
+  ...['privacy', 'terms', 'refund', 'about', 'help', 'policies', 'support', 'closed', 'auth/index', 'auth/denied'].map((name) => `mobile/src/app/${name}.tsx`),
   ...readdirSync(join(ROOT, 'mobile/src/info'))
     .filter((name) => name.endsWith('.tsx'))
     .map((name) => `mobile/src/info/${name}`),
@@ -46,4 +46,20 @@ describe('앱 안내 화면의 글자', () => {
       expect(koreanChunks(read(file)).filter((chunk) => !WEB.includes(flat(chunk)))).toEqual([]);
     });
   }
+
+  it('앱에만 서는 글자(`info/copy.ts`)는 대장 settings-14 에 있다', () => {
+    const ledger = read('docs/product/copy-ledger/settings.md');
+    const section = ledger.slice(ledger.indexOf('## settings-14'));
+    const chunks = [...withoutComments(read('mobile/src/info/copy.ts')).matchAll(/[가-힣][^'"`{}<>\n]*/g)].map((match) => match[0].replace(/\$$/, '').trim());
+    expect(chunks.length).toBeGreaterThan(5);
+    expect(chunks.filter((chunk) => !section.includes(chunk))).toEqual([]);
+  });
+
+  it('고지와 문의의 길이 다 있다 — 설정 → 처리방침 · 약관 및 정책 · 문의 · 로그아웃 · 탈퇴, 약관 및 정책 → 약관 셋 · 사업자 정보', () => {
+    const settings = withoutComments(read('mobile/src/settings/settings-screen.tsx'));
+    for (const piece of ["'/privacy'", "'/policies'", "'/support'", '<SignOutRow />', '<RequestDeletion']) expect(settings).toContain(piece);
+    const policies = withoutComments(read('mobile/src/app/policies.tsx'));
+    for (const piece of ['POLICY_LINKS.map', 'businessInfoLines(info)', 'BUSINESS_DISCLOSURE_LINK']) expect(policies).toContain(piece);
+    for (const route of ['privacy', 'terms', 'refund']) expect(read(`mobile/src/app/${route}.tsx`)).toContain('<PoliciesLink />');
+  });
 });

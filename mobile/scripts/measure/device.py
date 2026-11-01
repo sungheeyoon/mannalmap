@@ -80,7 +80,7 @@ def main():
     if cmd == 'link':
         path = sys.argv[2]
         # 패키지 인자를 붙이지 않는다 — 함정 표는 local-env.md
-        url = 'exp://127.0.0.1:' + os.environ.get('METRO_PORT', '8081') + '/--' + path
+        url = f"exp://127.0.0.1:{os.environ.get('METRO_PORT', '8081')}/--" + path
         print(adb('shell', 'am', 'start', '-a', 'android.intent.action.VIEW', '-d', "'" + url + "'").strip()[:120])
     elif cmd == 'shot':
         png = adb('exec-out', 'screencap', '-p', binary=True)

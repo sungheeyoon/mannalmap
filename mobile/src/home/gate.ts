@@ -16,7 +16,7 @@ export type Gate =
   | { kind: 'signup' }
   /** 테스트가 끝났다 — 주소마다 `gateFor` 를 다시 묻는다. 열린 것은 설정(철회 · 탈퇴 신청)뿐이다 */
   | { kind: 'closed'; account: GateAccount; notice: GateNotice | null | typeof NOTICE_UNREAD }
-  | { kind: 'in'; email: string | null }
+  | { kind: 'in' }
   | { kind: 'failed'; message: string };
 
 /**
@@ -61,16 +61,21 @@ async function askGate(): Promise<Settled> {
   const notice = schedule.ok ? schedule.value : NOTICE_UNREAD;
 
   const to = gateFor('/me', account, notice, new Date());
-  if (to === null) return { kind: 'in', email: data.session.user.email ?? null };
+  if (to === null) return { kind: 'in' };
   return to === '/closed' ? { kind: 'closed', account, notice } : { kind: 'signup' };
 }
 
 /** 앱을 다시 앞으로 가져올 때도 다시 본다 — 웹은 요청마다 보고, 레이아웃은 화면을 옮겨도 다시 안 돈다 */
-export function useGate(): { gate: Gate; retry: () => void } {
+export function useGate(): { gate: Gate; retry: () => void; held: boolean } {
   const [gate, setGate] = useState<Gate>({ kind: 'checking' });
+  /* 이 실행에서 들어온 적이 있나 — 다시 보다 못 읽어도 관문은 닫히지만, 껍데기가 그 아래 스택을 걷지 않게 알린다. 세션이 끊기면 지운다 */
+  const [held, setHeld] = useState(false);
 
   const check = useCallback(() => {
-    void readGate().then(setGate);
+    void readGate().then((next) => {
+      setGate(next);
+      if (next.kind !== 'failed') setHeld(next.kind === 'in');
+    });
   }, []);
 
   useEffect(() => {
@@ -79,7 +84,9 @@ export function useGate(): { gate: Gate; retry: () => void } {
       if (state === 'active') check();
     });
     const auth = supabase?.auth.onAuthStateChange((event) => {
-      if (event === 'SIGNED_OUT') setGate({ kind: 'out', left: true });
+      if (event !== 'SIGNED_OUT') return;
+      setHeld(false);
+      setGate({ kind: 'out', left: true });
     });
     return () => {
       foreground.remove();
@@ -87,5 +94,5 @@ export function useGate(): { gate: Gate; retry: () => void } {
     };
   }, [check]);
 
-  return { gate, retry: check };
+  return { gate, retry: check, held };
 }

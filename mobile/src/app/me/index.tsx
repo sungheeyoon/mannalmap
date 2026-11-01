@@ -1,6 +1,6 @@
 import { useFocusEffect } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
-import { ActivityIndicator, AppState, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { AppState, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { DEFAULT_QUERY, missingAnswer } from '@input/query';
 import { ELEMENTS } from '@saju';
@@ -14,6 +14,7 @@ import { BirthFields, useBirthForm } from '@/people/birth-fields';
 import { openParticipation, saveFailureOf, saveSelfPerson } from '@/reading/chart-writes';
 import { followRefusal } from '@/reading/panel';
 import { ElementSymbol } from '@/ui/element-symbol';
+import { LoadingMark } from '@/ui/loading';
 import { PrimaryButton, SecondaryButton } from '@/ui/parts';
 import { COLOR, FONT, TYPE } from '@/ui/tokens';
 import { CardFrame, Paper } from '@/ui/surfaces';
@@ -25,7 +26,8 @@ export default function HomeScreen() {
 
   const load = useCallback(() => {
     void settled(readHome(), 'readHome', homeUnreachable).then((next) => {
-      setHome(next);
+      /* 선 화면을 다시 읽다 못 읽으면 가진 것을 그대로 둔다 — 다음에 돌아올 때 메운다(채팅 목록과 같다) */
+      setHome((now) => (next.kind === 'failed' && (now?.kind === 'home' || now?.kind === 'no-self') ? now : next));
       /* 참여를 여는 문은 아무것도 안 그린다 — 끈 사람은 안 열리고, 못 열어도 홈은 선다(웹의 `openDiscoveryParticipation`) */
       if (next.kind === 'home') void openParticipation();
     });
@@ -52,7 +54,7 @@ export default function HomeScreen() {
     return () => clearInterval(timer);
   }, [watching, load]));
 
-  if (home === null) return <ActivityIndicator color={COLOR.secondary} style={styles.loading} />;
+  if (home === null) return <LoadingMark />;
   return (
     <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled" automaticallyAdjustKeyboardInsets>
       <Body home={home} retry={load} />
@@ -168,7 +170,6 @@ function NoSelf({ nickname, onSaved }: { nickname: string; onSaved: () => void }
 }
 
 const styles = StyleSheet.create({
-  loading: { marginTop: 48 },
   content: { padding: 16, gap: 24 },
   stack: { gap: 12 },
   failure: { gap: 8, alignItems: 'flex-start' },
