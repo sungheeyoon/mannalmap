@@ -71,12 +71,12 @@
 | 6 | 인연 `/me/discovery` · `/me/matching` · `/me/requests` · `/me/match/[matchId]` · `/me/matching/history` · `/me/readings/match/[matchId]` | 있다. `/me/readings/match/[matchId]` 는 앱의 `/me/match/[matchId]` 안에 선다 |
 | 7 | 채팅 `/me/chat` · `/me/chat/[matchId]` | 있다 |
 | 8 | 풀이권 `/me/credits` · `/me/credits/history` | 보기만 있다. 구매 없음(PG 미정) |
-| 9 | 공유본 `/share/*` · 첫 화면 `/` | 있다. `/` 의 소개는 앱의 `/landing`, 링크는 웹으로 연다 |
+| 9 | 공유본 `/share/*` · 첫 화면 `/` | 있다. `/` 은 입력 화면 하나다(소개 판 `/landing` 은 #940 에 걷었다). 링크는 웹으로 연다 |
 | 10 | 안내 · 약관 `/about` · `/help` · `/privacy` · `/terms` · `/refund` · `/auth` · `/auth/denied` · `/closed` | 있다 — 앱 네이티브(운영자 2026-10-30) |
 | 끼우지 않음 | 푸시 | G-71 이 `보류` 다 — 운영자가 다시 꺼낸다 |
 | 옮기지 않음 | `/ops/*` · `/me/reading/inspect` · `/me/credits/done` · `/taste` | 운영자 결정 2026-10-30 |
 
-`/compat` 은 따로 없다 — 앱의 `/landing` 「궁합 보기」가 로그인 뒤 `/me/compat` 으로 간다.
+`/compat` 은 따로 없다 — 앱의 궁합은 로그인 뒤 궁합 탭 `/me/compat` 이다. 앱에만 있는 안내 화면은 인연 소개 `/matching-intro` 다(#940).
 
 ## 틀렸던 것 — 되풀이하지 않는다
 

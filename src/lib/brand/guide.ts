@@ -142,6 +142,21 @@ const MATCHING_START_STEPS: readonly { key: MatchingStartStep; text: string }[] 
 ];
 export const matchingStartSteps = (done: readonly MatchingStartStep[]) => MATCHING_START_STEPS.filter((step) => !done.includes(step.key));
 
+/**
+ * 앱의 인연 소개(`mobile/src/app/matching-intro.tsx`) — 로그인 전에 인연이 어떻게 이어지는지 말한다. 서버를 안 부르고 실제 회원이 없다.
+ * 예시 카드는 사람이 아니라 카드의 모양을 보이는 그림이다 — 사진 · 닉네임 · 활동 표시 · 요청 단추가 없다. 대장 matching 「확인 전」
+ */
+export const MATCHING_INTRO_TITLE = '인연은 어떻게 찾나요?';
+export const MATCHING_INTRO_EXAMPLE = {
+  stamp: '예시',
+  note: '실제 회원이 아니에요. 요청과 알림은 가지 않아요.',
+  score: 80,
+  verdict: '아주 좋은 궁합일 수 있어요.',
+  supply: '이 사람이 채워 주는 기운',
+} as const;
+export const MATCHING_INTRO_AGE = '만 19세 이상만 가입할 수 있어요.';
+export const MATCHING_INTRO_START = '인연 시작하기';
+
 /** 로그인 뒤에 실제로 있는 것 — 수 · 가격은 안 적는다(바뀔 수 있다) */
 export const SIGN_IN_UNLOCKS: readonly { icon: 'reading' | 'people' | 'taiji'; text: string }[] = [
   { icon: 'reading', text: '내 사주를 읽고 쓴 사주풀이' },
