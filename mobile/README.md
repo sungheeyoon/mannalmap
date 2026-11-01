@@ -1,4 +1,6 @@
-# Welcome to your Expo app 👋
+# 만날지도 앱
+
+Expo SDK 58. 빌드 · 테스트 · 스토어 제출은 [`docs/ops/runbook/mobile-release.md`](../docs/ops/runbook/mobile-release.md), 시험하는 법은 [`docs/notes/2026-10-30-expo-app-round.md`](../docs/notes/2026-10-30-expo-app-round.md) 다. 아래는 Expo 기본 안내다.
 
 This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
 
