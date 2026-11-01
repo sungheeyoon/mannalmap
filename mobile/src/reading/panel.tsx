@@ -1,5 +1,5 @@
 import type { PairNicknames } from '@reading/display';
-import { readingNoneNote } from '@reading/notes';
+import { CREDITS_AVAILABLE_LABEL, readingNoneNote } from '@reading/notes';
 import { readingOutline } from '@reading/outline';
 import type { Element } from '@saju';
 import { router } from 'expo-router';
@@ -11,6 +11,7 @@ import { PrimaryButton, SecondaryButton, TextButton } from '@/ui/parts';
 import { COLOR, FONT, TYPE } from '@/ui/tokens';
 import { settled } from '@/ui/settled';
 import { UNREACHABLE } from '@/auth/signup';
+
 
 import { readReadingView, type DoorRefusal, type ReadingTarget, type ReadingView } from './api';
 import { ConfirmMake, CreditsShortage } from './dialogs';
@@ -130,6 +131,8 @@ export function ReadingPanel({
       <SecondaryButton label={chrome.makeLabel} onPress={panel.press} disabled={chrome.makeDisabled} />
     );
   const note = creditsNote !== null && <Text style={styles.small}>{creditsNote}</Text>;
+  /* 처음 받는 사람이 확인창 앞에 가진 수를 먼저 본다(ADR 0213) — 수는 서버의 답이고 지어내지 않는다 */
+  const available = reading === null && panel.view.credits !== null && <Text style={styles.small}>{CREDITS_AVAILABLE_LABEL} {panel.view.credits.available}장</Text>;
 
   return (
     <View style={styles.panel}>
@@ -148,6 +151,7 @@ export function ReadingPanel({
             <View>
               <Text style={styles.lead}>사주를 바탕으로 {noun}를 받아 보세요</Text>
               <Text style={styles.small}>{readingNoneNote(noun)}</Text>
+              {available}
             </View>
           )}
           {makeButton('primary')}

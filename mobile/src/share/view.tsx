@@ -1,5 +1,5 @@
 import { BETA_SIGNUP_CODE_NOTE } from '@account/copy';
-import { SERVICE_NAME } from '@brand';
+import { SERVICE_NAME, SERVICE_NAME_TOPIC } from '@brand';
 import { SHARE_COPY, sharedTitle, type ShareKind, type SharedReading } from '@reading/shared';
 import { router } from 'expo-router';
 import { useCallback, useEffect, useState, type ReactNode } from 'react';
@@ -107,13 +107,12 @@ function OpenScreen({ shared, expect }: { shared: SharedReading; expect: ShareKi
 
 /**
  * 열리지 않는 공유 링크 — 웹의 `app/share/not-found.tsx`. 이유를 가르지 않고, 막다른 자리에 세워 두지 않는다.
- * 웹의 아래 줄 「…로그인 없이 사주를 볼 수 있어요」는 안 세운다 — 앱은 결과 앞에 로그인을 지난다(운영자 결정, 비로그인 전용 결과 없음).
  */
 function GoneScreen() {
   return (
     <Notice
       title="열 수 없는 링크예요"
-      lines={['주소가 잘못됐거나 더 이상 남아 있지 않은 풀이예요.', '보낸 분에게 링크를 다시 받아 주세요.']}
+      lines={['주소가 잘못됐거나 더 이상 남아 있지 않은 풀이예요.', '보낸 분에게 링크를 다시 받아 주세요.', `${SERVICE_NAME_TOPIC} 생일만 넣으면 로그인 없이 사주를 볼 수 있어요.`]}
     >
       <PrimaryButton label="무료로 내 사주 보기" onPress={() => router.replace('/')} />
     </Notice>

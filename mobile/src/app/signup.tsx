@@ -4,6 +4,7 @@ import { KeyboardAvoidingView, ScrollView, StyleSheet, Text, TextInput, View } f
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { SIGN_OUT_PENDING } from '@account/copy';
+import { safeReturnPath } from '@consent/return-path';
 import { NOTICE_ACK_LABEL, NOTICE_ACK_NOTE, OPTIONAL_CONSENTS, OPTIONAL_CONSENT_NOTE, SIGNUP_CODE_NOTE } from '@consent/notice';
 import {
   SIGNUP_CODE_MAX,
@@ -18,6 +19,7 @@ import {
 } from '@consent/signup';
 import { NICKNAME_AVAILABLE_NOTE, NICKNAME_MAX, NICKNAME_MIN, NICKNAME_TAKEN_NOTE, missingNickname, nicknameKey } from '@profile';
 
+import { MatchingSteps } from '@/auth/matching-steps';
 import { signOut } from '@/auth/sign-in';
 import { checkNickname, completeSignup, readSignup, UNREACHABLE, type SignupState } from '@/auth/signup';
 import { Logo } from '@/ui/logo';
@@ -29,11 +31,13 @@ import { Card, CardFrame, Paper, Tile } from '@/ui/surfaces';
 
 const SIGN_OUT_FAILED = '로그아웃하지 못했어요. 다시 시도해 주세요.';
 
-/** 가입 — 웹의 `/signup` 과 같은 한 폼이다(ADR 0042). 마치면 들고 온 출생 정보로 만세력 결과에 간다 */
+/**
+ * 가입 — 웹의 `/signup` 과 같은 한 폼이다(ADR 0042). 마치면 이 자리를 들고 온 목적지 `next` 로 갈아 끼운다(ADR 0128 · 0213).
+ */
 export default function SignupScreen() {
-  const { query } = useLocalSearchParams<{ query?: string }>();
+  const { next } = useLocalSearchParams<{ next?: string }>();
   const [state, setState] = useState<SignupState | null>(null);
-  const finish = () => (query ? router.replace({ pathname: '/chart', params: { query } }) : router.replace('/'));
+  const finish = () => router.replace(safeReturnPath(next) as never);
 
   useEffect(() => {
     let live = true;
@@ -66,6 +70,9 @@ export default function SignupScreen() {
             <Text style={styles.title}>{head.title}</Text>
             <Text style={styles.headNote}>{head.note}</Text>
           </Paper>
+
+          {/* 다시 동의하는 사람은 가입을 이미 마쳤다 — 첫 가입에만 남은 단계를 말한다 */}
+          {state.kind === 'form' && !state.again && safeReturnPath(next).startsWith('/me/matching') && <MatchingSteps done={['sign-in']} />}
 
           {state.kind === 'form' ? (
             <SignupForm form={state} onDone={finish} />

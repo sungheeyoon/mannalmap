@@ -29,7 +29,9 @@ describe('앱 공유본 · 소개 화면의 글자', () => {
     });
   }
 
-  it('앱의 공유본은 「로그인 없이」를 약속하지 않는다 — 앱은 결과 앞에 로그인을 지난다', () => {
-    expect(withoutComments(read('mobile/src/share/view.tsx'))).not.toContain('로그인 없이');
+  it('막힌 링크의 「로그인 없이 사주를 볼 수 있어요」는 웹의 그 줄이다 — 앱도 만세력까지 로그인을 묻지 않는다(ADR 0213)', () => {
+    const line = '생일만 넣으면 로그인 없이 사주를 볼 수 있어요.';
+    expect(read('app/share/not-found.tsx')).toContain(line);
+    expect(withoutComments(read('mobile/src/share/view.tsx'))).toContain(line);
   });
 });

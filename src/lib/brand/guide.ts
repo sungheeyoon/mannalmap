@@ -131,6 +131,17 @@ export const HELP_GROUPS: readonly {
   },
 ];
 
+/** 앱의 인연 입구 — 시작 전에 남은 단계를 미리 말한다(ADR 0213). 차례가 곧 걷는 차례이고, 끝낸 단계는 뺀다. 대장 public-03 「확인 전」 */
+export const MATCHING_START_HEAD = '인연을 시작하려면 이 단계가 필요해요';
+export const MATCHING_START_LEAVE = '그만둬도 사주는 그대로 볼 수 있어요.';
+export type MatchingStartStep = 'sign-in' | 'signup' | 'self';
+const MATCHING_START_STEPS: readonly { key: MatchingStartStep; text: string }[] = [
+  { key: 'sign-in', text: '구글로 로그인' },
+  { key: 'signup', text: '테스트 코드로 가입' },
+  { key: 'self', text: '내 사주 저장' },
+];
+export const matchingStartSteps = (done: readonly MatchingStartStep[]) => MATCHING_START_STEPS.filter((step) => !done.includes(step.key));
+
 /** 로그인 뒤에 실제로 있는 것 — 수 · 가격은 안 적는다(바뀔 수 있다) */
 export const SIGN_IN_UNLOCKS: readonly { icon: 'reading' | 'people' | 'taiji'; text: string }[] = [
   { icon: 'reading', text: '내 사주를 읽고 쓴 사주풀이' },

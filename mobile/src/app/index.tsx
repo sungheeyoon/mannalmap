@@ -1,5 +1,5 @@
-import { Redirect, router, useLocalSearchParams } from 'expo-router';
-import { useEffect, useRef, useState, type ComponentRef } from 'react';
+import { Redirect, router, useFocusEffect, useLocalSearchParams } from 'expo-router';
+import { useCallback, useRef, useState, type ComponentRef } from 'react';
 import { Keyboard, KeyboardAvoidingView, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -10,7 +10,7 @@ import { convertedLine, dateOfParts, limitsOf, timeOfParts } from '@input/entry'
 import { DEFAULT_QUERY, HOUR_UNKNOWN_CHOICE, NAME_MAX, TIME_BASES, TIME_BASIS, type Query } from '@input/query';
 import { CALENDARS, CALENDAR_KO, CITY_LONGITUDES, GENDERS, GENDER_KO, SUPPORTED_YEAR_RANGE, type CityName, type LateNightRule } from '@saju';
 
-import { signInWithGoogle } from '@/auth/sign-in';
+import { chartPath } from '@consent/app-destination';
 import { readGate } from '@/home/gate';
 import { Choices, DigitField, Field, FieldLabel, KeyboardDoneBar, PrimaryButton, Select } from '@/ui/parts';
 import { Logo } from '@/ui/logo';
@@ -28,27 +28,33 @@ const RULES: readonly { value: LateNightRule; label: string; hint: string }[] = 
 ];
 
 /**
- * 입구 — 로그인과 가입을 끝낸 사람은 앱을 열면 홈이다. 아니면(모르면) 입력 화면이다.
+ * 입구 — 로그인과 가입을 끝낸 사람은 앱을 열면 홈이다. 아니면(모르면) 입력 화면이고, 만세력까지 로그인을 묻지 않는다(ADR 0213).
  * 홈의 「다른 사람 사주 보기」는 `another` 를 들고 와 입력 화면을 그대로 연다.
+ *
+ * 돌아올 때마다 다시 본다 — 결과 화면에서 로그인하고 돌아온 사람에게 「로그인」이 남지 않고, 적어 둔 값 위에서 홈으로 튕기지도 않는다.
  */
 export default function EntryScreen() {
   const { another } = useLocalSearchParams<{ another?: string }>();
   const [entry, setEntry] = useState<'checking' | 'home' | 'birth'>(another === undefined ? 'checking' : 'birth');
+  const [signedIn, setSignedIn] = useState(another !== undefined);
 
-  useEffect(() => {
-    if (another !== undefined) return;
-    let watching = true;
-    void readGate().then((gate) => {
-      if (watching) setEntry(gate.kind === 'in' ? 'home' : 'birth');
-    });
-    return () => {
-      watching = false;
-    };
-  }, [another]);
+  useFocusEffect(
+    useCallback(() => {
+      let watching = true;
+      void readGate().then((gate) => {
+        if (!watching) return;
+        setSignedIn(gate.kind === 'in');
+        setEntry((now) => (now !== 'checking' ? now : gate.kind === 'in' ? 'home' : 'birth'));
+      });
+      return () => {
+        watching = false;
+      };
+    }, []),
+  );
 
   if (entry === 'checking') return <View style={styles.screen} />;
   if (entry === 'home') return <Redirect href={'/me' as never} />;
-  return <BirthScreen signedOut={another === undefined} />;
+  return <BirthScreen signedOut={!signedIn} />;
 }
 
 /** 바닥글의 안내 링크(`app/site-footer.tsx`) — 앱의 소개는 입구 앞에 선 `/landing` 이라 첫 줄만 그리로 간다 */
@@ -71,7 +77,6 @@ function BirthScreen({ signedOut }: { signedOut: boolean }) {
   const [basis, setBasis] = useState<Query['basis']>(DEFAULT_QUERY.basis);
   const [saeunFrom, setSaeunFrom] = useState(String(DEFAULT_QUERY.saeunFrom));
   const [failure, setFailure] = useState<string | null>(null);
-  const [going, setGoing] = useState(false);
 
   const monthRef = useRef<ComponentRef<typeof TextInput>>(null);
   const dayRef = useRef<ComponentRef<typeof TextInput>>(null);
@@ -106,21 +111,15 @@ function BirthScreen({ signedOut }: { signedOut: boolean }) {
     setHourChoice(next);
   };
 
-  const submit = async () => {
+  /* 계산은 기기 안에서 끝난다 — 서버를 안 부른다. 적은 값은 이 화면이 들고 있어 결과에서 돌아와도 그대로다 */
+  const submit = () => {
     const result = calculateChart(query);
     if (!result.ok) {
       setFailure(result.message);
       return;
     }
     setFailure(null);
-    setGoing(true);
-    /* 적은 값은 이 화면이 들고 있다 — 로그인을 다녀와도 그대로다 */
-    const signIn = await signInWithGoogle();
-    setGoing(false);
-    if (signIn.kind === 'failed') setFailure(signIn.message);
-    const params = { query: JSON.stringify(query) };
-    if (signIn.kind === 'needs-signup') router.push({ pathname: '/signup', params });
-    if (signIn.kind === 'signed-in') router.push({ pathname: '/chart', params });
+    router.push(chartPath(query) as never);
   };
 
   return (
@@ -131,7 +130,7 @@ function BirthScreen({ signedOut }: { signedOut: boolean }) {
             {/* 로고는 웹의 그 파일이다 — 앱에 사본을 두지 않는다 */}
             <Logo size={32} />
             <Text style={styles.brand}>{SERVICE_NAME}</Text>
-            {/* 이미 계정이 있는 사람의 길 — 웹 머리글의 그 자리다. 생년월일을 안 적어도 들어간다. 홈에서 「다른 사람 사주 보기」로 온 사람에게는 안 선다 */}
+            {/* 이미 계정이 있는 사람의 길 — 웹 머리글의 그 자리다. 생년월일을 안 적어도 들어간다. 이미 로그인한 사람에게는 안 선다 */}
             {signedOut && (
               <Pressable accessibilityRole="link" onPress={() => router.push('/auth' as never)} style={styles.signIn}>
                 <Text style={styles.signInText}>로그인</Text>
@@ -226,7 +225,7 @@ function BirthScreen({ signedOut }: { signedOut: boolean }) {
             {/* 폼이 짧은 화면에서도 단추는 엄지가 닿는 맨 아래에 선다 */}
             <View style={styles.action}>
               {failure !== null && <Text style={styles.failure}>{failure}</Text>}
-              <PrimaryButton label="사주 보기" onPress={submit} disabled={going} />
+              <PrimaryButton label="사주 보기" onPress={submit} />
             </View>
           </Paper>
 

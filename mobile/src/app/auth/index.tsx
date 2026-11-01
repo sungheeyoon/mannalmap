@@ -6,6 +6,7 @@ import { SERVICE_NAME } from '@brand';
 import { SIGN_IN_UNLOCKS, SIGNED_OUT_EXIT } from '@brand/guide';
 import { safeReturnPath, withReturnPath } from '@consent/return-path';
 
+import { MatchingSteps } from '@/auth/matching-steps';
 import { signInWithGoogle } from '@/auth/sign-in';
 import { readGate } from '@/home/gate';
 import { goHome } from '@/info/go-home';
@@ -16,7 +17,7 @@ import { COLOR, FONT, RADIUS, TYPE } from '@/ui/tokens';
 
 /**
  * 로그인 — 웹의 `/auth` 와 같은 글자이고 로그인은 네이티브 구글이다. 돌아갈 곳은 앱에 있는 `/me` 아래뿐이다 —
- * 웹의 두 갈래 제목(`/compat` · `/saju` 이어 보기)은 앱에 없는 주소에서 오는 말이라 세우지 않는다. 「로그인 없이도…」 줄도 앱에서는 사실이 아니라 뺀다. 실패와 취소는 로그인 실패 화면으로 간다.
+ * 웹의 두 갈래 제목(`/compat` · `/saju` 이어 보기)은 앱에 없는 주소에서 오는 말이라 세우지 않는다. 「로그인 없이도…」 줄은 궁합 첫 신호까지 약속하는데 앱에는 그 화면이 없어 뺀다. 실패와 취소는 로그인 실패 화면으로 간다.
  */
 export default function SignInScreen() {
   const { next } = useLocalSearchParams<{ next?: string }>();
@@ -29,7 +30,7 @@ export default function SignInScreen() {
     void readGate().then((gate) => {
       if (!live) return;
       if (gate.kind === 'in') router.replace(destination as never);
-      else if (gate.kind === 'signup') router.replace('/signup');
+      else if (gate.kind === 'signup') router.replace(withReturnPath('/signup', destination) as never);
     });
     return () => {
       live = false;
@@ -41,7 +42,7 @@ export default function SignInScreen() {
     const answer = await signInWithGoogle();
     setGoing(false);
     if (answer.kind === 'signed-in') router.replace(destination as never);
-    else if (answer.kind === 'needs-signup') router.replace('/signup');
+    else if (answer.kind === 'needs-signup') router.replace(withReturnPath('/signup', destination) as never);
     else router.replace(withReturnPath('/auth/denied', destination) as never);
   };
 
@@ -61,6 +62,7 @@ export default function SignInScreen() {
         </View>
       }
     >
+      {destination.startsWith('/me/matching') && <MatchingSteps done={[]} />}
       <View style={styles.unlocks}>
         {SIGN_IN_UNLOCKS.map(({ icon, text }) => (
           <View key={text} style={styles.unlock}>

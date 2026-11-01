@@ -2,14 +2,18 @@ import { calculateChart } from '@input/chart';
 import type { Query } from '@input/query';
 import type { SameChart } from '@input/same-chart';
 import { noRoomToSave, type PersonSlots } from '@people';
-import { router } from 'expo-router';
-import { useEffect, useMemo, useState } from 'react';
+import { withReturnPath } from '@consent/return-path';
+import { router, useFocusEffect } from 'expo-router';
+import { useCallback, useMemo, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
+import { chartPath } from '@consent/app-destination';
 import { supabase } from '@/auth/client';
+import { readGate } from '@/home/gate';
 import { SelfCard } from '@/home/self-card';
 import { addPerson, readSlots } from '@/people/data';
 import { SameChartAsk, type SameChartQuestion } from '@/people/same-chart-ask';
+import { useStart } from '@/share/start';
 import { settled } from '@/ui/settled';
 import { Card } from '@/ui/surfaces';
 import { PrimaryButton, SecondaryButton, TextButton } from '@/ui/parts';
@@ -21,43 +25,46 @@ const reading = '사주풀이';
 const saveWhat = '출생 정보';
 
 /**
+ * `out` 은 아직 저장할 수 없는 사람(로그인 전 · 가입 전)이다 — 세션이 없으면 서버를 안 부른다(ADR 0213). 가입 전인 사람에게 내 사주를 묻지 않는다.
  * `self` 는 내 사주를 등록했는가와 등록하면 설 이름 — 못 읽었으면 `null` 이고 그때는 묻지 않는다(`app/self-person-state.ts`).
  * `slots` 가 `null` 이면 못 읽은 것이고 막지 않는다.
  */
-type SaveContext = { self: { saved: boolean; nickname: string | null } | null; slots: PersonSlots | null };
+type SaveContext = { state: 'out' } | { state: 'in'; self: { saved: boolean; nickname: string | null } | null; slots: PersonSlots | null };
 
 function useSaveContext(): SaveContext | null {
   const [context, setContext] = useState<SaveContext | null>(null);
 
-  useEffect(() => {
-    let live = true;
-    /* 세션을 못 읽었으면 묻지 않고 막지 않는다 — 저장 카드가 서고 저장이 제 실패 줄을 말한다 */
-    void settled(
-      (async (): Promise<SaveContext | null> => {
-        if (supabase === null) return null;
-        /* 세션이 없으면 안 선다 — 정책이 빈 답을 내 「내 사주가 없다」로 읽히지 않게 */
-        const { data: session } = await supabase.auth.getSession();
-        if (session.session === null) return null;
-        const [account, slots] = await Promise.all([supabase.from('app_user').select('self_person_id, nickname').maybeSingle(), readSlots()]);
-        const self = account.error !== null ? null : { saved: account.data !== null && account.data.self_person_id !== null, nickname: account.data?.nickname ?? null };
-        return { self, slots };
-      })(),
-      'useSaveContext',
-      () => ({ self: null, slots: null }),
-    ).then((next) => {
-      if (live) setContext(next);
-    });
-    return () => {
-      live = false;
-    };
-  }, []);
+  /* 돌아올 때마다 다시 본다 — 가입을 마치고 돌아온 사람, 저장한 사람을 비우고 온 사람의 답이 바뀐다 */
+  useFocusEffect(
+    useCallback(() => {
+      let live = true;
+      /* 세션을 못 읽었으면 묻지 않고 막지 않는다 — 저장 카드가 서고 저장이 제 실패 줄을 말한다 */
+      void settled(
+        (async (): Promise<SaveContext> => {
+          const gate = await readGate();
+          /* 관문은 세션이 없으면 서버를 안 부른다 — 정책이 빈 답을 내 「내 사주가 없다」로 읽히지 않게 여기서 갈린다 */
+          if (gate.kind === 'out' || gate.kind === 'signup' || supabase === null) return { state: 'out' };
+          const [account, slots] = await Promise.all([supabase.from('app_user').select('self_person_id, nickname').maybeSingle(), readSlots()]);
+          const self = account.error !== null ? null : { saved: account.data !== null && account.data.self_person_id !== null, nickname: account.data?.nickname ?? null };
+          return { state: 'in', self, slots };
+        })(),
+        'useSaveContext',
+        (): SaveContext => ({ state: 'in', self: null, slots: null }),
+      ).then((next) => {
+        if (live) setContext(next);
+      });
+      return () => {
+        live = false;
+      };
+    }, []),
+  );
 
   return context;
 }
 
 /**
- * **결과 화면에서 저장해 풀이로 가는 길** — 갈래와 글자는 웹의 `app/save-for-reading.tsx` 다. 내 사주가 없으면 내 사주인지 먼저 묻고(ADR 0128),
- * 아니면 「저장한 사람」으로 저장한다. 웹이 함께 잇는 로그인 전 맛보기는 앱에 없어 그 갈래도 없다.
+ * **결과 화면에서 저장해 풀이로 가는 길** — 갈래와 글자는 웹의 `app/save-for-reading.tsx` 다. 로그인 전이면 로그인 카드가 서고(ADR 0213), 내 사주가
+ * 없으면 내 사주인지 먼저 묻고(ADR 0128), 아니면 「저장한 사람」으로 저장한다. 웹이 함께 잇는 로그인 전 맛보기는 앱에 없어 그 갈래도 없다.
  */
 export function SavePersonForReading({ query }: { query: Query }) {
   const context = useSaveContext();
@@ -65,10 +72,30 @@ export function SavePersonForReading({ query }: { query: Query }) {
   const [someoneElse, setSomeoneElse] = useState(false);
 
   if (context === null) return null;
+  if (context.state === 'out') return <SignInCard query={query} />;
   if (context.self !== null && !context.self.saved && !someoneElse) {
     return <SelfConfirm query={query} name={context.self.nickname ?? query.name.trim()} onSomeoneElse={() => setSomeoneElse(true)} />;
   }
   return <SaveCard query={query} slots={context.slots} />;
+}
+
+/**
+ * 로그인 전의 저장 칸 — 글자는 웹의 그 갈래다. 다녀오면 이 결과로 돌아오고, 저장도 풀이도 대신 누르지 않는다(ADR 0213 · 0028).
+ * 취소하면 제자리이고 말이 없다 — 사용자가 고른 일이다.
+ */
+function SignInCard({ query }: { query: Query }) {
+  const { start, going, failure } = useStart(chartPath(query), { standingThere: true });
+  return (
+    <Card style={styles.card}>
+      <View style={styles.head}>
+        <Text accessibilityRole="header" style={styles.title}>이 사주가 내 삶에서는 어떤 뜻일까요?</Text>
+        <Text style={styles.line}>성향부터 일과 연애, 운의 흐름까지 글로 풀어드려요.</Text>
+      </View>
+      <PrimaryButton label="로그인하고 계속하기" onPress={() => void start()} disabled={going} />
+      <Text style={styles.fine}>로그인하면 이 입력으로 돌아와요. 사주풀이는 저장한 뒤에 받을 수 있고, 풀이권 1장을 써요.</Text>
+      {failure !== null && <Text accessibilityRole="alert" style={styles.failure}>{failure}</Text>}
+    </Card>
+  );
 }
 
 /** 저장한 사람으로 저장한다 — 같은 명식이면 먼저 묻고, 자리가 없으면 버튼 자리에 할 일이 선다 */
@@ -161,7 +188,8 @@ function SelfConfirm({ query, name, onSomeoneElse }: { query: Query; name: strin
       return;
     }
     setFailure(answer.ok ? (answer.value.ok ? null : answer.value.message) : answer.refused.refused === 'unavailable' ? answer.refused.message : null);
-    if (!answer.ok && answer.refused.refused !== 'unavailable') router.replace(answer.refused.refused === 'sign-in' ? '/' : '/signup');
+    /* 저장하려다 세션이 끊겼거나 가입이 안 끝났다 — 이 결과를 들고 다시 묻는다 */
+    if (!answer.ok && answer.refused.refused !== 'unavailable') router.replace((answer.refused.refused === 'sign-in' ? chartPath(query) : withReturnPath('/signup', chartPath(query))) as never);
   };
 
   /* 아직 저장 전이라 사람도 글도 사진도 없다. 단추 자리는 아래 둘이라 `personId` 를 쓰는 길이 안 선다 */

@@ -5,7 +5,9 @@ import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
 
 import { SERVICE_NAME } from '@brand';
 import { gateFor } from '@consent/gate';
+import { withReturnPath } from '@consent/return-path';
 
+import { currentPath } from '@consent/app-destination';
 import { LiveChannel } from '@/chat/live';
 import { useCounts } from '@/home/counts';
 import { useGate } from '@/home/gate';
@@ -50,8 +52,9 @@ export default function MeLayout() {
   const counts = useCounts(pathname, gate.kind === 'in');
 
   if (gate.kind === 'checking') return <View style={styles.screen} />;
-  if (gate.kind === 'out') return <Redirect href="/" />;
-  if (gate.kind === 'signup') return <Redirect href="/signup" />;
+  /* 이 주소로 바로 들어온 사람은 로그인 · 가입 뒤 여기로 돌아온다(ADR 0213). 로그아웃한 사람은 돌아올 뜻이 없다 */
+  if (gate.kind === 'out') return <Redirect href={(gate.left ? '/' : withReturnPath('/auth', currentPath(pathname, search))) as never} />;
+  if (gate.kind === 'signup') return <Redirect href={withReturnPath('/signup', currentPath(pathname, search)) as never} />;
   if (gate.kind === 'closed') {
     /* 끝난 뒤 지나가는 곳은 설정뿐이라 탭도 머리도 안 선다 — 눌러 봐야 안내로 되돌아온다 */
     if (gateFor(pathname, gate.account, gate.notice, new Date()) !== null) return <Redirect href={'/closed' as never} />;
