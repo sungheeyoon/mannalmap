@@ -948,6 +948,7 @@ select is(
      * 익명 · 로그인한 사람은 일곱 다 못 부른다(`80_taste_run`).
      */
     'claim_taste_session',
+    'confirm_adult_check',
     'count_taste_step',
     /** 퍼널 단계를 세션당 한 번 — 세션 id 와 브라우저 HMAC 이 함께 맞아야 센다(`20261119090000`, `81_taste_step_once`) */
     'count_taste_step_once',
@@ -1034,7 +1035,7 @@ select is(
     'taste_continuation_of_run',
     'taste_session_view'
   ]::text[],
-  'service_role 이 부를 수 있는 public 함수는 이 마흔아홉 줄뿐이다');
+  'service_role 이 부를 수 있는 public 함수는 이 쉰 줄뿐이다');
 
 /**
  * **기본값이 닫아 준다는 약속이 안 지켜지고 있었다.**

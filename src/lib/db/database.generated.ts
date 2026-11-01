@@ -111,6 +111,47 @@ export type Database = {
           },
         ]
       }
+      adult_check: {
+        Row: {
+          confirmed_at: string
+          user_id: string
+        }
+        Insert: {
+          confirmed_at?: string
+          user_id: string
+        }
+        Update: {
+          confirmed_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "adult_check_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "app_user"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      adult_check_switch: {
+        Row: {
+          changed_at: string
+          id: boolean
+          required: boolean
+        }
+        Insert: {
+          changed_at?: string
+          id?: boolean
+          required?: boolean
+        }
+        Update: {
+          changed_at?: string
+          id?: boolean
+          required?: boolean
+        }
+        Relationships: []
+      }
       app_user: {
         Row: {
           contact_consent: boolean | null
@@ -2840,6 +2881,8 @@ export type Database = {
         Args: { p_response_id: string; p_run_id: string }
         Returns: boolean
       }
+      adult_check_must_pass: { Args: { p_user_id: string }; Returns: undefined }
+      adult_check_passed: { Args: { p_user_id: string }; Returns: boolean }
       approve_reading_order: {
         Args: {
           p_amount: number
@@ -3020,6 +3063,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      confirm_adult_check: { Args: { p_user_id: string }; Returns: string }
       count_taste_step: { Args: { p_step: string }; Returns: undefined }
       count_taste_step_once: {
         Args: { p_browser_hmac: string; p_session_id: string; p_step: string }
@@ -3360,6 +3404,13 @@ export type Database = {
       move_my_photo: {
         Args: { p_from: number; p_to: number; p_version?: number }
         Returns: undefined
+      }
+      my_adult_check: {
+        Args: never
+        Returns: {
+          confirmed: boolean
+          required: boolean
+        }[]
       }
       my_chat_messages: {
         Args: { p_before_seq?: number; p_limit?: number; p_match_id: string }

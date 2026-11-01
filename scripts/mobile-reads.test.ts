@@ -11,7 +11,7 @@ import { describe, expect, it } from 'vitest';
 const ROOT = join(import.meta.dirname, '..');
 
 /** 안에서 스스로 받아 던지지 않는 읽기 — 받아 주는 코드가 그 함수 안에 있다 */
-const NEVER_REJECTS = new Set(['readGate']);
+const NEVER_REJECTS = new Set(['readGate', 'readAdultCheck']);
 
 const filesUnder = (dir: string): string[] =>
   readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {

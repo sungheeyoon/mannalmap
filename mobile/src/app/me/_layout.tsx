@@ -11,6 +11,7 @@ import { currentPath } from '@consent/app-destination';
 import { LiveChannel } from '@/chat/live';
 import { useCounts } from '@/home/counts';
 import { useGate } from '@/home/gate';
+import { useAdultCheckGuard } from '@/matching/adult-check';
 import { appHeadStands, dockStands } from '@app-shell';
 import { SettingsMenu } from '@/home/settings-menu';
 import { WarningNotice } from '@/home/warning-notice';
@@ -50,6 +51,7 @@ export default function MeLayout() {
   const insets = useSafeAreaInsets();
   const [menuOpen, setMenuOpen] = useState(false);
   const counts = useCounts(pathname, gate.kind === 'in');
+  useAdultCheckGuard(pathname, currentPath(pathname, search), gate.kind === 'in');
 
   if (gate.kind === 'checking') return <View style={styles.screen} />;
   /* 이 주소로 바로 들어온 사람은 로그인 · 가입 뒤 여기로 돌아온다(ADR 0213). 로그아웃한 사람은 돌아올 뜻이 없다 */
