@@ -1,6 +1,6 @@
 /**
  * **인연의 성인 확인 — 화면이 가는 길**(ADR 0214). 판정은 DB 가 한다(`adult_check_passed`). 여기는 안내를 세울지, 어디로 갈지만 고른다.
- * 문구는 대장 matching-15 「확인 전」.
+ * 문구는 대장 matching-16 「확인 전」.
  */
 
 export const ADULT_CHECK_TITLE = '성인 확인이 필요해요';

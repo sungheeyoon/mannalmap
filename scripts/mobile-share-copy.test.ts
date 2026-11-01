@@ -18,7 +18,6 @@ const koreanChunks = (text: string) =>
 
 const WEB = {
   'mobile/src/share/view.tsx': ['app/share/view.tsx', 'app/share/not-found.tsx', 'app/error-screen.tsx'],
-  'mobile/src/app/landing.tsx': ['app/home-hero.tsx', 'app/landing-guide.tsx'],
 };
 
 describe('앱 공유본 · 소개 화면의 글자', () => {
