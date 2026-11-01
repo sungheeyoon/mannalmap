@@ -74,7 +74,7 @@
 6. `mobile/scripts/measure/dev-seed.tsx.txt` 를 `mobile/src/app/dev-seed.tsx` 로 잠시 복사하고 `python3 mobile/scripts/measure/device.py link /dev-seed` 로 세션을 넣는다. **이 복사본과 `.env.local` 은 끝나면 지운다 — 커밋하지 않는다.**
 7. 라우트를 쓴다 — `python3 mobile/scripts/measure/sweep.py me=/me chat=/me/chat …` 가 그림 · 글자 · 새 로그를 모은다. 누르는 흐름은 `device.py` 의 `tap` · `input` · `type` · `key` 로 스크립트 파일에 적는다.
 
-환경값은 `ADB`(WSL 은 Windows SDK 의 `adb.exe` 전체 경로) · `MEASURE_DIR`(기본은 임시 폴더의 `saju-measure`) · `FAKE_PORT` 다. 앱이 새 DB 함수를 부르면 가짜 서버 기록에 `!! 없는 rpc` 가 찍힌다 — 그 답을 `fake-server.mjs` 에 더한다.
+환경값은 `ADB`(WSL 은 Windows SDK 의 `adb.exe` 전체 경로) · `MEASURE_DIR`(기본은 임시 폴더의 `saju-measure`) · `FAKE_PORT` · `METRO_PORT` 다. 에뮬레이터를 나눠 쓰면 Metro · 가짜 서버를 제 포트로 띄워 `adb reverse` 를 맞춘다. 앱이 새 DB 함수를 부르면 가짜 서버 기록에 `!! 없는 rpc` 가 찍힌다 — 그 답을 `fake-server.mjs` 에 더한다.
 
 | 증상 | 원인 | 하는 일 |
 | --- | --- | --- |

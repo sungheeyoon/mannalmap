@@ -3,33 +3,39 @@ import { useEffect, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
 import { SERVICE_NAME } from '@brand';
-import { SIGN_IN_UNLOCKS, SIGNED_OUT_EXIT } from '@brand/guide';
+import { CHART_SIGN_IN, SIGN_IN_UNLOCKS, SIGNED_OUT_EXIT } from '@brand/guide';
+import { chartWantOf, isChartPath } from '@consent/app-destination';
 import { safeReturnPath, withReturnPath } from '@consent/return-path';
 
+import { arriveAt } from '@/auth/arrive';
 import { MatchingSteps } from '@/auth/matching-steps';
 import { signInWithGoogle } from '@/auth/sign-in';
 import { readGate } from '@/home/gate';
 import { goHome } from '@/info/go-home';
 import { Icon } from '@/ui/icons';
 import { NoticeLine, NoticeScreen } from '@/ui/notice-screen';
-import { PrimaryButton, TextButton } from '@/ui/parts';
+import { PrimaryButton, SecondaryButton, TextButton } from '@/ui/parts';
 import { COLOR, FONT, RADIUS, TYPE } from '@/ui/tokens';
+import { goBack } from '@/ui/top-bar';
 
 /**
- * 로그인 — 웹의 `/auth` 와 같은 글자이고 로그인은 네이티브 구글이다. 돌아갈 곳은 앱에 있는 `/me` 아래뿐이다 —
+ * 로그인 — 웹의 `/auth` 와 같은 글자이고 로그인은 네이티브 구글이다. 돌아갈 곳은 앱에 있는 `/me` 아래와 결과 화면이다 —
  * 웹의 두 갈래 제목(`/compat` · `/saju` 이어 보기)은 앱에 없는 주소에서 오는 말이라 세우지 않는다. 「로그인 없이도…」 줄은 궁합 첫 신호까지 약속하는데 앱에는 그 화면이 없어 뺀다. 실패와 취소는 로그인 실패 화면으로 간다.
+ * 결과 화면에서 왔으면 누른 일의 까닭을 말하고, 취소는 그 결과로 돌아간다 — 구글 창을 닫아도 제자리다.
  */
 export default function SignInScreen() {
   const { next } = useLocalSearchParams<{ next?: string }>();
   const returnTo = safeReturnPath(next);
-  const destination = returnTo.startsWith('/me') ? returnTo : '/me';
+  const destination = returnTo.startsWith('/me') || isChartPath(returnTo) ? returnTo : '/me';
+  const want = chartWantOf(destination);
+  const fromChart = isChartPath(destination);
   const [going, setGoing] = useState(false);
 
   useEffect(() => {
     let live = true;
     void readGate().then((gate) => {
       if (!live) return;
-      if (gate.kind === 'in') router.replace(destination as never);
+      if (gate.kind === 'in') arriveAt(destination);
       else if (gate.kind === 'signup') router.replace(withReturnPath('/signup', destination) as never);
     });
     return () => {
@@ -41,38 +47,47 @@ export default function SignInScreen() {
     setGoing(true);
     const answer = await signInWithGoogle();
     setGoing(false);
-    if (answer.kind === 'signed-in') router.replace(destination as never);
+    if (answer.kind === 'signed-in') arriveAt(destination);
     else if (answer.kind === 'needs-signup') router.replace(withReturnPath('/signup', destination) as never);
-    else router.replace(withReturnPath('/auth/denied', destination) as never);
+    else if (answer.kind !== 'cancelled' || !fromChart) router.replace(withReturnPath('/auth/denied', destination) as never);
   };
 
   return (
     <NoticeScreen
-      title={`${SERVICE_NAME} 시작하기`}
+      title={want !== null ? CHART_SIGN_IN[want].title : `${SERVICE_NAME} 시작하기`}
       description={
         <NoticeLine>
-          로그인하면 저장한 사람과 사주풀이를 다음에도 이어서 볼 수 있어요.{' '}
+          {want !== null ? CHART_SIGN_IN[want].note : '로그인하면 저장한 사람과 사주풀이를 다음에도 이어서 볼 수 있어요.'}{' '}
           지금은 비공개 베타라, 처음 오셨다면 로그인 뒤에 <Text style={styles.strong}>테스트 코드</Text>가 필요해요.
         </NoticeLine>
       }
-      actions={<PrimaryButton label={going ? '구글로 이동하는 중…' : '구글로 로그인'} onPress={signIn} disabled={going} />}
+      actions={
+        <>
+          <PrimaryButton label={going ? '구글로 이동하는 중…' : '구글로 로그인'} onPress={signIn} disabled={going} />
+          {fromChart && <SecondaryButton label="취소" onPress={() => goBack('/')} disabled={going} />}
+        </>
+      }
       note={
-        <View style={styles.exit}>
-          <TextButton label={SIGNED_OUT_EXIT} onPress={() => void goHome()} />
-        </View>
+        fromChart ? undefined : (
+          <View style={styles.exit}>
+            <TextButton label={SIGNED_OUT_EXIT} onPress={() => void goHome()} />
+          </View>
+        )
       }
     >
       {destination.startsWith('/me/matching') && <MatchingSteps done={[]} />}
-      <View style={styles.unlocks}>
-        {SIGN_IN_UNLOCKS.map(({ icon, text }) => (
-          <View key={text} style={styles.unlock}>
-            <View style={styles.unlockIcon}>
-              <Icon name={icon} size={18} color={COLOR.creamInk} />
+      {!fromChart && (
+        <View style={styles.unlocks}>
+          {SIGN_IN_UNLOCKS.map(({ icon, text }) => (
+            <View key={text} style={styles.unlock}>
+              <View style={styles.unlockIcon}>
+                <Icon name={icon} size={18} color={COLOR.creamInk} />
+              </View>
+              <Text style={styles.unlockText}>{text}</Text>
             </View>
-            <Text style={styles.unlockText}>{text}</Text>
-          </View>
-        ))}
-      </View>
+          ))}
+        </View>
+      )}
     </NoticeScreen>
   );
 }

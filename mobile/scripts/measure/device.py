@@ -10,7 +10,7 @@
   device.py swipe-up                 한 화면 올린다
   device.py err                      ReactNativeJS 오류 줄
 
-환경: ADB(기본 `adb`, WSL 은 Windows SDK 의 adb.exe) · MEASURE_DIR(그림 자리, 저장소 밖). 차례는
+환경: ADB(기본 `adb`, WSL 은 Windows SDK 의 adb.exe) · MEASURE_DIR(그림 자리, 저장소 밖) · METRO_PORT(기본 8081). 차례는
 `docs/agents/delegation/local-env.md` 「앱을 네이티브로 재기」.
 """
 import os, re, subprocess, sys, tempfile, time, xml.etree.ElementTree as ET
@@ -80,7 +80,7 @@ def main():
     if cmd == 'link':
         path = sys.argv[2]
         # 패키지 인자를 붙이지 않는다 — 함정 표는 local-env.md
-        url = 'exp://127.0.0.1:8081/--' + path
+        url = 'exp://127.0.0.1:' + os.environ.get('METRO_PORT', '8081') + '/--' + path
         print(adb('shell', 'am', 'start', '-a', 'android.intent.action.VIEW', '-d', "'" + url + "'").strip()[:120])
     elif cmd == 'shot':
         png = adb('exec-out', 'screencap', '-p', binary=True)

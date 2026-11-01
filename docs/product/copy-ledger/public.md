@@ -150,3 +150,13 @@ BoxHero 「support@boxhero.io로」(붙임)다 — 크몽 「help@kmong.com 으�
 | 제목 `src/lib/brand/guide.ts` | (없음) | 인연을 시작하려면 이 단계가 필요해요 | [리메리](https://apps.apple.com/mw/app/%EB%A6%AC%EB%A9%94%EB%A6%AC-%EB%8F%8C%EC%8B%B1%EC%9D%84-%EC%9C%84%ED%95%9C-%EA%B2%BD%EC%A0%9C%EB%A0%A5-%EC%9D%B8%EC%A6%9D-%EC%86%8C%EA%B0%9C%ED%8C%85/id6736382595) 2026-11-02 |
 | 단계 셋 | (없음) | 구글로 로그인 · 테스트 코드로 가입 · 내 사주 저장 | [크리스천데이트](https://mwm.ai/apps/1-1/577004927) 2026-11-02 |
 | 끝 줄 | (없음) | 그만둬도 사주는 그대로 볼 수 있어요. | [리메리](https://apps.apple.com/mw/app/%EB%A6%AC%EB%A9%94%EB%A6%AC-%EB%8F%8C%EC%8B%B1%EC%9D%84-%EC%9C%84%ED%95%9C-%EA%B2%BD%EC%A0%9C%EB%A0%A5-%EC%9D%B8%EC%A6%9D-%EC%86%8C%EA%B0%9C%ED%8C%85/id6736382595) 2026-11-02 |
+
+## public-04 확인 전 — 앱의 결과에서 온 로그인 까닭 (#940, ADR 0213 추기)
+
+제목 꼴은 대장 17 의 「궁합풀이는 로그인하면 볼 수 있어요」를 저장 · 사주풀이에 맞춘 것이다. 뒷줄은 웹 `app/save-for-reading.tsx` 의 글자다. 앱 안 화면은 못 봤다 — 근거는 `docs/notes/2026-11-02-korean-app-flow-references.md` 3 · 4. 확인 날짜 2026-11-02.
+
+| 자리 | 이전 | 넣은 글자 | 출처 |
+| --- | --- | --- | --- |
+| 저장을 누른 사람의 제목 `src/lib/brand/guide.ts` | 만날지도 시작하기 | 저장은 로그인하면 할 수 있어요 | [헬로우봇 문구표](https://hellobot.co/terms) 「로그인해서 대화 기록을 안전하게 보관하세요」 · 대장 17 의 꼴 2026-11-02 |
+| 풀이를 누른 사람의 제목 | 만날지도 시작하기 | 사주풀이는 로그인하면 볼 수 있어요 | [헬로우봇 문구표](https://hellobot.co/terms) 「로그인 후에 바로 써볼 수 있어요」 · 대장 17 의 꼴 2026-11-02 |
+| 나가는 단추 `mobile/src/app/auth/index.tsx` | 사주로 돌아가기 | 취소 — 대장 01 「닫는 것은 취소」 | 실사례 없음 — 대장 안 글자 |

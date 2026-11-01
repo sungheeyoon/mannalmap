@@ -3,9 +3,9 @@ import { join } from 'node:path';
 
 import { describe, expect, it } from 'vitest';
 
-import { chartPath, currentPath } from '../src/lib/consent/app-destination';
+import { chartPath, chartWantOf, currentPath } from '../src/lib/consent/app-destination';
 import { safeReturnPath, withReturnPath } from '../src/lib/consent/return-path';
-import { matchingStartSteps } from '../src/lib/brand/guide';
+import { CHART_SIGN_IN, matchingStartSteps } from '../src/lib/brand/guide';
 import { DEFAULT_QUERY, queryFromJson, type Query } from '../src/lib/input/query';
 
 /**
@@ -27,6 +27,28 @@ describe('앱 입구', () => {
   it('입력 없이 들어가는 길과 소개로 가는 길이 있다', () => {
     expect(entry).toContain("router.push('/auth'");
     expect(entry).toContain("href: '/landing'");
+  });
+});
+
+describe('앱의 첫 결과 (#940)', () => {
+  const chart = read('mobile/src/app/chart.tsx');
+
+  it('사주 카드 → 계산값 한 줄 → 다음 행동 → 만세력 보기 → 표 차례다', () => {
+    const order = ['<SelfCard', 'elementsFirstLine(', '<SavePersonForReading', '>만세력 보기<', '{tableOpen && ('].map((mark) => chart.indexOf(mark));
+    expect(order.every((at) => at > -1)).toBe(true);
+    expect(order).toEqual([...order].sort((a, b) => a - b));
+  });
+
+  it('표의 절 열이 모두 접힘 아래에 있다 — 표의 내용을 빼지 않는다', () => {
+    const fold = chart.slice(chart.indexOf('{tableOpen && ('));
+    for (const part of ['<PillarChart', '<StarTable', '<ElementChart', '<StrengthMeter', '<YongsinCard', '<RelationTable', '<NowOverlaps', '<FortuneTabs', '<TimeCorrections', '<Warnings']) {
+      expect(fold).toContain(part);
+    }
+  });
+
+  it('요약은 계산값만 읽는다 — 서버 · 모델을 부르지 않는다', () => {
+    expect(chart).toContain('elementsFirstLine(model.saju.analysis.elements)');
+    expect(read('src/lib/saju/view/firstLine.ts')).not.toMatch(/fetch|supabase|import\('/);
   });
 });
 
@@ -54,15 +76,47 @@ describe('로그인 시점과 목적지 (ADR 0213)', () => {
     expect(context.indexOf('readGate()')).toBeLessThan(context.indexOf("from('app_user')"));
   });
 
-  it.each(['이 사주가 내 삶에서는 어떤 뜻일까요?', '성향부터 일과 연애, 운의 흐름까지 글로 풀어드려요.', '로그인하고 계속하기', '로그인하면 이 입력으로 돌아와요. 사주풀이는 저장한 뒤에 받을 수 있고, 풀이권 1장을 써요.'])('로그인 카드 글자는 웹의 것 — %s', (words) => {
+  it.each(['이 사주가 내 삶에서는 어떤 뜻일까요?', '성향부터 일과 연애, 운의 흐름까지 글로 풀어드려요.'])('로그인 전 다음 행동의 글자는 웹의 것 — %s', (words) => {
     expect(read('app/save-for-reading.tsx')).toContain(words);
     expect(save).toContain(words);
   });
 
-  it('로그인 카드는 저장 · 풀이를 대신 누르지 않는다', () => {
-    const card = save.slice(save.indexOf('function SignInCard'), save.indexOf('/** 저장한 사람으로 저장한다'));
-    expect(card).toContain('useStart(chartPath(query), { standingThere: true })');
+  it('풀이의 로그인 까닭은 풀이권을 말하고 웹의 글자다, 저장의 까닭은 풀이권을 말하지 않는다', () => {
+    expect(read('app/save-for-reading.tsx')).toContain(CHART_SIGN_IN.reading.note);
+    expect(CHART_SIGN_IN.reading.title).not.toBe(CHART_SIGN_IN.save.title);
+    expect(CHART_SIGN_IN.save.note).not.toContain('풀이권');
+  });
+
+  it('로그인 전 단추는 누른 일을 주소에 실어 로그인 화면으로 갈 뿐, 저장 · 풀이를 대신 누르지 않는다', () => {
+    const card = save.slice(save.indexOf('function SignInCard'), save.indexOf('/** 저장을 누르고 온 사람이'));
+    expect(card).toContain("withReturnPath('/auth', chartPath(query, want))");
+    expect(card).toContain("signInFor('reading')");
+    expect(card).toContain("signInFor('save')");
     expect(card).not.toMatch(/addPerson|saveSelfPerson|start_reading|\/me\/readings/);
+  });
+
+  it('로그인 화면 · 돌아온 뒤에 풀이를 요청하거나 풀이권을 쓰는 호출이 없다', () => {
+    for (const file of ['mobile/src/app/auth/index.tsx', 'mobile/src/auth/arrive.ts', 'mobile/src/app/chart.tsx', 'mobile/src/app/auth/denied.tsx']) {
+      expect(read(file)).not.toMatch(/start_reading|startReading|requestReading|ConfirmMake|addPerson|saveSelfPerson/);
+    }
+    /* 저장은 효과(useEffect · useFocusEffect)가 아니라 누름에서만 간다 */
+    const context = save.slice(save.indexOf('function useSaveContext'), save.indexOf('/**\n * **결과 화면의 다음 행동**'));
+    expect(context).not.toMatch(/addPerson|saveSelfPerson/);
+  });
+
+  it('누르던 일이 주소를 지난다 — 저장을 누른 사람만 저장 뒤 결과에 남는다', () => {
+    expect(chartWantOf(chartPath(DEFAULT_QUERY, 'reading'))).toBe('reading');
+    expect(chartWantOf(chartPath(DEFAULT_QUERY, 'save'))).toBe('save');
+    expect(chartWantOf(chartPath(DEFAULT_QUERY))).toBeNull();
+    expect(chartWantOf('/me/compat?want=save')).toBeNull();
+    const auth = new URL(withReturnPath('/auth', chartPath(DEFAULT_QUERY, 'reading')), 'https://local.invalid');
+    expect(chartWantOf(safeReturnPath(auth.searchParams.get('next')))).toBe('reading');
+    expect(save).toContain("if (want === 'save') onSavedHere();\n      else router.replace('/me/readings/self' as never);");
+  });
+
+  it('결과로 돌아갈 때는 스택 아래의 그 화면으로 돌아간다 — 겹치지 않는다', () => {
+    expect(read('mobile/src/auth/arrive.ts')).toContain('router.dismissTo(path as never)');
+    expect(read('mobile/src/app/auth/index.tsx')).toContain('arriveAt(destination)');
   });
 
   it.each([
@@ -70,7 +124,7 @@ describe('로그인 시점과 목적지 (ADR 0213)', () => {
     ['mobile/src/app/auth/index.tsx', "withReturnPath('/signup', destination)"],
     ['mobile/src/app/me/_layout.tsx', "withReturnPath('/signup', currentPath(pathname, search))"],
     ['mobile/src/app/me/_layout.tsx', "withReturnPath('/auth', currentPath(pathname, search))"],
-    ['mobile/src/reading/save-self.tsx', "withReturnPath('/signup', chartPath(query))"],
+    ['mobile/src/reading/save-self.tsx', "withReturnPath('/signup', here)"],
   ])('%s 은 가입 · 로그인으로 보낼 때 목적지를 든다', (file, carried) => {
     expect(read(file)).toContain(carried);
     expect(read(file)).not.toMatch(/(push|replace)\('\/signup'\)|href="\/signup"/);
@@ -92,7 +146,7 @@ describe('로그인 시점과 목적지 (ADR 0213)', () => {
   });
 
   it('가입 화면은 목적지를 좁힌 뒤 간다', () => {
-    expect(read('mobile/src/app/signup.tsx')).toContain('router.replace(safeReturnPath(next) as never)');
+    expect(read('mobile/src/app/signup.tsx')).toContain('arriveAt(safeReturnPath(next))');
   });
 
   describe('출생 정보가 목적지 주소를 지나도 그대로다', () => {

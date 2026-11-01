@@ -19,6 +19,7 @@ import {
 } from '@consent/signup';
 import { NICKNAME_AVAILABLE_NOTE, NICKNAME_MAX, NICKNAME_MIN, NICKNAME_TAKEN_NOTE, missingNickname, nicknameKey } from '@profile';
 
+import { arriveAt } from '@/auth/arrive';
 import { MatchingSteps } from '@/auth/matching-steps';
 import { signOut } from '@/auth/sign-in';
 import { checkNickname, completeSignup, readSignup, UNREACHABLE, type SignupState } from '@/auth/signup';
@@ -37,7 +38,7 @@ const SIGN_OUT_FAILED = '로그아웃하지 못했어요. 다시 시도해 주�
 export default function SignupScreen() {
   const { next } = useLocalSearchParams<{ next?: string }>();
   const [state, setState] = useState<SignupState | null>(null);
-  const finish = () => router.replace(safeReturnPath(next) as never);
+  const finish = () => arriveAt(safeReturnPath(next));
 
   useEffect(() => {
     let live = true;
