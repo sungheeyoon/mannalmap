@@ -31,7 +31,7 @@ npm run db:push               # 밀린 것 전부를 원격에 적용한다 — 
 
 #### 묶음 배포 — 최신 main 을 Production 으로 한 번
 
-머지는 운영에 아무것도 안 올린다. 묶음이 끝났을 때(하루 한 번, 또는 한 라운드를 닫을 때) 한 번 올린다.
+앱의 빌드 · 제출 차례는 `docs/ops/runbook/mobile-release.md` 다. 머지는 운영에 아무것도 안 올린다. 묶음이 끝났을 때(하루 한 번, 또는 한 라운드를 닫을 때) 한 번 올린다.
 
 0. **올리기 전에.** 올리라고 한 변경은 그 PR 이 main 에 들면 올린다(ADR 0152). 묶음이면 머지를 기다리는 PR 이 없는지(`gh pr list`),
    `node scripts/deploy-range.mjs` 가 `wait` 면 `main` CI 가 초록인지(ADR 0159), 지난
