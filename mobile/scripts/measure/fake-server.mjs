@@ -172,6 +172,7 @@ const rpc = {
   report_user: () => null,
   report_chat_message: () => null,
   acknowledge_warning: () => { db.warning = []; return null; },
+  complete_signup: () => { db.account.signed_up_at = new Date().toISOString(); return true; },
   request_match: () => null,
   cancel_match_request: () => 'cancelled',
   restore_passed_connection: () => db.passed,

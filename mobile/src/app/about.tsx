@@ -14,9 +14,6 @@ import { PrimaryButton, SecondaryButton } from '@/ui/parts';
 import { COLOR, FONT, RADIUS, TYPE } from '@/ui/tokens';
 import { Card, CardFrame, Paper } from '@/ui/surfaces';
 
-/** 앱은 로그인 뒤에야 결과를 보여 준다 — 로그인 없이 된다는 조건 줄은 앱에서 사실이 아니라 세우지 않는다 */
-const SIGNED_OUT_ONLY = '로그인 없이';
-
 /** 서비스 소개 — 웹의 `/about`. 로그인 없이 열리고 세션도 DB 도 안 읽는다 */
 export default function AboutScreen() {
   return (
@@ -37,7 +34,8 @@ export default function AboutScreen() {
             </View>
             <Text style={styles.name}>{feature.title}</Text>
             <Text style={styles.body}>{feature.body}</Text>
-            {!feature.note.includes(SIGNED_OUT_ONLY) && <Text style={styles.meta}>{feature.note}</Text>}
+            {/* 궁합의 조건 줄은 첫 신호까지 약속하는데 앱에는 로그인 전 궁합 결과가 없다(ADR 0213) */}
+            {feature.title !== '궁합' && <Text style={styles.meta}>{feature.note}</Text>}
           </Card>
         ))}
       </View>

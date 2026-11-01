@@ -10,7 +10,8 @@ import { settled } from '@/ui/settled';
 
 export type Gate =
   | { kind: 'checking' }
-  | { kind: 'out' }
+  /** `left` — 이 자리에서 세션이 끊겼다(로그아웃). 없으면 처음부터 세션이 없었다 — 로그인 뒤 그 주소로 돌아올 사람이다 */
+  | { kind: 'out'; left?: true }
   /** 가입이 안 끝났다 — 무슨 말을 할지는 가입 화면이 안다 */
   | { kind: 'signup' }
   /** 테스트가 끝났다 — 주소마다 `gateFor` 를 다시 묻는다. 열린 것은 설정(철회 · 탈퇴 신청)뿐이다 */
@@ -78,7 +79,7 @@ export function useGate(): { gate: Gate; retry: () => void } {
       if (state === 'active') check();
     });
     const auth = supabase?.auth.onAuthStateChange((event) => {
-      if (event === 'SIGNED_OUT') setGate({ kind: 'out' });
+      if (event === 'SIGNED_OUT') setGate({ kind: 'out', left: true });
     });
     return () => {
       foreground.remove();

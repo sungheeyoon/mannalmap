@@ -10,7 +10,7 @@ import { SecondaryButton } from '@/ui/parts';
 import { COLOR, FONT, RADIUS, TYPE } from '@/ui/tokens';
 import { Card } from '@/ui/surfaces';
 
-/** 앱은 로그인 뒤에야 결과를 보여 준다 — 「로그인하지 않고 무엇을 볼 수 있나요?」는 앱에서 사실이 아니라 물음째 뺀다 */
+/** 답이 궁합 첫 신호까지 약속하는데 앱에는 로그인 전 궁합 결과가 없다 — 물음째 뺀다(ADR 0213) */
 const SIGNED_OUT_QUESTION = 'without-sign-in';
 
 /**

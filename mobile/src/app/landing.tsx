@@ -17,7 +17,7 @@ import { CardFrame, Paper } from '@/ui/surfaces';
 /**
  * 첫 화면의 소개 — 웹 `/` 의 머리와 「할 수 있는 것」이다(`app/home-hero.tsx` · `app/landing-guide.tsx`). **앱의 입구는 입력 화면이고**
  * (운영자 결정) 이 화면은 소개에서 들어온다. 그래서 웹의 두 탭은 입력 칸을 고르는 대신 그 일을 하는 자리로 간다: 「내 사주 보기」는 입력 화면,
- * 「궁합 보기」는 로그인을 지나 궁합(앱에는 비로그인 전용 결과가 없다). 로그인한 사람은 웹처럼 홈으로 옮긴다.
+ * 「궁합 보기」는 로그인을 지나 궁합(앱에는 로그인 전 궁합 결과가 없다, ADR 0213). 로그인한 사람은 웹처럼 홈으로 옮긴다.
  */
 export default function LandingScreen() {
   const [gate, setGate] = useState<'checking' | 'in' | 'out'>('checking');
