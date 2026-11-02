@@ -3412,6 +3412,11 @@ export type Database = {
         Args: { p_event_id: string }
         Returns: undefined
       }
+      match_detail_ttl: { Args: never; Returns: string }
+      match_is_on_the_old_way: {
+        Args: { p_match_id: string }
+        Returns: boolean
+      }
       match_reading_source: {
         Args: { p_match_id: string }
         Returns: {

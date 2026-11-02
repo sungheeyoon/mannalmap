@@ -25,6 +25,16 @@ insert into public.match_talk_switch (id, open) values (true, false);
 alter table public.match_talk_switch enable row level security;
 revoke all on public.match_talk_switch from public, anon, authenticated, service_role;
 
+/** 상세 요청의 답 없음 기한 — 운영자 결정 2026-11-02. 지나면 요청만 끝나고 자리가 돌아온다. 옛 요청의 7일은 `match_request_ttl` 이다 */
+create function public.match_detail_ttl()
+returns interval
+language sql
+immutable
+set search_path to ''
+as $$ select interval '72 hours' $$;
+
+revoke all on function public.match_detail_ttl() from public, anon, authenticated, service_role;
+
 /** 흐름이 열렸는가 — 줄이 없으면 꺼짐이다. 옛 흐름은 수락 없이 아무것도 안 연다 */
 create function public.match_talk_is_open()
 returns boolean
@@ -91,9 +101,27 @@ $$;
 
 revoke all on function public.close_talk_room(uuid, uuid) from public, anon, authenticated, service_role;
 
+/** 이 인연이 옛 길에만 있는가 — 옛 요청으로 섰고 상세를 탄 적이 없다. 규칙은 스위치 말고 이것을 따른다 */
+create function public.match_is_on_the_old_way(p_match_id uuid)
+returns boolean
+language sql
+stable
+security definer
+set search_path to ''
+as $$
+  select exists (
+      select 1 from public.match m join public.match_request q on q.id = m.request_id
+      where m.id = p_match_id and q.kind = 'bundled'
+    )
+    and not exists (select 1 from public.match_request q where q.detail_match_id = p_match_id);
+$$;
+
+revoke all on function public.match_is_on_the_old_way(uuid) from public, anon, authenticated, service_role;
+
 /**
- * 이 열쇠가 인연의 시도를 열어도 되는가 — 꺼진 동안 글자가 선 인연은 옛 다시 만들기가 그대로다.
- * 그 밖에는 **수락 · 누름이 끝난 그 요청의 열쇠**여야 하고, 구매자 이름이어야 한다. 차감이 든 동의를 앱이 지어내지 못한다.
+ * 이 열쇠가 인연의 시도를 열어도 되는가 — 꺼진 동안 옛 길의 인연은 옛 다시 만들기가 그대로다.
+ * 그 밖에는 **수락 · 누름이 끝난 그 요청의 열쇠**여야 하고, 구매자 이름이어야 하고, **입력 판이 그 요청 때와 같아야 한다.**
+ * 차감이 든 동의를 앱이 지어내지 못하고, 동의하지 않은 입력을 얼리지 못한다(D2).
  */
 create function public.match_run_is_agreed(p_actor uuid, p_match_id uuid, p_key text)
 returns boolean
@@ -104,7 +132,7 @@ set search_path to ''
 as $$
   select (
       not public.match_talk_is_open()
-      and exists (select 1 from public.match m where m.id = p_match_id and m.chart_low is not null and m.chart_high is not null)
+      and public.match_is_on_the_old_way(p_match_id)
     )
     or exists (
       select 1
@@ -115,6 +143,10 @@ as $$
         and q.status = 'accepted'
         and q.requester_user_id = p_actor
         and p_key = 'match-accept:' || q.id::text
+        and (select pe.input_version from public.app_user u join public.person pe on pe.id = u.self_person_id where u.id = q.requester_user_id)
+          is not distinct from q.requester_input_version
+        and (select pe.input_version from public.app_user u join public.person pe on pe.id = u.self_person_id where u.id = q.addressee_user_id)
+          is not distinct from q.addressee_input_version
     );
 $$;
 
@@ -786,8 +818,8 @@ AS $function$
     limit 1
   ) run on true
   left join public.reading_job job on job.run_id = run.id and run.status = 'running'
-  /** 인연 궁합의 실패는 구매자에게만 — 켜진 뒤의 약속이다(D3a, ADR 0215) */
-  where not (s.kind = 'match' and run.status = 'failed' and run.user_id <> (select auth.uid()) and public.match_talk_is_open());
+  /** 인연 궁합의 실패는 구매자에게만(D3a, ADR 0215) — 스위치가 아니라 그 인연의 길을 따른다. 옛 길은 지금처럼 함께 본다 */
+  where not (s.kind = 'match' and run.status = 'failed' and run.user_id <> (select auth.uid()) and not public.match_is_on_the_old_way(s.match_id));
 $function$
 ;
 
@@ -899,7 +931,9 @@ AS $function$
       select 1 from public.match_request r
       where r.pair_low = least(actor, other)
         and r.pair_high = greatest(actor, other)
-        and (r.status in ('pending', 'accepted', 'rejected') or r.kind = 'talk')
+        and (r.status in ('pending', 'accepted', 'rejected')
+          -- 거둔 대화는 인연이 남아 다시 못 연다. 정지가 끝낸 대화는 인연째 지워져 새로 시작한다(ADR 0215)
+          or (r.kind = 'talk' and exists (select 1 from public.match m where m.request_id = r.id)))
     );
 $function$
 ;
@@ -1077,6 +1111,357 @@ end;
 $function$
 ;
 
+CREATE OR REPLACE FUNCTION public.visible_matches()
+ RETURNS SETOF match
+ LANGUAGE sql
+ STABLE SECURITY DEFINER
+ SET search_path TO ''
+AS $function$
+  select m.*
+  from public.match m
+  join public.app_user partner
+    on partner.id = case
+      when m.user_low = (select auth.uid()) then m.user_high else m.user_low end
+  where (m.user_low = (select auth.uid()) or m.user_high = (select auth.uid()))
+    and partner.status = 'active'
+    and public.is_active_account()
+    and public.adult_check_passed((select auth.uid()))
+    and public.adult_check_passed(partner.id)
+    -- 답 전에 끝난 대화는 인연이 아니다 — 거절 · 거둠 · 차단이 같은 답이다(ADR 0120 · 0215)
+    and not exists (
+      select 1 from public.match_request q
+      where q.id = m.request_id and q.kind = 'talk' and q.status not in ('pending', 'accepted')
+    )
+    and not exists (
+      select 1 from public.block b
+      where (b.user_id = (select auth.uid()) and b.blocked_user_id = partner.id)
+         or (b.user_id = partner.id and b.blocked_user_id = (select auth.uid()))
+    );
+$function$
+;
+
+CREATE OR REPLACE FUNCTION public.close_chat_room_on_block()
+ RETURNS trigger
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO ''
+AS $function$
+begin
+  update public.chat_room r
+  -- 답 전 대화의 차단은 거절과 같은 이름으로 닫는다 — 이 칸은 상대가 읽는다. 차단은 알리지 않는다(ADR 0009 · 0120 · 0215)
+  set closed_reason = case when exists (
+        select 1 from public.match m join public.match_request q on q.id = m.request_id
+        where m.id = r.match_id and q.kind = 'talk' and q.status = 'pending'
+      ) then 'declined' else 'block' end,
+      closed_by_user_id = new.user_id,
+      closed_at = new.created_at
+  where r.closed_at is null
+    and r.user_low = least(new.user_id, new.blocked_user_id)
+    and r.user_high = greatest(new.user_id, new.blocked_user_id);
+
+  return new;
+end;
+$function$
+;
+
+CREATE OR REPLACE FUNCTION public.request_account_deletion()
+ RETURNS boolean
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO ''
+AS $function$
+declare
+  actor uuid := (select auth.uid());
+  account public.app_user;
+begin
+  if actor is null then
+    raise exception '로그인이 필요해요. 로그인한 뒤 다시 시도해 주세요.' using errcode = '28000';
+  end if;
+
+  select * into account from public.app_user where id = actor for update;
+
+  if account.status = 'deletion_requested' then
+    -- 두 번 눌러도 처음 요청한 시각을 밀어내지 않는다.
+    return true;
+  end if;
+
+  if account.status <> 'active' then
+    raise exception '이용이 정지된 계정입니다.' using errcode = '42501';
+  end if;
+
+  update public.app_user
+  set status = 'deletion_requested', deletion_requested_at = now()
+  where id = actor;
+
+  update public.discovery_profile
+  set opted_in_at = null,
+      element_summary = null,
+      element_input_version = null,
+      element_chart_engine_version = null
+  where user_id = actor;
+
+  with ended as (
+    update public.match_request
+    -- 상세는 시스템이 끝내면 거둠이다 — 받은 사람이 거절한 적이 없고, 거절은 다시 못 청한다(ADR 0215)
+    set status = case when requester_user_id = actor or kind = 'detail' then 'cancelled' else 'rejected' end,
+        decided_at = now()
+    where status = 'pending'
+      and (requester_user_id = actor or addressee_user_id = actor)
+    returning id, requester_user_id, status
+  )
+  insert into public.notification (user_id, kind, request_id)
+  select ended.requester_user_id, 'request_rejected', ended.id
+  from ended
+  where ended.status = 'rejected';
+
+  return true;
+end;
+$function$
+;
+
+CREATE OR REPLACE FUNCTION public.change_account_status(p_actor uuid, p_user_id uuid, p_status text, p_reason text, p_note text, p_report_id uuid DEFAULT NULL::uuid, p_request_id uuid DEFAULT NULL::uuid)
+ RETURNS uuid
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO ''
+AS $function$
+declare
+  memo constant text := nullif(btrim(coalesce(p_note, '')), '');
+  now_status text;
+  came_from text;
+  earlier public.account_status_change;
+  made uuid := gen_random_uuid();
+begin
+  if p_actor is null or not exists (select 1 from public.operator o where o.user_id = p_actor) then
+    raise exception '운영자만 계정 상태를 바꿉니다.' using errcode = '42501';
+  end if;
+
+  if p_status is null or p_status not in ('suspended', 'active', 'deletion_requested') then
+    raise exception 'account status: suspended, active or deletion_requested' using errcode = '22023';
+  end if;
+
+  select a.status into now_status from public.app_user a where a.id = p_user_id for update;
+  if not found then
+    raise exception '회원을 찾지 못했습니다.' using errcode = 'P0002';
+  end if;
+
+  -- 같은 요청의 재시도 — 계정 행을 잡은 뒤에 찾는다(나란히 온 재시도는 첫째의 커밋 뒤에 본다)
+  if p_request_id is not null then
+    select * into earlier from public.account_status_change c where c.request_id = p_request_id;
+    if found then
+      if earlier.user_id <> p_user_id or earlier.to_status <> p_status or earlier.reason is distinct from p_reason
+         or earlier.actor_user_id is distinct from p_actor then
+        raise exception '이 요청 번호는 다른 처리에 쓰였습니다. 화면을 새로 열어 주세요.' using errcode = '22023';
+      end if;
+      return earlier.id;
+    end if;
+  end if;
+
+  -- 탈퇴 대기가 어디서 왔나 — 탈퇴 대기로 들어온 마지막 줄의 앞 상태. 이력이 없으면(`20261215090000` 전) 이용 중에서 왔다
+  if now_status = 'deletion_requested' then
+    select c.from_status into came_from
+    from public.account_status_change c
+    where c.user_id = p_user_id and c.to_status = 'deletion_requested'
+    order by c.at desc, c.id desc
+    limit 1;
+    came_from := coalesce(came_from, 'active');
+  end if;
+
+  if p_status = 'deletion_requested' then
+    if now_status = 'deletion_requested' then
+      raise exception '이미 탈퇴 대기인 계정입니다.' using errcode = '55000';
+    end if;
+    if now_status <> 'suspended' then
+      -- 이용 중인 사람은 화면에서 스스로 신청한다(`request_account_deletion`) — 운영자가 대신 옮기는 길이 아니다
+      raise exception '이용 정지인 계정만 탈퇴 대기로 옮깁니다.' using errcode = '55000';
+    end if;
+    if p_reason is distinct from 'deletion_request' then
+      raise exception '사유를 골라 주세요.' using errcode = '22023';
+    end if;
+  elsif p_status = 'suspended' and now_status = 'deletion_requested' then
+    -- 정지에서 온 탈퇴 대기의 해제만 정지로 간다 — 탈퇴 대기를 정지하는 길이 아니다
+    if p_reason is distinct from 'deletion_withdrawn' then
+      -- 계정 검사식(`deletion_time_matches_status`)이 거절하던 것과 같은 코드다 — 런북의 검토 문을 부르는 쪽이 그대로 읽는다
+      raise exception '탈퇴를 신청한 계정이라 정지할 수 없습니다.' using errcode = '23514';
+    end if;
+    if came_from <> 'suspended' then
+      raise exception '이용 중에서 온 탈퇴 대기는 이용 중으로 되돌립니다.' using errcode = '22023';
+    end if;
+  elsif p_status = 'suspended' then
+    if now_status <> 'active' then
+      raise exception '이미 이용 정지된 계정입니다.' using errcode = '55000';
+    end if;
+    if exists (select 1 from public.operator o where o.user_id = p_user_id) then
+      raise exception '운영자 계정은 정지할 수 없습니다.' using errcode = '55000';
+    end if;
+    if p_reason is null or p_reason not in ('report', 'policy', 'payment', 'eligibility', 'other') then
+      raise exception '사유를 골라 주세요.' using errcode = '22023';
+    end if;
+  else
+    if not ((now_status = 'suspended' and p_reason in ('appeal', 'mistake', 'other'))
+            or (now_status = 'deletion_requested' and p_reason = 'deletion_withdrawn')) then
+      raise exception '%', case when now_status = 'active' then '이미 이용 중인 계정입니다.' else '사유를 골라 주세요.' end
+        using errcode = case when now_status = 'active' then '55000' else '22023' end;
+    end if;
+    if now_status = 'deletion_requested' and came_from = 'suspended' then
+      raise exception '정지 중에 받은 탈퇴 요청이라 이용 정지로 되돌립니다.' using errcode = '22023';
+    end if;
+  end if;
+
+  if (p_reason = 'report') <> (p_report_id is not null) then
+    raise exception 'account status: a report goes with the report reason only' using errcode = '22023';
+  end if;
+
+  if p_reason <> 'report' and (memo is null or length(memo) > 200) then
+    raise exception '메모를 200자 안으로 적어 주세요.' using errcode = '22023';
+  end if;
+
+  perform set_config('saju.account_status_change', jsonb_build_object(
+    'id', made, 'user_id', p_user_id, 'from', now_status, 'to', p_status, 'reason', p_reason,
+    'note', memo, 'report_id', p_report_id, 'request_id', p_request_id, 'actor', p_actor)::text, true);
+
+  update public.app_user a
+  set status = p_status,
+      deletion_requested_at = case when p_status = 'deletion_requested' then now() else null end
+  where a.id = p_user_id;
+
+  perform set_config('saju.account_status_change', '', true);
+
+  if not exists (select 1 from public.account_status_change c where c.id = made) then
+    raise exception 'account status: the change was not recorded' using errcode = '55000';
+  end if;
+
+  -- 탈퇴 대기는 이용자 스스로의 신청과 같은 자리에 선다(`request_account_deletion`) — 노출이 꺼지고 기다리던 요청이 정리된다
+  if p_status = 'deletion_requested' then
+    update public.discovery_profile
+    set opted_in_at = null,
+        element_summary = null,
+        element_input_version = null,
+        element_chart_engine_version = null
+    where user_id = p_user_id;
+
+    with ended as (
+      update public.match_request
+      -- 상세는 시스템이 끝내면 거둠이다 — 받은 사람이 거절한 적이 없고, 거절은 다시 못 청한다(ADR 0215)
+    set status = case when requester_user_id = p_user_id or kind = 'detail' then 'cancelled' else 'rejected' end,
+          decided_at = now()
+      where status = 'pending'
+        and (requester_user_id = p_user_id or addressee_user_id = p_user_id)
+      returning id, requester_user_id, status
+    )
+    insert into public.notification (user_id, kind, request_id)
+    select ended.requester_user_id, 'request_rejected', ended.id
+    from ended
+    where ended.status = 'rejected';
+  end if;
+
+  return made;
+end;
+$function$
+;
+
+CREATE OR REPLACE FUNCTION public.chat_room_readable(p_room_id uuid)
+ RETURNS boolean
+ LANGUAGE sql
+ STABLE SECURITY DEFINER
+ SET search_path TO ''
+AS $function$
+  select public.is_active_account()
+    and public.adult_check_passed((select auth.uid()))
+    and exists (
+      select 1 from public.chat_room r
+      where r.id = p_room_id
+        and (select auth.uid()) in (r.user_low, r.user_high)
+        and (r.user_low is null or r.user_high is null
+          or public.adult_check_passed(case when r.user_low = (select auth.uid()) then r.user_high else r.user_low end))
+        -- 답 전에 끝난 방은 양쪽 다 안 읽는다 — 거둠 · 차단 · 옛 앱의 거절이 같은 모양이다(ADR 0120 · 0215)
+        and r.closed_reason is distinct from 'declined'
+        and (r.closed_reason is null
+             or r.closed_reason = 'block'
+             or r.closed_by_user_id is distinct from (select auth.uid()))
+    );
+$function$
+;
+
+CREATE OR REPLACE FUNCTION public.close_chat_rooms_on_account_status()
+ RETURNS trigger
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO ''
+AS $function$
+declare
+  reason text;
+begin
+  if new.status = 'active' or new.status is not distinct from old.status then
+    return new;
+  end if;
+
+  /**
+   * **정지로 닫힌 답 전 대화는 끝낸다**(ADR 0215) — 닫힌 채 살아 있는 요청을 안 남긴다. 인연째 지워 풀린 뒤 새로 시작할 수 있다.
+   * 신고가 든 말은 스냅숏에 따로 있다. 답 전이라 시도 · 글 · 차감이 없다.
+   */
+  if new.status = 'suspended' then
+    with ended as (
+      update public.match_request q
+      set status = 'cancelled', decided_at = now()
+      where q.kind = 'talk' and q.status = 'pending' and new.id in (q.requester_user_id, q.addressee_user_id)
+      returning q.id
+    )
+    delete from public.match m where m.request_id in (select id from ended);
+  end if;
+
+  reason := case new.status
+    when 'suspended' then 'suspension'
+    when 'deletion_requested' then 'deletion_request'
+  end;
+
+  if reason is null then
+    raise exception 'chat: no closing reason for account status %', new.status
+      using errcode = '22023';
+  end if;
+
+  update public.chat_room r
+  set closed_reason = reason,
+      closed_by_user_id = new.id,
+      closed_at = case when new.status = 'deletion_requested'
+        then coalesce(new.deletion_requested_at, now()) else now() end
+  where r.closed_at is null
+    and new.id in (r.user_low, r.user_high);
+
+  return new;
+end;
+$function$
+;
+
+/**
+ * **동의 뒤 글 없이 실패하면 글자를 거둔다**(ADR 0215) — 그 동의는 그 글을 위한 것이었다. 다시 만들려면 새 동의가 들고, 누름이 다시 베낀다. 옛 길은 그대로다.
+ */
+create function public.match_failure_takes_back_the_charts()
+returns trigger
+language plpgsql
+security definer
+set search_path to ''
+as $$
+begin
+  if new.kind = 'match' and new.status = 'failed'
+     and not public.match_is_on_the_old_way(new.match_id)
+     and not exists (select 1 from public.reading g where g.match_id = new.match_id and g.kind = 'match') then
+    update public.match m
+    set chart_low = null, chart_high = null, chart_engine_low = null, chart_engine_high = null
+    where m.id = new.match_id;
+  end if;
+
+  return null;
+end;
+$$;
+
+revoke all on function public.match_failure_takes_back_the_charts() from public, anon, authenticated, service_role;
+
+create trigger reading_run_failure_takes_back_the_charts
+  after update of status on public.reading_run
+  for each row when (old.status = 'running' and new.status = 'failed')
+  execute function public.match_failure_takes_back_the_charts();
+
 -- ── 새 문 둘 ──
 
 /**
@@ -1111,14 +1496,27 @@ begin
     raise exception '이용이 정지된 계정입니다.' using errcode = '42501';
   end if;
 
-  if not public.match_talk_is_open() then
-    raise exception '상세 궁합은 아직 열리지 않았어요.' using errcode = '55000';
-  end if;
-
   perform public.adult_check_must_pass(actor);
 
   if p_client_key is null or length(p_client_key) not between 8 and 100 then
     raise exception 'detail: the client key has no shape' using errcode = '22023';
+  end if;
+
+  /** 같은 키의 재전송은 처음 답이다 — 그 뒤 무엇이 됐든. 다른 인연에 쓴 키는 잘못 지은 키다(ADR 0106 과 같은 규율) */
+  select * into held from public.match_request q
+  where q.requester_user_id = actor and q.client_key = p_client_key;
+
+  if found then
+    if held.detail_match_id is distinct from p_match_id then
+      raise exception 'detail: the client key belongs to another match' using errcode = '22023';
+    end if;
+    return query select held.id, held.status, true;
+    return;
+  end if;
+
+  /** 끈 뒤에도 응답을 잃은 재전송은 위에서 답을 받는다 — 새 청함만 닫는다 */
+  if not public.match_talk_is_open() then
+    raise exception '상세 궁합은 아직 열리지 않았어요.' using errcode = '55000';
   end if;
 
   select * into the_match from public.match m where m.id = p_match_id;
@@ -1135,24 +1533,16 @@ begin
     raise exception '이용이 정지된 계정입니다.' using errcode = '42501';
   end if;
 
-  /** 같은 키의 재전송은 처음 답이다 — 그 뒤 무엇이 됐든. 다른 인연에 쓴 키는 잘못 지은 키다(ADR 0106 과 같은 규율) */
-  select * into held from public.match_request q
-  where q.requester_user_id = actor and q.client_key = p_client_key;
-
-  if found then
-    if held.detail_match_id is distinct from p_match_id then
-      raise exception 'detail: the client key belongs to another match' using errcode = '22023';
-    end if;
-    return query select held.id, held.status, true;
-    return;
-  end if;
-
   if not exists (select 1 from public.reading_scope_for(actor, 'match', null, null, p_match_id)) then
     raise exception '결과를 만들 수 있는 대상이 아닙니다.' using errcode = 'check_violation';
   end if;
 
   if not public.adult_check_passed(partner) then
     raise exception '결과를 만들 수 있는 대상이 아닙니다.' using errcode = 'check_violation';
+  end if;
+
+  if exists (select 1 from public.chat_room r where r.match_id = p_match_id and r.closed_at is not null) then
+    raise exception '닫힌 대화에서는 청할 수 없어요.' using errcode = 'check_violation';
   end if;
 
   select q.* into talk from public.match_request q where q.id = the_match.request_id;
@@ -1220,14 +1610,14 @@ begin
   from public.app_user u join public.person pe on pe.id = u.self_person_id where u.id = partner;
 
   insert into public.match_request (
-    kind, detail_match_id, client_key, created_at,
+    kind, detail_match_id, client_key, created_at, expires_at,
     requester_user_id, addressee_user_id,
     requester_input_version, addressee_input_version,
     impression_id, policy_version,
     supplied_to_requester, supplied_to_addressee, balance_band
   )
   values (
-    'detail', p_match_id, p_client_key, clock_timestamp(),
+    'detail', p_match_id, p_client_key, clock_timestamp(), now() + public.match_detail_ttl(),
     actor, partner,
     my_version, their_version,
     talk.impression_id, talk.policy_version,
@@ -1251,8 +1641,8 @@ comment on function public.request_match_detail(uuid, text) is
   '상세 궁합을 청한다 — 부른 사람이 구매자, 1장 예약. 받은 사람의 누름은 respond_to_match_request (ADR 0215)';
 
 /**
- * **화면이 읽을 상태 한 줄**(ADR 0215) — `state` 는 여덟: `before_purchase` 구매 전 · `no_credit` 잔액 없음 · `awaiting_consent` 동의 대기 ·
- * `rejected` 거절 · `making` 만드는 중 · `ready` 완료 · `failed_mine` 내 실패(구매자에게만) · `input_changed` 입력 변경.
+ * **화면이 읽을 상태 한 줄**(ADR 0215) — `state` 는 아홉: `before_purchase` 구매 전 · `no_credit` 잔액 없음 · `awaiting_consent` 동의 대기 ·
+ * `rejected` 거절 · `making` 만드는 중 · `ready` 완료 · `failed_mine` 내 실패(구매자에게만) · `input_changed` 입력 변경 · `room_closed` 닫힌 방.
  * 못 보는 인연은 0행이다(`visible_matches`). 실패의 칸은 구매자에게만 찬다 — 상대에게는 구매 전이다(D3a). 읽기만 한다.
  */
 create function public.my_match_detail_state(p_match_id uuid)
@@ -1305,6 +1695,8 @@ begin
   elsif run.id is not null and run.user_id = actor and run.status <> 'succeeded'
         and (latest.id is null or latest.status = 'accepted') then
     answer := 'failed_mine';
+  elsif room.closed_at is not null then
+    answer := 'room_closed';
   elsif left_over > 0 then
     answer := 'before_purchase';
   else
@@ -1314,7 +1706,7 @@ begin
   return query select
     answer,
     case when answer in ('awaiting_consent', 'rejected', 'input_changed', 'making', 'failed_mine') then latest.id end,
-    case when answer in ('before_purchase', 'no_credit') then false else coalesce(mine, false) end,
+    case when answer in ('before_purchase', 'no_credit', 'room_closed') then false else coalesce(mine, false) end,
     case when answer = 'awaiting_consent' then latest.expires_at end,
     case when answer = 'failed_mine' then coalesce(run.failure_code, 'expired') end,
     case when answer = 'failed_mine' then run.failure_detail end,
@@ -1331,4 +1723,4 @@ revoke all on function public.my_match_detail_state(uuid) from public, anon, aut
 grant execute on function public.my_match_detail_state(uuid) to authenticated;
 
 comment on function public.my_match_detail_state(uuid) is
-  '상세 궁합의 상태 — 여덟 갈래 하나와 대화의 답 여부. 실패의 칸은 구매자에게만 (ADR 0215)';
+  '상세 궁합의 상태 — 아홉 갈래 하나와 대화의 답 여부. 실패의 칸은 구매자에게만 (ADR 0215)';
