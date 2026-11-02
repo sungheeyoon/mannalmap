@@ -54,7 +54,7 @@ select
 
 1. **조건** — 상태 문을 읽는 웹 · 앱(#964 · #965), 출력 계약(#963), 고지 문장(#938), 닫힌 방 90일 파기의 크론(G-132 — 지금은 사람이 돈다). 하나라도 없으면 멈춘다
 2. **옛 앱** — 그 앱이 나가고 옛 판이 얼마나 남았는지 본다. 옛 앱의 받은 사람은 상세 소식을 못 봐 누르지 못하고, 구매자의 1장이 72시간 잡혔다 돌아온다 — 이 대가를 승인 표에 적는다. 받은 요청 카드의 거절 단추는 호환 길로 남는다. 옛 앱의 소식 문장은 대화에 안 맞고 궁합 만들기는 거절로 답한다(ADR 0215 「켜면 옛 앱이 보는 것」)
-3. **재측정** — 위 질의
+3. **재측정** — 위 질의. `matches` 가 0 이 아니면 옛 인연의 글자가 상세 청하기로 닫히는 일을 먼저 정한다(ADR 0215)
 4. **승인** — 운영자에게 값과 함께 표로 묻는다
 5. **켠다**
 
@@ -99,6 +99,8 @@ returning open, changed_at;
 **더한 칸(옛 앱은 안 읽는다):** `my_match_requests.kind` · `my_matches.request_kind`(`bundled` · `talk` · 목록에 `detail` 없음) · `my_readings.request_kind`(인연 궁합 줄만 `bundled` · `detail`, 나머지 null). 대화의 `request_received` 소식은 `match_id` 를 든다 — 옛 화면은 이 종류의 줄을 인연 탭으로 보낸다(`destinationFor`).
 
 **끝난 대화의 신고:** `my_ended_talks()` → `match_id` · `partner_user_id` · `partner_nickname` · `closed_at`, `my_ended_talk_messages(p_match_id)` → `message_id` · `mine` · `body` · `created_at`. 자기 방 · 보존 90일 안 · 읽기 전용. 사진 · 소개 · 끝난 까닭이 없다. 신고는 지금 `report_user` · `report_chat_message` 다.
+
+**제출 문의 차례:** 앱이 `reading_run_request_kind` 를 묻는다. **앱 배포가 DB 보다 먼저면 그 문이 없어(`PGRST202`) 인연 궁합의 첫 제출까지 `request-kind-unknown` 으로 닫힌다** — 마이그레이션이 먼저다. 일시 장애(끊김 · 시한)는 닫지 않고 복구기가 다시 집는다.
 
 **제출 문:** 열쇠 전용 `match_run_awaiting_send` 가 `request_kind`(`bundled` · `detail`)를 더 내주고, 그 이름을 안 내주는 다시 만들기 · 복구기는 열쇠 전용 `reading_run_request_kind(시도)` 로 묻는다. **앱이 이 문을 부르므로 이 마이그레이션이 앱 배포보다 먼저다** — 문이 없으면 인연 궁합의 다시 만들기 · 복구가 옛 흐름까지 `request-kind-unknown` 으로 닫힌다. 보내기 직전 `prepare_reading_job` 은 새 흐름의 범위 · 방 · 동의를 다시 재고, 끝났으면 `false` 와 함께 시도를 `consent-ended` 실패로 닫는다.
 

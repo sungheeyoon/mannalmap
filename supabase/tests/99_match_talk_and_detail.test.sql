@@ -12,7 +12,7 @@
 --
 -- 두 세션의 진짜 경합은 pgTAP 이 못 만든다 — 그 값은 PR 에 적었다(psql 두 세션을 나란히 돌렸다).
 begin;
-select plan(398);
+select plan(403);
 
 create or replace function pg_temp.participant(mail text, who text, summary jsonb)
 returns uuid
@@ -1126,10 +1126,12 @@ select pg_temp.acting((select park from folks));
 select is((select count(*)::int from public.my_ended_talks() where match_id = pg_temp.got('m-lee-park')), 1, '보존 안의 끝난 대화가 선다');
 select is((select count(*)::int from public.my_ended_talk_messages(pg_temp.got('m-lee-park'))), 1, '그 말도 선다');
 reset role;
+insert into seen select 'lee-word', m.id from public.chat_message m join public.chat_room r on r.id = m.room_id where r.match_id = pg_temp.got('m-lee-park');
 update public.chat_room set closed_at = now() - public.chat_retention() - interval '1 day' where match_id = pg_temp.got('m-lee-park');
 set local role authenticated;
 select is((select count(*)::int from public.my_ended_talks() where match_id = pg_temp.got('m-lee-park')), 0, '보존이 지나면 끝난 대화가 내려간다');
 select is((select count(*)::int from public.my_ended_talk_messages(pg_temp.got('m-lee-park'))), 0, '보존이 지나면 말도 내려간다');
+select throws_ok(format('select public.report_chat_message(%L, %L, null)', pg_temp.got('lee-word'), 'harassment'), '42501', 'chat: no such message', '보존이 지난 끝난 대화의 말은 신고 문이 닫힌다');
 reset role;
 update public.chat_room set closed_at = now() where match_id = pg_temp.got('m-lee-park');
 update public.app_user set status = 'suspended' where id = (select lee from folks);
@@ -1140,6 +1142,30 @@ reset role;
 update public.app_user set status = 'active' where id = (select lee from folks);
 select pg_temp.reopen(pg_temp.got('m-lee-park-2'));
 set local role authenticated;
+
+-- 성인 확인이 켜지면 재시도 · 보내기 직전 문도 양쪽을 묻는다
+set local role authenticated;
+select pg_temp.acting((select lee from folks));
+insert into seen select 'lp-r1', d.request_id from public.request_match_detail(pg_temp.got('m-lee-park-2'), 'lee-park-r1') d;
+select pg_temp.acting((select park from folks));
+select is(public.respond_to_match_request(pg_temp.got('lp-r1'), true), 'accepted', '누른다');
+reset role;
+insert into seen select 'lp-run-r1', id from public.reading_run where match_id = pg_temp.got('m-lee-park-2') and status = 'running';
+update public.adult_check_switch set required = true;
+insert into public.adult_check (user_id) select lee from folks;
+select is(pg_temp.prepare(pg_temp.got('lp-run-r1')), false, '상대가 미확인이면 보내기 직전 문이 멈춘다');
+set local role authenticated;
+select pg_temp.acting((select lee from folks));
+select throws_ok(format($$select * from public.start_reading_run('match', 'detail-retry:lee-adult', null, null, %L)$$, pg_temp.got('m-lee-park-2')), '23514', '상세 궁합은 대화방에서 상대의 동의를 받은 뒤에 만들어요.', '상대가 미확인이면 재시도가 안 열린다');
+reset role;
+delete from public.adult_check where user_id = (select lee from folks);
+update public.adult_check_switch set required = false;
+set local role authenticated;
+select pg_temp.acting((select lee from folks));
+select ok((select consent_holds from public.my_match_detail_state(pg_temp.got('m-lee-park-2'))), '성인 확인이 꺼지면 그 동의는 그대로다');
+select pg_temp.acting((select park from folks));
+select tests.set_discovery_participation(false, null, null);
+select tests.set_discovery_participation(true, pg_temp.summary(2, 2, 2, 2, 0), tests.need());
 
 -- 2 — 차단은 상세를 취소로 끝내고 소식이 없다
 select pg_temp.acting((select lee from folks));

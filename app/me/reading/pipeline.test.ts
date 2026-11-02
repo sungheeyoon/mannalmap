@@ -1071,7 +1071,7 @@ describe('상세 궁합의 제출', () => {
   });
 
   it.each([
-    ['문이 실패했다', { data: null, error: { code: '57014', message: '끊김' } }],
+    ['문이 거절했다', { data: null, error: { code: 'PGRST202', message: '없는 문' } }],
     ['답이 없다', { data: null, error: null }],
     ['모르는 이름이다', { data: 'talk', error: null }],
   ])('%s — 흐름을 모르면 안 보내고 닫는다', async (_, broken) => {
@@ -1083,6 +1083,17 @@ describe('상세 궁합의 제출', () => {
     expect(submit).not.toHaveBeenCalled();
     expect(prepared()).toBeUndefined();
     expect(closed()?.[1]).toMatchObject({ p_failure_code: 'request-kind-unknown' });
+  });
+
+  it('문의 일시 실패는 닫지 않고 복구기에 맡긴다 — 보내지도 않는다', async () => {
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+    job = frozen(pair);
+    flowAnswer = { data: null, error: { code: '57014', message: '끊김' } };
+    await beginReading({ kind: 'match', matchId: 'match-1' });
+    await settle();
+    expect(submit).not.toHaveBeenCalled();
+    expect(prepared()).toBeUndefined();
+    expect(closed()).toBeUndefined();
   });
 
   it('제출 직전 문이 거짓이면(동의가 끝남) 모델을 안 부르고 더 닫지 않는다 — 닫는 것은 그 문이 했다', async () => {

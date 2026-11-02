@@ -281,6 +281,11 @@ as $$
     limit 1
   ), false)
   and not exists (select 1 from public.chat_room r where r.match_id = p_match_id and r.closed_at is not null)
+  -- 두 사람 다 성인 확인을 지나야 한다 — 스위치가 꺼져 있으면 언제나 참이다(ADR 0214)
+  and exists (
+    select 1 from public.match m
+    where m.id = p_match_id and public.adult_check_passed(m.user_low) and public.adult_check_passed(m.user_high)
+  )
   -- 두 사람 다 참여 중이어야 한다 — 어느 쪽이 꺼도 그 사람 자료가 재시도로 안 나간다
   and not exists (
     select 1 from public.match m
@@ -803,6 +808,16 @@ declare
 begin
   if actor is null then
     raise exception '로그인이 필요해요. 로그인한 뒤 다시 시도해 주세요.' using errcode = '28000';
+  end if;
+
+  /**
+   * **읽고 → 잠그고 → 다시 읽는다** — 답하는 문 · 차단과 같은 차례(계정 → 요청 → 인연 → 방)다. 요청을 먼저 쥐면 방을 닫는 외래 키 확인이
+   * 차단이 쥔 계정 행을 기다려 서로 물린다(ADR 0215).
+   */
+  select * into req from public.match_request where id = p_request_id;
+
+  if found and req.requester_user_id = actor then
+    perform public.lock_users(req.requester_user_id, req.addressee_user_id);
   end if;
 
   select * into req from public.match_request where id = p_request_id for update;
@@ -1376,6 +1391,22 @@ CREATE OR REPLACE FUNCTION public.close_chat_room_on_block()
  SET search_path TO ''
 AS $function$
 begin
+  /**
+   * **잠그는 차례는 요청 → 인연 → 방이다** — 취소(`cancel_match_request` · `close_talk_room`)와 같다. 엇갈리면 취소와 차단이 서로를 기다린다.
+   */
+  perform 1 from public.match_request q
+  where q.pair_low = least(new.user_id, new.blocked_user_id)
+    and q.pair_high = greatest(new.user_id, new.blocked_user_id)
+    and q.kind = 'talk' and q.status = 'pending'
+  order by q.id
+  for update;
+
+  perform 1 from public.match m
+  where m.user_low = least(new.user_id, new.blocked_user_id)
+    and m.user_high = greatest(new.user_id, new.blocked_user_id)
+  order by m.id
+  for update;
+
   update public.chat_room r
   -- 답 전 대화의 차단은 거절과 같은 이름으로 닫는다 — 이 칸은 상대가 읽는다. 차단은 알리지 않는다(ADR 0009 · 0120 · 0215)
   set closed_reason = case when exists (
@@ -1849,9 +1880,9 @@ begin
     select r.* into room
     from public.chat_room r
     where r.id = chosen.room_id
-      -- 숨겨진 끝난 대화의 말도 보존 동안 신고한다(ADR 0215)
+      -- 숨겨진 끝난 답 전 대화의 말은 보존 동안만 신고한다(ADR 0215). 옛 방은 그대로다
       and (public.chat_room_readable(r.id)
-           or (r.closed_reason = 'declined' and actor in (r.user_low, r.user_high)));
+           or (r.closed_reason = 'declined' and actor in (r.user_low, r.user_high) and r.closed_at > now() - public.chat_retention()));
   end if;
 
   if chosen.id is null or room.id is null or chosen.sender_user_id is null then
