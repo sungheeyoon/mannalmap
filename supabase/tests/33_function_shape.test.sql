@@ -62,8 +62,9 @@ select set_eq(
     from pg_proc p join pg_namespace n on n.oid = p.pronamespace
     where n.nspname = 'public' and has_function_privilege('anon', p.oid, 'EXECUTE')$$,
   $$values ('current_beta_schedule()'),
+           ('match_talk_open()'),
            ('shared_reading(p_token text)')$$,
-  'anon 이 부를 수 있는 public 함수는 이 둘뿐이다');
+  'anon 이 부를 수 있는 public 함수는 이 셋뿐이다');
 
 -- ---------------------------------------------------------------------------
 -- 3. 모든 표에 RLS 가 켜져 있다

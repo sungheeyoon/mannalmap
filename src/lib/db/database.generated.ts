@@ -3448,6 +3448,7 @@ export type Database = {
           match_id: string
           person_a: string
           person_b: string
+          request_kind: string
           run_id: string
           viewer_is_first: boolean
         }[]
