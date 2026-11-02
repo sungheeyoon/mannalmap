@@ -13,7 +13,7 @@ import { STEM_INFO, storedChartSnapshot, type Element, type Stem } from '@saju';
 
 import { supabase } from '@/auth/client';
 import { NOT_READY } from '@/auth/signup';
-import { readDetail } from '@/matching/talk-doors';
+import { readDetail, readEndedTalks, type EndedTalk } from '@/matching/talk-doors';
 import { settled } from '@/ui/settled';
 
 /**
@@ -158,6 +158,8 @@ export type RoomListScreen =
       readonly hasSelf: boolean;
       /** 답하지 않은 대화를 가르는 재료 — 옛 요청뿐이면 접히는 방이 없어 지금 목록 그대로다 */
       readonly requests: readonly RequestRow[];
+      /** 끝난 답 전 대화 — 신고의 길이다 */
+      readonly ended: readonly EndedTalk[];
     };
 
 export type RequestRow = { readonly requestId: string; readonly direction: 'sent' | 'received'; readonly status: string; readonly counterpartUserId: string };
@@ -179,13 +181,13 @@ async function readRequestRows(): Promise<readonly RequestRow[]> {
 
 export async function readRoomListScreen(): Promise<RoomListScreen> {
   if ((await currentUserId()) === null) return { kind: 'signed-out' };
-  const [account, rooms, requests] = await Promise.all([readAccount(), readRooms(), readRequestRows()]);
+  const [account, rooms, requests, ended] = await Promise.all([readAccount(), readRooms(), readRequestRows(), readEndedTalks()]);
   if (isStopped(account.state)) return { kind: 'blocked', state: account.state };
   if (!rooms.ok) return { kind: 'failed', message: rooms.message };
   const scopes = await Promise.all(rooms.rooms.filter(isOpen).map(async (room) => [room.matchId, await readScope(room.matchId)] as const));
   const tones = new Map<string, RoomTones>();
   for (const [matchId, scope] of scopes) if (scope?.tones) tones.set(matchId, scope.tones);
-  return { kind: 'ready', rooms: rooms.rooms, tones, hasSelf: account.state.kind === 'active' && account.state.selfPersonId !== null, requests };
+  return { kind: 'ready', rooms: rooms.rooms, tones, hasSelf: account.state.kind === 'active' && account.state.selfPersonId !== null, requests, ended };
 }
 
 const isStopped = (state: AccountState): boolean => state.kind === 'halted' || state.kind === 'missing' || state.kind === 'unreachable';

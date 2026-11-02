@@ -122,7 +122,8 @@ const fresh = () => ({
   block: [],
   discovery: { user_id: ME, prefer_gender: 'male', opted_out_at: null },
   talkOpen: false,
-  detail: { state: 'before_purchase', request_id: null, i_am_buyer: false, expires_at: null, failure_code: null, failure_detail: null, credits_left: 5, talk_status: 'accepted', may_send: true, detail_open: false },
+  ended: [],
+  detail: { state: 'before_purchase', request_id: null, i_am_buyer: false, expires_at: null, failure_code: null, failure_detail: null, credits_left: 5, talk_status: 'accepted', may_send: true, detail_open: false, consent_holds: false },
 });
 
 let db = fresh();
@@ -158,6 +159,8 @@ const rpc = {
   my_matches: () => db.matches,
   // 기본은 스위치가 꺼진 답이다 — 켠 상태는 `__set` 으로 든다(ADR 0215)
   match_talk_open: () => db.talkOpen,
+  my_ended_talks: () => db.ended,
+  my_ended_talk_messages: () => [{ message_id: 'dddddddd-3333-4000-8000-000000000001', mine: false, body: '끝난 대화의 말이에요', created_at: ago(900) }],
   my_match_detail_state: () => [db.detail],
   request_match_detail: () => {
     db.detail = { ...db.detail, state: 'awaiting_consent', request_id: R2, i_am_buyer: true, expires_at: ago(-4320) };
@@ -293,7 +296,8 @@ const server = http.createServer((req, res) => {
       if (mode === 'warning') db.warning = [{ category: 'harassment', warned_on: '2026-10-30', note: '가짜 경고' }];
       if (mode === 'no-credits') db.credits[0].available = 0;
       if (mode === 'no-self') db.account.self_person_id = null;
-      if (mode === 'talk-on') { db.talkOpen = true; db.detail.detail_open = true; }
+      if (mode === 'ended') db.ended = [{ match_id: M2, partner_user_id: U4, partner_nickname: '지나간사람', closed_at: ago(800) }];
+      if (mode === 'talk-on') { db.talkOpen = true; db.detail.detail_open = true; for (const one of db.matches) one.request_kind = 'talk'; }
       if (mode.startsWith('detail-')) { db.detail.state = mode.slice('detail-'.length); db.detail.request_id = R1; if (db.detail.state === 'awaiting_consent') db.detail.expires_at = ago(-4320); }
       if (mode === 'buyer') db.detail.i_am_buyer = true;
       if (mode === 'holds') db.detail.consent_holds = true;

@@ -48,6 +48,20 @@ $$;
 
 revoke all on function public.match_talk_is_open() from public, anon, authenticated, service_role;
 
+/** 화면이 켜짐을 읽는 문 — 개인 값이 없다. 줄이 없으면 꺼짐이다. 인연이 없는 화면(카드 · 받은 요청)이 흐름을 가른다 */
+create function public.match_talk_open()
+returns boolean
+language sql
+stable
+security definer
+set search_path to ''
+as $$
+  select public.match_talk_is_open();
+$$;
+
+revoke all on function public.match_talk_open() from public, anon, authenticated, service_role;
+grant execute on function public.match_talk_open() to authenticated;
+
 alter table public.match_request
   add column kind text not null default 'bundled'
     constraint match_request_kind_known check (kind in ('bundled', 'talk', 'detail')),
@@ -56,10 +70,16 @@ alter table public.match_request
   add constraint detail_names_its_match check ((kind = 'detail') = (detail_match_id is not null)),
   add constraint detail_carries_its_key check (
     (kind = 'detail') = (client_key is not null)
-    and (client_key is null or length(client_key) between 8 and 100));
+    and (client_key is null or length(client_key) between 8 and 80));
 
 comment on column public.match_request.kind is
   'bundled 옛 요청 · talk 대화(방이 수락 없이 열린다) · detail 상세 궁합(구매자의 예약, 받은 사람의 누름) (ADR 0215)';
+
+/** 끝난 답 전 대화의 인연은 말 · 방을 90일 보존과 함께 남기고, 그 쌍은 새 인연을 열 수 있다 — 한 쌍에 하나는 살아 있는 인연의 일이다 */
+alter table public.match add column ended_at timestamptz;
+alter table public.match drop constraint match_user_low_user_high_key;
+create unique index match_live_pair_is_one on public.match (user_low, user_high) where ended_at is null;
+create index match_by_user_low on public.match (user_low);
 
 /** 살아 있는 결정은 한 쌍에 하나(ADR 0009)는 대화 · 옛 요청의 일이다 — 상세는 아래 둘이 든다 */
 drop index public.one_live_request_between_two;
@@ -93,6 +113,8 @@ language sql
 security definer
 set search_path to ''
 as $$
+  update public.match m set ended_at = now() where m.request_id = p_request_id and m.ended_at is null;
+
   update public.chat_room r
   set closed_reason = 'declined', closed_by_user_id = p_by, closed_at = now()
   where r.closed_at is null
@@ -118,6 +140,131 @@ $$;
 
 revoke all on function public.match_is_on_the_old_way(uuid) from public, anon, authenticated, service_role;
 
+/** (행위자 → 상대) 새 대화 · 상세 요청이 함께 쓰는 수 — 지난 60분. 줄이 새로 설 때만 센다. 거둠 · 만료가 안 돌린다. **초기값이다** (ADR 0215) */
+create function public.match_request_hourly_limit()
+returns integer
+language sql
+stable
+set search_path to ''
+as $$ select 3 $$;
+
+revoke all on function public.match_request_hourly_limit() from public, anon, authenticated, service_role;
+
+create function public.match_request_too_often(p_from uuid, p_to uuid)
+returns boolean
+language sql
+stable
+security definer
+set search_path to ''
+as $$
+  select count(*) >= public.match_request_hourly_limit()
+  from public.match_request q
+  where q.requester_user_id = p_from and q.addressee_user_id = p_to
+    and q.kind in ('talk', 'detail')
+    and q.created_at > now() - interval '1 hour';
+$$;
+
+revoke all on function public.match_request_too_often(uuid, uuid) from public, anon, authenticated, service_role;
+
+/** 새 대화 하루 수 — 보낸 사람 기준 서울 달력일. 같은 상대 재시작도 세고 거둬도 안 돌아온다. 상세는 안 센다. **초기값이다** */
+create function public.match_talk_daily_limit()
+returns integer
+language sql
+stable
+set search_path to ''
+as $$ select 10 $$;
+
+revoke all on function public.match_talk_daily_limit() from public, anon, authenticated, service_role;
+
+create function public.match_talk_too_many_today(p_from uuid)
+returns boolean
+language sql
+stable
+security definer
+set search_path to ''
+as $$
+  select count(*) >= public.match_talk_daily_limit()
+  from public.match_request q
+  where q.requester_user_id = p_from and q.kind = 'talk'
+    and q.created_at >= (date_trunc('day', now() at time zone 'Asia/Seoul') at time zone 'Asia/Seoul');
+$$;
+
+revoke all on function public.match_talk_too_many_today(uuid) from public, anon, authenticated, service_role;
+
+/** 소식 묶음의 창 — 보낸 사람 → 받는 사람의 요청 소식 · 푸시. **초기값이다** */
+create function public.request_news_window()
+returns interval
+language sql
+immutable
+set search_path to ''
+as $$ select interval '24 hours' $$;
+
+revoke all on function public.request_news_window() from public, anon, authenticated, service_role;
+
+/** 이 창에 이미 요청 소식이 갔는가 — 대화 · 상세가 한 계수이고 거둔 요청의 소식도 센다. 넘는 것은 방 안 상태로만 보인다 */
+create function public.request_news_is_recent(p_to uuid, p_from uuid)
+returns boolean
+language sql
+stable
+security definer
+set search_path to ''
+as $$
+  select exists (
+    select 1 from public.notification n
+    join public.match_request q on q.id = n.request_id
+    where n.user_id = p_to and n.kind in ('request_received', 'detail_requested') and q.requester_user_id = p_from
+      and n.created_at > now() - public.request_news_window()
+  );
+$$;
+
+revoke all on function public.request_news_is_recent(uuid, uuid) from public, anon, authenticated, service_role;
+
+/** 답 전 첫 말의 푸시는 그 대화의 요청 소식이 갔을 때만 — 거두고 다시 열어 푸시로 울리는 길을 닫는다. 답장은 안 묶는다 */
+create function public.first_word_is_quiet(p_room_id uuid, p_sender uuid)
+returns boolean
+language sql
+stable
+security definer
+set search_path to ''
+as $$
+  select exists (
+    select 1 from public.chat_room r
+    join public.match m on m.id = r.match_id
+    join public.match_request q on q.id = m.request_id
+    where r.id = p_room_id and q.kind = 'talk' and q.status = 'pending' and q.requester_user_id = p_sender
+      and not exists (select 1 from public.notification n where n.request_id = q.id and n.kind = 'request_received')
+  );
+$$;
+
+revoke all on function public.first_word_is_quiet(uuid, uuid) from public, anon, authenticated, service_role;
+
+/**
+ * 이 인연의 상세 동의가 살아 있는가 — 마지막 상세 줄이 누름이고 두 사람의 입력 판이 그때와 같다. 차단 · 탈퇴 · 정지는 범위 · 닫힌 방이 끝낸다.
+ * 기술 실패 뒤 다시 만드는 데 새 누름이 안 든다.
+ */
+create function public.match_consent_holds(p_match_id uuid)
+returns boolean
+language sql
+stable
+security definer
+set search_path to ''
+as $$
+  select coalesce((
+    select q.status = 'accepted'
+      and (select pe.input_version from public.app_user u join public.person pe on pe.id = u.self_person_id where u.id = q.requester_user_id)
+        is not distinct from q.requester_input_version
+      and (select pe.input_version from public.app_user u join public.person pe on pe.id = u.self_person_id where u.id = q.addressee_user_id)
+        is not distinct from q.addressee_input_version
+    from public.match_request q
+    where q.detail_match_id = p_match_id
+    order by q.created_at desc, q.id
+    limit 1
+  ), false)
+  and not exists (select 1 from public.chat_room r where r.match_id = p_match_id and r.closed_at is not null);
+$$;
+
+revoke all on function public.match_consent_holds(uuid) from public, anon, authenticated, service_role;
+
 /**
  * 이 열쇠가 인연의 시도를 열어도 되는가 — 꺼진 동안 옛 길의 인연은 옛 다시 만들기가 그대로다.
  * 그 밖에는 **수락 · 누름이 끝난 그 요청의 열쇠**여야 하고, 구매자 이름이어야 하고, **입력 판이 그 요청 때와 같아야 한다.**
@@ -133,6 +280,12 @@ as $$
   select (
       not public.match_talk_is_open()
       and public.match_is_on_the_old_way(p_match_id)
+    )
+    -- 살아 있는 동의의 다시 만들기 — 인연의 어느 쪽이든, 연 사람이 쓴다
+    or (
+      public.match_talk_is_open()
+      and p_key like 'detail-retry:%'
+      and public.match_consent_holds(p_match_id)
     )
     or exists (
       select 1
@@ -170,6 +323,7 @@ declare
   counted record;
   new_request uuid;
   talk_opens boolean := public.match_talk_is_open();
+  talk_match uuid;
 begin
   if actor is null then
     raise exception '로그인이 필요해요. 로그인한 뒤 다시 시도해 주세요.' using errcode = '28000';
@@ -205,6 +359,28 @@ begin
 
   if not public.my_summary_is_current(actor) then
     raise exception '내 오행 요약이 지금 입력의 것이 아닙니다.' using errcode = '55000';
+  end if;
+
+  /**
+   * **두 사람 사이 살아 있는 대화는 하나다**(ADR 0215) — 상대가 이미 시작했거나 내가 시작했으면 그 대화를 돌려주고 안 센다. 그때 내 말은 답장이다.
+   * 차단 · 닫힌 방은 살아 있는 것이 아니라 아래의 한 문장으로 간다.
+   */
+  if talk_opens then
+    select q.id into new_request
+    from public.match_request q
+    join public.match m on m.request_id = q.id and m.ended_at is null
+    join public.chat_room r on r.match_id = m.id and r.closed_at is null
+    where q.pair_low = least(actor, p_candidate_user_id)
+      and q.pair_high = greatest(actor, p_candidate_user_id)
+      and q.kind = 'talk' and q.status in ('pending', 'accepted')
+      and not exists (
+        select 1 from public.block b
+        where (b.user_id = actor and b.blocked_user_id = p_candidate_user_id)
+           or (b.user_id = p_candidate_user_id and b.blocked_user_id = actor));
+
+    if new_request is not null then
+      return new_request;
+    end if;
   end if;
 
   /**
@@ -254,6 +430,14 @@ begin
       using errcode = '42501';
   end if;
 
+  if talk_opens and public.match_request_too_often(actor, p_candidate_user_id) then
+    raise exception '같은 사람에게는 잠시 뒤 다시 청해 주세요.' using errcode = 'check_violation';
+  end if;
+
+  if talk_opens and public.match_talk_too_many_today(actor) then
+    raise exception '오늘은 새 대화를 더 열 수 없어요. 내일 다시 시작해 주세요.' using errcode = 'check_violation';
+  end if;
+
   insert into public.match_request (
     kind, expires_at,
     requester_user_id, addressee_user_id,
@@ -280,11 +464,14 @@ begin
    */
   if talk_opens then
     insert into public.match (request_id, user_low, user_high)
-    values (new_request, least(actor, p_candidate_user_id), greatest(actor, p_candidate_user_id));
+    values (new_request, least(actor, p_candidate_user_id), greatest(actor, p_candidate_user_id))
+    returning id into talk_match;
   end if;
 
-  insert into public.notification (user_id, kind, request_id)
-  values (p_candidate_user_id, 'request_received', new_request);
+  if not talk_opens or not public.request_news_is_recent(p_candidate_user_id, actor) then
+    insert into public.notification (user_id, kind, request_id, match_id)
+    values (p_candidate_user_id, 'request_received', new_request, talk_match);
+  end if;
 
   return new_request;
 
@@ -823,8 +1010,10 @@ AS $function$
 $function$
 ;
 
+drop function public.my_match_requests();
+
 CREATE OR REPLACE FUNCTION public.my_match_requests()
- RETURNS TABLE(request_id uuid, direction text, counterpart_user_id uuid, counterpart_nickname text, counterpart_intro text, counterpart_has_photo boolean, status text, supplied_to_me text[], supplied_to_them text[], balance_band text, created_at timestamp with time zone, decided_at timestamp with time zone, counterpart_photo_focus integer[])
+ RETURNS TABLE(request_id uuid, direction text, counterpart_user_id uuid, counterpart_nickname text, counterpart_intro text, counterpart_has_photo boolean, status text, supplied_to_me text[], supplied_to_them text[], balance_band text, created_at timestamp with time zone, decided_at timestamp with time zone, counterpart_photo_focus integer[], kind text)
  LANGUAGE sql
  STABLE SECURITY DEFINER
  SET search_path TO ''
@@ -848,7 +1037,8 @@ AS $function$
     r.created_at,
     r.decided_at,
     -- 사진 표시와 같은 문턱 — 끝난 줄은 빈 배열이라 모양이 같다
-    case when r.status = 'pending' then public.photo_focus_of(counterpart.id) else '{}'::integer[] end
+    case when r.status = 'pending' then public.photo_focus_of(counterpart.id) else '{}'::integer[] end,
+    r.kind
   from public.match_request r
   -- **중지된 계정과의 요청은 서지 않는다.** 제재는 새 접근과 접촉을 함께 멈춘다(`prd-archive`).
   join public.app_user counterpart
@@ -867,6 +1057,9 @@ AS $function$
   limit 50;
 $function$
 ;
+
+revoke all on function public.my_match_requests() from public, anon, authenticated, service_role;
+grant execute on function public.my_match_requests() to authenticated;
 
 CREATE OR REPLACE FUNCTION public.invalidate_pending_requests(p_user_id uuid)
  RETURNS integer
@@ -912,29 +1105,6 @@ begin
 
   return ended;
 end;
-$function$
-;
-
-CREATE OR REPLACE FUNCTION public.discovery_unavailable(actor uuid, other uuid)
- RETURNS boolean
- LANGUAGE sql
- STABLE SECURITY DEFINER
- SET search_path TO ''
-AS $function$
-  select exists (
-      select 1 from public.block b
-      where (b.user_id = actor and b.blocked_user_id = other)
-         or (b.user_id = other and b.blocked_user_id = actor)
-    )
-    or exists (
-      -- `one_live_request_between_two` 와 같은 세 상태 · 같은 짝이다(머리말 3)
-      select 1 from public.match_request r
-      where r.pair_low = least(actor, other)
-        and r.pair_high = greatest(actor, other)
-        and (r.status in ('pending', 'accepted', 'rejected')
-          -- 거둔 대화는 인연이 남아 다시 못 연다. 정지가 끝낸 대화는 인연째 지워져 새로 시작한다(ADR 0215)
-          or (r.kind = 'talk' and exists (select 1 from public.match m where m.request_id = r.id)))
-    );
 $function$
 ;
 
@@ -1158,6 +1328,13 @@ begin
   where r.closed_at is null
     and r.user_low = least(new.user_id, new.blocked_user_id)
     and r.user_high = greatest(new.user_id, new.blocked_user_id);
+
+  update public.match m
+  set ended_at = now()
+  where m.ended_at is null
+    and m.user_low = least(new.user_id, new.blocked_user_id)
+    and m.user_high = greatest(new.user_id, new.blocked_user_id)
+    and exists (select 1 from public.match_request q where q.id = m.request_id and q.kind = 'talk' and q.status = 'pending');
 
   return new;
 end;
@@ -1397,17 +1574,16 @@ begin
   end if;
 
   /**
-   * **정지로 닫힌 답 전 대화는 끝낸다**(ADR 0215) — 닫힌 채 살아 있는 요청을 안 남긴다. 인연째 지워 풀린 뒤 새로 시작할 수 있다.
-   * 신고가 든 말은 스냅숏에 따로 있다. 답 전이라 시도 · 글 · 차감이 없다.
+   * **정지로 닫힌 답 전 대화는 끝낸다**(ADR 0215) — 닫힌 채 살아 있는 요청을 안 남긴다. 말은 지우지 않고 90일 보존을 따른다. 풀린 뒤 새로 시작할 수 있고 차단 · 시간당 횟수는 그대로다.
    */
   if new.status = 'suspended' then
-    with ended as (
-      update public.match_request q
-      set status = 'cancelled', decided_at = now()
-      where q.kind = 'talk' and q.status = 'pending' and new.id in (q.requester_user_id, q.addressee_user_id)
-      returning q.id
-    )
-    delete from public.match m where m.request_id in (select id from ended);
+    perform public.close_talk_room(q.id, new.id)
+    from public.match_request q
+    where q.kind = 'talk' and q.status = 'pending' and new.id in (q.requester_user_id, q.addressee_user_id);
+
+    update public.match_request q
+    set status = 'cancelled', decided_at = now()
+    where q.kind = 'talk' and q.status = 'pending' and new.id in (q.requester_user_id, q.addressee_user_id);
   end if;
 
   reason := case new.status
@@ -1433,34 +1609,364 @@ end;
 $function$
 ;
 
+CREATE OR REPLACE FUNCTION public.my_match_scope(p_match_id uuid)
+ RETURNS TABLE(match_id uuid, partner_user_id uuid, partner_nickname text, partner_intro text, partner_has_photo boolean, my_chart jsonb, partner_chart jsonb, supplied_to_me text[], supplied_to_them text[], balance_band text, created_at timestamp with time zone)
+ LANGUAGE sql
+ STABLE SECURITY DEFINER
+ SET search_path TO ''
+AS $function$
+  select
+    m.id,
+    partner.id,
+    partner.nickname,
+    partner.intro,
+    exists (select 1 from public.profile_photo f where f.user_id = partner.id),
+    -- 새 흐름은 글자를 사용자에게 안 돌려준다 — 안에서 얼리는 데만 쓴다(ADR 0012 개정, ADR 0215). 옛 길은 그대로다
+    case when not public.match_is_on_the_old_way(m.id) then null when m.user_low = (select auth.uid()) then m.chart_low else m.chart_high end,
+    case when not public.match_is_on_the_old_way(m.id) then null when m.user_low = (select auth.uid()) then m.chart_high else m.chart_low end,
+    case when r.requester_user_id = (select auth.uid())
+      then r.supplied_to_requester else r.supplied_to_addressee end,
+    case when r.requester_user_id = (select auth.uid())
+      then r.supplied_to_addressee else r.supplied_to_requester end,
+    r.balance_band,
+    m.created_at
+  from public.visible_matches() m
+  join public.match_request r on r.id = m.request_id
+  join public.app_user partner
+    on partner.id = case
+      when m.user_low = (select auth.uid()) then m.user_high else m.user_low end
+  where m.id = p_match_id;
+$function$
+;
+
+CREATE OR REPLACE FUNCTION public.my_readings()
+ RETURNS TABLE(kind text, person_a uuid, person_b uuid, match_id uuid, label_a text, label_b text, score smallint, metaphor text, created_at timestamp with time zone, from_current_chart boolean, day_master_a text, day_master_b text)
+ LANGUAGE sql
+ STABLE SECURITY DEFINER
+ SET search_path TO ''
+AS $function$
+  select
+    l.kind, l.person_a, l.person_b, l.match_id,
+    l.label_a, l.label_b, l.score, l.metaphor, l.created_at, l.from_current_chart,
+    l.day_master_a, l.day_master_b
+  from (
+    /**
+     * 내가 주인인 셋 — `self` · `person` · `private`.
+     *
+     * **이름이 붙는 근거가 곧 좁힘이다.** 엣지가 없으면 그 줄이 안 선다. 결과가 남아
+     * 있어도 내가 그 사람을 목록에서 빼면 이 목록에서 사라진다.
+     */
+    select
+      r.kind,
+      r.person_a,
+      r.person_b,
+      null::uuid as match_id,
+      case when r.kind = 'self' then null else (
+        select e.local_label from public.user_person_access e
+        where e.user_id = (select auth.uid()) and e.person_id = r.person_a
+      ) end as label_a,
+      (
+        select e.local_label from public.user_person_access e
+        where e.user_id = (select auth.uid()) and e.person_id = r.person_b
+      ) as label_b,
+      r.score,
+      r.metaphor,
+      r.created_at,
+      coalesce(
+        r.chart_a = pa.current_chart and r.chart_b is not distinct from pb.current_chart,
+        false) as from_current_chart,
+      r.chart_a ->> 'dayMaster' as day_master_a,
+      r.chart_b ->> 'dayMaster' as day_master_b
+    from public.reading r
+    join public.person pa on pa.id = r.person_a
+    left join public.person pb on pb.id = r.person_b
+    where public.is_active_account()
+      and r.owner_user_id = (select auth.uid())
+      and exists (
+        select 1 from public.user_person_access e
+        where e.user_id = (select auth.uid()) and e.person_id = r.person_a
+      )
+      and (
+        r.person_b is null
+        or exists (
+          select 1 from public.user_person_access e
+          where e.user_id = (select auth.uid()) and e.person_id = r.person_b
+        )
+      )
+
+    union all
+
+    /**
+     * 함께 본 궁합 — **좁힘은 `visible_matches()` 가 이미 든다.**
+     *
+     * **「이전 입력」이 없다.** 공유 결과는 동의 당시 여덟 글자로 나고 그 값이 곧 동의한
+     * 대상이라, 「그 뒤에 고친 입력으로 다시 봐야 한다」는 말이 성립하지 않는다.
+     *
+     * 두 일간도 그 동의 당시 사본에서 난다 — 앞자리가 나, 뒷자리가 상대다.
+     */
+    select
+      r.kind,
+      null::uuid,
+      null::uuid,
+      r.match_id,
+      partner.nickname,
+      null::text,
+      r.score,
+      r.metaphor,
+      r.created_at,
+      true,
+      case when not public.match_is_on_the_old_way(m.id) then null when m.user_low = (select auth.uid()) then m.chart_low else m.chart_high end ->> 'dayMaster',
+      case when not public.match_is_on_the_old_way(m.id) then null when m.user_low = (select auth.uid()) then m.chart_high else m.chart_low end ->> 'dayMaster'
+    from public.reading r
+    join public.visible_matches() m on m.id = r.match_id
+    join public.app_user partner
+      on partner.id = case
+        when m.user_low = (select auth.uid()) then m.user_high else m.user_low end
+    where r.kind = 'match'
+  ) l (
+    kind, person_a, person_b, match_id,
+    label_a, label_b, score, metaphor, created_at, from_current_chart,
+    day_master_a, day_master_b
+  )
+  order by l.created_at desc;
+$function$
+;
+
+CREATE OR REPLACE FUNCTION public.report_chat_message(p_message_id uuid, p_reason text, p_detail text DEFAULT NULL::text)
+ RETURNS uuid
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO ''
+AS $function$
+declare
+  actor uuid := (select auth.uid());
+  trimmed text := nullif(btrim(coalesce(p_detail, '')), '');
+  chosen public.chat_message;
+  room public.chat_room;
+  context integer := public.chat_snapshot_context();
+  new_report uuid;
+begin
+  if actor is null then
+    raise exception '로그인이 필요해요. 로그인한 뒤 다시 시도해 주세요.' using errcode = '28000';
+  end if;
+
+  if not public.is_active_account() then
+    raise exception '이용이 정지된 계정입니다.' using errcode = '42501';
+  end if;
+
+  /** 가입이 끝난 계정만 — 공개 출시에서 가입은 본인인증을 품는다(ADR 0101) */
+  if not exists (select 1 from public.app_user u where u.id = actor and u.signed_up_at is not null) then
+    raise exception '가입을 먼저 끝내 주세요.' using errcode = '42501';
+  end if;
+
+  /** 이 사람의 신고를 줄 세운다 — 중복과 하루 수를 이 자물쇠 안에서 센다 */
+  perform 1 from public.app_user u where u.id = actor for update;
+
+  if p_reason is null or p_reason not in ('harassment', 'impersonation', 'inappropriate', 'other') then
+    raise exception '신고 사유를 골라 주세요.' using errcode = '22023';
+  end if;
+
+  if trimmed is not null and length(trimmed) > 1000 then
+    raise exception '적어 주신 내용이 너무 깁니다.' using errcode = '22023';
+  end if;
+
+  select m.* into chosen from public.chat_message m where m.id = p_message_id;
+
+  if found then
+    select r.* into room
+    from public.chat_room r
+    where r.id = chosen.room_id
+      -- 숨겨진 끝난 대화의 말도 보존 동안 신고한다(ADR 0215)
+      and (public.chat_room_readable(r.id)
+           or (r.closed_reason = 'declined' and actor in (r.user_low, r.user_high)));
+  end if;
+
+  if chosen.id is null or room.id is null or chosen.sender_user_id is null then
+    raise exception 'chat: no such message' using errcode = '42501';
+  end if;
+
+  if chosen.sender_user_id = actor then
+    raise exception '자기 자신은 신고할 수 없습니다.' using errcode = '22023';
+  end if;
+
+  /**
+   * 같은 메시지 · 같은 사유로 처리 필요인 신고가 있으면 또 쌓지 않는다 — 안 봤거나 추가 확인 필요로 보류한 것.
+   * 정의는 운영자 목록과 같은 `report_is_open` 하나다(ADR 0107).
+   * 같은 사람의 **다른** 메시지는 저마다 다른 근거라 막지 않는다 — 하루 한도가 그 수를 묶는다.
+   */
+  if exists (
+    select 1 from public.report r
+    join public.chat_report_snapshot s on s.report_id = r.id
+    where r.reporter_user_id = actor and s.message_id = chosen.id
+      and r.reason = p_reason and public.report_is_open(r.reviewed_at, r.review_outcome)
+  ) then
+    raise exception '같은 사유의 신고가 이미 접수되어 검토 중입니다.' using errcode = '23505';
+  end if;
+
+  /** 하루 수는 중복 뒤에 센다 — 같은 신고를 다시 낸 사람에게는 「이미 접수」가 먼저 선다 */
+  perform public.hold_report_quota(actor);
+
+  insert into public.report (reporter_user_id, reported_user_id, reason, detail)
+  values (actor, chosen.sender_user_id, p_reason, trimmed)
+  returning id into new_report;
+
+  insert into public.chat_report_snapshot (
+    report_id, match_id, message_id, context_before, context_after, messages)
+  select
+    new_report, room.match_id, chosen.id, context, context,
+    coalesce(jsonb_agg(jsonb_build_object(
+      'message_id', x.id,
+      'seq', x.seq,
+      'sender_user_id', x.sender_user_id,
+      'body', x.body,
+      'created_at', x.created_at,
+      'chosen', x.id = chosen.id
+    ) order by x.seq), '[]'::jsonb)
+  from (
+    (select b.* from public.chat_message b
+     where b.room_id = room.id and b.seq < chosen.seq
+     order by b.seq desc limit context)
+    union all
+    (select c.* from public.chat_message c where c.id = chosen.id)
+    union all
+    (select a.* from public.chat_message a
+     where a.room_id = room.id and a.seq > chosen.seq
+     order by a.seq asc limit context)
+  ) x;
+
+  return new_report;
+end;
+$function$
+;
+
+CREATE OR REPLACE FUNCTION public.queue_push_for_chat_message()
+ RETURNS trigger
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO ''
+AS $function$
+declare
+  room_key integer;
+begin
+  for room_key in
+    select distinct public.push_room_key(s.id, t.room_id)
+    from (
+      select distinct a.room_id,
+             case when a.sender_user_id = r.user_low then r.user_high else r.user_low end as recipient
+      from added a
+      join public.chat_room r on r.id = a.room_id
+      where not public.first_word_is_quiet(a.room_id, a.sender_user_id)
+    ) t
+    join public.push_subscription s on s.user_id = t.recipient
+    order by 1
+  loop
+    perform pg_advisory_xact_lock(room_key);
+  end loop;
+
+  insert into public.push_delivery (subscription_id, room_id, due_at)
+  select s.id, t.room_id,
+         greatest(now(), coalesce((
+           select max(coalesce(d.sent_at, d.claimed_at)) from public.push_delivery d
+           where d.subscription_id = s.id and d.room_id = t.room_id and d.status in ('sent', 'sending')
+         ) + public.push_room_quiet(), now()))
+  from (
+    select distinct a.room_id,
+           case when a.sender_user_id = r.user_low then r.user_high else r.user_low end as recipient
+    from added a
+    join public.chat_room r on r.id = a.room_id
+    where not public.first_word_is_quiet(a.room_id, a.sender_user_id)
+  ) t
+  join public.push_subscription s on s.user_id = t.recipient
+  where t.recipient is not null
+  on conflict (subscription_id, room_id) where status = 'pending' do nothing;
+
+  return null;
+exception when others then
+  raise warning 'queue_push_for_chat_message: % %', sqlstate, sqlerrm;
+  return null;
+end;
+$function$
+;
+
+drop function public.my_matches();
+
+CREATE OR REPLACE FUNCTION public.my_matches()
+ RETURNS TABLE(match_id uuid, partner_user_id uuid, partner_nickname text, partner_intro text, partner_has_photo boolean, supplied_to_me text[], balance_band text, created_at timestamp with time zone, partner_photo_focus integer[], request_kind text)
+ LANGUAGE sql
+ STABLE SECURITY DEFINER
+ SET search_path TO ''
+AS $function$
+  select
+    m.id,
+    partner.id,
+    partner.nickname,
+    partner.intro,
+    exists (select 1 from public.profile_photo f where f.user_id = partner.id),
+    case when r.requester_user_id = (select auth.uid())
+      then r.supplied_to_requester else r.supplied_to_addressee end,
+    r.balance_band,
+    m.created_at,
+    public.photo_focus_of(partner.id),
+    r.kind
+  from public.visible_matches() m
+  join public.match_request r on r.id = m.request_id
+  join public.app_user partner
+    on partner.id = case
+      when m.user_low = (select auth.uid()) then m.user_high else m.user_low end
+  order by m.created_at desc;
+$function$
+;
+
+revoke all on function public.my_matches() from public, anon, authenticated, service_role;
+grant execute on function public.my_matches() to authenticated;
+
 /**
- * **동의 뒤 글 없이 실패하면 글자를 거둔다**(ADR 0215) — 그 동의는 그 글을 위한 것이었다. 다시 만들려면 새 동의가 들고, 누름이 다시 베낀다. 옛 길은 그대로다.
+ * **끝난 답 전 대화를 신고하는 길**(ADR 0215) — 방 목록에서는 사라지지만 보존 동안 신고는 닫히지 않는다. 자기 방 · 보존 안 · 읽기 전용이다.
+ * 사진 · 소개 · 닫은 사람 · 까닭이 없어 거절 · 취소 · 차단 · 정지가 같은 모양이다.
  */
-create function public.match_failure_takes_back_the_charts()
-returns trigger
-language plpgsql
+create function public.my_ended_talks()
+returns table(match_id uuid, partner_user_id uuid, partner_nickname text, closed_at timestamptz)
+language sql
+stable
 security definer
 set search_path to ''
 as $$
-begin
-  if new.kind = 'match' and new.status = 'failed'
-     and not public.match_is_on_the_old_way(new.match_id)
-     and not exists (select 1 from public.reading g where g.match_id = new.match_id and g.kind = 'match') then
-    update public.match m
-    set chart_low = null, chart_high = null, chart_engine_low = null, chart_engine_high = null
-    where m.id = new.match_id;
-  end if;
-
-  return null;
-end;
+  select r.match_id, partner.id, partner.nickname, r.closed_at
+  from public.chat_room r
+  join public.app_user partner
+    on partner.id = case when r.user_low = (select auth.uid()) then r.user_high else r.user_low end
+  where public.is_active_account()
+    and (r.user_low = (select auth.uid()) or r.user_high = (select auth.uid()))
+    and r.closed_reason = 'declined'
+    and r.closed_at > now() - public.chat_retention()
+  order by r.closed_at desc
+  limit 50;
 $$;
 
-revoke all on function public.match_failure_takes_back_the_charts() from public, anon, authenticated, service_role;
+revoke all on function public.my_ended_talks() from public, anon, authenticated, service_role;
+grant execute on function public.my_ended_talks() to authenticated;
 
-create trigger reading_run_failure_takes_back_the_charts
-  after update of status on public.reading_run
-  for each row when (old.status = 'running' and new.status = 'failed')
-  execute function public.match_failure_takes_back_the_charts();
+create function public.my_ended_talk_messages(p_match_id uuid)
+returns table(message_id uuid, mine boolean, body text, created_at timestamptz)
+language sql
+stable
+security definer
+set search_path to ''
+as $$
+  select c.id, c.sender_user_id is not distinct from (select auth.uid()), c.body, c.created_at
+  from public.chat_room r
+  join public.chat_message c on c.room_id = r.id
+  where public.is_active_account()
+    and r.match_id = p_match_id
+    and (r.user_low = (select auth.uid()) or r.user_high = (select auth.uid()))
+    and r.closed_reason = 'declined'
+    and r.closed_at > now() - public.chat_retention()
+  order by c.seq
+  limit 50;
+$$;
+
+revoke all on function public.my_ended_talk_messages(uuid) from public, anon, authenticated, service_role;
+grant execute on function public.my_ended_talk_messages(uuid) to authenticated;
 
 -- ── 새 문 둘 ──
 
@@ -1487,6 +1993,7 @@ declare
   my_version integer;
   their_version integer;
   new_request uuid;
+  opened_run uuid;
 begin
   if actor is null then
     raise exception '로그인이 필요해요. 로그인한 뒤 다시 시도해 주세요.' using errcode = '28000';
@@ -1498,7 +2005,7 @@ begin
 
   perform public.adult_check_must_pass(actor);
 
-  if p_client_key is null or length(p_client_key) not between 8 and 100 then
+  if p_client_key is null or length(p_client_key) not between 8 and 80 then
     raise exception 'detail: the client key has no shape' using errcode = '22023';
   end if;
 
@@ -1509,6 +2016,13 @@ begin
   if found then
     if held.detail_match_id is distinct from p_match_id then
       raise exception 'detail: the client key belongs to another match' using errcode = '22023';
+    end if;
+    if exists (
+      select 1 from public.block b
+      where (b.user_id = held.requester_user_id and b.blocked_user_id = held.addressee_user_id)
+         or (b.user_id = held.addressee_user_id and b.blocked_user_id = held.requester_user_id)
+    ) then
+      raise exception '결과를 만들 수 있는 대상이 아닙니다.' using errcode = 'check_violation';
     end if;
     return query select held.id, held.status, true;
     return;
@@ -1580,7 +2094,9 @@ begin
     order by (q.kind = 'detail') desc, q.created_at desc
     limit 1;
 
-    return query select held.id, held.status, held.requester_user_id = actor;
+    return query select held.id, held.status,
+      (select r.user_id = actor from public.reading_run r
+       where r.match_id = p_match_id and r.kind = 'match' and r.status = 'running' order by r.created_at desc limit 1);
     return;
   end if;
 
@@ -1601,6 +2117,26 @@ begin
 
   if counted.used + counted.reserved + counted.requested >= public.reading_credit_limit_for(actor) then
     raise exception '풀이권이 없어요. 충전 기능은 준비 중이에요.' using errcode = 'check_violation';
+  end if;
+
+  /** **동의가 살아 있으면 새 누름 없이 연다** — 기술 실패 뒤다. 부른 사람이 1장을 쓴다. 새 줄이 없어 횟수 · 소식을 안 탄다 */
+  if public.match_consent_holds(p_match_id) then
+    select f.run_id into opened_run
+    from public.start_reading_run_for(actor, 'match', 'detail-retry:' || p_client_key, null, null, p_match_id) f;
+
+    if opened_run is null then
+      raise exception '지금은 만들 수 없어요. 잠시 뒤 다시 눌러 주세요.' using errcode = 'check_violation';
+    end if;
+
+    select * into held from public.match_request q
+    where q.detail_match_id = p_match_id order by q.created_at desc, q.id limit 1;
+
+    return query select held.id, held.status, true;
+    return;
+  end if;
+
+  if public.match_request_too_often(actor, partner) then
+    raise exception '같은 사람에게는 잠시 뒤 다시 청해 주세요.' using errcode = 'check_violation';
   end if;
 
   select pe.input_version into my_version
@@ -1627,8 +2163,10 @@ begin
   )
   returning id into new_request;
 
-  insert into public.notification (user_id, kind, request_id, match_id)
-  values (partner, 'detail_requested', new_request, p_match_id);
+  if not public.request_news_is_recent(partner, actor) then
+    insert into public.notification (user_id, kind, request_id, match_id)
+    values (partner, 'detail_requested', new_request, p_match_id);
+  end if;
 
   return query select new_request, 'pending'::text, true;
 end;
@@ -1649,7 +2187,7 @@ create function public.my_match_detail_state(p_match_id uuid)
 returns table(
   state text, request_id uuid, i_am_buyer boolean, expires_at timestamptz,
   failure_code text, failure_detail text, credits_left integer,
-  talk_status text, may_send boolean, detail_open boolean)
+  talk_status text, may_send boolean, detail_open boolean, consent_holds boolean)
 language plpgsql
 stable
 security definer
@@ -1706,7 +2244,11 @@ begin
   return query select
     answer,
     case when answer in ('awaiting_consent', 'rejected', 'input_changed', 'making', 'failed_mine') then latest.id end,
-    case when answer in ('before_purchase', 'no_credit', 'room_closed') then false else coalesce(mine, false) end,
+    case
+      when answer in ('before_purchase', 'no_credit', 'room_closed') then false
+      when answer in ('ready', 'making', 'failed_mine') then coalesce(run.user_id = actor, false)
+      else coalesce(mine, false)
+    end,
     case when answer = 'awaiting_consent' then latest.expires_at end,
     case when answer = 'failed_mine' then coalesce(run.failure_code, 'expired') end,
     case when answer = 'failed_mine' then run.failure_detail end,
@@ -1715,7 +2257,8 @@ begin
     room.closed_at is null and not (
       talk.kind = 'talk' and talk.status <> 'accepted' and talk.requester_user_id = actor
       and exists (select 1 from public.chat_message m where m.room_id = room.id and m.sender_user_id = actor)),
-    public.match_talk_is_open();
+    public.match_talk_is_open(),
+    answer <> 'ready' and public.match_consent_holds(p_match_id);
 end;
 $$;
 

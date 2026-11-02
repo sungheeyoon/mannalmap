@@ -768,6 +768,7 @@ export type Database = {
           chart_high: Json | null
           chart_low: Json | null
           created_at: string
+          ended_at: string | null
           id: string
           request_id: string | null
           user_high: string | null
@@ -779,6 +780,7 @@ export type Database = {
           chart_high?: Json | null
           chart_low?: Json | null
           created_at?: string
+          ended_at?: string | null
           id?: string
           request_id?: string | null
           user_high?: string | null
@@ -790,6 +792,7 @@ export type Database = {
           chart_high?: Json | null
           chart_low?: Json | null
           created_at?: string
+          ended_at?: string | null
           id?: string
           request_id?: string | null
           user_high?: string | null
@@ -3345,6 +3348,10 @@ export type Database = {
         }
         Returns: string
       }
+      first_word_is_quiet: {
+        Args: { p_room_id: string; p_sender: string }
+        Returns: boolean
+      }
       forget_orphan_people: { Args: never; Returns: number }
       forget_user: {
         Args: { p_user_id: string }
@@ -3412,6 +3419,7 @@ export type Database = {
         Args: { p_event_id: string }
         Returns: undefined
       }
+      match_consent_holds: { Args: { p_match_id: string }; Returns: boolean }
       match_detail_ttl: { Args: never; Returns: string }
       match_is_on_the_old_way: {
         Args: { p_match_id: string }
@@ -3423,6 +3431,11 @@ export type Database = {
           output: string
           prompt_version: string
         }[]
+      }
+      match_request_hourly_limit: { Args: never; Returns: number }
+      match_request_too_often: {
+        Args: { p_from: string; p_to: string }
+        Returns: boolean
       }
       match_request_ttl: { Args: never; Returns: string }
       match_run_awaiting_send: {
@@ -3443,7 +3456,10 @@ export type Database = {
         Args: { p_actor: string; p_key: string; p_match_id: string }
         Returns: boolean
       }
+      match_talk_daily_limit: { Args: never; Returns: number }
       match_talk_is_open: { Args: never; Returns: boolean }
+      match_talk_open: { Args: never; Returns: boolean }
+      match_talk_too_many_today: { Args: { p_from: string }; Returns: boolean }
       may_edit_person_input: {
         Args: { actor: string; target_person: string }
         Returns: boolean
@@ -3508,6 +3524,24 @@ export type Database = {
           supplied_elements: string[]
         }[]
       }
+      my_ended_talk_messages: {
+        Args: { p_match_id: string }
+        Returns: {
+          body: string
+          created_at: string
+          message_id: string
+          mine: boolean
+        }[]
+      }
+      my_ended_talks: {
+        Args: never
+        Returns: {
+          closed_at: string
+          match_id: string
+          partner_nickname: string
+          partner_user_id: string
+        }[]
+      }
       my_last_reading_run: {
         Args: {
           p_kind: string
@@ -3528,6 +3562,7 @@ export type Database = {
       my_match_detail_state: {
         Args: { p_match_id: string }
         Returns: {
+          consent_holds: boolean
           credits_left: number
           detail_open: boolean
           expires_at: string
@@ -3552,6 +3587,7 @@ export type Database = {
           created_at: string
           decided_at: string
           direction: string
+          kind: string
           request_id: string
           status: string
           supplied_to_me: string[]
@@ -3585,6 +3621,7 @@ export type Database = {
           partner_nickname: string
           partner_photo_focus: number[]
           partner_user_id: string
+          request_kind: string
           supplied_to_me: string[]
         }[]
       }
@@ -4571,6 +4608,11 @@ export type Database = {
           status: string
         }[]
       }
+      request_news_is_recent: {
+        Args: { p_from: string; p_to: string }
+        Returns: boolean
+      }
+      request_news_window: { Args: never; Returns: string }
       reserve_taste: {
         Args: {
           p_browser_hmac: string
@@ -4900,6 +4942,7 @@ export type Database = {
           chart_high: Json | null
           chart_low: Json | null
           created_at: string
+          ended_at: string | null
           id: string
           request_id: string | null
           user_high: string | null

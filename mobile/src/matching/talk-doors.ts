@@ -1,6 +1,7 @@
 import { useFocusEffect } from 'expo-router';
 import { useCallback, useState } from 'react';
 
+import { messageTimeLabel } from '@chat';
 import { matchDetailOf, type MatchDetail } from '@chat/room/detail';
 import { userFacingDbMessage } from '@db-error';
 
@@ -15,14 +16,10 @@ import { settled } from '@/ui/settled';
 const NOT_READY = '이 빌드에서는 로그인할 수 없어요.';
 const UNEXPECTED = '잠시 뒤 다시 시도해 주세요.';
 
-/** `match_talk_open` 은 아직 생성 타입에 없다 — 타입이 오면 이 한 줄을 걷는다 */
-const callSwitch = (client: NonNullable<typeof supabase>) =>
-  (client.rpc as unknown as (name: string) => PromiseLike<{ data: unknown; error: unknown }>).call(client, 'match_talk_open');
-
 export async function readTalkOpen(): Promise<boolean> {
   if (supabase === null) return false;
   try {
-    const { data, error } = await callSwitch(supabase);
+    const { data, error } = await supabase.rpc('match_talk_open');
     return error === null && data === true;
   } catch {
     return false;
@@ -59,6 +56,33 @@ export async function readDetail(matchId: string): Promise<MatchDetail | null> {
   } catch {
     return null;
   }
+}
+
+export type EndedTalk = { readonly matchId: string; readonly partnerUserId: string; readonly nickname: string };
+
+/** 끝난 답 전 대화 — 목록에서는 사라져도 보존 동안 신고는 닫히지 않는다. 사진 · 소개 · 까닭이 없다. 신고의 길이라 못 읽으면 칸이 안 선다 */
+export async function readEndedTalks(): Promise<readonly EndedTalk[]> {
+  if (supabase === null) return [];
+  const { data, error } = await supabase.rpc('my_ended_talks');
+  if (error !== null) {
+    console.error('my_ended_talks', error.code);
+    return [];
+  }
+  return (data ?? []).map((row) => ({ matchId: row.match_id, partnerUserId: row.partner_user_id, nickname: row.partner_nickname ?? '' }));
+}
+
+/** 신고 창에 고를 상대의 말 — 최근 것부터. 못 읽으면 빈 목록이고 사람 신고는 그대로 된다 */
+export async function readEndedTalkMessages(matchId: string): Promise<readonly { id: string; body: string; time: string }[]> {
+  if (supabase === null) return [];
+  const { data, error } = await supabase.rpc('my_ended_talk_messages', { p_match_id: matchId });
+  if (error !== null) {
+    console.error('my_ended_talk_messages', error.code);
+    return [];
+  }
+  return (data ?? [])
+    .filter((row) => !row.mine)
+    .sort((a, b) => b.created_at.localeCompare(a.created_at))
+    .map((row) => ({ id: row.message_id, body: row.body, time: messageTimeLabel(row.created_at) }));
 }
 
 export type TalkStart = { kind: 'room'; matchId: string } | { kind: 'no-room' } | { kind: 'switch-closed' } | { kind: 'refused'; message: string };

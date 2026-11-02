@@ -331,9 +331,10 @@ export function readMatchResult(matchId: string): Promise<Read<MatchOutcome>> {
     if (row === undefined) return { ok: true, value: { kind: 'none' } };
     const mine = storedChartSnapshot(row.my_chart);
     const theirs = storedChartSnapshot(row.partner_chart);
-    const talk = detail?.detailOpen === true || detail?.state === 'awaiting_consent';
-    if (!talk && (mine === null || theirs === null)) return { ok: true, value: { kind: 'closed' } };
     const inbox = (matches.data ?? []).find((one) => one.match_id === matchId);
+    /* 줄의 이름을 따른다 — 켠 뒤에도 옛 요청으로 선 인연은 여덟 글자 카드 그대로다 */
+    const talk = inbox?.request_kind === 'talk';
+    if (!talk && (mine === null || theirs === null)) return { ok: true, value: { kind: 'closed' } };
     const match = inbox === undefined ? null : matchOf(inbox);
     const flat = inbox?.partner_photo_focus ?? null;
     const count = row.partner_has_photo === true ? Math.max(1, Math.floor((flat?.length ?? 0) / 2)) : 0;
