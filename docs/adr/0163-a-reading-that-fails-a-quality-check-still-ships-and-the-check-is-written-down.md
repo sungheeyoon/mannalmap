@@ -98,3 +98,7 @@ ADR 0045 의 「경로가 새면 막는다」, ADR 0143 의 「검사를 지나�
 단위 — `src/lib/reading/reading.test.ts` 「검사의 두 갈래」 · 「샌 경로를 걷을 수 있는 자리만 걷는다」, `src/lib/reading/taste-run.test.ts`
 (코드마다 갈래), `app/me/reading/collect.test.ts`(막는 셋 · 내보내고 적기 · 경로 걷기 · 이어쓰기 · 기록 실패), `app/taste-run.test.ts`
 (품질만 걸린 맛보기는 성공 · DB 꼴은 막음 · 기록). pgTAP — `supabase/tests/88_check_findings.test.sql`. 마이그레이션 `20261130090000`.
+
+## 추기 — 상세 궁합의 기둥 직접 언급은 막는다 (2026-11-02, #963)
+
+조율자 결정(운영자 위임). 막는 코드에 `pillar-named-in-reading` 이 는다. 운영자 기준 「상대 여덟 글자는 화면과 응답에 직접 공개하지 않습니다」에 글도 들고, 나가면 사고인 쪽이라 이 ADR 의 막는 갈래와 같다. **상세 흐름에서만 난다** — `checkReading` 이 내지 않고 `detailFindingsOf` 만 낸다. 옛 흐름 · 비공개 궁합 · 개인 풀이의 문턱은 그대로다. 막힌 글은 있는 실패 길로 가 풀이권이 복원되고, 비용은 실패 때 모델 호출 1회다. 부르는 곳이 이어지기 전에는 돌지 않는다. 좁힌 조건은 `docs/text/detail-compat-contract.md` §9 의 7.

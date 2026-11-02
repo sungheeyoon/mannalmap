@@ -45,11 +45,11 @@ describe('상세 궁합의 상태', () => {
 
   it('받은 사람은 누르기 전에 전송 · 글자 · 함께 봄 · 기한 · 재시도 · 끝남을 읽는다', () => {
     const said = detailPanelOf(detail({ state: 'awaiting_consent', iAmBuyer: false })).lines.join(' ');
-    for (const fact of ['AI 분석', 'OpenAI', '생년월일시', '직접 나오지 않지만', '짐작', '함께 봐요', '72시간', '이 동의로 다시', '차단', '탈퇴', '이용 정지']) {
+    for (const fact of ['AI 분석', 'OpenAI', '생년월일시', '직접 나오지 않지만', '짐작', '함께 봐요', '72시간', '이 동의로 다시', '차단', '탈퇴', '이용 정지', '참여 끄기']) {
       expect(said).toContain(fact);
     }
-    /* 재지 않은 약속을 안 한다 — 복원 불가는 검증 밖이고, 참여 끄기는 `match_consent_holds` 가 안 본다 */
-    for (const promise of ['복원', '불가능', '안전', '참여']) {
+    /* 재지 않은 약속을 안 한다 — 복원 불가는 검증 밖이다 */
+    for (const promise of ['복원', '불가능', '안전']) {
       expect(said).not.toContain(promise);
     }
   });

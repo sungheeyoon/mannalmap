@@ -34,7 +34,7 @@ import { SAJU_TERMS } from './vocabulary';
  * 검사는 둘로 갈린다(ADR 0163). **막는 것**은 밖으로 나가면 사고인 셋이다 — 출생 원문이 샜다 · 동의 범위 밖의 판정을 만들었다 ·
  * 화면이 그릴 수 없는 꼴이다(본문이 비었거나 저장할 수 없다 · 점수가 드는 풀이에 읽을 수 있는 점수가 없다). **나머지는 품질**이다 —
  * 걸려도 글을 저장하고 화면에 세우며, 걸린 검사를 시도마다 적는다(`note_reading_checks`). 어느 코드가 어느 쪽인지는
- * `READING_BLOCKING_CODES` 하나가 든다.
+ * `READING_BLOCKING_CODES` 하나가 든다. 상세 궁합의 기둥 직접 언급은 `detailFindingsOf` 만 내고 이 파일의 검사는 안 낸다(ADR 0163 추기).
  *
  * ## 검사가 기계로 될 수 있는 까닭
  *
@@ -127,7 +127,11 @@ export type ReadingCheckCode =
   /** 이어쓰기 답이 계약(ADR 0143 의 2)을 어겼다 — 회수(`app/me/reading/collect.ts`)가 잰다 */
   | 'continuation-out-of-contract'
   /** 본문이 옛 프롬프트 본보기 문장을 그대로 옮겼다 — 여러 사람에게 같은 문장이 선다(ADR 0208 추기 「v25」) */
-  | 'example-copied';
+  | 'example-copied'
+  /** 상세 궁합의 발견 한 줄이 비었다 — 줄 없이 저장한다(`detailFindingsOf`) */
+  | 'discovery-out-of-contract'
+  /** 상세 궁합의 사용자 글이 두 사람의 실제 기둥 두 글자를 직접 썼다(`detailFindingsOf`) — 막는다. 옛 흐름에서는 안 난다 */
+  | 'pillar-named-in-reading';
 
 /**
  * **옛 본보기 문장** — v24 프롬프트가 「이렇게 써라」로 보였던 문장들. 모델이 정답으로 옮겨 서로 다른 두 사람의 핵심 세 가지
@@ -148,6 +152,7 @@ export const READING_BLOCKING_CODES: ReadonlySet<ReadingCheckCode> = new Set<Rea
   'out-of-scope-judgment',
   'body-unstorable',
   'score-unreadable',
+  'pillar-named-in-reading',
 ]);
 
 /**

@@ -442,5 +442,5 @@ DB 문이 내는 문장이다. 켜기 전까지 사용자에게 안 보인다. �
 | 글자 `DETAIL_CONSENT_PILLARS` | (없음) | 두 사람의 여덟 글자는 화면에 직접 나오지 않지만, 글에서 짐작될 수 있어요. | 실사례 없음 — 위험 고지 |
 | 함께 봄 `DETAIL_CONSENT_SHARED` | (없음) | 완성된 글은 두 사람이 함께 봐요. | 실사례 없음 |
 | 재시도 `DETAIL_CONSENT_RETRY` | (없음) | 기술 문제로 못 만들면 이 동의로 다시 만들 수 있어요. | 실사례 없음 |
-| 끝남 `DETAIL_CONSENT_ENDS` | (없음) | 출생 정보를 바꾸거나 차단 · 탈퇴 · 이용 정지가 되면 이 동의는 끝나요. | 실사례 없음 — `REQUEST_STATUS_TEXT.invalidated` 의 「출생 정보」 |
+| 끝남 `DETAIL_CONSENT_ENDS` | (없음) | 출생 정보 변경 · 차단 · 탈퇴 · 이용 정지 · 내 인연 참여 끄기가 있으면 이 동의는 끝나요. | 실사례 없음 — `REQUEST_STATUS_TEXT.invalidated` 의 「출생 정보」 |
 | 구매자 `DETAIL_BUYER_SENDS` | (없음) | 상대가 동의하면 내 사주 정보도 AI 분석(OpenAI, 미국)에 쓰여요. | 실사례 없음 |

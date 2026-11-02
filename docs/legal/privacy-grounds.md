@@ -117,7 +117,7 @@ Org」) **`plan: free`**(Management API `GET /v1/organizations/{slug}`) — Verc
 | 처리 | 거부할 수 있나 · 방법 | 효과 | 처리방침 문장 |
 | --- | --- | --- | --- |
 | OpenAI — 풀이 · 인연 궁합 · 첫 화면 | 있다 — 누르지 않기 · 수락하지 않기 · 첫 화면에 넣지 않기 | 풀이와 문단을 못 받고 인연 궁합 요청을 수락할 수 없다(수락이 궁합풀이를 만든다). 사주 계산 · 저장은 그대로 | 「OpenAI 로의 이전은 … 일어나지 않습니다. 그 경우 …」 |
-| OpenAI — 상세 궁합(켜질 때) | 있다 — 요청하지 않기 · 동의하지 않기(그냥 두면 72시간 뒤 만료) | 상세 궁합을 못 받는다. 대화 · 사주 계산 · 저장은 그대로. 이미 준 동의는 입력 변경 · 차단 · 탈퇴 · 정지로 끝난다 | `docs/legal/match-talk-notice-draft.md` |
+| OpenAI — 상세 궁합(켜질 때) | 있다 — 요청하지 않기 · 동의하지 않기(그냥 두면 72시간 뒤 만료) | 상세 궁합을 못 받는다. 대화 · 사주 계산 · 저장은 그대로. 이미 준 동의는 입력 변경 · 차단 · 탈퇴 · 정지 · 받은 사람의 참여 끄기로 끝난다 | `docs/legal/match-talk-notice-draft.md` |
 | Supabase 로그 · 지원 접근, Vercel 지원 접근 | 따로 거부할 수 없다 — 이용하는 동안 생긴다 | 가입하지 않거나 탈퇴 | 「… 따로 거부할 수 없습니다. 원하지 않으시면 가입하지 않거나 …」 |
 
 v7 의 「세 곳 모두 … 반드시 필요해, 거부하시면 서비스를 이용하실 수 없습니다」는 핵심 처리(풀이 생성)의 필요성과 개별 처리(로그 · 지원 접근)의 필요성을
@@ -474,12 +474,13 @@ WNS 를 말하지 않는다. 처리방침에 적을 때는 「Windows 의 Edge�
 | 사실 | 코드 | 잰 것 |
 | --- | --- | --- |
 | 자료는 받은 사람의 누름 뒤에 나간다 | `match_run_is_agreed` `:273-304` · 입력 판 대조 `:580-590` | SQL 읽음 · 시험 `supabase/tests/99_match_talk_and_detail.test.sql`(이 일에서 안 돌렸다) |
-| 나가는 항목은 두 사람의 여덟 글자 · 사이 관계 · 함께 이룬 구조 · 글자 수 보완 · 일간 사이 십성 · 시각 앎 · 한계 | `src/lib/saju/evidence/shared.ts` `LIMITED_FIELDS` · `docs/text/detail-compat-contract.md` §2 | 표가 잠금이다(`shared.test.ts`). **상세 궁합을 부르는 쪽은 아직 안 이어졌다**(main `510826ea` 의 `src/lib/reading/detail.ts` 머리) — 이으면 다시 잰다 |
+| 나가는 항목은 두 사람의 여덟 글자 · 사이 관계 · 함께 이룬 구조 · 글자 수 보완 · 일간 사이 십성 · 시각 앎 · 한계 | `src/lib/saju/evidence/shared.ts` `LIMITED_FIELDS` · `docs/text/detail-compat-contract.md` §2 | 표가 잠금이다(`shared.test.ts`). **상세 궁합을 부르는 쪽은 아직 안 이어졌다**(`src/lib/reading/detail.ts` 머리) — 이은 뒤 조율자가 다시 대조시킨다 |
 | 상대 여덟 글자는 응답 칸에 안 나온다 | `my_match_scope` · `my_readings` 의 글자 칸 null(ADR 0215) | 응답 칸만 쟀다 |
-| 글에 실제 기둥 두 글자를 쓰면 막는다 | `detailFindingsOf`(main `src/lib/reading/detail.ts`) | 한 글자 · 관계 이름 · 오행으로 돌려 쓴 것은 안 잡는다. 부르는 쪽이 안 이어져 아직 안 돈다 |
-| 기술 실패 뒤 같은 동의로 새 누름 없이 다시 만든다 — 연 사람이 1장 | `match_consent_holds` `:245-264` · `request_match_detail` `:2123` | SQL 읽음. **받은 사람의 자료가 새 누름 없이 다시 나간다** |
-| 동의는 입력 판이 바뀌거나 방이 닫히면 끝난다 — 방은 차단 · 탈퇴 신청 · 정지로 닫힌다 | `match_consent_holds` · `:1590-1603` | SQL 읽음 |
-| **참여 끄기는 동의를 안 끝낸다** | `set_discovery_participation`(`20261117090000_…sql:19`)은 `discovery_profile` 만 고친다. `match_consent_holds` · `reading_scope_for` 는 그 표를 안 본다 | SQL 읽음 — 실행으로 재지는 않았다. 그래서 고지 문장에 안 적었다 |
+| 글에 실제 기둥 두 글자를 쓰면 막는다 | `detailFindingsOf`(`src/lib/reading/detail.ts`) | 한 글자 · 관계 이름 · 오행으로 돌려 쓴 것은 안 잡는다. 부르는 쪽이 안 이어져 아직 안 돈다 |
+| 기술 실패 뒤 같은 동의로 새 누름 없이 다시 만든다 — 양쪽 누구나 · 누른 사람이 1장(PRD 매칭 §6.6 의 16) | `match_consent_holds` `:245-264` · `request_match_detail` `:2123` | SQL 읽음. **받은 사람의 자료가 새 누름 없이 다시 나간다** |
+| 동의는 입력 판이 바뀌거나 방이 닫히면 끝난다 — 방은 차단 · 탈퇴 신청 · 정지로 닫힌다 | `match_consent_holds` · `:1590-1603` | SQL 읽음. 줄 번호는 이 가지의 마이그레이션이고, #975 `cd77e66d` 가 같은 파일을 고쳤다 — 합쳐지면 줄이 움직인다 |
+| 받은 사람이 참여를 끄면 동의가 끝난다 — 대기 상세는 취소되고 예약이 풀리며, 다시 켜도 동의가 안 돌아온다. 완성된 글과 열린 대화는 그대로다 | #975 `cd77e66d` `set_discovery_participation` · 시험 「받은 사람이 참여를 끄면 동의가 끝난다」(`supabase/tests/99_match_talk_and_detail.test.sql`) | 그 커밋의 SQL · 시험을 읽음. 이 일에서 돌리지 않았다 |
+| 구매자가 답을 기다리는 상세 요청을 취소하면 예약이 풀린다 | `cancel_match_request` · PRD 매칭 §6.6 의 18 | 웹 · 앱의 단추는 조율자 결정(2026-11-02)이고 이 가지에는 아직 없다 |
 | 답을 기다리는 상세의 만료는 72시간이고 그 줄만 끝난다 | `match_detail_ttl` `:29` | PRD 매칭 §6.6 의 6 |
 
 ### 유추 위험과 검증의 한계
