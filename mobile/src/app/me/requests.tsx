@@ -26,7 +26,6 @@ const NOTIFICATION_ICON: Record<NotificationKind, IconName> = {
   reading_failed: 'alert',
   credits_granted: 'ticket',
   credits_revoked: 'ticket',
-  detail_requested: 'people',
 };
 
 const NOTIFICATION_WARNS: readonly NotificationKind[] = ['request_invalidated', 'reading_failed'];
