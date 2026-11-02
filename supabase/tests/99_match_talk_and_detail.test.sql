@@ -12,7 +12,7 @@
 --
 -- 두 세션의 진짜 경합은 pgTAP 이 못 만든다 — 그 값은 PR 에 적었다(psql 두 세션을 나란히 돌렸다).
 begin;
-select plan(395);
+select plan(398);
 
 create or replace function pg_temp.participant(mail text, who text, summary jsonb)
 returns uuid
@@ -1327,11 +1327,20 @@ select pg_temp.set_same(100);
 set local role authenticated;
 -- 상세끼리는 24시간에 1건 — 창이 지나면 다시 선다
 insert into seen select 'oh-lee-a', d.request_id from public.request_match_detail(pg_temp.got('m-oh-lee'), 'oh-lee-detail-a') d;
+select pg_temp.acting((select lee from folks));
+select public.save_push_subscription('https://fcm.googleapis.com/fcm/send/lee-news', 'BKey', 'auth');
+select public.mark_notifications_read();
+select ok((select read_at is not null from public.my_notifications() where kind = 'detail_requested' and request_id = pg_temp.got('oh-lee-a')), '받은 사람이 소식을 읽었다');
+select pg_temp.acting((select oh from folks));
 select is(public.cancel_match_request(pg_temp.got('oh-lee-a')), 'cancelled', '상세를 취소한다');
 insert into seen select 'oh-lee-b', d.request_id from public.request_match_detail(pg_temp.got('m-oh-lee'), 'oh-lee-detail-b') d;
 select pg_temp.acting((select lee from folks));
 select is((select count(*)::int from public.my_notifications() where kind = 'detail_requested' and request_id = pg_temp.got('oh-lee-b')), 1, '취소 뒤 다시 청한 요청의 소식이 받은 사람 목록에 보인다');
 select is((select count(*)::int from public.my_notifications() n where n.kind = 'detail_requested' and n.request_id in (pg_temp.got('oh-lee-a'), pg_temp.got('oh-lee-b'))), 1, '목록에 쌓이지 않고 한 줄이다');
+select ok((select read_at is null from public.my_notifications() where kind = 'detail_requested' and request_id = pg_temp.got('oh-lee-b')), '읽은 줄이 새 요청으로 옮겨 가면 안 읽음이다 — 딱지가 오른다');
+reset role;
+select is((select count(*)::int from public.push_delivery d join public.push_subscription s on s.id = d.subscription_id, folks f where s.user_id = f.lee and d.room_id = (select id from public.chat_room where match_id = pg_temp.got('m-oh-lee'))), 0, '옮겨 간 소식에 푸시가 없다');
+set local role authenticated;
 select pg_temp.acting((select oh from folks));
 select is(public.cancel_match_request(pg_temp.got('oh-lee-b')), 'cancelled', '다시 청해 또 취소한다');
 reset role;
