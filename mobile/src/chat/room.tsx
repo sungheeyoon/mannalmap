@@ -101,9 +101,7 @@ export function ChatRoomView({ room, onChanged }: { room: RoomView; onChanged: (
   const closed = room.notice !== null;
   const [opened, setOpened] = useState<'report' | 'block' | 'withdraw' | null>(null);
   const { detail, talk } = room;
-  /* 이미 선 동의 대기는 꺼진 동안에도 받은 사람이 누를 수 있다(운영 절차 「되돌리기」) */
-  const stillWaiting = detail?.state === 'awaiting_consent' && detail.replied;
-  const doorShown = stillWaiting || detailDoorShown(detail);
+  const doorShown = detailDoorShown(detail);
   const [pressedOpen, setPressedOpen] = useState<boolean | null>(null);
   const panelOpen = doorShown && detail !== null && (pressedOpen ?? detailPanelOpensItself(detail));
   /* 옛 궁합 단추는 켜지기 전의 방에만 — 답 전 대화에는 궁합이 없다 */

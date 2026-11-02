@@ -19,7 +19,7 @@ export function WithdrawDialog({ requestId, onClose }: { requestId: string; onCl
       return;
     }
     onClose();
-    router.replace('/me/chat' as never);
+    router.replace('/me/chat?withdrawn=1' as never);
   };
   return (
     <ConfirmDialog
