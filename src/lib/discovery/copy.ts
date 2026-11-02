@@ -39,14 +39,6 @@ export const DISCOVERY_EMPTY = {
   recheck: '다시 확인하기',
 } as const;
 
-/** 켜진 흐름의 인연 카드 — 풀이권 문구가 없다(대장 matching-18 확인 전, ADR 0215) */
-export const TALK_SCORE_LABEL = '예상 궁합';
-export const TALK_SCORE_INFO_NAME = '예상 궁합 계산 기준';
-export const TALK_SCORE_INFO = '일주 관계 · 필요한 기운 · 오행 균형으로 계산한 예상 점수예요. 상세 궁합에서는 달라질 수 있어요.';
-export const TALK_START_LABEL = '대화 시작';
-export const TALK_START_TITLE = '님과 대화를 시작할까요?';
-export const TALK_START_NOTE = '상대가 답하기 전에는 첫 말 하나만 보낼 수 있어요.';
-
 /**
  * 원하는 상대 성별의 화면 이름 — 키는 저장되는 값(`PREFER_GENDERS`)이고 값만 글자다. 타입 표기를 두지 않는다(모양) — 빠진 키는
  * 꺼내 쓰는 화면(`PREFER_GENDER_KO[value]`)의 타입 검사가 잡는다

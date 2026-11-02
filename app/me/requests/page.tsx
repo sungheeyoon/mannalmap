@@ -79,6 +79,7 @@ async function InboxSections() {
 const NOTIFICATION_ICON: Record<NotificationKind, IconName> = {
   request_received: 'taiji',
   request_accepted: 'taiji',
+  detail_requested: 'taiji',
   request_rejected: 'close',
   request_invalidated: 'alert',
   request_expired: 'ticket',

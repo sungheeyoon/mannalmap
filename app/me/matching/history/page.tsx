@@ -1,4 +1,5 @@
 import { isBlocked } from '@/src/lib/account';
+import { withoutTalks } from '@/src/lib/chat/room/talk';
 
 import { supabaseOnServer } from '../../../auth/server-client';
 import { signedInUser } from '../../../auth/signed-in';
@@ -12,6 +13,8 @@ import { readAccount } from '../../account';
 import { AccountNotice } from '../../account-notice';
 import type { ReadingEntry } from '@/src/lib/reading';
 import { myReadings } from '../../reading/current';
+import { EndedTalks } from '../ended-talks';
+import { endedTalksForViewer } from '../ended-talks-read';
 import { matchesForViewer, requestsForViewer, type InboxMatch, type Requests } from '../../requests/inbox';
 import { makingMatches, matchBooks, pastRequests } from '../history';
 import { COUNT_CHIP } from '../history-row';
@@ -52,7 +55,7 @@ export default async function MatchHistoryPage() {
     );
   }
 
-  const [readings, matches, requests] = await Promise.all([
+  const [readings, matches, requestsRead, ended] = await Promise.all([
     myReadings().then(read, (thrown: unknown): SkippableRead<readonly ReadingEntry[]> => ({
       ok: false,
       reason: answerOfThrown(thrown, 'my_readings'),
@@ -65,7 +68,13 @@ export default async function MatchHistoryPage() {
       ok: false,
       reason: answerOfThrown(thrown, 'inbox'),
     })),
+    endedTalksForViewer(supabase),
   ]);
+
+  /* 대화는 방이 든다 — 지난 요청에 안 선다(ADR 0215) */
+  const requests: SkippableRead<Requests> = requestsRead.ok
+    ? { ok: true, value: { ...requestsRead.value, requests: withoutTalks(requestsRead.value.requests) } }
+    : requestsRead;
 
   const books = readings.ok ? matchBooks(readings.value) : [];
   /* 글이 아직 없는 인연 궁합 — 수락 직후 만드는 중이다. 글 목록을 못 읽었으면 가르지 못하므로 안 세운다 */
@@ -75,7 +84,7 @@ export default async function MatchHistoryPage() {
   const pastCount = past === null ? 0 : past.sent.length + past.decided.length;
   /* 만드는 중인 것을 가를 `my_matches` 를 못 읽으면 수가 모자라다 — 수를 안 세우고 빈 기록이라 하지 않는다(G-100) */
   const matchesWhole = readings.ok && matches.ok;
-  const empty = matchesWhole && requests.ok && matchCount === 0 && pastCount === 0 && past?.blocked === 0;
+  const empty = matchesWhole && requests.ok && matchCount === 0 && pastCount === 0 && past?.blocked === 0 && ended.length === 0;
 
   return (
     <main className={`app-shell flex w-full ${COLUMN} flex-1 flex-col gap-7 py-6 sm:py-12`}>
@@ -146,6 +155,8 @@ export default async function MatchHistoryPage() {
           )}
         </section>
       )}
+
+      <EndedTalks talks={ended} />
     </main>
   );
 }

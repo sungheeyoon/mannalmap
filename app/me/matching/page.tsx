@@ -1,6 +1,7 @@
 import Link from 'next/link';
 
 import { isBlocked, selfPersonIdOf } from '@/src/lib/account';
+import { withoutTalks } from '@/src/lib/chat/room/talk';
 
 import { supabaseOnServer } from '../../auth/server-client';
 import { signedInUser } from '../../auth/signed-in';
@@ -16,6 +17,7 @@ import { myDiscoveryProfile } from '../discovery/discovery-profile';
 import { matchesForViewer, requestsForViewer, type InboxMatch } from '../requests/inbox';
 import { openParticipation } from '../chart-writes';
 import { selfElementSummary } from '../summary';
+import { talkIsOpen } from '../talk-switch';
 import type { DeckCard } from './deck-card';
 import { historySummary } from './history';
 import { HistoryRow } from './history-row';
@@ -76,6 +78,8 @@ export default async function MatchingPage() {
     ok: false as const,
     reason: answerOfThrown(thrown, 'my_matches'),
   }));
+  /** 대화의 스위치 — 모르면 꺼짐이고 지금 화면 그대로다 */
+  const opening = talkIsOpen(supabase);
   /** 못 읽으면 미리 안 거른다 — 끈 사람이면 아래 RPC 가 참여를 안 연다 */
   const profile = myDiscoveryProfile();
 
@@ -91,9 +95,13 @@ export default async function MatchingPage() {
   /** 받은 요청 띠는 덱 위, 「인연 기록」 한 줄은 덱 아래 — 덱이 서지 않는 자리도 같은 차례다 */
   const around = async () => {
     const [loaded, made] = await Promise.all([requests, matches]);
+    /* 대화는 수락 카드가 없고 방이 든다(ADR 0215) */
+    const asked: RequestsRead = loaded.ok
+      ? { ok: true, value: { ...loaded.value, requests: withoutTalks(loaded.value.requests) } }
+      : loaded;
     return {
-      lead: <ReceivedRequests loaded={loaded} />,
-      tail: <HistoryRow summary={historySummary(made, loaded)} />,
+      lead: <ReceivedRequests loaded={asked} />,
+      tail: <HistoryRow summary={historySummary(made, asked)} />,
     };
   };
 
@@ -149,6 +157,7 @@ export default async function MatchingPage() {
       passed={passedCards}
       notice={board.notice}
       explorationNote={board.explorationNote}
+      talkOpen={await opening}
     />
   );
 }
