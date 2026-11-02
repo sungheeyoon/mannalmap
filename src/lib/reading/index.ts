@@ -137,6 +137,7 @@ export * from './notes';
 export {
   baselineIn,
   CONTROL,
+  DETAIL_ASSEMBLY,
   LEGACY_PAIR_ASSEMBLY,
   NOTHING_KNOWN,
   READING_PROMPTS,
@@ -162,6 +163,15 @@ export {
   type CheckFinding,
   type ReadingCheckCode,
 } from './check';
+export {
+  DISCOVERY_PROPERTY,
+  detailFindingsOf,
+  isDetailPromptVersion,
+  requestAssemblyOf,
+  requestPromptVersionOf,
+  withDiscovery,
+  type DetailReadingOutput,
+} from './detail';
 export { sectionCounter, type SectionCount } from './progress';
 export type { CurrentReading } from './current-reading';
 export type { ReadingEntry } from './entry';

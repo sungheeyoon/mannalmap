@@ -127,7 +127,11 @@ export type ReadingCheckCode =
   /** 이어쓰기 답이 계약(ADR 0143 의 2)을 어겼다 — 회수(`app/me/reading/collect.ts`)가 잰다 */
   | 'continuation-out-of-contract'
   /** 본문이 옛 프롬프트 본보기 문장을 그대로 옮겼다 — 여러 사람에게 같은 문장이 선다(ADR 0208 추기 「v25」) */
-  | 'example-copied';
+  | 'example-copied'
+  /** 상세 궁합의 발견 한 줄이 비었다 — 줄 없이 저장한다(`detailFindingsOf`) */
+  | 'discovery-out-of-contract'
+  /** 상세 궁합의 사용자 글에 간지 한자나 그 글자로 지은 관계 이름이 그대로 섰다(`detailFindingsOf`) */
+  | 'pillar-characters-shown';
 
 /**
  * **옛 본보기 문장** — v24 프롬프트가 「이렇게 써라」로 보였던 문장들. 모델이 정답으로 옮겨 서로 다른 두 사람의 핵심 세 가지
@@ -340,7 +344,7 @@ const ko = {
  * 나온다(`자축합`). 삼형도 표는 `인사신 삼형` 인데 글은 `인사신형` 이라 적는다. 그래서
  * 짝만 표에서 가져오고 **뒤에 붙는 한 글자는 여기서 짓는다.**
  */
-const RELATION_NAMES: readonly string[] = [
+export const RELATION_NAMES: readonly string[] = [
   ...BRANCH_CLASHES.map(({ branches: [a, b] }) => `${ko.branch(a)}${ko.branch(b)}충`),
   ...BRANCH_HARMS.map(({ branches: [a, b] }) => `${ko.branch(a)}${ko.branch(b)}해`),
   ...BRANCH_DESTRUCTIONS.map(({ branches: [a, b] }) => `${ko.branch(a)}${ko.branch(b)}파`),
@@ -394,7 +398,7 @@ const STEM_CHARS: readonly string[] = STEMS;
 const BRANCH_CHARS: readonly string[] = BRANCHES;
 
 /** 글에 쓰인 간지 한자 — 한 글자씩 본다. 이름(`甲子`)은 두 글자로 갈린다 */
-const charactersIn = (text: string): string[] =>
+export const charactersIn = (text: string): string[] =>
   [...new Set([...text])].filter(
     (char) => STEM_CHARS.includes(char) || BRANCH_CHARS.includes(char),
   );
