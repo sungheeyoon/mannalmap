@@ -811,14 +811,10 @@ begin
   end if;
 
   /**
-   * **읽고 → 잠그고 → 다시 읽는다** — 답하는 문 · 차단과 같은 차례(계정 → 요청 → 인연 → 방)다. 요청을 먼저 쥐면 방을 닫는 외래 키 확인이
-   * 차단이 쥔 계정 행을 기다려 서로 물린다(ADR 0215).
+   * **내 계정을 먼저 잠근다**(ADR 0215) — 요청을 먼저 쥐면 방을 닫는 외래 키 확인이 차단이 쥔 내 계정 행을 기다려 서로 물린다.
+   * 두 계정을 잠그지 않는다 — 상대 계정을 잡으면 신고 · 입력 수정과 새로 물린다.
    */
-  select * into req from public.match_request where id = p_request_id;
-
-  if found and req.requester_user_id = actor then
-    perform public.lock_users(req.requester_user_id, req.addressee_user_id);
-  end if;
+  perform 1 from public.app_user u where u.id = actor for update;
 
   select * into req from public.match_request where id = p_request_id for update;
 
