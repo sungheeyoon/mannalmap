@@ -251,9 +251,9 @@ describe('검사의 두 갈래 — 막는 것과 내보내고 적는 것', () =>
     return blockingFindingsOf(result.ok ? [] : result.failures).map((finding) => finding.code);
   };
 
-  it('막는 코드는 넷 — 원문 누출 · 범위 밖 판정 · 빈 본문(저장할 수 없음) · 읽을 수 없는 점수', () => {
+  it('막는 코드는 다섯 — 원문 누출 · 범위 밖 판정 · 빈 본문(저장할 수 없음) · 읽을 수 없는 점수 · 상세 궁합의 기둥 직접 언급', () => {
     expect([...READING_BLOCKING_CODES].sort()).toEqual(
-      ['birth-input-leaked', 'body-unstorable', 'out-of-scope-judgment', 'score-unreadable'].sort(),
+      ['birth-input-leaked', 'body-unstorable', 'out-of-scope-judgment', 'pillar-named-in-reading', 'score-unreadable'].sort(),
     );
   });
 

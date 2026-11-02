@@ -4,7 +4,7 @@
 -- 문은 `mobile/src/matching/doors.ts` · `mobile/src/chat/reads.ts` · `app/me/requests/` 가 부르는 그것이다.
 -- 새 한도(첫 말 · 시간당 3회 · 하루 10건 · 소식 24시간)가 안 걸리고, 차단 · 실패 · 복원 · 재전송이 그대로인지 잰다.
 begin;
-select plan(42);
+select plan(43);
 
 create or replace function pg_temp.participant(mail text, who text, summary jsonb)
 returns uuid
@@ -146,6 +146,9 @@ select is((select count(*)::int from public.my_chat_messages(pg_temp.got('mkl'),
 reset role;
 select is((select count(*)::int from public.match_run_awaiting_send(pg_temp.got('kl'))), 1, '수락의 제출');
 insert into seen select 'run1', id from public.reading_run where match_id = pg_temp.got('mkl');
+select is(public.prepare_reading_job(
+    p_run_id => pg_temp.got('run1'), p_prompt => '# 지시', p_evidence => '{}', p_prompt_version => 'reading-prompt-v1',
+    p_requested_model => 'openai/gpt-5.6-luna', p_generation => '{}'::jsonb, p_viewed_at => now()), true, '옛 길의 보내기 직전 문은 그대로다');
 select ok(public.fail_reading_job(pg_temp.got('run1'), 'model-failed', '답이 없었다'), '실패');
 select is((select pg_temp.credits_of(kim) from folks), array[0, 0, 0], '실패하면 복원된다');
 set local role authenticated;
