@@ -581,7 +581,8 @@ describe('CI 계획 — 입구가 아닌 서버 파일은 import 를 거꾸로 �
     // 2026-10-30 에 하나 — 얼린 일감을 떠나보내는 자리(`app/me/reading/submit.ts`)를 누름과 복구기(`app/api/cron/reading`)가 함께 부른다(ADR 0210)
     // 2026-10-30 에 일곱 — 앱의 문(`app/api/mobile`, ADR 0211)이 부르는 자기 파일 셋(`session` · `writes` · `views`)과 웹과 함께 쓰는 문이 더해졌다. 더 돌리는 쪽이다
     // 2026-10-30 에 하나 — 저장소 올리기의 몸통(`app/me/profile/stored-photo-writes.ts`)을 웹의 액션과 앱의 문이 함께 부른다(ADR 0211 추기)
-    expect(noAddress.length).toBeLessThanOrEqual(82);
+    // 2026-11-02 에 하나 — 대화의 스위치를 읽는 자리(`app/me/talk-switch.ts`)를 인연 · 기록 · 소식이 부른다(ADR 0215)
+    expect(noAddress.length).toBeLessThanOrEqual(83);
   });
 });
 

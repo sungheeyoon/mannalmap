@@ -1,5 +1,6 @@
 'use client';
 
+import { TALK_WITHDRAW_LABEL } from '@/src/lib/chat/room/detail-copy';
 import { useEffect, useId, useRef, useState, useTransition } from 'react';
 
 import {
@@ -9,7 +10,6 @@ import {
   REPORT_REASONS,
   type ReportReason,
 } from '@/src/lib/account';
-import { TALK_WITHDRAW_LABEL } from '@/src/lib/chat/copy';
 import { BLOCK_FINAL_NOTE, BLOCK_KEEPS_NOTE, BLOCK_NOTE } from '@/src/lib/consent';
 
 import type { SaveResult } from '../../save-result';

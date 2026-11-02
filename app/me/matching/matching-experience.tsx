@@ -1,8 +1,9 @@
 'use client';
 
+import { TALK_SCORE_INFO, TALK_SCORE_INFO_NAME, TALK_SCORE_LABEL } from '@/src/lib/chat/room/detail-copy';
 import { useRef, useState, type ReactNode } from 'react';
 
-import { DISCOVERY_TEASER, TALK_SCORE_INFO, TALK_SCORE_INFO_NAME, TALK_SCORE_LABEL } from '@/src/lib/discovery/copy';
+import { DISCOVERY_TEASER } from '@/src/lib/discovery/copy';
 
 import { elementScope } from '../../ui/element-tone';
 import { Icon, type IconName } from '../../ui/icons';
@@ -72,7 +73,6 @@ export function MatchingExperience({
   const [view, setView] = useState<View>('today');
   const sheet = useRef<HTMLDialogElement>(null);
   const scoreSheet = useRef<HTMLDialogElement>(null);
-  const teaser = talkOpen ? TALK_SCORE_INFO : DISCOVERY_TEASER;
 
   /** 차단했다 — 열려 있던 ⓘ 시트를 닫고 덱에서 뺀다 */
   function blocked(card: DeckCard) {
@@ -162,7 +162,7 @@ export function MatchingExperience({
       */}
       {view === 'today' && profile !== undefined && (
         <div className="-mt-4 hidden max-w-3xl flex-col gap-1 lg:flex">
-          <p className="text-fine leading-5 text-secondary">{teaser}</p>
+          <p className="text-fine leading-5 text-secondary">{talkOpen ? TALK_SCORE_INFO : DISCOVERY_TEASER}</p>
           {notice !== null && <p className={TYPE_META}>{notice}</p>}
         </div>
       )}
@@ -284,7 +284,7 @@ export function MatchingExperience({
             <div className="overflow-hidden rounded-card bg-cream px-2 pt-3">
               <ApproachMap shape="arc" me={me} cards={mapCards} statusOf={statusOf} className="mx-auto max-w-[28rem]" />
             </div>
-            <p className="text-fine leading-5 text-secondary">{teaser}</p>
+            <p className="text-fine leading-5 text-secondary">{talkOpen ? TALK_SCORE_INFO : DISCOVERY_TEASER}</p>
             {notice !== null && <p className={TYPE_META}>{notice}</p>}
           </div>
         </DetailSheet>

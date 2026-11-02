@@ -1,9 +1,9 @@
+import { DETAIL_NOT_YET } from '@/src/lib/chat/room/detail-copy';
 import Link from 'next/link';
 import type { ReactNode } from 'react';
 import { notFound } from 'next/navigation';
 
 import { CHAT_TAB_LABEL } from '@/src/lib/chat';
-import { DETAIL_NOT_YET } from '@/src/lib/chat/copy';
 import { MATCH_RESULT_CLOSED_NOTE } from '@/src/lib/consent';
 import { STEM_INFO } from '@/src/lib/saju';
 

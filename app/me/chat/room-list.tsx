@@ -1,7 +1,8 @@
+import { TALK_UNANSWERED_LABEL } from '@/src/lib/chat/room/detail-copy';
 import Link from 'next/link';
 
 import { CHAT_TAB_LABEL, messageTimeLabel, partnerNameOf, roomNoticeOf } from '@/src/lib/chat';
-import { ROOM_NO_MESSAGES_YET, TALK_UNANSWERED_LABEL } from '@/src/lib/chat/copy';
+import { ROOM_NO_MESSAGES_YET } from '@/src/lib/chat/copy';
 import { foldUnanswered } from '@/src/lib/chat/room/talk';
 import type { InboxRequest } from '@/src/lib/matching/inbox';
 import type { Element } from '@/src/lib/saju';

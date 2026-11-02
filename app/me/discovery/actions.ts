@@ -8,7 +8,7 @@ import { publicCardFromRow } from '../candidates';
 import { selfElementSummary } from '../summary';
 import { setParticipation } from '../chart-writes';
 import { PREFER_GENDERS, type PreferGender } from '@/src/lib/discovery';
-import { userFacingDbMessage } from '../../db-error';
+import { recordDbFailure, userFacingDbMessage } from '../../db-error';
 import { PARTICIPATION_NO_SELF_NOTE } from '../person-writes';
 import { refusedForCredits, type OutOfCreditsRefusal } from '../credits/refusal';
 
@@ -144,8 +144,12 @@ export async function startTalk(
   const { error } = await supabase.rpc('request_match', { p_candidate_user_id: candidateUserId });
   if (error) return { ok: false, message: userFacingDbMessage(error, 'request_match') };
   refresh('match-requested');
-  const { data } = await supabase.rpc('my_chat_rooms');
-  return { ok: true, matchId: (data ?? []).find((room) => room.partner_user_id === candidateUserId)?.match_id ?? null };
+  const rooms = await supabase.rpc('my_chat_rooms');
+  if (rooms.error) {
+    recordDbFailure(rooms.error, 'my_chat_rooms');
+    return { ok: true, matchId: null };
+  }
+  return { ok: true, matchId: (rooms.data ?? []).find((room) => room.partner_user_id === candidateUserId)?.match_id ?? null };
 }
 
 /**

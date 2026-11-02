@@ -1,6 +1,6 @@
 'use client';
 
-import { TALK_START_LABEL, TALK_START_NOTE, TALK_START_TITLE } from '@/src/lib/discovery/copy';
+import { TALK_START_LABEL, TALK_START_NOTE, TALK_START_TITLE } from '@/src/lib/chat/room/detail-copy';
 import { REQUEST_RESERVES_NOTE } from '@/src/lib/reading/notes';
 
 import { ConfirmDialog } from '../../ui/confirm-dialog';

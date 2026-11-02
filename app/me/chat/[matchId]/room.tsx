@@ -1,18 +1,10 @@
 'use client';
 
+import { TALK_WAIT_REPLY, TALK_WITHDRAW_LABEL, TALK_WITHDRAW_NOTE, TALK_WITHDRAW_TITLE, TALK_WITHDRAWN } from '@/src/lib/chat/room/detail-copy';
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from 'react';
 
-import {
-  NEW_MESSAGES_LABEL,
-  OLDER_LOADING_LABEL,
-  OLDER_MESSAGES_LABEL,
-  TALK_WAIT_REPLY,
-  TALK_WITHDRAW_LABEL,
-  TALK_WITHDRAW_NOTE,
-  TALK_WITHDRAW_TITLE,
-  TALK_WITHDRAWN,
-} from '@/src/lib/chat/copy';
+import { NEW_MESSAGES_LABEL, OLDER_LOADING_LABEL, OLDER_MESSAGES_LABEL } from '@/src/lib/chat/copy';
 import { detailDoorShown } from '@/src/lib/chat/room/detail';
 import { waitsForReply } from '@/src/lib/chat/room/talk';
 

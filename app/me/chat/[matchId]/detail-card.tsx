@@ -1,9 +1,9 @@
 'use client';
 
+import { DETAIL_DOOR_LABEL } from '@/src/lib/chat/room/detail-copy';
 import Link from 'next/link';
 import { useRef, useState, useTransition } from 'react';
 
-import { DETAIL_DOOR_LABEL } from '@/src/lib/chat/copy';
 import { detailPanelOf, detailPanelOpensItself, newDetailKey, type MatchDetail } from '@/src/lib/chat/room/detail';
 
 import { withCameFrom } from '../../../came-from';

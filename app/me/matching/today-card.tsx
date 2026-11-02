@@ -1,8 +1,8 @@
 'use client';
 
+import { TALK_SCORE_INFO_NAME, TALK_SCORE_LABEL, TALK_START_LABEL } from '@/src/lib/chat/room/detail-copy';
 import { useEffect, useRef, type CSSProperties, type ReactNode } from 'react';
 
-import { TALK_SCORE_INFO_NAME, TALK_SCORE_LABEL, TALK_START_LABEL } from '@/src/lib/discovery/copy';
 import { activityText } from '@/src/lib/presence';
 import { ELEMENT_PICTURE_KO } from '@/src/lib/saju';
 
@@ -183,7 +183,7 @@ function FaceText({ card, onScoreInfo = null }: { card: DeckCard; onScoreInfo?: 
           <div className="flex shrink-0 items-center gap-0.5">
             <p className="flex items-baseline gap-1.5">
               <span className="text-small font-semibold text-white/85">{TALK_SCORE_LABEL}</span>
-              <strong className="text-[2rem] font-bold leading-none tracking-[-0.03em] tabular-nums">{card.previewScore}점</strong>
+              <strong className="text-figure font-bold leading-none tracking-[-0.03em] tabular-nums">{card.previewScore}점</strong>
             </p>
             <button
               type="button"
