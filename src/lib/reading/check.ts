@@ -306,7 +306,7 @@ const AMBIGUOUS_SAJU_TERMS: Readonly<Record<string, readonly RegExp[]>> = {
   정인: [/(?<![가-힣])정인/],
 };
 
-const hasSajuTerm = (markdown: string, term: string): boolean => {
+export const hasSajuTerm = (markdown: string, term: string): boolean => {
   const contextual = AMBIGUOUS_SAJU_TERMS[term];
   return contextual === undefined
     ? markdown.includes(term)

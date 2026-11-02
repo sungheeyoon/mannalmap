@@ -170,6 +170,6 @@ describe('상세 궁합의 품질 검사 — 직접 언급만 잰다', () => {
   });
 
   it('일상어를 간지로 안 친다', () => {
-    expect(detailFindingsOf({ ...clean, markdown: '갑자기 정화되는 기분이에요.' })).toEqual([]);
+    expect(detailFindingsOf({ ...clean, markdown: '갑자기 정화되는 기분이에요. 먼저 인사해 보세요.' })).toEqual([]);
   });
 });

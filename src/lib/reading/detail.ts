@@ -1,4 +1,4 @@
-import { RELATION_NAMES, charactersIn, type CheckFinding } from './check';
+import { RELATION_NAMES, charactersIn, hasSajuTerm, type CheckFinding } from './check';
 import { readingBody } from './display';
 import { READING_POLICY, promptVersionOf, type ReadingOutput } from './policy';
 import { CONTROL, DETAIL_ASSEMBLY, type PromptAssembly } from './prompt';
@@ -49,7 +49,7 @@ export const withDiscovery = (markdown: string, discovery: string): string => {
 };
 
 /**
- * 상세 궁합에만 더 적는 검사 — 전부 품질이다(ADR 0163). 글은 내보낸다. **옛 흐름이 쓰는 `checkReading` 은 안 고친다.**
+ * 상세 궁합에만 더 적는 검사 — 전부 품질이다(ADR 0163). 글은 내보낸다 — PRD 매칭 §6.6 의 15 가 말하는 「차단」은 아직 아니고, 막을지는 G-130 이 든다. **옛 흐름이 쓰는 `checkReading` 은 안 고친다.**
  *
  * 있는 자를 그대로 쓴다 — 간지 한자(`charactersIn`)와 표에서 지은 관계 이름(`RELATION_NAMES`). 「갑」처럼 한글 읽기만 쓴 것은 못 잡는다 —
  * 「갑자기」 · 「정화」 같은 일상어와 소리가 같아 짐작으로 막지 않는다.
@@ -74,7 +74,7 @@ export const detailFindingsOf = ({
 
   const shown = `${readingBody(markdown)}\n${metaphor}`;
   const characters = charactersIn(shown).length;
-  const relations = RELATION_NAMES.filter((name) => shown.includes(name)).length;
+  const relations = RELATION_NAMES.filter((name) => hasSajuTerm(shown, name)).length;
   if (characters > 0 || relations > 0) {
     /* 글자 자체는 적지 않는다 — 기록에 명식을 남기지 않는다 */
     findings.push({ code: 'pillar-characters-shown', detail: `간지 한자 ${characters}종 · 관계 이름 ${relations}개` });
