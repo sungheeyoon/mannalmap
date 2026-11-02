@@ -76,7 +76,23 @@ describe('상세 궁합의 상태', () => {
     expect(holds.lines.join(' ')).not.toContain('동의');
   });
 
-  it('아홉 상태 모두 말이 있다', () => {
+  it('구매자의 대기에만 요청 취소가 있고, 받은 사람에게는 없다', () => {
+    expect(detailPanelOf(detail({ state: 'awaiting_consent', iAmBuyer: true })).cancelLabel).toBeDefined();
+    expect(detailPanelOf(detail({ state: 'awaiting_consent', iAmBuyer: false })).cancelLabel).toBeUndefined();
+  });
+
+  it('동의가 끝난 실패는 기술 실패와 다르게 말하고 새 동의를 말한다', () => {
+    const ended = detailPanelOf(detail({ state: 'failed_mine', failureCode: 'consent-ended', consentHolds: true }));
+    expect(ended.title).toContain('동의가 끝나');
+    expect(ended.lines.join(' ')).toContain('동의');
+  });
+
+  it('동의 문장은 글자 공개를 약속하지 않는다 — 새 흐름은 글자를 안 낸다', () => {
+    const consent = detailPanelOf(detail({ state: 'awaiting_consent' }));
+    expect(consent.lines.join(' ')).not.toMatch(/여덟 글자|공개되고/);
+  });
+
+  it('여덟 상태 모두 말이 있다', () => {
     for (const state of DETAIL_STATES) expect(detailPanelOf(detail({ state })).title.length).toBeGreaterThan(0);
   });
 

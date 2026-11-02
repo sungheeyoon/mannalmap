@@ -1,6 +1,11 @@
 'use client';
 
-import { DETAIL_DOOR_LABEL } from '@/src/lib/chat/room/detail-copy';
+import {
+  DETAIL_CANCEL_NOTE,
+  DETAIL_CANCEL_TITLE,
+  DETAIL_CANCELLED,
+  DETAIL_DOOR_LABEL,
+} from '@/src/lib/chat/room/detail-copy';
 import Link from 'next/link';
 import { useRef, useState, useTransition } from 'react';
 
@@ -8,11 +13,13 @@ import { detailPanelOf, detailPanelOpensItself, newDetailKey, type MatchDetail }
 
 import { withCameFrom } from '../../../came-from';
 import { actionAnswer, isUnreached } from '../../../ui/action-answer';
-import { BUTTON_PRIMARY_SMALL, BUTTON_SECONDARY_SMALL_FACE } from '../../../ui/buttons';
+import { BUTTON_PRIMARY_SMALL, BUTTON_SECONDARY_SMALL, BUTTON_SECONDARY_SMALL_FACE } from '../../../ui/buttons';
+import { ConfirmDialog } from '../../../ui/confirm-dialog';
 import { FailureLine } from '../../../ui/failure-line';
+import { showSnackbar } from '../../../ui/snackbar-store';
 import { Icon } from '../../../ui/icons';
 import { announceIfMoved } from '../../credits/credits-signal';
-import { respondToRequest } from '../../requests/actions';
+import { cancelRequest, respondToRequest } from '../../requests/actions';
 import { requestMatchDetail } from '../actions';
 
 /** 방 머리의 작은 입구 — 옛 궁합 단추 자리에 선다. 점수를 안 든다 */
@@ -44,6 +51,22 @@ export function DetailCard({ matchId, detail }: { matchId: string; detail: Match
   const [working, startWorking] = useTransition();
   /* 응답을 잃은 재전송은 같은 키다 — 서버가 답하면 다음 누름은 새 키다 */
   const key = useRef<string | null>(null);
+
+  const [asking, setAsking] = useState(false);
+
+  const cancel = () => {
+    if (detail.requestId === null) return;
+    const requestId = detail.requestId;
+    setFailure(null);
+    startWorking(async () => {
+      const answer = await actionAnswer(cancelRequest(requestId));
+      announceIfMoved(answer);
+      setAsking(false);
+      if (!answer.ok) setFailure(answer.message);
+      /* 그 사이 상대가 동의했으면 취소되지 않았다 — 없는 일을 알리지 않는다(대장 01) */
+      else if (answer.status === 'cancelled') showSnackbar(DETAIL_CANCELLED);
+    });
+  };
 
   const press = () => {
     setFailure(null);
@@ -84,6 +107,25 @@ export function DetailCard({ matchId, detail }: { matchId: string; detail: Match
         <button type="button" disabled={working} onClick={press} className={`${BUTTON_PRIMARY_SMALL} self-start`}>
           {panel.action.label}
         </button>
+      )}
+      {panel.cancelLabel !== undefined && (
+        <>
+          <button type="button" disabled={working} onClick={() => setAsking(true)} className={`${BUTTON_SECONDARY_SMALL} self-start`}>
+            {panel.cancelLabel}
+          </button>
+          <ConfirmDialog
+            open={asking}
+            onClose={() => setAsking(false)}
+            title={DETAIL_CANCEL_TITLE}
+            confirmLabel={panel.cancelLabel}
+            /* 실행 글자에 「취소」가 들면 닫기는 「닫기」다(대장 01) */
+            cancelLabel="닫기"
+            onConfirm={cancel}
+            busy={working}
+          >
+            <p>{DETAIL_CANCEL_NOTE}</p>
+          </ConfirmDialog>
+        </>
       )}
     </section>
   );
