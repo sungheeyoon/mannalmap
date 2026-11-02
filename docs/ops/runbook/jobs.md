@@ -20,6 +20,8 @@
 | `reading-failure-rate` | 지난 한 시간에 끝난 풀이 시도 중 실패가 다섯 번 이상이고 절반 이상이다(`20261108090000`, 문턱은 `reading_failure_alert_floor()` · `reading_failure_alert_share()`). 알림에 가장 잦은 실패 코드가 붙는다 | 코드가 검사 실패(`length-out-of-contract` 같은 것)면 프롬프트 · 모델 판, `unexpected` 면 Vercel 로그의 `submit:` · `collect:` 줄 |
 | `database-size-warning` · `database-size-critical` · `database-size-unreadable` | DB 크기(클러스터의 모든 DB 의 `pg_database_size` 합 — Supabase 가 세는 값)가 350MB · 425MB 를 넘었다(`20261224090000`, ADR 0199 — 문턱은 `database_size_warning_bytes()` · `database_size_critical_bytes()`). **Free 는 500MB 에서 읽기 전용이 되고 그 뒤에는 `ops_alert` 에 못 적어 이 알림도 못 나간다**. `database-size-unreadable` 은 감시기가 크기를 못 쟀다는 뜻이다(다른 갈래는 그대로 돈다) | 큰 표를 본다 — `select concat(n.nspname, '.', c.relname), pg_size_pretty(pg_total_relation_size(c.oid)) from pg_class c join pg_namespace n on n.oid = c.relnamespace where c.relkind in ('r', 'm', 'p') order by pg_total_relation_size(c.oid) desc limit 10;`(크기만 — 개인정보 없음). 지울 것이 없으면 플랜을 올린다. **이미 읽기 전용이 됐으면** Supabase 문서의 차례로 푼다(<https://supabase.com/docs/guides/platform/database-size>, 2026-10-22 읽음) — `set session characteristics as transaction read write;` → 지운다 → `vacuum;` → `set default_transaction_read_only = 'off';` |
 
+**닫힌 방의 말이 남으면 잡이 스스로 알린다** — `chat-purge-overdue`(크론 `chat-purge-watch`, 매일 06:57 UTC, G-132 · ADR 0217). 보존 기간을 이틀 넘긴 말의 수만 싣는다. 할 일은 `docs/ops/runbook/moderation.md` 「실패는 어떻게 드러나나」.
+
 **지급 장부의 대조도 잡이 스스로 알린다** — `credit-grant-mismatch:<계정 id>`(크론 `credit-grant-watch`, 매일 05:41 UTC, G-111 R-8 ·
 ADR 0191). 무상 지급 장부의 합과 예외 몫(`reading_credit_grant.extra`)이 다른 계정마다 하루 한 줄이고 아무것도 고치지 않는다. 할 일은
 `docs/ops/runbook/credits.md` 「무상 풀이권 지급 · 회수」의 대조 절.
@@ -71,8 +73,9 @@ group by 1, 2 order by 1, 2;
 없으면 아무것도 안 한다) · `photo-sweep-watch`(매시 53분 — 멈춘 청소 · 남은 줄, 같은 조건)를 세운다 — 알림과 할 일은 `docs/ops/runbook/photo-store.md`
 「청소가 멈췄을 때 · 못 지운 줄이 쌓일 때」. `20261230090000`(G-118)이 `ops-heartbeat`(10분마다, 매시 5 · 15 · 25 … 분 — `cron-watch` 와 5분 엇갈림)를
 세운다 — 바깥 감시에 「살아 있다」를 보낸다. Vault 의 `ops_heartbeat_url` 이 없으면 아무것도 안 한다(아래 「바깥 감시」).
-Vercel Cron 은 셋이다(`vercel.json`) — 복구기의 하루 청소(`/api/cron/reading`), 접속기록 반출(`/api/cron/audit-export`,
-ADR 0105), 사진 청소의 예비(`/api/cron/photo-sweep`, 하루 한 번 — 매시 실행은 pg_cron 이 깨운다, ADR 0204). 셋은 `cron-watch` 가 못 본다 —
+`20270107100000`(ADR 0217)이 `chat-purge-watch`(매일 06:57 UTC)를 세운다.
+Vercel Cron 은 넷이다(`vercel.json`) — 복구기의 하루 청소(`/api/cron/reading`), 접속기록 반출(`/api/cron/audit-export`,
+ADR 0105), 사진 청소의 예비(`/api/cron/photo-sweep`, 하루 한 번 — 매시 실행은 pg_cron 이 깨운다, ADR 0204), 닫힌 방의 메시지 파기(`/api/cron/chat-purge`, ADR 0217 — `chat-purge-watch` 가 남은 말을 본다). 넷은 `cron-watch` 가 못 본다 —
 반출은 pg_cron 의 `audit-export-watch` 가 매일 본다(시도나 성공이 이틀 넘게 없으면 알린다), 사진 청소는 `photo-sweep-watch` 가 본다(끝까지 돈
 실행이 세 시간 넘게 없으면 — 어느 쪽이 깨웠든).
 **`failed` 가 한 줄이라도 있으면 그 잡은 지금 안 도는 것이다.**

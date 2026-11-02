@@ -408,21 +408,70 @@ order by 차례;
 때뿐이고, 신고는 계정을 따라간다(`docs/ops/runbook/erasure.md` 「지우기」). 그 전에 트리거가 신고째 `retention.report` 로 옮긴다 —
 떠난 사람의 신고는 `docs/ops/runbook/erasure.md` 「떠난 사람의 신고 기록」에서 읽는다.
 
-### 닫힌 지 90일 지난 방의 메시지를 지운다 — **손으로**
+### 닫힌 지 90일 지난 방의 메시지를 지운다 — 크론이 날마다
 
-크론이 아니다(PRD §7.1). 배포한 날이나 달마다 한 번 돈다. 기간은 DB 의 `chat_retention()` 이
-들고(90일), 이 함수와 pgTAP 이 같은 문을 돌린다.
+Vercel Cron `/api/cron/chat-purge`(`vercel.json`, 매일 20:27 UTC = 서울 05:27 전후 — Hobby 는 ±59분)가 `purge_closed_chat_messages()` 를 부른다(ADR 0217). 기간은 DB 의 `chat_retention()` 이
+들고(90일), 이 크론 · 손 · pgTAP 이 같은 문을 돌린다. 지우는 것은 메시지뿐이다 — 방은 남아 닫힌 이유를 계속 말하고, 스냅샷은 신고를 따른다. 새 변수는 없다(`CRON_SECRET` · `SUPABASE_SECRET_KEY` 그대로).
+
+**스위치와 무관하다.** `vercel.json` 의 크론은 그것이 든 첫 Production 배포와 함께 돌기 시작한다 — 대화 스위치가 꺼져 있어도 그날 밤 이미 90일 지난 말을 지운다. 지운 말은 되돌릴 수 없다.
+
+#### 배포 승인 전에 건수를 잰다
+
+크론이 든 첫 배포를 승인받기 전에 한 번 돌려 그 값을 승인 요청에 적는다. 읽기 전용이고 수와 날짜 하나뿐이다 — 내용 · 번호 · 사람이 없다(`docs/ops/runbook/access.md` 「보통」 갈래). `npm run db:remote -- --purpose "G-132 첫 파기 건수" "<아래 sql>"` 로 보낸다.
 
 ```sql
--- 무엇을 지울 것인지 먼저 본다. 세어 보지 않고 지우지 않는다.
-select r.match_id, r.closed_reason, r.closed_at, count(m.id) as 메시지
+select count(m.id) as 지울_메시지, count(distinct r.id) as 방, min(r.closed_at)::date as 가장_오래_닫힌_날
 from public.chat_room r
 join public.chat_message m on m.room_id = r.id
-where r.closed_at < now() - public.chat_retention()
-group by r.match_id, r.closed_reason, r.closed_at
-order by r.closed_at;
+where r.closed_at < now() - public.chat_retention();
+```
 
--- 지운다. 지우는 것은 메시지뿐이다 — 방은 남아 닫힌 이유를 계속 말하고, 스냅샷은 신고를 따른다.
+`supabase/tests/99_chat_purge_cron.test.sql` 이 이 SQL 의 **사본**으로 건수와 지운 수가 같은지 재고, `scripts/chat-purge-runbook.test.ts` 가 사본과 이 글자가 같은지 견준다.
+
+#### 첫 파기를 확인한다 — 배포 다음 날
+
+크론이 든 첫 배포 뒤 서울 시각으로 그다음 05:27~06:26 이 지나면 한 번 본다.
+
+1. 위 건수 SQL 이 **0** 인가. 0 이 아니어도 `가장_오래_닫힌_날` 이 딱 90일 전 날이면 크론 뒤에 막 기한을 넘긴 말이다 — 다음 날 지워진다. 그보다 오래된 날이면 크론이 안 돈 것이다 — 아래 「실패는 어떻게 드러나나」
+2. Vercel → Settings → Cron Jobs 에 `/api/cron/chat-purge` 가 있고, View Logs 에서 응답이 200 인가. Hobby 로그는 한 시간뿐이라 실행 직후가 아니면 안 보일 수 있다 — 그때는 1 이 판정이다
+3. 배포 전 건수 · 다음 날 건수 · 응답 코드를 #770 에 **수만** 적는다. 파기 수의 영구 기록은 만들지 않는다(ADR 0217)
+
+#### 실패는 어떻게 드러나나
+
+- **`chat-purge-overdue`**(`ops_alert`, 하루 한 줄) — pg_cron `chat-purge-watch`(매일 06:57 UTC)가 보존 기간을 **이틀 넘게** 지난 말을 찾았다. 크론의 실패 · 비밀 어긋남 · 등록 안 됨 · 시간 초과가 모두 이 한 줄로 온다. 실행 표는 없다.
+- 그 알림이 오면 차례로 본다 — Vercel 대시보드 → Settings → Cron Jobs 에 `/api/cron/chat-purge` 가 있나 · 응답 코드(403 이면 `CRON_SECRET`, 503 이면 열쇠, 500 이면 Vercel 로그의 `chat-purge failed <코드>` — `57014` 는 8초 초과) · `select has_function_privilege('service_role', 'public.purge_closed_chat_messages()', 'execute');` 가 참인가. **Hobby 의 런타임 로그는 한 시간뿐이다.**
+- 로그에는 지운 날의 `chat-purge deleted <수>` 와 오류 코드만 남는다.
+
+#### 파기를 멈춘다 — 수사기관의 보존 요청 같은 때
+
+**방 하나만 남기는 길은 없다**(`retention.report` 의 `hold_reason` 은 신고 기록에만 있다, `docs/ops/runbook/erasure.md` 「보존 요청 — 보류를 걸고 푼다」 · G-133). 대화방 메시지의 보존 요청이 오면 **파기 전체를** 멈춘다. 그동안 처리방침의 90일을 넘겨 모든 닫힌 방의 말이 남는다 — 까닭과 시작 · 끝을 저장소 밖 대장에 적고 짧게 쓴다. 요청이 의무인지는 이 절차서가 판단하지 않는다.
+
+크론이 든 문만 닫는다. **Vercel 의 Disable Cron Jobs 는 쓰지 않는다** — 프로젝트의 크론 전부(복구기 · 반출 · 사진 청소)가 함께 멈춘다.
+
+```sql
+-- 멈춘다 — 크론은 그대로 돌고 500(`chat-purge failed 42501`)으로 끝난다. 아무것도 안 지운다
+revoke execute on function public.purge_closed_chat_messages() from service_role;
+
+-- 닫혔나 — 거짓이어야 한다
+select has_function_privilege('service_role', 'public.purge_closed_chat_messages()', 'execute');
+
+-- 되돌린다 — 다음 실행이 밀린 것까지 지운다. 참이어야 한다
+grant execute on function public.purge_closed_chat_messages() to service_role;
+```
+
+**멈춘 동안 `chat-purge-overdue` 가 하루 한 줄 온다** — 기한을 이틀 넘긴 말이 있는 동안이다. 멈춘 것을 잊지 않게 하는 알림이라 감시는 끄지 않는다. 멈춘 동안 아래 「손으로 지운다」를 돌리지 않는다 — `postgres` 는 이 문이 안 막는다.
+
+2026-11-02 로컬 스택에서 진짜 라우트 · 열쇠로 쟀다: 말 30건 → `revoke` → 500 · 42501 · 30건 그대로 · 감시 알림 1 → `grant` → 200 `{"deleted":30}` → 다시 200 `{"deleted":0}`. 운영에서는 돌리지 않았다.
+
+#### 손으로 지운다 — 크론이 멈췄거나 8초를 넘을 때
+
+위의 건수를 먼저 본다. 세어 보지 않고 지우지 않는다. 대시보드와 client 의 질의는 제한시간을 60초까지만 올릴 수 있다(Supabase 「Timeouts」, 2026-11-02 읽음). 길은 둘이다.
+
+- **먼저** `npm run db:remote -- --purpose "G-132 손 파기" "select public.purge_closed_chat_messages();"` — 접속기록에 목적과 해시가 남는다. 이 명령은 직접 연결이 아니라 Management API 로 간다(`supabase db query --linked`). 그 길의 제한시간은 문서에서 못 찾았고 재지 않았다
+- **그래도 시간이 모자라면 직접 연결** — 대시보드 Connect 의 direct 또는 session pooler(5432) 주소로 `psql` 을 열어 아래를 돈다. Supabase 가 긴 관리 작업에 권하는 길이다. 접속기록이 안 남으니 목적과 시각을 밖의 대장에 적는다
+
+```sql
+set statement_timeout = '10min';
 select public.purge_closed_chat_messages();  -- 지운 메시지 수
 ```
 

@@ -100,7 +100,7 @@ node scripts/remote-lock.mjs npx supabase db advisors --linked --type performanc
 | `report_by_pair` | 처리 필요인 같은 대상 · 같은 사유의 중복 신고(같은 두 문, `report_is_open`) — `20261017090000` 이 `reviewed_at is null` 부분 인덱스 `report_unreviewed_by_pair` 를 술어 없는 것으로 바꿨다(ADR 0107 정정) |
 | `report_unreviewed` | 안 본 신고(`reviewed_at is null`) — 운영자 목록의 처리 필요는 추가 확인 필요까지라(ADR 0107) 이것만으로 다 짚지는 않는다(`operator_reports`) |
 | `chat_report_snapshot_by_message` | 같은 메시지의 중복 신고 |
-| `chat_room_closed` | 닫힌 지 90일 지난 방의 메시지 지우기(`purge_closed_chat_messages`) |
+| `chat_room_closed` | 닫힌 지 90일 지난 방의 메시지 지우기(`purge_closed_chat_messages`, 크론 `/api/cron/chat-purge` · ADR 0217) · 남은 말의 감시(`watch_chat_purge`) |
 | `chat_rate_limit_hit_by_time` | `docs/ops/runbook/moderation.md` 「한도에 걸린 건수를 본다」의 기간 집계 |
 | `reading_job_open_idx` | 복구기가 못 끝낸 일감을 오래된 차례로 집기(`open_reading_jobs`) |
 | `operator_access_by_actor` | 운영자 거절 기록의 시간당 빗장(`note_operator_denial`) |

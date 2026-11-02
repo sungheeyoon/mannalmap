@@ -4995,6 +4995,7 @@ export type Database = {
       wake_push_dispatch: { Args: never; Returns: undefined }
       wake_push_dispatch_when_due: { Args: never; Returns: boolean }
       wake_reading_recovery: { Args: never; Returns: undefined }
+      watch_chat_purge: { Args: { p_now?: string }; Returns: number }
       watch_cron: { Args: never; Returns: number }
       watch_photo_sweep: { Args: { p_now?: string }; Returns: number }
       watch_reading_credit_grants: { Args: never; Returns: number }
