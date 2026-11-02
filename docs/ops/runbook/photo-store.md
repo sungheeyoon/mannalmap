@@ -2,9 +2,12 @@
 
 색인은 `docs/ops/runbook.md` 다.
 
-사진의 바이트를 AWS S3 서울에 두는 일. **지금은 꺼져 있다** — 올리기의 스위치(`public.photo_upload_switch`)가 `db` 이고 `PHOTO_STORE_*`
-다섯이 운영에 없어 사진은 DB(`profile_photo.bytes`)에 산다. 바꾸는 길과 그 뒤의 손일을 여기 적는다. 설계는 ADR 0202, 열람 방식(안 A) ·
-스위치 · 전환 차례는 ADR 0203, 규격 · 출처는 `docs/product/gaps/records/g-120.md`.
+사진의 바이트를 AWS S3 서울에 두는 일. **운영에서 켜져 있다**(2026-11-02 잼) — 올리기의 스위치(`public.photo_upload_switch`)가
+2026-10-23 부터 `s3` 이고, Vercel Production 에 `PHOTO_STORE_BUCKET` · `PHOTO_STORE_REGION` · `PHOTO_STORE_ROLE_ARN` 이 있으며(역할 길), 사진
+줄 1건이 열쇠를 들고 바이트 줄은 0 이다. 매시 청소가 돈다 — Vault 주소 있음 · `photo-sweep-wake` 233번 다 성공(첫 실행 2026-10-23 11:33 UTC) ·
+마지막 끝남 2026-11-02 03:33 UTC · 지울 줄 0 · 남은 표 0 · `photo-*` 알림 0. **버킷의 실물(객체 수 · 버전 관리)은 아직 안 쟀다** — 아래 「파기 뒤
+잔류 점검」. 켜고 끄는 길과 그 뒤의 손일을 여기 적는다. 설계는 ADR 0202, 열람 방식(안 A) · 스위치 · 전환 차례는 ADR 0203, 규격 · 출처는
+`docs/product/gaps/records/g-120.md`.
 
 ## 올리기의 스위치
 
@@ -36,6 +39,8 @@ select mode, changed_at from public.photo_upload_switch;
 스스로 거절하며, 사진을 지우는 것은 마이그레이션이 아니라 아래 3 의 운영 SQL 이다.
 
 ## 사진 저장소로 바꾼다
+
+운영은 이 차례를 2026-10-23 에 지났다(스위치 `s3`) — 이 절은 그날의 차례이자 다시 세울 때의 절차다. 5 의 올려 보기 확인을 밟았다는 기록은 없다.
 
 **운영자 결정(2026-10-23, ADR 0203): 업로드 차단 → 기존 사진 전체 삭제 → 0건 확인 → S3 업로드 개방.** 옛 사진은 옮기지 않는다 —
 **되돌릴 수 없다**(운영 DB 에 백업이 없다, Supabase Free · 간극 대장 G-63). 차단이 먼저라 지우는 동안 새 바이트 줄이 안 생기고, 지운 뒤
@@ -297,6 +302,60 @@ AWS_PROFILE=saju-photo-admin PHOTO_STORE_BUCKET=<사진 버킷> PHOTO_STORE_REGI
 DB 의 열쇠 줄마다 두 벌의 머리(`HeadObject`)를 본다 — 있나 · 비지 않았나 · 형식이 DB 와 같은가. 어긋남이 하나라도 있으면 1 로 끝난다.
 바이트 줄(옛 장)은 재지 않는다 — 열기 전에 지운다(「사진 저장소로 바꾼다」 2). 출력의 열쇠 앞 칸은 계정 id 다 — 저장소 · 이슈 · 채팅에 붙이지 않는다. 켠 뒤 월 점검에 한 번.
 
+## 파기 뒤 잔류 점검
+
+계정을 파기한 뒤 저장소에 객체가 남지 않았는지 재는 읽기 전용 점검이다. **DB 만으로는 답이 안 나온다** — 지울 줄이 0 이어도 아래 표의 길은 보이지 않고,
+청소는 저장소를 훑지 않는다(ADR 0202 「고르지 않은 것」, `scripts/photo-verify.mjs` 는 열쇠 줄만 잰다).
+
+**파기가 객체를 지우는 길** — `forget_user` → `auth.users` 삭제 → `app_user` → `profile_photo` cascade → 트리거 `profile_photo_object_left` 가 열쇠를
+지울 줄에 넣는다 → 매시 33분 청소가 `card` · `large` 를 지우고 줄을 걷는다. 올리던 중이면 표(`photo_upload_ticket`, 계정 FK 없음)가 남아 있다가 한 시간 뒤 지울 줄로 간다.
+
+**그래도 남을 수 있는 길:**
+
+| 길 | 왜 안 보이나 | 무엇으로 드러나나 |
+| --- | --- | --- |
+| 버킷의 버전 관리가 켜진 적이 있다 | `DeleteObjects` 가 지우개 표식만 세우고 성공을 답해 줄이 걷힌다. 이전 판이 남는다 — 처리방침의 「이전 판을 남기지 않아」가 틀린다 | `versioning` · `markers` · `versions` |
+| `PHOTO_STORE_BUCKET` 을 바꾼 적이 있다 | 새 버킷에 없는 객체를 지우는 것은 성공이라 줄이 걷힌다. 옛 버킷에 남는다 | 옛 버킷에 같은 점검을 돌린다 |
+| 올리기가 두 벌 중 하나를 먼저 실패했다 | 다른 한 벌이 쓰는 중에 표를 지울 줄로 넘기고(`storePhoto` 의 `Promise.all`), 그 짧은 틈에 청소가 돌면 뒤늦은 쓰기가 장부 밖에 선다 | `objects` · `uploads` — 한 벌만 남은 고아는 `objects` 가 홀수일 수 있다 |
+| DB 를 앞 시점으로 되돌렸다 · 손으로 지울 줄을 걷었다 · 손으로 올렸다 | 어느 줄도 안 가리킨다 | `objects` · `other` |
+
+늦어지는 길(처분 지연 · 청소 멈춤)은 잔류가 아니라 지연이고 지울 줄에 보인다 — 아래 「청소가 멈췄을 때 · 못 지운 줄이 쌓일 때」.
+
+**1. 기준을 잰다** — 건수만이다:
+
+```sql
+select (select count(*) from public.profile_photo where object_key is not null) as key_rows,
+       (select count(distinct user_id) from public.profile_photo where object_key is not null) as key_users,
+       (select count(*) from public.photo_upload_ticket) as tickets,
+       (select count(*) from public.photo_object_trash) as trash;
+```
+
+`npm run db:remote -- --purpose "사진 잔류 점검 기준(G-120)" "<위 SQL>"`. `tickets` · `trash` 가 0 이 아니면 다음 매시 33분 뒤에 다시 잰다.
+2026-11-02 값은 `key_rows` 1 · `tickets` 0 · `trash` 0 이다(`key_users` 는 그래서 1).
+
+**2. 운영자가 돌린다** — `<사진 버킷>` 은 Vercel 대시보드에서 보고 채운다. 찍는 것은 수와 설정뿐이고 오류 문장도 버린다:
+
+```bash
+( B='<사진 버킷>'; P='<AWS 프로필>'; K=$(aws s3api list-objects-v2 --bucket "$B" --prefix photos/ --profile "$P" --query 'Contents[].Key' --output text 2>/dev/null) && printf '%s\n' "$K" | tr '\t' '\n' | awk -F/ '$0!="None"&&NF{n++; if(NF==4&&$1=="photos"&&($4=="card"||$4=="large")){if(!($2 in a)){a[$2];c++} if(!(($2"/"$3) in u)){u[$2"/"$3];d++}}else x++} END{print "objects="n+0, "accounts="c+0, "uploads="d+0, "other="x+0}' || echo 'objects=못읽음'; V=$(aws s3api list-object-versions --bucket "$B" --prefix photos/ --profile "$P" --query '[length(Versions||`[]`),length(DeleteMarkers||`[]`)]' --output text 2>/dev/null) && printf '%s\n' "$V" | awk '{v+=$1;m+=$2} END{print "versions="v+0, "markers="m+0}' || echo 'versions=못읽음'; S=$(aws s3api get-bucket-versioning --bucket "$B" --profile "$P" --query Status --output text 2>/dev/null) && echo "versioning=$S" || echo 'versioning=못읽음'; L=$(aws s3api get-bucket-lifecycle-configuration --bucket "$B" --profile "$P" --query 'Rules[].[Status,Expiration.Days,NoncurrentVersionExpiration.NoncurrentDays,AbortIncompleteMultipartUpload.DaysAfterInitiation]' --output text 2>/dev/null) && echo "lifecycle=$L" || echo 'lifecycle=규칙없음또는못읽음' )
+```
+
+도구 역할(`saju-photo-admin`)은 객체 목록만 읽는다 — 정책에 판본 목록 · 버킷 설정 권한이 없어 `versions` · `versioning` · `lifecycle` 이 못 읽는다.
+그 셋은 버킷 설정을 읽을 수 있는 관리자 프로필로 돌리거나, S3 콘솔의 Properties(버전 관리 · 수명 주기)와 Objects 의 「Show versions」로 본다.
+**못 읽은 칸은 0 이 아니다 — 안 잰 것이다.** 2 와 함께 「열쇠 줄 재기」를 돌린다(어긋남 0 이어야 수가 같을 때 그 객체가 장부의 것이다).
+
+**3. 판정** — 기준이 `key_rows` 1 · `tickets` 0 · `trash` 0 이면 맞는 값은 `objects=2 accounts=1 uploads=1 other=0` · `versions=2 markers=0` · `versioning=None`:
+
+| 본 값 | 뜻 | 할 일 |
+| --- | --- | --- |
+| 수가 다 맞고 「열쇠 줄 재기」 어긋남 0 | 잔류 없다 | 수와 날짜를 적는다 |
+| `objects` 가 `key_rows` × 2 보다 많다 · `uploads` 가 `key_rows` 보다 많다 · `accounts` 가 `key_users` 보다 많다 · `other` 가 0 이 아니다 | 장부 밖의 객체가 있다(잔류) | 수만 알린다. 지우기 전에 어느 열쇠가 고아인지 사람이 대조한다 — 파기한 계정의 것이면 처리방침 기한과 함께 본다 |
+| `objects` 가 `key_rows` × 2 보다 적다 | 줄은 있는데 객체가 없다 | 「열쇠 줄 재기」로 어느 장인지 본다 — 그 장은 안 열린다 |
+| `versioning` 이 `Enabled` · `Suspended` 이거나 `markers` 가 0 이 아니거나 `versions` 가 `objects` 보다 많다 | 지운 객체의 이전 판이 남아 있을 수 있다(잔류). 목록의 `objects` 가 맞아도 그렇다 | 수만 알린다. 처리방침의 파기 문장이 걸린다 — 고치는 차례는 운영자가 정한다 |
+| `lifecycle` 에 `Expiration` · `Noncurrent` 칸의 수가 있다(둘째 · 셋째 칸이 `None` 이 아니다) | 수명 규칙이 객체를 지운다 — 살아 있는 사진도 사라진다 | 규칙을 보고 알린다. 맞는 값은 `Enabled None None 1` 한 줄이다(「마법사가 쓸 값」) |
+
+**결과를 공개 이슈에 붙이지 않는다.** 객체 키에 계정 id 가 있다 — 위 줄은 수만 찍지만, 다른 명령의 키 목록 · 오류 문장 · 버킷 이름 · ARN 은 이슈 · 채팅 · 커밋에 적지 않고
+**수만** 적는다. 이 줄은 지우거나 쓰지 않는다. 고아를 지우는 것은 별개의 걸음이다.
+
 ## 청소가 멈췄을 때 · 못 지운 줄이 쌓일 때
 
 청소는 매시 33분(Supabase pg_cron → `wake_photo_sweep()`)과 예비인 하루 한 번(Vercel Cron)에 돈다. 못 지운 줄은 다음 매시 실행이 다시
@@ -358,7 +417,8 @@ DB 의 열쇠 줄마다 두 벌의 머리(`HeadObject`)를 본다 — 있나 · 
    - 임대 — `held_until` 이 미래인데 도는 실행이 없으면 죽은 실행의 임대다. 5분 안에 저절로 풀린다 — 손대지 않는다
 3. **돌지만 못 지운다** — `errors` 의 분류로 가른다. `delete:accessdenied` 면 앱 역할의 권한 정책(`DeleteObject`) · 신뢰 정책과 버킷 이름,
    `delete:nosuchbucket` 이면 `PHOTO_STORE_BUCKET`, `delete:partial` 이면 일부 객체만 — CloudTrail 의 `DeleteObjects` 오류, 그 밖은 Vercel 로그의
-   `photo-sweep: 못 지운 객체` 줄
+   `photo-sweep: 못 지운 객체` 줄. **다만 지금 진짜 저장소는 호출이 통째로 실패해도 예외를 삼켜(`app/me/photo/s3-store.ts` 의 `remove`) 분류가 `delete:partial` 로만 온다** —
+   `delete:accessdenied` · `delete:nosuchbucket` 을 기다리지 말고 `delete:partial` 이면 권한 · 버킷 이름부터 본다
 4. **고친 뒤 당긴다** — 운영자가. 차례를 지금으로 당기고 청소를 한 번 깨운다(비밀은 Vault 에서 나간다 — 셸에 안 남는다):
 
    ```sql
@@ -387,7 +447,7 @@ DB 가 장부이고 저장소가 바이트다. 둘은 따로 되돌아간다 —
 | 일 | DB | 저장소 | 사용자에게 |
 | --- | --- | --- | --- |
 | DB 를 앞 시점으로 되돌림 | 그 시점의 줄 — 그 뒤에 지운 장의 줄이 돌아온다 | 그 뒤에 청소기가 지운 객체는 **없다**(버전 관리를 끈다) | 돌아온 줄의 사진이 안 열린다(404) — 다시 올려야 한다 |
-| 같은 되돌림 | 그 뒤에 올린 장의 줄이 사라진다 | 그 객체는 **남는다** — 어느 줄도 안 가리켜 안 열린다 | 안 보인다. 저장소의 고아다 — 지금 이것을 찾는 도구는 없다(도구 역할의 `ListBucket` 으로 `photos/` 를 훑어 `scripts/photo-verify.mjs` 의 열쇠와 견주는 손일) |
+| 같은 되돌림 | 그 뒤에 올린 장의 줄이 사라진다 | 그 객체는 **남는다** — 어느 줄도 안 가리켜 안 열린다 | 안 보인다. 저장소의 고아다 — 청소는 이것을 찾지 않는다. 사람이 「파기 뒤 잔류 점검」으로 수를 견준다 |
 | 객체를 잘못 지움 · 버킷 사고 | 줄은 그대로 | 없다 — 다른 사본이 없다 | 그 장이 안 열린다 — 다시 올려야 한다 |
 | 옛 장(바이트 줄 — 열기 전에 지운다) | 지우기 전에는 바이트가 DB 에 있다 | — | 지운 뒤에는 어디에도 없다 — 백업이 없어 되돌릴 수 없다. 다시 올려야 한다 |
 | 계정 삭제 | 줄이 cascade 로 사라지고 열쇠가 지울 줄에 | 다음 매시 청소(한 시간 안)에 지운다 — 못 지우면 「청소가 멈췄을 때 · 못 지운 줄이 쌓일 때」 | 지운 그 순간부터 안 열린다 |
