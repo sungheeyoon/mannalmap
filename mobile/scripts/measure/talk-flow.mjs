@@ -18,6 +18,7 @@ import { CHECK_CODE, passNotice, scheduleBeta, seedSignupCode, clearMachineRunsF
 import { worktreeStack } from '../../../src/lib/local-env.ts';
 
 const stack = worktreeStack();
+const CRON_SECRET = `talk-flow-${Date.now()}`;
 if (stack.id === 'saju') {
   console.error('main 스택에서는 안 돈다 — npm run stack:slot -- --auto');
   process.exit(1);
@@ -51,7 +52,7 @@ const { base: BASE, stop } = await startCheckServer({
   supabaseUrl: API,
   anonKey: KEY,
   secretKey: status.SERVICE_ROLE_KEY,
-  whileRunning: { OPENAI_API_KEY: '', OPENAI_BASE_URL: 'http://127.0.0.1:9/v1' },
+  whileRunning: { OPENAI_API_KEY: '', OPENAI_BASE_URL: 'http://127.0.0.1:9/v1', CRON_SECRET },
 });
 
 const door = async (path, token, method, json) => {
@@ -166,9 +167,11 @@ try {
   check('받은 사람: 동의 대기 · 번호가 있다', partner?.state === 'awaiting_consent' && partner.i_am_buyer === false && partner.request_id !== null, brief(partner));
   const listed = (await b.client.rpc('my_match_requests')).data ?? [];
   check('상세는 요청 목록에 안 선다', !listed.some((one) => one.kind === 'detail'), JSON.stringify(listed.map((one) => one.kind)));
-  /* 재서 적는다 — 24시간 묶음 때문에 취소 뒤 다시 청한 요청의 소식은 새로 안 선다(ADR 0215 의 묶음). 앞 소식이 목록에 남는지가 값이다 */
+  /* 살아 있는 요청의 소식은 목록에 하나 보인다 — 취소 뒤 다시 청해도 받은 사람이 안다 */
   const newsAgain = (await b.client.rpc('my_notifications')).data ?? [];
-  console.log(`  · 취소 뒤 다시 청한 소식 | 목록 ${newsAgain.filter((one) => one.kind === 'detail_requested').length}건 · 표 ${sql(`select count(*) from public.notification where user_id = '${b.id}' and kind = 'detail_requested'`)}건`);
+  const seenAgain = newsAgain.filter((one) => one.kind === 'detail_requested');
+  console.log(`  · 취소 뒤 다시 청한 소식 | 목록 ${seenAgain.length}건 · 표 ${sql(`select count(*) from public.notification where user_id = '${b.id}' and kind = 'detail_requested'`)}건`);
+  check('취소 뒤 다시 청한 소식이 목록에 하나 보인다', seenAgain.length === 1 && seenAgain[0].match_id === matchId, JSON.stringify(seenAgain.map((one) => one.match_id)));
 
   /* 동의 — 앱의 문 */
   const notBuyer = await door('/api/mobile/matching/respond', b.token, 'POST', { requestId: partner.request_id, accept: true });
@@ -230,8 +233,109 @@ try {
   const strangerAsk = await door('/api/mobile/matching/detail', stranger.token, 'POST', { matchId, clientKey: randomUUID() });
   check('남의 인연으로는 시도가 안 열린다', strangerAsk.body?.ok === false, JSON.stringify(strangerAsk.body));
 
+  /* 내가 참여를 꺼도 23514 */
+  await door('/api/mobile/me/participation', a.token, 'POST', { on: false });
+  const selfOff = await a.client.rpc('request_match_detail', { p_match_id: matchId, p_client_key: randomUUID() });
+  check('내가 참여를 끄면 — 23514', selfOff.error?.code === '23514', said(selfOff));
+  await door('/api/mobile/me/participation', a.token, 'POST', { on: true });
+
   const after = (await a.client.rpc('my_match_scope', { p_match_id: matchId })).data?.[0];
   check('동의 뒤에도 응답에 글자가 없다', after?.my_chart == null && after?.partner_chart == null, JSON.stringify({ my: after?.my_chart, partner: after?.partner_chart }));
+
+  /* ---------- 드문 끝 — 쌍마다 새 계정이다 ---------- */
+  let seed = 10;
+  const talkPair = async (name) => {
+    seed += 1;
+    const one = await newAccount(`${name}가`, `1985-01-${seed}`, 'male');
+    const two = await newAccount(`${name}나`, `1986-02-${seed}`, 'female');
+    await stand(one);
+    await stand(two);
+    sql(`update public.discovery_profile set opted_in_at = null, opted_out_at = now() where user_id not in ('${one.id}', '${two.id}')`);
+    await one.client.rpc('my_discovery_board');
+    const asked = await one.client.rpc('request_match', { p_candidate_user_id: two.id });
+    if (asked.error) throw new Error(`${name} 대화 — ${said(asked)}`);
+    const found = ((await one.client.rpc('my_chat_rooms')).data ?? []).find((room) => room.partner_user_id === two.id);
+    return { one, two, id: found.match_id, requestId: asked.data };
+  };
+  const replied = async (name) => {
+    const pair = await talkPair(name);
+    await pair.one.client.rpc('send_chat_message', { p_match_id: pair.id, p_body: '안녕하세요', p_client_id: randomUUID() });
+    await pair.two.client.rpc('send_chat_message', { p_match_id: pair.id, p_body: '반가워요', p_client_id: randomUUID() });
+    return pair;
+  };
+  const respondDoor = (who, requestId) => door('/api/mobile/matching/respond', who.token, 'POST', { requestId, accept: true });
+
+  /* 참여 끔 → 누름 cancelled */
+  {
+    const pair = await replied('끔');
+    await door('/api/mobile/matching/detail', pair.one.token, 'POST', { matchId: pair.id, clientKey: randomUUID() });
+    const waiting = await stateOf(pair.two, pair.id);
+    await door('/api/mobile/me/participation', pair.two.token, 'POST', { on: false });
+    const pressed = await respondDoor(pair.two, waiting.request_id);
+    console.log(`  · 참여 끔 뒤 누름 | ${pressed.status} ${JSON.stringify(pressed.body)}`);
+    check('받은 사람이 참여를 끈 뒤의 누름 — cancelled', pressed.body?.ok === true && pressed.body?.status === 'cancelled', JSON.stringify(pressed.body));
+    const left = await stateOf(pair.one, pair.id);
+    console.log(`  · 참여 끔 뒤 구매자 | ${brief(left)}`);
+    check('그 뒤 구매자의 예약이 돌아왔다', left?.state !== 'awaiting_consent' && left?.credits_left === 5, brief(left));
+  }
+
+  /* 닫힌 방 → 누름 cancelled · 닫힘이 입력 변경보다 먼저 */
+  {
+    const pair = await replied('닫');
+    await door('/api/mobile/matching/detail', pair.one.token, 'POST', { matchId: pair.id, clientKey: randomUUID() });
+    const waiting = await stateOf(pair.two, pair.id);
+    sql(`update public.chat_room set closed_reason = 'suspension', closed_at = now() where match_id = '${pair.id}'`);
+    const pressed = await respondDoor(pair.two, waiting.request_id);
+    console.log(`  · 닫힌 방 누름 | ${pressed.status} ${JSON.stringify(pressed.body)}`);
+    check('닫힌 방의 누름 — cancelled', pressed.body?.ok === true && pressed.body?.status === 'cancelled', JSON.stringify(pressed.body));
+    const left = await stateOf(pair.one, pair.id);
+    console.log(`  · 닫힌 방 구매자 | ${brief(left)}`);
+    check('닫힌 방은 room_closed', left === null || left.state === 'room_closed', brief(left));
+  }
+
+  /*
+   * consent-ended — 누름은 RPC 로 해 제출을 멈춰 둔다(응답 뒤 제출이 죽은 자리와 같다). 동의가 끝나면 줄이 cancelled 라 문은 다시 안 보내고,
+   * 멈춘 일감을 다시 보내는 복구기가 보내기 직전 문에 닿는다. 인내 30초를 기다린다.
+   */
+  {
+    const pair = await replied('끝');
+    await door('/api/mobile/matching/detail', pair.one.token, 'POST', { matchId: pair.id, clientKey: randomUUID() });
+    const waiting = await stateOf(pair.two, pair.id);
+    const pressed = await pair.two.client.rpc('respond_to_match_request', { p_request_id: waiting.request_id, p_accept: true });
+    check('누름 — accepted, 아직 안 보냄', pressed.data === 'accepted', said(pressed));
+    await door('/api/mobile/me/participation', pair.two.token, 'POST', { on: false });
+    const stuck = await stateOf(pair.one, pair.id);
+    console.log(`  · 동의 끝난 뒤 복구기 전 | ${brief(stuck)}`);
+    await new Promise((done) => setTimeout(done, 32_000));
+    const cron = await fetch(`${BASE}/api/cron/reading`, { headers: { Authorization: `Bearer ${CRON_SECRET}` } });
+    console.log(`  · 복구기 | ${cron.status} ${(await cron.text()).slice(0, 160)}`);
+    let last = await stateOf(pair.one, pair.id);
+    for (let tries = 0; tries < 20 && last?.state === 'making'; tries += 1) {
+      await new Promise((done) => setTimeout(done, 2000));
+      last = await stateOf(pair.one, pair.id);
+    }
+    const run = sql(`select status || '|' || coalesce(failure_code, '') from public.reading_run where match_id = '${pair.id}' order by created_at desc limit 1`);
+    console.log(`  · consent-ended 구매자 | ${brief(last)} | 시도 ${run}`);
+    check('보내기 직전 동의가 끝나 consent-ended 로 닫힌다', run === 'failed|consent-ended', run);
+    check('구매자에게 그 코드가 보이고 풀이권이 돌아온다', last?.state === 'failed_mine' && last.failure_code === 'consent-ended' && last.credits_left === 5, brief(last));
+  }
+
+  /* 답 전 대화의 끝 — 보낸 사람에게 소식이 없고, 끝난 대화 문이 신고 길을 연다 */
+  {
+    const pair = await talkPair('답전');
+    await pair.one.client.rpc('send_chat_message', { p_match_id: pair.id, p_body: '안녕하세요', p_client_id: randomUUID() });
+    const blocked = await pair.two.client.rpc('block_user', { p_user_id: pair.one.id });
+    check('받은 사람의 차단', blocked.error === null, said(blocked));
+    const news = (await pair.one.client.rpc('my_notifications')).data ?? [];
+    console.log(`  · 답 전 끝 보낸 사람 소식 | ${JSON.stringify(news.map((one) => one.kind))}`);
+    check('답 전 대화가 끝나도 보낸 사람 소식이 없다', news.length === 0, JSON.stringify(news.map((one) => one.kind)));
+    const gone = ((await pair.one.client.rpc('my_chat_rooms')).data ?? []).some((room) => room.match_id === pair.id);
+    check('방이 목록에서 사라진다', gone === false);
+    const ended = await pair.two.client.rpc('my_ended_talks');
+    check('끝난 대화 문이 그 방을 내준다', (ended.data ?? []).some((one) => one.match_id === pair.id), said(ended));
+    const words = await pair.two.client.rpc('my_ended_talk_messages', { p_match_id: pair.id });
+    check('끝난 대화의 말을 읽어 신고할 수 있다', (words.data ?? []).some((one) => !one.mine), said(words));
+  }
 } finally {
   setSwitch(false);
   stop();
