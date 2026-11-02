@@ -207,13 +207,14 @@
 
 **문구.** 이 PR 이 넣는 화면 문구는 없어 대장 줄도 없다 — 발견 한 줄은 모델이 쓴다. 소제목 사례는 §5 대로 찾지 못했고, 발견 한 줄에 해당하는 한국 서비스 사례는 이번에 찾지 않았다.
 
-## 10. 남은 연결 — #975 머지 뒤, `app/me/reading/`
+## 10. 연결 — 2026-11-02, #975 위
 
-새 지시는 아래가 이어져야 나간다. 이어지기 전에는 어느 사용자에게도 안 간다.
-
-| 자리 | 할 일 |
+| 자리 | 지금 |
 | --- | --- |
-| 시도를 열고 얼리는 문 · `app/me/reading/pipeline.ts` · `submit.ts` | 시도의 요청 이름을 읽어 `requestAssemblyOf` · `requestPromptVersionOf` 로 조립과 판본을 고른다. #975 의 `match_run_awaiting_send` 는 `reading_run.kind`(늘 `match`)만 내주고 요청 이름은 안 내준다 — 인연의 시도 키 `match-accept:<요청 번호>` 로 찾거나 문이 내주게 한다. 후자면 마이그레이션 사슬이다 |
-| `app/me/reading/model.ts` | `SUMMARY_LAST_SHAPE` 에 `DISCOVERY_PROPERTY` 를 `score` 뒤에 끼운 상세 모양과 제출 선택값 |
-| `app/me/reading/collect.ts` | `isDetailPromptVersion(job.prompt_version)` 이면 `withDiscovery` 로 접은 뒤 검사하고, `detailFindingsOf`(자료 · 비유를 함께 넘긴다)의 답을 `findings` 에 더해 막는 코드를 같은 문턱(`blockingFindingsOf`)으로 가른다 |
-| `app/me/reading/call.live.test.ts` | 상세 조립 · 상세 모양으로 부르는 블록 — 운영자 실호출의 문이다 |
+| `app/me/reading/submit.ts` | 인연 궁합이면 요청 이름을 읽어 `requestAssemblyOf` · `requestPromptVersionOf` 로 고른다. 수락 · 동의의 제출 문은 `request_kind` 를 내주고, 다시 만들기 · 복구기는 이름을 안 내줘 `reading_run_request_kind` 로 묻는다. **이름을 모르면 안 보내고 `request-kind-unknown` 으로 닫는다** |
+| `prepare_reading_job` | 거짓이면 모델을 안 부른다. 동의가 끝난 시도는 그 문이 `consent-ended` 로 닫고 앱은 더 닫지 않는다 |
+| `app/me/reading/model.ts` | 상세 모양 `markdown` → `score` → `discovery` → `metaphor` |
+| `app/me/reading/collect.ts` | 얼린 판본이 상세면 `withDiscovery` 로 접고, `detailFindingsOf` 의 답을 같은 문턱(`blockingFindingsOf`)으로 가른다 |
+| `app/me/reading/call.live.test.ts` | 운영자 실호출 블록 `READING_DETAIL_LIVE`(끄기 기본). 부르는 것은 `READING_DETAIL_LIVE=1 READING_DETAIL_REPEAT=3 npx vitest run app/me/reading/call.live.test.ts -t "상세 궁합"` 이고, `READING_DETAIL_DRY=1` 은 안 부르고 프롬프트와 자료만 떨군다 |
+
+**스스로 안 고친 것:** 다시 만들기가 시도를 열 때 적는 `reading_run.prompt_version` 은 누름 자리에서 흐름을 몰라 옛 이름이다. 저장되는 글의 판본은 제출이 적은 상세 이름이다.

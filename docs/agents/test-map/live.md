@@ -10,7 +10,7 @@
 
 | 파일 | 켜는 값 | 무엇을 |
 | --- | --- | --- |
-| `app/me/reading/call.live.test.ts` | `READING_LIVE=1` (변형 · 두 판 · 인연 입력은 `READING_VARIANTS_LIVE` · `READING_PAIR_LIVE` · `READING_MATCH_INPUT_LIVE`) | 네 kind 의 풀이를 실제로 한 번 만든다 — 토큰이 나간다. 원문 옆에 자리 검사(`positionSlips`)와 근거 칸의 층 검사(`groundingTiers`, #427 — 층이 `claims` 상한을 넘는 경로와 분류별 수)를 적는다. 층 검사는 **보고만 하고 실패로 세우지 않는다** |
+| `app/me/reading/call.live.test.ts` | `READING_LIVE=1` (변형 · 두 판 · 인연 입력은 `READING_VARIANTS_LIVE` · `READING_PAIR_LIVE` · `READING_MATCH_INPUT_LIVE` · 상세 궁합 `READING_DETAIL_LIVE`) | 네 kind 의 풀이를 실제로 한 번 만든다 — 토큰이 나간다. 원문 옆에 자리 검사(`positionSlips`)와 근거 칸의 층 검사(`groundingTiers`, #427 — 층이 `claims` 상한을 넘는 경로와 분류별 수)를 적는다. 층 검사는 **보고만 하고 실패로 세우지 않는다** |
 | `src/lib/input/backfill-chart.live.test.ts` | `BACKFILL_CHART=1` (+ `BACKFILL_TARGET=remote` 와 ref 확인) | 명식 없는 사람 행을 채운다 |
 | `src/lib/input/backfill-reading-chart.live.test.ts` | `BACKFILL_READING_CHART=1` | 풀이 행의 여덟 글자를 채운다 |
 | `app/me/reading/taste-run.live.test.ts` | `TASTE_RUN_LIVE=1` (+ `TASTE_RUN_EFFORTS=none,low` · `TASTE_RUN_SAMPLES=` · `TASTE_RUN_PAIR=1` 이면 전체 자기 풀이까지) | **실험** — 개인별 맛보기 · 가입 뒤 이어쓰기의 짝 견본을 `.taste-run-live/` 에 떨군다. DB 에 안 쓴다 — 토큰이 나간다(`docs/notes/2026-10-03-taste-run-experiment.md`). 견본이 신강 · 신약 · 시간 모름 · 남녀를 섞는지 재는 블록은 잠금 없이 `npm test` 에서 돈다 |

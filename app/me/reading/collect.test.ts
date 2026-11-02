@@ -564,3 +564,50 @@ describe('가입 뒤 이어쓰기', () => {
     expect(called('count_taste_step')).toBeUndefined();
   });
 });
+
+describe('상세 궁합의 회수', () => {
+  const detailJob = () => ({ ...jobOf('match'), prompt_version: READING_POLICY.detailVersion });
+  const SCORE = () => baselineIn(jobOf('match').prompt) ?? 60;
+  const pillarOf = (evidence: string): { name: string; ko: string } => JSON.parse(evidence).charts.b.pillars.day;
+
+  it('발견 한 줄을 본문 맨 앞으로 접어 저장한다', async () => {
+    job = detailJob();
+    retrieve.mockResolvedValue(answered({ markdown: GOOD, score: SCORE(), discovery: '먼저 말을 거는 쪽이 정해져 있어요.' } as never));
+    await expect(collectReadingResult('resp-1')).resolves.toEqual({ done: 'saved' });
+    expect(called('save_reading')?.[1].p_output).toBe(`먼저 말을 거는 쪽이 정해져 있어요.\n\n${GOOD}`);
+  });
+
+  it('발견 한 줄이 비면 글은 그대로 저장하고 적는다', async () => {
+    job = detailJob();
+    retrieve.mockResolvedValue(answered({ markdown: GOOD, score: SCORE(), discovery: '' } as never));
+    await expect(collectReadingResult('resp-1')).resolves.toEqual({ done: 'saved' });
+    expect(called('save_reading')?.[1].p_output).toBe(GOOD);
+    expect(noted()?.p_findings.map((f) => f.code)).toContain('discovery-out-of-contract');
+  });
+
+  it('실제 기둥을 직접 쓴 글은 저장하지 않고 있는 실패 길로 닫는다', async () => {
+    job = detailJob();
+    const { name } = pillarOf(job.evidence);
+    retrieve.mockResolvedValue(answered({ markdown: `${GOOD}\n${name} 쪽이에요.`, score: SCORE(), discovery: '한 줄이에요.' } as never));
+    await expect(collectReadingResult('resp-1')).resolves.toEqual({ done: 'failed', code: 'pillar-named-in-reading' });
+    expect(called('save_reading')).toBeUndefined();
+    expect(called('fail_reading_job')?.[1]).toMatchObject({ p_failure_code: 'pillar-named-in-reading' });
+    expect(JSON.stringify(noted())).not.toContain(name);
+  });
+
+  it('발견 줄의 기둥도 막는다', async () => {
+    job = detailJob();
+    const { name } = pillarOf(job.evidence);
+    retrieve.mockResolvedValue(answered({ markdown: GOOD, score: SCORE(), discovery: `${name} 쪽이 먼저예요.` } as never));
+    await expect(collectReadingResult('resp-1')).resolves.toEqual({ done: 'failed', code: 'pillar-named-in-reading' });
+  });
+
+  it('옛 흐름은 기둥을 써도 막지 않고, 칸이 와도 접지 않는다', async () => {
+    job = jobOf('match');
+    const { name } = pillarOf(job.evidence);
+    const markdown = `${GOOD}\n${name} 쪽이에요.`;
+    retrieve.mockResolvedValue(answered({ markdown, score: SCORE(), discovery: '접으면 안 된다' } as never));
+    await expect(collectReadingResult('resp-1')).resolves.toEqual({ done: 'saved' });
+    expect(called('save_reading')?.[1].p_output).toBe(markdown);
+  });
+});
