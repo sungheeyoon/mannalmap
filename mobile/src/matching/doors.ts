@@ -1,4 +1,5 @@
 import { accountStateOf, type AccountState } from '@account/index';
+import type { MatchDetail } from '@chat/room/detail';
 import { REQUEST_STATUSES, type RequestStatus } from '@consent/index';
 import { rpcArgs } from '@db';
 import { userFacingDbMessage } from '@db-error';
@@ -18,6 +19,8 @@ import { outOfCredits } from '@reading/panel-chrome';
 import { supabase } from '@/auth/client';
 import { respondToMatchRequest } from '@/reading/api';
 import { openParticipation, saveFailureOf } from '@/reading/chart-writes';
+
+import { readDetail } from './talk-doors';
 
 /**
  * **앱의 인연 문** — 웹의 `app/me/candidates.ts` · `requests/inbox.ts` · `requests/actions.ts` · `discovery/actions.ts` 가 부르는 같은 문을
@@ -310,8 +313,10 @@ export type MatchResult = {
   partnerIntro: string | null;
   partnerPhotoCount: number;
   partnerPhotoFocus: readonly PhotoFocus[];
-  mine: ChartSnapshot;
-  theirs: ChartSnapshot;
+  /** 켜진 흐름에는 여덟 글자 카드가 없다 — 둘 다 `null` 이고 `detail` 이 화면을 정한다 */
+  mine: ChartSnapshot | null;
+  theirs: ChartSnapshot | null;
+  detail: MatchDetail | null;
 };
 
 export type MatchOutcome = { kind: 'ok'; result: MatchResult } | { kind: 'closed' } | { kind: 'none' };
@@ -320,13 +325,14 @@ export type MatchOutcome = { kind: 'ok'; result: MatchResult } | { kind: 'closed
 export function readMatchResult(matchId: string): Promise<Read<MatchOutcome>> {
   return guarded<MatchOutcome>(async () => {
     if (supabase === null) return { ok: false, reason: NOT_READY };
-    const [scope, matches] = await Promise.all([supabase.rpc('my_match_scope', { p_match_id: matchId }), supabase.rpc('my_matches')]);
+    const [scope, matches, detail] = await Promise.all([supabase.rpc('my_match_scope', { p_match_id: matchId }), supabase.rpc('my_matches'), readDetail(matchId)]);
     if (scope.error !== null) return { ok: false, reason: userFacingDbMessage(scope.error, 'my_match_scope') };
     const row = (scope.data ?? [])[0];
     if (row === undefined) return { ok: true, value: { kind: 'none' } };
     const mine = storedChartSnapshot(row.my_chart);
     const theirs = storedChartSnapshot(row.partner_chart);
-    if (mine === null || theirs === null) return { ok: true, value: { kind: 'closed' } };
+    const talk = detail?.detailOpen === true || detail?.state === 'awaiting_consent';
+    if (!talk && (mine === null || theirs === null)) return { ok: true, value: { kind: 'closed' } };
     const inbox = (matches.data ?? []).find((one) => one.match_id === matchId);
     const match = inbox === undefined ? null : matchOf(inbox);
     const flat = inbox?.partner_photo_focus ?? null;
@@ -342,8 +348,9 @@ export function readMatchResult(matchId: string): Promise<Read<MatchOutcome>> {
           partnerIntro: row.partner_intro,
           partnerPhotoCount: count,
           partnerPhotoFocus: match === null ? [] : [match.photoFocus],
-          mine,
-          theirs,
+          mine: talk ? null : mine,
+          theirs: talk ? null : theirs,
+          detail,
         },
       },
     };

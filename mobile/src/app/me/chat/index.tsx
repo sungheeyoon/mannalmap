@@ -1,9 +1,10 @@
 import { router, useFocusEffect } from 'expo-router';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { CHAT_TAB_LABEL, messageTimeLabel, partnerNameOf, roomNoticeOf } from '@chat';
-import { ROOM_NO_MESSAGES_YET } from '@chat/copy';
+import { ROOM_NO_MESSAGES_YET, TALK_UNANSWERED_LABEL } from '@chat/copy';
+import { foldUnanswered } from '@chat/room/talk';
 import type { Element } from '@saju';
 
 import { Avatar } from '@/chat/avatar';
@@ -83,14 +84,39 @@ export default function ChatRoomsScreen() {
         </View>
       )}
       {screen !== null && screen.kind === 'ready' && screen.rooms.length > 0 && (
-        <FlatList
-          data={screen.rooms}
-          keyExtractor={(room) => room.matchId}
-          contentContainerStyle={styles.list}
-          renderItem={({ item }) => <RoomRow room={item} tone={screen.tones.get(item.matchId)?.theirs.element ?? null} />}
-        />
+        <RoomList screen={screen} />
       )}
     </View>
+  );
+}
+
+/** 받은 사람이 그냥 둔 대화는 아래에 접힌다 — 재촉하지 않고 지우지도 않는다. 없으면 접이칸도 없다 */
+function RoomList({ screen }: { screen: Extract<RoomListScreen, { kind: 'ready' }> }) {
+  const [open, setOpen] = useState(false);
+  const { rooms, unanswered } = useMemo(() => foldUnanswered(screen.rooms, screen.requests), [screen.rooms, screen.requests]);
+  const row = (room: ChatRoom) => <RoomRow key={room.matchId} room={room} tone={screen.tones.get(room.matchId)?.theirs.element ?? null} />;
+  return (
+    <FlatList
+      data={rooms}
+      keyExtractor={(room) => room.matchId}
+      contentContainerStyle={styles.list}
+      renderItem={({ item }) => row(item)}
+      ListFooterComponent={
+        unanswered.length === 0 ? undefined : (
+          <View>
+            <Pressable accessibilityRole="button" accessibilityState={{ expanded: open }} onPress={() => setOpen(!open)} style={styles.fold}>
+              <Text style={styles.foldText}>
+                {TALK_UNANSWERED_LABEL} {unanswered.length}
+              </Text>
+              <View style={open && styles.turned}>
+                <Icon name="chevron" color={COLOR.secondary} size={16} />
+              </View>
+            </Pressable>
+            {open && unanswered.map(row)}
+          </View>
+        )
+      }
+    />
   );
 }
 
@@ -149,4 +175,7 @@ const styles = StyleSheet.create({
   previewUnread: { fontFamily: FONT.bold, color: COLOR.foreground },
   badge: { minWidth: 20, height: 20, paddingHorizontal: 6, alignItems: 'center', justifyContent: 'center', borderRadius: RADIUS.pill, backgroundColor: COLOR.danger },
   badgeText: { fontSize: TYPE.fine, fontFamily: FONT.bold, color: COLOR.onAccent },
+  fold: { minHeight: 48, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 8 },
+  foldText: { fontSize: TYPE.note, fontFamily: FONT.bold, color: COLOR.secondary },
+  turned: { transform: [{ rotate: '90deg' }] },
 });

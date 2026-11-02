@@ -2,12 +2,14 @@ import { router, useFocusEffect } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
+import { withoutTalks } from '@chat/room/talk';
 import { pastRequests } from '@matching/history';
 import type { InboxMatch, Requests } from '@matching/inbox';
 import { receivedOf } from '@matching/requests';
 
 import { readMatchBooks, readMatches, readRequests, type MatchBook, type Read } from '@/matching/doors';
 import { PastRequestList } from '@/matching/requests';
+import { useTalkOpen } from '@/matching/talk-doors';
 import { Icon } from '@/ui/icons';
 import { EmptyState } from '@/ui/empty-state';
 import { goTab } from '@/ui/go-tab';
@@ -22,6 +24,7 @@ type Loaded = { books: Read<readonly MatchBook[]>; matches: Read<readonly InboxM
 export default function MatchHistoryScreen() {
   const [loaded, setLoaded] = useState<Loaded | null>(null);
   const [note, setNote] = useState('');
+  const talkOpen = useTalkOpen();
 
   const load = useCallback(async () => {
     const [books, matches, requests] = await Promise.all([readMatchBooks(), readMatches(), readRequests()]);
@@ -55,10 +58,13 @@ export default function MatchHistoryScreen() {
     );
   }
 
-  const { books, matches, requests } = loaded;
+  const { books, matches, requests: readRows } = loaded;
+  /* 대화의 줄은 지난 요청이 아니다 */
+  const requests = readRows.ok && matches.ok ? { ...readRows, value: { ...readRows.value, requests: withoutTalks(readRows.value.requests, matches.value.map((match) => match.partnerUserId), talkOpen) } } : readRows;
   const shelf = books.ok ? books.value : [];
   const madeIds = new Set(shelf.map((book) => book.matchId));
-  const making = books.ok && matches.ok ? matches.value.filter((match) => !madeIds.has(match.matchId)) : [];
+  /* 켜진 동안 글 없는 인연은 대화다 — 궁합을 만드는 중이 아니다 */
+  const making = !talkOpen && books.ok && matches.ok ? matches.value.filter((match) => !madeIds.has(match.matchId)) : [];
   const matchCount = shelf.length + making.length;
   const past = requests.ok ? pastRequests(requests.value, matches.ok ? matches.value : null) : null;
   const pastCount = past === null ? 0 : past.sent.length + past.decided.length;

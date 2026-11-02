@@ -1,3 +1,4 @@
+import { router } from 'expo-router';
 import { useEffect, useReducer, useRef, useState } from 'react';
 
 import type { ElementSummary } from '@discovery/element-axes';
@@ -6,6 +7,7 @@ import { deckReducer, PASSED_LIMIT } from '@matching/deck-state';
 import { REQUEST_UNSURE } from '@matching/requests';
 
 import { outOfCreditsNow, passCandidate, requestMatch, restorePassed } from './doors';
+import { startTalk } from './talk-doors';
 
 const FLASH_MS = 2000;
 
@@ -20,7 +22,13 @@ export function useDeck({
   summary,
   onOutOfCredits,
   onRequested,
+  talkOpen = false,
+  onSwitchMoved,
 }: {
+  /** 대화가 열렸다 — 풀이권을 안 물어 확인 창이 서고, 보내면 방으로 간다 */
+  talkOpen?: boolean;
+  /** 누르려는 사이 스위치가 꺼졌다 — 옛 요청을 말없이 세우지 않고 다시 읽는다 */
+  onSwitchMoved?: () => void;
   cards: readonly DeckCard[];
   passedFromServer: readonly DeckCard[];
   summary: ElementSummary;
@@ -58,12 +66,42 @@ export function useDeck({
 
   /** 궁합 요청 단추 — 풀이권이 0개면 요청 확인 창 대신 풀이권 창이다. 못 물었으면 확인 창이고 DB 가 판정한다 */
   const askToRequest = async () => {
+    if (talkOpen) {
+      setAsking(true);
+      return;
+    }
     if (checkingCredits) return;
     setCheckingCredits(true);
     const spent = await outOfCreditsNow();
     setCheckingCredits(false);
     if (spent) onOutOfCredits();
     else setAsking(true);
+  };
+
+  const talk = async () => {
+    if (!profile || busy.current) return;
+    const sending = profile;
+    setFailure(null);
+    lock(true);
+    try {
+      const started = await startTalk(sending.candidateUserId);
+      if (started.kind === 'switch-closed') {
+        onSwitchMoved?.();
+        return;
+      }
+      if (started.kind === 'refused') {
+        setFailure(started.message);
+        return;
+      }
+      dispatch({ type: 'leave', id: sending.candidateUserId });
+      onRequested();
+      /* 방을 못 찾았으면 대화는 섰다 — 채팅 탭에 있으니 말을 더 짓지 않는다 */
+      if (started.kind === 'room') router.push(`/me/chat/${started.matchId}` as never);
+    } catch {
+      setFailure(REQUEST_UNSURE);
+    } finally {
+      lock(false);
+    }
   };
 
   const pass = async () => {
@@ -143,6 +181,7 @@ export function useDeck({
     askToRequest,
     pass,
     send,
+    talk,
     restoreCard,
     undo,
     blocked,

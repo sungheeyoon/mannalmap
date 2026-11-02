@@ -28,7 +28,12 @@ import {
   SEND_DROP_LABEL,
   SEND_FAILED_LABEL,
   SEND_RETRY_LABEL,
+  DETAIL_DOOR_LABEL,
+  TALK_WAIT_REPLY,
+  TALK_WITHDRAW_LABEL,
 } from '@chat/copy';
+import { detailDoorShown, detailPanelOpensItself } from '@chat/room/detail';
+import { waitsForReply } from '@chat/room/talk';
 import { bubbleDaysOf, reportableOf, type Bubble, type ShownMessage } from '@chat/room/bubbles';
 import { dropDraft, readDraft, writeDraft, type TabStorage } from '@chat/room/draft';
 import { bodyPartsOf } from '@chat/room/links';
@@ -43,7 +48,9 @@ import { ElementSymbol } from '@/ui/element-symbol';
 
 import { Avatar } from './avatar';
 import { CompatChip, CompatRow } from './compat';
+import { DetailPanelView } from './detail-panel';
 import { BlockDialog, ReportDialog } from './dialogs';
+import { WithdrawDialog } from './withdraw';
 import { BackButton } from '@/ui/top-bar';
 import { CardFrame, Tile } from '@/ui/surfaces';
 
@@ -94,7 +101,15 @@ type Row =
  */
 export function ChatRoomView({ room, onChanged }: { room: RoomView; onChanged: () => void }) {
   const closed = room.notice !== null;
-  const [opened, setOpened] = useState<'report' | 'block' | null>(null);
+  const [opened, setOpened] = useState<'report' | 'block' | 'withdraw' | null>(null);
+  const { detail, talk } = room;
+  /* 이미 선 동의 대기는 꺼진 동안에도 받은 사람이 누를 수 있다(운영 절차 「되돌리기」) */
+  const stillWaiting = detail?.state === 'awaiting_consent' && detail.replied;
+  const doorShown = stillWaiting || detailDoorShown(detail);
+  const [pressedOpen, setPressedOpen] = useState<boolean | null>(null);
+  const panelOpen = doorShown && detail !== null && (pressedOpen ?? detailPanelOpensItself(detail));
+  /* 옛 궁합 단추는 켜지기 전의 방에만 — 답 전 대화에는 궁합이 없다 */
+  const oldCompat = !doorShown && talk === null;
   const [sheet, setSheet] = useState<'partner' | 'me' | null>(null);
   const partnerOpens = room.partnerUserId !== null && !closed;
   const theirTone = room.tones?.theirs.element ?? null;
@@ -120,7 +135,14 @@ export function ChatRoomView({ room, onChanged }: { room: RoomView; onChanged: (
   }, []);
 
   const thread = useThread(room.matchId, room.messages, room.fromBeginning, beforeMerge);
-  const outbox = useOutbox(room.matchId, thread.messages, thread.catchUp, onChanged);
+  /* 답 전의 말은 방의 상태를 바꾼다 — 받은 사람의 말이 곧 답이라 상세 궁합이 열린다 */
+  const { catchUp } = thread;
+  const beforeAnswer = talk !== null;
+  const accepted = useCallback(() => {
+    catchUp();
+    if (beforeAnswer) onChanged();
+  }, [catchUp, beforeAnswer, onChanged]);
+  const outbox = useOutbox(room.matchId, thread.messages, accepted, onChanged);
   const pending = outbox.pending;
   const days = useMemo(() => bubbleDaysOf(withPending(thread.messages, pending)), [thread.messages, pending]);
   const pendingById = useMemo(() => new Map(pending.map((one) => [one.id, one])), [pending]);
@@ -153,6 +175,7 @@ export function ChatRoomView({ room, onChanged }: { room: RoomView; onChanged: (
   const openMe = room.me === null ? null : () => setSheet('me');
   const menuOf = (fromSheet: boolean): MenuItem[] => [
     ...(fromSheet || openMe === null ? [] : [{ label: '내 프로필', icon: 'people' as const, onPress: openMe }]),
+    ...(talk?.side === 'sent' ? [{ label: TALK_WITHDRAW_LABEL, icon: 'close' as const, onPress: () => setOpened('withdraw') }] : []),
     {
       label: '신고',
       icon: 'flag' as const,
@@ -199,13 +222,20 @@ export function ChatRoomView({ room, onChanged }: { room: RoomView; onChanged: (
               {room.activity !== null && <Activity band={room.activity} />}
             </View>
           </Pressable>
-          {partnerOpens && <CompatChip compat={room.compat ?? { kind: 'quiet' }} matchId={room.matchId} tone={room.tones === null ? null : theirTone} />}
+          {partnerOpens && oldCompat && <CompatChip compat={room.compat ?? { kind: 'quiet' }} matchId={room.matchId} tone={room.tones === null ? null : theirTone} />}
+          {partnerOpens && doorShown && (
+            <Pressable accessibilityRole="button" accessibilityState={{ expanded: panelOpen }} onPress={() => setPressedOpen(!panelOpen)} style={styles.door}>
+              <Text style={styles.doorText}>{DETAIL_DOOR_LABEL}</Text>
+            </Pressable>
+          )}
           {room.partnerUserId !== null && (
             <AnchoredMenu label={openMe === null ? '신고 · 차단' : '메뉴'} items={menuOf(false)}>
               <Icon size={22} name="more" color={COLOR.foreground} />
             </AnchoredMenu>
           )}
         </View>
+
+        {panelOpen && detail !== null && <DetailPanelView detail={detail} matchId={room.matchId} onChanged={onChanged} />}
 
         <View style={styles.logBox}>
           <FlatList
@@ -280,6 +310,8 @@ export function ChatRoomView({ room, onChanged }: { room: RoomView; onChanged: (
               <Text style={styles.closedText}>{room.notice}</Text>
             </Tile>
           ) : (
+            <>
+              {waitsForReply(talk, thread.messages, pending.length) && <Text style={styles.waitReply}>{TALK_WAIT_REPLY}</Text>}
             <Composer
               matchId={room.matchId}
               said={outbox.said}
@@ -288,6 +320,7 @@ export function ChatRoomView({ room, onChanged }: { room: RoomView; onChanged: (
                 toBottom();
               }}
             />
+            </>
           )}
         </View>
       </KeyboardAvoidingView>
@@ -299,7 +332,7 @@ export function ChatRoomView({ room, onChanged }: { room: RoomView; onChanged: (
           tone={theirTone}
           photos={room.partnerUserId === null ? null : { userId: room.partnerUserId, focuses: room.partnerPhotoFocuses }}
           onClose={() => setSheet(null)}
-          toMatch={<CompatRow compat={room.compat ?? { kind: 'quiet' }} matchId={room.matchId} />}
+          toMatch={oldCompat ? <CompatRow compat={room.compat ?? { kind: 'quiet' }} matchId={room.matchId} /> : undefined}
           menu={
             <AnchoredMenu label="신고 · 차단" items={menuOf(true)}>
               <Icon size={22} name="more" color={COLOR.foreground} />
@@ -337,6 +370,7 @@ export function ChatRoomView({ room, onChanged }: { room: RoomView; onChanged: (
           onBlock={closed ? null : () => setOpened('block')}
         />
       )}
+      {opened === 'withdraw' && talk !== null && <WithdrawDialog requestId={talk.requestId} onClose={() => setOpened(null)} />}
       {opened === 'block' && room.partnerUserId !== null && (
         <BlockDialog userId={room.partnerUserId} nickname={room.name} onClose={() => setOpened(null)} onBlocked={onChanged} />
       )}
@@ -582,6 +616,9 @@ const styles = StyleSheet.create({
   dotNow: { backgroundColor: ELEMENT_TONE.木.ink },
   dotDay: { backgroundColor: ELEMENT_TONE.木.mid },
   dotEarlier: { borderWidth: 1, borderColor: COLOR.borderStrong },
+  door: { minHeight: CONTROL, justifyContent: 'center', paddingHorizontal: 12, borderRadius: RADIUS.pill, borderWidth: 1, borderColor: COLOR.borderStrong },
+  doorText: { fontSize: TYPE.small, fontFamily: FONT.bold, color: COLOR.foreground },
+  waitReply: { paddingHorizontal: 16, paddingBottom: 6, fontSize: TYPE.small, lineHeight: 19, fontFamily: FONT.medium, color: COLOR.secondary },
   logBox: { flex: 1, minHeight: 0 },
   log: { paddingHorizontal: 12, paddingVertical: 20, gap: 4 },
   dayRow: { alignItems: 'center', marginTop: 16, marginBottom: 8 },

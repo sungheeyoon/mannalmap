@@ -2,6 +2,7 @@
 // 사람 · 값은 모두 지어낸 것이다. 띄우는 차례는 `docs/agents/delegation/local-env.md` 「앱을 네이티브로 재기」.
 // `node mobile/scripts/measure/fake-server.mjs` — 포트는 `FAKE_PORT`(기본 18999), 요청 기록은 `MEASURE_DIR/fake.log`.
 // 상태 바꾸기: `curl 'localhost:18999/__set?m=<reset|empty|unsigned|closed|suspended|warning|no-credits|no-self>'`
+// 대화 · 상세 궁합(ADR 0215): `m=talk-on`(스위치 켬) · `m=detail-<state>` · `m=buyer` · `m=holds` · `m=talk-sent` · `m=talk-received` · `m=talk-sent-said`
 // 망 흉내: `m=down`(읽기 · 앱용 문의 소켓을 끊는다) · `m=broken`(503) · `m=slow`(3초 늦게) · `m=up`(되돌림). 세션과 `/__` 는 안 걸린다. `m=screens-down` · `m=screens-slow` 는 관문의 두 읽기를 빼고 건다
 import { Buffer } from 'node:buffer';
 import http from 'node:http';
@@ -120,6 +121,8 @@ const fresh = () => ({
   survey: [],
   block: [],
   discovery: { user_id: ME, prefer_gender: 'male', opted_out_at: null },
+  talkOpen: false,
+  detail: { state: 'before_purchase', request_id: null, i_am_buyer: false, expires_at: null, failure_code: null, failure_detail: null, credits_left: 5, talk_status: 'accepted', may_send: true, detail_open: false },
 });
 
 let db = fresh();
@@ -128,7 +131,7 @@ let net = 'up';
 const gateRead = (url) => url.pathname.endsWith('/current_beta_schedule') || (url.pathname.endsWith('/app_user') && (url.searchParams.get('select') ?? '').includes('signed_up_at'));
 const scopeOf = (id) => {
   const m = db.matches.find((one) => one.match_id === id);
-  return m ? [{ match_id: id, created_at: m.created_at, my_chart: chart, partner_chart: chart2, partner_has_photo: m.partner_has_photo, partner_intro: m.partner_intro, partner_nickname: m.partner_nickname, partner_user_id: m.partner_user_id, balance_band: m.balance_band, supplied_to_me: m.supplied_to_me, supplied_to_them: ['火'] }] : [];
+  return m ? [{ match_id: id, created_at: m.created_at, my_chart: db.talkOpen ? null : chart, partner_chart: db.talkOpen ? null : chart2, partner_has_photo: m.partner_has_photo, partner_intro: m.partner_intro, partner_nickname: m.partner_nickname, partner_user_id: m.partner_user_id, balance_band: m.balance_band, supplied_to_me: m.supplied_to_me, supplied_to_them: ['火'] }] : [];
 };
 const readingRow = (a) => {
   const found = db.readings.find((r) => r.kind === a.p_kind && (a.p_kind === 'self' || (a.p_match_id && r.match_id === a.p_match_id) || (a.p_person_a === r.person_a && (a.p_person_b ?? null) === r.person_b) ));
@@ -153,9 +156,13 @@ const rpc = {
   my_chat_messages: (a) => (db.messages[a.p_match_id] ?? []).filter((m) => a.p_before_seq === undefined || m.seq < a.p_before_seq).slice(-(a.p_limit ?? 50)).reverse(),
   my_match_scope: (a) => scopeOf(a.p_match_id),
   my_matches: () => db.matches,
-  // 스위치가 꺼진 지금의 답 — 상세 궁합은 아직 안 열렸다(ADR 0215)
-  my_match_detail_state: () => [{ state: 'before_purchase', request_id: null, i_am_buyer: false, expires_at: null, failure_code: null, failure_detail: null, credits_left: 5, talk_status: 'accepted', may_send: true, detail_open: false }],
-  request_match_detail: () => [],
+  // 기본은 스위치가 꺼진 답이다 — 켠 상태는 `__set` 으로 든다(ADR 0215)
+  match_talk_open: () => db.talkOpen,
+  my_match_detail_state: () => [db.detail],
+  request_match_detail: () => {
+    db.detail = { ...db.detail, state: 'awaiting_consent', request_id: R2, i_am_buyer: true, expires_at: ago(-4320) };
+    return [{ request_id: R2, status: 'pending', i_am_buyer: true }];
+  },
   my_discovery_board: () => db.board,
   my_passed_connections: () => db.passed,
   my_reading: readingRow,
@@ -286,6 +293,20 @@ const server = http.createServer((req, res) => {
       if (mode === 'warning') db.warning = [{ category: 'harassment', warned_on: '2026-10-30', note: '가짜 경고' }];
       if (mode === 'no-credits') db.credits[0].available = 0;
       if (mode === 'no-self') db.account.self_person_id = null;
+      if (mode === 'talk-on') { db.talkOpen = true; db.detail.detail_open = true; }
+      if (mode.startsWith('detail-')) { db.detail.state = mode.slice('detail-'.length); db.detail.request_id = R1; if (db.detail.state === 'awaiting_consent') db.detail.expires_at = ago(-4320); }
+      if (mode === 'buyer') db.detail.i_am_buyer = true;
+      if (mode === 'holds') db.detail.consent_holds = true;
+      if (mode.startsWith('talk-sent') || mode === 'talk-received') {
+        const direction = mode === 'talk-received' ? 'received' : 'sent';
+        db.requests = [{ request_id: R3, direction, status: 'pending', counterpart_user_id: U1, counterpart_nickname: '바다소년', counterpart_intro: null, counterpart_has_photo: true, counterpart_photo_focus: [], balance_band: 'even', supplied_to_me: [], supplied_to_them: [], created_at: ago(30), decided_at: null }, ...db.requests.filter((one) => one.direction !== 'received')];
+        db.detail.talk_status = 'pending';
+        const said = mode === 'talk-sent-said';
+        const body = { seq: 1, message_id: 'dddddddd-2222-4000-8000-000000000001', client_id: 'eeeeeeee-2222-4000-8000-000000000001', sender_user_id: direction === 'sent' ? ME : U1, mine: direction === 'sent', body: '안녕하세요, 프로필 보고 인사드려요.', created_at: ago(30) };
+        db.messages[M1] = direction === 'sent' && !said ? [] : [body];
+        db.detail.may_send = !said;
+        db.rooms[0] = { ...db.rooms[0], unread_count: direction === 'sent' ? 0 : 1, last_message_body: direction === 'sent' && !said ? null : body.body, last_message_at: ago(30) };
+      }
       if (['up', 'down', 'broken', 'slow', 'screens-down', 'screens-slow'].includes(mode)) net = mode;
       log(`SET ${mode}`);
       return send(res, 200, { ok: true });

@@ -1,0 +1,93 @@
+import * as Crypto from 'expo-crypto';
+import { router } from 'expo-router';
+import { useRef, useState } from 'react';
+import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
+
+import { detailPanelOf, type MatchDetail } from '@chat/room/detail';
+import { REQUEST_STATUS_TEXT } from '@consent/index';
+
+import { respondToRequest } from '@/matching/doors';
+import { requestDetail } from '@/matching/talk-doors';
+import { COLOR, CONTROL, FONT, RADIUS, TYPE } from '@/ui/tokens';
+
+/**
+ * 방 상단의 상세 궁합 칸 — 글자와 누를 일은 공용 `detailPanelOf` 가 정한다(웹과 같다). 받은 사람의 답은 만들기와 그냥 둠뿐이라 거절 단추가 없다.
+ * 재전송은 같은 키다: 받았는지 모르는 실패면 키를 들고 있다가 다시 보낸다.
+ */
+export function DetailPanelView({ detail, matchId, onChanged }: { detail: MatchDetail; matchId: string; onChanged: () => void }) {
+  const [working, setWorking] = useState(false);
+  const [failure, setFailure] = useState<string | null>(null);
+  const key = useRef<string | null>(null);
+  const panel = detailPanelOf(detail);
+
+  const ask = async () => {
+    /* 앱에는 `crypto` 전역이 없을 수 있어 공용 `newDetailKey` 대신 기기의 난수로 짓는다 — 같은 uuid v4 다 */
+    key.current ??= Crypto.randomUUID();
+    const result = await requestDetail(matchId, key.current);
+    if (!result.ok) {
+      if (!result.unsure) key.current = null;
+      setFailure(result.message);
+      return;
+    }
+    key.current = null;
+    onChanged();
+  };
+
+  const consent = async () => {
+    if (detail.requestId === null) return;
+    const result = await respondToRequest(detail.requestId, true);
+    if (!result.ok) {
+      setFailure(result.message);
+      return;
+    }
+    if (result.status !== 'accepted') setFailure(REQUEST_STATUS_TEXT[result.status].received);
+    onChanged();
+  };
+
+  const press = async () => {
+    const kind = panel.action?.kind;
+    if (kind === 'see') {
+      router.push(`/me/match/${matchId}?from=chat` as never);
+      return;
+    }
+    setWorking(true);
+    setFailure(null);
+    await (kind === 'consent' ? consent() : ask());
+    setWorking(false);
+  };
+
+  return (
+    <View style={styles.panel}>
+      <View style={styles.titleRow}>
+        {detail.state === 'making' && <ActivityIndicator size="small" color={COLOR.secondary} />}
+        <Text style={styles.title}>{panel.title}</Text>
+      </View>
+      {panel.lines.map((line) => (
+        <Text key={line} style={styles.line}>
+          {line}
+        </Text>
+      ))}
+      {failure !== null && (
+        <Text style={styles.failure} accessibilityRole="alert">
+          {failure}
+        </Text>
+      )}
+      {panel.action !== null && (
+        <Pressable accessibilityRole="button" disabled={working} onPress={() => void press()} style={[styles.action, working && styles.off]}>
+          <Text style={styles.actionText}>{panel.action.label}</Text>
+        </Pressable>
+      )}
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  panel: { gap: 6, paddingHorizontal: 16, paddingVertical: 12, backgroundColor: COLOR.surfaceSoft, borderBottomWidth: 1, borderBottomColor: COLOR.border },
+  titleRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  title: { flex: 1, fontFamily: FONT.bold, fontSize: TYPE.note, lineHeight: 20, color: COLOR.foreground },
+  line: { fontFamily: FONT.medium, fontSize: TYPE.small, lineHeight: 19, color: COLOR.secondary },
+  failure: { fontFamily: FONT.medium, fontSize: TYPE.small, lineHeight: 19, color: COLOR.danger },
+  action: { minHeight: CONTROL, marginTop: 4, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 16, borderRadius: RADIUS.pill, backgroundColor: COLOR.accent },
+  actionText: { fontFamily: FONT.bold, fontSize: TYPE.note, color: COLOR.onAccent },
+  off: { opacity: 0.55 },
+});

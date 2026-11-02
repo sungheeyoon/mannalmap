@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 
+import { withoutTalks } from '@chat/room/talk';
 import { answerCount, bellCount } from '@consent/counts';
 import { readingCreditsLabel } from '@reading/notes';
 
@@ -30,15 +31,19 @@ export function useCounts(pathname: string, enabled: boolean): Counts {
         client.rpc('my_match_requests'),
         client.rpc('my_notifications'),
         client.rpc('my_reading_credits'),
+        client.rpc('my_matches'),
       ]);
       /* 배지는 부속이다 — 못 읽으면 그 자리를 비운다 */
       void settled(reads, 'counts', () => null).then((read) => {
         if (mine !== asked.current || read === null) return;
-        const [chat, requests, news, credits] = read;
+        const [chat, requests, news, credits, matches] = read;
         const left = credits.data?.[0]?.available;
+        /* 답 전 대화는 할 일이 아니다 — 받은 요청 딱지는 옛 요청만 센다. 인연을 못 읽으면 지금 셈 그대로다 */
+        const partners = (matches.data ?? []).map((match) => match.partner_user_id);
+        const lines = (requests.data ?? []).map((row) => ({ ...row, counterpartUserId: row.counterpart_user_id }));
         setCounts({
           chat: chat.error === null ? Number(chat.data ?? 0) : 0,
-          requests: requests.error === null ? answerCount(requests.data ?? []) : 0,
+          requests: requests.error === null ? answerCount(withoutTalks(lines, partners, false)) : 0,
           news: news.error === null ? bellCount((news.data ?? []).map((row) => ({ kind: row.kind, unread: row.read_at === null }))) : 0,
           credits: credits.error === null && left !== undefined ? readingCreditsLabel({ available: left }) : null,
         });
