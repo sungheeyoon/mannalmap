@@ -991,6 +991,8 @@ select is(
     'photo_trash_settle',
     /** Node 가 지은 것을 적는 문 — 계산 입력은 안 받는다(ADR 0071 · #66) */
     'prepare_reading_job',
+    /** 닫힌 방의 메시지 파기 크론의 문 — 지운 수만 돌려준다(`20270107100000`, ADR 0217 · `99_chat_purge_cron`) */
+    'purge_closed_chat_messages',
     /** 다시 만들기 · 복구기가 시도의 흐름을 묻는 문 — 상세 궁합이 옛 지시로 안 나가게 한다 */
     'reading_run_request_kind',
     'record_reading_webhook_event',

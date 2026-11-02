@@ -16,6 +16,10 @@
     {
       "path": "/api/cron/photo-sweep",
       "schedule": "47 19 * * *"
+    },
+    {
+      "path": "/api/cron/chat-purge",
+      "schedule": "27 20 * * *"
     }
   ]
 }

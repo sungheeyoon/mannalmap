@@ -408,21 +408,36 @@ order by 차례;
 때뿐이고, 신고는 계정을 따라간다(`docs/ops/runbook/erasure.md` 「지우기」). 그 전에 트리거가 신고째 `retention.report` 로 옮긴다 —
 떠난 사람의 신고는 `docs/ops/runbook/erasure.md` 「떠난 사람의 신고 기록」에서 읽는다.
 
-### 닫힌 지 90일 지난 방의 메시지를 지운다 — **손으로**
+### 닫힌 지 90일 지난 방의 메시지를 지운다 — 크론이 날마다
 
-크론이 아니다(PRD §7.1). 배포한 날이나 달마다 한 번 돈다. 기간은 DB 의 `chat_retention()` 이
-들고(90일), 이 함수와 pgTAP 이 같은 문을 돌린다.
+Vercel Cron `/api/cron/chat-purge`(`vercel.json`, 매일 20:27 UTC = 서울 05:27 전후 — Hobby 는 ±59분)가 `purge_closed_chat_messages()` 를 부른다(ADR 0217). 기간은 DB 의 `chat_retention()` 이
+들고(90일), 이 크론 · 손 · pgTAP 이 같은 문을 돌린다. 지우는 것은 메시지뿐이다 — 방은 남아 닫힌 이유를 계속 말하고, 스냅샷은 신고를 따른다. 새 변수는 없다(`CRON_SECRET` · `SUPABASE_SECRET_KEY` 그대로).
+
+**스위치와 무관하다.** `vercel.json` 의 크론은 그것이 든 첫 Production 배포와 함께 돌기 시작한다 — 대화 스위치가 꺼져 있어도 그날 밤 이미 90일 지난 말을 지운다. 지운 말은 되돌릴 수 없다.
+
+#### 배포 승인 전에 건수를 잰다
+
+크론이 든 첫 배포를 승인받기 전에 한 번 돌려 그 값을 승인 요청에 적는다. 읽기 전용이고 수와 날짜 하나뿐이다 — 내용 · 번호 · 사람이 없다(`docs/ops/runbook/access.md` 「보통」 갈래). `npm run db:remote -- --purpose "G-132 첫 파기 건수" "<아래 sql>"` 로 보낸다.
 
 ```sql
--- 무엇을 지울 것인지 먼저 본다. 세어 보지 않고 지우지 않는다.
-select r.match_id, r.closed_reason, r.closed_at, count(m.id) as 메시지
+select count(m.id) as 지울_메시지, count(distinct r.id) as 방, min(r.closed_at)::date as 가장_오래_닫힌_날
 from public.chat_room r
 join public.chat_message m on m.room_id = r.id
-where r.closed_at < now() - public.chat_retention()
-group by r.match_id, r.closed_reason, r.closed_at
-order by r.closed_at;
+where r.closed_at < now() - public.chat_retention();
+```
 
--- 지운다. 지우는 것은 메시지뿐이다 — 방은 남아 닫힌 이유를 계속 말하고, 스냅샷은 신고를 따른다.
+(`supabase/tests/99_chat_purge_cron.test.sql` 이 이 조건의 수와 지운 수가 같은지 잰다.)
+
+#### 실패는 어떻게 드러나나
+
+- **`chat-purge-overdue`**(`ops_alert`, 하루 한 줄) — pg_cron `chat-purge-watch`(매일 06:57 UTC)가 보존 기간을 **이틀 넘게** 지난 말을 찾았다. 크론의 실패 · 비밀 어긋남 · 등록 안 됨 · 시간 초과가 모두 이 한 줄로 온다. 실행 표는 없다.
+- 그 알림이 오면 차례로 본다 — Vercel 대시보드 → Settings → Cron Jobs 에 `/api/cron/chat-purge` 가 있나 · 응답 코드(403 이면 `CRON_SECRET`, 503 이면 열쇠, 500 이면 Vercel 로그의 `chat-purge failed <코드>` — `57014` 는 8초 초과) · `select has_function_privilege('service_role', 'public.purge_closed_chat_messages()', 'execute');` 가 참인가. **Hobby 의 런타임 로그는 한 시간뿐이다.**
+- 로그에는 지운 날의 `chat-purge deleted <수>` 와 오류 코드만 남는다.
+
+#### 손으로 지운다 — 크론이 멈췄거나 8초를 넘을 때
+
+```sql
+-- 위의 건수를 먼저 본다. 세어 보지 않고 지우지 않는다. SQL Editor 는 2분까지 돈다.
 select public.purge_closed_chat_messages();  -- 지운 메시지 수
 ```
 
