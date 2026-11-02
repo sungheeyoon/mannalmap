@@ -12,7 +12,7 @@
 --
 -- 두 세션의 진짜 경합은 pgTAP 이 못 만든다 — 그 값은 PR 에 적었다(psql 두 세션을 나란히 돌렸다).
 begin;
-select plan(333);
+select plan(335);
 
 create or replace function pg_temp.participant(mail text, who text, summary jsonb)
 returns uuid
@@ -804,6 +804,7 @@ select is(public.respond_to_match_request(pg_temp.got('old-asked'), true), 'acce
 reset role;
 insert into seen select 'm-old', id from public.match where request_id = pg_temp.got('old-asked');
 select is((select request_kind from public.match_run_awaiting_send(pg_temp.got('old-asked'))), 'bundled', '제출 문이 옛 요청의 이름을 내준다');
+select is((select public.reading_run_request_kind(r.id) from public.reading_run r where r.match_id = pg_temp.got('m-old') order by r.created_at desc limit 1), 'bundled', '다른 집기의 문도 옛 인연을 옛 흐름으로 답한다');
 select ok((select chart_low is not null and chart_high is not null from public.match where id = pg_temp.got('m-old')), '옛 길은 수락 때 글자를 베낀다');
 select is((select user_id from public.reading_run where match_id = pg_temp.got('m-old') and idempotency_key like 'match-accept:%'), (select oh from folks), '옛 길은 요청자 이름으로 시도를 연다');
 select is((select pg_temp.credits_of(oh) from folks), array[0, 1, 0], '옛 길은 예약을 쓴다');
@@ -925,6 +926,7 @@ select is(public.respond_to_match_request(pg_temp.got('lp-s4'), true), 'accepted
 reset role;
 select is((select request_kind from public.match_run_awaiting_send(pg_temp.got('lp-s4'))), 'detail', '제출 문이 상세의 이름을 내준다');
 insert into seen select 'lp-run-s4', id from public.reading_run where match_id = pg_temp.got('m-lee-park-2') and status = 'running';
+select is(public.reading_run_request_kind(pg_temp.got('lp-run-s4')), 'detail', '다른 집기의 문도 상세로 답한다');
 select ok(public.fail_reading_job(pg_temp.got('lp-run-s4'), 'model-failed', '실패'), '실패한다');
 update public.chat_room set closed_reason = 'suspension', closed_at = now() where match_id = pg_temp.got('m-lee-park-2');
 set local role authenticated;

@@ -4474,6 +4474,7 @@ export type Database = {
       }
       reading_job_send_patience: { Args: never; Returns: string }
       reading_rate_limit: { Args: never; Returns: number }
+      reading_run_request_kind: { Args: { p_run_id: string }; Returns: string }
       reading_run_timeout: { Args: never; Returns: string }
       reading_sale_is_open: { Args: never; Returns: boolean }
       reading_sale_is_open_for: { Args: { p_user: string }; Returns: boolean }

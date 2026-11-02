@@ -100,7 +100,7 @@ returning open, changed_at;
 
 **끝난 대화의 신고:** `my_ended_talks()` → `match_id` · `partner_user_id` · `partner_nickname` · `closed_at`, `my_ended_talk_messages(p_match_id)` → `message_id` · `mine` · `body` · `created_at`. 자기 방 · 보존 90일 안 · 읽기 전용. 사진 · 소개 · 끝난 까닭이 없다. 신고는 지금 `report_user` · `report_chat_message` 다.
 
-**제출 문:** 열쇠 전용 `match_run_awaiting_send` 가 `request_kind`(`bundled` · `detail`)를 더 내준다. 보내기 직전 `prepare_reading_job` 은 새 흐름의 범위 · 방 · 동의를 다시 재고, 끝났으면 `false` 와 함께 시도를 `consent-ended` 실패로 닫는다.
+**제출 문:** 열쇠 전용 `match_run_awaiting_send` 가 `request_kind`(`bundled` · `detail`)를 더 내주고, 그 이름을 안 내주는 다시 만들기 · 복구기는 열쇠 전용 `reading_run_request_kind(시도)` 로 묻는다. **앱이 이 문을 부르므로 이 마이그레이션이 앱 배포보다 먼저다** — 문이 없으면 인연 궁합의 다시 만들기 · 복구가 옛 흐름까지 `request-kind-unknown` 으로 닫힌다. 보내기 직전 `prepare_reading_job` 은 새 흐름의 범위 · 방 · 동의를 다시 재고, 끝났으면 `false` 와 함께 시도를 `consent-ended` 실패로 닫는다.
 
 **글자:** 새 흐름의 `my_match_scope.my_chart` · `partner_chart` 와 `my_readings` 의 일간은 null 이다.
 
