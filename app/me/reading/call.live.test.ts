@@ -16,6 +16,7 @@ import {
   positionSlips,
   promptVersionOf,
   writesSummaryLast,
+  type ReadingOutput,
 } from '@/src/lib/reading';
 import { measureMarkdown, outputDeviations, pairOutputDeviations, type OutputDeviation } from '@/src/lab/reading/measure';
 import { MATCH_INPUT_VARIANTS, PAIR_VARIANTS, PROMPT_VARIANTS } from '@/src/lab/reading/variants';
@@ -69,6 +70,8 @@ const variantsLive = process.env.READING_VARIANTS_LIVE === '1';
 const pairLive = process.env.READING_PAIR_LIVE === '1';
 /** 인연 궁합 입력 A/B — `READING_MATCH_DRY=1` 이면 부르지 않고 프롬프트만 떨군다 */
 const matchInputLive = process.env.READING_MATCH_INPUT_LIVE === '1';
+/** 상세 궁합 — 운영자가 돌린다. 끄기가 기본이다 */
+const detailLive = process.env.READING_DETAIL_LIVE === '1';
 
 /**
  * 변형끼리 견줄 때의 **고정 기준 시각.**
@@ -584,6 +587,93 @@ function sajuOf(result: { ok: true; saju: Saju } | { ok: false; message: string 
   if (!result.ok) throw new Error(`저장된 입력을 읽지 못했다: ${result.message}`);
   return result.saju;
 }
+
+/**
+ * **상세 궁합의 실호출** — 운영자가 돌린다. 끄기가 기본이고 DB 에 안 쓴다. 운영 제출과 같은 조립 · 모양 · 접기 · 검사를 탄다.
+ *
+ *   READING_DETAIL_LIVE=1 READING_DETAIL_REPEAT=3 npx vitest run app/me/reading/call.live.test.ts -t "상세 궁합"
+ *
+ * `READING_DETAIL_DRY=1` 이면 모델을 안 부르고 프롬프트와 보낼 자료만 떨군다. 부를 수가 `READING_DETAIL_MAX_CALLS`(기본 24)를 넘으면 안 부르고 멈춘다.
+ * 원문은 `.reading-live/detail-<시각>/` 에 쌓이고 `summary.json` 이 점수 차 · 막힘 발생률을 든다. 막힘이 높으면 검사를 풀기 전에 프롬프트부터 고친다.
+ */
+describe.skipIf(!detailLive)('상세 궁합을 운영과 같은 길로 부른다', () => {
+  it('글 · 점수 차 · 막힘을 떨군다', { timeout: 3_600_000 }, async () => {
+    const { DETAIL_ASSEMBLY, blockingFindingsOf, detailFindingsOf, requestPromptVersionOf, withDiscovery } = await import('@/src/lib/reading');
+    const { MATCH_INPUT_FIXTURES, chartsOf, secretsOf } = await import('@/src/lab/reading/match-input-eval');
+
+    const repeat = Number(process.env.READING_DETAIL_REPEAT ?? '3');
+    const maxCalls = Number(process.env.READING_DETAIL_MAX_CALLS ?? '24');
+    const dry = process.env.READING_DETAIL_DRY === '1';
+    const viewedAt = new Date(VARIANTS_VIEWED_AT);
+    const dir = `${OUTPUT_ROOT}/detail-${runStamp(viewedAt)}`;
+    mkdirSync(dir, { recursive: true });
+
+    const planned = MATCH_INPUT_FIXTURES.flatMap((fixture) => Array.from({ length: repeat }, (_, rep) => ({ fixture, rep })));
+    if (!dry && planned.length > maxCalls) throw new Error(`${planned.length}번 부른다 — READING_DETAIL_MAX_CALLS(${maxCalls}) 를 올리거나 REPEAT 를 줄인다`);
+
+    const built = (fixture: (typeof MATCH_INPUT_FIXTURES)[number]) => {
+      const reading = readingEvidenceOf('match', chartsOf(fixture), viewedAt, DETAIL_ASSEMBLY.matchInput);
+      if (reading.kind !== 'match') throw new Error('인연 궁합이 아니다');
+      return { reading, prompt: readingPromptOf(reading, DETAIL_ASSEMBLY), evidenceText: JSON.stringify(reading.evidence) };
+    };
+
+    if (dry) {
+      for (const fixture of MATCH_INPUT_FIXTURES) {
+        const { prompt, evidenceText } = built(fixture);
+        writeFileSync(`${dir}/${fixture.id}.prompt.md`, prompt);
+        writeFileSync(`${dir}/${fixture.id}.evidence.json`, evidenceText);
+      }
+      return;
+    }
+
+    const { callModel } = await import('@/app/me/reading/model');
+    type Called = { fixture: string; rep: number; gap?: number; blocked?: readonly string[]; failure?: string };
+    const lines: Called[] = [];
+
+    for (const { fixture, rep } of planned) {
+      const { reading, prompt, evidenceText } = built(fixture);
+      const called = await callModel<ReadingOutput & { discovery: string }>(prompt, { summaryLast: true, discovery: true });
+      if (!called.ok) {
+        lines.push({ fixture: fixture.id, rep, failure: `${called.code}: ${called.detail}` });
+        appendFileSync(`${dir}/runs.jsonl`, `${JSON.stringify(lines.at(-1))}\n`);
+        continue;
+      }
+      const { discovery, metaphor, score } = called.output;
+      const markdown = withDiscovery(called.output.markdown, discovery);
+      const verdict = checkReading({ kind: 'match', output: { score, metaphor, markdown }, evidenceText, secrets: secretsOf(fixture), baseline: reading.baseline });
+      const findings = [...(verdict.ok ? [] : verdict.failures), ...detailFindingsOf({ markdown, discovery, metaphor, evidenceText })];
+      const line: Called = {
+        fixture: fixture.id,
+        rep,
+        gap: score === null ? undefined : score - reading.baseline,
+        blocked: blockingFindingsOf(findings).map(({ code }) => code),
+      };
+      lines.push(line);
+      /* 부른 값을 먼저 떨군다 — 돈을 낸 원문이 판정에 안 사라지게 */
+      appendFileSync(
+        `${dir}/runs.jsonl`,
+        `${JSON.stringify({ ...line, promptVersion: requestPromptVersionOf('detail'), baseline: reading.baseline, findings, usage: called.usage, output: called.output })}\n`,
+      );
+    }
+
+    const made = lines.filter((line) => line.failure === undefined);
+    const blocked = made.filter((line) => (line.blocked ?? []).length > 0);
+    writeFileSync(
+      `${dir}/summary.json`,
+      JSON.stringify({
+        calls: lines.length,
+        failed: lines.length - made.length,
+        blocked: blocked.length,
+        blockedRate: made.length === 0 ? null : blocked.length / made.length,
+        pillarBlocked: blocked.filter((line) => line.blocked?.includes('pillar-named-in-reading')).length,
+        gaps: made.map((line) => line.gap ?? null),
+        sameAsBaseline: made.filter((line) => line.gap === 0).length,
+      }, null, 2),
+    );
+    console.info(`[상세 궁합] ${dir}/summary.json`);
+    expect(lines).toHaveLength(planned.length);
+  });
+});
 
 describe.skipIf(!matchInputLive)('인연 궁합 입력 A/B 를 같은 조건으로 부른다', () => {
   it('두 판을 같은 조건으로 부르고 호출·계약·사람 확인을 갈라 떨군다', { timeout: 3_600_000 }, async () => {

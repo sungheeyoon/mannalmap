@@ -219,7 +219,27 @@ $$;
 
 revoke all on function public.request_news_is_recent(uuid, uuid, text) from public, anon, authenticated, service_role;
 
-/** 답 전 첫 말의 푸시는 그 대화의 요청 소식이 갔을 때만 — 거두고 다시 열어 푸시로 울리는 길을 닫는다. 답장은 안 묶는다 */
+/**
+ * 창 안의 둘째 요청은 소식을 새로 안 세우고 **앞 줄을 새 요청으로 옮긴다** — 시각 · 읽음은 그대로라 다시 안 울리고, 살아 있는 요청의 줄이 목록에 하나 보인다.
+ * 취소된 요청의 줄은 목록에서 숨으므로 그대로 두면 받은 사람이 동의 기회를 놓친다.
+ */
+create function public.move_request_news(p_to uuid, p_from uuid, p_kind text, p_request uuid, p_match uuid)
+returns void
+language sql
+security definer
+set search_path to ''
+as $$
+  update public.notification n
+  set request_id = p_request, match_id = p_match
+  from public.match_request q
+  where q.id = n.request_id
+    and n.user_id = p_to and n.kind = p_kind and q.requester_user_id = p_from
+    and n.created_at > now() - public.request_news_window();
+$$;
+
+revoke all on function public.move_request_news(uuid, uuid, text, uuid, uuid) from public, anon, authenticated, service_role;
+
+/** 답 전 첫 말의 푸시는 그 대화에 새 소식이 섰을 때만 — 옮겨 온 줄(요청보다 오래됨)이면 조용하다. 거두고 다시 열어 푸시로 울리는 길을 닫는다. 답장은 안 묶는다 */
 create function public.first_word_is_quiet(p_room_id uuid, p_sender uuid)
 returns boolean
 language sql
@@ -232,7 +252,7 @@ as $$
     join public.match m on m.id = r.match_id
     join public.match_request q on q.id = m.request_id
     where r.id = p_room_id and q.kind = 'talk' and q.status = 'pending' and q.requester_user_id = p_sender
-      and not exists (select 1 from public.notification n where n.request_id = q.id and n.kind = 'request_received')
+      and not exists (select 1 from public.notification n where n.request_id = q.id and n.kind = 'request_received' and n.created_at >= q.created_at)
   );
 $$;
 
@@ -260,7 +280,14 @@ as $$
     order by q.created_at desc, q.id
     limit 1
   ), false)
-  and not exists (select 1 from public.chat_room r where r.match_id = p_match_id and r.closed_at is not null);
+  and not exists (select 1 from public.chat_room r where r.match_id = p_match_id and r.closed_at is not null)
+  -- 두 사람 다 참여 중이어야 한다 — 어느 쪽이 꺼도 그 사람 자료가 재시도로 안 나간다
+  and not exists (
+    select 1 from public.match m
+    where m.id = p_match_id
+      and (select count(*) from public.discovery_profile p
+           where p.user_id in (m.user_low, m.user_high) and p.opted_in_at is not null) < 2
+  );
 $$;
 
 revoke all on function public.match_consent_holds(uuid) from public, anon, authenticated, service_role;
@@ -295,8 +322,7 @@ as $$
         and q.kind in ('bundled', 'detail')
         and q.status = 'accepted'
         and q.requester_user_id = p_actor
-        and (q.kind = 'bundled' or not exists (
-          select 1 from public.chat_room r where r.match_id = m.id and r.closed_at is not null))
+        and (q.kind = 'bundled' or public.match_consent_holds(m.id))
         and p_key = 'match-accept:' || q.id::text
         and (select pe.input_version from public.app_user u join public.person pe on pe.id = u.self_person_id where u.id = q.requester_user_id)
           is not distinct from q.requester_input_version
@@ -473,6 +499,8 @@ begin
   if not talk_opens or not public.request_news_is_recent(p_candidate_user_id, actor, 'request_received') then
     insert into public.notification (user_id, kind, request_id, match_id)
     values (p_candidate_user_id, 'request_received', new_request, talk_match);
+  else
+    perform public.move_request_news(p_candidate_user_id, actor, 'request_received', new_request, talk_match);
   end if;
 
   return new_request;
@@ -606,14 +634,18 @@ begin
     set status = 'rejected', decided_at = now()
     where id = req.id;
 
+    /**
+     * 옛 앱의 대화 거절은 방을 닫고 말이 없다 — 거절 단추 없는 흐름에서 그 소식은 차단을 뜻하게 된다. 차단과 같은 모양이다(ADR 0120 · 0215).
+     * 다시 못 청하는 것은 유일 색인이 든다(ADR 0009).
+     */
+    if req.kind = 'talk' then
+      perform public.close_talk_room(req.id, actor);
+      return 'rejected';
+    end if;
+
     -- 거절은 요청한 쪽에만 알린다. 내가 거절했다는 것은 내가 안다.
     insert into public.notification (user_id, kind, request_id)
     values (req.requester_user_id, 'request_rejected', req.id);
-
-    /** 대화의 거절은 방을 닫는다 — 다시 못 청하는 것은 유일 색인이 든다(ADR 0009). 상세의 거절은 방을 안 건드린다 */
-    if req.kind = 'talk' then
-      perform public.close_talk_room(req.id, actor);
-    end if;
 
     return 'rejected';
   end if;
@@ -1672,8 +1704,10 @@ AS $function$
 $function$
 ;
 
+drop function public.my_readings();
+
 CREATE OR REPLACE FUNCTION public.my_readings()
- RETURNS TABLE(kind text, person_a uuid, person_b uuid, match_id uuid, label_a text, label_b text, score smallint, metaphor text, created_at timestamp with time zone, from_current_chart boolean, day_master_a text, day_master_b text)
+ RETURNS TABLE(kind text, person_a uuid, person_b uuid, match_id uuid, label_a text, label_b text, score smallint, metaphor text, created_at timestamp with time zone, from_current_chart boolean, day_master_a text, day_master_b text, request_kind text)
  LANGUAGE sql
  STABLE SECURITY DEFINER
  SET search_path TO ''
@@ -1681,7 +1715,7 @@ AS $function$
   select
     l.kind, l.person_a, l.person_b, l.match_id,
     l.label_a, l.label_b, l.score, l.metaphor, l.created_at, l.from_current_chart,
-    l.day_master_a, l.day_master_b
+    l.day_master_a, l.day_master_b, l.request_kind
   from (
     /**
      * 내가 주인인 셋 — `self` · `person` · `private`.
@@ -1709,7 +1743,8 @@ AS $function$
         r.chart_a = pa.current_chart and r.chart_b is not distinct from pb.current_chart,
         false) as from_current_chart,
       r.chart_a ->> 'dayMaster' as day_master_a,
-      r.chart_b ->> 'dayMaster' as day_master_b
+      r.chart_b ->> 'dayMaster' as day_master_b,
+      null::text as request_kind
     from public.reading r
     join public.person pa on pa.id = r.person_a
     left join public.person pb on pb.id = r.person_b
@@ -1749,7 +1784,9 @@ AS $function$
       r.created_at,
       true,
       case when not public.match_is_on_the_old_way(m.id) then null when m.user_low = (select auth.uid()) then m.chart_low else m.chart_high end ->> 'dayMaster',
-      case when not public.match_is_on_the_old_way(m.id) then null when m.user_low = (select auth.uid()) then m.chart_high else m.chart_low end ->> 'dayMaster'
+      case when not public.match_is_on_the_old_way(m.id) then null when m.user_low = (select auth.uid()) then m.chart_high else m.chart_low end ->> 'dayMaster',
+      -- 표지의 「?」 를 가른다 — 새 흐름은 일간을 안 내준다(ADR 0215)
+      case when public.match_is_on_the_old_way(m.id) then 'bundled' else 'detail' end
     from public.reading r
     join public.visible_matches() m on m.id = r.match_id
     join public.app_user partner
@@ -1759,11 +1796,14 @@ AS $function$
   ) l (
     kind, person_a, person_b, match_id,
     label_a, label_b, score, metaphor, created_at, from_current_chart,
-    day_master_a, day_master_b
+    day_master_a, day_master_b, request_kind
   )
   order by l.created_at desc;
 $function$
 ;
+
+revoke all on function public.my_readings() from public, anon, authenticated, service_role;
+grant execute on function public.my_readings() to authenticated;
 
 CREATE OR REPLACE FUNCTION public.report_chat_message(p_message_id uuid, p_reason text, p_detail text DEFAULT NULL::text)
  RETURNS uuid
@@ -1969,6 +2009,8 @@ as $$
   join public.app_user partner
     on partner.id = case when r.user_low = (select auth.uid()) then r.user_high else r.user_low end
   where public.is_active_account()
+    and public.adult_check_passed((select auth.uid()))
+    and public.adult_check_passed(partner.id)
     and (r.user_low = (select auth.uid()) or r.user_high = (select auth.uid()))
     and r.closed_reason = 'declined'
     and r.closed_at > now() - public.chat_retention()
@@ -1990,6 +2032,9 @@ as $$
   from public.chat_room r
   join public.chat_message c on c.room_id = r.id
   where public.is_active_account()
+    and public.adult_check_passed((select auth.uid()))
+    and (r.user_low is null or r.user_high is null
+      or public.adult_check_passed(case when r.user_low = (select auth.uid()) then r.user_high else r.user_low end))
     and r.match_id = p_match_id
     and (r.user_low = (select auth.uid()) or r.user_high = (select auth.uid()))
     and r.closed_reason = 'declined'
@@ -2043,12 +2088,13 @@ begin
     where status = 'pending'
       and ((requester_user_id = actor and addressee_user_id = p_user_id)
         or (requester_user_id = p_user_id and addressee_user_id = actor))
-    returning id, requester_user_id, status
+    returning id, requester_user_id, status, kind
   )
   insert into public.notification (user_id, kind, request_id)
   select ended.requester_user_id, 'request_rejected', ended.id
   from ended
-  where ended.status = 'rejected';
+  -- 답 전 대화의 차단은 소식이 없다 — 옛 앱의 거절과 같은 모양이다
+  where ended.status = 'rejected' and ended.kind <> 'talk';
 
   return true;
 end;
@@ -2168,12 +2214,12 @@ begin
           need_input_version = null,
           need_chart_engine_version = null;
     /**
-     * **참여를 끄면 받은 동의가 끝난다**(ADR 0215) — 대기 상세는 취소되고 예약이 풀린다. 누른 줄도 끝나 다시 켜도 동의가 안 돌아온다.
+     * **참여를 끄면 동의가 끝난다**(ADR 0215) — 받은 쪽 · 구매자 어느 쪽이든. 대기 상세는 취소되고 예약이 풀린다. 누른 줄도 끝나 다시 켜도 동의가 안 돌아온다.
      * 완성된 글과 열린 대화는 그대로다.
      */
     update public.match_request q
     set status = 'cancelled', decided_at = coalesce(q.decided_at, now())
-    where q.kind = 'detail' and q.addressee_user_id = actor and q.status in ('pending', 'accepted');
+    where q.kind = 'detail' and actor in (q.addressee_user_id, q.requester_user_id) and q.status in ('pending', 'accepted');
 
     return 'off';
   end if;
@@ -2227,6 +2273,54 @@ end;
 $function$
 ;
 
+/**
+ * **상대가 탈퇴 처분되면**(요청 줄이 cascade 로 지워진다) 답 전 대화도 끝난 모양으로 닫는다 — 빈 방이 남는 쪽 목록에 안 남는다. 답한 대화는 옛 규칙대로 떠난 사람의 방으로 남는다(ADR 0094).
+ * 계정 행이 사라지기 전에 돈다 — cascade 가 시작되면 인연 행을 고칠 수 없다.
+ */
+create function public.leaver_ends_their_talks()
+returns trigger
+language plpgsql
+security definer
+set search_path to ''
+as $$
+begin
+  perform public.close_talk_room(q.id, null)
+  from public.match_request q
+  where q.kind = 'talk' and q.status = 'pending' and old.id in (q.requester_user_id, q.addressee_user_id);
+
+  return old;
+end;
+$$;
+
+revoke all on function public.leaver_ends_their_talks() from public, anon, authenticated, service_role;
+
+create trigger app_user_leaving_ends_their_talks
+  before delete on public.app_user
+  for each row execute function public.leaver_ends_their_talks();
+
+-- 다시 만들기(`take_reading_job`)와 복구기(`retake_stalled_reading_job`)는 요청의 이름을 안 내준다. 그 길로 상세 궁합이 옛 지시로 나가면
+-- 안 되므로 제출하는 쪽이 시도 번호로 묻는다. 규칙은 `match_run_awaiting_send` 와 같은 한 함수다(`docs/text/detail-compat-contract.md` §10).
+--
+-- 표를 열쇠로 직접 읽지 않는다 — `service_role` 은 이 표들의 select 권한이 없다(2026-11-02 스택에서 쟀다).
+
+create function public.reading_run_request_kind(p_run_id uuid)
+returns text
+language sql
+stable
+security definer
+set search_path to ''
+as $$
+  select case when public.match_is_on_the_old_way(r.match_id) then 'bundled' else 'detail' end
+  from public.reading_run r
+  where r.id = p_run_id and r.kind = 'match' and r.match_id is not null;
+$$;
+
+revoke all on function public.reading_run_request_kind(uuid) from public, anon, authenticated, service_role;
+grant execute on function public.reading_run_request_kind(uuid) to service_role;
+
+comment on function public.reading_run_request_kind(uuid) is
+  '인연 궁합 시도가 어느 흐름인가 — 열쇠 전용. 인연 궁합이 아니거나 시도가 없으면 null 이고, 제출하는 쪽은 그때 보내지 않는다.';
+
 -- ── 새 문 둘 ──
 
 /**
@@ -2268,7 +2362,7 @@ begin
     raise exception 'detail: the client key has no shape' using errcode = '22023';
   end if;
 
-  /** 같은 키의 재전송은 처음 답이다 — 그 뒤 무엇이 됐든. 다른 인연에 쓴 키는 잘못 지은 키다(ADR 0106 과 같은 규율) */
+  /** 같은 키의 재전송은 그 줄의 지금 상태를 답한다 — 새로 안 잡는다. 다른 인연에 쓴 키는 잘못 지은 키다(ADR 0106 과 같은 규율) */
   select * into held from public.match_request q
   where q.requester_user_id = actor and q.client_key = p_client_key;
 
@@ -2287,7 +2381,7 @@ begin
     return;
   end if;
 
-  /** 재시도의 같은 키도 처음 답이다 — 재시도는 줄 없이 시도만 남는다. 차단이면 같은 답으로 거절한다 */
+  /** 재시도의 같은 키도 지금 상태다 — 재시도는 줄 없이 시도만 남아 마지막 상세 줄이 답한다. 차단이면 같은 답으로 거절한다 */
   if exists (select 1 from public.reading_run r where r.user_id = actor and r.idempotency_key = 'detail-retry:' || p_client_key) then
     if not exists (
       select 1 from public.reading_run r
@@ -2303,7 +2397,7 @@ begin
     select * into held from public.match_request q
     where q.detail_match_id = p_match_id order by q.created_at desc, q.id limit 1;
 
-    return query select held.id, 'accepted'::text, true;
+    return query select held.id, held.status, true;
     return;
   end if;
 
@@ -2338,8 +2432,8 @@ begin
     raise exception '닫힌 대화에서는 청할 수 없어요.' using errcode = 'check_violation';
   end if;
 
-  /** 참여를 끈 사람에게 새로 안 청한다 — 대화는 이어 가도 새 상세 동의를 묻지 않는다 */
-  if not exists (select 1 from public.discovery_profile p where p.user_id = partner and p.opted_in_at is not null) then
+  /** 참여를 끈 사람은 상세를 못 탄다 — 대화는 이어 가도 새 동의를 묻거나 자료를 내보내지 않는다 */
+  if (select count(*) from public.discovery_profile p where p.user_id in (actor, partner) and p.opted_in_at is not null) < 2 then
     raise exception '결과를 만들 수 있는 대상이 아닙니다.' using errcode = 'check_violation';
   end if;
 
@@ -2368,12 +2462,13 @@ begin
     where r.match_id = p_match_id and r.kind = 'match' and r.status = 'running'
       and r.created_at > now() - public.reading_run_timeout()
   ) then
+    /** 줄이 끝났어도(누른 뒤 참여 끔) 도는 시도의 답이다 — 마지막 상세 줄, 없으면 옛 요청의 번호 */
     select * into held from public.match_request q
-    where q.status = 'accepted' and (q.detail_match_id = p_match_id or q.id = the_match.request_id)
+    where q.detail_match_id = p_match_id or q.id = the_match.request_id
     order by (q.kind = 'detail') desc, q.created_at desc
     limit 1;
 
-    return query select held.id, held.status,
+    return query select held.id, 'accepted'::text,
       (select r.user_id = actor from public.reading_run r
        where r.match_id = p_match_id and r.kind = 'match' and r.status = 'running' order by r.created_at desc limit 1);
     return;
@@ -2445,6 +2540,8 @@ begin
   if not public.request_news_is_recent(partner, actor, 'detail_requested') then
     insert into public.notification (user_id, kind, request_id, match_id)
     values (partner, 'detail_requested', new_request, p_match_id);
+  else
+    perform public.move_request_news(partner, actor, 'detail_requested', new_request, p_match_id);
   end if;
 
   return query select new_request, 'pending'::text, true;
@@ -2502,16 +2599,18 @@ begin
     answer := 'ready';
   elsif latest.status = 'pending' and latest.expires_at > now() then
     answer := 'awaiting_consent';
-  elsif latest.status = 'invalidated' then
-    answer := 'input_changed';
+  -- 시도가 그 줄보다 새것이면 시도가 말한다 — 누른 뒤 참여를 꺼 줄이 끝나도 도는 시도 · 내 실패는 그대로다
   elsif run.status = 'running' and run.created_at > now() - public.reading_run_timeout()
-        and (latest.id is null or latest.status = 'accepted') then
+        and (latest.id is null or run.created_at >= latest.created_at) then
     answer := 'making';
   elsif run.id is not null and run.user_id = actor and run.status <> 'succeeded'
-        and (latest.id is null or latest.status = 'accepted') then
+        and (latest.id is null or run.created_at >= latest.created_at) then
     answer := 'failed_mine';
+  -- 닫힌 방이 입력 변경보다 먼저다 — 고쳐도 다시 못 청한다
   elsif room.closed_at is not null then
     answer := 'room_closed';
+  elsif latest.status = 'invalidated' then
+    answer := 'input_changed';
   elsif left_over > 0 then
     answer := 'before_purchase';
   else
