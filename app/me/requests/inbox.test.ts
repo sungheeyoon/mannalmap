@@ -12,7 +12,7 @@ import { supabaseOnServer } from '../../auth/server-client';
  */
 
 const answering = (answers: Record<string, { data: unknown; error: unknown }>) =>
-  vi.mocked(supabaseOnServer).mockResolvedValue({ rpc: async (name: string) => answers[name] } as never);
+  vi.mocked(supabaseOnServer).mockResolvedValue({ rpc: async (name: string) => answers[name] ?? { data: null, error: null } } as never);
 
 const notification = (over: Record<string, unknown>) => ({
   notification_id: 'n',

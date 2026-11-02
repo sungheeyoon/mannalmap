@@ -81,3 +81,12 @@ describe('찾는 칸이 맞춰 볼 이름', () => {
     expect(bookOf(entry({ kind: 'match', matchId: 'm', labelA: '하늘' })).names).toEqual(['하늘']);
   });
 });
+
+describe('상세 궁합의 표지', () => {
+  it('일간 자리를 비운다 — 옛 인연의 회색 표지와 다르다', () => {
+    const detail = entry({ kind: 'match', matchId: 'm1', requestKind: 'detail', dayMasterA: null, dayMasterB: null });
+    expect(bookOf(detail).subjects).toEqual([]);
+    const old = entry({ kind: 'match', matchId: 'm2', requestKind: 'bundled', dayMasterA: null, dayMasterB: null });
+    expect(bookOf(old).subjects).toEqual([null, null]);
+  });
+});

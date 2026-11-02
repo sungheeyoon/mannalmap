@@ -22,7 +22,8 @@ export function withFrom(href: string, from: 'history' | 'news'): string {
  */
 export function makingMatches(readings: readonly ReadingEntry[], matches: readonly InboxMatch[]): readonly InboxMatch[] {
   const made = new Set(readings.flatMap((entry) => (entry.kind === 'match' && entry.matchId !== null ? [entry.matchId] : [])));
-  return matches.filter((match) => !made.has(match.matchId));
+  /* 글 없는 대화는 만드는 중이 아니다 — 만드는 중인 상세는 방이 말한다(ADR 0215) */
+  return matches.filter((match) => match.requestKind !== 'talk' && !made.has(match.matchId));
 }
 
 /**
@@ -90,16 +91,27 @@ export type HistorySummary = {
 export function historySummary(
   matches: Skippable<readonly InboxMatch[]>,
   requests: Skippable<Requests>,
+  extra: {
+    /** 글이 선 인연 — 대화에서 선 인연은 글이 있어야 인연 궁합이다(ADR 0215). 앱은 아직 안 넘긴다 */
+    readonly finishedMatchIds?: readonly string[];
+    /** 끝난 대화의 수 — 0 이어도 지나간 것만 있으면 줄이 서야 신고 길에 닿는다 */
+    readonly endedTalks?: number;
+  } = {},
 ): HistorySummary | null {
-  const made = matches.ok ? matches.value.length : null;
+  const finished = new Set(extra.finishedMatchIds ?? []);
+  const shelved = matches.ok ? matches.value.filter((match) => match.requestKind !== 'talk' || finished.has(match.matchId)) : null;
+  const made = shelved === null ? null : shelved.length;
   const past = requests.ok ? (({ sent, decided }) => sent.length + decided.length)(pastRequests(requests.value)) : null;
-  const count = (made ?? 0) + (past ?? 0);
+  const ended = extra.endedTalks ?? 0;
+  const count = (made ?? 0) + (past ?? 0) + ended;
   if (count === 0) return null;
 
-  const parts = [made === null ? null : `인연 궁합 ${made}`, past === null ? null : `지난 요청 ${past}`].filter(
-    (part) => part !== null,
-  );
+  const parts = [
+    made === null ? null : `인연 궁합 ${made}`,
+    past === null ? null : `지난 요청 ${past}`,
+    ended === 0 ? null : `끝난 대화 ${ended}`,
+  ].filter((part) => part !== null);
   /* `my_matches` 는 최근 것이 앞이다 */
-  const latest = matches.ok ? (matches.value[0]?.nickname ?? '') : '';
+  const latest = shelved?.[0]?.nickname ?? '';
   return { count, hint: latest === '' ? parts.join(' · ') : `${parts.join(' · ')} — 최근 ${latest}` };
 }

@@ -1,5 +1,6 @@
 'use client';
 
+import { TALK_SCORE_INFO_NAME, TALK_SCORE_LABEL, TALK_START_LABEL } from '@/src/lib/chat/room/detail-copy';
 import { useEffect, useRef, type CSSProperties, type ReactNode } from 'react';
 
 import { activityText } from '@/src/lib/presence';
@@ -50,7 +51,10 @@ export function TodayCard({
   feedback,
   onInfo,
   onBlocked,
+  onScoreInfo = null,
 }: {
+  /** 켜진 흐름 — 점수가 「예상 궁합 N점」이고 계산 기준을 여는 아이콘이 선다(ADR 0215). `null` 이면 지금 모양이다 */
+  onScoreInfo?: (() => void) | null;
   profile: DeckCard;
   next: DeckCard | undefined;
   exit: 'left' | 'right' | null;
@@ -140,7 +144,7 @@ export function TodayCard({
           <span aria-hidden="true" className="font-serif text-heading font-bold italic">i</span>
         </button>
 
-        <FaceText card={profile} />
+        <FaceText card={profile} onScoreInfo={onScoreInfo} />
       </div>
 
       {/*
@@ -167,7 +171,7 @@ const FACE_SHADOW = '[text-shadow:0_1px_2px_rgb(0_0_0/0.45),0_0_14px_rgb(0_0_0/0
  * 사진 아래 끝의 글 — 이름 · 접속 · 점수, 판정, 채워 주는 기운, 소개 한 줄. 누름은 뒤의 사진으로 흘려보낸다 —
  * 글 위를 눌러도 사진이 넘어간다(`CardPhotos`). 글은 사진의 장 번호를 모른다
  */
-function FaceText({ card }: { card: DeckCard }) {
+function FaceText({ card, onScoreInfo = null }: { card: DeckCard; onScoreInfo?: (() => void) | null }) {
   return (
     <div style={{ backgroundImage: FACE_SCRIM }} className={`${FACE_SHADOW} pointer-events-none absolute inset-x-0 bottom-0 flex flex-col gap-2.5 px-5 pb-5 pt-32 text-white`}>
       <div className="flex items-end justify-between gap-3">
@@ -175,11 +179,28 @@ function FaceText({ card }: { card: DeckCard }) {
           <h2 className="truncate text-[2.25rem] font-bold leading-tight">{card.nickname}</h2>
           {card.activity != null && <p className="text-small font-semibold text-white/85">{activityText(card.activity)}</p>}
         </div>
-        <p className="flex shrink-0 items-baseline">
-          <span className="sr-only">나와의 예측 궁합 점수 </span>
-          <strong className="text-[2.75rem] font-bold leading-none tracking-[-0.04em] tabular-nums">{card.previewScore}</strong>
-          <span className="ml-1 text-small font-semibold text-white/85"> / 100</span>
-        </p>
+        {onScoreInfo !== null ? (
+          <div className="flex shrink-0 items-center gap-0.5">
+            <p className="flex flex-col items-end gap-0.5">
+              <span className="text-small font-semibold leading-4 text-white/85">{TALK_SCORE_LABEL}</span>
+              <strong className="text-figure font-bold leading-none tracking-[-0.03em] tabular-nums">{card.previewScore}점</strong>
+            </p>
+            <button
+              type="button"
+              aria-label={TALK_SCORE_INFO_NAME}
+              onClick={onScoreInfo}
+              className="pointer-events-auto grid size-11 place-items-center rounded-full text-white/85 active:scale-95"
+            >
+              <span aria-hidden="true" className="grid size-5 place-items-center rounded-full font-serif text-small font-bold italic ring-1 ring-white/70">i</span>
+            </button>
+          </div>
+        ) : (
+          <p className="flex shrink-0 items-baseline">
+            <span className="sr-only">나와의 예측 궁합 점수 </span>
+            <strong className="text-[2.75rem] font-bold leading-none tracking-[-0.04em] tabular-nums">{card.previewScore}</strong>
+            <span className="ml-1 text-small font-semibold text-white/85"> / 100</span>
+          </p>
+        )}
       </div>
       <p className="font-rounded text-lead leading-snug text-white/95">{card.verdict}</p>
       <SupplyOnPhoto card={card} />
@@ -231,7 +252,8 @@ function SupplyOnPhoto({ card }: { card: DeckCard }) {
  * 「다음 인연」은 흰 보조 단추, 되돌리기는 작은 동그라미. 셋 다 56px — 엄지 한 번에 닿는다. 보조기기 이름은 하는 일을
  * 끝까지 말하고(`다음 인연으로 지나가기`), 눈에 보이는 글자를 그 안에 품는다.
  */
-export function DeckButtons({ actions }: { actions: DeckActions }) {
+export function DeckButtons({ actions, talkOpen = false }: { actions: DeckActions; talkOpen?: boolean }) {
+  const label = talkOpen ? TALK_START_LABEL : '궁합 요청';
   return (
     <div className="flex shrink-0 items-center gap-2">
       <button
@@ -255,13 +277,13 @@ export function DeckButtons({ actions }: { actions: DeckActions }) {
       </button>
       <button
         type="button"
-        aria-label="궁합 요청"
+        aria-label={label}
         disabled={actions.busy}
         onClick={actions.request}
         className={`${BUTTON_PRIMARY} min-h-14! flex-[1.3] whitespace-nowrap px-3!`}
       >
-        <Icon name="taiji" className="size-5" />
-        궁합 요청
+        <Icon name={talkOpen ? 'chat' : 'taiji'} className="size-5" />
+        {label}
       </button>
     </div>
   );

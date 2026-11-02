@@ -10,7 +10,7 @@ import { AccountNotice } from '../../account-notice';
 import { readAccount } from '../../account';
 import { EmptyChat, NoRoomChosen } from '../empty';
 import { ChatFrame, RoomList, RoomListPanel } from '../room-list';
-import { chatRoomsForViewer } from '../rooms';
+import { chatRoomsForViewer, talkRequestsForViewer } from '../rooms';
 import { roomTonesForViewer } from '../tones';
 
 export const metadata = {
@@ -71,10 +71,11 @@ async function Rooms({ hasSelf, reading }: { hasSelf: boolean; reading: ReturnTy
     );
   }
 
+  const [tones, requests] = await Promise.all([roomTonesForViewer(rooms), talkRequestsForViewer()]);
   return (
     <ChatFrame
       opened={false}
-      list={<RoomList rooms={rooms} activeId={null} titleLevel="h1" tones={await roomTonesForViewer(rooms)} />}
+      list={<RoomList rooms={rooms} activeId={null} titleLevel="h1" tones={tones} requests={requests} />}
       pane={<NoRoomChosen />}
     />
   );

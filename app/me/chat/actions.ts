@@ -1,10 +1,12 @@
 'use server';
 
-import { TOO_LONG_TEXT, checkBody, sendOutcomeOf } from '@/src/lib/chat';
+import { TOO_LONG_TEXT, checkBody, messageTimeLabel, sendOutcomeOf } from '@/src/lib/chat';
 import { rpcArgs } from '@/src/lib/db';
 
 import { supabaseOnServer } from '../../auth/server-client';
 import { userFacingDbMessage } from '../../db-error';
+import { refresh } from '../../refresh';
+import { sendAfterResponse } from '../requests/respond';
 import type { SaveResult } from '../../save-result';
 import type { SendResult } from '@/src/lib/chat/room/pending';
 
@@ -64,6 +66,43 @@ export async function sendChatMessage(matchId: string, body: string, clientId: s
     다른 탭은 채널이 알린다(ADR 0155).
   */
   return { ok: true, outcome };
+}
+
+/**
+ * 상세 궁합을 청한다 · 다시 만든다 — 부른 사람이 구매자다(ADR 0215). 판정은 문 안에 있다. 키는 화면이 지어 재전송에 같게 쥔다.
+ * `iAmBuyer` 가 거짓이면 상대의 요청이 먼저 섰고 차감이 없다.
+ */
+export async function requestMatchDetail(
+  matchId: string,
+  clientKey: string,
+): Promise<{ ok: true; iAmBuyer: boolean; credits: 'moved' } | { ok: false; message: string }> {
+  const supabase = await supabaseOnServer();
+  const { data, error } = await supabase.rpc(
+    'request_match_detail',
+    rpcArgs<'request_match_detail'>({ p_match_id: matchId, p_client_key: clientKey }),
+  );
+  if (error) return { ok: false, message: userFacingDbMessage(error, 'request_match_detail') };
+  const row = (data ?? [])[0];
+  /* 동의가 살아 있으면 문이 새 누름 없이 시도를 열었다 — 동의의 누름과 같은 제출을 건다. 누가 없으면 시도가 만료까지 돈다 */
+  if (row?.status === 'accepted' && row.i_am_buyer) sendAfterResponse(row.request_id);
+  refresh('requests-changed');
+  return { ok: true, iAmBuyer: row?.i_am_buyer === true, credits: 'moved' };
+}
+
+/** 끝난 대화에서 고를 상대의 말 — 읽기만 한다. 자기 방 · 보존 90일 안은 문이 잰다(ADR 0215). 최근 것이 앞이다 */
+export async function endedTalkMessages(
+  matchId: string,
+): Promise<{ ok: true; messages: readonly { id: string; body: string; time: string }[] } | { ok: false; message: string }> {
+  const supabase = await supabaseOnServer();
+  const { data, error } = await supabase.rpc('my_ended_talk_messages', { p_match_id: matchId });
+  if (error) return { ok: false, message: userFacingDbMessage(error, 'my_ended_talk_messages') };
+  return {
+    ok: true,
+    messages: (data ?? [])
+      .filter((row) => !row.mine)
+      .sort((a, b) => b.created_at.localeCompare(a.created_at))
+      .map((row) => ({ id: row.message_id, body: row.body, time: messageTimeLabel(row.created_at) })),
+  };
 }
 
 export async function reportChatMessage(

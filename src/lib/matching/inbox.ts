@@ -31,6 +31,8 @@ type NotificationRow = RpcRow<'my_notifications'>;
 
 export type InboxRequest = {
   readonly requestId: string;
+  /** `bundled` 옛 요청 · `talk` 대화(ADR 0215) */
+  readonly kind: string;
   readonly direction: RequestDirection;
   /** 차단하는 문이 하나이려면 필요하다 — 후보 카드가 이미 내주는 것과 같은 값이다 */
   readonly counterpartUserId: string;
@@ -62,6 +64,8 @@ export type InboxRequest = {
 
 export type InboxMatch = {
   readonly matchId: string;
+  /** `bundled` 옛 인연 · `talk` 대화에서 선 인연(ADR 0215) */
+  readonly requestKind: string;
   readonly partnerUserId: string;
   readonly nickname: string;
   readonly intro: string | null;
@@ -109,6 +113,7 @@ export type Requests = {
 
 export const matchOf = (row: MatchRow): InboxMatch => ({
   matchId: row.match_id,
+  requestKind: row.request_kind,
   partnerUserId: row.partner_user_id,
   nickname: row.partner_nickname ?? '',
   intro: row.partner_intro,
@@ -146,7 +151,7 @@ function destinationFor(
   readingKind: ReadingKind | null,
   row: NotificationRow,
 ): string | null {
-  if (kind === 'request_accepted' && row.match_id !== null) {
+  if ((kind === 'request_accepted' || kind === 'detail_requested') && row.match_id !== null) {
     return `/me/chat/${row.match_id}`;
   }
   if (REQUEST_NOTIFICATIONS.includes(kind)) return '/me/matching';
@@ -191,6 +196,7 @@ export function requestOf(row: RequestRow): InboxRequest[] {
   return [
     {
       requestId: row.request_id,
+      kind: row.kind,
       direction: row.direction === 'sent' ? ('sent' as const) : ('received' as const),
       counterpartUserId: row.counterpart_user_id,
       nickname: row.counterpart_nickname ?? '',
@@ -212,10 +218,24 @@ export function requestOf(row: RequestRow): InboxRequest[] {
   ];
 }
 
-/** 소식 한 줄을 도메인 말로 */
+/** 소식 한 줄을 도메인 말로. **인연을 든 받은 소식이 대화다** — 그 방으로 간다(ADR 0215) */
 export function notificationOf(row: NotificationRow): InboxNotification[] {
   const kind = NOTIFICATION_KINDS.find((known) => known === row.kind);
   if (kind === undefined) return [];
+
+  if (kind === 'request_received' && row.match_id !== null) {
+    const who = row.counterpart_nickname?.trim() ?? '';
+    return [
+      {
+        notificationId: row.notification_id,
+        kind,
+        text: who === '' ? '대화가 시작됐어요' : `${who} 님이 대화를 시작했어요`,
+        href: `/me/chat/${row.match_id}`,
+        createdAt: row.created_at,
+        unread: row.read_at === null,
+      },
+    ];
+  }
 
   const readingKind = READING_KINDS.find((known) => known === row.reading_kind) ?? null;
   const href = destinationFor(kind as NotificationKind, readingKind, row);

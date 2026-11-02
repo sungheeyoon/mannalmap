@@ -5,7 +5,8 @@ import { leadFocusOf, type PhotoFocus } from '@/src/lib/profile';
 
 import { supabaseOnServer } from '../../auth/server-client';
 import { photosFromFocus } from '../candidates';
-import { dbFailure } from '../../db-error';
+import { dbFailure, recordDbFailure } from '../../db-error';
+import { requestOf, type InboxRequest } from '@/src/lib/matching/inbox';
 
 /**
  * 대화방 목록 — `my_chat_rooms` 하나가 내주는 것이 곧 화면이 보는 것이다(ADR 0091).
@@ -76,6 +77,20 @@ export const roomOf = (row: RoomRow): ChatRoom | null => {
     partnerActivity: activityBandOf(row.partner_activity),
   };
 };
+
+/**
+ * 답 전 대화를 가를 요청 줄 — **꾸밈이다.** 못 읽으면 빈 목록이고 목록 · 방은 지금 모양 그대로다(ADR 0078).
+ * 꺼진 동안은 방이 있는 상대의 답 전 요청이 없어 아무것도 안 바뀐다(`talkLineOf`).
+ */
+export async function talkRequestsForViewer(): Promise<readonly InboxRequest[]> {
+  const supabase = await supabaseOnServer();
+  const { data, error } = await supabase.rpc('my_match_requests');
+  if (error) {
+    recordDbFailure(error, 'my_match_requests');
+    return [];
+  }
+  return (data ?? []).flatMap(requestOf);
+}
 
 export async function chatRoomsForViewer(): Promise<readonly ChatRoom[]> {
   const supabase = await supabaseOnServer();

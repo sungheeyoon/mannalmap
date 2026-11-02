@@ -116,6 +116,8 @@ describe('내보낸 액션은 바뀐 것의 이름을 고른다', () => {
     'app/me/discovery/actions.ts::passCandidate': 'deck-moved',
     'app/me/discovery/actions.ts::restorePassed': 'deck-moved',
     'app/me/discovery/actions.ts::requestMatch': 'match-requested',
+    'app/me/discovery/actions.ts::startTalk': 'match-requested',
+    'app/me/chat/actions.ts::requestMatchDetail': 'requests-changed',
     'app/me/profile/actions.ts::saveProfile': 'account-changed',
     'app/me/profile/actions.ts::addPhoto': 'account-changed',
     'app/me/profile/actions.ts::replacePhoto': 'account-changed',
@@ -163,6 +165,7 @@ describe('내보낸 액션은 바뀐 것의 이름을 고른다', () => {
    * 것들이다. 새 액션이 여기 들어오려면 까닭을 적어야 한다.
    */
   const NO_REFRESH: Readonly<Record<string, string>> = {
+    'app/me/chat/actions.ts::endedTalkMessages': '읽기만 한다 — 끝난 대화의 신고 창에 고를 말을 세운다(ADR 0215)',
     'app/me/actions.ts::savePersonForReading':
       '`addManagedPerson` 에 그대로 넘긴다 — 무르는 것도 그쪽이다',
     'app/me/compat/actions.ts::pairRelationFor': '읽기만 한다 — 적어 둔 사이를 화면에 세우려고',

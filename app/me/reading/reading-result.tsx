@@ -11,6 +11,7 @@ import { Icon } from '../../ui/icons';
 import { TYPE_SECTION } from '../../ui/surfaces';
 import type { CurrentReading } from '@/src/lib/reading';
 import { coverFace, readingMinutes } from './essay';
+import { discoveryLeadOf } from './discovery-lead';
 import { Markdown, READING_COLUMN } from './markdown';
 import { ShareReadingButton } from './share-button';
 import type { ReadingTarget } from './target';
@@ -25,7 +26,10 @@ export function Result({
   betweenSummaryAndBody,
   nicknames,
   canShare = false,
+  discoveryInCover = false,
 }: {
+  /** 상세 궁합 — 글 첫 문단(발견 한 줄)을 표지의 비유와 점수 사이로 올린다(`discoveryLeadOf`) */
+  discoveryInCover?: boolean;
   reading: CurrentReading;
   target: ReadingTarget;
   isMock: boolean;
@@ -46,7 +50,9 @@ export function Result({
   */
   const seats = nicknames === undefined ? null : seatNicknamesOf(nicknames, reading.viewerIsFirst);
   const named = (text: string): string => (seats === null ? text : withNicknames(text, seats));
-  const body = named(reading.output);
+  const { lead: discovery, rest: body } = discoveryInCover
+    ? discoveryLeadOf(named(reading.output))
+    : { lead: null, rest: named(reading.output) };
   const metaphor = reading.metaphor === null ? null : named(reading.metaphor);
 
   /*
@@ -127,6 +133,11 @@ export function Result({
             </>
           ) : (
             <p className="relative text-small font-semibold text-secondary">풀이 결과</p>
+          )}
+          {discovery !== null && (
+            <p data-discovery className="relative mt-5 max-w-[32em] text-pretty text-lead font-medium leading-7 text-foreground">
+              {discovery}
+            </p>
           )}
           <figcaption className="relative mt-8 flex flex-wrap items-end justify-between gap-x-6 gap-y-4 border-t border-[color-mix(in_srgb,var(--foreground)_12%,transparent)] pt-4">
             <span className="flex flex-wrap items-center gap-x-2.5 gap-y-1.5 text-small text-secondary">{meta}</span>

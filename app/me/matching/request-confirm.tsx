@@ -1,5 +1,6 @@
 'use client';
 
+import { TALK_START_LABEL, TALK_START_NOTE, TALK_START_TITLE } from '@/src/lib/chat/room/detail-copy';
 import { REQUEST_RESERVES_NOTE } from '@/src/lib/reading/notes';
 
 import { ConfirmDialog } from '../../ui/confirm-dialog';
@@ -23,7 +24,10 @@ export function RequestConfirm({
   onClose,
   onConfirm,
   busy,
+  talkOpen = false,
 }: {
+  /** 켜진 흐름 — 풀이권 · 수락 문구 없이 대화 시작만 묻는다(ADR 0215) */
+  talkOpen?: boolean;
   profile: DeckCard;
   open: boolean;
   onClose: () => void;
@@ -46,20 +50,30 @@ export function RequestConfirm({
           </span>
         </div>
       }
-      title={`${profile.nickname} 님에게 상세 궁합을 요청할까요?`}
+      title={talkOpen ? `${profile.nickname} ${TALK_START_TITLE}` : `${profile.nickname} 님에게 상세 궁합을 요청할까요?`}
       confirmLabel={
-        <>
-          <Icon name="taiji" className="size-[18px]" />
-          요청 보내기
-        </>
+        talkOpen ? (
+          TALK_START_LABEL
+        ) : (
+          <>
+            <Icon name="taiji" className="size-[18px]" />
+            요청 보내기
+          </>
+        )
       }
       onConfirm={onConfirm}
       busy={busy}
     >
-      <p>
-        요청하면 <strong>풀이권 1장</strong>이 임시로 차감되고, 상대가 수락하면 확정돼요. {REQUEST_RESERVES_NOTE}
-      </p>
-      <MatchAcceptNotice side="sent" />
+      {talkOpen ? (
+        <p>{TALK_START_NOTE}</p>
+      ) : (
+        <>
+          <p>
+            요청하면 <strong>풀이권 1장</strong>이 임시로 차감되고, 상대가 수락하면 확정돼요. {REQUEST_RESERVES_NOTE}
+          </p>
+          <MatchAcceptNotice side="sent" />
+        </>
+      )}
     </ConfirmDialog>
   );
 }

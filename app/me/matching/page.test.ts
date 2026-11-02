@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+vi.mock('./ended-talks-read', () => ({ historyExtrasForViewer: async () => ({ finishedMatchIds: [], endedTalks: 0 }) }));
 vi.mock('../../auth/server-client', () => ({ supabaseOnServer: vi.fn() }));
 vi.mock('../../auth/signed-in', () => ({ signedInUser: async () => ({ id: 'u-1', email: undefined }) }));
 vi.mock('../summary', () => ({

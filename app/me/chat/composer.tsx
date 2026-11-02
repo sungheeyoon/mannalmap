@@ -33,13 +33,25 @@ const noSubscription = () => () => {};
  * **쓰던 글은 방마다 탭에 남는다**(`draft.ts`) — 신고 · 차단 판이 이 칸을 내렸다 다시 세워도, 다른 방에 다녀와도 그대로다.
  * 첫 그림은 서버와 같은 빈 칸이고, 수화 뒤에 적어 둔 글이 선다 — 손으로 고치기 전까지는 적어 둔 글이 칸의 값이다.
  */
-export function Composer({ matchId, onSend, said }: { matchId: string; onSend: (body: string) => void; said: string | null }) {
+export function Composer({
+  matchId,
+  onSend,
+  said,
+  holdBack = null,
+}: {
+  matchId: string;
+  onSend: (body: string) => void;
+  said: string | null;
+  /** 지금 보낼 수 없는 까닭 — 누른 뒤에 말하고 쓴 글은 그대로 둔다(답 전 둘째 말, ADR 0215) */
+  holdBack?: string | null;
+}) {
   const stored = useSyncExternalStore(noSubscription, () => readDraft(() => sessionStorage, matchId), () => '');
   const [typed, setTyped] = useState<string | null>(null);
   const body = typed ?? stored;
   const [tooLong, setTooLong] = useState(false);
   const field = useRef<HTMLTextAreaElement>(null);
-  const failure = tooLong ? TOO_LONG_TEXT : said;
+  const [heldBack, setHeldBack] = useState(false);
+  const failure = tooLong ? TOO_LONG_TEXT : heldBack && holdBack !== null ? holdBack : said;
 
   const change = (next: string) => {
     setTyped(next);
@@ -54,6 +66,11 @@ export function Composer({ matchId, onSend, said }: { matchId: string; onSend: (
       return;
     }
     setTooLong(false);
+    if (holdBack !== null) {
+      setHeldBack(true);
+      return;
+    }
+    setHeldBack(false);
     change('');
     field.current?.focus();
     onSend(body);

@@ -29,6 +29,7 @@ export async function ReadingSection({
   automatic,
   ask,
   betweenSummaryAndBody,
+  discoveryInCover = false,
   bare = false,
   nicknames,
   tones,
@@ -57,6 +58,8 @@ export async function ReadingSection({
   ask?: ReactNode;
   /** 점수·한 문장 결론 다음, 본문 전에 세울 내용. */
   betweenSummaryAndBody?: ReactNode;
+  /** 상세 궁합 — 발견 한 줄을 표지로 */
+  discoveryInCover?: boolean;
   /** 독립 결과 화면에서 바깥 카드 테두리를 생략한다. */
   bare?: boolean;
   /** 두 사람 글의 자리 호칭을 바꿔 넣을 닉네임 — 내 궁합은 두 자리를, 인연 궁합은 나와 상대를 준다 */
@@ -120,6 +123,7 @@ export async function ReadingSection({
         automatic={automatic}
         ask={ask}
         betweenSummaryAndBody={betweenSummaryAndBody}
+        discoveryInCover={discoveryInCover}
         nicknames={nicknames}
         tones={cover}
         carry={carry}

@@ -26,7 +26,13 @@ export function RoomHeader({
   chipTone,
   onReport,
   onBlock,
+  door = null,
+  onWithdraw = null,
 }: {
+  /** 켜진 흐름의 「상세 궁합」 입구 — 있으면 궁합 단추 대신 선다(ADR 0215) */
+  door?: React.ReactNode;
+  /** 답 전 보낸 쪽만 — 「⋯」에 「대화 취소」가 선다 */
+  onWithdraw?: (() => void) | null;
   room: RoomView;
   /** 상대 프로필 시트가 열리는 방인가 — 상대가 있고 열린 방 */
   partnerOpens: boolean;
@@ -85,13 +91,17 @@ export function RoomHeader({
         바뀐다(`room-compat.ts`). 닫힌 방에는 안 선다: 차단 · 정지 · 탈퇴 신청으로 닫히면 인연 궁합도 그 쌍에게 닫힌다
         (`visible_matches()`) — 누르면 없는 화면이다.
       */}
-      {matchLink !== null && <CompatChip compat={room.compat ?? { kind: 'quiet' }} href={matchLink} tone={chipTone} />}
+      {door}
+      {door === null && matchLink !== null && (
+        <CompatChip compat={room.compat ?? { kind: 'quiet' }} href={matchLink} tone={chipTone} />
+      )}
       {hasPartner && (
         <ReportBlockMenu
           canBlock={!closed}
           onReport={onReport}
           onBlock={onBlock}
           onMyProfile={onOpenMe ?? undefined}
+          onWithdraw={onWithdraw ?? undefined}
         />
       )}
     </header>
