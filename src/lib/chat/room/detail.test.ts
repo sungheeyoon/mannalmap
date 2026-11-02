@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
+import { DETAIL_BUYER_SENDS } from './detail-consent';
 import { DETAIL_NO_CREDIT, DETAIL_SCORE_MAY_DIFFER } from './detail-copy';
 import { DETAIL_STATES, detailDoorShown, detailPanelOf, detailPanelOpensItself, matchDetailOf, type MatchDetail } from './detail';
 
@@ -40,6 +41,22 @@ describe('상세 궁합의 상태', () => {
     expect(panel.action?.kind).toBe('buy');
     expect(panel.action?.label).toContain('풀이권 1장');
     expect(panel.lines).toContain(DETAIL_SCORE_MAY_DIFFER);
+  });
+
+  it('받은 사람은 누르기 전에 전송 · 글자 · 함께 봄 · 기한 · 재시도 · 끝남을 읽는다', () => {
+    const said = detailPanelOf(detail({ state: 'awaiting_consent', iAmBuyer: false })).lines.join(' ');
+    for (const fact of ['AI 분석', 'OpenAI', '생년월일시', '직접 나오지 않지만', '짐작', '함께 봐요', '72시간', '이 동의로 다시', '차단', '탈퇴', '이용 정지']) {
+      expect(said).toContain(fact);
+    }
+    /* 재지 않은 약속을 안 한다 — 복원 불가는 검증 밖이고, 참여 끄기는 `match_consent_holds` 가 안 본다 */
+    for (const promise of ['복원', '불가능', '안전', '참여']) {
+      expect(said).not.toContain(promise);
+    }
+  });
+
+  it('사는 사람도 자기 자료가 나가는 것을 사기 전에 읽는다', () => {
+    expect(detailPanelOf(detail({})).lines).toContain(DETAIL_BUYER_SENDS);
+    expect(detailPanelOf(detail({ state: 'input_changed' })).lines).toContain(DETAIL_BUYER_SENDS);
   });
 
   it('잔액 없음은 단추가 없고 「곧 열려요」를 안 쓴다', () => {

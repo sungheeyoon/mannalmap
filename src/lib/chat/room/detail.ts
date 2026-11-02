@@ -20,7 +20,16 @@ import {
   DETAIL_WAITING,
   DETAIL_WAITING_NOTE,
 } from './detail-copy';
-import { DETAIL_CONSENT_DRAFT, DETAIL_CONSENT_TITLE_DRAFT } from './detail-consent-draft';
+import {
+  DETAIL_BUYER_SENDS,
+  DETAIL_CONSENT_ENDS,
+  DETAIL_CONSENT_KEEPS,
+  DETAIL_CONSENT_PILLARS,
+  DETAIL_CONSENT_RETRY,
+  DETAIL_CONSENT_SENDS,
+  DETAIL_CONSENT_SHARED,
+  DETAIL_CONSENT_TITLE,
+} from './detail-consent';
 
 /**
  * **상세 궁합의 상태 한 줄과 방 상단이 무엇을 그리나** — 웹과 앱이 같은 답을 낸다(ADR 0215, `docs/ops/runbook/match-talk.md` 「API 계약」).
@@ -115,7 +124,7 @@ export function detailPanelOf(detail: MatchDetail): DetailPanel {
     case 'before_purchase':
       return {
         title: DETAIL_INTRO,
-        lines: [DETAIL_SCORE_MAY_DIFFER],
+        lines: [DETAIL_SCORE_MAY_DIFFER, DETAIL_BUYER_SENDS],
         action: { kind: 'buy', label: DETAIL_ACTION_BUY },
       };
     case 'no_credit':
@@ -124,8 +133,16 @@ export function detailPanelOf(detail: MatchDetail): DetailPanel {
       return detail.iAmBuyer
         ? { title: DETAIL_WAITING, lines: [DETAIL_WAITING_NOTE, DETAIL_EXPIRED_NOTE], action: null }
         : {
-            title: DETAIL_CONSENT_TITLE_DRAFT,
-            lines: [DETAIL_CONSENT_DRAFT, DETAIL_CONSENT_WINDOW],
+            title: DETAIL_CONSENT_TITLE,
+            lines: [
+              DETAIL_CONSENT_SENDS,
+              DETAIL_CONSENT_KEEPS,
+              DETAIL_CONSENT_PILLARS,
+              DETAIL_CONSENT_SHARED,
+              DETAIL_CONSENT_WINDOW,
+              DETAIL_CONSENT_RETRY,
+              DETAIL_CONSENT_ENDS,
+            ],
             action: { kind: 'consent', label: DETAIL_ACTION_CONSENT },
           };
     case 'making':
@@ -141,7 +158,7 @@ export function detailPanelOf(detail: MatchDetail): DetailPanel {
           }
         : { title: DETAIL_FAILED, lines: [DETAIL_FAILED_NOTE], action: { kind: 'retry', label: DETAIL_ACTION_RETRY } };
     case 'input_changed':
-      return { title: DETAIL_INPUT_CHANGED, lines: [], action: { kind: 'buy', label: DETAIL_ACTION_BUY } };
+      return { title: DETAIL_INPUT_CHANGED, lines: [DETAIL_BUYER_SENDS], action: { kind: 'buy', label: DETAIL_ACTION_BUY } };
     case 'room_closed':
       return { title: DETAIL_ROOM_CLOSED, lines: [], action: null };
     case 'rejected':
