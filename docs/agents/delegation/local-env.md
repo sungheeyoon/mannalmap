@@ -33,6 +33,11 @@
 | `docker version` 이 「could not be found in this WSL 2 distro」이고 `/usr/bin/docker` 링크의 대상(`/mnt/wsl/docker-desktop/`)이 없다 | Docker Desktop 엔진이 꺼져 있다 — 설치가 없는 것이 아니다(2026-10-31). Windows 쪽 `docker.exe version` 이 `dockerDesktopLinuxEngine` 파이프를 못 찾는다고 답하면 이 줄이다 | 사람이 Docker Desktop 을 켠다. 아래 줄(CI 에 기대기)로 넘어가지 않는다 |
 | `docker` 명령이 아예 없고 `db:start` 가 `LegacyDockerLifecycleInspectError` 로 선다 | 이 WSL 에 Docker 가 없다(Docker Desktop 의 WSL 연동 꺼짐, 2026-10-12) — 로컬에서 pgTAP · `db:types` 를 못 돌린다 | 생성 타입(`src/lib/db/database.generated.ts`)은 손으로 고치고, CI 의 `test:db`(pgTAP)와 `db:types` 재생성 diff 에 기댄다. PR 에 「로컬에서 못 돌렸다 — CI 가 덮었다」를 적는다(#664) |
 | `supabase test db <파일>` 이 헬퍼 함수가 없다고 선다 | 파일 하나만 주면 `00_helpers.sql` 이 안 실린다 | `supabase/tests/00_helpers.sql` 을 앞에 함께 준다 |
+| 메인에서 쓰던 로컬 DB 가 갑자기 비었다 | 다른 에이전트가 부른 `db:reset` 의 대상이 **메인 스택**이었다(2026-11-02) | `db:reset` 앞에 `npm run stack:slot -- --auto` 를 밟고, 부르기 전에 대상 스택(`SAJU_STACK_ID`)이 제 것인지 본다 |
+| `supabase test db` 뒤에 psql 로 `plan()` · `ok()` 를 부르면 함수가 없다 | 그 명령이 pgTAP 확장을 지우고 끝난다(2026-11-02) | 손으로 돌릴 때는 `create extension if not exists pgtap` 을 다시 부른다 |
+| 스택을 다시 안 세우고 함수 하나만 바꿔 재고 싶다(돌연변이 · 고치기 전 재현) | 지금 DB 를 고치면 다음 시험까지 번진다 | 같은 스택의 psql 에서 `create database <복제> template postgres`(원본에 접속이 없어야 한다) 뒤 복제에만 `create or replace function` 을 넣어 재고 `drop database` 한다 |
+| `npm test` 를 나란히 돌리는 동안 vitest 일부가 붉고 단독으로 돌리면 초록이다(calibration · seoul-date · comparison 등) | 부하 때 드러난다(2026-11-02). **원인은 안 쟀다** — 5초 시간 초과인지도 모른다 | 그 파일만 단독으로 다시 돌려 초록이면 적어 두고, 단독에서도 붉으면 코드로 본다 |
+| `scripts/ui-seed.mjs` 가 시드 중에 멈춘다 | `BETA_ENDS_ON`(지금 `2026-10-31`)이 지난 날짜면 베타가 끝난 상태로 읽혀 쓰기 문이 닫힌다(2026-11-02, 코드는 안 고쳤다) | 제 워크트리에서만 그 값을 앞날로 올려 돌리고 커밋하지 않는다 |
 | e2e 가 시간 초과로 끝난 뒤 다음 e2e 가 옛 화면을 받는다 | 남은 dev 서버를 `reuseExistingServer` 가 붙잡는다 | `lsof -ti tcp:3000 \| xargs kill` 뒤 다시 |
 | `npx playwright test e2e/match.spec.ts` 만 붉다 | 그 spec 은 직렬이어야 한다 | `npm run test:e2e:match`(`--workers=1`) |
 | `db query` 가 `cannot insert multiple commands` | prepared statement 라 `begin; … rollback;` 을 못 받는다 | 트랜잭션이 필요하면 `docker exec -i supabase_db_<SAJU_STACK_ID> psql -U postgres -d postgres` |

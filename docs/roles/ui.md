@@ -48,6 +48,8 @@
 - `mobile/` 화면을 고치면 → [Expo 앱 인계 노트](../notes/2026-10-30-expo-app-round.md) · [`mobile/AGENTS.md`](../../mobile/AGENTS.md) — 지금 있는 것 · 시험하는 법 · Expo 는 판본의 문서를 본다
 - 색 · 모서리 · 글자 크기 · 그림자 값을 고치면 → [ADR 0109](../adr/0109-the-product-wears-one-soft-look-under-the-name-jeomjeom.md) 추기 2026-10-31 — `src/lib/design/tokens.json` 을 고치고 `node scripts/design-tokens.mjs`, 웹 CSS 칸과 앱 값이 한 원본에서 난다
 - 화면 글자를 하나라도 바꾸거나 새로 쓰면 → [고칠 화면의 대장 무리 파일](../product/copy-ledger/) — 고칠 자리(파일 이름 · 지금 글자)로 그 무리 파일과 대장 머리 `docs/product/copy-ledger.md` 의 여러 무리에 걸친 줄(탭 · 서비스 이름 · 확인창 · 출생 정보 폼 · 실패 줄)을 찾는다. 있으면 그 문구를 쓴다(ADR 0169). 옛 글자(제목 · 단추)를 `e2e/` 에서 grep 해 스펙도 같이 고친다([일하는 법](../agents/delegation/working.md#일하는-법--세션마다-다시-배우던-것) 「사용자와」)
+- 문구 상수를 판정 · 프롭에서 부르고 싶으면 → [`scripts/ci-plan.test.ts`](../../scripts/ci-plan.test.ts) — `src/lib/*/copy.ts` 는 화면만 부른다(ADR 0159)
+- 시드(`scripts/ui-seed.mjs`)가 멈추면 → [로컬 환경의 함정](../agents/delegation/local-env.md) 의 `BETA_ENDS_ON` 줄
 - e2e 를 돌려야 하나 망설이거나 CI 의 주소 차선이 붉으면 → [CI](../agents/test-map/ci.md#ci)
 - dev 서버를 띄우거나 `next build` 를 돌리면 → [로컬 환경의 함정](../agents/delegation/local-env.md) — 남의 dev 서버 · `next build` 만 잡는 파일 이름
 - 무인(밤) 라운드로 맡았으면 → [무인 라운드](../agents/delegation/unattended.md) — 뜻을 바꾸지 않는 다듬기의 경계
