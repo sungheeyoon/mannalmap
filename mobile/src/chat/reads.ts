@@ -1,6 +1,8 @@
 import { accountStateOf, type AccountState } from '@account/index';
 import { closedReasonOf, partnerNameOf, roomHeadingOf, roomNoticeOf, TOO_LONG_TEXT, checkBody, sendOutcomeOf, type ClosedReason } from '@chat';
 import { roomCompatOf, type RoomCompat } from '@chat/room/compat';
+import type { MatchDetail } from '@chat/room/detail';
+import { talkLineOf, type TalkLine } from '@chat/room/talk';
 import { MESSAGE_WINDOW, messagesOf, type ChatMessage } from '@chat/room/message';
 import type { SendResult } from '@chat/room/pending';
 import { rpcArgs } from '@db';
@@ -11,6 +13,7 @@ import { STEM_INFO, storedChartSnapshot, type Element, type Stem } from '@saju';
 
 import { supabase } from '@/auth/client';
 import { NOT_READY } from '@/auth/signup';
+import { readDetail } from '@/matching/talk-doors';
 import { settled } from '@/ui/settled';
 
 /**
@@ -153,17 +156,36 @@ export type RoomListScreen =
       readonly rooms: readonly ChatRoom[];
       readonly tones: ReadonlyMap<string, RoomTones>;
       readonly hasSelf: boolean;
+      /** 답하지 않은 대화를 가르는 재료 — 옛 요청뿐이면 접히는 방이 없어 지금 목록 그대로다 */
+      readonly requests: readonly RequestRow[];
     };
+
+export type RequestRow = { readonly requestId: string; readonly kind: string; readonly direction: 'sent' | 'received'; readonly status: string; readonly counterpartUserId: string };
+
+/** 꾸밈 쪽이라 못 읽으면 빈 목록이다(ADR 0078) — 그 방은 대화로 안 갈리고 지금 모양으로 선다 */
+async function readRequestRows(): Promise<readonly RequestRow[]> {
+  if (supabase === null) return [];
+  const { data, error } = await supabase.rpc('my_match_requests');
+  if (error !== null) {
+    console.error('my_match_requests', error.code);
+    return [];
+  }
+  return (data ?? []).flatMap((row) =>
+    row.direction === 'sent' || row.direction === 'received'
+      ? [{ requestId: row.request_id, kind: row.kind, direction: row.direction, status: row.status, counterpartUserId: row.counterpart_user_id }]
+      : [],
+  );
+}
 
 export async function readRoomListScreen(): Promise<RoomListScreen> {
   if ((await currentUserId()) === null) return { kind: 'signed-out' };
-  const [account, rooms] = await Promise.all([readAccount(), readRooms()]);
+  const [account, rooms, requests] = await Promise.all([readAccount(), readRooms(), readRequestRows()]);
   if (isStopped(account.state)) return { kind: 'blocked', state: account.state };
   if (!rooms.ok) return { kind: 'failed', message: rooms.message };
   const scopes = await Promise.all(rooms.rooms.filter(isOpen).map(async (room) => [room.matchId, await readScope(room.matchId)] as const));
   const tones = new Map<string, RoomTones>();
   for (const [matchId, scope] of scopes) if (scope?.tones) tones.set(matchId, scope.tones);
-  return { kind: 'ready', rooms: rooms.rooms, tones, hasSelf: account.state.kind === 'active' && account.state.selfPersonId !== null };
+  return { kind: 'ready', rooms: rooms.rooms, tones, hasSelf: account.state.kind === 'active' && account.state.selfPersonId !== null, requests };
 }
 
 const isStopped = (state: AccountState): boolean => state.kind === 'halted' || state.kind === 'missing' || state.kind === 'unreachable';
@@ -190,6 +212,10 @@ export type RoomView = {
   /** 열린 방에만 온다 — 닫힌 방에는 단추가 없다 */
   readonly compat: RoomCompat | null;
   readonly me: RoomSelf | null;
+  /** 상세 궁합의 상태 — 못 읽었으면 `null` 이고 방은 지금 그대로다 */
+  readonly detail: MatchDetail | null;
+  /** 답 전 대화에서 내 자리 — 답한 대화 · 옛 인연은 `null` */
+  readonly talk: TalkLine | null;
 };
 
 export type RoomScreen =
@@ -225,7 +251,7 @@ export async function readRoomScreen(matchId: string): Promise<RoomScreen> {
 
   const notice = roomNoticeOf(room);
   const open = notice === null && room.partnerUserId !== null;
-  const [messages, scope, compat, mine] = await Promise.all([
+  const [messages, scope, compat, mine, detail, requests] = await Promise.all([
     readMessages(matchId).then(
       (page) => ({ ok: true as const, page }),
       (failure: Error) => ({ ok: false as const, message: failure.message }),
@@ -234,6 +260,8 @@ export async function readRoomScreen(matchId: string): Promise<RoomScreen> {
     open ? readCompat(matchId) : null,
     /* 내 시트의 사진 — 꾸밈이라 못 읽으면 사진 없는 나로 선다(ADR 0078) */
     supabase === null ? null : supabase.rpc('my_photos'),
+    open ? readDetail(matchId) : null,
+    open ? readRequestRows() : [],
   ]);
   if (!messages.ok) return { kind: 'failed', message: messages.message };
 
@@ -256,6 +284,8 @@ export async function readRoomScreen(matchId: string): Promise<RoomScreen> {
       tones: scope?.tones ?? null,
       compat,
       me: account.nickname === null ? null : { userId, nickname: account.nickname, intro: account.intro, photoFocuses: (mine?.data ?? []).map((row) => focusOf(row.focus_x, row.focus_y)) },
+      detail,
+      talk: talkLineOf(room.partnerUserId, requests),
     },
   };
 }

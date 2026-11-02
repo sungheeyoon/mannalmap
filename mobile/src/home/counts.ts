@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 
+import { withoutTalks } from '@chat/room/talk';
 import { answerCount, bellCount } from '@consent/counts';
 import { readingCreditsLabel } from '@reading/notes';
 
@@ -38,7 +39,7 @@ export function useCounts(pathname: string, enabled: boolean): Counts {
         const left = credits.data?.[0]?.available;
         setCounts({
           chat: chat.error === null ? Number(chat.data ?? 0) : 0,
-          requests: requests.error === null ? answerCount(requests.data ?? []) : 0,
+          requests: requests.error === null ? answerCount(withoutTalks(requests.data ?? [])) : 0,
           news: news.error === null ? bellCount((news.data ?? []).map((row) => ({ kind: row.kind, unread: row.read_at === null }))) : 0,
           credits: credits.error === null && left !== undefined ? readingCreditsLabel({ available: left }) : null,
         });

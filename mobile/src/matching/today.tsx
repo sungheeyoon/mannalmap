@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { CHAT_USES_NO_CREDIT } from '@consent/disclosure';
+import { TALK_SCORE_INFO, TALK_SCORE_LABEL, TALK_START_LABEL, TALK_START_NOTE, TALK_START_TITLE } from '@chat/room/detail-copy';
 import { DISCOVERY_EMPTY, DISCOVERY_TEASER } from '@discovery/copy';
 import { elementOf, supplyOf, type DeckCard } from '@matching/deck-card';
 import { PASSED_LIMIT } from '@matching/deck-state';
@@ -27,7 +28,7 @@ import { MatchAcceptNotice } from './requests';
 const tileOf = (element: Element | null) => (element === null ? COLOR.noneSoft : ELEMENT_TONE[element].soft);
 
 /** 오늘의 인연 한 장 — 사진이 주인공이고 그 위에 고르는 데 필요한 것만 선다. 끌어서 넘기지 않는다(운영자 2026-09-25) */
-export function TodayCard({ card, onInfo, onBlocked }: { card: DeckCard; onInfo: () => void; onBlocked: () => void }) {
+export function TodayCard({ card, onInfo, onBlocked, talkOpen = false }: { card: DeckCard; onInfo: () => void; onBlocked: () => void; talkOpen?: boolean }) {
   const [at, setAt] = useState(0);
   const count = card.photoUrls?.length ?? 0;
   const names = card.highlights.map((highlight) => {
@@ -72,10 +73,14 @@ export function TodayCard({ card, onInfo, onBlocked }: { card: DeckCard; onInfo:
             </Text>
             {card.activity != null && <Text style={styles.activity}>{activityText(card.activity)}</Text>}
           </View>
-          <View style={styles.score} accessible accessibilityLabel={['나와의 예측 궁합 점수', card.previewScore, '/ 100'].join(' ')}>
-            <Text style={styles.scoreNumber}>{card.previewScore}</Text>
-            <Text style={styles.scoreOf}> / 100</Text>
-          </View>
+          {talkOpen ? (
+            <Text style={styles.scoreTalk}>{`${TALK_SCORE_LABEL} ${card.previewScore}점`}</Text>
+          ) : (
+            <View style={styles.score} accessible accessibilityLabel={['나와의 예측 궁합 점수', card.previewScore, '/ 100'].join(' ')}>
+              <Text style={styles.scoreNumber}>{card.previewScore}</Text>
+              <Text style={styles.scoreOf}> / 100</Text>
+            </View>
+          )}
         </View>
         <Text style={styles.verdict}>{card.verdict}</Text>
         {card.highlights.length > 0 && (
@@ -119,7 +124,8 @@ function FaceScrim() {
 }
 
 /** 단추 줄 — 사진 아래. 「궁합 요청」이 채운 주 단추로 가장 넓다 */
-export function DeckButtons({ canUndo, busy, onUndo, onPass, onRequest }: { canUndo: boolean; busy: boolean; onUndo: () => void; onPass: () => void; onRequest: () => void }) {
+export function DeckButtons({ canUndo, busy, onUndo, onPass, onRequest, talkOpen = false }: { canUndo: boolean; busy: boolean; onUndo: () => void; onPass: () => void; onRequest: () => void; talkOpen?: boolean }) {
+  const label = talkOpen ? TALK_START_LABEL : '궁합 요청';
   return (
     <View style={styles.buttons}>
       <Pressable
@@ -142,8 +148,8 @@ export function DeckButtons({ canUndo, busy, onUndo, onPass, onRequest }: { canU
         <Icon size={20} name="close" />
         <Text style={styles.passText}>다음 인연</Text>
       </Pressable>
-      <Pressable accessibilityRole="button" accessibilityLabel="궁합 요청" disabled={busy} onPress={onRequest} style={[styles.request, busy && styles.off]}>
-        <Text style={styles.requestText}>궁합 요청</Text>
+      <Pressable accessibilityRole="button" accessibilityLabel={label} disabled={busy} onPress={onRequest} style={[styles.request, busy && styles.off]}>
+        <Text style={styles.requestText}>{label}</Text>
       </Pressable>
     </View>
   );
@@ -202,7 +208,9 @@ export function CardSheet({
   explorationNote,
   notice,
   onBlocked,
+  talkOpen = false,
 }: {
+  talkOpen?: boolean;
   card: DeckCard;
   open: boolean;
   onClose: () => void;
@@ -213,7 +221,7 @@ export function CardSheet({
   return (
     <DetailSheet open={open} title={card.nickname} onClose={onClose} menu={<ReportBlock userId={card.candidateUserId} nickname={card.nickname} onBlocked={onBlocked} />}>
       <CardDetails card={card} explorationNote={explorationNote} />
-      <Text style={styles.fine}>{DISCOVERY_TEASER}</Text>
+      <Text style={styles.fine}>{talkOpen ? TALK_SCORE_INFO : DISCOVERY_TEASER}</Text>
       {notice !== null && <Text style={styles.meta}>{notice}</Text>}
     </DetailSheet>
   );
@@ -244,6 +252,16 @@ export function RequestConfirm({ card, open, onClose, onConfirm, busy }: { card:
         요청하면 <DialogStrong>풀이권 1장</DialogStrong>이 임시로 차감되고, 상대가 수락하면 확정돼요. {REQUEST_RESERVES_NOTE}
       </DialogText>
       <MatchAcceptNotice side="sent" />
+      <DialogText>{CHAT_USES_NO_CREDIT}</DialogText>
+    </ConfirmDialog>
+  );
+}
+
+/** 대화 시작 창 — 풀이권이 안 든다. 첫 말 한 건의 제한을 누르기 전에 읽는다 */
+export function TalkConfirm({ card, open, onClose, onConfirm, busy }: { card: DeckCard; open: boolean; onClose: () => void; onConfirm: () => void; busy: boolean }) {
+  return (
+    <ConfirmDialog open={open} onClose={onClose} title={`${card.nickname} ${TALK_START_TITLE}`} confirmLabel={TALK_START_LABEL} onConfirm={onConfirm} busy={busy}>
+      <DialogText>{TALK_START_NOTE}</DialogText>
       <DialogText>{CHAT_USES_NO_CREDIT}</DialogText>
     </ConfirmDialog>
   );
@@ -340,7 +358,9 @@ export function PassedConnections({
   onRestore,
   onBack,
   feedback,
+  talkOpen = false,
 }: {
+  talkOpen?: boolean;
   cards: readonly DeckCard[];
   working: boolean;
   explorationNote: string | null;
@@ -398,7 +418,7 @@ export function PassedConnections({
                 <Text style={styles.name} numberOfLines={1}>
                   {card.nickname}
                 </Text>
-                <Text style={styles.tileScore}>궁합 {card.previewScore}점</Text>
+                <Text style={styles.tileScore}>{talkOpen ? `${TALK_SCORE_LABEL} ${card.previewScore}점` : `궁합 ${card.previewScore}점`}</Text>
                 <Text style={styles.small} numberOfLines={2}>
                   {card.highlights[0]?.text ?? card.reason}
                 </Text>
@@ -455,6 +475,7 @@ const styles = StyleSheet.create({
   score: { flexDirection: 'row', alignItems: 'baseline' },
   scoreNumber: { fontFamily: FONT.bold, fontSize: 44, lineHeight: 48, color: '#ffffff' },
   scoreOf: { fontFamily: FONT.bold, fontSize: TYPE.small, color: 'rgba(255, 255, 255, 0.85)' },
+  scoreTalk: { fontFamily: FONT.bold, fontSize: TYPE.lead, lineHeight: 28, color: '#ffffff' },
   verdict: { fontFamily: FONT.medium, fontSize: TYPE.lead, lineHeight: 24, color: 'rgba(255, 255, 255, 0.95)' },
   supply: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   dots: { flexDirection: 'row', paddingLeft: 4 },

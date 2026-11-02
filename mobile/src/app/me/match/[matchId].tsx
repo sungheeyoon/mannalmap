@@ -3,6 +3,7 @@ import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { CHAT_TAB_LABEL } from '@chat/index';
+import { DETAIL_MAKING, DETAIL_NOT_YET } from '@chat/room/detail-copy';
 import { MATCH_RESULT_CLOSED_NOTE } from '@consent/index';
 import { ELEMENT_KO, PILLAR_POSITION_KO, STEM_INFO, type ChartSnapshot, type Element } from '@saju';
 
@@ -18,6 +19,8 @@ import { COLOR, ELEMENT_TONE, FONT, RADIUS, TYPE } from '@/ui/tokens';
 import { CardFrame, EmptySlot, Paper, Tile } from '@/ui/surfaces';
 
 const POSITIONS = ['hour', 'day', 'month', 'year'] as const;
+/** 만드는 동안 상태 문을 다시 묻는 간격 — 글이 서면 풀이 칸으로 바뀐다 */
+const MAKING_POLL_MS = 5000;
 
 /**
  * 인연 궁합 — 동의가 실제로 연 것. 머리 한 줄 · 표지 · 두 명식 · 풀이 본문 차례다(PRD §6.3). 풀이 칸은 네 갈래 한 벌이다(`ReadingPanel`) — 만드는 중 · 실패 · 의견이 거기 있다.
@@ -39,6 +42,13 @@ export default function MatchScreen() {
     // eslint-disable-next-line react-hooks/set-state-in-effect -- load 는 읽기를 기다린 뒤에만 상태를 고친다. 규칙이 await 를 넘어 보지 못한다
     void load();
   }, [load]);
+
+  const making = outcome?.ok === true && outcome.value.kind === 'ok' && outcome.value.result.mine === null && outcome.value.result.detail?.state === 'making';
+  useEffect(() => {
+    if (!making) return;
+    const timer = setInterval(() => void load(), MAKING_POLL_MS);
+    return () => clearInterval(timer);
+  }, [making, load]);
 
   const fallback = from === 'history' ? '/me/matching/history' : from === 'shelf' ? '/me/readings' : '/me/matching';
   const back = () => goBack(fallback);
@@ -100,7 +110,9 @@ export default function MatchScreen() {
   }
 
   const { result } = outcome.value;
-  const tone = STEM_INFO[result.theirs.dayMaster].element;
+  const tone = result.theirs === null ? null : STEM_INFO[result.theirs.dayMaster].element;
+  /* 켜진 흐름은 글이 서기 전에 풀이 칸을 안 세운다 — 청하기 · 재시도는 방의 일이다 */
+  const written = result.mine !== null || result.detail?.state === 'ready';
 
   return (
     <View style={styles.screen}>
@@ -143,19 +155,27 @@ export default function MatchScreen() {
           menu={<ReportBlock userId={result.partnerUserId} nickname={result.partnerNickname} onBlocked={back} />}
         />
 
-        <MatchReadingPanel
-          matchId={result.matchId}
-          nicknames={{ viewer: nickname, partner: result.partnerNickname }}
-          tones={[STEM_INFO[result.mine.dayMaster].element, tone]}
-          pair={
-            <Paper style={styles.pair}>
-              <Text style={styles.pairEyebrow}>각자의 사주</Text>
-              <Text style={styles.pairTitle}>궁합의 출발점</Text>
-              <Side name="나" chart={result.mine} who="첫 번째" />
-              <Side name={result.partnerNickname} chart={result.theirs} who="두 번째" />
-            </Paper>
-          }
-        />
+        {written ? (
+          <MatchReadingPanel
+            matchId={result.matchId}
+            nicknames={{ viewer: nickname, partner: result.partnerNickname }}
+            tones={result.mine === null || tone === null ? [] : [STEM_INFO[result.mine.dayMaster].element, tone]}
+            pair={
+              result.mine === null || result.theirs === null ? null : (
+                <Paper style={styles.pair}>
+                  <Text style={styles.pairEyebrow}>각자의 사주</Text>
+                  <Text style={styles.pairTitle}>궁합의 출발점</Text>
+                  <Side name="나" chart={result.mine} who="첫 번째" />
+                  <Side name={result.partnerNickname} chart={result.theirs} who="두 번째" />
+                </Paper>
+              )
+            }
+          />
+        ) : (
+          <EmptySlot>
+            <Text style={styles.line}>{result.detail?.state === 'making' ? DETAIL_MAKING : DETAIL_NOT_YET}</Text>
+          </EmptySlot>
+        )}
       </ScrollView>
     </View>
   );
