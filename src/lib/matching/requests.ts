@@ -45,3 +45,13 @@ export function refusedForCredits(error: { code?: string | null; message?: strin
   const message = error.message ?? '';
   return error.code === '23514' && OUT_OF_CREDITS_REFUSALS.some((lead) => message.startsWith(lead));
 }
+
+/**
+ * **화면이 그린 흐름과 스위치가 어긋난 거절인가**(ADR 0216) — 문이 아무것도 안 세우고 전용 코드로 답한다. 돈이 안 움직였으니 화면은 잔액을 다시 묻지 않고
+ * 스위치를 다시 읽어 그린다. 옛 DB 에서는 이 코드가 안 오고 `PGRST202` 로 닫힌다.
+ */
+export const SWITCH_MOVED_CODE = 'MK001';
+
+export function refusedForSwitchMoved(error: { code?: string | null }): boolean {
+  return error.code === SWITCH_MOVED_CODE;
+}

@@ -29,6 +29,36 @@ describe('대화의 스위치', () => {
   });
 });
 
+/** **새 코드가 기대값을 빠뜨리면 보호가 조용히 사라진다**(ADR 0216) — 인자가 선택이라 타입이 못 잡는 자리다. 옛 호출은 `scripts/check-*.mjs` 가 일부러 든다 */
+describe('화면의 요청 문은 기대한 종류를 싣는다', () => {
+  const sourceOf = (path: string) => readFileSync(join(process.cwd(), path), 'utf8');
+  const callsOf = (text: string) => text.match(/\.rpc\('request_match',\s*\{[^}]*\}/g) ?? [];
+
+  it.each([
+    ['app/me/discovery/actions.ts', ['talk', 'bundled']],
+    ['mobile/src/matching/talk-doors.ts', ['talk']],
+    ['mobile/src/matching/doors.ts', ['bundled']],
+  ])('%s', (path, kinds) => {
+    expect(callsOf(sourceOf(path)).map((call) => /p_expected_kind: '(\w+)'/.exec(call)?.[1])).toEqual(kinds);
+  });
+
+  it('앱은 부르기 전에 스위치를 따로 묻지 않는다 — 그 읽기와 부름 사이에 틈이 남는다', () => {
+    const start = sourceOf('mobile/src/matching/talk-doors.ts').split('export async function startTalk')[1]?.split('\n}\n')[0] ?? '';
+    expect(start).toContain('request_match');
+    expect(start).not.toContain('readTalkOpen');
+  });
+
+  it('다른 화면 코드는 이 문을 안 부른다', () => {
+    const callers = (dir: string): string[] =>
+      readdirSync(join(process.cwd(), dir), { withFileTypes: true, recursive: true })
+        .filter((one) => one.isFile() && /\.tsx?$/.test(one.name) && !/\.test\./.test(one.name))
+        .map((one) => join(one.parentPath, one.name))
+        .filter((path) => /\.rpc\('request_match'/.test(readFileSync(path, 'utf8')))
+        .map((path) => path.replace(`${process.cwd()}/`, ''));
+    expect([...callers('app'), ...callers('mobile/src')].sort()).toEqual(['app/me/discovery/actions.ts', 'mobile/src/matching/doors.ts', 'mobile/src/matching/talk-doors.ts']);
+  });
+});
+
 /** 켜는 날 판을 올릴 때 이 시험을 함께 고친다 — `docs/legal/match-talk-notice-draft.md` 「켜는 날의 차례」 */
 describe('게시 고지는 그대로다 — 스위치가 꺼진 동안', () => {
   const dates = { endsOn: '2026-11-30', purgeBy: '2026-12-30', purgeWithinDays: 30 };

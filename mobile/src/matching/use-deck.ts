@@ -27,8 +27,8 @@ export function useDeck({
 }: {
   /** 대화가 열렸다 — 풀이권을 안 물어 확인 창이 서고, 보내면 방으로 간다 */
   talkOpen?: boolean;
-  /** 누르려는 사이 스위치가 꺼졌다 — 옛 요청을 말없이 세우지 않고 다시 읽는다 */
-  onSwitchMoved?: () => void;
+  /** 그린 흐름과 스위치가 어긋나 문이 거절했다 — 돈은 안 움직였다. 다시 읽어 그리고 이 문장을 세운다(ADR 0216) */
+  onSwitchMoved?: (message: string) => void;
   cards: readonly DeckCard[];
   passedFromServer: readonly DeckCard[];
   summary: ElementSummary;
@@ -85,8 +85,8 @@ export function useDeck({
     lock(true);
     try {
       const started = await startTalk(sending.candidateUserId);
-      if (started.kind === 'switch-closed') {
-        onSwitchMoved?.();
+      if (started.kind === 'switch-moved') {
+        onSwitchMoved?.(started.message);
         return;
       }
       if (started.kind === 'refused') {
@@ -127,7 +127,8 @@ export function useDeck({
     lock(true);
     try {
       const result = await requestMatch(sending.candidateUserId);
-      if (!result.ok && 'outOfCredits' in result) onOutOfCredits();
+      if (!result.ok && 'switchMoved' in result) onSwitchMoved?.(result.message);
+      else if (!result.ok && 'outOfCredits' in result) onOutOfCredits();
       else if (!result.ok) setFailure(result.message);
       else {
         dispatch({ type: 'leave', id: sending.candidateUserId });

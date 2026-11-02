@@ -4612,7 +4612,10 @@ export type Database = {
         Returns: boolean
       }
       request_account_deletion: { Args: never; Returns: boolean }
-      request_match: { Args: { p_candidate_user_id: string }; Returns: string }
+      request_match: {
+        Args: { p_candidate_user_id: string; p_expected_kind?: string }
+        Returns: string
+      }
       request_match_detail: {
         Args: { p_client_key: string; p_match_id: string }
         Returns: {

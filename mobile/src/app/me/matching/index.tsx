@@ -32,8 +32,11 @@ const todayLabel = () => new Date().toLocaleDateString('ko-KR', { month: 'long',
 export default function MatchingScreen() {
   const [loaded, setLoaded] = useState<Loaded | null>(null);
   const [round, setRound] = useState(0);
+  /* 덱을 새로 세우면 덱 안의 실패 줄이 사라지므로 이 한 줄은 덱 밖에서 든다 — 다음 읽기가 걷는다 */
+  const [switchMoved, setSwitchMoved] = useState<string | null>(null);
 
   const load = useCallback(async () => {
+    setSwitchMoved(null);
     const account = await readAccountState();
     const [deck, read, matches, talkOpen, books, ended] = await Promise.all([readDeck(selfPersonIdOf(account)), readRequests(), readMatches(), readTalkOpen(), readMatchBooks(), readEndedTalks()]);
     /* 대화는 방의 일이다 — 수락 카드 · 인연 기록의 수에 안 든다 */
@@ -53,6 +56,12 @@ export default function MatchingScreen() {
     setRound((now) => now + 1);
   };
   const again = () => void reread();
+  const onSwitchMoved = (message: string) => {
+    void (async () => {
+      await reread();
+      setSwitchMoved(message);
+    })();
+  };
 
   if (loaded === null) {
     return (
@@ -121,16 +130,16 @@ export default function MatchingScreen() {
   }
 
   /* 덱은 다시 세우지 않는다 — 다만 앱은 응답이 화면을 다시 그려 주지 않으니, 다시 읽은 그때 덱을 그 값으로 새로 세운다 */
-  return <Deck key={round} place={place} lead={lead} tail={tail} onRecheck={again} onRequested={() => void load()} talkOpen={loaded.talkOpen} />;
+  return <Deck key={round} place={place} lead={lead} tail={tail} onRecheck={again} onRequested={() => void load()} talkOpen={loaded.talkOpen} onSwitchMoved={onSwitchMoved} switchMoved={switchMoved} />;
 }
 
-function Deck({ place, lead, tail, onRecheck, onRequested, talkOpen }: { place: Extract<DeckPlace, { kind: 'deck' }>; lead: React.ReactNode; tail: React.ReactNode; onRecheck: () => void; onRequested: () => void; talkOpen: boolean }) {
+function Deck({ place, lead, tail, onRecheck, onRequested, talkOpen, onSwitchMoved, switchMoved }: { place: Extract<DeckPlace, { kind: 'deck' }>; lead: React.ReactNode; tail: React.ReactNode; onRecheck: () => void; onRequested: () => void; talkOpen: boolean; onSwitchMoved: (message: string) => void; switchMoved: string | null }) {
   const credits = useCreditsNotice();
-  const deck = useDeck({ cards: place.cards, passedFromServer: place.passed, summary: place.summary, onOutOfCredits: () => void credits.offer(), onRequested, talkOpen, onSwitchMoved: onRecheck });
+  const deck = useDeck({ cards: place.cards, passedFromServer: place.passed, summary: place.summary, onOutOfCredits: () => void credits.offer(), onRequested, talkOpen, onSwitchMoved });
   const [view, setView] = useState<'today' | 'passed'>('today');
   const [info, setInfo] = useState(false);
   const { profile } = deck;
-  const feedback = <Feedback failure={deck.failure} flash={deck.flash} />;
+  const feedback = <Feedback failure={deck.failure ?? switchMoved} flash={deck.flash} />;
 
   return (
     <Frame>

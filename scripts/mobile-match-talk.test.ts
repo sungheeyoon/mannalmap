@@ -44,11 +44,17 @@ describe('꺼진 동안의 값', () => {
     expect(doors).toMatch(/catch \{\s+return false;/);
   });
 
-  it('대화를 부르기 직전에 스위치를 다시 묻는다 — 꺼졌으면 풀이권을 잡는 옛 요청이 말없이 서지 않는다', () => {
+  it('대화를 부를 때 그린 흐름을 문에 말한다 — 꺼졌으면 풀이권을 잡는 옛 요청 대신 거절이 온다(ADR 0216)', () => {
     const doors = read('mobile/src/matching/talk-doors.ts');
     const body = doors.slice(doors.indexOf('export async function startTalk'));
-    expect(body.indexOf('readTalkOpen()')).toBeGreaterThan(-1);
-    expect(body.indexOf('readTalkOpen()')).toBeLessThan(body.indexOf("rpc('request_match'"));
+    expect(body).toContain("rpc('request_match', { p_candidate_user_id: candidateUserId, p_expected_kind: 'talk' })");
+    expect(body).toContain('refusedForSwitchMoved(error)');
+  });
+
+  it('거절의 문장은 덱을 새로 세운 뒤에도 남는다 — 덱 안의 실패 줄은 함께 사라진다', () => {
+    const screen = read('mobile/src/app/me/matching/index.tsx');
+    expect(screen).toContain('await reread();\n      setSwitchMoved(message);');
+    expect(screen).toContain('deck.failure ?? switchMoved');
   });
 });
 
