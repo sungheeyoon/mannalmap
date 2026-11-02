@@ -19,6 +19,7 @@ import { SEAT_NAMES } from '@/src/lib/reading/display';
 import { storedChartOf, type StoredInput } from '@/src/lib/input/stored';
 
 import { recordDbFailure } from '../../db-error';
+import { passingDbFailure } from './collect';
 import { failReadingJob } from './fail-job';
 import { GENERATION } from './generation';
 import { readingInputOf } from './generator';
@@ -130,13 +131,15 @@ export async function submitFrozen(
 
   /**
    * **상세 궁합은 요청의 이름으로 고른다**(`docs/text/detail-compat-contract.md` §9). 인연 궁합이 아니면 묻지 않는다.
-   * 이름을 모르면 보내지 않고 닫는다 — 있는 실패 길이고 예약이 돌아온다.
+   * 이름을 모르면 보내지 않고 닫는다 — 있는 실패 길이고 예약이 돌아온다. 문의 일시 장애만 닫지 않는다.
    */
   let requestKind: string | null | undefined = kind === 'match' ? job.request_kind : null;
   if (kind === 'match' && requestKind === undefined) {
     /* 다시 만들기 · 복구기는 이름을 안 받는다 — 그 길로 상세가 옛 지시로 나가면 안 된다 */
     const { data, error } = await keyed.rpc('reading_run_request_kind', { p_run_id: job.run_id });
     if (error) recordDbFailure(error, 'submit: reading_run_request_kind');
+    /* 일시 장애는 닫지 않는다 — 보내지 않고 임대가 지나 복구기가 다시 집는다(`collect.ts` 와 같은 규칙) */
+    if (error && passingDbFailure(error)) return;
     requestKind = error ? null : data;
   }
   if (kind === 'match' && requestKind !== 'bundled' && requestKind !== 'detail') {
