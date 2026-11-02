@@ -12,7 +12,7 @@
 --
 -- 두 세션의 진짜 경합은 pgTAP 이 못 만든다 — 그 값은 PR 에 적었다(psql 두 세션을 나란히 돌렸다).
 begin;
-select plan(283);
+select plan(333);
 
 create or replace function pg_temp.participant(mail text, who text, summary jsonb)
 returns uuid
@@ -149,6 +149,15 @@ begin
 end;
 $fn$;
 
+create or replace function pg_temp.prepare(run uuid)
+returns boolean
+language sql
+as $fn$
+  select public.prepare_reading_job(
+    p_run_id => run, p_prompt => '# 지시', p_evidence => '{}', p_prompt_version => 'reading-prompt-v1',
+    p_requested_model => 'openai/gpt-5.6-luna', p_generation => '{}'::jsonb, p_viewed_at => now());
+$fn$;
+
 create or replace function pg_temp.set_limit(n int)
 returns void
 language plpgsql
@@ -250,7 +259,7 @@ insert into seen select 'm-old-swallowed', id from public.match where request_id
 select pg_temp.switch_to(true);
 select is(public.match_talk_is_open(), true, '켜면 참이다');
 select ok(has_function_privilege('authenticated', 'public.match_talk_open()', 'execute'), '화면이 켜짐을 읽는 문은 로그인한 사람에게 열린다');
-select ok(not has_function_privilege('anon', 'public.match_talk_open()', 'execute'), '익명에게 닫힌다 — 켜짐을 읽는 문');
+select ok(has_function_privilege('anon', 'public.match_talk_open()', 'execute'), '로그인 전 소개가 켜짐을 읽는다 — 개인 값이 없다');
 select is(public.match_talk_open(), true, '화면의 문이 스위치를 따른다');
 set local role authenticated;
 
@@ -339,7 +348,7 @@ select pg_temp.acting((select lee from folks));
 select ok((select d.request_id = pg_temp.got('detail') and not d.i_am_buyer from public.request_match_detail(pg_temp.got('m-kim-lee'), 'detail-key-0003') d),
   '두 사람이 함께 청하면 늦은 쪽은 앞 요청을 받고 구매자가 아니다');
 select is((select pg_temp.credits_of(lee) from folks), array[0, 0, 0], '늦은 쪽은 차감이 없다');
-select is((select count(*)::int from public.my_notifications() where kind = 'detail_requested'), 0, '24시간 안의 둘째 요청 소식은 묶인다 — 방 안 상태로만 보인다');
+select is((select count(*)::int from public.my_notifications() where kind = 'detail_requested'), 1, '답 뒤 첫 상세 요청은 대화 소식과 따로 세어 소식이 간다');
 
 reset role;
 select is((select count(*)::int from public.reading_credit_use where request_id = pg_temp.got('detail') and state = 'reserved' and user_id = (select kim from folks)), 1, '장부의 예약은 구매자 한 줄이다');
@@ -481,6 +490,9 @@ select is((select count(*)::int from public.my_last_reading_run('match', null, n
 select ok((select consent_holds from public.my_match_detail_state(pg_temp.got('m-park-han'))), '상태 — 실패 뒤에도 동의가 살아 있다');
 select ok((select d.status = 'accepted' and d.i_am_buyer from public.request_match_detail(pg_temp.got('m-park-han'), 'park-detail-0001') d), '상대가 새 누름 없이 다시 연다');
 select is((select pg_temp.credits_of(park) from folks), array[0, 1, 0], '다시 연 사람이 1장을 잡는다');
+select pg_temp.acting((select park from folks));
+select ok((select d.status = 'accepted' and d.i_am_buyer from public.request_match_detail(pg_temp.got('m-park-han'), 'park-detail-0001') d), '재시도의 같은 키는 처음 답이다');
+select is((select pg_temp.credits_of(park) from folks), array[0, 1, 0], '재시도의 재전송에 더 안 잡는다');
 select is((select pg_temp.credits_of(han) from folks), array[0, 0, 0], '앞 구매자는 안 쓴다');
 select is(pg_temp.state_of((select park from folks), pg_temp.got('m-park-han')), 'making', '상태 — 다시 만드는 중');
 select pg_temp.acting((select han from folks));
@@ -624,19 +636,28 @@ select throws_ok(
 insert into seen select 'oh-detail-6', d.request_id from public.request_match_detail(pg_temp.got('m-choi-oh'), 'oh-detail-0007') d;
 select is((select d.status from public.request_match_detail(pg_temp.got('m-choi-oh'), 'oh-detail-0007') d), 'pending', '입력이 바뀐 뒤에는 새 누름을 기다린다');
 
--- 옛 호출의 상세 거절 — 호환 길이다. 새 화면에 단추가 없다
+-- 상세의 p_accept=false — 옛 앱에는 없는 직접 호출이다. 영구 거절로 굳히지 않는다
 select pg_temp.acting((select choi from folks));
-select is(public.respond_to_match_request(pg_temp.got('oh-detail-6'), false), 'rejected', '옛 호출의 상세 거절은 호환으로 받는다');
-select is(pg_temp.state_of((select oh from folks), pg_temp.got('m-choi-oh')), 'rejected', '상태 — 거절');
-select throws_ok(
-  format($$select * from public.request_match_detail(%L, 'oh-detail-0008')$$, pg_temp.got('m-choi-oh')),
-  '23514', '이 상세 궁합은 다시 청할 수 없어요.', '거절 뒤 다시 못 청한다');
+select is(public.respond_to_match_request(pg_temp.got('oh-detail-6'), false), 'cancelled', '상세의 직접 거절 호출은 취소로 끝난다');
+select is(pg_temp.state_of((select oh from folks), pg_temp.got('m-choi-oh')), 'before_purchase', '상태 — 구매 전으로 돌아간다');
+select pg_temp.acting((select oh from folks));
+insert into seen select 'oh-detail-7', d.request_id from public.request_match_detail(pg_temp.got('m-choi-oh'), 'oh-detail-0008') d;
+select is(public.cancel_match_request(pg_temp.got('oh-detail-7')), 'cancelled', '직접 거절 뒤에도 다시 청할 수 있다');
+
+-- 3 — 보내기 직전에 입력이 바뀌면 안 보낸다
+insert into seen select 'oh-detail-8', d.request_id from public.request_match_detail(pg_temp.got('m-choi-oh'), 'oh-detail-0009') d;
 select pg_temp.acting((select choi from folks));
-select throws_ok(
-  format($$select * from public.request_match_detail(%L, 'choi-detail-0001')$$, pg_temp.got('m-choi-oh')),
-  '23514', '이 상세 궁합은 다시 청할 수 없어요.', '거절한 쪽도 다시 못 청한다');
+select is(public.respond_to_match_request(pg_temp.got('oh-detail-8'), true), 'accepted', '최가 누른다');
+select tests.edit_person_input(pg_temp.got('choi-person'), 'solar', '1994-09-19', '1994-09-19', '07:30', 'female', '서울', 'jo', 'localMean', tests.chart(), 'chart-for-tests');
 reset role;
-select ok((select closed_at is null from public.chat_room where match_id = pg_temp.got('m-choi-oh')), '상세를 거절해도 방은 열려 있다');
+insert into seen select 'oh-run-8', id from public.reading_run where match_id = pg_temp.got('m-choi-oh') and status = 'running';
+select is(pg_temp.prepare(pg_temp.got('oh-run-8')), false, '누른 뒤 입력이 바뀌면 보내기 직전 문이 멈춘다');
+select is((select status from public.reading_run where id = pg_temp.got('oh-run-8')), 'failed', '시도가 실패로 닫힌다');
+select is((select prepared_at is null from public.reading_run where id = pg_temp.got('oh-run-8')), true, '모델로 간 것으로 안 센다');
+select is((select pg_temp.credits_of(oh) from folks), array[0, 0, 1], '복원된다 — 남은 하나는 켜기 전의 옛 요청이다');
+set local role authenticated;
+reset role;
+select ok((select closed_at is null from public.chat_room where match_id = pg_temp.got('m-choi-oh')), '상세를 끝내도 방은 열려 있다');
 set local role authenticated;
 
 -- ── 7. 대화의 끝 · 옛 요청 ──────────────────────────────────────────────────
@@ -782,6 +803,7 @@ select pg_temp.acting((select han from folks));
 select is(public.respond_to_match_request(pg_temp.got('old-asked'), true), 'accepted', '켜기 전 요청의 수락은 옛 길이다');
 reset role;
 insert into seen select 'm-old', id from public.match where request_id = pg_temp.got('old-asked');
+select is((select request_kind from public.match_run_awaiting_send(pg_temp.got('old-asked'))), 'bundled', '제출 문이 옛 요청의 이름을 내준다');
 select ok((select chart_low is not null and chart_high is not null from public.match where id = pg_temp.got('m-old')), '옛 길은 수락 때 글자를 베낀다');
 select is((select user_id from public.reading_run where match_id = pg_temp.got('m-old') and idempotency_key like 'match-accept:%'), (select oh from folks), '옛 길은 요청자 이름으로 시도를 연다');
 select is((select pg_temp.credits_of(oh) from folks), array[0, 1, 0], '옛 길은 예약을 쓴다');
@@ -844,6 +866,126 @@ select throws_ok(
   format($$select * from public.start_reading_run('match', 'match-accept:%s', null, null, %L)$$, pg_temp.got('old-swallowed'), pg_temp.got('m-old-swallowed')),
   '23514', '상세 궁합은 대화방에서 상대의 동의를 받은 뒤에 만들어요.', '켠 동안 옛 열쇠는 입력 판을 견준다');
 
+-- ── 재검토 — 정지 · 닫힌 방 · 참여 끄기 · 차단 ────────────────────────────
+
+create or replace function pg_temp.reopen(in_match uuid)
+returns void
+language sql
+as $fn$
+  update public.chat_room set closed_reason = null, closed_by_user_id = null, closed_at = null where match_id = in_match;
+$fn$;
+
+-- 받은 사람 정지 → 대기 상세가 끝나고 복원된다, 풀려도 누를 수 없다
+select pg_temp.acting((select lee from folks));
+insert into seen select 'lp-s1', d.request_id from public.request_match_detail(pg_temp.got('m-lee-park-2'), 'lee-park-s1') d;
+select is((select pg_temp.credits_of(lee) from folks), array[0, 0, 1], '구매자가 한 장을 잡는다');
+reset role;
+update public.app_user set status = 'suspended' where id = (select park from folks);
+select is((select status from public.match_request where id = pg_temp.got('lp-s1')), 'cancelled', '받은 사람 정지가 대기 상세를 끝낸다');
+select is((select pg_temp.credits_of(lee) from folks), array[0, 0, 0], '받은 사람 정지에 구매자의 예약이 복원된다');
+update public.app_user set status = 'active' where id = (select park from folks);
+set local role authenticated;
+select pg_temp.acting((select park from folks));
+select is(public.respond_to_match_request(pg_temp.got('lp-s1'), true), 'cancelled', '정지가 풀려도 끝난 상세를 못 누른다');
+reset role;
+select is((select count(*)::int from public.reading_run where match_id = pg_temp.got('m-lee-park-2')), 0, '시도가 안 열린다');
+select pg_temp.reopen(pg_temp.got('m-lee-park-2'));
+
+-- 구매자 정지
+set local role authenticated;
+select pg_temp.acting((select lee from folks));
+insert into seen select 'lp-s2', d.request_id from public.request_match_detail(pg_temp.got('m-lee-park-2'), 'lee-park-s2') d;
+reset role;
+update public.app_user set status = 'suspended' where id = (select lee from folks);
+select is((select status from public.match_request where id = pg_temp.got('lp-s2')), 'cancelled', '구매자 정지가 대기 상세를 끝낸다');
+select is((select pg_temp.credits_of(lee) from folks), array[0, 0, 0], '구매자 정지에 예약이 복원된다');
+update public.app_user set status = 'active' where id = (select lee from folks);
+select pg_temp.reopen(pg_temp.got('m-lee-park-2'));
+
+-- 닫힌 방의 누름 — 찰나를 손으로 세운다
+set local role authenticated;
+select pg_temp.acting((select lee from folks));
+insert into seen select 'lp-s3', d.request_id from public.request_match_detail(pg_temp.got('m-lee-park-2'), 'lee-park-s3') d;
+reset role;
+update public.chat_room set closed_reason = 'suspension', closed_at = now() where match_id = pg_temp.got('m-lee-park-2');
+set local role authenticated;
+select pg_temp.acting((select park from folks));
+select is(public.respond_to_match_request(pg_temp.got('lp-s3'), true), 'cancelled', '닫힌 방의 누름은 취소로 끝난다');
+select is((select pg_temp.credits_of(lee) from folks), array[0, 0, 0], '그 예약도 복원된다');
+reset role;
+select is((select count(*)::int from public.reading_run where match_id = pg_temp.got('m-lee-park-2')), 0, '닫힌 방의 누름은 시도를 안 연다');
+select pg_temp.reopen(pg_temp.got('m-lee-park-2'));
+
+-- 누른 줄의 열쇠도 닫힌 방에서는 안 듣는다
+set local role authenticated;
+select pg_temp.acting((select lee from folks));
+insert into seen select 'lp-s4', d.request_id from public.request_match_detail(pg_temp.got('m-lee-park-2'), 'lee-park-s4') d;
+select pg_temp.acting((select park from folks));
+select is(public.respond_to_match_request(pg_temp.got('lp-s4'), true), 'accepted', '누른다');
+reset role;
+select is((select request_kind from public.match_run_awaiting_send(pg_temp.got('lp-s4'))), 'detail', '제출 문이 상세의 이름을 내준다');
+insert into seen select 'lp-run-s4', id from public.reading_run where match_id = pg_temp.got('m-lee-park-2') and status = 'running';
+select ok(public.fail_reading_job(pg_temp.got('lp-run-s4'), 'model-failed', '실패'), '실패한다');
+update public.chat_room set closed_reason = 'suspension', closed_at = now() where match_id = pg_temp.got('m-lee-park-2');
+set local role authenticated;
+select pg_temp.acting((select lee from folks));
+select throws_ok(
+  format($$select * from public.start_reading_run('match', 'match-accept:%s-x', null, null, %L)$$, pg_temp.got('lp-s4'), pg_temp.got('m-lee-park-2')),
+  '23514', '상세 궁합은 대화방에서 상대의 동의를 받은 뒤에 만들어요.', '닫힌 방에서 지어낸 열쇠로 못 연다');
+reset role;
+select pg_temp.reopen(pg_temp.got('m-lee-park-2'));
+
+-- 6 — 받은 사람이 참여를 끄면 동의가 끝나고 대기 상세도 끝난다. 대화는 그대로다
+set local role authenticated;
+select pg_temp.acting((select lee from folks));
+select ok((select consent_holds from public.my_match_detail_state(pg_temp.got('m-lee-park-2'))), '실패 뒤 동의가 살아 있다');
+select pg_temp.acting((select park from folks));
+select tests.set_discovery_participation(false, null, null);
+select pg_temp.acting((select lee from folks));
+select ok(not (select consent_holds from public.my_match_detail_state(pg_temp.got('m-lee-park-2'))), '받은 사람이 참여를 끄면 동의가 끝난다');
+select throws_ok(format($$select * from public.request_match_detail(%L, 'lee-park-o1')$$, pg_temp.got('m-lee-park-2')), '23514', '결과를 만들 수 있는 대상이 아닙니다.', '참여를 끈 사람에게 새로 못 청한다');
+select pg_temp.acting((select park from folks));
+select tests.set_discovery_participation(true, pg_temp.summary(2, 2, 2, 2, 0), tests.need());
+select pg_temp.acting((select lee from folks));
+select ok(not (select consent_holds from public.my_match_detail_state(pg_temp.got('m-lee-park-2'))), '다시 켜도 끝난 동의는 안 돌아온다');
+insert into seen select 'lp-o2', d.request_id from public.request_match_detail(pg_temp.got('m-lee-park-2'), 'lee-park-o2') d;
+select pg_temp.acting((select park from folks));
+select tests.set_discovery_participation(false, null, null);
+reset role;
+select is((select status from public.match_request where id = pg_temp.got('lp-o2')), 'cancelled', '참여를 끄면 대기 상세가 끝난다');
+select is((select pg_temp.credits_of(lee) from folks), array[0, 0, 0], '구매자의 예약이 복원된다');
+select is((select status from public.match_request where id = pg_temp.got('lee-park-2')), 'accepted', '대화는 그대로다');
+select ok((select closed_at is null from public.chat_room where match_id = pg_temp.got('m-lee-park-2')), '방도 열려 있다');
+set local role authenticated;
+select pg_temp.acting((select park from folks));
+select is(public.send_chat_message(pg_temp.got('m-lee-park-2'), '아직 대화해요', gen_random_uuid()), 'sent', '참여를 꺼도 열린 대화를 이어 간다');
+select tests.set_discovery_participation(true, pg_temp.summary(2, 2, 2, 2, 0), tests.need());
+
+-- 3 — 누른 뒤 참여를 끄면 보내기 직전 문이 멈춘다
+select pg_temp.acting((select lee from folks));
+insert into seen select 'lp-p1', d.request_id from public.request_match_detail(pg_temp.got('m-lee-park-2'), 'lee-park-p1') d;
+select pg_temp.acting((select park from folks));
+select is(public.respond_to_match_request(pg_temp.got('lp-p1'), true), 'accepted', '누른다');
+select tests.set_discovery_participation(false, null, null);
+reset role;
+insert into seen select 'lp-run-p1', id from public.reading_run where match_id = pg_temp.got('m-lee-park-2') and status = 'running';
+select is(pg_temp.prepare(pg_temp.got('lp-run-p1')), false, '동의가 끝났으면 보내기 직전 문이 멈춘다');
+select is((select pg_temp.credits_of(lee) from folks), array[0, 0, 0], '실패로 닫혀 복원된다');
+set local role authenticated;
+select pg_temp.acting((select park from folks));
+select tests.set_discovery_participation(true, pg_temp.summary(2, 2, 2, 2, 0), tests.need());
+
+-- 2 — 차단은 상세를 취소로 끝내고 소식이 없다
+select pg_temp.acting((select lee from folks));
+insert into seen select 'lp-b1', d.request_id from public.request_match_detail(pg_temp.got('m-lee-park-2'), 'lee-park-b1') d;
+select pg_temp.acting((select park from folks));
+select ok(public.block_user((select lee from folks)), '받은 사람이 차단한다');
+reset role;
+select is((select status from public.match_request where id = pg_temp.got('lp-b1')), 'cancelled', '차단은 상세를 취소로 끝낸다');
+select is((select count(*)::int from public.notification where request_id = pg_temp.got('lp-b1') and kind = 'request_rejected'), 0, '차단이 구매자에게 거절 소식을 안 보낸다');
+select is((select pg_temp.credits_of(lee) from folks), array[0, 0, 0], '차단에 예약이 복원된다');
+set local role authenticated;
+
 -- ── 8. 떠남 — 구매자가 받은 쪽, 요청자 탈퇴(#966) ──────────────────────────
 
 select pg_temp.acting((select yun from folks));
@@ -867,11 +1009,33 @@ select is((select count(*)::int from public.reading_credit_use where user_id = (
 
 -- ── 9. 다시 끔 · 권한 ──────────────────────────────────────────────────────
 
+-- 탈퇴 신청 철회 — 답 전 대화는 정지 해제와 같이 끝나고 새로 시작한다
 set local role authenticated;
 select pg_temp.acting((select oh from folks));
+insert into seen select 'oh-park-0', public.request_match((select park from folks));
+reset role;
+insert into seen select 'm-oh-park-0', pg_temp.match_of(oh, park) from folks;
+set local role authenticated;
+select pg_temp.acting((select park from folks));
+select ok(public.request_account_deletion(), '받은 사람이 답 전에 탈퇴를 신청한다');
+reset role;
+select is((select status from public.match_request where id = pg_temp.got('oh-park-0')), 'cancelled', '탈퇴 신청은 답 전 대화를 rejected 로 굳히지 않는다');
+select ok((select ended_at is not null from public.match where id = pg_temp.got('m-oh-park-0')), '탈퇴 신청이 답 전 대화를 끝낸다');
+select is((select closed_reason from public.chat_room where match_id = pg_temp.got('m-oh-park-0')), 'declined', '탈퇴 신청으로 끝난 방도 같은 모양이다');
+select is((select count(*)::int from public.notification where request_id = pg_temp.got('oh-park-0') and kind = 'request_rejected'), 0, '보낸 사람에게 거절 소식이 안 간다');
+update public.app_user set status = 'active', deletion_requested_at = null where id = (select park from folks);
+set local role authenticated;
+select pg_temp.acting((select park from folks));
+select tests.set_discovery_participation(true, pg_temp.summary(2, 2, 2, 2, 0), tests.need());
+select pg_temp.acting((select oh from folks));
 insert into seen select 'oh-park', public.request_match((select park from folks));
+select isnt(pg_temp.got('oh-park'), pg_temp.got('oh-park-0'), '철회 뒤 새로 시작할 수 있다');
 reset role;
 insert into seen select 'm-oh-park', pg_temp.match_of(oh, park) from folks;
+set local role authenticated;
+select pg_temp.acting((select oh from folks));
+insert into seen select 'oh-detail-off', d.request_id from public.request_match_detail(pg_temp.got('m-choi-oh'), 'oh-detail-off1') d;
+reset role;
 select pg_temp.switch_to(false);
 set local role authenticated;
 -- 끈 뒤에도 이미 열린 대화의 규칙은 줄을 따른다 — 답 전 첫 말
@@ -912,11 +1076,23 @@ select throws_ok(
 select pg_temp.acting((select han from folks));
 select is((select count(*)::int from public.my_last_reading_run('match', null, null, pg_temp.got('m-park-han'))), 0, '끈 뒤에도 상대의 옛 읽기에 상세 실패가 안 보인다');
 -- 끈 뒤에도 같은 키는 처음 답이다
+select pg_temp.acting((select kim from folks));
+select is((select d.status from public.request_match_detail(pg_temp.got('m-kim-lee'), 'detail-key-0001') d), 'accepted', '끈 뒤에도 같은 키의 재전송은 처음 답이다');
+select pg_temp.acting((select park from folks));
+select is((select d.status from public.request_match_detail(pg_temp.got('m-park-han'), 'park-detail-0001') d), 'accepted', '끈 뒤에도 재시도의 같은 키는 처음 답이다');
 select pg_temp.acting((select han from folks));
-select is((select d.status from public.request_match_detail(pg_temp.got('m-park-han'), 'han-detail-0001') d), 'accepted', '끈 뒤에도 같은 키의 재전송은 처음 답이다');
 select throws_ok(
   format($$select * from public.request_match_detail(%L, 'han-detail-new1')$$, pg_temp.got('m-park-han')),
   '55000', '상세 궁합은 아직 열리지 않았어요.', '끈 뒤 새 키는 닫혀 있다');
+-- 끄기는 전송을 멈추는 비상 수단이 아니다 — 끄기 전에 기다리던 상세의 누름은 전송까지 간다
+select pg_temp.acting((select choi from folks));
+select is(public.respond_to_match_request(pg_temp.got('oh-detail-off'), true), 'accepted', '끈 뒤에도 기다리던 상세를 누를 수 있다');
+reset role;
+select is((select count(*)::int from public.match_run_awaiting_send(pg_temp.got('oh-detail-off'))), 1, '끈 뒤에도 그 누름은 제출로 간다');
+set local role authenticated;
+-- 살아 있는 대화가 있는 쌍은 끈 뒤 옛 요청의 답이다
+select pg_temp.acting((select park from folks));
+select throws_ok(format($$select public.request_match(%L)$$, (select oh from folks)), '42501', '지금은 이 사람에게 요청할 수 없습니다. 후보 목록을 새로 열어 확인해 주세요.', '끈 뒤 살아 있는 대화의 쌍은 42501 이다');
 reset role;
 select pg_temp.switch_to(true);
 
@@ -937,8 +1113,14 @@ select throws_ok(format($$select * from public.request_match_detail(%L, 'oh-lee-
 reset role;
 select pg_temp.set_same(100);
 set local role authenticated;
+-- 상세끼리는 24시간에 1건 — 창이 지나면 다시 선다
+insert into seen select 'oh-lee-a', d.request_id from public.request_match_detail(pg_temp.got('m-oh-lee'), 'oh-lee-detail-a') d;
+select is(public.cancel_match_request(pg_temp.got('oh-lee-a')), 'cancelled', '상세를 취소한다');
+insert into seen select 'oh-lee-b', d.request_id from public.request_match_detail(pg_temp.got('m-oh-lee'), 'oh-lee-detail-b') d;
+select is(public.cancel_match_request(pg_temp.got('oh-lee-b')), 'cancelled', '다시 청해 또 취소한다');
 reset role;
-update public.notification set created_at = now() - interval '25 hours' where user_id = (select lee from folks) and kind = 'request_received' and request_id = pg_temp.got('oh-lee');
+select is((select count(*)::int from public.notification where request_id in (pg_temp.got('oh-lee-a'), pg_temp.got('oh-lee-b')) and kind = 'detail_requested'), 1, '같은 상대의 상세 소식은 창 안에 1건이다');
+update public.notification set created_at = now() - interval '25 hours' where user_id = (select lee from folks) and kind = 'detail_requested' and request_id = pg_temp.got('oh-lee-a');
 set local role authenticated;
 select pg_temp.acting((select oh from folks));
 insert into seen select 'oh-lee-detail', d.request_id from public.request_match_detail(pg_temp.got('m-oh-lee'), 'oh-lee-detail-1') d;

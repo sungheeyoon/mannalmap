@@ -6,6 +6,7 @@ import { rpcArgs } from '@/src/lib/db';
 import { supabaseOnServer } from '../../auth/server-client';
 import { userFacingDbMessage } from '../../db-error';
 import { refresh } from '../../refresh';
+import { sendAfterResponse } from '../requests/respond';
 import type { SaveResult } from '../../save-result';
 import type { SendResult } from '@/src/lib/chat/room/pending';
 
@@ -81,8 +82,11 @@ export async function requestMatchDetail(
     rpcArgs<'request_match_detail'>({ p_match_id: matchId, p_client_key: clientKey }),
   );
   if (error) return { ok: false, message: userFacingDbMessage(error, 'request_match_detail') };
+  const row = (data ?? [])[0];
+  /* 동의가 살아 있으면 문이 새 누름 없이 시도를 열었다 — 동의의 누름과 같은 제출을 건다. 누가 없으면 시도가 만료까지 돈다 */
+  if (row?.status === 'accepted' && row.i_am_buyer) sendAfterResponse(row.request_id);
   refresh('requests-changed');
-  return { ok: true, iAmBuyer: (data ?? [])[0]?.i_am_buyer === true, credits: 'moved' };
+  return { ok: true, iAmBuyer: row?.i_am_buyer === true, credits: 'moved' };
 }
 
 /** 끝난 대화에서 고를 상대의 말 — 읽기만 한다. 자기 방 · 보존 90일 안은 문이 잰다(ADR 0215). 최근 것이 앞이다 */

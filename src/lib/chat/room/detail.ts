@@ -1,11 +1,13 @@
 import {
   DETAIL_ACTION_BUY,
+  DETAIL_ACTION_CANCEL,
   DETAIL_ACTION_CONSENT,
   DETAIL_ACTION_RETRY,
   DETAIL_ACTION_RETRY_HOLDS,
   DETAIL_ACTION_SEE,
   DETAIL_CONSENT_WINDOW,
   DETAIL_EXPIRED_NOTE,
+  DETAIL_CONSENT_ENDED,
   DETAIL_FAILED,
   DETAIL_FAILED_HOLDS_NOTE,
   DETAIL_FAILED_NOTE,
@@ -14,7 +16,6 @@ import {
   DETAIL_MAKING,
   DETAIL_NO_CREDIT,
   DETAIL_READY,
-  DETAIL_REJECTED,
   DETAIL_ROOM_CLOSED,
   DETAIL_SCORE_MAY_DIFFER,
   DETAIL_WAITING,
@@ -40,7 +41,6 @@ export const DETAIL_STATES = [
   'before_purchase',
   'no_credit',
   'awaiting_consent',
-  'rejected',
   'making',
   'ready',
   'failed_mine',
@@ -113,11 +113,13 @@ export type DetailPanel = {
   readonly lines: readonly string[];
   /** 누를 일 — 없으면 단추가 안 선다 */
   readonly action: { readonly kind: DetailAction; readonly label: string } | null;
+  /** 구매자의 대기에만 — 묻는 창을 지나 요청을 거둔다. 예약이 돌아온다 */
+  readonly cancelLabel?: string;
 };
 
 /** 스스로 펼쳐 두는가 — 지금 일어난 일이 있는 상태. 구매 전 · 잔액 없음 · 닫힘은 눌러야 펼친다(대화를 밀어내지 않는다) */
 export const detailPanelOpensItself = ({ state }: MatchDetail): boolean =>
-  state !== 'before_purchase' && state !== 'no_credit' && state !== 'room_closed' && state !== 'rejected';
+  state !== 'before_purchase' && state !== 'no_credit' && state !== 'room_closed';
 
 export function detailPanelOf(detail: MatchDetail): DetailPanel {
   switch (detail.state) {
@@ -131,7 +133,7 @@ export function detailPanelOf(detail: MatchDetail): DetailPanel {
       return { title: DETAIL_INTRO, lines: [DETAIL_NO_CREDIT, DETAIL_SCORE_MAY_DIFFER], action: null };
     case 'awaiting_consent':
       return detail.iAmBuyer
-        ? { title: DETAIL_WAITING, lines: [DETAIL_WAITING_NOTE, DETAIL_EXPIRED_NOTE], action: null }
+        ? { title: DETAIL_WAITING, lines: [DETAIL_WAITING_NOTE, DETAIL_EXPIRED_NOTE], action: null, cancelLabel: DETAIL_ACTION_CANCEL }
         : {
             title: DETAIL_CONSENT_TITLE,
             lines: [
@@ -150,6 +152,10 @@ export function detailPanelOf(detail: MatchDetail): DetailPanel {
     case 'ready':
       return { title: DETAIL_READY, lines: [], action: { kind: 'see', label: DETAIL_ACTION_SEE } };
     case 'failed_mine':
+      /* 보내기 직전에 동의가 끝났다 — 기술 실패가 아니라 새 동의가 든다 */
+      if (detail.failureCode === 'consent-ended') {
+        return { title: DETAIL_CONSENT_ENDED, lines: [DETAIL_FAILED_NOTE], action: { kind: 'retry', label: DETAIL_ACTION_RETRY } };
+      }
       return detail.consentHolds
         ? {
             title: DETAIL_FAILED,
@@ -161,8 +167,6 @@ export function detailPanelOf(detail: MatchDetail): DetailPanel {
       return { title: DETAIL_INPUT_CHANGED, lines: [DETAIL_BUYER_SENDS], action: { kind: 'buy', label: DETAIL_ACTION_BUY } };
     case 'room_closed':
       return { title: DETAIL_ROOM_CLOSED, lines: [], action: null };
-    case 'rejected':
-      return { title: DETAIL_REJECTED, lines: [], action: null };
   }
 }
 

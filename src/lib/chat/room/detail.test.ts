@@ -45,7 +45,7 @@ describe('상세 궁합의 상태', () => {
 
   it('받은 사람은 누르기 전에 전송 · 글자 · 함께 봄 · 기한 · 재시도 · 끝남을 읽는다', () => {
     const said = detailPanelOf(detail({ state: 'awaiting_consent', iAmBuyer: false })).lines.join(' ');
-    for (const fact of ['AI 분석', 'OpenAI', '생년월일시', '직접 나오지 않지만', '짐작', '함께 봐요', '72시간', '이 동의로 다시', '차단', '탈퇴', '이용 정지', '참여 끄기']) {
+    for (const fact of ['여덟 글자와 관계 분석 자료', 'OpenAI', '닉네임', '생년월일시', '성별', '직접 나오지 않지만', '짐작', '함께 봐요', '72시간', '이 동의로 다시 보내', '차단', '탈퇴', '이용 정지', '참여 끄기']) {
       expect(said).toContain(fact);
     }
     /* 재지 않은 약속을 안 한다 — 복원 불가는 검증 밖이다 */
@@ -93,7 +93,23 @@ describe('상세 궁합의 상태', () => {
     expect(holds.lines.join(' ')).not.toContain('동의');
   });
 
-  it('아홉 상태 모두 말이 있다', () => {
+  it('구매자의 대기에만 요청 취소가 있고, 받은 사람에게는 없다', () => {
+    expect(detailPanelOf(detail({ state: 'awaiting_consent', iAmBuyer: true })).cancelLabel).toBeDefined();
+    expect(detailPanelOf(detail({ state: 'awaiting_consent', iAmBuyer: false })).cancelLabel).toBeUndefined();
+  });
+
+  it('동의가 끝난 실패는 기술 실패와 다르게 말하고 새 동의를 말한다', () => {
+    const ended = detailPanelOf(detail({ state: 'failed_mine', failureCode: 'consent-ended', consentHolds: true }));
+    expect(ended.title).toContain('동의가 끝나');
+    expect(ended.lines.join(' ')).toContain('동의');
+  });
+
+  it('동의 문장은 글자 공개를 약속하지 않는다 — 새 흐름은 글자를 안 낸다', () => {
+    const consent = detailPanelOf(detail({ state: 'awaiting_consent' }));
+    expect(consent.lines.join(' ')).not.toMatch(/공개/);
+  });
+
+  it('여덟 상태 모두 말이 있다', () => {
     for (const state of DETAIL_STATES) expect(detailPanelOf(detail({ state })).title.length).toBeGreaterThan(0);
   });
 

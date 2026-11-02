@@ -91,17 +91,27 @@ export type HistorySummary = {
 export function historySummary(
   matches: Skippable<readonly InboxMatch[]>,
   requests: Skippable<Requests>,
+  extra: {
+    /** 글이 선 인연 — 대화에서 선 인연은 글이 있어야 인연 궁합이다(ADR 0215). 앱은 아직 안 넘긴다 */
+    readonly finishedMatchIds?: readonly string[];
+    /** 끝난 대화의 수 — 0 이어도 지나간 것만 있으면 줄이 서야 신고 길에 닿는다 */
+    readonly endedTalks?: number;
+  } = {},
 ): HistorySummary | null {
-  /* 대화는 인연 궁합이 아니다 — 방이 든다(ADR 0215). 글이 선 대화까지 세려면 글 목록이 드는데 이 줄은 그것을 안 읽는다 */
-  const made = matches.ok ? matches.value.filter((match) => match.requestKind !== 'talk').length : null;
+  const finished = new Set(extra.finishedMatchIds ?? []);
+  const shelved = matches.ok ? matches.value.filter((match) => match.requestKind !== 'talk' || finished.has(match.matchId)) : null;
+  const made = shelved === null ? null : shelved.length;
   const past = requests.ok ? (({ sent, decided }) => sent.length + decided.length)(pastRequests(requests.value)) : null;
-  const count = (made ?? 0) + (past ?? 0);
+  const ended = extra.endedTalks ?? 0;
+  const count = (made ?? 0) + (past ?? 0) + ended;
   if (count === 0) return null;
 
-  const parts = [made === null ? null : `인연 궁합 ${made}`, past === null ? null : `지난 요청 ${past}`].filter(
-    (part) => part !== null,
-  );
+  const parts = [
+    made === null ? null : `인연 궁합 ${made}`,
+    past === null ? null : `지난 요청 ${past}`,
+    ended === 0 ? null : `끝난 대화 ${ended}`,
+  ].filter((part) => part !== null);
   /* `my_matches` 는 최근 것이 앞이다 */
-  const latest = matches.ok ? (matches.value.find((match) => match.requestKind !== 'talk')?.nickname ?? '') : '';
+  const latest = shelved?.[0]?.nickname ?? '';
   return { count, hint: latest === '' ? parts.join(' · ') : `${parts.join(' · ')} — 최근 ${latest}` };
 }
