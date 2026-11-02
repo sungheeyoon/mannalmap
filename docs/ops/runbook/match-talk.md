@@ -67,3 +67,29 @@ returning open, changed_at;
 ```
 
 새 요청이 옛 요청으로 돌아간다. **이미 선 대화 · 상세는 줄의 이름을 따라 그대로다** — 그냥 둔 대화는 그대로 남고, 답을 기다리는 상세는 누르거나 만료된다. 끈 동안 상세를 새로 못 청한다(같은 키의 재전송은 처음 답을 받는다). **상세를 탄 인연은 끈 뒤에도 옛 다시 만들기로 안 열린다** — 거절 · 입력 변경 · 만료 · 실패 모두, 글자가 있어도. 옛 다시 만들기는 옛 요청으로 섰고 상세 줄이 없는 인연만이다.
+
+## API 계약
+
+화면(#964 · #965)은 이 절로 시작한다. **바꾸면 조율자에게 바로 알린다.** 함수는 모두 `authenticated` 의 RPC 다. 오류 문장은 확인 전이라 코드로 갈린다 — 문장을 견주지 않는다.
+
+**스위치 읽기:** 표는 안 열린다. `my_match_detail_state(인연).detail_open` 이 참이면 켜졌다. 인연이 없는 화면은 켜졌는지 묻는 문이 아직 없다 — 옛 흐름으로 그린다.
+
+**인연 찾기:** 대화 시작은 요청 번호를 돌려준다. 방 · 인연 번호는 `my_chat_rooms` 의 `partner_user_id` 로 찾는다.
+
+| 하는 일 | 문 | 인자 | 응답 | 오류 |
+| --- | --- | --- | --- | --- |
+| 대화 시작 | `request_match` | `p_candidate_user_id uuid` | `uuid` 요청 번호. 살아 있는 대화가 있으면(상대가 시작했어도) 그 번호이고 안 센다 — 그때 내 말은 답장이다 | `42501` 못 청함(차단 포함 한 문장) · `23514` 시간당 3회 · 하루 10건 · `55000` 내 요약이 낡음 |
+| 말 · 답 | `send_chat_message` | `p_match_id uuid` · `p_body text` · `p_client_id uuid` | `sent` · `closed` · `rate_limited`. 받은 사람의 말이 곧 답이다 | `23514` 답 전 둘째 말 · `42501` 방 없음 |
+| 거두기(보낸 사람, 답 전) | `cancel_match_request` | `p_request_id uuid` | `cancelled` 또는 그 줄의 지금 상태. 방이 닫히고 말은 보존 기간을 따른다. 다시 청할 수 있다 | `42501` 내 요청이 아님 |
+| 받은 사람의 끝내기 | `block_user` · `report_user` · `report_chat_message` | 지금 그대로 | 지금 그대로 | 지금 그대로 |
+| 상세 청하기 · 재시도 | `request_match_detail` | `p_match_id uuid` · `p_client_key text`(8~80자, 누름마다 새로, 재전송은 같게) | 한 줄 `request_id uuid` · `status text`(`pending` · `accepted` · …) · `i_am_buyer boolean`. 상대의 살아 있는 요청이면 그 줄에 `i_am_buyer` 거짓, 차감 없음. **`consent_holds` 면 같은 문이 새 누름 없이 시도를 연다**(`accepted`, 부른 사람이 1장) | `55000` 꺼짐(같은 키 재전송 말고) · `22023` 키 모양 · `23514` 대상 아님(차단 포함) · 답 전 · 닫힌 대화 · 글 있음 · 거절됨 · 잔액 없음 · 시간당 3회 · 못 엶 · `42501` 정지 |
+| 상세 동의(받은 사람) | 앱 `POST /api/mobile/matching/respond` · 웹 `respondAndSend` → `respond_to_match_request` | `p_request_id uuid` · `p_accept true` | `accepted`(제출까지 서버가 한다) · `invalidated` 입력 변경 · `expired` | `23514` 지금 못 만듦(잠시 뒤) · `42501` |
+| 상태 읽기 | `my_match_detail_state` | `p_match_id uuid` | 0행 = 못 보는 인연. 한 줄 — 아래 | 없음 |
+
+**상태 문의 칸:** `state` · `request_id uuid` · `i_am_buyer boolean` · `expires_at timestamptz`(동의 대기만) · `failure_code text` · `failure_detail text`(`failed_mine` 만) · `credits_left integer` · `talk_status text`(`pending` 답 전 · `accepted` 답함) · `may_send boolean` · `detail_open boolean` · `consent_holds boolean`(새 누름 없이 다시 만들 수 있다).
+
+**`state` 아홉:** `before_purchase` 구매 전 · `no_credit` 잔액 없음 · `awaiting_consent` 동의 대기(`i_am_buyer` 로 양쪽을 가른다) · `rejected` 옛 호출의 거절 · `making` 만드는 중 · `ready` 완료(글은 `my_reading('match', null, null, 인연)`) · `failed_mine` 내 실패(구매자에게만, 상대는 구매 전) · `input_changed` 입력 변경 · `room_closed` 닫힌 방.
+
+**글자:** 새 흐름의 `my_match_scope.my_chart` · `partner_chart` 와 `my_readings` 의 일간은 null 이다.
+
+**새 화면에 없는 것:** 답 전 대화 · 상세 요청의 「거절」 단추. `p_accept=false` 는 옛 앱의 호환 길이다.
