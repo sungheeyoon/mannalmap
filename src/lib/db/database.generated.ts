@@ -3470,6 +3470,16 @@ export type Database = {
         Args: { p_from: number; p_to: number; p_version?: number }
         Returns: undefined
       }
+      move_request_news: {
+        Args: {
+          p_from: string
+          p_kind: string
+          p_match: string
+          p_request: string
+          p_to: string
+        }
+        Returns: undefined
+      }
       my_adult_check: {
         Args: never
         Returns: {
@@ -3764,6 +3774,7 @@ export type Database = {
           metaphor: string
           person_a: string
           person_b: string
+          request_kind: string
           score: number
         }[]
       }
