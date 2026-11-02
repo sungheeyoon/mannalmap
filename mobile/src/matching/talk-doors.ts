@@ -58,7 +58,7 @@ export async function readDetail(matchId: string): Promise<MatchDetail | null> {
   }
 }
 
-export type EndedTalk = { readonly matchId: string; readonly partnerUserId: string; readonly nickname: string };
+export type EndedTalk = { readonly matchId: string; readonly partnerUserId: string; readonly nickname: string; readonly closedAt: string };
 
 /** 끝난 답 전 대화 — 목록에서는 사라져도 보존 동안 신고는 닫히지 않는다. 사진 · 소개 · 까닭이 없다. 신고의 길이라 못 읽으면 칸이 안 선다 */
 export async function readEndedTalks(): Promise<readonly EndedTalk[]> {
@@ -68,7 +68,7 @@ export async function readEndedTalks(): Promise<readonly EndedTalk[]> {
     console.error('my_ended_talks', error.code);
     return [];
   }
-  return (data ?? []).map((row) => ({ matchId: row.match_id, partnerUserId: row.partner_user_id, nickname: row.partner_nickname ?? '' }));
+  return (data ?? []).map((row) => ({ matchId: row.match_id, partnerUserId: row.partner_user_id, nickname: row.partner_nickname ?? '', closedAt: row.closed_at }));
 }
 
 /** 신고 창에 고를 상대의 말 — 최근 것부터. 못 읽으면 빈 목록이고 사람 신고는 그대로 된다 */

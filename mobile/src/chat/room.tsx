@@ -28,10 +28,8 @@ import {
   SEND_DROP_LABEL,
   SEND_FAILED_LABEL,
   SEND_RETRY_LABEL,
-  DETAIL_DOOR_LABEL,
-  TALK_WAIT_REPLY,
-  TALK_WITHDRAW_LABEL,
 } from '@chat/copy';
+import { DETAIL_DOOR_LABEL, TALK_WAIT_REPLY, TALK_WITHDRAW_LABEL } from '@chat/room/detail-copy';
 import { detailDoorShown, detailPanelOpensItself } from '@chat/room/detail';
 import { waitsForReply } from '@chat/room/talk';
 import { bubbleDaysOf, reportableOf, type Bubble, type ShownMessage } from '@chat/room/bubbles';

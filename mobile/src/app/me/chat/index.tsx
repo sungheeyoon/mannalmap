@@ -3,7 +3,8 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { CHAT_TAB_LABEL, messageTimeLabel, partnerNameOf, roomNoticeOf } from '@chat';
-import { ROOM_NO_MESSAGES_YET, TALK_UNANSWERED_LABEL } from '@chat/copy';
+import { ROOM_NO_MESSAGES_YET } from '@chat/copy';
+import { TALK_UNANSWERED_LABEL } from '@chat/room/detail-copy';
 import { foldUnanswered } from '@chat/room/talk';
 import type { Element } from '@saju';
 
@@ -14,8 +15,6 @@ import { UNREACHABLE } from '@/auth/signup';
 import { AccountNotice, FailureLine } from '@/chat/notices';
 import { settled } from '@/ui/settled';
 import { noteActivity, readRoomListScreen, type ChatRoom, type RoomListScreen } from '@/chat/reads';
-import { ReportDialog, type ReportableMessage } from '@/chat/dialogs';
-import { readEndedTalkMessages, type EndedTalk } from '@/matching/talk-doors';
 import { Icon } from '@/ui/icons';
 import { LoadingMark } from '@/ui/loading';
 import { COLOR, FONT, RADIUS, TYPE } from '@/ui/tokens';
@@ -104,10 +103,8 @@ function RoomList({ screen }: { screen: Extract<RoomListScreen, { kind: 'ready' 
       contentContainerStyle={styles.list}
       renderItem={({ item }) => row(item)}
       ListFooterComponent={
-        unanswered.length === 0 && screen.ended.length === 0 ? undefined : (
+        unanswered.length === 0 ? undefined : (
           <View>
-            {unanswered.length > 0 && (
-              <>
             <Pressable accessibilityRole="button" accessibilityState={{ expanded: open }} onPress={() => setOpen(!open)} style={styles.fold}>
               <Text style={styles.foldText}>
                 {TALK_UNANSWERED_LABEL} {unanswered.length}
@@ -117,47 +114,10 @@ function RoomList({ screen }: { screen: Extract<RoomListScreen, { kind: 'ready' 
               </View>
             </Pressable>
             {open && unanswered.map(row)}
-              </>
-            )}
-            <EndedTalks talks={screen.ended} />
           </View>
         )
       }
     />
-  );
-}
-
-/** 끝난 대화의 신고 길(ADR 0215) — 방은 안 열린다. 이름만 서고 누르면 신고 창이다. 없으면 칸도 없다 */
-function EndedTalks({ talks }: { talks: readonly EndedTalk[] }) {
-  const [open, setOpen] = useState(false);
-  const [reporting, setReporting] = useState<{ talk: EndedTalk; messages: readonly ReportableMessage[] } | null>(null);
-  if (talks.length === 0) return null;
-  return (
-    <View>
-      <Pressable accessibilityRole="button" accessibilityState={{ expanded: open }} onPress={() => setOpen(!open)} style={styles.fold}>
-        <Text style={styles.foldText}>
-          끝난 대화 {talks.length}
-        </Text>
-        <View style={open && styles.turned}>
-          <Icon name="chevron" color={COLOR.secondary} size={16} />
-        </View>
-      </Pressable>
-      {open &&
-        talks.map((talk) => (
-          <Pressable
-            key={talk.matchId}
-            accessibilityRole="button"
-            onPress={() => void readEndedTalkMessages(talk.matchId).then((messages) => setReporting({ talk, messages }), () => setReporting({ talk, messages: [] }))}
-            style={styles.endedRow}
-          >
-            <Text numberOfLines={1} style={styles.preview}>
-              {talk.nickname}
-            </Text>
-            <Icon name="flag" color={COLOR.secondary} size={16} />
-          </Pressable>
-        ))}
-      {reporting !== null && <ReportDialog userId={reporting.talk.partnerUserId} nickname={reporting.talk.nickname} messages={reporting.messages} onClose={() => setReporting(null)} onBlock={null} />}
-    </View>
   );
 }
 
@@ -219,5 +179,4 @@ const styles = StyleSheet.create({
   fold: { minHeight: 48, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 8 },
   foldText: { fontSize: TYPE.note, fontFamily: FONT.bold, color: COLOR.secondary },
   turned: { transform: [{ rotate: '90deg' }] },
-  endedRow: { minHeight: 48, flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 8 },
 });

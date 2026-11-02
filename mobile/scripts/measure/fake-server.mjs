@@ -303,7 +303,7 @@ const server = http.createServer((req, res) => {
       if (mode === 'holds') db.detail.consent_holds = true;
       if (mode.startsWith('talk-sent') || mode === 'talk-received') {
         const direction = mode === 'talk-received' ? 'received' : 'sent';
-        db.requests = [{ request_id: R3, direction, status: 'pending', counterpart_user_id: U1, counterpart_nickname: '바다소년', counterpart_intro: null, counterpart_has_photo: true, counterpart_photo_focus: [], balance_band: 'even', supplied_to_me: [], supplied_to_them: [], created_at: ago(30), decided_at: null }, ...db.requests.filter((one) => one.direction !== 'received')];
+        db.requests = [{ request_id: R3, kind: 'talk', direction, status: 'pending', counterpart_user_id: U1, counterpart_nickname: '바다소년', counterpart_intro: null, counterpart_has_photo: true, counterpart_photo_focus: [], balance_band: 'even', supplied_to_me: [], supplied_to_them: [], created_at: ago(30), decided_at: null }, ...db.requests.filter((one) => one.direction !== 'received')];
         db.detail.talk_status = 'pending';
         const said = mode === 'talk-sent-said';
         const body = { seq: 1, message_id: 'dddddddd-2222-4000-8000-000000000001', client_id: 'eeeeeeee-2222-4000-8000-000000000001', sender_user_id: direction === 'sent' ? ME : U1, mine: direction === 'sent', body: '안녕하세요, 프로필 보고 인사드려요.', created_at: ago(30) };

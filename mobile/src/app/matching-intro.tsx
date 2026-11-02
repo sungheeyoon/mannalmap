@@ -1,8 +1,6 @@
 import { MATCHING_INTRO_AGE, MATCHING_INTRO_EXAMPLE, MATCHING_INTRO_START, MATCHING_INTRO_TITLE } from '@brand/guide';
-import { DETAIL_DOOR_LABEL } from '@chat/copy';
-import { DETAIL_EXPIRED_NOTE, DETAIL_INTRO, DETAIL_WAITING_NOTE } from '@chat/room/detail-copy';
+import { DETAIL_DOOR_LABEL, DETAIL_EXPIRED_NOTE, DETAIL_INTRO, DETAIL_WAITING_NOTE, TALK_SCORE_INFO, TALK_SCORE_LABEL, TALK_START_LABEL, TALK_START_NOTE } from '@chat/room/detail-copy';
 import { CHAT_USES_NO_CREDIT, MATCH_ACCEPT_HIDDEN, MATCH_ACCEPT_OPENS, RECEIVER_USES_NO_CREDIT } from '@consent/disclosure';
-import { TALK_SCORE_INFO, TALK_SCORE_LABEL, TALK_START_LABEL, TALK_START_NOTE } from '@discovery/copy';
 import { withReturnPath } from '@consent/return-path';
 import { SIGNUP_NOTICE_DISCOVERY } from '@consent/signup';
 import { REQUEST_RESERVES_NOTE } from '@reading/notes';

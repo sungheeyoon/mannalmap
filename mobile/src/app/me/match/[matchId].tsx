@@ -2,9 +2,8 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
-import { DETAIL_NOT_YET } from '@chat/copy';
 import { CHAT_TAB_LABEL } from '@chat/index';
-import { DETAIL_MAKING } from '@chat/room/detail-copy';
+import { DETAIL_MAKING, DETAIL_NOT_YET } from '@chat/room/detail-copy';
 import { MATCH_RESULT_CLOSED_NOTE } from '@consent/index';
 import { ELEMENT_KO, PILLAR_POSITION_KO, STEM_INFO, type ChartSnapshot, type Element } from '@saju';
 

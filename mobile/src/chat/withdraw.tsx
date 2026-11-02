@@ -1,4 +1,4 @@
-import { TALK_WITHDRAW_LABEL, TALK_WITHDRAW_NOTE, TALK_WITHDRAW_TITLE } from '@chat/copy';
+import { TALK_WITHDRAW_LABEL, TALK_WITHDRAW_NOTE, TALK_WITHDRAW_TITLE } from '@chat/room/detail-copy';
 import { router } from 'expo-router';
 import { useState } from 'react';
 

@@ -11,7 +11,7 @@ import { historySummary, type HistorySummary } from '@matching/history';
 import type { InboxMatch, Requests } from '@matching/inbox';
 import { receivedOf } from '@matching/requests';
 
-import { readAccountState, readDeck, readMatchBooks, readMatches, readRequests, type DeckPlace, type Read } from '@/matching/doors';
+import { readAccountState, readDeck, readMatches, readRequests, type DeckPlace, type Read } from '@/matching/doors';
 import { readTalkOpen } from '@/matching/talk-doors';
 import { RequestsBand } from '@/matching/requests';
 import { CardSheet, DeckButtons, EmptyDeck, Feedback, PassedConnections, QuietPlace, RequestConfirm, TalkConfirm, TodayCard, useCreditsNotice } from '@/matching/today';
@@ -35,13 +35,9 @@ export default function MatchingScreen() {
 
   const load = useCallback(async () => {
     const account = await readAccountState();
-    const [deck, read, allMatches, talkOpen] = await Promise.all([readDeck(selfPersonIdOf(account)), readRequests(), readMatches(), readTalkOpen()]);
-    /* 대화는 방의 일이다 — 수락 카드 · 인연 기록의 수에 안 든다. 옛 요청뿐이고 꺼져 있으면 두 값이 그대로다. 켜졌는데 인연을 못 읽으면 대화를 가를 수 없어 띠를 안 세운다 */
-    const books = talkOpen ? await readMatchBooks() : null;
-    const made = new Set(books?.ok ? books.value.map((book) => book.matchId) : []);
-    const partners = allMatches.ok ? allMatches.value.map((match) => match.partnerUserId) : [];
-    const requests = read.ok ? { ...read, value: { ...read.value, requests: talkOpen && !allMatches.ok ? [] : withoutTalks(read.value.requests, partners, talkOpen) } } : read;
-    const matches = talkOpen && allMatches.ok ? { ...allMatches, value: allMatches.value.filter((match) => made.has(match.matchId)) } : allMatches;
+    const [deck, read, matches, talkOpen] = await Promise.all([readDeck(selfPersonIdOf(account)), readRequests(), readMatches(), readTalkOpen()]);
+    /* 대화는 방의 일이다 — 수락 카드 · 인연 기록의 수에 안 든다 */
+    const requests = read.ok ? { ...read, value: { ...read.value, requests: withoutTalks(read.value.requests) } } : read;
     setLoaded({ account, deck, requests, matches, talkOpen });
   }, []);
 

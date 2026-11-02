@@ -3,7 +3,8 @@ import { useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { CHAT_USES_NO_CREDIT } from '@consent/disclosure';
-import { DISCOVERY_EMPTY, DISCOVERY_TEASER, TALK_SCORE_INFO, TALK_SCORE_LABEL, TALK_START_LABEL, TALK_START_NOTE, TALK_START_TITLE } from '@discovery/copy';
+import { TALK_SCORE_INFO, TALK_SCORE_LABEL, TALK_START_LABEL, TALK_START_NOTE, TALK_START_TITLE } from '@chat/room/detail-copy';
+import { DISCOVERY_EMPTY, DISCOVERY_TEASER } from '@discovery/copy';
 import { elementOf, supplyOf, type DeckCard } from '@matching/deck-card';
 import { PASSED_LIMIT } from '@matching/deck-state';
 import { REQUEST_UNSURE } from '@matching/requests';

@@ -14,6 +14,7 @@ const read = (file: string) => readFileSync(join(import.meta.dirname, '..', file
 
 const oldLine = (over: Partial<{ status: string; direction: 'sent' | 'received'; counterpartUserId: string }>) => ({
   requestId: 'r',
+  kind: 'bundled',
   direction: 'received' as const,
   counterpartUserId: 'u',
   status: 'pending',
@@ -23,7 +24,7 @@ const oldLine = (over: Partial<{ status: string; direction: 'sent' | 'received';
 describe('꺼진 동안의 값', () => {
   it('옛 요청은 방이 없어 대화로 안 갈린다 — 받은 요청 띠 · 인연 기록 · 채팅 목록이 그대로다', () => {
     const lines = [oldLine({}), oldLine({ status: 'accepted', counterpartUserId: 'm' }), oldLine({ status: 'rejected', direction: 'sent' })];
-    expect(withoutTalks(lines, ['m'], false)).toEqual(lines);
+    expect(withoutTalks(lines)).toEqual(lines);
     const rooms = [{ partnerUserId: 'm' }];
     expect(foldUnanswered(rooms, lines)).toEqual({ rooms, unanswered: [] });
     expect(talkLineOf('m', lines)).toBeNull();
