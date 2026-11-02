@@ -220,7 +220,7 @@ $$;
 revoke all on function public.request_news_is_recent(uuid, uuid, text) from public, anon, authenticated, service_role;
 
 /**
- * 창 안의 둘째 요청은 소식을 새로 안 세우고 **앞 줄을 새 요청으로 옮긴다** — 시각 · 읽음은 그대로라 다시 안 울리고, 살아 있는 요청의 줄이 목록에 하나 보인다.
+ * 창 안의 둘째 요청은 소식을 새로 안 세우고 **앞 줄을 새 요청으로 옮긴다** — 푸시 없이 읽음을 풀어 딱지가 오른다. 읽은 사람이 새 요청을 모르면 72시간 동의 기회를 놓친다. 줄은 쌓이지 않고 하나다.
  * 취소된 요청의 줄은 목록에서 숨으므로 그대로 두면 받은 사람이 동의 기회를 놓친다.
  */
 create function public.move_request_news(p_to uuid, p_from uuid, p_kind text, p_request uuid, p_match uuid)
@@ -230,7 +230,7 @@ security definer
 set search_path to ''
 as $$
   update public.notification n
-  set request_id = p_request, match_id = p_match
+  set request_id = p_request, match_id = p_match, read_at = null
   from public.match_request q
   where q.id = n.request_id
     and n.user_id = p_to and n.kind = p_kind and q.requester_user_id = p_from
