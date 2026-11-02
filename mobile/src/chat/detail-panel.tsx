@@ -4,9 +4,11 @@ import { useRef, useState } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { detailPanelOf, type MatchDetail } from '@chat/room/detail';
+import { DETAIL_CANCEL_NOTE, DETAIL_CANCEL_TITLE, DETAIL_CANCELLED } from '@chat/room/detail-copy';
 import { REQUEST_STATUS_TEXT } from '@consent/index';
 
-import { respondToRequest } from '@/matching/doors';
+import { cancelRequest, respondToRequest } from '@/matching/doors';
+import { ConfirmDialog, DialogText } from '@/ui/confirm-dialog';
 import { requestDetail } from '@/matching/talk-doors';
 import { COLOR, CONTROL, FONT, RADIUS, TYPE } from '@/ui/tokens';
 
@@ -14,11 +16,28 @@ import { COLOR, CONTROL, FONT, RADIUS, TYPE } from '@/ui/tokens';
  * 방 상단의 상세 궁합 칸 — 글자와 누를 일은 공용 `detailPanelOf` 가 정한다(웹과 같다). 받은 사람의 답은 만들기와 그냥 둠뿐이라 거절 단추가 없다.
  * 재전송은 같은 키다: 받았는지 모르는 실패면 키를 들고 있다가 다시 보낸다.
  */
-export function DetailPanelView({ detail, matchId, onChanged }: { detail: MatchDetail; matchId: string; onChanged: () => void }) {
+export function DetailPanelView({ detail, matchId, onChanged, onNote }: { detail: MatchDetail; matchId: string; onChanged: () => void; onNote: (note: string) => void }) {
   const [working, setWorking] = useState(false);
   const [failure, setFailure] = useState<string | null>(null);
   const key = useRef<string | null>(null);
   const panel = detailPanelOf(detail);
+  const [asking, setAsking] = useState(false);
+
+  const cancel = async () => {
+    if (detail.requestId === null) return;
+    setWorking(true);
+    setFailure(null);
+    const result = await cancelRequest(detail.requestId);
+    setWorking(false);
+    setAsking(false);
+    if (!result.ok) {
+      setFailure(result.message);
+      return;
+    }
+    /* 그 사이 상대가 동의했으면 취소되지 않았다 — 없는 일을 알리지 않는다(대장 01) */
+    if (result.status === 'cancelled') onNote(DETAIL_CANCELLED);
+    onChanged();
+  };
 
   const ask = async () => {
     /* 앱에는 `crypto` 전역이 없을 수 있어 공용 `newDetailKey` 대신 기기의 난수로 짓는다 — 같은 uuid v4 다 */
@@ -77,6 +96,16 @@ export function DetailPanelView({ detail, matchId, onChanged }: { detail: MatchD
           <Text style={styles.actionText}>{panel.action.label}</Text>
         </Pressable>
       )}
+      {panel.cancelLabel !== undefined && (
+        <>
+          <Pressable accessibilityRole="button" disabled={working} onPress={() => setAsking(true)} style={[styles.quiet, working && styles.off]}>
+            <Text style={styles.quietText}>{panel.cancelLabel}</Text>
+          </Pressable>
+          <ConfirmDialog open={asking} onClose={() => setAsking(false)} title={DETAIL_CANCEL_TITLE} confirmLabel={panel.cancelLabel} cancelLabel="닫기" onConfirm={() => void cancel()} busy={working}>
+            <DialogText>{DETAIL_CANCEL_NOTE}</DialogText>
+          </ConfirmDialog>
+        </>
+      )}
     </View>
   );
 }
@@ -90,4 +119,6 @@ const styles = StyleSheet.create({
   action: { minHeight: CONTROL, marginTop: 4, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 16, borderRadius: RADIUS.pill, backgroundColor: COLOR.accent },
   actionText: { fontFamily: FONT.bold, fontSize: TYPE.note, color: COLOR.onAccent },
   off: { opacity: 0.55 },
+  quiet: { minHeight: CONTROL, marginTop: 4, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 16, borderRadius: RADIUS.pill, borderWidth: 1, borderColor: COLOR.borderStrong },
+  quietText: { fontFamily: FONT.bold, fontSize: TYPE.note, color: COLOR.foreground },
 });

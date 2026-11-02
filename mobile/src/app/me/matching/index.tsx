@@ -11,8 +11,8 @@ import { historySummary, type HistorySummary } from '@matching/history';
 import type { InboxMatch, Requests } from '@matching/inbox';
 import { receivedOf } from '@matching/requests';
 
-import { readAccountState, readDeck, readMatches, readRequests, type DeckPlace, type Read } from '@/matching/doors';
-import { readTalkOpen } from '@/matching/talk-doors';
+import { readAccountState, readDeck, readMatchBooks, readMatches, readRequests, type DeckPlace, type Read } from '@/matching/doors';
+import { readEndedTalks, readTalkOpen } from '@/matching/talk-doors';
 import { RequestsBand } from '@/matching/requests';
 import { CardSheet, DeckButtons, EmptyDeck, Feedback, PassedConnections, QuietPlace, RequestConfirm, TalkConfirm, TodayCard, useCreditsNotice } from '@/matching/today';
 import { useDeck } from '@/matching/use-deck';
@@ -21,7 +21,7 @@ import { LoadingMark } from '@/ui/loading';
 import { COLOR, FONT, RADIUS, TYPE } from '@/ui/tokens';
 import { CardFrame, RowCard } from '@/ui/surfaces';
 
-type Loaded = { account: AccountState; deck: Read<DeckPlace>; requests: Read<Requests>; matches: Read<readonly InboxMatch[]>; talkOpen: boolean };
+type Loaded = { finishedMatchIds: readonly string[]; endedTalks: number; account: AccountState; deck: Read<DeckPlace>; requests: Read<Requests>; matches: Read<readonly InboxMatch[]>; talkOpen: boolean };
 
 const todayLabel = () => new Date().toLocaleDateString('ko-KR', { month: 'long', day: 'numeric', weekday: 'long', timeZone: 'Asia/Seoul' });
 
@@ -35,10 +35,10 @@ export default function MatchingScreen() {
 
   const load = useCallback(async () => {
     const account = await readAccountState();
-    const [deck, read, matches, talkOpen] = await Promise.all([readDeck(selfPersonIdOf(account)), readRequests(), readMatches(), readTalkOpen()]);
+    const [deck, read, matches, talkOpen, books, ended] = await Promise.all([readDeck(selfPersonIdOf(account)), readRequests(), readMatches(), readTalkOpen(), readMatchBooks(), readEndedTalks()]);
     /* 대화는 방의 일이다 — 수락 카드 · 인연 기록의 수에 안 든다 */
     const requests = read.ok ? { ...read, value: { ...read.value, requests: withoutTalks(read.value.requests) } } : read;
-    setLoaded({ account, deck, requests, matches, talkOpen });
+    setLoaded({ account, deck, requests, matches, talkOpen, finishedMatchIds: books.ok ? books.value.map((book) => book.matchId) : [], endedTalks: ended.length });
   }, []);
 
   useFocusEffect(
@@ -67,7 +67,7 @@ export default function MatchingScreen() {
 
   const { requests } = loaded;
   const received = requests.ok ? receivedOf(requests.value.requests) : [];
-  const summary = historySummary(loaded.matches, requests);
+  const summary = historySummary(loaded.matches, requests, { finishedMatchIds: loaded.finishedMatchIds, endedTalks: loaded.endedTalks });
 
   const lead = (
     <>

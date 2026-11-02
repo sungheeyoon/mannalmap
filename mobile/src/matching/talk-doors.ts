@@ -6,6 +6,7 @@ import { matchDetailOf, type MatchDetail } from '@chat/room/detail';
 import { userFacingDbMessage } from '@db-error';
 
 import { supabase } from '@/auth/client';
+import { door } from '@/reading/api';
 import { settled } from '@/ui/settled';
 
 /**
@@ -103,14 +104,21 @@ export async function startTalk(candidateUserId: string): Promise<TalkStart> {
 
 export type DetailAsked = { ok: true } | { ok: false; message: string; unsure: boolean };
 
-/** 상세 청하기 · 다시 청하기 — 키는 누름마다 새로, 재전송은 같게(부른 쪽이 든다). 코드 있는 답은 거절이고 코드 없는 실패는 받았는지 모른다 */
+/**
+ * 상세 청하기 · 다시 만들기 — **앱용 문으로 간다.** 동의가 살아 있으면 문이 새 누름 없이 시도를 여는데, RPC 를 앱에서 바로 부르면 제출할 곳이 없어 시도가 만료까지 돈다.
+ * 키는 누름마다 새로, 재전송은 같게(부른 쪽이 든다). 문장으로 답했으면 거절이고, 닿지 못했으면 받았는지 모른다.
+ */
 export async function requestDetail(matchId: string, clientKey: string): Promise<DetailAsked> {
-  if (supabase === null) return { ok: false, message: NOT_READY, unsure: false };
-  try {
-    const { error } = await supabase.rpc('request_match_detail', { p_match_id: matchId, p_client_key: clientKey });
-    return error === null ? { ok: true } : { ok: false, message: userFacingDbMessage(error, 'request_match_detail'), unsure: !error.code };
-  } catch (thrown) {
-    console.error('request_match_detail', thrown);
-    return { ok: false, message: UNEXPECTED, unsure: true };
+  const answer = await door<{ ok: true; iAmBuyer: boolean } | { ok: false; message: string }>('/api/mobile/matching/detail', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ matchId, clientKey }),
+  });
+  if (!answer.ok) {
+    const { refused } = answer;
+    if (refused.refused === 'unavailable') return { ok: false, message: refused.message, unsure: true };
+    if (refused.refused === 'sign-in') return { ok: false, message: '로그인이 풀렸어요. 다시 로그인해 주세요.', unsure: false };
+    return { ok: false, message: UNEXPECTED, unsure: false };
   }
+  return answer.value.ok ? { ok: true } : { ok: false, message: answer.value.message, unsure: false };
 }

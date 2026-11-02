@@ -4,16 +4,18 @@
  * `check-mobile.mjs` 는 꺼진 스위치의 읽기 · 권한을 잰다. 여기는 앱과 같은 자격으로 대화 시작 → 첫 말 → 답장 → 상세 요청 → 동의 → 만드는 중을 밟고 문마다 답을 적는다.
  * 모델은 안 부른다 — 열쇠를 비우고 닫힌 포트로 돌려, 동의 뒤의 시도는 실패로 끝날 수 있다. 그 실패가 구매자에게만 보이는지까지 잰다.
  *
+ * 뿌리에서 `node mobile/scripts/measure/talk-flow.mjs`. 흐름 검사 러너에 안 든다 — 스위치를 켜는 측정 도구다.
+ *
  * **스위치를 켜므로 main 스택(`saju`)에서는 안 돈다** — `npm run stack:slot -- --auto` 로 받은 자리에서만 돈다. 끝나면 끈다.
  */
 import { createClient } from '@supabase/supabase-js';
 import { execFileSync } from 'node:child_process';
 import { randomUUID } from 'node:crypto';
 
-import { createChecks, sql } from './checks.mjs';
-import { startCheckServer } from './next-server.mjs';
-import { CHECK_CODE, passNotice, scheduleBeta, seedSignupCode, clearMachineRunsFromToday } from './notice.mjs';
-import { worktreeStack } from '../src/lib/local-env.ts';
+import { createChecks, sql } from '../../../scripts/checks.mjs';
+import { startCheckServer } from '../../../scripts/next-server.mjs';
+import { CHECK_CODE, passNotice, scheduleBeta, seedSignupCode, clearMachineRunsFromToday } from '../../../scripts/notice.mjs';
+import { worktreeStack } from '../../../src/lib/local-env.ts';
 
 const stack = worktreeStack();
 if (stack.id === 'saju') {
@@ -141,6 +143,20 @@ try {
   check('상세 요청 — pending · 구매자', asked.data?.[0]?.status === 'pending' && asked.data[0].i_am_buyer === true, said(asked));
   const resent = await a.client.rpc('request_match_detail', { p_match_id: matchId, p_client_key: key });
   check('같은 키의 재전송은 같은 요청', resent.data?.[0]?.request_id === asked.data?.[0]?.request_id, said(resent));
+  const detailNews = (await b.client.rpc('my_notifications')).data ?? [];
+  check('받은 사람에게 상세 소식', detailNews.some((one) => one.kind === 'detail_requested' && one.match_id === matchId), JSON.stringify(detailNews.map((one) => one.kind)));
+
+  /* 상세 요청 취소 — 묻는 창 뒤의 문. 예약이 돌아오고 다시 청할 수 있다 */
+  const waiting = await stateOf(a, matchId);
+  check('취소 전 1장 잡힘', waiting?.credits_left === creditsBefore - 1, brief(waiting));
+  const cancelled = await a.client.rpc('cancel_match_request', { p_request_id: waiting.request_id });
+  check('구매자의 상세 요청 취소 — cancelled', cancelled.data === 'cancelled', said(cancelled));
+  const backAgain = await stateOf(a, matchId);
+  console.log(`  · 취소 뒤 구매자 | ${brief(backAgain)}`);
+  check('취소하면 구매 전 · 예약이 돌아온다', backAgain?.state === 'before_purchase' && backAgain.credits_left === creditsBefore, brief(backAgain));
+  const askedAgain = await door('/api/mobile/matching/detail', a.token, 'POST', { matchId, clientKey: randomUUID() });
+  check('다시 청한다 — 앱의 문, 대기라 제출 없음', askedAgain.body?.ok === true && askedAgain.body?.iAmBuyer === true, JSON.stringify(askedAgain.body));
+
   const buyer = await stateOf(a, matchId);
   const partner = await stateOf(b, matchId);
   console.log(`  · 대기 구매자 | ${brief(buyer)}`);
@@ -150,8 +166,9 @@ try {
   check('받은 사람: 동의 대기 · 번호가 있다', partner?.state === 'awaiting_consent' && partner.i_am_buyer === false && partner.request_id !== null, brief(partner));
   const listed = (await b.client.rpc('my_match_requests')).data ?? [];
   check('상세는 요청 목록에 안 선다', !listed.some((one) => one.kind === 'detail'), JSON.stringify(listed.map((one) => one.kind)));
-  const detailNews = (await b.client.rpc('my_notifications')).data ?? [];
-  check('받은 사람에게 상세 소식', detailNews.some((one) => one.kind === 'detail_requested' && one.match_id === matchId), JSON.stringify(detailNews.map((one) => one.kind)));
+  /* 재서 적는다 — 24시간 묶음 때문에 취소 뒤 다시 청한 요청의 소식은 새로 안 선다(ADR 0215 의 묶음). 앞 소식이 목록에 남는지가 값이다 */
+  const newsAgain = (await b.client.rpc('my_notifications')).data ?? [];
+  console.log(`  · 취소 뒤 다시 청한 소식 | 목록 ${newsAgain.filter((one) => one.kind === 'detail_requested').length}건 · 표 ${sql(`select count(*) from public.notification where user_id = '${b.id}' and kind = 'detail_requested'`)}건`);
 
   /* 동의 — 앱의 문 */
   const notBuyer = await door('/api/mobile/matching/respond', b.token, 'POST', { requestId: partner.request_id, accept: true });
@@ -175,6 +192,44 @@ try {
   } else {
     console.log('  · 시한 안에 실패로 안 끝났다 — 실패 칸은 못 쟀다');
   }
+  /* 재시도 — 동의가 살아 있으면 앱의 문이 시도를 열고 제출까지 건다. 문을 부르지 않으면 시도가 만료까지 돈다 */
+  if (end?.state === 'failed_mine' && end.consent_holds === true) {
+    const runsBefore = Number(sql(`select count(*) from public.reading_run where match_id = '${matchId}'`));
+    const retried = await door('/api/mobile/matching/detail', a.token, 'POST', { matchId, clientKey: randomUUID() });
+    check('재시도 — 앱의 문이 답한다', retried.status === 200 && retried.body?.ok === true && retried.body?.iAmBuyer === true, JSON.stringify(retried.body));
+    check('재시도가 시도를 새로 연다', Number(sql(`select count(*) from public.reading_run where match_id = '${matchId}'`)) === runsBefore + 1);
+    let last = await stateOf(a, matchId);
+    console.log(`  · 재시도 직후 구매자 | ${brief(last)}`);
+    for (let tries = 0; tries < 30 && last?.state === 'making'; tries += 1) {
+      await new Promise((done) => setTimeout(done, 2000));
+      last = await stateOf(a, matchId);
+    }
+    console.log(`  · 재시도 끝 구매자 | ${brief(last)}`);
+    /* 제출이 걸리지 않았으면 시도가 만드는 중에 머문다. 모델이 닫혀 있어 제출이 실패로 닫는다 */
+    check('재시도의 제출이 실제로 나갔다 — 모델이 닫혀 실패로 닫힌다, 만료까지 안 돈다', last?.state === 'failed_mine' && last.failure_code === 'model-submit-failed', brief(last));
+    const lastRun = sql(`select status || '|' || coalesce(failure_code, '') from public.reading_run where match_id = '${matchId}' order by created_at desc limit 1`);
+    console.log(`  · 재시도 시도 줄 | ${lastRun}`);
+    check('새 시도가 running 에 안 머문다 — 제출이 나갔다', lastRun.startsWith('failed|') , lastRun);
+    check('재시도 실패도 풀이권이 돌아온다', last?.credits_left === creditsBefore, `${last?.credits_left} / ${creditsBefore}`);
+  } else {
+    console.log('  · 동의가 살아 있지 않아 재시도를 못 쟀다');
+  }
+
+  /* 참여를 끈 상대에게는 못 청한다 */
+  const rest = await door('/api/mobile/me/participation', b.token, 'POST', { on: false });
+  check('상대가 참여를 끈다', rest.body?.ok === true, JSON.stringify(rest.body));
+  const refusedRow = await a.client.rpc('request_match_detail', { p_match_id: matchId, p_client_key: randomUUID() });
+  console.log(`  · 참여 끈 상대 | ${said(refusedRow)}`);
+  check('참여를 끈 상대 — 23514', refusedRow.error?.code === '23514', said(refusedRow));
+  const refusedDoor = await door('/api/mobile/matching/detail', a.token, 'POST', { matchId, clientKey: randomUUID() });
+  check('앱의 문은 문장으로 답한다', refusedDoor.status === 200 && refusedDoor.body?.ok === false && typeof refusedDoor.body?.message === 'string', JSON.stringify(refusedDoor.body));
+  await door('/api/mobile/me/participation', b.token, 'POST', { on: true });
+
+  /* 남의 인연 — 문이 안 내준다 */
+  const stranger = await newAccount('남', '1988-11-20', 'male');
+  const strangerAsk = await door('/api/mobile/matching/detail', stranger.token, 'POST', { matchId, clientKey: randomUUID() });
+  check('남의 인연으로는 시도가 안 열린다', strangerAsk.body?.ok === false, JSON.stringify(strangerAsk.body));
+
   const after = (await a.client.rpc('my_match_scope', { p_match_id: matchId })).data?.[0];
   check('동의 뒤에도 응답에 글자가 없다', after?.my_chart == null && after?.partner_chart == null, JSON.stringify({ my: after?.my_chart, partner: after?.partner_chart }));
 } finally {

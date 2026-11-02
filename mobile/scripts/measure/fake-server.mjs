@@ -162,10 +162,6 @@ const rpc = {
   my_ended_talks: () => db.ended,
   my_ended_talk_messages: () => [{ message_id: 'dddddddd-3333-4000-8000-000000000001', mine: false, body: '끝난 대화의 말이에요', created_at: ago(900) }],
   my_match_detail_state: () => [db.detail],
-  request_match_detail: () => {
-    db.detail = { ...db.detail, state: 'awaiting_consent', request_id: R2, i_am_buyer: true, expires_at: ago(-4320) };
-    return [{ request_id: R2, status: 'pending', i_am_buyer: true }];
-  },
   my_discovery_board: () => db.board,
   my_passed_connections: () => db.passed,
   my_reading: readingRow,
@@ -191,7 +187,7 @@ const rpc = {
   acknowledge_warning: () => { db.warning = []; return null; },
   complete_signup: () => { db.account.signed_up_at = new Date().toISOString(); return true; },
   request_match: () => null,
-  cancel_match_request: () => 'cancelled',
+  cancel_match_request: () => { if (db.detail.state === 'awaiting_consent') db.detail = { ...db.detail, state: 'before_purchase', request_id: null, i_am_buyer: false, expires_at: null }; return 'cancelled'; },
   restore_passed_connection: () => db.passed,
   shared_reading: (a) => {
     const kind = a.p_token.startsWith('compat') ? 'private' : 'person';
@@ -300,6 +296,7 @@ const server = http.createServer((req, res) => {
       if (mode === 'talk-on') { db.talkOpen = true; db.detail.detail_open = true; for (const one of db.matches) one.request_kind = 'talk'; }
       if (mode.startsWith('detail-')) { db.detail.state = mode.slice('detail-'.length); db.detail.request_id = R1; if (db.detail.state === 'awaiting_consent') db.detail.expires_at = ago(-4320); }
       if (mode === 'buyer') db.detail.i_am_buyer = true;
+      if (mode === 'consent-ended') db.detail.failure_code = 'consent-ended';
       if (mode === 'holds') db.detail.consent_holds = true;
       if (mode.startsWith('talk-sent') || mode === 'talk-received') {
         const direction = mode === 'talk-received' ? 'received' : 'sent';
@@ -334,6 +331,10 @@ const server = http.createServer((req, res) => {
     if (path === '/api/mobile/reading/run') return send(res, 200, { run: null });
     if (path === '/api/mobile/reading' && req.method === 'GET') return send(res, 200, view(url.searchParams));
     if (path === '/api/mobile/reading') return send(res, 200, { ok: true, started: true });
+    if (path === '/api/mobile/matching/detail') {
+      db.detail = { ...db.detail, state: db.detail.consent_holds ? 'making' : 'awaiting_consent', request_id: R2, i_am_buyer: true, expires_at: ago(-4320) };
+      return send(res, 200, { ok: true, iAmBuyer: true });
+    }
     if (path === '/api/mobile/matching/respond') {
       if (body.accept) {
         const r = db.requests.find((one) => one.request_id === (body.requestId ?? R1));

@@ -59,6 +59,8 @@ import { useOutbox, useReadMarker, useThread, type MergeKind } from './use-room'
 
 /** 맨 아래에서 이만큼 안이면 「맨 아래에 있다」 — 웹의 `NEAR_BOTTOM_PX` 와 같다 */
 const NEAR_BOTTOM_PX = 48;
+/** 인연 기록의 스낵바와 같은 길이 */
+const NOTE_MS = 4000;
 /** 글자 수는 한도에 가까워질 때만 선다 */
 const COUNT_FROM = Math.floor(CHAT_POLICY.maxLength * 0.9);
 /** 말풍선이 이만큼 화면에 들어와야 「본 것」이다 — 웹의 `SEEN_RATIO` 와 같다 */
@@ -102,6 +104,13 @@ export function ChatRoomView({ room, onChanged }: { room: RoomView; onChanged: (
   const [opened, setOpened] = useState<'report' | 'block' | 'withdraw' | null>(null);
   const { detail, talk } = room;
   const doorShown = detailDoorShown(detail);
+  /* 상세 요청을 취소한 뒤의 한 줄 — 칸이 접혀도 남고 잠시 뒤 걷힌다 */
+  const [note, setNote] = useState<string | null>(null);
+  useEffect(() => {
+    if (note === null) return;
+    const clear = setTimeout(() => setNote(null), NOTE_MS);
+    return () => clearTimeout(clear);
+  }, [note]);
   const [pressedOpen, setPressedOpen] = useState<boolean | null>(null);
   const panelOpen = doorShown && detail !== null && (pressedOpen ?? detailPanelOpensItself(detail));
   /* 옛 궁합 단추는 켜지기 전의 방에만 — 답 전 대화에는 궁합이 없다 */
@@ -231,7 +240,12 @@ export function ChatRoomView({ room, onChanged }: { room: RoomView; onChanged: (
           )}
         </View>
 
-        {panelOpen && detail !== null && <DetailPanelView detail={detail} matchId={room.matchId} onChanged={onChanged} />}
+        {panelOpen && detail !== null && <DetailPanelView detail={detail} matchId={room.matchId} onChanged={onChanged} onNote={setNote} />}
+        {note !== null && (
+          <View style={styles.note} accessibilityLiveRegion="polite">
+            <Text style={styles.noteText}>{note}</Text>
+          </View>
+        )}
 
         <View style={styles.logBox}>
           <FlatList
@@ -615,6 +629,8 @@ const styles = StyleSheet.create({
   door: { minHeight: CONTROL, justifyContent: 'center', paddingHorizontal: 12, borderRadius: RADIUS.pill, borderWidth: 1, borderColor: COLOR.borderStrong },
   doorText: { fontSize: TYPE.small, fontFamily: FONT.bold, color: COLOR.foreground },
   waitReply: { paddingHorizontal: 16, paddingBottom: 6, fontSize: TYPE.small, lineHeight: 19, fontFamily: FONT.medium, color: COLOR.secondary },
+  note: { alignSelf: 'center', marginTop: 8, paddingHorizontal: 14, paddingVertical: 8, borderRadius: RADIUS.pill, backgroundColor: COLOR.accent },
+  noteText: { fontFamily: FONT.medium, fontSize: TYPE.small, color: COLOR.onAccent },
   logBox: { flex: 1, minHeight: 0 },
   log: { paddingHorizontal: 12, paddingVertical: 20, gap: 4 },
   dayRow: { alignItems: 'center', marginTop: 16, marginBottom: 8 },
