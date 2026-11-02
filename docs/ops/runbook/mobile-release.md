@@ -35,7 +35,7 @@ curl -s -o /dev/null -w "%{http_code}\n" "<운영 주소>/api/mobile/readings"  
 
 | 프로필(`mobile/eas.json`) | 무엇 | environment | 쓰는 데 |
 | --- | --- | --- | --- |
-| `development` | 개발 빌드 · APK | `development` | 에뮬레이터 |
+| `development` | 개발 빌드 · APK. 네이티브만 들고 JS 는 Metro 에서 받는다(아래 「`development` 빌드에는 JS 가 없다」) | `development` | 에뮬레이터 |
 | `preview` | 내부 배포 · APK. 링크로 깐다 | `preview` | 안드로이드 기기에 바로 깔아 보기 |
 | `production` | 스토어용(AAB · IPA) · 번호 자동 증가 | `production` | TestFlight · Play 의 모든 트랙 |
 
@@ -60,7 +60,27 @@ npx eas-cli@latest env:list production --format short
 | `EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID` · `_URL_SCHEME` | 없다 — Google iOS 클라이언트가 먼저다 | **iOS 빌드 전에 `production` 에 넣는다** — `app.config.js` 가 이 값으로 URL 스킴을 세운다 |
 | `EXPO_PUBLIC_BUSINESS_*` 여덟 | 없다 — 웹 배포의 `BUSINESS_*` 와 같은 값이고 저장소에 안 적는다 | 약관 · 환불정책의 그 줄이 안 선다(ADR 0172). **제출할 `production` 빌드 전에 넣는다** |
 
-**`development` 도 같은 운영 Supabase 를 본다.** `preview` 빌드도 운영 DB 에 쓴다 — 시험 계정의 규칙은 `docs/agents/delegation/local-env.md` 「로컬 환경의 함정」 그대로다.
+**`preview` 빌드는 운영 DB 에 쓴다. `development` 빌드가 어디를 보는지는 Metro 를 띄운 자리의 `mobile/.env.local` 이 정한다** — 운영 값이면 운영 DB 다. 시험 계정의 규칙은 `docs/agents/delegation/local-env.md` 「로컬 환경의 함정」 그대로다.
+
+### `development` 빌드에는 JS 가 없다
+
+개발 빌드는 네이티브와 `expo-dev-client` 만 굽고, JS 는 `npx expo start` 의 번들러에서 받는다([Expo](https://docs.expo.dev/develop/development-builds/introduction/)). 2026-11-02 에 받아 둔 APK 를 쟀다 — 개발 빌드에는 `assets/index.android.bundle` 이 없고, 출시 APK 에는 있다.
+
+- **EAS 의 `EXPO_PUBLIC_*` 값이 번들에 안 든다.** 그 값을 코드에 박는 것은 Metro 이고 읽는 곳은 `.env` 파일이다([Expo](https://docs.expo.dev/guides/environment-variables/)) — 개발 빌드가 받는 번들에는 Metro 를 띄운 자리의 값이 든다. EAS 값을 로컬로 쓰려면 `eas env:pull` 이다([Expo](https://docs.expo.dev/eas/environment-variables/usage/)). 빌드 때 EAS 값이 닿는 곳은 네이티브 설정(`app.config.js` 의 iOS URL 스킴)이다.
+- **그래서 빌드 `FINISHED` 는 로그인 검증이 아니다.** 빌드로 재는 것은 네이티브 쪽(패키지 · 서명)이다. 실제 로그인은 Google 콘솔 · Supabase 설정과 Metro 쪽 값까지 맞아야 하고, 기기에서 눌러야 잰다.
+- **새 워크트리에는 `mobile/node_modules` 와 `mobile/.env.local` 이 없다.** `mobile/` 에서 `npm ci` 를 먼저 하고, `.env.local` 은 `mobile/.env.example` 의 이름으로 채운다(가짜 서버로 잴 때의 값은 `docs/agents/delegation/local-env.md`). 뿌리 `node_modules` 도 같은 문서 「뿌리 `node_modules` 가 없다」.
+
+### 받은 APK 를 대조하는 법
+
+저장소에 대조 스크립트는 없다 — 아래 명령을 손으로 부른다. 값은 찍지 말고 센다.
+
+```bash
+unzip -l <apk> "assets/*bundle*"                                       # JS 번들이 들었나. development 는 비어야 한다
+unzip -p <apk> assets/index.android.bundle | grep -a -c "<찾을 값>"     # 0 이면 그 값이 없다. 운영 ref · 주소 · 구글 웹 클라이언트 ID · service_role
+apksigner verify --print-certs <apk>                                   # 서명의 SHA-1. 두 APK · Google 콘솔의 지문과 견준다
+```
+
+`apksigner` 는 Android SDK 의 `build-tools/<판>/` 에 있고 Java 가 든다. 패키지 이름은 `aapt2 dump badging <apk>` 다. **대조가 맞아도 패키지 · 서명 · 번들의 글자가 맞다는 뜻뿐이다** — 로그인 성공이 아니다. APK 파일은 저장소에 넣지 않는다.
 
 ### 빌드에 운영 값이 들었나
 
@@ -81,7 +101,7 @@ npx eas-cli@latest submit --profile production --platform ios                   
 - Android 제출에는 Google 서비스 계정 키가 든다([Expo](https://docs.expo.dev/submit/android.md)). 키는 EAS 에 올리고 저장소에 두지 않는다.
 - iOS 를 `--non-interactive` 로 내려면 `submit.production.ios.ascAppId` 가 든다([Expo](https://docs.expo.dev/submit/ios.md)) — App Store Connect 에 앱을 만든 뒤 적는다. 앞서는 대화형으로 낸다.
 - **Play 에서 받은 앱은 Google 키로 다시 서명된다** — 구글 로그인이 `DEVELOPER_ERROR` 면 설정이 어긋난 것이다([google-signin](https://react-native-google-signin.github.io/docs/troubleshooting)). 내부 트랙의 첫 빌드에서 구글 로그인을 먼저 본다.
-- 2026-11-02 의 빌드 `expirationDate` 는 만든 날 + 14일이다 — 링크를 오래 쓰지 않는다.
+- 2026-11-02 의 빌드 `expirationDate` 는 만든 날 + 14일이다 — 링크를 오래 쓰지 않는다. **이 칸의 뜻은 공식 문서에서 못 찾았다(확인 전).** 찾은 공식 문장은 산출물 보관뿐이고 — 「EAS Build logs and artifacts are stored for up to 90 days before being deleted」([Expo](https://expo.dev/security)) — 14일과 어떻게 이어지는지는 안 적혀 있다. 설치된 앱의 사용기한이라는 문장도, 아니라는 문장도 못 찾았다([내부 배포](https://docs.expo.dev/build/internal-distribution/)에도 없다).
 
 ## 내부 트랙과 비공개 테스트는 다르다
 
@@ -97,7 +117,7 @@ npx eas-cli@latest submit --profile production --platform ios                   
 
 - 계정의 유형 · 생성일이 요건에 드는지를 먼저 본다 — #304 의 「Google Play 개발자 계정」 칸. 안 들면 이 요건이 없다.
 - 12명은 문턱이다. 나가는 사람을 세어 15~20명을 모은다(#304).
-- **베타 종료일과 견준다.** 테스트 환경의 종료일은 `2026-11-30` 이고(지도 #932), 종료 뒤 앱의 문은 `closed` 를 답한다. 그 안에 14일을 채우려면 **2026-11-16 까지** 시작해야 한다. 넘기면 일정을 옮기는 것은 운영자 결정이다(`docs/ops/runbook/signup.md` 「테스트 시작하기」).
+- **베타 종료일과 견준다.** 테스트 환경의 종료일은 `2026-11-30` 이고(지도 #932), 종료 뒤 앱의 문은 `closed` 를 답한다. 그 안에 14일을 채우려면 **2026-11-16 까지** 시작해야 한다 — 종료일에서 거슬러 센 일정이고 Google 의 마감이 아니며, 11-02 빌드의 `expirationDate` 와 날짜가 같을 뿐 관계없다. 넘기면 일정을 옮기는 것은 운영자 결정이다(`docs/ops/runbook/signup.md` 「테스트 시작하기」).
 
 ## 심사 계정과 테스트 코드
 
