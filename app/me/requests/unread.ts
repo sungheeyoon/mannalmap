@@ -16,7 +16,7 @@ import { read, unread, type SkippableRead } from '../../db-error';
  */
 
 /** 대화가 왔다는 소식 — 인연 탭이 안 세므로 종이 센다(ADR 0215) */
-const talkArrived = (row: { kind: string; match_id: string | null }) => row.kind === 'request_received' && row.match_id !== null;
+const talkArrived = (row: { kind: string; match_id?: string | null }) => row.kind === 'request_received' && Boolean(row.match_id);
 
 /**
  * 안 읽은 소식 수 — 요청이 왔다는 소식을 뺀다.
