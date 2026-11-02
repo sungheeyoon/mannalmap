@@ -104,7 +104,7 @@ ADR 0093).
 
 **`db push` 뒤에 새 함수를 손으로 다시 적을 때는 프로덕션의 살아 있는 정의에서 뜬다** — 옮겨
 적으면 그 사이에 바뀐 것을 되돌린다(ADR 0043 의 풀이권 함수가 그랬다). 저장소 안에서 지금 정의는 그 이름의 마지막 정의다 —
-`grep -nE "create (or replace )?function public\.<이름>" supabase/migrations/*.sql` 의 맨 끝 줄.
+`grep -inE "create (or replace )?function public\.<이름>" supabase/migrations/*.sql` 의 맨 끝 줄(`-i` 없이는 대문자로 쓴 정의를 놓친다), 살아 있는 DB 에서는 `select pg_get_functiondef('public.<이름>'::regproc)`(겹쳐 쓴 함수는 인자까지 적는다).
 
 **운영에 오른 마이그레이션 파일은 고치지 않는다** — `db push` 는 이미 적용된 버전을 다시 돌리지 않는다. 고칠 것은 새
 마이그레이션으로 낸다(2026-10-23 — #810 이 연 사진 문 넷을 `20261227120000` 이 걷었다).

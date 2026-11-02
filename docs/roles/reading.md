@@ -40,4 +40,6 @@
 손대기 전에 다 읽지 않는다 — 일이 그 자리에 닿을 때 연다(ADR 0147).
 
 - 무인(밤) 라운드로 맡았으면 → [무인 라운드](../agents/delegation/unattended.md) — 실호출은 운영자가 돌린다
+- 궁합 프롬프트를 고치면 → [match-reading-guide.ts](../../src/lib/reading/match-reading-guide.ts) · [prompt.ts](../../src/lib/reading/prompt.ts) — 이 둘이 입구다
+- `app/` 을 못 건드리는 일을 맡았으면 → [잠긴 시험 넷](../agents/test-map/live.md#잠긴-시험-넷--livetestts) — 실호출 문이 `app/me/reading/` 에 있어 그 범위에는 문이 없다
 - 시험이 로컬 5초에 붙거나 모집단 시험을 더하면 → [시험 하나의 시간](../agents/test-map/kinds.md#시험-하나의-시간--로컬-5초) — `POPULATION_TIMEOUT_MS` 와 시험마다 시간 재는 법

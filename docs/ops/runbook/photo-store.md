@@ -5,8 +5,8 @@
 사진의 바이트를 AWS S3 서울에 두는 일. **운영에서 켜져 있다**(2026-11-02 잼) — 올리기의 스위치(`public.photo_upload_switch`)가
 2026-10-23 부터 `s3` 이고, Vercel Production 에 `PHOTO_STORE_BUCKET` · `PHOTO_STORE_REGION` · `PHOTO_STORE_ROLE_ARN` 이 있으며(역할 길), 사진
 줄 1건이 열쇠를 들고 바이트 줄은 0 이다. 매시 청소가 돈다 — Vault 주소 있음 · `photo-sweep-wake` 233번 다 성공(첫 실행 2026-10-23 11:33 UTC) ·
-마지막 끝남 2026-11-02 03:33 UTC · 지울 줄 0 · 남은 표 0 · `photo-*` 알림 0. **버킷의 실물(객체 수 · 버전 관리)은 아직 안 쟀다** — 아래 「파기 뒤
-잔류 점검」. 켜고 끄는 길과 그 뒤의 손일을 여기 적는다. 설계는 ADR 0202, 열람 방식(안 A) · 스위치 · 전환 차례는 ADR 0203, 규격 · 출처는
+마지막 끝남 2026-11-02 03:33 UTC · 지울 줄 0 · 남은 표 0 · `photo-*` 알림 0. **버킷의 실물은 2026-11-02 에 쟀다**(아래 「파기 뒤
+잔류 점검」) — `objects=2 accounts=1 uploads=1 other=0` · `versions=2 markers=0` · `versioning=None` · `lifecycle=Enabled None None 1`, DB 열쇠 1 과 해시 일치, 사진 버킷 1개. `photo-verify` 를 돌린 것이 아니라 해시 대조라 형식 · 크기는 안 쟀다. 켜고 끄는 길과 그 뒤의 손일을 여기 적는다. 설계는 ADR 0202, 열람 방식(안 A) · 스위치 · 전환 차례는 ADR 0203, 규격 · 출처는
 `docs/product/gaps/records/g-120.md`.
 
 ## 올리기의 스위치
