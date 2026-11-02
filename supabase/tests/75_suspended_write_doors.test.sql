@@ -13,7 +13,7 @@
 -- `cancel_match_request` 는 **의도적으로 열어 둔다**(남에게 해가 없고 후속 피해를 줄인다), `clear_my_photo` 는 걷었고,
 -- `set_person_listed` 는 막았다(`20261110090000`). 옛 사진 문 `set_my_photo` 는 `20261115090000` 이 걷었다. 열린 둘은 아래 목록에 `OK` 로 적는다 — 누가 닫으면 붉어진다.
 begin;
-select plan(56);
+select plan(57);
 
 create or replace function pg_temp.summary(i integer)
 returns jsonb
@@ -157,6 +157,7 @@ from (values
   ('report_user',           format($$select public.report_user(%L, 'etc', null)$$, (select lee from folks)), '42501 이용이 정지된 계정입니다.', null),
   ('request_account_deletion', $$select public.request_account_deletion()$$, '42501 이용이 정지된 계정입니다.', null),
   ('request_match',         format($$select public.request_match(%L)$$, (select choi from folks)), '42501 이용이 정지된 계정입니다.', null),
+  ('request_match_detail',  $$select * from public.request_match_detail(gen_random_uuid(), 'suspended-key')$$, '42501 이용이 정지된 계정입니다.', null),
   ('respond_to_match_request', format($$select public.respond_to_match_request(%L, true)$$, (select v from kept where k = 'to_park')),
                             '42501 이용이 정지된 계정입니다.', null),
   ('save_my_profile',       $$select public.save_my_profile('새이름', null)$$, '42501 이용이 정지된 계정입니다.', null),

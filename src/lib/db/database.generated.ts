@@ -824,11 +824,14 @@ export type Database = {
           addressee_input_version: number | null
           addressee_user_id: string
           balance_band: string
+          client_key: string | null
           created_at: string
           decided_at: string | null
+          detail_match_id: string | null
           expires_at: string
           id: string
           impression_id: string | null
+          kind: string
           pair_high: string | null
           pair_low: string | null
           policy_version: string
@@ -842,11 +845,14 @@ export type Database = {
           addressee_input_version?: number | null
           addressee_user_id: string
           balance_band: string
+          client_key?: string | null
           created_at?: string
           decided_at?: string | null
+          detail_match_id?: string | null
           expires_at?: string
           id?: string
           impression_id?: string | null
+          kind?: string
           pair_high?: string | null
           pair_low?: string | null
           policy_version: string
@@ -860,11 +866,14 @@ export type Database = {
           addressee_input_version?: number | null
           addressee_user_id?: string
           balance_band?: string
+          client_key?: string | null
           created_at?: string
           decided_at?: string | null
+          detail_match_id?: string | null
           expires_at?: string
           id?: string
           impression_id?: string | null
+          kind?: string
           pair_high?: string | null
           pair_low?: string | null
           policy_version?: string
@@ -883,6 +892,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "match_request_detail_match_id_fkey"
+            columns: ["detail_match_id"]
+            isOneToOne: false
+            referencedRelation: "match"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "match_request_impression_id_fkey"
             columns: ["impression_id"]
             isOneToOne: false
@@ -897,6 +913,24 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      match_talk_switch: {
+        Row: {
+          changed_at: string
+          id: boolean
+          open: boolean
+        }
+        Insert: {
+          changed_at?: string
+          id?: boolean
+          open?: boolean
+        }
+        Update: {
+          changed_at?: string
+          id?: boolean
+          open?: boolean
+        }
+        Relationships: []
       }
       notification: {
         Row: {
@@ -3052,6 +3086,10 @@ export type Database = {
         }[]
       }
       claimed_by: { Args: { target_person: string }; Returns: string }
+      close_talk_room: {
+        Args: { p_by: string; p_request_id: string }
+        Returns: undefined
+      }
       complete_signup: {
         Args: {
           p_code: string
@@ -3396,6 +3434,11 @@ export type Database = {
           viewer_is_first: boolean
         }[]
       }
+      match_run_is_agreed: {
+        Args: { p_actor: string; p_key: string; p_match_id: string }
+        Returns: boolean
+      }
+      match_talk_is_open: { Args: never; Returns: boolean }
       may_edit_person_input: {
         Args: { actor: string; target_person: string }
         Returns: boolean
@@ -3475,6 +3518,21 @@ export type Database = {
           job_status: string
           sections_begun: number
           status: string
+        }[]
+      }
+      my_match_detail_state: {
+        Args: { p_match_id: string }
+        Returns: {
+          credits_left: number
+          detail_open: boolean
+          expires_at: string
+          failure_code: string
+          failure_detail: string
+          i_am_buyer: boolean
+          may_send: boolean
+          request_id: string
+          state: string
+          talk_status: string
         }[]
       }
       my_match_requests: {
@@ -4500,6 +4558,14 @@ export type Database = {
       }
       request_account_deletion: { Args: never; Returns: boolean }
       request_match: { Args: { p_candidate_user_id: string }; Returns: string }
+      request_match_detail: {
+        Args: { p_client_key: string; p_match_id: string }
+        Returns: {
+          i_am_buyer: boolean
+          request_id: string
+          status: string
+        }[]
+      }
       reserve_taste: {
         Args: {
           p_browser_hmac: string
