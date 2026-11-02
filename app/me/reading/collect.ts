@@ -4,7 +4,10 @@ import {
   checkReading,
   findingForRecord,
   isScored,
+  detailFindingsOf,
+  isDetailPromptVersion,
   metaphorToStore,
+  withDiscovery,
   withoutLeakedPaths,
   type BirthSecret,
   type CheckFinding,
@@ -232,6 +235,14 @@ export async function collectReadingResult(responseId: string): Promise<CollectO
     }
   }
 
+  /**
+   * **상세 궁합이면 발견 한 줄을 본문 맨 앞으로 접는다** — 얼린 판본으로 안다. 접은 뒤의 글을 걷고 검사하므로 그 줄도 본문과 같은 검사를 받는다.
+   * 옛 흐름은 이 칸을 안 받고 글자도 안 바뀐다.
+   */
+  const detail = isDetailPromptVersion(job.prompt_version);
+  const discovery = retrieved.output.discovery ?? '';
+  if (detail) markdown = withDiscovery(markdown, discovery);
+
   const unleaked = withoutLeakedPaths(markdown, job.evidence);
   markdown = unleaked.markdown;
   if (unleaked.stripped.length > 0) {
@@ -251,6 +262,8 @@ export async function collectReadingResult(responseId: string): Promise<CollectO
     baseline: baselineIn(job.prompt) ?? undefined,
   });
   if (!verdict.ok) findings.push(...verdict.failures);
+  /* 상세만 더 잰다 — 기둥을 직접 쓴 글은 아래 같은 문턱에서 막혀 있는 실패 길로 간다(ADR 0163 추기) */
+  if (detail) findings.push(...detailFindingsOf({ markdown, discovery, metaphor, evidenceText: job.evidence }));
 
   const blocking = blockingFindingsOf(findings);
   if (blocking.length > 0) {

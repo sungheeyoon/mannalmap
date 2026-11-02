@@ -6,6 +6,7 @@ import { NoOutputGeneratedError, Output, generateText, jsonSchema, type JSONSche
 
 import { READING_POLICY, type ReadingOutput } from '@/src/lib/reading';
 import { CONTINUATION_ANSWER_PROPERTY } from '@/src/lib/reading/continuation';
+import { DISCOVERY_PROPERTY } from '@/src/lib/reading/detail';
 
 import { GENERATION } from './generation';
 import { RETRIEVE_REQUEST } from './lease';
@@ -94,6 +95,21 @@ const CONTINUATION_SHAPE = {
   required: ['continuationAnswer', ...SUMMARY_LAST_SHAPE.required],
 } satisfies JSONSchema7;
 
+/**
+ * **상세 궁합의 모양** — 본문 → 점수 → 발견 한 줄 → 한 줄 요약. 둘 다 방금 쓴 본문에 기대므로 본문 뒤다. 회수가 발견 한 줄을 본문 맨 앞으로
+ * 접는다(`withDiscovery`). 옛 흐름은 이 모양을 안 쓴다.
+ */
+const DETAIL_SHAPE = {
+  ...SUMMARY_LAST_SHAPE,
+  properties: {
+    markdown: OUTPUT_SHAPE.properties.markdown,
+    score: OUTPUT_SHAPE.properties.score,
+    discovery: DISCOVERY_PROPERTY,
+    metaphor: OUTPUT_SHAPE.properties.metaphor,
+  },
+  required: ['markdown', 'score', 'discovery', 'metaphor'],
+} satisfies JSONSchema7;
+
 /** 실험이 견주는 추론 세기 — provider 가 받는 값 가운데 우리가 부르는 넷 */
 export type ReasoningEffort = 'none' | 'low' | 'medium' | 'high';
 
@@ -110,6 +126,8 @@ type CallOptions = {
   summaryLast?: boolean;
   /** 이어쓰기 답(`continuationAnswer`)을 맨 앞 칸으로 받는가 */
   continuation?: boolean;
+  /** 상세 궁합의 모양으로 받는가 — 운영 제출과 같은 모양이다(`DETAIL_SHAPE`) */
+  discovery?: boolean;
   /** 모양을 통째로 갈아 끼운다 — 맛보기(`tasteRunShapeOf`). 주면 위 둘은 안 본다 */
   shape?: JSONSchema7;
   /**
@@ -132,6 +150,7 @@ type CallOptions = {
 const shapeOf = (options: CallOptions): JSONSchema7 => {
   if (options.shape !== undefined) return options.shape;
   if (options.continuation === true) return CONTINUATION_SHAPE;
+  if (options.discovery === true) return DETAIL_SHAPE;
   return options.summaryLast === true ? SUMMARY_LAST_SHAPE : OUTPUT_SHAPE;
 };
 
@@ -308,6 +327,8 @@ export async function submitBackgroundReading(
      * 이어쓰기 없는 모양이다. 자기 풀이에만 오고, 그 뒤 차례는 자기 풀이의 것(본문 → 한 줄 요약)이다.
      */
     continuation?: boolean;
+    /** 상세 궁합의 모양으로 받는가 — 얼린 시도가 상세일 때만. 안 넘기면 옛 모양 그대로다 */
+    discovery?: boolean;
   } = {},
 ): Promise<ModelSubmission> {
   try {
@@ -323,7 +344,7 @@ export async function submitBackgroundReading(
           type: 'json_schema',
           name: 'reading',
           strict: true,
-          schema: options.continuation ? CONTINUATION_SHAPE : options.summaryLast ? SUMMARY_LAST_SHAPE : OUTPUT_SHAPE,
+          schema: options.continuation ? CONTINUATION_SHAPE : options.discovery ? DETAIL_SHAPE : options.summaryLast ? SUMMARY_LAST_SHAPE : OUTPUT_SHAPE,
         },
       },
     }, SUBMIT_REQUEST);
@@ -453,9 +474,9 @@ export async function retrieveBackgroundReading(responseId: string): Promise<Mod
      * **여기서 던지지 않는다.** 스키마가 strict 라도 파싱은 우리 몫이고, 못 읽은 것은
      * 실패로 값이 되어야 시도가 닫힌다.
      */
-    let output: ReadingOutput & { continuationAnswer?: string };
+    let output: ReadingOutput & { continuationAnswer?: string; discovery?: string };
     try {
-      output = JSON.parse(text) as ReadingOutput & { continuationAnswer?: string };
+      output = JSON.parse(text) as ReadingOutput & { continuationAnswer?: string; discovery?: string };
     } catch {
       return { ok: false, code: 'model-no-output', detail: '결과를 읽지 못했습니다', usage: usageOf(response) };
     }

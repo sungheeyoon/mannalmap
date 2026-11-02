@@ -3470,6 +3470,16 @@ export type Database = {
         Args: { p_from: number; p_to: number; p_version?: number }
         Returns: undefined
       }
+      move_request_news: {
+        Args: {
+          p_from: string
+          p_kind: string
+          p_match: string
+          p_request: string
+          p_to: string
+        }
+        Returns: undefined
+      }
       my_adult_check: {
         Args: never
         Returns: {
@@ -3764,6 +3774,7 @@ export type Database = {
           metaphor: string
           person_a: string
           person_b: string
+          request_kind: string
           score: number
         }[]
       }
@@ -4474,6 +4485,7 @@ export type Database = {
       }
       reading_job_send_patience: { Args: never; Returns: string }
       reading_rate_limit: { Args: never; Returns: number }
+      reading_run_request_kind: { Args: { p_run_id: string }; Returns: string }
       reading_run_timeout: { Args: never; Returns: string }
       reading_sale_is_open: { Args: never; Returns: boolean }
       reading_sale_is_open_for: { Args: { p_user: string }; Returns: boolean }

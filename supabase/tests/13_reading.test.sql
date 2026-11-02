@@ -991,6 +991,8 @@ select is(
     'photo_trash_settle',
     /** Node 가 지은 것을 적는 문 — 계산 입력은 안 받는다(ADR 0071 · #66) */
     'prepare_reading_job',
+    /** 다시 만들기 · 복구기가 시도의 흐름을 묻는 문 — 상세 궁합이 옛 지시로 안 나가게 한다 */
+    'reading_run_request_kind',
     'record_reading_webhook_event',
     'refund_reading_order',
     'release_reading_job',
@@ -1035,7 +1037,7 @@ select is(
     'taste_continuation_of_run',
     'taste_session_view'
   ]::text[],
-  'service_role 이 부를 수 있는 public 함수는 이 쉰 줄뿐이다');
+  'service_role 이 부를 수 있는 public 함수는 이 목록뿐이다');
 
 /**
  * **기본값이 닫아 준다는 약속이 안 지켜지고 있었다.**
