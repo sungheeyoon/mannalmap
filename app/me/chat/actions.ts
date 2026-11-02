@@ -5,6 +5,7 @@ import { rpcArgs } from '@/src/lib/db';
 
 import { supabaseOnServer } from '../../auth/server-client';
 import { userFacingDbMessage } from '../../db-error';
+import { refresh } from '../../refresh';
 import type { SaveResult } from '../../save-result';
 import type { SendResult } from '@/src/lib/chat/room/pending';
 
@@ -64,6 +65,24 @@ export async function sendChatMessage(matchId: string, body: string, clientId: s
     다른 탭은 채널이 알린다(ADR 0155).
   */
   return { ok: true, outcome };
+}
+
+/**
+ * 상세 궁합을 청한다 · 다시 만든다 — 부른 사람이 구매자다(ADR 0215). 판정은 문 안에 있다. 키는 화면이 지어 재전송에 같게 쥔다.
+ * `iAmBuyer` 가 거짓이면 상대의 요청이 먼저 섰고 차감이 없다.
+ */
+export async function requestMatchDetail(
+  matchId: string,
+  clientKey: string,
+): Promise<{ ok: true; iAmBuyer: boolean; credits: 'moved' } | { ok: false; message: string }> {
+  const supabase = await supabaseOnServer();
+  const { data, error } = await supabase.rpc(
+    'request_match_detail',
+    rpcArgs<'request_match_detail'>({ p_match_id: matchId, p_client_key: clientKey }),
+  );
+  if (error) return { ok: false, message: userFacingDbMessage(error, 'request_match_detail') };
+  refresh('requests-changed');
+  return { ok: true, iAmBuyer: (data ?? [])[0]?.i_am_buyer === true, credits: 'moved' };
 }
 
 export async function reportChatMessage(

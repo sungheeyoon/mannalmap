@@ -146,7 +146,7 @@ function destinationFor(
   readingKind: ReadingKind | null,
   row: NotificationRow,
 ): string | null {
-  if (kind === 'request_accepted' && row.match_id !== null) {
+  if ((kind === 'request_accepted' || kind === 'detail_requested') && row.match_id !== null) {
     return `/me/chat/${row.match_id}`;
   }
   if (REQUEST_NOTIFICATIONS.includes(kind)) return '/me/matching';
@@ -212,10 +212,28 @@ export function requestOf(row: RequestRow): InboxRequest[] {
   ];
 }
 
-/** 소식 한 줄을 도메인 말로 */
-export function notificationOf(row: NotificationRow): InboxNotification[] {
+/**
+ * 소식 한 줄을 도메인 말로.
+ *
+ * `talkOpen` — 켜진 동안 새로 온 요청은 대화다(ADR 0215). 줄이 이름을 안 내주므로 켜기 전에 남은 옛 요청도 이 말을 받는다. 줄에 인연이 없어 방 목록으로 간다.
+ */
+export function notificationOf(row: NotificationRow, talkOpen = false): InboxNotification[] {
   const kind = NOTIFICATION_KINDS.find((known) => known === row.kind);
   if (kind === undefined) return [];
+
+  if (talkOpen && kind === 'request_received') {
+    const who = row.counterpart_nickname?.trim() ?? '';
+    return [
+      {
+        notificationId: row.notification_id,
+        kind,
+        text: who === '' ? '대화가 시작됐어요' : `${who} 님이 대화를 시작했어요`,
+        href: '/me/chat',
+        createdAt: row.created_at,
+        unread: row.read_at === null,
+      },
+    ];
+  }
 
   const readingKind = READING_KINDS.find((known) => known === row.reading_kind) ?? null;
   const href = destinationFor(kind as NotificationKind, readingKind, row);

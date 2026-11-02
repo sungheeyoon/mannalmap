@@ -129,6 +129,8 @@ export const NOTIFICATION_KINDS = [
    */
   'credits_granted',
   'credits_revoked',
+  /** 상대가 상세 궁합을 청했다 — 받은 사람에게 1건, 재촉하지 않는다(ADR 0215). 꺼진 동안은 안 선다 */
+  'detail_requested',
 ] as const;
 export type NotificationKind = (typeof NOTIFICATION_KINDS)[number];
 
@@ -209,6 +211,10 @@ export function notificationText({
       return who === ''
         ? '상세 궁합을 함께 보자는 요청이 왔어요'
         : `${who} 님이 상세 궁합을 함께 보자고 요청했어요`;
+    case 'detail_requested':
+      return who === ''
+        ? '상세 궁합을 함께 만들자는 요청이 왔어요'
+        : `${who} 님이 상세 궁합을 함께 만들자고 했어요`;
     case 'request_accepted':
       return who === ''
         ? '요청이 수락돼 채팅방이 열렸어요'

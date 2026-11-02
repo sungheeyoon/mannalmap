@@ -1,10 +1,11 @@
 'use client';
 
+import { useRouter } from 'next/navigation';
 import { useEffect, useReducer, useRef, useState, useTransition } from 'react';
 
 import { REQUEST_UNSURE } from '@/src/lib/matching/requests';
 
-import { passCandidate, requestMatch, restorePassed } from '../discovery/actions';
+import { passCandidate, requestMatch, restorePassed, startTalk } from '../discovery/actions';
 import { outOfCreditsNow } from '../credits/asked-on-press';
 import { useBuyCredits } from '../credits/buy-credits';
 import { announceCreditsMoved, announceIfMoved } from '../credits/credits-signal';
@@ -26,7 +27,17 @@ export { REQUEST_UNSURE };
  * 나가며(`requestMatch` — 서버가 받은 뒤에 떠난다), 되돌리기와 지나친 인연의 「다시 만나보기」는 같은 복원 경로를 쓴다
  * (`restorePassed`). 덱의 모양 바꾸기는 `deckReducer` 가, 떠나는 움직임의 박자와 알림 · 실패 줄은 여기가 든다.
  */
-export function useDeck({ cards, passedFromServer }: { cards: readonly DeckCard[]; passedFromServer: readonly DeckCard[] }) {
+export function useDeck({
+  cards,
+  passedFromServer,
+  talkOpen = false,
+}: {
+  cards: readonly DeckCard[];
+  passedFromServer: readonly DeckCard[];
+  /** 켜진 흐름 — 풀이권을 안 보고 대화를 열어 그 방으로 간다(ADR 0215) */
+  talkOpen?: boolean;
+}) {
+  const router = useRouter();
   const [deck, dispatch] = useReducer(deckReducer, {
     remaining: cards, passed: passedFromServer.slice(0, PASSED_LIMIT), history: [], seen: [],
   });
@@ -66,6 +77,11 @@ export function useDeck({ cards, passedFromServer }: { cards: readonly DeckCard[
    */
   function askToRequest() {
     if (checkingCredits) return;
+    /* 대화는 풀이권을 안 쓴다 — 잔액을 묻지 않고 곧장 확인 창이다 */
+    if (talkOpen) {
+      setAsking(true);
+      return;
+    }
     setCheckingCredits(true);
     void (async () => {
       let spent = false;
@@ -165,6 +181,12 @@ export function useDeck({ cards, passedFromServer }: { cards: readonly DeckCard[
     busy.current = true;
     startWorking(async () => {
       try {
+        if (talkOpen) {
+          const talk = await startTalk(sending.candidateUserId);
+          if (!talk.ok) { setFailure(talk.message); return; }
+          router.push(talk.matchId === null ? '/me/chat' : `/me/chat/${talk.matchId}`);
+          return;
+        }
         const result = await requestMatch(sending.candidateUserId);
         announceIfMoved(result);
         /* 잔액을 본 뒤 그 사이 다른 탭에서 마지막 풀이권을 썼다 — 오류 줄 대신 풀이권 창(ADR 0171 「덧」) */

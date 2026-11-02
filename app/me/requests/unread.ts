@@ -1,5 +1,6 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 
+import { withoutTalks } from '@/src/lib/chat/room/talk';
 import { answerCount, bellCount } from '@/src/lib/consent';
 import type { Database } from '@/src/lib/db';
 
@@ -32,7 +33,14 @@ export async function readUnreadNotifications(
 export async function readRequestsToAnswer(
   client: SupabaseClient<Database>,
 ): Promise<SkippableRead<number>> {
-  const { data, error } = await client.rpc('my_match_requests');
+  const [{ data, error }, matches] = await Promise.all([client.rpc('my_match_requests'), client.rpc('my_matches')]);
   if (error) return unread(error, 'my_match_requests');
-  return read(answerCount(data ?? []));
+  if (matches.error) return unread(matches.error, 'my_matches');
+  /* 답하지 않은 대화는 답할 일이 아니다 — 그냥 두어도 된다(ADR 0215). 딱지가 영영 안 꺼지면 재촉이 된다 */
+  const asked = (data ?? []).map((row) => ({
+    direction: row.direction,
+    status: row.status,
+    counterpartUserId: row.counterpart_user_id,
+  }));
+  return read(answerCount(withoutTalks(asked, (matches.data ?? []).map((row) => row.partner_user_id), false)));
 }

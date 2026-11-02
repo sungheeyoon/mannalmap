@@ -9,6 +9,7 @@ import {
   REPORT_REASONS,
   type ReportReason,
 } from '@/src/lib/account';
+import { TALK_WITHDRAW_LABEL } from '@/src/lib/chat/copy';
 import { BLOCK_FINAL_NOTE, BLOCK_KEEPS_NOTE, BLOCK_NOTE } from '@/src/lib/consent';
 
 import type { SaveResult } from '../../save-result';
@@ -61,7 +62,10 @@ export function ReportBlockMenu({
   look = 'plain',
   className = '',
   onMyProfile,
+  onWithdraw,
 }: {
+  /** 답 전 대화를 보낸 쪽만(ADR 0215) */
+  onWithdraw?: () => void;
   canBlock: boolean;
   onReport: () => void;
   onBlock: () => void;
@@ -120,6 +124,19 @@ export function ReportBlockMenu({
           >
             <Icon name="block" className="size-[18px]" />
             차단
+          </button>
+        )}
+        {onWithdraw !== undefined && (
+          <button
+            type="button"
+            className={`${item} text-foreground`}
+            onClick={() => {
+              close();
+              onWithdraw();
+            }}
+          >
+            <Icon name="close" className="size-[18px]" />
+            {TALK_WITHDRAW_LABEL}
           </button>
         )}
       </div>

@@ -10,14 +10,19 @@ import { redirectToSignIn } from '../../../auth/sign-in-redirect';
 import { AccountNotice } from '../../account-notice';
 import { readAccount } from '../../account';
 import { ChatFrame, RoomList } from '../room-list';
-import { chatRoomsForViewer } from '../rooms';
+import { chatRoomsForViewer, talkRequestsForViewer } from '../rooms';
 import { roomScopesForViewer } from '../tones';
 import { labelled } from '@/src/lib/chat/room/bubbles';
+import { talkLineOf } from '@/src/lib/chat/room/talk';
+import { matchDetailForViewer } from './room-detail';
 import { myRoomFace } from './me';
 import { MESSAGE_WINDOW, messagesForViewer } from './messages';
 import { ChatRoomView } from './room';
 import { roomCompatForViewer } from './room-compat';
 import styles from './room.module.css';
+
+/** 상세 궁합의 동의가 여기서 풀이를 떠나보낸다 — 제출은 응답 뒤에 돈다(`after`). 인연 탭과 같은 값이다 */
+export const maxDuration = 300;
 
 export const metadata = {
   title: CHAT_TAB_LABEL,
@@ -70,11 +75,13 @@ export default async function ChatRoomPage({
   /* 궁합 단추는 열린 방 · 상대가 있는 방에만 선다 — 닫힌 방은 묻지 않는다(결과 화면도 그 쌍에게 닫혔다) */
   const notice = roomNoticeOf(room);
   const open = notice === null && room.partnerUserId !== null;
-  const [messages, { tones, intros }, compat, face] = await Promise.all([
+  const [messages, { tones, intros }, compat, face, detail, talkRequests] = await Promise.all([
     messagesForViewer(supabase, matchId),
     roomScopesForViewer(rooms),
     open ? roomCompatForViewer(supabase, matchId) : null,
     myRoomFace(supabase, user.id),
+    matchDetailForViewer(supabase, matchId),
+    talkRequestsForViewer(),
   ]);
   /* 꾸밈이다 — 사진을 못 읽었거나 계정 줄이 없으면 「내 프로필」만 안 선다(ADR 0078) */
   const me =
@@ -92,7 +99,7 @@ export default async function ChatRoomPage({
     <main className={`app-shell ${styles.page} flex w-full flex-1 flex-col md:py-6 lg:py-8`}>
       <ChatFrame
         opened
-        list={<RoomList rooms={rooms} activeId={matchId} titleLevel="h2" tones={tones} />}
+        list={<RoomList rooms={rooms} activeId={matchId} titleLevel="h2" tones={tones} requests={talkRequests} />}
         pane={
           /* 방마다 제 상태다 — 넓은 화면에서 다른 방을 누르면 가진 메시지 · 쓰던 글을 새로 시작한다 */
           <ChatRoomView
@@ -114,6 +121,8 @@ export default async function ChatRoomPage({
               fromBeginning: messages.length < MESSAGE_WINDOW,
               tones: tones.get(matchId) ?? null,
               compat,
+              detail,
+              talk: talkLineOf(room.partnerUserId, talkRequests),
               me,
             }}
           />

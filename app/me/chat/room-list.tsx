@@ -1,7 +1,9 @@
 import Link from 'next/link';
 
 import { CHAT_TAB_LABEL, messageTimeLabel, partnerNameOf, roomNoticeOf } from '@/src/lib/chat';
-import { ROOM_NO_MESSAGES_YET } from '@/src/lib/chat/copy';
+import { ROOM_NO_MESSAGES_YET, TALK_UNANSWERED_LABEL } from '@/src/lib/chat/copy';
+import { foldUnanswered } from '@/src/lib/chat/room/talk';
+import type { InboxRequest } from '@/src/lib/matching/inbox';
 import type { Element } from '@/src/lib/saju';
 
 import { elementScope } from '../../ui/element-tone';
@@ -49,6 +51,7 @@ export function RoomList({
   activeId,
   titleLevel,
   tones,
+  requests,
 }: {
   rooms: readonly ChatRoom[];
   activeId: string | null;
@@ -56,16 +59,39 @@ export function RoomList({
   tones: ReadonlyMap<string, RoomTones>;
   /** 목록 화면에서는 화면 제목(h1), 방 화면에서는 곁의 칸이라 h2 다 — 방 화면의 h1 은 상대의 이름이다 */
   titleLevel: 'h1' | 'h2';
+  /** 답 전 대화를 가를 요청 줄(`talkRequestsForViewer`) */
+  requests: readonly InboxRequest[];
 }) {
+  const { rooms: shown, unanswered } = foldUnanswered(rooms, requests);
+  const row = (room: ChatRoom) => (
+    <li key={room.matchId}>
+      <RoomRow room={room} active={room.matchId === activeId} tone={tones.get(room.matchId)?.theirs.element ?? null} />
+    </li>
+  );
   return (
     <RoomListPanel titleLevel={titleLevel}>
-      <ul className="-mx-2 flex min-h-0 flex-col gap-0.5 overflow-y-auto lg:mx-0 lg:p-2">
-        {rooms.map((room) => (
-          <li key={room.matchId}>
-            <RoomRow room={room} active={room.matchId === activeId} tone={tones.get(room.matchId)?.theirs.element ?? null} />
-          </li>
-        ))}
-      </ul>
+      <div className="-mx-2 flex min-h-0 flex-col gap-0.5 overflow-y-auto lg:mx-0 lg:p-2">
+        {/*
+          **답하지 않은 대화는 접어 맨 위 한 줄로 둔다** — 그냥 두어도 만료되지 않아 목록을 밀어내면 안 된다(ADR 0215). 다른 방이 없거나 지금 연
+          방이 그 안이면 펼친다 — 빈 목록처럼 보이지 않게
+        */}
+        {unanswered.length > 0 && (
+          <details
+            data-unanswered
+            open={shown.length === 0 || unanswered.some((room) => room.matchId === activeId)}
+            className="group"
+          >
+            <summary className="flex min-h-12 cursor-pointer list-none items-center justify-between gap-3 rounded-card px-2 text-body font-semibold text-foreground hover:bg-surface-soft lg:px-3 [&::-webkit-details-marker]:hidden">
+              <span>
+                {TALK_UNANSWERED_LABEL} <span className="tabular-nums text-secondary">{unanswered.length}</span>
+              </span>
+              <Icon name="chevron" className="size-4 text-secondary transition-transform group-open:rotate-90" />
+            </summary>
+            <ul className="flex flex-col gap-0.5">{unanswered.map(row)}</ul>
+          </details>
+        )}
+        <ul className="flex flex-col gap-0.5">{shown.map(row)}</ul>
+      </div>
     </RoomListPanel>
   );
 }

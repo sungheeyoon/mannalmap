@@ -2,7 +2,7 @@
 
 import { useRef, useState, type ReactNode } from 'react';
 
-import { DISCOVERY_TEASER } from '@/src/lib/discovery/copy';
+import { DISCOVERY_TEASER, TALK_SCORE_INFO, TALK_SCORE_INFO_NAME, TALK_SCORE_LABEL } from '@/src/lib/discovery/copy';
 
 import { elementScope } from '../../ui/element-tone';
 import { Icon, type IconName } from '../../ui/icons';
@@ -49,7 +49,10 @@ export function MatchingExperience({
   notice,
   explorationNote,
   passed: passedFromServer = EMPTY_CARDS,
+  talkOpen = false,
 }: {
+  /** 켜진 흐름인가 — 거짓이면 지금 화면 그대로다(ADR 0215) */
+  talkOpen?: boolean;
   /** 받은 요청 띠 한 줄 — 제목 아래, 덱 위에 선다. 없으면 아무것도 안 선다(ADR 0130) */
   lead?: ReactNode;
   /** 덱 아래 — 「인연 기록 N」 한 줄(2026-09-29 u2). 비면 아무것도 안 선다 */
@@ -65,9 +68,11 @@ export function MatchingExperience({
   const {
     profile, next, remaining, passed, hidden, total, counter, exit, leaving, announcement, flash, failure, working,
     asking, setAsking, buy, mapCards, statusOf, askToRequest, pass, send, restoreCard, undo, blocked: leaveBlocked,
-  } = useDeck({ cards, passedFromServer });
+  } = useDeck({ cards, passedFromServer, talkOpen });
   const [view, setView] = useState<View>('today');
   const sheet = useRef<HTMLDialogElement>(null);
+  const scoreSheet = useRef<HTMLDialogElement>(null);
+  const teaser = talkOpen ? TALK_SCORE_INFO : DISCOVERY_TEASER;
 
   /** 차단했다 — 열려 있던 ⓘ 시트를 닫고 덱에서 뺀다 */
   function blocked(card: DeckCard) {
@@ -157,7 +162,7 @@ export function MatchingExperience({
       */}
       {view === 'today' && profile !== undefined && (
         <div className="-mt-4 hidden max-w-3xl flex-col gap-1 lg:flex">
-          <p className="text-fine leading-5 text-secondary">{DISCOVERY_TEASER}</p>
+          <p className="text-fine leading-5 text-secondary">{teaser}</p>
           {notice !== null && <p className={TYPE_META}>{notice}</p>}
         </div>
       )}
@@ -219,8 +224,10 @@ export function MatchingExperience({
               feedback={cardFeedback}
               onInfo={() => openSheet(sheet.current)}
               onBlocked={() => blocked(profile)}
+              onScoreInfo={talkOpen ? () => openSheet(scoreSheet.current) : null}
             />
             <DeckButtons
+              talkOpen={talkOpen}
               actions={{
                 undo,
                 pass,
@@ -277,15 +284,21 @@ export function MatchingExperience({
             <div className="overflow-hidden rounded-card bg-cream px-2 pt-3">
               <ApproachMap shape="arc" me={me} cards={mapCards} statusOf={statusOf} className="mx-auto max-w-[28rem]" />
             </div>
-            <p className="text-fine leading-5 text-secondary">{DISCOVERY_TEASER}</p>
+            <p className="text-fine leading-5 text-secondary">{teaser}</p>
             {notice !== null && <p className={TYPE_META}>{notice}</p>}
           </div>
+        </DetailSheet>
+      )}
+      {talkOpen && (
+        <DetailSheet sheet={scoreSheet} nickname={TALK_SCORE_LABEL} label={TALK_SCORE_INFO_NAME}>
+          <p className="text-body leading-6 text-foreground">{TALK_SCORE_INFO}</p>
         </DetailSheet>
       )}
 
       {/* 요청 확인 창 — 받는 쪽 카드와 같은 한 벌을 읽는다(`request-confirm.tsx`) */}
       {profile && (
         <RequestConfirm
+          talkOpen={talkOpen}
           profile={profile}
           open={asking}
           onClose={() => setAsking(false)}

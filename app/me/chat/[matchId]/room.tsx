@@ -1,12 +1,29 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from 'react';
 
-import { NEW_MESSAGES_LABEL, OLDER_LOADING_LABEL, OLDER_MESSAGES_LABEL } from '@/src/lib/chat/copy';
+import {
+  NEW_MESSAGES_LABEL,
+  OLDER_LOADING_LABEL,
+  OLDER_MESSAGES_LABEL,
+  TALK_WAIT_REPLY,
+  TALK_WITHDRAW_LABEL,
+  TALK_WITHDRAW_NOTE,
+  TALK_WITHDRAW_TITLE,
+  TALK_WITHDRAWN,
+} from '@/src/lib/chat/copy';
+import { detailDoorShown } from '@/src/lib/chat/room/detail';
+import { waitsForReply } from '@/src/lib/chat/room/talk';
 
 import { withCameFrom } from '../../../came-from';
+import { actionAnswer } from '../../../ui/action-answer';
 import { BUTTON_SECONDARY_SMALL } from '../../../ui/buttons';
+import { ConfirmDialog } from '../../../ui/confirm-dialog';
+import { FailureLine } from '../../../ui/failure-line';
+import { showSnackbar } from '../../../ui/snackbar-store';
+import { cancelRequest } from '../../requests/actions';
+import { DetailCard, DetailDoor, startsExpanded } from './detail-card';
 import { Icon } from '../../../ui/icons';
 import { MyProfileEditFooter, PartnerSheet, usePartnerSheet, type PartnerProfile } from '../../partner-sheet';
 import { BlockDialog, ReportBlockMenu, ReportDialog } from '../../requests/report-block';
@@ -92,7 +109,35 @@ export function ChatRoomView({ room }: { room: RoomView }) {
         };
   const openMe = me === null ? null : myself.open;
   /* 인연 궁합으로 가는 길 — 상대가 있는 열린 방에만. 머리와 시트의 궁합 단추가 같은 곳 · 같은 상태다 */
-  const matchLink = hasPartner && !closed ? withCameFrom(`/me/match/${room.matchId}`, 'chat') : null;
+  /* 답 전 대화에는 궁합으로 갈 곳이 없다 — 글자도 글도 없다(ADR 0215) */
+  const matchLink = hasPartner && !closed && room.talk === null ? withCameFrom(`/me/match/${room.matchId}`, 'chat') : null;
+  /* 켜진 흐름 — 머리의 입구와 머리 아래 공용 카드. 답 전에는 안 선다. 상태가 바뀌면 그 상태의 기본으로 다시 펼친다(`key`) */
+  const door = detailDoorShown(room.detail) && room.talk === null ? room.detail : null;
+  const [toggled, setToggled] = useState<{ state: string; expanded: boolean } | null>(null);
+  const expanded =
+    door !== null && (toggled !== null && toggled.state === door.state ? toggled.expanded : startsExpanded(door));
+  /* 시트의 궁합 한 줄 — 켜진 흐름에서는 글이 있을 때만 결과로 간다 */
+  const compatRowShown = door === null ? matchLink !== null : door.state === 'ready' && room.compat?.kind === 'ready';
+  const [withdrawing, setWithdrawing] = useState(false);
+  const [withdrawFailure, setWithdrawFailure] = useState<string | null>(null);
+  const [withdrawBusy, startWithdraw] = useTransition();
+  const withdraw = () => {
+    if (room.talk === null) return;
+    const { requestId } = room.talk;
+    setWithdrawFailure(null);
+    startWithdraw(async () => {
+      const answer = await actionAnswer(cancelRequest(requestId));
+      if (!answer.ok) {
+        setWithdrawFailure(answer.message);
+        return;
+      }
+      setWithdrawing(false);
+      /* 상대가 먼저 답했으면 거두지 못했다 — 없는 일을 알리지 않고 방에 남는다(대장 01) */
+      if (answer.status !== 'cancelled') return;
+      showSnackbar(TALK_WITHDRAWN);
+      router.push('/me/chat');
+    });
+  };
   const chipTone = room.tones === null ? null : theirTone;
   /* 닫힌 방에는 쓸 칸이 없다 — 쓰다 만 글도 탭에서 걷는다(`draft.ts`) */
   useEffect(() => {
@@ -145,7 +190,14 @@ export function ChatRoomView({ room }: { room: RoomView }) {
         chipTone={chipTone}
         onReport={() => setOpened('report')}
         onBlock={() => setOpened('block')}
+        door={
+          door === null ? null : (
+            <DetailDoor expanded={expanded} onToggle={() => setToggled({ state: door.state, expanded: !expanded })} />
+          )
+        }
+        onWithdraw={room.talk?.side === 'sent' && !closed ? () => setWithdrawing(true) : null}
       />
+      {door !== null && expanded && <DetailCard matchId={room.matchId} detail={door} />}
 
       {/* 읽음은 화면에 들어온 상대 말까지만 남는다 — 신고 · 차단 창이나 프로필 시트가 대화를 덮은 동안은 멈춘다(`useReadMarker`) */}
       <div className="relative flex min-h-0 flex-1 flex-col">
@@ -229,6 +281,7 @@ export function ChatRoomView({ room }: { room: RoomView }) {
           <Composer
             matchId={room.matchId}
             said={outbox.said}
+            holdBack={waitsForReply(room.talk, thread.messages, pending.length) ? TALK_WAIT_REPLY : null}
             onSend={(body) => {
               // 보낸 사람은 제 말을 곧장 본다 — 맨 아래로 내려가고 말풍선이 선다.
               outbox.send(body);
@@ -242,7 +295,7 @@ export function ChatRoomView({ room }: { room: RoomView }) {
           control={profile}
           partner={partner}
           toMatch={
-            matchLink === null ? null : <CompatRow compat={room.compat ?? { kind: 'quiet' }} href={matchLink} />
+            matchLink === null || !compatRowShown ? null : <CompatRow compat={room.compat ?? { kind: 'quiet' }} href={matchLink} />
           }
           /* 시트의 「⋯」는 머리의 것과 같은 길이다 — 시트를 닫고 신고 · 차단 창을 연다 */
           menu={
@@ -268,6 +321,21 @@ export function ChatRoomView({ room }: { room: RoomView }) {
           /* 홈의 「내 프로필」과 같은 판 — 폰은 시트 바닥에 붙는다(운영자 2026-10-27) */
           footer={<MyProfileEditFooter />}
         />
+      )}
+      {room.talk?.side === 'sent' && (
+        <ConfirmDialog
+          open={withdrawing}
+          onClose={() => setWithdrawing(false)}
+          title={TALK_WITHDRAW_TITLE}
+          confirmLabel={TALK_WITHDRAW_LABEL}
+          /* 실행 글자에 「취소」가 들면 닫기는 「닫기」다(대장 01) */
+          cancelLabel="닫기"
+          onConfirm={withdraw}
+          busy={withdrawBusy}
+        >
+          <p>{TALK_WITHDRAW_NOTE}</p>
+          {withdrawFailure !== null && <FailureLine>{withdrawFailure}</FailureLine>}
+        </ConfirmDialog>
       )}
       {room.partnerUserId !== null && (
         <>

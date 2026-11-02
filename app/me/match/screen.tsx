@@ -3,6 +3,7 @@ import type { ReactNode } from 'react';
 import { notFound } from 'next/navigation';
 
 import { CHAT_TAB_LABEL } from '@/src/lib/chat';
+import { DETAIL_NOT_YET } from '@/src/lib/chat/copy';
 import { MATCH_RESULT_CLOSED_NOTE } from '@/src/lib/consent';
 import { STEM_INFO } from '@/src/lib/saju';
 
@@ -18,6 +19,8 @@ import { PartnerFace } from '../partner-sheet';
 import { ReadingSection } from '../reading/section';
 import { readAccount } from '../account';
 import { backOf, placeOf } from '../../came-from';
+import { UUID } from '../../uuid';
+import { matchDetailForViewer } from '../chat/[matchId]/room-detail';
 import { matchResultForViewer, type SharedResult } from './result';
 
 /** 결과가 어느 틀에 서나 — 제 주소(`/me/match/[id]`)의 한 화면, 또는 풀이 보관함의 옆 칸(ADR 0134, `../compat/screen.tsx` 와 같다) */
@@ -55,10 +58,17 @@ export async function MatchScreen({
    * 시작했을 수 있고, 그러면 404 를 부르고도 200 이 나간다.
    */
   /* 내 닉네임은 글의 자리 호칭을 바꿔 넣을 때만 쓴다(`Result`). 닉네임은 가입 때 정해 늘 있다 — 못 읽은 드문 때는 빈 값이고, 그 자리는 호칭 그대로 선다(`withNicknames`) */
-  const [outcome, account] = await Promise.all([
+  const [outcome, account, detailRead] = await Promise.all([
     matchResultForViewer(matchId),
     readAccount(supabase, ['status', 'nickname']),
+    UUID.test(matchId) ? matchDetailForViewer(supabase, matchId) : null,
   ]);
+  /*
+    켜진 흐름 — 글은 동의 뒤에만 서므로 글이 없는 동안 할 일은 방에 있다(ADR 0215). 옛 「궁합풀이 받기」를 세우지 않는다.
+    만드는 중 · 완료만 글 칸이 선다.
+  */
+  const newFlow = detailRead?.detailOpen === true;
+  const noReadingYet = newFlow && detailRead.state !== 'ready' && detailRead.state !== 'making';
   const myNickname = account.row?.nickname ?? '';
 
   /**
@@ -140,8 +150,16 @@ export async function MatchScreen({
         </div>
       </header>
 
-      {outcome.kind === 'ok' ? (
-        <Result result={outcome.result} myNickname={myNickname} />
+      {noReadingYet ? (
+        <section className={EMPTY_SLOT}>
+          <p className="text-body leading-7 text-secondary">{DETAIL_NOT_YET}</p>
+          <Link href={`/me/chat/${matchId}`} className={`${BUTTON_SECONDARY_SMALL} mt-3`}>
+            <Icon name="chat" className="size-[18px]" />
+            {CHAT_TAB_LABEL}
+          </Link>
+        </section>
+      ) : outcome.kind === 'ok' ? (
+        <Result result={outcome.result} myNickname={myNickname} newFlow={newFlow} />
       ) : (
         /*
           **문장은 정책이 든다** — 화면이 손으로 적지 않는다.
@@ -172,7 +190,7 @@ function Frame({ frame, children }: { frame: MatchFrame; children: ReactNode }) 
   );
 }
 
-function Result({ result, myNickname }: { result: SharedResult; myNickname: string }) {
+function Result({ result, myNickname, newFlow }: { result: SharedResult; myNickname: string; newFlow: boolean }) {
   return (
     <>
       {/*
@@ -198,7 +216,8 @@ function Result({ result, myNickname }: { result: SharedResult; myNickname: stri
         automatic
         bare
         nicknames={{ viewer: myNickname, partner: result.partnerNickname }}
-        betweenSummaryAndBody={<PillarPair charts={result.charts} names={result.names} />}
+        /* 켜진 흐름의 결과는 비유 → 점수 → 글이다 — 상대 여덟 글자 카드를 안 세운다(ADR 0215) */
+        betweenSummaryAndBody={newFlow ? undefined : <PillarPair charts={result.charts} names={result.names} />}
         /*
           표지는 두 사람의 일간이 비스듬히 만난다 — 동의로 열린 여덟 글자에서 읽으므로 새로 열리는 것이 없다
           (ADR 0012). 앞자리가 늘 보는 사람이다(`names.a`).

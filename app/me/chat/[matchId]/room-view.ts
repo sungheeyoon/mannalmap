@@ -1,6 +1,9 @@
 import type { PhotoFocus } from '@/src/lib/profile';
 import type { ActivityBand } from '@/src/lib/presence';
 
+import type { MatchDetail } from '@/src/lib/chat/room/detail';
+import type { TalkLine } from '@/src/lib/chat/room/talk';
+
 import type { RoomTones } from '../tones';
 import type { ShownMessage } from '@/src/lib/chat/room/bubbles';
 import type { RoomCompat } from './room-compat';
@@ -35,6 +38,10 @@ export type RoomView = {
   readonly tones: RoomTones | null;
   /** 그 인연 궁합이 어디까지 왔나 — 궁합 단추가 든다. 열린 방에만 온다(닫힌 방에는 단추가 없다) */
   readonly compat: RoomCompat | null;
+  /** 상세 궁합의 상태 — 못 읽었거나 닫힌 방은 `null`, 그때 머리는 옛 단추다(ADR 0215) */
+  readonly detail: MatchDetail | null;
+  /** 답 전 대화에서 내 자리 — 답한 대화 · 옛 인연은 `null`(`talkLineOf`) */
+  readonly talk: TalkLine | null;
   /**
    * 나 — 상대가 이 방에서 내 얼굴을 누르면 보는 지금의 사진 · 소개(`me.ts`). 방 머리의 「⋯」 맨 위 「내 프로필」과 첫머리의
    * 「나」 카드가 같은 시트로 연다(2026-10-24). 사진을 못 읽었으면 `null` — 그 길이 안 선다

@@ -1,4 +1,5 @@
 import { isBlocked } from '@/src/lib/account';
+import { withoutTalks } from '@/src/lib/chat/room/talk';
 
 import { supabaseOnServer } from '../../../auth/server-client';
 import { signedInUser } from '../../../auth/signed-in';
@@ -12,6 +13,7 @@ import { readAccount } from '../../account';
 import { AccountNotice } from '../../account-notice';
 import type { ReadingEntry } from '@/src/lib/reading';
 import { myReadings } from '../../reading/current';
+import { talkIsOpen } from '../../talk-switch';
 import { matchesForViewer, requestsForViewer, type InboxMatch, type Requests } from '../../requests/inbox';
 import { makingMatches, matchBooks, pastRequests } from '../history';
 import { COUNT_CHIP } from '../history-row';
@@ -52,7 +54,7 @@ export default async function MatchHistoryPage() {
     );
   }
 
-  const [readings, matches, requests] = await Promise.all([
+  const [readings, matches, requestsRead, talkOpen] = await Promise.all([
     myReadings().then(read, (thrown: unknown): SkippableRead<readonly ReadingEntry[]> => ({
       ok: false,
       reason: answerOfThrown(thrown, 'my_readings'),
@@ -65,11 +67,29 @@ export default async function MatchHistoryPage() {
       ok: false,
       reason: answerOfThrown(thrown, 'inbox'),
     })),
+    talkIsOpen(supabase),
   ]);
 
+  /* 대화는 방이 든다 — 지난 요청에 안 선다(ADR 0215). 인연 목록을 못 읽은 켜진 날은 가르지 못해 요청을 안 세운다 */
+  const requests: SkippableRead<Requests> = !requestsRead.ok
+    ? requestsRead
+    : {
+        ok: true,
+        value: {
+          ...requestsRead.value,
+          requests:
+            matches.ok || !talkOpen
+              ? withoutTalks(requestsRead.value.requests, matches.ok ? matches.value.map((one) => one.partnerUserId) : [], talkOpen)
+              : [],
+        },
+      };
+
   const books = readings.ok ? matchBooks(readings.value) : [];
-  /* 글이 아직 없는 인연 궁합 — 수락 직후 만드는 중이다. 글 목록을 못 읽었으면 가르지 못하므로 안 세운다 */
-  const making = readings.ok && matches.ok ? makingMatches(readings.value, matches.value) : [];
+  /*
+    글이 아직 없는 인연 궁합 — 수락 직후 만드는 중이다. 글 목록을 못 읽었으면 가르지 못하므로 안 세운다.
+    켜진 동안은 글 없는 인연이 대화라 「만드는 중」이 거짓이다 — 만드는 중은 방이 말한다.
+  */
+  const making = !talkOpen && readings.ok && matches.ok ? makingMatches(readings.value, matches.value) : [];
   const matchCount = books.length + making.length;
   const past = requests.ok ? pastRequests(requests.value, matches.ok ? matches.value : null) : null;
   const pastCount = past === null ? 0 : past.sent.length + past.decided.length;

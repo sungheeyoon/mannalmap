@@ -134,6 +134,21 @@ export async function restorePassed(candidateUserId: string) {
 }
 
 /**
+ * 대화를 시작한다 — 켜진 흐름의 「대화 시작」(ADR 0215). 문은 요청 번호를 돌려주므로 방은 상대로 찾는다(`my_chat_rooms`).
+ * 살아 있는 대화가 있으면 같은 번호라 그 방으로 간다. 방을 못 찾아도 대화는 섰으니 실패로 답하지 않는다(`matchId: null`).
+ */
+export async function startTalk(
+  candidateUserId: string,
+): Promise<{ ok: true; matchId: string | null } | { ok: false; message: string }> {
+  const supabase = await supabaseOnServer();
+  const { error } = await supabase.rpc('request_match', { p_candidate_user_id: candidateUserId });
+  if (error) return { ok: false, message: userFacingDbMessage(error, 'request_match') };
+  refresh('match-requested');
+  const { data } = await supabase.rpc('my_chat_rooms');
+  return { ok: true, matchId: (data ?? []).find((room) => room.partner_user_id === candidateUserId)?.match_id ?? null };
+}
+
+/**
  * 상세 궁합을 함께 보자고 청한다.
  *
  * **인자는 상대 하나뿐이다.** 판본도 추천 이유도 정책 버전도 RPC 가 그 자리에서 읽는다 —

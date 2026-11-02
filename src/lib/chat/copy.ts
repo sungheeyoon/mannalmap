@@ -50,11 +50,11 @@ export const MY_PROFILE_EDIT_LABEL = '프로필 편집';
 export const TALK_UNANSWERED_LABEL = '답하지 않은 대화';
 /** 답 전 보낸 쪽 — 둘째 말을 누른 뒤에 선다 */
 export const TALK_WAIT_REPLY = '상대가 답하면 이어서 보낼 수 있어요.';
-/** 답 전 보낸 쪽의 대화 끝내기 — 메뉴 · 확인 창 · 끝난 뒤 */
-export const TALK_WITHDRAW_LABEL = '대화 거두기';
-export const TALK_WITHDRAW_TITLE = '이 대화를 거둘까요?';
-export const TALK_WITHDRAW_NOTE = '거두면 이 사람과 다시 대화할 수 없어요.';
-export const TALK_WITHDRAWN = '대화를 거뒀어요';
+/** 답 전 보낸 쪽의 대화 끝내기 — 메뉴 · 확인 창 · 끝난 뒤. 화면 글자는 「취소」다(대장 matching-09), 개념 이름은 거둠 */
+export const TALK_WITHDRAW_LABEL = '대화 취소';
+export const TALK_WITHDRAW_TITLE = '이 대화를 취소할까요?';
+export const TALK_WITHDRAW_NOTE = '취소하면 이 사람과 다시 대화할 수 없어요.';
+export const TALK_WITHDRAWN = '대화를 취소했어요';
 
 /** 방 상단의 입구 — 대장 matching-18 확인 전. 공용 카드의 글자는 `room/detail-copy.ts` */
 export const DETAIL_DOOR_LABEL = '상세 궁합';
