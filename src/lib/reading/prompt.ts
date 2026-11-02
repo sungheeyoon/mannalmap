@@ -177,6 +177,13 @@ export type PromptAssembly = {
    * 바꾼다(`usesPairGuide`). 인연 궁합의 옛 컷 입력에는 걸지 않는다.
    */
   readonly pairReading: 'plain-v1' | 'guide-v4';
+  /**
+   * 인연 궁합이 **어느 흐름의 글인가** — `bundled` 는 수락과 함께 나는 옛 흐름, `detail` 은 채팅 뒤 사는 상세 궁합이다(PRD 매칭 §6.6, #963).
+   *
+   * `match_request.kind` 의 값을 따른다(`requestAssemblyOf`). 비공개 궁합과 개인 풀이는 이 칸을 안 읽는다 — 옛 흐름의 글자도,
+   * `private` 의 글자도 이 칸으로 안 바뀐다(`scripts/old-reading-prompts-unchanged.test.ts` 가 글자의 지문으로 잰다).
+   */
+  readonly matchFlow: 'bundled' | 'detail';
 };
 
 /** 실제 배포에서 쓰는 기준판. */
@@ -194,7 +201,11 @@ export const CONTROL: PromptAssembly = {
   matchInput: DEFAULT_MATCH_INPUT,
   /** 인연 궁합 읽는 법 4판 — 제한형 A 와 한 세트로 운영에 올렸다(2026-09-15, ADR 0067) */
   pairReading: 'guide-v4',
+  matchFlow: 'bundled',
 };
+
+/** 상세 궁합의 조립 — 인연 궁합의 자료 · 읽는 법 · 분량은 운영 그대로이고 흐름 하나만 다르다 */
+export const DETAIL_ASSEMBLY: PromptAssembly = { ...CONTROL, matchFlow: 'detail' };
 
 /**
  * **원복용 궁합 조립** — 4판 이전에 운영이 보내던 궁합 지시와 인연 궁합 옛 컷.
@@ -640,7 +651,20 @@ const pairCustomerVoice = (terminology: Terminology, kind: PairKind): string => 
 
 ${PAIR_TERMS}${kind === 'private' ? `\n\n${PRIVATE_TERMS}` : ''}`;
 
-const PAIR_NEEDS_BLOCK = (meeting: string, kind: PairKind, scene: string): string => `## 무엇을 쓸까
+/**
+ * **상세 궁합이 빠뜨리지 않는 넷** — 고정 소제목이 아니다. 인연 궁합을 알아 가는 물음으로 바꾼 판단(ADR 0067)과 소제목을 글마다
+ * 짓는 구성(2026-09-15)을 되돌리지 않고, 다룰 내용만 보장한다(조율자 위임 2026-11-02). 프롬프트 실험 보류와의 관계는 ADR 0139 추기.
+ */
+const DETAIL_COVERAGE = `이 글은 아래 넷을 **빠뜨리지 않는다.** 위 안내의 「쓰지 않아도 된다」는 자료를 고르는 이야기이고, 이 넷에는 해당하지 않는다.
+
+- 연락 — 언제 어떻게 말을 걸고 답하는지
+- 속도 — 가까워지고 정하는 빠르기
+- 표현 차이 — 마음을 어떻게 드러내고 어떻게 받아들이는지
+- 부딪힐 때 맞춰 볼 점
+
+얼마나 길게 쓸지는 이 두 사람에게서 두드러지는 정도가 정한다. **이 넷을 소제목 이름으로 옮기거나 이 차례로 늘어놓지 않는다** — 고른 이야기 안에서 답하고, 소제목과 문단을 어떻게 나눌지는 위 「글을 나누는 법」을 따른다.`;
+
+const PAIR_NEEDS_BLOCK = (meeting: string, kind: PairKind, scene: string, detail: boolean): string => `## 무엇을 쓸까
 
 풀이를 받는 사람이 알고 싶은 것은 **두 사람이 서로에게 어떤 사람이고, 어디서 잘 맞고 어디서 부딪히며, 함께 지내면 어떤 장면이 되풀이되고, 오래 가려면 무엇이 필요한가**다. ${meeting}도 궁금해한다.${
   kind === 'private'
@@ -648,7 +672,11 @@ const PAIR_NEEDS_BLOCK = (meeting: string, kind: PairKind, scene: string): strin
     : ''
 }
 
-이것을 절 목록으로 삼지 마라. 위 「이 두 사람에게서 두드러지는 이야기를 고른다」에서 고른 이야기 안에서 답한다. 두드러지는 것은 길게, 아닌 것은 짧게 지나거나 쓰지 않는다. 소제목과 문단을 어떻게 나눌지는 위 「글을 나누는 법」을 따른다.
+${
+  detail
+    ? DETAIL_COVERAGE
+    : '이것을 절 목록으로 삼지 마라. 위 「이 두 사람에게서 두드러지는 이야기를 고른다」에서 고른 이야기 안에서 답한다. 두드러지는 것은 길게, 아닌 것은 짧게 지나거나 쓰지 않는다. 소제목과 문단을 어떻게 나눌지는 위 「글을 나누는 법」을 따른다.'
+}
 
 
 
@@ -713,6 +741,34 @@ const PAIR_OUTPUT_CONTRACT = `## 구조화 출력의 뜻
 본문에 JSON 코드 감싸개를 두르지 않는다. 표는 쓰지 않는다. 소제목·문단·목록·굵게만 쓴다.`;
 
 /**
+ * **상세 궁합이 더 받는 칸과 글자 규칙.**
+ *
+ * 발견 한 줄은 스키마 칸으로 받고 저장할 때 본문 맨 앞 문단으로 접는다(`withDiscovery`) — 새 DB 칸 없이 첫 문단 리드 자리에 서고,
+ * 본문이 받는 검사 · 호칭 바꾸기를 함께 받는다. 칸의 차례는 본문 뒤다(ADR 0207 추기 「v21」과 같은 까닭).
+ *
+ * **글은 하나이고 두 사람이 다 읽는다**(ADR 0058) — 어느 자리의 글자든 누군가에게는 상대의 글자다. 그래서 여덟 글자 전부를 쓰지
+ * 않게 한다. 이 지시와 `detailFindingsOf` 는 **직접 언급**만 다룬다. 글에서 상대 글자를 유추할 위험이 있고, 직접 언급 금지만
+ * 검증했으며, 복원 불가를 보장하지 않는다(운영자 2026-11-02).
+ */
+const DETAIL_BLOCK = `## 발견 한 줄
+
+**본문을 다 쓴 뒤에** 쓴다. 구조화 출력의 \`discovery\` 칸이다. 화면은 이 줄을 글 맨 앞에 세운다. 이 두 사람 사이에서 **읽는 사람이 관계를 새로 알게 되는 한 문장**을 쓴다.
+
+- 본문이 실제로 다룬 것에서 고른다. 어느 두 사람에게나 맞는 말은 쓰지 않는다.
+- 해요체 한 문장. 호칭은 「${SEAT_NAMES.first}」·「${SEAT_NAMES.second}」 그대로 쓴다.
+- 점수와, 점수가 왜 움직였는지는 쓰지 않는다.
+- 본문에 이 줄을 다시 적지 않는다.
+
+## 천간·지지 글자를 쓰지 않는다
+
+본문·\`discovery\`·\`metaphor\` 에 두 사람의 천간·지지 글자를 쓰지 않는다 — 한자도, 한글 읽기도, 그 글자로 지은 관계 이름도. 글은 두 사람이 함께 읽으므로 어느 쪽 글자든 누군가에게는 상대의 글자다. 맨 끝 검사용 근거 절만 이 규칙 밖이다.`;
+
+const DETAIL_OUTPUT_CONTRACT = PAIR_OUTPUT_CONTRACT.replace(
+  '마지막으로 \`metaphor\` 에',
+  '그다음 \`discovery\` 에 발견 한 줄을, 마지막으로 \`metaphor\` 에',
+);
+
+/**
  * 이 조립이 **궁합 읽는 법(4판)**을 쓰는가 — 공통 조각을 궁합용으로 갈아 끼우는 문이 이 한 곳이다.
  *
  * 인연 궁합은 옛 컷 입력에는 걸지 않는다 — 원복 조립은 옛 지시를 그대로 내야 한다. 개인 풀이는 해당하지 않는다.
@@ -744,6 +800,10 @@ type PromptVoice = 'self' | 'pair-legacy' | 'pair-guided';
 
 const voiceOf = (kind: ReadingKind, assembly: PromptAssembly): PromptVoice =>
   isSolo(kind) ? 'self' : usesPairGuide(kind, assembly) ? 'pair-guided' : 'pair-legacy';
+
+/** 상세 궁합의 지시가 서는가 — 인연 궁합의 4판에서만. `private` 와 옛 컷은 흐름 칸을 안 읽는다 */
+const isDetailFlow = (kind: ReadingKind, assembly: PromptAssembly): boolean =>
+  kind === 'match' && assembly.matchFlow === 'detail' && voiceOf(kind, assembly) === 'pair-guided';
 
 /**
  * 한 줄 요약을 **본문 뒤에** 짓는 세대인가 — 지시문(`metaphorSection`)과 출력 스키마의 차례(`writesSummaryLast`)가 이 하나를 읽는다.
@@ -1142,6 +1202,9 @@ export const pairSectionTexts = (kind: PairKind, assembly: PromptAssembly): read
  * 근거 칸에 적게 한다 — `COMPAT_POLICY.scoring` 이 「총점 대신 항목별 기여로 내야 한다」고
  * 적어 둔 그 조건이다.
  *
+ * **상세 궁합에는 이 규칙이 없다**(D7, 조율자 위임 2026-11-02). 움직일 까닭이 없을 때 지어 움직이지 않고, 화면의 약속은
+ * 「달라질 수 있어요」까지다. 옛 흐름과 비공개 궁합은 그대로 이 규칙을 받는다 — 그래서 절이 함수다.
+ *
  * ## 기준점에 든 사실은 다시 세지 않는다
  *
  * `v2-beta` 기준점은 필요한 기운 보완 · 오행 균형을 모든 사이에서, 일간 · 일지끼리의 관계를
@@ -1149,7 +1212,7 @@ export const pairSectionTexts = (kind: PairKind, assembly: PromptAssembly): read
  * 이 남아 있거나 재량이 일지 충을 무겁게 보면 같은 사실이 두 번 세진다. 그래서 그 두 줄을 걷고,
  * 조정은 년 · 월 · 시가 하나 이상 걸린 관계로만 한다(`reading-prompt-v17`).
  */
-const SCORE_SECTION = `## 점수
+const scoreSection = (mustMove: boolean): string => `## 점수
 
 **기준점에서 시작해 항목별로 더하고 뺀다.** 아래 「기준점」에 적힌 수가 출발점이다.
 \`baseline\` 은 사이에 맞는 정책으로 계산한 베타 기준점이다. 연인·배우자는 일주·일지 관계 40%, 필요한 기운 보완 40%, 오행 균형 20% 를 반영한다. 가족·친구·동료·모름은 필요한 기운 보완 60%, 오행 균형 40% 만 반영하며 일주·일지 관계는 점수에 포함하지 않는다.
@@ -1163,21 +1226,27 @@ const SCORE_SECTION = `## 점수
 | 함께 이룬 삼형 | \`combinedFormations\` | -3 ~ -6 |
 | 십성이 한쪽으로만 기운 자리 | \`tenGods\` 양방향 | -2 ~ +2 |
 
-**규칙 여섯.**
+**규칙 ${mustMove ? '여섯' : '다섯'}.**
 
 1. **걸린 항목만 쓴다.** 자료에 없는 관계를 항목으로 세우지 마라 — 없는 것을 0점으로
    적는 것과 있는 것을 안 적는 것은 다르다.
 2. 기준점 산출에 사용한 사실은 항목 조정이나 재량 조정에서 다시 반영하지 않는다. 필요한 기운 보완과 두 사람에게 함께 없는 오행은 모든 사이에서 기준점에 이미 포함된다. 두 사람의 일간끼리 또는 일지끼리의 관계는 연인·배우자 기준점에 포함되고, 일반 관계에서는 설명에만 사용한다. 어느 경우에도 이를 점수 조정 근거로 다시 사용하지 않는다. 년·월·시가 하나 이상 걸린 별도 관계만 조정 근거로 사용할 수 있다.
-3. **적어도 한 항목은 움직인다.** 기준점을 그대로 내지 마라. 두 사람 사이에 아무것도 안
+${
+  mustMove
+    ? `3. **적어도 한 항목은 움직인다.** 기준점을 그대로 내지 마라. 두 사람 사이에 아무것도 안
    걸렸으면 그것 자체가 내리는 쪽 근거다.
-4. **조정의 합은 -${READING_POLICY.scoreAdjustment} ~ +${READING_POLICY.scoreAdjustment} 를 넘지 않는다.** 넘을 것 같으면 항목마다 폭을 줄여 맞춘다.
-5. **마지막에 네 판단으로 ${READING_POLICY.scoreDiscretion} 점 안에서 더 움직일 수 있다.**
+`
+    : ''
+}${mustMove ? 4 : 3}. **조정의 합은 -${READING_POLICY.scoreAdjustment} ~ +${READING_POLICY.scoreAdjustment} 를 넘지 않는다.** 넘을 것 같으면 항목마다 폭을 줄여 맞춘다.
+${mustMove ? 5 : 4}. **마지막에 네 판단으로 ${READING_POLICY.scoreDiscretion} 점 안에서 더 움직일 수 있다.**
    위 표가 다 담지 못하는 것이 있다 — 십성이 서로를 무엇으로 보는지, 관계가 **어느
    자리**에 걸렸는지(년·월·시가 걸린 관계라도 월지에 걸린 충과 시지에 걸린 충은 무게가 다르다), 시각을 몰라
    못 본 것이 얼마나 되는지. 자료를 읽고 「이 두 사람은 표가 말하는 것보다 낫다/못하다」
    싶으면 그만큼 얹어라. 그럴 까닭이 없으면 **0 이 맞다** — 쓰라고 준 폭이 아니라
    **쓸 수 있는 폭**이다.
-6. 최종 점수는 **기준점 + 항목 조정 + 네 판단**이고 0~100 으로 자른다.
+${mustMove ? 6 : 5}. 최종 점수는 **기준점 + 항목 조정 + 네 판단**이고 0~100 으로 자른다.${
+  mustMove ? '' : '\n\n움직일 까닭이 없으면 **기준점 그대로가 맞다.** 다르게 내려고 항목을 지어내지 않는다.'
+}
 
 같은 항목이라도 폭 안에서 어디에 놓을지는 자료가 정한다 — 그 관계가 두 사람 사이에서
 얼마나 크게 걸렸는지, 몇 군데에서 걸렸는지를 보고 고른다. 관계가 많다는 것 자체가 좋다는
@@ -1497,12 +1566,13 @@ const compatSections = (
    */
   const needsShape = assembly.pairShape === 'needs-v1';
   const guided = voice === 'pair-guided';
+  const detail = isDetailFlow(kind, assembly);
   const relationKey: RelationKey = kind === 'match' && relation === null ? 'match' : (relation ?? 'unknown');
 
   const plan = needsShape
     ? `${
         guided
-          ? PAIR_NEEDS_BLOCK(PAIR_MEETING_NEED[relationKey], kind, RELATION_SCENE[relationKey])
+          ? PAIR_NEEDS_BLOCK(PAIR_MEETING_NEED[relationKey], kind, RELATION_SCENE[relationKey], detail)
           : NEEDS_BLOCK(kind, MEETING_NEED[relationKey])
       }
 
@@ -1527,7 +1597,7 @@ ${guided ? PAIR_CLOSING : PROMPT_PARTS.closing}
 
 사용자 본문은 ${min}~${max}자. 검사용 근거 절은 분량에 넣지 않는다.
 
-${SCORE_SECTION}`;
+${scoreSection(!detail)}`;
 };
 
 /**
@@ -1722,6 +1792,7 @@ const SLOT_ORDER = [
   'precedence',
   'extra',
   'body',
+  'detail',
   'summary',
   'output',
 ] as const;
@@ -1782,8 +1853,13 @@ const planOf = (kind: ReadingKind, assembly: PromptAssembly, about: ReadingAbout
     body: solo
       ? selfSections(assembly)
       : compatSections(kind as PairKind, assembly, about, voice),
+    detail: isDetailFlow(kind, assembly) ? DETAIL_BLOCK : null,
     summary: metaphorSection(voice),
-    output: guided ? PAIR_OUTPUT_CONTRACT : OUTPUT_CONTRACT(kind),
+    output: isDetailFlow(kind, assembly)
+      ? DETAIL_OUTPUT_CONTRACT
+      : guided
+        ? PAIR_OUTPUT_CONTRACT
+        : OUTPUT_CONTRACT(kind),
   };
 };
 

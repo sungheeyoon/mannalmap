@@ -3448,6 +3448,7 @@ export type Database = {
           match_id: string
           person_a: string
           person_b: string
+          request_kind: string
           run_id: string
           viewer_is_first: boolean
         }[]
@@ -4609,7 +4610,7 @@ export type Database = {
         }[]
       }
       request_news_is_recent: {
-        Args: { p_from: string; p_to: string }
+        Args: { p_from: string; p_kind: string; p_to: string }
         Returns: boolean
       }
       request_news_window: { Args: never; Returns: string }

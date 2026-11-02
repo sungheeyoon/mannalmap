@@ -21,6 +21,18 @@ export function statusOf(value: unknown): RequestStatus | null {
   return REQUEST_STATUSES.find((known) => known === value) ?? null;
 }
 
+/** 얼린 일감을 응답 뒤에 떠나보낸다 — 이미 떠났으면 문이 0행으로 답해 아무 일도 없다 */
+export function sendAfterResponse(requestId: string): void {
+  after(async () => {
+    try {
+      await sendAcceptedMatchReading(requestId);
+    } catch (thrown) {
+      // 여기까지 온 것은 우리가 못 적은 경우다. 복구기가 deadline 에 닫는다 — 까닭만 기록에 남긴다.
+      console.error('respond: sendAcceptedMatchReading', thrown);
+    }
+  });
+}
+
 export async function respondAndSend(
   client: SupabaseClient<Database>,
   requestId: string,
@@ -46,16 +58,7 @@ export async function respondAndSend(
    * **던지지 않는다.** 응답은 이미 나갔고 부르는 쪽이 없다. 실패하면 `submitFrozen` 이 시도를
    * 닫고, 결과 화면에 만드는 버튼이 돌아온다.
    */
-  if (status === 'accepted') {
-    after(async () => {
-      try {
-        await sendAcceptedMatchReading(requestId);
-      } catch (thrown) {
-        // 여기까지 온 것은 우리가 못 적은 경우다. 복구기가 deadline 에 닫는다 — 까닭만 기록에 남긴다.
-        console.error('respond: sendAcceptedMatchReading', thrown);
-      }
-    });
-  }
+  if (status === 'accepted') sendAfterResponse(requestId);
 
   return { ok: true, status };
 }

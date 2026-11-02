@@ -8,6 +8,11 @@ export const DETAIL_SCORE_MAY_DIFFER = '상세 분석에서는 점수가 달라�
 export const DETAIL_NO_CREDIT = '풀이권이 없어요. 충전 기능은 준비 중이에요.';
 export const DETAIL_WAITING = '상대의 동의를 기다리고 있어요.';
 export const DETAIL_WAITING_NOTE = '동의하면 풀이권 1장으로 만들어요.';
+export const DETAIL_ACTION_CANCEL = '상세 요청 취소';
+export const DETAIL_CANCEL_TITLE = '상세 요청을 취소할까요?';
+export const DETAIL_CANCEL_NOTE = '잡아 둔 풀이권 1장이 돌아와요. 대화는 그대로예요.';
+export const DETAIL_CANCELLED = '상세 요청을 취소했어요';
+export const DETAIL_CONSENT_ENDED = '동의가 끝나 만들지 않았어요. 풀이권은 돌아왔어요.';
 export const DETAIL_EXPIRED_NOTE = '72시간 안에 답이 없으면 풀이권은 돌아와요.';
 export const DETAIL_ACTION_CONSENT = '상세 궁합 함께 만들기';
 export const DETAIL_CONSENT_WINDOW = '72시간이 지나면 요청은 사라지고 대화는 그대로예요.';
@@ -21,7 +26,6 @@ export const DETAIL_ACTION_RETRY = '다시 요청 · 풀이권 1장';
 export const DETAIL_ACTION_RETRY_HOLDS = '다시 만들기 · 풀이권 1장';
 export const DETAIL_INPUT_CHANGED = '출생 정보가 바뀌어 만들지 않았어요. 새로 요청해 주세요.';
 export const DETAIL_ROOM_CLOSED = '대화가 닫혀 상세 궁합을 요청할 수 없어요.';
-export const DETAIL_REJECTED = '이 상세 궁합은 다시 요청할 수 없어요.';
 
 /** 인연 카드 · 목록 · 방의 글자 — 프롭 · 판정으로도 쓰여 여기 산다. 화면 글자 「취소」는 대장 matching-09 */
 export const TALK_UNANSWERED_LABEL = '답하지 않은 대화';

@@ -106,7 +106,7 @@ export function ShelfRow({ book, match = null, from, kind }: { book: Book; match
   const [a = null, b = null] = book.subjects;
   return (
     <CoverLink href={book.href} from={from} className={ROW} current={ROW_CURRENT}>
-      <MiniCover subjects={book.single ? [a] : [a, b]} score={book.score} />
+      <MiniCover subjects={book.single ? [a] : book.subjects} score={book.score} />
       <span className="flex min-w-0 flex-1 flex-col gap-1">
         {kind !== undefined && <span className={KIND_TAG}>{kind}</span>}
         <span className="flex min-w-0 items-center gap-2">
@@ -264,7 +264,7 @@ export function PairCover({
 
       <span className="relative flex items-center justify-between gap-2">
         <span className="flex -space-x-2">
-          {[a, b].map((one, index) => (
+          {book.subjects.map((one, index) => (
             <span
               key={index}
               className={`${elementScope(one?.element ?? null)} grid size-8 place-items-center rounded-full bg-surface ring-2 ring-[var(--tile)]`}

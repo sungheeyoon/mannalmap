@@ -151,3 +151,22 @@ describe('인연 기록', () => {
     expect(summary).toEqual({ count: 1, hint: '지난 요청 1' });
   });
 });
+
+describe('인연 탭의 기록 수와 기록 화면의 수 (ADR 0215)', () => {
+  const talk = (matchId: string): InboxMatch => ({ ...made(matchId, matchId), requestKind: 'talk' });
+  const requests = { ok: true as const, value: { requests: [], blocked: 0 } };
+
+  it('글 없는 대화는 안 세고, 글이 선 대화와 옛 인연은 센다 — 화면의 책 + 만드는 중과 같다', () => {
+    const all = [made('old', '옛'), talk('talk-done'), talk('talk-open')];
+    const readings = [match('talk-done')];
+    const summary = historySummary({ ok: true, value: all }, requests, { finishedMatchIds: ['talk-done'] });
+    expect(summary?.count).toBe(matchBooks(readings).length + makingMatches(readings, all).length);
+    expect(summary?.count).toBe(2);
+  });
+
+  it('끝난 대화만 있어도 줄이 서서 신고 길에 닿는다', () => {
+    const summary = historySummary({ ok: true, value: [] }, requests, { endedTalks: 1 });
+    expect(summary?.count).toBe(1);
+    expect(summary?.hint).toContain('끝난 대화 1');
+  });
+});
