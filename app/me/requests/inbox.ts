@@ -14,7 +14,6 @@ import {
 
 import { supabaseOnServer } from '../../auth/server-client';
 import { dbFailure } from '../../db-error';
-import { talkIsOpen } from '../talk-switch';
 
 export type { Inbox, InboxMatch, InboxRequest, Requests };
 
@@ -92,12 +91,12 @@ export async function requestsForViewer(): Promise<Requests> {
 export async function inboxForViewer(): Promise<Inbox> {
   const supabase = await supabaseOnServer();
 
-  const [{ data, error }, talkOpen] = await Promise.all([supabase.rpc('my_notifications'), talkIsOpen(supabase)]);
+  const { data, error } = await supabase.rpc('my_notifications');
   if (error) throw dbFailure(error, 'inbox');
 
   const notificationRows = data ?? [];
   return {
-    notifications: notificationRows.flatMap((row) => notificationOf(row, talkOpen)),
+    notifications: notificationRows.flatMap(notificationOf),
     unread: notificationRows.filter((row) => row.read_at === null).length,
   };
 }

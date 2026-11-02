@@ -15,6 +15,9 @@ import { read, unread, type SkippableRead } from '../../db-error';
  * 정적으로 미리 그려지므로 서버에서 읽지 않는다(`site-header.tsx`).
  */
 
+/** 대화가 왔다는 소식 — 인연 탭이 안 세므로 종이 센다(ADR 0215) */
+const talkArrived = (row: { kind: string; match_id: string | null }) => row.kind === 'request_received' && row.match_id !== null;
+
 /**
  * 안 읽은 소식 수 — 요청이 왔다는 소식을 뺀다.
  *
@@ -26,21 +29,15 @@ export async function readUnreadNotifications(
 ): Promise<SkippableRead<number>> {
   const { data, error } = await client.rpc('my_notifications');
   if (error) return unread(error, 'my_notifications');
-  return read(bellCount((data ?? []).map((row) => ({ kind: row.kind, unread: row.read_at === null }))));
+  return read(bellCount((data ?? []).map((row) => ({ kind: talkArrived(row) ? 'talk_received' : row.kind, unread: row.read_at === null }))));
 }
 
 /** 답할 요청 수 — 받은 요청 중 아직 답하지 않은 것. 인연 탭의 딱지다 */
 export async function readRequestsToAnswer(
   client: SupabaseClient<Database>,
 ): Promise<SkippableRead<number>> {
-  const [{ data, error }, matches] = await Promise.all([client.rpc('my_match_requests'), client.rpc('my_matches')]);
+  const { data, error } = await client.rpc('my_match_requests');
   if (error) return unread(error, 'my_match_requests');
-  if (matches.error) return unread(matches.error, 'my_matches');
   /* 답하지 않은 대화는 답할 일이 아니다 — 그냥 두어도 된다(ADR 0215). 딱지가 영영 안 꺼지면 재촉이 된다 */
-  const asked = (data ?? []).map((row) => ({
-    direction: row.direction,
-    status: row.status,
-    counterpartUserId: row.counterpart_user_id,
-  }));
-  return read(answerCount(withoutTalks(asked, (matches.data ?? []).map((row) => row.partner_user_id), false)));
+  return read(answerCount(withoutTalks(data ?? [])));
 }

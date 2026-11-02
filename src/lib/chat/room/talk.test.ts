@@ -7,6 +7,7 @@ const request = (over: Partial<Parameters<typeof talkLineOf>[1][number]>) => ({
   direction: 'received' as const,
   counterpartUserId: 'u1',
   status: 'pending',
+  kind: 'talk',
   ...over,
 });
 
@@ -34,15 +35,11 @@ describe('대화의 판정', () => {
     expect(foldUnanswered(rooms, [])).toEqual({ rooms, unanswered: [] });
   });
 
-  it('인연이 있는 상대의 답 전 요청은 띠 · 딱지에서 빠지고, 인연 없는 옛 요청은 남는다', () => {
-    const old = request({ counterpartUserId: 'u9' });
-    expect(withoutTalks([request({}), old], ['u1'], false)).toEqual([old]);
-  });
-
-  it('성립한 줄은 켠 동안만 뺀다 — 꺼진 동안 인연 기록은 그대로다', () => {
-    const accepted = request({ status: 'accepted' });
-    expect(withoutTalks([accepted], ['u1'], false)).toEqual([accepted]);
-    expect(withoutTalks([accepted], ['u1'], true)).toEqual([]);
+  it('옛 요청은 대화가 아니다 — 수락 카드 · 인연 기록에 남는다', () => {
+    const old = request({ counterpartUserId: 'u9', kind: 'bundled' });
+    expect(talkLineOf('u9', [old])).toBeNull();
+    expect(withoutTalks([request({}), old])).toEqual([old]);
+    expect(withoutTalks([request({ status: 'accepted' })])).toEqual([]);
   });
 
   it('답 전 보낸 쪽은 첫 말 뒤에 기다린다 — 첫 말 전 · 상대가 답한 뒤 · 받은 쪽은 아니다', () => {

@@ -1,5 +1,5 @@
 /**
- * 방 상단 · 공용 카드의 글자 — 대장 matching-18 확인 전. 판정(`detail.ts`)이 고르므로 `../copy`(화면만 부른다)에 못 든다.
+ * 방 상단 · 공용 카드의 글자 — 대장 matching-19 확인 전. 판정(`detail.ts`)이 고르므로 `../copy`(화면만 부른다)에 못 든다.
  * **공용 카드라 점수 · 결론 · 구매자를 안 적는다.** 재시도는 차감을 먼저 말한다(ADR 0215).
  */
 export const DETAIL_INTRO = '두 사람의 사주를 더 자세히 풀어 함께 봐요.';
@@ -28,7 +28,7 @@ export const TALK_UNANSWERED_LABEL = '답하지 않은 대화';
 export const TALK_WAIT_REPLY = '상대가 답하면 이어서 보낼 수 있어요.';
 export const TALK_WITHDRAW_LABEL = '대화 취소';
 export const TALK_WITHDRAW_TITLE = '이 대화를 취소할까요?';
-export const TALK_WITHDRAW_NOTE = '취소하면 이 사람과 다시 대화할 수 없어요.';
+export const TALK_WITHDRAW_NOTE = '취소하면 이 대화는 다시 열 수 없어요.';
 export const TALK_WITHDRAWN = '대화를 취소했어요';
 export const DETAIL_DOOR_LABEL = '상세 궁합';
 export const DETAIL_NOT_YET = '아직 상세 궁합이 없어요. 대화방에서 열 수 있어요.';
@@ -38,3 +38,6 @@ export const TALK_SCORE_INFO = '일주 관계 · 필요한 기운 · 오행 균�
 export const TALK_START_LABEL = '대화 시작';
 export const TALK_START_TITLE = '님과 대화를 시작할까요?';
 export const TALK_START_NOTE = '상대가 답하기 전에는 첫 말 하나만 보낼 수 있어요.';
+export const ENDED_TALKS_TITLE = '끝난 대화';
+export const ENDED_TALKS_NOTE = '대화가 끝난 뒤 90일까지 신고할 수 있어요.';
+export const ENDED_TALK_REPORT = '신고';

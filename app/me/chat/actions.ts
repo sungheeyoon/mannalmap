@@ -1,6 +1,6 @@
 'use server';
 
-import { TOO_LONG_TEXT, checkBody, sendOutcomeOf } from '@/src/lib/chat';
+import { TOO_LONG_TEXT, checkBody, messageTimeLabel, sendOutcomeOf } from '@/src/lib/chat';
 import { rpcArgs } from '@/src/lib/db';
 
 import { supabaseOnServer } from '../../auth/server-client';
@@ -83,6 +83,22 @@ export async function requestMatchDetail(
   if (error) return { ok: false, message: userFacingDbMessage(error, 'request_match_detail') };
   refresh('requests-changed');
   return { ok: true, iAmBuyer: (data ?? [])[0]?.i_am_buyer === true, credits: 'moved' };
+}
+
+/** 끝난 대화에서 고를 상대의 말 — 읽기만 한다. 자기 방 · 보존 90일 안은 문이 잰다(ADR 0215). 최근 것이 앞이다 */
+export async function endedTalkMessages(
+  matchId: string,
+): Promise<{ ok: true; messages: readonly { id: string; body: string; time: string }[] } | { ok: false; message: string }> {
+  const supabase = await supabaseOnServer();
+  const { data, error } = await supabase.rpc('my_ended_talk_messages', { p_match_id: matchId });
+  if (error) return { ok: false, message: userFacingDbMessage(error, 'my_ended_talk_messages') };
+  return {
+    ok: true,
+    messages: (data ?? [])
+      .filter((row) => !row.mine)
+      .sort((a, b) => b.created_at.localeCompare(a.created_at))
+      .map((row) => ({ id: row.message_id, body: row.body, time: messageTimeLabel(row.created_at) })),
+  };
 }
 
 export async function reportChatMessage(

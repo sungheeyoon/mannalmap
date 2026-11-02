@@ -22,7 +22,8 @@ export function withFrom(href: string, from: 'history' | 'news'): string {
  */
 export function makingMatches(readings: readonly ReadingEntry[], matches: readonly InboxMatch[]): readonly InboxMatch[] {
   const made = new Set(readings.flatMap((entry) => (entry.kind === 'match' && entry.matchId !== null ? [entry.matchId] : [])));
-  return matches.filter((match) => !made.has(match.matchId));
+  /* 글 없는 대화는 만드는 중이 아니다 — 만드는 중인 상세는 방이 말한다(ADR 0215) */
+  return matches.filter((match) => match.requestKind !== 'talk' && !made.has(match.matchId));
 }
 
 /**
@@ -91,7 +92,8 @@ export function historySummary(
   matches: Skippable<readonly InboxMatch[]>,
   requests: Skippable<Requests>,
 ): HistorySummary | null {
-  const made = matches.ok ? matches.value.length : null;
+  /* 대화는 인연 궁합이 아니다 — 방이 든다(ADR 0215). 글이 선 대화까지 세려면 글 목록이 드는데 이 줄은 그것을 안 읽는다 */
+  const made = matches.ok ? matches.value.filter((match) => match.requestKind !== 'talk').length : null;
   const past = requests.ok ? (({ sent, decided }) => sent.length + decided.length)(pastRequests(requests.value)) : null;
   const count = (made ?? 0) + (past ?? 0);
   if (count === 0) return null;
@@ -100,6 +102,6 @@ export function historySummary(
     (part) => part !== null,
   );
   /* `my_matches` 는 최근 것이 앞이다 */
-  const latest = matches.ok ? (matches.value[0]?.nickname ?? '') : '';
+  const latest = matches.ok ? (matches.value.find((match) => match.requestKind !== 'talk')?.nickname ?? '') : '';
   return { count, hint: latest === '' ? parts.join(' · ') : `${parts.join(' · ')} — 최근 ${latest}` };
 }

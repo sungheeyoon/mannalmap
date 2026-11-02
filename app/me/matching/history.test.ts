@@ -31,6 +31,7 @@ const match = (id: string, partner: string | null = id) => entry({ kind: 'match'
 
 const made = (matchId: string, nickname: string): InboxMatch => ({
   matchId,
+  requestKind: 'bundled',
   partnerUserId: `u-${matchId}`,
   nickname,
   intro: null,
@@ -45,6 +46,7 @@ const made = (matchId: string, nickname: string): InboxMatch => ({
 
 const request = (over: Partial<InboxRequest>): InboxRequest => ({
   requestId: 'r',
+  kind: 'bundled',
   direction: 'sent',
   counterpartUserId: 'u',
   nickname: '누군가',

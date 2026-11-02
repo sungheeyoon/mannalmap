@@ -49,13 +49,13 @@ describe('꺼진 동안의 글자', () => {
     read_at: null,
   } as unknown as RpcRow<'my_notifications'>;
 
-  it('받은 요청 소식은 끈 동안 옛 문장 · 인연 탭이고, 켜면 대화 문장 · 채팅이다', () => {
+  it('옛 받은 소식은 옛 문장 · 인연 탭이고, 인연을 든 소식은 대화 문장 · 그 방이다', () => {
     const off = notificationOf(row)[0];
     expect(off?.text).toContain('상세 궁합');
     expect(off?.href).toBe('/me/matching');
-    const on = notificationOf(row, true)[0];
-    expect(on?.text).toBe('지영 님이 대화를 시작했어요');
-    expect(on?.href).toBe('/me/chat');
+    const talk = notificationOf({ ...row, match_id: 'm1' })[0];
+    expect(talk?.text).toBe('지영 님이 대화를 시작했어요');
+    expect(talk?.href).toBe('/me/chat/m1');
   });
 
   it('상세 요청 소식은 그 방으로 간다', () => {
