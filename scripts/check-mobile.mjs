@@ -79,7 +79,7 @@ const hasColumns = (row, names) => names.filter((name) => !(name in row));
 const MOBILE_RPCS = [
   'acknowledge_warning', 'add_my_photo', 'block_user', 'cancel_match_request', 'complete_signup', 'create_managed_person',
   'create_pair_for_reading', 'current_beta_schedule', 'leave_reading_feedback', 'mark_chat_read', 'mark_notifications_read',
-  'mark_reading_ready_read', 'match_talk_open', 'move_my_photo', 'my_adult_check', 'my_chat_messages', 'my_chat_rooms', 'my_discovery_board', 'my_ended_talk_messages', 'my_ended_talks', 'my_last_reading_run',
+  'mark_reading_ready_read', 'match_talk_open', 'move_my_photo', 'request_match_detail', 'my_adult_check', 'my_chat_messages', 'my_chat_rooms', 'my_discovery_board', 'my_ended_talk_messages', 'my_ended_talks', 'my_last_reading_run',
   'my_match_detail_state', 'my_match_requests', 'my_match_scope', 'my_matches', 'my_notifications', 'my_passed_connections', 'my_person_slots', 'my_photos',
   'my_reading', 'my_reading_credits', 'my_reading_orders', 'my_readings', 'my_running_readings', 'my_service_survey', 'my_suspension',
   'my_warning_notice', 'nickname_is_available', 'pair_relation_of', 'photo_at', 'remove_my_photo', 'replace_my_photo',
