@@ -1,5 +1,5 @@
-import { RELATION_NAMES, charactersIn, hasSajuTerm, type CheckFinding } from './check';
-import { readingBody } from './display';
+import { type CheckFinding } from './check';
+import { SEAT_NAMES, readingBody } from './display';
 import { READING_POLICY, promptVersionOf, type ReadingOutput } from './policy';
 import { CONTROL, DETAIL_ASSEMBLY, type PromptAssembly } from './prompt';
 
@@ -48,24 +48,69 @@ export const withDiscovery = (markdown: string, discovery: string): string => {
   return line === '' ? markdown : `${line}\n\n${markdown.trimStart()}`;
 };
 
+/** 기둥을 부르는 말 — 한글 읽기는 이 말 곁에 있어야 기둥으로 읽는다 */
+const PILLAR_WORDS = '(?:일주|월주|년주|연주|시주|기둥|간지)';
+/** 한글 읽기의 앞뒤 경계 — 다른 낱말의 조각(「갑자기」)이 아니고, 조사까지만 붙는다 */
+const WORD_START = '(?<![가-힣])';
+const WORD_END = '(?=$|[^가-힣]|(?:은|는|이|가|을|를|의|에|와|과|로|으로|예요|이에요)(?![가-힣]))';
+
+type SeatPillars = { readonly seat: string; readonly names: readonly string[]; readonly readings: readonly string[] };
+
+/** 모델에 보낸 자료에서 자리마다 기둥을 읽는다 — 우리가 답을 안다. 자료를 못 읽으면 할 말이 없다(없는 근거로 막지 않는다) */
+const seatPillarsIn = (evidenceText: string): readonly SeatPillars[] => {
+  let charts: Record<string, { pillars?: Record<string, { name?: unknown; ko?: unknown } | null> } | undefined>;
+  try {
+    charts = (JSON.parse(evidenceText) as { charts?: typeof charts }).charts ?? {};
+  } catch {
+    return [];
+  }
+  const ofSeat = (seat: string, key: 'a' | 'b'): SeatPillars => {
+    const pillars = (['year', 'month', 'day', 'hour'] as const).map((at) => charts[key]?.pillars?.[at] ?? null);
+    const strings = (pick: 'name' | 'ko') =>
+      pillars.flatMap((pillar) => (typeof pillar?.[pick] === 'string' ? [pillar[pick] as string] : []));
+    return { seat, names: strings('name'), readings: strings('ko') };
+  };
+  return [ofSeat(SEAT_NAMES.first, 'a'), ofSeat(SEAT_NAMES.second, 'b')];
+};
+
 /**
- * 상세 궁합에만 더 적는 검사 — 전부 품질이다(ADR 0163). 글은 내보낸다 — PRD 매칭 §6.6 의 15 가 말하는 「차단」은 아직 아니고, 막을지는 G-130 이 든다. **옛 흐름이 쓰는 `checkReading` 은 안 고친다.**
+ * 글이 그 기둥을 **그 사람의 자리로** 썼는가 — 소리가 같은 일상어(기사 · 임신 · 신사 · 무인)를 걸지 않게 좁혔다.
  *
- * 있는 자를 그대로 쓴다 — 간지 한자(`charactersIn`)와 표에서 지은 관계 이름(`RELATION_NAMES`). 「갑」처럼 한글 읽기만 쓴 것은 못 잡는다 —
- * 「갑자기」 · 「정화」 같은 일상어와 소리가 같아 짐작으로 막지 않는다.
+ * - 한자 두 글자는 그대로 찾는다. 일상어와 겹치지 않는다.
+ * - 한글 읽기는 곁에 기둥을 부르는 말이 있거나(「갑자 일주」 · 「일주는 갑자」) 그 사람의 호칭에 바로 붙을 때(「두번째님의 갑자」)만이다.
+ */
+const namesPillar = (text: string, { seat, names, readings }: SeatPillars): boolean =>
+  names.some((name) => text.includes(name)) ||
+  readings.some((reading) =>
+    [
+      `${WORD_START}${reading}\\s*${PILLAR_WORDS}`,
+      `${PILLAR_WORDS}(?:은|는|이|가|인|:)?\\s*${reading}${WORD_END}`,
+      `${seat}의\\s*${reading}${WORD_END}`,
+    ].some((pattern) => new RegExp(pattern).test(text)),
+  );
+
+/**
+ * 상세 궁합에만 더 재는 검사. **옛 흐름이 쓰는 `checkReading` 은 안 고친다** — 부르는 쪽이 상세일 때만 이 답을 더한다.
  *
- * **직접 언급만 잰다.** 글에서 상대 글자를 유추할 위험이 있고, 직접 언급 금지만 검증했으며, 복원 불가를 보장하지 않는다(운영자 2026-11-02).
+ * - 발견 한 줄이 비면 품질로 적고 줄 없이 저장한다(ADR 0163).
+ * - 실제 기둥 두 글자를 직접 쓰면 **막는다**(조율자 2026-11-02, PRD 매칭 §6.6 의 15, ADR 0163 추기). 있는 실패 길로 가 풀이권이 복원된다.
  *
- * @param markdown `withDiscovery` 로 접은 글. 근거 절은 안 본다 — 글자를 대라고 시킨 자리다.
+ * 한 글자로 쓴 것 · 관계 이름 · 오행으로 돌려 쓴 것은 잡지 않는다. **글에서 상대 글자를 유추할 위험이 있고, 직접 언급 금지만 검증했으며,
+ * 복원 불가를 보장하지 않는다**(운영자 2026-11-02).
+ *
+ * @param markdown `withDiscovery` 로 접은 글. 근거 절은 안 본다 — 글자를 대라고 시킨 자리이고 인연 궁합은 DB 문이 자른다.
+ * @param evidenceText 실제로 모델에 보낸 자료 그대로
  */
 export const detailFindingsOf = ({
   markdown,
   discovery,
   metaphor,
+  evidenceText,
 }: {
   markdown: string;
   discovery: string;
   metaphor: string;
+  evidenceText: string;
 }): CheckFinding[] => {
   const findings: CheckFinding[] = [];
   if (discovery.trim() === '') {
@@ -73,11 +118,10 @@ export const detailFindingsOf = ({
   }
 
   const shown = `${readingBody(markdown)}\n${metaphor}`;
-  const characters = charactersIn(shown).length;
-  const relations = RELATION_NAMES.filter((name) => hasSajuTerm(shown, name)).length;
-  if (characters > 0 || relations > 0) {
+  const named = seatPillarsIn(evidenceText).filter((pillars) => namesPillar(shown, pillars)).length;
+  if (named > 0) {
     /* 글자 자체는 적지 않는다 — 기록에 명식을 남기지 않는다 */
-    findings.push({ code: 'pillar-characters-shown', detail: `간지 한자 ${characters}종 · 관계 이름 ${relations}개` });
+    findings.push({ code: 'pillar-named-in-reading', detail: `기둥을 직접 쓴 자리 ${named}곳` });
   }
   return findings;
 };

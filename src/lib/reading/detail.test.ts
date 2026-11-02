@@ -10,6 +10,7 @@ import {
   LEGACY_PAIR_ASSEMBLY,
   READING_POLICY,
   READING_PROMPTS,
+  blockingFindingsOf,
   checkReading,
   detailFindingsOf,
   isDetailPromptVersion,
@@ -144,32 +145,80 @@ describe('발견 한 줄은 본문 맨 앞 문단으로 접힌다', () => {
   });
 });
 
-describe('상세 궁합의 품질 검사 — 직접 언급만 잰다', () => {
+describe('상세 궁합의 직접 언급 — 실제 기둥 두 글자를 그 사람 자리로 쓰면 막는다', () => {
+  const evidenceText = JSON.stringify({
+    charts: {
+      a: { pillars: { year: { name: '庚午', ko: '경오' }, month: { name: '辛巳', ko: '신사' }, day: { name: '甲子', ko: '갑자' }, hour: null } },
+      b: { pillars: { year: { name: '壬申', ko: '임신' }, month: { name: '己巳', ko: '기사' }, day: { name: '丁丑', ko: '정축' }, hour: { name: '戊寅', ko: '무인' } } },
+    },
+  });
   const clean = {
-    markdown: '## 소제목\n\n말을 먼저 걸어요.\n\n### 근거 (검사용)\n\n甲子 자오충',
+    markdown: '## 소제목\n\n말을 먼저 걸어요.\n\n### 근거 (검사용)\n\n甲子 갑자 일주 자오충',
     discovery: '한 줄',
     metaphor: '비유',
+    evidenceText,
   };
+  const codes = (markdown: string, more: Partial<typeof clean> = {}) =>
+    detailFindingsOf({ ...clean, markdown, ...more }).map(({ code }) => code);
 
   it('근거 절의 글자는 안 걸린다', () => {
     expect(detailFindingsOf(clean)).toEqual([]);
   });
 
   it.each([
-    ['본문의 한자', { ...clean, markdown: `甲 쪽이에요.\n\n${clean.markdown}` }],
-    ['접힌 줄의 관계 이름', { ...clean, markdown: withDiscovery(clean.markdown, '자오충이 걸려요.') }],
-    ['비유의 한자', { ...clean, metaphor: '子 같은 사이' }],
-  ])('%s 은 품질로 적고 글자는 적지 않는다', (_, input) => {
-    const [finding] = detailFindingsOf(input);
-    expect(finding.code).toBe('pillar-characters-shown');
-    expect(finding.detail).not.toMatch(/[甲子]|자오/);
+    ['기둥 한자', '丁丑 쪽이에요.'],
+    ['읽기 + 기둥 말', '두 사람 가운데 정축 일주는 조용해요.'],
+    ['기둥 말 + 읽기', '일주는 갑자예요.'],
+    ['호칭 + 읽기', '두번째님의 정축은 차분해요.'],
+    ['접힌 발견 줄', withDiscovery('말이 없어요.', '첫번째님의 갑자가 먼저 움직여요.')],
+  ])('%s 은 막고 기록에 글자를 안 적는다', (_, markdown) => {
+    const findings = detailFindingsOf({ ...clean, markdown });
+    expect(findings.map(({ code }) => code)).toEqual(['pillar-named-in-reading']);
+    expect(blockingFindingsOf(findings)).toHaveLength(1);
+    expect(findings[0].detail).not.toMatch(/丁|丑|정축|갑자/);
   });
 
-  it('빈 발견 줄을 적는다', () => {
-    expect(detailFindingsOf({ ...clean, discovery: ' ' }).map(({ code }) => code)).toEqual(['discovery-out-of-contract']);
+  it('비유의 기둥 한자도 막는다', () => {
+    expect(codes('글이에요.', { metaphor: '甲子 같은 사이' })).toEqual(['pillar-named-in-reading']);
   });
 
-  it('일상어를 간지로 안 친다', () => {
-    expect(detailFindingsOf({ ...clean, markdown: '갑자기 정화되는 기분이에요. 먼저 인사해 보세요.' })).toEqual([]);
+  it.each([
+    '갑자기 말을 걸어요.',
+    '기사를 읽다가 임신 소식을 전해요.',
+    '신사답게 굴어요. 무인 매장에서 만나요.',
+    '첫번째님은 기사를 써요.',
+    '두번째님이 신사 같아요.',
+    '일주는 갑자기 달라지지 않아요.',
+    '두번째님의 정축제 이야기예요.',
+  ])('일상어는 막지 않는다 — %s', (markdown) => {
+    expect(codes(markdown)).toEqual([]);
+  });
+
+  it('자료에 없는 기둥은 안 걸린다 — 실제 기둥만 본다', () => {
+    expect(codes('계해 일주는 조용해요. 乙亥 쪽이에요.')).toEqual([]);
+  });
+
+  it('한 글자 · 관계 이름 · 오행은 잡지 않는다 — 간접 표현은 재지 않는다', () => {
+    expect(codes('甲 쪽이에요. 자오충이 걸려요. 금이 셋이에요.')).toEqual([]);
+  });
+
+  it('자료를 못 읽으면 막지 않는다', () => {
+    expect(codes('丁丑 쪽이에요.', { evidenceText: '자료 아님' })).toEqual([]);
+  });
+
+  it('빈 발견 줄은 품질로만 적는다', () => {
+    const findings = detailFindingsOf({ ...clean, discovery: ' ' });
+    expect(findings.map(({ code }) => code)).toEqual(['discovery-out-of-contract']);
+    expect(blockingFindingsOf(findings)).toEqual([]);
+  });
+
+  it('옛 흐름의 검사는 기둥을 써도 막지 않는다 — 상세에서만 고른다', () => {
+    const verdict = checkReading({
+      kind: 'match',
+      output: { score: 70, metaphor: '비유', markdown: '## 소제목\n\n丁丑 쪽이에요. 정축 일주예요.' },
+      evidenceText,
+      secrets: [],
+    });
+    expect(verdict.ok ? [] : blockingFindingsOf(verdict.failures)).toEqual([]);
   });
 });
