@@ -201,8 +201,8 @@ as $$ select interval '24 hours' $$;
 
 revoke all on function public.request_news_window() from public, anon, authenticated, service_role;
 
-/** 이 창에 이미 요청 소식이 갔는가 — 대화 · 상세가 한 계수이고 거둔 요청의 소식도 센다. 넘는 것은 방 안 상태로만 보인다 */
-create function public.request_news_is_recent(p_to uuid, p_from uuid)
+/** 이 창에 같은 종류의 요청 소식이 갔는가 — 대화와 상세는 따로 센다. 답 뒤 첫 상세는 동의할 기회라 소식이 간다. 거둔 요청의 소식도 센다 */
+create function public.request_news_is_recent(p_to uuid, p_from uuid, p_kind text)
 returns boolean
 language sql
 stable
@@ -212,12 +212,12 @@ as $$
   select exists (
     select 1 from public.notification n
     join public.match_request q on q.id = n.request_id
-    where n.user_id = p_to and n.kind in ('request_received', 'detail_requested') and q.requester_user_id = p_from
+    where n.user_id = p_to and n.kind = p_kind and q.requester_user_id = p_from
       and n.created_at > now() - public.request_news_window()
   );
 $$;
 
-revoke all on function public.request_news_is_recent(uuid, uuid) from public, anon, authenticated, service_role;
+revoke all on function public.request_news_is_recent(uuid, uuid, text) from public, anon, authenticated, service_role;
 
 /** 답 전 첫 말의 푸시는 그 대화의 요청 소식이 갔을 때만 — 거두고 다시 열어 푸시로 울리는 길을 닫는다. 답장은 안 묶는다 */
 create function public.first_word_is_quiet(p_room_id uuid, p_sender uuid)
@@ -468,7 +468,7 @@ begin
     returning id into talk_match;
   end if;
 
-  if not talk_opens or not public.request_news_is_recent(p_candidate_user_id, actor) then
+  if not talk_opens or not public.request_news_is_recent(p_candidate_user_id, actor, 'request_received') then
     insert into public.notification (user_id, kind, request_id, match_id)
     values (p_candidate_user_id, 'request_received', new_request, talk_match);
   end if;
@@ -1574,9 +1574,10 @@ begin
   end if;
 
   /**
-   * **정지로 닫힌 답 전 대화는 끝낸다**(ADR 0215) — 닫힌 채 살아 있는 요청을 안 남긴다. 말은 지우지 않고 90일 보존을 따른다. 풀린 뒤 새로 시작할 수 있고 차단 · 시간당 횟수는 그대로다.
+   * **정지 · 탈퇴 신청으로 닫힌 답 전 대화는 끝낸다**(ADR 0215) — 닫힌 채 살아 있는 요청을 안 남기고 `rejected` 로 굳히지 않는다. 말은 지우지 않고 90일 보존을 따른다.
+   * 풀리거나 철회한 뒤 새로 시작할 수 있고 차단 · 시간당 횟수는 그대로다. 호출부의 요청 정리보다 이 트리거가 먼저 돈다.
    */
-  if new.status = 'suspended' then
+  if new.status in ('suspended', 'deletion_requested') then
     perform public.close_talk_room(q.id, new.id)
     from public.match_request q
     where q.kind = 'talk' and q.status = 'pending' and new.id in (q.requester_user_id, q.addressee_user_id);
@@ -2163,7 +2164,7 @@ begin
   )
   returning id into new_request;
 
-  if not public.request_news_is_recent(partner, actor) then
+  if not public.request_news_is_recent(partner, actor, 'detail_requested') then
     insert into public.notification (user_id, kind, request_id, match_id)
     values (partner, 'detail_requested', new_request, p_match_id);
   end if;

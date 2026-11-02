@@ -12,7 +12,7 @@
 --
 -- 두 세션의 진짜 경합은 pgTAP 이 못 만든다 — 그 값은 PR 에 적었다(psql 두 세션을 나란히 돌렸다).
 begin;
-select plan(283);
+select plan(292);
 
 create or replace function pg_temp.participant(mail text, who text, summary jsonb)
 returns uuid
@@ -339,7 +339,7 @@ select pg_temp.acting((select lee from folks));
 select ok((select d.request_id = pg_temp.got('detail') and not d.i_am_buyer from public.request_match_detail(pg_temp.got('m-kim-lee'), 'detail-key-0003') d),
   '두 사람이 함께 청하면 늦은 쪽은 앞 요청을 받고 구매자가 아니다');
 select is((select pg_temp.credits_of(lee) from folks), array[0, 0, 0], '늦은 쪽은 차감이 없다');
-select is((select count(*)::int from public.my_notifications() where kind = 'detail_requested'), 0, '24시간 안의 둘째 요청 소식은 묶인다 — 방 안 상태로만 보인다');
+select is((select count(*)::int from public.my_notifications() where kind = 'detail_requested'), 1, '답 뒤 첫 상세 요청은 대화 소식과 따로 세어 소식이 간다');
 
 reset role;
 select is((select count(*)::int from public.reading_credit_use where request_id = pg_temp.got('detail') and state = 'reserved' and user_id = (select kim from folks)), 1, '장부의 예약은 구매자 한 줄이다');
@@ -867,9 +867,27 @@ select is((select count(*)::int from public.reading_credit_use where user_id = (
 
 -- ── 9. 다시 끔 · 권한 ──────────────────────────────────────────────────────
 
+-- 탈퇴 신청 철회 — 답 전 대화는 정지 해제와 같이 끝나고 새로 시작한다
 set local role authenticated;
 select pg_temp.acting((select oh from folks));
+insert into seen select 'oh-park-0', public.request_match((select park from folks));
+reset role;
+insert into seen select 'm-oh-park-0', pg_temp.match_of(oh, park) from folks;
+set local role authenticated;
+select pg_temp.acting((select park from folks));
+select ok(public.request_account_deletion(), '받은 사람이 답 전에 탈퇴를 신청한다');
+reset role;
+select is((select status from public.match_request where id = pg_temp.got('oh-park-0')), 'cancelled', '탈퇴 신청은 답 전 대화를 rejected 로 굳히지 않는다');
+select ok((select ended_at is not null from public.match where id = pg_temp.got('m-oh-park-0')), '탈퇴 신청이 답 전 대화를 끝낸다');
+select is((select closed_reason from public.chat_room where match_id = pg_temp.got('m-oh-park-0')), 'declined', '탈퇴 신청으로 끝난 방도 같은 모양이다');
+select is((select count(*)::int from public.notification where request_id = pg_temp.got('oh-park-0') and kind = 'request_rejected'), 0, '보낸 사람에게 거절 소식이 안 간다');
+update public.app_user set status = 'active', deletion_requested_at = null where id = (select park from folks);
+set local role authenticated;
+select pg_temp.acting((select park from folks));
+select tests.set_discovery_participation(true, pg_temp.summary(2, 2, 2, 2, 0), tests.need());
+select pg_temp.acting((select oh from folks));
 insert into seen select 'oh-park', public.request_match((select park from folks));
+select isnt(pg_temp.got('oh-park'), pg_temp.got('oh-park-0'), '철회 뒤 새로 시작할 수 있다');
 reset role;
 insert into seen select 'm-oh-park', pg_temp.match_of(oh, park) from folks;
 select pg_temp.switch_to(false);
@@ -937,8 +955,14 @@ select throws_ok(format($$select * from public.request_match_detail(%L, 'oh-lee-
 reset role;
 select pg_temp.set_same(100);
 set local role authenticated;
+-- 상세끼리는 24시간에 1건 — 창이 지나면 다시 선다
+insert into seen select 'oh-lee-a', d.request_id from public.request_match_detail(pg_temp.got('m-oh-lee'), 'oh-lee-detail-a') d;
+select is(public.cancel_match_request(pg_temp.got('oh-lee-a')), 'cancelled', '상세를 취소한다');
+insert into seen select 'oh-lee-b', d.request_id from public.request_match_detail(pg_temp.got('m-oh-lee'), 'oh-lee-detail-b') d;
+select is(public.cancel_match_request(pg_temp.got('oh-lee-b')), 'cancelled', '다시 청해 또 취소한다');
 reset role;
-update public.notification set created_at = now() - interval '25 hours' where user_id = (select lee from folks) and kind = 'request_received' and request_id = pg_temp.got('oh-lee');
+select is((select count(*)::int from public.notification where request_id in (pg_temp.got('oh-lee-a'), pg_temp.got('oh-lee-b')) and kind = 'detail_requested'), 1, '같은 상대의 상세 소식은 창 안에 1건이다');
+update public.notification set created_at = now() - interval '25 hours' where user_id = (select lee from folks) and kind = 'detail_requested' and request_id = pg_temp.got('oh-lee-a');
 set local role authenticated;
 select pg_temp.acting((select oh from folks));
 insert into seen select 'oh-lee-detail', d.request_id from public.request_match_detail(pg_temp.got('m-oh-lee'), 'oh-lee-detail-1') d;
