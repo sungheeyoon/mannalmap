@@ -45,7 +45,8 @@ export function bookOf(entry: ReadingEntry): Book {
     뒷자리를 누가 차지하는가도 문이 정한다 — `match` 의 앞자리는 나, 뒷자리는 동의 당시 사본의 상대다.
     한 사람짜리는 뒷자리를 안 그린다. 모르는 자리는 `null`(회색 표지)이다.
   */
-  const subjects = single ? [of(entry.dayMasterA)] : [of(entry.dayMasterA), of(entry.dayMasterB)];
+  /* 상세 궁합은 문이 일간을 안 준다 — 「?」 둘을 세우지 않고 그림 자리를 비운다. 옛 인연의 모르는 자리는 그대로 회색이다 */
+  const subjects = entry.requestKind === 'detail' ? [] : single ? [of(entry.dayMasterA)] : [of(entry.dayMasterA), of(entry.dayMasterB)];
 
   return {
     key: `${entry.kind}:${entry.matchId ?? entry.personA ?? 'me'}:${entry.personB ?? ''}`,

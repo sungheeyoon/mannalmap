@@ -39,6 +39,7 @@ export function ReadingPanel({
   automatic = false,
   ask,
   betweenSummaryAndBody,
+  discoveryInCover = false,
   nicknames,
   tones,
   carry = null,
@@ -128,6 +129,8 @@ export function ReadingPanel({
   automatic?: boolean;
   ask?: ReactNode;
   betweenSummaryAndBody?: ReactNode;
+  /** 상세 궁합 — 발견 한 줄을 표지로(`Result`) */
+  discoveryInCover?: boolean;
   /** 두 사람 글의 자리 호칭을 바꿔 넣을 닉네임(`Result`) — 궁합 화면만 넘긴다 */
   nicknames?: PairNicknames;
   /**
@@ -314,6 +317,7 @@ export function ReadingPanel({
           isMock={isMock}
           tones={tones}
           betweenSummaryAndBody={betweenSummaryAndBody}
+          discoveryInCover={discoveryInCover}
           nicknames={nicknames}
           canShare={chrome.canShare}
         />
