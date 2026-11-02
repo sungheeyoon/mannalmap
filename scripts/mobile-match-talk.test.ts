@@ -51,10 +51,12 @@ describe('꺼진 동안의 값', () => {
     expect(body).toContain('refusedForSwitchMoved(error)');
   });
 
-  it('거절의 문장은 덱을 새로 세운 뒤에도 남는다 — 덱 안의 실패 줄은 함께 사라진다', () => {
+  it('거절의 문장은 새 덱의 첫 실패 줄이고, 덱이 아닌 자리(안내 · 쉼)에도 선다 — 움직임은 `mobile-deck-switch-moved.test.ts`', () => {
     const screen = read('mobile/src/app/me/matching/index.tsx');
-    expect(screen).toContain('await reread();\n      setSwitchMoved(message);');
-    expect(screen).toContain('deck.failure ?? switchMoved');
+    expect(screen).toContain('setSwitchMoved(message);\n      setRound(');
+    expect(screen).toContain('movedNotice: switchMoved');
+    expect(screen).not.toContain('deck.failure ?? switchMoved');
+    expect(screen.match(/\{lead\}\n\s+\{moved\}\n\s+<QuietPlace/g)).toHaveLength(2);
   });
 });
 

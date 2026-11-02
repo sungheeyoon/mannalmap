@@ -25,6 +25,10 @@
 
 새 코드가 없는 인자를 부르므로 마이그레이션이 먼저다(`docs/ops/runbook/deploy.md` 규약 넷의 2). **새 코드가 옛 DB 를 만나면 요청이 전부 닫힌다** — `PGRST202`, 줄 0, 돈 0. 화면에는 「일시적인 문제로 처리하지 못했어요. 잠시 뒤 다시 시도해 주세요.」가 선다. 돈이 안 나가는 쪽이지만 그 창 동안 인연 요청이 안 된다.
 
+**이 PR 은 나누지 않는다 — `docs/agents/delegation/permissions.md` 「예외 — 마이그레이션이 든 PR」의 분리 규칙(「넓히는 마이그레이션 PR 과 앱 PR 로 나눈다」)과 다르다**(조율자 결정). 까닭: 머지는 아무것도 내보내지 않고(`vercel.json` `deploymentEnabled: false`), DB 적용은 운영자의 별도 승인이며, 테스트 앱이 main 을 재야 한다. 그래서 **머지와 DB 적용의 차례가 그 규칙처럼 잠기지 않는다 — 운영 `db push` 와 확인 전 묶음 배포 금지, 어기면 인연 요청이 전부 `PGRST202` 로 닫힌다(돈은 안 나간다).** `docs/ops/runbook/deploy.md` 「묶음 배포」의 0 과 G-130 이 든다. 적용 순서는 `20270107090000` → `20270107100000`.
+
+**옛 서명의 `drop` 과 새 서명의 `create` 사이에 틈이 없다** — 저장소 관례대로 파일에 `begin` 을 안 적어도 CLI 가 파일 하나를 한 트랜잭션으로 돈다. 로컬 `supabase migration up --local`(CLI 2.115.0)로 쟀다: `drop` 뒤 6초 잠들고 `1/0` 으로 끝나는 파일을 돌리면, 잠든 사이 다른 세션에 함수가 1개 보이고 `AccessExclusiveLock` 이 쥐어져 있으며, 실패 뒤 함수가 그대로이고 이력 줄이 0 이다. 운영에 쓰는 `db push` 자체로는 안 쟀다.
+
 ## 잰 값 (2026-11-02, 로컬 스택, 진짜 PostgREST)
 
 | 상태 | 호출 | 답 | 남은 것 |
@@ -66,4 +70,4 @@
 
 ## 시험
 
-`supabase/tests/99_match_request_expected_kind.test.sql` · `supabase/tests/99_match_off_keeps_old_answers.test.sql` · `scripts/match-talk-stays-off.test.ts` · `app/me/discovery/actions.test.ts` · `scripts/check-mobile.mjs`.
+`supabase/tests/99_match_request_expected_kind.test.sql` · `supabase/tests/99_match_off_keeps_old_answers.test.sql` · `scripts/match-talk-stays-off.test.ts` · `scripts/mobile-match-talk.test.ts` · `scripts/mobile-deck-switch-moved.test.ts` · `app/me/discovery/actions.test.ts` · `scripts/check-mobile.mjs`.
