@@ -154,7 +154,7 @@ const rpc = {
   my_match_scope: (a) => scopeOf(a.p_match_id),
   my_matches: () => db.matches,
   // 스위치가 꺼진 지금의 답 — 상세 궁합은 아직 안 열렸다(ADR 0215)
-  my_match_detail_state: () => [{ state: 'before_purchase', request_id: null, i_am_buyer: false, expires_at: null, failure_code: null, failure_detail: null, credits_left: 5, talk_status: 'accepted', may_send: true, detail_open: false }],
+  my_match_detail_state: () => [{ state: 'before_purchase', request_id: null, i_am_buyer: false, expires_at: null, failure_code: null, failure_detail: null, credits_left: 5, talk_status: 'accepted', may_send: true, detail_open: false, consent_holds: false }],
   request_match_detail: () => [],
   my_discovery_board: () => db.board,
   my_passed_connections: () => db.passed,
