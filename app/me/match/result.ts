@@ -59,8 +59,8 @@ export type SharedResult = {
    * 자기 자리를 앞에 둔다.
    */
   readonly names: { readonly a: string; readonly b: string };
-  /** **동의 당시** 여덟 글자 — 지금 다시 세지 않는다(ADR 0071) */
-  readonly charts: Record<CompatSide, SharedPillarChart>;
+  /** **동의 당시** 여덟 글자 — 지금 다시 세지 않는다(ADR 0071). 켜진 흐름의 글은 글자를 안 내준다 — `null`(ADR 0215) */
+  readonly charts: Record<CompatSide, SharedPillarChart> | null;
   /** 요청이 잡아 둔 그때의 두 축 — 지금 다시 세지 않는다 */
   readonly suppliedToMe: string | null;
   readonly suppliedToThem: string | null;
@@ -80,7 +80,8 @@ export type SharedResult = {
  */
 type ResultOutcome =
   | { kind: 'ok'; result: SharedResult }
-  | { kind: 'closed'; message: string };
+  /** `chartless` — 글자 없이 그릴 수 있는 그 인연. 켜진 흐름에서 글이 서는 동안만 화면이 쓴다(ADR 0215) */
+  | { kind: 'closed'; message: string; chartless: SharedResult };
 
 /** `my_match_scope()` 가 내주는 한 줄 — **여기 없는 것이 안 나가는 것이다** */
 type ScopeRow = {
@@ -133,29 +134,25 @@ export async function matchResultForViewer(matchId: string): Promise<ResultOutco
    * 백필이 아직 안 닿은 옛 Match 다. 지금 값으로 메우면 두 사람이 동의한 적 없는 명식이
    * 보드에 서므로, 메우지 않고 그렇게 말하고 멈춘다.
    */
+  const base = {
+    matchId: scope.match_id,
+    partnerUserId: scope.partner_user_id,
+    partnerNickname: names.b,
+    partnerIntro: scope.partner_intro,
+    ...partnerPhotosOf(scope, focus),
+    names,
+    suppliedToMe: suppliedText(scope.supplied_to_me, 'toMe'),
+    suppliedToThem: suppliedText(scope.supplied_to_them, 'toThem'),
+    balanceLabel: balanceLabelOf(scope.balance_band),
+    createdAt: scope.created_at,
+    [granted]: true as const,
+  };
+
   if (mine === null || theirs === null) {
-    const message = '동의 당시의 여덟 글자를 찾지 못했습니다';
-    console.error('공유 결과를 닫는다', matchId, message);
-    return { kind: 'closed', message };
+    return { kind: 'closed', message: '동의 당시의 여덟 글자를 찾지 못했습니다', chartless: { ...base, charts: null } };
   }
 
-  return {
-    kind: 'ok',
-    result: {
-      matchId: scope.match_id,
-      partnerUserId: scope.partner_user_id,
-      partnerNickname: names.b,
-      partnerIntro: scope.partner_intro,
-      ...partnerPhotosOf(scope, focus),
-      names,
-      charts: { a: mine, b: theirs },
-      suppliedToMe: suppliedText(scope.supplied_to_me, 'toMe'),
-      suppliedToThem: suppliedText(scope.supplied_to_them, 'toThem'),
-      balanceLabel: balanceLabelOf(scope.balance_band),
-      createdAt: scope.created_at,
-      [granted]: true,
-    },
-  };
+  return { kind: 'ok', result: { ...base, charts: { a: mine, b: theirs } } };
 }
 
 /**

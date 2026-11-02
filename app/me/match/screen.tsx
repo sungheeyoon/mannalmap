@@ -58,7 +58,7 @@ export async function MatchScreen({
    * 시작했을 수 있고, 그러면 404 를 부르고도 200 이 나간다.
    */
   /* 내 닉네임은 글의 자리 호칭을 바꿔 넣을 때만 쓴다(`Result`). 닉네임은 가입 때 정해 늘 있다 — 못 읽은 드문 때는 빈 값이고, 그 자리는 호칭 그대로 선다(`withNicknames`) */
-  const [outcome, account, detailRead] = await Promise.all([
+  const [read, account, detailRead] = await Promise.all([
     matchResultForViewer(matchId),
     readAccount(supabase, ['status', 'nickname']),
     UUID.test(matchId) ? matchDetailForViewer(supabase, matchId) : null,
@@ -69,6 +69,12 @@ export async function MatchScreen({
   */
   const newFlow = detailRead?.detailOpen === true;
   const noReadingYet = newFlow && detailRead.state !== 'ready' && detailRead.state !== 'making';
+  /* 켜진 흐름의 글은 상대 글자를 내주지 않는다 — 글자 없음은 닫힘이 아니다 */
+  const outcome =
+    read !== null && read.kind === 'closed' && newFlow && !noReadingYet
+      ? ({ kind: 'ok', result: read.chartless } as const)
+      : read;
+  if (outcome?.kind === 'closed') console.error('공유 결과를 닫는다', matchId, outcome.message);
   const myNickname = account.row?.nickname ?? '';
 
   /**
@@ -118,7 +124,7 @@ export async function MatchScreen({
               intro: outcome.result.partnerIntro,
               photoUrls: outcome.result.partnerPhotoUrls,
               photoFocus: outcome.result.partnerPhotoFocus,
-              tone: STEM_INFO[outcome.result.charts.b.dayMaster].element,
+              tone: outcome.result.charts === null ? null : STEM_INFO[outcome.result.charts.b.dayMaster].element,
             }}
             menu={<ReportBlock userId={outcome.result.partnerUserId} nickname={outcome.result.partnerNickname} />}
           />
@@ -217,12 +223,12 @@ function Result({ result, myNickname, newFlow }: { result: SharedResult; myNickn
         bare
         nicknames={{ viewer: myNickname, partner: result.partnerNickname }}
         /* 켜진 흐름의 결과는 비유 → 점수 → 글이다 — 상대 여덟 글자 카드를 안 세운다(ADR 0215) */
-        betweenSummaryAndBody={newFlow ? undefined : <PillarPair charts={result.charts} names={result.names} />}
+        betweenSummaryAndBody={newFlow || result.charts === null ? undefined : <PillarPair charts={result.charts} names={result.names} />}
         /*
           표지는 두 사람의 일간이 비스듬히 만난다 — 동의로 열린 여덟 글자에서 읽으므로 새로 열리는 것이 없다
           (ADR 0012). 앞자리가 늘 보는 사람이다(`names.a`).
         */
-        tones={[STEM_INFO[result.charts.a.dayMaster].element, STEM_INFO[result.charts.b.dayMaster].element]}
+        tones={result.charts === null ? undefined : [STEM_INFO[result.charts.a.dayMaster].element, STEM_INFO[result.charts.b.dayMaster].element]}
       />
     </>
   );

@@ -29,6 +29,12 @@ describe('상세 궁합의 상태', () => {
     expect(detailDoorShown(null)).toBe(false);
   });
 
+  it('다시 꺼도 이미 선 동의 대기에는 입구가 남고, 그 밖의 꺼진 상태에는 없다', () => {
+    expect(detailDoorShown(detail({ detailOpen: false, state: 'awaiting_consent' }))).toBe(true);
+    expect(detailDoorShown(detail({ detailOpen: false, state: 'ready' }))).toBe(false);
+    expect(detailDoorShown(detail({ detailOpen: false, state: 'making' }))).toBe(false);
+  });
+
   it('구매 전은 값과 달라질 수 있음을 함께 말한다', () => {
     const panel = detailPanelOf(detail({}));
     expect(panel.action?.kind).toBe('buy');

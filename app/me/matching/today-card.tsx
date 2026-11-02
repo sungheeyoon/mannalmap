@@ -181,8 +181,8 @@ function FaceText({ card, onScoreInfo = null }: { card: DeckCard; onScoreInfo?: 
         </div>
         {onScoreInfo !== null ? (
           <div className="flex shrink-0 items-center gap-0.5">
-            <p className="flex items-baseline gap-1.5">
-              <span className="text-small font-semibold text-white/85">{TALK_SCORE_LABEL}</span>
+            <p className="flex flex-col items-end gap-0.5">
+              <span className="text-small font-semibold leading-4 text-white/85">{TALK_SCORE_LABEL}</span>
               <strong className="text-figure font-bold leading-none tracking-[-0.03em] tabular-nums">{card.previewScore}점</strong>
             </p>
             <button

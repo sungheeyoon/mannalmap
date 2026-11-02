@@ -88,9 +88,12 @@ export function matchDetailOf(row: DetailRow | undefined): MatchDetail | null {
   };
 }
 
-/** 방 상단의 작은 「상세 궁합」이 서는가 — 켜졌고 답을 받은 대화에만(답 전에는 청할 수 없다) */
+/**
+ * 방 상단의 작은 「상세 궁합」이 서는가 — 켜졌고 답을 받은 대화에만(답 전에는 청할 수 없다).
+ * **다시 꺼도 이미 선 동의 대기는 눌러 끝낼 수 있다**(runbook 「대화를 되돌리기」). 그 상태는 상세 줄에서만 나므로 옛 인연의 꺼진 화면은 그대로다.
+ */
 export const detailDoorShown = (detail: MatchDetail | null): detail is MatchDetail =>
-  detail !== null && detail.detailOpen && detail.replied;
+  detail !== null && detail.replied && (detail.detailOpen || detail.state === 'awaiting_consent');
 
 export type DetailAction = 'buy' | 'consent' | 'retry' | 'see';
 
