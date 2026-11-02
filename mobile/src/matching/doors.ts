@@ -10,7 +10,7 @@ import { publicCardFromRow } from '@matching/cards';
 import type { DeckCard } from '@matching/deck-card';
 import { withFrom } from '@matching/history';
 import { matchOf, notificationOf, requestOf, type Inbox, type InboxMatch, type Requests } from '@matching/inbox';
-import { refusedForCredits } from '@matching/requests';
+import { refusedForCredits, refusedForSwitchMoved } from '@matching/requests';
 import { activityBandOf } from '@presence';
 import { ELEMENTS, storedChartSnapshot, type ChartSnapshot } from '@saju';
 import type { PhotoFocus } from '@profile';
@@ -232,12 +232,16 @@ export async function restorePassed(
   }
 }
 
-/** 요청 — 인자는 상대 하나뿐이다. 풀이권으로 막혔으면 표를 단다(화면이 풀이권 창을 연다). 부름이 던졌으면 던진다 — 서버가 받았는지 모른다 */
-export async function requestMatch(candidateUserId: string): Promise<Done | { ok: false; message: string; outOfCredits: true }> {
+/**
+ * 요청 — 상대와 그린 흐름을 싣는다(ADR 0216). 스위치가 그 사이 켜졌으면 표를 단다(화면이 새 값으로 다시 그린다). 풀이권으로 막혔으면 표를 단다(화면이 풀이권 창을 연다).
+ * 부름이 던졌으면 던진다 — 서버가 받았는지 모른다
+ */
+export async function requestMatch(candidateUserId: string): Promise<Done | { ok: false; message: string; outOfCredits: true } | { ok: false; message: string; switchMoved: true }> {
   if (supabase === null) return { ok: false, message: NOT_READY };
-  const { error } = await supabase.rpc('request_match', { p_candidate_user_id: candidateUserId });
+  const { error } = await supabase.rpc('request_match', { p_candidate_user_id: candidateUserId, p_expected_kind: 'bundled' });
   if (error === null) return { ok: true };
   const message = userFacingDbMessage(error, 'request_match');
+  if (refusedForSwitchMoved(error)) return { ok: false, message, switchMoved: true };
   return refusedForCredits(error) ? { ok: false, message, outOfCredits: true } : { ok: false, message };
 }
 

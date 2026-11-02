@@ -14,7 +14,7 @@ vi.mock('../../keyed-client', () => ({ keyedClient: () => ({ rpc: async () => ({
 
 import { supabaseOnServer } from '../../auth/server-client';
 import { selfElementSummary } from '../summary';
-import { passCandidate, requestMatch, restorePassed, savePreferGender, setDiscoveryParticipation } from './actions';
+import { passCandidate, requestMatch, restorePassed, savePreferGender, setDiscoveryParticipation, startTalk } from './actions';
 
 /**
  * **처음인지를 못 읽었으면 저장하지 않고 값으로 말한다**(ADR 0078).
@@ -112,6 +112,39 @@ describe('덱에서 지나치기', () => {
  * **잔액을 본 뒤 그 사이 풀이권이 바닥났으면** 요청 문이 잔액으로 막는다 — 화면이 오류 줄 대신 풀이권 창을 열 수 있게 그 거절에 표를 단다
  * (ADR 0171 「덧」). 같은 코드의 다른 거절에는 안 단다.
  */
+describe('화면이 그린 흐름과 스위치가 어긋난 거절(ADR 0216)', () => {
+  const message = '화면이 바뀌어 처리하지 않았어요. 확인하고 다시 눌러 주세요.';
+  const answering = (error: { code: string; message: string } | null) => {
+    const rpc = vi.fn(async (name: string) => (name === 'my_chat_rooms' ? { data: [], error: null } : { data: error ? null : 'r-1', error }));
+    vi.mocked(supabaseOnServer).mockResolvedValue({ rpc } as never);
+    return rpc;
+  };
+  beforeEach(() => { cacheCalls.length = 0; });
+
+  it('대화 시작은 무료를, 궁합 요청은 유료를 기대한다고 문에 말한다', async () => {
+    const rpc = answering(null);
+    await startTalk('c-1');
+    expect(rpc).toHaveBeenCalledWith('request_match', { p_candidate_user_id: 'c-1', p_expected_kind: 'talk' });
+    await requestMatch('c-1');
+    expect(rpc).toHaveBeenCalledWith('request_match', { p_candidate_user_id: 'c-1', p_expected_kind: 'bundled' });
+  });
+
+  it.each([
+    ['대화 시작', startTalk],
+    ['궁합 요청', requestMatch],
+  ] as const)('%s 이 거절되면 문장만 내고 지금 화면을 다시 그린다 — 풀이권이 움직였다고 말하지 않는다', async (_, press) => {
+    answering({ code: 'MK001', message });
+    expect(await press('c-1')).toEqual({ ok: false, message });
+    expect(cacheCalls).toContain('revalidatePath /me/matching');
+  });
+
+  it('옛 DB 를 만나면(문이 없다) 실패로 닫힌다 — 화면을 다시 그리지 않고 일시 문제로 답한다', async () => {
+    answering({ code: 'PGRST202', message: 'Could not find the function' });
+    expect(await requestMatch('c-1')).toEqual({ ok: false, message: '일시적인 문제로 처리하지 못했어요. 잠시 뒤 다시 시도해 주세요.' });
+    expect(cacheCalls).toEqual([]);
+  });
+});
+
 describe('인연 요청이 풀이권으로 막힌 거절', () => {
   const refusing = (error: { code: string; message: string }) =>
     vi.mocked(supabaseOnServer).mockResolvedValue({ rpc: async () => ({ data: null, error }) } as never);

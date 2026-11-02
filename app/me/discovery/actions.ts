@@ -8,6 +8,7 @@ import { publicCardFromRow } from '../candidates';
 import { selfElementSummary } from '../summary';
 import { setParticipation } from '../chart-writes';
 import { PREFER_GENDERS, type PreferGender } from '@/src/lib/discovery';
+import { refusedForSwitchMoved } from '@/src/lib/matching/requests';
 import { recordDbFailure, userFacingDbMessage } from '../../db-error';
 import { PARTICIPATION_NO_SELF_NOTE } from '../person-writes';
 import { refusedForCredits, type OutOfCreditsRefusal } from '../credits/refusal';
@@ -136,13 +137,17 @@ export async function restorePassed(candidateUserId: string) {
 /**
  * 대화를 시작한다 — 켜진 흐름의 「대화 시작」(ADR 0215). 문은 요청 번호를 돌려주므로 방은 상대로 찾는다(`my_chat_rooms`).
  * 살아 있는 대화가 있으면 같은 번호라 그 방으로 간다. 방을 못 찾아도 대화는 섰으니 실패로 답하지 않는다(`matchId: null`).
+ * **그린 흐름을 문에 말한다**(ADR 0216) — 그 사이 스위치가 꺼졌으면 풀이권을 잡는 옛 요청 대신 거절이 오고, 이 화면을 새 값으로 다시 그린다.
  */
 export async function startTalk(
   candidateUserId: string,
 ): Promise<{ ok: true; matchId: string | null } | { ok: false; message: string }> {
   const supabase = await supabaseOnServer();
-  const { error } = await supabase.rpc('request_match', { p_candidate_user_id: candidateUserId });
-  if (error) return { ok: false, message: userFacingDbMessage(error, 'request_match') };
+  const { error } = await supabase.rpc('request_match', { p_candidate_user_id: candidateUserId, p_expected_kind: 'talk' });
+  if (error) {
+    if (refusedForSwitchMoved(error)) refresh('match-requested');
+    return { ok: false, message: userFacingDbMessage(error, 'request_match') };
+  }
   refresh('match-requested');
   const rooms = await supabase.rpc('my_chat_rooms');
   if (rooms.error) {
@@ -155,7 +160,8 @@ export async function startTalk(
 /**
  * 상세 궁합을 함께 보자고 청한다.
  *
- * **인자는 상대 하나뿐이다.** 판본도 추천 이유도 정책 버전도 RPC 가 그 자리에서 읽는다 —
+ * **인자는 상대와 그린 흐름뿐이다**(ADR 0216 — 흐름은 판정 값이 아니라 「이 화면은 유료 요청을 말했다」는 사실이다. 그 사이 켜졌으면 말없이 무료 대화가
+ * 서지 않고 거절이 온다). 판본도 추천 이유도 정책 버전도 RPC 가 그 자리에서 읽는다 —
  * 앱이 실어 보내면 그 값은 손으로 적은 값이 되고, 이 서버 액션도 RPC 도 주소만 알면
  * 부를 수 있는 자리다(`my_discovery_board` 와 같은 규율).
  *
@@ -168,10 +174,15 @@ export async function requestMatch(candidateUserId: string): Promise<SaveResult 
 
   const { error } = await supabase.rpc('request_match', {
     p_candidate_user_id: candidateUserId,
+    p_expected_kind: 'bundled',
   });
 
   if (error) {
     const message = userFacingDbMessage(error, 'request_match');
+    if (refusedForSwitchMoved(error)) {
+      refresh('match-requested');
+      return { ok: false, message };
+    }
     /* 잔액을 본 뒤 다른 탭에서 마지막 풀이권을 썼다 — 화면은 오류 줄 대신 풀이권 창을 연다(ADR 0171 「덧」) */
     return refusedForCredits(error) ? { ok: false, message, outOfCredits: true } : { ok: false, message };
   }

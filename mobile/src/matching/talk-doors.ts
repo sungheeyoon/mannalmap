@@ -4,6 +4,7 @@ import { useCallback, useState } from 'react';
 import { messageTimeLabel } from '@chat';
 import { matchDetailOf, type MatchDetail } from '@chat/room/detail';
 import { userFacingDbMessage } from '@db-error';
+import { refusedForSwitchMoved } from '@matching/requests';
 
 import { supabase } from '@/auth/client';
 import { door } from '@/reading/api';
@@ -86,17 +87,19 @@ export async function readEndedTalkMessages(matchId: string): Promise<readonly {
     .map((row) => ({ id: row.message_id, body: row.body, time: messageTimeLabel(row.created_at) }));
 }
 
-export type TalkStart = { kind: 'room'; matchId: string } | { kind: 'no-room' } | { kind: 'switch-closed' } | { kind: 'refused'; message: string };
+export type TalkStart = { kind: 'room'; matchId: string } | { kind: 'no-room' } | { kind: 'switch-moved'; message: string } | { kind: 'refused'; message: string };
 
 /**
- * 대화 시작 — 누르기 직전에 스위치를 다시 묻는다: 그 사이 꺼졌으면 같은 문이 풀이권을 잡는 옛 요청을 세우므로 부르지 않는다.
+ * 대화 시작 — **그린 흐름을 문에 말한다**(ADR 0216). 그 사이 꺼졌으면 풀이권을 잡는 옛 요청 대신 거절이 온다. 앞서 스위치를 따로 묻지 않는다 — 그 읽기와 부름 사이에 틈이 남는다.
  * 부름이 던졌으면 던진다 — 서버가 받았는지 모른다. 방은 계약대로 상대로 찾는다.
  */
 export async function startTalk(candidateUserId: string): Promise<TalkStart> {
   if (supabase === null) return { kind: 'refused', message: NOT_READY };
-  if (!(await readTalkOpen())) return { kind: 'switch-closed' };
-  const { error } = await supabase.rpc('request_match', { p_candidate_user_id: candidateUserId });
-  if (error !== null) return { kind: 'refused', message: userFacingDbMessage(error, 'request_match') };
+  const { error } = await supabase.rpc('request_match', { p_candidate_user_id: candidateUserId, p_expected_kind: 'talk' });
+  if (error !== null) {
+    const message = userFacingDbMessage(error, 'request_match');
+    return refusedForSwitchMoved(error) ? { kind: 'switch-moved', message } : { kind: 'refused', message };
+  }
   const rooms = await supabase.rpc('my_chat_rooms');
   const room = (rooms.data ?? []).find((one) => one.partner_user_id === candidateUserId);
   return room === undefined ? { kind: 'no-room' } : { kind: 'room', matchId: room.match_id };
