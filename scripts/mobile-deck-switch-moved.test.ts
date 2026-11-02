@@ -4,11 +4,11 @@ import { join } from 'node:path';
 import ts from 'typescript';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { deckReducer, PASSED_LIMIT } from '../app/me/matching/deck-state';
+import * as deckState from '../src/lib/matching/deck-state';
 
 /**
  * **스위치가 바뀌어 거절된 뒤 앱 덱의 움직임**(ADR 0216) — 진짜 `use-deck.ts` 를 돌린다.
- * 뿌리 코드는 `mobile/` 을 import 하지 못하고(`mobile-closure.test.ts`) 앱 쪽에는 시험 러너가 없어, 소스를 읽어 옮겨 돌리고 import 자리에 가짜를 댄다.
+ * 뿌리 코드는 `mobile/` 을 import 하지 못하고(`mobile-closure.test.ts`), 앱 쪽에는 시험 러너가 없다. 그래서 소스를 읽어 옮겨 돌리고 import 자리에 가짜를 댄다.
  * 웹의 `setFailure(null)` 과 같게, 문장은 다음 누름이 걷어야 한다 — 안 걷으면 다음 카드에도 「화면이 바뀌어…」가 남는다.
  */
 const slots: unknown[] = [];
@@ -36,25 +36,35 @@ const passCandidate = vi.fn();
 const requestMatch = vi.fn();
 const restorePassed = vi.fn();
 const startTalk = vi.fn();
-const fakes: Record<string, unknown> = {
-  react: hooks,
-  'expo-router': { router: { push: vi.fn() } },
-  '@matching/deck-state': { deckReducer, PASSED_LIMIT },
-  '@matching/requests': { REQUEST_UNSURE: '모름' },
-  './doors': { outOfCreditsNow: vi.fn(), passCandidate, requestMatch, restorePassed },
-  './talk-doors': { startTalk },
-};
-
-const useDeck = (() => {
-  const source = readFileSync(join(process.cwd(), 'mobile/src/matching/use-deck.ts'), 'utf8');
+/** 소스 한 장을 옮겨 돌린다. 값을 들이는 import 는 `fakes` 에 있어야 한다 */
+const moduleOf = <T>(path: string, fakes: Record<string, unknown>): T => {
+  const source = readFileSync(join(process.cwd(), path), 'utf8');
   const { outputText } = ts.transpileModule(source, { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } });
-  const exported: { useDeck?: (props: Record<string, unknown>) => any } = {}; // eslint-disable-line @typescript-eslint/no-explicit-any
+  const exported = {};
   new Function('require', 'exports', outputText)((name: string) => {
     if (!(name in fakes)) throw new Error(`가짜가 없는 import: ${name}`);
     return fakes[name];
   }, exported);
-  return exported.useDeck!;
-})();
+  return exported as T;
+};
+
+type Deck = {
+  failure: string | null;
+  profile: unknown;
+  pass: () => Promise<void>;
+  send: () => Promise<void>;
+  talk: () => Promise<void>;
+  restoreCard: (back: unknown) => Promise<string | null>;
+};
+
+const { useDeck: runDeck } = moduleOf<{ useDeck: (props: Record<string, unknown>) => Deck }>('mobile/src/matching/use-deck.ts', {
+  react: hooks,
+  'expo-router': { router: { push: vi.fn() } },
+  '@matching/deck-state': deckState,
+  '@matching/requests': { REQUEST_UNSURE: '모름' },
+  './doors': { outOfCreditsNow: vi.fn(), passCandidate, requestMatch, restorePassed },
+  './talk-doors': { startTalk },
+});
 
 const MOVED = '화면이 바뀌어 처리하지 않았어요. 확인하고 다시 눌러 주세요.';
 const card = (id: string) => ({ candidateUserId: id, nickname: id });
@@ -69,7 +79,7 @@ const deckOf = (options: Record<string, unknown> = {}) => {
     onSwitchMoved: vi.fn(),
     ...options,
   };
-  const render = () => { at = 0; return useDeck(props); };
+  const render = () => { at = 0; return runDeck(props); };
   return { props, render };
 };
 
