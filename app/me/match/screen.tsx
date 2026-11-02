@@ -221,8 +221,9 @@ function Result({ result, myNickname, newFlow }: { result: SharedResult; myNickn
         headingHidden
         automatic
         bare
+        discoveryInCover={newFlow && result.requestKind === 'talk'}
         nicknames={{ viewer: myNickname, partner: result.partnerNickname }}
-        /* 켜진 흐름의 결과는 비유 → 점수 → 글이다 — 상대 여덟 글자 카드를 안 세운다(ADR 0215) */
+        /* 켜진 흐름의 결과는 비유 → 발견 → 점수 → 글이다 — 상대 여덟 글자 카드를 안 세운다(ADR 0215) */
         betweenSummaryAndBody={newFlow || result.charts === null ? undefined : <PillarPair charts={result.charts} names={result.names} />}
         /*
           표지는 두 사람의 일간이 비스듬히 만난다 — 동의로 열린 여덟 글자에서 읽으므로 새로 열리는 것이 없다

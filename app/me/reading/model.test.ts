@@ -115,3 +115,22 @@ describe('회수 조회', () => {
     expect(calls).toBe(1);
   });
 });
+
+describe('상세 궁합의 모양', () => {
+  const propertiesOf = async (options: Parameters<typeof callModel>[1]): Promise<string[]> => {
+    await callModel('프롬프트', options);
+    const output = generateText.mock.calls.at(-1)?.[0].output as { responseFormat: Promise<{ schema: { properties: object; required: string[] } }> };
+    const { schema } = await output.responseFormat;
+    expect(schema.required).toEqual(Object.keys(schema.properties));
+    return Object.keys(schema.properties);
+  };
+
+  it('본문 → 점수 → 발견 한 줄 → 한 줄 요약 차례다', async () => {
+    await expect(propertiesOf({ summaryLast: true, discovery: true })).resolves.toEqual(['markdown', 'score', 'discovery', 'metaphor']);
+  });
+
+  it('안 넘기면 옛 모양 그대로다', async () => {
+    await expect(propertiesOf({ summaryLast: true })).resolves.toEqual(['markdown', 'score', 'metaphor']);
+    await expect(propertiesOf({})).resolves.toEqual(['score', 'metaphor', 'markdown']);
+  });
+});

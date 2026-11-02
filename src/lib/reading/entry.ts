@@ -29,4 +29,6 @@ export type ReadingEntry = {
   readonly dayMasterA: Stem | null;
   /** 뒷자리 — `private` 은 `personB`, `match` 는 상대. 한 사람짜리는 `null` */
   readonly dayMasterB: Stem | null;
+  /** 인연 궁합만 — `bundled` 옛 길 · `detail` 상세 궁합(문이 일간을 안 준다, ADR 0215). 옛 문 · 나머지는 없다 */
+  readonly requestKind?: string | null;
 };

@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
-import { DETAIL_BUYER_SENDS } from './detail-consent';
 import { DETAIL_NO_CREDIT, DETAIL_SCORE_MAY_DIFFER } from './detail-copy';
+import { DETAIL_BUYER_SENDS } from './detail-consent';
 import { DETAIL_STATES, detailDoorShown, detailPanelOf, detailPanelOpensItself, matchDetailOf, type MatchDetail } from './detail';
 
 const row = {

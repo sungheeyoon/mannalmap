@@ -205,6 +205,7 @@ export async function myReadings(client?: ReadsAs): Promise<readonly ReadingEntr
         fromCurrentChart: row.from_current_chart,
         dayMasterA: stemOf(row.day_master_a),
         dayMasterB: stemOf(row.day_master_b),
+        requestKind: row.request_kind ?? null,
       },
     ];
   });

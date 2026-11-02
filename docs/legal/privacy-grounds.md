@@ -469,18 +469,20 @@ WNS 를 말하지 않는다. 처리방침에 적을 때는 「Windows 의 Edge�
 
 ## 상세 궁합 — 켜질 때 (#938 · #961, 2026-11-02 · 스위치 꺼짐)
 
-**재어 본 사실이다. 적법 판단이 아니다.** 지금 게시된 `notice-v12` 는 옛 흐름의 사실이고, 이 절은 켜는 날 옮길 문장(`docs/legal/match-talk-notice-draft.md`)의 근거다. 마이그레이션 줄은 `supabase/migrations/20270106090000_the_talk_opens_first_and_the_detail_waits_for_a_press.sql` 이다.
+**재어 본 사실이다. 적법 판단이 아니다.** 지금 게시된 `notice-v12` 는 옛 흐름의 사실이고, 이 절은 켜는 날 옮길 문장(`docs/legal/match-talk-notice-draft.md`)의 근거다. 마이그레이션 줄(`:수`)은 `supabase/migrations/20270106090000_the_talk_opens_first_and_the_detail_waits_for_a_press.sql` 이다.
 
 | 사실 | 코드 | 잰 것 |
 | --- | --- | --- |
-| 자료는 받은 사람의 누름 뒤에 나간다 | `match_run_is_agreed` `:273-304` · 입력 판 대조 `:580-590` | SQL 읽음 · 시험 `supabase/tests/99_match_talk_and_detail.test.sql`(이 일에서 안 돌렸다) |
-| **나간다** — 두 사람의 여덟 글자 전부(한자 · 한글 · 오행 · 음양 · 일간 · 월지 계절) · 사이 관계 · 함께 이룬 구조 · 십성 · 시각 앎 · 기준점 · 시도 번호. **안 나간다** — 이름 · 닉네임 · 생년월일시 · 출생지 · 성별 | `src/lib/saju/evidence/shared.ts` `LIMITED_FIELDS` · 시도 번호 `metadata.reading_run_id`(`app/me/reading/model.ts`) · 연결 `feat/963-detail-wiring` `df03655e` | 조율자가 연결된 코드에서 잰 목록(2026-11-02)이다. 이 일은 그 목록과 문장을 대조했다. 그 가지는 이 PR 의 base 에 아직 없다 |
+| 자료는 받은 사람의 누름 뒤에 나간다 | `match_run_is_agreed` `:305` | SQL 읽음 · 시험 `supabase/tests/99_match_talk_and_detail.test.sql`(CI 차선) |
+| **나간다** — 두 사람의 여덟 글자 전부(60갑자 번호 · 한자 · 한글 · 천간 · 지지 · 일간, 프롬프트에 글자별 오행), 시각 앎(모르면 여섯 글자), 사이 관계 · 함께 이룬 구조(참여 글자 · 자리), 글자 수로 센 오행 보완, 두 일간 사이 십성, 말의 세기 상한, 경계 한계 문장(있을 때), 기준 시각 `viewedAt`(보내는 때), 기준점과 판, 고정된 사이 문구(「인연 찾기에서 만나 …」), 시도 번호 | `src/lib/saju/evidence/shared.ts` `LIMITED_FIELDS` · `app/me/reading/submit.ts:152` · `app/me/reading/model.ts:341` | **2026-11-02 main `0d297bbb` 에서 표본 두 사람으로 `readingInputOf`(상세 조립)를 돌려 잎 경로와 프롬프트를 봤다** |
+| **안 나간다** — 이름 · 닉네임 · 생년월일시 · 분 단위 시각 · 출생지 · 성별 · 태어난 해 · 나이 · 대운 · 채팅 | 같은 곳 · `WITHHELD_PATHS` | 표본 프롬프트에 해 · 시각 · 성별 값이 0 건(낱말 `gender` 1 건은 「빠진 칸」 설명). 년주에서 60년 주기로 해가 좁혀질 수 있다(「판단 셋」) |
+| **음양 · 월지 계절은 따로 나가는 칸이 없다** — 조율자 전달 목록과 다른 자리다. 다만 글자에서 바로 읽히는 값이다. 음양은 십성 칸 설명에만, 계절 낱말은 자료의 고정 문장에 있고 사람별 값으로 안 실린다 | 같은 곳 | 표본 자료에 음양 낱말 · 키 0 건. 계절은 사람별 칸이 아님을 키 목록으로 봤고, 그 낱말이 든 문장을 따로 읽지는 않았다 |
 | 상대 여덟 글자는 응답 칸에 안 나온다 | `my_match_scope` · `my_readings` 의 글자 칸 null(ADR 0215) | 응답 칸만 쟀다 |
-| 글에 실제 기둥 두 글자를 쓰면 막는다 | `detailFindingsOf`(`src/lib/reading/detail.ts`) | 한 글자 · 관계 이름 · 오행으로 돌려 쓴 것은 안 잡는다. 부르는 쪽이 안 이어져 아직 안 돈다 |
-| 기술 실패 뒤 같은 동의로 새 누름 없이 다시 만든다 — 양쪽 누구나 · 누른 사람이 1장(PRD 매칭 §6.6 의 16) | `match_consent_holds` `:245-264` · `request_match_detail` `:2123` | SQL 읽음. **두 사람의 자료가 새 누름 없이 다시 나간다**(재전송) |
-| 동의는 입력 판이 바뀌거나 방이 닫히면 끝난다 — 방은 차단 · 탈퇴 신청 · 정지로 닫힌다 | `match_consent_holds` · `:1590-1603` | SQL 읽음. 줄 번호는 이 가지의 마이그레이션이고, #975 `cd77e66d` 가 같은 파일을 고쳤다 — 합쳐지면 줄이 움직인다 |
-| 어느 쪽이든 참여를 끄면 동의가 끝난다 — 대기 상세는 취소되고 예약이 풀리며, 다시 켜도 동의가 안 돌아온다. 완성된 글과 열린 대화는 그대로다 | #975 `9f2717f0` `set_discovery_participation` · `match_consent_holds`(「어느 쪽이 꺼도 그 사람 자료가 재시도로 안 나간다」) | 그 커밋을 읽음. 이 일에서 돌리지 않았다 |
-| 구매자가 답을 기다리는 상세 요청을 취소하면 예약이 풀린다 | `cancel_match_request` · PRD 매칭 §6.6 의 18 | 웹 · 앱의 단추는 조율자 결정(2026-11-02)이고 이 가지에는 아직 없다 |
+| 글에 실제 기둥 두 글자를 쓰면 막는다 | `detailFindingsOf`(`src/lib/reading/detail.ts`) | 한 글자 · 관계 이름 · 오행으로 돌려 쓴 것은 안 잡는다. `app/me/reading/collect.ts:242` 가 상세에 잇는다 |
+| 기술 실패 뒤 같은 동의로 새 누름 없이 다시 만든다 — 양쪽 누구나 · 누른 사람이 1장(PRD 매칭 §6.6 의 16) | `match_consent_holds` `:265` · `request_match_detail` | SQL 읽음. **두 사람의 자료가 새 누름 없이 다시 나간다**(재전송) |
+| 동의는 입력 판이 바뀌거나 방이 닫히면 끝난다 — 방은 차단 · 탈퇴 신청 · 정지로 닫힌다 | `match_consent_holds` `:265` | SQL 읽음 |
+| 어느 쪽이든 참여를 끄면 동의가 끝난다 — 대기 상세는 취소되고 예약이 풀리며, 다시 켜도 동의가 안 돌아온다. 완성된 글과 열린 대화는 그대로다 | `set_discovery_participation` `:2244` | SQL 읽음 |
+| 구매자가 답을 기다리는 상세 요청을 취소하면 예약이 풀린다 | `cancel_match_request` · `src/lib/chat/room/detail.ts` `cancelLabel` · PRD 매칭 §6.6 의 18 | 웹은 main 에 섰다. 앱은 #980 — 켜기 조건 |
 | 답을 기다리는 상세의 만료는 72시간이고 그 줄만 끝난다 | `match_detail_ttl` `:29` | PRD 매칭 §6.6 의 6 |
 
 ### 유추 위험과 검증의 한계

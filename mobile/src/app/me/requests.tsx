@@ -18,6 +18,7 @@ import { CardFrame } from '@/ui/surfaces';
 const NOTIFICATION_ICON: Record<NotificationKind, IconName> = {
   request_received: 'people',
   request_accepted: 'people',
+  detail_requested: 'people',
   request_rejected: 'close',
   request_invalidated: 'alert',
   request_expired: 'ticket',

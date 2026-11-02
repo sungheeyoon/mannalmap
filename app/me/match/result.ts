@@ -42,6 +42,8 @@ const granted = Symbol('matchResultForViewer');
 
 export type SharedResult = {
   readonly matchId: string;
+  /** `talk` 면 글이 상세 궁합이다 — 못 읽었으면 `null`(ADR 0215) */
+  readonly requestKind: string | null;
   /** 차단하는 문이 하나이려면 필요하다 — 요청함이 이미 내주는 것과 같은 값이다 */
   readonly partnerUserId: string;
   readonly partnerNickname: string;
@@ -108,9 +110,9 @@ export async function matchResultForViewer(matchId: string): Promise<ResultOutco
 
   const supabase = await supabaseOnServer();
 
-  const [{ data, error }, focus] = await Promise.all([
+  const [{ data, error }, row] = await Promise.all([
     supabase.rpc('my_match_scope', { p_match_id: matchId }),
-    partnerFocusOf(supabase, matchId),
+    matchRowOf(supabase, matchId),
   ]);
 
   /**
@@ -139,7 +141,8 @@ export async function matchResultForViewer(matchId: string): Promise<ResultOutco
     partnerUserId: scope.partner_user_id,
     partnerNickname: names.b,
     partnerIntro: scope.partner_intro,
-    ...partnerPhotosOf(scope, focus),
+    requestKind: row?.request_kind ?? null,
+    ...partnerPhotosOf(scope, row?.partner_photo_focus ?? null),
     names,
     suppliedToMe: suppliedText(scope.supplied_to_me, 'toMe'),
     suppliedToThem: suppliedText(scope.supplied_to_them, 'toThem'),
@@ -160,16 +163,16 @@ export async function matchResultForViewer(matchId: string): Promise<ResultOutco
  * (`visible_matches()`)의 `my_matches` 가 장마다의 초점을 이미 내므로 거기서 그 Match 한 줄을 집는다 — 새 문도 새 권한도 없다.
  * **꾸밈이다** — 못 읽으면 기록에 남기고 `null`, 머리는 대표 한 장으로 선다(ADR 0078).
  */
-async function partnerFocusOf(
+async function matchRowOf(
   supabase: Awaited<ReturnType<typeof supabaseOnServer>>,
   matchId: string,
-): Promise<readonly number[] | null> {
+): Promise<{ readonly request_kind: string; readonly partner_photo_focus: readonly number[] } | null> {
   const { data, error } = await supabase.rpc('my_matches');
   if (error) {
     recordDbFailure(error, 'my_matches');
     return null;
   }
-  return (data ?? []).find((row) => row.match_id === matchId)?.partner_photo_focus ?? null;
+  return (data ?? []).find((row) => row.match_id === matchId) ?? null;
 }
 
 const partnerPhotosOf = (scope: ScopeRow, focus: readonly number[] | null) => {
