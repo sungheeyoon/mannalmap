@@ -54,19 +54,18 @@ select is(
   '알림에는 수만 있다 — 본문과 번호가 없다');
 
 -- 파기 ------------------------------------------------------------------------
+-- docs/ops/runbook/moderation.md 「배포 승인 전에 건수를 잰다」 SQL 의 사본 — 글자가 같은지는 scripts/chat-purge-runbook.test.ts 가 견준다
 create temp table runbook_count as
-  -- docs/ops/runbook/moderation.md 의 「건수만 세는 읽기 전용 SQL」과 같은 글자
-  select count(m.id)::int as messages, count(distinct r.id)::int as rooms
-  from public.chat_room r
-  join public.chat_message m on m.room_id = r.id
-  where r.closed_at < now() - public.chat_retention();
-grant select on runbook_count to service_role;
+select count(m.id) as 지울_메시지, count(distinct r.id) as 방, min(r.closed_at)::date as 가장_오래_닫힌_날
+from public.chat_room r
+join public.chat_message m on m.room_id = r.id
+where r.closed_at < now() - public.chat_retention();
 
 set local role service_role;
 create temp table purged on commit drop as select public.purge_closed_chat_messages() as gone;
 reset role;
 
-select is((select gone from purged), (select messages from runbook_count), '절차서의 건수와 지운 수가 같다');
+select is((select gone from purged), (select 지울_메시지::int from runbook_count), '절차서의 건수와 지운 수가 같다');
 select cmp_ok((select gone from purged), '>=', 6, 'd91 · d93 의 여섯을 지운다');
 
 select is((select count(*)::int from public.chat_message m join rooms r on r.id = m.room_id where r.name in ('d91', 'd93')), 0, '91일 · 93일의 말이 없다');
