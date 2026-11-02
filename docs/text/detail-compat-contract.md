@@ -173,7 +173,7 @@
 
 ## 7. 운영자 실호출로 잴 것 — 에이전트가 안 돌린다
 
-구현 PR 뒤, 프롬프트 판마다(`READING_LIVE=1 npx vitest run app/me/reading/call.live.test.ts`). `private` 도 함께면 그 kind 까지.
+구현 PR 뒤, 프롬프트 판마다. 명령 · 결과 파일 · 판정 기준은 `docs/ops/runbook/match-talk.md` 「상세 궁합 실호출」이다 — `READING_LIVE` 는 상세 모양을 안 부른다. `private` 도 함께면 그 kind 까지(`READING_LIVE`).
 
 1. 점수와 기준점의 차 분포 — 0 이 얼마인가(D7 전후), 위아래 치우침, ±25 를 넘은 수.
 2. 같은 짝 재호출의 흔들림 — 옛 판 ±3 이 지금도 맞는가. 변화 이유가 재호출마다 뒤집히는가.

@@ -1,4 +1,6 @@
-import { appendFileSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { appendFileSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 
 import { describe, expect, it } from 'vitest';
 
@@ -20,6 +22,8 @@ import {
 } from '@/src/lib/reading';
 import { measureMarkdown, outputDeviations, pairOutputDeviations, type OutputDeviation } from '@/src/lab/reading/measure';
 import { MATCH_INPUT_VARIANTS, PAIR_VARIANTS, PROMPT_VARIANTS } from '@/src/lab/reading/variants';
+
+import type { ModelCall } from './generator';
 
 /**
  * **진짜로 한 번 부르는 자리** — 평소에는 돌지 않는다.
@@ -589,89 +593,274 @@ function sajuOf(result: { ok: true; saju: Saju } | { ok: false; message: string 
 }
 
 /**
- * **상세 궁합의 실호출** — 운영자가 돌린다. 끄기가 기본이고 DB 에 안 쓴다. 운영 제출과 같은 조립 · 모양 · 접기 · 검사를 탄다.
+ * **상세 궁합의 실호출** — 운영자가 돌린다. 끄기가 기본이고 DB 에 안 쓴다. 운영 제출과 같은 조립 · 모양 · 접기 · 검사를 타되, 부르는 길은
+ * 기다리는 `callModel` 이다(운영은 background 제출). 차례와 판정 기준은 `docs/ops/runbook/match-talk.md` 「상세 궁합 실호출」이 든다.
  *
  *   READING_DETAIL_LIVE=1 READING_DETAIL_REPEAT=3 npx vitest run app/me/reading/call.live.test.ts -t "상세 궁합"
  *
  * `READING_DETAIL_DRY=1` 이면 모델을 안 부르고 프롬프트와 보낼 자료만 떨군다. 부를 수가 `READING_DETAIL_MAX_CALLS`(기본 24)를 넘으면 안 부르고 멈춘다.
- * 원문은 `.reading-live/detail-<시각>/` 에 쌓이고 `summary.json` 이 점수 차 · 막힘 발생률을 든다. 막힘이 높으면 검사를 풀기 전에 프롬프트부터 고친다.
+ * 표본은 `MATCH_INPUT_FIXTURES` 뿐이다 — 실제 사람의 입력을 받는 길이 이 블록에 없다.
  */
-describe.skipIf(!detailLive)('상세 궁합을 운영과 같은 길로 부른다', () => {
-  it('글 · 점수 차 · 막힘을 떨군다', { timeout: 3_600_000 }, async () => {
-    const { DETAIL_ASSEMBLY, blockingFindingsOf, detailFindingsOf, requestPromptVersionOf, withDiscovery } = await import('@/src/lib/reading');
-    const { MATCH_INPUT_FIXTURES, chartsOf, secretsOf } = await import('@/src/lab/reading/match-input-eval');
+type DetailFixture = (typeof import('@/src/lab/reading/match-input-eval').MATCH_INPUT_FIXTURES)[number];
+type DetailOutput = ReadingOutput & { discovery: string };
 
-    const repeat = Number(process.env.READING_DETAIL_REPEAT ?? '3');
-    const maxCalls = Number(process.env.READING_DETAIL_MAX_CALLS ?? '24');
-    const dry = process.env.READING_DETAIL_DRY === '1';
-    const viewedAt = new Date(VARIANTS_VIEWED_AT);
-    const dir = `${OUTPUT_ROOT}/detail-${runStamp(viewedAt)}`;
-    mkdirSync(dir, { recursive: true });
+/** 열쇠가 못 쓰는 값인가 — 값은 말하지 않는다. 못 쓰는 열쇠로 부르면 모든 줄이 호출 실패로 떨어진다 */
+const openAiKeyProblem = (key: string | undefined): string | null => {
+  if (key === undefined || key.trim() === '') return 'OPENAI_API_KEY 가 없다 — 셸이나 .env.development.local 에 둔다';
+  if (key.trim() === '[SENSITIVE]') return 'OPENAI_API_KEY 가 Vercel 의 가림값이다 — 실제 값을 손으로 붙인다';
+  return null;
+};
 
-    const planned = MATCH_INPUT_FIXTURES.flatMap((fixture) => Array.from({ length: repeat }, (_, rep) => ({ fixture, rep })));
-    if (!dry && planned.length > maxCalls) throw new Error(`${planned.length}번 부른다 — READING_DETAIL_MAX_CALLS(${maxCalls}) 를 올리거나 REPEAT 를 줄인다`);
+/**
+ * 표본마다 `repeat` 번 부르고 **부른 값을 줄마다 먼저 떨군 뒤** 묶음을 적는다 — 모델은 주입한다. 실호출 없이 파일 쓰기 길을 재려고 갈라 뒀다.
+ *
+ * 남는 것: `runs.jsonl`(줄마다 글 · 점수 · 찾은 것 · 토큰) · `readings.md`(사람이 읽을 글) · `summary.json`(묶음).
+ */
+async function runDetailCalls({
+  dir,
+  fixtures,
+  repeat,
+  viewedAt,
+  generation,
+  call,
+}: {
+  dir: string;
+  fixtures: readonly DetailFixture[];
+  repeat: number;
+  viewedAt: Date;
+  generation: unknown;
+  call: (prompt: string) => Promise<ModelCall<DetailOutput>>;
+}) {
+  const { DETAIL_ASSEMBLY, blockingFindingsOf, detailFindingsOf, requestPromptVersionOf, withDiscovery } = await import('@/src/lib/reading');
+  const { chartsOf, secretsOf } = await import('@/src/lab/reading/match-input-eval');
 
-    const built = (fixture: (typeof MATCH_INPUT_FIXTURES)[number]) => {
-      const reading = readingEvidenceOf('match', chartsOf(fixture), viewedAt, DETAIL_ASSEMBLY.matchInput);
-      if (reading.kind !== 'match') throw new Error('인연 궁합이 아니다');
-      return { reading, prompt: readingPromptOf(reading, DETAIL_ASSEMBLY), evidenceText: JSON.stringify(reading.evidence) };
-    };
+  type Line = {
+    fixture: string;
+    rep: number;
+    failure?: string;
+    gap?: number;
+    blocked?: readonly string[];
+    found?: readonly string[];
+  };
+  const lines: Line[] = [];
+  const usages: Extract<ModelCall<DetailOutput>, { ok: true }>[] = [];
 
-    if (dry) {
-      for (const fixture of MATCH_INPUT_FIXTURES) {
-        const { prompt, evidenceText } = built(fixture);
-        writeFileSync(`${dir}/${fixture.id}.prompt.md`, prompt);
-        writeFileSync(`${dir}/${fixture.id}.evidence.json`, evidenceText);
-      }
-      return;
-    }
+  for (const fixture of fixtures) {
+    const reading = readingEvidenceOf('match', chartsOf(fixture), viewedAt, DETAIL_ASSEMBLY.matchInput);
+    if (reading.kind !== 'match') throw new Error('인연 궁합이 아니다');
+    const evidenceText = JSON.stringify(reading.evidence);
+    const prompt = readingPromptOf(reading, DETAIL_ASSEMBLY);
 
-    const { callModel } = await import('@/app/me/reading/model');
-    type Called = { fixture: string; rep: number; gap?: number; blocked?: readonly string[]; failure?: string };
-    const lines: Called[] = [];
-
-    for (const { fixture, rep } of planned) {
-      const { reading, prompt, evidenceText } = built(fixture);
-      const called = await callModel<ReadingOutput & { discovery: string }>(prompt, { summaryLast: true, discovery: true });
+    for (let rep = 1; rep <= repeat; rep += 1) {
+      const called = await call(prompt);
       if (!called.ok) {
-        lines.push({ fixture: fixture.id, rep, failure: `${called.code}: ${called.detail}` });
-        appendFileSync(`${dir}/runs.jsonl`, `${JSON.stringify(lines.at(-1))}\n`);
+        const failed: Line = { fixture: fixture.id, rep, failure: `${called.code}: ${called.detail}` };
+        lines.push(failed);
+        appendFileSync(`${dir}/runs.jsonl`, `${JSON.stringify({ ...failed, usage: null })}\n`);
         continue;
       }
+      usages.push(called);
       const { discovery, metaphor, score } = called.output;
       const markdown = withDiscovery(called.output.markdown, discovery);
       const verdict = checkReading({ kind: 'match', output: { score, metaphor, markdown }, evidenceText, secrets: secretsOf(fixture), baseline: reading.baseline });
       const findings = [...(verdict.ok ? [] : verdict.failures), ...detailFindingsOf({ markdown, discovery, metaphor, evidenceText })];
-      const line: Called = {
+      const blocked = blockingFindingsOf(findings).map(({ code }) => code);
+      const deviations = pairOutputDeviations('match', measureMarkdown(markdown), DETAIL_ASSEMBLY);
+      const line: Line = {
         fixture: fixture.id,
         rep,
         gap: score === null ? undefined : score - reading.baseline,
-        blocked: blockingFindingsOf(findings).map(({ code }) => code),
+        blocked,
+        found: findings.map(({ code }) => code),
       };
       lines.push(line);
       /* 부른 값을 먼저 떨군다 — 돈을 낸 원문이 판정에 안 사라지게 */
       appendFileSync(
         `${dir}/runs.jsonl`,
-        `${JSON.stringify({ ...line, promptVersion: requestPromptVersionOf('detail'), baseline: reading.baseline, findings, usage: called.usage, output: called.output })}\n`,
+        `${JSON.stringify({
+          ...line,
+          promptVersion: requestPromptVersionOf('detail'),
+          modelId: called.modelId,
+          baseline: reading.baseline,
+          findings,
+          deviations,
+          usage: called.usage,
+          reasoningTokens: called.reasoningTokens,
+          output: called.output,
+        })}\n`,
+      );
+      appendFileSync(
+        `${dir}/readings.md`,
+        `# ${fixture.id} · ${rep}회 — 점수 ${score ?? '없음'} · 기준점 ${reading.baseline}${blocked.length > 0 ? ` · 막힘 ${blocked.join(', ')}` : ''}\n\n> 비유: ${metaphor}\n\n${markdown}\n\n---\n\n`,
       );
     }
+  }
 
-    const made = lines.filter((line) => line.failure === undefined);
-    const blocked = made.filter((line) => (line.blocked ?? []).length > 0);
-    writeFileSync(
-      `${dir}/summary.json`,
-      JSON.stringify({
-        calls: lines.length,
-        failed: lines.length - made.length,
-        blocked: blocked.length,
-        blockedRate: made.length === 0 ? null : blocked.length / made.length,
-        pillarBlocked: blocked.filter((line) => line.blocked?.includes('pillar-named-in-reading')).length,
-        gaps: made.map((line) => line.gap ?? null),
-        sameAsBaseline: made.filter((line) => line.gap === 0).length,
-      }, null, 2),
-    );
+  const made = lines.filter((line) => line.failure === undefined);
+  const blocked = made.filter((line) => (line.blocked ?? []).length > 0);
+  const countOf = (codes: readonly string[]) =>
+    Object.fromEntries([...new Set(codes)].sort().map((code) => [code, codes.filter((one) => one === code).length]));
+  type Usage = NonNullable<(typeof usages)[number]['usage']>;
+  const tokens = (pick: (usage: Usage) => number | null) =>
+    usages.reduce((total, { usage }) => total + (usage === null ? 0 : (pick(usage) ?? 0)), 0);
+
+  const summary = {
+    /** 무엇으로 만든 것인가 — 입력은 시험 표본뿐이다 */
+    promptVersion: requestPromptVersionOf('detail'),
+    generation,
+    modelIds: [...new Set(usages.map(({ modelId }) => modelId))],
+    viewedAt: viewedAt.toISOString(),
+    inputs: { source: 'MATCH_INPUT_FIXTURES', fixtures: fixtures.map(({ id }) => id), repeat },
+    calls: lines.length,
+    failed: lines.length - made.length,
+    failures: lines.flatMap(({ fixture, rep, failure }) => (failure === undefined ? [] : [{ fixture, rep, failure }])),
+    blocked: blocked.length,
+    blockedRate: made.length === 0 ? null : blocked.length / made.length,
+    pillarBlocked: blocked.filter((line) => line.blocked?.includes('pillar-named-in-reading')).length,
+    blockedByCode: countOf(made.flatMap((line) => line.blocked ?? [])),
+    foundByCode: countOf(made.flatMap((line) => line.found ?? [])),
+    gaps: made.map((line) => line.gap ?? null),
+    gapsByFixture: Object.fromEntries(
+      fixtures.map(({ id }) => [id, made.filter((line) => line.fixture === id).map((line) => line.gap ?? null)]),
+    ),
+    sameAsBaseline: made.filter((line) => line.gap === 0).length,
+    /** 실패 응답은 사용량을 안 들고 온다 — 재시도 몫도 여기 없다. 청구의 원본은 OpenAI 대시보드다 */
+    usage: {
+      withUsage: usages.length,
+      inputTokens: tokens((usage) => usage.inputTokens),
+      cacheReadTokens: tokens((usage) => usage.cacheReadTokens),
+      outputTokens: tokens((usage) => usage.outputTokens),
+      reasoningTokens: usages.reduce((total, { reasoningTokens }) => total + (reasoningTokens ?? 0), 0),
+      totalTokens: tokens((usage) => usage.totalTokens),
+    },
+  };
+  writeFileSync(`${dir}/summary.json`, JSON.stringify(summary, null, 2));
+  return summary;
+}
+
+describe('상세 실호출의 기록 — 가짜 모델로 파일까지 잰다', () => {
+  const usage = { inputTokens: 100, noCacheTokens: 100, cacheReadTokens: 0, cacheWriteTokens: null, outputTokens: 50, totalTokens: 150 };
+  const made = (output: DetailOutput): ModelCall<DetailOutput> => ({ ok: true, output, usage, reasoningTokens: 10, modelId: 'fake-model' });
+
+  it('글 · 점수 · 막힘 이유 · 토큰을 파일에 남기고 실패도 줄로 남긴다', { timeout: 30_000 }, async () => {
+    const { DETAIL_ASSEMBLY, READING_POLICY: policy } = await import('@/src/lib/reading');
+    const { MATCH_INPUT_FIXTURES, chartsOf } = await import('@/src/lab/reading/match-input-eval');
+    const fixture = MATCH_INPUT_FIXTURES[0];
+    const viewedAt = new Date(VARIANTS_VIEWED_AT);
+    const reading = readingEvidenceOf('match', chartsOf(fixture), viewedAt, DETAIL_ASSEMBLY.matchInput);
+    if (reading.kind !== 'match') throw new Error('인연 궁합이 아니다');
+    const body = `## 첫 이야기\n\n${'두 사람은 연락의 속도를 맞춰 가요. '.repeat(40)}`;
+    const pillar = chartsOf(fixture).a.pillars.day.name;
+    const answers: ModelCall<DetailOutput>[] = [
+      made({ markdown: body, score: reading.baseline + 3, metaphor: '천천히 데워지는 찻잔', discovery: '말보다 속도가 먼저 맞아요.' }),
+      made({ markdown: `${body}\n\n이 사람의 일주는 ${pillar}예요.`, score: reading.baseline, metaphor: '천천히 데워지는 찻잔', discovery: '말보다 속도가 먼저 맞아요.' }),
+      { ok: false, code: 'model-timeout', detail: 'aborted' },
+    ];
+    const dir = mkdtempSync(join(tmpdir(), 'detail-live-'));
+
+    try {
+      const summary = await runDetailCalls({
+        dir,
+        fixtures: [fixture],
+        repeat: answers.length,
+        viewedAt,
+        generation: { model: 'fake-model' },
+        call: async () => answers.shift()!,
+      });
+
+      const saved = JSON.parse(readFileSync(`${dir}/summary.json`, 'utf8'));
+      expect(saved).toEqual(JSON.parse(JSON.stringify(summary)));
+      expect(saved).toMatchObject({
+        promptVersion: policy.detailVersion,
+        modelIds: ['fake-model'],
+        inputs: { source: 'MATCH_INPUT_FIXTURES', fixtures: [fixture.id], repeat: 3 },
+        calls: 3,
+        failed: 1,
+        failures: [{ fixture: fixture.id, rep: 3, failure: 'model-timeout: aborted' }],
+        blocked: 1,
+        blockedRate: 0.5,
+        pillarBlocked: 1,
+        blockedByCode: { 'pillar-named-in-reading': 1 },
+        gaps: [3, 0],
+        gapsByFixture: { [fixture.id]: [3, 0] },
+        sameAsBaseline: 1,
+        usage: { withUsage: 2, inputTokens: 200, outputTokens: 100, reasoningTokens: 20, totalTokens: 300 },
+      });
+
+      const runs = readFileSync(`${dir}/runs.jsonl`, 'utf8').trim().split('\n').map((line) => JSON.parse(line));
+      expect(runs.map(({ rep }) => rep)).toEqual([1, 2, 3]);
+      expect(runs[0].output.markdown).toBe(body);
+      expect(runs[0].usage.totalTokens).toBe(150);
+      expect(runs[1].blocked).toEqual(['pillar-named-in-reading']);
+      expect(runs[1].findings.map(({ code }: { code: string }) => code)).toContain('pillar-named-in-reading');
+      expect(runs[2]).toEqual({ fixture: fixture.id, rep: 3, failure: 'model-timeout: aborted', usage: null });
+
+      const readings = readFileSync(`${dir}/readings.md`, 'utf8');
+      expect(readings).toContain('말보다 속도가 먼저 맞아요.');
+      expect(readings).toContain('막힘 pillar-named-in-reading');
+
+      /* 보낸 자료 · 출생 입력을 안 남긴다 — 글에 샌 것은 검사가 막힘으로 적는다 */
+      const everything = `${JSON.stringify(saved)}${JSON.stringify(runs)}${readings}`;
+      expect(everything).not.toContain(`${fixture.a.year}-${String(fixture.a.month).padStart(2, '0')}-${String(fixture.a.day).padStart(2, '0')}`);
+      expect(everything).not.toContain('"charts"');
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+  it('못 쓰는 열쇠는 부르기 전에 이름으로 말하고 값은 말하지 않는다', () => {
+    expect(openAiKeyProblem(undefined)).toContain('OPENAI_API_KEY');
+    expect(openAiKeyProblem('  ')).toContain('없다');
+    expect(openAiKeyProblem('[SENSITIVE]')).toContain('가림값');
+    expect(openAiKeyProblem('fake-key-for-the-test')).toBeNull();
+  });
+});
+
+describe.skipIf(!detailLive)('상세 궁합을 운영과 같은 조립으로 부른다', () => {
+  it('글 · 점수 차 · 막힘을 떨군다', { timeout: 3_600_000 }, async () => {
+    const { DETAIL_ASSEMBLY } = await import('@/src/lib/reading');
+    const { MATCH_INPUT_FIXTURES, chartsOf } = await import('@/src/lab/reading/match-input-eval');
+
+    const repeat = Number(process.env.READING_DETAIL_REPEAT ?? '3');
+    const maxCalls = Number(process.env.READING_DETAIL_MAX_CALLS ?? '24');
+    const dry = process.env.READING_DETAIL_DRY === '1';
+    const viewedAt = new Date(VARIANTS_VIEWED_AT);
+    const planned = MATCH_INPUT_FIXTURES.length * repeat;
+    /* 폴더 이름은 부른 시각이다 — 고정 기준 시각으로 지으면 실행마다 같은 날짜가 찍혀 어느 것이 새것인지 못 가린다 */
+    const dir = `${OUTPUT_ROOT}/detail-${dry ? 'dry-' : ''}${runStamp(new Date())}`;
+
+    if (dry) {
+      mkdirSync(dir, { recursive: true });
+      for (const fixture of MATCH_INPUT_FIXTURES) {
+        const reading = readingEvidenceOf('match', chartsOf(fixture), viewedAt, DETAIL_ASSEMBLY.matchInput);
+        writeFileSync(`${dir}/${fixture.id}.prompt.md`, readingPromptOf(reading, DETAIL_ASSEMBLY));
+        writeFileSync(`${dir}/${fixture.id}.evidence.json`, JSON.stringify(reading.evidence));
+      }
+      return;
+    }
+
+    if (planned > maxCalls) throw new Error(`${planned}번 부른다 — READING_DETAIL_MAX_CALLS(${maxCalls}) 를 올리거나 REPEAT 를 줄인다`);
+    /* 이 블록만 안 불러서 파일의 열쇠를 못 읽고, 모든 줄이 호출 실패인 채 초록으로 끝나던 자리다 */
+    loadLocalEnv();
+    const keyProblem = openAiKeyProblem(process.env.OPENAI_API_KEY);
+    if (keyProblem !== null) throw new Error(keyProblem);
+
+    mkdirSync(dir, { recursive: true });
+    const { callModel } = await import('@/app/me/reading/model');
+    const { GENERATION } = await import('@/app/me/reading/generation');
+    const summary = await runDetailCalls({
+      dir,
+      fixtures: MATCH_INPUT_FIXTURES,
+      repeat,
+      viewedAt,
+      generation: GENERATION,
+      call: (prompt) => callModel<DetailOutput>(prompt, { summaryLast: true, discovery: true }),
+    });
     console.info(`[상세 궁합] ${dir}/summary.json`);
-    expect(lines).toHaveLength(planned.length);
+
+    /* 막힘은 결과라 시험을 안 떨군다. 호출 실패는 실험이 성립하지 않은 것이다 */
+    expect(summary.failures, dir).toEqual([]);
+    expect(summary.calls).toBe(planned);
   });
 });
 
