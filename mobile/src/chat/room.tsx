@@ -380,7 +380,7 @@ export function ChatRoomView({ room, onChanged }: { room: RoomView; onChanged: (
           onBlock={closed ? null : () => setOpened('block')}
         />
       )}
-      {opened === 'withdraw' && talk !== null && <WithdrawDialog requestId={talk.requestId} onClose={() => setOpened(null)} />}
+      {opened === 'withdraw' && talk !== null && <WithdrawDialog requestId={talk.requestId} onClose={() => setOpened(null)} onStayed={onChanged} />}
       {opened === 'block' && room.partnerUserId !== null && (
         <BlockDialog userId={room.partnerUserId} nickname={room.name} onClose={() => setOpened(null)} onBlocked={onChanged} />
       )}

@@ -320,6 +320,17 @@ try {
     check('구매자에게 그 코드가 보이고 풀이권이 돌아온다', last?.state === 'failed_mine' && last.failure_code === 'consent-ended' && last.credits_left === 5, brief(last));
   }
 
+  /* 상대가 먼저 답한 뒤의 대화 취소 — 문이 accepted 를 돌려준다. 앱은 이 답에 「취소했어요」를 안 세우고 방에 남는다 */
+  {
+    const pair = await talkPair('늦');
+    await pair.two.client.rpc('send_chat_message', { p_match_id: pair.id, p_body: '먼저 답해요', p_client_id: randomUUID() });
+    const late = await pair.one.client.rpc('cancel_match_request', { p_request_id: pair.requestId });
+    console.log(`  · 답 뒤 대화 취소 | ${said(late)}`);
+    check('상대가 먼저 답한 뒤의 대화 취소 — cancelled 가 아니다', late.error === null && late.data === 'accepted', said(late));
+    const still = ((await pair.one.client.rpc('my_chat_rooms')).data ?? []).some((room) => room.match_id === pair.id);
+    check('방이 그대로 있다', still === true);
+  }
+
   /* 답 전 대화의 끝 — 보낸 사람에게 소식이 없고, 끝난 대화 문이 신고 길을 연다 */
   {
     const pair = await talkPair('답전');

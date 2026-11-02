@@ -60,6 +60,14 @@ describe('켜진 흐름의 화면', () => {
     expect(panel.replace(/\/\*[\s\S]*?\*\//g, '')).not.toContain('거절');
   });
 
+  it('취소 안내는 문이 cancelled 라고 답했을 때만 선다 — 상대가 먼저 답하면 없는 일이다', () => {
+    const withdraw = read('mobile/src/chat/withdraw.tsx');
+    expect(withdraw).toMatch(/if \(result\.status === 'cancelled'\) router\.replace\('\/me\/chat\?withdrawn=1'/);
+    expect(withdraw).toMatch(/else onStayed\(\);/);
+    expect(read('mobile/src/chat/detail-panel.tsx')).toMatch(/if \(result\.status === 'cancelled'\) onNote\(DETAIL_CANCELLED\);/);
+    expect(read('mobile/src/matching/requests.tsx')).toContain('onCancelled(cancelledNote(result.status));');
+  });
+
   it('켜진 결과 화면에는 여덟 글자가 없다', () => {
     expect(read('mobile/src/matching/doors.ts')).toContain('mine: talk ? null : mine');
   });
