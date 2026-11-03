@@ -6,8 +6,10 @@
 --   4. **켬 · 확인** — 한쪽만 확인하면 상대가 안 보이고, 둘 다 확인하면 돌아온다
 --   5. **실패 때 닫힘** — 스위치 줄이 없으면 켜진 것이다
 --   6. **다시 끔** — 미확인인 사람이 그대로 돌아온다
+--
+-- 대화 흐름(ADR 0215 · 0216)이 켜진 동안의 무료 대화 요청 · 끝난 대화도 2 · 4 에서 잰다 — 두 스위치의 판정이 겹치는 자리다(#947).
 begin;
-select plan(48);
+select plan(51);
 
 create or replace function pg_temp.participant(mail text, who text, summary jsonb)
 returns uuid
@@ -133,6 +135,14 @@ select is((select count(*)::int from public.my_notifications() n where n.request
 select is((select count(*)::int from public.photo_at((select park from folks), 1)), 0, '2. 요청을 보낸 사람의 사진이 안 열린다');
 select throws_ok($$select tests.set_discovery_participation(true, pg_temp.summary(0, 0, 4, 4, 0), tests.need())$$, '42501', '성인 확인을 먼저 마쳐 주세요.', '2. 참여 켜기를 거절한다');
 
+/** 대화 흐름이 켜져도 같다 — 무료 대화 요청도 확인을 먼저 묻는다 */
+reset role;
+update public.match_talk_switch set open = true, changed_at = now();
+set local role authenticated;
+select pg_temp.acting((select lee from folks));
+select throws_ok($$select public.request_match((select choi from folks), 'talk')$$, '42501', '성인 확인을 먼저 마쳐 주세요.', '2. 무료 대화 요청을 거절한다');
+select is((select count(*)::int from public.my_ended_talks()), 0, '2. 끝난 대화도 안 보인다');
+
 /** 내 사주 · 내 안전의 길은 안 막는다 */
 select lives_ok($$select public.create_managed_person('어머니', null, 'solar', '1965-03-02', '1965-03-02', '12:00', 'female', '서울', 'jo', 'localMean', tests.chart(), 'chart-for-tests')$$, '2. 사주 저장은 그대로다');
 select is(public.respond_to_match_request((select id from seen where what = 'park-lee'), false), 'rejected', '2. 거절은 그대로다');
@@ -163,6 +173,7 @@ select lives_ok($$select * from public.my_discovery_board()$$, '4. 확인하면 
 select ok(not pg_temp.board_has((select lee from folks)), '4. 미확인인 사람은 후보로 안 선다');
 select is((select count(*)::int from public.my_matches()), 0, '4. 상대가 미확인이면 그 인연은 아직 안 보인다');
 select is((select count(*)::int from public.my_chat_rooms()), 0, '4. 그 채팅방도');
+select throws_ok($$select public.request_match((select park from folks), 'talk')$$, '42501', null, '4. 미확인인 사람에게는 무료 대화도 못 청한다');
 
 reset role;
 set local role service_role;
@@ -172,6 +183,10 @@ set local role authenticated;
 
 select is((select count(*)::int from public.my_matches()), 1, '4. 둘 다 확인하면 인연이 돌아온다');
 select is(public.send_chat_message((select id from seen where what = 'kim-lee'), '다시 안녕', gen_random_uuid()), 'sent', '4. 말도 다시 보낸다');
+
+reset role;
+update public.match_talk_switch set open = false, changed_at = now();
+set local role authenticated;
 
 -- ── 5. 실패 때 닫힘 ──────────────────────────────────────────────────────────
 
