@@ -65,11 +65,11 @@ describe('게시 고지는 그대로다 — 스위치가 꺼진 동안', () => {
   const operator = { name: '만세력 운영자', officer: '홍길동', contact: 'ops@example.com' };
   const noticeText = () => JSON.stringify(noticeFor(dates, operator));
 
-  it('판본과 재확인 기준이 그대로라 이미 확인한 사람을 다시 안 부른다', () => {
-    expect(NOTICE_VERSION).toBe('notice-v12');
-    expect(NOTICE_ACK_FLOOR).toBe('notice-v8');
-    expect(noticeAckHolds('notice-v8')).toBe(true);
-    expect(noticeAckHolds('notice-v12')).toBe(true);
+  /* v13 은 대화 · 상세 궁합과 무관한 내용 개정이다(애플 로그인 · 이용 정지 기록, ADR 0220) — 켜는 날의 판은 그 다음 판이다 */
+  it('판본과 재확인 기준이 대화 · 상세 궁합 없이 선 판 그대로다', () => {
+    expect(NOTICE_VERSION).toBe('notice-v13');
+    expect(NOTICE_ACK_FLOOR).toBe('notice-v13');
+    expect(noticeAckHolds('notice-v13')).toBe(true);
   });
 
   it('처리방침은 옛 흐름의 글이고 켜질 때의 줄이 안 들어갔다', () => {

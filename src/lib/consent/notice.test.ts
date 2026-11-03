@@ -7,6 +7,7 @@ import {
   NOTICE_VERSION,
   OPTIONAL_CONSENT_NOTE,
   OPTIONAL_CONSENTS,
+  noticeAckHolds,
   noticeFor,
 } from './notice';
 import { scheduleOf } from './schedule';
@@ -227,7 +228,7 @@ describe('선택 항목', () => {
 
 /** 문구가 바뀌면 판본도 바뀐다 — 「보여 준 적 있다」가 아니라 「무엇을 보여 줬나」다 */
 it('안내 판본이 값으로 서 있다', () => {
-  expect(NOTICE_VERSION).toBe('notice-v12');
+  expect(NOTICE_VERSION).toBe('notice-v13');
 });
 
 /**
@@ -255,8 +256,9 @@ describe('사진 저장소', () => {
     expect(purge).not.toContain('반드시');
   });
 
-  it('재확인을 시키지 않는다 — 기준은 v8 그대로다', () => {
-    expect(NOTICE_ACK_FLOOR).toBe('notice-v8');
+  /* v9 당시에는 기준을 v8 에 두었다(운영자 결정 2026-10-23). v13 의 내용 개정(ADR 0220)이 기준을 올렸다 — 아래 「애플 로그인 · 이용 정지 기록」 */
+  it('v9 의 줄을 본 사람은 v13 의 내용 개정으로 다시 본다', () => {
+    expect(NOTICE_ACK_FLOOR).toBe('notice-v13');
   });
 });
 
@@ -408,4 +410,44 @@ it('권리 줄이 내 출생 정보와 가족·친구의 출생 정보를 고치
 
   expect(text).toContain('내 출생 정보는 프로필 화면에서, 등록한 가족·친구의 출생 정보는 저장한 사람 화면에서 직접 고치실 수 있고');
   expect(text).not.toContain('내 사주 화면');
+});
+
+/**
+ * v13 — 내용 개정 둘을 한 판으로(운영자 승인 2026-11-03, ADR 0220). 애플 로그인이 받는 이메일(ADR 0219)과 이용이 정지된 채 떠난
+ * 계정의 이용 정지 기록 1년(ADR 0218). 받는 항목 · 보유기간이 달라졌으므로 기준도 오른다.
+ */
+describe('애플 로그인 · 이용 정지 기록', () => {
+  const sections = noticeFor(
+    { endsOn: '2026-11-30', purgeBy: '2026-12-30', purgeWithinDays: 30 },
+    { name: '만세력 운영자', officer: '홍길동', contact: 'ops@example.com' },
+  );
+  const lines = (title: string) => sections.find((section) => section.title === title)?.lines.join(' ') ?? '';
+
+  it('애플로 로그인하면 받는 이메일과 가린 주소를 첫 절에 적는다', () => {
+    const first = lines('무엇을 받고 무엇에 쓰나요');
+    expect(first).toContain('구글 계정 이메일');
+    expect(first).toContain('애플 계정 이메일');
+    expect(first).toContain('나의 이메일 가리기');
+  });
+
+  it('이용 정지 기록의 대상 · 목적 · 항목 · 1년을 따로 적는다', () => {
+    const kept = lines('이용 정지 기록은 따로 둡니다');
+    expect(kept).toContain('이용이 정지된 상태에서 탈퇴하신 계정');
+    expect(kept).toContain('탈퇴 처리일부터 1년');
+    expect(kept).toContain('정지가 풀린 계정의 기록은 남기지 않습니다');
+    expect(kept).toContain('재가입을 막는 것');
+    expect(kept).toContain('로그인 이메일, 로그인 수단과 그 수단의 계정 식별값');
+    expect(kept).toContain('권한 있는 운영자만 열람합니다');
+  });
+
+  it('신고 기록 절 바로 뒤에 선다 — 파기의 예외끼리', () => {
+    const titles = sections.map((section) => section.title);
+    expect(titles.indexOf('이용 정지 기록은 따로 둡니다')).toBe(titles.indexOf('신고 기록은 따로 둡니다') + 1);
+  });
+
+  it('받는 항목 · 보유기간이 달라져 기준도 v13 으로 오른다 — v12 를 본 사람도 다시 본다', () => {
+    expect(NOTICE_ACK_FLOOR).toBe('notice-v13');
+    expect(noticeAckHolds('notice-v12')).toBe(false);
+    expect(noticeAckHolds('notice-v13')).toBe(true);
+  });
 });

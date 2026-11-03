@@ -108,8 +108,11 @@ export const SIGNUP_LABEL = {
   otherAccount: '다른 계정으로 로그인하기',
 } as const;
 
-/** 고지 세 줄의 앞뒤 — 가운데 줄은 날짜만 굵게 세우므로 조각으로 낸다 */
-export const SIGNUP_NOTICE_USE = '구글 이메일과 닉네임, 직접 저장한 사주 정보는 서비스 제공에 사용합니다.';
+/**
+ * 고지 세 줄의 앞뒤 — 가운데 줄은 날짜만 굵게 세우므로 조각으로 낸다. 첫 줄의 「로그인 이메일」은 구글 · 애플(iOS 앱) 둘 다다 —
+ * 「구글 이메일」이던 것을 애플 가입자에게도 맞게 고쳤다(G-134, ADR 0220). 처리방침의 신고 기록 절이 이미 쓰던 낱말이다.
+ */
+export const SIGNUP_NOTICE_USE = '로그인 이메일과 닉네임, 직접 저장한 사주 정보는 서비스 제공에 사용합니다.';
 export const SIGNUP_NOTICE_DISCOVERY = '내 사주를 저장하면 인연 찾기에 참여합니다. 참여는 설정에서 언제든 끌 수 있습니다.';
 export const signupNoticeDates = (endsOn: string, purgeBy: string) => ({
   ends: asKoreanDay(endsOn),
