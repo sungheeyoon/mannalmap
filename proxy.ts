@@ -3,7 +3,8 @@ import { isAuthApiError } from '@supabase/supabase-js';
 import { NextResponse, type NextRequest } from 'next/server';
 import { supabaseEnv } from '@/app/auth/config';
 import { currentSchedule } from '@/app/beta-schedule';
-import { NOTICE_UNREAD, RETURN_PATH_HEADER, gateFor } from '@/src/lib/consent';
+import { NOTICE_UNREAD, RETURN_PATH_HEADER, gateFor, safeReturnPath } from '@/src/lib/consent';
+import { ADULT_CHECK_SCREEN, adultCheckDetours, adultCheckGuards, type AdultCheckState } from '@/src/lib/matching/adult-check';
 
 /**
  * 세션을 갱신하고, **`/me` 아래로 들어오는 사람에게 길을 가리킨다.**
@@ -28,7 +29,8 @@ import { NOTICE_UNREAD, RETURN_PATH_HEADER, gateFor } from '@/src/lib/consent';
  * `is_active_account`). 여기서 하는 일은 **길을 가리키는 것**뿐이라, 이 파일이 통째로
  * 틀려도 열리는 문은 없다.
  *
- * 관문이 묻는 것은 **둘**이다 — 베타가 끝났나, 가입이 끝났나(ADR 0042).
+ * 관문이 묻는 것은 **둘**이다 — 베타가 끝났나, 가입이 끝났나(ADR 0042). 그 뒤에 인연 주소에서만 하나를 더 본다 —
+ * 성인 확인이 요구되는데 미확인인가(ADR 0214). 앱 껍데기의 안내와 같은 판정이고, 거절은 DB 의 문이 한다.
  *
  * 고르는 규칙은 여기 없다 — `gateFor` 가 든다. 자료를 읽는 일과 고르는 일을 떼어
  * 두면 규칙을 브라우저 없이 전부 밟을 수 있고, **밟히지 않은 규칙이 그 구멍을
@@ -127,13 +129,15 @@ export async function proxy(request: NextRequest) {
   const pressed =
     request.method !== 'GET' && request.method !== 'HEAD' && request.nextUrl.pathname !== PUSH_RESUBSCRIBE_PATH;
 
-  const [{ data: account, error: accountError }, schedule] = await Promise.all([
+  const [{ data: account, error: accountError }, schedule, , adultCheck] = await Promise.all([
     supabase
       .from('app_user')
       .select('signed_up_at, notice_version, notice_schedule_id')
       .maybeSingle(),
     currentSchedule(supabase),
     pressed ? supabase.rpc('touch_activity') : Promise.resolve(),
+    /* 화면을 여는 요청만 묻는다 — 서버 액션을 안내로 돌리지 않는다. 스위치가 꺼져 있으면 읽기만 하고 아무 데도 안 보낸다 */
+    pressed || !adultCheckGuards(request.nextUrl.pathname) ? Promise.resolve(null) : readAdultCheck(supabase),
   ]);
 
   /*
@@ -157,7 +161,23 @@ export async function proxy(request: NextRequest) {
 
   if (where !== null) return carrying(NextResponse.redirect(new URL(where, request.url)));
 
+  if (adultCheckDetours(request.nextUrl.pathname, adultCheck)) {
+    const detour = `${ADULT_CHECK_SCREEN}?next=${encodeURIComponent(safeReturnPath(location))}`;
+    return carrying(NextResponse.redirect(new URL(detour, request.url)));
+  }
+
   return carrying(NextResponse.next({ request }));
+}
+
+/** 못 읽으면 `null` — 안내를 안 세우고 거절은 문이 말한다(ADR 0214). 앱의 `readAdultCheck` 와 같은 갈래다 */
+async function readAdultCheck(supabase: ReturnType<typeof createServerClient>): Promise<AdultCheckState | null> {
+  try {
+    const { data, error } = await supabase.rpc('my_adult_check').maybeSingle();
+    return error === null && data !== null ? (data as AdultCheckState) : null;
+  } catch (thrown) {
+    console.error('my_adult_check', thrown);
+    return null;
+  }
 }
 
 export const config = {
