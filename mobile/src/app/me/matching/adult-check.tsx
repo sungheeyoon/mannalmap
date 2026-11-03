@@ -10,6 +10,7 @@ import {
   ADULT_CHECK_LINE,
   ADULT_CHECK_TITLE,
   ADULT_CHECK_UNAVAILABLE,
+  ADULT_CHECK_VISIBLE,
   adultCheckAfter,
   adultCheckNeeded,
 } from '@matching/adult-check';
@@ -57,6 +58,8 @@ export default function AdultCheckScreen() {
             {ADULT_CHECK_TITLE}
           </Text>
           <Text style={styles.body}>{ADULT_CHECK_LINE}</Text>
+          {/* 확인이 곧 공개 시점이다 — 저장하면 참여가 자동으로 켜진다(운영자 결정 2026-11-02, #947) */}
+          <Text style={styles.body}>{ADULT_CHECK_VISIBLE}</Text>
           {failed && (
             <Text style={styles.failure} accessibilityRole="alert">
               {ADULT_CHECK_FAILED}

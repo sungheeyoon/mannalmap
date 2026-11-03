@@ -8,6 +8,11 @@ export const ADULT_CHECK_LINE = '인연은 만 19세 이상만 이용할 수 있
 export const ADULT_CHECK_ACTION = '성인 확인하기';
 export const ADULT_CHECK_FAILED = '성인 확인을 마치지 못했어요. 잠시 뒤 다시 시도해 주세요.';
 export const ADULT_CHECK_UNAVAILABLE = '지금은 성인 확인을 할 수 없어요. 잠시 뒤 다시 시도해 주세요.';
+/**
+ * 확인이 곧 공개 시점이다 — 미확인 계정은 남에게 안 보이고(ADR 0214) 내 사주를 저장하면 참여가 자동으로 켜진다.
+ * 운영자 결정 2026-11-02(#947): 자동 참여를 유지하고 안내 화면에 이 뜻을 넣는다.
+ */
+export const ADULT_CHECK_VISIBLE = '확인을 마치면 다른 회원에게 내 프로필이 보여요. 설정에서 끌 수 있어요.';
 
 /** `my_adult_check` 의 답 */
 export type AdultCheckState = { required: boolean; confirmed: boolean };
@@ -22,6 +27,13 @@ export const ADULT_CHECK_SCREEN = '/me/matching/adult-check';
 const GUARDED = ['/me/matching', '/me/match', '/me/requests', '/me/chat'];
 export const adultCheckGuards = (pathname: string): boolean =>
   !within(pathname, ADULT_CHECK_SCREEN) && GUARDED.some((base) => within(pathname, base));
+
+/**
+ * 웹의 관문이 안내로 돌릴 화면 요청인가 — 앱 껍데기의 `useAdultCheckGuard` 와 같은 판정이다. 못 읽었으면(`null`) 안 돌린다.
+ * 막는 것은 DB 의 문이다.
+ */
+export const adultCheckDetours = (pathname: string, state: AdultCheckState | null): boolean =>
+  state !== null && adultCheckGuards(pathname) && adultCheckNeeded(state);
 
 /** 업체가 끝낸 뒤의 갈래 — 업체의 답을 믿지 않고 서버에서 다시 읽은 상태로 고른다. 못 읽었으면 지나가지 않는다 */
 export type AdultCheckOutcome = 'verified' | 'cancelled' | 'failed';

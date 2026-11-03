@@ -50,3 +50,10 @@
 ## 시험
 
 `supabase/tests/99_adult_check.test.sql`(꺼짐 · 켬 · 직접 호출 · 권한 · 실패 때 닫힘) · `scripts/adult-check-stays-off.test.ts` · `src/lib/matching/adult-check.test.ts`.
+
+## 추기 2026-11-03 — 웹의 안내와 공개 시점 줄 (#947)
+
+- **웹.** 관문(`proxy.ts`)이 인연 · 요청 · 채팅 주소의 화면 요청(GET)에서만 `my_adult_check` 를 계정 · 일정과 나란히 읽고, 요구되는데 미확인이면 `/me/matching/adult-check?next=온 주소` 로 보낸다. 판정은 앱과 같은 `adultCheckDetours`(`src/lib/matching/adult-check.ts`)다. 서버 액션은 안 돌린다. 못 읽으면 안 보내고 문의 거절이 말한다. 안내 화면은 꺼져 있거나 확인했으면 `next` 로 돌아간다. 잠그는 것은 여전히 DB 다 — 이 갈래가 통째로 틀려도 열리는 문은 없다.
+- **공개 시점 줄.** 운영자가 자동 참여를 유지했다(2026-11-02, #947 댓글). 미확인 계정은 남에게 안 보이므로 확인이 곧 공개 시점이다. 앱 · 웹 안내에 「확인을 마치면 다른 회원에게 내 프로필이 보여요. 설정에서 끌 수 있어요.」가 선다(대장 matching-16).
+- **서버 문은 아직 안 세웠다.** 업체의 결과를 검증해 `confirm_adult_check` 를 부르는 문은 열쇠를 드는 새 자리라(`app/keyed-client.ts` 의 목록 · `eslint.config.mjs` `KEY_HOLDERS` · `scripts/layers.test.ts`) 업체가 정해져 요청 모양을 알 때 함께 세운다. 그때까지 앱의 `adultCheckProvider` 와 웹 안내 화면의 단추 자리는 비어 있다.
+- **두 스위치의 겹침.** 대화 흐름(ADR 0215 · 0216)이 켜진 동안에도 무료 대화 요청 · 끝난 대화가 확인을 묻는 것을 pgTAP 이 잰다(`99_adult_check`).
