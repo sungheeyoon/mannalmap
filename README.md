@@ -1,5 +1,9 @@
 # 만세력 (Saju Engine)
 
+**[만날지도](https://mannalmap.com)** — 이 저장소가 돌리는 사주 · 궁합 · 인연 서비스다(웹 · iOS · Android, 운영 베타).
+구현은 AI 코딩 에이전트가 맡고, 사람은 무엇을 만들지 정하고 결과를 검증한다. 에이전트가 따르는 규칙은
+[`docs/start.md`](docs/start.md) 와 [`docs/agents/delegation.md`](docs/agents/delegation.md), 결정은 [`docs/adr/`](docs/adr) 에 있다.
+
 > 사람이 처음(또는 오랜만에) 이 저장소를 연다면 [`docs/guide.md`](docs/guide.md) — 일하는 방식과 사내 용어를 쉬운 말로 풀었다.
 
 생년월일시로 사주 8자를 도출하는 만세력 엔진. 천문 계산과 시간대 보정을 순수 함수
