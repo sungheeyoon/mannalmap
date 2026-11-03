@@ -24,7 +24,10 @@ import { SETTINGS_TEXT_ROW_QUIET } from './settings/card';
  * **여는 자리는 계정 관리 맨 아래, 무리 밖 회색 바탕 위의 작은 글자 「탈퇴하기」다**(`settings/card.tsx` 의 `SETTINGS_TEXT_ROW_QUIET`,
  * 2026-10-26) — 토스 · 당근 설정 맨 아래의 「탈퇴하기」와 같은 자리 · 같은 말이다. 찾을 수는 있되 눈에 덜 띈다.
  */
-export function RequestDeletion() {
+export function RequestDeletion({ className = SETTINGS_TEXT_ROW_QUIET }: {
+  /** 여는 글자의 자리 — 설정은 맨 아래 무리 밖, 가입 화면은 「다른 계정으로 로그인하기」 곁(ADR 0218) */
+  className?: string;
+} = {}) {
   const [asking, setAsking] = useState(false);
   const [failure, setFailure] = useState<string | null>(null);
   const [working, startWorking] = useTransition();
@@ -44,7 +47,7 @@ export function RequestDeletion() {
       여는 줄에 설명을 두 번 적지 않는다(2026-10-25).
     */
     <>
-      <button type="button" onClick={() => setAsking(true)} className={SETTINGS_TEXT_ROW_QUIET}>
+      <button type="button" onClick={() => setAsking(true)} className={className}>
         탈퇴하기
       </button>
       {/* 안내 글이 길어 낮은 폰에서는 창이 화면을 넘는다 — 창 안에서 내려 읽는다 */}

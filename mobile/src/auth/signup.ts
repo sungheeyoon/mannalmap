@@ -1,4 +1,4 @@
-import { accountFailureOf } from '@account/index';
+import { accountFailureOf, type AccountState } from '@account/index';
 import { betaIsOver, signupDone } from '@consent/gate';
 import { NOTICE_NOT_READY, NOTICE_VERSION } from '@consent/notice';
 import { refusedField, signupRequest, WRONG_CODE_NOTE, type SignupField } from '@consent/signup';
@@ -20,6 +20,8 @@ export type SignupState =
   | { kind: 'blocked'; message: string }
   /** 테스트가 끝났다 — 말은 `/closed` 가 한다 */
   | { kind: 'closed' }
+  /** 가입을 안 마친 채 정지 · 탈퇴 대기다 — 폼 대신 그 상태의 안내가 선다(ADR 0218) */
+  | { kind: 'halted'; account: AccountState }
   | { kind: 'failed'; message: string };
 
 /**
@@ -31,7 +33,7 @@ export async function readSignup(): Promise<SignupState> {
 
   const [session, account, schedule] = await Promise.all([
     supabase.auth.getSession(),
-    supabase.from('app_user').select('signed_up_at, nickname, notice_version, notice_schedule_id').maybeSingle(),
+    supabase.from('app_user').select('status, signed_up_at, nickname, notice_version, notice_schedule_id').maybeSingle(),
     readSchedule(),
   ]);
   if (account.error !== null) {
@@ -56,6 +58,8 @@ export async function readSignup(): Promise<SignupState> {
       notice,
     );
   if (done) return { kind: 'done' };
+  /* 폼을 세우면 DB 가 「이용이 정지된 계정입니다.」로 거절할 누름을 권한다 — 웹 `/signup` 과 같다 */
+  if (account.data !== null && account.data.status !== 'active') return { kind: 'halted', account: { kind: 'halted', status: account.data.status } };
 
   return {
     kind: 'form',

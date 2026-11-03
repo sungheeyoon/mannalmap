@@ -5,9 +5,11 @@ import { signedInUser } from '../auth/signed-in';
 import { currentSchedule } from '../beta-schedule';
 import { readAccount } from '../me/account';
 import { AccountNotice } from '../me/account-notice';
+import { RequestDeletion } from '../me/leaving';
 import { Logo } from '../ui/logo';
 import { CARD, COLUMN, PAPER, TYPE_TITLE } from '../ui/surfaces';
 import { SignOutLink } from './sign-out-link';
+import { mayRequestDeletion } from '@/src/lib/account';
 import { SERVICE_NAME_OBJECT } from '@/src/lib/brand';
 import {
   NOTICE_NOT_READY,
@@ -95,6 +97,21 @@ export default async function SignupPage({ searchParams }: {
   }
 
   /*
+    **정지 · 탈퇴 대기면 폼을 안 세운다**(ADR 0218). 가입을 안 마친 채 탈퇴를 신청한 계정은 관문이 여기로 보내므로, 폼 대신 그 상태의
+    안내가 선다 — 폼을 세우면 DB 가 「이용이 정지된 계정입니다.」로 거절할 누름을 권하게 된다. 정지된 사람에게는 탈퇴 길이 남는다.
+  */
+  if (state.kind === 'halted') {
+    return (
+      <main className={`app-shell flex w-full ${COLUMN} flex-1 flex-col gap-6 py-8 sm:py-12`}>
+        <div className={`${CARD} text-sm leading-6`}>
+          <AccountNotice state={state} />
+        </div>
+        <LeavingLinks deletable={mayRequestDeletion(state)} />
+      </main>
+    );
+  }
+
+  /*
     **끝났으면 여기서 아무도 가입하지 않는다.** 안 막으면 종료일 다음 날에 들어온 사람이
     「10월 31일에 끝납니다」를 읽고 확인을 남긴다 — 이미 지난 날짜에 대고 하는 확인이다.
   */
@@ -160,7 +177,24 @@ export default async function SignupPage({ searchParams }: {
         **나가는 길을 낸다.** 코드가 없는 사람은 여기서 할 수 있는 일이 없고, 다른 구글
         계정으로 들어와야 할 수도 있다. 길이 없으면 주소를 직접 쳐야 한다.
       */}
-      <SignOutLink />
+      <LeavingLinks deletable />
     </main>
+  );
+}
+
+/**
+ * 가입 화면의 나가는 길 둘 — 다른 계정으로 로그인하기와 **탈퇴하기**(ADR 0218).
+ *
+ * 가입을 안 마친 계정도 계정이다 — 로그인하는 순간 계정 행이 생긴다. 앱 스토어의 계정 삭제 요건은 그 계정도 앱 안에서 지울 길을
+ * 요구하고, 이 사람에게 설정은 닫혀 있다. 그래서 설정 맨 아래와 같은 말 · 같은 확인 창을 여기에 둔다.
+ */
+function LeavingLinks({ deletable }: { deletable: boolean }) {
+  return (
+    <div className="flex flex-col items-center gap-1 self-center sm:items-start sm:self-start">
+      <SignOutLink />
+      {deletable && (
+        <RequestDeletion className="inline-flex min-h-11 min-w-11 items-center px-1 text-small font-medium text-muted hover:opacity-70 active:opacity-55" />
+      )}
+    </div>
   );
 }
