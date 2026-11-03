@@ -8,7 +8,8 @@
     "scheme": "mannalmap",
     "userInterfaceStyle": "light",
     "ios": {
-      "bundleIdentifier": "com.mannalmap.app"
+      "bundleIdentifier": "com.mannalmap.app",
+      "usesAppleSignIn": true
     },
     "android": {
       "adaptiveIcon": {
@@ -37,6 +38,7 @@
         }
       ],
       "@react-native-google-signin/google-signin",
+      "expo-apple-authentication",
       [
         "expo-image-picker",
         {

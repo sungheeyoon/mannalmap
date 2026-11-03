@@ -1,4 +1,4 @@
-import { isAuthApiError, isAuthSessionMissingError, type SupabaseClient } from '@supabase/supabase-js';
+import { isAuthApiError, isAuthSessionMissingError, type SupabaseClient, type User } from '@supabase/supabase-js';
 
 import { NOTICE_UNREAD, gateFor } from '@/src/lib/consent';
 import type { Database } from '@/src/lib/db';
@@ -41,13 +41,15 @@ export function photoClientOf(request: Request): SupabaseClient<Database> | null
  * **못 읽으면 닫는다**(웹과 다른 한 자리). 웹의 관문은 계정을 못 읽으면 지나가게 두고 화면이 실패를 말한다. 이 문 뒤에는 그 화면이
  * 없고 바로 비용이 나가는 길이 있어 503 으로 답한다. 일정만 못 읽은 것은 웹과 같다 — 가입을 마친 사람은 지나가고 종료는 DB 가 다시 막는다.
  *
+ * 답의 `user` 는 Auth 서버가 돌려준 그 사람이다 — 신원(구글 · 애플)을 보는 문이 쓴다(ADR 0219).
+ *
  * @param touches 사람이 낸 요청인가 — 화면을 열었거나 눌렀다(ADR 0118). 기다리며 3초마다 묻는 것은 활동이 아니다.
  * @param gatedAs 웹의 어느 주소와 같은 문인가 — 참여 끄기는 `/me/settings` 다. 끝난 뒤에도 철회는 열려 있다는 `gateFor` 의 예외를 그대로 탄다.
  */
 export async function mobileSession(
   request: Request,
   { touches, gatedAs = GATED_AS }: { touches: boolean; gatedAs?: string },
-): Promise<{ ok: true; client: SupabaseClient<Database>; userId: string } | { ok: false; response: Response }> {
+): Promise<{ ok: true; client: SupabaseClient<Database>; userId: string; user: User } | { ok: false; response: Response }> {
   const refuse = (status: number, body: DoorRefusal) => ({ ok: false as const, response: refusal(status, body) });
 
   const token = tokenOf(request);
@@ -88,7 +90,7 @@ export async function mobileSession(
   );
   if (where !== null) return refuse(403, { refused: where === '/closed' ? 'closed' : 'signup' });
 
-  return { ok: true, client, userId: data.user.id };
+  return { ok: true, client, userId: data.user.id, user: data.user };
 }
 
 /** 활동을 적는다 — 1분에 한 번만 실제로 적히고(ADR 0092) 답은 안 쓴다. 부속 정보라 실패는 기록에만 남긴다 */

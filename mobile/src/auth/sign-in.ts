@@ -8,7 +8,7 @@ export type SignInAnswer =
   | { kind: 'failed'; message: string };
 
 /** 네이티브 모듈 · 설정이 없는 개발 환경(Expo Go)에서는 로그인을 건너뛴다 — 출시 빌드에는 `__DEV__` 가 없다 */
-const notReady = (): SignInAnswer => (__DEV__ ? { kind: 'signed-in' } : { kind: 'failed', message: NOT_READY });
+export const notReady = (): SignInAnswer => (__DEV__ ? { kind: 'signed-in' } : { kind: 'failed', message: NOT_READY });
 
 /**
  * 구글로 로그인하고 가입을 마쳤는지 본다. 세션이 이미 있으면 구글을 다시 안 부른다.
@@ -52,14 +52,17 @@ export async function signInWithGoogle(): Promise<SignInAnswer> {
   }
 }
 
-/** 가입 화면이 끝난 사람만 지나간다 — 일정이 없거나 테스트가 끝났을 때의 말도 가입 화면이 한다 */
-async function accountAnswer(): Promise<SignInAnswer> {
+/** 가입 화면이 끝난 사람만 지나간다 — 일정이 없거나 테스트가 끝났을 때의 말도 가입 화면이 한다. 애플 로그인(`./apple.ts`)도 이 답을 낸다 */
+export async function accountAnswer(): Promise<SignInAnswer> {
   const signup = await readSignup();
   if (signup.kind === 'failed') return { kind: 'failed', message: signup.message };
   return signup.kind === 'done' ? { kind: 'signed-in' } : { kind: 'needs-signup' };
 }
 
-/** 다른 구글 계정으로 들어오는 길 — 구글 쪽도 끊어야 다음 로그인에서 계정을 고른다 */
+/**
+ * 다른 계정으로 들어오는 길 — 구글 쪽도 끊어야 다음 로그인에서 계정을 고른다.
+ * 애플은 앱이 끊을 길이 없다 — 다음 애플 로그인은 시스템 창이 다시 묻는다(ADR 0219).
+ */
 export async function signOut(): Promise<boolean> {
   if (supabase === null) return true;
   const { error } = await supabase.auth.signOut({ scope: 'local' });

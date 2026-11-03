@@ -63,6 +63,11 @@ export const SECRET_ENV = [
    */
   'WEB_PUSH_VAPID_PRIVATE_KEY',
   'PUSH_DISPATCH_SECRET',
+  /**
+   * 애플 로그인 키(`.p8`, ADR 0219) — 탈퇴 때 애플 연결을 끊는 클라이언트 비밀을 서명한다(`app/api/mobile/me/apple-revoke/apple-tokens.ts`).
+   * 없으면 끊기가 503 이고 탈퇴는 그대로 간다. 팀 ID · 키 ID 는 비밀이 아니다(아래 설정)
+   */
+  'APPLE_SIGN_IN_PRIVATE_KEY',
 ];
 
 /** 브라우저가 본다 — 빌드 때 번들에 박힌다. 비밀을 여기 두는 순간 공개된다 */
@@ -125,6 +130,9 @@ export const CONFIG_ENV = [
   'BUSINESS_MAIL_ORDER_NUMBER',
   'BUSINESS_HOSTING_PROVIDER',
   'BUSINESS_DISCLOSURE_URL',
+  /** 애플 로그인 키의 팀 ID · 키 ID — 비밀이 아니다(클라이언트 비밀의 머리 · 몸에 그대로 실린다, ADR 0219) */
+  'APPLE_TEAM_ID',
+  'APPLE_SIGN_IN_KEY_ID',
 ];
 
 /** 제 안에서 비밀을 읽는 패키지 — 이것을 부르는 모듈도 비밀을 읽는 모듈이다 */
