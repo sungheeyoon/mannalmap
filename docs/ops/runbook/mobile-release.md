@@ -119,13 +119,38 @@ npx eas-cli@latest submit --profile production --platform ios                   
 - 12명은 문턱이다. 나가는 사람을 세어 15~20명을 모은다(#304).
 - **베타 종료일과 견준다.** 테스트 환경의 종료일은 `2026-11-30` 이고(지도 #932), 종료 뒤 앱의 문은 `closed` 를 답한다. 그 안에 14일을 채우려면 **2026-11-16 까지** 시작해야 한다 — 종료일에서 거슬러 센 일정이고 Google 의 마감이 아니며, 11-02 빌드의 `expirationDate` 와 날짜가 같을 뿐 관계없다. 넘기면 일정을 옮기는 것은 운영자 결정이다(`docs/ops/runbook/signup.md` 「테스트 시작하기」).
 
+## 애플 로그인을 켜는 차례
+
+iOS 앱의 애플 로그인(ADR 0218)은 코드만 main 에 있고 **운영자의 Apple Developer 가입(#304) 뒤에 선다.** 웹(Services ID · OAuth)은 안 쓴다 — 네이티브 ID 토큰뿐이다. 공식 문서를 본 날은 2026-11-03 이다([Supabase Apple](https://supabase.com/docs/guides/auth/social-login/auth-apple) · [Expo AppleAuthentication](https://docs.expo.dev/versions/v58.0.0/sdk/apple-authentication/) · [Apple 탈퇴 안내](https://developer.apple.com/support/offering-account-deletion-in-your-app/)).
+
+| 차례 | 걸음 | 누가 | 끝의 값 |
+| --- | --- | --- | --- |
+| 1 | Apple Developer → Membership details 에서 **Team ID** 를 적는다 | 운영자 | 열 글자 Team ID |
+| 2 | Identifiers → App ID `com.mannalmap.app` 의 Capabilities 에서 **Sign in with Apple** 을 켠다(없으면 App ID 를 만든다). **Server-to-Server Notification Endpoint 는 비운다** — Supabase 가 받지 않는다. EAS 빌드가 자격 증명을 맞출 때 켜 주기도 한다 | 운영자 | App ID 에 Sign in with Apple 표시 |
+| 3 | Keys → 「+」 → **Sign in with Apple** 체크 → Configure 에서 주 App ID `com.mannalmap.app` → 등록 → `.p8` 를 내려받는다(**한 번만 받는다**) · **Key ID** 를 적는다 | 운영자 | `.p8` 파일 · Key ID |
+| 4 | Vercel **Production** 에 `APPLE_TEAM_ID` · `APPLE_SIGN_IN_KEY_ID` · `APPLE_SIGN_IN_PRIVATE_KEY`(`.p8` 전문, 줄바꿈은 그대로 또는 `\n`) | 운영자(값) | `vercel env ls production` 에 이름 셋. 값은 이슈 · 저장소에 안 적는다. 운영 배포는 「배포」 답 뒤(`deploy.md`) |
+| 5 | Supabase 대시보드 → Authentication → Sign In / Providers → **Apple** 을 켜고 **Client IDs** 에 `com.mannalmap.app`. Secret Key(OAuth)는 비운다. 「Allow users without an email」은 ADR 0218 ①의 답대로(지금 코드 = 이메일을 받음 → 끈다). **`supabase config push` 는 쓰지 않는다** — 로컬 `config.toml` 의 다른 값이 운영을 덮는다 | 운영자 | 공급자 Apple 켜짐 · Client IDs 한 줄 |
+| 6 | iOS 개발 빌드를 굽는다 — 네이티브 모듈(`expo-apple-authentication`)이 새로 들어 옛 빌드에는 없다. 기기를 먼저 등록한다 | 조율자 · 운영자 | `npx eas-cli@latest device:create` → `npx eas-cli@latest build --profile development --platform ios` 의 빌드 링크 |
+| 7 | 실기기 확인(#770 에 줄로) | 운영자 | 아래 목록 |
+
+**실기기에서 볼 것**
+
+1. 로그인 화면에 「구글로 로그인」 밑으로 애플 단추가 같은 크기로 서고 글자가 한국어다
+2. 애플로 처음 가입 — 애플 창의 「나의 이메일 가리기」를 골라 가입이 끝나고 목적지로 돌아온다
+3. 로그아웃 → 다시 애플로 로그인 — **같은 계정**(저장한 사주가 그대로)
+4. 설정 → 탈퇴하기 → 「탈퇴」 → 애플 창이 한 번 더 뜬다 → 탈퇴 대기 안내. 그 뒤 기기의 설정 → (이름) → 로그인 및 보안 → 「Apple로 로그인」 목록에서 만날지도가 사라진다. Vercel 로그에 `apple revoke` 줄이 없어야 한다
+5. 같은 사람이 구글로 가입한 이메일과 같은 애플 ID 이메일을 **그대로 주고** 애플로 들어오면 어느 계정이 되는지 — ADR 0218 ②의 답과 같아야 한다
+6. 탈퇴 때 뜬 애플 창을 닫으면 탈퇴가 안 나가고 확인 창이 열린 채다
+
+**키가 새면** `docs/ops/runbook/secret-leak.md` 「비밀이 새면」의 `APPLE_SIGN_IN_PRIVATE_KEY` 줄. 키가 없거나 틀리면 탈퇴는 그대로 가고 애플 연결 끊기만 503 이다.
+
 ## 심사 계정과 테스트 코드
 
 로그인이 있는 앱은 심사에 데모 계정 정보를 주고 백엔드를 켜 둔다([Apple 2.1(a)](https://developer.apple.com/app-store/review/guidelines/)). Google 도 로그인으로 막힌 앱은 들어갈 정보를 다 달라고 한다([Google 「Prepare your app for review」](https://support.google.com/googleplay/android-developer/answer/9859455) 「Sign-in details」). **심사자도 로그인 뒤 테스트 코드로 가입을 지나므로 둘을 함께 준다.**
 
 제출 전에:
 
-1. **로그인 길을 정한다 — 아직 안 정했다.** 앱의 로그인은 지금 구글뿐이고(애플은 #935), 비밀번호 계정(`docs/agents/delegation/local-env.md` 의 `createUser`)은 앱에서 쓸 길이 없다. 심사 전용 구글 계정은 운영자만 만든다. 그 계정이 낯선 기기 확인에 막히지 않는지를 실기기로 재고, 막히면 다른 길은 보고 뒤 결정이다 — 앱에 데모 길을 더하면 새 흐름이다. Apple 의 내장 데모 모드는 사전 승인이 든다
+1. **로그인 길을 정한다 — 아직 안 정했다.** 앱의 로그인은 지금 구글이고 iOS 에는 애플이 함께 선다(ADR 0218, 위 「애플 로그인을 켜는 차례」 뒤에), 비밀번호 계정(`docs/agents/delegation/local-env.md` 의 `createUser`)은 앱에서 쓸 길이 없다. 심사 전용 구글 계정은 운영자만 만든다. 그 계정이 낯선 기기 확인에 막히지 않는지를 실기기로 재고, 막히면 다른 길은 보고 뒤 결정이다 — 앱에 데모 길을 더하면 새 흐름이다. Apple 의 내장 데모 모드는 사전 승인이 든다
 2. **테스트 코드를 넣는다** — `docs/ops/runbook/signup.md` 「초대」 그대로다. 심사 전용 줄 하나, `valid_until` 은 심사가 끝날 때까지 넉넉히, 정원은 작게. 운영 DB 쓰기라 조율자가 밟고, 코드 글자는 저장소에 적지 않는다
 3. **그 절의 경고를 본다** — 「테스트가 아닌 사람을 처음 들이기 전에 출시 단계를 옮긴다」. 심사 전용 계정만이면 실제 사용자 자료가 아니지만, 비공개 테스터를 받기 전에는 조율자가 운영자에게 묻는다
 4. **로그인 → 코드 → 가입 → 풀이까지 그 계정으로 실기기에서 한 번 간다.** 배포된 문(「앱의 문이 운영에 섰나」)과 베타 일정이 살아 있어야 한다

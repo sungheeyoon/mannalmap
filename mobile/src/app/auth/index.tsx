@@ -8,8 +8,10 @@ import { chartWantOf, isChartPath } from '@consent/app-destination';
 import { safeReturnPath, withReturnPath } from '@consent/return-path';
 
 import { arriveAt } from '@/auth/arrive';
+import { AppleSignInButton } from '@/auth/apple-button';
+import { signInWithApple } from '@/auth/apple';
 import { MatchingSteps } from '@/auth/matching-steps';
-import { signInWithGoogle } from '@/auth/sign-in';
+import { signInWithGoogle, type SignInAnswer } from '@/auth/sign-in';
 import { readGate } from '@/home/gate';
 import { goHome } from '@/info/go-home';
 import { Icon } from '@/ui/icons';
@@ -20,9 +22,9 @@ import { goBack } from '@/ui/top-bar';
 import { WordText } from '@/ui/word-text';
 
 /**
- * 로그인 — 웹의 `/auth` 와 같은 글자이고 로그인은 네이티브 구글이다. 돌아갈 곳은 앱에 있는 `/me` 아래와 결과 화면이다 —
+ * 로그인 — 웹의 `/auth` 와 같은 글자이고 로그인은 네이티브 구글, iOS 에서는 그 밑에 애플이 나란히 선다(ADR 0218). 돌아갈 곳은 앱에 있는 `/me` 아래와 결과 화면이다 —
  * 웹의 두 갈래 제목(`/compat` · `/saju` 이어 보기)은 앱에 없는 주소에서 오는 말이라 세우지 않는다. 「로그인 없이도…」 줄은 궁합 첫 신호까지 약속하는데 앱에는 그 화면이 없어 뺀다. 실패와 취소는 로그인 실패 화면으로 간다.
- * 결과 화면에서 왔으면 누른 일의 까닭을 말하고, 취소는 그 결과로 돌아간다 — 구글 창을 닫아도 제자리다.
+ * 결과 화면에서 왔으면 누른 일의 까닭을 말하고, 취소는 그 결과로 돌아간다 — 구글 · 애플 창을 닫아도 제자리다.
  */
 export default function SignInScreen() {
   const { next } = useLocalSearchParams<{ next?: string }>();
@@ -30,7 +32,7 @@ export default function SignInScreen() {
   const destination = returnTo.startsWith('/me') || isChartPath(returnTo) ? returnTo : '/me';
   const want = chartWantOf(destination);
   const fromChart = isChartPath(destination);
-  const [going, setGoing] = useState(false);
+  const [going, setGoing] = useState<'google' | 'apple' | null>(null);
 
   useEffect(() => {
     let live = true;
@@ -44,10 +46,10 @@ export default function SignInScreen() {
     };
   }, [destination]);
 
-  const signIn = async () => {
-    setGoing(true);
-    const answer = await signInWithGoogle();
-    setGoing(false);
+  const signIn = async (provider: 'google' | 'apple', start: () => Promise<SignInAnswer>) => {
+    setGoing(provider);
+    const answer = await start();
+    setGoing(null);
     if (answer.kind === 'signed-in') arriveAt(destination);
     else if (answer.kind === 'needs-signup') router.replace(withReturnPath('/signup', destination) as never);
     else if (answer.kind !== 'cancelled' || !fromChart) router.replace(withReturnPath('/auth/denied', destination) as never);
@@ -64,8 +66,13 @@ export default function SignInScreen() {
       }
       actions={
         <>
-          <PrimaryButton label={going ? '구글로 이동하는 중…' : '구글로 로그인'} onPress={signIn} disabled={going} />
-          {fromChart && <SecondaryButton label="취소" onPress={() => goBack('/')} disabled={going} />}
+          <PrimaryButton
+            label={going === 'google' ? '구글로 이동하는 중…' : '구글로 로그인'}
+            onPress={() => void signIn('google', signInWithGoogle)}
+            disabled={going !== null}
+          />
+          <AppleSignInButton onPress={() => void signIn('apple', signInWithApple)} busy={going !== null} />
+          {fromChart && <SecondaryButton label="취소" onPress={() => goBack('/')} disabled={going !== null} />}
         </>
       }
       note={
