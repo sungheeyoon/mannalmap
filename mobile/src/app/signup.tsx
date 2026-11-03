@@ -4,6 +4,7 @@ import { KeyboardAvoidingView, ScrollView, StyleSheet, Text, TextInput, View } f
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { SIGN_OUT_PENDING } from '@account/copy';
+import { mayRequestDeletion } from '@account/index';
 import { safeReturnPath } from '@consent/return-path';
 import { NOTICE_ACK_LABEL, NOTICE_ACK_NOTE, OPTIONAL_CONSENTS, OPTIONAL_CONSENT_NOTE, SIGNUP_CODE_NOTE } from '@consent/notice';
 import {
@@ -23,6 +24,8 @@ import { arriveAt } from '@/auth/arrive';
 import { MatchingSteps } from '@/auth/matching-steps';
 import { signOut } from '@/auth/sign-in';
 import { checkNickname, completeSignup, readSignup, UNREACHABLE, type SignupState } from '@/auth/signup';
+import { RequestDeletion } from '@/settings/leaving';
+import { AccountNotice } from '@/settings/parts';
 import { Logo } from '@/ui/logo';
 import { CheckRow, Field, FieldLabel, PrimaryButton, SecondaryButton, TextButton } from '@/ui/parts';
 import { COLOR, FONT, TYPE } from '@/ui/tokens';
@@ -40,6 +43,8 @@ export default function SignupScreen() {
   const [state, setState] = useState<SignupState | null>(null);
   const finish = () => arriveAt(safeReturnPath(next));
 
+  /* 탈퇴를 신청하면 다시 읽는다 — 폼 대신 탈퇴 대기 안내가 선다 */
+  const [reads, setReads] = useState(0);
   useEffect(() => {
     let live = true;
     void settled(readSignup(), 'readSignup', () => ({ kind: 'failed', message: UNREACHABLE }) as const).then((next) => {
@@ -48,7 +53,7 @@ export default function SignupScreen() {
     return () => {
       live = false;
     };
-  }, []);
+  }, [reads]);
 
   useEffect(() => {
     if (state?.kind === 'done') finish();
@@ -77,6 +82,8 @@ export default function SignupScreen() {
 
           {state.kind === 'form' ? (
             <SignupForm form={state} onDone={finish} />
+          ) : state.kind === 'halted' ? (
+            <AccountNotice state={state.account} onRetry={() => setReads((n) => n + 1)} />
           ) : (
             <Card>
               <Text style={styles.line}>{state.message}</Text>
@@ -84,6 +91,13 @@ export default function SignupScreen() {
           )}
 
           <LeaveLink />
+          {/*
+            가입을 안 마친 계정도 계정이다 — 앱 스토어의 계정 삭제 요건은 이 계정도 앱 안에서 지울 길을 요구하고, 이 사람에게 설정은
+            닫혀 있다. 설정 맨 아래와 같은 말 · 같은 확인 창이다(ADR 0218). 못 읽은 상태에는 세우지 않는다 — 무엇을 지울지 모른다
+          */}
+          {(state.kind === 'form' || state.kind === 'blocked' || (state.kind === 'halted' && mayRequestDeletion(state.account))) && (
+            <RequestDeletion onDone={() => setReads((n) => n + 1)} style={styles.deletion} />
+          )}
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
@@ -316,4 +330,5 @@ const styles = StyleSheet.create({
   checkLabel: { fontSize: TYPE.note, lineHeight: 21, fontFamily: FONT.bold, color: COLOR.foreground },
   action: { gap: 10, paddingTop: 20, borderTopWidth: 1, borderTopColor: COLOR.border },
   leave: { alignItems: 'center' },
+  deletion: { alignSelf: 'center', marginHorizontal: 0 },
 });

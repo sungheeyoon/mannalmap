@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Pressable, StyleSheet, Text } from 'react-native';
+import { Pressable, StyleSheet, Text, type StyleProp, type ViewStyle } from 'react-native';
 
 import { DELETION_IRREVERSIBLE_NOTE, DELETION_NOTE, DELETION_SHARED_NOTE } from '@account/index';
 
@@ -14,7 +14,11 @@ import { requestAccountDeletion } from './settings';
  * 말하고, 되돌릴 수 없는 누름은 그 안의 「탈퇴」다. 거절되면 창이 열린 채 그 줄이 서고, 성공하면 화면이 다시 읽혀 통째로 탈퇴 대기 안내로 바뀐다.
  * 애플로 가입한 계정은 「탈퇴」 뒤에 애플 창이 한 번 더 뜬다 — 연결을 끊는 코드를 받는 자리다. 그 창을 닫으면 아무것도 안 보내고 창이 열린 채다(ADR 0219).
  */
-export function RequestDeletion({ onDone }: { onDone: () => void }) {
+export function RequestDeletion({ onDone, style }: {
+  onDone: () => void;
+  /** 여는 글자의 자리 — 설정은 맨 아래 왼쪽, 가입 화면은 「다른 계정으로 로그인하기」 아래 가운데(ADR 0218) */
+  style?: StyleProp<ViewStyle>;
+}) {
   const [asking, setAsking] = useState(false);
   const [failure, setFailure] = useState<string | null>(null);
   const [working, setWorking] = useState(false);
@@ -38,7 +42,7 @@ export function RequestDeletion({ onDone }: { onDone: () => void }) {
 
   return (
     <>
-      <Pressable accessibilityRole="button" onPress={() => setAsking(true)} style={({ pressed }) => [styles.open, pressed && styles.pressed]}>
+      <Pressable accessibilityRole="button" onPress={() => setAsking(true)} style={({ pressed }) => [styles.open, style, pressed && styles.pressed]}>
         <Text style={styles.openText}>탈퇴하기</Text>
       </Pressable>
       <ConfirmDialog

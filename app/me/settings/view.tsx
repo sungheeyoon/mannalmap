@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react';
 
 import type { AccountState } from '@/src/lib/account';
-import { isBlocked } from '@/src/lib/account';
+import { isBlocked, mayRequestDeletion } from '@/src/lib/account';
 import { OPTIONAL_CONSENT_NOTE, asKoreanDay, noticeAckHolds } from '@/src/lib/consent';
 import type { DiscoveryProfile } from '@/src/lib/discovery';
 import { initialOf } from '@/src/lib/profile';
@@ -133,7 +133,10 @@ export function SettingsView({ data }: { data: SettingsData }): ReactNode {
           </SettingsGroup>
         )}
 
-        {/* 로그아웃은 「계정」 무리의 한 줄, 탈퇴하기는 그 아래 무리 밖 작은 글자(토스 · 당근 설정의 맨 아래) */}
+        {/*
+          로그아웃은 「계정」 무리의 한 줄, 탈퇴하기는 그 아래 무리 밖 작은 글자(토스 · 당근 설정의 맨 아래). 정지된 사람에게도 선다 —
+          스토어의 계정 삭제 요건(ADR 0218)
+        */}
         <SettingsGroup title="계정">
           {!active && email !== undefined && (
             <p className="px-6 py-3 text-small leading-5 text-secondary">{email}</p>
@@ -141,7 +144,7 @@ export function SettingsView({ data }: { data: SettingsData }): ReactNode {
           <SignOutRow />
         </SettingsGroup>
 
-        {active && <RequestDeletion />}
+        {mayRequestDeletion(state) && <RequestDeletion />}
       </div>
     </main>
   );

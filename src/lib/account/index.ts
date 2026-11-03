@@ -207,6 +207,16 @@ export const isBlocked = (
   state.kind === 'halted' || state.kind === 'missing' || state.kind === 'unreachable';
 
 /**
+ * 스스로 탈퇴를 신청할 수 있는 상태인가 — 이용 중 · 온보딩 · **이용 정지**(ADR 0218).
+ *
+ * 앱 스토어의 계정 삭제 요건이 앱 안의 길을 요구한다 — 정지된 사람도 화면에서 지운다. 탈퇴 대기는 이미 신청했고, 못 읽은 계정은
+ * 무엇을 지울지 모른다. 가입을 안 마친 계정은 이 상태를 안 지나고 가입 화면이 따로 길을 낸다. DB 문(`request_account_deletion`)이
+ * 같은 경계를 다시 본다.
+ */
+export const mayRequestDeletion = (state: AccountState): boolean =>
+  state.kind === 'active' || state.kind === 'onboarding' || (state.kind === 'halted' && state.status === 'suspended');
+
+/**
  * 자기 사주가 무엇인가 — **없으면 `null`.**
  *
  * 온보딩과 막힌 자리를 같은 `null` 로 낸다. 이 값을 쓰는 화면들은 「내 것을 목록에서

@@ -62,10 +62,12 @@ select throws_ok(
   '42501', '이용이 정지된 계정입니다.',
   '신고도 못 한다');
 
-select throws_ok(
+-- 탈퇴 신청은 정지된 사람에게도 열렸다(ADR 0218) — 뒤의 문장을 정지된 채로 재려고 되감는다
+savepoint before_leaving;
+select lives_ok(
   $$select public.request_account_deletion()$$,
-  '42501', '이용이 정지된 계정입니다.',
-  '탈퇴 신청도 DB 가 같은 문장으로 막는다');
+  '탈퇴 신청은 정지된 사람에게도 열린다 — 스토어의 계정 삭제 요건(ADR 0218)');
+rollback to savepoint before_leaving;
 
 select throws_ok(
   $$select tests.create_self_person(

@@ -5,6 +5,7 @@ import {
   accountNoticeOf,
   accountStateOf,
   haltedText,
+  mayRequestDeletion,
   type AccountState,
 } from '.';
 
@@ -172,5 +173,19 @@ describe('accountFailureOf — 못 읽은 계정은 실패 줄로 선다 (G-100)
     expect(accountFailureOf({ kind: 'halted', status: 'suspended' })).toBeNull();
     expect(accountFailureOf({ kind: 'active', selfPersonId: 'p1' })).toBeNull();
     expect(accountFailureOf({ kind: 'onboarding' })).toBeNull();
+  });
+});
+
+describe('mayRequestDeletion — 정지된 사람도 스스로 떠난다 (ADR 0218)', () => {
+  it('이용 중 · 온보딩 · 이용 정지는 탈퇴를 신청한다', () => {
+    expect(mayRequestDeletion({ kind: 'active', selfPersonId: 'p' })).toBe(true);
+    expect(mayRequestDeletion({ kind: 'onboarding' })).toBe(true);
+    expect(mayRequestDeletion({ kind: 'halted', status: 'suspended' })).toBe(true);
+  });
+
+  it('이미 신청한 계정 · 못 읽은 계정은 길이 없다', () => {
+    expect(mayRequestDeletion({ kind: 'halted', status: 'deletion_requested' })).toBe(false);
+    expect(mayRequestDeletion({ kind: 'missing' })).toBe(false);
+    expect(mayRequestDeletion({ kind: 'unreachable' })).toBe(false);
   });
 });
