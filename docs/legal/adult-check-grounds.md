@@ -1,36 +1,38 @@
 # 인연의 연령 확인 — 법 · 스토어 · 자체 정책의 근거 (#947)
 
 > 법률 자문이 아니고 변호사 검토 전이다. 「적법」이라는 뜻이 아니다 — 요건과 사실만 두고 판정은 운영자 몫이다(ADR 0182 · 0209).
-> 원문을 확인한 날은 모두 **2026-11-03**, 코드는 main `a93f2ddb` 에서 잰 것이다. 셋(법 · 스토어 · 자체 정책)은 따로 적는다 —
+> 원문을 확인한 날은 모두 **2026-11-03**, 코드는 main `917e58ba` 에서 잰 것이다. 셋(법 · 스토어 · 자체 정책)은 따로 적는다 —
 > 한쪽의 답이 다른 쪽의 답이 아니다.
 
-## 먼저 표시할 둘
+## 먼저 표시할 셋
 
 - **스토어 18+ 등급은 실제 나이 확인이 아니다.** 애플 연령 등급은 이용자가 아니라 앱에 붙는 표시이고(아래 2.3.6), 구글 Play 의
   「Restrict Minor Access」는 구글 계정의 나이와 구글 시스템의 판단으로 검색 · 설치 · 구매를 막는다. 이미 설치한 사람은 계속 쓴다(아래 원문).
   둘 다 앱 안에서 이 사람이 몇 살인지 확인하지 않는다.
-- **사주용으로 직접 입력한 생년월일은 연령 자기신고이지 본인확인이 아니다.** 코드는 그 값으로 인연 자격을 재지 않는다 — 인연의
-  조건은 성별 하나다(PRD §6.1 「나이는 없다」). **자기신고만으로 출시할 수 있는지는 「확인되지 않음」이다.**
+- **구글 · 애플 로그인은 본인확인이 아니다.** 이메일 계정을 인증할 뿐이고, 이 문서는 그것을 실명 확인 · 연령 확인으로 세지 않는다 —
+  아래 대조표도 그렇게 센다.
+- **사주용으로 직접 입력한 생년월일은 연령 자기신고이지 본인확인이 아니다.** 코드는 그 값으로 인연 자격을 재지 않는다(아래 표).
+  **자기신고만으로 출시할 수 있는지는 「확인되지 않음」이다.**
 
 ## 우리 기능 — 코드에서 잰 것
 
 | 물음 | 지금 | 잰 자리 |
 | --- | --- | --- |
-| 가입 | 구글 로그인 + 운영자가 준 테스트 코드. 휴대전화 · 실명 인증은 없다 | `app/auth/page.tsx:40` |
+| 가입 · 로그인 | 구글 로그인(웹 · 앱), iOS 앱은 애플 로그인도(ADR 0219) + 운영자가 준 테스트 코드. 휴대전화 · 실명 인증은 없다 | `app/auth/page.tsx:40` · `mobile/src/auth/apple.ts` |
 | 누가 누구를 보나 | 내 사주를 저장하면 후보 풀에 자동으로 든다(끌 수 있다). 조건은 성별 하나. 한 자리는 점수 상위 20% 컷 안에서 80%, 컷 아래에서 20% 무작위로 채운다 — 지인 목록이 아니다 | `supabase/migrations/20261107090000_the_deck_scores_each_shape_once_and_the_rooms_start_from_me.sql:121` · `:231` · PRD §6.1 |
 | 카드에 나가는 것 | 닉네임 · 자기소개 · 사진(한 사람 여섯 장까지) · 예측 궁합 점수 · 활동 띠. 나이 · 지역 칸은 없다 | `supabase/migrations/20261203090000_a_photo_shows_the_spot_its_owner_chose.sql:285`(반환 칸) |
-| 대화가 열리는 때 | 지금은 받은 사람이 궁합 요청을 수락한 뒤 두 사람의 1:1 방. 스위치를 켜면 수락 없이 열리고 답 전 첫 말 1건까지다 — 스위치 기본값은 꺼짐 | PRD §6.2 · §6.6 · `supabase/migrations/20270106090000_the_talk_opens_first_and_the_detail_waits_for_a_press.sql:14-23` |
-| 대화의 형태 | 글만 — 음성 · 화상 없음 | `supabase/migrations/20270106090000_the_talk_opens_first_and_the_detail_waits_for_a_press.sql:1174`(`send_chat_message(p_match_id, p_body text, …)`) |
-| 대화 저장 | 서버 표에 남는다. 닫힌 방은 90일 보존 뒤 크론이 지운다(크론은 운영 배포 전, G-132) | `supabase/migrations/20260927090000_the_matched_pair_talks_in_a_room.sql:174`(`chat_message`) · `:69`(`chat_retention` 90일) · `supabase/migrations/20270107100000_the_closed_rooms_words_go_by_a_daily_cron.sql:42` |
-| 신고 | 사람 신고 · 메시지 신고, 메시지는 사본을 남긴다 | `supabase/migrations/20261017090000_the_held_report_still_counts_as_a_duplicate.sql:25` · `:106` · `supabase/migrations/20260927090000_the_matched_pair_talks_in_a_room.sql:234`(`chat_report_snapshot`) |
+| 대화가 열리는 때 | 지금은 받은 사람이 궁합 요청을 수락한 뒤 두 사람의 1:1 방. 스위치를 켜면 수락 없이 열리고, 답 전에는 첫 말 1건, 답장 1건이 오면 자유다(PRD §6.6 1 · 3). 스위치 기본값은 꺼짐 | PRD §6.2 · §6.6 · `supabase/migrations/20270106090000_the_talk_opens_first_and_the_detail_waits_for_a_press.sql:14-23` |
+| 대화의 형태 | 글만 — 음성 · 화상 없음. 새 말은 실시간 채널로 선다 | `supabase/migrations/20270106090000_the_talk_opens_first_and_the_detail_waits_for_a_press.sql:1174`(`send_chat_message(p_match_id, p_body text, …)`) · `src/lib/live/connection.ts:7` |
+| 대화 저장 | 서버 표에 남는다. 상대가 거두거나 차단해 끝난 답 전 대화도 보존 동안 내 말 · 상대 말을 읽기 전용으로 다시 본다. 닫힌 방은 90일 보존 뒤 크론이 지운다(크론은 운영 배포 전, G-132). 화면 캡처를 막는 설정은 앱에서 찾지 못했다 | `supabase/migrations/20260927090000_the_matched_pair_talks_in_a_room.sql:174`(`chat_message`) · `:69`(`chat_retention` 90일) · `supabase/migrations/20270106090000_the_talk_opens_first_and_the_detail_waits_for_a_press.sql:2051`(`my_ended_talk_messages`) · `supabase/migrations/20270107100000_the_closed_rooms_words_go_by_a_daily_cron.sql:42` |
+| 신고 | 사람 신고 · 메시지 신고, 메시지는 사본을 남긴다. 신고와 처분은 표에 남고 운영자 화면에서 본다 | `supabase/migrations/20261017090000_the_held_report_still_counts_as_a_duplicate.sql:25` · `:106` · `supabase/migrations/20260927090000_the_matched_pair_talks_in_a_room.sql:234`(`chat_report_snapshot`) · `supabase/migrations/20261215090000_the_operator_decides_a_report_on_its_screen_and_each_decision_is_kept.sql:125` |
 | 차단 | 있다. 되돌릴 수 없다 | `supabase/migrations/20270106090000_the_talk_opens_first_and_the_detail_waits_for_a_press.sql:2076` · PRD §6.5 |
 | 위치 | 기기 위치를 쓰지 않는다 — 앱 의존성에 위치 패키지가 없다. 출생지는 태어난 시각을 보정하는 경도로만 쓰고 카드에 안 나간다 | `mobile/package.json`(`expo-location` 없음) · `src/lib/saju/timeCorrection/longitude.ts:33` |
 | 성인 확인 | 스위치 기본값 꺼짐 — 꺼져 있으면 누구에게나 통과다. 업체 연동 없음 | `supabase/migrations/20270105090000_the_adult_check_stands_ready_behind_a_switch_that_is_off.sql:15-24` · `:41-52` · ADR 0214 「정한 것」 8 |
-| 사주용 생년월일 | 이용자가 직접 입력한다 | `app/birth-form.tsx:127` |
+| 사주용 생년월일과 인연 | 이용자가 직접 입력하고 고칠 수 있다. 받는 해의 위 끝은 2030 이다. 인연 참여 문은 성인 확인 스위치만 보고 생년월일 · 나이는 보지 않는다 — **생년월일을 바꾸지 않아도, 미성년의 생년월일을 넣어도 인연에 든다** | `app/birth-form.tsx:127` · `src/lib/input/query.ts:239`(`BIRTH_YEAR_MAX`) · `supabase/migrations/20270105090000_the_adult_check_stands_ready_behind_a_switch_that_is_off.sql:1068` · `:1092`(`ensure_discovery_participation` 의 `adult_check_passed`) |
 
 ## 1. 한국 법적 의무
 
-### 원문
+### 원문 — 청소년 보호법 · 시행령
 
 **청소년 보호법** [시행 2026. 10. 8.] [법률 제21537호, 2026. 4. 7., 일부개정] —
 https://www.law.go.kr/LSW/lsInfoP.do?ancYnChk=0&chrClsCd=010202&efYd=20261008&lsiSeq=285397
@@ -51,68 +53,96 @@ https://www.law.go.kr/LSW/lsInfoP.do?ancYnChk=0&chrClsCd=010202&efYd=20261008&ls
 
 - 제16조 — 「법 제16조제1항에 따라 … 금지되는 청소년유해매체물은 법 제2조제2호가목부터 마목까지 및 사목부터 카목까지의 규정에 해당하는
   청소년유해매체물을 말한다.」(마목이 「전기통신사업법」에 따른 전기통신을 통한 부호ㆍ문언ㆍ음향 또는 영상정보다)
-- 제17조 ① — 「… 다음 각 호의 어느 하나에 해당하는 수단이나 방법으로 그 상대방의 나이 및 본인 여부를 확인하여야 한다.
-  1. 대면(對面)을 통한 신분증 확인이나 팩스 또는 우편으로 수신한 신분증 사본 확인 2. 「전자서명법」 제2조제6호에 따른 인증서(서명자의
-  실지명의를 확인할 수 있는 것으로 한정한다) 3. 「정보통신망 이용촉진 및 정보보호 등에 관한 법률」 제23조의2제2항에 따른 주민등록번호를
-  사용하지 아니하고 본인을 확인하는 방법 4. 「개인정보 보호법」 제24조의2제3항에 따라 주민등록번호를 사용하지 않고 회원으로 가입할 수 있는
-  방법 5. 신용카드를 통한 인증 6. 휴대전화를 통한 인증. 이 경우 휴대전화를 통한 문자전송, 음성 자동응답 등의 방법을 추가하여 나이 및
-  본인 여부를 확인하여야 한다. 7. 그 밖에 제1호부터 제6호까지의 규정에 따른 수단이나 방법과 유사한 것으로서 성평등가족부장관이 정하여
-  고시하는 것」
 - 제17조 ② — 회원으로 가입한 상대방을 제1항으로 확인했으면 「그 확인 후 1년까지는 해당 인터넷 사이트 등에 가입된 회원임을 확인하는
   방법으로 제1항에 따른 확인을 갈음할 수 있다.」
 
-**「불특정 이용자 간 온라인 대화서비스를 제공하는 애플리케이션」 청소년유해매체물 결정 고시** — 여성가족부 고시 제2020-36호, 2020-09-10 —
-https://www.mogef.go.kr/io/ind/io_ind_s030d.do?bbtSn=704988&mid=info306
+### 본인확인이 필요하다면 — 조문이 인정하는 수단
 
-- 게시 본문 — 「「청소년 보호법」 제7조 및 제9조, 같은 법 시행령 제9조에 의거 청소년보호위원회가 결정한 「불특정 이용자 간 온라인
-  대화서비스를 제공하는 애플리케이션」 중 청소년에게 불건전한 교제를 조장 또는 매개할 우려가 있는 애플리케이션을 “청소년유해매체물”로
-  결정하고, 같은 법 제21조에 따라 다음과 같이 고시합니다.」 「☞ 청소년유해매체물 목록표는 … “청소년유해매체물 보기” 참조」
-- **최신본** — 부처 누리집의 고시 목록에서 이 고시는 제2020-36호 하나이고, 뒤의 개정은 검색으로 찾지 못했다. 고시를 낸 부처는 지금
-  성평등가족부다(법 제2조 3호의 「성평등가족부장관이 고시한」, 2025. 10. 1. 개정).
-- **대상 · 예외의 문장은 고시 게시 본문에 없다** — 목록표(첨부)로 넘기는데 그 페이지의 첨부 칸이 비어 있어 목록표 원문을 못 봤다. 아래는
-  같은 날 부처가 낸 보도자료의 원문이다(정책브리핑 전재, https://www.korea.kr/briefing/pressReleaseView.do?newsId=156410259):
-  - 「이번 고시에 따라 ▲실명 인증 또는 휴대전화 인증을 통한 회원관리, ▲대화 저장, ▲신고 기능 등 안전한 대화서비스를 위한 기술적 조치가
-    없는 랜덤채팅앱은 청소년 보호법에서 규정된 청소년유해매체물로서 청소년 대상 제공 금지 등의 의무가 부여된다.」
-  - 「청소년이 이용토록 제공하기 위해서는 채팅앱 이용자의 신원확인과 대화(채팅) 중 성범죄 유인 등의 피해 발생 시 대화내용을 저장하여
-    증거 수집 및 신고가 가능하도록 함으로써, 청소년의 안전한 채팅환경을 위한 최소한의 장치를 갖추도록 한 것이다.」
-  - 「다만, 불특정 이용자가 아닌 지인(知人) 기반의 대화서비스, 게임 등 주된 정보통신서비스에 연계하여 부가적인 형태로 제공되는
-    대화서비스, 게시판, 댓글 형식 등 누구나 열람․시청할 수 있는 형태의 대화서비스는 이번 청소년유해매체물 범위에서 제외된다.」
-  - 「유예기간 동안 기술적 조치를 마련하지 않은 랜덤채팅앱은 청소년유해매체물에 해당되어 사업자는 해당 랜덤채팅앱에 청소년유해표시(⑲금)와
-    함께 별도의 성인인증 절차를 두어 청소년이 이용하지 않도록 해야 한다.」(시행 2020-12-11)
+시행령 제17조 ① 원문 그대로다. 업체는 적지 않는다. 「PASS」 · 「아이핀」이라는 낱말은 조문에 없다 — 조문은 아래 문장으로만 말한다.
 
-### 우리 기능과 한 줄씩
+> 법 제16조제1항에 따라 청소년유해매체물을 판매등에 제공하는 경우에는 다음 각 호의 어느 하나에 해당하는 수단이나 방법으로 그 상대방의
+> 나이 및 본인 여부를 확인하여야 한다.
+> 1. 대면(對面)을 통한 신분증 확인이나 팩스 또는 우편으로 수신한 신분증 사본 확인
+> 2. 「전자서명법」 제2조제6호에 따른 인증서(서명자의 실지명의를 확인할 수 있는 것으로 한정한다)
+> 3. 「정보통신망 이용촉진 및 정보보호 등에 관한 법률」 제23조의2제2항에 따른 주민등록번호를 사용하지 아니하고 본인을 확인하는 방법
+> 4. 「개인정보 보호법」 제24조의2제3항에 따라 주민등록번호를 사용하지 않고 회원으로 가입할 수 있는 방법
+> 5. 신용카드를 통한 인증
+> 6. 휴대전화를 통한 인증. 이 경우 휴대전화를 통한 문자전송, 음성 자동응답 등의 방법을 추가하여 나이 및 본인 여부를 확인하여야 한다.
+> 7. 그 밖에 제1호부터 제6호까지의 규정에 따른 수단이나 방법과 유사한 것으로서 성평등가족부장관이 정하여 고시하는 것
 
-| 고시 · 법의 요건 | 우리 사실 | 상태 |
+이 목록에 구글 · 애플 로그인과 이용자가 적은 생년월일은 없다. 이 조항은 법 제16조①, 곧 **청소년유해매체물일 때** 드는 확인 방법이다.
+
+### 원문 — 랜덤채팅앱 고시
+
+**여성가족부고시 제2020-36호** 「불특정 이용자 간 온라인 대화서비스를 제공하는 애플리케이션의 청소년유해매체물 결정 고시」(2020. 9. 10.,
+청소년보호위원회 결정 2020. 8. 28., 고시일로부터 3개월 이후 시행). 게시 글은
+https://www.mogef.go.kr/io/ind/io_ind_s030d.do?bbtSn=704988&mid=info306 이고, 목록표 원문은 같은 누리집 「청소년유해매체물 보기」
+(`/sp/yth/sp_yth_s001.do?mid=gnr111`)의 「불특정 이용자 간 온라인 대화서비스를 제공하는 애플리케이션」 글(등록 2020-09-10)에 붙은 한글 파일
+「붙임1. 여성가족부 고시_제2020-36호_…_청소년유해매체믈 고시.hwp」에서 옮겼다. 목록표의 「내 용」 칸:
+
+> o 문자, 음성, 화상을 매개로 불특정 이용자 간의 온라인 대화서비스를 실시간 제공하는 애플리케이션 중 청소년에게 불건전한 교제를 조장 또는
+> 매개할 우려가 있는 다음 각 호의 어느 하나에 해당하는 것
+>
+> 1. 실명 인증 또는 휴대전화 인증을 거쳐 확인된 이용자의 정보로 회원관리(회원 가입, 가입정보 관리)를 하지 않는 애플리케이션
+>    \* 휴대전화 인증 : 휴대전화 문자전송 또는 음성 자동응답 등의 방법을 통한 인증
+> 2. 대화저장이 불가능한 애플리케이션
+>    \* 대화저장 : 대화 상대자가 대화방을 나가도 대화내용이 유지되거나, 화면갈무리(캡쳐) 또는 대화 내용 저장(파일 형태 내보내기 등)이 가능한 것
+> 3. 신고기능이 없거나 신고 기록 확인이 불가능한 애플리케이션
+>
+> ※ 제외사항 : ①주된 정보통신서비스와 연계하여 부가적으로 제공되는 온라인 대화서비스 ② 특정한 게시물에 댓글을 쓰는 방식이나 메일과 같은
+> 방식으로 대화하는 서비스 ③누구나 열람·시청·청취할 수 있는 대화서비스
+
+결정사유 칸 — 「청소년에게 불건전한 교제를 조장·매개하거나 성매매 등 불법행위를 유발할 우려가 있음」. 고시를 낸 부처는 지금
+성평등가족부다(법 제2조 3호의 「성평등가족부장관이 고시한」, 2025. 10. 1. 개정).
+
+**후속 고시 「여성가족부고시 제2021-57호」 — 원문 미확인.** 본 곳: 성평등가족부 「청소년유해매체물 보기」 목록(2026-11-03, 이 갈래의 글은
+2020-09-10 의 제2020-36호 하나다) · 같은 누리집의 「청소년 유해매체물 고시」 글(등록 2025-12-29, 첨부 칸 비어 있음) · 웹 검색. 번호는
+2차 자료에만 나온다 — 방송통신위원회 연구보고서 KCC-2024-19 「청소년보호책임자 지정 제도운영의 성과 및 실효성 개선방안 연구」 11쪽 표가
+「여성가족부고시 제2021-57호 / 청소년유해매체물(불특정 이용자간 온라인 대화서비스를 제공하는 애플리케이션)」을 들고, 내용을 「실명인증,
+대화저장기능, 신고기능 등 제공하지 않아 청소년에게 불건전한 교제를 조장 또는 매개할 우려가 있는 대화서비스」, 제외사항을 「주된
+정보통신서비스와 연계하여 부가적으로 제공되는 온라인 대화서비스, 특정한 게시물에 댓글을 쓰는 방식이나 메일과 같은 방식으로 대화하는 서비스,
+누구나 열람‧시청‧청취할 수 있는 대화서비스」로 요약한다(https://www.kmcc.go.kr/download.do?fileSeq=61323). 이 요약은 위 제2020-36호
+목록표와 같은 요소다. 제2021-57호가 대상 · 예외를 바꿨는지는 원문을 못 봐 **모른다** — 그래서 아래 대조는 제2020-36호 목록표로 하고 결론을 확정하지 않는다.
+
+부처의 시행 설명(2020-12-10, https://m.korea.kr/news/policyNewsView.do?newsId=148880823) — 「여가부는 지난 9월 10일 ▲실명 인증 또는 휴대전화
+인증을 통한 회원관리 ▲대화 저장 ▲신고 기능 등 안전한 대화서비스를 위한 기술적 조치가 없는 랜덤채팅앱을 청소년유해매체물로 결정 고시하고,
+3개월의 유예기간을 두었다.」 「청소년유해매체물에 해당되는 랜덤채팅앱에는 청소년유해표시(⑲금)와 함께 별도의 성인인증 절차를 두어 청소년이
+이용하지 않도록해야 한다.」
+
+### 우리 기능과 항목별로 — 제2020-36호 목록표 기준
+
+| 목록표의 요건 | 우리 사실 | 상태 |
 | --- | --- | --- |
-| 불특정 이용자 간 온라인 대화서비스 | 지인 목록이 아니라 풀에서 점수 · 무작위로 모르는 사람을 보이고 1:1 로 대화한다. 지금은 수락 뒤에 방이 열린다 | **미확정** — 목록표의 정의 원문을 못 봤다. 수락을 거친 1:1 이 「불특정」에 드는지 원문으로 못 가른다 |
-| 예외 — 주된 서비스에 연계한 부가 대화 | 주 서비스는 사주풀이(풀이권 판매)이고, 인연은 사주를 저장하면 자동으로 참여한다 | **미확정** — 「게임 등」의 예가 이 모양까지 넓은지는 고시 문장으로 안 나온다. 판단은 청소년보호위원회 · 부처 몫이다 |
-| 예외 — 게시판 · 댓글처럼 누구나 열람 | 아니다 — 두 사람만 보는 방 | 예외에 들지 않는다(사실) |
-| 불건전한 교제를 조장 또는 매개할 우려 | 추천 점수는 연인용 정책이다(PRD §6.1 「예측 궁합 점수의 연인용 정책」) | 사실만 둔다 — 판정하지 않는다 |
-| 기술 조치 ① 실명 인증 또는 휴대전화 인증을 통한 회원관리 | 없다 — 구글 로그인 + 테스트 코드, 성인 확인 스위치 꺼짐 · 업체 없음 | **갖추지 않았다** |
-| 기술 조치 ② 대화 저장 | 있다 — 서버 표, 닫힌 방 90일 뒤 삭제 | 있다. 저장 기간을 보도자료가 말하지 않아 90일이 충분한지는 **미확정** |
-| 기술 조치 ③ 신고 | 있다 — 사람 · 메시지, 메시지 사본 | 있다 |
-| 위치 정보 | 기기 위치를 안 쓴다 | 고시 · 보도자료의 조건에 위치는 없다 — 참고 사실 |
-| 걸리면 — 나이 및 본인 확인(법 제16조①) | 사주용 생년월일은 이용자가 적은 값이다 | 시행령 제17조① 1~7 의 수단에 **이용자가 적은 생년월일은 없다** |
+| 문자 · 음성 · 화상을 매개로 | 글(문자)만 | 문자에 해당(사실) |
+| 불특정 이용자 간 | 지인 목록이 아니라 풀에서 점수 · 무작위로 모르는 사람을 보인다. 지금은 수락 뒤, 스위치를 켜면 수락 없이 첫 말 1건 | **미확정** — 수락을 거친 1:1 이 「불특정」에 드는지 목록표는 말하지 않는다 |
+| 실시간 제공 | 새 말이 실시간 채널로 선다 | 사실만 둔다 |
+| 불건전한 교제를 조장 또는 매개할 우려 | 추천 점수는 연인용 정책이다(PRD §6.1) | 사실만 둔다 — 판정하지 않는다 |
+| 1호 — 실명 인증 또는 휴대전화 인증을 거친 정보로 회원관리 | 구글 · 애플 로그인 + 테스트 코드 — 이메일 계정 인증이라 **세지 않는다**. 성인 확인 스위치 꺼짐 · 업체 없음 | **해당한다** — 1호의 「하지 않는 애플리케이션」쪽이다 |
+| 2호 — 대화저장(상대가 나가도 유지 · 캡처 · 내보내기 중 하나) | 상대가 거두거나 차단해도 보존 동안 내용을 다시 본다. 캡처를 막는 설정은 찾지 못했다. 내보내기 없음 | 「유지」가 있다. 닫힌 방 90일 뒤 지우는 것이 「유지」에 드는지 목록표가 기간을 말하지 않아 **미확정** |
+| 3호 — 신고기능 · 신고 기록 확인 | 사람 · 메시지 신고, 메시지 사본, 운영자 화면의 처분 이력 | 신고기능은 있다. 「신고 기록 확인」이 누구의 확인인지 목록표가 말하지 않아 **미확정** |
+| 제외 ① 주된 정보통신서비스에 연계한 부가 대화 | 주 서비스는 사주풀이(풀이권 판매)이고, 인연은 사주를 저장하면 자동으로 참여한다 | **미확정** — 판단은 청소년보호위원회 · 성평등가족부 몫이다 |
+| 제외 ② 댓글 · 메일 방식 | 아니다 — 방 안의 1:1 대화 | 제외에 들지 않는다(사실) |
+| 제외 ③ 누구나 열람 | 아니다 — 두 사람만 보는 방 | 제외에 들지 않는다(사실) |
+| 위치 정보 | 기기 위치를 안 쓴다 | 목록표의 요건에 위치는 없다 — 참고 사실 |
+| 성별 · 나이 조건 | 조건은 성별 하나, 나이 없음 | 목록표의 요건에 없다 — 참고 사실 |
 
-**결론(법)** — 고시가 우리에게 걸리는지는 **미확정**이다(목록표 원문 미확인 · 부가 대화 예외 · 「불특정」 해당 여부). 걸린다면 지금은
-기술 조치 ① 이 없어 청소년유해매체물 쪽이고, 그때 드는 나이 · 본인 확인은 시행령 제17조의 수단이어야 한다 — 생년월일 자기신고는 그 목록에
-없다. 거꾸로 세 조치를 다 갖추면 보도자료 문장으로는 유해매체물 범위에서 빠지며, 그때 법이 나이 확인을 따로 요구하는지는 이 고시로는 안 나온다.
+**결론(법)** — 「PASS 가 법적으로 무조건 필수」도, 「직접 입력한 생년월일만으로 인연을 열어도 된다」도 아니다. **둘 다 미확정이다.**
+고시가 우리에게 걸리고(제외 ① 에 들지 않고) 1호에 해당하면 청소년유해매체물이 되고, 그때의 나이 · 본인 확인은 시행령 제17조①의 수단이어야
+한다 — 로그인과 자기신고 생년월일은 그 목록에 없다. 확정에 필요한 것은 둘뿐이다: **제2021-57호 원문 대조**, **담당 기관의 회신**(아래 문안).
 
 ## 2. 스토어 요구
 
 ### Google Play
 
-- **Requirements for apps with incidental dating or matchmaking features** — https://support.google.com/googleplay/android-developer/answer/16838200
-  - 「To protect users under 18 years of age from content that is not age-appropriate, our Age-Restricted Content and Functionality policy
-    requires dating and matchmaking apps to use the Restrict Minor Access feature in Play Console.」
-  - 「The policy may not apply to apps where the core functionality is not facilitating dating or matchmaking that include incidental dating
-    or matchmaking features, provided these apps adopt appropriate minor protections and age-gating safeguards to prevent minors from
-    accessing such mature features.」
-  - 「**We do not mandate specific age-gating technologies.** As the developer, you are free to choose the method that is most appropriate
-    for your app as long as it reasonably prevents minors from accessing the age-restricted dating or matchmaking content and functionality
-    of your app.」
-  - 「It is your responsibility to ensure that your age-gating mechanism is robust and effective. **Simple age gates that can be easily
-    circumvented may not be considered reasonable.**」
+- **데이트 또는 교제 기능이 부수적인 앱의 요건** — https://support.google.com/googleplay/android-developer/answer/16838200?hl=ko
+  - 「만 18세 미만 사용자를 연령에 적합하지 않은 콘텐츠로부터 보호하기 위해 연령 제한 콘텐츠 및 기능 정책에 따라 데이트 및 교제 앱은 Play
+    Console의 미성년자 액세스 제한 기능을 사용해야 합니다.」
+  - 「핵심 기능이 부수적인 데이트 또는 교제 기능을 포함하는 데이트 또는 교제를 지원하지 않는 앱에는 정책이 적용되지 않을 수 있습니다. 단, 이러한
+    앱은 미성년자가 성인용 기능에 액세스하지 못하도록 적절한 미성년자 보호 및 연령 제한 보호 수단을 채택해야 합니다.」
+  - 「**Google에서는 특정 연령 제한 기술을 의무화하지 않습니다.** 개발자는 … 앱에서 합리적으로 방지하는 한 앱에 가장 적합한 방법을 자유롭게
+    선택할 수 있습니다.」
+  - 「연령 제한 메커니즘이 강력하고 효과적인지 확인하는 것은 개발자의 책임입니다. **쉽게 우회할 수 있는 단순한 연령 제한은 합리적이지 않은 것으로
+    간주될 수 있습니다.**」 (영문판: 「Simple age gates that can be easily circumvented may not be considered reasonable.」 한국어판은 AI 번역이라고 페이지가 적는다)
 - **Age-Restricted Content and Functionality** — https://support.google.com/googleplay/android-developer/answer/16302250 — 「apps meeting the
   descriptions below are required to use the Play Console functionality and tools to block minors:」 가운데
   - 「Apps whose core functionality is to facilitate matchmaking or dating. Apps where matchmaking or dating is an incidental feature are not
@@ -123,27 +153,38 @@ https://www.mogef.go.kr/io/ind/io_ind_s030d.do?bbtSn=704988&mid=info306
   determined to be under 18 will not be able to search for, download or purchase the app. Additionally, users who have already installed the
   app will continue to be able to use it, …」
 
-**결론(구글)** — 특정 인증 기술을 지정하지 않는다. 우리 앱의 핵심 기능이 매칭인지(그러면 Restrict Minor Access 가 필수), 부가 기능인지(그러면
-앱이 고른 연령 확인 장치가 「robust and effective」해야 한다)는 구글이 판단하며 **미확정**이다. 덱의 무작위 자리 · 스위치 뒤의 수락 없는 대화가
-「randomly connecting users …」 문장에 드는지도 **미확정**이다. 생년월일 자기신고가 「Simple age gates that can be easily circumvented」에 드는지는
-구글의 판단이다 — **확인되지 않음**.
+**사실(코드)** — 지금 인연 앞에는 나이를 묻는 문이 없다. 사주용 생년월일은 인연 참여의 조건이 아니어서, 그것을 바꾸는 것과 무관하게 인연에
+든다(위 표 마지막 줄). 성인 확인 스위치를 켜면 그때는 업체 확인 줄이 있는 사람만 든다(ADR 0214).
+
+**결론(구글)** — 특정 인증 기술을 지정하지 않는다. 우리 앱의 매칭이 핵심 기능인지(그러면 미성년자 액세스 제한 필수), 부수 기능인지(그러면 앱이 고른
+연령 제한이 강력하고 효과적이어야 한다)는 구글이 판단하며 **미확정**이다. 덱의 무작위 자리 · 스위치 뒤의 수락 없는 대화가 「randomly
+connecting users …」 문장에 드는지도 **미확정**이다.
 
 ### Apple App Review Guidelines
 
-https://developer.apple.com/app-store/review/guidelines/ (페이지의 「Last Updated: October 16, 2026」)
+https://developer.apple.com/app-store/review/guidelines/#user-generated-content (페이지의 「Last Updated: October 16, 2026」)
 
+- 1.2 — 「Apps that enable users to create, generate, upload, share, or otherwise contribute content present particular challenges, including
+  intellectual property infringement, nonconsensual intimate imagery, and anonymous bullying. … To prevent abuse, such apps must include: A method
+  for filtering objectionable material from being posted to the app · A mechanism to report offensive content and timely responses to concerns ·
+  The ability to block abusive users from the service · Published contact information so users can easily reach you」
+- 1.2 — 「Apps with user-generated content or services that end up being used primarily for pornographic content, Chatroulette-style experiences,
+  **random or anonymous chat**, objectification of real people (such as “hot-or-not” voting), making physical threats, or bullying do not belong on
+  the App Store and may be removed without notice.」
 - 1.1.4 — 「Overtly sexual or pornographic material … This includes “hookup” apps and other apps that may include pornography or be used to
   facilitate prostitution, or human trafficking and exploitation.」
-- 1.2 — 사용자 생성 콘텐츠 앱은 「To prevent abuse, such apps must include: A method for filtering objectionable material from being posted to
-  the app · A mechanism to report offensive content and timely responses to concerns · The ability to block abusive users from the service ·
-  Published contact information so users can easily reach you」. 「Apps with user-generated content or services that end up being used
-  primarily for pornographic content, Chatroulette-style experiences, random or anonymous chat, … do not belong on the App Store and may be
-  removed without notice.」
 - 2.3.6 — 「Answer the age rating questions in App Store Connect honestly so that your app aligns properly with parental controls.」
 
-**결론(애플)** — 데이팅 · 매칭 앱에 나이 확인이나 특정 인증 기술을 요구하는 조항은 이 문서에서 찾지 못했다. 「verified or declared age」는
-1.2.1(a)(크리에이터 콘텐츠)와 4.7.5(미니 앱 등)의 조항이다 — 그 대상만 적고 우리에게 걸리는지는 판단하지 않는다. 연령 확인과 따로, 1.2 의
-신고 · 차단은 있고(위 표), 올라오는 말을 거르는 자리는 `src/lib/chat` · `send_chat_message` 에서 찾지 못했다.
+**1.2 「random or anonymous chat」과의 사실 대조** — 판정하지 않는다.
+
+| 1.2 의 낱말 | 우리 사실 |
+| --- | --- |
+| random | 덱 한 자리는 점수 가중 무작위, 20% 는 컷 아래 무작위로 채운다. 대화는 지금 수락 뒤, 스위치를 켜면 수락 없이 첫 말 1건 |
+| anonymous | 실명은 없다 — 닉네임 · 사진(올린 사람만) · 자기소개가 보인다. 운영자는 계정을 안다 |
+| 1.2 의 필터 · 신고 · 차단 · 연락처 | 신고 · 차단은 있다. 올라오는 말을 거르는 자리는 `src/lib/chat` · `send_chat_message` 에서 찾지 못했다 |
+
+**결론(애플)** — 데이팅 · 매칭 앱에 나이 확인이나 특정 인증 기술을 요구하는 조항은 찾지 못했다. 「verified or declared age」는 1.2.1(a)(크리에이터
+콘텐츠)와 4.7.5(미니 앱 등)의 조항이다 — 그 대상만 적고 우리에게 걸리는지는 판단하지 않는다.
 
 ## 3. 자체 정책 — 저장소에 이미 정한 것
 
@@ -163,17 +204,56 @@ https://developer.apple.com/app-store/review/guidelines/ (페이지의 「Last U
 
 | 선택지 | 법(고시 · 제16조 · 시행령 제17조) | Google Play | Apple | 자체 정책 |
 | --- | --- | --- | --- | --- |
-| A. 지금 그대로 — 성인 확인 꺼짐, 사주용 생년월일(자기신고)만 | 고시가 걸리면 기술 조치 ① 이 없어 유해매체물 쪽. 자기신고는 시행령 제17조의 수단이 아니다 | 핵심 기능이 매칭이면 Restrict Minor Access 필수. 부가면 「Simple age gates … may not be considered reasonable」— **확인되지 않음** | 나이 확인 조항 없음. 1.2 · 2.3.6 | ADR 0101 · 0214 · 약관 제8조와 어긋난다 |
-| B. A + 스토어 18+ 등급 · 구글 Restrict Minor Access | 앱 안의 나이 · 본인 확인이 아니다 — 법 쪽은 A 와 같다 | 핵심 기능이 매칭일 때 정책이 지정한 그 장치다. 이미 설치한 사람은 계속 쓴다 | 2.3.6 의 정직한 등급 | A 와 같이 어긋난다 |
-| C. 인연 시작 때 휴대전화 본인확인으로 성인 확인(ADR 0214 의 스위치를 켠다) | 시행령 제17조①6 의 수단이다. 인연에 드는 사람만 인증하므로 고시의 「회원관리」에 해당하는지는 **미확정** | 기술 지정 없음 — 충분한지는 구글이 본다 | 걸리는 조항 없음 | ADR 0214 그대로. 업체 계약 · 앱 배포 · 켜는 승인이 남았다(`docs/ops/runbook/adult-check.md`) |
-| D. 가입 때 본인확인(ADR 0101 원안) | 시행령 제17조①6. 모든 회원을 인증하므로 고시 ① 「회원관리」 쪽 | C 와 같다 | 걸리는 조항 없음 | ADR 0101 원안. 운영자 답(인연 시작 때, ADR 0214)과 다르다 |
+| A. 지금 그대로 — 성인 확인 꺼짐, 로그인과 사주용 생년월일(자기신고)만 | 고시가 걸리면 목록표 1호에 해당해 유해매체물 쪽. 로그인 · 자기신고는 시행령 제17조의 수단이 아니다 | 핵심 기능이 매칭이면 미성년자 액세스 제한 필수. 부수면 「쉽게 우회할 수 있는 단순한 연령 제한은 합리적이지 않은 것으로 간주될 수 있습니다」— **확인되지 않음** | 나이 확인 조항 없음. 1.2 · 2.3.6 | ADR 0101 · 0214 · 약관 제8조와 어긋난다 |
+| B. A + 스토어 18+ 등급 · 구글 미성년자 액세스 제한 | 앱 안의 나이 · 본인 확인이 아니다 — 법 쪽은 A 와 같다 | 핵심 기능이 매칭일 때 정책이 지정한 그 장치다. 이미 설치한 사람은 계속 쓴다 | 2.3.6 의 정직한 등급 | A 와 같이 어긋난다 |
+| C. 인연 시작 때 휴대전화 본인확인으로 성인 확인(ADR 0214 의 스위치를 켠다) | 시행령 제17조①6 의 수단이다. 인연에 드는 사람만 인증하므로 목록표 1호의 「회원관리(회원 가입, 가입정보 관리)」에 해당하는지는 **미확정** | 기술 지정 없음 — 충분한지는 구글이 본다 | 걸리는 조항 없음 | ADR 0214 그대로. 업체 계약 · 앱 배포 · 켜는 승인이 남았다(`docs/ops/runbook/adult-check.md`) |
+| D. 가입 때 본인확인(ADR 0101 원안) | 시행령 제17조①6. 모든 회원을 인증하므로 목록표 1호 「회원관리」 쪽 | C 와 같다 | 걸리는 조항 없음 | ADR 0101 원안. 운영자 답(인연 시작 때, ADR 0214)과 다르다 |
 
 B 는 C · D 와 함께 둘 수 있다. 어느 줄도 「적법」을 뜻하지 않는다.
 
+## 담당 기관 문의 문안 — 운영자가 직접 보낸다
+
+받는 곳: 성평등가족부 청소년보호환경과(고시 게시 글의 담당 부서, 02-2100-6298). 국민신문고 등 보내는 길은 운영자가 고른다.
+문안의 사실은 위 「우리 기능」 표와 PRD §6.6 그대로다 — 보내기 전에 스위치 상태가 바뀌었으면 고친다.
+
+```text
+제목: 사주 서비스 안의 1:1 대화 기능이 「불특정 이용자 간 온라인 대화서비스를 제공하는 애플리케이션」 고시 대상인지 문의드립니다
+
+안녕하세요. 「만날지도」(mannalmap.com, 상호 갑자기탐구생활)를 운영하는 사업자입니다. 여성가족부고시 제2020-36호와
+후속 고시(제2021-57호로 알고 있습니다)의 적용 여부를 여쭙니다.
+
+1. 서비스 구조
+- 주된 서비스는 생년월일시로 사주풀이를 만들어 주는 유료 서비스(풀이권 판매)입니다.
+- 그 안에 「인연」 기능이 있습니다. 사주를 저장한 회원은 자동으로 추천 대상에 들며 설정에서 끌 수 있습니다.
+  추천은 사주로 계산한 궁합 점수를 바탕으로 하되 일부 자리는 무작위로 채웁니다. 지인 목록 기반이 아닙니다.
+- 추천 카드에는 닉네임, 자기소개, 본인이 올린 사진(최대 6장), 예측 궁합 점수가 보입니다. 나이·지역은 보이지 않습니다.
+- 추천 조건은 상대 성별 하나이며 나이 조건은 없습니다.
+- 대화는 1:1 문자 대화만 있습니다(음성·화상 없음). 지금은 상대가 수락해야 대화방이 열리며,
+  준비 중인 방식은 상대 수락 없이 첫 메시지 1건을 보낼 수 있고, 상대가 답장하면 그 뒤 자유롭게 대화하는 방식입니다.
+
+2. 안전 기능
+- 회원 가입: 구글 또는 애플 계정 로그인입니다. 실명 인증·휴대전화 인증은 아직 없습니다.
+  인연 기능 시작 시 휴대전화 본인확인으로 성인 여부를 확인하는 기능을 준비했으나 아직 켜지 않았습니다.
+- 대화 저장: 메시지는 서버에 저장되며, 상대가 대화를 끝내거나 차단해도 보존 기간 동안 내용을 다시 볼 수 있습니다.
+  닫힌 대화방의 메시지는 90일 보존 뒤 삭제합니다.
+- 신고: 회원 신고와 메시지 신고가 있고, 신고한 메시지는 사본을 남기며 운영자가 처리 이력을 남깁니다.
+- 차단: 있으며 되돌릴 수 없습니다.
+- 위치 정보: 기기 위치를 수집하지 않습니다.
+
+3. 여쭙는 것
+(1) 위 구조의 인연 대화가 고시의 「불특정 이용자 간 온라인 대화서비스를 제공하는 애플리케이션」에 해당합니까?
+(2) 고시 제외사항 ①「주된 정보통신서비스와 연계하여 부가적으로 제공되는 온라인 대화서비스」에 해당합니까?
+(3) 해당한다면 필요한 조치는 무엇입니까? 특히 실명 인증 또는 휴대전화 인증을 인연 기능을 쓰는 회원에게만 거치게 하는 것이
+    고시의 「회원관리(회원 가입, 가입정보 관리)」 요건을 충족합니까? 90일 보존 뒤 삭제가 「대화저장」 요건에 맞습니까?
+(4) 제2021-57호가 제2020-36호의 대상·제외사항을 바꾸었다면 그 원문을 어디서 볼 수 있습니까?
+
+감사합니다.
+```
+
 ## 미확정 — 다시 볼 때
 
-- 고시 목록표(첨부)의 원문 — 대상 정의 · 예외 문장. 지금은 보도자료로만 옮겼다
-- 「주된 서비스에 연계한 부가 대화」 예외가 사주 + 인연에 드는가 · 수락 뒤 1:1 이 「불특정」인가 — 청소년보호위원회 · 성평등가족부의 판단
-- 인연 참여자만 인증하는 것(C)이 고시 ① 「회원관리」인가
-- 구글이 우리 앱의 매칭을 핵심으로 보는가 부가로 보는가
+- **제2021-57호 원문** — 대상 · 제외사항이 제2020-36호와 같은지(위 「원문 — 랜덤채팅앱 고시」의 본 곳 다음부터)
+- 「주된 서비스에 연계한 부가 대화」 제외에 사주 + 인연이 드는가 · 수락 뒤 1:1 이 「불특정」인가 — 기관 회신(위 문안의 (1) · (2))
+- 인연 참여자만 인증하는 것(C)이 목록표 1호 「회원관리」인가 · 90일 삭제가 2호 「대화저장」인가 · 3호 「신고 기록 확인」이 누구의 확인인가 — 문안의 (3)
+- 구글이 우리 앱의 매칭을 핵심으로 보는가 부수로 보는가
 - 자기신고 생년월일만으로 출시할 수 있는가 — **확인되지 않음**
