@@ -61,7 +61,7 @@ export async function accountAnswer(): Promise<SignInAnswer> {
 
 /**
  * 다른 계정으로 들어오는 길 — 구글 쪽도 끊어야 다음 로그인에서 계정을 고른다.
- * 애플은 앱이 끊을 길이 없다 — 다음 애플 로그인은 시스템 창이 다시 묻는다(ADR 0218).
+ * 애플은 앱이 끊을 길이 없다 — 다음 애플 로그인은 시스템 창이 다시 묻는다(ADR 0219).
  */
 export async function signOut(): Promise<boolean> {
   if (supabase === null) return true;

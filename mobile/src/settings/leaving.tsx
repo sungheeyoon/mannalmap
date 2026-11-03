@@ -12,7 +12,7 @@ import { requestAccountDeletion } from './settings';
 /**
  * 떠나는 자리 — 웹 `app/me/leaving.tsx` 와 같은 차례다: **여는 누름은 아무것도 안 지운다.** 창이 무엇이 지워지고 무엇이 남는지 먼저
  * 말하고, 되돌릴 수 없는 누름은 그 안의 「탈퇴」다. 거절되면 창이 열린 채 그 줄이 서고, 성공하면 화면이 다시 읽혀 통째로 탈퇴 대기 안내로 바뀐다.
- * 애플로 가입한 계정은 「탈퇴」 뒤에 애플 창이 한 번 더 뜬다 — 연결을 끊는 코드를 받는 자리다. 그 창을 닫으면 아무것도 안 보내고 창이 열린 채다(ADR 0218).
+ * 애플로 가입한 계정은 「탈퇴」 뒤에 애플 창이 한 번 더 뜬다 — 연결을 끊는 코드를 받는 자리다. 그 창을 닫으면 아무것도 안 보내고 창이 열린 채다(ADR 0219).
  */
 export function RequestDeletion({ onDone }: { onDone: () => void }) {
   const [asking, setAsking] = useState(false);

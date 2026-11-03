@@ -3,7 +3,7 @@ import 'server-only';
 import { createPrivateKey, sign } from 'node:crypto';
 
 /**
- * **애플 연결 끊기**(ADR 0218) — 탈퇴 앞에서 그 사람의 애플 토큰을 Sign in with Apple REST API 로 끊는다.
+ * **애플 연결 끊기**(ADR 0219) — 탈퇴 앞에서 그 사람의 애플 토큰을 Sign in with Apple REST API 로 끊는다.
  * Apple 「Offering account deletion in your app」 · 「Revoke tokens」(`/auth/token` → `/auth/revoke`).
  *
  * 우리는 애플의 갱신 토큰을 들지 않는다. 앱이 탈퇴 때 애플 창에서 받은 일회용 코드(5분)를 여기서 토큰으로 바꾸고 곧바로 끊는다 — 그래서 새 표가 없다.

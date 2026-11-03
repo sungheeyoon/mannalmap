@@ -9,7 +9,7 @@ import { appleKeysFromEnv, revokeAppleGrant } from './apple-tokens';
 const REVOKE_UNAVAILABLE_NOTE = UNREACHABLE_NOTE;
 
 /**
- * **애플 연결 끊기**(ADR 0218) — 탈퇴 앞에서 앱이 부른다. `POST { authorizationCode }`.
+ * **애플 연결 끊기**(ADR 0219) — 탈퇴 앞에서 앱이 부른다. `POST { authorizationCode }`.
  *
  * - 사람은 토큰의 답이다. 그 사람에게 애플 신원이 없으면 끊을 것이 없다 — 404
  * - 참여 끄기처럼 웹의 `/me/settings` 와 같은 주소로 관문을 지난다 — 베타가 끝난 뒤에도 탈퇴는 열려 있다(`gateFor`)

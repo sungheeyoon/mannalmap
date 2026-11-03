@@ -6,8 +6,8 @@ import { accountAnswer, notReady, type SignInAnswer } from './sign-in';
 import { FAILED } from './signup';
 
 /**
- * **애플에 묻는 것은 이메일 하나다**(ADR 0218) — 구글 로그인이 받는 것과 같은 칸이고, 이름은 가입 화면의 닉네임이 맡아 안 묻는다.
- * 애플 창은 이메일을 그대로 줄지 가릴지 그 사람에게 묻는다(Apple 4.8). 받지 않기로 답이 나면 이 줄을 `[]` 로 비우고
+ * **애플에 묻는 것은 이메일 하나다**(ADR 0219) — 구글 로그인이 받는 것과 같은 칸이고, 이름은 가입 화면의 닉네임이 맡아 안 묻는다.
+ * 애플 창은 이메일을 그대로 줄지 가릴지 그 사람에게 묻는다(Apple 4.8). 받기로 한 것은 운영자 결정 2026-11-03 이다. 받지 않기로 바꾸면 이 줄을 `[]` 로 비우고
  * Supabase 의 애플 공급자에 「Allow users without an email」을 켠다 — 둘은 함께 움직인다.
  */
 const APPLE_SCOPES = [AppleAuthentication.AppleAuthenticationScope.EMAIL];
@@ -74,7 +74,7 @@ export async function signedInWithApple(): Promise<boolean> {
 
 /**
  * 애플 연결을 끊는 데 드는 일회용 코드 — 탈퇴 때 애플 창을 한 번 더 띄워 받는다(Apple 「Offering account deletion in your app」).
- * 로그인 때 받은 코드는 5분이면 죽고 우리가 갱신 토큰을 들지 않아(ADR 0218) 그때 받는다. 이메일은 다시 묻지 않는다(빈 범위).
+ * 로그인 때 받은 코드는 5분이면 죽고 우리가 갱신 토큰을 들지 않아(ADR 0219) 그때 받는다. 이메일은 다시 묻지 않는다(빈 범위).
  */
 export async function appleRevokeCode(): Promise<{ kind: 'code'; code: string } | { kind: 'cancelled' } | { kind: 'failed' }> {
   try {

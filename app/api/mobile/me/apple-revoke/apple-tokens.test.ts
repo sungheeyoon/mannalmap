@@ -6,7 +6,7 @@ import { describe, expect, it } from 'vitest';
 
 import { APPLE_CLIENT_ID, clientSecretOf, subjectOf } from './apple-tokens';
 
-/** 애플이 받는 클라이언트 비밀의 모양(ADR 0218) — Apple 「Creating a client secret」의 머리 · 몸 칸과 ES256 서명 */
+/** 애플이 받는 클라이언트 비밀의 모양(ADR 0219) — Apple 「Creating a client secret」의 머리 · 몸 칸과 ES256 서명 */
 describe('애플 클라이언트 비밀', () => {
   const { privateKey, publicKey } = generateKeyPairSync('ec', { namedCurve: 'P-256' });
   const keys = { teamId: 'TEAM123456', keyId: 'KEY1234567', privateKey: privateKey.export({ type: 'pkcs8', format: 'pem' }).toString() };

@@ -10,7 +10,7 @@ vi.mock('../../../../auth/bearer-client', () => bearer);
 import { POST } from './route';
 
 /**
- * **애플 연결 끊기의 문**(ADR 0218) — 자격 · 그 사람의 애플 신원 · 키 · 애플의 답마다 무엇이 나가는가를 잰다. 애플은 가짜 `fetch` 다.
+ * **애플 연결 끊기의 문**(ADR 0219) — 자격 · 그 사람의 애플 신원 · 키 · 애플의 답마다 무엇이 나가는가를 잰다. 애플은 가짜 `fetch` 다.
  */
 const APPLE_SUB = '001234.abcdef.0123';
 const { privateKey } = generateKeyPairSync('ec', { namedCurve: 'P-256' });

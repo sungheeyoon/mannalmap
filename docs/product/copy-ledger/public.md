@@ -170,7 +170,7 @@ BoxHero 「support@boxhero.io로」(붙임)다 — 크몽 「help@kmong.com 으�
 | 입구 머리의 둘째 줄 `mobile/src/app/index.tsx` · `COMPAT_ENTRY` | (없음, 걷은 소개 판의 단추) | 궁합 보기 — 로그인 뒤 궁합 탭 | 실사례 없음 — 걷은 `/landing` 의 글자 · ADR 0213 의 3 |
 | 궁합으로 가는 로그인 제목 `mobile/src/app/auth/index.tsx` · `COMPAT_SIGN_IN_TITLE` | 만날지도 시작하기 | 궁합풀이는 로그인하면 볼 수 있어요 | 실사례 없음 — 대장 17 확정 |
 
-## public-06 확인 전 — 앱 로그인 실패 줄에서 공급자 이름을 뺀다 (#935, ADR 0218)
+## public-06 확인 전 — 앱 로그인 실패 줄에서 공급자 이름을 뺀다 (#935, ADR 0219)
 
 애플 로그인이 실패해도 같은 화면으로 와서 「구글」을 뺐다. 새 낱말은 없다 — 실사례 없음, 이 대장의 웹 글자(`app/auth/denied/page.tsx`)에서 앞 낱말만 뺐다. 웹은 구글뿐이라 그대로 둔다.
 애플 단추의 글자(「Apple로 로그인」)는 시스템 단추가 기기 언어로 그리는 것이라 우리 글자가 아니다.
