@@ -317,10 +317,10 @@ npm run test:e2e:signed-in   # 차선 하나만 — match · notice 도 같은 �
 
 ## 운영
 
-폐쇄 초대 MVP 를 운영하는 절차 — 초대·이용 정지·신고 조회·탈퇴 대기 처리·AI 호출량과
-실패 조회 — 는 [`docs/ops/runbook.md`](docs/ops/runbook.md) 에 SQL 로 적혀 있다. 화면은
-아직 없다. `prd-archive` 가 초기에는 UI 대신 **감사 가능한 절차**를 쓸 수 있다고 했고 지금이 그
-단계다.
+지금은 운영 베타다. 운영자 화면은 `/ops` 에 있고(오늘의 숫자 · 회원 찾기 · 주문 · 신고 열람 · 설문 요약 —
+무엇이 있는지는 [`docs/product/prd/screens/ops.md`](docs/product/prd/screens/ops.md)), 들어갈 때 2단계 인증을 다시 묻는다(ADR 0209).
+화면이 없는 절차 — 초대 · 이용 정지 · 탈퇴 대기 처리 · AI 호출량과 실패 조회 — 는
+[`docs/ops/runbook.md`](docs/ops/runbook.md) 에 SQL 로 적혀 있다.
 
 ## 알려진 한계
 
@@ -338,5 +338,6 @@ npm run test:e2e:signed-in   # 차선 하나만 — match · notice 도 같은 �
 
 ## 스택
 
-Next.js 16 (App Router) · TypeScript · Tailwind CSS v4 · Vitest · Playwright ·
+Next.js 16 (App Router) · React 19 · TypeScript · Tailwind CSS v4 · Supabase(PostgreSQL · pgTAP) ·
+Expo(React Native, `mobile/`) · OpenAI(Vercel AI SDK) · Vitest · Playwright · Vercel ·
 [astronomy-engine](https://github.com/cosinekitty/astronomy)
