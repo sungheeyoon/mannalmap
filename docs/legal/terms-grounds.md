@@ -156,6 +156,33 @@
 
 **사실로 달라지는 것** — 옛 구조는 「요청 · 수락은 궁합풀이를 함께 보는 동의이고, 수락 뒤 대화방」이었다. 켜지면 대화가 **상대 수락 없이 먼저** 열리고 대화에 풀이권이 안 들며, 풀이권은 상세 궁합에만 든다. 운영자의 비해당 판단(2026-09-23, 다시 확인 2026-10-29)은 옛 구조 위에서 났다. `[변호사 검토 필요: 수락 없이 먼저 열리는 1:1 대화가 제1호 「알선 등」의 판단에 영향을 주는가 — 요청서 G-25 ⑪]`
 
+## 스토어 결제 · 애플 로그인 — 출시 때 (#938, 2026-11-03 · 게시 안 함)
+
+줄마다의 안과 기다리는 PR 은 `docs/legal/store-launch-notice-draft.md`. 여기는 원문과 확인한 날만 둔다. 판정은 적지 않는다.
+
+**Apple App Store Review Guidelines** — <https://developer.apple.com/app-store/review/guidelines/>, 2026-11-03 에 다시 읽었다.
+
+| 조 | 원문(필요한 대목만) |
+| --- | --- |
+| 3.1.1 | "Any credits or in-game currencies purchased via in-app purchase may not expire, and you should make sure you have a restore mechanism for any restorable in-app purchases." |
+| 3.1.1(a) | "In all other storefronts, except for the United States storefront, where this prohibition does not apply, apps and their metadata may not include buttons, external links, or other calls to action that direct customers to purchasing mechanisms other than in-app purchase." |
+| 3.1.3 머리 | "Apps in this section cannot, within the app, encourage users to use a purchasing method other than in-app purchase, except for apps on the United States storefront and as set forth in 3.1.1(a) and 3.1.3(a)." |
+| 4.8 | "Apps that use a third-party or social login service (such as Facebook Login, Google Sign-In, …) to set up or authenticate the user's primary account with the app must also offer as an equivalent option another login service with the following features: the login service limits data collection to the user's name and email address; the login service allows users to keep their email address private as part of setting up their account; and the login service does not collect interactions with your app for advertising purposes without consent." |
+| 5.1.1(v) | "If your app supports account creation, you must also offer account deletion within the app." |
+
+Google Play 결제 정책은 ADR 0212 가 2026-11-02 에 읽은 것을 그대로 쓴다(이번에 다시 열지 않음).
+
+**한국에서 출시한 서비스 — 인앱결제 환불 안내**(Apple · Google 규정은 조건이고 이 사례를 대신하지 않는다)
+
+| 서비스 | 원문 | 링크 | 확인한 날 |
+| --- | --- | --- | --- |
+| 맞나만나 이용약관 제11조 ③ | 「이용권은 앱에서 App Store 또는 Google Play로 결제합니다. 웹에서는 살 수 없습니다.」 | <https://matnamana.com/terms> | 2026-11-03 |
+| 맞나만나 제15조 ① · ② · ④ | ① 「환불은 결제한 스토어(App Store, Google Play)에 신청하거나, 카카오톡 채널 '맞나만나'나 이메일로 회사에 요청할 수 있습니다.」 ② 「스토어가 환불하면 그 결제로 받은 이용권 가운데 남은 횟수와 기간은 사라집니다.」 ④ 「이미 스토어에서 환불된 결제는 회사가 다시 환불하지 않습니다.」 | 같은 곳 | 2026-11-03 |
+| 미러 환불정책 | 「환불은 결제한 스토어(Google Play 또는 Apple App Store)의 주문/구독 관리 또는 고객센터를 통해 요청하실 수 있습니다.」 · 「Apple App Store 결제분은 Apple의 '문제 신고'(reportaproblem.apple.com)를 통해 환불을 요청할 수 있습니다.」 · 「환불은 결제가 이루어진 해당 스토어의 환불 정책 및 절차에 따라 처리됩니다.」 | <https://mirror-apps.com/refund> | 2026-11-03 |
+| 점신 · 글램 · 정오의 데이트 · 아만다 · 위피 | 유효기간 · 스토어 환불 · 탈퇴 때 잔액의 비교 | #932 의 조사 댓글(2026-11-02) | 이번에 다시 열지 않음 |
+
+**재확인이 드는가** — 약관 · 환불정책은 처리방침 판(`NOTICE_VERSION`)의 대상이 아니고 시행일이 비어 있어 동의한 사람이 없다(「개정의 길」). 처리방침은 애플 로그인 · 앱 푸시 · 인앱결제가 각각 받는 항목을 늘리므로 그 줄을 싣는 날 내용 개정이다(ADR 0095) — 지금 판은 그대로 맞다.
+
 ## 조문 — 원문과 확인한 날
 
 모두 2026-10-16 에 국가법령정보센터 공개 API(`lawService.do`)로 원문을 읽었다.
