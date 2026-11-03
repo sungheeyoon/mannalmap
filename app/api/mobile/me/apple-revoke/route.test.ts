@@ -27,12 +27,12 @@ const press = (body: unknown, token: string | null = 'token-1') =>
 
 const idTokenOf = (sub: string) => `h.${Buffer.from(JSON.stringify({ sub })).toString('base64url')}.s`;
 
-function signedIn(identities: { provider: string; id: string; identity_data?: Record<string, unknown> }[]) {
+function signedIn(identities: { provider: string; id: string; identity_data?: Record<string, unknown> }[], signedUpAt: string | null = '2026-01-01') {
   bearer.supabaseAsBearer.mockReturnValue({
     auth: { getUser: async () => ({ data: { user: { id: 'u-1', identities } }, error: null }) },
     from: () => ({
       select: () => ({
-        maybeSingle: async () => ({ data: { signed_up_at: '2026-01-01', notice_version: NOTICE_VERSION, notice_schedule_id: 7 }, error: null }),
+        maybeSingle: async () => ({ data: { signed_up_at: signedUpAt, notice_version: NOTICE_VERSION, notice_schedule_id: 7 }, error: null }),
       }),
     }),
     rpc: async (name: string) =>
@@ -112,6 +112,12 @@ describe('애플 연결 끊기의 문', () => {
     const revokeForm = new URLSearchParams(String(revokeInit.body));
     expect(revokeForm.get('token')).toBe('r-1');
     expect(revokeForm.get('token_type_hint')).toBe('refresh_token');
+  });
+
+  it('가입을 못 마친 사람도 끊는다 — 가입 화면에서 탈퇴한다(ADR 0218)', async () => {
+    signedIn([apple], null);
+    appleAnswers({ status: 200, body: { id_token: idTokenOf(APPLE_SUB), refresh_token: 'r-1' } });
+    expect((await press({ authorizationCode: 'code-1' })).status).toBe(200);
   });
 
   it('코드가 남의 애플 신원이면 끊지 않는다 — 403', async () => {

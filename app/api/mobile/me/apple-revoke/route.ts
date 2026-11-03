@@ -12,11 +12,12 @@ const REVOKE_UNAVAILABLE_NOTE = UNREACHABLE_NOTE;
  * **애플 연결 끊기**(ADR 0219) — 탈퇴 앞에서 앱이 부른다. `POST { authorizationCode }`.
  *
  * - 사람은 토큰의 답이다. 그 사람에게 애플 신원이 없으면 끊을 것이 없다 — 404
- * - 참여 끄기처럼 웹의 `/me/settings` 와 같은 주소로 관문을 지난다 — 베타가 끝난 뒤에도 탈퇴는 열려 있다(`gateFor`)
+ * - 관문은 웹의 `/signup` 과 같은 주소로 지난다 — 가입을 못 마친 사람 · 정지된 사람도 가입 화면에서 탈퇴하고(ADR 0218), 베타가 끝난 뒤에도
+ *   탈퇴는 열려 있다. 그 사람 자신의 애플 연결만 끊는 문이라 넓게 열어도 남의 것에 닿지 않는다
  * - 키가 아직 없으면(운영자가 Apple Developer 에서 키를 만들기 전) 503 이다. 남의 연결은 못 끊는다(`revokeAppleGrant`)
  */
 export async function POST(request: Request): Promise<Response> {
-  const session = await mobileSession(request, { touches: true, gatedAs: '/me/settings' });
+  const session = await mobileSession(request, { touches: true, gatedAs: '/signup' });
   if (!session.ok) return session.response;
 
   const { authorizationCode } = await bodyOf(request);
