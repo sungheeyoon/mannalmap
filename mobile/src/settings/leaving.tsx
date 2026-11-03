@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Pressable, StyleSheet, Text } from 'react-native';
+import { Pressable, StyleSheet, Text, type StyleProp, type ViewStyle } from 'react-native';
 
 import { DELETION_IRREVERSIBLE_NOTE, DELETION_NOTE, DELETION_SHARED_NOTE } from '@account/index';
 
@@ -12,7 +12,11 @@ import { requestAccountDeletion } from './settings';
  * 떠나는 자리 — 웹 `app/me/leaving.tsx` 와 같은 차례다: **여는 누름은 아무것도 안 지운다.** 창이 무엇이 지워지고 무엇이 남는지 먼저
  * 말하고, 되돌릴 수 없는 누름은 그 안의 「탈퇴」다. 거절되면 창이 열린 채 그 줄이 서고, 성공하면 화면이 다시 읽혀 통째로 탈퇴 대기 안내로 바뀐다.
  */
-export function RequestDeletion({ onDone }: { onDone: () => void }) {
+export function RequestDeletion({ onDone, style }: {
+  onDone: () => void;
+  /** 여는 글자의 자리 — 설정은 맨 아래 왼쪽, 가입 화면은 「다른 계정으로 로그인하기」 아래 가운데(ADR 0218) */
+  style?: StyleProp<ViewStyle>;
+}) {
   const [asking, setAsking] = useState(false);
   const [failure, setFailure] = useState<string | null>(null);
   const [working, setWorking] = useState(false);
@@ -32,7 +36,7 @@ export function RequestDeletion({ onDone }: { onDone: () => void }) {
 
   return (
     <>
-      <Pressable accessibilityRole="button" onPress={() => setAsking(true)} style={({ pressed }) => [styles.open, pressed && styles.pressed]}>
+      <Pressable accessibilityRole="button" onPress={() => setAsking(true)} style={({ pressed }) => [styles.open, style, pressed && styles.pressed]}>
         <Text style={styles.openText}>탈퇴하기</Text>
       </Pressable>
       <ConfirmDialog

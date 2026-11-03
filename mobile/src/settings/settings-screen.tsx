@@ -3,7 +3,7 @@ import { router, useFocusEffect } from 'expo-router';
 import { useCallback, useState } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 
-import { isBlocked } from '@account/index';
+import { isBlocked, mayRequestDeletion } from '@account/index';
 import { SIGN_OUT_PENDING } from '@account/copy';
 import { GUIDE_LINKS } from '@brand/links';
 import { OPTIONAL_CONSENT_NOTE } from '@consent/notice';
@@ -126,7 +126,8 @@ export function SettingsScreen() {
           <SignOutRow />
         </SettingsGroup>
 
-        {active && <RequestDeletion onDone={load} />}
+        {/* 정지된 사람에게도 선다 — 스토어의 계정 삭제 요건(ADR 0218) */}
+        {mayRequestDeletion(state) && <RequestDeletion onDone={load} />}
       </ScrollView>
     </View>
   );

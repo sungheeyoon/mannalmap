@@ -5,7 +5,7 @@
 --   2. **갈래만** — 나가는 칸은 닉네임 · 갈래 둘이다. 메모 · 실행자 · 관련 신고는 안 나간다
 --   3. **갈래가 없을 때** — 직접 UPDATE 의 정지 · 이력 없는 정지는 갈래가 빈 한 줄이다. 앞 정지의 갈래가 새 정지에 묻어오지 않는다
 --   4. **정지 → 탈퇴 대기**(R-1) — 운영자가 공통 함수로 옮기고(`deletion_request`, 메모 필수), 탈퇴 대기 시각이 서고 노출이 꺼진다.
---      이용 중 · 이미 탈퇴 대기는 거절한다. 이용자는 여전히 스스로 신청하지 못한다(`42501`)
+--      이용 중 · 이미 탈퇴 대기는 거절한다. 이용자도 스스로 신청한다(ADR 0218 — 「99_sanction_record」)
 --   5. **그 해제는 정지로** — 정지에서 온 탈퇴 대기는 정지로만 되돌리고, 앞 정지의 갈래가 다시 읽힌다. 이용 중에서 온 것은 지금처럼
 --      이용 중으로
 begin;
@@ -129,10 +129,12 @@ select pg_temp.change((select self_leaver from folks), 'active', 'mistake');
 
 -- ── 4. 정지 → 탈퇴 대기 ────────────────────────────────────────────────────────
 
--- 이용자는 여전히 스스로 신청하지 못한다
+-- 이용자도 스스로 신청한다(ADR 0218, `99_sanction_record` 가 잰다) — 운영자의 길을 재려고 되감는다
 set local role authenticated;
 select pg_temp.acting((select other from folks));
-select throws_ok('select public.request_account_deletion()', '42501', null, '정지된 계정은 화면에서 탈퇴를 신청하지 못한다');
+savepoint before_leaving;
+select lives_ok('select public.request_account_deletion()', '정지된 계정도 화면에서 탈퇴를 신청한다 — 스토어의 계정 삭제 요건');
+rollback to savepoint before_leaving;
 reset role;
 
 -- 정지 전에 켜 둔 노출이 정지 동안 남아 있던 자리 — 요약 칸은 검사식(`opted_in_needs_summary`)을 지나는 값이면 된다
