@@ -64,7 +64,7 @@ const chart2 = { year: { stem: '壬', branch: '申' }, month: { stem: '癸', bra
 const person = (id, date, time, gender) => ({ id, calendar: 'solar', original_date: date, solar_date: date, birth_time: time, gender, city: '서울', late_night_rule: 'jo', time_basis: 'record' });
 
 const fresh = () => ({
-  account: { user_id: ME, status: 'active', self_person_id: SELF, nickname: '달빛산책', intro: LONG, signed_up_at: ago(90000), notice_version: 'notice-v12', notice_schedule_id: 1, improvement_consent: true, contact_consent: false, marketing_consent: false, created_at: ago(90000), first_seen_at: ago(90000), notice_ack_at: ago(50000), last_active_at: ago(1), birth_year: 1990, gender: 'female' },
+  account: { user_id: ME, status: 'active', self_person_id: SELF, nickname: '달빛산책', intro: LONG, signed_up_at: ago(90000), notice_version: 'notice-v13', notice_schedule_id: 1, improvement_consent: true, contact_consent: false, marketing_consent: false, created_at: ago(90000), first_seen_at: ago(90000), notice_ack_at: ago(50000), last_active_at: ago(1), birth_year: 1990, gender: 'female' },
   schedule: [{ schedule_id: 1, ends_on: '2027-06-30', purge_by: '2027-07-30', purge_within_days: 30, operator_name: '가짜 운영자', operator_officer: '가짜 책임자', operator_contact: 'fake@example.invalid' }],
   edges: [
     { person_id: SELF, local_label: '윤하늘', note: null, listed: false, created_at: ago(90000) },

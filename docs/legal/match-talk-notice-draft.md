@@ -29,7 +29,7 @@ ADR 0095 의 기준은 「처리 항목 · 목적 · 보유기간 · 국외 이�
 3. 구매자의 상세 요청 취소 단추가 웹 · 앱에 섰는지 본다(웹은 main, 앱은 #980) — 없으면 제14조의 취소가 없는 길을 약속한다. 멈춘다.
 4. 옛 요청을 잰다 — 운영은 요청 · 인연 0 이었다(2026-11-04). 옛 궁합 요청이 남으면 마이그레이션이 멈춘다(runbook 「배포 순서」). 옛 인연이 있으면 아래 「경과 줄」을 싣는다. 0 이면 뺀다.
 5. 아래 줄을 코드로 옮기고 같은 PR 에서 `terms-draft.md` · `refund-policy.md` · `privacy-v8-draft.md` 를 맞춘다.
-6. 시험 `scripts/match-talk-stays-off.test.ts` 「게시 고지는 그대로다」를 그날의 판으로 고친다 — 안 고치면 붉다. `NOTICE_VERSION` · `NOTICE_ACK_FLOOR` 를 그날의 다음 판으로 올린다(지금 `notice-v12` · 기준 `notice-v8`, `src/lib/consent/notice.ts:94` · `:111`). 그 판 주석에 내용 개정이라 적는다.
+6. 시험 `scripts/match-talk-stays-off.test.ts` 「게시 고지는 그대로다」를 그날의 판으로 고친다 — 안 고치면 붉다. `NOTICE_VERSION` · `NOTICE_ACK_FLOOR` 를 그날의 다음 판으로 올린다(지금 `notice-v13` · 기준 `notice-v13`, `src/lib/consent/notice.ts` 의 `NOTICE_VERSION` · `NOTICE_ACK_FLOOR` — v13 은 애플 로그인 · 이용 정지 기록의 판이다, ADR 0220). 그 판 주석에 내용 개정이라 적는다.
 7. 시행일이 서 있으면 약관 제4조의 공지를 먼저 한다.
 8. **게시는 옛 흐름을 지운 배포와 함께다** — DB 를 먼저 올리고 웹 · 앱 OTA 가 나가는 사이 새 판이 사실보다 앞서는 틈은 짧게 둔다. 되돌릴 스위치는 없다.
 9. #770 에 줄을 더한다.
