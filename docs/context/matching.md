@@ -72,7 +72,7 @@ _Avoid_: 로그, 조회수
 대화 시작이나 영구 제외를 뜻하지 않는다.
 _Avoid_: 차단, 매칭 취소
 
-**pending 요청** — `match_request.status` 의 `pending` · `RequestStatus` · `requestMatch` :
+**pending 요청** — `match_request.status` 의 `pending` · `RequestStatus` · `request_match_detail` :
 받은 사람의 답을 기다리는 요청. 대화(`talk`)는 받은 사람이 아직 답장하지 않은 상태(**답 전 대화**)이고,
 상세 궁합 요청(`detail`)은 받은 사람이 아직 동의하지 않은 상태다. 근거를 바꾸는 수정은 상세 궁합 요청만
 무효화한다 — 대화는 입력을 고쳐도 끝나지 않는다(PRD §6.2).
@@ -99,7 +99,7 @@ _Avoid_: 무효, 삭제
 **궁합풀이**(PRD §6.6). 상대 여덟 글자를 화면 · 응답에 내지 않고 글에 직접 쓰지 않으며 관계 해석만 보인다. 화면 이름은 안 정했다(G-130).
 _Avoid_: 상세 궁합 리포트
 
-**동의 화면** — `respond_to_match_request` : 받은 사람이 「상세 궁합 함께 만들기」를 누르면 무엇이 AI 로 가고
+**동의 화면** — `MATCH_DISCLOSURE` · `DETAIL_CONSENT_SENDS` · `respond_to_match_request` : 받은 사람이 「상세 궁합 함께 만들기」를 누르면 무엇이 AI 로 가고
 무엇이 열리지 않는지를 **누르기 전에** 적어 둔 자리. 구매자와 받은 사람이 **같은 한 벌**을 읽는다(ADR 0008 · 0221).
 _Avoid_: 약관, 안내
 

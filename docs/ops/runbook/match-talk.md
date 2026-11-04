@@ -6,11 +6,21 @@
 
 **DB 먼저 → 웹 → 앱 OTA 다**(`docs/ops/runbook/deploy.md` 규약 넷의 2). 새 웹 · 앱은 옛 흐름 · 스위치를 지운 DB 의 문을 부른다.
 
-1. **DB** — `npx supabase migration list` 로 밀린 줄을 보고 `npm run db:push`. 올린 뒤 `migration list` 의 remote 칸을 본다.
+1. **DB** — `npx supabase migration list` 로 밀린 줄을 본다. 2026-11-04 에 운영에 안 오른 것은 넷이다 — `20270107090000` → `20270107100000` → `20270108154600` → `20270109090000`(옛 흐름 · 스위치를 걷는 판).
+   **올리기 전에 옛 궁합 요청을 센다** — 0 이어야 한다(개인을 가리키지 않는 집계).
+
+   ```sql
+   select count(*) as bundled_requests from public.match_request where kind = 'bundled';
+   ```
+
+   0 이 아니면 `20270109090000` 이 예외로 멈추고 아무것도 안 바뀐다(가드, 한 트랜잭션). 그 줄을 대화로 바꿀지 지울지는 운영자가 정한다 — 멈추고 묻는다.
+   0 이면 `npm run db:push`. 올린 뒤 `migration list` 의 remote 칸을 본다.
 2. **웹** — 그 뒤에 묶음 배포(`docs/ops/runbook/deploy.md` 「묶음 배포」).
 3. **앱** — 웹이 선 뒤 OTA(`docs/ops/runbook/mobile-release.md`).
 
-**거꾸로면 닫힌다** — 새 코드가 옛 DB 를 만나면 없는 문 · 인자를 불러 `PGRST202` 로 실패한다. 줄 · 예약 · 돈은 안 움직이지만 그 창 동안 인연 요청 · 상세 궁합 제출이 안 된다. 앱이 DB 보다 먼저면 제출 문(`reading_run_request_kind`)이 없어 인연 궁합의 첫 제출까지 `request-kind-unknown` 으로 닫힌다(아래 「API 계약」).
+**거꾸로면 닫힌다** — 새 코드가 옛 DB 를 만나면 없는 문 · 인자를 불러 `PGRST202` 로 실패한다. 줄 · 예약 · 돈은 안 움직이지만 그 창 동안 인연 요청 · 상세 궁합 제출이 안 된다.
+
+**임시 호환 셋** — OTA 전에 깔린 앱이 대화를 열 수 있게 남긴다: `request_match` 의 `p_expected_kind`, `my_match_detail_state.detail_open`(늘 참), `match_talk_open()`(늘 참). **제거 조건은 같다** — 운영 웹이 `20270109090000` 뒤의 판으로 나가고, 모든 계정의 앱 채널에 새 OTA 가 닿은 것을 확인한 뒤 후속 마이그레이션으로 걷는다.
 
 **올린 뒤 확인** — 발행 키(로그인 없음)로 새 코드가 부르는 모양 그대로(인자까지) `request_match` 를 부른다: `PGRST202` 면 아직 안 올랐거나 스키마 캐시가 낡았고, `42501` 이면 문을 찾은 것이다. 끝나면 두 시험 계정으로 웹과 실기기에서 대화 · 첫 말 · 답 · 상세 요청 · 누름 · 완성 · 실패를 밟고 #770 에 줄을 더한다.
 
@@ -30,15 +40,15 @@
 
 | 하는 일 | 문 | 인자 | 응답 | 오류 |
 | --- | --- | --- | --- | --- |
-| 대화 시작 | `request_match` | `p_candidate_user_id uuid` · `p_expected_kind text`(선택, 임시 호환 — 비우거나 `talk`) | `uuid` 요청 번호. 늘 대화(`talk`)를 연다. 살아 있는 대화가 있으면(상대가 시작했어도) 그 번호이고 안 센다 — 그때 내 말은 답장이다 | `42501` 못 청함(차단 포함 한 문장) · `23514` 시간당 3회 · 하루 10건 · `55000` 내 요약이 낡음 |
+| 대화 시작 | `request_match` | `p_candidate_user_id uuid` · `p_expected_kind text`(선택, 임시 호환 — `null` · `talk` 만. 새 웹 · 앱은 안 보낸다) | `uuid` 요청 번호. 늘 대화(`talk`)를 연다. 살아 있는 대화가 있으면(상대가 시작했어도) 그 번호이고 안 센다 — 그때 내 말은 답장이다 | `22023` 그 밖의 `p_expected_kind`(옛 화면의 `bundled` 포함) — 아무것도 안 남는다 · `42501` 못 청함(차단 포함 한 문장) · `23514` 시간당 3회 · 하루 10건 · `55000` 내 요약이 낡음 |
 | 말 · 답 | `send_chat_message` | `p_match_id uuid` · `p_body text` · `p_client_id uuid` | `sent` · `closed` · `rate_limited`. 받은 사람의 말이 곧 답이다 | `23514` 답 전 둘째 말 · `42501` 방 없음 |
 | 취소(보낸 사람, 답 전) | `cancel_match_request` | `p_request_id uuid` | `cancelled` 또는 그 줄의 지금 상태. 방이 닫혀 양쪽 목록에서 사라지고 말은 90일 보존을 따른다. 다시 청하면 새 방이다 | `42501` 내 요청이 아님 |
 | 받은 사람의 끝내기 | `block_user` · `report_user` · `report_chat_message` | 지금 그대로 | 지금 그대로 | 지금 그대로 |
 | 상세 청하기 · 재시도 | 앱 `POST /api/mobile/matching/detail`(`matchId` · `clientKey`, 답 `{ ok, iAmBuyer }` 또는 `{ ok: false, message }`) · 웹 `requestMatchDetail` → `request_match_detail`. `accepted` 면 그 길이 제출까지 건다 — 앱에서 RPC 를 바로 부르면 시도가 만료까지 돈다 | `p_match_id uuid` · `p_client_key text`(8~80자, 누름마다 새로, 재전송은 같게) | 한 줄 `request_id uuid` · `status text`(`pending` · `accepted` · …) · `i_am_buyer boolean`. 상대의 살아 있는 요청이면 그 줄에 `i_am_buyer` 거짓, 차감 없음. **`consent_holds` 면 같은 문이 새 누름 없이 시도를 연다**(`accepted`, 부른 사람이 1장) | `22023` 키 모양 · `23514` 대상 아님(차단 포함) · 답 전 · 닫힌 대화 · 글 있음 · 나나 상대가 참여를 끔 · 잔액 없음 · 시간당 3회 · 못 엶 · `42501` 정지 |
-| 상세 동의(받은 사람) | 앱 `POST /api/mobile/matching/respond` · 웹 `respondAndSend` → `respond_to_match_request` | `p_request_id uuid` · `p_accept true` | `accepted`(제출까지 서버가 한다) · `invalidated` 입력 변경 · `expired` · `cancelled` 닫힌 방 | `23514` 지금 못 만듦(잠시 뒤) · `42501` |
+| 상세 동의(받은 사람) | 앱 `POST /api/mobile/matching/respond`(답에 `matchId` 가 없다) · 웹 `respondAndSend` → `respond_to_match_request` | `p_request_id uuid` · `p_accept true` | `accepted`(제출까지 서버가 한다) · `invalidated` 입력 변경 · `expired` · `cancelled` 닫힌 방 | `23514` 지금 못 만듦(잠시 뒤) · `42501` · 대화에 `p_accept=false` 면 `22023`(거절 대신 차단) |
 | 상태 읽기 | `my_match_detail_state` | `p_match_id uuid` | 0행 = 못 보는 인연. 한 줄 — 아래 | 없음 |
 
-**상태 문의 칸:** `state` · `request_id uuid` · `i_am_buyer boolean` · `expires_at timestamptz`(동의 대기만) · `failure_code text` · `failure_detail text`(`failed_mine` 만) · `credits_left integer` · `talk_status text`(`pending` 답 전 · `accepted` 답함) · `may_send boolean` · `consent_holds boolean`(새 누름 없이 다시 만들 수 있다).
+**상태 문의 칸:** `state` · `request_id uuid` · `i_am_buyer boolean` · `expires_at timestamptz`(동의 대기만) · `failure_code text` · `failure_detail text`(`failed_mine` 만) · `credits_left integer` · `talk_status text`(`pending` 답 전 · `accepted` 답함) · `may_send boolean` · `detail_open boolean`(늘 참 — 임시 호환, 위 「배포 순서」) · `consent_holds boolean`(새 누름 없이 다시 만들 수 있다).
 
 **`state` 여덟:** `before_purchase` 구매 전 · `no_credit` 잔액 없음 · `awaiting_consent` 동의 대기(`i_am_buyer` 로 양쪽을 가른다) · `making` 만드는 중 · `ready` 완료(글은 `my_reading('match', null, null, 인연)`) · `failed_mine` 내 실패(구매자에게만, 상대는 구매 전) · `input_changed` 입력 변경 · `room_closed` 닫힌 방.
 
@@ -46,13 +56,15 @@
 
 **끝난 대화의 신고:** `my_ended_talks()` → `match_id` · `partner_user_id` · `partner_nickname` · `closed_at`, `my_ended_talk_messages(p_match_id)` → `message_id` · `mine` · `body` · `created_at`. 자기 방 · 보존 90일 안 · 읽기 전용. 사진 · 소개 · 끝난 까닭이 없다. 신고는 지금 `report_user` · `report_chat_message` 다.
 
-**제출 문:** 열쇠 전용 `match_run_awaiting_send` 가 `request_kind`(`detail`)를 더 내주고, 그 이름을 안 내주는 다시 만들기 · 복구기는 열쇠 전용 `reading_run_request_kind(시도)` 로 묻는다. **앱이 이 문을 부르므로 마이그레이션이 앱 배포보다 먼저다** — 문이 없으면(`PGRST202`) 인연 궁합의 첫 제출 · 다시 만들기 · 복구가 `request-kind-unknown` 으로 닫힌다. 일시 장애(끊김 · 시한)는 닫지 않고 복구기가 다시 집는다. 보내기 직전 `prepare_reading_job` 은 범위 · 방 · 동의를 다시 재고, 끝났으면 `false` 와 함께 시도를 `consent-ended` 실패로 닫는다.
+**제출 문:** 인연 궁합은 늘 상세 궁합이라 제출이 종류를 묻지 않는다 — `reading_run_request_kind` 와 `match_run_awaiting_send.request_kind` 는 걷혔다. 보내기 직전 `prepare_reading_job` 은 범위 · 방 · 동의를 다시 재고, 끝났으면 `false` 와 함께 시도를 `consent-ended` 실패로 닫는다.
 
 **글자:** `my_match_scope.my_chart` · `partner_chart` 와 `my_readings` 의 일간은 null 이다 — 어느 흐름도 글자를 사용자에게 돌려주지 않는다(ADR 0221).
 
 **같은 키:** 재전송은 처음 답이 아니라 **지금 상태**다. **소식:** 살아 있는 요청의 줄은 목록에 하나 보인다(창 안이면 앞 줄을 옮기고 안 읽음으로 돌린다, 푸시 없음).
 
-**거절 단추는 없다** — 답 전 대화에도 상세 요청에도. 상세의 `p_accept=false` 는 어느 화면에도 없는 직접 호출이고 `cancelled` 로 끝나 다시 청할 수 있다.
+**거절 단추는 없다** — 답 전 대화에도 상세 요청에도. 대화의 `p_accept=false` 는 `22023` 이다. 상세의 `p_accept=false` 는 어느 화면에도 없는 직접 호출이고 `cancelled` 로 끝나 다시 청할 수 있다.
+
+**걷힌 것**(`20270109090000`): `match_talk_switch` 표 · `match_talk_is_open` · `match_is_on_the_old_way` · `match_request_ttl` · `reading_run_request_kind` · `match_run_awaiting_send.request_kind` · `MK001` · 상세의 「꺼짐」 `55000`.
 
 ## 상세 궁합 실호출
 
