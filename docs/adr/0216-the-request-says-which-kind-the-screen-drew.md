@@ -1,5 +1,7 @@
 # 요청 문은 화면이 그린 종류를 받아 스위치와 같은 읽기로 견준다
 
+> 후속 결정: ADR 0221 — 옛 흐름과 스위치가 걷혀 요청 문이 견줄 것이 없다. `request_match` 는 늘 대화를 연다.
+
 > 운영자 결정(2026-11-02, #961): 스위치 경합을 위험 기록으로 끝내지 말고 DB 에서 호출자가 기대한 요청 종류를 확인한다. 결정 점검표의 「비용」 · 「실패했을 때 열리는가 닫히는가」에 걸린다. 흐름의 원본은 PRD §6.6, 흐름을 세운 까닭은 ADR 0215 다.
 
 ## 잰 결함
@@ -70,4 +72,4 @@
 
 ## 시험
 
-`supabase/tests/99_match_request_expected_kind.test.sql` · `supabase/tests/99_match_off_keeps_old_answers.test.sql` · `scripts/match-talk-stays-off.test.ts` · `scripts/mobile-match-talk.test.ts` · `scripts/mobile-deck-switch-moved.test.ts` · `app/me/discovery/actions.test.ts` · `scripts/check-mobile.mjs`.
+`supabase/tests/99_match_request_expected_kind.test.sql` · `supabase/tests/99_match_off_keeps_old_answers.test.sql` · `scripts/match-talk-stays-off.test.ts` · `scripts/mobile-match-talk.test.ts` · `scripts/mobile-deck-talk.test.ts`(앱 PR #999 에서 이름을 바꿨다) · `app/me/discovery/actions.test.ts` · `scripts/check-mobile.mjs`.

@@ -14,7 +14,7 @@
 | User | `app_user` · `AccountState` | 표 · `src/lib/account` |
 | selfPerson | `self_person_id` · `create_self_person` | `app_user` 칸 · 함수 |
 | 성인 확인 | `adult_check` · `adult_check_switch` · `adult_check_passed` · `my_adult_check` · `confirm_adult_check` | 표 · 판정 · 문(ADR 0214) |
-| 대화 · 상세 궁합 | `match_talk_switch` · `match_request.kind` · `request_match_detail` · `my_match_detail_state` · `p_expected_kind` | 스위치 · 칸 · 문(ADR 0215 · 0216) |
+| 대화 · 상세 궁합 | `match_request.kind` · `request_match_detail` · `my_match_detail_state` | 칸 · 문(ADR 0215 · 0221) |
 | localLabel | `local_label` | `user_person_access` 칸 |
 | 닉네임 | `nickname` · `nicknameKey` | `app_user` 칸 · `src/lib/profile` |
 | 프로필 사진 | `profile_photo` · `photo_at` | 표 · 함수 |
@@ -84,7 +84,7 @@
 | pending 요청 | `match_request` · `pending` · `RequestStatus` · `requestMatch` | 표 · 값 · `src/lib/consent` · 액션 |
 | 무효 | `invalidated` · `invalidate_pending_requests` | 값 · 함수 |
 | 거둠 | `cancelled` · `cancelRequest` | 값 · 액션 |
-| 동의 화면 | `MATCH_DISCLOSURE` · `CONSENT_FLOW_STEPS` · `respond_to_match_request` | `src/lib/consent` · 함수 |
+| 동의 화면 | `respond_to_match_request` | 함수 |
 | Match | `match` · `my_matches` · `visible_matches` | 표 · 함수 |
 | 공유 결과 | `matchResultForViewer` | `app/me/match/result.ts` |
 | 동의 당시 여덟 글자 | `chart_high` · `chart_low` · `freeze_reading_input` | `match` 칸 · 함수 |
