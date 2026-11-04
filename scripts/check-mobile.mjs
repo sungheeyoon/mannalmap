@@ -492,10 +492,11 @@ try {
   const badRespond = await door('/api/mobile/matching/respond', { token: bToken, method: 'POST', json: { requestId: 'x', accept: true } });
   check('요청 id 모양이 틀리면 400', badRespond.status === 400, said(badRespond));
   const accepted = await door('/api/mobile/matching/respond', { token: bToken, method: 'POST', json: { requestId, accept: true } });
-  check('수락한다 — matchId 가 온다', accepted.body?.ok === true && accepted.body.status === 'accepted' && typeof accepted.body.matchId === 'string', said(accepted));
-  const matchId = accepted.body?.matchId;
-  await new Promise((resolve) => setTimeout(resolve, 1500));
-  note('수락 뒤 궁합풀이 시도', '수락', sql(`select coalesce(string_agg(status || ':' || coalesce(failure_code, '-'), ','), '없음') from public.reading_run where match_id = '${matchId}'`));
+  /* 대화의 수락은 받은 사람의 답과 같다 — 방은 요청 때 이미 섰다. 문은 상태만 답한다(인연 번호를 안 싣는다, `20270109090000`) */
+  check('대화에 답한다 — 상태 글자가 온다', accepted.body?.ok === true && accepted.body.status === 'accepted', said(accepted));
+  const matchId = sql(`select id from public.match where request_id = '${requestId}'`);
+  check('대화의 인연은 요청 때 섰다', /^[0-9a-f-]{36}$/.test(matchId), matchId);
+  check('대화의 답은 궁합풀이 시도를 안 연다', sql(`select count(*) from public.reading_run where match_id = '${matchId}'`) === '0');
 
   const scope = await a.client.rpc('my_match_scope', { p_match_id: matchId });
   check('인연 범위의 칸', scope.error === null && hasColumns(scope.data?.[0] ?? {}, ['match_id', 'partner_user_id', 'partner_nickname', 'partner_intro', 'partner_has_photo', 'my_chart', 'partner_chart']).length === 0, shapeOf(scope));

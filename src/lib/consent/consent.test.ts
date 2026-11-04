@@ -129,7 +129,7 @@ describe('알림은 여섯 사건을 말한다', () => {
     expect(notificationText({ kind: 'request_accepted', nickname: '지영', readingKind: null }))
       .toBe('지영 님과 채팅방이 열렸어요');
     expect(notificationText({ kind: 'request_accepted', nickname: null, readingKind: null }))
-      .toBe('요청이 수락돼 채팅방이 열렸어요');
+      .toBe('채팅방이 열렸어요');
   });
 });
 
@@ -190,7 +190,7 @@ describe('실패 알림은 무엇을 만들다 실패했는지 말한다', () =>
       expect(tapped).toContain('이 알림을 눌러 다시 시도해 주세요');
       expect(failed(kind)).not.toContain('눌러');
     }
-    expect(failed('match')).toContain('인연 기록에서 해당 궁합을 열어');
+    expect(failed('match')).toContain('대화방에서 다시 시도해');
     expect(failed('self')).toContain('만들던 풀이 화면에서');
   });
 
@@ -231,16 +231,16 @@ describe('완성 소식은 무엇이 다 됐는지 말한다', () => {
   });
 
   /** 인연 궁합 상대의 소식은 시도를 안 가리킨다(`readingKind` 없음) — 확정 문구 그대로다 */
-  it('인연 궁합의 소식은 그대로다', () => {
-    expect(ready(null, [null, null], '지영')).toBe('지영 님과의 인연 궁합이 완성됐어요');
-    expect(ready(null)).toBe('인연 궁합이 완성됐어요');
-    expect(ready('match', [null, null], '지영')).toBe('지영 님과의 인연 궁합이 완성됐어요');
+  it('상세 궁합의 소식은 두 사람이 같은 문장이다', () => {
+    expect(ready(null, [null, null], '지영')).toBe('지영 님과의 상세 궁합이 완성됐어요');
+    expect(ready(null)).toBe('상세 궁합이 완성됐어요');
+    expect(ready('match', [null, null], '지영')).toBe('지영 님과의 상세 궁합이 완성됐어요');
   });
 
-  /** 흐름 검사(`scripts/check-reading.mjs`)는 「인연 궁합이 완성됐어요」로 연 쪽에 안 섰는지 잰다 — 셋이 그 글자를 들면 안 된다 */
+  /** 흐름 검사(`scripts/check-reading.mjs`)는 「상세 궁합이 완성됐어요」로 연 쪽에 안 섰는지 잰다 — 셋이 그 글자를 들면 안 된다 */
   it('내가 주인인 셋의 문장은 인연 궁합의 문장과 겹치지 않는다', () => {
     for (const kind of ['self', 'person', 'private'] as const) {
-      expect(ready(kind, ['엄마', '아빠'])).not.toContain('인연 궁합이 완성됐어요');
+      expect(ready(kind, ['엄마', '아빠'])).not.toContain('상세 궁합이 완성됐어요');
     }
   });
 });

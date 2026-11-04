@@ -213,7 +213,7 @@ select pg_temp.open_board(kim), pg_temp.open_board(lee), pg_temp.open_board(park
 
 reset role;
 select ok(to_regclass('public.match_talk_switch') is null, '스위치 표는 없다 — 켜고 끌 것이 없다');
-select ok(to_regprocedure('public.match_talk_open()') is null, '화면이 켜짐을 읽던 문도 없다');
+select is(public.match_talk_open(), true, '화면이 켜짐을 읽던 문은 늘 참이다 — 깔린 앱의 임시 호환');
 create temporary table the_rate as select public.reading_rate_limit() as n;
 set local role authenticated;
 

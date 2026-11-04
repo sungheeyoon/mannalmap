@@ -2,16 +2,18 @@
 --
 -- 카드 → 첫 말 1건(무료, 수락 없음) → 상대의 답 → 자유 채팅 → 원하면 상세 궁합(구매자 1장, 받은 사람의 72시간 안 누름)만 남는다.
 -- 걷는 것: 요청 때 1장 예약 · 수락이 여는 인연 · 자동 인연 궁합 · 수락 때 여덟 글자 공개 · 7일 만료 · 옛 다시 만들기 · 대화의 거절,
--- 그리고 `match_talk_switch` · `match_talk_is_open` · `match_talk_open` · `match_is_on_the_old_way` · `match_request_ttl` · `reading_run_request_kind`.
+-- 그리고 `match_talk_switch` · `match_talk_is_open` · `match_is_on_the_old_way` · `match_request_ttl` · `reading_run_request_kind`.
 -- 켜고 끌 것이 없으니 스위치를 읽던 문은 늘 켜진 쪽으로 답한다.
 --
 -- **남은 옛 요청이 있으면 멈춘다** — 줄을 바꾸지 않는다. 2026-11-04 운영 집계는 요청 · 인연 · 예약 0 이다. 수락된 옛 인연은 글자가 이미 열렸고
 -- 글이 있을 수 있어, 대화로 이름을 바꿀지 지울지는 그 줄을 본 운영자가 정할 일이다. 멈추면 아무것도 안 바뀐다(파일 하나가 한 트랜잭션이다).
 --
--- **임시 호환 둘** — 깔린 앱의 판을 모르는 동안만 남긴다. 제거 조건은 같다: 운영 웹이 이 판 뒤로 나가고, 모든 계정의 앱 채널에
--- 새 OTA 가 닿은 것을 확인한 뒤 후속 마이그레이션으로 걷는다.
+-- **임시 호환 셋** — 깔린 앱의 판을 모르는 동안만 남긴다. 제거 조건은 같다: 운영 웹이 이 판 뒤로 나가고, 모든 계정의 앱 채널에
+-- 새 OTA 가 닿은 것을 확인한 뒤 후속 마이그레이션으로 셋을 함께 걷는다. 새 웹 · 앱은 셋 다 안 부른다 · 안 읽는다.
 --   1. `request_match` 의 `p_expected_kind` — `null` · `talk` 만 받는다. 새 웹 · 앱은 안 보낸다. `bundled` 를 싣는 옛 화면은 `22023` 이다.
 --   2. `my_match_detail_state.detail_open` — 늘 참이다. 칸을 빼면 그 칸을 읽는 옛 화면이 꺼짐으로 읽는다.
+--   3. `match_talk_open()` — 늘 참이다. 지우면 OTA 전 깔린 앱이 `PGRST202` 를 꺼짐으로 읽고 `bundled` 를 보내 `22023` 을 받는다 —
+--      대화를 못 연다. 참이면 그 앱이 「대화 시작」을 그리고 `talk` 를 보낸다.
 -- 반환 칸의 글자 · 일간(`my_match_scope.my_chart` · `partner_chart`, `my_readings.day_master_*`)은 늘 null 이다 — 새 흐름은 글자를 돌려주지 않는다(ADR 0215).
 
 do $$
@@ -1196,10 +1198,21 @@ $function$
 
 ;
 
+-- ── 임시 호환 3 — 스위치를 읽던 깔린 앱이 켜진 쪽을 그리게 늘 참이다. 권한(anon · authenticated)은 그대로다. 제거 조건은 머리말 ──
+create or replace function public.match_talk_open()
+returns boolean
+language sql
+stable
+security definer
+set search_path to ''
+as $$ select true $$;
+
+comment on function public.match_talk_open() is
+  '임시 호환 — 늘 참. OTA 전 깔린 앱이 스위치를 읽는다. 운영 웹이 20270109090000 뒤로 나가고 모든 계정 채널에 새 OTA 를 확인하면 p_expected_kind · detail_open 과 함께 걷는다.';
+
 -- ── 걷는 것 — 위의 문이 더는 안 부른다 ──
 drop function public.reading_run_request_kind(uuid);
 drop function public.match_is_on_the_old_way(uuid);
-drop function public.match_talk_open();
 drop function public.match_talk_is_open();
 drop function public.match_request_ttl();
 drop table public.match_talk_switch;

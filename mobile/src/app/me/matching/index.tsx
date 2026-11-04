@@ -20,9 +20,6 @@ import { CardFrame, RowCard } from '@/ui/surfaces';
 
 type Loaded = { finishedMatchIds: readonly string[]; endedTalks: number; account: AccountState; deck: Read<DeckPlace>; matches: Read<readonly InboxMatch[]> };
 
-/** 지난 요청은 옛 흐름의 자리다 — 대화는 방이 들고 상세 요청은 목록에 없다. 세지 않는다. 임시: 공용 `historySummary` 가 요청 인자를 걷으면 이 상수를 지운다 */
-const NO_PAST_REQUESTS = { ok: false, reason: '' } as const;
-
 const todayLabel = () => new Date().toLocaleDateString('ko-KR', { month: 'long', day: 'numeric', weekday: 'long', timeZone: 'Asia/Seoul' });
 
 /**
@@ -63,7 +60,7 @@ export default function MatchingScreen() {
   const { account } = loaded;
   if (isBlocked(account)) return <Blocked state={account} onRetry={again} />;
 
-  const summary = historySummary(loaded.matches, NO_PAST_REQUESTS, { finishedMatchIds: loaded.finishedMatchIds, endedTalks: loaded.endedTalks });
+  const summary = historySummary(loaded.matches, { finishedMatchIds: loaded.finishedMatchIds, endedTalks: loaded.endedTalks });
   const tail = <HistoryRow summary={summary} />;
 
   if (!loaded.deck.ok) {

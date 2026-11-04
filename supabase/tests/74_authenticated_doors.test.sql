@@ -13,8 +13,8 @@
 -- `set_my_photo` 를 걷어 81 개다. 2026-10-09 에 홈의 「만드는 중」(`my_running_readings`, ADR 0157)이, 2026-10-11 에 사진을 그 자리에서 바꾸는 문(`replace_my_photo`, `20261202090000`)이, 사진의 보일 자리를 정하는 문(`set_my_photo_focus`, `20261203090000`)이 하나씩 더했다. 2026-10-12 에 풀이권 상품 화면의 문 둘(`my_reading_sale_is_open` · `my_reading_order`, `20261207090000`, ADR 0171)이 더했다. 같은 날 결제 내역 화면의 문(`my_reading_orders`, `20261208090000`, ADR 0174)이 더했다. 2026-10-16 에 운영자의 오늘 · 이번 주 숫자 문(`operator_today_figures`, `20261210090000`, ADR 0183)이, 같은 날 운영자가 주문 화면에서 환불을 확보 · 확정 · 준비 취소하고 진행 중인 것을 읽는 문 넷(`operator_hold_reading_refund` · `operator_book_reading_refund` · `operator_release_reading_refund` · `operator_reading_refund_hold`, `20261211090000`, ADR 0184)이, 같은 날 운영자의 회원 찾기 문 둘(`operator_member` · `operator_member_warnings`, `20261212090000`, ADR 0185)이 더했다 — 회원 찾기 둘은 사람 id 를 받지만 운영자만 부른다(`is_operator()`, 아니면 `42501`). 2026-10-17 에 무상 풀이권 지급 · 회수와 그 장부 · 이력을 읽는 문 넷(`operator_grant_reading_credits` · `operator_revoke_reading_credits` · `operator_member_grant_ledger` · `operator_member_credit_history`, `20261214090000`, ADR 0187)이 더했다 — 같은 꼴로 운영자만 부른다. 같은 날 회원 화면의 정지 · 해제와 처분 이력을 읽는 문 셋(`operator_suspend_member` · `operator_unsuspend_member` · `operator_member_sanctions`, `20261216090000`, ADR 0189)이 더했다 — 같은 꼴이다. 같은 날 정지된 사람이 제 정지의 갈래를 읽는 문(`my_suspension`, `20261217090000`, ADR 0190)이 더했다 — 사람 id 를 받지 않고 부른 사람 제 것만, 정지일 때만 낸다. 사진 저장소의 올리는 문 넷(`begin_my_photo_upload` · `add_my_photo_object` · `replace_my_photo_object` · `drop_my_photo_upload`, `20261227090000`, G-120)은 `20261227120000` 이 닫았다가 열람 방식과 함께 `20261228150000` 이 연다 — 넷 다 제 사진 · 제 표만 다룬다. 열려도 올리기는 DB 의 스위치(`photo_upload_switch`, `20261228140000`)가 `s3` 일 때만 받는다 — 그 스위치의 값을 화면이 읽는 문(`photo_upload_mode`)이 하나 더했다. 2026-10-23 에 `photo_at` 이 판본 인자(`p_version`)를 받게 됐다 — 수는 그대로다(`20261227180000`, G-119). 화면이 안 부르는 것도 든다 — 정책 · 다른 함수 안에서 불리는 판정(`chat_room_readable` ·
 -- `discovery_shown_to_me` · `set_person_listed`), 모양 검사(`is_*` · `reject_bad_chart`). 걷을지는 이 파일이 아니라
 -- 마이그레이션이 정한다 — 옛 사진 문 셋은 `clear_my_photo` 를 `20261110090000` 이, `photo_of` 를 `20261112090000` 이,
--- `set_my_photo` 를 `20261115090000` 이 걷었다. 대화가 유일한 흐름이 되며 `match_talk_open` · `match_request_ttl` 을
--- `20270109090000` 이 걷었다.
+-- `set_my_photo` 를 `20261115090000` 이 걷었다. 대화가 유일한 흐름이 되며 `match_request_ttl` 을
+-- `20270109090000` 이 걷었다. `match_talk_open` 은 그 마이그레이션의 임시 호환으로 늘 참이다.
 begin;
 select plan(1);
 
@@ -45,6 +45,7 @@ select set_eq(
            ('mark_chat_read(p_match_id uuid, p_up_to_seq bigint)'),
            ('mark_notifications_read()'),
            ('mark_reading_ready_read(p_reading_id uuid)'),
+           ('match_talk_open()'),
            ('match_reading_source(p_match_id uuid)'),
            ('move_my_photo(p_from integer, p_to integer, p_version bigint)'),
            ('my_adult_check()'),

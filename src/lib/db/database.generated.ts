@@ -3434,6 +3434,7 @@ export type Database = {
         Returns: boolean
       }
       match_talk_daily_limit: { Args: never; Returns: number }
+      match_talk_open: { Args: never; Returns: boolean }
       match_talk_too_many_today: { Args: { p_from: string }; Returns: boolean }
       may_edit_person_input: {
         Args: { actor: string; target_person: string }
