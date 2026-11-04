@@ -115,7 +115,6 @@ describe('내보낸 액션은 바뀐 것의 이름을 고른다', () => {
     'app/me/discovery/actions.ts::setDiscoveryParticipation': 'discovery-settings-changed',
     'app/me/discovery/actions.ts::passCandidate': 'deck-moved',
     'app/me/discovery/actions.ts::restorePassed': 'deck-moved',
-    'app/me/discovery/actions.ts::requestMatch': 'match-requested',
     'app/me/discovery/actions.ts::startTalk': 'match-requested',
     'app/me/chat/actions.ts::requestMatchDetail': 'requests-changed',
     'app/me/profile/actions.ts::saveProfile': 'account-changed',

@@ -45,14 +45,14 @@ export function startReading(target: ReadingTarget, requestKey: string): Promise
 }
 
 /**
- * 받은 요청에 답한다 — 수락이면 서버가 응답 뒤에 궁합풀이를 떠나보낸다. `respond_to_match_request` 를 앱에서 바로 부르면 방만 열리고 글이 안 선다.
- * 제출만 하는 문은 없다 — 이 부름이 수락 그 자체다(ADR 0211).
+ * 상세 궁합에 동의한다 — 동의가 서면 서버가 응답 뒤에 상세 궁합을 떠나보낸다. `respond_to_match_request` 를 앱에서 바로 부르면 글이 안 선다.
+ * 제출만 하는 문은 없다 — 이 부름이 동의 그 자체다(ADR 0211). 앱은 거절을 보내지 않는다 — `accept` 는 늘 참이다.
  */
-export function respondToMatchRequest(requestId: string, accept: boolean): Promise<DoorAnswer<DoorRespond>> {
+export function respondToMatchRequest(requestId: string): Promise<DoorAnswer<DoorRespond>> {
   return door('/api/mobile/matching/respond', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ requestId, accept }),
+    body: JSON.stringify({ requestId, accept: true }),
   });
 }
 

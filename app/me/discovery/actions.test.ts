@@ -14,7 +14,7 @@ vi.mock('../../keyed-client', () => ({ keyedClient: () => ({ rpc: async () => ({
 
 import { supabaseOnServer } from '../../auth/server-client';
 import { selfElementSummary } from '../summary';
-import { passCandidate, requestMatch, restorePassed, savePreferGender, setDiscoveryParticipation, startTalk } from './actions';
+import { passCandidate, restorePassed, savePreferGender, setDiscoveryParticipation, startTalk } from './actions';
 
 /**
  * **처음인지를 못 읽었으면 저장하지 않고 값으로 말한다**(ADR 0078).
@@ -108,59 +108,24 @@ describe('덱에서 지나치기', () => {
   });
 });
 
-/**
- * **잔액을 본 뒤 그 사이 풀이권이 바닥났으면** 요청 문이 잔액으로 막는다 — 화면이 오류 줄 대신 풀이권 창을 열 수 있게 그 거절에 표를 단다
- * (ADR 0171 「덧」). 같은 코드의 다른 거절에는 안 단다.
- */
-describe('화면이 그린 흐름과 스위치가 어긋난 거절(ADR 0216)', () => {
-  const message = '화면이 바뀌어 처리하지 않았어요. 확인하고 다시 눌러 주세요.';
+/** 대화 시작은 상대만 싣는다 — 기대 종류 인자는 새 화면이 안 보낸다(대화가 유일한 흐름, `20270109090000`) */
+describe('대화 시작', () => {
   const answering = (error: { code: string; message: string } | null) => {
-    const rpc = vi.fn(async (name: string) => (name === 'my_chat_rooms' ? { data: [], error: null } : { data: error ? null : 'r-1', error }));
+    const rpc = vi.fn(async (name: string) => (name === 'my_chat_rooms' ? { data: [{ partner_user_id: 'c-1', match_id: 'm-1' }], error: null } : { data: error ? null : 'r-1', error }));
     vi.mocked(supabaseOnServer).mockResolvedValue({ rpc } as never);
     return rpc;
   };
   beforeEach(() => { cacheCalls.length = 0; });
 
-  it('대화 시작은 무료를, 궁합 요청은 유료를 기대한다고 문에 말한다', async () => {
+  it('상대만 싣고, 연 방으로 간다', async () => {
     const rpc = answering(null);
-    await startTalk('c-1');
-    expect(rpc).toHaveBeenCalledWith('request_match', { p_candidate_user_id: 'c-1', p_expected_kind: 'talk' });
-    await requestMatch('c-1');
-    expect(rpc).toHaveBeenCalledWith('request_match', { p_candidate_user_id: 'c-1', p_expected_kind: 'bundled' });
+    expect(await startTalk('c-1')).toEqual({ ok: true, matchId: 'm-1' });
+    expect(rpc).toHaveBeenCalledWith('request_match', { p_candidate_user_id: 'c-1' });
   });
 
-  it.each([
-    ['대화 시작', startTalk],
-    ['궁합 요청', requestMatch],
-  ] as const)('%s 이 거절되면 문장만 내고 지금 화면을 다시 그린다 — 풀이권이 움직였다고 말하지 않는다', async (_, press) => {
-    answering({ code: 'MK001', message });
-    expect(await press('c-1')).toEqual({ ok: false, message });
-    expect(cacheCalls).toContain('revalidatePath /me/matching');
-  });
-
-  it('옛 DB 를 만나면(문이 없다) 실패로 닫힌다 — 화면을 다시 그리지 않고 일시 문제로 답한다', async () => {
-    answering({ code: 'PGRST202', message: 'Could not find the function' });
-    expect(await requestMatch('c-1')).toEqual({ ok: false, message: '일시적인 문제로 처리하지 못했어요. 잠시 뒤 다시 시도해 주세요.' });
-    expect(cacheCalls).toEqual([]);
-  });
-});
-
-describe('인연 요청이 풀이권으로 막힌 거절', () => {
-  const refusing = (error: { code: string; message: string }) =>
-    vi.mocked(supabaseOnServer).mockResolvedValue({ rpc: async () => ({ data: null, error }) } as never);
-
-  it('풀이권이 없어 막혔으면 문장과 함께 outOfCredits 를 단다', async () => {
-    const message = '풀이권이 없어 요청할 수 없습니다. 요청 한 건이 풀이권 한 장을 잡고, 동의가 나면 그 한 장으로 궁합 풀이가 만들어집니다.';
-    refusing({ code: '23514', message });
-
-    expect(await requestMatch('c-1')).toEqual({ ok: false, message, outOfCredits: true });
-  });
-
-  it('같은 코드의 다른 거절은 문장만 낸다', async () => {
-    refusing({ code: '23514', message: '이미 요청을 보냈어요.' });
-
-    const answer = await requestMatch('c-1');
-    expect(answer.ok).toBe(false);
-    expect('outOfCredits' in answer).toBe(false);
+  it('거절되면 DB 의 문장을 낸다', async () => {
+    const message = '지금은 이 사람에게 요청할 수 없습니다. 후보 목록을 새로 열어 확인해 주세요.';
+    answering({ code: '42501', message });
+    expect(await startTalk('c-1')).toEqual({ ok: false, message });
   });
 });

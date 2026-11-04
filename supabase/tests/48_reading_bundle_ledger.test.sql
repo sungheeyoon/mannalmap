@@ -6,14 +6,15 @@
 -- 2. **몫을 만드는 길은 서버의 문뿐이다.** 판매는 닫혀 있고, 로그인한 사람은 표에도 승인 문에도 못 닿는다.
 --    같은 열쇠를 다른 묶음에 쓰면 거절하고, 금액이 다른 알림은 **던지지 않고 거절을 돌려주며 남는다**
 --    (`20261013090000`). 두 세션이 같은 열쇠로 나란히 여는 경우는 여기서 못 만든다 — `scripts/check-db-races.mjs`
--- 3. **쓴 순서.** 무료 → 예외 → 오래된 묶음. 예약 → 확정 · 풀림, 수락은 요청의 예약을 이어 받는다.
+-- 3. **쓴 순서.** 무료 → 예외 → 오래된 묶음. 예약 → 확정 · 풀림, 상세의 누름은 그 요청의 예약을 이어 받는다.
+--    대화는 풀이권을 안 잡고 상세 궁합을 청할 때 잡는다(대화가 유일한 흐름, `20270109090000`).
 -- 4. **환불은 안 쓴 것만.** 예약 중인 것은 풀릴 때까지 안 쓴 것이 아니다. 운영자의 읽기는 적힌다.
 -- 5. **두 문이 마지막 한 번을 다투면 하나만** — 두 문이 같은 자물쇠 안에서 센다.
 -- 6. **떠나면** 결제 기록이 따로 5년 남고 일반 표에서는 사라진다.
 -- 7. **무료 · 유료가 함께 있으면** 무료 → 예외 → 먼저 산 묶음. 풀린 무료 · 예외 자리가 묶음보다 먼저 돌아오고,
---    인연 요청도 같은 순서이며, 무료를 쓰는 동안 묶음의 환불 셈은 안 준다(운영자 요구 2026-10-16).
+--    상세 궁합의 청함도 같은 순서이며, 무료를 쓰는 동안 묶음의 환불 셈은 안 준다(운영자 요구 2026-10-16).
 begin;
-select plan(76);
+select plan(77);
 
 create or replace function pg_temp.participant(mail text, who text, summary jsonb)
 returns uuid
@@ -80,6 +81,18 @@ $$;
 create or replace function pg_temp.use_of_request(req uuid)
 returns text language sql security definer as $$
   select u.share || ':' || u.state from public.reading_credit_use u where u.request_id = req
+$$;
+
+/** 대화가 연 인연 — 표는 밖에서 못 읽으므로 소유자 권한으로 */
+create or replace function pg_temp.match_of_talk(talk uuid)
+returns uuid language sql security definer as $$
+  select m.id from public.match m where m.request_id = talk
+$$;
+
+/** 지금 세션의 사람이 그 대화에서 상세 궁합을 청한다 — 풀이권 1장이 여기서 잡힌다 */
+create or replace function pg_temp.ask_detail(talk uuid, key text)
+returns uuid language sql as $$
+  select d.request_id from public.request_match_detail(pg_temp.match_of_talk(talk), key) d
 $$;
 
 set local role authenticated;
@@ -327,18 +340,30 @@ select pg_temp.acting((select kim from folks));
 select count(*) from public.my_discovery_board();
 
 create temporary table asked as
-select public.request_match((select lee from folks)) as to_lee;
+select public.request_match((select lee from folks)) as talk_lee;
 grant select, update on asked to authenticated, service_role;
 
-select is(pg_temp.use_of_request((select to_lee from asked)), 'bundle:reserved', '인연 요청도 묶음에서 예약한다');
+select is(pg_temp.use_of_request((select talk_lee from asked)), null, '대화는 풀이권을 안 잡는다');
+
+select pg_temp.acting((select lee from folks));
+select public.respond_to_match_request((select talk_lee from asked), true);
+
+select pg_temp.acting((select kim from folks));
+alter table asked add column to_lee uuid;
+update asked set to_lee = pg_temp.ask_detail((select talk_lee from asked), 'ledger-detail-lee');
+select is(pg_temp.use_of_request((select to_lee from asked)), 'bundle:reserved', '상세 궁합의 청함도 묶음에서 예약한다');
 
 select pg_temp.acting((select lee from folks));
 select public.respond_to_match_request((select to_lee from asked), false);
-select is(pg_temp.use_of_request((select to_lee from asked)), 'bundle:released', '거절되면 풀린다');
+select is(pg_temp.use_of_request((select to_lee from asked)), 'bundle:released', '누르지 않고 끝나면(취소) 풀린다');
 
 select pg_temp.acting((select kim from folks));
-alter table asked add column to_park uuid;
-update asked set to_park = public.request_match((select park from folks));
+alter table asked add column talk_park uuid, add column to_park uuid;
+update asked set talk_park = public.request_match((select park from folks));
+select pg_temp.acting((select park from folks));
+select public.respond_to_match_request((select talk_park from asked), true);
+select pg_temp.acting((select kim from folks));
+update asked set to_park = pg_temp.ask_detail((select talk_park from asked), 'ledger-detail-park');
 
 reset role;
 create temporary table held as
@@ -347,14 +372,14 @@ grant select on held to authenticated, service_role;
 
 set local role authenticated;
 select pg_temp.acting((select park from folks));
-select is(public.respond_to_match_request((select to_park from asked), true), 'accepted', '박이 수락한다');
+select is(public.respond_to_match_request((select to_park from asked), true), 'accepted', '박이 상세를 누른다');
 
 reset role;
 select is(
   (select u.id::text || ':' || u.share || ':' || u.state || ':' || (u.run_id is not null)::text
    from public.reading_credit_use u where u.request_id = (select to_park from asked)),
   (select id::text from held) || ':bundle:reserved:true',
-  '수락이 연 시도는 요청의 예약을 그대로 이어 받는다 — 새 몫을 고르지 않는다');
+  '누름이 연 시도는 요청의 예약을 그대로 이어 받는다 — 새 몫을 고르지 않는다');
 
 select pg_temp.save((select u.run_id from public.reading_credit_use u where u.request_id = (select to_park from asked)));
 select is(pg_temp.use_of_request((select to_park from asked)), 'bundle:confirmed', '궁합이 서면 확정이다');
@@ -438,8 +463,8 @@ select throws_ok(
 
 /**
  * 한 세션으로는 나란히 부르는 둘을 못 만든다. 대신 **셈하는 순간 그 사람의 자물쇠를 쥐고 있는가**를 잰다 —
- * 셈 함수를 이 트랜잭션 안에서만 감싸 그 순간을 적는다. 인연 요청이 셈 뒤에야(트리거에서) 자물쇠를 잡으면
- * 풀이 시작과 나란히 마지막 한 번을 읽고 둘 다 지나간다. 최는 이 트랜잭션에서 아직 아무 자물쇠도 안 잡았다.
+ * 셈 함수를 이 트랜잭션 안에서만 감싸 그 순간을 적는다. 상세의 청함이 셈 뒤에야(트리거에서) 자물쇠를 잡으면
+ * 풀이 시작과 나란히 마지막 한 번을 읽고 둘 다 지나간다. 대화는 셈하지 않으므로 셈은 청함의 한 번뿐이다.
  */
 create temporary table lock_seen (actor uuid, held boolean);
 grant insert, select on lock_seen to authenticated;
@@ -461,13 +486,18 @@ $$;
 set local role authenticated;
 select pg_temp.acting((select choi from folks));
 select count(*) from public.my_discovery_board();
-select public.request_match((select lee from folks));
+create temporary table choi_talk as select public.request_match((select lee from folks)) as id;
+grant select on choi_talk to authenticated;
+select pg_temp.acting((select lee from folks));
+select public.respond_to_match_request((select id from choi_talk), true);
+select pg_temp.acting((select choi from folks));
+select pg_temp.ask_detail((select id from choi_talk), 'ledger-detail-choi');
 
 reset role;
 select is(
   (select array_agg(held) from lock_seen where actor = (select choi from folks)),
   array[true],
-  '인연 요청은 셈하는 순간 풀이 시작과 같은 자물쇠를 쥐고 있다');
+  '상세의 청함은 셈하는 순간 풀이 시작과 같은 자물쇠를 쥐고 있다');
 
 -- ── 6. 떠나면 ──────────────────────────────────────────────────────────────
 
@@ -516,8 +546,8 @@ select is(
 -- ── 7. 무료 · 유료가 함께 있을 때의 순서 ─────────────────────────────────────
 
 /**
- * 운영자 요구(2026-10-16): 가입 무료분 → 운영자 무상 지급분(grant) → 먼저 산 묶음. 풀이 시작과 인연 요청이
- * 같은 순서로 예약하고, 실패 · 거절로 풀리면 그 출처로 돌아간다. 3 절은 묶음 하나와 무료를 다 쓴 뒤의 차례를
+ * 운영자 요구(2026-10-16): 가입 무료분 → 운영자 무상 지급분(grant) → 먼저 산 묶음. 풀이 시작과 상세의 청함이
+ * 같은 순서로 예약하고, 실패 · 취소로 풀리면 그 출처로 돌아간다. 3 절은 묶음 하나와 무료를 다 쓴 뒤의 차례를
  * 잰다 — 여기는 **처음부터 묶음 둘을 쥔 사람**이 무료를 쓰는 동안 묶음이 안 줄고, 풀린 무료 · 예외 자리가
  * 묶음보다 먼저 돌아오며, 묶음 둘 사이는 산 때가 이른 쪽부터인지를 잰다.
  *
@@ -605,22 +635,27 @@ select is(
   '묶음 둘을 먼저 사 두었어도 무료 몫부터 쓴다');
 
 select count(*) from public.my_discovery_board();
-insert into steps (label, request_id) values ('ask-han', public.request_match((select han from pair)));
+insert into steps (label, request_id) values ('talk-han', public.request_match((select han from pair)));
+select pg_temp.acting((select han from pair));
+select public.respond_to_match_request((select request_id from steps where label = 'talk-han'), true);
+select pg_temp.acting((select jung from pair));
+insert into steps (label, request_id)
+values ('ask-han', pg_temp.ask_detail((select request_id from steps where label = 'talk-han'), 'ledger-detail-han'));
 select is(pg_temp.use_of_request((select request_id from steps where label = 'ask-han')), 'free:reserved',
-  '무료가 남아 있으면 인연 요청도 무료에서 예약한다');
+  '무료가 남아 있으면 상세의 청함도 무료에서 예약한다');
 
 select is(pg_temp.unused_by_basis(), array[3, 3], '무료로 예약하는 동안 두 묶음의 환불 셈은 그대로다');
 
 select pg_temp.acting((select han from pair));
 select public.respond_to_match_request((select request_id from steps where label = 'ask-han'), false);
 select is(pg_temp.use_of_request((select request_id from steps where label = 'ask-han')), 'free:released',
-  '거절되면 무료 예약이 풀린다');
+  '취소되면 무료 예약이 풀린다');
 
 select pg_temp.acting((select jung from pair));
 insert into steps (label, run_id)
 select 'after-refusal', run_id from public.start_reading_run('person', 'ledger-run-0150', (select me from pair));
 select is(pg_temp.use_of_run((select run_id from steps where label = 'after-refusal')), 'free:reserved',
-  '거절로 풀린 무료 자리가 돌아온다 — 묶음에서 먼저 빼지 않는다');
+  '취소로 풀린 무료 자리가 돌아온다 — 묶음에서 먼저 빼지 않는다');
 
 reset role;
 select public.fail_reading_job((select run_id from steps where label = 'after-refusal'), 'provider_error');

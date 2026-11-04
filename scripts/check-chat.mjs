@@ -118,7 +118,7 @@ try {
     check('방이 없으면 빈 목록이 말한다', empty.includes(CHAT_EMPTY_TITLE));
   }
 
-  // ── 2. 후보 → 요청 → 수락 → 방 ────────────────────────────────────────────
+  // ── 2. 후보 → 대화 시작(방이 선다) → 답 ─────────────────────────────────────
   await get('/me', cookie.a);
   await get('/me', cookie.b);
   sql(`delete from public.discovery_candidate s using auth.users u
@@ -127,11 +127,11 @@ try {
 
   const asked = await a.rpc('request_match', { p_candidate_user_id: userId(mail.b) });
   const accepted = await b.rpc('respond_to_match_request', { p_request_id: asked.data, p_accept: true });
-  check('수락하면 Match 가 선다', accepted.data === 'accepted', accepted.error?.message ?? '');
+  check('받은 사람이 답하면 accepted 다', accepted.data === 'accepted', accepted.error?.message ?? '');
 
   const { data: rooms } = await a.rpc('my_chat_rooms');
   const matchId = rooms?.[0]?.match_id;
-  check('동의가 나면 방이 트리거로 선다 — 화면이 세우는 것이 아니다',
+  check('대화를 열면 방이 트리거로 선다 — 화면이 세우는 것이 아니다',
     typeof matchId === 'string' && rooms.length === 1, `${rooms?.length ?? '?'}건`);
   const ROOM = `/me/chat/${matchId}`;
 

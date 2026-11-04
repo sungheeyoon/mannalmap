@@ -45,7 +45,7 @@ language sql
 security definer
 as $$ select to_jsonb(t) from public.take_reading_job(run) t $$;
 
-/** 수락이 연 시도를 집는다 — 같은 전이를 요청 id 로 */
+/** 상세의 누름이 연 시도를 집는다 — 같은 전이를 상세 요청 id 로 */
 create or replace function pg_temp.awaiting(request uuid)
 returns jsonb
 language sql
@@ -689,15 +689,12 @@ select lives_ok(
   '이미 적힌 것을 다시 적어도 조용하다');
 
 -- ---------------------------------------------------------------------------
--- 14. 수락이 연 시도도 **한 번만** 나간다
+-- 14. 상세의 누름이 연 시도도 **한 번만** 나간다
 -- ---------------------------------------------------------------------------
 
 /**
- * 수락은 시도를 열고 입력을 얼리기만 한다(ADR 0038). 그것을 집어 가는 문이
+ * 받은 사람의 누름은 시도를 열고 입력을 얼리기만 한다(ADR 0215). 그것을 집어 가는 문이
  * `match_run_awaiting_send` 이고, **집는 일이 원자적이어야** 같은 시도가 두 번 안 나간다.
- *
- * 앞서는 이 문이 「job 행이 없는 run」을 골랐다. 얼리는 일이 수락 트랜잭션으로 들어오면서
- * 그 조건은 **아무것도 안 고르게** 됐다 — 이 절이 그 자리를 붙든다.
  */
 reset role;
 set local role authenticated;
@@ -727,25 +724,30 @@ select pg_temp.acting((select lee from pair));
 select is(
   public.respond_to_match_request((select request_id from asked), true),
   'accepted',
-  '이가 수락해 Match 가 선다');
+  '이가 대화에 답한다');
+
+/** 김이 상세 궁합을 사고 이가 누른다 — 제출하는 쪽은 상세 요청의 번호로 부른다 */
+create temporary table detail as
+select tests.press_detail((select request_id from asked)) as request_id;
+grant select on detail to authenticated, service_role;
 
 /**
- * **수락 트랜잭션이 얼렸다.** 청한 사람 이름으로 선 시도에 얼린 입력이 딸려 있어야
- * 한다 — 없으면 제출하는 쪽이 읽을 것이 없고, 그 Match 는 만료까지 빈 채로 남는다.
+ * **누름 트랜잭션이 얼렸다.** 구매자 이름으로 선 시도에 얼린 입력이 딸려 있어야
+ * 한다 — 없으면 제출하는 쪽이 읽을 것이 없다.
  */
 create temporary table first_take as
-select pg_temp.awaiting((select request_id from asked)) as job;
+select pg_temp.awaiting((select request_id from detail)) as job;
 grant select on first_take to authenticated, service_role;
 
 select isnt(
   (select job from first_take),
   null,
-  '수락이 연 시도를 열쇠가 집는다');
+  '누름이 연 시도를 열쇠가 집는다');
 
 select is(
   (select job -> 'birth_a' ->> 'city' from first_take),
   '서울',
-  '수락 트랜잭션이 양쪽 입력을 값으로 얼렸다');
+  '누름 트랜잭션이 양쪽 입력을 값으로 얼렸다');
 
 select isnt(
   (select job -> 'birth_b' from first_take),
@@ -753,9 +755,9 @@ select isnt(
   '두 번째 사람의 입력도 함께 언다');
 
 /**
- * **수락이 얼리는 여덟 글자는 Match 가 베껴 둔 그것이다**(ADR 0071).
+ * **누름이 얼리는 여덟 글자는 Match 가 베껴 둔 그것이다**(ADR 0071).
  *
- * `person.current_chart` 를 다시 읽지 않는다 — 수락과 제출 사이에 한쪽이 입력을 고치면
+ * `person.current_chart` 를 다시 읽지 않는다 — 누름과 제출 사이에 한쪽이 입력을 고치면
  * 동의한 것과 계산한 것이 갈리기 때문이다.
  */
 reset role;
@@ -764,10 +766,10 @@ select is(
    from public.reading_job j
    join public.reading_run r on r.id = j.run_id
    join public.match m on m.id = r.match_id
-   join public.match_request q on q.id = m.request_id
-   where q.id = (select request_id from asked)),
+   join public.match_request q on q.detail_match_id = m.id
+   where q.id = (select request_id from detail)),
   true,
-  '수락이 얼린 한 벌은 Match 의 여덟 글자를 그대로 든다');
+  '누름이 얼린 한 벌은 Match 의 여덟 글자를 그대로 든다');
 set local role authenticated;
 
 /**
@@ -777,7 +779,7 @@ set local role authenticated;
  * 나가고 결과 하나는 미아가 된다.
  */
 select is(
-  pg_temp.awaiting((select request_id from asked)),
+  pg_temp.awaiting((select request_id from detail)),
   null,
   '같은 요청을 두 번 집으면 두 번째는 0행이다');
 

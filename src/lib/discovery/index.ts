@@ -393,7 +393,7 @@ export const DISCOVERY_DISCLOSURE = {
     '닉네임, 프로필 사진, 소개 — 사진을 등록하지 않으면 닉네임의 첫 글자가 표시됩니다.',
     '나에게 20%보다 적은 오행 중 소개받은 사람이 가지고 있는 오행의 이름.',
     '함께 놓았을 때의 오행 균형을 말로 옮긴 설명.',
-    '두 사람의 태어난 날 기둥 사이 관계, 서로 채우는 기운, 오행 균형을 반영한 예측 궁합 점수. 계산에 사용한 사주팔자 글자는 수락 전에는 공개되지 않습니다.',
+    '두 사람의 태어난 날 기둥 사이 관계, 서로 채우는 기운, 오행 균형을 반영한 예측 궁합 점수. 계산에 사용한 사주팔자 글자는 공개되지 않습니다.',
   ],
   hidden: [
     '생년월일시와 출생지.',
@@ -415,7 +415,7 @@ export const DISCOVERY_DISCLOSURE = {
 export const balanceLabelOf = (raw: string): string => BALANCE_LABEL[balanceBandOf(raw)];
 
 /**
- * 균형 한 줄의 **짧은 꼴** — 요청 카드의 오행 주고받기(`app/me/matching/element-exchange.tsx`) 아래에 선다.
+ * 균형 한 줄의 **짧은 꼴** — 책장의 「만드는 중」 편지(`app/me/(shelf)/readings/shelf.tsx`)가 쓴다.
  *
  * 그 자리는 위에서 이미 「두 사람」의 기운을 그림으로 주고받았다 — 「두 사람의 오행을 함께 보면」을 다시 적으면
  * 한 줄이 두 줄로 꺾인다(360px). 밴드 · 말끝은 `BALANCE_LABEL` 그대로다.

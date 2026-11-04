@@ -1,8 +1,8 @@
 /**
  * **상세 궁합의 AI 전송 고지** — 받은 사람의 동의 칸과 구매자의 안내. 대장 matching-20 확인 전.
- * 켜지기 전이라 처리방침 판을 안 올린다 — 같은 사실의 처리방침 · 약관 줄은 `docs/legal/match-talk-notice-draft.md` 가 켜는 날 옮긴다.
+ * 같은 사실의 처리방침 · 약관 줄은 `notice-v14` 에 들었다(`docs/legal/match-talk-notice-draft.md`).
  *
- * 사실만 적는다. 나가는 항목은 `docs/legal/privacy-grounds.md` 「상세 궁합 — 켜질 때」, 동의가 끝나는 때는 `match_consent_holds` 다.
+ * 사실만 적는다. 나가는 항목은 `docs/legal/privacy-grounds.md` 「상세 궁합」, 동의가 끝나는 때는 `match_consent_holds` 다.
  * 「복원 불가」는 적지 않는다 — 직접 노출 차단만 쟀다(ADR 0215).
  */
 export const DETAIL_CONSENT_TITLE = '상세 궁합을 함께 만들까요?';

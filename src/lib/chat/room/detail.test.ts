@@ -13,7 +13,6 @@ const row = {
   credits_left: 3,
   talk_status: 'accepted',
   may_send: true,
-  detail_open: true,
 };
 const detail = (over: Partial<MatchDetail>): MatchDetail => ({ ...matchDetailOf(row)!, ...over });
 
@@ -23,17 +22,10 @@ describe('상세 궁합의 상태', () => {
     expect(matchDetailOf({ ...row, state: 'later' })).toBeNull();
   });
 
-  it('입구는 켜졌고 답을 받은 대화에만 선다', () => {
+  it('입구는 답을 받은 대화에만 선다', () => {
     expect(detailDoorShown(detail({}))).toBe(true);
-    expect(detailDoorShown(detail({ detailOpen: false }))).toBe(false);
     expect(detailDoorShown(detail({ replied: false }))).toBe(false);
     expect(detailDoorShown(null)).toBe(false);
-  });
-
-  it('다시 꺼도 이미 선 동의 대기에는 입구가 남고, 그 밖의 꺼진 상태에는 없다', () => {
-    expect(detailDoorShown(detail({ detailOpen: false, state: 'awaiting_consent' }))).toBe(true);
-    expect(detailDoorShown(detail({ detailOpen: false, state: 'ready' }))).toBe(false);
-    expect(detailDoorShown(detail({ detailOpen: false, state: 'making' }))).toBe(false);
   });
 
   it('구매 전은 값과 달라질 수 있음을 함께 말한다', () => {

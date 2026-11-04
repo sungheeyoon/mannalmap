@@ -300,7 +300,9 @@ describe('시키는 값과 막는 값', () => {
         expect(score, kind).not.toContain('| 용신을 상대가 가졌다');
         expect(score, kind).not.toContain('| 둘 다 없는 오행');
         expect(score, kind).not.toContain('일지에 걸린 충과');
-        expect(score, kind).toContain('**규칙 여섯.**');
+        /* 운영 조립의 인연 궁합(4판)은 상세 궁합이라 「적어도 한 항목은 움직인다」 규칙이 없어 하나 적다(D7) — 실험 · 옛 컷은 그대로다 */
+        const detail = kind === 'match' && assembly === CONTROL;
+        expect(score, kind).toContain(detail ? '**규칙 다섯.**' : '**규칙 여섯.**');
         expect(score, kind).toContain(
           '기준점 산출에 사용한 사실은 항목 조정이나 재량 조정에서 다시 반영하지 않는다.',
         );
@@ -346,13 +348,11 @@ describe('시키는 값과 막는 값', () => {
 
   /**
    * **기준점을 그대로 뱉으면 풀이권이 아무것도 안 산다.** 앵커가 세면 모델은 움직이지
-   * 않는다 — 그 자리를 규칙으로 막는지 본다.
+   * 않는다 — 그 자리를 규칙으로 막는지 본다. 인연 궁합은 상세 궁합이라 이 규칙이 없다(D7, `detail.test.ts`).
    */
-  it('적어도 한 항목은 움직이라고 시킨다', () => {
-    for (const kind of ['private', 'match'] as const) {
-      expect(READING_PROMPTS[kind], kind).toContain('적어도 한 항목은 움직인다');
-      expect(READING_PROMPTS[kind], kind).toContain('기준점을 그대로 내지 마라');
-    }
+  it('비공개 궁합에는 적어도 한 항목은 움직이라고 시킨다', () => {
+    expect(READING_PROMPTS.private).toContain('적어도 한 항목은 움직인다');
+    expect(READING_PROMPTS.private).toContain('기준점을 그대로 내지 마라');
   });
 
   /**
@@ -462,11 +462,13 @@ describe('개인 풀이는 쉬운 말로 가르친다', () => {
     expect(legacy).not.toContain('## 이 자료를 읽는 법');
   });
 
-  it('개인 풀이는 v25, 궁합은 v23 이다(ADR 0208 추기 「v25」)', () => {
+  it('개인 풀이는 v25, 비공개 궁합은 v23, 인연 궁합은 상세 v1 이다(ADR 0208 추기 「v25」)', () => {
     expect(READING_POLICY.version).toBe('reading-prompt-v25');
     expect(READING_POLICY.pairVersion).toBe('reading-prompt-v23');
+    expect(READING_POLICY.detailVersion).toBe('reading-prompt-detail-v1');
     for (const kind of READING_KINDS) {
-      expect(promptVersionOf(kind), kind).toBe(isSolo(kind) ? 'reading-prompt-v25' : 'reading-prompt-v23');
+      const expected = isSolo(kind) ? 'reading-prompt-v25' : kind === 'match' ? 'reading-prompt-detail-v1' : 'reading-prompt-v23';
+      expect(promptVersionOf(kind), kind).toBe(expected);
     }
   });
 

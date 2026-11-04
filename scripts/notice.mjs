@@ -151,6 +151,8 @@ export function clearMachineRunsFromToday() {
  * 앞선 검사가 무엇을 남겼는지 기대하지 않는다.
  */
 export function scheduleBeta(endsOn = checkEndsOn()) {
+  /* 검사의 DB 는 인연이 열린 쪽이다 — 운영의 기본값(닫힘)은 pgTAP `99_match_waits_closed` 와 `check-mobile` 의 닫힘 절이 잰다(ADR 0222) */
+  psql('update public.match_open_switch set open = true, changed_at = now() where not open');
   // **지우고 넣지 않는다** — 이미 그 값이면 아무것도 안 한다(`e2e/session.ts` 와 같은 까닭).
   psql(`insert into public.beta_schedule
              (ends_on, note, operator_name, operator_officer, operator_contact)

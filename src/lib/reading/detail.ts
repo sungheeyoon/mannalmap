@@ -1,28 +1,13 @@
 import { type CheckFinding } from './check';
 import { SEAT_NAMES, readingBody } from './display';
-import { READING_POLICY, promptVersionOf, type ReadingOutput } from './policy';
-import { CONTROL, DETAIL_ASSEMBLY, type PromptAssembly } from './prompt';
+import { READING_POLICY, type ReadingOutput } from './policy';
 
 /**
- * **상세 궁합의 글이 옛 흐름과 갈리는 자리**(PRD 매칭 §6.6, `docs/text/detail-compat-contract.md`).
+ * **상세 궁합의 글만 쓰는 자리**(PRD 매칭 §6.6, `docs/text/detail-compat-contract.md`).
  *
- * 갈림은 스위치가 아니라 **요청의 이름**을 따른다 — `match_request.kind` 가 `detail` 인 시도만 새 지시를 받는다. 스위치로 가르면 켜기 전에
- * 동의한 옛 요청의 글이 켜는 순간 바뀐다(#975 의 규칙과 같다).
- *
- * 부르는 쪽(제출 · 회수 · 모델의 모양)은 아직 안 이어졌다 — 얼린 시도에 요청의 이름이 안 실리고, 그 칸은 머지 전의 #975 가 든다.
- * 남은 연결은 계약 문서 「남은 연결」이 든다.
+ * 인연 궁합은 대화 뒤에 사는 상세 궁합 하나다 — 옛 흐름(수락과 함께 나는 인연 궁합)은 걷었다(2026-11-04). 지시는 `prompt.ts` 가
+ * 인연 궁합의 4판이면 늘 세우고, 판본은 `READING_POLICY.detailVersion`(`promptVersionOf('match')`)이다.
  */
-
-/** 시도를 연 요청의 이름 — `match_request.kind` 의 값이다. `talk` 는 시도를 열지 않지만 값으로는 있다 */
-type RequestKind = 'bundled' | 'talk' | 'detail';
-
-/** 그 요청의 인연 궁합이 쓸 조립 */
-export const requestAssemblyOf = (kind: RequestKind): PromptAssembly =>
-  kind === 'detail' ? DETAIL_ASSEMBLY : CONTROL;
-
-/** 그 요청의 인연 궁합에 적을 판본 — 시도를 열 때 얼린다 */
-export const requestPromptVersionOf = (kind: RequestKind): string =>
-  kind === 'detail' ? READING_POLICY.detailVersion : promptVersionOf('match');
 
 /** 얼린 시도가 상세 궁합인가 — 회수는 프롬프트를 다시 고르지 않고 이것을 읽는다 */
 export const isDetailPromptVersion = (version: string): boolean => version === READING_POLICY.detailVersion;

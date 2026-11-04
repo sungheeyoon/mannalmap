@@ -4,13 +4,10 @@ import type { ReactNode } from 'react';
 import { notFound } from 'next/navigation';
 
 import { CHAT_TAB_LABEL } from '@/src/lib/chat';
-import { MATCH_RESULT_CLOSED_NOTE } from '@/src/lib/consent';
-import { STEM_INFO } from '@/src/lib/saju';
 
 import { supabaseOnServer } from '../../auth/server-client';
 import { signedInUser } from '../../auth/signed-in';
 import { redirectToSignIn } from '../../auth/sign-in-redirect';
-import { PillarPair } from '../../compat-view';
 import { BUTTON_SECONDARY_SMALL, ICON_BUTTON_GHOST } from '../../ui/buttons';
 import { Icon } from '../../ui/icons';
 import { EMPTY_SLOT, TYPE_META, TYPE_NAME } from '../../ui/surfaces';
@@ -27,15 +24,10 @@ import { matchResultForViewer, type SharedResult } from './result';
 type MatchFrame = 'page' | 'shelf';
 
 /**
- * 공유 결과 — **동의가 실제로 연 것.**
+ * 공유 결과 — **상세 궁합의 동의가 연 글.**
  *
- * 요청·수락 화면이 「열릴 것」이라고 적은 목록이 여기서 열린다. 그래서 같은 한 벌을
- * 여기서도 읽는다(`MATCH_DISCLOSURE`) — 동의할 때 읽은 약속과 실제로 보이는 것이
- * 갈리면, 갈렸다는 사실을 아는 사람이 아무도 없다.
- *
- * **상대의 `Saju`와 `ChartEvidence`는 이 화면에 오지 않는다.** 서버가 두 판본을 읽어
- * 계산한 뒤, 서로 공개하기로 한 여덟 글자만 새 객체로 잘라 내보낸다(ADR 0010·0012).
- * 정확한 생년월일시·출생지·상대 원국 전체 판정·근거 패널은 계속 서버 경계 안에 남는다.
+ * **상대의 `Saju` · `ChartEvidence` · 여덟 글자는 이 화면에 오지 않는다**(ADR 0010 · 0012 · 0215). 여덟 글자는 글을 쓰는 데만
+ * 쓰이고, 정확한 생년월일시·출생지·상대 원국 전체 판정·근거 패널은 계속 서버 경계 안에 남는다.
  */
 export async function MatchScreen({
   matchId,
@@ -58,23 +50,16 @@ export async function MatchScreen({
    * 시작했을 수 있고, 그러면 404 를 부르고도 200 이 나간다.
    */
   /* 내 닉네임은 글의 자리 호칭을 바꿔 넣을 때만 쓴다(`Result`). 닉네임은 가입 때 정해 늘 있다 — 못 읽은 드문 때는 빈 값이고, 그 자리는 호칭 그대로 선다(`withNicknames`) */
-  const [read, account, detailRead] = await Promise.all([
+  const [result, account, detailRead] = await Promise.all([
     matchResultForViewer(matchId),
     readAccount(supabase, ['status', 'nickname']),
     UUID.test(matchId) ? matchDetailForViewer(supabase, matchId) : null,
   ]);
   /*
-    켜진 흐름 — 글은 동의 뒤에만 서므로 글이 없는 동안 할 일은 방에 있다(ADR 0215). 옛 「궁합풀이 받기」를 세우지 않는다.
-    만드는 중 · 완료만 글 칸이 선다.
+    글은 상세 궁합의 동의 뒤에만 서므로 글이 없는 동안 할 일은 방에 있다(ADR 0215). 만드는 중 · 완료만 글 칸이 선다.
+    상태를 못 읽었으면 글 칸이 제 상태를 읽어 선다.
   */
-  const newFlow = detailRead?.detailOpen === true;
-  const noReadingYet = newFlow && detailRead.state !== 'ready' && detailRead.state !== 'making';
-  /* 켜진 흐름의 글은 상대 글자를 내주지 않는다 — 글자 없음은 닫힘이 아니다 */
-  const outcome =
-    read !== null && read.kind === 'closed' && newFlow && !noReadingYet
-      ? ({ kind: 'ok', result: read.chartless } as const)
-      : read;
-  if (outcome?.kind === 'closed') console.error('공유 결과를 닫는다', matchId, outcome.message);
+  const noReadingYet = detailRead !== null && detailRead.state !== 'ready' && detailRead.state !== 'making';
   const myNickname = account.row?.nickname ?? '';
 
   /**
@@ -85,7 +70,7 @@ export async function MatchScreen({
    * `matchResultForViewer` 는 둘 다 `null` 을 내고, 그 `null` 을 응답으로 바꾸는
    * 곳이 이 한 줄뿐이다.
    */
-  if (outcome === null) notFound();
+  if (result === null) notFound();
 
   /* 방으로 돌아가는 ← 는 이 Match 의 방이다 — `matchId` 는 위 문이 UUID 로 걸렀고 실제로 볼 수 있는 Match 다 */
   const place = placeOf(query, frame === 'shelf' ? `/me/readings/match/${matchId}` : `/me/match/${matchId}`);
@@ -97,7 +82,7 @@ export async function MatchScreen({
     **방으로 가는 길은 머리에 선다**(화면 감사 2026-10-09). 맺어진 뒤 가장 먼저 할 일인데, 글 끝(설문 뒤 약 3000px)에만
     있었다. 방에서 왔으면 ← 가 이미 그 방이라(`backOf` 의 `chat`) 한 머리에 같은 이름 · 같은 곳이 둘 서지 않게 뺀다.
   */
-  const room = outcome.kind === 'ok' ? `/me/chat/${outcome.result.matchId}` : null;
+  const room = `/me/chat/${result.matchId}`;
   const toRoom = room !== null && back.href !== room ? room : null;
 
   return (
@@ -115,32 +100,24 @@ export async function MatchScreen({
         >
           <Icon name="back" className="size-5" />
         </Link>
-        {outcome.kind === 'ok' && (
-          <PartnerFace
-            size={40}
-            partner={{
-              userId: outcome.result.partnerUserId,
-              nickname: outcome.result.partnerNickname,
-              intro: outcome.result.partnerIntro,
-              photoUrls: outcome.result.partnerPhotoUrls,
-              photoFocus: outcome.result.partnerPhotoFocus,
-              tone: outcome.result.charts === null ? null : STEM_INFO[outcome.result.charts.b.dayMaster].element,
-            }}
-            menu={<ReportBlock userId={outcome.result.partnerUserId} nickname={outcome.result.partnerNickname} />}
-          />
-        )}
+        <PartnerFace
+          size={40}
+          partner={{
+            userId: result.partnerUserId,
+            nickname: result.partnerNickname,
+            intro: result.partnerIntro,
+            photoUrls: result.partnerPhotoUrls,
+            photoFocus: result.partnerPhotoFocus,
+            tone: null,
+          }}
+          menu={<ReportBlock userId={result.partnerUserId} nickname={result.partnerNickname} />}
+        />
         {/* 제목 하나가 두 줄을 든다 — 보조기기에는 「{닉네임} 님 궁합 결과」 한 이름으로 읽힌다 */}
         <Title className="min-w-0 flex-1">
-          {outcome.kind === 'ok' ? (
-            <>
-              <span className={`${TYPE_NAME} block break-words`}>
-                {outcome.result.partnerNickname} 님
-              </span>{' '}
-              <span className={`${TYPE_META} block`}>궁합 결과</span>
-            </>
-          ) : (
-            <span className={`${TYPE_NAME} block break-words`}>궁합 결과</span>
-          )}
+          <span className={`${TYPE_NAME} block break-words`}>
+            {result.partnerNickname} 님
+          </span>{' '}
+          <span className={`${TYPE_META} block`}>궁합 결과</span>
         </Title>
         <div className="flex shrink-0 items-center gap-1">
           {toRoom !== null && (
@@ -149,10 +126,8 @@ export async function MatchScreen({
               {CHAT_TAB_LABEL}
             </Link>
           )}
-          {/* 끊는 자리는 머리의 「⋯」다(ADR 0158) — 닫힌 결과에는 상대가 안 실려 와 서지 않는다 */}
-          {outcome.kind === 'ok' && (
-            <ReportBlock userId={outcome.result.partnerUserId} nickname={outcome.result.partnerNickname} />
-          )}
+          {/* 끊는 자리는 머리의 「⋯」다(ADR 0158) */}
+          <ReportBlock userId={result.partnerUserId} nickname={result.partnerNickname} />
         </div>
       </header>
 
@@ -164,24 +139,8 @@ export async function MatchScreen({
             {CHAT_TAB_LABEL}
           </Link>
         </section>
-      ) : outcome.kind === 'ok' ? (
-        <Result result={outcome.result} myNickname={myNickname} newFlow={newFlow} />
       ) : (
-        /*
-          **문장은 정책이 든다** — 화면이 손으로 적지 않는다.
-
-          여기 「함께 보기로 한 두 분의 동의는 그대로 있습니다…」가 적혀 있었고,
-          `MATCH_RESULT_CLOSED_NOTE` 가 같은 말을 하며 시험까지 딸린 채로 **아무도 안
-          부르는 상수**로 서 있었다. 두 벌이면 갈리고, 실제로 조금 갈려 있었다.
-
-          `outcome.message` 는 내리고 이 한 줄만 세운다. 그 값은 「매인 판본을 찾지
-          못했습니다」처럼 **우리가 FK 를 부르는 이름**이라 읽는 사람에게 아무 뜻이 없고,
-          이 문장이 이미 「무엇이 그대로이고 무엇이 지금 안 되는지」를 다 말한다. 어느
-          갈래로 닫혔는지는 서버 로그가 든다.
-        */
-        <section className={EMPTY_SLOT}>
-          <p className="text-body leading-7 text-secondary">{MATCH_RESULT_CLOSED_NOTE}</p>
-        </section>
+        <Result result={result} myNickname={myNickname} />
       )}
     </Frame>
   );
@@ -196,7 +155,7 @@ function Frame({ frame, children }: { frame: MatchFrame; children: ReactNode }) 
   );
 }
 
-function Result({ result, myNickname, newFlow }: { result: SharedResult; myNickname: string; newFlow: boolean }) {
+function Result({ result, myNickname }: { result: SharedResult; myNickname: string }) {
   return (
     <>
       {/*
@@ -206,14 +165,10 @@ function Result({ result, myNickname, newFlow }: { result: SharedResult; myNickn
         일부이고(`prd-archive`), `match-v0` 는 그 뒤 코드에서도 걷었다.
       */}
       {/*
-        **여기에는 만드는 버튼이 없다** (ADR 0038).
+        **여기에는 만드는 버튼이 없다** (ADR 0215).
 
-        풀이권은 요청할 때 예약되고 동의가 그것을 쓴다. 그래서 이 글은 수락하는 그
-        순간부터 만들어지고 있고, 두 사람 다 누를 것이 없다 — 「먼저 누른 사람이 쓴다」가
-        사라지는 것은 규칙을 하나 더 세워서가 아니라 **누를 것이 없어져서**다.
-
-        글도 도는 시도도 없을 때만 「궁합풀이 받기」가 선다. 자동 생성이 실패한 자리이고,
-        거기서까지 버튼을 없애면 동의는 났는데 아무도 못 여는 Match 가 남는다.
+        상세 궁합은 방에서 청하고 받은 사람이 누를 때 만들어진다. 실패 뒤 다시 만들기도 방의 상세 칸이 든다 —
+        글이 없는 동안 이 화면은 방으로 가는 길만 세운다(위 `noReadingYet`).
       */}
       <ReadingSection
         target={{ kind: 'match', matchId: result.matchId }}
@@ -221,15 +176,9 @@ function Result({ result, myNickname, newFlow }: { result: SharedResult; myNickn
         headingHidden
         automatic
         bare
-        discoveryInCover={newFlow && result.requestKind === 'talk'}
+        discoveryInCover
         nicknames={{ viewer: myNickname, partner: result.partnerNickname }}
-        /* 켜진 흐름의 결과는 비유 → 발견 → 점수 → 글이다 — 상대 여덟 글자 카드를 안 세운다(ADR 0215) */
-        betweenSummaryAndBody={newFlow || result.charts === null ? undefined : <PillarPair charts={result.charts} names={result.names} />}
-        /*
-          표지는 두 사람의 일간이 비스듬히 만난다 — 동의로 열린 여덟 글자에서 읽으므로 새로 열리는 것이 없다
-          (ADR 0012). 앞자리가 늘 보는 사람이다(`names.a`).
-        */
-        tones={result.charts === null ? undefined : [STEM_INFO[result.charts.a.dayMaster].element, STEM_INFO[result.charts.b.dayMaster].element]}
+        /* 결과는 비유 → 발견 → 점수 → 글이다 — 여덟 글자 카드 · 일간 표지를 안 세운다. 글자를 돌려주지 않는다(ADR 0215) */
       />
     </>
   );

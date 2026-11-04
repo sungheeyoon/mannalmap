@@ -105,6 +105,8 @@ export const sql = (statement: string) =>
  * 쌓는 표라 지우고 넣는다. 이력이 남는 것은 운영의 값이지 검사의 값이 아니다.
  */
 export function scheduleBeta(endsOn: string | null): void {
+  /* 검사의 DB 는 인연이 열린 쪽이다 — 운영의 기본값(닫힘)은 pgTAP `99_match_waits_closed` 가 잰다(ADR 0222) */
+  sql('update public.match_open_switch set open = true, changed_at = now() where not open');
   if (endsOn === null) {
     sql('delete from public.beta_schedule');
     return;
@@ -493,7 +495,7 @@ async function seed(
  * 매칭 참여를 **RPC 로** 켠다 — 참여 화면 자체를 재는 시험만 손으로 켠다.
  *
  * 요약을 손으로 적는 것이 여기서는 맞다. 이 값은 남에 대한 사실이 아니라 이 계정이
- * 매칭 풀에 내놓는 자기 요약이고, 우리가 재려는 것은 그 숫자가 아니라 **요청·수락·
+ * 매칭 풀에 내놓는 자기 요약이고, 우리가 재려는 것은 그 숫자가 아니라 **대화 · 답 · 상세 궁합 ·
  * 무효화가 이어지는가**다.
  */
 export async function optIn(
@@ -654,7 +656,7 @@ type Fixtures = {
    */
   newcomerRaw: Account;
   /**
-   * 사람을 **하나 더** 연다 — 요청·수락·차단처럼 둘이 있어야 성립하는 흐름.
+   * 사람을 **하나 더** 연다 — 대화 · 상세 궁합 · 차단처럼 둘이 있어야 성립하는 흐름.
    *
    * 창을 따로 여는 것이 핵심이다. 한 브라우저에서 쿠키만 갈아 끼우면 「상대에게는
    * 무엇이 보이는가」를 한 번도 못 잰다 — 그 답이 이 제품의 절반이다.

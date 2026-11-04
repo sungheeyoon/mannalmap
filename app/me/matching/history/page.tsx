@@ -1,5 +1,4 @@
 import { isBlocked } from '@/src/lib/account';
-import { withoutTalks } from '@/src/lib/chat/room/talk';
 
 import { supabaseOnServer } from '../../../auth/server-client';
 import { signedInUser } from '../../../auth/signed-in';
@@ -15,10 +14,9 @@ import type { ReadingEntry } from '@/src/lib/reading';
 import { myReadings } from '../../reading/current';
 import { EndedTalks } from '../ended-talks';
 import { endedTalksForViewer } from '../ended-talks-read';
-import { matchesForViewer, requestsForViewer, type InboxMatch, type Requests } from '../../requests/inbox';
-import { makingMatches, matchBooks, pastRequests } from '../history';
+import { matchesForViewer, type InboxMatch } from '../../requests/inbox';
+import { makingMatches, matchBooks } from '../history';
 import { COUNT_CHIP } from '../history-row';
-import { PastRequestList, receivedOf } from '../requests-lead';
 import { FailureLine } from '../../../ui/failure-line';
 import { SIGN_IN_AGAIN_NOTE } from '../../../ui/sign-in-again';
 
@@ -28,10 +26,10 @@ export const metadata = {
 };
 
 /**
- * **인연 기록** — 인연 궁합 전부와 지난 요청(운영자 답 2026-09-29 u2, ADR 0130 덧붙임).
+ * **인연 기록** — 인연 궁합 전부와 끝난 대화(운영자 답 2026-09-29 u2, ADR 0130 덧붙임). 지난 요청은 없다 — 대화는 방이 든다(ADR 0215).
  *
  * 인연 탭 첫 화면은 덱이 주인이라 지나간 것은 「인연 기록 N」 한 줄로만 선다(`history-row.tsx`). 이 화면이 그 줄의 안쪽이다 —
- * #330 이 덱 아래 펼쳤던 최근 인연 궁합 셋과 지난 요청 접이칸이 여기로 왔다. 주소가 `/me/matching` 아래라 인연 탭에 불이
+ * #330 이 덱 아래 펼쳤던 최근 인연 궁합 셋이 여기로 왔다. 주소가 `/me/matching` 아래라 인연 탭에 불이
  * 켜지고(`site-header.tsx`), 로그인 · 가입 관문(`proxy.ts` 의 `/me` 아래 · `src/lib/consent/gate.ts`)도 그대로 지난다.
  *
  * 인연 궁합 표지는 책장의 궁합 표지 그대로(`PairCover`)이고, 수락 직후 글이 아직 없는 것은 책장의 「만드는 중」 편지
@@ -55,7 +53,7 @@ export default async function MatchHistoryPage() {
     );
   }
 
-  const [readings, matches, requestsRead, ended] = await Promise.all([
+  const [readings, matches, ended] = await Promise.all([
     myReadings().then(read, (thrown: unknown): SkippableRead<readonly ReadingEntry[]> => ({
       ok: false,
       reason: answerOfThrown(thrown, 'my_readings'),
@@ -64,27 +62,16 @@ export default async function MatchHistoryPage() {
       ok: false,
       reason: answerOfThrown(thrown, 'my_matches'),
     })),
-    requestsForViewer().then(read, (thrown: unknown): SkippableRead<Requests> => ({
-      ok: false,
-      reason: answerOfThrown(thrown, 'inbox'),
-    })),
     endedTalksForViewer(supabase),
   ]);
-
-  /* 대화는 방이 든다 — 지난 요청에 안 선다(ADR 0215) */
-  const requests: SkippableRead<Requests> = requestsRead.ok
-    ? { ok: true, value: { ...requestsRead.value, requests: withoutTalks(requestsRead.value.requests) } }
-    : requestsRead;
 
   const books = readings.ok ? matchBooks(readings.value) : [];
   /* 글이 아직 없는 인연 궁합 — 수락 직후 만드는 중이다. 글 목록을 못 읽었으면 가르지 못하므로 안 세운다 */
   const making = readings.ok && matches.ok ? makingMatches(readings.value, matches.value) : [];
   const matchCount = books.length + making.length;
-  const past = requests.ok ? pastRequests(requests.value, matches.ok ? matches.value : null) : null;
-  const pastCount = past === null ? 0 : past.sent.length + past.decided.length;
   /* 만드는 중인 것을 가를 `my_matches` 를 못 읽으면 수가 모자라다 — 수를 안 세우고 빈 기록이라 하지 않는다(G-100) */
   const matchesWhole = readings.ok && matches.ok;
-  const empty = matchesWhole && requests.ok && matchCount === 0 && pastCount === 0 && past?.blocked === 0 && ended.length === 0;
+  const empty = matchesWhole && matchCount === 0 && ended.length === 0;
 
   return (
     <main className={`app-shell flex w-full ${COLUMN} flex-1 flex-col gap-7 py-6 sm:py-12`}>
@@ -138,20 +125,6 @@ export default async function MatchHistoryPage() {
             </>
           ) : (
             <FailureLine retry>인연 궁합을 불러오지 못했어요. {readings.reason}</FailureLine>
-          )}
-        </section>
-      )}
-
-      {(!requests.ok || (past !== null && (pastCount > 0 || past.blocked > 0))) && (
-        <section aria-labelledby="history-requests" className="flex flex-col gap-4">
-          <h2 id="history-requests" className={`${TYPE_SECTION} flex items-center gap-2`}>
-            지난 요청
-            {requests.ok && <span className={COUNT_CHIP}>{pastCount}</span>}
-          </h2>
-          {requests.ok ? (
-            past !== null && <PastRequestList past={past} guide={receivedOf(requests.value.requests).length === 0} />
-          ) : (
-            <FailureLine retry>요청을 불러오지 못했어요. {requests.reason}</FailureLine>
           )}
         </section>
       )}

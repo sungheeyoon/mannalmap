@@ -56,11 +56,9 @@ export type MatchDetail = {
   readonly expiresAt: string | null;
   readonly failureCode: string | null;
   readonly creditsLeft: number;
-  /** 답 전(`talk_status` 가 `pending`)이 아니다 — 옛 인연도 참이다 */
+  /** 답 전(`talk_status` 가 `pending`)이 아니다 */
   readonly replied: boolean;
   readonly maySend: boolean;
-  /** 스위치 — 참이면 방 상단이 새 흐름이다 */
-  readonly detailOpen: boolean;
   /** 새 누름 없이 다시 만들 수 있다 */
   readonly consentHolds: boolean;
 };
@@ -74,7 +72,6 @@ type DetailRow = {
   readonly credits_left: number | null;
   readonly talk_status: string | null;
   readonly may_send: boolean | null;
-  readonly detail_open: boolean | null;
   readonly consent_holds?: boolean | null;
 };
 
@@ -92,17 +89,14 @@ export function matchDetailOf(row: DetailRow | undefined): MatchDetail | null {
     creditsLeft: row.credits_left ?? 0,
     replied: row.talk_status !== 'pending',
     maySend: row.may_send !== false,
-    detailOpen: row.detail_open === true,
     consentHolds: row.consent_holds === true,
   };
 }
 
 /**
- * 방 상단의 작은 「상세 궁합」이 서는가 — 켜졌고 답을 받은 대화에만(답 전에는 청할 수 없다).
- * **다시 꺼도 이미 선 동의 대기는 눌러 끝낼 수 있다**(runbook 「대화를 되돌리기」). 그 상태는 상세 줄에서만 나므로 옛 인연의 꺼진 화면은 그대로다.
+ * 방 상단의 작은 「상세 궁합」이 서는가 — 답을 받은 대화에만(답 전에는 청할 수 없다). 문의 `detail_open` 칸(늘 참, 옛 앱의 임시 호환)은 안 읽는다.
  */
-export const detailDoorShown = (detail: MatchDetail | null): detail is MatchDetail =>
-  detail !== null && detail.replied && (detail.detailOpen || detail.state === 'awaiting_consent');
+export const detailDoorShown = (detail: MatchDetail | null): detail is MatchDetail => detail !== null && detail.replied;
 
 export type DetailAction = 'buy' | 'consent' | 'retry' | 'see';
 

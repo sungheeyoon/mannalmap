@@ -9,7 +9,7 @@ create schema if not exists tests;
 -- pg_prove 는 plan 이 없는 파일을 「망가진 시험」으로 읽는다. 도구 파일이라도
 -- 한 줄은 세워 둔다 — 손잡이가 안 서면 나머지가 전부 이유 없이 무너지므로,
 -- 그 자리를 여기서 먼저 알려 주는 것이 맞다.
-select plan(5);
+select plan(6);
 
 /**
  * 시험의 종료일 — **오늘에서 센다.** 서울 날짜로 다다음 달 1일이다(29~62일 뒤 — 가장 짧은 것이 1월 31일 → 3월 1일).
@@ -335,6 +335,48 @@ as $$
     (select v.chart_engine_version from tests.my_versions((select auth.uid())) v)) = 'joined';
 $$;
 
+/**
+ * 답한 대화에서 **상세 궁합을 사고 누른다** — 인연 궁합의 시도가 서는 유일한 길이다(대화가 유일한 흐름, `20270109090000`).
+ *
+ * 대화를 시작한 사람이 상세를 청하고(1장 예약) 받은 사람이 누른다 — 누름이 여덟 글자를 베끼고 구매자 이름으로 시도를 연다.
+ * 시도의 열쇠는 `'match-accept:' || 돌려준 상세 요청 번호` 다. 대화는 답한 뒤여야 한다(받은 사람의 말 또는 수락).
+ * 부르기 전의 세션(`request.jwt.claims`)으로 돌려놓는다. 누름이 `accepted` 가 아니면 던진다 — 시험이 조용히 빈 인연을 재지 않게.
+ */
+create or replace function tests.press_detail(p_talk uuid)
+returns uuid
+language plpgsql
+security definer
+as $$
+declare
+  was text := current_setting('request.jwt.claims', true);
+  talk public.match_request;
+  in_match uuid;
+  detail uuid;
+  answer text;
+begin
+  select * into talk from public.match_request q where q.id = p_talk and q.kind = 'talk';
+  select m.id into in_match from public.match m where m.request_id = p_talk;
+
+  perform set_config('request.jwt.claims', tests.claims(talk.requester_user_id), true);
+  select d.request_id into detail from public.request_match_detail(in_match, 'detail-' || gen_random_uuid()::text) d;
+
+  perform set_config('request.jwt.claims', tests.claims(talk.addressee_user_id), true);
+  answer := public.respond_to_match_request(detail, true);
+
+  perform set_config('request.jwt.claims', coalesce(was, ''), true);
+
+  if answer is distinct from 'accepted' then
+    raise exception 'tests.press_detail: 누름이 %', answer;
+  end if;
+
+  return detail;
+end;
+$$;
+
+-- **시험의 DB 는 인연이 열린 쪽이다**(ADR 0222) — 운영의 기본값은 닫힘이지만, 나머지 시험이 재려는 것은 「열려 있는 동안」이다.
+-- 종료일(`tests.beta_ends_on`)과 같은 까닭이다. 닫힌 동안은 `99_match_waits_closed` 가 스스로 닫아 잰다.
+update public.match_open_switch set open = true, changed_at = now() where not open;
+
 -- 시험은 역할을 `authenticated` 로 바꾼 채로 이 손잡이들을 부른다.
 grant usage on schema tests to authenticated;
 grant execute on all functions in schema tests to authenticated;
@@ -346,4 +388,5 @@ select ok(public.is_need_summary(tests.need()), '손잡이가 내는 필요한 �
 select ok(
   tests.beta_ends_on() > (now() at time zone 'Asia/Seoul')::date + 28,
   '시험의 종료일은 오늘에서 4주 넘게 남는다 — 날짜를 적어 두면 그날 모든 파일이 붉어진다');
+select ok(public.match_is_open(), '시험의 DB 는 인연이 열려 있다 — 닫힌 동안은 99_match_waits_closed 가 잰다');
 select * from finish();

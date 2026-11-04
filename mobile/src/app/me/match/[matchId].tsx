@@ -1,11 +1,9 @@
 import { router, useLocalSearchParams } from 'expo-router';
-import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { CHAT_TAB_LABEL } from '@chat/index';
 import { DETAIL_MAKING, DETAIL_NOT_YET } from '@chat/room/detail-copy';
-import { MATCH_RESULT_CLOSED_NOTE } from '@consent/index';
-import { ELEMENT_KO, PILLAR_POSITION_KO, STEM_INFO, type ChartSnapshot, type Element } from '@saju';
 
 import { readMatchResult, readMyNickname, type MatchOutcome, type Read } from '@/matching/doors';
 import { Face, PartnerSheet, ReportBlock } from '@/matching/people';
@@ -15,16 +13,15 @@ import { Icon } from '@/ui/icons';
 import { LoadingMark } from '@/ui/loading';
 import { PrimaryButton } from '@/ui/parts';
 import { TopBar, goBack } from '@/ui/top-bar';
-import { COLOR, ELEMENT_TONE, FONT, RADIUS, TYPE } from '@/ui/tokens';
-import { CardFrame, EmptySlot, Paper, Tile } from '@/ui/surfaces';
+import { COLOR, FONT, RADIUS, TYPE } from '@/ui/tokens';
+import { CardFrame, EmptySlot } from '@/ui/surfaces';
 
-const POSITIONS = ['hour', 'day', 'month', 'year'] as const;
 /** 만드는 동안 상태 문을 다시 묻는 간격 — 글이 서면 풀이 칸으로 바뀐다 */
 const MAKING_POLL_MS = 5000;
 
 /**
- * 인연 궁합 — 동의가 실제로 연 것. 머리 한 줄 · 표지 · 두 명식 · 풀이 본문 차례다(PRD §6.3). 풀이 칸은 네 갈래 한 벌이다(`ReadingPanel`) — 만드는 중 · 실패 · 의견이 거기 있다.
- * 없는 Match 와 못 보는 Match 는 같은 말로 거절한다(ADR 0007). 글이 있으면 만드는 단추가 없다(ADR 0038) — 글이 없을 때만 선다.
+ * 상세 궁합 — 둘이 같이 보는 한 장. 머리 한 줄 · 풀이 본문 차례다. 글이 서기 전에는 풀이 칸을 안 세운다 — 청하기 · 재시도는 방의 일이다.
+ * 없는 Match 와 못 보는 Match 는 같은 말로 거절한다(ADR 0007).
  */
 export default function MatchScreen() {
   const { matchId, from } = useLocalSearchParams<{ matchId: string; from?: string }>();
@@ -43,7 +40,7 @@ export default function MatchScreen() {
     void load();
   }, [load]);
 
-  const making = outcome?.ok === true && outcome.value.kind === 'ok' && outcome.value.result.mine === null && outcome.value.result.detail?.state === 'making';
+  const making = outcome?.ok === true && outcome.value.kind === 'ok' && outcome.value.result.detail?.state === 'making';
   useEffect(() => {
     if (!making) return;
     const timer = setInterval(() => void load(), MAKING_POLL_MS);
@@ -96,23 +93,8 @@ export default function MatchScreen() {
     );
   }
 
-  if (outcome.value.kind === 'closed') {
-    return (
-      <View style={styles.screen}>
-        <TopBar title="궁합 결과" fallback={fallback} />
-        <ScrollView contentContainerStyle={styles.content}>
-          <EmptySlot >
-            <Text style={styles.line}>{MATCH_RESULT_CLOSED_NOTE}</Text>
-          </EmptySlot>
-        </ScrollView>
-      </View>
-    );
-  }
-
   const { result } = outcome.value;
-  const tone = result.theirs === null ? null : STEM_INFO[result.theirs.dayMaster].element;
-  /* 켜진 흐름은 글이 서기 전에 풀이 칸을 안 세운다 — 청하기 · 재시도는 방의 일이다 */
-  const written = result.mine !== null || result.detail?.state === 'ready';
+  const written = result.detail?.state === 'ready';
 
   return (
     <View style={styles.screen}>
@@ -131,7 +113,7 @@ export default function MatchScreen() {
         }
       >
         <Pressable accessibilityRole="button" accessibilityLabel={`${result.partnerNickname} 님 자세히`} onPress={() => setSheet(true)}>
-          <Face userId={result.partnerUserId} nickname={result.partnerNickname} hasPhoto={result.partnerPhotoCount > 0} focus={result.partnerPhotoFocus[0]} size={40} tone={tone} />
+          <Face userId={result.partnerUserId} nickname={result.partnerNickname} hasPhoto={result.partnerPhotoCount > 0} focus={result.partnerPhotoFocus[0]} size={40} tone={null} />
         </Pressable>
         <View style={styles.flex}>
           <Text style={styles.name} numberOfLines={1} accessibilityRole="header">
@@ -150,27 +132,13 @@ export default function MatchScreen() {
             intro: result.partnerIntro,
             photoCount: result.partnerPhotoCount,
             photoFocus: result.partnerPhotoFocus,
-            tone,
+            tone: null,
           }}
           menu={<ReportBlock userId={result.partnerUserId} nickname={result.partnerNickname} onBlocked={back} />}
         />
 
         {written ? (
-          <MatchReadingPanel
-            matchId={result.matchId}
-            nicknames={{ viewer: nickname, partner: result.partnerNickname }}
-            tones={result.mine === null || tone === null ? [] : [STEM_INFO[result.mine.dayMaster].element, tone]}
-            pair={
-              result.mine === null || result.theirs === null ? null : (
-                <Paper style={styles.pair}>
-                  <Text style={styles.pairEyebrow}>각자의 사주</Text>
-                  <Text style={styles.pairTitle}>궁합의 출발점</Text>
-                  <Side name="나" chart={result.mine} who="첫 번째" />
-                  <Side name={result.partnerNickname} chart={result.theirs} who="두 번째" />
-                </Paper>
-              )
-            }
-          />
+          <MatchReadingPanel matchId={result.matchId} nicknames={{ viewer: nickname, partner: result.partnerNickname }} />
         ) : (
           <EmptySlot>
             <Text style={styles.line}>{result.detail?.state === 'making' ? DETAIL_MAKING : DETAIL_NOT_YET}</Text>
@@ -181,18 +149,8 @@ export default function MatchScreen() {
   );
 }
 
-/** 풀이 칸 — 글은 문이 근거 절을 자르고 내준다(ADR 0008 · 0211). 동의가 만드는 글이라 `automatic` 이다(ADR 0038). 두 명식은 표지와 본문 사이에 선다 */
-function MatchReadingPanel({
-  matchId,
-  nicknames,
-  tones,
-  pair,
-}: {
-  matchId: string;
-  nicknames: { viewer: string; partner: string };
-  tones: readonly Element[];
-  pair: ReactNode;
-}) {
+/** 풀이 칸 — 글은 문이 근거 절을 자르고 내준다(ADR 0008 · 0211). 동의가 만드는 글이라 `automatic` 이다(ADR 0038) */
+function MatchReadingPanel({ matchId, nicknames }: { matchId: string; nicknames: { viewer: string; partner: string } }) {
   const target = useMemo<ReadingTarget>(() => ({ kind: 'match', matchId }), [matchId]);
   const { answer, reload } = useReadingView(target);
 
@@ -207,36 +165,7 @@ function MatchReadingPanel({
     );
   }
   if (answer.view.view !== 'reading') return null;
-  return <ReadingPanel target={target} view={answer.view} automatic nicknames={nicknames} tones={tones} betweenSummaryAndBody={pair} />;
-}
-
-/** 한 사람의 면 — 동의로 열린 여덟 글자만. 입력 · 출생지 · 원국 판정은 이 값에 없다(ADR 0012) */
-function Side({ name, chart, who }: { name: string; chart: ChartSnapshot; who: string }) {
-  const dayMaster = STEM_INFO[chart.dayMaster];
-  return (
-    <Tile tone={ELEMENT_TONE[dayMaster.element].soft} style={styles.side}>
-      <Text style={styles.meta}>{who} 사람</Text>
-      <Text style={styles.name} numberOfLines={1}>
-        {name}
-      </Text>
-      <Text style={styles.meta}>
-        {dayMaster.ko}
-        {ELEMENT_KO[dayMaster.element]} 일간
-      </Text>
-      <View style={styles.pillars}>
-        {POSITIONS.map((position) => {
-          const pillar = chart[position];
-          return (
-            <View key={position} style={styles.pillar}>
-              <Text style={styles.meta}>{PILLAR_POSITION_KO[position]}</Text>
-              <Text style={styles.glyph}>{pillar === null ? '–' : pillar.stem}</Text>
-              <Text style={styles.glyph}>{pillar === null ? '–' : pillar.branch}</Text>
-            </View>
-          );
-        })}
-      </View>
-    </Tile>
-  );
+  return <ReadingPanel target={target} view={answer.view} automatic nicknames={nicknames} />;
 }
 
 const styles = StyleSheet.create({
@@ -253,12 +182,5 @@ const styles = StyleSheet.create({
   notFound: { flex: 1, justifyContent: 'center', gap: 16, padding: 24 },
   title: { fontFamily: FONT.bold, fontSize: TYPE.title, lineHeight: 34, color: COLOR.foreground },
   line: { fontFamily: FONT.medium, fontSize: TYPE.body, lineHeight: 26, color: COLOR.secondary },
-  pair: { gap: 12, padding: 16 },
-  pairEyebrow: { fontFamily: FONT.bold, fontSize: TYPE.small, color: COLOR.creamInk },
-  pairTitle: { fontFamily: FONT.bold, fontSize: TYPE.heading, color: COLOR.foreground, marginTop: -8 },
-  side: { gap: 4 },
-  pillars: { flexDirection: 'row', gap: 6, marginTop: 8 },
-  pillar: { flex: 1, alignItems: 'center', gap: 2, paddingVertical: 8, borderRadius: RADIUS.cell, backgroundColor: COLOR.surface },
-  glyph: { fontSize: 24, lineHeight: 30, color: COLOR.foreground },
   blocked: { gap: 12, padding: 20 },
 });

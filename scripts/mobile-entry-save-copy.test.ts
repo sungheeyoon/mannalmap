@@ -40,8 +40,9 @@ describe('앱 입구', () => {
 describe('인연 소개 (#940)', () => {
   const intro = read('mobile/src/app/matching-intro.tsx');
 
-  it('세션 · 회원을 안 읽는다 — 서버에 묻는 것은 대화 스위치 하나다(#965)', () => {
-    expect(intro).not.toMatch(/supabase|fetch\(|readGate|\.rpc\(|useDeck|@\/matching\/(?!talk-doors)|PersonPhoto/);
+  it('세션 · 회원을 안 읽는다 — 서버에 묻는 것은 인연이 열려 있는가 하나다(ADR 0222)', () => {
+    expect(intro).not.toMatch(/supabase|fetch\(|readGate|\.rpc\(|useDeck|@\/matching\/(?!opening')|PersonPhoto/);
+    expect(intro).toContain('useMatchOpen()');
   });
 
   it('예시 카드에는 사람도 누를 자리도 없다 — 눌러도 아무에게도 안 간다', () => {
@@ -57,8 +58,8 @@ describe('인연 소개 (#940)', () => {
     expect(MATCHING_INTRO_EXAMPLE.score).toBeGreaterThanOrEqual(75);
   });
 
-  it('규칙은 요청 창 · 약관과 같은 상수를 읽고, 없는 본인인증을 약속하지 않는다', () => {
-    for (const name of ['REQUEST_RESERVES_NOTE', 'MATCH_ACCEPT_OPENS', 'MATCH_ACCEPT_HIDDEN', 'SIGNUP_NOTICE_DISCOVERY']) expect(intro).toContain(name);
+  it('규칙은 카드 · 방 · 약관과 같은 상수를 읽고, 없는 본인인증을 약속하지 않는다', () => {
+    for (const name of ['TALK_START_NOTE', 'CHAT_USES_NO_CREDIT', 'DETAIL_INTRO', 'SIGNUP_NOTICE_DISCOVERY']) expect(intro).toContain(name);
     expect(read('src/lib/brand/terms.ts')).toContain('만 19세 이상만 가입할 수 있습니다');
     expect(intro).not.toMatch(/본인인증|본인확인|성인 확인/);
   });
@@ -246,10 +247,7 @@ describe('앱은 풀이권을 팔지 않는다', () => {
     expect(dialogs).toContain('SALE_CLOSED_NOTE');
     expect(dialogs).toContain('SALE_CLOSED_OK');
     expect(read('mobile/src/reading/api.ts')).not.toContain('my_reading_sale_is_open');
-
-    const today = read('mobile/src/matching/today.tsx');
-    expect(today).not.toContain('BUY_CREDITS_LABEL');
-    expect(today).toContain('SALE_CLOSED_NOTE');
+    expect(read('mobile/src/matching/today.tsx')).not.toContain('BUY_CREDITS_LABEL');
     expect(read('mobile/src/matching/doors.ts')).not.toContain('my_reading_sale_is_open');
   });
 });

@@ -631,7 +631,7 @@ async function runDetailCalls({
   generation: unknown;
   call: (prompt: string) => Promise<ModelCall<DetailOutput>>;
 }) {
-  const { DETAIL_ASSEMBLY, blockingFindingsOf, detailFindingsOf, requestPromptVersionOf, withDiscovery } = await import('@/src/lib/reading');
+  const { blockingFindingsOf, detailFindingsOf, withDiscovery } = await import('@/src/lib/reading');
   const { chartsOf, secretsOf } = await import('@/src/lab/reading/match-input-eval');
 
   type Line = {
@@ -646,10 +646,10 @@ async function runDetailCalls({
   const usages: Extract<ModelCall<DetailOutput>, { ok: true }>[] = [];
 
   for (const fixture of fixtures) {
-    const reading = readingEvidenceOf('match', chartsOf(fixture), viewedAt, DETAIL_ASSEMBLY.matchInput);
+    const reading = readingEvidenceOf('match', chartsOf(fixture), viewedAt, CONTROL.matchInput);
     if (reading.kind !== 'match') throw new Error('인연 궁합이 아니다');
     const evidenceText = JSON.stringify(reading.evidence);
-    const prompt = readingPromptOf(reading, DETAIL_ASSEMBLY);
+    const prompt = readingPromptOf(reading, CONTROL);
 
     for (let rep = 1; rep <= repeat; rep += 1) {
       const called = await call(prompt);
@@ -665,7 +665,7 @@ async function runDetailCalls({
       const verdict = checkReading({ kind: 'match', output: { score, metaphor, markdown }, evidenceText, secrets: secretsOf(fixture), baseline: reading.baseline });
       const findings = [...(verdict.ok ? [] : verdict.failures), ...detailFindingsOf({ markdown, discovery, metaphor, evidenceText })];
       const blocked = blockingFindingsOf(findings).map(({ code }) => code);
-      const deviations = pairOutputDeviations('match', measureMarkdown(markdown), DETAIL_ASSEMBLY);
+      const deviations = pairOutputDeviations('match', measureMarkdown(markdown), CONTROL);
       const line: Line = {
         fixture: fixture.id,
         rep,
@@ -679,7 +679,7 @@ async function runDetailCalls({
         `${dir}/runs.jsonl`,
         `${JSON.stringify({
           ...line,
-          promptVersion: requestPromptVersionOf('detail'),
+          promptVersion: READING_POLICY.detailVersion,
           modelId: called.modelId,
           baseline: reading.baseline,
           findings,
@@ -706,7 +706,7 @@ async function runDetailCalls({
 
   const summary = {
     /** 무엇으로 만든 것인가 — 입력은 시험 표본뿐이다 */
-    promptVersion: requestPromptVersionOf('detail'),
+    promptVersion: READING_POLICY.detailVersion,
     generation,
     modelIds: [...new Set(usages.map(({ modelId }) => modelId))],
     viewedAt: viewedAt.toISOString(),
@@ -743,11 +743,11 @@ describe('상세 실호출의 기록 — 가짜 모델로 파일까지 잰다', 
   const made = (output: DetailOutput): ModelCall<DetailOutput> => ({ ok: true, output, usage, reasoningTokens: 10, modelId: 'fake-model' });
 
   it('글 · 점수 · 막힘 이유 · 토큰을 파일에 남기고 실패도 줄로 남긴다', { timeout: 30_000 }, async () => {
-    const { DETAIL_ASSEMBLY, READING_POLICY: policy } = await import('@/src/lib/reading');
+    const { READING_POLICY: policy } = await import('@/src/lib/reading');
     const { MATCH_INPUT_FIXTURES, chartsOf } = await import('@/src/lab/reading/match-input-eval');
     const fixture = MATCH_INPUT_FIXTURES[0];
     const viewedAt = new Date(VARIANTS_VIEWED_AT);
-    const reading = readingEvidenceOf('match', chartsOf(fixture), viewedAt, DETAIL_ASSEMBLY.matchInput);
+    const reading = readingEvidenceOf('match', chartsOf(fixture), viewedAt, CONTROL.matchInput);
     if (reading.kind !== 'match') throw new Error('인연 궁합이 아니다');
     const body = `## 첫 이야기\n\n${'두 사람은 연락의 속도를 맞춰 가요. '.repeat(40)}`;
     const pillar = chartsOf(fixture).a.pillars.day.name;
@@ -818,7 +818,6 @@ describe('상세 실호출의 기록 — 가짜 모델로 파일까지 잰다', 
 
 describe.skipIf(!detailLive)('상세 궁합을 운영과 같은 조립으로 부른다', () => {
   it('글 · 점수 차 · 막힘을 떨군다', { timeout: 3_600_000 }, async () => {
-    const { DETAIL_ASSEMBLY } = await import('@/src/lib/reading');
     const { MATCH_INPUT_FIXTURES, chartsOf } = await import('@/src/lab/reading/match-input-eval');
 
     const repeat = Number(process.env.READING_DETAIL_REPEAT ?? '3');
@@ -832,8 +831,8 @@ describe.skipIf(!detailLive)('상세 궁합을 운영과 같은 조립으로 부
     if (dry) {
       mkdirSync(dir, { recursive: true });
       for (const fixture of MATCH_INPUT_FIXTURES) {
-        const reading = readingEvidenceOf('match', chartsOf(fixture), viewedAt, DETAIL_ASSEMBLY.matchInput);
-        writeFileSync(`${dir}/${fixture.id}.prompt.md`, readingPromptOf(reading, DETAIL_ASSEMBLY));
+        const reading = readingEvidenceOf('match', chartsOf(fixture), viewedAt, CONTROL.matchInput);
+        writeFileSync(`${dir}/${fixture.id}.prompt.md`, readingPromptOf(reading, CONTROL));
         writeFileSync(`${dir}/${fixture.id}.evidence.json`, JSON.stringify(reading.evidence));
       }
       return;

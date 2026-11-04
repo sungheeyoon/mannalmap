@@ -10,9 +10,11 @@ import { CHAT_TAB_LABEL } from '@/src/lib/chat';
 import { readingCreditsLabel } from '@/src/lib/reading/notes';
 import { SURVEY_COPY } from '@/src/lib/survey';
 import { SAJU_PATH, signInFrom } from '@/src/lib/consent';
+import { tabsWhileShut } from '@/src/lib/matching/opening';
 
 import { supabaseInBrowser } from './auth/browser-client';
 import { lightOf, placeOf, resultKindOf } from './came-from';
+import { openOf, readMatchOpen } from './match-opening';
 import { useBrowserSession } from './auth/browser-session';
 import { useSignOut } from './auth/sign-out';
 import { CreditsMenu } from './me/credits/credits-menu';
@@ -20,8 +22,8 @@ import { readUnreadChat } from './me/chat/unread';
 import { CHAT_UNREAD_MOVED } from './me/chat/unread-signal';
 import { readReadingCredits } from './me/credits/remaining';
 import { READING_CREDITS_MOVED } from './me/credits/credits-signal';
-import { readRequestsToAnswer, readUnreadNotifications } from './me/requests/unread';
-import { NOTIFICATIONS_UNREAD_MOVED, REQUESTS_TO_ANSWER_MOVED } from './me/requests/unread-signal';
+import { readUnreadNotifications } from './me/requests/unread';
+import { NOTIFICATIONS_UNREAD_MOVED } from './me/requests/unread-signal';
 import { isSharePath } from './share/path';
 import { BUTTON_SECONDARY_SMALL, ICON_BUTTON_BARE, ICON_BUTTON_BARE_ACTIVE } from './ui/buttons';
 import { useDetailsMenu } from './ui/details-menu';
@@ -43,6 +45,8 @@ import { FailureLine } from './ui/failure-line';
  *
  * 소식은 종, 프로필 · 설정 · 서비스 설문은 톱니 안이다(ADR 0109 그대로). 받은 요청은 종이 아니라 인연 탭 맨 위에
  * 산다(ADR 0130). 대화방 목록도 탭이다(PRD 「앱 내 채팅」).
+ *
+ * **인연이 닫힌 동안에는 홈 · 궁합 둘이다**(ADR 0222) — 열렸다고 읽기 전에는 인연 · 채팅을 안 세운다(`tabsWhileShut`).
  */
 const MEMBER_TABS = [
   { href: '/me', label: '홈', icon: 'home' },
@@ -148,13 +152,13 @@ export function SiteHeader() {
    * 섰다. 모양은 `live` 가 그대로 정한다 — 딱지만 세션이 선 뒤에 온다.
    */
   const counting = live && session === 'in';
-  const unreadChat = useUnreadCount(counting, pathname, readUnreadChat, CHAT_UNREAD_MOVED);
+  const matchOpen = useMatchOpen(counting);
+  const tabs = tabsWhileShut(MEMBER_TABS, matchOpen);
+  const unreadChat = useUnreadCount(counting && matchOpen === true, pathname, readUnreadChat, CHAT_UNREAD_MOVED);
   const unreadNews = useUnreadCount(counting, pathname, readUnreadNotifications, NOTIFICATIONS_UNREAD_MOVED);
-  const toAnswer = useUnreadCount(counting, pathname, readRequestsToAnswer, REQUESTS_TO_ANSWER_MOVED);
-  /** 탭마다 선 딱지 — 채팅은 안 읽은 메시지, 인연은 답할 요청(ADR 0130) */
+  /** 탭마다 선 딱지 — 채팅의 안 읽은 메시지. 인연 탭은 답할 일이 없다(ADR 0215) */
   const tabBadges: Partial<Record<(typeof MEMBER_TABS)[number]['href'], number>> = {
     '/me/chat': unreadChat,
-    '/me/matching': toAnswer,
   };
   /** 로그인 화면에서 「로그인」은 지금 보고 있는 화면으로 가는 버튼이다 */
   const onAuthScreen = pathname.startsWith('/auth');
@@ -191,7 +195,7 @@ export function SiteHeader() {
               <WithCameFrom
                 render={(from) => (
                   <ul className="flex items-center gap-1 rounded-full bg-surface p-1 ring-1 ring-border">
-                    {MEMBER_TABS.map((tab) => {
+                    {tabs.map((tab) => {
                       const active = isNavigationActive(pathname, tab.href, from);
                       return (
                         <li key={tab.href}>
@@ -259,7 +263,7 @@ export function SiteHeader() {
           )}
         </div>
       </header>
-      {live && dockStandsOn(pathname) && <WithCameFrom render={(from) => <Dock pathname={pathname} from={from} badges={tabBadges} />} />}
+      {live && dockStandsOn(pathname) && <WithCameFrom render={(from) => <Dock tabs={tabs} pathname={pathname} from={from} badges={tabBadges} />} />}
     </>
   );
 }
@@ -302,6 +306,29 @@ function useReadingCredits(enabled: boolean): number | null {
   }, [enabled]);
 
   return enabled ? available : null;
+}
+
+/**
+ * 인연이 열려 있는가 — 세션을 확인한 뒤 한 번 묻는다(`app/match-opening.ts`). 모르는 동안 · 못 읽었으면 `null` 이고 탭은 닫힌 쪽으로 선다.
+ * 운영자가 여닫는 일은 드물어 화면을 옮길 때마다 다시 묻지 않는다.
+ */
+function useMatchOpen(enabled: boolean): boolean | null {
+  const [open, setOpen] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    if (!enabled) return;
+
+    let watching = true;
+    void readMatchOpen(supabaseInBrowser()).then((answer) => {
+      if (watching) setOpen(openOf(answer));
+    });
+
+    return () => {
+      watching = false;
+    };
+  }, [enabled]);
+
+  return enabled ? open : null;
 }
 
 /**
@@ -393,14 +420,17 @@ function NewsBell({ count, active }: { count: number; active: boolean }) {
 }
 
 /**
- * 폰의 하단 독 — **탭 넷, 둥근 판.** 화면 가장자리에서 조금 떠 있고, 켜진 탭은 아이콘 뒤에 파스텔 알약이
+ * 폰의 하단 독 — **탭 넷(닫힌 동안 둘), 둥근 판.** 화면 가장자리에서 조금 떠 있고, 켜진 탭은 아이콘 뒤에 파스텔 알약이
  * 깔린다. 아래 여백은 `globals.css` 가 이 판의 `id` 를 보고 비운다.
  */
 function Dock({
+  tabs,
   pathname,
   from,
   badges,
 }: {
+  /** 서는 탭 — 인연이 닫힌 동안은 홈 · 궁합 둘이다(ADR 0222) */
+  tabs: readonly (typeof MEMBER_TABS)[number][];
   pathname: string;
   /** 결과 화면이 온 곳(`?from=`) — 불을 온 곳에 켠다(ADR 0134) */
   from: string | null;
@@ -412,8 +442,10 @@ function Dock({
       aria-label="모바일 내 메뉴"
       className="fixed inset-x-3 bottom-[calc(0.75rem+env(safe-area-inset-bottom))] z-50 md:hidden"
     >
-      <ul className="mx-auto grid max-w-md grid-cols-4 rounded-card bg-surface/95 p-1.5 shadow-raise ring-1 ring-border backdrop-blur-xl">
-        {MEMBER_TABS.map((tab) => {
+      <ul
+        className={`mx-auto grid max-w-md ${tabs.length === MEMBER_TABS.length ? 'grid-cols-4' : 'grid-cols-2'} rounded-card bg-surface/95 p-1.5 shadow-raise ring-1 ring-border backdrop-blur-xl`}
+      >
+        {tabs.map((tab) => {
           const active = isNavigationActive(pathname, tab.href, from);
           return (
             <li key={tab.href} className="min-w-0">

@@ -5,43 +5,35 @@ import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { accountFailureOf, accountNoticeOf, isBlocked, selfPersonIdOf, type AccountState } from '@account/index';
 import { SUPPORT_EMAIL } from '@brand';
 import { SIGNUP_NOTICE_DISCOVERY } from '@consent/signup';
-import { withoutTalks } from '@chat/room/talk';
 import { SELF_NEEDED } from '@matching/copy';
 import { historySummary, type HistorySummary } from '@matching/history';
-import type { InboxMatch, Requests } from '@matching/inbox';
-import { receivedOf } from '@matching/requests';
+import type { InboxMatch } from '@matching/inbox';
 
-import { readAccountState, readDeck, readMatchBooks, readMatches, readRequests, type DeckPlace, type Read } from '@/matching/doors';
-import { readEndedTalks, readTalkOpen } from '@/matching/talk-doors';
-import { RequestsBand } from '@/matching/requests';
-import { CardSheet, DeckButtons, EmptyDeck, Feedback, PassedConnections, QuietPlace, RequestConfirm, TalkConfirm, TodayCard, useCreditsNotice } from '@/matching/today';
+import { readAccountState, readDeck, readMatchBooks, readMatches, type DeckPlace, type Read } from '@/matching/doors';
+import { readEndedTalks } from '@/matching/talk-doors';
+import { CardSheet, DeckButtons, EmptyDeck, Feedback, PassedConnections, QuietPlace, TalkConfirm, TodayCard } from '@/matching/today';
 import { useDeck } from '@/matching/use-deck';
 import { Icon } from '@/ui/icons';
 import { LoadingMark } from '@/ui/loading';
 import { COLOR, FONT, RADIUS, TYPE } from '@/ui/tokens';
 import { CardFrame, RowCard } from '@/ui/surfaces';
 
-type Loaded = { finishedMatchIds: readonly string[]; endedTalks: number; account: AccountState; deck: Read<DeckPlace>; requests: Read<Requests>; matches: Read<readonly InboxMatch[]>; talkOpen: boolean };
+type Loaded = { finishedMatchIds: readonly string[]; endedTalks: number; account: AccountState; deck: Read<DeckPlace>; matches: Read<readonly InboxMatch[]> };
 
 const todayLabel = () => new Date().toLocaleDateString('ko-KR', { month: 'long', day: 'numeric', weekday: 'long', timeZone: 'Asia/Seoul' });
 
 /**
- * 오늘의 인연 — 폰 한 화면이다(ADR 0130). 위에서부터 받은 요청 띠 → 사진 카드와 단추 줄 → 인연 기록 한 줄.
+ * 오늘의 인연 — 폰 한 화면이다(ADR 0130). 위에서부터 사진 카드와 단추 줄 → 인연 기록 한 줄.
  * 후보를 뽑는 자리는 하나다(`my_discovery_board`, ADR 0037). 지나친 인연은 같은 화면의 두 번째 보기다.
  */
 export default function MatchingScreen() {
   const [loaded, setLoaded] = useState<Loaded | null>(null);
   const [round, setRound] = useState(0);
-  /* 덱을 새로 세우면 덱 안의 실패 줄이 사라지므로 새 덱에 건네고, 덱이 아닌 자리(안내 · 쉼)는 여기서 세운다 — 다음 읽기가 걷는다 */
-  const [switchMoved, setSwitchMoved] = useState<string | null>(null);
 
   const load = useCallback(async () => {
-    setSwitchMoved(null);
     const account = await readAccountState();
-    const [deck, read, matches, talkOpen, books, ended] = await Promise.all([readDeck(selfPersonIdOf(account)), readRequests(), readMatches(), readTalkOpen(), readMatchBooks(), readEndedTalks()]);
-    /* 대화는 방의 일이다 — 수락 카드 · 인연 기록의 수에 안 든다 */
-    const requests = read.ok ? { ...read, value: { ...read.value, requests: withoutTalks(read.value.requests) } } : read;
-    setLoaded({ account, deck, requests, matches, talkOpen, finishedMatchIds: books.ok ? books.value.map((book) => book.matchId) : [], endedTalks: ended.length });
+    const [deck, matches, books, ended] = await Promise.all([readDeck(selfPersonIdOf(account)), readMatches(), readMatchBooks(), readEndedTalks()]);
+    setLoaded({ account, deck, matches, finishedMatchIds: books.ok ? books.value.map((book) => book.matchId) : [], endedTalks: ended.length });
   }, []);
 
   useFocusEffect(
@@ -56,14 +48,6 @@ export default function MatchingScreen() {
     setRound((now) => now + 1);
   };
   const again = () => void reread();
-  const onSwitchMoved = (message: string) => {
-    void (async () => {
-      await load();
-      /* 한 번에 그려진다 — 새 덱이 이 문장을 처음 값으로 받는다 */
-      setSwitchMoved(message);
-      setRound((now) => now + 1);
-    })();
-  };
 
   if (loaded === null) {
     return (
@@ -76,37 +60,24 @@ export default function MatchingScreen() {
   const { account } = loaded;
   if (isBlocked(account)) return <Blocked state={account} onRetry={again} />;
 
-  const { requests } = loaded;
-  const received = requests.ok ? receivedOf(requests.value.requests) : [];
-  const summary = historySummary(loaded.matches, requests, { finishedMatchIds: loaded.finishedMatchIds, endedTalks: loaded.endedTalks });
-
-  const lead = (
-    <>
-      {!requests.ok && <FailureLine onRetry={again}>요청을 불러오지 못했어요. {requests.reason}</FailureLine>}
-      <RequestsBand received={received} onChanged={again} />
-    </>
-  );
+  const summary = historySummary(loaded.matches, { finishedMatchIds: loaded.finishedMatchIds, endedTalks: loaded.endedTalks });
   const tail = <HistoryRow summary={summary} />;
 
   if (!loaded.deck.ok) {
     return (
       <Frame>
         <Title />
-        {lead}
         <FailureLine onRetry={again}>{loaded.deck.reason}</FailureLine>
         {tail}
       </Frame>
     );
   }
   const place = loaded.deck.value;
-  const moved = switchMoved !== null && <FailureLine onRetry={again}>{switchMoved}</FailureLine>;
 
   if (place.kind === 'guide') {
     return (
       <Frame>
         <Title />
-        {lead}
-        {moved}
         <QuietPlace
           title={SELF_NEEDED.title}
           line={`${SELF_NEEDED.why} ${SIGNUP_NOTICE_DISCOVERY}`}
@@ -121,8 +92,6 @@ export default function MatchingScreen() {
     return (
       <Frame>
         <Title />
-        {lead}
-        {moved}
         <QuietPlace
           title="인연 찾기를 쉬고 있습니다"
           line="지금은 다른 참여자에게 내 프로필이 공개되지 않고, 새로운 사람도 소개받지 않아요. 내 사주와 저장한 사람은 그대로 남아 있어요."
@@ -135,12 +104,11 @@ export default function MatchingScreen() {
   }
 
   /* 덱은 다시 세우지 않는다 — 다만 앱은 응답이 화면을 다시 그려 주지 않으니, 다시 읽은 그때 덱을 그 값으로 새로 세운다 */
-  return <Deck key={round} place={place} lead={lead} tail={tail} onRecheck={again} onRequested={() => void load()} talkOpen={loaded.talkOpen} onSwitchMoved={onSwitchMoved} switchMoved={switchMoved} />;
+  return <Deck key={round} place={place} tail={tail} onRecheck={again} onRequested={() => void load()} />;
 }
 
-function Deck({ place, lead, tail, onRecheck, onRequested, talkOpen, onSwitchMoved, switchMoved }: { place: Extract<DeckPlace, { kind: 'deck' }>; lead: React.ReactNode; tail: React.ReactNode; onRecheck: () => void; onRequested: () => void; talkOpen: boolean; onSwitchMoved: (message: string) => void; switchMoved: string | null }) {
-  const credits = useCreditsNotice();
-  const deck = useDeck({ cards: place.cards, passedFromServer: place.passed, summary: place.summary, onOutOfCredits: () => void credits.offer(), onRequested, talkOpen, onSwitchMoved, movedNotice: switchMoved });
+function Deck({ place, tail, onRecheck, onRequested }: { place: Extract<DeckPlace, { kind: 'deck' }>; tail: React.ReactNode; onRecheck: () => void; onRequested: () => void }) {
+  const deck = useDeck({ cards: place.cards, passedFromServer: place.passed, summary: place.summary, onRequested });
   const [view, setView] = useState<'today' | 'passed'>('today');
   const [info, setInfo] = useState(false);
   const { profile } = deck;
@@ -162,8 +130,6 @@ function Deck({ place, lead, tail, onRecheck, onRequested, talkOpen, onSwitchMov
         </Pressable>
       </View>
 
-      {lead}
-
       {view === 'passed' ? (
         <PassedConnections
           cards={deck.passed}
@@ -176,7 +142,6 @@ function Deck({ place, lead, tail, onRecheck, onRequested, talkOpen, onSwitchMov
           }}
           onBack={() => setView('today')}
           feedback={feedback}
-          talkOpen={talkOpen}
         />
       ) : profile === undefined ? (
         <>
@@ -187,14 +152,13 @@ function Deck({ place, lead, tail, onRecheck, onRequested, talkOpen, onSwitchMov
       ) : (
         <View style={styles.deck}>
           {feedback}
-          <TodayCard card={profile} onInfo={() => setInfo(true)} onBlocked={() => deck.blocked(profile)} talkOpen={talkOpen} />
+          <TodayCard card={profile} onInfo={() => setInfo(true)} onBlocked={() => deck.blocked(profile)} />
           <DeckButtons
             canUndo={deck.hidden !== null && !deck.working}
             busy={deck.working}
             onUndo={deck.undo}
             onPass={() => void deck.pass()}
-            onRequest={() => void deck.askToRequest()}
-            talkOpen={talkOpen}
+            onRequest={deck.askToRequest}
           />
           <CardSheet
             card={profile}
@@ -202,40 +166,25 @@ function Deck({ place, lead, tail, onRecheck, onRequested, talkOpen, onSwitchMov
             onClose={() => setInfo(false)}
             explorationNote={place.explorationNote}
             notice={place.notice}
-            talkOpen={talkOpen}
             onBlocked={() => {
               setInfo(false);
               deck.blocked(profile);
             }}
           />
-          {talkOpen ? (
-            <TalkConfirm
-              card={profile}
-              open={deck.asking}
-              onClose={() => deck.setAsking(false)}
-              onConfirm={() => {
-                deck.setAsking(false);
-                void deck.talk();
-              }}
-              busy={deck.working}
-            />
-          ) : (
-            <RequestConfirm
-              card={profile}
-              open={deck.asking}
-              onClose={() => deck.setAsking(false)}
-              onConfirm={() => {
-                deck.setAsking(false);
-                void deck.send();
-              }}
-              busy={deck.working}
-            />
-          )}
+          <TalkConfirm
+            card={profile}
+            open={deck.asking}
+            onClose={() => deck.setAsking(false)}
+            onConfirm={() => {
+              deck.setAsking(false);
+              void deck.talk();
+            }}
+            busy={deck.working}
+          />
         </View>
       )}
 
       {tail}
-      {credits.notice}
     </Frame>
   );
 }

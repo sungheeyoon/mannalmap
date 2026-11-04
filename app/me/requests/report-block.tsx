@@ -20,7 +20,6 @@ import { Icon } from '../../ui/icons';
 import { useLeaveGuard } from '../../ui/leave-guard';
 import { DIALOG, MENU_PANEL } from '../../ui/surfaces';
 import { blockUser, reportUser } from './actions';
-import { announceRequestsToAnswerMoved } from './unread-signal';
 import { actionAnswer } from '../../ui/action-answer';
 import { FailureLine } from '../../ui/failure-line';
 
@@ -273,7 +272,6 @@ export function BlockDialog({
         setFailure(result.message);
         return;
       }
-      announceRequestsToAnswerMoved();
       onClose();
       onBlocked?.();
     });

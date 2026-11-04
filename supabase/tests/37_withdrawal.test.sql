@@ -12,7 +12,7 @@
 --
 -- 세는 것은 이 파일이 만든 행뿐이다(`32_test_isolation`).
 begin;
-select plan(43);
+select plan(44);
 
 create or replace function pg_temp.summary(w int, f int, e int, g int, s int)
 returns jsonb language sql as $$
@@ -86,6 +86,9 @@ select is(public.respond_to_match_request((select to_lee from asked), true), 'ac
 select pg_temp.acting((select park from folks));
 select is(public.respond_to_match_request((select to_park from asked), true), 'accepted', '박이 수락한다');
 
+/** 함께 보는 궁합은 상세를 사고 누를 때만 선다 — 김이 사고 이가 누른다(대화가 유일한 흐름, `20270109090000`) */
+select lives_ok($$select tests.press_detail((select to_lee from asked))$$, '김이 상세를 청하고 이가 누른다');
+
 reset role;
 
 create temporary table pairs as
@@ -95,7 +98,7 @@ select
   (select self_person_id from public.app_user where id = (select lee from folks)) as lee_self;
 grant select on pairs to authenticated;
 
-/** 동의가 연 시도에 궁합풀이를 하나 저장한다 — 처분 뒤에 그것이 남는지 본다 */
+/** 누름이 연 시도에 궁합풀이를 하나 저장한다 — 처분 뒤에 그것이 남는지 본다 */
 select isnt(
   pg_temp.save((select r.id from public.reading_run r
                 where r.match_id = (select kim_lee from pairs) and r.status = 'running')),

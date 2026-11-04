@@ -21,6 +21,7 @@ import {
   SEND_FAILED_LABEL,
   SEND_RETRY_LABEL,
 } from '@/src/lib/chat/copy';
+import { DETAIL_ACTION_SEE, DETAIL_DOOR_LABEL } from '@/src/lib/chat/room/detail-copy';
 import { activityText } from '@/src/lib/presence';
 import { WARNING_NOTICE_TITLE, warningNoticeLines } from '@/src/lib/account';
 import { SUPPORT_EMAIL } from '@/src/lib/brand';
@@ -43,27 +44,47 @@ async function bothParticipate(a: Person, b: Person, tag: string): Promise<void>
   forgetBoards([a.account.email, b.account.email]);
 }
 
-/** 요청 → 수락 → Match. 동의가 나면 방이 트리거로 선다(ADR 0091) — 화면이 세우는 것이 아니다 */
+/**
+ * 대화를 열고 받은 사람이 답한다 — 방은 대화를 여는 순간 트리거로 선다(ADR 0091 · 0215). 화면이 세우는 것이 아니다.
+ * 답(수락)이 있어야 시작한 사람이 이어 보낼 수 있다 — 첫 말 1건 규칙에 안 걸리게 답한 대화로 세운다.
+ */
 async function matched(from: Person, to: Person): Promise<string> {
   const board = await from.api.rpc('my_discovery_board');
   if (board.error) throw new Error(`후보 목록을 못 받았습니다 — ${board.error.message}`);
 
   const partner = await to.api.from('discovery_profile').select('user_id').maybeSingle();
   const asked = await from.api.rpc('request_match', { p_candidate_user_id: partner.data?.user_id });
-  if (asked.error) throw new Error(`요청을 못 보냈습니다 — ${asked.error.message}`);
+  if (asked.error) throw new Error(`대화를 못 열었습니다 — ${asked.error.message}`);
 
   const answered = await to.api.rpc('respond_to_match_request', {
     p_request_id: asked.data,
     p_accept: true,
   });
   if (answered.error || answered.data !== 'accepted') {
-    throw new Error(`수락이 안 됐습니다 — ${answered.error?.message ?? String(answered.data)}`);
+    throw new Error(`답이 안 됐습니다 — ${answered.error?.message ?? String(answered.data)}`);
   }
 
   const matches = await from.api.rpc('my_matches');
   const matchId: unknown = matches.data?.[0]?.match_id;
   if (typeof matchId !== 'string') throw new Error('Match 가 서지 않았습니다');
   return matchId;
+}
+
+/**
+ * **상세 궁합을 완성까지 세운다** — 시작한 쪽이 청하고 받은 쪽이 누른 뒤, 열린 시도에 글을 열쇠로 적는다. 시험 환경에는 모델 열쇠가
+ * 없으니 웹의 누름(제출까지 건다) 대신 RPC 로 눌러 시도를 열어 두고, 저장은 pgTAP 과 같은 꼴(`save_reading`)로 한다.
+ */
+async function detailReady(buyer: Person, partner: Person, matchId: string): Promise<void> {
+  const asked = await buyer.api.rpc('request_match_detail', { p_match_id: matchId, p_client_key: crypto.randomUUID() });
+  const requestId: unknown = (asked.data as { request_id: string }[] | null)?.[0]?.request_id;
+  if (asked.error || typeof requestId !== 'string') throw new Error(`상세를 못 청했습니다 — ${asked.error?.message ?? ''}`);
+  const pressed = await partner.api.rpc('respond_to_match_request', { p_request_id: requestId, p_accept: true });
+  if (pressed.error || pressed.data !== 'accepted') {
+    throw new Error(`누름이 안 됐습니다 — ${pressed.error?.message ?? String(pressed.data)}`);
+  }
+  const run = sql(`select id from public.reading_run where match_id = '${matchId}' and kind = 'match' and status = 'running'`);
+  sql(`select public.save_reading('${run}', '## 풀이', 70::smallint, '비유.', '{"charts":{}}', '# 역할', 'reading-prompt-v1',
+       'openai/gpt-5.6-luna', '{"temperature":1}'::jsonb, now())`);
 }
 
 const userIdOf = (email: string): string =>
@@ -106,7 +127,7 @@ async function pair(openAs: (seed: { selfPerson: true }) => Promise<Person>) {
 }
 
 test.describe('매칭된 한 쌍의 채팅', () => {
-  test('방이 없으면 빈 목록이 말하고, 동의가 나면 방이 서서 메시지를 주고받는다', async ({ openAs }) => {
+  test('방이 없으면 빈 목록이 말하고, 대화가 열리면 방이 서서 메시지를 주고받는다', async ({ openAs }) => {
     const alone = await openAs({ selfPerson: true });
     await alone.page.goto('/me/chat');
     await expect(alone.page.getByRole('heading', { name: '채팅', exact: true })).toBeVisible();
@@ -148,7 +169,7 @@ test.describe('매칭된 한 쌍의 채팅', () => {
     await expect(talkOf(b).getByText(hello)).toBeVisible();
     /*
       방 안에서 읽음이 끝나면 **주소를 안 옮겨도** 헤더의 배지가 내려간다. 종(소식)의 딱지는 뺀다 — 같은 글자를 쓰고,
-      요청이 왔다는 소식을 종이 안 세게 된 뒤로(ADR 0130) 이 쌍의 수락 소식 하나가 「1건 안 읽음」으로 선다.
+      대화가 왔다는 소식과 답한 소식이 종에 「1건 안 읽음」으로 설 수 있다(ADR 0130 · 0215).
     */
     const chatBadges = b.page.locator('a:not([href="/me/requests"])').getByText('1건 안 읽음');
     await expect(chatBadges).toHaveCount(0);
@@ -167,30 +188,27 @@ test.describe('매칭된 한 쌍의 채팅', () => {
   });
 
   /**
-   * **방에서 연 인연 궁합의 ← 는 그 방이다**(ADR 0134). 불은 인연 탭이다 — 인연 궁합은 어디서 와도 인연을 켠다(ADR 0134
-   * 덧붙임). 주소를 직접 열면(`from` 없음) 인연 탭 첫 화면으로 간다.
+   * **방에서 연 상세 궁합의 ← 는 그 방이다**(ADR 0134). 불은 인연 탭이다 — 인연 궁합은 어디서 와도 인연을 켠다(ADR 0134
+   * 덧붙임). 주소를 직접 열면(`from` 없음) 인연 탭 첫 화면으로 간다. 결과로 가는 길은 완성된 상세 궁합에만 선다(ADR 0215).
    */
-  test('채팅방에서 연 인연 궁합은 인연 탭 불이고 ← 「채팅」이 그 방으로 돌아간다', async ({ openAs }) => {
-    const { a, tag, matchId, room } = await pair(openAs);
+  test('채팅방에서 연 상세 궁합은 인연 탭 불이고 ← 「채팅」이 그 방으로 돌아간다', async ({ openAs }) => {
+    const { a, b, tag, matchId, room } = await pair(openAs);
+    await detailReady(a, b, matchId);
     const lit = a.page
       .locator('nav[aria-label="내 메뉴"], nav[aria-label="모바일 내 메뉴"]')
       .filter({ visible: true })
       .locator('a[aria-current="page"]');
 
     await a.page.goto(room);
-    /*
-      방 머리의 궁합 단추와 상대 프로필 시트의 궁합 단추가 같은 곳 · 같은 상태다(ADR 0155 「2026-10-11 저녁 덧」). 이름은 상태를 든다 —
-      이 시험 환경에는 모델 열쇠가 없어 만드는 중이거나 실패다. 머리의 사진 · 이름이 시트를 연다(ADR 0155 덧, 2026-10-11)
-    */
-    const headChip = a.page.locator('[data-chat-room] header').getByRole('link', { name: /^궁합/ });
-    await expect(headChip).toHaveAttribute('href', `/me/match/${matchId}?from=chat`);
+    /* 방 위 상세 궁합 카드가 완성을 말하고 「함께 보기」가 결과로 간다 — 상대 프로필 시트의 궁합 한 줄도 같은 곳이다 */
+    const card = a.page.getByRole('region', { name: DETAIL_DOOR_LABEL });
+    await expect(card).toHaveAttribute('data-detail-state', 'ready');
+    await expect(card.getByRole('link', { name: DETAIL_ACTION_SEE })).toHaveAttribute('href', `/me/match/${matchId}?from=chat`);
     await a.page.locator('[data-chat-room] header').getByRole('button', { name: `나${tag} 님 자세히`, exact: true }).click();
     const sheet = a.page.getByRole('dialog', { name: `나${tag} 님 자세히` });
     await expect(sheet).toBeVisible();
-    /* 시트의 궁합 한 줄 — 머리 알약과 같은 곳 · 같은 상태, 읽는 이름은 「궁합」으로 시작하는 보이는 글자(2026-10-27) */
     const sheetRow = sheet.getByRole('link', { name: /^궁합/ });
     await expect(sheetRow).toHaveAttribute('href', `/me/match/${matchId}?from=chat`);
-    await expect(sheetRow).toHaveAttribute('data-compat', (await headChip.getAttribute('data-compat'))!);
     await sheetRow.click();
     await expect(a.page).toHaveURL(new RegExp(`/me/match/${matchId}\\?from=chat$`));
     /* 제목이 상대를 부른다(화면 점검 C12) */

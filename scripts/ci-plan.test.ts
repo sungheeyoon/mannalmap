@@ -582,7 +582,8 @@ describe('CI 계획 — 입구가 아닌 서버 파일은 import 를 거꾸로 �
     // 2026-10-30 에 일곱 — 앱의 문(`app/api/mobile`, ADR 0211)이 부르는 자기 파일 셋(`session` · `writes` · `views`)과 웹과 함께 쓰는 문이 더해졌다. 더 돌리는 쪽이다
     // 2026-10-30 에 하나 — 저장소 올리기의 몸통(`app/me/profile/stored-photo-writes.ts`)을 웹의 액션과 앱의 문이 함께 부른다(ADR 0211 추기)
     // 2026-11-03 에 하나 — 애플 연결 끊기의 자기 파일(`app/api/mobile/me/apple-revoke/apple-tokens.ts`)을 그 문이 부른다(ADR 0219)
-    expect(noAddress.length).toBeLessThanOrEqual(83);
+    // 2026-11-04 에 하나 — 인연이 열려 있는가를 읽는 문(`app/match-opening.ts`)을 관문 · 머리글 · 설정이 함께 부른다(ADR 0222)
+    expect(noAddress.length).toBeLessThanOrEqual(84);
   });
 });
 
@@ -2420,11 +2421,11 @@ describe('CI 계획 — 문구만 바뀐 파일은 core 에 옛 글자를 찾는
     // 2026-10-09 검토 에이전트가 센 리터럴 315 개 — 그 뒤 시험이 늘면 늘 뿐 줄지 않게(줄면 셈이 빠진 것인지 본다)
     expect(walked).toBeGreaterThanOrEqual(315);
     expect(literals).toBeGreaterThanOrEqual(walked);
-    // 검색만 보면 문구 한 줄이(요청 취소 창의 제목 — G-86 의 채팅방 줄은 2026-10-26 걷혔고, 되돌릴 수 없다는 줄은 #852 가 확인 창의 프롭으로 옮겼다) 전부를 부른다 — 글자 없는 정규식이 도우미(`e2e/birth-form.ts` 등)의 `.exec` ·
+    // 검색만 보면 문구 한 줄이(앱의 내 사주 안내 제목 — 요청 취소 창의 제목은 대화가 유일한 흐름이 되며 걷혔다) 전부를 부른다 — 글자 없는 정규식이 도우미(`e2e/birth-form.ts` 등)의 `.exec` ·
     // `.test` 에 선다. 그래도 문구 판정은 좁히기만 하므로 계획은 지금 규칙(core)보다 넓어지지 않는다
     const note = 'src/lib/matching/copy.ts';
     const noteBefore = readFileSync(resolve(ROOT, note), 'utf8');
-    const noteTexts = copyOnlyChanged(ts, note, noteBefore, noteBefore.replace("'보낸 요청을 취소할까요?'", "'보낸 요청도 취소할까요?'"))!;
+    const noteTexts = copyOnlyChanged(ts, note, noteBefore, noteBefore.replace("'먼저 내 사주가 필요해요'", "'먼저 내 사주가 있어야 해요'"))!;
     const sources = files.map((file) => [file, readFileSync(resolve(ROOT, file), 'utf8')] as const);
     expect(lanesFor(new Map([[note, noteTexts]]), sources).lanes).toBeNull();
     // 다른 파일은 디스크에서 읽는다 — 아무 경로에나 같은 소스를 주면 관문의 import 를 끝없이 따라간다
@@ -2439,7 +2440,7 @@ describe('CI 계획 — 문구만 바뀐 파일은 core 에 옛 글자를 찾는
       files: [note],
       stage: '운영 베타',
       ts,
-      sourceOf: (one) => (one === note ? noteBefore.replace("'보낸 요청을 취소할까요?'", "'보낸 요청도 취소할까요?'") : disk(one)),
+      sourceOf: (one) => (one === note ? noteBefore.replace("'먼저 내 사주가 필요해요'", "'먼저 내 사주가 있어야 해요'") : disk(one)),
       baseSourceOf: (one) => (one === note ? noteBefore : disk(one)),
     });
     expect(notePlan.lanes).toEqual({ ...CORE_ONLY, mobile: true });
@@ -2532,18 +2533,20 @@ describe('CI 계획 — 문구만 바뀐 파일은 core 에 옛 글자를 찾는
     expect(both.lanes.anon).toBe(alone.lanes.anon);
   });
 
-  it('PR 계획 — 입구가 아닌 컴포넌트는 그것을 쓰는 입구의 차선이고, 옛 글자를 spec 이 글자 그대로 찾으면 문구로 좁히지 않는다(저장소의 match.spec 이 「수락해서 채팅방이 열렸어요.」를 말한다)', () => {
+  it('PR 계획 — 입구가 아닌 컴포넌트는 그것을 쓰는 입구의 차선이고, 옛 글자를 spec 이 글자 그대로 찾으면 문구로 좁히지 않는다(spec 이 「수락해서 채팅방이 열렸어요.」를 정규식으로 찾는다)', () => {
     const file = 'app/me/requests/status-line.tsx';
     const page = 'app/me/requests/page.tsx';
     const before = 'export const S = () => <p>수락해서 채팅방이 열렸어요.</p>;\n';
     const after = before.replace('열렸어요', '열렸습니다');
     const match = 'e2e/match.spec.ts';
+    /* 저장소의 match.spec 은 그 줄을 걷었다(옛 요청 기록, ADR 0215) — 글자 그대로 찾는 spec 한 벌을 손으로 준다 */
+    const matchSource = "await expect(page.getByRole('link', { name: /수락해서 채팅방이 열렸어요\\./ })).toBeVisible();\n";
     const pageSource = `import { S } from './status-line';\n${diskOf(page)}`;
     const plan = planFor({
       files: [file],
       stage: '운영 베타',
       ts,
-      mentions: [[match, readFileSync(resolve(ROOT, match), 'utf8')]],
+      mentions: [[match, matchSource]],
       sourceOf: (one) => (one === file ? after : one === page ? pageSource : diskOf(one)),
       baseSourceOf: (one) => (one === file ? before : diskOf(one)),
     });
@@ -2551,7 +2554,7 @@ describe('CI 계획 — 문구만 바뀐 파일은 core 에 옛 글자를 찾는
     expect(plan.lanes).toEqual(beta([page]).lanes);
     expect(plan.authedLanes).toEqual(beta([page]).authedLanes);
     // 아무도 안 부르는 컴포넌트는 쓰는 입구를 못 찾아 전부다
-    expect(planOf(file, before, after, [], '운영 베타', [[match, readFileSync(resolve(ROOT, match), 'utf8')]]).cause).toBe('주소 없음');
+    expect(planOf(file, before, after, [], '운영 베타', [[match, matchSource]]).cause).toBe('주소 없음');
   });
 
   it('공개 출시에는 문구로 좁히지 않는다 — 화면 하나도 전부다', () => {

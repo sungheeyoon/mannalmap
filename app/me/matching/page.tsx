@@ -1,7 +1,6 @@
 import Link from 'next/link';
 
 import { isBlocked, selfPersonIdOf } from '@/src/lib/account';
-import { withoutTalks } from '@/src/lib/chat/room/talk';
 
 import { supabaseOnServer } from '../../auth/server-client';
 import { signedInUser } from '../../auth/signed-in';
@@ -14,10 +13,9 @@ import { readAccount } from '../account';
 import { AccountNotice } from '../account-notice';
 import { candidatesForViewer, passedForViewer } from '../candidates';
 import { myDiscoveryProfile } from '../discovery/discovery-profile';
-import { matchesForViewer, requestsForViewer, type InboxMatch } from '../requests/inbox';
+import { matchesForViewer, type InboxMatch } from '../requests/inbox';
 import { openParticipation } from '../chart-writes';
 import { selfElementSummary } from '../summary';
-import { talkIsOpen } from '../talk-switch';
 import type { DeckCard } from './deck-card';
 import { historyExtrasForViewer } from './ended-talks-read';
 import { historySummary } from './history';
@@ -25,16 +23,6 @@ import { HistoryRow } from './history-row';
 import { MatchingExperience } from './matching-experience';
 import { meMarkOf, type MeMark } from './me-mark';
 import { QuietOrbit } from './orbit-map';
-import { ReceivedRequests, type RequestsRead } from './requests-lead';
-
-/**
- * **수락이 여기서 풀이를 떠나보낸다** (ADR 0038 · 0130).
- *
- * 받은 요청이 이 탭 맨 위에 산다. 동의하면 시도가 열리고, 제출은 응답 뒤에 돈다(`after`). 그 콜백이 사는 시간은
- * 그것을 부른 라우트의 상한이다 — 여기 없으면 플랫폼 기본값에서 잘리고, 그러면 시도가 열린 채 남아 그 Match 가
- * 10분간 잠긴다. 결과 칸이 서는 화면들과 같은 값을 든다. 요청이 종(`/me/requests`)에 살던 동안은 그 화면이 들었다.
- */
-export const maxDuration = 300;
 
 export const metadata = {
   title: '오늘의 인연',
@@ -60,27 +48,13 @@ export default async function MatchingPage() {
   if (!user) return redirectToSignIn();
 
   /*
-    **받은 요청은 덱과 나란히 읽는다**(ADR 0130) — 덱을 세우는 차례 호출 뒤에 따로 읽으면 탭 이동이 한 번 더 길어진다.
-    못 읽어도 덱은 선다 — 요청 자리에 까닭 한 줄만 선다.
-
-    **계정과도 나란히 읽는다**(2026-09-30) — 받은 요청 · 인연 기록의 수 · 참여 설정은 계정을 몰라도 읽을 수 있다. 셋 다 실패를
-    값으로 받으므로 이용이 멈춘 계정의 화면에서 안 쓰고 버려져도 던지지 않는다.
-  */
-  const requests: Promise<RequestsRead> = requestsForViewer().then(read, (thrown: unknown) => ({
-    ok: false as const,
-    reason: answerOfThrown(thrown, 'inbox'),
-  }));
-
-  /*
-    **인연 기록의 수도 덱과 나란히 읽는다**(2026-09-29 u2) — 성립한 Match 의 수(`my_matches`, 책장과 같은 문)다. 글 전부를 받는
+    **인연 기록의 수는 덱 · 계정과 나란히 읽는다**(2026-09-29 u2 · 2026-09-30) — 성립한 Match 의 수(`my_matches`, 책장과 같은 문)다. 글 전부를 받는
     `my_readings` 는 기록 화면만 부른다. 부속 정보라 못 읽으면 그 수만 빠진다(ADR 0078) — 문이 던진 것을 값으로 받는다.
   */
   const matches: Promise<SkippableRead<readonly InboxMatch[]>> = matchesForViewer().then(read, (thrown: unknown) => ({
     ok: false as const,
     reason: answerOfThrown(thrown, 'my_matches'),
   }));
-  /** 대화의 스위치 — 모르면 꺼짐이고 지금 화면 그대로다 */
-  const opening = talkIsOpen(supabase);
   /** 못 읽으면 미리 안 거른다 — 끈 사람이면 아래 RPC 가 참여를 안 연다 */
   const profile = myDiscoveryProfile();
 
@@ -93,17 +67,10 @@ export default async function MatchingPage() {
     );
   }
 
-  /** 받은 요청 띠는 덱 위, 「인연 기록」 한 줄은 덱 아래 — 덱이 서지 않는 자리도 같은 차례다 */
+  /** 「인연 기록」 한 줄은 덱 아래 — 덱이 서지 않는 자리도 같은 차례다. 받은 요청 띠는 없다 — 대화는 방이 든다(ADR 0215) */
   const around = async () => {
-    const [loaded, made, extra] = await Promise.all([requests, matches, historyExtrasForViewer(supabase)]);
-    /* 대화는 수락 카드가 없고 방이 든다(ADR 0215) */
-    const asked: RequestsRead = loaded.ok
-      ? { ok: true, value: { ...loaded.value, requests: withoutTalks(loaded.value.requests) } }
-      : loaded;
-    return {
-      lead: <ReceivedRequests loaded={asked} />,
-      tail: <HistoryRow summary={historySummary(made, asked, extra)} />,
-    };
+    const [made, extra] = await Promise.all([matches, historyExtrasForViewer(supabase)]);
+    return { tail: <HistoryRow summary={historySummary(made, extra)} /> };
   };
 
   /*
@@ -143,7 +110,7 @@ export default async function MatchingPage() {
   );
   const passedCards = passed.map((card) => deckCardOf(card, { exploration: false, activity: null }));
 
-  const { lead, tail } = await around();
+  const { tail } = await around();
 
   return (
     /*
@@ -151,14 +118,12 @@ export default async function MatchingPage() {
       합친다(`deck-state.ts` 의 `sync`). 넘기는 움직임과 되돌리기 이력이 끊기지 않게 `key` 를 안 단다.
     */
     <MatchingExperience
-      lead={lead}
       tail={tail}
       cards={cards}
       me={me}
       passed={passedCards}
       notice={board.notice}
       explorationNote={board.explorationNote}
-      talkOpen={await opening}
     />
   );
 }
@@ -195,7 +160,6 @@ function deckCardOf(
  */
 function Quiet({
   me,
-  lead,
   tail,
   title,
   line,
@@ -203,8 +167,6 @@ function Quiet({
   action,
 }: {
   me: MeMark | null;
-  /** 받은 요청 띠 — 덱이 없어도 답할 일은 선다(ADR 0130) */
-  lead: React.ReactNode;
   /** 「인연 기록」 한 줄 — 덱이 없어도 지나간 것은 선다 */
   tail: React.ReactNode;
   title: string;
@@ -215,7 +177,6 @@ function Quiet({
   return (
     <main className="app-shell flex flex-1 flex-col gap-5 py-6 sm:gap-7 sm:py-12">
       <h1 className={TYPE_TITLE}>오늘의 인연</h1>
-      {lead}
       <section className="grid items-center gap-6 overflow-hidden rounded-card bg-cream p-6 sm:grid-cols-[minmax(0,14rem)_minmax(0,1fr)] sm:gap-10 sm:p-10">
         <QuietOrbit me={me} />
         <div className="flex min-w-0 flex-col items-start gap-5">
@@ -235,11 +196,10 @@ function Quiet({
 }
 
 /** 참여가 열릴 자리가 아직 아니다 — 이름이나 내 사주가 비어 있다 */
-function Guide({ me, lead, tail }: { me: MeMark | null; lead: React.ReactNode; tail: React.ReactNode }) {
+function Guide({ me, tail }: { me: MeMark | null; tail: React.ReactNode }) {
   return (
     <Quiet
       me={me}
-      lead={lead}
       tail={tail}
       title="먼저 내 사주와 이름이 필요해요"
       line="나와 맞는 인연을 찾으려면 내 사주의 오행 구성이 있어야 해요. 내 사주를 저장하고 닉네임을 지으면 오늘의 인연을 볼 수 있어요."
@@ -250,11 +210,10 @@ function Guide({ me, lead, tail }: { me: MeMark | null; lead: React.ReactNode; t
 }
 
 /** 쉬기로 한 사람에게 서는 자리 — 홈의 목록과 같은 말을 한다 */
-function Resting({ me, lead, tail }: { me: MeMark; lead: React.ReactNode; tail: React.ReactNode }) {
+function Resting({ me, tail }: { me: MeMark; tail: React.ReactNode }) {
   return (
     <Quiet
       me={me}
-      lead={lead}
       tail={tail}
       title="인연 찾기를 쉬고 있습니다"
       line="지금은 다른 참여자에게 내 프로필이 공개되지 않고, 새로운 사람도 소개받지 않아요. 내 사주와 저장한 사람은 그대로 남아 있어요."

@@ -6,18 +6,12 @@ import {
   BLOCK_FINAL_NOTE,
   BLOCK_KEEPS_NOTE,
   BLOCK_NOTE,
-  CONSENT_FLOW_CAVEAT,
-  CONSENT_FLOW_STEPS,
-  MATCH_ACCEPT_HEAD,
-  MATCH_ACCEPT_HIDDEN,
-  MATCH_ACCEPT_OPENS,
   MATCH_DISCLOSURE,
-  MATCH_PILLARS_DISCLOSURE,
+  MATCH_DETAIL_DISCLOSURE,
   MATCH_RESULT_CLOSED_NOTE,
   MATCH_RESULT_ENGINE_NOTE,
   MATCH_RESULT_PINNED_NOTE,
   NOTIFICATION_KINDS,
-  REJECTION_IS_FINAL_NOTE,
   REQUEST_STATUSES,
   REQUEST_STATUS_TEXT,
   INPUT_EDIT_CHANGE_CONFIRM,
@@ -135,7 +129,7 @@ describe('알림은 여섯 사건을 말한다', () => {
     expect(notificationText({ kind: 'request_accepted', nickname: '지영', readingKind: null }))
       .toBe('지영 님과 채팅방이 열렸어요');
     expect(notificationText({ kind: 'request_accepted', nickname: null, readingKind: null }))
-      .toBe('요청이 수락돼 채팅방이 열렸어요');
+      .toBe('채팅방이 열렸어요');
   });
 });
 
@@ -196,7 +190,7 @@ describe('실패 알림은 무엇을 만들다 실패했는지 말한다', () =>
       expect(tapped).toContain('이 알림을 눌러 다시 시도해 주세요');
       expect(failed(kind)).not.toContain('눌러');
     }
-    expect(failed('match')).toContain('인연 기록에서 해당 궁합을 열어');
+    expect(failed('match')).toContain('대화방에서 다시 시도해');
     expect(failed('self')).toContain('만들던 풀이 화면에서');
   });
 
@@ -237,16 +231,16 @@ describe('완성 소식은 무엇이 다 됐는지 말한다', () => {
   });
 
   /** 인연 궁합 상대의 소식은 시도를 안 가리킨다(`readingKind` 없음) — 확정 문구 그대로다 */
-  it('인연 궁합의 소식은 그대로다', () => {
-    expect(ready(null, [null, null], '지영')).toBe('지영 님과의 인연 궁합이 완성됐어요');
-    expect(ready(null)).toBe('인연 궁합이 완성됐어요');
-    expect(ready('match', [null, null], '지영')).toBe('지영 님과의 인연 궁합이 완성됐어요');
+  it('상세 궁합의 소식은 두 사람이 같은 문장이다', () => {
+    expect(ready(null, [null, null], '지영')).toBe('지영 님과의 상세 궁합이 완성됐어요');
+    expect(ready(null)).toBe('상세 궁합이 완성됐어요');
+    expect(ready('match', [null, null], '지영')).toBe('지영 님과의 상세 궁합이 완성됐어요');
   });
 
-  /** 흐름 검사(`scripts/check-reading.mjs`)는 「인연 궁합이 완성됐어요」로 연 쪽에 안 섰는지 잰다 — 셋이 그 글자를 들면 안 된다 */
+  /** 흐름 검사(`scripts/check-reading.mjs`)는 「상세 궁합이 완성됐어요」로 연 쪽에 안 섰는지 잰다 — 셋이 그 글자를 들면 안 된다 */
   it('내가 주인인 셋의 문장은 인연 궁합의 문장과 겹치지 않는다', () => {
     for (const kind of ['self', 'person', 'private'] as const) {
-      expect(ready(kind, ['엄마', '아빠'])).not.toContain('인연 궁합이 완성됐어요');
+      expect(ready(kind, ['엄마', '아빠'])).not.toContain('상세 궁합이 완성됐어요');
     }
   });
 });
@@ -258,14 +252,6 @@ describe('완성 소식은 무엇이 다 됐는지 말한다', () => {
  * 앞에 붙는 말만 다르다.
  */
 describe('Match 가 여는 범위는 한 벌이다', () => {
-  /** 보내는 창과 받은 카드는 같은 목록이고 머리만 다르다(운영자 결정 2026-10-26 A안) */
-  it('요청 창과 받은 요청 카드는 수락하면 무엇이 일어나는지 같은 목록으로 말한다', () => {
-    expect(MATCH_ACCEPT_HEAD).toEqual({ sent: '상대가 수락하면', received: '수락하면' });
-    expect(MATCH_ACCEPT_OPENS[0]).toContain('서로의 사주팔자 여덟 글자가 공개');
-    expect(MATCH_ACCEPT_OPENS.join(' ')).toContain('채팅방');
-    expect(MATCH_ACCEPT_HIDDEN).toContain('생년월일시');
-    expect(MATCH_ACCEPT_HIDDEN).toContain('출생지');
-  });
   it('열리는 것에 궁합 관계·사주풀이와 점수·일부 오행 구성이 있다', () => {
     const shown = MATCH_DISCLOSURE.shown.join(' ');
     // 점수는 풀이와 같은 생성 건에서 난다. 내부 지표 이름은 여기 서지 않는다(`prd-archive`).
@@ -290,8 +276,8 @@ describe('Match 가 여는 범위는 한 벌이다', () => {
     const shown = MATCH_DISCLOSURE.shown.join(' ');
     expect(shown).toContain('여덟 글자');
     expect(shown).toContain('년주·월주·일주·시주');
-    expect(MATCH_PILLARS_DISCLOSURE).toContain('수락하면 서로의 사주팔자 여덟 글자가 공개');
-    expect(MATCH_PILLARS_DISCLOSURE).toContain('정확한 생년월일시 · 출생지는 공개되지 않아요');
+    /* 처리방침은 `notice-v14` 부터 글자를 화면에 안 돌려준다고 적는다 — 새 흐름(ADR 0215) */
+    expect(MATCH_DETAIL_DISCLOSURE.join(' ')).toContain('두 사람의 여덟 글자는 화면에 직접 나오지 않습니다');
     expect(MATCH_DISCLOSURE.hidden.join(' ')).not.toContain('여덟 글자');
   });
 });
@@ -332,33 +318,7 @@ describe('공유 결과는 무엇으로 났는지 함께 말한다', () => {
   });
 });
 
-/**
- * **「동의한 뒤에 열립니다」는 설명이 아니다.**
- *
- * 그 한 줄은 맞는 말이지만, 읽는 사람이 모르는 것은 「동의가 필요하다」가 아니라
- * 자기가 지금 무엇을 해야 하는가다. 그래서 흐름을 세 걸음으로 적고, 걸음마다
- * **그 걸음에서 아직 열리지 않는 것**을 함께 적는다 — 이 제품이 파는 것이 곧
- * 「아직 안 열렸다」라서, 그 사실이 빠지면 요청을 보내는 일 자체가 무서운 일이 된다.
- */
-describe('무엇을 하는 곳인지 세 걸음으로 적는다', () => {
-  it('보내기·답하기·함께 보기 순서로 선다', () => {
-    expect(CONSENT_FLOW_STEPS).toHaveLength(3);
-    const [send, answer, open] = CONSENT_FLOW_STEPS;
-    expect(send.title).toContain('요청');
-    expect(answer.title).toContain('답');
-    expect(open.title).toContain('봅니다');
-  });
-
-  it('걸음마다 그때 열리지 않는 것을 함께 적는다', () => {
-    const [send, answer, open] = CONSENT_FLOW_STEPS;
-    // 보내는 것만으로는 아무것도 열리지 않는다.
-    expect(send.body).toContain('열리는 것은 없고');
-    // 수락하지 않으면 지금 보이는 것에서 더 나가지 않는다.
-    expect(answer.body).toContain('수락하지 않으면');
-    // 열린 뒤에도 출생 원문은 닫혀 있다(ADR 0012).
-    expect(open.body).toContain('생년월일시와 출생지는 열리지 않습니다');
-  });
-
+describe('사용자에게 닿는 문장', () => {
   /**
    * 개념을 **처음 만나는 자리**에서 우리 내부 낱말로 설명하지 않는다.
    */
@@ -372,13 +332,10 @@ describe('무엇을 하는 곳인지 세 걸음으로 적는다', () => {
    */
   it('사용자에게 닿는 문장 어디에도 판본이라는 말이 없다', () => {
     const everything = [
-      ...CONSENT_FLOW_STEPS.map((step) => `${step.title} ${step.body}`),
-      CONSENT_FLOW_CAVEAT,
       ...MATCH_DISCLOSURE.shown,
       ...MATCH_DISCLOSURE.hidden,
       INPUT_EDIT_CHANGE_CONFIRM.title,
       ...INPUT_EDIT_CHANGE_CONFIRM.body,
-      REJECTION_IS_FINAL_NOTE,
       BLOCK_NOTE,
       BLOCK_KEEPS_NOTE,
       BLOCK_FINAL_NOTE,
@@ -392,10 +349,6 @@ describe('무엇을 하는 곳인지 세 걸음으로 적는다', () => {
     /** 내부 지표 이름도 같은 이유로 안 선다(`prd-archive`) */
     expect(everything).not.toContain('match-v0');
 
-    // 같은 사실은 그래도 말한다 — 무엇이 요청을 깨뜨리는지, 그리고 그다음에 할 일.
-    expect(CONSENT_FLOW_CAVEAT).toContain('출생 정보');
-    expect(CONSENT_FLOW_CAVEAT).toContain('무효');
-    expect(CONSENT_FLOW_CAVEAT).toContain('다시 요청');
   });
 });
 
@@ -413,10 +366,6 @@ describe('무효화와 거절과 차단은 누르기 전에 읽힌다', () => {
     expect(said).toContain('다시 요청');
     // 이미 만든 것은 안 사라진다 — 안 적으면 고칠 것을 못 고친다.
     expect(said).toContain('그대로 남아요');
-  });
-
-  it('거절이 되돌아오지 않는다는 것을 먼저 말한다', () => {
-    expect(REJECTION_IS_FINAL_NOTE).toContain('다시');
   });
 
   it('차단이 무엇을 함께 거두는지와 되돌릴 수 없다는 것을 말한다', () => {

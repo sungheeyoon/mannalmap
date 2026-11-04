@@ -79,9 +79,9 @@ const hasColumns = (row, names) => names.filter((name) => !(name in row));
 const MOBILE_RPCS = [
   'acknowledge_warning', 'add_my_photo', 'block_user', 'cancel_match_request', 'complete_signup', 'create_managed_person',
   'create_pair_for_reading', 'current_beta_schedule', 'leave_reading_feedback', 'mark_chat_read', 'mark_notifications_read',
-  'mark_reading_ready_read', 'match_talk_open', 'move_my_photo', 'my_adult_check', 'my_chat_messages', 'my_chat_rooms', 'my_discovery_board', 'my_ended_talk_messages', 'my_ended_talks', 'my_last_reading_run',
+  'mark_reading_ready_read', 'move_my_photo', 'my_adult_check', 'my_chat_messages', 'my_chat_rooms', 'my_discovery_board', 'my_ended_talk_messages', 'my_ended_talks',
   'my_match_detail_state', 'my_match_requests', 'my_match_scope', 'my_matches', 'my_notifications', 'my_passed_connections', 'my_person_slots', 'my_photos',
-  'my_reading', 'my_reading_credits', 'my_reading_orders', 'my_readings', 'my_running_readings', 'my_service_survey', 'my_suspension',
+  'match_is_open', 'my_reading', 'my_reading_credits', 'my_reading_orders', 'my_readings', 'my_running_readings', 'my_service_survey', 'my_suspension',
   'my_warning_notice', 'nickname_is_available', 'pair_relation_of', 'photo_at', 'remove_my_photo', 'replace_my_photo',
   'report_chat_message', 'report_user', 'request_account_deletion', 'request_match', 'restore_passed_connection', 'save_my_profile',
   'save_service_survey', 'send_chat_message', 'service_survey_context', 'set_contact_consent', 'set_improvement_consent',
@@ -127,6 +127,7 @@ const accountRead = (who) => who.client.from('app_user').select(ACCOUNT_COLUMNS)
 /** 인자 없이 또는 제 값만으로 부르는 읽기 — 상태마다 돌린다 */
 const statelessReads = (client) => ({
   current_beta_schedule: () => client.rpc('current_beta_schedule'),
+  match_is_open: () => client.rpc('match_is_open'),
   my_adult_check: () => client.rpc('my_adult_check'),
   my_chat_rooms: () => client.rpc('my_chat_rooms'),
   my_discovery_board: () => client.rpc('my_discovery_board'),
@@ -378,8 +379,6 @@ try {
   check('보관함에 본문이 없다', !JSON.stringify(shelf.body).includes('오래 버티는'));
   const direct = await a.client.rpc('my_reading', { p_kind: 'self', p_person_a: null, p_person_b: null, p_match_id: null });
   check('my_reading 의 칸', direct.error === null && hasColumns(direct.data?.[0] ?? {}, ['id', 'kind', 'score', 'metaphor', 'output', 'created_at']).length === 0, shapeOf(direct));
-  const lastDirect = await a.client.rpc('my_last_reading_run', { p_kind: 'self', p_person_a: null, p_person_b: null, p_match_id: null });
-  check('my_last_reading_run 의 칸', lastDirect.error === null && hasColumns(lastDirect.data?.[0] ?? {}, ['status']).length === 0, shapeOf(lastDirect));
   const readRow = await a.client.rpc('my_readings');
   check('my_readings 의 칸', readRow.error === null && hasColumns(readRow.data?.[0] ?? {}, ['kind', 'person_a', 'person_b', 'match_id', 'label_a', 'label_b', 'score', 'metaphor', 'created_at']).length === 0, shapeOf(readRow));
   const readDone = await a.client.rpc('mark_reading_ready_read', { p_reading_id: direct.data?.[0]?.id });
@@ -472,9 +471,9 @@ try {
   const spoofPass = await c.client.from('discovery_passed').upsert({ user_id: a.id, passed_user_id: b.id, passed_at: new Date().toISOString() }, { onConflict: 'user_id,passed_user_id' });
   check('남의 이름으로 넘기기는 거절된다', spoofPass.error !== null, shapeOf(spoofPass));
 
-  /* 그린 흐름과 스위치가 다르면 문이 아무것도 안 세운다 — 진짜 PostgREST 로 잰다. 아래 옛 호출(인자 하나)은 깔린 앱의 모양 그대로다(ADR 0216) */
-  const wrongKind = await a.client.rpc('request_match', { p_candidate_user_id: b.id, p_expected_kind: 'talk' });
-  check('꺼짐에 대화를 기대하면 전용 코드로 거절한다', wrongKind.error?.code === 'MK001', shapeOf(wrongKind));
+  /* 옛 화면이 유료 요청(`bundled`)을 기대하면 문이 아무것도 안 세운다 — 진짜 PostgREST 로 잰다. 기대 종류는 임시 호환 인자다(`20270109090000`) */
+  const wrongKind = await a.client.rpc('request_match', { p_candidate_user_id: b.id, p_expected_kind: 'bundled' });
+  check('옛 요청을 기대하면 22023 으로 거절한다', wrongKind.error?.code === '22023', shapeOf(wrongKind));
   check('그 거절은 요청을 안 남긴다', sql(`select count(*) from public.match_request where requester_user_id = '${a.id}'`) === '0');
   const asked = await a.client.rpc('request_match', { p_candidate_user_id: b.id });
   check('요청을 보낸다', asked.error === null && typeof asked.data === 'string', shapeOf(asked));
@@ -494,10 +493,11 @@ try {
   const badRespond = await door('/api/mobile/matching/respond', { token: bToken, method: 'POST', json: { requestId: 'x', accept: true } });
   check('요청 id 모양이 틀리면 400', badRespond.status === 400, said(badRespond));
   const accepted = await door('/api/mobile/matching/respond', { token: bToken, method: 'POST', json: { requestId, accept: true } });
-  check('수락한다 — matchId 가 온다', accepted.body?.ok === true && accepted.body.status === 'accepted' && typeof accepted.body.matchId === 'string', said(accepted));
-  const matchId = accepted.body?.matchId;
-  await new Promise((resolve) => setTimeout(resolve, 1500));
-  note('수락 뒤 궁합풀이 시도', '수락', sql(`select coalesce(string_agg(status || ':' || coalesce(failure_code, '-'), ','), '없음') from public.reading_run where match_id = '${matchId}'`));
+  /* 대화의 수락은 받은 사람의 답과 같다 — 방은 요청 때 이미 섰다. 문은 상태만 답한다(인연 번호를 안 싣는다, `20270109090000`) */
+  check('대화에 답한다 — 상태 글자가 온다', accepted.body?.ok === true && accepted.body.status === 'accepted', said(accepted));
+  const matchId = sql(`select id from public.match where request_id = '${requestId}'`);
+  check('대화의 인연은 요청 때 섰다', /^[0-9a-f-]{36}$/.test(matchId), matchId);
+  check('대화의 답은 궁합풀이 시도를 안 연다', sql(`select count(*) from public.reading_run where match_id = '${matchId}'`) === '0');
 
   const scope = await a.client.rpc('my_match_scope', { p_match_id: matchId });
   check('인연 범위의 칸', scope.error === null && hasColumns(scope.data?.[0] ?? {}, ['match_id', 'partner_user_id', 'partner_nickname', 'partner_intro', 'partner_has_photo', 'my_chart', 'partner_chart']).length === 0, shapeOf(scope));
@@ -705,6 +705,35 @@ try {
   check('탈퇴 신청: 시도가 안 열렸다', sql(`select count(*) from public.reading_run where user_id = '${leaving.id}'`) === '0');
   const leavingShelf = await door('/api/mobile/readings', { token: leavingToken });
   check('탈퇴 신청: 보관함은 blocked 로 답한다', leavingShelf.body?.view === 'blocked', said(leavingShelf));
+
+  /* ---------- 인연 닫힘 — 운영의 기본값(ADR 0222). 앱의 문 · PostgREST 직접 호출이 다 닫힌다 ---------- */
+  sql('update public.match_open_switch set open = false, changed_at = now()');
+  try {
+    await readAll(a.client, '인연 닫힘');
+    const shut = await a.client.rpc('match_is_open');
+    check('닫힘: 앱이 읽는 열림 여부가 거짓이다', shut.error === null && shut.data === false, shapeOf(shut));
+    const shutAnon = await anon().rpc('match_is_open');
+    check('닫힘: 로그인 전에도 읽힌다 — 첫 화면의 인연 소개', shutAnon.error === null && shutAnon.data === false, shapeOf(shutAnon));
+    const shutBoard = await a.client.rpc('my_discovery_board');
+    check('닫힘: 카드를 거절한다', shutBoard.error?.code === '42501' && shutBoard.error.message === '인연은 준비 중이에요.', shapeOf(shutBoard));
+    const shutAsk = await a.client.rpc('request_match', { p_candidate_user_id: c.id });
+    check('닫힘: 대화를 못 청한다', shutAsk.error?.message === '인연은 준비 중이에요.', shapeOf(shutAsk));
+    const shutSend = await a.client.rpc('send_chat_message', { p_match_id: matchId, p_body: '닫힌 말', p_client_id: randomUUID() });
+    check('닫힘: 말을 못 보낸다', shutSend.error?.message === '인연은 준비 중이에요.', shapeOf(shutSend));
+    for (const [name, rows] of Object.entries({
+      my_matches: await a.client.rpc('my_matches'),
+      my_chat_rooms: await b.client.rpc('my_chat_rooms'),
+      my_chat_messages: await b.client.rpc('my_chat_messages', { p_match_id: matchId, p_limit: 30 }),
+      my_match_scope: await a.client.rpc('my_match_scope', { p_match_id: matchId }),
+      my_match_requests: await b.client.rpc('my_match_requests'),
+    })) check(`닫힘: ${name} 이 비어 있다`, rows.error === null && rows.data?.length === 0, shapeOf(rows));
+    const shutPhoto = await door(photoOf(a.id), { token: bToken });
+    check('닫힘: 인연이 된 상대의 사진도 안 열린다', shutPhoto.status !== 200, String(shutPhoto.status));
+    const shutDetail = await door('/api/mobile/matching/detail', { token: aToken, method: 'POST', json: { matchId, clientKey: randomUUID() } });
+    check('닫힘: 앱의 상세 궁합 문이 안 받는다', shutDetail.body?.ok !== true, said(shutDetail));
+  } finally {
+    sql('update public.match_open_switch set open = true, changed_at = now()');
+  }
 
   /* ---------- 베타 종료 ---------- */
   const endedId = sql(`insert into public.beta_schedule (ends_on, note, operator_name, operator_officer, operator_contact)

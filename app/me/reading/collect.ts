@@ -237,7 +237,7 @@ export async function collectReadingResult(responseId: string): Promise<CollectO
 
   /**
    * **상세 궁합이면 발견 한 줄을 본문 맨 앞으로 접는다** — 얼린 판본으로 안다. 접은 뒤의 글을 걷고 검사하므로 그 줄도 본문과 같은 검사를 받는다.
-   * 옛 흐름은 이 칸을 안 받고 글자도 안 바뀐다.
+   * 상세 판본이 아닌 시도(비공개 궁합 · 개인 풀이)는 이 칸을 안 받고 글자도 안 바뀐다.
    */
   const detail = isDetailPromptVersion(job.prompt_version);
   const discovery = retrieved.output.discovery ?? '';

@@ -160,10 +160,10 @@ const saveAs = async (client, kind, target, output, score, metaphor) => {
 };
 
 /**
- * 이미 열려 있는 시도에 결과를 적는다 — **동의가 연 시도가 그렇다** (ADR 0038).
+ * 이미 열려 있는 시도에 결과를 적는다 — **상세 궁합의 누름이 연 시도가 그렇다** (ADR 0215).
  *
- * 공유 궁합은 아무도 안 누른다. 수락이 요청자 이름으로 시도를 열어 두므로 여는 일이
- * 아니라 **찾는 일**이고, 그 행은 브라우저에 안 열리므로 여기서만 SQL 로 읽는다.
+ * 받은 사람의 누름이 구매자 이름으로 시도를 열어 두므로 여는 일이 아니라 **찾는 일**이고,
+ * 그 행은 브라우저에 안 열리므로 여기서만 SQL 로 읽는다.
  */
 const saveToRun = async (run, output, score, metaphor) => {
   const saved = await keyed().rpc('save_reading', {
@@ -518,45 +518,51 @@ try {
     check('남이 적어 둔 사이는 안 읽힌다', !stranger.data, String(stranger.data));
   }
 
-  // ── 4. 공유 궁합 — 양쪽이 같은 글을 읽는다 ───────────────────────────────
+  // ── 4. 상세 궁합 — 양쪽이 같은 글을 읽는다 ───────────────────────────────
   let matchId;
   {
     await a.rpc('my_discovery_board');
     const asked = await a.rpc('request_match', { p_candidate_user_id: await userIdOf(mail.b) });
-    check('요청이 선다', !asked.error, asked.error?.message ?? '');
+    check('대화가 열린다', !asked.error, asked.error?.message ?? '');
     const accepted = await b.rpc('respond_to_match_request', { p_request_id: asked.data, p_accept: true });
-    check('수락하면 Match 가 선다', accepted.data === 'accepted', accepted.error?.message ?? '');
+    check('받은 사람이 답한다', accepted.data === 'accepted', accepted.error?.message ?? '');
 
     const { data: matches } = await a.rpc('my_matches');
     matchId = matches?.[0]?.match_id;
 
+    const { data: detail, error: detailError } = await a.rpc('request_match_detail', {
+      p_match_id: matchId, p_client_key: `check-reading-${Date.now()}`,
+    });
+    check('청한 쪽이 상세 궁합을 청한다', !detailError && typeof detail?.[0]?.request_id === 'string', detailError?.message ?? '');
+    const pressed = await b.rpc('respond_to_match_request', { p_request_id: detail?.[0]?.request_id, p_accept: true });
+    check('받은 쪽이 누른다', pressed.data === 'accepted', pressed.error?.message ?? String(pressed.data));
+
     /**
-     * **동의가 시도를 연다 — 아무도 안 누른다** (ADR 0038).
+     * **누름이 시도를 연다** (ADR 0215).
      *
-     * 수락은 받은 쪽(b) 세션에서 일어났는데 시도는 **청한 쪽(a)** 이름으로 서야 한다.
-     * 한 세션짜리 시험은 이 자리를 못 잰다: 여는 사람과 누르는 사람과 보는 사람이
+     * 누름은 받은 쪽(b) 세션에서 일어났는데 시도는 **청한 쪽(a)** 이름으로 서야 한다.
+     * 한 세션짜리 시험은 이 자리를 못 잰다: 청하는 사람과 누르는 사람과 보는 사람이
      * 다 다르다.
      */
     const opened = sql(`select r.id || '|' || r.user_id || '|' || coalesce(r.status,'')
        from public.reading_run r where r.match_id = '${matchId}'`);
     const [openedRunId, openedBy, openedStatus] = opened.split('|');
 
-    check('수락이 시도를 연다 — 아무도 안 눌렀는데', openedStatus === 'running', opened);
+    check('누름이 시도를 연다', openedStatus === 'running', opened);
     check('시도는 청한 사람 이름으로 선다',
       openedBy === (await userIdOf(mail.a)), `${openedBy}`);
 
     /** **예약이 사용으로 옮겨 간다** — 합계는 그대로다 */
     const { data: creditRows } = await a.rpc('my_reading_credits');
-    check('수락이 예약을 사용으로 옮긴다',
+    check('누름이 예약을 사용으로 옮긴다',
       creditRows?.[0]?.requested === 0 && creditRows?.[0]?.reserved === 1,
       JSON.stringify(creditRows?.[0] ?? null));
 
     /**
-     * **누를 것이 없다.** 글이 아직 없고 만들고 있는 중인데, 두 화면 어디에도 만드는
-     * 버튼이 서지 않는다 — 「먼저 누른 사람이 쓴다」가 사라지는 것은 누를 것이
-     * 없어져서다. 양쪽 다 본다: 결과는 둘의 것이다.
+     * **결과 화면에는 누를 것이 없다.** 글이 아직 없고 만들고 있는 중인데, 두 화면 어디에도 만드는
+     * 버튼이 서지 않는다 — 만들기와 다시 만들기는 방의 상세 칸이 든다(ADR 0215). 양쪽 다 본다: 결과는 둘의 것이다.
      */
-    for (const [who, jar] of [['청한 쪽', cookie.a], ['동의한 쪽', cookie.b]]) {
+    for (const [who, jar] of [['청한 쪽', cookie.a], ['누른 쪽', cookie.b]]) {
       const waiting = await body(`/me/match/${matchId}`, jar);
       /* 궁합 화면은 그 글을 「궁합풀이」라고 부른다 — 낱말이 갈리면 이 검사가 늘 참이 된다 */
       check(`${who} 화면에 만드는 버튼이 없다`, !waiting.includes('궁합풀이 받기'));
@@ -565,11 +571,11 @@ try {
     }
 
     /**
-     * **판본을 안 집어 온다**(ADR 0071). 무엇으로 계산했는지는 수락이 시도를 열 때 이미
+     * **판본을 안 집어 온다**(ADR 0071). 무엇으로 계산했는지는 누름이 시도를 열 때 이미
      * 얼었고, 저장하는 문이 그 얼린 작업에서 직접 읽는다 — 부르는 쪽이 댈 값이 없다.
      */
     const saved = await saveToRun({ run_id: openedRunId }, OUTPUT.match, 64, METAPHOR.match);
-    check('공유 궁합이 저장된다', !saved.error, saved.error?.message ?? '');
+    check('상세 궁합이 저장된다', !saved.error, saved.error?.message ?? '');
 
     const mine = plain(await body(`/me/match/${matchId}`, cookie.a));
     const theirs = plain(await body(`/me/match/${matchId}`, cookie.b));
@@ -608,16 +614,16 @@ try {
 
     /**
      * 준비 완료는 **두 사람 다에게** 뜬다 — 시도를 연 쪽(청한 사람)에게도(ADR 0157 「2026-10-10 덧」). 문장은 읽는 사람의
-     * 상대를 부른다. 닉네임이 있든 없든 「…인연 궁합이 완성됐어요」로 끝난다(`notificationText`).
+     * 상대를 부른다. 닉네임이 있든 없든 「…상세 궁합이 완성됐어요」로 끝난다(`notificationText`).
      *
      * 위에서 양쪽이 결과 화면을 열었지만 서버가 그린 HTML 을 받았을 뿐이다 — 읽음으로 바꾸는 것은 브라우저에서 화면이 선 뒤의 일이라
      * (`news-read.ts`) 여기서는 두 소식이 안 읽은 채 선다.
      */
-    const told = (text) => text.includes('인연 궁합이 완성됐어요');
+    const told = (text) => text.includes('상세 궁합이 완성됐어요');
     const inbox = plain(await body('/me/requests', cookie.b));
-    check('상대의 알림함에 준비 완료가 뜬다', told(inbox) && inbox.includes(`${NAME.a} 님과의 인연 궁합이 완성됐어요`));
+    check('상대의 알림함에 준비 완료가 뜬다', told(inbox) && inbox.includes(`${NAME.a} 님과의 상세 궁합이 완성됐어요`));
     const mineInbox = plain(await body('/me/requests', cookie.a));
-    check('연 사람의 알림함에도 준비 완료가 뜬다', mineInbox.includes(`${NAME.b} 님과의 인연 궁합이 완성됐어요`));
+    check('연 사람의 알림함에도 준비 완료가 뜬다', mineInbox.includes(`${NAME.b} 님과의 상세 궁합이 완성됐어요`));
   }
 
   // ── 4-1. 만든 글은 한 목록에 선다 ────────────────────────────────────────

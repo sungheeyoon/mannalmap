@@ -162,9 +162,9 @@ begin
   for s in select * from statuses loop
     -- 요청 하나를 그 상태로 세운다 — 트리거(풀이권)는 여기서 재는 것이 아니다
     set local session_replication_role = replica;
-    insert into public.match_request (requester_user_id, addressee_user_id, status, policy_version,
+    insert into public.match_request (kind, expires_at, requester_user_id, addressee_user_id, status, policy_version,
       supplied_to_requester, supplied_to_addressee, balance_band, decided_at)
-    values (a, b, s.status, 'v2-beta', array[]::text[], array[]::text[], 'balanced',
+    values ('talk', 'infinity', a, b, s.status, 'v2-beta', array[]::text[], array[]::text[], 'balanced',
       case when s.status = 'pending' then null else now() end);
     set local session_replication_role = origin;
 

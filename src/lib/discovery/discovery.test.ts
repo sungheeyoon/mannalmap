@@ -18,7 +18,7 @@ import {
   type BalanceBand,
   type PreferGender,
 } from './index';
-import { DISCOVERY_TEASER, PREFER_GENDER_KO } from './copy';
+import { PREFER_GENDER_KO } from './copy';
 import { combinedCountBalanceOf, mutualDeficitComplementOf } from './element-axes';
 
 import { computeSaju, type Element } from '../saju';
@@ -174,21 +174,6 @@ describe('목록이 함께 드는 말', () => {
       '색다른 인연',
     );
     expect(boardNotes({ viewerMissingCount: 2, hasExploration: false }).explorationNote).toBeNull();
-  });
-
-  /** 첫인상에서 상세 궁합으로 이어지는 버튼 이름을 그대로 쓴다. */
-  it('「궁합 요청」으로 다음 단계를 안내한다', () => {
-    expect(DISCOVERY_TEASER).toContain('「궁합 요청」을 누르면');
-    expect(DISCOVERY_TEASER).toContain('두 사람의 자세한 궁합');
-  });
-
-  /**
-   * **이름은 세게, 면책은 작게.** 카드는 「예측 궁합 점수」라고 부르고, 그것이 오행
-   * 구성만 본 참고 점수라는 말은 목록 머리의 이 한 줄이 든다 — 카드마다 되풀이하면
-   * 열 장에 열 번 같은 말이 서고, 아예 없으면 수가 근거 없이 단정으로 읽힌다.
-   */
-  it('참고 점수라는 사실은 목록 머리에서 한 번만 말한다', () => {
-    expect(DISCOVERY_TEASER).toContain('오행 구성을 바탕으로 계산한 참고 점수');
   });
 
   /**

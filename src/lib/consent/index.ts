@@ -32,11 +32,12 @@ import type { ReadingKind } from '../reading';
 export const REQUEST_STATUSES = [
   'pending',
   'accepted',
+  /** 새 흐름에서는 서지 않는다 — 옛 요청의 거절이었다. DB 검사식 · 차단 판정(ADR 0009)이 아직 이 값을 들어 이름은 남긴다 */
   'rejected',
   'invalidated',
   'cancelled',
   /**
-   * 7일 답이 없어 만료됐다 (ADR 0038).
+   * 상세 궁합 요청에 72시간 답이 없어 만료됐다 (ADR 0038 · 0215). 대화는 만료되지 않는다.
    *
    * `cancelled`(스스로 거둠)·`invalidated`(입력이 바뀜)와 갈라 둔다. 셋 다 「성립하지
    * 않았다」지만 사용자가 알아야 하는 것은 이유다 — 만료는 **아무도 아무것도 안 한 것**이고,
@@ -65,11 +66,13 @@ export const REQUEST_STATUS_TEXT: Record<
     sent: '상대의 답을 기다리고 있어요.',
     received: '아직 답하지 않은 요청이에요.',
   },
+  /* 대화의 답 · 상세의 동의 — 동의한 상세는 곧 만들어진다(`DETAIL_MAKING` 과 같은 말) */
   accepted: {
     label: '성립',
-    sent: '상대가 수락해 채팅방이 열렸어요.',
-    received: '수락해서 채팅방이 열렸어요.',
+    sent: '상세 궁합을 만들고 있어요.',
+    received: '상세 궁합을 만들고 있어요.',
   },
+  /* 새 흐름에서는 서지 않는다(위) */
   rejected: {
     label: '거절',
     sent: '상대가 요청을 거절했어요.',
@@ -88,8 +91,8 @@ export const REQUEST_STATUS_TEXT: Record<
   },
   expired: {
     label: '만료',
-    sent: '7일 동안 답이 없어 요청이 만료됐어요. 잡고 있던 풀이권은 돌아왔어요.',
-    received: '답하지 않은 채 7일이 지나 요청이 만료됐어요.',
+    sent: '72시간 동안 답이 없어 요청이 만료됐어요. 잡고 있던 풀이권은 돌아왔어요.',
+    received: '답하지 않은 채 72시간이 지나 요청이 만료됐어요.',
   },
 };
 
@@ -97,10 +100,11 @@ export const REQUEST_STATUS_TEXT: Record<
 export const NOTIFICATION_KINDS = [
   'request_received',
   'request_accepted',
+  /** 새 흐름에서는 서지 않는다 — 옛 요청의 거절 소식이었다. DB 검사식이 아직 이 값을 든다 */
   'request_rejected',
   'request_invalidated',
   /**
-   * 7일 답이 없어 만료됐다 — **요청한 쪽에만 선다** (ADR 0038).
+   * 상세 궁합 요청에 72시간 답이 없어 만료됐다 — **요청한 쪽에만 선다** (ADR 0038 · 0215).
    *
    * 받은 쪽은 답을 안 한 것이라 알릴 일이 없고, 알리면 「답하지 않았다」를 두드리는
    * 도구가 된다. 요청자는 **잡고 있던 풀이권이 돌아왔다**는 것을 알아야 한다 — 조용히
@@ -207,22 +211,18 @@ export function notificationText({
       return creditText('지급', credits);
     case 'credits_revoked':
       return creditText('회수', credits);
+    /* 대화가 열렸다 — 받은 사람의 소식이다(ADR 0215) */
     case 'request_received':
-      return who === ''
-        ? '상세 궁합을 함께 보자는 요청이 왔어요'
-        : `${who} 님이 상세 궁합을 함께 보자고 요청했어요`;
+      return who === '' ? '대화가 시작됐어요' : `${who} 님이 대화를 시작했어요`;
     case 'detail_requested':
       return who === ''
         ? '상세 궁합을 함께 만들자는 요청이 왔어요'
         : `${who} 님이 상세 궁합을 함께 만들자고 했어요`;
+    /* 옛 앱의 수락 단추가 대화에 답했다 — 방은 이미 열려 있다 */
     case 'request_accepted':
-      return who === ''
-        ? '요청이 수락돼 채팅방이 열렸어요'
-        : `${who} 님과 채팅방이 열렸어요`;
+      return who === '' ? '채팅방이 열렸어요' : `${who} 님과 채팅방이 열렸어요`;
     case 'request_rejected':
-      return who === ''
-        ? '상대가 요청을 거절했어요'
-        : `${who} 님이 요청을 거절했어요`;
+      return who === '' ? '상대가 요청을 거절했어요' : `${who} 님이 요청을 거절했어요`;
     case 'request_invalidated':
       return who === ''
         ? '출생 정보가 바뀌어 요청이 무효가 됐어요'
@@ -232,9 +232,9 @@ export function notificationText({
         ? '답이 없어 요청이 만료됐어요. 잡고 있던 풀이권은 돌아왔어요.'
         : `${who} 님에게 보낸 요청이 만료됐어요. 잡고 있던 풀이권은 돌아왔어요.`;
     case 'reading_ready': {
-      /* 인연 궁합 — 완성 소식은 시도 대신 Match 를 가리켜 `readingKind` 가 없다. 두 사람 다 같은 문장으로 상대를 부른다 */
+      /* 상세 궁합 — 완성 소식은 시도 대신 Match 를 가리켜 `readingKind` 가 없다. 두 사람 다 같은 문장으로 상대를 부른다 */
       if (readingKind === null || readingKind === 'match') {
-        return who === '' ? '인연 궁합이 완성됐어요' : `${who} 님과의 인연 궁합이 완성됐어요`;
+        return who === '' ? '상세 궁합이 완성됐어요' : `${who} 님과의 상세 궁합이 완성됐어요`;
       }
       return `${readyReadingName(readingKind, readingLabels)}가 완성됐어요`;
     }
@@ -248,12 +248,10 @@ export function notificationText({
      */
     case 'reading_failed': {
       if (readingKind === 'match') {
-        const retry = tappable
-          ? '이 알림을 눌러 다시 시도해 주세요.'
-          : '인연 기록에서 해당 궁합을 열어 다시 시도해 주세요.';
+        const retry = tappable ? '이 알림을 눌러 다시 시도해 주세요.' : '대화방에서 다시 시도해 주세요.';
         return who === ''
-          ? `인연 궁합을 만들지 못했어요. ${retry}`
-          : `${who} 님과의 인연 궁합을 만들지 못했어요. ${retry}`;
+          ? `상세 궁합을 만들지 못했어요. ${retry}`
+          : `${who} 님과의 상세 궁합을 만들지 못했어요. ${retry}`;
       }
       const retry = tappable ? '이 알림을 눌러 다시 시도해 주세요.' : '만들던 풀이 화면에서 다시 시도해 주세요.';
       return `${FAILED_READING_NAME[readingKind ?? 'unknown']}를 만들지 못했어요. ${retry}`;
@@ -293,53 +291,6 @@ const FAILED_READING_NAME = {
 
 
 /**
- * **이 화면이 무엇을 하는 곳인가** — 세 걸음으로 적는다.
- *
- * 문장 하나로 「상세 궁합은 서로 동의한 뒤에 열립니다」라고만 적어 두면 맞는 말이지만
- * 아무것도 알려 주지 않는다. 읽는 사람이 모르는 것은 「동의가 필요하다」가 아니라
- * **내가 지금 무엇을 해야 하고, 그다음에 무슨 일이 일어나며, 끝에 무엇을 보게 되는가**다.
- * 그 셋을 안 적으면 사용자는 「동의」라는 낱말만 보고 약관을 읽는 기분이 된다.
- *
- * 걸음마다 **그 걸음에서 열리지 않는 것**을 함께 적는다. 이 제품이 파는 것이 곧
- * 「아직 안 열렸다」이기 때문이다 — 요청을 보내는 것만으로는 아무것도 열리지 않는다는
- * 사실이 첫 걸음에 없으면, 보내는 일 자체가 무서운 일이 된다.
- *
- * 「판본」은 여기 서지 않는다 — 개념을 처음 만나는 자리에서 우리 내부 낱말로 설명할 수는
- * 없다. 출생 정보를 바꾸면 요청이 취소된다는 사실은 바꾸기 직전의 확인 창이 든다
- * (`INPUT_EDIT_CHANGE_CONFIRM`).
- */
-export const CONSENT_FLOW_STEPS = [
-  {
-    title: '요청을 보냅니다',
-    body: '인연 목록에서 마음이 가는 사람에게 「상세 궁합을 함께 보자」고 청합니다. 보내는 것만으로 상대에게 열리는 것은 없고, 상대의 인연 탭에 요청이 하나 뜹니다.',
-  },
-  {
-    title: '상대가 답합니다',
-    body: '상대는 서로의 사주팔자 여덟 글자가 공개된다는 안내를 읽은 뒤 수락하거나 거절합니다. 수락하지 않으면 사주팔자는 공개되지 않습니다.',
-  },
-  {
-    title: '둘이 같은 결과를 봅니다',
-    body: '수락하면 두 사람의 사주팔자와 자세한 궁합풀이가 양쪽 계정에 함께 열립니다. 정확한 생년월일시와 출생지는 열리지 않습니다.',
-  },
-] as const;
-
-/**
- * 흐름 아래에 붙는 한 줄 — **답을 기다리는 동안 무엇이 요청을 깨뜨리는가.**
- *
- * `INPUT_EDIT_CHANGE_CONFIRM` 과 같은 사실이지만 **먼저 읽히는 자리**라 낱말이 다르다.
- * 저쪽은 출생 정보를 바꾸려는 사람에게 지금 걸린 요청이 어떻게 되는지 말하고, 여기는
- * 아직 요청을 보내지도 않은 사람에게 규칙 하나를 알려 준다.
- */
-export const CONSENT_FLOW_CAVEAT =
-  '요청은 보낼 때 저장된 두 사람의 출생 정보로 계산해요. 답을 기다리는 동안 한쪽이 생년월일시 · 출생지 · 계산 옵션을 바꾸면 그 요청은 무효가 돼요. 바뀐 정보로 다시 요청해 주세요.';
-
-/**
- * 수락하면 일어나는 일(`MATCH_ACCEPT_OPENS`)의 머리 — 보내는 창은 상대가, 받은 카드는 내가 수락한다. 목록은 같은 한 벌이다
- * (운영자 결정 2026-10-26 A안, 대장 matching-12).
- */
-export const MATCH_ACCEPT_HEAD = { sent: '상대가 수락하면', received: '수락하면' } as const;
-
-/**
  * 내 출생 정보를 바꾸기 **직전**에 서는 확인 창.
  *
  * 요청은 보낼 때 저장된 두 사람의 출생 정보에 대한 동의라, 어느 한쪽이 여덟 글자를
@@ -360,9 +311,6 @@ export const INPUT_EDIT_CHANGE_CONFIRM = {
   confirm: '바꾸기',
   cancel: '취소',
 } as const;
-
-/** 거절은 되돌리지 않는다 — 누르기 전에 읽힌다 */
-export const REJECTION_IS_FINAL_NOTE = '거절하면 이 사람은 인연 목록에 다시 나타나지 않고, 같은 요청도 다시 받지 않아요.';
 
 /**
  * 차단은 **되돌릴 수 없다** — 누르기 전에 그렇게 말한다.

@@ -177,13 +177,6 @@ export type PromptAssembly = {
    * 바꾼다(`usesPairGuide`). 인연 궁합의 옛 컷 입력에는 걸지 않는다.
    */
   readonly pairReading: 'plain-v1' | 'guide-v4';
-  /**
-   * 인연 궁합이 **어느 흐름의 글인가** — `bundled` 는 수락과 함께 나는 옛 흐름, `detail` 은 채팅 뒤 사는 상세 궁합이다(PRD 매칭 §6.6, #963).
-   *
-   * `match_request.kind` 의 값을 따른다(`requestAssemblyOf`). 비공개 궁합과 개인 풀이는 이 칸을 안 읽는다 — 옛 흐름의 글자도,
-   * `private` 의 글자도 이 칸으로 안 바뀐다(`scripts/old-reading-prompts-unchanged.test.ts` 가 글자의 지문으로 잰다).
-   */
-  readonly matchFlow: 'bundled' | 'detail';
 };
 
 /** 실제 배포에서 쓰는 기준판. */
@@ -201,11 +194,7 @@ export const CONTROL: PromptAssembly = {
   matchInput: DEFAULT_MATCH_INPUT,
   /** 인연 궁합 읽는 법 4판 — 제한형 A 와 한 세트로 운영에 올렸다(2026-09-15, ADR 0067) */
   pairReading: 'guide-v4',
-  matchFlow: 'bundled',
 };
-
-/** 상세 궁합의 조립 — 인연 궁합의 자료 · 읽는 법 · 분량은 운영 그대로이고 흐름 하나만 다르다 */
-export const DETAIL_ASSEMBLY: PromptAssembly = { ...CONTROL, matchFlow: 'detail' };
 
 /**
  * **원복용 궁합 조립** — 4판 이전에 운영이 보내던 궁합 지시와 인연 궁합 옛 컷.
@@ -801,9 +790,12 @@ type PromptVoice = 'self' | 'pair-legacy' | 'pair-guided';
 const voiceOf = (kind: ReadingKind, assembly: PromptAssembly): PromptVoice =>
   isSolo(kind) ? 'self' : usesPairGuide(kind, assembly) ? 'pair-guided' : 'pair-legacy';
 
-/** 상세 궁합의 지시가 서는가 — 인연 궁합의 4판에서만. `private` 와 옛 컷은 흐름 칸을 안 읽는다 */
+/**
+ * 상세 궁합의 지시가 서는가 — 인연 궁합의 4판이면 늘 선다. 인연 궁합은 대화 뒤에 사는 상세 궁합 하나다(대화가 유일한 흐름, 2026-11-04).
+ * `private` 와 원복용 옛 컷(`LEGACY_PAIR_ASSEMBLY`)은 안 받는다 — 그 글자는 `scripts/old-reading-prompts-unchanged.test.ts` 가 지문으로 잰다.
+ */
 const isDetailFlow = (kind: ReadingKind, assembly: PromptAssembly): boolean =>
-  kind === 'match' && assembly.matchFlow === 'detail' && voiceOf(kind, assembly) === 'pair-guided';
+  kind === 'match' && voiceOf(kind, assembly) === 'pair-guided';
 
 /**
  * 한 줄 요약을 **본문 뒤에** 짓는 세대인가 — 지시문(`metaphorSection`)과 출력 스키마의 차례(`writesSummaryLast`)가 이 하나를 읽는다.
@@ -1203,7 +1195,7 @@ export const pairSectionTexts = (kind: PairKind, assembly: PromptAssembly): read
  * 적어 둔 그 조건이다.
  *
  * **상세 궁합에는 이 규칙이 없다**(D7, 조율자 위임 2026-11-02). 움직일 까닭이 없을 때 지어 움직이지 않고, 화면의 약속은
- * 「달라질 수 있어요」까지다. 옛 흐름과 비공개 궁합은 그대로 이 규칙을 받는다 — 그래서 절이 함수다.
+ * 「달라질 수 있어요」까지다. 비공개 궁합과 원복용 옛 컷은 그대로 이 규칙을 받는다 — 그래서 절이 함수다.
  *
  * ## 기준점에 든 사실은 다시 세지 않는다
  *

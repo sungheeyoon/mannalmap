@@ -1,6 +1,5 @@
 import { accountStateOf, type AccountState } from '@account/index';
 import { closedReasonOf, partnerNameOf, roomHeadingOf, roomNoticeOf, TOO_LONG_TEXT, checkBody, sendOutcomeOf, type ClosedReason } from '@chat';
-import { roomCompatOf, type RoomCompat } from '@chat/room/compat';
 import type { MatchDetail } from '@chat/room/detail';
 import { talkLineOf, type TalkLine } from '@chat/room/talk';
 import { MESSAGE_WINDOW, messagesOf, type ChatMessage } from '@chat/room/message';
@@ -9,7 +8,6 @@ import { rpcArgs } from '@db';
 import { userFacingDbMessage } from '@db-error';
 import { activityBandOf, type ActivityBand } from '@presence';
 import { focusOf, focusesOf, leadFocusOf, type PhotoFocus } from '@profile';
-import { STEM_INFO, storedChartSnapshot, type Element, type Stem } from '@saju';
 
 import { supabase } from '@/auth/client';
 import { NOT_READY } from '@/auth/signup';
@@ -39,11 +37,6 @@ export type ChatRoom = {
   readonly partnerPhotoFocus: PhotoFocus;
   /** 장마다의 보일 자리 — 수가 곧 장 수다(`photosFromFocus`). 닫힌 방은 시트를 안 여니 비운다 */
   readonly partnerPhotoFocuses: readonly PhotoFocus[];
-};
-
-export type RoomTones = {
-  readonly mine: { readonly stem: Stem; readonly element: Element };
-  readonly theirs: { readonly stem: Stem; readonly element: Element };
 };
 
 type RoomRow = {
@@ -121,32 +114,16 @@ async function readRooms(): Promise<{ ok: true; rooms: readonly ChatRoom[] } | {
   };
 }
 
-type RoomScope = { readonly tones: RoomTones | null; readonly intro: string | null };
-
-/** 인연 궁합이 이미 연 값에서만 두 사람의 색과 소개를 받는다 — 꾸밈이라 못 읽으면 중립 색이다(ADR 0078) */
-async function readScope(matchId: string): Promise<RoomScope | null> {
+/** 상대의 소개 — 범위 문이 연 값에서만 받는다. 꾸밈이라 못 읽으면 없다(ADR 0078) */
+async function readIntro(matchId: string): Promise<string | null> {
   if (supabase === null) return null;
   const { data, error } = await supabase.rpc('my_match_scope', { p_match_id: matchId });
   if (error !== null) {
     console.error('my_match_scope', error.code);
     return null;
   }
-  const row = (data ?? [])[0];
-  if (row === undefined) return null;
-  const intro = row.partner_intro ?? null;
-  const mine = storedChartSnapshot(row.my_chart);
-  const theirs = storedChartSnapshot(row.partner_chart);
-  if (mine === null || theirs === null) return { tones: null, intro };
-  return {
-    tones: {
-      mine: { stem: mine.dayMaster, element: STEM_INFO[mine.dayMaster].element },
-      theirs: { stem: theirs.dayMaster, element: STEM_INFO[theirs.dayMaster].element },
-    },
-    intro,
-  };
+  return (data ?? [])[0]?.partner_intro ?? null;
 }
-
-const isOpen = (room: ChatRoom): boolean => room.closedReason === null && !room.partnerLeft && room.partnerUserId !== null;
 
 export type RoomListScreen =
   | Unread
@@ -154,9 +131,8 @@ export type RoomListScreen =
   | {
       readonly kind: 'ready';
       readonly rooms: readonly ChatRoom[];
-      readonly tones: ReadonlyMap<string, RoomTones>;
       readonly hasSelf: boolean;
-      /** 답하지 않은 대화를 가르는 재료 — 옛 요청뿐이면 접히는 방이 없어 지금 목록 그대로다 */
+      /** 답하지 않은 대화를 가르는 재료 — 못 읽으면 접히는 방이 없어 지금 목록 그대로다 */
       readonly requests: readonly RequestRow[];
     };
 
@@ -182,10 +158,7 @@ export async function readRoomListScreen(): Promise<RoomListScreen> {
   const [account, rooms, requests] = await Promise.all([readAccount(), readRooms(), readRequestRows()]);
   if (isStopped(account.state)) return { kind: 'blocked', state: account.state };
   if (!rooms.ok) return { kind: 'failed', message: rooms.message };
-  const scopes = await Promise.all(rooms.rooms.filter(isOpen).map(async (room) => [room.matchId, await readScope(room.matchId)] as const));
-  const tones = new Map<string, RoomTones>();
-  for (const [matchId, scope] of scopes) if (scope?.tones) tones.set(matchId, scope.tones);
-  return { kind: 'ready', rooms: rooms.rooms, tones, hasSelf: account.state.kind === 'active' && account.state.selfPersonId !== null, requests };
+  return { kind: 'ready', rooms: rooms.rooms, hasSelf: account.state.kind === 'active' && account.state.selfPersonId !== null, requests };
 }
 
 const isStopped = (state: AccountState): boolean => state.kind === 'halted' || state.kind === 'missing' || state.kind === 'unreachable';
@@ -208,9 +181,6 @@ export type RoomView = {
   readonly messages: readonly ChatMessage[];
   /** 읽은 것이 방의 처음부터다(200건 아래) — 그때만 첫머리를 세운다 */
   readonly fromBeginning: boolean;
-  readonly tones: RoomTones | null;
-  /** 열린 방에만 온다 — 닫힌 방에는 단추가 없다 */
-  readonly compat: RoomCompat | null;
   readonly me: RoomSelf | null;
   /** 상세 궁합의 상태 — 못 읽었으면 `null` 이고 방은 지금 그대로다 */
   readonly detail: MatchDetail | null;
@@ -225,21 +195,6 @@ export type RoomScreen =
   | { readonly kind: 'not-found' }
   | { readonly kind: 'ready'; readonly view: RoomView };
 
-/** 방 머리의 궁합 단추 — 결과 화면과 같은 두 문을 점수 칸만 읽는다. 꾸밈이라 못 읽으면 이름만 선다(ADR 0078) */
-async function readCompat(matchId: string): Promise<RoomCompat> {
-  if (supabase === null) return { kind: 'quiet' };
-  const target = { p_kind: 'match', p_person_a: null, p_person_b: null, p_match_id: matchId };
-  const [reading, run] = await Promise.all([
-    supabase.rpc('my_reading', rpcArgs<'my_reading'>(target)).select('score'),
-    supabase.rpc('my_last_reading_run', rpcArgs<'my_last_reading_run'>(target)),
-  ]);
-  const row = (reading.data ?? [])[0];
-  return roomCompatOf(
-    reading.error !== null ? { ok: false } : { ok: true, value: row === undefined ? null : { score: row.score ?? null } },
-    run.error !== null ? { ok: false } : { ok: true, value: (run.data ?? [])[0]?.status ?? null },
-  );
-}
-
 export async function readRoomScreen(matchId: string): Promise<RoomScreen> {
   const userId = await currentUserId();
   if (userId === null) return { kind: 'signed-out' };
@@ -251,13 +206,12 @@ export async function readRoomScreen(matchId: string): Promise<RoomScreen> {
 
   const notice = roomNoticeOf(room);
   const open = notice === null && room.partnerUserId !== null;
-  const [messages, scope, compat, mine, detail, requests] = await Promise.all([
+  const [messages, intro, mine, detail, requests] = await Promise.all([
     readMessages(matchId).then(
       (page) => ({ ok: true as const, page }),
       (failure: Error) => ({ ok: false as const, message: failure.message }),
     ),
-    open ? readScope(matchId) : null,
-    open ? readCompat(matchId) : null,
+    open ? readIntro(matchId) : null,
     /* 내 시트의 사진 — 꾸밈이라 못 읽으면 사진 없는 나로 선다(ADR 0078) */
     supabase === null ? null : supabase.rpc('my_photos'),
     open ? readDetail(matchId) : null,
@@ -275,14 +229,12 @@ export async function readRoomScreen(matchId: string): Promise<RoomScreen> {
       partnerHasPhoto: room.partnerHasPhoto,
       partnerPhotoFocus: room.partnerPhotoFocus,
       partnerPhotoFocuses: room.partnerPhotoFocuses,
-      partnerIntro: scope?.intro ?? null,
+      partnerIntro: intro,
       notice,
       activity: room.partnerActivity,
       unread: room.unread,
       messages: messages.page,
       fromBeginning: messages.page.length < MESSAGE_WINDOW,
-      tones: scope?.tones ?? null,
-      compat,
       me: account.nickname === null ? null : { userId, nickname: account.nickname, intro: account.intro, photoFocuses: (mine?.data ?? []).map((row) => focusOf(row.focus_x, row.focus_y)) },
       detail,
       talk: talkLineOf(room.partnerUserId, requests),

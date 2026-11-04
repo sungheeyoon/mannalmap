@@ -3,6 +3,7 @@ import type { Query } from '@input/query';
 import type { SameChart } from '@input/same-chart';
 import { noRoomToSave, type PersonSlots } from '@people';
 import { withReturnPath } from '@consent/return-path';
+import { matchEntriesStand } from '@matching/opening';
 import { router, useFocusEffect } from 'expo-router';
 import { useCallback, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
@@ -10,6 +11,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { chartPath, type ChartWant } from '@consent/app-destination';
 import { supabase } from '@/auth/client';
 import { readGate } from '@/home/gate';
+import { useMatchOpen } from '@/matching/opening';
 import { goHome } from '@/info/go-home';
 import { addPerson, readSlots } from '@/people/data';
 import { SameChartAsk, type SameChartQuestion } from '@/people/same-chart-ask';
@@ -72,6 +74,7 @@ export function SavePersonForReading({ query, want }: { query: Query; want: Char
   /** 「다른 사람의 사주예요」를 눌렀다 — 이 화면에서는 다시 묻지 않는다 */
   const [someoneElse, setSomeoneElse] = useState(false);
   const [savedHere, setSavedHere] = useState(false);
+  const matchOpen = useMatchOpen();
 
   if (savedHere) return <SavedCard />;
   if (context === null) return null;
@@ -79,11 +82,13 @@ export function SavePersonForReading({ query, want }: { query: Query; want: Char
     return (
       <>
         <SignInCard query={query} />
-        {/* 로그인한 사람에게는 인연 탭이 있어 안 선다 */}
-        <Pressable accessibilityRole="link" onPress={() => router.push('/matching-intro')} style={styles.intro}>
-          <Text style={styles.introText}>{MATCHING_INTRO_TITLE}</Text>
-          <Icon name="arrow" size={16} color={COLOR.secondary} />
-        </Pressable>
+        {/* 로그인한 사람에게는 인연 탭이 있어 안 선다. 인연이 닫힌 동안은 소개도 안 선다(ADR 0222) */}
+        {matchEntriesStand(matchOpen) && (
+          <Pressable accessibilityRole="link" onPress={() => router.push('/matching-intro')} style={styles.intro}>
+            <Text style={styles.introText}>{MATCHING_INTRO_TITLE}</Text>
+            <Icon name="arrow" size={16} color={COLOR.secondary} />
+          </Pressable>
+        )}
       </>
     );
   }

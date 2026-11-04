@@ -22,7 +22,6 @@ import { BADGE, TYPE_BODY, TYPE_CAPTION, TYPE_META, TYPE_NAME, TYPE_SECTION, TYP
  */
 const OUTSIDE_SCALE: { at: string; value: string; n?: number; why: string }[] = [
   { at: 'app/me/matching/today-card.tsx', value: '2.25rem', why: '오늘의 인연 카드의 별명 — 사진 위의 큰 이름' },
-  { at: 'app/me/matching/today-card.tsx', value: '2.75rem', why: '카드의 점수 숫자 강조' },
   { at: 'app/me/matching/today-card.tsx', value: 'min(9rem,18dvh)', why: '사진 없는 카드의 첫 글자 — 화면 높이를 따른다' },
   { at: 'app/me/matching/today-card.tsx', value: '9rem', why: '같은 첫 글자의 넓은 폭' },
   { at: 'app/me/matching/candidate-photo.tsx', value: '1.2em', why: '사진 없는 자리의 첫 글자 — 칸의 글자를 따라 큰다' },

@@ -1,22 +1,20 @@
--- 공유 결과 — **동의한 그때의 여덟 글자로 나고, 상대의 입력은 어디로도 안 나간다.**
+-- 공유 결과 — **동의한 그때의 여덟 글자로 나고, 여덟 글자는 어디로도 안 나간다.**
 --
--- 여기서 재는 것은 한 문의 모양이다(ADR 0010 개정 · ADR 0071).
+-- 여기서 재는 것은 한 문의 모양이다(ADR 0010 개정 · ADR 0071 · ADR 0215).
 --
 -- `my_match_scope` — 누가 볼 수 있는가. 당사자가 아니면 **없는 것과 같은 답**이고,
--- 제재·차단이 걸리면 내려간다. 나가는 것은 별명과 **동의 당시 여덟 글자 둘**뿐이다.
+-- 제재·차단이 걸리면 내려간다. 나가는 것은 별명과 오행 말이다 — **글자 칸은 늘 비어 있다**(ADR 0215).
 --
--- **계산 입력을 내주던 열쇠 문이 없어졌다**(#70). 그 문이 있던 까닭은 화면이 두 사람의
--- 명식을 서버에서 다시 계산했기 때문이고, 수락이 여덟 글자를 베껴 두면서 그 계산이
--- 통째로 사라졌다. 문이 없다는 것은 13번이 **열쇠의 허용 집합**으로 잰다.
+-- **계산 입력을 내주던 열쇠 문이 없어졌다**(#70). 문이 없다는 것은 13번이 **열쇠의 허용 집합**으로 잰다.
 --
 -- 그리고 이 파일이 재는 가장 중요한 둘.
 --
--- 1. **한쪽이 입력을 고쳐도 베껴 둔 여덟 글자는 움직이지 않는다.** 결과가 조용히 다른
+-- 1. **상세 궁합의 누름이 여덟 글자를 베끼고 시도를 연다.** 대화의 답은 아무것도 안 연다. 받은 사람이
+--    누르면 구매자 이름으로 시도가 서 있고, 그 시도에 **얼린 한 벌**이 딸려 있다.
+-- 2. **한쪽이 입력을 고쳐도 베껴 둔 여덟 글자는 움직이지 않는다.** 결과가 조용히 다른
 --    값이 되면 무엇에 동의한 것인지 알 수 없다.
--- 2. **수락이 자동 생성 시도를 연다**(ADR 0038). 아무도 안 눌렀는데 청한 사람 이름으로
---    시도가 서 있고, 그 시도에 **얼린 한 벌**이 딸려 있다.
 begin;
-select plan(31);
+select plan(32);
 
 /** 다섯 오행 개수만 주면 요약 한 벌이 된다 */
 create or replace function pg_temp.summary(w int, f int, e int, g int, s int)
@@ -42,7 +40,7 @@ begin
   perform set_config('request.jwt.claims', tests.claims(uid), true);
   /**
    * **여덟 글자를 함께 넣는다**(ADR 0071). 안 넣으면 `person.current_chart` 가 빈 채로
-   * 남고, 그러면 아래 「수락이 베꼈는가」가 `null = null` 로 언제나 통과한다 —
+   * 남고, 그러면 아래 「누름이 베꼈는가」가 `null = null` 로 언제나 통과한다 —
    * 아무것도 안 재는 시험이 된다.
    *
    * **사람마다 일간을 달리 준다.** 둘이 같은 여덟 글자를 들면 「누구 것을 베꼈나」를
@@ -90,7 +88,7 @@ where user_id not in (select uid from (
   union all select choi from folks) ours);
 
 /**
- * 지금 서 있는 여덟 글자 둘 — **수락이 베껴 둘 값**이다.
+ * 지금 서 있는 여덟 글자 둘 — **누름이 베껴 둘 값**이다.
  *
  * `postgres` 로 잡는다. 남의 `app_user` 는 정책이 자기 행만 내주므로 시험 안에서
  * 당사자 역할로는 이 표를 만들 수 없다. 당사자 역할로는 상대의 `person` 도 못 읽는다 —
@@ -112,7 +110,7 @@ grant select on pinned to authenticated, service_role;
 
 set local role authenticated;
 
--- ── 후보를 보고 청하고 수락한다 ──────────────────────────────────────────────
+-- ── 후보를 보고 대화를 열고, 답하고, 상세를 사고 누른다 ──────────────────────
 select pg_temp.acting((select kim from folks));
 select lives_ok($$select count(*) from public.my_discovery_board()$$, '김이 후보 목록을 연다');
 
@@ -124,14 +122,17 @@ select pg_temp.acting((select lee from folks));
 select is(
   public.respond_to_match_request((select request_id from asked), true),
   'accepted',
-  '수락하면 Match 가 선다');
+  '답하면 대화가 이어진다');
+
+/** 인연 궁합은 상세를 사고 누를 때만 선다 — 김이 사고 이가 누른다 */
+select lives_ok($$select tests.press_detail((select request_id from asked))$$, '김이 상세를 청하고 이가 누른다');
 
 create temporary table matched as select match_id from public.my_matches();
 grant select on matched to authenticated, service_role;
 
--- ── 수락이 **DB 안에서** 동의 당시 여덟 글자를 베낀다 (ADR 0071 · #68) ──────
+-- ── 누름이 **DB 안에서** 동의 당시 여덟 글자를 베낀다 (ADR 0071 · #68) ──────
 --
--- 앱이 스냅샷을 수락에 넘기면 DB 는 그 값이 그 입력에서 나온 것인지 알 수 없다 —
+-- 앱이 스냅샷을 누름에 넘기면 DB 는 그 값이 그 입력에서 나온 것인지 알 수 없다 —
 -- ADR 0013 이 `save_reading` 에서 막아 둔 구멍을 다른 문에 다시 내는 일이다.
 -- 그래서 값은 `person.current_chart` 에서 오고, 앱은 한 글자도 안 댄다.
 
@@ -146,7 +147,7 @@ select is(
    join public.person hi on hi.id = high_user.self_person_id
    where m.id = (select match_id from matched)),
   true,
-  '수락 트랜잭션이 양쪽 여덟 글자를 person 에서 그대로 베꼈다');
+  '누름 트랜잭션이 양쪽 여덟 글자를 person 에서 그대로 베꼈다');
 
 /** 판 없는 스냅샷은 낡았는지 물을 수 없다 — 함께 적혀야 뜻이 있다 */
 select is(
@@ -165,7 +166,7 @@ select isnt(
   '두 사람의 여덟 글자가 서로 다르다');
 
 /**
- * **앱이 댈 자리가 없다.** 인자는 요청 id 와 수락 여부 둘뿐이다 — 스냅샷을 받는 칸이
+ * **앱이 댈 자리가 없다.** 인자는 요청 id 와 답 둘뿐이다 — 스냅샷을 받는 칸이
  * 생기는 순간 이 문은 「아무 여덟 글자나 매어 두는 문」이 된다.
  */
 select is(
@@ -174,25 +175,24 @@ select is(
    where n.nspname = 'public' and p.proname = 'respond_to_match_request'
      and pg_get_function_arguments(p.oid) like '%chart%'),
   0,
-  '수락 문은 여덟 글자를 인자로 안 받는다');
+  '답 문은 여덟 글자를 인자로 안 받는다');
 
--- ── 수락이 **자동 생성 시도를 연다** (ADR 0038 · ADR 0071) ───────────────────
+-- ── 누름이 **생성 시도를 연다** (ADR 0071 · ADR 0215) ────────────────────────
 --
--- 동의가 예약된 풀이권을 쓴다. 이 자리가 조용히 안 돌면 Match 는 「동의는 났는데
--- 아무도 못 여는」 상태로 만료까지 남는다 — 누르는 화면이 없기 때문이다.
+-- 누름이 구매자가 잡아 둔 풀이권을 쓴다. 시도를 못 열면 누름 전체가 되돌아간다.
 
 select is(
   (select count(*)::int from public.reading_run r
    where r.match_id = (select match_id from matched) and r.status = 'running'),
   1,
-  '수락 트랜잭션이 시도를 연다 — 아무도 안 눌렀는데');
+  '누름 트랜잭션이 시도를 연다');
 
-/** **청한 사람 이름으로 선다.** 받은 쪽 세션에서 일어나는 일이라 안 정해 주면 뒤집힌다 */
+/** **구매자 이름으로 선다.** 받은 쪽 세션에서 일어나는 일이라 안 정해 주면 뒤집힌다 */
 select is(
   (select r.user_id from public.reading_run r
    where r.match_id = (select match_id from matched) and r.status = 'running'),
   (select kim from folks),
-  '시도는 청한 사람 이름으로 선다');
+  '시도는 구매자 이름으로 선다');
 
 /**
  * **얼린 한 벌이 함께 선다**(ADR 0071). 제출하는 쪽이 읽을 재료가 여기 없으면 그
@@ -206,7 +206,7 @@ select is(
    join public.match m on m.id = r.match_id
    where r.match_id = (select match_id from matched)),
   true,
-  '수락이 얼린 한 벌은 Match 의 여덟 글자를 그대로 든다');
+  '누름이 얼린 한 벌은 Match 의 여덟 글자를 그대로 든다');
 
 set local role authenticated;
 select pg_temp.acting((select lee from folks));
@@ -238,18 +238,18 @@ select is(
   '상대는 **공개용 별명**으로 불린다 — 부를 이름도 Person 입력도 아니다');
 
 /**
- * **보드에 설 값은 저장된 스냅샷이다**(ADR 0071). 앞서는 서버가 열쇠로 상대의 계산
- * 입력을 읽어 여덟 글자를 계산했다 — 이제 동의 때 베껴 둔 것을 그대로 낸다.
+ * **여덟 글자는 사용자에게 안 돌아간다**(ADR 0012 개정 · ADR 0215). 베낀 값은 글을 쓰는 데만 쓰인다 —
+ * 칸은 옛 화면이 읽어 남았고 늘 비어 있다.
  */
 select is(
   (select my_chart from public.my_match_scope((select match_id from matched))),
-  (select lee_chart from pinned),
-  '내 자리에는 내 여덟 글자가 나온다');
+  null,
+  '내 자리의 여덟 글자는 돌려주지 않는다');
 
 select is(
   (select partner_chart from public.my_match_scope((select match_id from matched))),
-  (select kim_chart from pinned),
-  '상대 자리에는 상대의 여덟 글자가 나온다');
+  null,
+  '상대의 여덟 글자도 돌려주지 않는다 — 누른 뒤에도');
 
 select is(
   (select supplied_to_me from public.my_match_scope((select match_id from matched))),
@@ -275,9 +275,9 @@ select is(
   '보낸 쪽에서 상대는 이결이다');
 
 select is(
-  (select my_chart from public.my_match_scope((select match_id from matched))),
-  (select kim_chart from pinned),
-  '내 자리에는 언제나 내 여덟 글자가 선다 — 자리가 뒤집혀도 섞이지 않는다');
+  (select partner_chart from public.my_match_scope((select match_id from matched))),
+  null,
+  '보낸 쪽(구매자)에게도 상대의 여덟 글자는 안 나간다');
 
 -- ── 남의 Match 와 없는 Match 는 **같은 답**이다 ──────────────────────────────
 select pg_temp.acting((select choi from folks));
@@ -308,10 +308,15 @@ select isnt(
   (select lee_chart from pinned),
   '지금 Person 의 여덟 글자는 실제로 달라졌다');
 
+reset role;
 select is(
-  (select my_chart from public.my_match_scope((select match_id from matched))),
+  (select case when m.user_low = (select lee from folks) then m.chart_low else m.chart_high end
+   from public.match m where m.id = (select match_id from matched)),
   (select lee_chart from pinned),
-  '**결과는 여전히 동의한 그때의 여덟 글자를 든다**');
+  '**베껴 둔 것은 여전히 동의한 그때의 여덟 글자다**');
+
+set local role authenticated;
+select pg_temp.acting((select lee from folks));
 
 select is(
   (select count(*)::int from public.my_matches()),

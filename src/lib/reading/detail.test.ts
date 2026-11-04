@@ -5,7 +5,6 @@ import { readingBody } from './display';
 import { markdownBlocks } from './markdown-blocks';
 import {
   CONTROL,
-  DETAIL_ASSEMBLY,
   DISCOVERY_PROPERTY,
   LEGACY_PAIR_ASSEMBLY,
   READING_POLICY,
@@ -18,8 +17,6 @@ import {
   promptVersionOf,
   readingEvidenceOf,
   readingPromptOf,
-  requestAssemblyOf,
-  requestPromptVersionOf,
   withDiscovery,
 } from '.';
 
@@ -28,37 +25,27 @@ const B = computeSaju({ year: 1993, month: 11, day: 3, hour: 8, minute: 10, seco
 const AT = new Date('2026-08-25T13:00:00+09:00');
 
 /** 글자의 지문은 `scripts/old-reading-prompts-unchanged.test.ts` 가 잰다 — 이 폴더는 `node:crypto` 를 안 부른다 */
-describe('옛 흐름과 비공개 궁합은 그대로다', () => {
-  it('비공개 궁합은 상세 조립을 받아도 글자가 같다', () => {
-    const evidence = readingEvidenceOf('private', { a: A, b: B }, AT, CONTROL.matchInput);
-    expect(readingPromptOf(evidence, DETAIL_ASSEMBLY)).toBe(readingPromptOf(evidence, CONTROL));
-    expect(promptSlotsOf('private', DETAIL_ASSEMBLY)).toEqual(promptSlotsOf('private', CONTROL));
+describe('인연 궁합은 상세 궁합 하나다 — 다른 kind 는 상세 지시를 모른다', () => {
+  it('상세 지시는 인연 궁합 4판에만 선다 — 비공개 궁합 · 옛 컷 · 개인 풀이에는 없다', () => {
+    expect(promptSlotsOf('match', CONTROL)).toContain('detail');
+    for (const kind of ['self', 'person', 'private'] as const) expect(promptSlotsOf(kind, CONTROL), kind).not.toContain('detail');
+    expect(promptSlotsOf('match', LEGACY_PAIR_ASSEMBLY)).not.toContain('detail');
   });
 
-  it('옛 컷은 상세 칸을 받아도 글자가 같다', () => {
-    const legacy = readingEvidenceOf('match', { a: A, b: B }, AT, LEGACY_PAIR_ASSEMBLY.matchInput);
-    expect(readingPromptOf(legacy, { ...LEGACY_PAIR_ASSEMBLY, matchFlow: 'detail' })).toBe(
-      readingPromptOf(legacy, LEGACY_PAIR_ASSEMBLY),
-    );
-  });
-
-  it('옛 지시는 새 지시를 모른다', () => {
-    for (const kind of ['self', 'person', 'private', 'match'] as const) {
+  it('다른 kind 의 지시는 새 지시를 모른다', () => {
+    for (const kind of ['self', 'person', 'private'] as const) {
       expect(READING_PROMPTS[kind], kind).not.toContain('discovery');
       expect(READING_PROMPTS[kind], kind).not.toContain('천간·지지 글자를 쓰지 않는다');
     }
-    for (const kind of ['private', 'match'] as const) {
-      expect(READING_PROMPTS[kind], kind).toContain('적어도 한 항목은 움직인다');
-    }
+    expect(READING_PROMPTS.private).toContain('적어도 한 항목은 움직인다');
+    expect(READING_PROMPTS.match).toContain('discovery');
+    const legacy = readingEvidenceOf('match', { a: A, b: B }, AT, LEGACY_PAIR_ASSEMBLY.matchInput);
+    expect(readingPromptOf(legacy, LEGACY_PAIR_ASSEMBLY)).not.toContain('discovery');
   });
 
-  it('옛 요청 · 대화는 옛 조립과 옛 판본이고, 상세만 갈린다', () => {
-    expect(requestAssemblyOf('bundled')).toBe(CONTROL);
-    expect(requestAssemblyOf('talk')).toBe(CONTROL);
-    expect(requestAssemblyOf('detail')).toBe(DETAIL_ASSEMBLY);
-    expect(requestPromptVersionOf('bundled')).toBe(promptVersionOf('match'));
-    expect(requestPromptVersionOf('talk')).toBe(promptVersionOf('match'));
-    expect(requestPromptVersionOf('detail')).toBe(READING_POLICY.detailVersion);
+  it('인연 궁합의 판본은 상세 판본이고, 다른 궁합은 궁합 판본이다', () => {
+    expect(promptVersionOf('match')).toBe(READING_POLICY.detailVersion);
+    expect(promptVersionOf('private')).toBe(READING_POLICY.pairVersion);
     expect(READING_POLICY.detailVersion).not.toBe(READING_POLICY.pairVersion);
     expect(isDetailPromptVersion(READING_POLICY.detailVersion)).toBe(true);
     expect(isDetailPromptVersion(READING_POLICY.pairVersion)).toBe(false);
@@ -69,8 +56,8 @@ describe('옛 흐름과 비공개 궁합은 그대로다', () => {
 
 describe('상세 궁합의 지시', () => {
   const prompt = readingPromptOf(
-    readingEvidenceOf('match', { a: A, b: B }, AT, DETAIL_ASSEMBLY.matchInput),
-    DETAIL_ASSEMBLY,
+    readingEvidenceOf('match', { a: A, b: B }, AT, CONTROL.matchInput),
+    CONTROL,
   ).split('\n## 자료 (')[0];
 
   it('점수를 억지로 움직이지 않는다 — D7', () => {
@@ -104,8 +91,8 @@ describe('상세 궁합의 지시', () => {
   });
 
   it('자리가 표대로 선다', () => {
-    const slots = promptSlotsOf('match', DETAIL_ASSEMBLY);
-    expect(slots.filter((slot) => slot !== 'detail')).toEqual(promptSlotsOf('match', CONTROL));
+    const slots = promptSlotsOf('match', CONTROL);
+    expect(slots).toEqual(['role', 'rules', 'scope', 'guide', 'voice', 'body', 'detail', 'summary', 'output']);
     expect(slots.indexOf('detail')).toBe(slots.indexOf('body') + 1);
   });
 });
@@ -212,7 +199,7 @@ describe('상세 궁합의 직접 언급 — 실제 기둥 두 글자를 그 사
     expect(blockingFindingsOf(findings)).toEqual([]);
   });
 
-  it('옛 흐름의 검사는 기둥을 써도 막지 않는다 — 상세에서만 고른다', () => {
+  it('공통 검사는 기둥을 써도 막지 않는다 — 기둥은 상세 검사(`detailFindingsOf`)가 고른다', () => {
     const verdict = checkReading({
       kind: 'match',
       output: { score: 70, metaphor: '비유', markdown: '## 소제목\n\n丁丑 쪽이에요. 정축 일주예요.' },

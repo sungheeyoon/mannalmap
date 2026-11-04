@@ -110,6 +110,8 @@ function clearTheWalkFromToday() {
  * DB 에서 날짜만 보고 지나가면, 그 화면은 계속 옛 연락처를 든다.
  */
 function openTheDoor() {
+  /* 훑기는 인연 화면까지 찍는다 — 운영의 기본값은 닫힘이다(ADR 0222) */
+  sql('update public.match_open_switch set open = true, changed_at = now() where not open');
   sql(`insert into public.beta_schedule
          (ends_on, note, operator_name, operator_officer, operator_contact)
        select '${BETA_ENDS_ON}', 'UI 훑기',
@@ -266,7 +268,11 @@ function runningRun(kind, personId, matchId) {
  * 넣으면 어느 배치에서나 예뻐서 **깨지는 자리를 못 본다.**
  */
 export async function plantReading(api, { kind, personId = null, matchId = null, title }) {
-  const started = await api.rpc('start_reading_run', {
+  /*
+    **인연 궁합은 열지 않고 찾는다** — 그 시도는 상세 궁합의 누름만 연다(ADR 0215). 사용자 열쇠로 열려고 하면 동의의 열쇠가
+    없어 거절된다. 부르는 쪽이 누름까지 지난 뒤 부른다(`ui-states.mjs` 의 `pairThem`).
+  */
+  const started = kind === 'match' ? { data: null, error: null } : await api.rpc('start_reading_run', {
     p_kind: kind,
     p_idempotency_key: `ui-${kind}-${Math.random().toString(36).slice(2)}`,
     p_person_a: personId,
@@ -280,9 +286,7 @@ export async function plantReading(api, { kind, personId = null, matchId = null,
   /**
    * **이미 도는 시도가 있으면 그것에 심는다.**
    *
-   * 궁합이 그렇다 — 수락이 곧 시도를 연다(ADR 0038). 새로 열려고 하면 0행으로 거절되고
-   * (같은 대상에 도는 시도는 하나다), 그 자리에서 「시작되지 않았습니다」로 죽으면 도구가
-   * 제품의 규칙을 어기려 든 것이 된다. 열린 것을 찾아 **그 시도의 판본으로** 저장한다.
+   * 인연 궁합이 그렇다 — 상세 궁합의 누름이 곧 시도를 연다(ADR 0215). 열린 것을 찾아 **그 시도의 판본으로** 저장한다.
    */
   const run = started.data?.[0] ?? runningRun(kind, personId, matchId);
   if (!run) throw new Error('시도가 없습니다 — 같은 대상에 이미 끝난 글이 있습니다.');

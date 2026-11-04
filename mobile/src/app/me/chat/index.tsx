@@ -6,7 +6,6 @@ import { CHAT_TAB_LABEL, messageTimeLabel, partnerNameOf, roomNoticeOf } from '@
 import { ROOM_NO_MESSAGES_YET } from '@chat/copy';
 import { TALK_UNANSWERED_LABEL, TALK_WITHDRAWN } from '@chat/room/detail-copy';
 import { foldUnanswered } from '@chat/room/talk';
-import type { Element } from '@saju';
 
 import { Avatar } from '@/chat/avatar';
 import { EmptyChat } from '@/chat/empty';
@@ -110,7 +109,7 @@ export default function ChatRoomsScreen() {
 function RoomList({ screen }: { screen: Extract<RoomListScreen, { kind: 'ready' }> }) {
   const [open, setOpen] = useState(false);
   const { rooms, unanswered } = useMemo(() => foldUnanswered(screen.rooms, screen.requests), [screen.rooms, screen.requests]);
-  const row = (room: ChatRoom) => <RoomRow key={room.matchId} room={room} tone={screen.tones.get(room.matchId)?.theirs.element ?? null} />;
+  const row = (room: ChatRoom) => <RoomRow key={room.matchId} room={room} />;
   return (
     <FlatList
       data={rooms}
@@ -136,7 +135,7 @@ function RoomList({ screen }: { screen: Extract<RoomListScreen, { kind: 'ready' 
   );
 }
 
-function RoomRow({ room, tone }: { room: ChatRoom; tone: Element | null }) {
+function RoomRow({ room }: { room: ChatRoom }) {
   /* 닫힌 방은 마지막 말 대신 닫힌 까닭이 자물쇠와 함께 선다 — 누르기 전에 무엇이 안 되는지 읽힌다 */
   const notice = roomNoticeOf(room);
   const closed = notice !== null;
@@ -149,7 +148,7 @@ function RoomRow({ room, tone }: { room: ChatRoom; tone: Element | null }) {
       onPress={() => router.push(`/me/chat/${room.matchId}` as never)}
       style={({ pressed }) => [styles.row, pressed && styles.pressed]}
     >
-      <Avatar nickname={name} size={56} tone={tone} dim={closed} userId={room.partnerUserId} hasPhoto={room.partnerHasPhoto} focus={room.partnerPhotoFocus} />
+      <Avatar nickname={name} size={56} tone={null} dim={closed} userId={room.partnerUserId} hasPhoto={room.partnerHasPhoto} focus={room.partnerPhotoFocus} />
       <View style={styles.rowBody}>
         <View style={styles.rowTop}>
           <Text numberOfLines={1} style={[styles.name, closed && styles.quiet]}>

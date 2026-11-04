@@ -18,7 +18,7 @@ import { execFileSync } from 'node:child_process';
 import { startCheckServer } from './next-server.mjs';
 import { passNotice, chartArgs } from './notice.mjs';
 import { createChecks, sql, testNeed, fetchWhole, keyedRpc, sessionCookie, shapeOnlySummary } from './checks.mjs';
-import { DISCOVERY_TEASER } from '../src/lib/discovery/copy.ts';
+import { TALK_SCORE_INFO, TALK_SCORE_LABEL, TALK_START_LABEL } from '../src/lib/chat/room/detail-copy.ts';
 import { worktreeStack } from '../src/lib/local-env.ts';
 
 const status = JSON.parse(execFileSync('npx', ['supabase', 'status', '-o', 'json'], { encoding: 'utf8' }));
@@ -233,10 +233,10 @@ const isolate = (emails) => {
     // **점수를 만든 두 축이 다 나온다** — 뒤 축만 말하면 낮은 점수의 이유가 화면에 없다
     check('점수의 이유가 보완 축까지 든다',
       /내게 적은 오행을 (크게 )?보완하(는 데 보탬이 되|지)/.test(body));
-    /* 숫자 칸과 「/ 100」 칸이 짝으로 선다. 칸에 붙는 class 와 칸 사이 공백은 모양이라 재지 않는다 — 6차 카드(3ba986a)가 class 를 달았다. 첫 후보 카드 안에서만 잰다 */
+    /* 「예상 궁합」 이름표와 「N점」 칸이 선다(ADR 0215). 칸에 붙는 class 는 모양이라 재지 않는다. 첫 후보 카드 안에서만 잰다 */
     check('첫인상 궁합 점수를 이름표와 함께 보여 준다',
-      candidateListIn(body).includes('예측 궁합 점수') &&
-        /<strong\b[^>]*>\d+<\/strong>\s*<span\b[^>]*>\s*\/\s*100<\/span>/.test(candidateListIn(body)));
+      candidateListIn(body).includes(TALK_SCORE_LABEL) &&
+        /<strong\b[^>]*>\d+(?:<!--\s*-->)?점<\/strong>/.test(candidateListIn(body)));
     /**
      * **수는 그 자체로 높낮이를 말하지 않는다.** 만점이 몇인지 보통이 몇인지를
      * 사용자가 모르므로, 점수 옆에는 그 수를 말로 옮긴 한 줄이 함께 서야 한다.
@@ -248,10 +248,10 @@ const isolate = (emails) => {
     check('점수를 말로 옮긴 한 줄이 함께 선다',
       /(일 수 있어요|에 가까워요|편이에요|있어요)\.?</.test(body) &&
         /궁합|어울리|엇갈리|다른 부분/.test(body));
-    check('상세 궁합은 서로 선택한 뒤에 열린다고 말한다',
-      body.includes('궁합 요청') && body.includes('7일 동안 답이 없으면 돌려드려요'));
-    check('참고 점수라는 말이 목록 머리에 선다',
-      body.includes(DISCOVERY_TEASER));
+    check('카드의 단추는 「대화 시작」이고 옛 「궁합 요청」은 없다(ADR 0215)',
+      body.includes(TALK_START_LABEL) && !body.includes('궁합 요청'));
+    check('예상 점수의 계산 기준이 목록 머리에 선다',
+      body.includes(TALK_SCORE_INFO));
 
     /**
      * **여기서 멈추는 것들.** 후보 카드가 여는 만큼 닫히는 자리도 또렷해야 한다 —
@@ -517,7 +517,7 @@ const isolate = (emails) => {
 
     /**
      * 내가 든 카드는 **바뀌기 전 요약**을 가리킨다. 남겨 두면 화면이 지금의 그 사람이
-     * 아닌 오행을 말하고, 눌러도 요청이 안 난다(`request_match` 는 요약 두 벌이 지금과
+     * 아닌 오행을 말하고, 눌러도 대화가 안 열린다(`request_match` 는 요약 두 벌이 지금과
      * 같은 기록만 받는다). 그래서 읽는 자리가 **그 자리를 걷고 채운다**(ADR 0115) — 그 사람이
      * 여전히 풀에 있으면 **지금 요약으로** 다시 뽑힐 수 있다. 재는 것은 덱에 옛 요약이 안 남는 것이다.
      */

@@ -14,9 +14,8 @@
 import { describe, expect, it } from 'vitest';
 
 import { RATE_LIMITED_TEXT } from '../src/lib/chat';
-import { CONSENT_FLOW_STEPS } from '../src/lib/consent';
-import { MATCH_PILLARS_DISCLOSURE, NOTICE_ACK_LABEL, OPTIONAL_CONSENTS } from '../src/lib/consent/notice';
-import { READING_USES_TICKET_NOTE, REQUEST_RESERVES_NOTE } from '../src/lib/reading';
+import { MATCH_DETAIL_DISCLOSURE, NOTICE_ACK_LABEL, OPTIONAL_CONSENTS } from '../src/lib/consent/notice';
+import { READING_USES_TICKET_NOTE } from '../src/lib/reading';
 
 describe('계약 문구', () => {
   it('가입 안내의 동의 확인문', () => {
@@ -29,20 +28,10 @@ describe('계약 문구', () => {
     );
   });
 
-  it('수락하면 무엇이 공개되고 무엇은 안 되나', () => {
-    /* 운영자 결정 2026-10-26 — 처리방침 줄도 요청 창 · 받은 카드와 같은 해요체(notice-v11, 표현 개정, 대장 matching-12) */
-    expect(MATCH_PILLARS_DISCLOSURE).toBe('수락하면 서로의 사주팔자 여덟 글자가 공개돼요. 정확한 생년월일시 · 출생지는 공개되지 않아요.');
-  });
-
-  it('요청을 보내는 것만으로는 상대에게 열리는 것이 없다', () => {
-    expect(CONSENT_FLOW_STEPS.find((step) => step.title === '요청을 보냅니다')?.body).toBe(
-      '인연 목록에서 마음이 가는 사람에게 「상세 궁합을 함께 보자」고 청합니다. 보내는 것만으로 상대에게 열리는 것은 없고, 상대의 인연 탭에 요청이 하나 뜹니다.',
-    );
-  });
-
-  it('풀이권 — 요청이 쓰는 풀이권이 돌아오는 길', () => {
-    /* 운영자 결정 2026-10-26 — 앞머리 「요청하면 풀이권 1장이 임시로 차감되고, 상대가 수락하면 확정돼요.」는 창이 「풀이권 1장」을 굵게 세워 들고, 이 줄은 돌려받는 길(대장 matching-12) */
-    expect(REQUEST_RESERVES_NOTE).toBe('상대가 거절하거나 7일 동안 답이 없으면 돌려드려요.');
+  it('대화와 상세 궁합에서 무엇이 나가고 무엇이 보이나', () => {
+    /* `notice-v14` 내용 개정 — `docs/legal/match-talk-notice-draft.md` 「상세 궁합 줄」을 그대로 옮겼다(운영자 지시 2026-11-04) */
+    expect(MATCH_DETAIL_DISCLOSURE[0]).toBe('대화는 상대의 수락 없이 열립니다. 대화를 시작해도 여덟 글자는 상대에게 공개되거나 AI 로 보내지지 않습니다.');
+    expect(MATCH_DETAIL_DISCLOSURE[2]).toBe('두 사람의 여덟 글자는 화면에 직접 나오지 않습니다. 다만 글의 내용에서 짐작될 수 있고, 이를 완전히 막는다고 보장하지 않습니다.');
   });
 
   it('풀이권 — 내 풀이의 사용과 실패 시 복구', () => {

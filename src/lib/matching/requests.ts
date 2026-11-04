@@ -1,7 +1,3 @@
-import { REQUEST_STATUS_TEXT, type RequestStatus } from '../consent';
-
-import type { InboxRequest } from './inbox';
-
 /**
  * 요청 화면이 함께 쓰는 판정과 짧은 값 — 웹과 앱이 같은 답을 낸다.
  */
@@ -9,25 +5,10 @@ import type { InboxRequest } from './inbox';
 /** 요청 부름이 던졌다 — 서버가 받았는지 모른다. 보낸 요청은 인연 기록에 서므로 줄이 그리로 가는 링크를 단다(G-103) */
 export const REQUEST_UNSURE = '요청이 갔는지 확인하지 못했어요. 인연 기록에서 확인해 주세요.';
 
-export const receivedOf = (requests: readonly InboxRequest[]) =>
-  requests.filter((request) => request.direction === 'received' && request.status === 'pending');
-
 export { when } from '../reading/when';
 
 /**
- * **보낸 요청을 거둔 뒤 바닥(스낵바)에 서는 한 줄** — 서버가 답한 끝 그대로다.
- *
- * 거두는 문(`cancel_match_request`)은 이미 끝난 요청이면 거두지 않고 **그 끝**을 돌려준다 — 누르기 직전에 상대가 수락했거나 7일이 지나
- * 만료됐다. 그때 「거뒀어요」라 말하면 없는 일을 알린다(완료 안내는 그 일이 된 뒤에만, 대장 01). 그래서 끝마다 보낸 쪽의 말
- * (`REQUEST_STATUS_TEXT[끝].sent`)을 세운다. 아직 기다리는 중이라는 답은 거두지 못한 것이라 아무 말도 안 한다.
- */
-export function cancelledNote(status: RequestStatus): string | null {
-  if (status === 'pending') return null;
-  return REQUEST_STATUS_TEXT[status].sent;
-}
-
-/**
- * **풀이권이 없어서 막힌 거절인가** — 풀이를 여는 문(`start_reading_run`)과 인연 요청(`request_match`)이 잔액으로 막으면 이 문장으로 던진다.
+ * **풀이권이 없어서 막힌 거절인가** — 풀이를 여는 문(`start_reading_run`)이 잔액으로 막으면 이 문장으로 던진다.
  *
  * 화면은 누르기 전에 잔액을 보지만(`outOfCredits`), 그 사이 다른 탭에서 마지막 풀이권을 쓰면 서버가 막는다. 그때는 오류 줄 대신
  * 풀이권 창(보유 0장 + 필요 수량)을 연다(ADR 0171 「덧」).
@@ -39,19 +20,9 @@ export function cancelledNote(status: RequestStatus): string | null {
  * 앞머리에는 수를 세는 말(번 · 회 · 개 · 장)을 넣지 않는다 — 꼬리의 단위는 바뀐다(2026-10-12 「장 · 회」, `20261209090000`).
  * 앞머리만 견주므로 그 마이그레이션이 운영 DB 에 오르기 전후 어느 쪽 앱이 떠 있어도 같은 창이 열린다.
  */
-export const OUT_OF_CREDITS_REFUSALS = ['풀이권을 다 쓰셨습니다', '풀이권이 없어 요청할 수 없습니다'] as const;
+export const OUT_OF_CREDITS_REFUSALS = ['풀이권을 다 쓰셨습니다'] as const;
 
 export function refusedForCredits(error: { code?: string | null; message?: string | null }): boolean {
   const message = error.message ?? '';
   return error.code === '23514' && OUT_OF_CREDITS_REFUSALS.some((lead) => message.startsWith(lead));
-}
-
-/**
- * **화면이 그린 흐름과 스위치가 어긋난 거절인가**(ADR 0216) — 문이 아무것도 안 세우고 전용 코드로 답한다. 돈이 안 움직였으니 화면은 잔액을 다시 묻지 않고
- * 스위치를 다시 읽어 그린다. 옛 DB 에서는 이 코드가 안 오고 `PGRST202` 로 닫힌다.
- */
-export const SWITCH_MOVED_CODE = 'MK001';
-
-export function refusedForSwitchMoved(error: { code?: string | null }): boolean {
-  return error.code === SWITCH_MOVED_CODE;
 }
