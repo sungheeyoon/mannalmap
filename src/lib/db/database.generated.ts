@@ -822,6 +822,24 @@ export type Database = {
           },
         ]
       }
+      match_open_switch: {
+        Row: {
+          changed_at: string
+          id: boolean
+          open: boolean
+        }
+        Insert: {
+          changed_at?: string
+          id?: boolean
+          open?: boolean
+        }
+        Update: {
+          changed_at?: string
+          id?: boolean
+          open?: boolean
+        }
+        Relationships: []
+      }
       match_request: {
         Row: {
           addressee_input_version: number | null
@@ -3403,6 +3421,9 @@ export type Database = {
       }
       match_consent_holds: { Args: { p_match_id: string }; Returns: boolean }
       match_detail_ttl: { Args: never; Returns: string }
+      match_is_open: { Args: never; Returns: boolean }
+      match_must_be_open_to: { Args: { p_user_id: string }; Returns: undefined }
+      match_open_to: { Args: { p_user_id: string }; Returns: boolean }
       match_reading_source: {
         Args: { p_match_id: string }
         Returns: {

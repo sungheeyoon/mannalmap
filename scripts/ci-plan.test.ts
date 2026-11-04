@@ -582,7 +582,8 @@ describe('CI 계획 — 입구가 아닌 서버 파일은 import 를 거꾸로 �
     // 2026-10-30 에 일곱 — 앱의 문(`app/api/mobile`, ADR 0211)이 부르는 자기 파일 셋(`session` · `writes` · `views`)과 웹과 함께 쓰는 문이 더해졌다. 더 돌리는 쪽이다
     // 2026-10-30 에 하나 — 저장소 올리기의 몸통(`app/me/profile/stored-photo-writes.ts`)을 웹의 액션과 앱의 문이 함께 부른다(ADR 0211 추기)
     // 2026-11-03 에 하나 — 애플 연결 끊기의 자기 파일(`app/api/mobile/me/apple-revoke/apple-tokens.ts`)을 그 문이 부른다(ADR 0219)
-    expect(noAddress.length).toBeLessThanOrEqual(83);
+    // 2026-11-04 에 하나 — 인연이 열려 있는가를 읽는 문(`app/match-opening.ts`)을 관문 · 머리글 · 설정이 함께 부른다(ADR 0222)
+    expect(noAddress.length).toBeLessThanOrEqual(84);
   });
 });
 

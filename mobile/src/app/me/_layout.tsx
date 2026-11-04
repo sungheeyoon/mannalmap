@@ -11,6 +11,8 @@ import { LiveChannel } from '@/chat/live';
 import { useCounts } from '@/home/counts';
 import { useGate } from '@/home/gate';
 import { useAdultCheckGuard } from '@/matching/adult-check';
+import { useMatchClosedGuard, useMatchOpen } from '@/matching/opening';
+import { tabsWhileShut } from '@matching/opening';
 import { appHeadStands, dockStands } from '@app-shell';
 import { WarningNotice } from '@/home/warning-notice';
 import { goTab } from '@/ui/go-tab';
@@ -19,7 +21,7 @@ import { Logo } from '@/ui/logo';
 import { SecondaryButton } from '@/ui/parts';
 import { COLOR, ELEMENT_TONE, FONT, RADIUS, TYPE } from '@/ui/tokens';
 
-/** 웹 머리글의 `MEMBER_TABS` 와 같은 넷 · 같은 글자다. 궁합의 첫 화면은 앱에서 `/me/compat` 다 */
+/** 웹 머리글의 `MEMBER_TABS` 와 같은 넷 · 같은 글자다. 궁합의 첫 화면은 앱에서 `/me/compat` 다. 인연이 닫힌 동안은 홈 · 궁합 둘이다(ADR 0222) */
 const TABS = [
   { href: '/me', label: '홈', icon: 'home' },
   { href: '/me/compat', label: '궁합', icon: 'taiji' },
@@ -49,7 +51,10 @@ export default function MeLayout() {
   const search = useGlobalSearchParams<{ a?: string; b?: string }>();
   const insets = useSafeAreaInsets();
   const counts = useCounts(pathname, gate.kind === 'in');
-  useAdultCheckGuard(pathname, currentPath(pathname, search), gate.kind === 'in');
+  const matchOpen = useMatchOpen();
+  useMatchClosedGuard(pathname, matchOpen);
+  useAdultCheckGuard(pathname, currentPath(pathname, search), gate.kind === 'in' && matchOpen !== false);
+  const tabs = tabsWhileShut(TABS, matchOpen);
 
   if (gate.kind === 'checking') return <View style={styles.screen} />;
   /* 이 주소로 바로 들어온 사람은 로그인 · 가입 뒤 여기로 돌아온다(ADR 0213). 로그아웃한 사람은 돌아올 뜻이 없다 */
@@ -120,7 +125,7 @@ export default function MeLayout() {
 
       {dockStands(pathname) && (
         <View accessibilityRole="tablist" style={[styles.dock, { paddingBottom: insets.bottom + 6 }]}>
-          {TABS.map((tab) => {
+          {tabs.map((tab) => {
             const active = isActive(pathname, tab.href);
             const count = badges[tab.href] ?? 0;
             return (

@@ -4,6 +4,7 @@ import type { AccountState } from '@/src/lib/account';
 import { isBlocked, mayRequestDeletion } from '@/src/lib/account';
 import { OPTIONAL_CONSENT_NOTE, asKoreanDay, noticeAckHolds } from '@/src/lib/consent';
 import type { DiscoveryProfile } from '@/src/lib/discovery';
+import { matchEntriesStand } from '@/src/lib/matching/opening';
 import { initialOf } from '@/src/lib/profile';
 
 import type { SkippableRead } from '../../db-error';
@@ -31,6 +32,8 @@ export type SettingsData = {
   discoveryProfile: SkippableRead<DiscoveryProfile | null>;
   /** 사진이 한 장도 없다고 **읽었을 때만** 참 — 못 읽었으면 거짓(ADR 0078) */
   photoless: boolean;
+  /** 인연이 열려 있는가 — 닫혔거나 못 읽었으면 인연 무리 · 새 메시지 알림이 안 선다(ADR 0222) */
+  matchOpen: boolean | null;
   email: string | undefined;
   userId: string;
   /** 푸시 공개 열쇠가 있는 배포인가(G-71) */
@@ -46,8 +49,10 @@ export type SettingsData = {
  * 줄 전체가 프로필 화면(`/me/profile`)으로 가고 오른쪽은 「›」 하나다 — 「사진 추가」 글자는 걷었다(운영자 2026-10-26). 이름 · 사진 · 소개는 앱 전체에서 불리는 값이라 제 화면이 있다.
  */
 export function SettingsView({ data }: { data: SettingsData }): ReactNode {
-  const { state, account, discoveryProfile, photoless, email, userId, pushAvailable } = data;
+  const { state, account, discoveryProfile, photoless, matchOpen, email, userId, pushAvailable } = data;
   const active = state.kind === 'active';
+  /** 인연 찾기 · 새 메시지 알림은 인연의 입구다 — 닫힌 동안은 안 선다(ADR 0222) */
+  const matching = active && matchEntriesStand(matchOpen);
   return (
     /* 화면 바탕이 가라앉은 면이고 무리 사이의 틈이 곧 회색 띠다(TDS `Border` 의 `height16`) — 폰에서는 무리가 화면 끝까지 간다 */
     <main className={`flex w-full flex-1 flex-col bg-surface-sunken ${SETTINGS_TEXT_WRAP}`}>
@@ -92,7 +97,7 @@ export function SettingsView({ data }: { data: SettingsData }): ReactNode {
           못 읽었으면 두 줄 대신 실패 줄 하나가 선다 — 기본값으로 메우면 끈 사람에게 「켜져 있다」고 말하고(ADR 0078), 말없이 비우면
           그 설정이 있는 줄도 모른다(ADR 0164 덧).
         */}
-        {active && (
+        {matching && (
           <SettingsGroup title="인연">
             {discoveryProfile.ok ? (
               <>
@@ -111,7 +116,7 @@ export function SettingsView({ data }: { data: SettingsData }): ReactNode {
           이 기기의 새 메시지 알림 — 상태는 브라우저만 알아 줄이 스스로 잰다(ADR 0156). **공개 열쇠가 없는 배포에는 안 세운다** —
           운영에 열쇠를 넣기 전(G-71)에 세우면 모든 사람에게 「이 브라우저에서는 알림을 받을 수 없어요」라는 거짓을 말한다.
         */}
-        {active && pushAvailable && <PushRow />}
+        {matching && pushAvailable && <PushRow />}
 
         {active && account !== null && (
           <SettingsGroup title="선택 동의" description={OPTIONAL_CONSENT_NOTE}>

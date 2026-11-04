@@ -12,7 +12,9 @@ import { CALENDARS, CALENDAR_KO, CITY_LONGITUDES, GENDERS, GENDER_KO, SUPPORTED_
 
 import { chartPath } from '@consent/app-destination';
 import { withReturnPath } from '@consent/return-path';
+import { matchEntriesStand } from '@matching/opening';
 import { readGate } from '@/home/gate';
+import { useMatchOpen } from '@/matching/opening';
 import { POLICY_TITLE, SUPPORT_TITLE } from '@/info/copy';
 import { Choices, DigitField, Field, FieldLabel, KeyboardDoneBar, PrimaryButton, Select } from '@/ui/parts';
 import { Mark } from '@/share/marks';
@@ -69,6 +71,7 @@ const ENTRY_LINKS = [
 
 /** 출생 정보 — 칸의 차례와 말은 웹의 `app/birth-form.tsx` 와 같다. 계산은 웹과 같은 `calculateChart` 다 */
 function BirthScreen({ signedOut }: { signedOut: boolean }) {
+  const matchOpen = useMatchOpen();
   const [name, setName] = useState('');
   const [gender, setGender] = useState<Query['gender']>(DEFAULT_QUERY.gender);
   const [year, setYear] = useState('');
@@ -153,10 +156,13 @@ function BirthScreen({ signedOut }: { signedOut: boolean }) {
                 <Text accessibilityRole="header" style={styles.title}>나는 어떤 사람일까?</Text>
                 <Text style={styles.lead}>{ABOUT_LEAD[0]}</Text>
                 <View style={styles.doors}>
-                  <Pressable accessibilityRole="link" onPress={() => router.push('/matching-intro')} style={styles.intro}>
-                    <Text style={styles.introText}>{MATCHING_INTRO_TITLE}</Text>
-                    <Mark name="arrow" size={16} color={COLOR.secondary} />
-                  </Pressable>
+                  {/* 인연이 닫힌 동안은 소개도 안 선다(ADR 0222) */}
+                  {matchEntriesStand(matchOpen) && (
+                    <Pressable accessibilityRole="link" onPress={() => router.push('/matching-intro')} style={styles.intro}>
+                      <Text style={styles.introText}>{MATCHING_INTRO_TITLE}</Text>
+                      <Mark name="arrow" size={16} color={COLOR.secondary} />
+                    </Pressable>
+                  )}
                   {/* 궁합은 로그인 뒤 궁합 탭이다 — 앱에는 로그인 전 궁합 결과가 없다(ADR 0213 의 11) */}
                   <Pressable accessibilityRole="link" onPress={() => router.push(withReturnPath('/auth', '/me/compat') as never)} style={styles.intro}>
                     <Text style={styles.introText}>{COMPAT_ENTRY}</Text>

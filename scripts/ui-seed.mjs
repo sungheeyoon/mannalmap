@@ -110,6 +110,8 @@ function clearTheWalkFromToday() {
  * DB 에서 날짜만 보고 지나가면, 그 화면은 계속 옛 연락처를 든다.
  */
 function openTheDoor() {
+  /* 훑기는 인연 화면까지 찍는다 — 운영의 기본값은 닫힘이다(ADR 0222) */
+  sql('update public.match_open_switch set open = true, changed_at = now() where not open');
   sql(`insert into public.beta_schedule
          (ends_on, note, operator_name, operator_officer, operator_contact)
        select '${BETA_ENDS_ON}', 'UI 훑기',

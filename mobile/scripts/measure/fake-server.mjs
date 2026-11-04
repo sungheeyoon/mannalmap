@@ -159,6 +159,8 @@ const rpc = {
   my_matches: () => db.matches,
   // 기본은 스위치가 꺼진 답이다 — 켠 상태는 `__set` 으로 든다(ADR 0215)
   match_talk_open: () => db.talkOpen,
+  /* 재는 화면은 인연까지 걷는다 — 열린 쪽이다(ADR 0222) */
+  match_is_open: () => true,
   my_ended_talks: () => db.ended,
   my_ended_talk_messages: () => [{ message_id: 'dddddddd-3333-4000-8000-000000000001', mine: false, body: '끝난 대화의 말이에요', created_at: ago(900) }],
   my_match_detail_state: () => [db.detail],

@@ -4,10 +4,11 @@ import { CHAT_USES_NO_CREDIT } from '@consent/disclosure';
 import { withReturnPath } from '@consent/return-path';
 import { SIGNUP_NOTICE_DISCOVERY } from '@consent/signup';
 import { ELEMENT_PICTURE_KO, type Element } from '@saju';
-import { router } from 'expo-router';
+import { Redirect, router } from 'expo-router';
 import { StyleSheet, Text, View } from 'react-native';
 
 import { InfoScreen } from '@/info/frame';
+import { useMatchOpen } from '@/matching/opening';
 import { ElementSymbol } from '@/ui/element-symbol';
 import { PrimaryButton } from '@/ui/parts';
 import { CardFrame, Tile } from '@/ui/surfaces';
@@ -28,6 +29,9 @@ const STEPS: readonly { title: string; body: string }[] = [
  * 예시 카드는 눌리지 않아 아무에게도 가지 않는다. 참여는 인연 탭의 그 길이다 — 로그인 · 가입 화면이 남은 단계를 말한다.
  */
 export default function MatchingIntroScreen() {
+  const matchOpen = useMatchOpen();
+  /* 인연이 닫힌 동안은 소개도 안 열린다 — 바로 들어온 주소는 첫 화면으로 간다(ADR 0222) */
+  if (matchOpen === false) return <Redirect href="/" />;
   return (
     <InfoScreen title={MATCHING_INTRO_TITLE} fallback="/">
       <Tile tone={ELEMENT_TONE[SUPPLIES[0]].soft} style={styles.example} accessibilityLabel={`예시 카드. ${MATCHING_INTRO_EXAMPLE.note}`}>

@@ -40,8 +40,9 @@ describe('앱 입구', () => {
 describe('인연 소개 (#940)', () => {
   const intro = read('mobile/src/app/matching-intro.tsx');
 
-  it('세션 · 회원을 안 읽는다 — 서버에 아무것도 묻지 않는다', () => {
-    expect(intro).not.toMatch(/supabase|fetch\(|readGate|\.rpc\(|useDeck|@\/matching\/|PersonPhoto/);
+  it('세션 · 회원을 안 읽는다 — 서버에 묻는 것은 인연이 열려 있는가 하나다(ADR 0222)', () => {
+    expect(intro).not.toMatch(/supabase|fetch\(|readGate|\.rpc\(|useDeck|@\/matching\/(?!opening')|PersonPhoto/);
+    expect(intro).toContain('useMatchOpen()');
   });
 
   it('예시 카드에는 사람도 누를 자리도 없다 — 눌러도 아무에게도 안 간다', () => {

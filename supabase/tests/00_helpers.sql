@@ -9,7 +9,7 @@ create schema if not exists tests;
 -- pg_prove 는 plan 이 없는 파일을 「망가진 시험」으로 읽는다. 도구 파일이라도
 -- 한 줄은 세워 둔다 — 손잡이가 안 서면 나머지가 전부 이유 없이 무너지므로,
 -- 그 자리를 여기서 먼저 알려 주는 것이 맞다.
-select plan(5);
+select plan(6);
 
 /**
  * 시험의 종료일 — **오늘에서 센다.** 서울 날짜로 다다음 달 1일이다(29~62일 뒤 — 가장 짧은 것이 1월 31일 → 3월 1일).
@@ -373,6 +373,10 @@ begin
 end;
 $$;
 
+-- **시험의 DB 는 인연이 열린 쪽이다**(ADR 0222) — 운영의 기본값은 닫힘이지만, 나머지 시험이 재려는 것은 「열려 있는 동안」이다.
+-- 종료일(`tests.beta_ends_on`)과 같은 까닭이다. 닫힌 동안은 `99_match_waits_closed` 가 스스로 닫아 잰다.
+update public.match_open_switch set open = true, changed_at = now() where not open;
+
 -- 시험은 역할을 `authenticated` 로 바꾼 채로 이 손잡이들을 부른다.
 grant usage on schema tests to authenticated;
 grant execute on all functions in schema tests to authenticated;
@@ -384,4 +388,5 @@ select ok(public.is_need_summary(tests.need()), '손잡이가 내는 필요한 �
 select ok(
   tests.beta_ends_on() > (now() at time zone 'Asia/Seoul')::date + 28,
   '시험의 종료일은 오늘에서 4주 넘게 남는다 — 날짜를 적어 두면 그날 모든 파일이 붉어진다');
+select ok(public.match_is_open(), '시험의 DB 는 인연이 열려 있다 — 닫힌 동안은 99_match_waits_closed 가 잰다');
 select * from finish();

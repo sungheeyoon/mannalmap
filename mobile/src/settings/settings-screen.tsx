@@ -8,10 +8,12 @@ import { SIGN_OUT_PENDING } from '@account/copy';
 import { GUIDE_LINKS } from '@brand/links';
 import { OPTIONAL_CONSENT_NOTE } from '@consent/notice';
 import { asKoreanDay, noticeAckHolds } from '@consent/index';
+import { matchEntriesStand } from '@matching/opening';
 import { initialOf } from '@profile';
 
 import { signOut } from '@/auth/sign-in';
 import { readGate } from '@/home/gate';
+import { useMatchOpen } from '@/matching/opening';
 import { CONTACT_LABEL, POLICY_TITLE, SUPPORT_TITLE, SURVEY_LABEL } from '@/info/copy';
 import { COLOR, FONT, RADIUS, TYPE } from '@/ui/tokens';
 import { settled } from '@/ui/settled';
@@ -36,6 +38,8 @@ export function SettingsScreen() {
   const [face, setFace] = useState<string | null>(null);
   /* 테스트가 끝나면 관문이 설정만 연다 — 눌러도 종료 안내로 되돌아올 줄(프로필 · 설문)은 세우지 않는다 */
   const [ended, setEnded] = useState(false);
+  /** 인연 찾기는 인연의 입구다 — 닫혔거나 못 읽었으면 그 무리가 안 선다(ADR 0222) */
+  const matchOpen = useMatchOpen();
 
   const load = useCallback(() => {
     void settled(readSettings(), 'readSettings', settingsUnreachable).then(setData);
@@ -90,7 +94,7 @@ export function SettingsScreen() {
           </SettingsGroup>
         )}
 
-        {active && (
+        {active && matchEntriesStand(matchOpen) && (
           <SettingsGroup title="인연">
             {discovery.ok ? (
               <>

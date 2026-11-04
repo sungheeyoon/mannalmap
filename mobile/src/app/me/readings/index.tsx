@@ -1,9 +1,11 @@
+import { matchEntriesStand } from '@matching/opening';
 import { findStatus, findsInList, matchesName } from '@people/pick';
 import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { useCallback, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { useMatchOpen } from '@/matching/opening';
 import { readShelf, type DoorRefusal, type ShelfView } from '@/reading/api';
 import { followRefusal, ReadFailure } from '@/reading/panel';
 import { BlankBook, BookRow, MakingRow, SHELF_CHIPS, SHELF_TITLE, type ShelfChip } from '@/reading/shelf';
@@ -76,6 +78,7 @@ function ShelfBody({
   setTyped: (typed: string) => void;
 }) {
   const { books, making, hasSelf } = shelf;
+  const matchOpen = useMatchOpen();
 
   if (books.length === 0 && making.length === 0) {
     return (
@@ -115,7 +118,8 @@ function ShelfBody({
   const compatBlank = wanted === '' && privates.length === 0 && !makingOf('compat') && (
     <BlankBook element="火" label="궁합 보러 가기" onPress={() => goTab('/me/compat')} />
   );
-  const matchBlank = wanted === '' && fated.length === 0 && !makingOf('match') && (
+  /* 인연이 닫힌 동안은 「오늘의 인연」으로 가는 빈 책이 안 선다(ADR 0222) */
+  const matchBlank = wanted === '' && fated.length === 0 && !makingOf('match') && matchEntriesStand(matchOpen) && (
     <BlankBook element="水" label="오늘의 인연" onPress={() => goTab('/me/matching')} />
   );
 
