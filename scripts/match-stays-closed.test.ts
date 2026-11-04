@@ -34,10 +34,11 @@ describe('인연의 스위치', () => {
 });
 
 /**
- * **문은 성인 확인을 따로 묻지 않는다** — 인연의 문은 열림과 성인 확인을 함께 묻는 `match_open_to` · `match_must_be_open_to` 를 지난다.
- * 새 문이 성인 확인만 물으면 닫힌 동안 열리는 길이 생긴다. 성인 확인만 묻는 자리는 판정 둘과 사주 저장 뒤의 자동 참여 · 참여 스위치뿐이다.
+ * **성인 확인만 부르고 닫힘을 빠뜨린 문이 없다** — 인연의 문은 열림과 성인 확인을 함께 묻는 `match_open_to` · `match_must_be_open_to` 를 지난다.
+ * 성인 확인만 묻는 자리는 판정 둘과 사주 저장 뒤의 자동 참여 · 참여 스위치뿐이다. **둘 다 빠뜨린 새 문은 여기서 못 잡는다** —
+ * 그것은 `supabase/tests/99_match_waits_closed.test.sql` 의 8(인연의 표를 읽는 사용자 문)이 잡는다.
  */
-describe('인연의 문은 닫힘을 함께 묻는다', () => {
+describe('성인 확인만 부르고 닫힘을 빠뜨린 문이 없다', () => {
   const ADULT_ONLY = new Set(['adult_check_passed', 'adult_check_must_pass', 'match_open_to', 'match_must_be_open_to', 'ensure_discovery_participation', 'set_discovery_participation', 'my_adult_check']);
 
   it('성인 확인을 부르는 최신 함수는 판정 둘과 참여 문뿐이다', () => {

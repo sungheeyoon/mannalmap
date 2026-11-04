@@ -8,6 +8,9 @@
 -- SQL 도 이름으로 풀어 이 하나에 닿고(재서 ADR 에 적었다) 동작이 그대로다 — 다만 기대값이 없으니 이 보호는 없다.
 --
 -- **새 웹 · 앱이 이 인자를 부르므로 이 마이그레이션이 먼저다.** 옛 DB 를 만나면 `PGRST202` 로 닫혀 아무것도 안 선다.
+--
+-- **인연이 닫힌 동안 이 문도 닫혀 있다**(ADR 0222) — 앞 파일 `20270106120000` 이 세운 판정 `match_must_be_open_to` 를 묻는다. 운영에 오르기 전에
+-- 고쳤다 — 이 파일이 성인 확인만 물으면 이 파일까지 커밋된 순간 요청 문이 다시 열린다.
 
 drop function public.request_match(uuid);
 
@@ -41,7 +44,7 @@ begin
     raise exception '이용이 정지된 계정입니다.' using errcode = '42501';
   end if;
 
-  perform public.adult_check_must_pass(actor);
+  perform public.match_must_be_open_to(actor);
 
   if p_candidate_user_id is null or p_candidate_user_id = actor then
     raise exception '지금은 이 사람에게 요청할 수 없습니다. 후보 목록을 새로 열어 확인해 주세요.'

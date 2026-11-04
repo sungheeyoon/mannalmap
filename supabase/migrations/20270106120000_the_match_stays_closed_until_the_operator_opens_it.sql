@@ -1,21 +1,26 @@
 -- 인연은 닫힌 채 선다 — 사주부터 운영하고, 운영자가 승인하면 운영 SQL 한 줄로 연다 (운영자 결정 2026-11-04, ADR 0222)
 --
+-- **이 파일은 운영에 아직 안 오른 인연 마이그레이션 가운데 맨 앞에 선다**(`20270106090000` 뒤 · `20270107090000` 앞). CLI 는 파일마다 따로
+-- 트랜잭션을 묶어 커밋하므로, 닫힘이 맨 앞 파일에 있어야 뒤의 어느 파일 경계에서 멈추거나 실패해도 인연이 닫혀 있다. 뒤의 파일
+-- (`20270107090000` · `20270109090000`)이 다시 쓰는 문은 같은 판정(`match_open_to` · `match_must_be_open_to`)을 부르도록 그 파일 안에서 고쳤다.
+-- 경계마다의 확인은 `scripts/match-closed-boundaries.mjs` 가 한다.
+--
 -- 1. **스위치** `match_open_switch` 는 한 줄이고 기본값은 닫힘(`false`)이다. 어느 마이그레이션도 열지 않는다. 여는 것은
 --    `docs/ops/runbook/match-opening.md` 의 운영 SQL 이다. 줄이 없어지면 닫힌다 — 실패 때 닫힘이다.
 -- 2. **판정 둘** — `match_is_open()` 은 화면이 메뉴와 주소를 고르려고 읽는다(anon · authenticated). `match_open_to(사람)` 은 문이 묻는다:
 --    열려 있고 그 사람이 성인 확인을 지났는가(ADR 0214 의 `adult_check_passed`). 쓰는 문의 거절은 `match_must_be_open_to(사람)` 이다 —
 --    닫혀 있으면 「인연은 준비 중이에요.」, 열려 있으면 성인 확인의 거절을 그대로 낸다.
--- 3. **막는 자리** — 성인 확인이 막던 열여섯 문이 그대로 이 판정을 묻는다. 추천 · 지나친 인연 · 요청 · 되살리기 · 수락 · 말 보내기 ·
---    상세 궁합 청하기는 문장으로 거절하고, 요청 목록 · 인연(`visible_matches`) · 채팅방 · 메시지(`chat_room_readable` — 두 표의 RLS 도 이것이다) ·
---    끝난 대화 · 요청 소식 · 상대 사진(`may_see_photo`) · 인연 궁합의 동의(`match_consent_holds`)는 비어 있다. 카드에 남의 프로필이 서는 길이 없다.
+-- 3. **막는 자리** — 성인 확인이 막던 열여섯 문이 그대로 이 판정을 묻는다. 추천 · 지나친 인연 · 요청(옛 궁합 요청 · 대화 모두) · 되살리기 · 수락 ·
+--    말 보내기 · 상세 궁합 청하기는 문장으로 거절하고, 요청 목록 · 인연(`visible_matches`) · 채팅방 · 메시지(`chat_room_readable` — 두 표의 RLS 도
+--    이것이다) · 끝난 대화 · 요청 소식 · 상대 사진(`may_see_photo`) · 인연 궁합의 동의(`match_consent_holds`)는 비어 있다.
 --    거절 · 취소 · 차단 · 신고 · 참여 끄기 · 탈퇴 · 사주 · 궁합은 안 막는다(ADR 0214 의 6 과 같은 줄). 참여 켜기 · 내 사주 저장 뒤의 자동 참여는
 --    닫혀 있어도 그대로다 — 남에게 보이는 길이 모두 닫혀 있고, 열 때는 성인 확인을 함께 켜 그 확인이 공개 시점이 된다(ADR 0222).
--- 4. **임시 호환 `match_talk_open()`** — OTA 전 깔린 앱이 읽는다(`20270109090000` 머리말 3). 늘 참이던 값이 이제 이 스위치를 따른다 —
---    닫힌 동안 거짓이다. 깔린 앱이 무엇을 그리든 위의 문이 모두 거절한다(ADR 0222 「깔린 앱」).
+-- 4. **`match_talk_open()`** — 깔린 앱이 읽는다. 옛 스위치와 이 스위치가 둘 다 켜져야 참이다. 닫힌 동안 거짓이다.
+--    `20270109090000` 이 옛 스위치를 걷으며 이 스위치만 따르게 바꾼다.
 --
--- 아래 열여섯 본문은 로컬 스택의 `pg_get_functiondef`(`20270109090000` 까지 올린 판)에서 떴고 `adult_check_passed` → `match_open_to`,
+-- 아래 열여섯 본문은 로컬 스택의 `pg_get_functiondef`(`20270106090000` 까지 올린 판 — 운영의 지금 판)에서 떴고 `adult_check_passed` → `match_open_to`,
 -- `adult_check_must_pass` → `match_must_be_open_to` 만 바꿨다. `create or replace` 라 권한은 그대로다.
--- 재는 자리는 `supabase/tests/99_match_waits_closed.test.sql` · `scripts/match-stays-closed.test.ts`.
+-- 재는 자리는 `supabase/tests/99_match_waits_closed.test.sql` · `scripts/match-stays-closed.test.ts` · `scripts/match-closed-boundaries.mjs`.
 
 create table public.match_open_switch (
   id boolean primary key default true check (id),
@@ -76,17 +81,14 @@ $$;
 
 revoke all on function public.match_must_be_open_to(uuid) from public, anon, authenticated, service_role;
 
--- ── 임시 호환 — 깔린 앱이 읽는 값이 이 스위치를 따른다. 권한(anon · authenticated)은 그대로다. 제거 조건은 `20270109090000` 머리말 ──
+-- ── 깔린 앱이 읽는 값 — 옛 스위치와 이 스위치가 둘 다 켜져야 참이다. 권한(anon · authenticated)은 그대로다 ──
 create or replace function public.match_talk_open()
 returns boolean
 language sql
 stable
 security definer
 set search_path to ''
-as $$ select public.match_is_open() $$;
-
-comment on function public.match_talk_open() is
-  '임시 호환 — match_is_open() 을 따른다. OTA 전 깔린 앱이 읽는다. 운영 웹이 20270109090000 뒤로 나가고 모든 계정 채널에 새 OTA 를 확인하면 p_expected_kind · detail_open 과 함께 걷는다 (ADR 0222).';
+as $$ select public.match_talk_is_open() and public.match_is_open() $$;
 
 -- ── 열여섯 문 — 성인 확인을 묻던 자리가 이제 열림 · 성인 확인을 함께 묻는다 ──
 
@@ -521,7 +523,7 @@ end;
 $function$
 ;
 
-CREATE OR REPLACE FUNCTION public.request_match(p_candidate_user_id uuid, p_expected_kind text DEFAULT NULL::text)
+CREATE OR REPLACE FUNCTION public.request_match(p_candidate_user_id uuid)
  RETURNS uuid
  LANGUAGE plpgsql
  SECURITY DEFINER
@@ -534,19 +536,13 @@ declare
   their_summary jsonb;
   their_version integer;
   shown public.discovery_impression;
+  counted record;
   new_request uuid;
+  talk_opens boolean := public.match_talk_is_open();
   talk_match uuid;
 begin
   if actor is null then
     raise exception '로그인이 필요해요. 로그인한 뒤 다시 시도해 주세요.' using errcode = '28000';
-  end if;
-
-  /**
-   * **임시 호환** — 깔린 앱이 어느 판인지 모르는 동안 인자를 남긴다. 새 웹 · 앱은 안 보낸다. `bundled` 를 싣는 옛 화면은 유료 요청을 기대하므로
-   * 무료 대화로 바꿔 세우지 않고 거절한다. 운영 웹이 이 판 뒤로 나가고 모든 계정 채널에 새 OTA 를 확인한 뒤 후속 마이그레이션으로 인자를 걷는다.
-   */
-  if p_expected_kind is not null and p_expected_kind <> 'talk' then
-    raise exception '요청을 처리하지 못했어요. 잠시 뒤 다시 시도해 주세요.' using errcode = '22023';
   end if;
 
   if not public.is_active_account() then
@@ -585,23 +581,37 @@ begin
    * **두 사람 사이 살아 있는 대화는 하나다**(ADR 0215) — 상대가 이미 시작했거나 내가 시작했으면 그 대화를 돌려주고 안 센다. 그때 내 말은 답장이다.
    * 차단 · 닫힌 방은 살아 있는 것이 아니라 아래의 한 문장으로 간다.
    */
-  select q.id into new_request
-  from public.match_request q
-  join public.match m on m.request_id = q.id and m.ended_at is null
-  join public.chat_room r on r.match_id = m.id and r.closed_at is null
-  where q.pair_low = least(actor, p_candidate_user_id)
-    and q.pair_high = greatest(actor, p_candidate_user_id)
-    and q.kind = 'talk' and q.status in ('pending', 'accepted')
-    and not exists (
-      select 1 from public.block b
-      where (b.user_id = actor and b.blocked_user_id = p_candidate_user_id)
-         or (b.user_id = p_candidate_user_id and b.blocked_user_id = actor));
+  if talk_opens then
+    select q.id into new_request
+    from public.match_request q
+    join public.match m on m.request_id = q.id and m.ended_at is null
+    join public.chat_room r on r.match_id = m.id and r.closed_at is null
+    where q.pair_low = least(actor, p_candidate_user_id)
+      and q.pair_high = greatest(actor, p_candidate_user_id)
+      and q.kind = 'talk' and q.status in ('pending', 'accepted')
+      and not exists (
+        select 1 from public.block b
+        where (b.user_id = actor and b.blocked_user_id = p_candidate_user_id)
+           or (b.user_id = p_candidate_user_id and b.blocked_user_id = actor));
 
-  if new_request is not null then
-    return new_request;
+    if new_request is not null then
+      return new_request;
+    end if;
   end if;
 
-  /** 대화는 풀이권을 안 잡는다 — 풀이권은 상세 궁합을 청할 때 잡는다(`request_match_detail`) */
+  /**
+   * **셈 전에 사람 자물쇠를 잡는다** — `start_reading_run_for` 와 같은 자물쇠다(ADR 0106). 계정 행만
+   * 잠그면 풀이 시작과 이 요청이 나란히 마지막 한 번을 읽고 둘 다 지나간다.
+   */
+  perform pg_advisory_xact_lock(hashtext('reading:user:' || actor::text));
+
+  select * into counted from public.reading_credits_used(actor);
+
+  /** **켜지면 대화는 풀이권을 안 잡는다**(ADR 0215) — 옛 요청만 묻는다 */
+  if not talk_opens and counted.used + counted.reserved + counted.requested >= public.reading_credit_limit_for(actor) then
+    raise exception '풀이권이 없어 요청할 수 없습니다. 요청 한 건이 풀이권 한 장을 잡고, 동의가 나면 그 한 장으로 궁합 풀이가 만들어집니다.'
+      using errcode = 'check_violation';
+  end if;
 
   /** 상대 쪽은 **한 문장으로만** 거절하고, 자격은 후보 목록과 **같은 함수**에 묻는다. */
   if not public.discovery_eligible(actor, p_candidate_user_id) then
@@ -636,11 +646,11 @@ begin
       using errcode = '42501';
   end if;
 
-  if public.match_request_too_often(actor, p_candidate_user_id) then
+  if talk_opens and public.match_request_too_often(actor, p_candidate_user_id) then
     raise exception '같은 사람에게는 잠시 뒤 다시 청해 주세요.' using errcode = 'check_violation';
   end if;
 
-  if public.match_talk_too_many_today(actor) then
+  if talk_opens and public.match_talk_too_many_today(actor) then
     raise exception '오늘은 새 대화를 더 열 수 없어요. 내일 다시 시작해 주세요.' using errcode = 'check_violation';
   end if;
 
@@ -652,9 +662,9 @@ begin
     supplied_to_requester, supplied_to_addressee, balance_band
   )
   values (
-    'talk',
-    /** 답이 없어도 대화는 만료로 안 끝난다 — 끝내는 길은 거둠 · 차단이다 */
-    'infinity'::timestamptz,
+    case when talk_opens then 'talk' else 'bundled' end,
+    /** 답이 없어도 대화는 만료로 안 끝난다 — 끝내는 길은 거절 · 거둠 · 차단이다 */
+    case when talk_opens then 'infinity'::timestamptz else now() + public.match_request_ttl() end,
     actor, p_candidate_user_id,
     my_version, their_version,
     shown.id, shown.policy_version,
@@ -668,11 +678,13 @@ begin
    * **대화 방은 수락 없이 바로 열린다**(D1, ADR 0215) — 글자는 없다. 동의 없이 상대에게 열 글자가 아니다(ADR 0012).
    * 여덟 글자는 상세 궁합의 누름이 베낀다. 방은 `match` 의 트리거가 세운다.
    */
-  insert into public.match (request_id, user_low, user_high)
-  values (new_request, least(actor, p_candidate_user_id), greatest(actor, p_candidate_user_id))
-  returning id into talk_match;
+  if talk_opens then
+    insert into public.match (request_id, user_low, user_high)
+    values (new_request, least(actor, p_candidate_user_id), greatest(actor, p_candidate_user_id))
+    returning id into talk_match;
+  end if;
 
-  if not public.request_news_is_recent(p_candidate_user_id, actor, 'request_received') then
+  if not talk_opens or not public.request_news_is_recent(p_candidate_user_id, actor, 'request_received') then
     insert into public.notification (user_id, kind, request_id, match_id)
     values (p_candidate_user_id, 'request_received', new_request, talk_match);
   else
@@ -761,6 +773,11 @@ begin
     return;
   end if;
 
+  /** 끈 뒤에도 응답을 잃은 재전송은 위에서 답을 받는다 — 새 청함만 닫는다 */
+  if not public.match_talk_is_open() then
+    raise exception '상세 궁합은 아직 열리지 않았어요.' using errcode = '55000';
+  end if;
+
   select * into the_match from public.match m where m.id = p_match_id;
 
   if not found or actor not in (the_match.user_low, the_match.user_high) then
@@ -817,7 +834,7 @@ begin
     where r.match_id = p_match_id and r.kind = 'match' and r.status = 'running'
       and r.created_at > now() - public.reading_run_timeout()
   ) then
-    /** 줄이 끝났어도(누른 뒤 참여 끔) 도는 시도의 답이다 — 마지막 상세 줄, 없으면 대화 요청의 번호 */
+    /** 줄이 끝났어도(누른 뒤 참여 끔) 도는 시도의 답이다 — 마지막 상세 줄, 없으면 옛 요청의 번호 */
     select * into held from public.match_request q
     where q.detail_match_id = p_match_id or q.id = the_match.request_id
     order by (q.kind = 'detail') desc, q.created_at desc
@@ -956,9 +973,10 @@ begin
   end if;
 
   /**
-   * **기한이 지난 요청은 답이 아니라 만료다** — 상세의 72시간이다. 대화는 기한이 없다.
+   * **기한이 지난 요청은 답이 아니라 만료다.**
    *
-   * 미는 일은 cron 이 하지만 그것이 늦을 수 있다. 늦은 사이에 누르면 이미 풀린 풀이권으로 시도가 선다.
+   * 미는 일은 cron 이 하지만 그것이 늦을 수 있다. 늦은 사이에 수락되면 이미 풀린
+   * 풀이권으로 Match 가 서고, 그러면 예약이 지키던 약속이 깨진다.
    */
   if req.expires_at <= now() then
     update public.match_request
@@ -1010,10 +1028,7 @@ begin
     return 'invalidated';
   end if;
 
-  /**
-   * **거절은 없다** — 대화의 끝은 차단 · 신고다. 옛 앱의 거절 단추가 여기 닿으면 아무것도 안 바꾸고 거절한다.
-   * 상세의 `p_accept=false` 는 어느 앱에도 없는 직접 호출이다. 영구 거절로 굳히지 않는다 — 취소로 끝나고 다시 청할 수 있다.
-   */
+  /** 상세의 `p_accept=false` 는 옛 앱에도 없는 직접 호출이다. 영구 거절로 굳히지 않는다 — 취소로 끝나고 다시 청할 수 있다 */
   if p_accept is not true and req.kind = 'detail' then
     update public.match_request
     set status = 'cancelled', decided_at = now()
@@ -1023,7 +1038,24 @@ begin
   end if;
 
   if p_accept is not true then
-    raise exception '대화는 거절 대신 차단으로 끝낼 수 있어요.' using errcode = '22023';
+    update public.match_request
+    set status = 'rejected', decided_at = now()
+    where id = req.id;
+
+    /**
+     * 옛 앱의 대화 거절은 방을 닫고 말이 없다 — 거절 단추 없는 흐름에서 그 소식은 차단을 뜻하게 된다. 차단과 같은 모양이다(ADR 0120 · 0215).
+     * 다시 못 청하는 것은 유일 색인이 든다(ADR 0009).
+     */
+    if req.kind = 'talk' then
+      perform public.close_talk_room(req.id, actor);
+      return 'rejected';
+    end if;
+
+    -- 거절은 요청한 쪽에만 알린다. 내가 거절했다는 것은 내가 안다.
+    insert into public.notification (user_id, kind, request_id)
+    values (req.requester_user_id, 'request_rejected', req.id);
+
+    return 'rejected';
   end if;
 
   /** 수락은 인연을 여는 일이라 성인 확인을 묻는다 — 거절 · 취소 · 차단 · 신고는 확인 없이 된다(ADR 0214). 상대가 미확인이면 없는 요청과 같은 답이다 */
@@ -1033,7 +1065,7 @@ begin
     raise exception '요청을 찾지 못했습니다.' using errcode = '42501';
   end if;
 
-  /** **대화의 답** — 옛 앱의 수락 단추가 여기 닿는다. 받은 사람의 말과 같은 답이다. 방은 이미 있고 시도 · 글자 · 차감이 없다 */
+  /** **대화의 답** — 옛 앱의 수락 단추가 여기 닿는다. 방은 이미 있고 시도 · 글자 · 차감이 없다 */
   if req.kind = 'talk' then
     update public.match_request
     set status = 'accepted', decided_at = now()
@@ -1052,64 +1084,115 @@ begin
    * **상세 궁합의 누름**(D11-1, ADR 0215) — 동의 시점이 여기다. 지금 글자를 베끼고 같은 트랜잭션에서 시도를 열어 얼린다.
    * 위에서 입력 판을 재었으므로 요청 때의 입력과 베끼는 글자가 같은 입력이다(D2).
    *
-   * **못 열면 누름 전체가 되돌아간다.** 시도 없는 동의를 남기면 글자만 열린다.
+   * **못 열면 누름 전체가 되돌아간다.** 옛 길(아래)은 동의가 먼저 서고 버튼이 남았지만, 여기는 시도 없는 동의를 남기면 글자만 열린다.
    * 까닭(구매자의 한도 · 잔액)은 누른 사람에게 말하지 않는다 — 구매자의 지갑이다.
-   *
-   * 닫힌 방의 누름은 만들지 않는다 — 정지 · 탈퇴 신청의 뒤에 남은 줄을 끝낸다.
    */
-  if exists (select 1 from public.chat_room r where r.match_id = req.detail_match_id and r.closed_at is not null) then
+  if req.kind = 'detail' then
+    /** 닫힌 방의 누름은 만들지 않는다 — 정지 · 탈퇴 신청의 뒤에 남은 줄을 끝낸다 */
+    if exists (select 1 from public.chat_room r where r.match_id = req.detail_match_id and r.closed_at is not null) then
+      update public.match_request
+      set status = 'cancelled', decided_at = now()
+      where id = req.id;
+
+      return 'cancelled';
+    end if;
+
+    select lo.current_chart, hi.current_chart, lo.chart_engine_version, hi.chart_engine_version
+      into copied_low, copied_high, engine_low, engine_high
+    from public.match m
+    join public.app_user low_user on low_user.id = m.user_low
+    join public.person lo on lo.id = low_user.self_person_id
+    join public.app_user high_user on high_user.id = m.user_high
+    join public.person hi on hi.id = high_user.self_person_id
+    where m.id = req.detail_match_id;
+
+    if copied_low is null or copied_high is null then
+      update public.match_request
+      set status = 'invalidated', decided_at = now()
+      where id = req.id;
+
+      insert into public.notification (user_id, kind, request_id)
+      values (req.requester_user_id, 'request_invalidated', req.id),
+             (req.addressee_user_id, 'request_invalidated', req.id);
+
+      return 'invalidated';
+    end if;
+
     update public.match_request
-    set status = 'cancelled', decided_at = now()
+    set status = 'accepted', decided_at = now()
     where id = req.id;
 
-    return 'cancelled';
-  end if;
+    update public.match m
+    set chart_low = copied_low,
+        chart_high = copied_high,
+        chart_engine_low = engine_low,
+        chart_engine_high = engine_high
+    where m.id = req.detail_match_id;
 
-  select lo.current_chart, hi.current_chart, lo.chart_engine_version, hi.chart_engine_version
-    into copied_low, copied_high, engine_low, engine_high
-  from public.match m
-  join public.app_user low_user on low_user.id = m.user_low
-  join public.person lo on lo.id = low_user.self_person_id
-  join public.app_user high_user on high_user.id = m.user_high
-  join public.person hi on hi.id = high_user.self_person_id
-  where m.id = req.detail_match_id;
+    begin
+      select f.run_id into opened_run
+      from public.start_reading_run_for(
+        req.requester_user_id, 'match', 'match-accept:' || req.id::text,
+        null, null, req.detail_match_id) f;
+    exception
+      when check_violation or sqlstate '53400' then
+        opened_run := null;
+    end;
 
-  if copied_low is null or copied_high is null then
-    update public.match_request
-    set status = 'invalidated', decided_at = now()
-    where id = req.id;
+    if opened_run is null then
+      raise exception '지금은 만들 수 없어요. 잠시 뒤 다시 눌러 주세요.' using errcode = 'check_violation';
+    end if;
 
-    insert into public.notification (user_id, kind, request_id)
-    values (req.requester_user_id, 'request_invalidated', req.id),
-           (req.addressee_user_id, 'request_invalidated', req.id);
-
-    return 'invalidated';
+    return 'accepted';
   end if;
 
   update public.match_request
   set status = 'accepted', decided_at = now()
   where id = req.id;
 
-  update public.match m
-  set chart_low = copied_low,
-      chart_high = copied_high,
-      chart_engine_low = engine_low,
-      chart_engine_high = engine_high
-  where m.id = req.detail_match_id;
+  /**
+   * **동의 당시 여덟 글자를 베낀다** (#68). 값은 `person.current_chart` 에서 오고 앱은
+   * 한 글자도 안 댄다 — 넘기면 DB 는 그 값이 그 입력에서 나온 것인지 알 수 없다.
+   */
+  insert into public.match (
+    request_id, user_low, user_high,
+    chart_low, chart_high, chart_engine_low, chart_engine_high
+  )
+  select
+    req.id,
+    least(req.requester_user_id, req.addressee_user_id),
+    greatest(req.requester_user_id, req.addressee_user_id),
+    lo.current_chart,
+    hi.current_chart,
+    lo.chart_engine_version,
+    hi.chart_engine_version
+  from public.app_user low_user
+  join public.person lo on lo.id = low_user.self_person_id
+  join public.app_user high_user
+    on high_user.id = greatest(req.requester_user_id, req.addressee_user_id)
+  join public.person hi on hi.id = high_user.self_person_id
+  where low_user.id = least(req.requester_user_id, req.addressee_user_id)
+  returning id into new_match;
 
+  -- 성립은 **양쪽 다** 알아야 하는 사건이다.
+  insert into public.notification (user_id, kind, request_id, match_id)
+  values (req.requester_user_id, 'request_accepted', req.id, new_match),
+         (req.addressee_user_id, 'request_accepted', req.id, new_match);
+
+  /**
+   * **동의가 예약을 쓴다** — 시도는 **요청자 이름으로** 선다.
+   *
+   * 여기서 던지면 **수락 전체가 되돌아간다.** 시도를 못 여는 이유는 여럿이고 그중 어느
+   * 것도 「동의하지 말라」는 뜻이 아니다. 동의는 두 사람이 정한 사실이므로 그 사실을 못
+   * 여는 시도가 취소하게 두지 않는다.
+   */
   begin
-    select f.run_id into opened_run
-    from public.start_reading_run_for(
+    perform public.start_reading_run_for(
       req.requester_user_id, 'match', 'match-accept:' || req.id::text,
-      null, null, req.detail_match_id) f;
+      null, null, new_match);
   exception
-    when check_violation or sqlstate '53400' then
-      opened_run := null;
+    when others then null;
   end;
-
-  if opened_run is null then
-    raise exception '지금은 만들 수 없어요. 잠시 뒤 다시 눌러 주세요.' using errcode = 'check_violation';
-  end if;
 
   return 'accepted';
 end;

@@ -12,8 +12,11 @@
 -- 새 OTA 가 닿은 것을 확인한 뒤 후속 마이그레이션으로 셋을 함께 걷는다. 새 웹 · 앱은 셋 다 안 부른다 · 안 읽는다.
 --   1. `request_match` 의 `p_expected_kind` — `null` · `talk` 만 받는다. 새 웹 · 앱은 안 보낸다. `bundled` 를 싣는 옛 화면은 `22023` 이다.
 --   2. `my_match_detail_state.detail_open` — 늘 참이다. 칸을 빼면 그 칸을 읽는 옛 화면이 꺼짐으로 읽는다.
---   3. `match_talk_open()` — 늘 참이다. 지우면 OTA 전 깔린 앱이 `PGRST202` 를 꺼짐으로 읽고 `bundled` 를 보내 `22023` 을 받는다 —
---      대화를 못 연다. 참이면 그 앱이 「대화 시작」을 그리고 `talk` 를 보낸다.
+--   3. `match_talk_open()` — 인연의 스위치(`match_is_open()`, ADR 0222)를 따른다. 지우면 OTA 전 깔린 앱이 `PGRST202` 를 꺼짐으로 읽고 `bundled` 를
+--      보내 `22023` 을 받는다 — 연 뒤에도 대화를 못 연다. 참이면 그 앱이 「대화 시작」을 그리고 `talk` 를 보낸다. 닫힌 동안은 거짓이고 문이 모두 거절한다.
+--
+-- **인연이 닫힌 동안 아래 문도 닫혀 있다**(ADR 0222) — 다시 쓰는 요청 · 답 · 상세 궁합 문은 앞 파일 `20270106120000` 의 판정(`match_open_to` ·
+-- `match_must_be_open_to`)을 묻는다. 운영에 오르기 전에 고쳤다 — 이 파일이 성인 확인만 물으면 이 파일까지 커밋된 순간 대화가 열린다.
 -- 반환 칸의 글자 · 일간(`my_match_scope.my_chart` · `partner_chart`, `my_readings.day_master_*`)은 늘 null 이다 — 새 흐름은 글자를 돌려주지 않는다(ADR 0215).
 
 do $$
@@ -68,7 +71,7 @@ begin
     raise exception '이용이 정지된 계정입니다.' using errcode = '42501';
   end if;
 
-  perform public.adult_check_must_pass(actor);
+  perform public.match_must_be_open_to(actor);
 
   if p_candidate_user_id is null or p_candidate_user_id = actor then
     raise exception '지금은 이 사람에게 요청할 수 없습니다. 후보 목록을 새로 열어 확인해 주세요.'
@@ -329,9 +332,9 @@ begin
   end if;
 
   /** 수락은 인연을 여는 일이라 성인 확인을 묻는다 — 거절 · 취소 · 차단 · 신고는 확인 없이 된다(ADR 0214). 상대가 미확인이면 없는 요청과 같은 답이다 */
-  perform public.adult_check_must_pass(actor);
+  perform public.match_must_be_open_to(actor);
 
-  if not public.adult_check_passed(req.requester_user_id) then
+  if not public.match_open_to(req.requester_user_id) then
     raise exception '요청을 찾지 못했습니다.' using errcode = '42501';
   end if;
 
@@ -640,7 +643,7 @@ begin
     raise exception '이용이 정지된 계정입니다.' using errcode = '42501';
   end if;
 
-  perform public.adult_check_must_pass(actor);
+  perform public.match_must_be_open_to(actor);
 
   if p_client_key is null or length(p_client_key) not between 8 and 80 then
     raise exception 'detail: the client key has no shape' using errcode = '22023';
@@ -703,7 +706,7 @@ begin
     raise exception '결과를 만들 수 있는 대상이 아닙니다.' using errcode = 'check_violation';
   end if;
 
-  if not public.adult_check_passed(partner) then
+  if not public.match_open_to(partner) then
     raise exception '결과를 만들 수 있는 대상이 아닙니다.' using errcode = 'check_violation';
   end if;
 
@@ -1198,17 +1201,17 @@ $function$
 
 ;
 
--- ── 임시 호환 3 — 스위치를 읽던 깔린 앱이 켜진 쪽을 그리게 늘 참이다. 권한(anon · authenticated)은 그대로다. 제거 조건은 머리말 ──
+-- ── 임시 호환 3 — 스위치를 읽던 깔린 앱이 인연의 스위치를 따른다(ADR 0222). 권한(anon · authenticated)은 그대로다. 제거 조건은 머리말 ──
 create or replace function public.match_talk_open()
 returns boolean
 language sql
 stable
 security definer
 set search_path to ''
-as $$ select true $$;
+as $$ select public.match_is_open() $$;
 
 comment on function public.match_talk_open() is
-  '임시 호환 — 늘 참. OTA 전 깔린 앱이 스위치를 읽는다. 운영 웹이 20270109090000 뒤로 나가고 모든 계정 채널에 새 OTA 를 확인하면 p_expected_kind · detail_open 과 함께 걷는다.';
+  '임시 호환 — match_is_open() 을 따른다(ADR 0222). OTA 전 깔린 앱이 스위치를 읽는다. 운영 웹이 20270109090000 뒤로 나가고 모든 계정 채널에 새 OTA 를 확인하면 p_expected_kind · detail_open 과 함께 걷는다.';
 
 -- ── 걷는 것 — 위의 문이 더는 안 부른다 ──
 drop function public.reading_run_request_kind(uuid);

@@ -1,4 +1,4 @@
--- 인연은 닫힌 채 선다 (`20270110090000`, ADR 0222)
+-- 인연은 닫힌 채 선다 (`20270106120000`, ADR 0222). 마이그레이션 경계마다의 확인은 `scripts/match-closed-boundaries.mjs`
 --
 --   1. **기본값** — 스위치의 첫 줄과 칸의 기본값은 닫힘이다. 시험의 DB 는 `00_helpers` 가 열어 둔다(열린 동안을 재는 나머지 시험의 까닭)
 --   2. **열림** — 닫기 전에 요청 · 인연 · 말 · 사진 · 지나친 사람을 세워 둔다
@@ -7,8 +7,9 @@
 --   5. **권한** — 스위치는 사용자가 못 읽고 못 고친다. 열림 여부(`match_is_open`)만 누구나 읽는다
 --   6. **실패 때 닫힘** — 스위치 줄이 없으면 닫힌 것이다
 --   7. **다시 엶** — 세워 둔 것이 그대로 돌아온다. 지운 것은 없다
+--   8. **새 문** — 인연의 표를 읽는 사용자 문은 닫힘 판정을 지나거나, 이름이 아래 목록(떠나는 길 · 내 것만 보는 문)에 있다
 begin;
-select plan(52);
+select plan(53);
 
 create or replace function pg_temp.participant(mail text, who text, summary jsonb)
 returns uuid
@@ -192,5 +193,19 @@ select pg_temp.acting((select kim from folks));
 select lives_ok($$select * from public.my_discovery_board()$$, '7. 열면 카드가 돌아온다');
 select is((select count(*)::int from public.my_matches()), 1, '7. 세워 둔 인연이 그대로 돌아온다');
 select is(public.send_chat_message((select id from seen where what = 'kim-lee'), '다시 안녕', gen_random_uuid()), 'sent', '7. 말도 다시 보낸다');
+
+-- ── 8. 새 문 ────────────────────────────────────────────────────────────────
+-- 인연의 표를 본문에서 부르는 `authenticated` 문이 판정(또는 판정을 지나는 문)을 안 부르면 이 목록에 들어야 한다. 새 문이 둘 다 빠뜨리면 붉다.
+-- 본문의 글자를 보는 셈이라 표를 다른 함수로 감싸 읽는 문은 그 함수를 보아야 한다 — 그 함수가 판정을 안 부르면 여기서 안 걸린다.
+select set_eq(
+  $$select p.proname::text
+    from pg_proc p join pg_namespace n on n.oid = p.pronamespace
+    where n.nspname = 'public'
+      and has_function_privilege('authenticated', p.oid, 'execute')
+      and p.prosrc ~ 'public\.(match_request|match|chat_room|chat_message|discovery_profile|discovery_candidate|discovery_candidate_slot|discovery_passed|discovery_impression|notification)\M'
+      and p.prosrc !~ 'public\.(match_open_to|match_must_be_open_to|visible_matches|chat_room_readable|may_see_photo|discovery_pair_eligible|match_consent_holds|visible_notifications|my_match_requests|my_discovery_board)\('$$,
+  $$values ('block_user'), ('cancel_match_request'), ('report_user'), ('request_account_deletion'),
+           ('discovery_shown_to_me'), ('my_reading_orders'), ('save_service_survey'), ('service_survey_context')$$,
+  '8. 인연 표를 읽는 사용자 문은 닫힘 판정을 지나거나 떠나는 길 · 내 것만 보는 문의 목록에 있다');
 
 select * from finish();
