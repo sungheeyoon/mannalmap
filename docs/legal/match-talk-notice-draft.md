@@ -1,6 +1,6 @@
 # 대화 · 상세 궁합의 고지 — 옮긴 판 (#938 · #961)
 
-> **코드로 옮겼다(`notice-v13`, 2026-11-04).** 대화가 유일한 흐름이 되면서 스위치(`match_talk_switch`)가 없어졌고, 그 PR 이 아래 줄을 `src/lib/consent/notice.ts` · `src/lib/brand/terms.ts` · `src/lib/brand/refund.ts` · `src/lib/discovery/index.ts` 로 옮겼다 — 그 배포가 곧 「켜는 날」이다. 게시는 그 배포가 운영에 나가는 때다. 경과 줄은 2026-11-04 운영 집계에서 옛 인연 0 이라 뺐다. 법률 자문이 아니고 변호사 검토 전이다. 「적법」이라는 뜻이 아니다.
+> **코드로 옮겼다(`notice-v14`, 2026-11-04 — `notice-v13`(애플 로그인 · 이용 정지 기록, ADR 0220) 위의 판).** 대화가 유일한 흐름이 되면서 스위치(`match_talk_switch`)가 없어졌고, 그 PR 이 아래 줄을 `src/lib/consent/notice.ts` · `src/lib/brand/terms.ts` · `src/lib/brand/refund.ts` · `src/lib/discovery/index.ts` 로 옮겼다 — 그 배포가 곧 「켜는 날」이다. 게시는 그 배포가 운영에 나가는 때다. 경과 줄은 2026-11-04 운영 집계에서 옛 인연 0 이라 뺐다. 법률 자문이 아니고 변호사 검토 전이다. 「적법」이라는 뜻이 아니다.
 > 사실의 근거는 `docs/legal/privacy-grounds.md` · `docs/legal/terms-grounds.md` 의 「상세 궁합」 · 「대화 먼저 · 상세 궁합」 절. 정책의 원본은 PRD `docs/product/prd/matching.md` §6.6.
 
 ## 무엇이 내용 개정인가 — 판단과 근거
@@ -29,7 +29,7 @@ ADR 0095 의 기준은 「처리 항목 · 목적 · 보유기간 · 국외 이�
 3. 구매자의 상세 요청 취소 단추가 웹 · 앱에 섰는지 본다(웹은 main, 앱은 #980) — 없으면 제14조의 취소가 없는 길을 약속한다. 멈춘다.
 4. 옛 요청을 잰다(runbook 「켜기 직전 재측정」). 옛 인연이 있으면 아래 「경과 줄」을 싣는다. 0 이면 뺀다.
 5. 아래 줄을 코드로 옮기고 같은 PR 에서 `terms-draft.md` · `refund-policy.md` · `privacy-v8-draft.md` 를 맞춘다.
-6. 시험 `scripts/match-talk-stays-off.test.ts` 「게시 고지는 그대로다」를 그날의 판으로 고친다 — 안 고치면 붉다. `NOTICE_VERSION` · `NOTICE_ACK_FLOOR` 를 그날의 다음 판으로 올린다(지금 `notice-v12` · 기준 `notice-v8`, `src/lib/consent/notice.ts:94` · `:111`). 그 판 주석에 내용 개정이라 적는다.
+6. 시험 `scripts/match-talk-stays-off.test.ts` 「게시 고지는 그대로다」를 그날의 판으로 고친다 — 안 고치면 붉다. `NOTICE_VERSION` · `NOTICE_ACK_FLOOR` 를 그날의 다음 판으로 올린다 — 올렸다: `notice-v13` · 기준 `notice-v13`(애플 로그인 · 이용 정지 기록의 판, ADR 0220) 위에 `notice-v14` · 기준 `notice-v14`(`src/lib/consent/notice.ts` 의 `NOTICE_VERSION` · `NOTICE_ACK_FLOOR`). 그 판 주석에 내용 개정이라 적는다.
 7. 시행일이 서 있으면 약관 제4조의 공지를 먼저 한다.
 8. **앱 배포를 먼저 끝내고 스위치를 켠다** — 게시와 켜기 사이에 새 판이 사실보다 앞서는 틈은 짧게 둔다. 되돌리면(런북 「대화를 되돌리기」) 이미 선 대화 · 상세는 그대로이므로 판을 안 내린다.
 9. #770 에 줄을 더한다.
