@@ -1,10 +1,10 @@
--- 요청 · 동의 · Match — **동의는 사람이 아니라 그때 그 입력에 대한 것이다.**
+-- 대화 시작 · 답 · Match — **카드에서 바로 대화가 열리고, 받은 사람의 답이 대화를 잇는다**(ADR 0215).
 --
 -- 여기서 재는 것은 상태 머신의 규칙이 **DB 안에서** 지켜지는가다. 「후보로 본 적 있는
--- 사람에게만」, 「살아 있는 결정은 한 쌍에 하나」, 「수락 순간 판본을 다시 본다」,
--- 「없는 사람과 못 보는 사람의 답이 같다」.
+-- 사람에게만」, 「살아 있는 대화는 한 쌍에 하나」, 「대화는 명식 · 풀이권 · 기한에 안 매인다」,
+-- 「거절은 없다」, 「없는 사람과 못 보는 사람의 답이 같다」.
 begin;
-select plan(93);
+select plan(89);
 
 /**
  * 참여자 하나를 세우는 손잡이.
@@ -119,10 +119,10 @@ grant select on asked to authenticated;
 
 select isnt((select request_id from asked), null, '요청이 난다');
 
-select throws_ok(
-  format($$select public.request_match(%L::uuid)$$, (select lee from folks)),
-  '42501', '지금은 이 사람에게 요청할 수 없습니다. 후보 목록을 새로 열어 확인해 주세요.',
-  '같은 쌍에 살아 있는 결정은 하나뿐이다');
+select is(
+  public.request_match((select lee from folks)),
+  (select request_id from asked),
+  '같은 쌍에 살아 있는 대화는 하나뿐이다 — 다시 불러도 그 대화를 돌려준다');
 
 select is(
   (select count(*)::int from public.my_discovery_board()
@@ -172,7 +172,7 @@ select is(
   array['木', '火'],
   '받은 쪽이 읽는 오행은 **뒤집혀** 나온다 — 화면이 방향을 다시 계산하지 않는다');
 
--- ── 수락 ─────────────────────────────────────────────────────────────────────
+-- ── 답 — 옛 앱의 수락 단추는 받은 사람의 말과 같은 답이다 ────────────────────
 
 /**
  * **`null` 은 답이 아니다.**
@@ -192,12 +192,12 @@ select is(
 select is(
   public.respond_to_match_request((select request_id from asked), true),
   'accepted',
-  '수락하면 accepted 다');
+  '답하면 accepted 다');
 
 select is(
   (select count(*)::int from public.my_matches()),
   1,
-  'Match 가 하나 난다');
+  'Match 는 하나다 — 대화를 열 때 섰다');
 
 select is(
   (select partner_user_id from public.my_matches()),
@@ -207,12 +207,12 @@ select is(
 select is(
   public.respond_to_match_request((select request_id from asked), true),
   'accepted',
-  '두 번 수락해도 지금 상태를 그대로 돌려준다');
+  '두 번 답해도 지금 상태를 그대로 돌려준다');
 
 select is(
   (select count(*)::int from public.my_matches()),
   1,
-  '중복 수락이 Match 를 둘로 만들지 않는다');
+  '중복 답이 Match 를 둘로 만들지 않는다');
 
 select is(
   (select partner_nickname from public.my_matches()),
@@ -222,7 +222,7 @@ select is(
 select is(
   (select count(*)::int from public.my_notifications() where kind = 'request_accepted'),
   1,
-  '성립은 받은 쪽도 알림으로 받는다');
+  '답은 받은 쪽도 알림으로 받는다');
 
 /**
  * **Match 는 `user_person_access` 에 아무 행도 만들지 않는다**(US 46).
@@ -238,7 +238,7 @@ select is(
 select pg_temp.acting((select kim from folks));
 select is((select partner_nickname from public.my_matches()), '이요', '보낸 쪽에서 상대는 이요다');
 
--- ── 입력이 바뀌면 pending 이 무효가 된다 ──────────────────────────────────────
+-- ── 대화는 명식에 안 매인다 — 입력을 고쳐도 답 전 대화가 그대로 산다 ──────────
 create temporary table asked_park as
 select public.request_match((select park from folks)) as request_id;
 grant select on asked_park to authenticated;
@@ -272,25 +272,24 @@ select lives_ok(
 
 select is(
   (select status from public.my_match_requests() where request_id = (select request_id from asked_park)),
-  'invalidated',
-  'Evidence 를 바꾸는 수정은 pending 을 무효로 만든다');
+  'pending',
+  '출생 입력을 고쳐도 답 전 대화는 무효가 안 된다');
 
 select is(
   (select count(*)::int from public.my_notifications() where kind = 'request_invalidated'),
-  1,
-  '무효화는 **양쪽 다** 알림을 받는다 — 받은 쪽');
+  0,
+  '무효 알림이 없다 — 받은 쪽');
 
 select pg_temp.acting((select kim from folks));
 select is(
   (select count(*)::int from public.my_notifications() where kind = 'request_invalidated'),
-  1,
-  '무효화는 양쪽 다 알림을 받는다 — 청한 쪽');
+  0,
+  '무효 알림이 없다 — 시작한 쪽');
 
--- ── 수락하는 순간에도 판본을 다시 본다 ───────────────────────────────────────
---
--- 아래 상태는 **앱 경로로는 만들 수 없다** — 판본을 고치는 그 트랜잭션이 pending 을
--- 이미 거두기 때문이다. 무효화와 수락이 겹치는 찰나를 손으로 세워 두고, 그때도
--- 수락이 Match 를 만들지 않는지를 잰다(US 44).
+/** 김이 박과의 대화를 거둔다 — 아래에서 낡은 카드로 새 대화를 못 연다는 것을 재려면 살아 있는 대화가 없어야 한다 */
+select is(public.cancel_match_request((select request_id from asked_park)), 'cancelled', '김이 답 전 대화를 거둔다');
+
+-- ── 요약이 바뀐 사람에게는 낡은 카드로 대화를 못 연다 ────────────────────────
 select pg_temp.acting((select park from folks));
 select tests.ensure_discovery_participation(
   (select park_person from persons), pg_temp.summary(0, 0, 4, 4, 0), tests.need());
@@ -365,9 +364,8 @@ select is(
 set local role authenticated;
 
 /**
- * **잡아 둔 것과 지금이 다르면 무효다** — 견주는 값이 판본 id 에서 **입력 버전**으로
- * 옮겨 갔다(ADR 0071 · #69). 여기서 옛 버전을 도로 적어 두고 수락을 눌러, 수락이
- * 실제로 그 칸을 읽는지 잰다.
+ * **대화의 답은 입력 버전을 안 본다**(ADR 0215) — 잡아 둔 버전을 옛것으로 도로 적어 두고 답해도
+ * 무효가 아니라 답이다. 버전을 재는 것은 상세의 누름이다(`99_match_talk_and_detail`).
  */
 reset role;
 update public.match_request
@@ -378,47 +376,55 @@ set local role authenticated;
 select pg_temp.acting((select park from folks));
 select is(
   public.respond_to_match_request((select request_id from asked_again), true),
-  'invalidated',
-  '잡아 둔 입력 버전과 지금 버전이 다르면 수락이 아니라 무효다');
+  'accepted',
+  '잡아 둔 입력 버전이 지금과 달라도 대화의 답은 답이다');
 
 select pg_temp.acting((select kim from folks));
 select is(
   (select count(*)::int from public.my_matches()),
-  1,
-  '무효가 된 요청은 Match 를 만들지 않는다');
+  2,
+  '김에게 살아 있는 대화는 이 · 박 둘이다 — 거둔 대화는 목록에서 내려갔다');
 
--- ── 거절은 되돌리지 않는다 ───────────────────────────────────────────────────
+-- ── 거절은 없다 — 대화의 끝은 차단 · 신고다 ─────────────────────────────────
 create temporary table asked_choi as
 select public.request_match((select choi from folks)) as request_id;
 grant select on asked_choi to authenticated;
 
 select pg_temp.acting((select choi from folks));
+select throws_ok(
+  format($$select public.respond_to_match_request(%L::uuid, false)$$, (select request_id from asked_choi)),
+  '22023', null,
+  '옛 앱의 거절 단추는 거절된다');
+
 select is(
-  public.respond_to_match_request((select request_id from asked_choi), false),
-  'rejected',
-  '거절하면 rejected 다');
+  (select status from public.my_match_requests() where request_id = (select request_id from asked_choi)),
+  'pending',
+  '거절이 거절되면 대화는 그대로 답을 기다린다');
 
 select pg_temp.acting((select kim from folks));
 select is(
   (select count(*)::int from public.my_notifications() where kind = 'request_rejected'),
-  1,
-  '거절은 청한 쪽에만 알린다');
+  0,
+  '시작한 쪽에 거절 소식이 안 간다');
 
-select throws_ok(
-  format($$select public.request_match(%L::uuid)$$, (select choi from folks)),
-  '42501', '지금은 이 사람에게 요청할 수 없습니다. 후보 목록을 새로 열어 확인해 주세요.',
-  '거절한 사람에게 다시 두드리는 길은 열지 않는다');
+select is(
+  public.request_match((select choi from folks)),
+  (select request_id from asked_choi),
+  '다시 불러도 같은 대화다');
 
 select is(
   (select count(*)::int from public.my_discovery_board()
    where candidate_user_id = (select choi from folks)),
   0,
-  '거절한 사람은 후보 목록에도 서지 않는다');
+  '대화 중인 사람은 후보 목록에 서지 않는다');
 
 -- ── 차단 ─────────────────────────────────────────────────────────────────────
 select is(public.block_user((select lee from folks)), true, '차단한다');
 
-select is((select count(*)::int from public.my_matches()), 0, '차단하면 Match 가 목록에서 빠진다');
+select is(
+  (select count(*)::int from public.my_matches() where partner_user_id = (select lee from folks)),
+  0,
+  '차단하면 Match 가 목록에서 빠진다');
 
 select pg_temp.acting((select lee from folks));
 select is((select count(*)::int from public.my_matches()), 0, '차단당한 쪽에서도 빠진다');
@@ -439,10 +445,8 @@ select is(
 set local role authenticated;
 
 /**
- * **차단은 살아 있던 요청을 함께 거둔다** — 그리고 방향에 따라 이름이 다르다.
- *
- * 박이 청하고 김이 차단하면 김이 거절한 것이다. 상대가 받는 것은 평범한 거절 알림이고,
- * 차단했다는 사실은 알리지 않는다.
+ * **두 사람 사이 살아 있는 대화는 하나다** — 상대가 먼저 열었으면 내 호출은 그 대화를 돌려준다.
+ * 그 대화를 차단하면 방이 닫히고, 차단했다는 사실은 알리지 않는다(ADR 0120 · 0215).
  */
 select pg_temp.acting((select park from folks));
 -- 박도 자기 요약이 바뀌었으므로 자기가 든 옛 기록은 더 이상 지금의 자기가 아니다.
@@ -453,19 +457,27 @@ create temporary table asked_kim as
 select public.request_match((select kim from folks)) as request_id;
 grant select on asked_kim to authenticated;
 
+select is(
+  (select request_id from asked_kim),
+  (select request_id from asked_again),
+  '김이 먼저 연 대화가 있으면 박의 호출은 그 대화다');
+
 select pg_temp.acting((select kim from folks));
-select is(public.block_user((select park from folks)), true, '받은 요청이 있는 사람을 차단한다');
+select is(public.block_user((select park from folks)), true, '대화 중인 사람을 차단한다');
+
+reset role;
+select isnt(
+  (select r.closed_at from public.chat_room r join public.match m on m.id = r.match_id
+   where m.request_id = (select request_id from asked_kim)),
+  null,
+  '차단하면 그 대화의 방이 닫힌다');
+set local role authenticated;
 
 select pg_temp.acting((select park from folks));
 select is(
-  (select status from public.my_match_requests() where request_id = (select request_id from asked_kim)),
-  'rejected',
-  '받은 쪽이 차단하면 그 요청은 거절로 거둬진다');
-
-select is(
   (select count(*)::int from public.my_notifications() where kind = 'request_rejected'),
-  1,
-  '상대는 평범한 거절 알림을 받는다');
+  0,
+  '상대에게 거절 소식이 안 간다 — 차단을 알리지 않는다');
 
 select pg_temp.acting((select kim from folks));
 select throws_ok(
@@ -558,19 +570,19 @@ select is(
 set local role authenticated;
 
 select pg_temp.acting((select lee from folks));
-select throws_ok(
-  format($$select public.respond_to_match_request(%L::uuid, true)$$,
-    (select request_id from asked_lee_by_han)),
-  '42501', '요청을 찾지 못했습니다.',
-  '제재된 사람의 요청은 수락되지 않는다 — 없는 요청과 같은 문장이다');
+select is(
+  public.respond_to_match_request((select request_id from asked_lee_by_han), true),
+  'cancelled',
+  '제재된 사람이 연 대화는 거둬져 답이 안 선다');
 
 reset role;
 select is(
   (select count(*)::int from public.match
    where user_low = least((select uid from han), (select lee from folks))
-     and user_high = greatest((select uid from han), (select lee from folks))),
+     and user_high = greatest((select uid from han), (select lee from folks))
+     and ended_at is null),
   0,
-  '제재된 요청자의 Match 는 만들어지지 않는다');
+  '제재된 사람과의 대화는 끝난다 — 살아 있는 Match 가 없다');
 set local role authenticated;
 select pg_temp.acting((select lee from folks));
 
@@ -624,24 +636,25 @@ select is(
   '안 읽은 수는 목록에 선 것만 센다');
 
 -- ── 읽음은 사건이다 ──────────────────────────────────────────────────────────
+/** 최가 김의 대화에 답한다 — 답은 두 사람 모두에게 소식이 선다 */
+select pg_temp.acting((select choi from folks));
+select is(
+  public.respond_to_match_request((select request_id from asked_choi), true),
+  'accepted',
+  '최가 김의 대화에 답한다');
 select ok((select public.unread_notifications()) > 0, '안 읽은 알림이 있다');
 select ok((select public.mark_notifications_read()) > 0, '읽음으로 바꾼 개수를 돌려준다');
 select is((select public.unread_notifications()), 0, '읽고 나면 안 읽은 알림이 없다');
 
--- ── 요청이 풀이권 한 자리를 잡는다 (ADR 0038) ────────────────────────────────
+-- ── 대화는 풀이권 · 기한에 안 매인다 (ADR 0215) ──────────────────────────────
 --
--- **예약은 값이 아니라 세는 법이다.** 원장을 두지 않았으므로 여기서 재는 것은 「차감과
--- 반환이 맞는가」가 아니라 **살아 있는 요청이 셈에 드는가**다. 끝나는 갈래가 넷이고
--- 그중 어느 것도 되돌리는 일을 하지 않는다.
+-- 풀이권은 상세 궁합을 청할 때 잡는다(`99_match_talk_and_detail`). 대화는 잔액이 없어도 열리고, 답이 없어도 만료로 안 끝난다.
 
 reset role;
 
-/**
- * **한 장으로 잰다.** 다섯 장을 쓰려면 결과를 다섯 번 저장해야 하고, 그건 이 파일이
- * 재려는 것이 아니다. 경계는 한 장에서도 똑같이 서 있다.
- */
+/** **잔액 0 으로 잰다** — 풀이권이 한 장도 없어도 대화가 열리는가 */
 create or replace function public.reading_credit_limit()
-returns integer language sql immutable as $limit$ select 1 $limit$;
+returns integer language sql immutable as $limit$ select 0 $limit$;
 
 set local role authenticated;
 
@@ -666,8 +679,8 @@ set local role authenticated;
 select pg_temp.acting((select yoon from later));
 select is(
   (select array[used, reserved, requested, available] from public.my_reading_credits()),
-  array[0, 0, 0, 1],
-  '아직 아무것도 안 잡혀 있다');
+  array[0, 0, 0, 0],
+  '윤에게 풀이권이 없다');
 
 select lives_ok($$select count(*) from public.my_discovery_board()$$, '윤이 목록을 연다');
 
@@ -675,118 +688,62 @@ create temporary table asked_jang as
 select public.request_match((select jang from later)) as request_id;
 grant select on asked_jang to authenticated;
 
+select isnt((select request_id from asked_jang), null, '잔액이 없어도 대화가 열린다');
+
 select is(
   (select array[used, reserved, requested, available] from public.my_reading_credits()),
-  array[0, 0, 1, 0],
-  '요청 한 건이 풀이권 한 자리를 잡는다');
+  array[0, 0, 0, 0],
+  '대화는 풀이권을 안 잡는다');
 
-/**
- * **제품에 새로 서는 사실 하나** — 요청을 띄운 사람은 자기 사주 풀이를 못 만든다.
- * 버그가 아니라 정책이라, 거절의 말이 「다 썼다」가 아니라 **왜 잡혀 있는지**를 말한다.
- */
-select throws_like(
-  $$select * from public.start_reading_run('self', 'yoon-self-0001')$$,
-  '%인연 요청%',
-  '요청이 잡고 있으면 자기 풀이도 못 만든다');
+reset role;
+select is(
+  (select expires_at from public.match_request where id = (select request_id from asked_jang)),
+  'infinity'::timestamptz,
+  '대화에는 기한이 없다');
+set local role authenticated;
+select pg_temp.acting((select yoon from later));
 
-/** **제품에 새로 서는 사실 둘** — 풀이권 없이는 인연 요청을 못 한다 */
-select throws_like(
-  format($$select public.request_match(%L::uuid)$$, (select moon from later)),
-  '풀이권이 없어 요청할 수 없습니다.%풀이권 한 장을 잡고%그 한 장으로%',
-  '잔액이 없으면 청할 수 없다 — 잡는 풀이권은 「장」으로 센다(`20261209090000`)');
-
--- ── 끝나는 갈래는 다 자리를 푼다 ─────────────────────────────────────────────
+-- ── 거두면 끝나고, 다시 열면 새 대화다 ───────────────────────────────────────
 
 select is(
   public.cancel_match_request((select request_id from asked_jang)),
   'cancelled',
-  '거두면 요청이 없던 일이 된다');
-
-select is(
-  (select array[requested, available] from public.my_reading_credits()),
-  array[0, 1],
-  '거두면 자리가 풀린다 — 되돌리는 일 없이');
+  '거두면 대화가 끝난다');
 
 select lives_ok($$select count(*) from public.my_discovery_board()$$, '윤이 목록을 다시 연다');
 create temporary table asked_jang_again as
 select public.request_match((select jang from later)) as request_id;
 grant select on asked_jang_again to authenticated;
 
-select pg_temp.acting((select jang from later));
-select is(
-  public.respond_to_match_request((select request_id from asked_jang_again), false),
-  'rejected',
-  '장이 거절한다');
+select isnt(
+  (select request_id from asked_jang_again),
+  (select request_id from asked_jang),
+  '거둔 뒤 다시 열면 새 대화다');
 
-select pg_temp.acting((select yoon from later));
-select is(
-  (select array[requested, available] from public.my_reading_credits()),
-  array[0, 1],
-  '거절당하면 자리가 풀린다');
+-- ── 답이 없어도 대화는 만료로 안 끝난다 ─────────────────────────────────────
 
--- ── 7일이 지나면 만료다 ─────────────────────────────────────────────────────
-
-select lives_ok($$select count(*) from public.my_discovery_board()$$, '윤이 문을 보러 목록을 연다');
 create temporary table asked_moon as
 select public.request_match((select moon from later)) as request_id;
 grant select on asked_moon to authenticated;
 
-select is(
-  (select array[requested, available] from public.my_reading_credits()),
-  array[1, 0],
-  '문에게 청한 것도 한 자리를 잡는다');
-
+/** 미는 일은 기한이 있는 줄(상세)만 민다 — 대화는 그대로다 */
 reset role;
-update public.match_request set expires_at = now() - interval '1 minute'
-where id = (select request_id from asked_moon);
-set local role authenticated;
-select pg_temp.acting((select yoon from later));
-
-/**
- * **잔액은 미는 일을 안 기다린다.** 셈이 `expires_at > now()` 만 보므로 풀이권은 기한이
- * 지나는 그 순간 이미 돌아와 있다. cron 이 늦어도 사용자가 잃는 것이 없다.
- */
-select is(
-  (select array[requested, available] from public.my_reading_credits()),
-  array[0, 1],
-  '기한이 지나면 밀기 전에도 자리가 풀려 있다');
-
-/** 미는 일이 하는 것은 **표시와 유일 인덱스**다 — 목록에서 내려가고 다시 청할 수 있게 된다 */
-reset role;
-select is(public.expire_match_requests(), 1, '기한이 지난 요청 하나를 만료로 민다');
+select lives_ok($$select public.expire_match_requests()$$, '기한을 미는 일이 돈다');
 set local role authenticated;
 select pg_temp.acting((select yoon from later));
 
 select is(
   (select status from public.my_match_requests()
    where request_id = (select request_id from asked_moon)),
-  'expired',
-  '만료는 거둠·무효와 다른 상태로 남는다');
+  'pending',
+  '답 없는 대화는 그대로 답을 기다린다');
 
-select is(
-  (select count(*)::int from public.my_notifications()
-   where request_id = (select request_id from asked_moon) and kind = 'request_expired'),
-  1,
-  '요청자에게만 만료가 알려진다 — 풀이권이 돌아왔다는 것을 알아야 한다');
-
-/**
- * 받은 쪽에는 만료가 안 선다 — 답을 안 한 것이라 알릴 일이 없고, 알리면 「답하지
- * 않았다」를 두드리는 도구가 된다. 처음 받은 통보는 그대로 남는다.
- */
 select pg_temp.acting((select moon from later));
 select is(
   (select count(*)::int from public.my_notifications()
    where request_id = (select request_id from asked_moon) and kind = 'request_expired'),
   0,
-  '답하지 않은 쪽은 두드리지 않는다');
-
-/** 만료된 요청은 다시 청할 수 있다 — `one_live_request_between_two` 가 `pending` 만 묶는다 */
-select pg_temp.acting((select yoon from later));
-select lives_ok($$select count(*) from public.my_discovery_board()$$, '윤이 다시 목록을 연다');
-select isnt(
-  public.request_match((select moon from later)),
-  null,
-  '만료된 뒤에는 같은 사람에게 다시 청할 수 있다');
+  '만료 소식이 없다');
 
 reset role;
 select * from finish();

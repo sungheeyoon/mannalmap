@@ -1,13 +1,16 @@
--- 화면이 기대한 요청 종류를 문이 견준다 (`20270107090000`, ADR 0216, #961)
+-- 요청 문의 임시 호환 인자 `p_expected_kind` (`20270109090000`, ADR 0216 을 잇는다)
 --
---   1. **네 조합** — 켜짐/꺼짐 × 기대 무료/유료. 같으면 그 종류가 서고, 다르면 `MK001`
---   2. **기대값 없는 호출** — 이미 나간 웹 · 앱의 모양. 켜짐 · 꺼짐 모두 지금 동작 그대로이고 이 보호가 없다
---   3. **거절은 아무것도 안 남긴다** — 풀이권 · 요청 줄 · 인연 · 횟수 · 소식
+-- 대화가 유일한 흐름이 되어 `request_match` 는 늘 대화(`talk`)를 세운다. 스위치도, 화면과 스위치를 견주던 `MK001` 도 없다.
+-- 인자는 **임시 호환**이다 — 운영자 기기의 깔린 앱이 어느 판인지 몰라 남긴다. 새 웹 · 앱은 안 보낸다.
+-- **제거 조건:** 운영 웹이 이 판 뒤로 나가고 모든 계정의 앱 채널에 새 OTA 가 닿은 것을 확인한 뒤, 후속 마이그레이션으로 인자를 걷고
+-- 이 파일을 지운다.
+--
+--   1. **받는 값** — 인자 없음 · `null` · `talk` 은 대화를 세운다. 방이 바로 열리고 풀이권을 안 잡는다
+--   2. **거절** — `bundled`(유료 요청을 기대한 옛 화면) · 모르는 값 · 빈 값은 `22023` 이고 아무것도 안 남긴다
+--   3. **돌려받기** — 살아 있는 대화가 있으면 같은 번호다. 옛 화면의 `bundled` 는 그때도 거절한다
 --   4. **서명** — 하나뿐이라 인자 하나의 호출이 모호하지 않다. 권한은 그대로다
---
--- 스위치가 뒤집히는 동안의 진짜 두 세션은 pgTAP 이 못 만든다 — 그 값은 ADR 0216 에 적었다.
 begin;
-select plan(31);
+select plan(24);
 
 create or replace function pg_temp.participant(mail text, who text, summary jsonb)
 returns uuid
@@ -52,14 +55,6 @@ begin
   perform pg_temp.acting(uid);
   perform count(*) from public.my_discovery_board();
 end;
-$$;
-
-/** 켜고 끄는 운영 SQL 과 같은 문장이다 */
-create or replace function pg_temp.switch_to(wanted boolean)
-returns void
-language sql
-as $$
-  update public.match_talk_switch set open = wanted, changed_at = now();
 $$;
 
 /** 내 요청 줄 · 인연 · 소식 · 쓰임 · 풀이권 셈 · 시간당 · 하루 셈을 한 줄로 — 거절 앞뒤로 견준다 */
@@ -108,7 +103,7 @@ select is(
 select is(
   (select pg_get_function_arguments(p.oid) from pg_proc p where proname = 'request_match' and pronamespace = 'public'::regnamespace),
   'p_candidate_user_id uuid, p_expected_kind text DEFAULT NULL::text',
-  '기대값은 기본값을 든다');
+  '호환 인자는 기본값을 든다 — 새 화면은 안 보낸다');
 select ok(has_function_privilege('authenticated', 'public.request_match(uuid, text)', 'execute'), '로그인한 사람은 부른다');
 select ok(not has_function_privilege('anon', 'public.request_match(uuid, text)', 'execute'), 'anon 은 못 부른다');
 select ok(not has_function_privilege('service_role', 'public.request_match(uuid, text)', 'execute'), '열쇠는 못 부른다');
@@ -116,104 +111,69 @@ select is(
   (select proconfig from pg_proc where proname = 'request_match' and pronamespace = 'public'::regnamespace),
   array['search_path=""'],
   'search_path 가 비었다');
-
-/* 견줌과 갈래가 같은 한 번의 읽기다 — 둘째 읽기가 틈을 되살린다. 경합 자체는 pgTAP 이 못 만들어 모양을 잰다 */
 select is(
-  (select regexp_count(pg_get_functiondef(p.oid), 'match_talk_switch') from pg_proc p where proname = 'request_match' and pronamespace = 'public'::regnamespace),
-  1, '스위치 표를 한 번만 읽는다');
-select is(
-  (select regexp_count(pg_get_functiondef(p.oid), 'match_talk_is_open|match_talk_open') from pg_proc p where proname = 'request_match' and pronamespace = 'public'::regnamespace),
-  0, '스위치를 읽는 다른 문을 안 부른다');
-select ok(
-  (select pg_get_functiondef(p.oid) ~ 'match_talk_switch s where s.id for share' from pg_proc p where proname = 'request_match' and pronamespace = 'public'::regnamespace),
-  '커밋까지 쥔다 — 끄는 update 가 기다린다');
+  (select regexp_count(pg_get_functiondef(p.oid), 'MK001') from pg_proc p where proname = 'request_match' and pronamespace = 'public'::regnamespace),
+  0, '화면과 스위치를 견주던 전용 코드가 없다');
 
 set local role authenticated;
 
-/* ---------- 꺼짐 ---------- */
+/* ---------- 거절 — 아무것도 안 남긴다 ---------- */
 select pg_temp.acting(a) from folks;
 insert into before_refusal select pg_temp.trace(a, b) from folks;
 
 select throws_ok(
-  format($$select public.request_match(%L, 'talk')$$, (select b from folks)),
-  'MK001', '화면이 바뀌어 처리하지 않았어요. 확인하고 다시 눌러 주세요.',
-  '꺼짐 × 기대 무료 — 전용 코드로 거절한다');
-select is((select pg_temp.trace(a, b) from folks), (select trace from before_refusal),
-  '꺼짐 × 기대 무료 — 풀이권 · 요청 줄 · 인연 · 횟수 · 소식이 그대로다');
+  format($$select public.request_match(%L, 'bundled')$$, (select b from folks)),
+  '22023', '요청을 처리하지 못했어요. 잠시 뒤 다시 시도해 주세요.',
+  '유료 요청을 기대한 옛 화면 — 무료 대화로 바꿔 세우지 않고 거절한다');
 select throws_ok(
   format($$select public.request_match(%L, 'paid')$$, (select b from folks)),
   '22023', null, '모르는 값은 거절한다');
 select throws_ok(
   format($$select public.request_match(%L, '')$$, (select b from folks)),
   '22023', null, '빈 값도 기대값 없음이 아니다');
-select is((select pg_temp.trace(a, b) from folks), (select trace from before_refusal), '모르는 값도 아무것도 안 남긴다');
+select is((select pg_temp.trace(a, b) from folks), (select trace from before_refusal),
+  '거절은 풀이권 · 요청 줄 · 인연 · 횟수 · 소식을 안 남긴다');
 
-insert into seen select 'off-bundled', public.request_match((select b from folks), 'bundled');
-reset role;
-select is((select kind from public.match_request where id = (select id from seen where name = 'off-bundled')), 'bundled', '꺼짐 × 기대 유료 — 옛 요청이 선다');
-select is((select array[c.used, c.reserved, c.requested] from public.reading_credits_for((select a from folks)) c), array[0, 0, 1], '꺼짐 × 기대 유료 — 풀이권 한 장을 잡는다');
-select is((select count(*)::int from public.notification n where n.request_id = (select id from seen where name = 'off-bundled')), 1, '꺼짐 × 기대 유료 — 소식이 간다');
-set local role authenticated;
-
+/* ---------- 받는 값 — 늘 대화 ---------- */
+insert into seen select 'talk', public.request_match((select b from folks), 'talk');
 select pg_temp.acting(c) from folks;
-insert into seen select 'off-none', public.request_match((select d from folks));
-reset role;
-select is((select kind from public.match_request where id = (select id from seen where name = 'off-none')), 'bundled', '꺼짐 × 기대값 없음 — 옛 요청 그대로다');
-select is((select array[c.used, c.reserved, c.requested] from public.reading_credits_for((select c from folks)) c), array[0, 0, 1], '꺼짐 × 기대값 없음 — 풀이권 한 장을 잡는다');
-
-/* 스위치 줄이 없어도 꺼짐이다 */
-delete from public.match_talk_switch;
-set local role authenticated;
+insert into seen select 'none', public.request_match((select d from folks));
 select pg_temp.acting(e) from folks;
-select throws_ok(
-  format($$select public.request_match(%L, 'talk')$$, (select f from folks)),
-  'MK001', null, '줄이 없으면 꺼짐이라 무료 기대를 거절한다');
+insert into seen select 'null', public.request_match((select f from folks), null);
+
 reset role;
-insert into public.match_talk_switch (id, open) values (true, false);
-
-/* ---------- 켜짐 ---------- */
-select pg_temp.switch_to(true);
-set local role authenticated;
-select pg_temp.acting(e) from folks;
-delete from before_refusal;
-insert into before_refusal select pg_temp.trace(e, f) from folks;
-
-select throws_ok(
-  format($$select public.request_match(%L, 'bundled')$$, (select f from folks)),
-  'MK001', '화면이 바뀌어 처리하지 않았어요. 확인하고 다시 눌러 주세요.',
-  '켜짐 × 기대 유료 — 말없이 무료 대화가 안 선다');
-select is((select pg_temp.trace(e, f) from folks), (select trace from before_refusal),
-  '켜짐 × 기대 유료 — 풀이권 · 요청 줄 · 인연 · 횟수 · 소식이 그대로다');
-
-insert into seen select 'on-talk', public.request_match((select f from folks), 'talk');
-reset role;
-select is((select kind from public.match_request where id = (select id from seen where name = 'on-talk')), 'talk', '켜짐 × 기대 무료 — 대화가 선다');
-select is((select count(*)::int from public.match where request_id = (select id from seen where name = 'on-talk')), 1, '켜짐 × 기대 무료 — 방이 바로 열린다');
-select is((select array[c.used, c.reserved, c.requested] from public.reading_credits_for((select e from folks)) c), array[0, 0, 0], '켜짐 × 기대 무료 — 풀이권을 안 잡는다');
+select is(
+  (select array_agg(q.kind order by s.name) from seen s join public.match_request q on q.id = s.id),
+  array['talk', 'talk', 'talk'],
+  '인자 없음 · null · talk 모두 대화가 선다');
+select is(
+  (select count(*)::int from seen s join public.match m on m.request_id = s.id),
+  3, '방이 바로 열린다 — 수락이 없다');
+select is(
+  (select array_agg(q.expires_at = 'infinity' order by s.name) from seen s join public.match_request q on q.id = s.id),
+  array[true, true, true], '대화는 기한이 없다');
+select is((select array[c.used, c.reserved, c.requested] from public.reading_credits_for((select a from folks)) c), array[0, 0, 0], 'talk — 풀이권을 안 잡는다');
+select is((select array[c.used, c.reserved, c.requested] from public.reading_credits_for((select c from folks)) c), array[0, 0, 0], '인자 없음 — 풀이권을 안 잡는다');
+select is((select count(*)::int from public.reading_credit_use u where u.request_id in (select id from seen)), 0, '쓰임 줄이 안 선다');
+select is((select count(*)::int from public.notification n where n.request_id = (select id from seen where name = 'talk')), 1, '받는 사람에게 소식이 간다');
 set local role authenticated;
 
-/* 살아 있는 대화의 돌려받기도 같은 견줌 뒤다 */
-select is((select public.request_match((select f from folks), 'talk')), (select id from seen where name = 'on-talk'), '다시 불러도 같은 대화다');
+/* ---------- 돌려받기 ---------- */
+select pg_temp.acting(a) from folks;
+select is((select public.request_match((select b from folks), 'talk')), (select id from seen where name = 'talk'), '다시 불러도 같은 대화다');
+select is((select public.request_match((select b from folks))), (select id from seen where name = 'talk'), '인자 없이 불러도 같은 대화다');
 select throws_ok(
-  format($$select public.request_match(%L, 'bundled')$$, (select f from folks)),
-  'MK001', null, '살아 있는 대화가 있어도 유료 기대는 거절한다');
-select pg_temp.acting(f) from folks;
-select is((select public.request_match((select e from folks), 'talk')), (select id from seen where name = 'on-talk'), '상대가 시작한 대화도 같은 번호다');
+  format($$select public.request_match(%L, 'bundled')$$, (select b from folks)),
+  '22023', null, '살아 있는 대화가 있어도 옛 화면의 유료 기대는 거절한다');
+select pg_temp.acting(b) from folks;
+select is((select public.request_match((select a from folks), 'talk')), (select id from seen where name = 'talk'), '상대가 시작한 대화도 같은 번호다');
 
 reset role;
-select is((select count(*)::int from public.match_request where kind = 'talk' and requester_user_id = (select e from folks)), 1, '돌려받기는 줄을 더 안 세운다');
-
-/* 켜짐 × 기대값 없음 — 옛 호출은 대화가 된다. 이 보호가 없는 자리다 */
-set local role authenticated;
-select pg_temp.acting(d) from folks;
-delete from before_refusal;
-insert into seen select 'on-none', public.request_match((select a from folks));
-reset role;
-select is((select kind from public.match_request where id = (select id from seen where name = 'on-none')), 'talk', '켜짐 × 기대값 없음 — 지금 동작 그대로 대화다');
+select is((select count(*)::int from public.match_request where requester_user_id = (select a from folks)), 1, '돌려받기는 줄을 더 안 세운다');
 
 /* ---------- 거절의 차례 ---------- */
 set local role authenticated;
-select throws_ok($$select public.request_match(null, 'bundled')$$, '42501', null, '상대가 없으면 견주기 전에 옛 거절 그대로다');
+select throws_ok($$select public.request_match(null, 'talk')$$, '42501', null, '상대가 없으면 그 한 문장이다');
 
 select * from finish();
 rollback;

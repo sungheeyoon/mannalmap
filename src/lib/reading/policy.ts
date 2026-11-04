@@ -137,7 +137,7 @@ export const READING_POLICY = {
    */
   pairVersion: 'reading-prompt-v23',
   /**
-   * 상세 궁합의 판본 — **따로 센다.** `pairVersion` 을 올리면 안 바뀐 옛 흐름 · 비공개 궁합의 새 글이 바뀐 것처럼 기록된다.
+   * 상세 궁합의 판본 — 인연 궁합의 판본이다. **따로 센다.** `pairVersion` 을 올리면 안 바뀐 비공개 궁합의 새 글이 바뀐 것처럼 기록된다.
    * 회수는 얼린 시도의 이 이름으로 상세 궁합인지 안다(`isDetailPromptVersion`).
    */
   detailVersion: 'reading-prompt-detail-v1',
@@ -288,6 +288,6 @@ export type ReadingOutput = {
   markdown: string;
 };
 
-/** 그 kind 의 결과에 적을 프롬프트 판본 — **저장하는 자리는 이것만 부른다** */
+/** 그 kind 의 결과에 적을 프롬프트 판본 — **저장하는 자리는 이것만 부른다.** 인연 궁합은 상세 궁합 하나라 그 판본이다 */
 export const promptVersionOf = (kind: ReadingKind): string =>
-  isSolo(kind) ? READING_POLICY.version : READING_POLICY.pairVersion;
+  isSolo(kind) ? READING_POLICY.version : kind === 'match' ? READING_POLICY.detailVersion : READING_POLICY.pairVersion;

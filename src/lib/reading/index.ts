@@ -137,7 +137,6 @@ export * from './notes';
 export {
   baselineIn,
   CONTROL,
-  DETAIL_ASSEMBLY,
   LEGACY_PAIR_ASSEMBLY,
   NOTHING_KNOWN,
   READING_PROMPTS,
@@ -167,8 +166,6 @@ export {
   DISCOVERY_PROPERTY,
   detailFindingsOf,
   isDetailPromptVersion,
-  requestAssemblyOf,
-  requestPromptVersionOf,
   withDiscovery,
   type DetailReadingOutput,
 } from './detail';

@@ -147,7 +147,7 @@ try {
   await get('/me/matching', cookie.a);
   const asked = await a.rpc('request_match', { p_candidate_user_id: userId(mail.b) });
   const accepted = await b.rpc('respond_to_match_request', { p_request_id: asked.data, p_accept: true });
-  check('두 사람의 방이 선다', accepted.data === 'accepted', accepted.error?.message ?? '');
+  check('대화를 열고 답해 두 사람의 방이 선다', accepted.data === 'accepted', accepted.error?.message ?? '');
   const { data: rooms } = await a.rpc('my_chat_rooms');
   const matchId = rooms?.[0]?.match_id;
 

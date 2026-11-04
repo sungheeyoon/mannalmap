@@ -23,8 +23,8 @@ import styles from './orbit.module.css';
   사진 위에는 **고르는 데 필요한 것만** 선다 — 이름 · 접속 · 점수 · 판정 · 채워 주는 기운 · 소개 한 줄. 까닭 · 기운의 문장 ·
   소개 전문 · 궤도 · 참고 점수 고지는 폰에서는 ⓘ 시트(`DetailSheet`)가, 넓은 화면에서는 옆 열이 든다.
 
-  **끌지 않는다.** 요청 하나가 풀이권을 예약하고 여덟 글자를 여는 일이라 손맛보다 분명한 누름이 맞다 — 그래서 단추가 이
-  화면의 주인공이다: 사진 **아래** 따로 서서(사진마다 대비가 갈리지 않게) 글자로 말하고, 「궁합 요청」이 채운 주 단추다.
+  **끌지 않는다.** 누름 하나가 상대에게 대화를 여는 일이라 손맛보다 분명한 누름이 맞다 — 그래서 단추가 이
+  화면의 주인공이다: 사진 **아래** 따로 서서(사진마다 대비가 갈리지 않게) 글자로 말하고, 「대화 시작」이 채운 주 단추다.
   누르면 카드가 누른 쪽으로 옅게 빠지고 뒤에서 **진짜 다음 사람**이 커지며 올라온다. 되돌리면 떠난 쪽에서 다시 들어온다.
   줄인 움직임이면 움직임은 빠지고 끝 모습만 선다.
 
@@ -51,10 +51,10 @@ export function TodayCard({
   feedback,
   onInfo,
   onBlocked,
-  onScoreInfo = null,
+  onScoreInfo,
 }: {
-  /** 켜진 흐름 — 점수가 「예상 궁합 N점」이고 계산 기준을 여는 아이콘이 선다(ADR 0215). `null` 이면 지금 모양이다 */
-  onScoreInfo?: (() => void) | null;
+  /** 점수는 「예상 궁합 N점」이고 곁의 아이콘이 계산 기준 시트를 연다(ADR 0215) */
+  onScoreInfo: () => void;
   profile: DeckCard;
   next: DeckCard | undefined;
   exit: 'left' | 'right' | null;
@@ -107,7 +107,7 @@ export function TodayCard({
           className={`${elementScope(supplyOf(next))} absolute inset-0 overflow-hidden rounded-card bg-[var(--tile)] motion-reduce:transition-none`}
         >
           <CandidatePhoto card={next} initialClass={INITIAL_ON_CARD} />
-          <FaceText card={next} />
+          <FaceText card={next} onScoreInfo={onScoreInfo} />
         </div>
       )}
 
@@ -171,7 +171,7 @@ const FACE_SHADOW = '[text-shadow:0_1px_2px_rgb(0_0_0/0.45),0_0_14px_rgb(0_0_0/0
  * 사진 아래 끝의 글 — 이름 · 접속 · 점수, 판정, 채워 주는 기운, 소개 한 줄. 누름은 뒤의 사진으로 흘려보낸다 —
  * 글 위를 눌러도 사진이 넘어간다(`CardPhotos`). 글은 사진의 장 번호를 모른다
  */
-function FaceText({ card, onScoreInfo = null }: { card: DeckCard; onScoreInfo?: (() => void) | null }) {
+function FaceText({ card, onScoreInfo }: { card: DeckCard; onScoreInfo: () => void }) {
   return (
     <div style={{ backgroundImage: FACE_SCRIM }} className={`${FACE_SHADOW} pointer-events-none absolute inset-x-0 bottom-0 flex flex-col gap-2.5 px-5 pb-5 pt-32 text-white`}>
       <div className="flex items-end justify-between gap-3">
@@ -179,28 +179,20 @@ function FaceText({ card, onScoreInfo = null }: { card: DeckCard; onScoreInfo?: 
           <h2 className="truncate text-[2.25rem] font-bold leading-tight">{card.nickname}</h2>
           {card.activity != null && <p className="text-small font-semibold text-white/85">{activityText(card.activity)}</p>}
         </div>
-        {onScoreInfo !== null ? (
-          <div className="flex shrink-0 items-center gap-0.5">
-            <p className="flex flex-col items-end gap-0.5">
-              <span className="text-small font-semibold leading-4 text-white/85">{TALK_SCORE_LABEL}</span>
-              <strong className="text-figure font-bold leading-none tracking-[-0.03em] tabular-nums">{card.previewScore}점</strong>
-            </p>
-            <button
-              type="button"
-              aria-label={TALK_SCORE_INFO_NAME}
-              onClick={onScoreInfo}
-              className="pointer-events-auto grid size-11 place-items-center rounded-full text-white/85 active:scale-95"
-            >
-              <span aria-hidden="true" className="grid size-5 place-items-center rounded-full font-serif text-small font-bold italic ring-1 ring-white/70">i</span>
-            </button>
-          </div>
-        ) : (
-          <p className="flex shrink-0 items-baseline">
-            <span className="sr-only">나와의 예측 궁합 점수 </span>
-            <strong className="text-[2.75rem] font-bold leading-none tracking-[-0.04em] tabular-nums">{card.previewScore}</strong>
-            <span className="ml-1 text-small font-semibold text-white/85"> / 100</span>
+        <div className="flex shrink-0 items-center gap-0.5">
+          <p className="flex flex-col items-end gap-0.5">
+            <span className="text-small font-semibold leading-4 text-white/85">{TALK_SCORE_LABEL}</span>
+            <strong className="text-figure font-bold leading-none tracking-[-0.03em] tabular-nums">{card.previewScore}점</strong>
           </p>
-        )}
+          <button
+            type="button"
+            aria-label={TALK_SCORE_INFO_NAME}
+            onClick={onScoreInfo}
+            className="pointer-events-auto grid size-11 place-items-center rounded-full text-white/85 active:scale-95"
+          >
+            <span aria-hidden="true" className="grid size-5 place-items-center rounded-full font-serif text-small font-bold italic ring-1 ring-white/70">i</span>
+          </button>
+        </div>
       </div>
       <p className="font-rounded text-lead leading-snug text-white/95">{card.verdict}</p>
       <SupplyOnPhoto card={card} />
@@ -248,12 +240,12 @@ function SupplyOnPhoto({ card }: { card: DeckCard }) {
 }
 
 /**
- * 단추 줄 — **사진 아래, 이 화면의 주인공.** 앱의 단추 단을 그대로 쓴다: 「궁합 요청」이 채운 주 단추로 가장 넓고,
+ * 단추 줄 — **사진 아래, 이 화면의 주인공.** 앱의 단추 단을 그대로 쓴다: 「대화 시작」이 채운 주 단추로 가장 넓고,
  * 「다음 인연」은 흰 보조 단추, 되돌리기는 작은 동그라미. 셋 다 56px — 엄지 한 번에 닿는다. 보조기기 이름은 하는 일을
  * 끝까지 말하고(`다음 인연으로 지나가기`), 눈에 보이는 글자를 그 안에 품는다.
  */
-export function DeckButtons({ actions, talkOpen = false }: { actions: DeckActions; talkOpen?: boolean }) {
-  const label = talkOpen ? TALK_START_LABEL : '궁합 요청';
+export function DeckButtons({ actions }: { actions: DeckActions }) {
+  const label = TALK_START_LABEL;
   return (
     <div className="flex shrink-0 items-center gap-2">
       <button
@@ -282,7 +274,7 @@ export function DeckButtons({ actions, talkOpen = false }: { actions: DeckAction
         onClick={actions.request}
         className={`${BUTTON_PRIMARY} min-h-14! flex-[1.3] whitespace-nowrap px-3!`}
       >
-        <Icon name={talkOpen ? 'chat' : 'taiji'} className="size-5" />
+        <Icon name="chat" className="size-5" />
         {label}
       </button>
     </div>

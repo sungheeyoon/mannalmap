@@ -38,22 +38,6 @@ export const MATCH_DISCLOSURE = {
   ],
 } as const;
 
-/**
- * **수락하면 무엇이 일어나는가** — 인연 요청 보내기 창 · 받은 요청 카드 · 처리방침이 같은 한 벌을 읽는다(ADR 0008 「같은 한 벌」).
- *
- * 운영자 결정(2026-10-26, A안 — 짧은 본문 + 목록, 대장 matching-12). 머리(「상대가 수락하면」 · 「수락하면」)만 자리마다 다르고 목록과
- * 비공개 한 줄은 같다. 처리방침의 줄(`MATCH_PILLARS_DISCLOSURE`, `notice.ts`)은 첫 줄과 비공개 줄을 이어 쓴다 — 그 글이 바뀌어
- * 판본이 `notice-v11` 이 됐다(표현 개정, 기준은 그대로).
- */
-/** 풀이권이 드는 자리와 안 드는 자리의 구분 — 요청 창 · 받은 카드 · 인연 소개가 같은 글자를 읽는다(대장 matching-17). 요청자의 1장은 `REQUEST_RESERVES_NOTE` 쪽이 말한다 */
+/** 풀이권이 드는 자리와 안 드는 자리의 구분 — 인연 소개 · 상세 궁합 창이 같은 글자를 읽는다(대장 matching-17) */
 export const CHAT_USES_NO_CREDIT = '채팅은 풀이권을 쓰지 않아요.';
 export const RECEIVER_USES_NO_CREDIT = '요청을 받은 쪽은 풀이권을 쓰지 않아요.';
-
-export const MATCH_ACCEPT_OPENS = [
-  '서로의 사주팔자 여덟 글자가 공개돼요.',
-  '두 사람이 함께 볼 궁합풀이가 만들어져요.',
-  '채팅방이 열려요.',
-] as const;
-
-/** 수락해도 열리지 않는 것 — 목록 아래 한 줄 */
-export const MATCH_ACCEPT_HIDDEN = '정확한 생년월일시 · 출생지는 공개되지 않아요.';

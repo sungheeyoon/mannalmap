@@ -297,8 +297,8 @@ select pg_temp.forget();
 delete from realtime.messages where topic in (select 'user:' || choi::text from more union all select 'user:' || jung::text from more);
 
 insert into public.match_request (
-  requester_user_id, addressee_user_id, policy_version, supplied_to_requester, supplied_to_addressee, balance_band)
-select choi, jung, 'policy-for-tests', '{}', '{}', 'balanced' from more;
+  kind, expires_at, requester_user_id, addressee_user_id, policy_version, supplied_to_requester, supplied_to_addressee, balance_band)
+select 'talk', 'infinity', choi, jung, 'policy-for-tests', '{}', '{}', 'balanced' from more;
 
 select results_eq(
   $$select area, match_id from pg_temp.heard((select jung from more))$$,
@@ -307,8 +307,8 @@ select results_eq(
 
 select set_eq(
   $$select area, match_id from pg_temp.heard((select choi from more))$$,
-  $$values ('requests', null::uuid), ('credits', null::uuid)$$,
-  '보낸 사람도 requests 를 듣고, 요청이 풀이권 하나를 잡아 credits 도 듣는다');
+  $$values ('requests', null::uuid)$$,
+  '보낸 사람도 requests 를 듣는다 — 대화는 풀이권을 안 잡아 credits 는 안 선다');
 
 delete from realtime.messages where topic like 'user:%' and topic in (
   select 'user:' || choi::text from more union all select 'user:' || jung::text from more);

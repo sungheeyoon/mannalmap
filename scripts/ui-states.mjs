@@ -15,9 +15,9 @@ export const STATES = {
   /** 다 갖춘 사람 — 자기 사주·가족 하나·풀이 둘 */
   full: '자기 사주 + 가족 + 풀이 둘',
   /** 둘이 이어진 상태 — 궁합 결과와 알림함이 여기서만 산다 */
-  pair: '수락된 궁합 한 쌍 (창 둘)',
+  pair: '대화하고 상세 궁합을 함께 본 한 쌍 (창 둘)',
   /** 아직 아무에게도 안 보낸 상태 — **후보 카드가 실제로 서는 유일한 자리** */
-  board: '홈에 오늘의 인연이 선다 (요청 전)',
+  board: '홈에 오늘의 인연이 선다 (대화 전)',
 };
 
 async function fullOne(local, { nickname, label, gender, tag }) {
@@ -51,10 +51,10 @@ async function fullOne(local, { nickname, label, gender, tag }) {
 }
 
 /**
- * 요청을 보내고 **받은 쪽이 수락까지 한다** — 화면을 안 지나간다.
+ * 대화를 열고 **받은 쪽이 답하고, 상세 궁합을 청하고 누르기까지 한다** — 화면을 안 지나간다(ADR 0215).
  *
- * 화면으로 지나가면 수락이 곧 풀이 생성이라(ADR 0038) 열쇠 없는 서버에서 실패한 시도가
- * 남는다. 여기서 재려는 것이 없으므로 문으로 바로 지나고, 글은 따로 심는다.
+ * 화면의 누름은 제출까지 걸어(열쇠 없는 서버에서) 실패한 시도가 남는다. 여기서 재려는 것이 없으므로 문으로 바로
+ * 지나고, 누름이 연 시도에 글을 따로 심는다(`plantReading`).
  */
 async function pairThem(asker, receiver) {
   const board = await asker.api.rpc('my_discovery_board');
@@ -64,22 +64,27 @@ async function pairThem(asker, receiver) {
   const asked = await asker.api.rpc('request_match', {
     p_candidate_user_id: partner.data?.user_id,
   });
-  if (asked.error) throw new Error(`요청을 못 보냈습니다 — ${asked.error.message}`);
-
-  const inbox = await receiver.api.rpc('my_match_requests');
-  if (inbox.error) throw new Error(`요청함을 못 읽었습니다 — ${inbox.error.message}`);
-  const incoming = (inbox.data ?? []).find((row) => row.status === 'pending');
-  if (!incoming) throw new Error('받은 요청이 없습니다.');
+  if (asked.error) throw new Error(`대화를 못 열었습니다 — ${asked.error.message}`);
 
   const answered = await receiver.api.rpc('respond_to_match_request', {
-    p_request_id: incoming.request_id,
+    p_request_id: asked.data,
     p_accept: true,
   });
-  if (answered.error) throw new Error(`수락하지 못했습니다 — ${answered.error.message}`);
+  if (answered.error) throw new Error(`답하지 못했습니다 — ${answered.error.message}`);
 
   const matches = await receiver.api.rpc('my_matches');
   const match = (matches.data ?? [])[0];
-  if (!match) throw new Error('맺어진 궁합이 없습니다.');
+  if (!match) throw new Error('대화방이 서지 않았습니다.');
+
+  const detail = await asker.api.rpc('request_match_detail', { p_match_id: match.match_id, p_client_key: crypto.randomUUID() });
+  if (detail.error) throw new Error(`상세 궁합을 못 청했습니다 — ${detail.error.message}`);
+  const pressed = await receiver.api.rpc('respond_to_match_request', {
+    p_request_id: detail.data?.[0]?.request_id,
+    p_accept: true,
+  });
+  if (pressed.error || pressed.data !== 'accepted') {
+    throw new Error(`누르지 못했습니다 — ${pressed.error?.message ?? String(pressed.data)}`);
+  }
 
   return match.match_id;
 }
@@ -127,7 +132,7 @@ export async function build(state) {
    * 자리로 선다 — 앱에서 가장 자주 보는 화면인데 훑기가 그 채워진 모양을 한 번도 안
    * 찍고 있었다.
    *
-   * `pair` 와 다른 것은 **아무것도 안 보냈다는 것**이다. 요청이 오가면 상대는 후보에서
+   * `pair` 와 다른 것은 **아무것도 안 보냈다는 것**이다. 대화가 열리면 상대는 후보에서
    * 빠지므로, 같은 상태로는 이 화면을 못 찍는다.
    *
    * 요약을 서로 어긋나게 준다. 둘 다 다섯 칸이 찬 기본값이면 채울 오행이 없어

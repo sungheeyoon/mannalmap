@@ -35,14 +35,15 @@ async function ask(from: Person, to: Person): Promise<string> {
   const board = await from.api.rpc('my_discovery_board');
   if (board.error) throw new Error(`후보 목록을 못 받았습니다 — ${board.error.message}`);
   const asked = await from.api.rpc('request_match', { p_candidate_user_id: userIdOf(to.account.email) });
-  if (asked.error) throw new Error(`요청을 못 보냈습니다 — ${asked.error.message}`);
+  if (asked.error) throw new Error(`대화를 못 열었습니다 — ${asked.error.message}`);
   return asked.data as string;
 }
 
+/** 받은 사람의 답 — 답한 대화라야 시작한 사람이 이어 보낼 수 있다(첫 말 1건, ADR 0215) */
 async function accept(to: Person, requestId: string): Promise<void> {
   const answered = await to.api.rpc('respond_to_match_request', { p_request_id: requestId, p_accept: true });
   if (answered.error || answered.data !== 'accepted') {
-    throw new Error(`수락이 안 됐습니다 — ${answered.error?.message ?? String(answered.data)}`);
+    throw new Error(`답이 안 됐습니다 — ${answered.error?.message ?? String(answered.data)}`);
   }
 }
 
@@ -236,21 +237,21 @@ test.describe('앱이 스스로 갱신된다', () => {
     await expect(row.getByText('1건 안 읽음')).toBeVisible();
   });
 
-  test('(2) 수락으로 새 방이 서면 보낸 쪽의 빈 대화방 목록에 그 방이 선다', async ({ openAs }) => {
+  test('(2) 대화가 열리면 받은 쪽의 빈 대화방 목록에 그 방이 선다', async ({ openAs }) => {
     const tag = freshTag();
     const a = await openAs({ selfPerson: true });
     const b = await openAs({ selfPerson: true });
     await bothParticipate([a, b], tag);
-    const requestId = await ask(a, b);
 
-    const aLog = socketLog(a.page);
-    await a.page.goto('/me/chat');
-    await channelUp(aLog, userIdOf(a.account.email));
-    await expect(a.page.getByText(CHAT_EMPTY_TITLE)).toBeVisible();
+    const bLog = socketLog(b.page);
+    await b.page.goto('/me/chat');
+    await channelUp(bLog, userIdOf(b.account.email));
+    await expect(b.page.getByText(CHAT_EMPTY_TITLE)).toBeVisible();
 
-    await accept(b, requestId);
-    await expect(a.page.getByRole('link', { name: new RegExp(`나${tag}`) })).toBeVisible({ timeout: WITHIN_MS + 1_000 });
-    await expect(a.page.getByText(CHAT_EMPTY_TITLE)).toHaveCount(0);
+    /* 방은 수락 없이 대화를 여는 순간 선다(ADR 0215) */
+    await ask(a, b);
+    await expect(b.page.getByRole('link', { name: new RegExp(`가${tag}`) })).toBeVisible({ timeout: WITHIN_MS + 1_000 });
+    await expect(b.page.getByText(CHAT_EMPTY_TITLE)).toHaveCount(0);
   });
 
   test('(3) 같은 계정의 다른 탭에서 읽으면 첫 탭의 딱지와 목록의 수가 내려간다', async ({ openAs }) => {
@@ -301,25 +302,26 @@ test.describe('앱이 스스로 갱신된다', () => {
     ).toBeVisible({ timeout: WITHIN_MS + 1_000 });
   });
 
-  test('(4) 받은 요청이 인연 탭 딱지와 띠에 서고, 거두면 둘 다 내려간다', async ({ openAs }) => {
+  /** 인연 탭에는 답할 요청 딱지가 없다(ADR 0215) — 받은 대화는 대화방 목록에 서고, 시작한 쪽이 답 전에 거두면 양쪽 목록에서 사라진다 */
+  test('(4) 받은 대화가 대화방 목록에 서고, 거두면 내려가며 인연 탭에는 딱지가 없다', async ({ openAs }) => {
     const tag = freshTag();
     const a = await openAs({ selfPerson: true });
     const b = await openAs({ selfPerson: true });
     await bothParticipate([a, b], tag);
 
     const bLog = socketLog(b.page);
-    await b.page.goto('/me/matching');
+    await b.page.goto('/me/chat');
     await channelUp(bLog, userIdOf(b.account.email));
-    await expect(b.page.getByText(/받은 요청 \d/)).toHaveCount(0);
+    const row = b.page.getByRole('link', { name: new RegExp(`가${tag}`) });
+    await expect(row).toHaveCount(0);
 
     const requestId = await ask(a, b);
-    await expect(matchingTab(b.page).getByText('1건 답할 요청')).toBeVisible({ timeout: WITHIN_MS + 1_000 });
-    await expect(b.page.getByText('받은 요청 1')).toBeVisible();
+    await expect(row).toBeVisible({ timeout: WITHIN_MS + 1_000 });
+    await expect(matchingTab(b.page).getByText('답할 요청')).toHaveCount(0);
 
     const cancelled = await a.api.rpc('cancel_match_request', { p_request_id: requestId });
-    if (cancelled.error) throw new Error(`요청을 못 거뒀습니다 — ${cancelled.error.message}`);
-    await expect(matchingTab(b.page).getByText('건 답할 요청')).toHaveCount(0, { timeout: WITHIN_MS + 1_000 });
-    await expect(b.page.getByText(/받은 요청 \d/)).toHaveCount(0);
+    if (cancelled.error) throw new Error(`대화를 못 거뒀습니다 — ${cancelled.error.message}`);
+    await expect(row).toHaveCount(0, { timeout: WITHIN_MS + 1_000 });
   });
 
   test('(4) 차단으로 방이 닫히면 상대 화면의 입력 자리가 닫힌 까닭으로 바뀌고 보낼 수 없다', async ({ openAs }) => {

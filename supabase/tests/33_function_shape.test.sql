@@ -51,7 +51,8 @@ select is(
 --
 -- 둘 다 그래야 할 까닭이 있다. 베타 일정은 **로그인 화면 앞에서** 읽어야 하고, 공유 풀이는
 -- **링크만 든 사람**이 여는 것이다(ADR 0063). `beta_is_over()` 는 화면이 안 부르고 다른 definer 안에서만
--- 불려 `20261009120000` 이 닫았다(G-23 ⑪, advisor lint 0028). 로그인 전 사주 문단의 옛 문 `taste_passage(p_key)` 는
+-- 불려 `20261009120000` 이 닫았다(G-23 ⑪, advisor lint 0028). 대화의 스위치를 읽던 `match_talk_open()` 은 스위치와 함께
+-- `20270109090000` 이 걷었다 — 대화가 유일한 흐름이다. 로그인 전 사주 문단의 옛 문 `taste_passage(p_key)` 는
 -- 사람마다 쓰는 길(ADR 0143 — 문은 열쇠에만 열렸다)로 옮긴 뒤 `20261206090000` 이 걷었다(G-69).
 --
 -- 수가 아니라 **집합**을 잰다. 하나가 늘면 이름이 함께 드러나므로, 그때 물을 수 있다 —
@@ -62,9 +63,8 @@ select set_eq(
     from pg_proc p join pg_namespace n on n.oid = p.pronamespace
     where n.nspname = 'public' and has_function_privilege('anon', p.oid, 'EXECUTE')$$,
   $$values ('current_beta_schedule()'),
-           ('match_talk_open()'),
            ('shared_reading(p_token text)')$$,
-  'anon 이 부를 수 있는 public 함수는 이 셋뿐이다');
+  'anon 이 부를 수 있는 public 함수는 이 둘뿐이다');
 
 -- ---------------------------------------------------------------------------
 -- 3. 모든 표에 RLS 가 켜져 있다

@@ -4,14 +4,14 @@
 --
 -- 1. **표는 한 줄도 안 보인다.** 근거와 프롬프트가 그 안에 있다.
 -- 2. **kind 마다 접근 판정이 다르고 서로를 열지 않는다.** 내 엣지에 없는 사람으로
---    비공개 궁합을 만들 수 없고, Match 는 동의가 연 시도로만 난다.
+--    비공개 궁합을 만들 수 없고, 인연 궁합은 상세의 누름이 연 시도로만 난다.
 -- 3. **교체는 통째로 일어난다.** 같은 대상에 두 번 저장해도 행은 하나이고 옛 값은
 --    어디에도 남지 않는다.
 -- 4. **되짚을 여덟 글자를 든다**(ADR 0071). 저장이 얼린 작업의 값을 글에 옮겨 적고,
 --    「이전 명식으로 쓴 글」인지는 그 값으로만 판정한다 — 앱은 한 글자도 안 댄다.
 -- 5. **열쇠가 부를 수 있는 문이 값으로 세어진다.** 판본을 내주던 문 둘이 여기서 빠진다.
 begin;
-select plan(79);
+select plan(80);
 
 /**
  * **이 파일은 풀이권을 재지 않는다.**
@@ -384,30 +384,26 @@ create temporary table asked as
 select public.request_match((select lee from folks)) as request_id;
 grant select on asked to authenticated, service_role;
 
-/**
- * **요청이 자리를 잡는다** (ADR 0038). 원장은 없다 — `pending` 인 내 요청을 세는 것이
- * 곧 예약이다. 이 자리는 아직 아무도 안 눌렀는데 잔액이 하나 줄어 있어야 한다.
- */
+/** **대화는 풀이권을 안 잡는다**(ADR 0215) — 자리는 상세를 청할 때 잡힌다 */
 select is(
   (select requested from public.my_reading_credits()),
-  1,
-  '보낸 요청이 풀이권 한 자리를 잡는다');
+  0,
+  '대화를 연 것으로는 풀이권이 안 잡힌다');
 
 select pg_temp.acting((select lee from folks));
 select is(
   public.respond_to_match_request((select request_id from asked), true),
   'accepted',
-  '수락하면 Match 가 선다');
+  '이가 대화에 답한다');
+
+/** 김이 상세 궁합을 사고(1장 예약) 이가 누른다 — 누름이 시도를 연다 */
+select lives_ok($$select tests.press_detail((select request_id from asked))$$, '김이 상세를 청하고 이가 누른다');
 
 create temporary table matched as select match_id from public.my_matches();
 grant select on matched to authenticated, service_role;
 
 /**
- * **수락이 시도를 이미 열었다** — 요청자 이름으로(ADR 0038).
- *
- * 여기서 `start_reading_run` 을 부르던 자리다. 이제는 부를 것이 없다: 같은 대상에 도는
- * 시도는 하나이므로 0행이 오고, 그 0행으로 저장하려 들면 「기록할 시도를 찾지
- * 못했습니다」가 난다. 동의가 예약을 쓰는 것이 이 ADR 의 전부다.
+ * **누름이 시도를 이미 열었다** — 구매자 이름으로(ADR 0215).
  *
  * `reading_run` 은 당사자에게도 안 열리므로 소유자로 읽는다 — 재려는 것은 열람이
  * 아니라 **누구 이름으로 섰는가**다.
@@ -424,35 +420,34 @@ select pg_temp.acting((select lee from folks));
 select is(
   (select count(*)::int from run_match),
   1,
-  '수락이 시도를 연다 — 아무도 안 눌렀는데');
+  '누름이 시도를 연다');
 
 /**
- * **예약이 사용으로 옮겨 간다.** `pending` 이 `accepted` 가 되면서 셈에서 빠지고, 그
- * 자리를 새 `running` 시도가 이어받는다 — 합계는 그대로다. 빼고 더하는 일이 아니라
- * **같은 자리를 다른 이름으로 세는 일**이다.
+ * **예약이 사용으로 옮겨 간다.** 상세 요청이 `accepted` 가 되면서 셈에서 빠지고, 그
+ * 자리를 새 `running` 시도가 이어받는다 — 합계는 그대로다.
  */
 select pg_temp.acting((select kim from folks));
 select is(
   (select array[reserved, requested] from public.my_reading_credits()),
   array[1, 0],
-  '수락이 예약을 사용으로 옮긴다');
+  '누름이 예약을 사용으로 옮긴다');
 select pg_temp.acting((select lee from folks));
 
 /**
- * **요청자 것이다.** 수락은 받은 쪽 세션에서 일어나므로 `auth.uid()` 로 actor 를 정하는
+ * **구매자 것이다.** 누름은 받은 쪽 세션에서 일어나므로 `auth.uid()` 로 actor 를 정하는
  * 문을 그대로 부르면 시도가 받은 쪽 것으로 서고, 풀이권도 그쪽에서 나간다.
  */
 select is(
   (select user_id from run_match),
   (select kim from folks),
-  '시도는 청한 사람 이름으로 선다');
+  '시도는 구매자 이름으로 선다');
 
-/** 받은 쪽은 누를 것이 없다 — 같은 대상에 도는 시도가 이미 하나 있다 */
-select is(
-  (select count(*)::int from public.start_reading_run(
-    'match', 'key-match-0001', null, null, (select match_id from matched))),
-  0,
-  '동의한 쪽이 눌러도 아무것도 새로 열리지 않는다');
+/** 받은 쪽이 풀이 문으로 따로 열 길은 없다 — 인연의 시도는 누름의 열쇠로만 선다 */
+select throws_ok(
+  format($$select * from public.start_reading_run('match', 'key-match-0001', null, null, %L::uuid)$$,
+    (select match_id from matched)),
+  '23514', null,
+  '누른 쪽이 풀이 문을 불러도 아무것도 새로 열리지 않는다');
 
 /**
  * **앱이 계산 입력을 고르는 자리가 없어졌다** (ADR 0071).
@@ -472,12 +467,12 @@ select is(
 select lives_ok(
   format($$select pg_temp.save(%L::uuid, '## 공유 궁합', 64::smallint)$$,
     (select id from run_match)),
-  '동의가 연 시도로 저장된다');
+  '누름이 연 시도로 저장된다');
 
 select is(
   (select output from public.my_reading('match', null, null, (select match_id from matched))),
   '## 공유 궁합',
-  '수락한 쪽이 공유 결과를 읽는다');
+  '누른 쪽이 공유 결과를 읽는다');
 
 select pg_temp.acting((select kim from folks));
 select is(
@@ -872,9 +867,19 @@ select is(
  * 시도 행은 대상의 증표이지 **십 분짜리 자격 임대권이 아니다.** 모델이 도는 동안 상대가
  * 차단했으면 새 공유 결과와 알림을 그 뒤에 만들 수 없어야 한다.
  */
+/**
+ * 완성된 인연 궁합은 하나라(ADR 0215) 새 시도가 안 선다 — 글을 걷고 살아 있는 동의의 다시 만들기(`detail-retry:`)로 연다.
+ */
+reset role;
+delete from public.reading where match_id = (select match_id from matched);
+update public.reading_run set status = 'failed', failure_code = 'expired'
+where match_id = (select match_id from matched) and status = 'succeeded';
+set local role authenticated;
+select pg_temp.acting((select kim from folks));
+
 create temporary table run_blocked_match as
 select run_id as id from public.start_reading_run(
-  'match', 'key-match-blocked-0001', null, null, (select match_id from matched));
+  'match', 'detail-retry:blocked-0001', null, null, (select match_id from matched));
 grant select on run_blocked_match to authenticated, service_role;
 
 reset role;
@@ -964,7 +969,7 @@ select is(
     'finish_taste',
     'link_taste_reading_run',
     'mark_reading_webhook_processed',
-    /** 동의가 연 시도를 서버가 찾아 제출한다 — 부르는 사람은 요청자가 아니다(ADR 0038) */
+    /** 누름이 연 시도를 서버가 찾아 제출한다 — 부르는 사람은 구매자가 아니다(ADR 0215) */
     'match_run_awaiting_send',
     /**
      * 필요한 기운 요약을 다시 채우는 두 문(ADR 0113) — 참여자의 여덟 글자를 읽고 요약을 적는다.
@@ -993,8 +998,6 @@ select is(
     'prepare_reading_job',
     /** 닫힌 방의 메시지 파기 크론의 문 — 지운 수만 돌려준다(`20270107100000`, ADR 0217 · `99_chat_purge_cron`) */
     'purge_closed_chat_messages',
-    /** 다시 만들기 · 복구기가 시도의 흐름을 묻는 문 — 상세 궁합이 옛 지시로 안 나가게 한다 */
-    'reading_run_request_kind',
     'record_reading_webhook_event',
     'refund_reading_order',
     'release_reading_job',

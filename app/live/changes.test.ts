@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import { CHAT_UNREAD_MOVED } from '../me/chat/unread-signal';
 import { READING_CREDITS_MOVED } from '../me/credits/credits-signal';
-import { NOTIFICATIONS_UNREAD_MOVED, REQUESTS_TO_ANSWER_MOVED } from '../me/requests/unread-signal';
+import { NOTIFICATIONS_UNREAD_MOVED } from '../me/requests/unread-signal';
 import { liveChangeOf } from '@/src/lib/live/changes';
 
 import { ALL_SIGNALS, redrawsOn, redrawsOnResync, signalsOf } from './changes';
@@ -29,14 +29,14 @@ describe('채널이 실어 온 한 건', () => {
 describe('갈래 → 신호', () => {
   it('채팅은 채팅 딱지, 요청은 인연 딱지 · 종 · 잔액(요청이 풀이권을 잡는다), 소식은 종, 풀이권은 잔액을 다시 센다', () => {
     expect(signalsOf('chat')).toEqual([CHAT_UNREAD_MOVED]);
-    expect(signalsOf('requests')).toEqual([REQUESTS_TO_ANSWER_MOVED, NOTIFICATIONS_UNREAD_MOVED, READING_CREDITS_MOVED]);
+    expect(signalsOf('requests')).toEqual([NOTIFICATIONS_UNREAD_MOVED, READING_CREDITS_MOVED]);
     expect(signalsOf('notifications')).toEqual([NOTIFICATIONS_UNREAD_MOVED]);
     expect(signalsOf('credits')).toEqual([READING_CREDITS_MOVED]);
   });
 
   it('다시 대조는 넷을 다 다시 센다', () => {
     expect([...ALL_SIGNALS].sort()).toEqual(
-      [CHAT_UNREAD_MOVED, NOTIFICATIONS_UNREAD_MOVED, READING_CREDITS_MOVED, REQUESTS_TO_ANSWER_MOVED].sort(),
+      [CHAT_UNREAD_MOVED, NOTIFICATIONS_UNREAD_MOVED, READING_CREDITS_MOVED].sort(),
     );
   });
 });

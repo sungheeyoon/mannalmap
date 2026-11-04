@@ -20,8 +20,8 @@ import { readUnreadChat } from './me/chat/unread';
 import { CHAT_UNREAD_MOVED } from './me/chat/unread-signal';
 import { readReadingCredits } from './me/credits/remaining';
 import { READING_CREDITS_MOVED } from './me/credits/credits-signal';
-import { readRequestsToAnswer, readUnreadNotifications } from './me/requests/unread';
-import { NOTIFICATIONS_UNREAD_MOVED, REQUESTS_TO_ANSWER_MOVED } from './me/requests/unread-signal';
+import { readUnreadNotifications } from './me/requests/unread';
+import { NOTIFICATIONS_UNREAD_MOVED } from './me/requests/unread-signal';
 import { isSharePath } from './share/path';
 import { BUTTON_SECONDARY_SMALL, ICON_BUTTON_BARE, ICON_BUTTON_BARE_ACTIVE } from './ui/buttons';
 import { useDetailsMenu } from './ui/details-menu';
@@ -150,11 +150,9 @@ export function SiteHeader() {
   const counting = live && session === 'in';
   const unreadChat = useUnreadCount(counting, pathname, readUnreadChat, CHAT_UNREAD_MOVED);
   const unreadNews = useUnreadCount(counting, pathname, readUnreadNotifications, NOTIFICATIONS_UNREAD_MOVED);
-  const toAnswer = useUnreadCount(counting, pathname, readRequestsToAnswer, REQUESTS_TO_ANSWER_MOVED);
-  /** 탭마다 선 딱지 — 채팅은 안 읽은 메시지, 인연은 답할 요청(ADR 0130) */
+  /** 탭마다 선 딱지 — 채팅의 안 읽은 메시지. 인연 탭은 답할 일이 없다(ADR 0215) */
   const tabBadges: Partial<Record<(typeof MEMBER_TABS)[number]['href'], number>> = {
     '/me/chat': unreadChat,
-    '/me/matching': toAnswer,
   };
   /** 로그인 화면에서 「로그인」은 지금 보고 있는 화면으로 가는 버튼이다 */
   const onAuthScreen = pathname.startsWith('/auth');

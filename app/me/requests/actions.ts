@@ -6,7 +6,7 @@ import { refresh } from '../../refresh';
 import type { SaveResult } from '../../save-result';
 import { supabaseOnServer } from '../../auth/server-client';
 import { userFacingDbMessage } from '../../db-error';
-import { acceptedMatchIdOf, respondAndSend, statusOf } from './respond';
+import { respondAndSend, statusOf } from './respond';
 import { rpcArgs } from '@/src/lib/db';
 
 /**
@@ -17,11 +17,11 @@ import { rpcArgs } from '@/src/lib/db';
  * 없는 Match 를 찾게 된다. 그래서 결과를 성공/실패가 아니라 **상태**로 돌려준다.
  */
 type RespondResult =
-  | { ok: true; status: RequestStatus; credits?: 'moved'; matchId?: string }
+  | { ok: true; status: RequestStatus; credits?: 'moved' }
   | { ok: false; message: string };
 
 /**
- * 받은 요청에 답한다.
+ * 받은 상세 궁합 요청에 답한다 — 화면은 동의(`true`)만 보낸다.
  *
  * **여기서 판정하지 않는다.** 내가 받는 쪽인가, 아직 pending 인가, 잡아 둔 입력 판
  * (`input_version`)이 지금과 같은가 — 셋 다 RPC 안에 있다. 여기서 다시 물으면 답하는 자리가 둘이 되고,
@@ -32,10 +32,7 @@ export async function respondToRequest(requestId: string, accept: boolean): Prom
   if (!answered.ok) return answered;
 
   refresh('requests-changed');
-  if (answered.status !== 'accepted') return answered;
-
-  const matchId = await acceptedMatchIdOf(requestId);
-  return matchId === null ? answered : { ...answered, matchId };
+  return answered;
 }
 
 /**

@@ -30,7 +30,7 @@ export const SERVICE_FEATURES: readonly { icon: ServiceFeatureIcon; title: strin
   {
     icon: 'people',
     title: '인연',
-    body: '다른 사람에게 궁합을 요청하고, 서로 동의하면 인연 궁합이 열리고 대화를 나눌 수 있어요.',
-    note: '로그인 · 요청할 때 풀이권 1장 예약',
+    body: '마음이 가는 사람과 바로 대화를 시작하고, 서로 동의하면 상세 궁합을 함께 볼 수 있어요.',
+    note: '로그인 · 대화는 무료 · 상세 궁합을 청할 때 풀이권 1장 예약',
   },
 ];

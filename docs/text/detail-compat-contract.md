@@ -1,6 +1,6 @@
 # 상세 궁합 출력 계약
 
-> **정한 것은 §9 다 — 운영자 위임으로 조율자가 정했다(2026-11-02).** 상수 · 함수 · 시험은 `src/lib/reading/detail.ts` 에 섰고 **부르는 곳은 아직 안 이어졌다**(§10) — 운영 글은 그대로다. 정책 원본은 PRD 매칭 §6.6 이다.
+> **정한 것은 §9 다 — 운영자 위임으로 조율자가 정했다(2026-11-02).** 상수 · 함수 · 시험은 `src/lib/reading/detail.ts` 에 섰고 부르는 곳은 §10 이다 — 인연 궁합은 상세 궁합 하나다(2026-11-04). 정책 원본은 PRD 매칭 §6.6 이다.
 > §2 ~ §8 의 잰 값 기준은 main `3a6e47a`, 2026-11-02 이고 §5 의 갈래는 그때의 재료다. 실호출을 하지 않았다 — 글 품질 · 점수 분포 · 재호출 흔들림은 **못 쟀다**(「운영자 실호출로 잴 것」).
 
 표시는 넷이다. **[코드 사실]** 코드에서 잰 것 · **[운영자 결정]** 운영자 직접 발언 · **[추천]** 승인 아닌 제안 · **[미정]** 갈래와 대가만 적고 정하지 않은 것.
@@ -32,7 +32,7 @@
 | --- | --- | --- | --- |
 | `markdown` 본문 | 있음 | `reading.output` | `### 근거` 앞까지만. 인연 궁합은 DB 문이 자르고(`my_reading`), 화면 경계가 또 자른다(`app/me/reading/current.ts:54`) |
 | `### 근거` 절(점수 근거 줄 포함) | `markdown` 안의 평문 | `reading.output` 안 | 안 나간다. 운영자 검산 화면만(`docs/context/matching.md:104`) |
-| `score` | 있음 | `reading.score` | 표지의 「궁합풀이 점수」(`app/me/reading/reading-result.tsx:133-137`, `mobile/src/reading/result.tsx:84`) · 앱 방 머리 「72점」 꼴(`mobile/src/chat/compat.tsx:25`) |
+| `score` | 있음 | `reading.score` | 표지의 「궁합풀이 점수」(`app/me/reading/reading-result.tsx:133-137`, `mobile/src/reading/result.tsx:84`) |
 | `metaphor` 한 줄 비유 | 있음 | `reading.metaphor` | 표지 맨 위(`reading-result.tsx:105-127`) |
 | 기준점 | 출력 칸 아님. 프롬프트에만 실림(`prompt.ts:1225-1227`) | `reading.score_baseline` — 시도의 얼린 값 | 결과 표지에는 안 선다. 문은 내준다(`supabase/migrations/20261025150000_the_reading_keeps_the_scale_it_was_scored_on.sql:257`) |
 
@@ -195,26 +195,26 @@
 
 ## 9. 정한 것 — 조율자, 운영자 위임(2026-11-02)
 
-**새 지시는 상세 흐름(`match_request.kind = 'detail'`)에서만 고른다.** 옛 흐름 · 스위치 꺼짐 · `private` 의 글자와 판본은 그대로이고, `scripts/old-reading-prompts-unchanged.test.ts` 가 글자의 지문으로 잰다.
+**인연 궁합은 상세 궁합 하나다**(대화가 유일한 흐름, 2026-11-04) — 옛 흐름(수락과 함께 나는 인연 궁합)의 지시와 스위치는 걷었고, 인연 궁합의 4판은 늘 아래 지시를 받는다. `private` · 개인 풀이 · 원복용 옛 컷의 글자와 판본은 그대로이고, `scripts/old-reading-prompts-unchanged.test.ts` 가 글자의 지문으로 잰다 — 인연 궁합의 지문은 걷기 전 상세 조립의 글과 같다.
 
 1. **D7** — 상세에서 「적어도 한 항목은 움직인다」를 지운다. 까닭이 없으면 기준점 그대로가 맞다. 화면 약속은 「달라질 수 있어요」까지다.
 2. **다루는 내용** — 고정 소제목을 두지 않는다(ADR 0067 · 2026-09-15 구성을 안 되돌린다). 글이 **연락 · 속도 · 표현 차이 · 부딪힐 때 맞춰 볼 점**을 빠뜨리지 않게 지시하고 소제목은 글이 짓는다. 어겼는지 기계가 모른다 — 사람이 대조한다. ADR 0139 와의 관계는 그 추기.
 3. **발견 한 줄** — 스키마 칸 `discovery`(차례 `markdown` → `score` → `discovery` → `metaphor`)로 받아 저장 때 `reading.output` 맨 앞 문단으로 접는다(`withDiscovery`). **새 DB 칸이 없다.** 첫 문단이 리드로 서서 웹 · 앱을 안 고치고, 본문 검사 · 호칭 바꾸기를 함께 받는다. 평문을 되파싱하지 않고, 화면이 그 줄만 따로 꺼낼 수는 없다. §8 의 「필요함」은 따로 칸을 세울 때의 말이다.
 4. **점수 변화 이유** — 내보내지 않는다. 칸이 없고 프롬프트가 쓰지 말라고 한다.
-5. **`private` · D10** — 안 건드린다. 판본은 `detailVersion`(`reading-prompt-detail-v1`)으로 따로 세고 `pairVersion` 은 v23 그대로다.
+5. **`private` · D10** — 안 건드린다. 인연 궁합의 판본은 `detailVersion`(`reading-prompt-detail-v1`, `promptVersionOf('match')`)으로 따로 세고 `pairVersion` 은 비공개 궁합의 v23 그대로다.
 6. **낱말** — 화면의 「상세 궁합」 · 「예상 궁합」은 운영자 방향이다. 약관의 「궁합풀이」 · 「예측」 정리는 #938 몫이다.
 7. **글 안 직접 노출** — §6.6 의 15 를 따른다. 상세 글(본문 · 발견 한 줄 · 비유)이 두 사람의 **실제 기둥 두 글자**를 직접 쓰면 **막는다**(`pillar-named-in-reading`, 조율자 2026-11-02, ADR 0163 추기). 글은 두 사람이 함께 읽으므로 어느 자리든 누군가에게는 상대의 글자다. 한자는 그대로 찾고, 한글 읽기는 기둥을 부르는 말 곁이나 그 사람의 호칭 바로 뒤에서만 찾는다 — 「기사」 · 「임신」 같은 일상어를 안 걸려고 좁혔다. 막힌 글은 있는 실패 길로 가 풀이권이 복원되고, 비용은 실패 때 모델 호출 1회다. 근거 절은 재지 않는다 — 인연 궁합은 DB 문이 자른다(§2). 한 글자 · 관계 이름 · 오행으로 돌려 쓴 것은 잡지 않는다. **글에서 상대 글자를 유추할 위험이 있고, 직접 언급 금지만 검증했으며, 복원 불가를 보장하지 않는다.** 복원을 막는 검사는 두지 않는다(운영자 2026-11-02).
 
 **문구.** 이 PR 이 넣는 화면 문구는 없어 대장 줄도 없다 — 발견 한 줄은 모델이 쓴다. 소제목 사례는 §5 대로 찾지 못했고, 발견 한 줄에 해당하는 한국 서비스 사례는 이번에 찾지 않았다.
 
-## 10. 연결 — 2026-11-02, #975 위
+## 10. 연결 — 2026-11-02, #975 위 · 2026-11-04 대화가 유일한 흐름
 
 | 자리 | 지금 |
 | --- | --- |
-| `app/me/reading/submit.ts` | 인연 궁합이면 요청 이름을 읽어 `requestAssemblyOf` · `requestPromptVersionOf` 로 고른다. 수락 · 동의의 제출 문은 `request_kind` 를 내주고, 다시 만들기 · 복구기는 이름을 안 내줘 `reading_run_request_kind` 로 묻는다. **이름을 모르면 안 보내고 `request-kind-unknown` 으로 닫는다** |
+| `app/me/reading/submit.ts` | 인연 궁합은 늘 상세다 — 누름의 제출 · 다시 만들기 · 복구기가 같은 지시와 `promptVersionOf('match')`(상세 판본)로 보낸다. 요청의 이름을 묻지 않는다 |
 | `prepare_reading_job` | 거짓이면 모델을 안 부른다. 동의가 끝난 시도는 그 문이 `consent-ended` 로 닫고 앱은 더 닫지 않는다 |
 | `app/me/reading/model.ts` | 상세 모양 `markdown` → `score` → `discovery` → `metaphor` |
 | `app/me/reading/collect.ts` | 얼린 판본이 상세면 `withDiscovery` 로 접고, `detailFindingsOf` 의 답을 같은 문턱(`blockingFindingsOf`)으로 가른다 |
 | `app/me/reading/call.live.test.ts` | 운영자 실호출 블록 `READING_DETAIL_LIVE`(끄기 기본). 부르는 것은 `READING_DETAIL_LIVE=1 READING_DETAIL_REPEAT=3 npx vitest run app/me/reading/call.live.test.ts -t "상세 궁합"` 이고, `READING_DETAIL_DRY=1` 은 안 부르고 프롬프트와 자료만 떨군다 |
 
-**스스로 안 고친 것:** 다시 만들기가 시도를 열 때 적는 `reading_run.prompt_version` 은 누름 자리에서 흐름을 몰라 옛 이름이다. 저장되는 글의 판본은 제출이 적은 상세 이름이다.
+다시 만들기가 시도를 열 때 적는 `reading_run.prompt_version` 도 `promptVersionOf('match')` 라 상세 이름이다 — 흐름이 하나라 누름 자리에서 모를 것이 없다.

@@ -2,7 +2,7 @@ import { AREAS, type Area } from '@/src/lib/live/changes';
 
 import { CHAT_UNREAD_MOVED } from '../me/chat/unread-signal';
 import { READING_CREDITS_MOVED } from '../me/credits/credits-signal';
-import { NOTIFICATIONS_UNREAD_MOVED, REQUESTS_TO_ANSWER_MOVED } from '../me/requests/unread-signal';
+import { NOTIFICATIONS_UNREAD_MOVED } from '../me/requests/unread-signal';
 
 /**
  * 채널이 실어 오는 「무엇이 바뀌었나」 한 건과, 그것을 **어느 신호 · 어느 화면**으로 옮기는가(ADR 0155).
@@ -18,20 +18,19 @@ import { NOTIFICATIONS_UNREAD_MOVED, REQUESTS_TO_ANSWER_MOVED } from '../me/requ
 const SIGNALS: Readonly<Record<Area, readonly string[]>> = {
   chat: [CHAT_UNREAD_MOVED],
   /*
-    요청의 상태가 바뀌면 소식도 함께 선다(수락 · 거절 · 만료의 소식). 보낸 요청은 풀이권 한 자리를 잡고 거두거나 만료되면
-    돌려준다(ADR 0038) — 셋 다 다시 센다.
+    요청의 상태가 바뀌면 소식도 함께 선다(답 · 동의 · 만료의 소식). 상세 요청은 풀이권 한 자리를 잡고 거두거나 만료되면
+    돌려준다(ADR 0038) — 둘 다 다시 센다.
   */
-  requests: [REQUESTS_TO_ANSWER_MOVED, NOTIFICATIONS_UNREAD_MOVED, READING_CREDITS_MOVED],
+  requests: [NOTIFICATIONS_UNREAD_MOVED, READING_CREDITS_MOVED],
   notifications: [NOTIFICATIONS_UNREAD_MOVED],
   credits: [READING_CREDITS_MOVED],
 };
 
 export const signalsOf = (area: Area): readonly string[] => SIGNALS[area];
 
-/** 다시 대조할 때는 넷 다 다시 센다 */
+/** 다시 대조할 때는 셋 다 다시 센다 */
 export const ALL_SIGNALS: readonly string[] = [
   CHAT_UNREAD_MOVED,
-  REQUESTS_TO_ANSWER_MOVED,
   NOTIFICATIONS_UNREAD_MOVED,
   READING_CREDITS_MOVED,
 ];

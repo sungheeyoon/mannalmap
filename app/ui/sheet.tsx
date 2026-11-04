@@ -17,7 +17,7 @@ import { TYPE_SECTION } from './surfaces';
  *
  * **넓은 화면(lg)에서는 가운데 대화상자다**(화면 점검 2026-10-09 C15). 바닥에 붙은 판과 끌 손잡이는 엄지의 모양이라, 1280 폭에서는
  * 화면 아래로 이어지는 폰 시트로 읽혔다. 거기서는 손잡이가 없고 끌어 닫지 않으며, 아래에서 올라오지 않고 제자리에서 떠오른다.
- * ⓘ 자체는 넓은 화면에 안 선다(내용이 옆 열에 있다) — 넓은 화면에서 이 판을 여는 것은 「받은 요청 N」 띠다(`app/me/matching/requests-band.tsx`).
+ * ⓘ 자체는 넓은 화면에 안 선다(내용이 옆 열에 있다).
  */
 export function DetailSheet({
   sheet,
@@ -31,7 +31,7 @@ export function DetailSheet({
   sheet: RefObject<HTMLDialogElement | null>;
   /** 시트 머리의 제목 */
   nickname: string;
-  /** 보조기기가 읽는 시트 이름 — 없으면 「○○ 님 자세히」. 받은 요청 시트(`app/me/matching/requests-band.tsx`)가 제 이름을 준다 */
+  /** 보조기기가 읽는 시트 이름 — 없으면 「○○ 님 자세히」. 점수 설명 시트(`app/me/matching/matching-experience.tsx`)가 제 이름을 준다 */
   label?: string;
   /** 머리의 닫기(X) 왼쪽에 서는 것 — 오늘의 인연은 신고 · 차단 「⋯」를 둔다 */
   menu?: ReactNode;

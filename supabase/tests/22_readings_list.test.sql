@@ -12,7 +12,7 @@
 -- 5. **본문도 근거도 안 나간다.** 반환형이 곧 계약이다 — 목록은 결과로 가는 길이지
 --    두 번째 결과 화면이 아니다(ADR 0008·0033).
 begin;
-select plan(25);
+select plan(26);
 
 /**
  * 이 파일은 풀이권을 재지 않는다 — 대상 넷에 시도를 여는 것이 여기서 재려는 것이고,
@@ -156,15 +156,17 @@ select pg_temp.acting((select lee from folks));
 select is(
   public.respond_to_match_request((select request_id from asked), true),
   'accepted',
-  '수락하면 Match 가 선다');
+  '이가 대화에 답한다');
 
 create temporary table matched as select match_id from public.my_matches();
 grant select on matched to authenticated, service_role;
 
 /**
- * **아무도 안 누른다 — 동의가 시도를 열었다**(ADR 0038). 시도는 청한 쪽(김) 이름으로
+ * **김이 사고 이가 누른다 — 누름이 시도를 연다**(ADR 0215). 시도는 구매자(김) 이름으로
  * 이미 서 있으므로 여는 것이 아니라 찾는다. `reading_run` 은 당사자에게도 안 열린다.
  */
+select lives_ok($$select tests.press_detail((select request_id from asked))$$, '김이 상세를 청하고 이가 누른다');
+
 reset role;
 create temporary table match_run as
 select r.id from public.reading_run r
@@ -356,8 +358,8 @@ select is(
  * (ADR 0033 이 반환형에서 `output` 을 뺀 그 자리다).
  *
  * **두 일간도 일부러 내준다**(G-59) — 표지 색 하나를 위해 화면이 명식을 다시 읽지 않게. 천간 한
- * 글자씩이고, 인연 궁합의 상대 것은 결과 화면이 이미 연 동의 당시 사본의 것이다. 누구의 일간인가는
- * `58_readings_cover` 가 잰다.
+ * 글자씩이고, 인연 궁합 줄은 비어 있다 — 상세 궁합은 글자를 돌려주지 않는다(ADR 0215). 그 줄은
+ * `request_kind` 가 표지를 가른다. `58_readings_cover` 가 잰다.
  */
 select bag_eq(
   $$select unnest(array[

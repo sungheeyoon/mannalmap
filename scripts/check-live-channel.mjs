@@ -51,7 +51,7 @@ const join = (client, topic, onChanged = () => {}) => new Promise((resolve) => {
 const a = await signedIn(mail.a);
 const b = await signedIn(mail.b);
 
-/** 둘의 Match — 요청 · 수락의 흐름은 `check-chat` 이 잰다. 여기는 방만 있으면 된다 */
+/** 둘의 Match — 대화 시작 · 답의 흐름은 `check-chat` 이 잰다. 여기는 방만 있으면 된다 */
 sql(`insert into public.match (user_low, user_high)
      values (least('${a.id}'::uuid, '${b.id}'::uuid), greatest('${a.id}'::uuid, '${b.id}'::uuid))`);
 const matchId = sql(`select id from public.match where user_low = least('${a.id}'::uuid, '${b.id}'::uuid)

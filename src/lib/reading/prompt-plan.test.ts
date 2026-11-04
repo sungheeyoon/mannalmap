@@ -87,7 +87,7 @@ const CASES: readonly Case[] = [
     id: 'match/control',
     kind: 'match',
     assembly: CONTROL,
-    slots: ['role', 'rules', 'scope', 'guide', 'voice', 'body', 'summary', 'output'],
+    slots: ['role', 'rules', 'scope', 'guide', 'voice', 'body', 'detail', 'summary', 'output'],
   },
   {
     id: 'private/legacy',
@@ -286,14 +286,14 @@ describe('운영 네 판의 소제목 차례', () => {
     '구조화 출력의 뜻',
   ];
 
-  /** 두 궁합은 「이 자료의 범위」 한 줄만 다르다 — 인연 궁합에만 선다 */
-  const pairHeadings = (scope: boolean) => [
+  /** 두 궁합은 「이 자료의 범위」와 상세 궁합의 두 절만 다르다 — 인연 궁합에만 선다 */
+  const pairHeadings = (match: boolean) => [
     '한눈에',
     '자리가 붙은 사실',
     '이 자료가 무엇인가',
     '사실에 관한 단 하나의 금지',
     '말의 세기',
-    ...(scope ? ['이 자료의 범위'] : []),
+    ...(match ? ['이 자료의 범위'] : []),
     '이 자료를 읽는 법',
     '틀리면 안 되는 것',
     '이 두 사람에게서 두드러지는 이야기를 고른다',
@@ -308,6 +308,7 @@ describe('운영 네 판의 소제목 차례', () => {
     '무엇을 쓸까',
     '낼 것',
     '점수',
+    ...(match ? ['발견 한 줄', '천간·지지 글자를 쓰지 않는다'] : []),
     '한 줄 요약',
     '구조화 출력의 뜻',
     '기준점',
@@ -322,7 +323,7 @@ describe('운영 네 판의 소제목 차례', () => {
     expect(headingsOf('private')).toEqual(pairHeadings(false));
   });
 
-  it('인연 궁합은 같은 차례에 범위 절이 하나 더 선다', () => {
+  it('인연 궁합은 같은 차례에 범위 절과 상세 궁합의 두 절이 더 선다', () => {
     expect(headingsOf('match')).toEqual(pairHeadings(true));
   });
 });

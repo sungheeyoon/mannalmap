@@ -472,9 +472,9 @@ try {
   const spoofPass = await c.client.from('discovery_passed').upsert({ user_id: a.id, passed_user_id: b.id, passed_at: new Date().toISOString() }, { onConflict: 'user_id,passed_user_id' });
   check('남의 이름으로 넘기기는 거절된다', spoofPass.error !== null, shapeOf(spoofPass));
 
-  /* 그린 흐름과 스위치가 다르면 문이 아무것도 안 세운다 — 진짜 PostgREST 로 잰다. 아래 옛 호출(인자 하나)은 깔린 앱의 모양 그대로다(ADR 0216) */
-  const wrongKind = await a.client.rpc('request_match', { p_candidate_user_id: b.id, p_expected_kind: 'talk' });
-  check('꺼짐에 대화를 기대하면 전용 코드로 거절한다', wrongKind.error?.code === 'MK001', shapeOf(wrongKind));
+  /* 옛 화면이 유료 요청(`bundled`)을 기대하면 문이 아무것도 안 세운다 — 진짜 PostgREST 로 잰다. 기대 종류는 임시 호환 인자다(`20270109090000`) */
+  const wrongKind = await a.client.rpc('request_match', { p_candidate_user_id: b.id, p_expected_kind: 'bundled' });
+  check('옛 요청을 기대하면 22023 으로 거절한다', wrongKind.error?.code === '22023', shapeOf(wrongKind));
   check('그 거절은 요청을 안 남긴다', sql(`select count(*) from public.match_request where requester_user_id = '${a.id}'`) === '0');
   const asked = await a.client.rpc('request_match', { p_candidate_user_id: b.id });
   check('요청을 보낸다', asked.error === null && typeof asked.data === 'string', shapeOf(asked));

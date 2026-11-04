@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { inboxForViewer, matchesForViewer, matchOfAcceptedRequest } from './inbox';
+import { inboxForViewer, matchesForViewer } from './inbox';
 
 vi.mock('../../auth/server-client', () => ({ supabaseOnServer: vi.fn() }));
 
@@ -27,23 +27,6 @@ const notification = (over: Record<string, unknown>) => ({
   read_at: null,
   reading_label_a: null,
   reading_label_b: null,
-  ...over,
-});
-
-const requestRow = (over: Record<string, unknown>) => ({
-  request_id: 'r1',
-  direction: 'received',
-  counterpart_user_id: 'u-daon',
-  counterpart_nickname: '다온',
-  counterpart_intro: null,
-  counterpart_has_photo: false,
-  status: 'accepted',
-  supplied_to_me: null,
-  supplied_to_them: null,
-  balance_band: 'balanced',
-  created_at: '2026-10-11T00:00:00Z',
-  decided_at: '2026-10-11T00:01:00Z',
-  counterpart_photo_focus: [],
   ...over,
 });
 
@@ -87,39 +70,6 @@ describe('소식이 가는 곳', () => {
   });
 });
 
-describe('방금 수락한 요청의 인연 궁합', () => {
-  it('그 요청의 상대와 맺어진 Match 다', async () => {
-    answering({
-      my_match_requests: { data: [requestRow({ request_id: 'r0', counterpart_user_id: 'u-other' }), requestRow({})], error: null },
-      my_matches: { data: [matchRow({ match_id: 'm0', partner_user_id: 'u-other' }), matchRow({})], error: null },
-    });
-
-    expect(await matchOfAcceptedRequest('r1')).toBe('m1');
-  });
-
-  it('지금 볼 수 있는 Match 가 없으면 `null` 이다 — 옮기지 않는다', async () => {
-    answering({
-      my_match_requests: { data: [requestRow({})], error: null },
-      my_matches: { data: [], error: null },
-    });
-
-    expect(await matchOfAcceptedRequest('r1')).toBeNull();
-  });
-
-  it('못 읽으면 던진다 — 액션이 받아 옮기지 않고 답한다', async () => {
-    answering({
-      my_match_requests: { data: [requestRow({})], error: null },
-      my_matches: { data: null, error: { message: 'fetch failed' } },
-    });
-
-    await expect(matchOfAcceptedRequest('r1')).rejects.toThrow();
-  });
-});
-
-/**
- * **보관함의 인연 궁합 줄은 기운을 값으로 받는다**(#849). 앞서는 화면이 기운 이름 하나와 문장 전체(`suppliedToMe`)를 견줘
- * 늘 맞지 않았고, 줄의 기운 그림이 한 번도 서지 않았다. 문장은 보조기기가 읽는 이름으로 남는다.
- */
 describe('보관함의 인연 궁합 — 받는 기운', () => {
   it('상대가 채워 주는 오행이 값(오행 글자)으로 오고, 균형은 짧은 꼴도 함께 온다', async () => {
     answering({ my_matches: { data: [matchRow({ supplied_to_me: ['土', '金'], balance_band: 'even' })], error: null } });

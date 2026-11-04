@@ -11,7 +11,7 @@
 
 /** 빈 목록 — 사용자가 정한 글자 그대로(2026-09-23) */
 export const CHAT_EMPTY_TITLE = '아직 채팅방이 없어요';
-export const CHAT_EMPTY_DETAIL = '요청이 수락돼 인연 궁합이 열리면 메시지를 주고받을 수 있어요.';
+export const CHAT_EMPTY_DETAIL = '오늘의 인연에서 대화를 시작하면 메시지를 주고받을 수 있어요.';
 /** 쓰는 칸 — 사용자가 정한 글자 그대로(2026-09-23) */
 export const CHAT_INPUT_PLACEHOLDER = '메시지를 입력해 주세요';
 export const CHAT_SEND_LABEL = '보내기';

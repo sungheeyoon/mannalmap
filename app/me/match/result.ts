@@ -1,10 +1,8 @@
-import type { CompatSide } from '@/src/lib/saju';
 import type { PhotoFocus } from '@/src/lib/profile';
 import { balanceLabelOf } from '@/src/lib/discovery';
 import { suppliedText } from '@/src/lib/consent';
 
 import { supabaseOnServer } from '../../auth/server-client';
-import { storedPillarChart, type SharedPillarChart } from '../../shared-pillar';
 import { UUID } from '../../uuid';
 import { dbFailure, recordDbFailure } from '../../db-error';
 import { photosFromFocus } from '../candidates';
@@ -15,16 +13,10 @@ import { photosFromFocus } from '../candidates';
  * `payloadForViewer` · `candidatesForViewer` · `inboxForViewer` 와 같은 규율이다 —
  * 묻지 않고 답만 낸다.
  *
- * ## 자르는 자리가 없어졌다 (ADR 0071)
+ * ## 여덟 글자가 안 나간다 (ADR 0215)
  *
- * 앞서는 여기가 **자르는 자리**였다. 서버가 열쇠로 상대의 계산 입력을 읽어
- * (`match_calculation_inputs`) 두 명식을 세우고, 여덟 글자만 새 객체로 잘라 내보냈다.
- *
- * 이제 그 여덟 글자는 **동의하던 그 트랜잭션에서 이미 베껴져 있다.** 읽어서 그대로
- * 내보내면 되므로 자를 것이 없고, **상대의 계산 입력을 읽는 열쇠 문이 이 길에서 빠진다**
- * (ADR 0010 개정). 출생 원문·출생지·성별은 애초에 이 함수에 도착하지 않는다.
- *
- * 나가는 것이 넓어지지 않았다 — 여덟 글자는 동의로 열린 바로 그 값이다(ADR 0012).
+ * 상세 궁합의 누름이 베낀 여덟 글자는 안에서 얼리는 데만 쓰인다 — `my_match_scope` 의 글자 칸은 늘 비어 있고 이 문도 안 읽는다.
+ * 출생 원문·출생지·성별은 애초에 이 함수에 도착하지 않는다.
  *
  * ## 관계 판정이 여기서 없어졌다
  *
@@ -42,8 +34,6 @@ const granted = Symbol('matchResultForViewer');
 
 export type SharedResult = {
   readonly matchId: string;
-  /** `talk` 면 글이 상세 궁합이다 — 못 읽었으면 `null`(ADR 0215) */
-  readonly requestKind: string | null;
   /** 차단하는 문이 하나이려면 필요하다 — 요청함이 이미 내주는 것과 같은 값이다 */
   readonly partnerUserId: string;
   readonly partnerNickname: string;
@@ -61,8 +51,6 @@ export type SharedResult = {
    * 자기 자리를 앞에 둔다.
    */
   readonly names: { readonly a: string; readonly b: string };
-  /** **동의 당시** 여덟 글자 — 지금 다시 세지 않는다(ADR 0071). 켜진 흐름의 글은 글자를 안 내준다 — `null`(ADR 0215) */
-  readonly charts: Record<CompatSide, SharedPillarChart> | null;
   /** 요청이 잡아 둔 그때의 두 축 — 지금 다시 세지 않는다 */
   readonly suppliedToMe: string | null;
   readonly suppliedToThem: string | null;
@@ -71,20 +59,6 @@ export type SharedResult = {
   readonly [granted]: true;
 };
 
-/**
- * 결과를 그리기 **전에** 나오는 답.
- *
- * 둘을 가른다. **없거나 못 보는 Match** 는 `null` 이고(그 둘은 갈리지 않는다 — 갈리면
- * 응답 차이만으로 실재를 알아낼 수 있다), **여덟 글자가 없는 Match** 는 자기 말을 든다.
- * 뒤엣것을 `null` 로 합치면 성립한 Match 를 두고 「그런 것 없습니다」라고 말하게 된다.
- *
- * 「못 읽는 판본」 갈래는 없어졌다 — 이 길에서 판본을 안 읽는다.
- */
-type ResultOutcome =
-  | { kind: 'ok'; result: SharedResult }
-  /** `chartless` — 글자 없이 그릴 수 있는 그 인연. 켜진 흐름에서 글이 서는 동안만 화면이 쓴다(ADR 0215) */
-  | { kind: 'closed'; message: string; chartless: SharedResult };
-
 /** `my_match_scope()` 가 내주는 한 줄 — **여기 없는 것이 안 나가는 것이다** */
 type ScopeRow = {
   match_id: string;
@@ -92,8 +66,6 @@ type ScopeRow = {
   partner_nickname: string | null;
   partner_intro: string | null;
   partner_has_photo: boolean | null;
-  my_chart: unknown;
-  partner_chart: unknown;
   supplied_to_me: string[] | null;
   supplied_to_them: string[] | null;
   balance_band: string;
@@ -103,9 +75,9 @@ type ScopeRow = {
 /**
  * 그 Match 의 공유 결과.
  *
- * @returns 없거나 못 보는 Match 면 `null`. 그 밖에는 무엇이 됐는지를 값으로 낸다.
+ * @returns 없거나 못 보는 Match 면 `null`(둘은 갈리지 않는다 — 갈리면 응답 차이만으로 실재를 알아낼 수 있다).
  */
-export async function matchResultForViewer(matchId: string): Promise<ResultOutcome | null> {
+export async function matchResultForViewer(matchId: string): Promise<SharedResult | null> {
   if (!UUID.test(matchId)) return null;
 
   const supabase = await supabaseOnServer();
@@ -127,21 +99,11 @@ export async function matchResultForViewer(matchId: string): Promise<ResultOutco
 
   const names = { a: '나', b: scope.partner_nickname ?? '상대' } as const;
 
-  const mine = storedPillarChart(scope.my_chart);
-  const theirs = storedPillarChart(scope.partner_chart);
-
-  /**
-   * **동의 당시 여덟 글자가 없다.**
-   *
-   * 백필이 아직 안 닿은 옛 Match 다. 지금 값으로 메우면 두 사람이 동의한 적 없는 명식이
-   * 보드에 서므로, 메우지 않고 그렇게 말하고 멈춘다.
-   */
-  const base = {
+  return {
     matchId: scope.match_id,
     partnerUserId: scope.partner_user_id,
     partnerNickname: names.b,
     partnerIntro: scope.partner_intro,
-    requestKind: row?.request_kind ?? null,
     ...partnerPhotosOf(scope, row?.partner_photo_focus ?? null),
     names,
     suppliedToMe: suppliedText(scope.supplied_to_me, 'toMe'),
@@ -150,12 +112,6 @@ export async function matchResultForViewer(matchId: string): Promise<ResultOutco
     createdAt: scope.created_at,
     [granted]: true as const,
   };
-
-  if (mine === null || theirs === null) {
-    return { kind: 'closed', message: '동의 당시의 여덟 글자를 찾지 못했습니다', chartless: { ...base, charts: null } };
-  }
-
-  return { kind: 'ok', result: { ...base, charts: { a: mine, b: theirs } } };
 }
 
 /**
@@ -166,7 +122,7 @@ export async function matchResultForViewer(matchId: string): Promise<ResultOutco
 async function matchRowOf(
   supabase: Awaited<ReturnType<typeof supabaseOnServer>>,
   matchId: string,
-): Promise<{ readonly request_kind: string; readonly partner_photo_focus: readonly number[] } | null> {
+): Promise<{ readonly partner_photo_focus: readonly number[] } | null> {
   const { data, error } = await supabase.rpc('my_matches');
   if (error) {
     recordDbFailure(error, 'my_matches');

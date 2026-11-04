@@ -52,7 +52,7 @@ export type InboxRequest = {
   readonly suppliedToMe: string | null;
   /** 내가 상대에게 채우는 오행 */
   readonly suppliedToThem: string | null;
-  /** 위 두 문장의 오행 그대로 — 요청 카드가 그림으로 세운다(`app/me/matching/element-exchange.tsx`). 문장은 보조기기 이름이 된다 */
+  /** 위 두 문장의 오행 그대로 — 그림으로 세울 때 쓰고, 문장은 보조기기 이름이 된다 */
   readonly elementsToMe: readonly Element[];
   readonly elementsToThem: readonly Element[];
   readonly balanceLabel: string;

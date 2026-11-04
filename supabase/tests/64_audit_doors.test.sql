@@ -73,8 +73,8 @@ update public.app_user set intro = '이의 소개' where id = (select lee from w
 create temporary table asked (id uuid, asker uuid);
 with made as (
   insert into public.match_request
-    (requester_user_id, addressee_user_id, policy_version, supplied_to_requester, supplied_to_addressee, balance_band)
-  select a.u, (select lee from who), 'discovery-v1', '{}', '{}', 'balanced'
+    (kind, expires_at, requester_user_id, addressee_user_id, policy_version, supplied_to_requester, supplied_to_addressee, balance_band)
+  select 'talk', 'infinity'::timestamptz, a.u, (select lee from who), 'discovery-v1', '{}', '{}', 'balanced'
   from (values ((select kim from who)), ((select park from who))) as a(u)
   returning id, requester_user_id
 )
@@ -114,22 +114,23 @@ select is(
   array['없음', 'false'],
   '끊긴 요청의 줄에는 상대의 소개도 사진 표시도 없다');
 
--- 박의 요청은 차단 없이 거절된다 — 차단과 같은 답이어야 차단이 알려지지 않는다
+-- 박의 대화에는 거절이 없다 — 받은 사람의 끝내기는 차단 · 신고뿐이다(대화가 유일한 흐름, `20270109090000`)
 select pg_temp.acting((select lee from who));
-select lives_ok(
+select throws_ok(
   format($$select public.respond_to_match_request(%L::uuid, false)$$,
     (select id from asked where asker = (select park from who))),
-  '받은 사람이 박의 요청을 거절한다');
+  '22023', null,
+  '받은 사람의 거절은 없다 — 옛 앱의 거절 단추는 아무것도 안 바꾼다');
 
 select pg_temp.acting((select park from who));
 select is(
-  (select count(*)::int from public.photo_at((select lee from who), 1)), 0,
-  '그냥 거절된 요청도 사진을 안 연다 — 거절과 차단이 같은 답이다');
+  (select count(*)::int from public.photo_at((select lee from who), 1)), 1,
+  '거절이 없으니 기다리는 대화는 그대로 사진을 연다');
 select is(
   (select array[coalesce(counterpart_intro, '없음'), counterpart_has_photo::text] from public.my_match_requests()
    where request_id = (select id from asked where asker = (select park from who))),
-  array['없음', 'false'],
-  '그냥 거절된 줄도 소개와 사진 표시를 안 싣는다 — 차단된 줄과 모양이 같다');
+  array['이의 소개', 'true'],
+  '기다리는 대화의 줄은 그대로다 — 끝난 줄만 소개와 사진 표시를 걷는다');
 
 /**
  * **수락된 요청도 차단 뒤에는 닫힌다.** 성립한 쌍의 사진은 `visible_matches` 가 차단을 보고 닫지만, 요청 갈래가
@@ -137,9 +138,9 @@ select is(
  */
 reset role;
 insert into public.match_request
-  (requester_user_id, addressee_user_id, status, decided_at, policy_version,
+  (kind, expires_at, requester_user_id, addressee_user_id, status, decided_at, policy_version,
    supplied_to_requester, supplied_to_addressee, balance_band)
-values ((select choi from who), (select kim from who), 'accepted', now(), 'discovery-v1', '{}', '{}', 'balanced');
+values ('talk', 'infinity', (select choi from who), (select kim from who), 'accepted', now(), 'discovery-v1', '{}', '{}', 'balanced');
 set local role authenticated;
 
 select pg_temp.acting((select choi from who));

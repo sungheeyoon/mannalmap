@@ -852,10 +852,10 @@ export type Database = {
           created_at?: string
           decided_at?: string | null
           detail_match_id?: string | null
-          expires_at?: string
+          expires_at: string
           id?: string
           impression_id?: string | null
-          kind?: string
+          kind: string
           pair_high?: string | null
           pair_low?: string | null
           policy_version: string
@@ -916,24 +916,6 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
-      }
-      match_talk_switch: {
-        Row: {
-          changed_at: string
-          id: boolean
-          open: boolean
-        }
-        Insert: {
-          changed_at?: string
-          id?: boolean
-          open?: boolean
-        }
-        Update: {
-          changed_at?: string
-          id?: boolean
-          open?: boolean
-        }
-        Relationships: []
       }
       notification: {
         Row: {
@@ -3421,10 +3403,6 @@ export type Database = {
       }
       match_consent_holds: { Args: { p_match_id: string }; Returns: boolean }
       match_detail_ttl: { Args: never; Returns: string }
-      match_is_on_the_old_way: {
-        Args: { p_match_id: string }
-        Returns: boolean
-      }
       match_reading_source: {
         Args: { p_match_id: string }
         Returns: {
@@ -3437,7 +3415,6 @@ export type Database = {
         Args: { p_from: string; p_to: string }
         Returns: boolean
       }
-      match_request_ttl: { Args: never; Returns: string }
       match_run_awaiting_send: {
         Args: { p_lease_id?: string; p_request_id: string }
         Returns: {
@@ -3448,7 +3425,6 @@ export type Database = {
           match_id: string
           person_a: string
           person_b: string
-          request_kind: string
           run_id: string
           viewer_is_first: boolean
         }[]
@@ -3458,8 +3434,6 @@ export type Database = {
         Returns: boolean
       }
       match_talk_daily_limit: { Args: never; Returns: number }
-      match_talk_is_open: { Args: never; Returns: boolean }
-      match_talk_open: { Args: never; Returns: boolean }
       match_talk_too_many_today: { Args: { p_from: string }; Returns: boolean }
       may_edit_person_input: {
         Args: { actor: string; target_person: string }
@@ -4485,7 +4459,6 @@ export type Database = {
       }
       reading_job_send_patience: { Args: never; Returns: string }
       reading_rate_limit: { Args: never; Returns: number }
-      reading_run_request_kind: { Args: { p_run_id: string }; Returns: string }
       reading_run_timeout: { Args: never; Returns: string }
       reading_sale_is_open: { Args: never; Returns: boolean }
       reading_sale_is_open_for: { Args: { p_user: string }; Returns: boolean }

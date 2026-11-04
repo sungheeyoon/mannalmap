@@ -81,10 +81,10 @@
 | 예측 궁합 점수 | `previewScoreOf` · `buildMatchPreview` | `src/lib/discovery` · `src/lib/matching` |
 | 노출 기록 | `discovery_impression` | 표 |
 | 지나친 인연 | `discovery_passed` · `passCandidate` · `restorePassed` | 표 · 액션 |
-| pending 요청 | `match_request` · `pending` · `RequestStatus` · `requestMatch` | 표 · 값 · `src/lib/consent` · 액션 |
+| pending 요청 | `match_request` · `pending` · `RequestStatus` · `request_match_detail` | 표 · 값 · `src/lib/consent` · 함수 |
 | 무효 | `invalidated` · `invalidate_pending_requests` | 값 · 함수 |
 | 거둠 | `cancelled` · `cancelRequest` | 값 · 액션 |
-| 동의 화면 | `MATCH_DISCLOSURE` · `CONSENT_FLOW_STEPS` · `respond_to_match_request` | `src/lib/consent` · 함수 |
+| 동의 화면 | `MATCH_DISCLOSURE` · `DETAIL_CONSENT_SENDS` · `respond_to_match_request` | `src/lib/consent` · `src/lib/chat` · 함수 |
 | Match | `match` · `my_matches` · `visible_matches` | 표 · 함수 |
 | 공유 결과 | `matchResultForViewer` | `app/me/match/result.ts` |
 | 동의 당시 여덟 글자 | `chart_high` · `chart_low` · `freeze_reading_input` | `match` 칸 · 함수 |

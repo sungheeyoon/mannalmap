@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import { DISCOVERY_DISCLOSURE } from '../discovery';
 import {
-  MATCH_PILLARS_DISCLOSURE,
+  MATCH_DETAIL_DISCLOSURE,
   NOTICE_ACK_FLOOR,
   NOTICE_VERSION,
   OPTIONAL_CONSENT_NOTE,
@@ -144,7 +144,7 @@ describe('처리방침이 갖춰야 하는 것', () => {
    * 안 되는지 안 적으면, 고를 수 있는 것처럼 보이는 것을 고르게 된다.
    */
   it('거부하면 무엇이 안 되는지도 적는다', () => {
-    expect(text).toContain('받을 수 없고 인연 궁합 요청을 수락할 수 없지만');
+    expect(text).toContain('상세 궁합을 받을 수 없지만, 대화와 사주 계산 · 저장은 그대로');
     expect(text).toContain('가입하지 않거나 설정에서 탈퇴를 신청하시면 됩니다');
   });
 
@@ -227,7 +227,7 @@ describe('선택 항목', () => {
 
 /** 문구가 바뀌면 판본도 바뀐다 — 「보여 준 적 있다」가 아니라 「무엇을 보여 줬나」다 */
 it('안내 판본이 값으로 서 있다', () => {
-  expect(NOTICE_VERSION).toBe('notice-v12');
+  expect(NOTICE_VERSION).toBe('notice-v13');
 });
 
 /**
@@ -255,8 +255,9 @@ describe('사진 저장소', () => {
     expect(purge).not.toContain('반드시');
   });
 
-  it('재확인을 시키지 않는다 — 기준은 v8 그대로다', () => {
-    expect(NOTICE_ACK_FLOOR).toBe('notice-v8');
+  /** v9 는 기준을 v8 에 두었다. 그 뒤 v13 의 내용 개정(대화가 유일한 흐름)이 기준을 함께 올렸다 */
+  it('재확인 기준은 마지막 내용 개정 v13 이다', () => {
+    expect(NOTICE_ACK_FLOOR).toBe('notice-v13');
   });
 });
 
@@ -287,8 +288,9 @@ describe('첫 화면의 짧은 사주 문단', () => {
    */
   it('OpenAI 로 가는 분석 정보와 갈래마다 빠지는 것을 적는다', () => {
     expect(text).toContain('계산된 명식과 태어난 해·나이·성별 등 분석 정보');
+    expect(text).toContain('사주 여덟 글자 전부(60갑자 번호 · 한자 · 한글 · 글자별 오행 · 일간)');
     expect(text).toContain('궁합풀이에는 고르신 사이도 보내고, 이름·닉네임은 보내지 않습니다');
-    expect(text).toContain('인연 궁합풀이에는 태어난 해·나이·성별을 빼고');
+    expect(text).toContain('상세 궁합에는 태어난 해·나이·성별을 빼고');
     /* 궁합풀이에 이름 · 닉네임을 보내지 않는다(운영자 2026-10-15, reading PR) */
     expect(text).not.toContain('두 분의 닉네임');
     expect(text).not.toContain('붙인 이름과');
@@ -378,14 +380,15 @@ it('안내가 대화 90일 · OpenAI 의 때 셋 · 3일 자동 처분 · 신고
     .join(' ');
 
   expect(text).toContain('닫힌 날부터 90일');
-  expect(text).toContain('궁합풀이가 자동으로 만들어질 때');
+  expect(text).toContain('상세 궁합 요청을 받은 분이 동의했을 때');
   expect(text).toContain('신청 후 3일 이내에 파기합니다');
   expect(text).toContain('탈퇴 처리일부터 6개월');
   expect(text).not.toContain('영업일');
   expect(text).not.toContain('운영자가 확인한 뒤');
 });
 
-it('가입 안내도 상세 궁합의 양방향 여덟 글자 공개를 직접 알린다', () => {
+/** v13 — 대화가 유일한 흐름이다. 수락이 글자를 열지 않고, AI 로의 이전은 상세 궁합의 동의 때다(운영자 지시 2026-11-04) */
+it('가입 안내가 대화 · 상세 궁합 줄을 그대로 싣고 옛 공개 줄은 없다', () => {
   const text = noticeFor(
     { endsOn: '2026-11-30', purgeBy: '2026-12-30', purgeWithinDays: 30 },
     { name: '만세력 운영자', officer: '홍길동', contact: 'ops@example.com' },
@@ -393,7 +396,9 @@ it('가입 안내도 상세 궁합의 양방향 여덟 글자 공개를 직접 �
     .flatMap((section) => section.lines)
     .join(' ');
 
-  expect(text).toContain(MATCH_PILLARS_DISCLOSURE);
+  for (const line of MATCH_DETAIL_DISCLOSURE) expect(text).toContain(line);
+  expect(text).not.toContain('여덟 글자가 공개돼요');
+  expect(text).not.toContain('궁합 요청이 수락되어');
   expect(text).not.toContain('드러날 수 있습니다');
 });
 

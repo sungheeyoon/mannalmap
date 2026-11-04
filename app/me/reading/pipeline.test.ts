@@ -118,9 +118,6 @@ const frozen = (over: Record<string, unknown> = {}) => ({
 
 const started = { run_id: 'run-1' };
 
-/** 다른 집기가 시도의 흐름을 묻는 문의 답(`reading_run_request_kind`) — 시험마다 갈아 끼운다 */
-let flowAnswer: { data: string | null; error: { code: string; message: string } | null } = { data: 'bundled', error: null };
-
 /** 이 시도가 집어 올 얼린 작업 — 시험마다 갈아 끼운다 */
 let job: Record<string, unknown> = frozen();
 
@@ -139,13 +136,11 @@ beforeEach(() => {
     name === 'start_reading_run' ? { data: [started], error: null } : { data: null, error: null },
   );
   keyedRpc.mockImplementation(async (name: string) => {
-    if (name === 'reading_run_request_kind') return flowAnswer;
     if (name === 'take_reading_job') return { data: [job], error: null };
     if (name === 'match_run_awaiting_send') return { data: [job], error: null };
     if (name === 'prepare_reading_job') return { data: true, error: null };
     return { data: null, error: null };
   });
-  flowAnswer = { data: 'bundled', error: null };
   keyedClient.mockReturnValue({ rpc: keyedRpc });
   pending.length = 0;
   submit.mockReset();
@@ -1016,50 +1011,30 @@ describe('상세 궁합의 제출', () => {
     submit.mockResolvedValue({ ok: true, responseId: 'resp-1', written: (async function* () {})(), release: vi.fn() });
   });
   const DETAIL_MARK = '## 발견 한 줄';
+  /** 인연 궁합은 상세 궁합 하나다 — 어느 길로 집어도 상세 지시 · 상세 판본으로 나가고 흐름을 묻지 않는다 */
   const detailSent = () => {
     expect(prepared()?.[1].p_prompt_version).toBe(READING_POLICY.detailVersion);
     expect(prepared()?.[1].p_prompt).toContain(DETAIL_MARK);
     expect(submit.mock.calls[0]?.[0]).toContain(DETAIL_MARK);
     expect(submit.mock.calls[0]?.[2]).toMatchObject({ discovery: true });
-  };
-  const oldSent = () => {
-    expect(prepared()?.[1].p_prompt_version).toBe(READING_POLICY.pairVersion);
-    expect(prepared()?.[1].p_prompt).not.toContain(DETAIL_MARK);
-    expect(submit.mock.calls[0]?.[2]).toMatchObject({ discovery: false });
-  };
-
-  it('제출 문이 `detail` 이라 하면 상세로, 표를 안 읽는다', async () => {
-    job = frozen({ ...pair, request_kind: 'detail' });
-    await sendAcceptedMatchReading('request-1');
-    detailSent();
     expect(keyedCall('reading_run_request_kind')).toBeUndefined();
-  });
+  };
 
-  it('제출 문이 `bundled` 라 하면 옛 지시 그대로다', async () => {
-    job = frozen({ ...pair, request_kind: 'bundled' });
-    await sendAcceptedMatchReading('request-1');
-    oldSent();
-  });
-
-  it('다시 만들기 — 상세의 인연이면 상세다', async () => {
+  it('누름의 제출은 상세다', async () => {
     job = frozen(pair);
-    flowAnswer = { data: 'detail', error: null };
-    await beginReading({ kind: 'match', matchId: 'match-1' });
-    await settle();
+    await sendAcceptedMatchReading('request-1');
     detailSent();
   });
 
-  it('다시 만들기 — 옛 인연은 옛 지시다', async () => {
+  it('다시 만들기도 상세다', async () => {
     job = frozen(pair);
     await beginReading({ kind: 'match', matchId: 'match-1' });
     await settle();
-    oldSent();
+    detailSent();
   });
 
   it('복구기가 집어도 상세다', async () => {
-    flowAnswer = { data: 'detail', error: null };
     keyedRpc.mockImplementation(async (name: string) => {
-      if (name === 'reading_run_request_kind') return flowAnswer;
       if (name === 'retake_stalled_reading_job') {
         return { data: [{ ...frozen(pair), preview_markdown: null, continuation_question: null, answer_direction: null, supporting_claims: null }], error: null };
       }
@@ -1070,34 +1045,8 @@ describe('상세 궁합의 제출', () => {
     detailSent();
   });
 
-  it.each([
-    ['문이 거절했다', { data: null, error: { code: 'PGRST202', message: '없는 문' } }],
-    ['답이 없다', { data: null, error: null }],
-    ['모르는 이름이다', { data: 'talk', error: null }],
-  ])('%s — 흐름을 모르면 안 보내고 닫는다', async (_, broken) => {
-    vi.spyOn(console, 'error').mockImplementation(() => {});
-    job = frozen(pair);
-    flowAnswer = broken;
-    await beginReading({ kind: 'match', matchId: 'match-1' });
-    await settle();
-    expect(submit).not.toHaveBeenCalled();
-    expect(prepared()).toBeUndefined();
-    expect(closed()?.[1]).toMatchObject({ p_failure_code: 'request-kind-unknown' });
-  });
-
-  it('문의 일시 실패는 닫지 않고 복구기에 맡긴다 — 보내지도 않는다', async () => {
-    vi.spyOn(console, 'error').mockImplementation(() => {});
-    job = frozen(pair);
-    flowAnswer = { data: null, error: { code: '57014', message: '끊김' } };
-    await beginReading({ kind: 'match', matchId: 'match-1' });
-    await settle();
-    expect(submit).not.toHaveBeenCalled();
-    expect(prepared()).toBeUndefined();
-    expect(closed()).toBeUndefined();
-  });
-
   it('제출 직전 문이 거짓이면(동의가 끝남) 모델을 안 부르고 더 닫지 않는다 — 닫는 것은 그 문이 했다', async () => {
-    job = frozen({ ...pair, request_kind: 'detail' });
+    job = frozen(pair);
     keyedRpc.mockImplementation(async (name: string) => {
       if (name === 'match_run_awaiting_send') return { data: [job], error: null };
       if (name === 'prepare_reading_job') return { data: false, error: null };
@@ -1109,10 +1058,11 @@ describe('상세 궁합의 제출', () => {
     expect(closed()).toBeUndefined();
   });
 
-  it('개인 풀이는 흐름을 안 찾는다', async () => {
+  it('개인 풀이는 상세 지시를 안 받는다', async () => {
     await beginReading({ kind: 'self' });
     await settle();
     expect(submit).toHaveBeenCalled();
-    expect(keyedCall('reading_run_request_kind')).toBeUndefined();
+    expect(prepared()?.[1].p_prompt).not.toContain(DETAIL_MARK);
+    expect(submit.mock.calls[0]?.[2]).toMatchObject({ discovery: false });
   });
 });

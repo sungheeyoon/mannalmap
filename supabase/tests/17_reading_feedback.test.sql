@@ -10,7 +10,7 @@
 --    답이 없다.
 -- 4. **표는 한 줄도 안 보인다.** 답을 세는 것은 운영자의 일이다.
 begin;
-select plan(31);
+select plan(32);
 
 create or replace function pg_temp.summary(w int, f int, e int, g int, s int)
 returns jsonb language sql as $$
@@ -262,7 +262,7 @@ select throws_ok(
     (select id from run_running)),
   'P0002', null, '남의 실패한 시도도 같은 답으로 거절한다');
 
--- ── 공유 궁합 — 누르지 않은 쪽도 답한다 ─────────────────────────────────────
+-- ── 공유 궁합 — 사지 않은 쪽도 답한다 ───────────────────────────────────────
 
 select pg_temp.acting((select kim from folks));
 select lives_ok($$select count(*) from public.my_discovery_board()$$, '김이 후보 목록을 연다');
@@ -275,18 +275,19 @@ select pg_temp.acting((select lee from folks));
 select is(
   public.respond_to_match_request((select request_id from asked), true),
   'accepted',
-  '수락하면 Match 가 선다');
+  '이가 대화에 답한다');
 
 create temporary table matched as select match_id from public.my_matches();
 grant select on matched to authenticated, service_role;
 
 /**
- * **아무도 안 누른다 — 동의가 시도를 연다**(ADR 0038).
+ * **김이 사고 이가 누른다 — 누름이 시도를 연다**(ADR 0215).
  *
- * 여기서 이(수락한 쪽)가 눌렀었다. 이제 시도는 수락 트랜잭션 안에서 **김(청한 쪽)**
- * 이름으로 서 있고, 풀이권도 김이 쓴다. 이 파일이 재려는 것은 그 다음 자리다 —
- * **누른 사람이 아니어도 답할 수 있는가.** 이제 그 물음이 더 곧다: 누른 사람이 없다.
+ * 시도는 **김(구매자)** 이름으로 서고, 풀이권도 김이 쓴다. 이 파일이 재려는 것은 그 다음 자리다 —
+ * **산 사람이 아니어도 답할 수 있는가.**
  */
+select lives_ok($$select tests.press_detail((select request_id from asked))$$, '김이 상세를 청하고 이가 누른다');
+
 reset role;
 create temporary table run_match as
 select r.id from public.reading_run r
@@ -310,7 +311,7 @@ select pg_temp.acting((select kim from folks));
 select lives_ok(
   format($$select public.leave_reading_feedback(%L::uuid, 5::smallint, 5::smallint, 'right')$$,
     (select id from run_match)),
-  '공유 궁합은 누르지 않은 쪽도 답한다');
+  '공유 궁합은 사지 않은 쪽도 답한다');
 
 /** 답은 사람마다다 — 내가 답했다고 상대의 자리가 채워지지 않는다 */
 select is(

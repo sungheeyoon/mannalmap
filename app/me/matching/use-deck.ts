@@ -5,10 +5,7 @@ import { useEffect, useReducer, useRef, useState, useTransition } from 'react';
 
 import { REQUEST_UNSURE } from '@/src/lib/matching/requests';
 
-import { passCandidate, requestMatch, restorePassed, startTalk } from '../discovery/actions';
-import { outOfCreditsNow } from '../credits/asked-on-press';
-import { useBuyCredits } from '../credits/buy-credits';
-import { announceCreditsMoved, announceIfMoved } from '../credits/credits-signal';
+import { passCandidate, restorePassed, startTalk } from '../discovery/actions';
 import { reducedMotion } from '../../ui/motion';
 import type { DeckCard } from './deck-card';
 import { deckReducer, PASSED_LIMIT } from './deck-state';
@@ -23,19 +20,16 @@ export { REQUEST_UNSURE };
 /**
  * **오늘의 인연 덱의 상태와 누름 전부** — 화면(`matching-experience.tsx`)은 이것이 내준 값을 그리기만 한다.
  *
- * 넘기면 서버 보관함에 적고(`passCandidate` — 카드는 누르는 순간 떠나고 서버가 못 받으면 돌아온다), 요청은 확인 창을 지나야
- * 나가며(`requestMatch` — 서버가 받은 뒤에 떠난다), 되돌리기와 지나친 인연의 「다시 만나보기」는 같은 복원 경로를 쓴다
+ * 넘기면 서버 보관함에 적고(`passCandidate` — 카드는 누르는 순간 떠나고 서버가 못 받으면 돌아온다), 대화는 확인 창을 지나야
+ * 열리며(`startTalk` — 서버가 연 그 방으로 간다. 풀이권을 안 쓴다), 되돌리기와 지나친 인연의 「다시 만나보기」는 같은 복원 경로를 쓴다
  * (`restorePassed`). 덱의 모양 바꾸기는 `deckReducer` 가, 떠나는 움직임의 박자와 알림 · 실패 줄은 여기가 든다.
  */
 export function useDeck({
   cards,
   passedFromServer,
-  talkOpen = false,
 }: {
   cards: readonly DeckCard[];
   passedFromServer: readonly DeckCard[];
-  /** 켜진 흐름 — 풀이권을 안 보고 대화를 열어 그 방으로 간다(ADR 0215) */
-  talkOpen?: boolean;
 }) {
   const router = useRouter();
   const [deck, dispatch] = useReducer(deckReducer, {
@@ -65,36 +59,12 @@ export function useDeck({
   const [failure, setFailure] = useState<string | null>(null);
   const [working, startWorking] = useTransition();
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  /** 요청 확인 창이 열렸나 */
+  /** 대화 시작 확인 창이 열렸나 */
   const [asking, setAsking] = useState(false);
-  const buy = useBuyCredits();
-  const [checkingCredits, setCheckingCredits] = useState(false);
 
-  /**
-   * 궁합 요청 단추 — **풀이권이 0개면 요청 확인 창 대신 풀이권 창이다**(`useBuyCredits`). 요청 한 건이 풀이권 한 번을 잡으므로(ADR 0038) 0개인
-   * 사람의 요청은 DB 가 거절한다 — 그 거절을 받으러 확인 창을 지나게 하지 않는다. 잔액은 누를 때 머리글과 같은 문으로 묻는다 —
-   * 화면을 그릴 때 묻지 않는다. 못 물었으면 확인 창이고 DB 가 판정한다.
-   */
+  /** 대화 시작 단추 — 대화는 풀이권을 안 쓴다. 잔액을 묻지 않고 곧장 확인 창이다 */
   function askToRequest() {
-    if (checkingCredits) return;
-    /* 대화는 풀이권을 안 쓴다 — 잔액을 묻지 않고 곧장 확인 창이다 */
-    if (talkOpen) {
-      setAsking(true);
-      return;
-    }
-    setCheckingCredits(true);
-    void (async () => {
-      let spent = false;
-      try {
-        spent = await outOfCreditsNow();
-      } catch {
-        /* 부름이 던졌다(망) — 확인 창으로 간다. 요청을 보내면 DB 가 판정한다 */
-      } finally {
-        setCheckingCredits(false);
-      }
-      if (spent) buy.offer(0);
-      else setAsking(true);
-    })();
+    setAsking(true);
   }
   const profile = deck.remaining[0];
 
@@ -109,8 +79,7 @@ export function useDeck({
   }, [cards, passedFromServer, working, exit]);
 
   /**
-   * 카드를 화면에서 떠나보낸다 — 움직임과 알림만 맡는다. 서버에 적는 일은 부르는 쪽이 맡는다 — 요청은 `requestMatch` 가
-   * 끝난 뒤에 부르고, 지나침은 `passCandidate` 를 보내며 함께 부른다(`pass`)
+   * 카드를 화면에서 떠나보낸다 — 움직임과 알림만 맡는다. 서버에 적는 일은 부르는 쪽이 맡는다 — 지나침은 `passCandidate` 를 보내며 함께 부른다(`pass`)
    */
   function leave(direction: 'left' | 'right', said: string, id: string) {
     setExit(direction);
@@ -172,27 +141,17 @@ export function useDeck({
     });
   }
 
-  /** 궁합 요청 단추와 오른쪽 스와이프 모두 확인 창을 거친 뒤에 요청한다. */
+  /** 대화 시작 단추와 오른쪽 스와이프 모두 확인 창을 거친 뒤에 대화를 열고 그 방으로 간다. */
   function send() {
     if (!profile || busy.current || exit) return;
     const sending = profile;
-    const finish = () => leave('right', `${sending.nickname} 님에게 상세 궁합을 요청했어요.`, sending.candidateUserId);
     setFailure(null);
     busy.current = true;
     startWorking(async () => {
       try {
-        if (talkOpen) {
-          const talk = await startTalk(sending.candidateUserId);
-          if (!talk.ok) { setFailure(talk.message); return; }
-          router.push(talk.matchId === null ? '/me/chat' : `/me/chat/${talk.matchId}`);
-          return;
-        }
-        const result = await requestMatch(sending.candidateUserId);
-        announceIfMoved(result);
-        /* 잔액을 본 뒤 그 사이 다른 탭에서 마지막 풀이권을 썼다 — 오류 줄 대신 풀이권 창(ADR 0171 「덧」) */
-        if (!result.ok && 'outOfCredits' in result) { announceCreditsMoved(); buy.offer(0); return; }
-        if (!result.ok) { setFailure(result.message); return; }
-        finish();
+        const talk = await startTalk(sending.candidateUserId);
+        if (!talk.ok) { setFailure(talk.message); return; }
+        router.push(talk.matchId === null ? '/me/chat' : `/me/chat/${talk.matchId}`);
       } catch {
         setFailure(REQUEST_UNSURE);
       } finally { busy.current = false; }
@@ -270,7 +229,6 @@ export function useDeck({
     working,
     asking,
     setAsking,
-    buy,
     mapCards,
     statusOf,
     askToRequest,

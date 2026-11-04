@@ -1,13 +1,13 @@
 -- 인연의 성인 확인 (`20270105090000`, ADR 0214, #947)
 --
 --   1. **꺼짐(기본값)** — 미확인인 사람의 추천 · 요청 · 수락 · 채팅이 지금처럼 돈다. 옛 웹 · 옛 앱이 받는 답이다
---   2. **켬 · 미확인** — 화면을 건너뛴 직접 호출도 문마다 거절하거나 비어 있다. 거절 · 차단 · 끄기 · 사주는 그대로다
+--   2. **켬 · 미확인** — 화면을 건너뛴 직접 호출도 문마다 거절하거나 비어 있다. 차단 · 취소 · 끄기 · 사주는 그대로다
 --   3. **권한** — 스위치와 상태는 사용자가 못 읽고 못 고친다. 확인을 적는 문은 열쇠 전용이다
 --   4. **켬 · 확인** — 한쪽만 확인하면 상대가 안 보이고, 둘 다 확인하면 돌아온다
 --   5. **실패 때 닫힘** — 스위치 줄이 없으면 켜진 것이다
 --   6. **다시 끔** — 미확인인 사람이 그대로 돌아온다
 --
--- 대화 흐름(ADR 0215 · 0216)이 켜진 동안의 무료 대화 요청 · 끝난 대화도 2 · 4 에서 잰다 — 두 스위치의 판정이 겹치는 자리다(#947).
+-- 요청은 늘 무료 대화다(대화가 유일한 흐름, `20270109090000`). 끝난 대화 · 화면이 `talk` 를 싣는 호출도 2 · 4 에서 잰다(#947).
 begin;
 select plan(51);
 
@@ -135,17 +135,14 @@ select is((select count(*)::int from public.my_notifications() n where n.request
 select is((select count(*)::int from public.photo_at((select park from folks), 1)), 0, '2. 요청을 보낸 사람의 사진이 안 열린다');
 select throws_ok($$select tests.set_discovery_participation(true, pg_temp.summary(0, 0, 4, 4, 0), tests.need())$$, '42501', '성인 확인을 먼저 마쳐 주세요.', '2. 참여 켜기를 거절한다');
 
-/** 대화 흐름이 켜져도 같다 — 무료 대화 요청도 확인을 먼저 묻는다 */
-reset role;
-update public.match_talk_switch set open = true, changed_at = now();
-set local role authenticated;
+/** 화면이 `talk` 를 실어도 같다 — 무료 대화 요청도 확인을 먼저 묻는다 */
 select pg_temp.acting((select lee from folks));
 select throws_ok($$select public.request_match((select choi from folks), 'talk')$$, '42501', '성인 확인을 먼저 마쳐 주세요.', '2. 무료 대화 요청을 거절한다');
 select is((select count(*)::int from public.my_ended_talks()), 0, '2. 끝난 대화도 안 보인다');
 
 /** 내 사주 · 내 안전의 길은 안 막는다 */
 select lives_ok($$select public.create_managed_person('어머니', null, 'solar', '1965-03-02', '1965-03-02', '12:00', 'female', '서울', 'jo', 'localMean', tests.chart(), 'chart-for-tests')$$, '2. 사주 저장은 그대로다');
-select is(public.respond_to_match_request((select id from seen where what = 'park-lee'), false), 'rejected', '2. 거절은 그대로다');
+select throws_ok($$select public.respond_to_match_request((select id from seen where what = 'park-lee'), false)$$, '22023', null, '2. 거절은 없다 — 확인 전에도 같은 답이다');
 select lives_ok($$select public.block_user((select choi from folks))$$, '2. 차단은 그대로다');
 
 select pg_temp.acting((select park from folks));
@@ -183,10 +180,6 @@ set local role authenticated;
 
 select is((select count(*)::int from public.my_matches()), 1, '4. 둘 다 확인하면 인연이 돌아온다');
 select is(public.send_chat_message((select id from seen where what = 'kim-lee'), '다시 안녕', gen_random_uuid()), 'sent', '4. 말도 다시 보낸다');
-
-reset role;
-update public.match_talk_switch set open = false, changed_at = now();
-set local role authenticated;
 
 -- ── 5. 실패 때 닫힘 ──────────────────────────────────────────────────────────
 

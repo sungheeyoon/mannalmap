@@ -4,13 +4,13 @@
 --
 --   1. 내가 주인인 셋은 **그 풀이를 만들 때의** 일간이다 — 뒤에 출생 정보를 고쳐도 안 바뀐다(2026-09-25)
 --   2. `private` 은 행의 `person_a` · `person_b` 와 같은 차례다
---   3. `match` 는 **앞자리가 보는 사람, 뒷자리가 상대**다 — 두 사람이 같은 줄을 서로 반대로 본다
---   4. `match` 의 상대 일간은 **동의 당시 사본**이다 — 상대가 뒤에 입력을 고쳐도 안 바뀐다.
---      상대의 지금 명식이 새면 동의한 대상 밖의 값이 이 목록으로 나간다
+--   3. `match` 는 **두 칸이 다 비어 있다** — 상세 궁합은 글자를 사용자에게 돌려주지 않는다(ADR 0215).
+--      표지는 `request_kind`(`detail`)로 가른다
+--   4. 상대가 뒤에 입력을 고쳐도 `match` 줄에는 아무 일간도 안 나간다 — 지금 명식도 동의 당시 사본도
 --
 -- 사람마다 일간을 다르게 준다(`tests.chart(day_stem)`). 모두 같은 일간이면 「누구의 것인가」를 못 가른다.
 begin;
-select plan(13);
+select plan(14);
 
 /** 풀이권은 여기서 안 잰다 — 대상 넷에 시도를 여는 것이 목적이다(22번과 같은 손잡이) */
 create or replace function public.reading_credit_limit()
@@ -107,7 +107,9 @@ select pg_temp.acting((select lee from folks));
 select is(
   public.respond_to_match_request((select request_id from asked), true),
   'accepted',
-  '수락하면 Match 가 선다');
+  '이가 대화에 답한다');
+
+select lives_ok($$select tests.press_detail((select request_id from asked))$$, '김이 상세를 청하고 이가 누른다');
 
 reset role;
 select pg_temp.save(r.id, 64::smallint)
@@ -138,20 +140,20 @@ select is(
             then array['壬', '甲'] else array['甲', '壬'] end),
   '두 사람 궁합의 두 일간은 person_a · person_b 의 차례다');
 
--- ── 3. 인연 궁합 — 앞자리가 보는 사람 ─────────────────────────────────────
+-- ── 3. 인연 궁합 — 일간을 안 낸다 ─────────────────────────────────────────
 
 select is(
-  (select array[day_master_a, day_master_b] from public.my_readings() where kind = 'match'),
-  array['甲', '庚'],
-  '김이 보면 인연 궁합은 김 · 이의 차례다');
+  (select array[day_master_a, day_master_b, request_kind] from public.my_readings() where kind = 'match'),
+  array[null, null, 'detail'],
+  '김이 보면 인연 궁합 줄은 일간 없이 상세다');
 
 select pg_temp.acting((select lee from folks));
 select is(
-  (select array[day_master_a, day_master_b] from public.my_readings() where kind = 'match'),
-  array['庚', '甲'],
-  '이가 보면 같은 줄이 이 · 김의 차례다');
+  (select array[day_master_a, day_master_b, request_kind] from public.my_readings() where kind = 'match'),
+  array[null, null, 'detail'],
+  '이가 봐도 같다 — 누른 쪽에게도 글자가 안 나간다');
 
--- ── 4. 동의 뒤에 고친 입력은 안 샌다 ───────────────────────────────────────
+-- ── 4. 동의 뒤에 고친 입력도 안 샌다 ───────────────────────────────────────
 
 select is(
   tests.edit_person_input((select lee_person from people),
@@ -163,8 +165,8 @@ select is(
 select pg_temp.acting((select kim from folks));
 select is(
   (select day_master_b from public.my_readings() where kind = 'match'),
-  '庚',
-  '인연 궁합의 상대 일간은 동의 당시 사본이다 — 뒤에 고친 입력은 안 나간다');
+  null,
+  '상대가 고친 뒤에도 인연 궁합 줄에는 상대 일간이 안 나간다');
 
 select pg_temp.acting((select kim from folks));
 select is(

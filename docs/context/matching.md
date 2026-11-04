@@ -72,7 +72,7 @@ _Avoid_: 로그, 조회수
 궁합 요청이나 영구 제외를 뜻하지 않는다.
 _Avoid_: 차단, 매칭 취소
 
-**pending 요청** — `match_request.status` 의 `pending` · `RequestStatus` · `requestMatch` :
+**pending 요청** — `match_request.status` 의 `pending` · `RequestStatus` · `request_match_detail` :
 한쪽이 「상세 궁합을 함께 보자」고 요청했고 상대가 아직 수락도 거절도 하지 않은 상태.
 근거를 바꾸는 수정이 일어나면 무효화된다.
 _Avoid_: 매칭 신청, 대기, MatchRequest
@@ -97,7 +97,7 @@ _Avoid_: 무효, 삭제
 **궁합풀이**(PRD §6.6). 상대 여덟 글자를 화면 · 응답에 내지 않고 글에 직접 쓰지 않으며 관계 해석만 보인다. 아직 켜지지 않았다. 화면 이름은 안 정했다(G-130).
 _Avoid_: 상세 궁합 리포트
 
-**동의 화면** — `MATCH_DISCLOSURE` · `CONSENT_FLOW_STEPS` · `respond_to_match_request` : 수락하면
+**동의 화면** — `MATCH_DISCLOSURE` · `DETAIL_CONSENT_SENDS` · `respond_to_match_request` : 수락하면
 서로에게 무엇이 열리고 무엇이 열리지 않는지를 **누르기 전에** 적어 둔 자리. 보내는 쪽과
 받는 쪽이 **같은 한 벌**을 읽는다(ADR 0008).
 _Avoid_: 약관, 안내

@@ -1,16 +1,10 @@
 /**
- * 공유 결과를 **실제 스택에 대고** 돌린다 — AI 없이 전체 동의 흐름을 끝까지.
+ * 상세 궁합의 결과 화면을 **실제 스택에 대고** 돌린다 — AI 없이 대화 · 상세 청함 · 누름을 끝까지(ADR 0215).
  *
- * 이 단계는 앱 코드에 기대는 자리가 하나 있다(ADR 0010): 서버가 두 판본을 읽어
- * 계산하고 **잘라서** 내려보낸다. 자르는 일이 앱에 있으면 밖에서 재야 한다.
- *
- * 1. **결과 화면이 실제로 서는가** — 요청·수락 화면이 「열린다」고 적은 것이 정말 열리는지.
- * 2. **두 사람이 같은 지표를 보는가**(US 47) — 보는 사람이 언제나 `a` 자리에 서므로,
- *    자리가 뒤집혀도 숫자가 같아야 공유가 성립한다.
- * 3. **출생 원문이 응답에 없는가**(US 49) — 서버가 두 판본을 손에 들고 있는 화면이라,
- *    「안 내보낸다」는 약속을 본문을 봐야 확인할 수 있다.
- * 4. **매인 판본으로 나는가** — 한쪽이 입력을 고쳐도 결과가 움직이지 않아야 한다.
- * 5. **열쇠 없이는 못 여는가** — 로그인한 사람이 RPC 를 그대로 두드리는 경로.
+ * 1. **결과 화면이 실제로 서는가** — 글이 없는 동안은 방으로 가는 길만, 글이 서면 두 사람이 같은 글을 본다(US 47).
+ * 2. **출생 원문과 여덟 글자가 응답에 없는가**(US 49 · ADR 0012 개정) — 새 흐름은 글자를 돌려주지 않는다.
+ * 3. **누름이 얼린 글자가 움직이지 않는가** — 한쪽이 입력을 고쳐도 인연에 베낀 글자는 그대로다.
+ * 4. **열쇠 없이는 못 여는가** — 로그인한 사람이 RPC 를 그대로 두드리는 경로.
  */
 import { createClient } from '@supabase/supabase-js';
 import { execFileSync } from 'node:child_process';
@@ -20,6 +14,7 @@ import { passNotice, chartArgs } from './notice.mjs';
 import { createChecks, sql, testNeed, fetchWhole, keyedRpc, sessionCookie, shapeOnlySummary } from './checks.mjs';
 /** 공개 범위 목록의 **제품 원본** — 손으로 베끼면 문구가 바뀐 날 검사만 옛 글자를 든다 */
 import { MATCH_DISCLOSURE } from '../src/lib/consent/disclosure.ts';
+import { DETAIL_NOT_YET } from '../src/lib/chat/room/detail-copy.ts';
 import { worktreeStack } from '../src/lib/local-env.ts';
 
 const status = JSON.parse(execFileSync('npx', ['supabase', 'status', '-o', 'json'], { encoding: 'utf8' }));
@@ -117,28 +112,18 @@ const plain = (html) => html.replace(/<!--\s*-->/g, '');
  */
 const NO_INDEX = ['match-v0', '100점 만점 베타 탐색 지표', '입력 완성도'];
 
-/**
- * 두 사람의 **명식** 카드 전체 — 매인 판본으로 났는지 재는 자리.
- *
- * 판본이 바뀌면 걸린 글자와 자리가 바뀐다. 큰 수 하나 대신 칸을 통째로 견주는 것은
- * 지표가 이 화면에서 내려갔기 때문이다.
- */
-const pillarsOf = (html) =>
-  (/궁합의 출발점[\s\S]*?(?=사주의 흐름을 이어 읽고 있어요)/.exec(plain(html)) ?? [null])[0];
+/** 인연에 베낀 글자 — 누름이 얼린 값이다. 화면이 아니라 표에서 읽는다(화면에는 서지 않는다) */
+const frozenCharts = (matchId) => sql(`select md5(chart_low::text || chart_high::text) from public.match where id = '${matchId}'`);
 
 try {
-  // ── 1. 후보 → 요청 → 수락 ─────────────────────────────────────────────────
+  // ── 1. 후보 → 대화 시작 → 답 → 상세 청함 → 누름 ─────────────────────────────
   /**
    * 둘 다 연 **뒤에** 민수가 목록을 다시 뽑아 연다.
    *
    * 첫 화면에서 각자 자기 요약을 판본에서 다시 계산하므로, 상대가 아직 안 열었을 때
-   * 뽑힌 목록은 **지금의 그 사람이 아니다.** 요청은 그런 기록으로는 나지 않는다
+   * 뽑힌 목록은 **지금의 그 사람이 아니다.** 대화는 그런 기록으로는 안 열린다
    * (ADR 0009). 목록이 스냅샷이 된 뒤로(ADR 0037) 다시 여는 것만으로는 새로 안 뽑히고
-   * 새로 뽑게 하는 문도 없어(ADR 0115) 검사는 스냅샷을 지운다.
-   *
-   * **여는 화면이 둘로 갈린다**(2026-09-18 매칭 개정, `docs/product/prd-changelog.md`). 홈은 참여를 열고 요약을
-   * 다시 계산하는 자리이고, 목록을 뽑아 **노출 기록을 남기는** 일은 `/me/matching` 으로
-   * 옮겨 갔다 — `my_discovery_board` 를 부르는 쪽이 그 화면이다.
+   * 새로 뽑게 하는 문도 없어(ADR 0115) 검사는 스냅샷을 지운다. 노출 기록은 `/me/matching` 이 남긴다.
    */
   await get('/me', cookie.a);
   await get('/me', cookie.b);
@@ -147,19 +132,39 @@ try {
   await get('/me/matching', cookie.a);
 
   const asked = await a.rpc('request_match', { p_candidate_user_id: userId(mail.b) });
-  check('후보로 본 사람에게 청한다', !asked.error, asked.error?.message ?? '');
+  check('후보로 본 사람과 대화를 연다', !asked.error, asked.error?.message ?? '');
 
   const accepted = await b.rpc('respond_to_match_request', {
     p_request_id: asked.data, p_accept: true,
   });
-  check('수락하면 Match 가 선다', accepted.data === 'accepted', accepted.error?.message ?? '');
+  check('받은 사람이 답한다', accepted.data === 'accepted', accepted.error?.message ?? '');
 
   const { data: matches } = await a.rpc('my_matches');
   const matchId = matches?.[0]?.match_id;
   check('내 Match 목록에서 그 Match 를 집는다', typeof matchId === 'string',
     `${matches?.length ?? '?'}건`);
 
-  // ── 2. 결과 화면이 선다 ───────────────────────────────────────────────────
+  // ── 2. 글이 없는 동안 결과 화면은 방으로 가는 길만 세운다 ──────────────────────
+  {
+    const opened = await get(`/me/match/${matchId}`, cookie.a);
+    const early = plain(await opened.text());
+    check('결과 화면이 열린다', opened.status === 200, String(opened.status));
+    check('글이 없으면 방에서 열 수 있다고 말한다', early.includes(DETAIL_NOT_YET) && early.includes(`/me/chat/${matchId}`));
+  }
+
+  const { data: detail, error: detailError } = await a.rpc('request_match_detail', {
+    p_match_id: matchId, p_client_key: `check-result-${stamp}`,
+  });
+  check('민수가 상세 궁합을 청한다', !detailError && typeof detail?.[0]?.request_id === 'string', detailError?.message ?? '');
+  const pressed = await b.rpc('respond_to_match_request', { p_request_id: detail?.[0]?.request_id, p_accept: true });
+  check('지영이 누른다', pressed.data === 'accepted', pressed.error?.message ?? String(pressed.data));
+
+  /* 글은 열쇠가 적는다 — 이 검사는 모델을 안 부른다. pgTAP 과 같은 꼴(`save_reading`)이다 */
+  const run = sql(`select id from public.reading_run where match_id = '${matchId}' and kind = 'match' and status = 'running'`);
+  sql(`select public.save_reading('${run}', '## 두 사람의 결\n\n결과-${stamp} 문단.', 70::smallint, '비유.', '{"charts":{}}', '# 역할',
+       'reading-prompt-v1', 'openai/gpt-5.6-luna', '{"temperature":1}'::jsonb, now())`);
+
+  // ── 3. 결과 화면이 선다 — 두 사람이 같은 글을 본다 ───────────────────────────
   const opened = await get(`/me/match/${matchId}`, cookie.a);
   const mine = await opened.text();
   const theirs = await body(`/me/match/${matchId}`, cookie.b);
@@ -168,50 +173,25 @@ try {
    * **상태 코드부터 본다.** 제목은 못 연 화면에도 남는다 — 거절은 이 경로의 메타데이터를
    * 그대로 쓰면서 본문만 갈아 끼우기 때문이다(재어 봤다: 없는 Match 로도 제목이 맞았다).
    */
-  check('결과 화면이 열린다', opened.status === 200, String(opened.status));
+  check('결과 화면이 열린다 — 글이 선 뒤', opened.status === 200, String(opened.status));
   check('상대는 공개용 별명으로 불린다', mine.includes(NAME.b) && theirs.includes(NAME.a));
-  check('각자의 사주와 궁합의 출발점이 선다',
-    mine.includes('각자의 사주') && mine.includes('궁합의 출발점'));
-  check('엔진 중간 관계표는 결과 화면에서 빠진다',
-    !mine.includes('두 사주 사이의 관계')
-      && !mine.includes('두 사람 사이에 대해 말할 수 있는 것'));
+  check('두 사람이 같은 글을 본다', plain(mine).includes(`결과-${stamp} 문단.`) && plain(theirs).includes(`결과-${stamp} 문단.`));
+  check('글이 서면 「아직 없다」는 말이 내려간다', !plain(mine).includes(DETAIL_NOT_YET));
+  check('여덟 글자 카드와 엔진 관계표는 결과 화면에 없다',
+    !mine.includes('각자의 사주') && !mine.includes('두 사주 사이의 관계'));
 
-  /**
-   * **점수 자리가 하나다.** 내부 지표는 사용자 화면에 서지 않는다(`prd-archive`).
-   */
+  /** **점수 자리가 하나다.** 내부 지표는 사용자 화면에 서지 않는다(`prd-archive`). */
   for (const word of NO_INDEX) {
     check(`내부 지표(${word})가 결과 화면에 없다`, !mine.includes(word));
   }
-
-  /**
-   * 사주풀이 칸은 서되, **동의하는 그 순간부터 만들어지고 있다** (ADR 0038).
-   *
-   * 여기서 「아직 받아 둔 사주풀이가 없습니다」를 재고 있었다. 그 문장이 참이려면
-   * 누가 눌러야 하는데, 이제 아무도 안 누른다 — 풀이권은 요청할 때 예약되고 동의가
-   * 그것을 쓴다. 그래서 두 사람 다 **만드는 중**을 본다.
-   */
-  check('궁합풀이 칸이 선다', mine.includes('궁합풀이'));
-  check('동의하면 그 자리에서 만들어지고 있다',
-    plain(mine).includes('사주의 흐름을 이어 읽고 있어요'));
-  check('두 사람이 같은 상태를 본다',
-    plain(theirs).includes('사주의 흐름을 이어 읽고 있어요'));
-  /** **누를 것이 없다** — 「먼저 누른 사람이 쓴다」가 사라지는 것은 누를 것이 없어져서다 */
+  /** **여기에는 만드는 버튼이 없다** — 상세 궁합은 방에서 청하고 받은 사람이 누를 때 만든다(ADR 0215) */
   check('양쪽 다 만드는 버튼이 없다',
-    !mine.includes('사주풀이 받기') && !theirs.includes('사주풀이 받기'));
+    !mine.includes('궁합풀이 받기') && !theirs.includes('궁합풀이 받기'));
 
-  // ── 3. 결과 화면은 풀이와 명식만 둔다 ─────────────────────────────────────
+  // ── 3-2. 결과 화면은 글만 둔다 ─────────────────────────────────────────────
   {
     const text = plain(mine);
     /**
-     * **제목이 아니라 실린 값을 잰다.**
-     *
-     * 이 둘은 「'함께 보기로 한 사람'이 없다」·「'서로에게 열리는 것'이 없다」였다. 둘 다
-     * 2026-09-11 에 지워진 옛 제목이라(`1fe0783`) 그 뒤로는 아무것도 안 쟀다 — 그 커밋이
-     * 제품에서 문구를 지우면서 **같은 자리에서 긍정 단언을 부정으로 뒤집었다.**
-     *
-     * 소개 카드는 **이 실행만의 소개 글**(`INTRO`)이 본문에 실리는지로 잰다. 카드 제목이
-     * 무엇으로 바뀌든, 소개가 돌아오면 걸린다.
-     *
      * **소개는 머리 얼굴이 여는 상대 프로필 시트에만 선다**(운영자 결정 2026-10-11, ADR 0155 덧). 그래서 시트(`data-partner-sheet`)
      * 밖의 화면 — 머리와 결과 본문 — 에 그 글이 없고, 시트 안에 있는지를 잰다. 스크립트(넘겨진 값)는 화면이 아니라 걷고 본다.
      * 닫힌 시트에는 안쪽 창이 없어(「⋯」는 열린 동안만 선다) 시트의 끝은 그 뒤 첫 `</dialog>` 다.
@@ -231,20 +211,14 @@ try {
         && !text.includes('계산 결과로 바로 만든 것이에요'));
   }
 
-  // ── 4. 출생 원문은 응답에 없다 ────────────────────────────────────────────
+  // ── 4. 출생 원문과 여덟 글자는 응답에 없다 ────────────────────────────────
   {
     check('상대의 생년월일이 응답에 없다', !mine.includes(BIRTH.b.date));
     check('상대의 출생지가 응답에 없다', !mine.includes(BIRTH.b.city));
     check('내 생년월일도 이 화면에는 없다', !mine.includes(BIRTH.a.date));
     check('출생 시각이 응답에 없다', !mine.includes('14:30'));
-
-    check('상대의 여덟 글자 명식은 선다', plain(mine).includes('일간 '));
-    /*
-      「'풀이에 넘기는 자료'가 없다」가 여기 있었다. 그 제목은 2026-09-06 에 제품에서
-      사라졌고(`b7b0fed`), 무엇보다 **이 검사는 근거도 프롬프트도 한 번도 안 심는다** —
-      빈 화면에 대고 「안 샌다」를 재고 있었던 셈이다. 실제로 심어 놓고 재는 자리는
-      `check-reading.mjs` 다(`evidence-v0`·「검사용 프롬프트 원문」).
-    */
+    /* 상세 궁합은 글자를 돌려주지 않는다 — 명식 카드의 「일간」 줄이 없다(ADR 0012 개정, ADR 0215) */
+    check('여덟 글자 명식이 서지 않는다', !plain(mine).includes('일간 '));
     check('지금 도는 운이 서지 않는다', !mine.includes('지금 도는 운'));
     check('오행 개수표가 응답에 없다',
       !mine.includes('glyphCount') && !mine.includes('"counts"') && !mine.includes('"ratios"'));
@@ -275,19 +249,14 @@ try {
       narrowing.error?.message ?? '열려 있다');
 
     /**
-     * **나가는 것은 여덟 글자뿐이고, 상대의 입력은 못 읽는다** (ADR 0071).
-     *
-     * 앞서는 매인 판본 id 둘이 나갔고 「그 id 를 알아도 못 읽는다」를 쟀다. 이제 id
-     * 자체가 없다 — 보드가 서는 데 필요한 것은 동의 당시 여덟 글자이고, 그 값은
-     * 이미 베껴 둔 것이라 아무 표도 안 가리킨다.
-     *
-     * 그래서 재는 것이 하나 늘었다: **여덟 글자는 나오는데 생년월일시는 안 나온다.**
+     * **여덟 글자도 상대의 입력도 안 나간다** (ADR 0071 · ADR 0012 개정, ADR 0215). 누름이 인연에 글자를 베끼지만 그 값은
+     * 문장을 쓰는 데만 쓰이고, 범위 문의 글자 칸은 늘 비어 있다.
      */
     const { data: rows } = await a.rpc('my_match_scope', { p_match_id: matchId });
     const board = rows?.[0];
-    check('내 자리에서 두 사람의 여덟 글자가 나온다',
-      board?.my_chart?.dayMaster !== undefined && board?.partner_chart?.dayMaster !== undefined,
-      JSON.stringify({ mine: board?.my_chart?.dayMaster, theirs: board?.partner_chart?.dayMaster }));
+    check('범위 문은 두 사람의 여덟 글자를 내주지 않는다',
+      board !== undefined && board.my_chart === null && board.partner_chart === null,
+      JSON.stringify({ mine: board?.my_chart ?? null, theirs: board?.partner_chart ?? null }));
     check('판본 id 는 이 한 벌에 없다',
       !('my_revision_id' in (board ?? {})) && !('partner_revision_id' in (board ?? {})),
       Object.keys(board ?? {}).join(','));
@@ -298,9 +267,9 @@ try {
       `${peek.data?.length ?? '?'}줄`);
   }
 
-  // ── 7. 매인 판본은 움직이지 않는다 ────────────────────────────────────────
+  // ── 7. 누름이 얼린 글자는 움직이지 않는다 ────────────────────────────────
   {
-    const before = pillarsOf(mine);
+    const before = frozenCharts(matchId);
 
     const { data: account } = await b.from('app_user').select('self_person_id').maybeSingle();
     const edited = await keyedRpc(b, 'edit_person_input', {
@@ -317,16 +286,11 @@ try {
     check('성립한 Match 는 입력 수정으로 사라지지 않는다', reopened.status === 200,
       String(reopened.status));
     /**
-     * **무엇으로 재는가가 바뀌었다.** 전에는 `match-v0` 지표의 큰 수 하나로 쟀는데,
-     * 그 지표와 관계표가 이 화면에서 내려갔다. 대신 두 사람의 **명식** 카드를 통째로
-     * 견준다 — 시주가 14:30 에서 05:20 으로 옮겨 가면 상대의 시지가 바뀌므로, 지금
-     * 판본으로 다시 계산했다면 이 칸이 달라진다.
-     *
-     * 칸이 비어 있으면 이 검사는 아무것도 재지 않는다. 그래서 비어 있지 않은지도 함께 본다.
+     * **표에서 견준다** — 글자는 화면에 서지 않는다. 시주가 14:30 에서 05:20 으로 옮겨 가면 상대의 시지가 바뀌므로, 지금
+     * 입력으로 다시 베꼈다면 이 값이 달라진다. 비어 있으면 아무것도 안 재므로 비어 있지 않은지도 함께 본다.
      */
-    check('각자의 사주 카드가 비어 있지 않다', before !== null && before.length > 200,
-      `${before?.length ?? 0}자`);
-    check('**결과는 동의한 그때의 판본 그대로다**', pillarsOf(after) === before);
+    check('누름이 두 사람의 글자를 베꼈다', /^[0-9a-f]{32}$/.test(before), before);
+    check('**결과는 동의한 그때의 글자 그대로다**', frozenCharts(matchId) === before && plain(after).includes(`결과-${stamp} 문단.`));
   }
 
   // ── 8. 차단하면 결과도 내려간다 ───────────────────────────────────────────
