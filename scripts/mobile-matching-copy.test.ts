@@ -9,7 +9,7 @@ import { describe, expect, it } from 'vitest';
  * 판정과 긴 문장은 `src/lib/matching` · `src/lib/consent` 를 함께 쓴다. 단추 이름 같은 짧은 말은 두 화면의 코드에 각자 선다 —
  * 앱의 글자가 웹 코드에 그대로 있는지 여기서 잰다. 웹에서 글자를 고치면 이 시험이 앱 쪽 옛 글자를 이름으로 댄다.
  *
- * **고지 문장은 상수 그대로다** — 요청 · 수락 · 거절 · 차단의 글자를 앱이 손으로 적지 않는 것도 여기서 잰다(사용자 약속이다).
+ * **고지 문장은 상수 그대로다** — 차단 · 신고의 글자를 앱이 손으로 적지 않는 것도 여기서 잰다(사용자 약속이다).
  */
 const ROOT = join(import.meta.dirname, '..');
 
@@ -66,7 +66,7 @@ describe('앱 인연 화면의 글자', () => {
 
   it('고지 문장은 앱이 손으로 적지 않고 상수로 읽는다', () => {
     const all = screens.map((one) => withoutComments(one.text)).join('\n');
-    for (const name of ['MATCH_ACCEPT_HEAD', 'MATCH_ACCEPT_OPENS', 'MATCH_ACCEPT_HIDDEN', 'REJECTION_IS_FINAL_NOTE', 'BLOCK_NOTE', 'BLOCK_KEEPS_NOTE', 'BLOCK_FINAL_NOTE', 'REPORT_NOTE', 'REPORT_DONE', 'REQUEST_RESERVES_NOTE']) {
+    for (const name of ['BLOCK_NOTE', 'BLOCK_KEEPS_NOTE', 'BLOCK_FINAL_NOTE', 'REPORT_NOTE', 'REPORT_DONE']) {
       expect(all, name).toContain(name);
     }
     for (const line of ['서로의 사주팔자 여덟 글자가 공개돼요', '정확한 생년월일시 · 출생지는 공개되지 않아요', '차단은 되돌릴 수 없어요', '돌려드려요.\'']) {

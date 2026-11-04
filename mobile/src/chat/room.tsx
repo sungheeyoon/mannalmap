@@ -38,14 +38,11 @@ import { bodyPartsOf } from '@chat/room/links';
 import { droppable, withPending, type Pending } from '@chat/room/pending';
 import { readAlready, readsNow } from '@chat/room/thread';
 import { activityText, type ActivityBand } from '@presence';
-import { STEM_INFO, type Element, type Stem } from '@saju';
 
 import { Icon } from '@/ui/icons';
 import { COLOR, CONTROL, ELEMENT_TONE, FONT, RADIUS, TYPE } from '@/ui/tokens';
-import { ElementSymbol } from '@/ui/element-symbol';
 
 import { Avatar } from './avatar';
-import { CompatChip, CompatRow } from './compat';
 import { DetailPanelView } from './detail-panel';
 import { BlockDialog, ReportDialog } from './dialogs';
 import { WithdrawDialog } from './withdraw';
@@ -75,20 +72,6 @@ const memory: TabStorage = {
 };
 const draftStore = () => memory;
 
-/** 천간의 그림 이름 — 웹의 `STEM_PICTURE` 와 같은 글자다 */
-const STEM_PICTURE: Record<Stem, string> = {
-  甲: '나무',
-  乙: '덩굴',
-  丙: '햇빛',
-  丁: '등불',
-  戊: '산',
-  己: '밭',
-  庚: '강철',
-  辛: '보석',
-  壬: '바다',
-  癸: '빗물',
-};
-
 type Row =
   | { readonly kind: 'bubble'; readonly key: string; readonly bubble: Bubble }
   | { readonly kind: 'day'; readonly key: string; readonly label: string }
@@ -97,7 +80,7 @@ type Row =
 
 /**
  * **방 하나 — 머리와 입력이 붙어 있고 대화만 스크롤한다**(웹의 `room.tsx`). 대화 칸은 거꾸로 쌓는다(`inverted`) — 스크롤의 시작이 맨 아래라 들어오면 가장 최근 말이
- * 먼저 보인다. 말풍선은 두 사람의 일간 색이고, 값이 없는 방은 먹색 · 회색 한 벌이다 — 지어낸 색은 그 사람에 대해 거짓을 말한다.
+ * 먼저 보인다. 말풍선은 먹색 · 회색 한 벌이다.
  */
 export function ChatRoomView({ room, onChanged }: { room: RoomView; onChanged: () => void }) {
   const closed = room.notice !== null;
@@ -113,12 +96,8 @@ export function ChatRoomView({ room, onChanged }: { room: RoomView; onChanged: (
   }, [note]);
   const [pressedOpen, setPressedOpen] = useState<boolean | null>(null);
   const panelOpen = doorShown && detail !== null && (pressedOpen ?? detailPanelOpensItself(detail));
-  /* 옛 궁합 단추는 켜지기 전의 방에만 — 답 전 대화에는 궁합이 없다 */
-  const oldCompat = !doorShown && talk === null;
   const [sheet, setSheet] = useState<'partner' | 'me' | null>(null);
   const partnerOpens = room.partnerUserId !== null && !closed;
-  const theirTone = room.tones?.theirs.element ?? null;
-  const myTone = room.tones?.mine.element ?? null;
 
   useEffect(() => {
     if (closed) dropDraft(draftStore, room.matchId);
@@ -216,7 +195,7 @@ export function ChatRoomView({ room, onChanged }: { room: RoomView; onChanged: (
             onPress={openPartner ?? undefined}
             style={styles.who}
           >
-            <Avatar nickname={room.name} size={44} tone={theirTone} dim={closed} userId={room.partnerUserId} hasPhoto={room.partnerHasPhoto} focus={room.partnerPhotoFocus} />
+            <Avatar nickname={room.name} size={44} tone={null} dim={closed} userId={room.partnerUserId} hasPhoto={room.partnerHasPhoto} focus={room.partnerPhotoFocus} />
             <View style={styles.whoWords}>
               <View style={styles.nameLine}>
                 <Text accessibilityRole="header" numberOfLines={1} style={styles.heading}>
@@ -227,7 +206,6 @@ export function ChatRoomView({ room, onChanged }: { room: RoomView; onChanged: (
               {room.activity !== null && <Activity band={room.activity} />}
             </View>
           </Pressable>
-          {partnerOpens && oldCompat && <CompatChip compat={room.compat ?? { kind: 'quiet' }} matchId={room.matchId} tone={room.tones === null ? null : theirTone} />}
           {partnerOpens && doorShown && (
             <Pressable accessibilityRole="button" accessibilityState={{ expanded: panelOpen }} onPress={() => setPressedOpen(!panelOpen)} style={styles.door}>
               <Text style={styles.doorText}>{DETAIL_DOOR_LABEL}</Text>
@@ -279,12 +257,7 @@ export function ChatRoomView({ room, onChanged }: { room: RoomView; onChanged: (
                   );
                 case 'start':
                   return (
-                    <RoomStart
-                      room={room}
-                      quiet={thread.messages.length === 0 && pending.length === 0}
-                      onMe={openMe}
-                      onPartner={openPartner}
-                    />
+                    <RoomStart room={room} quiet={thread.messages.length === 0 && pending.length === 0} />
                   );
                 case 'bubble': {
                   const one = pendingById.get(item.bubble.id);
@@ -339,10 +312,9 @@ export function ChatRoomView({ room, onChanged }: { room: RoomView; onChanged: (
         <ProfileSheet
           nickname={room.name}
           intro={room.partnerIntro}
-          tone={theirTone}
+          tone={null}
           photos={room.partnerUserId === null ? null : { userId: room.partnerUserId, focuses: room.partnerPhotoFocuses }}
           onClose={() => setSheet(null)}
-          toMatch={oldCompat ? <CompatRow compat={room.compat ?? { kind: 'quiet' }} matchId={room.matchId} /> : undefined}
           menu={
             <AnchoredMenu label="신고 · 차단" items={menuOf(true)}>
               <Icon size={22} name="more" color={COLOR.foreground} />
@@ -354,7 +326,7 @@ export function ChatRoomView({ room, onChanged }: { room: RoomView; onChanged: (
         <ProfileSheet
           nickname={room.me.nickname}
           intro={room.me.intro}
-          tone={myTone}
+          tone={null}
           photos={{ userId: room.me.userId, focuses: room.me.photoFocuses }}
           onClose={() => setSheet(null)}
           footer={
@@ -399,7 +371,7 @@ function Activity({ band }: { band: ActivityBand }) {
   );
 }
 
-function RoomStart({ room, quiet, onMe, onPartner }: { room: RoomView; quiet: boolean; onMe: (() => void) | null; onPartner: (() => void) | null }) {
+function RoomStart({ room, quiet }: { room: RoomView; quiet: boolean }) {
   /* 막 열린 방은 무엇을 하면 되는지와 어디서 끊는지를 말한다(대장 28). 열린 방 · 상대가 있는 방에만 선다 */
   const hello = quiet && room.partnerUserId !== null && room.notice === null && (
     <View style={styles.hello}>
@@ -407,49 +379,12 @@ function RoomStart({ room, quiet, onMe, onPartner }: { room: RoomView; quiet: bo
       <Text style={styles.helloNote}>{ROOM_SAFETY_NOTE}</Text>
     </View>
   );
-  if (room.tones === null) {
-    return (
-      <View style={styles.startPlain}>
-        <Avatar nickname={room.name} size={72} tone={null} userId={room.partnerUserId} hasPhoto={room.partnerHasPhoto} focus={room.partnerPhotoFocus} />
-        <Text style={styles.startName}>{room.heading}</Text>
-        {hello}
-      </View>
-    );
-  }
   return (
-    <View style={styles.start}>
-      <View style={styles.sides}>
-        <StartSide label="나" stem={room.tones.mine.stem} onOpen={onMe} openName="내 프로필" />
-        <StartSide label={room.name} stem={room.tones.theirs.stem} onOpen={onPartner} openName={partnerSheetName(room.name)} />
-      </View>
+    <View style={styles.startPlain}>
+      <Avatar nickname={room.name} size={72} tone={null} userId={room.partnerUserId} hasPhoto={room.partnerHasPhoto} focus={room.partnerPhotoFocus} />
+      <Text style={styles.startName}>{room.heading}</Text>
       {hello}
     </View>
-  );
-}
-
-/** 첫머리 카드의 한 사람 — 색만으로 말하지 않게 그림 이름이 함께 선다. 그림은 그 천간의 오행 상징이다 */
-function StartSide({ label, stem, onOpen, openName }: { label: string; stem: Stem; onOpen: (() => void) | null; openName: string }) {
-  const element: Element = STEM_INFO[stem].element;
-  const scale = ELEMENT_TONE[element];
-  return (
-    <Tile tone={scale.soft}
-      accessibilityRole={onOpen === null ? undefined : 'button'}
-      accessibilityLabel={onOpen === null ? undefined : openName}
-      disabled={onOpen === null}
-      onPress={onOpen ?? undefined}
-      style={styles.side}
-    >
-      <View style={styles.stemChip}>
-        <ElementSymbol element={element} size={20} />
-        <Text style={[styles.stemName, { color: scale.ink }]}>{STEM_PICTURE[stem]}</Text>
-      </View>
-      <View style={styles.nameLine}>
-        <Text numberOfLines={1} style={styles.sideName}>
-          {label}
-        </Text>
-        {onOpen !== null && <Icon name="chevron" color={COLOR.secondary} size={16} />}
-      </View>
-    </Tile>
   );
 }
 
@@ -472,15 +407,8 @@ function BubbleRow({
   onFace: (() => void) | null;
 }) {
   const mine = bubble.mine;
-  const tones = room.tones;
-  const face = mine
-    ? tones === null
-      ? { backgroundColor: COLOR.accent }
-      : { backgroundColor: ELEMENT_TONE[tones.mine.element].ink }
-    : tones === null
-      ? { backgroundColor: COLOR.noneSoft, borderWidth: 1, borderColor: COLOR.border }
-      : { backgroundColor: ELEMENT_TONE[tones.theirs.element].soft };
-  const ink = mine ? (tones === null ? COLOR.onAccent : ELEMENT_TONE[tones.mine.element].soft) : COLOR.foreground;
+  const face = mine ? { backgroundColor: COLOR.accent } : { backgroundColor: COLOR.noneSoft, borderWidth: 1, borderColor: COLOR.border };
+  const ink = mine ? COLOR.onAccent : COLOR.foreground;
   /* 묶음의 첫 말은 머리 쪽 모서리만 뾰족하다 */
   const corner = bubble.first ? (mine ? styles.cornerMine : styles.cornerTheirs) : null;
 
@@ -519,7 +447,7 @@ function BubbleRow({
             onPress={onFace ?? undefined}
             style={styles.face}
           >
-            <Avatar nickname={room.name} size={36} tone={tones?.theirs.element ?? null} userId={room.partnerUserId} hasPhoto={room.partnerHasPhoto} focus={room.partnerPhotoFocus} />
+            <Avatar nickname={room.name} size={36} tone={null} userId={room.partnerUserId} hasPhoto={room.partnerHasPhoto} focus={room.partnerPhotoFocus} />
           </Pressable>
         ) : (
           <View style={styles.faceGap} />
@@ -679,14 +607,8 @@ const styles = StyleSheet.create({
   body: { fontSize: TYPE.body, lineHeight: 23, fontFamily: FONT.medium },
   link: { textDecorationLine: 'underline' },
   time: { flexShrink: 0, paddingBottom: 2, fontSize: TYPE.fine, fontFamily: FONT.medium, color: COLOR.secondary },
-  start: { width: '100%', maxWidth: 448, alignSelf: 'center', gap: 12, paddingTop: 8, alignItems: 'center' },
   startPlain: { alignItems: 'center', gap: 12, paddingTop: 16, paddingBottom: 8 },
   startName: { fontSize: TYPE.lead, fontFamily: FONT.bold, color: COLOR.foreground },
-  sides: { flexDirection: 'row', gap: 8, width: '100%' },
-  side: { flex: 1, minWidth: 0, gap: 8, overflow: 'hidden' },
-  stemChip: { alignSelf: 'flex-start', flexDirection: 'row', alignItems: 'center', gap: 4, paddingVertical: 4, paddingLeft: 4, paddingRight: 10, borderRadius: RADIUS.pill, backgroundColor: 'rgba(255, 253, 249, 0.72)' },
-  stemName: { fontSize: TYPE.fine, fontFamily: FONT.bold },
-  sideName: { flexShrink: 1, fontSize: TYPE.lead, lineHeight: 24, fontFamily: FONT.bold, color: COLOR.foreground },
   hello: { maxWidth: 384, gap: 4, alignItems: 'center' },
   helloTitle: { fontSize: TYPE.body, lineHeight: 24, fontFamily: FONT.bold, color: COLOR.foreground, textAlign: 'center' },
   helloNote: { fontSize: TYPE.small, lineHeight: 20, fontFamily: FONT.medium, color: COLOR.secondary, textAlign: 'center' },

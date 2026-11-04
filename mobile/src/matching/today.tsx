@@ -4,31 +4,29 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { CHAT_USES_NO_CREDIT } from '@consent/disclosure';
 import { TALK_SCORE_INFO, TALK_SCORE_LABEL, TALK_START_LABEL, TALK_START_NOTE, TALK_START_TITLE } from '@chat/room/detail-copy';
-import { DISCOVERY_EMPTY, DISCOVERY_TEASER } from '@discovery/copy';
+import { DISCOVERY_EMPTY } from '@discovery/copy';
 import { elementOf, supplyOf, type DeckCard } from '@matching/deck-card';
 import { PASSED_LIMIT } from '@matching/deck-state';
 import { REQUEST_UNSURE } from '@matching/requests';
 import { activityText } from '@presence';
-import { REQUEST_RESERVES_NOTE, CREDITS_AVAILABLE_LABEL, CREDITS_REQUIRED_LABEL, CREDITS_SHORTAGE_TITLE, SALE_CLOSED_NOTE, SALE_CLOSED_OK } from '@reading/notes';
 import { ELEMENT_PICTURE_KO, type Element } from '@saju';
 
 import { ElementSymbol } from '@/ui/element-symbol';
 import { goTab } from '@/ui/go-tab';
 import { Icon } from '@/ui/icons';
 import { PrimaryButton } from '@/ui/parts';
-import { ConfirmDialog, DialogStrong, DialogText } from '@/ui/confirm-dialog';
+import { ConfirmDialog, DialogText } from '@/ui/confirm-dialog';
 import { DetailSheet } from '@/ui/sheet';
 import { ELEVATION } from '@design';
 import { COLOR, ELEMENT_TONE, FONT, RADIUS, TYPE } from '@/ui/tokens';
 import { Card, CardFrame, Paper, RowCard, Tile } from '@/ui/surfaces';
 
 import { PersonPhoto, PhotoBars, ReportBlock } from './people';
-import { MatchAcceptNotice } from './requests';
 
 const tileOf = (element: Element | null) => (element === null ? COLOR.noneSoft : ELEMENT_TONE[element].soft);
 
 /** 오늘의 인연 한 장 — 사진이 주인공이고 그 위에 고르는 데 필요한 것만 선다. 끌어서 넘기지 않는다(운영자 2026-09-25) */
-export function TodayCard({ card, onInfo, onBlocked, talkOpen = false }: { card: DeckCard; onInfo: () => void; onBlocked: () => void; talkOpen?: boolean }) {
+export function TodayCard({ card, onInfo, onBlocked }: { card: DeckCard; onInfo: () => void; onBlocked: () => void }) {
   const [at, setAt] = useState(0);
   const count = card.photoUrls?.length ?? 0;
   const names = card.highlights.map((highlight) => {
@@ -73,14 +71,7 @@ export function TodayCard({ card, onInfo, onBlocked, talkOpen = false }: { card:
             </Text>
             {card.activity != null && <Text style={styles.activity}>{activityText(card.activity)}</Text>}
           </View>
-          {talkOpen ? (
-            <Text style={styles.scoreTalk}>{`${TALK_SCORE_LABEL} ${card.previewScore}점`}</Text>
-          ) : (
-            <View style={styles.score} accessible accessibilityLabel={['나와의 예측 궁합 점수', card.previewScore, '/ 100'].join(' ')}>
-              <Text style={styles.scoreNumber}>{card.previewScore}</Text>
-              <Text style={styles.scoreOf}> / 100</Text>
-            </View>
-          )}
+          <Text style={styles.scoreTalk}>{`${TALK_SCORE_LABEL} ${card.previewScore}점`}</Text>
         </View>
         <Text style={styles.verdict}>{card.verdict}</Text>
         {card.highlights.length > 0 && (
@@ -123,9 +114,9 @@ function FaceScrim() {
   return <View style={[StyleSheet.absoluteFill, { backgroundImage: FACE_SCRIM }]} />;
 }
 
-/** 단추 줄 — 사진 아래. 「궁합 요청」이 채운 주 단추로 가장 넓다 */
-export function DeckButtons({ canUndo, busy, onUndo, onPass, onRequest, talkOpen = false }: { canUndo: boolean; busy: boolean; onUndo: () => void; onPass: () => void; onRequest: () => void; talkOpen?: boolean }) {
-  const label = talkOpen ? TALK_START_LABEL : '궁합 요청';
+/** 단추 줄 — 사진 아래. 대화 시작이 채운 주 단추로 가장 넓다 */
+export function DeckButtons({ canUndo, busy, onUndo, onPass, onRequest }: { canUndo: boolean; busy: boolean; onUndo: () => void; onPass: () => void; onRequest: () => void }) {
+  const label = TALK_START_LABEL;
   return (
     <View style={styles.buttons}>
       <Pressable
@@ -208,9 +199,7 @@ export function CardSheet({
   explorationNote,
   notice,
   onBlocked,
-  talkOpen = false,
 }: {
-  talkOpen?: boolean;
   card: DeckCard;
   open: boolean;
   onClose: () => void;
@@ -221,39 +210,9 @@ export function CardSheet({
   return (
     <DetailSheet open={open} title={card.nickname} onClose={onClose} menu={<ReportBlock userId={card.candidateUserId} nickname={card.nickname} onBlocked={onBlocked} />}>
       <CardDetails card={card} explorationNote={explorationNote} />
-      <Text style={styles.fine}>{talkOpen ? TALK_SCORE_INFO : DISCOVERY_TEASER}</Text>
+      <Text style={styles.fine}>{TALK_SCORE_INFO}</Text>
       {notice !== null && <Text style={styles.meta}>{notice}</Text>}
     </DetailSheet>
-  );
-}
-
-/** 요청 확인 창 — 풀이권 문단과 「상대가 수락하면」 목록을 누르기 전에 읽는다(ADR 0038 · 대장 matching-12) */
-export function RequestConfirm({ card, open, onClose, onConfirm, busy }: { card: DeckCard; open: boolean; onClose: () => void; onConfirm: () => void; busy: boolean }) {
-  return (
-    <ConfirmDialog
-      open={open}
-      onClose={onClose}
-      title={`${card.nickname} 님에게 상세 궁합을 요청할까요?`}
-      confirmLabel="요청 보내기"
-      onConfirm={onConfirm}
-      busy={busy}
-      lead={
-        <View style={styles.confirmLead}>
-          <View style={styles.confirmFace}>
-            <PersonPhoto userId={card.candidateUserId} nickname={card.nickname} hasPhoto={card.hasPhoto} focus={card.photoFocus?.[0]} tone={card.avatarElement ?? supplyOf(card)} initialSize={24} />
-          </View>
-          <View style={[styles.supplyDot, { backgroundColor: tileOf(supplyOf(card)) }]}>
-            <ElementSymbol element={supplyOf(card)} size={24} />
-          </View>
-        </View>
-      }
-    >
-      <DialogText>
-        요청하면 <DialogStrong>풀이권 1장</DialogStrong>이 임시로 차감되고, 상대가 수락하면 확정돼요. {REQUEST_RESERVES_NOTE}
-      </DialogText>
-      <MatchAcceptNotice side="sent" />
-      <DialogText>{CHAT_USES_NO_CREDIT}</DialogText>
-    </ConfirmDialog>
   );
 }
 
@@ -267,30 +226,7 @@ export function TalkConfirm({ card, open, onClose, onConfirm, busy }: { card: De
   );
 }
 
-/**
- * 풀이권 창 — 0장이면 요청 확인 창 대신 선다. 앱은 풀이권을 팔지 않으므로 웹의 판매가 닫힌 꼴 하나다: 한 줄과 「확인」(`useBuyCredits` 의 닫힌 꼴).
- */
-export function useCreditsNotice() {
-  const [shown, setShown] = useState(false);
-  const offer = () => setShown(true);
-  const close = () => setShown(false);
-  const notice = (
-    <ConfirmDialog open={shown} onClose={close} title={CREDITS_SHORTAGE_TITLE} confirmLabel={SALE_CLOSED_OK} cancelLabel={null} onConfirm={close}>
-      <View style={styles.creditRow}>
-        <DialogText>{CREDITS_AVAILABLE_LABEL}</DialogText>
-        <DialogStrong>0장</DialogStrong>
-      </View>
-      <View style={styles.creditRow}>
-        <DialogText>{CREDITS_REQUIRED_LABEL}</DialogText>
-        <DialogStrong>1장</DialogStrong>
-      </View>
-      <DialogText>{SALE_CLOSED_NOTE}</DialogText>
-    </ConfirmDialog>
-  );
-  return { offer, notice };
-}
-
-/** 실패 · 방금 한 일 — 한 자리에 한 줄. 요청이 갔는지 모르면 인연 기록으로 가는 길을 단다 */
+/** 실패 · 방금 한 일 — 한 자리에 한 줄. 대화가 섰는지 모르면 인연 기록으로 가는 길을 단다 */
 export function Feedback({ failure, flash }: { failure: string | null; flash: string }) {
   return (
     <>
@@ -358,9 +294,7 @@ export function PassedConnections({
   onRestore,
   onBack,
   feedback,
-  talkOpen = false,
 }: {
-  talkOpen?: boolean;
   cards: readonly DeckCard[];
   working: boolean;
   explorationNote: string | null;
@@ -418,7 +352,7 @@ export function PassedConnections({
                 <Text style={styles.name} numberOfLines={1}>
                   {card.nickname}
                 </Text>
-                <Text style={styles.tileScore}>{talkOpen ? `${TALK_SCORE_LABEL} ${card.previewScore}점` : `궁합 ${card.previewScore}점`}</Text>
+                <Text style={styles.tileScore}>{`${TALK_SCORE_LABEL} ${card.previewScore}점`}</Text>
                 <Text style={styles.small} numberOfLines={2}>
                   {card.highlights[0]?.text ?? card.reason}
                 </Text>
@@ -472,9 +406,6 @@ const styles = StyleSheet.create({
   faceHead: { flexDirection: 'row', alignItems: 'flex-end', gap: 12 },
   nickname: { fontFamily: FONT.bold, fontSize: 32, lineHeight: 40, color: '#ffffff' },
   activity: { fontFamily: FONT.bold, fontSize: TYPE.small, color: 'rgba(255, 255, 255, 0.85)' },
-  score: { flexDirection: 'row', alignItems: 'baseline' },
-  scoreNumber: { fontFamily: FONT.bold, fontSize: 44, lineHeight: 48, color: '#ffffff' },
-  scoreOf: { fontFamily: FONT.bold, fontSize: TYPE.small, color: 'rgba(255, 255, 255, 0.85)' },
   scoreTalk: { fontFamily: FONT.bold, fontSize: TYPE.lead, lineHeight: 28, color: '#ffffff' },
   verdict: { fontFamily: FONT.medium, fontSize: TYPE.lead, lineHeight: 24, color: 'rgba(255, 255, 255, 0.95)' },
   supply: { flexDirection: 'row', alignItems: 'center', gap: 12 },
@@ -504,9 +435,6 @@ const styles = StyleSheet.create({
   signature: { alignSelf: 'flex-end', fontFamily: FONT.medium, fontSize: TYPE.body, color: COLOR.creamInk },
   fine: { fontFamily: FONT.medium, fontSize: TYPE.fine, lineHeight: 20, color: COLOR.secondary },
   meta: { fontFamily: FONT.medium, fontSize: TYPE.small, lineHeight: 20, color: COLOR.muted },
-  confirmLead: { flexDirection: 'row', alignItems: 'center', gap: 12 },
-  confirmFace: { width: 56, height: 56, borderRadius: RADIUS.pill, overflow: 'hidden' },
-  creditRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 16 },
   failureBox: { gap: 4 },
   failure: { fontFamily: FONT.medium, fontSize: TYPE.small, lineHeight: 19, color: COLOR.danger },
   textLink: { minHeight: 44, justifyContent: 'center' },

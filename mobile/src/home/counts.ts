@@ -1,16 +1,15 @@
 import { useEffect, useRef, useState } from 'react';
 
-import { withoutTalks } from '@chat/room/talk';
-import { answerCount, bellCount } from '@consent/counts';
+import { bellCount } from '@consent/counts';
 import { readingCreditsLabel } from '@reading/notes';
 
 import { supabase } from '@/auth/client';
 import { listenLive } from '@/chat/live';
 import { settled } from '@/ui/settled';
 
-export type Counts = { chat: number; requests: number; news: number; credits: string | null };
+export type Counts = { chat: number; news: number; credits: string | null };
 
-const NONE: Counts = { chat: 0, requests: 0, news: 0, credits: null };
+const NONE: Counts = { chat: 0, news: 0, credits: null };
 
 /**
  * 탭의 딱지와 남은 풀이권 — 웹 머리글과 같은 문이다. 못 읽었으면 안 세운다(모르는 수를 세어 보게 하지 않는다).
@@ -28,18 +27,16 @@ export function useCounts(pathname: string, enabled: boolean): Counts {
       const mine = ++asked.current;
       const reads = Promise.all([
         client.rpc('unread_chat_count'),
-        client.rpc('my_match_requests'),
         client.rpc('my_notifications'),
         client.rpc('my_reading_credits'),
       ]);
       /* 배지는 부속이다 — 못 읽으면 그 자리를 비운다 */
       void settled(reads, 'counts', () => null).then((read) => {
         if (mine !== asked.current || read === null) return;
-        const [chat, requests, news, credits] = read;
+        const [chat, news, credits] = read;
         const left = credits.data?.[0]?.available;
         setCounts({
           chat: chat.error === null ? Number(chat.data ?? 0) : 0,
-          requests: requests.error === null ? answerCount(withoutTalks(requests.data ?? [])) : 0,
           news: news.error === null ? bellCount((news.data ?? []).map((row) => ({ kind: row.kind, unread: row.read_at === null }))) : 0,
           credits: credits.error === null && left !== undefined ? readingCreditsLabel({ available: left }) : null,
         });

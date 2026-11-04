@@ -10,11 +10,9 @@ import { publicCardFromRow } from '@matching/cards';
 import type { DeckCard } from '@matching/deck-card';
 import { withFrom } from '@matching/history';
 import { matchOf, notificationOf, requestOf, type Inbox, type InboxMatch, type Requests } from '@matching/inbox';
-import { refusedForCredits, refusedForSwitchMoved } from '@matching/requests';
 import { activityBandOf } from '@presence';
-import { ELEMENTS, storedChartSnapshot, type ChartSnapshot } from '@saju';
+import { ELEMENTS } from '@saju';
 import type { PhotoFocus } from '@profile';
-import { outOfCredits } from '@reading/panel-chrome';
 
 import { supabase } from '@/auth/client';
 import { respondToMatchRequest } from '@/reading/api';
@@ -26,7 +24,7 @@ import { readDetail } from './talk-doors';
  * **앱의 인연 문** — 웹의 `app/me/candidates.ts` · `requests/inbox.ts` · `requests/actions.ts` · `discovery/actions.ts` 가 부르는 같은 문을
  * 앱 세션으로 부른다. 자를 것 · 판정은 여기 없다 — 공개 범위는 그 문의 반환형이 곧 답이다. 거절 문구는 `userFacingDbMessage` 다.
  *
- * 참여를 여는 문 · 수락 · 사진은 열쇠 전용이라 앱용 문(ADR 0211)이 든다 — `openParticipation` · `respondToRequest` · `@/ui/photo`.
+ * 참여를 여는 문 · 상세 동의 · 사진은 열쇠 전용이라 앱용 문(ADR 0211)이 든다 — `openParticipation` · `respondToRequest` · `@/ui/photo`.
  */
 
 const NOT_READY = '이 빌드에서는 로그인할 수 없어요.';
@@ -232,42 +230,16 @@ export async function restorePassed(
   }
 }
 
-/**
- * 요청 — 상대와 그린 흐름을 싣는다(ADR 0216). 스위치가 그 사이 켜졌으면 표를 단다(화면이 새 값으로 다시 그린다). 풀이권으로 막혔으면 표를 단다(화면이 풀이권 창을 연다).
- * 부름이 던졌으면 던진다 — 서버가 받았는지 모른다
- */
-export async function requestMatch(candidateUserId: string): Promise<Done | { ok: false; message: string; outOfCredits: true } | { ok: false; message: string; switchMoved: true }> {
-  if (supabase === null) return { ok: false, message: NOT_READY };
-  const { error } = await supabase.rpc('request_match', { p_candidate_user_id: candidateUserId, p_expected_kind: 'bundled' });
-  if (error === null) return { ok: true };
-  const message = userFacingDbMessage(error, 'request_match');
-  if (refusedForSwitchMoved(error)) return { ok: false, message, switchMoved: true };
-  return refusedForCredits(error) ? { ok: false, message, outOfCredits: true } : { ok: false, message };
-}
-
-/** 지금 풀이권이 0개인가 — 못 물었으면 `false`(DB 가 판정한다) */
-export async function outOfCreditsNow(): Promise<boolean> {
-  if (supabase === null) return false;
-  try {
-    const { data, error } = await supabase.rpc('my_reading_credits');
-    if (error !== null) return false;
-    const row = (data ?? [])[0];
-    return row !== undefined && outOfCredits(row);
-  } catch {
-    return false;
-  }
-}
-
 const statusOf = (value: unknown): RequestStatus | null => REQUEST_STATUSES.find((known) => known === value) ?? null;
 
 export type Answered = { ok: true; status: RequestStatus; matchId?: string } | { ok: false; message: string };
 
 /**
- * 받은 요청에 답한다 — **앱용 문으로 간다**(ADR 0211). 판정은 `respond_to_match_request` 안에 있고, 수락이면 서버가 응답 뒤에 궁합풀이를 떠나보낸다.
- * RPC 를 앱에서 바로 부르면 방만 열리고 글이 안 선다. 그 Match 를 못 찾았으면 `matchId` 없이 답한다 — 카드만 내려가고 인연 탭에 남는다(웹과 같다).
+ * 상세 궁합에 동의한다 — **앱용 문으로 간다**(ADR 0211). 판정은 `respond_to_match_request` 안에 있고, 동의가 서면 서버가 응답 뒤에 상세 궁합을 떠나보낸다.
+ * RPC 를 앱에서 바로 부르면 글이 안 선다. 거절은 없다 — 받은 사람의 답은 동의와 그냥 둠뿐이다.
  */
-export async function respondToRequest(requestId: string, accept: boolean): Promise<Answered> {
-  const answer = await respondToMatchRequest(requestId, accept);
+export async function respondToRequest(requestId: string): Promise<Answered> {
+  const answer = await respondToMatchRequest(requestId);
   if (!answer.ok) {
     if (answer.refused.refused === 'unavailable') return { ok: false, message: answer.refused.message };
     if (answer.refused.refused === 'sign-in') return { ok: false, message: '로그인이 풀렸어요. 다시 로그인해 주세요.' };
@@ -317,15 +289,13 @@ export type MatchResult = {
   partnerIntro: string | null;
   partnerPhotoCount: number;
   partnerPhotoFocus: readonly PhotoFocus[];
-  /** 켜진 흐름에는 여덟 글자 카드가 없다 — 둘 다 `null` 이고 `detail` 이 화면을 정한다 */
-  mine: ChartSnapshot | null;
-  theirs: ChartSnapshot | null;
+  /** 상세 궁합의 상태가 화면을 정한다 — 못 읽었으면 `null` */
   detail: MatchDetail | null;
 };
 
-export type MatchOutcome = { kind: 'ok'; result: MatchResult } | { kind: 'closed' } | { kind: 'none' };
+export type MatchOutcome = { kind: 'ok'; result: MatchResult } | { kind: 'none' };
 
-/** 인연 궁합 — 없는 Match 와 못 보는 Match 는 같은 답이다(`none`). 여덟 글자는 동의 때 베낀 것을 그대로 읽는다 */
+/** 인연 궁합 — 없는 Match 와 못 보는 Match 는 같은 답이다(`none`). 여덟 글자 카드는 없다 */
 export function readMatchResult(matchId: string): Promise<Read<MatchOutcome>> {
   return guarded<MatchOutcome>(async () => {
     if (supabase === null) return { ok: false, reason: NOT_READY };
@@ -333,12 +303,7 @@ export function readMatchResult(matchId: string): Promise<Read<MatchOutcome>> {
     if (scope.error !== null) return { ok: false, reason: userFacingDbMessage(scope.error, 'my_match_scope') };
     const row = (scope.data ?? [])[0];
     if (row === undefined) return { ok: true, value: { kind: 'none' } };
-    const mine = storedChartSnapshot(row.my_chart);
-    const theirs = storedChartSnapshot(row.partner_chart);
     const inbox = (matches.data ?? []).find((one) => one.match_id === matchId);
-    /* 줄의 이름을 따른다 — 켠 뒤에도 옛 요청으로 선 인연은 여덟 글자 카드 그대로다 */
-    const talk = inbox?.request_kind === 'talk';
-    if (!talk && (mine === null || theirs === null)) return { ok: true, value: { kind: 'closed' } };
     const match = inbox === undefined ? null : matchOf(inbox);
     const flat = inbox?.partner_photo_focus ?? null;
     const count = row.partner_has_photo === true ? Math.max(1, Math.floor((flat?.length ?? 0) / 2)) : 0;
@@ -353,8 +318,6 @@ export function readMatchResult(matchId: string): Promise<Read<MatchOutcome>> {
           partnerIntro: row.partner_intro,
           partnerPhotoCount: count,
           partnerPhotoFocus: match === null ? [] : [match.photoFocus],
-          mine: talk ? null : mine,
-          theirs: talk ? null : theirs,
           detail,
         },
       },

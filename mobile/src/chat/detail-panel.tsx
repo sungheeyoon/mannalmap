@@ -54,7 +54,7 @@ export function DetailPanelView({ detail, matchId, onChanged, onNote }: { detail
 
   const consent = async () => {
     if (detail.requestId === null) return;
-    const result = await respondToRequest(detail.requestId, true);
+    const result = await respondToRequest(detail.requestId);
     if (!result.ok) {
       setFailure(result.message);
       return;
