@@ -29,7 +29,7 @@ describe('계약 문구', () => {
   });
 
   it('대화와 상세 궁합에서 무엇이 나가고 무엇이 보이나', () => {
-    /* `notice-v13` 내용 개정 — `docs/legal/match-talk-notice-draft.md` 「상세 궁합 줄」을 그대로 옮겼다(운영자 지시 2026-11-04) */
+    /* `notice-v14` 내용 개정 — `docs/legal/match-talk-notice-draft.md` 「상세 궁합 줄」을 그대로 옮겼다(운영자 지시 2026-11-04) */
     expect(MATCH_DETAIL_DISCLOSURE[0]).toBe('대화는 상대의 수락 없이 열립니다. 대화를 시작해도 여덟 글자는 상대에게 공개되거나 AI 로 보내지지 않습니다.');
     expect(MATCH_DETAIL_DISCLOSURE[2]).toBe('두 사람의 여덟 글자는 화면에 직접 나오지 않습니다. 다만 글의 내용에서 짐작될 수 있고, 이를 완전히 막는다고 보장하지 않습니다.');
   });

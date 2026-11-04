@@ -2,7 +2,7 @@
 // 사람 · 값은 모두 지어낸 것이다. 띄우는 차례는 `docs/agents/delegation/local-env.md` 「앱을 네이티브로 재기」.
 // `node mobile/scripts/measure/fake-server.mjs` — 포트는 `FAKE_PORT`(기본 18999), 요청 기록은 `MEASURE_DIR/fake.log`.
 // 상태 바꾸기: `curl 'localhost:18999/__set?m=<reset|empty|unsigned|closed|suspended|warning|no-credits|no-self>'`
-// 대화 · 상세 궁합(ADR 0215): `m=talk-on`(스위치 켬) · `m=detail-<state>` · `m=buyer` · `m=holds` · `m=talk-sent` · `m=talk-received` · `m=talk-sent-said`
+// 대화 · 상세 궁합(ADR 0215 · 0221 — 대화가 유일한 흐름이라 스위치가 없다): `m=detail-<state>` · `m=buyer` · `m=holds` · `m=talk-sent` · `m=talk-received` · `m=talk-sent-said`
 // 망 흉내: `m=down`(읽기 · 앱용 문의 소켓을 끊는다) · `m=broken`(503) · `m=slow`(3초 늦게) · `m=up`(되돌림). 세션과 `/__` 는 안 걸린다. `m=screens-down` · `m=screens-slow` 는 관문의 두 읽기를 빼고 건다
 import { Buffer } from 'node:buffer';
 import http from 'node:http';
@@ -58,13 +58,10 @@ const output = (name) => `## 한눈에 보는 ${name}
 상반기에는 준비, 하반기에는 움직임입니다. 큰 결정은 가을 뒤로 미루는 편이 좋습니다.
 `;
 
-const chart = { year: { stem: '庚', branch: '午' }, month: { stem: '戊', branch: '寅' }, day: { stem: '甲', branch: '子' }, hour: { stem: '丙', branch: '寅' }, dayMaster: '甲' };
-const chart2 = { year: { stem: '壬', branch: '申' }, month: { stem: '癸', branch: '卯' }, day: { stem: '丁', branch: '巳' }, hour: null, dayMaster: '丁' };
-
 const person = (id, date, time, gender) => ({ id, calendar: 'solar', original_date: date, solar_date: date, birth_time: time, gender, city: '서울', late_night_rule: 'jo', time_basis: 'record' });
 
 const fresh = () => ({
-  account: { user_id: ME, status: 'active', self_person_id: SELF, nickname: '달빛산책', intro: LONG, signed_up_at: ago(90000), notice_version: 'notice-v12', notice_schedule_id: 1, improvement_consent: true, contact_consent: false, marketing_consent: false, created_at: ago(90000), first_seen_at: ago(90000), notice_ack_at: ago(50000), last_active_at: ago(1), birth_year: 1990, gender: 'female' },
+  account: { user_id: ME, status: 'active', self_person_id: SELF, nickname: '달빛산책', intro: LONG, signed_up_at: ago(90000), notice_version: 'notice-v14', notice_schedule_id: 1, improvement_consent: true, contact_consent: false, marketing_consent: false, created_at: ago(90000), first_seen_at: ago(90000), notice_ack_at: ago(50000), last_active_at: ago(1), birth_year: 1990, gender: 'female' },
   schedule: [{ schedule_id: 1, ends_on: '2027-06-30', purge_by: '2027-07-30', purge_within_days: 30, operator_name: '가짜 운영자', operator_officer: '가짜 책임자', operator_contact: 'fake@example.invalid' }],
   edges: [
     { person_id: SELF, local_label: '윤하늘', note: null, listed: false, created_at: ago(90000) },
@@ -121,9 +118,8 @@ const fresh = () => ({
   survey: [],
   block: [],
   discovery: { user_id: ME, prefer_gender: 'male', opted_out_at: null },
-  talkOpen: false,
   ended: [],
-  detail: { state: 'before_purchase', request_id: null, i_am_buyer: false, expires_at: null, failure_code: null, failure_detail: null, credits_left: 5, talk_status: 'accepted', may_send: true, detail_open: false, consent_holds: false },
+  detail: { state: 'before_purchase', request_id: null, i_am_buyer: false, expires_at: null, failure_code: null, failure_detail: null, credits_left: 5, talk_status: 'accepted', may_send: true, detail_open: true, consent_holds: false },
 });
 
 let db = fresh();
@@ -132,7 +128,7 @@ let net = 'up';
 const gateRead = (url) => url.pathname.endsWith('/current_beta_schedule') || (url.pathname.endsWith('/app_user') && (url.searchParams.get('select') ?? '').includes('signed_up_at'));
 const scopeOf = (id) => {
   const m = db.matches.find((one) => one.match_id === id);
-  return m ? [{ match_id: id, created_at: m.created_at, my_chart: db.talkOpen ? null : chart, partner_chart: db.talkOpen ? null : chart2, partner_has_photo: m.partner_has_photo, partner_intro: m.partner_intro, partner_nickname: m.partner_nickname, partner_user_id: m.partner_user_id, balance_band: m.balance_band, supplied_to_me: m.supplied_to_me, supplied_to_them: ['火'] }] : [];
+  return m ? [{ match_id: id, created_at: m.created_at, my_chart: null, partner_chart: null, partner_has_photo: m.partner_has_photo, partner_intro: m.partner_intro, partner_nickname: m.partner_nickname, partner_user_id: m.partner_user_id, balance_band: m.balance_band, supplied_to_me: m.supplied_to_me, supplied_to_them: ['火'] }] : [];
 };
 const readingRow = (a) => {
   const found = db.readings.find((r) => r.kind === a.p_kind && (a.p_kind === 'self' || (a.p_match_id && r.match_id === a.p_match_id) || (a.p_person_a === r.person_a && (a.p_person_b ?? null) === r.person_b) ));
@@ -157,8 +153,6 @@ const rpc = {
   my_chat_messages: (a) => (db.messages[a.p_match_id] ?? []).filter((m) => a.p_before_seq === undefined || m.seq < a.p_before_seq).slice(-(a.p_limit ?? 50)).reverse(),
   my_match_scope: (a) => scopeOf(a.p_match_id),
   my_matches: () => db.matches,
-  // 기본은 스위치가 꺼진 답이다 — 켠 상태는 `__set` 으로 든다(ADR 0215)
-  match_talk_open: () => db.talkOpen,
   /* 재는 화면은 인연까지 걷는다 — 열린 쪽이다(ADR 0222) */
   match_is_open: () => true,
   my_ended_talks: () => db.ended,
@@ -295,7 +289,6 @@ const server = http.createServer((req, res) => {
       if (mode === 'no-credits') db.credits[0].available = 0;
       if (mode === 'no-self') db.account.self_person_id = null;
       if (mode === 'ended') db.ended = [{ match_id: M2, partner_user_id: U4, partner_nickname: '지나간사람', closed_at: ago(800) }];
-      if (mode === 'talk-on') { db.talkOpen = true; db.detail.detail_open = true; for (const one of db.matches) one.request_kind = 'talk'; }
       if (mode.startsWith('detail-')) { db.detail.state = mode.slice('detail-'.length); db.detail.request_id = R1; if (db.detail.state === 'awaiting_consent') db.detail.expires_at = ago(-4320); }
       if (mode === 'buyer') db.detail.i_am_buyer = true;
       if (mode === 'consent-ended') db.detail.failure_code = 'consent-ended';

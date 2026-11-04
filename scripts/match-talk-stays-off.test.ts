@@ -46,11 +46,12 @@ describe('게시 고지는 대화 · 상세 궁합의 판이다', () => {
   const operator = { name: '만세력 운영자', officer: '홍길동', contact: 'ops@example.com' };
   const noticeText = () => JSON.stringify(noticeFor(dates, operator));
 
+  /* v13 은 대화 · 상세 궁합과 무관한 내용 개정이다(애플 로그인 · 이용 정지 기록, ADR 0220) — 대화 · 상세 궁합의 판은 그 위의 v14 다 */
   it('내용 개정이라 판본과 재확인 기준을 함께 올려 확인한 사람 전원이 다시 읽는다', () => {
-    expect(NOTICE_VERSION).toBe('notice-v13');
-    expect(NOTICE_ACK_FLOOR).toBe('notice-v13');
-    expect(noticeAckHolds('notice-v12')).toBe(false);
-    expect(noticeAckHolds('notice-v13')).toBe(true);
+    expect(NOTICE_VERSION).toBe('notice-v14');
+    expect(NOTICE_ACK_FLOOR).toBe('notice-v14');
+    expect(noticeAckHolds('notice-v13')).toBe(false);
+    expect(noticeAckHolds('notice-v14')).toBe(true);
   });
 
   it('처리방침은 새 흐름의 글이고 옛 흐름의 줄이 없다', () => {

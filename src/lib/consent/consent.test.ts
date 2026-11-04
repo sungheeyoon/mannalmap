@@ -276,7 +276,7 @@ describe('Match 가 여는 범위는 한 벌이다', () => {
     const shown = MATCH_DISCLOSURE.shown.join(' ');
     expect(shown).toContain('여덟 글자');
     expect(shown).toContain('년주·월주·일주·시주');
-    /* 처리방침은 `notice-v13` 부터 글자를 화면에 안 돌려준다고 적는다 — 새 흐름(ADR 0215) */
+    /* 처리방침은 `notice-v14` 부터 글자를 화면에 안 돌려준다고 적는다 — 새 흐름(ADR 0215) */
     expect(MATCH_DETAIL_DISCLOSURE.join(' ')).toContain('두 사람의 여덟 글자는 화면에 직접 나오지 않습니다');
     expect(MATCH_DISCLOSURE.hidden.join(' ')).not.toContain('여덟 글자');
   });
