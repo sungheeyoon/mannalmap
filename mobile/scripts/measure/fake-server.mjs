@@ -153,6 +153,8 @@ const rpc = {
   my_chat_messages: (a) => (db.messages[a.p_match_id] ?? []).filter((m) => a.p_before_seq === undefined || m.seq < a.p_before_seq).slice(-(a.p_limit ?? 50)).reverse(),
   my_match_scope: (a) => scopeOf(a.p_match_id),
   my_matches: () => db.matches,
+  /* 재는 화면은 인연까지 걷는다 — 열린 쪽이다(ADR 0222) */
+  match_is_open: () => true,
   my_ended_talks: () => db.ended,
   my_ended_talk_messages: () => [{ message_id: 'dddddddd-3333-4000-8000-000000000001', mine: false, body: '끝난 대화의 말이에요', created_at: ago(900) }],
   my_match_detail_state: () => [db.detail],

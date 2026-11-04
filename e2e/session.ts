@@ -105,6 +105,8 @@ export const sql = (statement: string) =>
  * 쌓는 표라 지우고 넣는다. 이력이 남는 것은 운영의 값이지 검사의 값이 아니다.
  */
 export function scheduleBeta(endsOn: string | null): void {
+  /* 검사의 DB 는 인연이 열린 쪽이다 — 운영의 기본값(닫힘)은 pgTAP `99_match_waits_closed` 가 잰다(ADR 0222) */
+  sql('update public.match_open_switch set open = true, changed_at = now() where not open');
   if (endsOn === null) {
     sql('delete from public.beta_schedule');
     return;

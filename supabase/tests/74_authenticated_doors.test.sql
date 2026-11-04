@@ -14,7 +14,8 @@
 -- `discovery_shown_to_me` · `set_person_listed`), 모양 검사(`is_*` · `reject_bad_chart`). 걷을지는 이 파일이 아니라
 -- 마이그레이션이 정한다 — 옛 사진 문 셋은 `clear_my_photo` 를 `20261110090000` 이, `photo_of` 를 `20261112090000` 이,
 -- `set_my_photo` 를 `20261115090000` 이 걷었다. 대화가 유일한 흐름이 되며 `match_request_ttl` 을
--- `20270109090000` 이 걷었다. `match_talk_open` 은 그 마이그레이션의 임시 호환으로 늘 참이다.
+-- `20270109090000` 이 걷었다. `match_talk_open` 은 그 마이그레이션의 임시 호환이고 인연의 스위치(`20270106120000`)만 따른다.
+-- 같은 마이그레이션이 화면이 메뉴 · 주소를 고르는 `match_is_open` 을 더했다 — 참 · 거짓 하나뿐이다(ADR 0222).
 begin;
 select plan(1);
 
@@ -45,6 +46,7 @@ select set_eq(
            ('mark_chat_read(p_match_id uuid, p_up_to_seq bigint)'),
            ('mark_notifications_read()'),
            ('mark_reading_ready_read(p_reading_id uuid)'),
+           ('match_is_open()'),
            ('match_talk_open()'),
            ('match_reading_source(p_match_id uuid)'),
            ('move_my_photo(p_from integer, p_to integer, p_version bigint)'),

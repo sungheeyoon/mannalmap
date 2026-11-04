@@ -1,6 +1,7 @@
 import { supabaseOnServer } from '../../auth/server-client';
 import { signedInUser } from '../../auth/signed-in';
 import { redirectToSignIn } from '../../auth/sign-in-redirect';
+import { openOf, readMatchOpen } from '../../match-opening';
 import { readAccount } from '../account';
 import { myDiscoveryProfile } from '../discovery/discovery-profile';
 import { myPhotos } from '../profile/photos';
@@ -20,7 +21,7 @@ export default async function SettingsPage() {
   if (!user) return redirectToSignIn();
 
   /** 온보딩을 안 묻는 화면이라 `self_person_id` 를 안 읽고, 대신 동의 칸과 이름을 함께 읽는다 */
-  const [{ state, row: account }, discoveryProfile, photoless] = await Promise.all([
+  const [{ state, row: account }, discoveryProfile, photoless, matchOpen] = await Promise.all([
     readAccount(supabase, ['status', 'nickname', 'improvement_consent', 'contact_consent', 'notice_version', 'notice_ack_at']),
     myDiscoveryProfile(),
     /*
@@ -31,6 +32,7 @@ export default async function SettingsPage() {
       (photos) => photos.length === 0,
       () => false,
     ),
+    readMatchOpen(supabase).then(openOf),
   ]);
 
   return (
@@ -40,6 +42,7 @@ export default async function SettingsPage() {
         account,
         discoveryProfile,
         photoless,
+        matchOpen,
         email: user.email,
         userId: user.id,
         pushAvailable: Boolean(process.env.NEXT_PUBLIC_WEB_PUSH_VAPID_PUBLIC_KEY),
