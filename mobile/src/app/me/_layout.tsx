@@ -74,7 +74,7 @@ export default function MeLayout() {
   /* 한 번도 못 들어온 사람은 안내만 본다. 들어와 있던 사람은 안내가 화면을 가릴 뿐 아래 스택은 살아 있다 — 다시 시도하면 쓰던 글과 스크롤이 그대로다 */
   if (gate.kind === 'failed' && !held) return failure;
 
-  const badges: Record<string, number> = { '/me/chat': counts.chat, '/me/matching': counts.requests };
+  const badges: Record<string, number> = { '/me/chat': counts.chat };
 
   return (
     <View style={styles.screen}>

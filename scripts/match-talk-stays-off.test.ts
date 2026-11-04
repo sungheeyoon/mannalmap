@@ -36,16 +36,8 @@ describe('화면의 요청 문은 기대한 종류를 싣는다', () => {
 
   it.each([
     ['app/me/discovery/actions.ts', ['talk', 'bundled']],
-    ['mobile/src/matching/talk-doors.ts', ['talk']],
-    ['mobile/src/matching/doors.ts', ['bundled']],
   ])('%s', (path, kinds) => {
     expect(callsOf(sourceOf(path)).map((call) => /p_expected_kind: '(\w+)'/.exec(call)?.[1])).toEqual(kinds);
-  });
-
-  it('앱은 부르기 전에 스위치를 따로 묻지 않는다 — 그 읽기와 부름 사이에 틈이 남는다', () => {
-    const start = sourceOf('mobile/src/matching/talk-doors.ts').split('export async function startTalk')[1]?.split('\n}\n')[0] ?? '';
-    expect(start).toContain('request_match');
-    expect(start).not.toContain('readTalkOpen');
   });
 
   it('다른 화면 코드는 이 문을 안 부른다', () => {
@@ -55,7 +47,7 @@ describe('화면의 요청 문은 기대한 종류를 싣는다', () => {
         .map((one) => join(one.parentPath, one.name))
         .filter((path) => /\.rpc\('request_match'/.test(readFileSync(path, 'utf8')))
         .map((path) => path.replace(`${process.cwd()}/`, ''));
-    expect([...callers('app'), ...callers('mobile/src')].sort()).toEqual(['app/me/discovery/actions.ts', 'mobile/src/matching/doors.ts', 'mobile/src/matching/talk-doors.ts']);
+    expect([...callers('app'), ...callers('mobile/src')].sort()).toEqual(['app/me/discovery/actions.ts', 'mobile/src/matching/talk-doors.ts']);
   });
 });
 

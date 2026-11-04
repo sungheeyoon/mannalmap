@@ -79,7 +79,7 @@ const hasColumns = (row, names) => names.filter((name) => !(name in row));
 const MOBILE_RPCS = [
   'acknowledge_warning', 'add_my_photo', 'block_user', 'cancel_match_request', 'complete_signup', 'create_managed_person',
   'create_pair_for_reading', 'current_beta_schedule', 'leave_reading_feedback', 'mark_chat_read', 'mark_notifications_read',
-  'mark_reading_ready_read', 'match_talk_open', 'move_my_photo', 'my_adult_check', 'my_chat_messages', 'my_chat_rooms', 'my_discovery_board', 'my_ended_talk_messages', 'my_ended_talks', 'my_last_reading_run',
+  'mark_reading_ready_read', 'move_my_photo', 'my_adult_check', 'my_chat_messages', 'my_chat_rooms', 'my_discovery_board', 'my_ended_talk_messages', 'my_ended_talks',
   'my_match_detail_state', 'my_match_requests', 'my_match_scope', 'my_matches', 'my_notifications', 'my_passed_connections', 'my_person_slots', 'my_photos',
   'my_reading', 'my_reading_credits', 'my_reading_orders', 'my_readings', 'my_running_readings', 'my_service_survey', 'my_suspension',
   'my_warning_notice', 'nickname_is_available', 'pair_relation_of', 'photo_at', 'remove_my_photo', 'replace_my_photo',
@@ -378,8 +378,6 @@ try {
   check('보관함에 본문이 없다', !JSON.stringify(shelf.body).includes('오래 버티는'));
   const direct = await a.client.rpc('my_reading', { p_kind: 'self', p_person_a: null, p_person_b: null, p_match_id: null });
   check('my_reading 의 칸', direct.error === null && hasColumns(direct.data?.[0] ?? {}, ['id', 'kind', 'score', 'metaphor', 'output', 'created_at']).length === 0, shapeOf(direct));
-  const lastDirect = await a.client.rpc('my_last_reading_run', { p_kind: 'self', p_person_a: null, p_person_b: null, p_match_id: null });
-  check('my_last_reading_run 의 칸', lastDirect.error === null && hasColumns(lastDirect.data?.[0] ?? {}, ['status']).length === 0, shapeOf(lastDirect));
   const readRow = await a.client.rpc('my_readings');
   check('my_readings 의 칸', readRow.error === null && hasColumns(readRow.data?.[0] ?? {}, ['kind', 'person_a', 'person_b', 'match_id', 'label_a', 'label_b', 'score', 'metaphor', 'created_at']).length === 0, shapeOf(readRow));
   const readDone = await a.client.rpc('mark_reading_ready_read', { p_reading_id: direct.data?.[0]?.id });

@@ -1,71 +1,49 @@
-import { readFileSync } from 'node:fs';
+import { readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
 import { describe, expect, it } from 'vitest';
 
-import { detailDoorShown, matchDetailOf } from '../src/lib/chat/room/detail';
-import { foldUnanswered, talkLineOf, withoutTalks } from '../src/lib/chat/room/talk';
-
 /**
- * **앱의 대화 · 상세 궁합은 스위치 뒤에 있다**(ADR 0215, #965). 꺼진 동안의 값이 지금 앱과 같고, 스위치를 못 읽으면 꺼짐이며, 새 칸에 거절 단추가 없는지 잰다.
- * 화면의 전후는 가짜 서버 그림으로 잰다(`docs/agents/delegation/local-env.md` 「앱을 웹 번들로 재기」).
+ * **앱의 인연 흐름은 하나다**(운영자 2026-11-04) — 카드 → 첫 말 → 답하면 대화 → 원하면 상세 궁합. 앱은 스위치를 묻지 않고, 옛 흐름(요청 때 예약 · 수락 · 거절 · 여덟 글자)의 코드가 없다.
+ * 덱의 움직임은 `mobile-deck-talk.test.ts`, 화면의 전후는 가짜 서버 그림으로 잰다(`docs/agents/delegation/local-env.md` 「앱을 웹 번들로 재기」).
  */
-const read = (file: string) => readFileSync(join(import.meta.dirname, '..', file), 'utf8');
+const ROOT = join(import.meta.dirname, '..');
+const read = (file: string) => readFileSync(join(ROOT, file), 'utf8');
+const withoutComments = (text: string) => text.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '');
 
-const oldLine = (over: Partial<{ status: string; direction: 'sent' | 'received'; counterpartUserId: string }>) => ({
-  requestId: 'r',
-  kind: 'bundled',
-  direction: 'received' as const,
-  counterpartUserId: 'u',
-  status: 'pending',
-  ...over,
-});
+const appSources = readdirSync(join(ROOT, 'mobile/src'), { recursive: true, encoding: 'utf8' })
+  .filter((name) => /\.tsx?$/.test(name))
+  .map((name) => ({ name: `mobile/src/${name}`, text: withoutComments(read(`mobile/src/${name}`)) }));
 
-describe('꺼진 동안의 값', () => {
-  it('옛 요청은 방이 없어 대화로 안 갈린다 — 받은 요청 띠 · 인연 기록 · 채팅 목록이 그대로다', () => {
-    const lines = [oldLine({}), oldLine({ status: 'accepted', counterpartUserId: 'm' }), oldLine({ status: 'rejected', direction: 'sent' })];
-    expect(withoutTalks(lines)).toEqual(lines);
-    const rooms = [{ partnerUserId: 'm' }];
-    expect(foldUnanswered(rooms, lines)).toEqual({ rooms, unanswered: [] });
-    expect(talkLineOf('m', lines)).toBeNull();
+describe('흐름은 하나다', () => {
+  it.each(['match_talk_open', 'p_expected_kind', 'talkOpen', 'detail_open', 'MK001', 'refusedForSwitchMoved'])('앱 코드에 %s 가 없다', (word) => {
+    expect(appSources.filter((one) => one.text.includes(word)).map((one) => one.name)).toEqual([]);
   });
 
-  it('스위치가 꺼진 답에는 상세 궁합 입구가 없다 · 칸이 없는 옛 함수도 그렇다', () => {
-    const row = { state: 'before_purchase', request_id: null, i_am_buyer: false, expires_at: null, failure_code: null, credits_left: 5, talk_status: 'accepted', may_send: true, detail_open: false };
-    const detail = matchDetailOf(row);
-    expect(detail?.consentHolds).toBe(false);
-    expect(detailDoorShown(detail)).toBe(false);
-    expect(detailDoorShown(matchDetailOf(undefined))).toBe(false);
-  });
-
-  it('스위치는 참이라는 답일 때만 켜짐이다 — 없는 문 · 오류 · 망은 꺼짐', () => {
-    const doors = read('mobile/src/matching/talk-doors.ts');
-    expect(doors).toContain("return error === null && data === true;");
-    expect(doors).toMatch(/catch \{\s+return false;/);
-  });
-
-  it('대화를 부를 때 그린 흐름을 문에 말한다 — 꺼졌으면 풀이권을 잡는 옛 요청 대신 거절이 온다(ADR 0216)', () => {
+  it('대화 시작은 상대 하나만 싣는다', () => {
     const doors = read('mobile/src/matching/talk-doors.ts');
     const body = doors.slice(doors.indexOf('export async function startTalk'));
-    expect(body).toContain("rpc('request_match', { p_candidate_user_id: candidateUserId, p_expected_kind: 'talk' })");
-    expect(body).toContain('refusedForSwitchMoved(error)');
+    expect(body).toContain("rpc('request_match', { p_candidate_user_id: candidateUserId })");
   });
 
-  it('거절의 문장은 새 덱의 첫 실패 줄이고, 덱이 아닌 자리(안내 · 쉼)에도 선다 — 움직임은 `mobile-deck-switch-moved.test.ts`', () => {
-    const screen = read('mobile/src/app/me/matching/index.tsx');
-    expect(screen).toContain('setSwitchMoved(message);\n      setRound(');
-    expect(screen).toContain('movedNotice: switchMoved');
-    expect(screen).not.toContain('deck.failure ?? switchMoved');
-    expect(screen.match(/\{lead\}\n\s+\{moved\}\n\s+<QuietPlace/g)).toHaveLength(2);
+  it('요청 문을 부르는 앱 코드는 대화 시작 한 곳이다', () => {
+    expect(appSources.filter((one) => one.text.includes(".rpc('request_match'")).map((one) => one.name)).toEqual(['mobile/src/matching/talk-doors.ts']);
+  });
+
+  it('옛 흐름의 화면 · 문이 없다 — 받은 요청 띠 · 요청 확인 창 · 수락 고지 · 풀이권 창', () => {
+    const all = appSources.map((one) => one.text).join('\n');
+    for (const name of ['RequestsBand', 'RequestConfirm', 'MatchAcceptNotice', 'useCreditsNotice', 'outOfCreditsNow', 'requestMatch(', 'CompatChip', 'MATCH_ACCEPT_', 'REQUEST_RESERVES_NOTE', 'REJECTION_IS_FINAL_NOTE']) {
+      expect(all, name).not.toContain(name);
+    }
   });
 });
 
-describe('켜진 흐름의 화면', () => {
+describe('상세 궁합', () => {
   it('상세 칸은 동의만 보낸다 — 거절이 없다', () => {
     const panel = read('mobile/src/chat/detail-panel.tsx');
-    expect(panel).toContain('respondToRequest(detail.requestId, true)');
-    expect(panel).not.toMatch(/respondToRequest\([^)]*false/);
-    expect(panel.replace(/\/\*[\s\S]*?\*\//g, '')).not.toContain('거절');
+    expect(panel).toContain('respondToRequest(detail.requestId)');
+    expect(withoutComments(panel)).not.toContain('거절');
+    expect(read('mobile/src/reading/api.ts')).toContain('JSON.stringify({ requestId, accept: true })');
   });
 
   it('취소 안내는 문이 cancelled 라고 답했을 때만 선다 — 상대가 먼저 답하면 없는 일이다', () => {
@@ -73,14 +51,13 @@ describe('켜진 흐름의 화면', () => {
     expect(withdraw).toMatch(/if \(result\.status === 'cancelled'\) router\.replace\('\/me\/chat\?withdrawn=1'/);
     expect(withdraw).toMatch(/else onStayed\(\);/);
     expect(read('mobile/src/chat/detail-panel.tsx')).toMatch(/if \(result\.status === 'cancelled'\) onNote\(DETAIL_CANCELLED\);/);
-    expect(read('mobile/src/matching/requests.tsx')).toContain('onCancelled(cancelledNote(result.status));');
   });
 
-  it('켜진 결과 화면에는 여덟 글자가 없다', () => {
-    expect(read('mobile/src/matching/doors.ts')).toContain('mine: talk ? null : mine');
-  });
-
-  it('인연 소개는 고지 배열을 숫자 자리로 읽지 않는다', () => {
-    expect(read('mobile/src/app/matching-intro.tsx')).not.toMatch(/MATCH_ACCEPT_OPENS\[/);
+  it('결과 화면 · 방에는 여덟 글자가 없다 — 글이 선 뒤에만 풀이 칸이 선다', () => {
+    for (const file of ['mobile/src/matching/doors.ts', 'mobile/src/chat/reads.ts', 'mobile/src/app/me/match/[matchId].tsx', 'mobile/src/chat/room.tsx']) {
+      const text = withoutComments(read(file));
+      expect(text, file).not.toMatch(/my_chart|partner_chart|storedChartSnapshot|dayMaster/);
+    }
+    expect(read('mobile/src/app/me/match/[matchId].tsx')).toContain("const written = result.detail?.state === 'ready';");
   });
 });

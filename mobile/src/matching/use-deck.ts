@@ -6,7 +6,7 @@ import type { DeckCard } from '@matching/deck-card';
 import { deckReducer, PASSED_LIMIT } from '@matching/deck-state';
 import { REQUEST_UNSURE } from '@matching/requests';
 
-import { outOfCreditsNow, passCandidate, requestMatch, restorePassed } from './doors';
+import { passCandidate, restorePassed } from './doors';
 import { startTalk } from './talk-doors';
 
 const FLASH_MS = 2000;
@@ -14,29 +14,18 @@ const FLASH_MS = 2000;
 /**
  * **오늘의 인연 덱의 상태와 누름** — 웹의 `app/me/matching/use-deck.ts` 와 같은 규칙이고 줄이는 일은 같은 `deckReducer` 가 한다.
  * 지나침은 누르는 순간 넘기고 저장은 뒤에서 한다(ADR 0115 「2026-10-08 덧」) — 못 받으면 맨 앞으로 돌아온다. 저장이 끝날 때까지 다음 누름은 잠긴다.
- * 요청은 서버가 받은 뒤에 넘어간다. 움직임은 빠졌다 — 끝 모습만 선다.
+ * 대화 시작은 서버가 받은 뒤에 넘어가고 방으로 간다. 움직임은 빠졌다 — 끝 모습만 선다.
  */
 export function useDeck({
   cards,
   passedFromServer,
   summary,
-  onOutOfCredits,
   onRequested,
-  talkOpen = false,
-  onSwitchMoved,
-  movedNotice = null,
 }: {
-  /** 대화가 열렸다 — 풀이권을 안 물어 확인 창이 서고, 보내면 방으로 간다 */
-  talkOpen?: boolean;
-  /** 그린 흐름과 스위치가 어긋나 문이 거절했다 — 돈은 안 움직였다. 다시 읽어 그리고 이 문장을 세운다(ADR 0216) */
-  onSwitchMoved?: (message: string) => void;
-  /** 그 거절의 문장 — 다시 읽으며 덱을 새로 세우므로 밖에서 받아 실패 줄의 첫 값으로 든다. 그래서 다음 누름이 다른 실패처럼 걷는다(웹의 `setFailure(null)` 과 같다) */
-  movedNotice?: string | null;
   cards: readonly DeckCard[];
   passedFromServer: readonly DeckCard[];
   summary: ElementSummary;
-  onOutOfCredits: () => void;
-  /** 요청이 갔다 — 보낸 요청이 선 「인연 기록」을 다시 읽는다. 덱은 그대로다 */
+  /** 대화가 섰다 — 「인연 기록」을 다시 읽는다. 덱은 그대로다 */
   onRequested: () => void;
 }) {
   const [deck, dispatch] = useReducer(deckReducer, {
@@ -48,9 +37,8 @@ export function useDeck({
   const [working, setWorking] = useState(false);
   const busy = useRef(false);
   const [flash, setFlash] = useState('');
-  const [failure, setFailure] = useState<string | null>(movedNotice);
+  const [failure, setFailure] = useState<string | null>(null);
   const [asking, setAsking] = useState(false);
-  const [checkingCredits, setCheckingCredits] = useState(false);
 
   useEffect(() => {
     if (flash === '') return;
@@ -67,19 +55,8 @@ export function useDeck({
     setWorking(on);
   };
 
-  /** 궁합 요청 단추 — 풀이권이 0개면 요청 확인 창 대신 풀이권 창이다. 못 물었으면 확인 창이고 DB 가 판정한다 */
-  const askToRequest = async () => {
-    if (talkOpen) {
-      setAsking(true);
-      return;
-    }
-    if (checkingCredits) return;
-    setCheckingCredits(true);
-    const spent = await outOfCreditsNow();
-    setCheckingCredits(false);
-    if (spent) onOutOfCredits();
-    else setAsking(true);
-  };
+  /** 대화 시작 단추 — 풀이권이 안 들어 묻는 것은 확인 창 하나다 */
+  const askToRequest = () => setAsking(true);
 
   const talk = async () => {
     if (!profile || busy.current) return;
@@ -88,10 +65,6 @@ export function useDeck({
     lock(true);
     try {
       const started = await startTalk(sending.candidateUserId);
-      if (started.kind === 'switch-moved') {
-        onSwitchMoved?.(started.message);
-        return;
-      }
       if (started.kind === 'refused') {
         setFailure(started.message);
         return;
@@ -121,28 +94,6 @@ export function useDeck({
       setFailure(result.message);
     }
     lock(false);
-  };
-
-  const send = async () => {
-    if (!profile || busy.current) return;
-    const sending = profile;
-    setFailure(null);
-    lock(true);
-    try {
-      const result = await requestMatch(sending.candidateUserId);
-      if (!result.ok && 'switchMoved' in result) onSwitchMoved?.(result.message);
-      else if (!result.ok && 'outOfCredits' in result) onOutOfCredits();
-      else if (!result.ok) setFailure(result.message);
-      else {
-        dispatch({ type: 'leave', id: sending.candidateUserId });
-        setFlash(`${sending.nickname} 님에게 상세 궁합을 요청했어요.`);
-        onRequested();
-      }
-    } catch {
-      setFailure(REQUEST_UNSURE);
-    } finally {
-      lock(false);
-    }
   };
 
   /** 보관함과 되돌리기가 같은 복원 경로를 쓴다. 실패하면 이력도 그대로 둔다 */
@@ -184,7 +135,6 @@ export function useDeck({
     setAsking,
     askToRequest,
     pass,
-    send,
     talk,
     restoreCard,
     undo,
