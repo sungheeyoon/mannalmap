@@ -2277,13 +2277,15 @@ describe('CI 계획 — 문구만 바뀐 파일은 core 에 옛 글자를 찾는
     const file = 'src/lib/account/copy.ts';
     const before = readFileSync(resolve(ROOT, file), 'utf8');
     const share = 'scripts/check-share.mjs';
-    const plan = planOf(file, before, before.replace('테스트 코드가 필요해요', '테스트 코드가 있어야 해요'), ['docs/product/copy-ledger.md'], '운영 베타', [
-      [share, readFileSync(resolve(ROOT, share), 'utf8')],
+    // check-share 가 그 글자를 말하던 상수(`BETA_SIGNUP_CODE_NOTE`)는 ADR 0225 가 걷었다 — 말하는 줄을 시험 안에서 붙인다
+    const said = `${readFileSync(resolve(ROOT, share), 'utf8')}\ncheck('사진 멈춤', html.includes('지금은 사진을 올릴 수 없어요'));\n`;
+    const plan = planOf(file, before, before.replace('지금은 사진을 올릴 수 없어요', '지금은 사진을 못 올려요'), ['docs/product/copy-ledger.md'], '운영 베타', [
+      [share, said],
     ]);
     expect(plan.tier).toBe('core');
     expect(plan.lanes).toEqual({ ...CORE_ONLY, mobile: true });
     // 앱 파일이 섞이면 문구 판정으로 좁히지 않는다 — 웹 문구 파일이 빠지면 앱만 바뀐 PR 로 읽혀 웹 차선이 사라진다
-    expect(planOf(file, before, before.replace('테스트 코드가 필요해요', '테스트 코드가 있어야 해요'), ['mobile/src/app/index.tsx']).tier).toBe('full');
+    expect(planOf(file, before, before.replace('지금은 사진을 올릴 수 없어요', '지금은 사진을 못 올려요'), ['mobile/src/app/index.tsx']).tier).toBe('full');
   });
 
   it('입구 page 의 문구 — 말하는 시험 없음은 core, 지금 규칙 안의 차선이면 그것, 넓으면 지금 규칙, 동작이 섞이면 지금 규칙', () => {

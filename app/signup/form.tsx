@@ -8,11 +8,9 @@ import {
   NOTICE_ACK_NOTE,
   OPTIONAL_CONSENTS,
   OPTIONAL_CONSENT_NOTE,
-  SIGNUP_CODE_NOTE,
   SIGNUP_LABEL,
   SIGNUP_NOTICE_DISCOVERY,
   SIGNUP_NOTICE_USE,
-  signupCodeOf,
   signupGap,
   signupNoticeDates,
   type SignupField,
@@ -48,14 +46,14 @@ const LABEL = 'text-body font-semibold';
 /**
  * 가입 폼 — **한 번 눌러 셋을 적는다** (ADR 0042).
  *
- * 코드 · 이름 · 안내 확인이 한 요청으로 나간다. 갈라 보내면 그 사이에서 멈춘 계정이
+ * 이름 · 안내 확인 · 선택 답이 한 요청으로 나간다. 갈라 보내면 그 사이에서 멈춘 계정이
  * 생기고, 관문이 그런 사람을 어디로 보낼지 다시 정해야 한다 — 그 자리를 없애려고 폼을
  * 합친 것이다.
  *
- * ## 두 칸은 **없을 때만 선다**
+ * ## 이름 칸은 **없을 때만 선다**
  *
- * 안내가 새 판본이 되면 이미 가입한 사람도 이 화면으로 돌아온다. 그때 코드와 이름을 다시
- * 물으면 두 번째 코드를 어디서 구하라는 말이 된다. 그 사람에게 남는 것은 확인 하나다.
+ * 안내가 새 판본이 되면 이미 가입한 사람도 이 화면으로 돌아온다. 그 사람에게 남는 것은 확인 하나다.
+ * 테스트 코드 칸은 걷었다 — 가입은 코드를 묻지 않는다(ADR 0225).
  *
  * ## 사진과 소개는 여기 없다
  *
@@ -64,7 +62,7 @@ const LABEL = 'text-body font-semibold';
  */
 export function SignupForm({
   returnTo,
-  needsCode,
+  firstSignup,
   needsName,
   version,
   scheduleId,
@@ -73,14 +71,14 @@ export function SignupForm({
 }: {
   /** 가입을 마치고 갈 곳 — 관문이 `next` 로 들려 보낸 목적지(ADR 0128) */
   returnTo: string;
-  needsCode: boolean;
+  /** 처음 가입하는가 — 아니면 바뀐 안내를 다시 확인하는 사람이다(단추의 글자가 갈린다) */
+  firstSignup: boolean;
   needsName: boolean;
   version: string;
   scheduleId: number;
   endsOn: string;
   purgeBy: string;
 }) {
-  const [code, setCode] = useState('');
   const [nickname, setNickname] = useState('');
   const [acknowledged, setAcknowledged] = useState(false);
   const [chosen, setChosen] = useState<Record<string, boolean>>({
@@ -104,16 +102,15 @@ export function SignupForm({
     눌렀을 때 **위에서부터 처음 걸린 칸 하나**를 말하고 그 칸으로 초점을 옮긴다. 칸을 고치면 말도 다음 칸으로 넘어간다.
   */
   const [tried, setTried] = useState(false);
-  const codeField = useRef<HTMLInputElement>(null);
   const nicknameField = useRef<HTMLInputElement>(null);
   const ackField = useRef<HTMLInputElement>(null);
-  const gap = signupGap({ needsCode, code, nicknameGap: missing, acknowledged });
+  const gap = signupGap({ nicknameGap: missing, acknowledged });
   const shownGap = tried ? gap : null;
   const dates = signupNoticeDates(endsOn, purgeBy);
   /** 「중복 확인」을 눌렀는데 닉네임이 규칙에 안 맞았나 — 그 말이 닉네임 칸 아래에 선다 */
   const [checkTried, setCheckTried] = useState(false);
   const refusedHere = (field: SignupField) => failure !== null && failure.field === field;
-  const invalid = (field: 'code' | 'nickname' | 'ack') =>
+  const invalid = (field: 'nickname' | 'ack') =>
     shownGap?.field === field
       ? { 'aria-invalid': true, 'aria-describedby': 'signup-gap' }
       : field !== 'ack' && refusedHere(field)
@@ -145,7 +142,7 @@ export function SignupForm({
     setFailure(null);
     if (gap !== null) {
       setTried(true);
-      ({ code: codeField, nickname: nicknameField, ack: ackField })[gap.field].current?.focus();
+      ({ nickname: nicknameField, ack: ackField })[gap.field].current?.focus();
       return;
     }
     setTried(false);
@@ -157,7 +154,6 @@ export function SignupForm({
       const failed = await actionAnswer(
         completeSignup({
           returnTo,
-          code,
           nickname,
           version,
           /* 이 사람이 **본 안내의 줄**이다. 그 사이에 바뀌었으면 DB 가 거절한다 */
@@ -169,7 +165,7 @@ export function SignupForm({
 
       const field = 'field' in failed ? failed.field : null;
       setFailure({ message: failed.message, field });
-      if (field !== null) ({ code: codeField, nickname: nicknameField })[field].current?.focus();
+      if (field !== null) nicknameField.current?.focus();
     });
   };
 
@@ -183,37 +179,6 @@ export function SignupForm({
       noValidate
       className="flex flex-col gap-6"
     >
-      {needsCode && (
-        <div className="flex flex-col gap-1.5">
-          <label htmlFor="signup-code" className={LABEL}>
-            {SIGNUP_LABEL.code}
-          </label>
-          <input
-            id="signup-code"
-            ref={codeField}
-            {...invalid('code')}
-            type="text"
-            inputMode="text"
-            autoCapitalize="characters"
-            autoComplete="off"
-            value={code}
-            onChange={(event) => {
-              setCode(signupCodeOf(event.target.value));
-              /* 칸을 고치면 그 칸의 거절은 걷힌다 — 고친 값에 대한 말이 아니다 */
-              if (failure?.field === 'code') setFailure(null);
-            }}
-            placeholder={SIGNUP_LABEL.codePlaceholder}
-            className={`${FIELD} w-full tracking-[0.08em] sm:max-w-64`}
-          />
-          {refusedHere('code') && (
-            <p id="signup-code-refused" role="alert" className={`${FAILURE_TEXT} font-medium`}>
-              {failure?.message}
-            </p>
-          )}
-          <p className="text-small leading-5 text-muted">{SIGNUP_CODE_NOTE}</p>
-        </div>
-      )}
-
       {needsName && (
         <div className="flex flex-col gap-1.5">
           {/*
@@ -360,7 +325,7 @@ export function SignupForm({
           aria-describedby={shownGap !== null ? 'signup-gap' : undefined}
           className={BUTTON_PRIMARY}
         >
-          {working ? SIGNUP_LABEL.signingUp : needsCode ? SIGNUP_LABEL.signUp : SIGNUP_LABEL.confirm}
+          {working ? SIGNUP_LABEL.signingUp : firstSignup ? SIGNUP_LABEL.signUp : SIGNUP_LABEL.confirm}
         </button>
         {/* 눌렀는데 못 간 이유를 단추 옆에서 말한다 — 누르기 전에는 이 자리가 비어 있다 */}
         {shownGap !== null && (

@@ -13,7 +13,7 @@
  */
 import { createClient } from '@supabase/supabase-js';
 import { execFileSync } from 'node:child_process';
-import { CHECK_CODE, NOTICE_VERSION, passNotice, scheduleBeta, seedSignupCode, chartArgs } from './notice.mjs';
+import { NOTICE_VERSION, passNotice, scheduleBeta, chartArgs } from './notice.mjs';
 import { createChecks, keyedRpc } from './checks.mjs';
 
 const status = JSON.parse(execFileSync('npx', ['supabase', 'status', '-o', 'json'], { encoding: 'utf8' }));
@@ -30,25 +30,14 @@ const password = `pw-${stamp}-Aa1!`;
 const scheduleId = async (client) =>
   (await client.rpc('current_beta_schedule')).data?.[0]?.schedule_id;
 
-// ── 1. 코드는 운영자가 만든다 ────────────────────────────────────────────────
-{
-  scheduleBeta();
-  let ok = true;
-  let detail = '';
-  try {
-    seedSignupCode();
-  } catch (error) {
-    ok = false;
-    detail = String(error.stderr ?? error.message).trim();
-  }
-  check('테스트 코드를 넣는다 (운영자 SQL)', ok, detail);
-}
+// ── 1. 일정은 운영자가 넣는다 — 가입은 코드를 묻지 않는다(ADR 0225) ──────────────
+scheduleBeta();
 
 // ── 2. 구글 로그인만으로 계정 행이 생긴다 ─────────────────────────────────────
 const client = anon();
 {
   const { data, error } = await client.auth.signUp({ email: tester, password });
-  check('명단 없이도 로그인은 된다 — 문은 코드가 지킨다', error === null && data.user !== null,
+  check('명단 없이도 로그인은 된다', error === null && data.user !== null,
     error?.message);
   check('세션이 선다', Boolean(data.session));
 
@@ -85,24 +74,11 @@ const client = anon();
     managed !== null && managed.message.includes('가입을 먼저'), managed?.message ?? '들어가 버렸다');
 }
 
-// ── 3-1. 코드가 실제로 문이다 ────────────────────────────────────────────────
+// ── 3-1. 가입 문은 코드 없이도 나머지를 묻는다 ───────────────────────────────
 {
-  const { error: nocode } = await client.rpc('complete_signup', {
-    p_code: null, p_nickname: '민수', p_version: NOTICE_VERSION,
-    p_schedule_id: await scheduleId(client), p_improvement: false, p_contact: false,
-  });
-  check('코드 없이는 가입이 안 끝난다', nocode !== null, nocode?.message ?? '지나가 버렸다');
-
-  /* 틀린 코드는 던지지 않고 `false` 로 온다 — DB 가 틀린 시도를 적고 센다(`20261101090000`) */
-  const { data: wrongAnswer, error: wrong } = await client.rpc('complete_signup', {
-    p_code: 'NOSUCHCODE', p_nickname: '민수', p_version: NOTICE_VERSION,
-    p_schedule_id: await scheduleId(client), p_improvement: false, p_contact: false,
-  });
-  check('없는 코드는 거절된다', wrong === null && wrongAnswer === false, wrong?.message ?? `답 ${wrongAnswer}`);
-
   /** 선택 답을 비운 채 지나가는 길이 없다 — 물었는데 `null` 인 사람이 생기면 안 된다 */
   const { error: blank } = await client.rpc('complete_signup', {
-    p_code: CHECK_CODE, p_nickname: '민수', p_version: NOTICE_VERSION,
+    p_code: null, p_nickname: '민수', p_version: NOTICE_VERSION,
     p_schedule_id: await scheduleId(client), p_improvement: null, p_contact: false,
   });
   check('선택 항목을 비운 채로는 가입할 수 없다', blank !== null, blank?.message ?? '지나가 버렸다');

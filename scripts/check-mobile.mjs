@@ -19,7 +19,7 @@ import { readFileSync, readdirSync, statSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 
 import { startCheckServer } from './next-server.mjs';
-import { passNotice, seedSignupCode, scheduleBeta, chartArgs, NOTICE_VERSION, CHECK_CODE } from './notice.mjs';
+import { passNotice, clearMachineRunsFromToday, scheduleBeta, chartArgs, NOTICE_VERSION } from './notice.mjs';
 import { createChecks, sql } from './checks.mjs';
 import { worktreeStack } from '../src/lib/local-env.ts';
 
@@ -217,7 +217,7 @@ const expiredToken = (sub) => {
 
 try {
   scheduleBeta();
-  seedSignupCode(CHECK_CODE, 500);
+  clearMachineRunsFromToday();
 
   /* ---------- 흐름: 가입 → 저장 → 수정 → 참여 끔 → 다시 켬 → 복귀 ---------- */
   const a = await newAccount('a');
@@ -231,10 +231,8 @@ try {
     schedule.error === null && hasColumns(schedule.data[0], ['schedule_id', 'ends_on', 'purge_by', 'purge_within_days', 'operator_name', 'operator_officer', 'operator_contact']).length === 0,
     shapeOf(schedule));
 
-  const wrongCode = await a.client.rpc('complete_signup', { p_code: 'NOPE', p_nickname: `벗${tag}`, p_version: NOTICE_VERSION, p_schedule_id: schedule.data[0].schedule_id, p_improvement: false, p_contact: false });
-  check('틀린 코드는 거절이 아니라 false — 앱이 그 값으로 칸을 가른다', wrongCode.error === null && wrongCode.data === false, shapeOf(wrongCode));
-  const signup = await a.client.rpc('complete_signup', { p_code: CHECK_CODE, p_nickname: `벗${tag}`, p_version: NOTICE_VERSION, p_schedule_id: schedule.data[0].schedule_id, p_improvement: true, p_contact: false });
-  check('가입을 마친다', signup.error === null && signup.data !== false, shapeOf(signup));
+  const signup = await a.client.rpc('complete_signup', { p_code: null, p_nickname: `벗${tag}`, p_version: NOTICE_VERSION, p_schedule_id: schedule.data[0].schedule_id, p_improvement: true, p_contact: false });
+  check('코드 없이 가입을 마친다(ADR 0225)', signup.error === null && signup.data === true, shapeOf(signup));
 
   const aToken = await tokenOf(a);
   const saved = await saveSelf(aToken, '1990-05-15', 'male');

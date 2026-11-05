@@ -60,7 +60,7 @@ describe('인연 소개 (#940)', () => {
 
   it('규칙은 카드 · 방 · 약관과 같은 상수를 읽고, 없는 본인인증을 약속하지 않는다', () => {
     for (const name of ['TALK_START_NOTE', 'CHAT_USES_NO_CREDIT', 'DETAIL_INTRO', 'SIGNUP_NOTICE_DISCOVERY']) expect(intro).toContain(name);
-    expect(read('src/lib/brand/terms.ts')).toContain('만 19세 이상만 가입할 수 있습니다');
+    expect(read('src/lib/brand/terms.ts')).toContain('인연 찾기와 대화방은 휴대폰 본인확인을 마친 만 19세 이상 이용자만 이용할 수 있습니다');
     expect(intro).not.toMatch(/본인인증|본인확인|성인 확인/);
   });
 

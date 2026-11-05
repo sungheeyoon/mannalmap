@@ -4,7 +4,7 @@
 --   2. **검토 기록의 모양** — 결과에는 검토한 사람과 시각이, 이용 정지에는 받은 쪽이, 제재는 두 계정 중 하나에
 --   3. **운영자 화면이 검토 기록을 읽는다** — 받은 쪽은 신고 안의 자리로
 --   4. **떠나도 검토 기록이 함께 옮겨진다**(ADR 0098) — 옮긴 뒤에도 검토 칸은 적을 수 있다
---   5. **가입이 닫히면 새 사람은 코드가 살아 있어도 못 들어오고, 이미 가입한 사람은 안내를 다시 확인한다**
+--   5. **가입이 닫히면 새 사람은 못 들어오고, 이미 가입한 사람은 안내를 다시 확인한다** — 코드가 걷힌 뒤에도(ADR 0225)
 --   6. **닫힌 줄은 하나뿐이고 앱 역할은 그 표를 못 읽는다**
 begin;
 select plan(20);
@@ -133,7 +133,6 @@ select throws_ok(
 
 select tests.schedule_beta();
 
-insert into public.signup_code (code, note, valid_on, max_uses) values ('PAUSE1', '닫기 시험', public.signup_today(), 10);
 insert into public.signup_pause (reason) values ('운영자 부재 시험');
 
 create or replace function pg_temp.schedule_id()
@@ -146,8 +145,8 @@ set local role authenticated;
 select pg_temp.acting((select newcomer from folks));
 
 select throws_ok(
-  $$select public.complete_signup('PAUSE1', '새사람', 'notice-v9', pg_temp.schedule_id(), false, false)$$,
-  '42501', '사용할 수 없는 코드예요. 코드를 다시 확인해 주세요.', '닫혀 있으면 살아 있는 코드로도 새 사람은 못 들어온다 — 기존 문장으로');
+  $$select public.complete_signup(null, '새사람', 'notice-v9', pg_temp.schedule_id(), false, false)$$,
+  '42501', '지금은 신규 가입을 잠시 멈췄어요. 나중에 다시 시도해 주세요.', '닫혀 있으면 새 사람은 못 들어온다 — 코드를 말하지 않는 문장으로');
 
 select pg_temp.acting((select reporter from folks));
 select lives_ok(
@@ -162,7 +161,7 @@ update public.signup_pause set resumed_at = now() where resumed_at is null;
 set local role authenticated;
 select pg_temp.acting((select later from folks));
 select lives_ok(
-  $$select public.complete_signup('PAUSE1', '나중사람', 'notice-v9', pg_temp.schedule_id(), false, false)$$,
+  $$select public.complete_signup(null, '나중사람', 'notice-v9', pg_temp.schedule_id(), false, false)$$,
   '열면 다시 들어온다');
 
 select * from finish();

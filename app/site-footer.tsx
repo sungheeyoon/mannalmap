@@ -60,7 +60,7 @@ export function SiteFooter({ business }: { business: BusinessInfo }) {
       <div className="app-shell flex flex-col gap-4 pt-8 pb-8 sm:flex-row sm:items-end sm:justify-between">
         <div className="flex flex-col gap-1">
           <p className="font-rounded text-lead text-foreground">{SERVICE_NAME}</p>
-          <p className="text-small leading-5 text-secondary">{SERVICE_TAGLINE} · 비공개 베타</p>
+          <p className="text-small leading-5 text-secondary">{SERVICE_TAGLINE}</p>
         </div>
         {nav}
       </div>

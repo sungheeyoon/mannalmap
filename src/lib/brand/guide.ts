@@ -33,7 +33,7 @@ export const ABOUT_LEAD = [
 /** 서비스 소개 「시작하는 차례」 */
 export const ABOUT_STEPS: readonly { title: string; body: string }[] = [
   { title: '사주 보기', body: '첫 화면에서 생년월일시를 넣고 내 사주를 봐요.' },
-  { title: '로그인 · 가입', body: '구글로 로그인하고, 테스트 코드와 닉네임으로 가입해요.' },
+  { title: '로그인 · 가입', body: '구글로 로그인하고, 닉네임으로 가입해요.' },
   { title: '내 사주 저장', body: '내 출생 정보를 저장하면 홈에 내 사주 카드가 서요.' },
   { title: '풀이 받기', body: '사주풀이 · 궁합 · 인연 중 마음 가는 것부터 시작해요.' },
 ];
@@ -46,14 +46,6 @@ export const HELP_GROUPS: readonly {
   {
     title: '시작하기',
     items: [
-      {
-        id: 'signup-code',
-        q: '테스트 코드는 어디서 받나요?',
-        a: [
-          '지금은 비공개 베타라 운영자가 테스터에게 직접 알려 드려요.',
-          '구글로 로그인한 뒤 가입 화면에서 코드와 닉네임을 넣으면 가입이 끝나요.',
-        ],
-      },
       {
         id: 'without-sign-in',
         q: '로그인하지 않고 무엇을 볼 수 있나요?',
@@ -143,7 +135,7 @@ export const MATCHING_START_LEAVE = '그만둬도 사주는 그대로 볼 수 �
 export type MatchingStartStep = 'sign-in' | 'signup' | 'self';
 const MATCHING_START_STEPS: readonly { key: MatchingStartStep; text: string }[] = [
   { key: 'sign-in', text: '구글로 로그인' },
-  { key: 'signup', text: '테스트 코드로 가입' },
+  { key: 'signup', text: '닉네임으로 가입' },
   { key: 'self', text: '내 사주 저장' },
 ];
 export const matchingStartSteps = (done: readonly MatchingStartStep[]) => MATCHING_START_STEPS.filter((step) => !done.includes(step.key));
