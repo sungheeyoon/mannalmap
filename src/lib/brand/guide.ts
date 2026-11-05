@@ -161,6 +161,12 @@ export const matchingStartSteps = (done: readonly MatchingStartStep[]) => MATCHI
 /** 앱에서 궁합으로 가려다 로그인에 선 사람의 제목(대장 public 17, 웹은 `app/auth/page.tsx` 의 글자) · 앱 입구의 궁합 입구 */
 export const COMPAT_SIGN_IN_TITLE = '궁합풀이는 로그인하면 볼 수 있어요';
 export const COMPAT_ENTRY = '궁합 보기';
+/**
+ * 로그인 전 궁합 결과의 로그인 단추와 풀이권 한 줄 — 웹 `app/pair-taste.tsx` 의 확정 글자(대장 06)이고, 로그인 전 궁합 결과가 없는 앱 첫 화면의
+ * 「궁합 보기」 탭이 같은 글자를 쓴다(ADR 0226). 풀이권의 수는 적지 않는다 — 무료 몫이 바뀔 수 있다(#1012)
+ */
+export const COMPAT_SIGN_IN_ACTION = '로그인하고 궁합풀이 받기';
+export const COMPAT_CREDIT_NOTE = '가입하면 풀이권으로 궁합풀이를 받을 수 있어요.';
 
 export const MATCHING_INTRO_TITLE = '인연은 어떻게 찾나요?';
 export const MATCHING_INTRO_EXAMPLE = {

@@ -4,7 +4,8 @@ import { Keyboard, KeyboardAvoidingView, Pressable, ScrollView, StyleSheet, Text
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { SERVICE_NAME } from '@brand';
-import { COMPAT_ENTRY, MATCHING_INTRO_TITLE, MEMBER_SIGN_IN_ASK } from '@brand/guide';
+import { COMPAT_CREDIT_NOTE, COMPAT_ENTRY, COMPAT_SIGN_IN_ACTION, COMPAT_SIGN_IN_TITLE, MEMBER_SIGN_IN_ASK } from '@brand/guide';
+import { ELEVATION } from '@design';
 import { calculateChart, dateRefusal } from '@input/chart';
 import { convertedLine, dateOfParts, limitsOf, timeOfParts } from '@input/entry';
 import { DEFAULT_QUERY, HOUR_UNKNOWN_CHOICE, NAME_MAX, TIME_BASES, TIME_BASIS, type Query } from '@input/query';
@@ -13,12 +14,11 @@ import { CALENDARS, CALENDAR_KO, CITY_LONGITUDES, GENDERS, GENDER_KO, SUPPORTED_
 import { chartPath } from '@consent/app-destination';
 import { entryFor, type Entry, type EntryOpened } from '@consent/entry';
 import { withReturnPath } from '@consent/return-path';
-import { matchEntriesStand } from '@matching/opening';
 import { readGate } from '@/home/gate';
-import { useMatchOpen } from '@/matching/opening';
 import { POLICY_TITLE, SUPPORT_TITLE } from '@/info/copy';
 import { Choices, DigitField, Field, FieldLabel, KeyboardDoneBar, PrimaryButton, SecondaryButton, Select } from '@/ui/parts';
-import { Mark } from '@/share/marks';
+import { SunMark } from '@/share/marks';
+import { Icon } from '@/ui/icons';
 import { Logo } from '@/ui/logo';
 import { COLOR, FONT, RADIUS, TYPE } from '@/ui/tokens';
 import { CardFrame, Paper } from '@/ui/surfaces';
@@ -32,6 +32,39 @@ const RULES: readonly { value: LateNightRule; label: string; hint: string }[] = 
   { value: 'jo', label: '조자시', hint: '경계 23:00' },
   { value: 'ya', label: '야자시', hint: '경계 자정' },
 ];
+
+type Doorway = 'self' | 'pair';
+
+/**
+ * 로그인 전 첫 화면의 두 입구 — 웹 `/` 의 탭(`app/home-hero.tsx` 의 `VisitorFace`)과 같은 모양이다: `rounded-cell bg-surface-sunken p-0.5` 판에
+ * 켜진 칸은 `bg-surface shadow-card`, 그림은 해(`SunMark`) · 태극(`Icon name="taiji"`). 이름은 웹의 두 탭 글자 그대로다(ADR 0226)
+ */
+function EntryTabs({ value, onPick }: { value: Doorway; onPick: (next: Doorway) => void }) {
+  const doors: readonly { key: Doorway; label: string }[] = [
+    { key: 'self', label: '내 사주 보기' },
+    { key: 'pair', label: COMPAT_ENTRY },
+  ];
+  return (
+    <View accessibilityRole="tablist" aria-label="무엇을 볼까요" style={styles.tabs}>
+      {doors.map((door) => {
+        const on = door.key === value;
+        const color = on ? COLOR.foreground : COLOR.secondary;
+        return (
+          <Pressable
+            key={door.key}
+            accessibilityRole="tab"
+            accessibilityState={{ selected: on }}
+            onPress={() => onPick(door.key)}
+            style={[styles.tab, on && styles.tabOn]}
+          >
+            {door.key === 'self' ? <SunMark size={20} color={color} /> : <Icon name="taiji" size={20} color={color} />}
+            <Text style={[styles.tabText, on && styles.tabTextOn]}>{door.label}</Text>
+          </Pressable>
+        );
+      })}
+    </View>
+  );
+}
 
 /**
  * 입구 — 앱을 열면 관문의 답 하나로 설 곳을 고른다(`entryFor`, ADR 0226). 가입을 마친 회원은 홈, 가입 · 다시 확인할 안내가 남았으면
@@ -92,7 +125,9 @@ const ENTRY_LINKS = [
 
 /** 출생 정보 — 칸의 차례와 말은 웹의 `app/birth-form.tsx` 와 같다. 계산은 웹과 같은 `calculateChart` 다 */
 function BirthScreen({ signedOut }: { signedOut: boolean }) {
-  const matchOpen = useMatchOpen();
+  /* 두 입구 — 웹 `/` 의 「내 사주 보기 · 궁합 보기」 탭(`app/home-hero.tsx`). 로그인 전에만 선다 */
+  const [doorway, setDoorway] = useState<Doorway>('self');
+  const pair = signedOut && doorway === 'pair';
   const [name, setName] = useState('');
   const [gender, setGender] = useState<Query['gender']>(DEFAULT_QUERY.gender);
   const [year, setYear] = useState('');
@@ -175,25 +210,24 @@ function BirthScreen({ signedOut }: { signedOut: boolean }) {
             {signedOut ? (
               <View style={styles.head}>
                 <Text accessibilityRole="header" style={styles.title}>나는 어떤 사람일까?</Text>
-                <View style={styles.doors}>
-                  {/* 인연이 닫힌 동안은 소개도 안 선다(ADR 0222) */}
-                  {matchEntriesStand(matchOpen) && (
-                    <Pressable accessibilityRole="link" onPress={() => router.push('/matching-intro')} style={styles.intro}>
-                      <Text style={styles.introText}>{MATCHING_INTRO_TITLE}</Text>
-                      <Mark name="arrow" size={16} color={COLOR.secondary} />
-                    </Pressable>
-                  )}
-                  {/* 궁합은 로그인 뒤 궁합 탭이다 — 앱에는 로그인 전 궁합 결과가 없다(ADR 0213 의 11) */}
-                  <Pressable accessibilityRole="link" onPress={() => router.push(withReturnPath('/auth', '/me/compat') as never)} style={styles.intro}>
-                    <Text style={styles.introText}>{COMPAT_ENTRY}</Text>
-                    <Mark name="arrow" size={16} color={COLOR.secondary} />
-                  </Pressable>
-                </View>
+                <EntryTabs value={doorway} onPick={setDoorway} />
               </View>
             ) : (
               <Text style={[styles.title, styles.titleAlone]}>출생 정보를 입력해 주세요</Text>
             )}
 
+            {/* 궁합 쪽 — 앱에는 로그인 전 궁합 결과가 없어 로그인으로 잇는다(ADR 0213 의 11 · ADR 0226). 입력 판은 내려 두지 않고 숨긴다 — 적던 값이 남는다 */}
+            {pair && (
+              <View style={styles.compat}>
+                <Text style={styles.compatTitle}>{COMPAT_SIGN_IN_TITLE}</Text>
+                <Text style={styles.compatNote}>{COMPAT_CREDIT_NOTE}</Text>
+                <View style={styles.compatAction}>
+                  <PrimaryButton label={COMPAT_SIGN_IN_ACTION} onPress={() => router.push(withReturnPath('/auth', '/me/compat') as never)} />
+                </View>
+              </View>
+            )}
+
+            <View style={[styles.formArea, pair && styles.hidden]}>
             <CardFrame style={styles.form}>
               <View style={styles.pair}>
                 <View style={styles.half}>
@@ -279,7 +313,8 @@ function BirthScreen({ signedOut }: { signedOut: boolean }) {
             {/* 폼이 짧은 화면에서도 단추는 엄지가 닿는 맨 아래에 선다 */}
             <View style={styles.action}>
               {failure !== null && <Text style={styles.failure}>{failure}</Text>}
-              <PrimaryButton label={signedOut ? '내 사주 보기' : '사주 보기'} onPress={submit} />
+              {/* 로그인 전에는 웹 첫 화면의 주 단추와 같은 글자다 — 무엇이 무료인지 단추가 말한다(ADR 0131 · 0226) */}
+              <PrimaryButton label={signedOut ? '무료로 내 사주 보기' : '사주 보기'} onPress={submit} />
               {/* 이미 쓰는 사람의 길 — 주 단추 바로 아래 한 줄, 웹 첫 화면과 같은 글자다(ADR 0226). 생년월일 없이 홈으로 간다 */}
               {signedOut && (
                 <View style={styles.member}>
@@ -289,6 +324,7 @@ function BirthScreen({ signedOut }: { signedOut: boolean }) {
                   </Pressable>
                 </View>
               )}
+            </View>
             </View>
           </Paper>
 
@@ -320,16 +356,24 @@ const styles = StyleSheet.create({
   link: { minHeight: 44, justifyContent: 'center' },
   linkText: { fontSize: TYPE.small, fontFamily: FONT.bold, color: COLOR.secondary },
   titleAlone: { marginHorizontal: 4 },
-  head: { gap: 4, marginHorizontal: 4 },
+  head: { gap: 20, marginHorizontal: 4, marginBottom: 4 },
+  tabs: { flexDirection: 'row', gap: 2, padding: 2, borderRadius: RADIUS.cell, backgroundColor: COLOR.surfaceSunken },
+  tab: { flex: 1, minHeight: 44, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, borderRadius: RADIUS.cell, paddingHorizontal: 8 },
+  tabOn: { backgroundColor: COLOR.surface, boxShadow: ELEVATION.card },
+  tabText: { fontSize: TYPE.body, fontFamily: FONT.bold, color: COLOR.secondary },
+  tabTextOn: { color: COLOR.foreground },
+  formArea: { flexGrow: 1, gap: 12 },
+  hidden: { display: 'none' },
+  compat: { gap: 8, marginHorizontal: 4, paddingTop: 8 },
+  compatAction: { paddingTop: 12 },
+  compatTitle: { fontSize: TYPE.heading, lineHeight: 29, fontFamily: FONT.bold, color: COLOR.foreground },
+  compatNote: { fontSize: TYPE.body, lineHeight: 24, fontFamily: FONT.medium, color: COLOR.secondary },
   member: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 4, marginTop: -6 },
   memberAsk: { fontSize: TYPE.small, fontFamily: FONT.medium, color: COLOR.secondary },
   memberSignIn: { minHeight: 44, justifyContent: 'center', paddingHorizontal: 4 },
   memberSignInText: { fontSize: TYPE.small, fontFamily: FONT.bold, color: COLOR.foreground, textDecorationLine: 'underline' },
   retry: { alignItems: 'center', justifyContent: 'center', gap: 12, padding: 24 },
   retryLine: { fontSize: TYPE.body, lineHeight: 24, fontFamily: FONT.medium, color: COLOR.foreground, textAlign: 'center' },
-  doors: { flexDirection: 'row', flexWrap: 'wrap', columnGap: 16 },
-  intro: { minHeight: 44, flexDirection: 'row', alignItems: 'center', gap: 4 },
-  introText: { fontSize: TYPE.body, fontFamily: FONT.bold, color: COLOR.secondary },
   title: { fontSize: TYPE.title, lineHeight: 35, fontFamily: FONT.bold, color: COLOR.foreground },
   form: { padding: 16, gap: 18, borderWidth: 0 },
   pair: { flexDirection: 'row', gap: 12 },
