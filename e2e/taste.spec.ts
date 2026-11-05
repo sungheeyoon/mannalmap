@@ -12,15 +12,15 @@ import { fillBirth, openTrial } from './birth-form';
  * 잠긴 채 선다. 글이 서는 길과 가입 왕복은 로그인 차선(`signed-in.spec.ts`)이 DB 에 글을 심어 잰다.
  */
 
-test('첫 화면은 소개 · 사주풀이 예시 · 두 입구이고, 체험을 고르면 두 입구와 생일 칸이다 (ADR 0226)', async ({ page }) => {
+test('첫 화면은 소개 · 예시 내 사주 카드 · 두 입구이고, 체험을 고르면 두 입구와 생일 칸이다 (ADR 0226)', async ({ page }) => {
   await page.goto('/');
 
-  /* 소개가 먼저다 — 폼은 아직 안 보이고, 사주풀이 예시(「예시」 · 절 제목)와 체험 · 로그인 두 입구가 선다. 명식 카드는 없다 */
+  /* 소개가 먼저다 — 폼은 아직 안 보이고, 회원 홈의 내 사주 카드(「예시」 · 한줄평)와 체험 · 로그인 두 입구가 선다. 카드에 단추는 없다 */
   await expect(page.getByRole('heading', { level: 1, name: '나는 어떤 사람일까?' })).toBeVisible();
-  const example = page.getByRole('figure', { name: '사주풀이 예시' });
-  await expect(example).toContainText('예시');
-  await expect(example.getByRole('heading', { name: '지금의 핵심' })).toBeVisible();
-  await expect(page.getByRole('region', { name: '내 사주' })).toHaveCount(0);
+  const example = page.getByRole('region', { name: '내 사주' });
+  await expect(example.getByRole('heading', { name: '예시' })).toBeVisible();
+  await expect(example).toContainText('늘 앞장서 걷다가 가끔 뒤를 돌아보는 사람입니다.');
+  await expect(example.getByRole('link')).toHaveCount(0);
   await expect(page.getByRole('tab', { name: /내 사주 보기/ })).toBeHidden();
   await expect(page.locator('main').getByRole('link', { name: '로그인', exact: true })).toHaveAttribute('href', '/auth');
 

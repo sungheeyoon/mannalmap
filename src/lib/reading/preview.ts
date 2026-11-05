@@ -1,6 +1,7 @@
 /**
  * **예시 사주풀이 — 한 벌.** 개발 기계의 풀이 화면이 연결 없이 세우는 예시 결과(`app/me/reading/reading-state.ts` 의
- * `previewReading`, 화면에 「예시 결과」 딱지)와 로그인 전 첫 화면의 예시 카드(ADR 0226)가 같은 글을 읽는다.
+ * `previewReading`, 화면에 「예시 결과」 딱지)가 읽고, 로그인 전 첫 화면의 예시 내 사주 카드(ADR 0226)가 그 한 사람 비유를
+ * 카드의 한줄평으로 읽는다 — 회원 홈 카드의 한줄평도 내 사주풀이의 비유다.
  *
  * 모델이 쓴 글이 아니라 화면을 보려고 박아 둔 글이다 — 그래서 공유 · 설문이 안 붙고(`panelChrome`), 첫 화면에서는 「예시」라고
  * 적혀 선다. 글을 고치면 두 자리가 함께 바뀐다.
@@ -36,13 +37,3 @@ export const PREVIEW_OUTPUT = `## 지금의 핵심
 
 이 해석은 저장된 사주 근거를 바탕으로 현재 확인 가능한 경향을 설명합니다. 출생 시각이 없거나 계산 근거가 제한된 부분은 단정하지 않았으며, 중요한 결정을 대신하는 판단으로 사용하지 마세요.`;
 
-/**
- * **첫 화면의 예시 카드**(ADR 0226) — 위 글의 표지 비유와 **첫 절의 제목 · 첫 문장**만 뗀다. 글자를 새로 짓지 않고 잘라 낸다 —
- * 카드는 폰 한 화면에 주 단추까지 들어야 하고, 남은 글은 「사주풀이를 받으면 이런 글이 이어진다」를 말하는 데 필요 없다.
- */
-const [FIRST_HEADING, FIRST_PARAGRAPH] = PREVIEW_OUTPUT.split('\n\n');
-
-export const READING_EXAMPLE = {
-  metaphor: PREVIEW_SELF_METAPHOR,
-  excerpt: `${FIRST_HEADING}\n\n${FIRST_PARAGRAPH.slice(0, FIRST_PARAGRAPH.indexOf('. ') + 1)}`,
-} as const;

@@ -32,14 +32,20 @@ describe('앱 입구', () => {
     expect(intro).toContain("router.push('/policies'");
   });
 
-  it('소개는 웹 첫 화면과 같은 글자와 한 벌의 사주풀이 예시를 든다 — 명식 칸이 아니고, 슬라이드가 없다(ADR 0226)', () => {
-    for (const name of ['TRIAL_START', 'MEMBER_SIGN_IN_ASK', 'RESULT_EXAMPLE_STAMP', 'ABOUT_LEAD', 'READING_EXAMPLE', '<Markdown source={READING_EXAMPLE.excerpt} />']) {
+  it('소개는 웹 첫 화면과 같은 글자와 회원 홈의 내 사주 카드(예시)를 든다 — 기둥 표 · 풀이 글이 없고, 슬라이드가 없다(ADR 0226)', () => {
+    const web = read('app/first-intro.tsx');
+    for (const name of ['TRIAL_START', 'MEMBER_SIGN_IN_ASK', 'RESULT_EXAMPLE_STAMP', 'ABOUT_LEAD', 'calculateChart(EXAMPLE_QUERY)', 'PREVIEW_SELF_METAPHOR']) {
       expect(intro).toContain(name);
-      expect(read('app/first-intro.tsx')).toContain(name);
+      expect(web).toContain(name);
     }
-    /* 예시 글은 지어 쓰지 않는다 — 개발 기계의 예시 결과와 한 벌이다 */
-    expect(read('app/me/reading/reading-state.ts')).toContain('PREVIEW_OUTPUT');
-    expect(intro).not.toMatch(/PillarStrip|SelfCard|calculateChart/);
+    /* 각 플랫폼의 홈 카드 그대로다 — 웹은 홈 탭의 줄인 판, 앱은 홈의 그 부품 */
+    expect(web).toContain("import { SelfCard } from './me/home/self-card'");
+    expect(web).toMatch(/<SelfCard [^>]*compact/);
+    expect(intro).toContain("import { SelfCard } from '@/home/self-card'");
+    /* 한줄평은 지어 쓰지 않는다 — 개발 기계의 예시 결과와 한 벌의 비유다 */
+    expect(read('app/me/reading/reading-state.ts')).toContain('PREVIEW_SELF_METAPHOR');
+    expect(intro).not.toMatch(/PillarStrip|Markdown/);
+    expect(web).not.toMatch(/Markdown|SajuView/);
     expect(intro).not.toMatch(/setInterval|FlatList|pagingEnabled/);
     /* 체험은 입력 화면을 스택에 올린다 — 뒤로 가면 소개다 */
     expect(intro).toContain("router.push('/?start=1'");
