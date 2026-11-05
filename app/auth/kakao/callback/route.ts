@@ -8,7 +8,7 @@ import { kakaoKeys, kakaoRedirectUri } from '../config';
 import { FLOW_COOKIE, FLOW_COOKIE_PATH, callbackOf, decodeFlow, exchangeCode } from '../flow';
 
 /**
- * 카카오가 인가 코드를 들고 돌아오는 자리(ADR 0223) — 흐름 쿠키를 먼저 걷고, state 를 견주고, 코드를 ID 토큰으로 바꿔
+ * 카카오가 인가 코드를 들고 돌아오는 자리(ADR 0224) — 흐름 쿠키를 먼저 걷고, state 를 견주고, 코드를 ID 토큰으로 바꿔
  * `signInWithIdToken({ provider: 'kakao' })` 로 세션을 쿠키에 붙인다.
  *
  * 어느 갈래에서 멈춰도 로그인 실패 화면(`/auth/denied`)이다 — 구글의 `/auth/callback` 과 같다. 갈 곳은 쿠키에 둔 값이고,

@@ -4,7 +4,7 @@ import { KAKAO_SIGN_IN } from '@/src/lib/account/sign-in-line';
  * 카카오 로그인 단추 — 카카오 로그인 디자인 가이드의 꼴이다: 바탕 `#FEE500`, 심볼 `#000000`, 글자 `#000000` 85%, 완성형 레이블
  * 「카카오 로그인」. 심볼 없이 단추를 만들 수 없다(같은 가이드). 높이 · 알약은 구글 단추(주 단추)와 같다.
  *
- * 누르면 서버의 시작 주소(`/auth/kakao`)로 **문서째 옮긴다** — 쿠키를 심고 카카오로 보내는 것은 서버다(ADR 0223). 그래서
+ * 누르면 서버의 시작 주소(`/auth/kakao`)로 **문서째 옮긴다** — 쿠키를 심고 카카오로 보내는 것은 서버다(ADR 0224). 그래서
  * 클라이언트 코드가 없고, 부르는 쪽(`page.tsx`)이 키가 있을 때만 세운다.
  */
 export function KakaoSignInButton({ returnTo }: { returnTo: string }) {
@@ -19,7 +19,7 @@ export function KakaoSignInButton({ returnTo }: { returnTo: string }) {
   );
 }
 
-/** 말풍선 심볼 — 카카오 가이드의 리소스로 갈아 끼울 자리다(ADR 0223 「켜기 전」) */
+/** 말풍선 심볼 — 카카오 가이드의 리소스로 갈아 끼울 자리다(ADR 0224 「켜기 전」) */
 function KakaoSymbol() {
   return (
     <svg aria-hidden="true" viewBox="0 0 24 24" className="size-[18px]" fill="#000000">

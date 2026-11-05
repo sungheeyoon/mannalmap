@@ -56,7 +56,7 @@ export type SettingsData = {
   state: AccountState;
   account: SettingsAccount | null;
   discovery: DiscoveryRead;
-  /** 로그인 이메일, 없으면 로그인 수단의 이름(카카오) — 둘 다 없으면 줄이 없다(`accountLineOf`, ADR 0223) */
+  /** 로그인 이메일, 없으면 로그인 수단의 이름(카카오) — 둘 다 없으면 줄이 없다(`accountLineOf`, ADR 0224) */
   accountLine: string | undefined;
   userId: string | null;
 };

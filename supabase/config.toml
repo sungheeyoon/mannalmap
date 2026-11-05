@@ -339,7 +339,7 @@ skip_nonce_check = false
 # If enabled, it will allow the user to successfully authenticate when the provider does not return an email address.
 email_optional = false
 
-# 카카오 로그인 — 로컬 시험용으로만 켠다(ADR 0223). 운영은 대시보드가 들고 `config push` 는 쓰지 않는다(`docs/ops/runbook/access.md`).
+# 카카오 로그인 — 로컬 시험용으로만 켠다(ADR 0224). 운영은 대시보드가 들고 `config push` 는 쓰지 않는다(`docs/ops/runbook/access.md`).
 # 웹 · 앱 둘 다 `signInWithIdToken` 으로 들어온다 — client_id 는 쉼표 목록이고 전부가 ID 토큰 `aud` 의 허용 목록이다(REST API 키, 네이티브 앱 키).
 # 값은 `supabase/.env.local` 에 둔다. 비어 있으면 CLI 가 경고만 하고 `env(...)` 글자가 그대로 남아 어떤 토큰의 aud 와도 안 맞는다 — 로그인이 닫힌다.
 # 이메일은 받지 않으므로 email_optional 을 켠다(#970 실측 N2 — 이메일 없이 가입 · 재로그인이 같은 계정).

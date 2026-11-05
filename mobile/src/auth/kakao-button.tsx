@@ -14,7 +14,7 @@ const KAKAO_LABEL = 'rgba(0, 0, 0, 0.85)';
 
 /**
  * 카카오 로그인 단추 — 웹 `app/auth/kakao-sign-in-button.tsx` 와 같은 꼴(가이드의 완성형 「카카오 로그인」, 심볼 없이 만들 수 없다)이고
- * 높이 · 알약은 구글 단추(주 단추)와 같다. 네이티브 앱 키가 없는 빌드에서는 아무것도 안 선다(ADR 0223).
+ * 높이 · 알약은 구글 단추(주 단추)와 같다. 네이티브 앱 키가 없는 빌드에서는 아무것도 안 선다(ADR 0224).
  */
 export function KakaoSignInButton({ onPress, busy, label = KAKAO_SIGN_IN }: { onPress: () => void; busy: boolean; label?: string }) {
   if (!kakaoSignInAvailable()) return null;
@@ -28,7 +28,7 @@ export function KakaoSignInButton({ onPress, busy, label = KAKAO_SIGN_IN }: { on
       }}
       style={({ pressed }) => [styles.button, busy && styles.busy, pressed && !busy && styles.pressed]}
     >
-      {/* 말풍선 심볼 — 카카오 가이드의 리소스로 갈아 끼울 자리다(ADR 0223 「켜기 전」) */}
+      {/* 말풍선 심볼 — 카카오 가이드의 리소스로 갈아 끼울 자리다(ADR 0224 「켜기 전」) */}
       <Svg width={18} height={18} viewBox="0 0 24 24" accessibilityElementsHidden importantForAccessibility="no">
         <Path
           fill={KAKAO_SYMBOL}

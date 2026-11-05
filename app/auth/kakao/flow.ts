@@ -3,7 +3,7 @@ import { createHash, randomBytes, timingSafeEqual } from 'node:crypto';
 import { safeReturnPath } from '@/src/lib/consent';
 
 /**
- * 웹의 카카오 로그인 한 번 — **우리 서버가 카카오와 인가 코드를 주고받고, 받은 ID 토큰을 Supabase 에 건넨다**(ADR 0223).
+ * 웹의 카카오 로그인 한 번 — **우리 서버가 카카오와 인가 코드를 주고받고, 받은 ID 토큰을 Supabase 에 건넨다**(ADR 0224).
  *
  * Supabase 의 브라우저 OAuth(`signInWithOAuth({ provider: 'kakao' })`)는 이메일 동의항목(`account_email`)을 늘 요청해서
  * 이메일을 받지 않는 앱에서는 카카오가 KOE205 로 거절한다(#970 실측 N1). 그래서 인가 요청은 우리가 짓고, 끝에서
@@ -47,7 +47,7 @@ export const codeChallengeOf = (verifier: string): string => createHash('sha256'
 
 /**
  * 카카오의 인가 주소. `scope` 는 싣지 않는다 — 카카오 문서상 그 값은 **추가 동의** 요청이고, OIDC 를 켠 앱은 기본 로그인에서
- * ID 토큰을 준다. 이메일 동의항목은 앱에 두지 않는다(ADR 0223).
+ * ID 토큰을 준다. 이메일 동의항목은 앱에 두지 않는다(ADR 0224).
  */
 export function authorizeUrlOf(flow: KakaoFlow, { restKey, redirectUri }: { restKey: string; redirectUri: string }): string {
   const url = new URL(KAKAO_AUTHORIZE_URL);

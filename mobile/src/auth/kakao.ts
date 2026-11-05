@@ -5,7 +5,7 @@ import { accountAnswer, notReady, type SignInAnswer } from './sign-in';
 import { FAILED } from './signup';
 
 /**
- * 카카오 로그인 — 네이티브 SDK(`@react-native-kakao/user`)로 ID 토큰을 받아 `signInWithIdToken({ provider: 'kakao' })` 으로 들어간다(ADR 0223).
+ * 카카오 로그인 — 네이티브 SDK(`@react-native-kakao/user`)로 ID 토큰을 받아 `signInWithIdToken({ provider: 'kakao' })` 으로 들어간다(ADR 0224).
  * 구글 · 애플과 같은 꼴이고 같은 답을 낸다.
  *
  * **동의항목을 묻지 않는다** — `scopes` 를 비워 카카오 앱에 설정한 기본 동의만 받는다. 이메일은 받지 않으므로 Supabase 의 카카오

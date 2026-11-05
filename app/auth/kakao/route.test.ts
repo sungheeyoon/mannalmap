@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 /**
- * **웹의 카카오 로그인 두 문**(ADR 0223) — 꺼져 있을 때 · state · nonce · PKCE · 되돌아갈 주소마다 무엇이 나가는가를 잰다.
+ * **웹의 카카오 로그인 두 문**(ADR 0224) — 꺼져 있을 때 · state · nonce · PKCE · 되돌아갈 주소마다 무엇이 나가는가를 잰다.
  * 카카오는 가짜 `fetch`, Auth 는 가짜 클라이언트다 — 진짜 카카오는 부르지 않는다.
  */
 const jar = vi.hoisted(() => {

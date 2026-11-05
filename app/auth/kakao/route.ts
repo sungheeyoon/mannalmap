@@ -8,7 +8,7 @@ import { kakaoKeys, kakaoRedirectUri } from './config';
 import { FLOW_COOKIE, FLOW_COOKIE_PATH, FLOW_MAX_AGE_SECONDS, authorizeUrlOf, encodeFlow, newFlow } from './flow';
 
 /**
- * 웹의 카카오 로그인을 시작한다 — 흐름 쿠키를 심고 카카오의 인가 주소로 보낸다(ADR 0223, 지키는 넷은 `./flow.ts`).
+ * 웹의 카카오 로그인을 시작한다 — 흐름 쿠키를 심고 카카오의 인가 주소로 보낸다(ADR 0224, 지키는 넷은 `./flow.ts`).
  *
  * 로그인 전에 오는 문이라 자격을 묻지 않는다 — 구글의 `/auth/callback` 과 같은 자리다. 하는 일은 쿠키 하나와 이동 하나뿐이다.
  *

@@ -34,7 +34,7 @@ export type SettingsData = {
   photoless: boolean;
   /** 인연이 열려 있는가 — 닫혔거나 못 읽었으면 인연 무리 · 새 메시지 알림이 안 선다(ADR 0222) */
   matchOpen: boolean | null;
-  /** 로그인 이메일, 없으면 로그인 수단의 이름(카카오) — 둘 다 없으면 줄이 없다(`accountLineOf`, ADR 0223) */
+  /** 로그인 이메일, 없으면 로그인 수단의 이름(카카오) — 둘 다 없으면 줄이 없다(`accountLineOf`, ADR 0224) */
   accountLine: string | undefined;
   userId: string;
   /** 푸시 공개 열쇠가 있는 배포인가(G-71) */

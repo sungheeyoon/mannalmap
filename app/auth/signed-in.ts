@@ -7,7 +7,7 @@ import type { Database } from '@/src/lib/db';
 
 import { LIVE_REDRAW_COOKIE } from '../live/redraw-mark';
 
-/** `providers` 는 그 계정에 붙은 로그인 수단(`app_metadata.providers`) — 카카오로만 들어온 계정은 이메일이 빈 글자다(ADR 0223) */
+/** `providers` 는 그 계정에 붙은 로그인 수단(`app_metadata.providers`) — 카카오로만 들어온 계정은 이메일이 빈 글자다(ADR 0224) */
 type SignedInUser = { id: string; email: string | undefined; providers?: unknown };
 
 /**

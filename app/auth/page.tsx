@@ -44,7 +44,7 @@ export default async function SignInPage({
         </p>
       }
       actions={
-        /* 카카오는 키가 있을 때만 선다(ADR 0223) — 없으면 구글 하나다 */
+        /* 카카오는 키가 있을 때만 선다(ADR 0224) — 없으면 구글 하나다 */
         <div className="flex flex-col items-stretch gap-2 sm:items-start">
           <SignInButton returnTo={returnTo} />
           {kakaoSignInReady() && <KakaoSignInButton returnTo={returnTo} />}

@@ -69,7 +69,7 @@ export const SECRET_ENV = [
    */
   'APPLE_SIGN_IN_PRIVATE_KEY',
   /**
-   * 카카오 REST API 키의 클라이언트 시크릿(ADR 0223) — 웹의 카카오 로그인이 인가 코드를 토큰으로 바꿀 때 싣는다(`app/auth/kakao/`).
+   * 카카오 REST API 키의 클라이언트 시크릿(ADR 0224) — 웹의 카카오 로그인이 인가 코드를 토큰으로 바꿀 때 싣는다(`app/auth/kakao/`).
    * 카카오 콘솔에서 시크릿을 켰을 때만 든다
    */
   'KAKAO_CLIENT_SECRET',
@@ -139,7 +139,7 @@ export const CONFIG_ENV = [
   'APPLE_TEAM_ID',
   'APPLE_SIGN_IN_KEY_ID',
   /**
-   * 카카오 REST API 키 — 비밀이 아니다(인가 주소에 실려 브라우저가 본다, ADR 0223). 없으면 웹의 카카오 로그인 단추가 안 선다.
+   * 카카오 REST API 키 — 비밀이 아니다(인가 주소에 실려 브라우저가 본다, ADR 0224). 없으면 웹의 카카오 로그인 단추가 안 선다.
    * Production 에만 둔다 — 미리보기 주소는 카카오에 등록할 수 없다
    */
   'KAKAO_REST_API_KEY',

@@ -77,7 +77,7 @@ export async function signOut(): Promise<boolean> {
     /* 네이티브 모듈이 없는 Expo Go · 구글 쪽 실패 — 우리 세션은 이미 끊겼다 */
     console.error('google sign-out', thrown);
   }
-  /* 카카오도 끊어야 다음 로그인에서 다른 카카오계정을 고를 수 있다(ADR 0223). 여기서 불러들인다 — `./kakao` 가 이 파일을 부른다 */
+  /* 카카오도 끊어야 다음 로그인에서 다른 카카오계정을 고를 수 있다(ADR 0224). 여기서 불러들인다 — `./kakao` 가 이 파일을 부른다 */
   const kakao: typeof import('./kakao') = require('./kakao');
   await kakao.signOutOfKakao();
   return true;

@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import { KAKAO_SIGN_IN, accountLineOf } from './sign-in-line';
 
-describe('설정의 계정 줄 (ADR 0223)', () => {
+describe('설정의 계정 줄 (ADR 0224)', () => {
   it('이메일이 있으면 이메일이다 — 카카오가 함께 붙어 있어도', () => {
     expect(accountLineOf('a@example.com', ['google', 'kakao'])).toBe('a@example.com');
   });
