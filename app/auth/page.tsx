@@ -7,11 +7,15 @@ import { BUTTON_TERTIARY } from '../ui/buttons';
 import { Icon } from '../ui/icons';
 import { NoticeScreen } from '../ui/notice-screen';
 import { SIGNED_OUT_EXIT, SIGNED_OUT_REACH } from '../service-features';
+import { kakaoSignInReady } from './kakao/config';
+import { KakaoSignInButton } from './kakao-sign-in-button';
 import { SignInButton } from './sign-in-button';
 import { supabaseOnServer } from './server-client';
 import { signedInUser } from './signed-in';
 import { RESUME_PAIR_PATH, RESUME_READING_PATH, afterSignIn, safeReturnPath, visitorExitOf } from '@/src/lib/consent';
 import { HomeLink } from '../home-link';
+import { matchOpenForSignedOut } from '../match-opening';
+import { matchEntriesStand } from '@/src/lib/matching/opening';
 
 export default async function SignInPage({
   searchParams,
@@ -25,6 +29,9 @@ export default async function SignInPage({
   /* 첫 화면의 로그인 전 궁합 결과에서 온 사람도 궁합으로 간다(ADR 0131) */
   const forCompat = returnTo === '/compat' || returnTo === RESUME_PAIR_PATH;
   const forReading = returnTo === RESUME_READING_PATH;
+  /* 인연이 닫힌 동안(ADR 0222) 「인연 만나기」를 약속하지 않는다 — 못 읽었으면 닫힌 쪽이고 로그를 안 남긴다 */
+  const matchOpen = await matchOpenForSignedOut(supabase);
+  const unlocks = SIGN_IN_UNLOCKS.filter((one) => !one.match || matchEntriesStand(matchOpen));
 
   return (
     <NoticeScreen
@@ -41,7 +48,13 @@ export default async function SignInPage({
           필요해요.
         </p>
       }
-      actions={<SignInButton returnTo={returnTo} />}
+      actions={
+        /* 카카오는 키가 있을 때만 선다(ADR 0224) — 없으면 구글 하나다 */
+        <div className="flex flex-col items-stretch gap-2 sm:items-start">
+          <SignInButton returnTo={returnTo} />
+          {kakaoSignInReady() && <KakaoSignInButton returnTo={returnTo} />}
+        </div>
+      }
       note={
         /*
           코드가 없는 사람의 길 — 막다른 자리로 두지 않는다. 첫 화면은 로그인 없이 사주와 궁합 첫 신호까지 연다.
@@ -58,7 +71,7 @@ export default async function SignInPage({
         하지?」의 답이 화면에 없다. 적는 것은 로그인 뒤 실제로 있는 화면뿐이다(사주풀이 · 저장한 사람 · 궁합풀이 · 인연).
       */}
       <ul className="flex flex-col gap-2.5" aria-label="로그인하면">
-        {SIGN_IN_UNLOCKS.map(({ icon, text }) => (
+        {unlocks.map(({ icon, text }) => (
           <li key={text} className="flex items-center gap-3 text-body leading-6 text-foreground">
             <span className="grid size-9 shrink-0 place-items-center rounded-full bg-surface text-cream-ink shadow-card">
               <Icon name={icon} className="size-[18px]" />
