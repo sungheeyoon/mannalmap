@@ -19,7 +19,6 @@ import { NoticeLine, NoticeScreen } from '@/ui/notice-screen';
 import { PrimaryButton, SecondaryButton, TextButton } from '@/ui/parts';
 import { COLOR, FONT, RADIUS, TYPE } from '@/ui/tokens';
 import { goBack } from '@/ui/top-bar';
-import { WordText } from '@/ui/word-text';
 
 /**
  * 로그인 — 웹의 `/auth` 와 같은 글자이고 로그인은 네이티브 구글, iOS 에서는 그 밑에 애플이 나란히 선다(ADR 0219). 돌아갈 곳은 앱에 있는 `/me` 아래와 결과 화면이다 —
@@ -60,8 +59,7 @@ export default function SignInScreen() {
       title={want !== null ? CHART_SIGN_IN[want].title : destination === '/me/compat' ? COMPAT_SIGN_IN_TITLE : `${SERVICE_NAME} 시작하기`}
       description={
         <NoticeLine>
-          {want !== null ? CHART_SIGN_IN[want].note : '로그인하면 저장한 사람과 사주풀이를 다음에도 이어서 볼 수 있어요.'}{' '}
-          지금은 비공개 베타라, 처음 오셨다면 로그인 뒤에 <WordText style={styles.strong}>테스트 코드</WordText>가 필요해요.
+          {want !== null ? CHART_SIGN_IN[want].note : '로그인하면 저장한 사람과 사주풀이를 다음에도 이어서 볼 수 있어요.'}
         </NoticeLine>
       }
       actions={
@@ -101,7 +99,6 @@ export default function SignInScreen() {
 }
 
 const styles = StyleSheet.create({
-  strong: { fontFamily: FONT.bold },
   unlocks: { gap: 10 },
   unlock: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   unlockIcon: { width: 36, height: 36, alignItems: 'center', justifyContent: 'center', borderRadius: RADIUS.pill, backgroundColor: COLOR.surface },

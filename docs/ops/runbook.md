@@ -17,7 +17,7 @@
 | --- | --- | --- |
 | `docs/ops/runbook/access.md` | 「어디서 실행하나」 | 원격 프로젝트 ref · 개인정보는 화면으로만(break-glass) · 접속값 여섯 |
 | `docs/ops/runbook/secret-leak.md` | 「비밀이 새면」 | 교체 순서 넷 · 비밀마다 새 값 · 넣는 자리 · 확인과 끊기 · git 기록에 새었을 때 |
-| `docs/ops/runbook/signup.md` | 「테스트 시작하기」 · 「초대」 · 「가입을 닫고 연다」 | 베타 날짜 한 줄 · 가입 코드 · 운영자가 자리를 비울 때 가입 닫기 |
+| `docs/ops/runbook/signup.md` | 「테스트 시작하기」 · 「초대」 · 「가입을 닫고 연다」 | 베타 날짜 한 줄 · 가입 코드는 걷었다(ADR 0225) · 운영자가 자리를 비울 때 가입 닫기 |
 | `docs/ops/runbook/credits.md` | 「풀이권」 | 풀이권 예외 · 산 풀이권(주문 · 묶음 · 쓰임 · 수동 환불) · 결제 알림 |
 | `docs/ops/runbook/erasure.md` | 「지우기」 · 「떠난 사람의 신고 기록」 · 「탈퇴 신청의 처리」 | 한 사람 · 종료일 · 베타 종료 파기 · DB 밖 · 수사기관 요청 · 보존 요청 · 탈퇴 처분 · 정지된 계정의 탈퇴 요청 |
 | `docs/ops/runbook/operators.md` | 「설문 읽기」 · 「서비스 설문」 | 운영자를 세우고 내린다 · 운영자 로그인(2단계 인증 · break-glass) · 두 설문 |

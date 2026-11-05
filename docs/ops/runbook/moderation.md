@@ -361,9 +361,8 @@ from audit.operator_access
 where actor_user_id = '<A>' and outcome = 'denied' and at > now() - interval '2 hours' order by id;
 ```
 
-**정리(⑬) — 무엇이 지워지고 무엇이 남나.** 두 테스트 계정을 `docs/ops/runbook/erasure.md` 「지우기」의 `forget_user` 로 **둘 다** 지우고 전용 코드를 지운다
-(`delete from public.signup_code where code = '<코드>'` — 그 코드로 들어온 계정이 둘 다 지워졌으면 FK 가 막지 않는다. `max_uses = 0` 은
-검사식 `between 1 and 1000` 에 걸린다). 그러면 방 · 메시지 · 궁합은 사라진다. 남는 것은 둘이다.
+**정리(⑬) — 무엇이 지워지고 무엇이 남나.** 두 테스트 계정을 `docs/ops/runbook/erasure.md` 「지우기」의 `forget_user` 로 **둘 다** 지운다
+(가입 코드는 걷었다 — ADR 0225. 그 전에 낸 전용 코드가 남아 있으면 `delete from public.signup_code where code = '<코드>'`). 그러면 방 · 메시지 · 궁합은 사라진다. 남는 것은 둘이다.
 
 - **신고와 스냅샷** — 지우기 전에 트리거가 `retention.report` 로 옮긴다(ADR 0098). 처분일부터 6개월 뒤 크론이 지운다.
   테스트 자료라 그 전에 지워도 되지만, 그 표를 손으로 지우는 길은 문서에 두지 않았다 — **6개월 뒤 자동 파기에 맡기고**

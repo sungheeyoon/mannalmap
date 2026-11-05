@@ -104,16 +104,14 @@ test('로그인이 끊겨도 다시 로그인이 같은 곳으로 간다 — 밖
   await expect(page.getByRole('link', { name: '다시 로그인' })).toHaveAttribute('href', '/auth');
 });
 
-test('로그인 화면은 코드가 한 번 필요하다고 미리 말한다', async ({ page }) => {
+test('로그인 화면은 테스트 코드를 말하지 않는다', async ({ page }) => {
   await page.goto('/auth');
 
   /*
-    **로그인 버튼을 누르기 전에 알려 준다.** 이메일 명단이 문을 지킬 때는 「초대받은
-    분만」이었고, 그때는 명단에 없으면 로그인 자체가 안 됐다. 지금은 로그인이 되고
-    그다음에 코드를 묻는다(ADR 0042) — 코드가 없는 사람이 로그인부터 하고 나서
-    막다른 화면을 만나지 않게, 필요한 것을 여기서 먼저 말한다.
+    **가입은 코드를 묻지 않는다**(ADR 0225). 운영 베타 동안 이 화면은 로그인 뒤에 코드가 필요하다고 미리 말했다(ADR 0042) —
+    그 줄이 남으면 코드가 없는 사람이 들어오지 않는다. 출구는 그대로 선다.
   */
-  await expect(page.getByText('테스트 코드', { exact: false })).toBeVisible();
+  await expect(page.getByText('테스트 코드', { exact: false })).toHaveCount(0);
   await expect(page.getByRole('link', { name: '사주로 돌아가기' })).toBeVisible();
 });
 

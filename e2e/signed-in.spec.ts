@@ -1,13 +1,11 @@
 import { INPUT_EDIT_CHANGE_CONFIRM } from '@/src/lib/consent';
 import { endsWithBatchim } from '@/src/lib/saju/text/batchim';
 import {
-  E2E_CODE,
   answerReading,
   expect,
   leavePersonSlots,
   makeOperator,
   personLimit,
-  seedSignupCode,
   sql,
   test,
 } from './session';
@@ -3035,7 +3033,7 @@ test.describe('가입 관문', () => {
 
     await expect(newcomer.page).toHaveURL(/\/signup$/);
     await expect(
-      newcomer.page.getByRole('heading', { name: /테스트 코드와 닉네임/ }),
+      newcomer.page.getByRole('heading', { name: '닉네임을 입력해 주세요' }),
     ).toBeVisible();
   });
 
@@ -3670,9 +3668,7 @@ test.describe('자바스크립트 없이 여는 홈', () => {
 test.describe('로그인 · 가입이 목적지를 든다', () => {
   /** 가입 한 장을 채운다 — 가입 화면의 모양은 그대로다(`notice.spec.ts` 가 모양을 잰다) */
   const signUp = async (page: Page): Promise<string> => {
-    seedSignupCode();
     const nickname = `벗${String(Date.now()).slice(-4)}${Math.floor(Math.random() * 90 + 10)}`;
-    await page.getByLabel('테스트 코드').fill(E2E_CODE);
     await page.getByLabel('닉네임').fill(nickname);
     await page.getByRole('button', { name: '중복 확인' }).click();
     await expect(page.getByText('사용할 수 있는 닉네임입니다.')).toBeVisible();
@@ -3687,7 +3683,7 @@ test.describe('로그인 · 가입이 목적지를 든다', () => {
     await newcomer.page.goto('/auth?next=%2Fcompat');
     /* 가입 화면이 끼어들어도 `next` 는 최종 목적지 하나다 — 겹치지 않는다 */
     await expect(newcomer.page).toHaveURL(/\/signup\?next=%2Fcompat$/);
-    await expect(newcomer.page.getByRole('heading', { name: /테스트 코드와 닉네임/ })).toBeVisible();
+    await expect(newcomer.page.getByRole('heading', { name: '닉네임을 입력해 주세요' })).toBeVisible();
 
     await signUp(newcomer.page);
     await expect(newcomer.page).toHaveURL(/\/compat$/);

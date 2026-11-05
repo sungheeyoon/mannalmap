@@ -243,7 +243,7 @@ check('자기 풀이 화면이 누구 것인지 말한다', html.includes(`${NAM
 /* 그린 링크만 센다 — 같은 글자가 페이지 데이터(RSC 페이로드)에도 한 번 더 실린다 */
 const starts = (html.match(/>로그인하고 시작하기<\/a>/g) ?? []).length;
 check('시작하는 길은 초대 판에 하나 선다', starts === 1, String(starts));
-check('가입에 코드가 필요하다는 것을 미리 말한다', html.includes('테스트 코드가 필요해요'));
+check('가입에 코드가 필요하다는 줄은 없다 — 가입은 코드를 묻지 않는다(ADR 0225)', !html.includes('테스트 코드'));
 
 /* 원본 사용자의 손잡이는 하나도 없다 */
 for (const forbidden of ['다시 받기', '서비스 설문', '풀이권', '소식']) {

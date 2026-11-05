@@ -1,11 +1,9 @@
 import {
-  E2E_CODE,
   expect,
   postponedEndsOn,
   test,
   scheduleBeta,
   scheduledEndsOn,
-  seedSignupCode,
   sql,
 } from './session';
 
@@ -49,7 +47,7 @@ test.describe('시작하기 전에', () => {
 
     /* 화면은 길을 가리키고, 막는 일은 DB 가 한다(`create_self_person`) */
     await expect(page).toHaveURL(/\/signup$/);
-    await expect(page.getByRole('heading', { name: /테스트 코드와 닉네임/ })).toBeVisible();
+    await expect(page.getByRole('heading', { name: '닉네임을 입력해 주세요' })).toBeVisible();
   });
 
   test('종료일이 없으면 아무도 지나갈 수 없다', async ({ page, newcomerRaw }) => {
@@ -97,8 +95,7 @@ test.describe('시작하기 전에', () => {
     await expect(page).toHaveURL(/\/signup$/);
     await expect(page.getByText(asKoreanDay(postponedEndsOn()), { exact: false })).toBeVisible();
 
-    /* 이미 가진 사람에게는 코드 칸도 이름 칸도 안 선다 */
-    await expect(page.getByLabel('테스트 코드')).toHaveCount(0);
+    /* 이미 가진 사람에게는 이름 칸이 안 선다 */
     await expect(page.getByLabel('닉네임')).toHaveCount(0);
 
     /* 다시 확인하면 돌아온다 — 여기서 루프면 이 줄이 타임아웃으로 죽는다 */
@@ -146,14 +143,13 @@ test.describe('시작하기 전에', () => {
     await expect(page).toHaveURL(/\/me$/);
   });
 
-  test('코드와 이름과 확인이 한 폼에서 끝난다', async ({ page, newcomerRaw }) => {
+  test('이름과 확인이 한 폼에서 끝난다 — 코드는 묻지 않는다', async ({ page, newcomerRaw }) => {
     expect(newcomerRaw.email).not.toBe('');
     scheduleBeta(scheduledEndsOn());
-    seedSignupCode();
 
     await page.goto('/signup');
 
-    /* 전문은 링크로 갈라 두고, 가입 화면에는 코드 앞의 핵심 안내만 선다 */
+    /* 전문은 링크로 갈라 두고, 가입 화면에는 핵심 안내만 선다 */
     await expect(page.getByRole('heading', { name: '가입 전에 확인해 주세요' })).toBeVisible();
     await expect(page.getByRole('link', { name: '개인정보 처리방침' })).toHaveAttribute(
       'href',
@@ -186,11 +182,11 @@ test.describe('시작하기 전에', () => {
     */
     const start = page.getByRole('button', { name: '가입하고 시작하기' });
     const gap = page.locator('#signup-gap');
+    /* 코드 칸은 없다(ADR 0225) — 처음 걸리는 칸은 닉네임이다 */
+    await expect(page.getByLabel('테스트 코드')).toHaveCount(0);
     await start.click();
-    await expect(gap).toHaveText('테스트 코드를 입력해 주세요.');
-    await expect(page.getByLabel('테스트 코드')).toBeFocused();
+    await expect(page.getByLabel('닉네임')).toBeFocused();
 
-    await page.getByLabel('테스트 코드').fill(E2E_CODE);
     await page.getByLabel('닉네임').fill(`벗${String(Date.now()).slice(-6)}`);
     await page.getByRole('button', { name: '중복 확인' }).click();
     await expect(page.getByText('사용할 수 있는 닉네임입니다.')).toBeVisible();

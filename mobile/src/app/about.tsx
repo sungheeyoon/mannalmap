@@ -1,7 +1,6 @@
 import { router } from 'expo-router';
 import { StyleSheet, Text, View } from 'react-native';
 
-import { BETA_SIGNUP_CODE_NOTE } from '@account/copy';
 import { SERVICE_NAME_TOPIC, SERVICE_TAGLINE } from '@brand';
 import { SERVICE_FEATURES } from '@brand/features';
 import { ABOUT_LEAD, ABOUT_STEPS } from '@brand/guide';
@@ -55,7 +54,6 @@ export default function AboutScreen() {
             </CardFrame>
           ))}
         </View>
-        <Text style={styles.stepText}>{BETA_SIGNUP_CODE_NOTE}</Text>
       </View>
 
       <View style={styles.actions}>

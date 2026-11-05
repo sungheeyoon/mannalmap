@@ -1,4 +1,4 @@
-# 운영 절차 — 베타 시작 · 초대 · 가입을 닫고 연다
+# 운영 절차 — 베타 시작 · 가입을 닫고 연다
 
 색인은 `docs/ops/runbook.md` 다.
 
@@ -9,7 +9,7 @@
 
 > **일정을 옮기면 이미 가입한 사람도 다시 확인한다.** 관문이 「지금 일정 줄」을 보므로
 > (ADR 0042) 그 사람들은 다음 방문에 `/signup` 으로 돌아가 확인 하나만 다시 누른다 —
-> 코드와 닉네임은 다시 안 묻는다.
+> 닉네임은 다시 안 묻는다.
 
 **두 가지를 함께 넣는다** — 언제 끝나는가와 **누가 약속하는가**. 처리자와 연락처가 없으면
 열람·정정·삭제·처리정지가 적혀만 있는 권리가 되므로, 셋 중 하나라도 비면 안내가 안 선다.
@@ -41,7 +41,10 @@ select id, ends_on, purge_within_days, note, set_at from public.beta_schedule or
 **종료일은 초대와 무관하다.** 언제 몇 명을 초대하든 그날 끝난다 — 초대에서 며칠을 세는
 값이 아니므로, 테스터를 늦게 넣었다고 자동으로 밀리지 않는다. 밀려면 새 줄을 넣는다.
 
-넣고 나면 `/privacy` 를 열어 날짜가 문장 안에 서 있는지 눈으로 본 뒤 아래 「초대」로 간다.
+넣고 나면 `/privacy` 를 열어 날짜가 문장 안에 서 있는지 눈으로 본다.
+
+> **종료일이 지나면 가입도 이용도 닫힌다.** 관문이 모두를 `/closed` 로 보내고 가입 문 · 쓰는 문이 거절한다 — 코드를 걷은 뒤에도(ADR 0225)
+> 그렇다. 이어 받으려면 그날이 오기 전에 새 줄을 넣는다(이미 가입한 사람은 안내를 한 번 다시 확인한다).
 
 **문구를 고쳤으면 판본도 올린다**(`NOTICE_VERSION`, 코드). 판본만 올리고 문구를 안 고치면
 사람들을 이유 없이 다시 세우는 것이고, 문구만 고치고 판본을 안 올리면 아무도 새 문구를
@@ -57,80 +60,33 @@ order by a.notice_ack_at desc nulls first;
 
 ---
 
-## 초대 — **코드 한 줄** (ADR 0042)
+## 초대 — **걷었다** (ADR 0225)
 
-이메일 명단은 걷었다. 지금 문을 여는 것은 **테스트 코드**다 — 운영자가 코드를 하나 만들고
-그 문자열만 전하면 받은 사람이 스스로 들어온다.
+가입은 테스트 코드를 묻지 않는다 — 로그인한 누구나 닉네임 · 안내 확인으로 가입을 마친다. 코드를 내는 SQL 은 걷었다.
 
-> **테스트가 아닌 사람을 처음 들이기 전에 출시 단계를 옮긴다**(ADR 0093 · 0097). 실제 사용자의 자료가 운영
-> DB 에 들어오는 날이 공개 뒤의 규율이 켜지는 날이다 — `docs/product/prd/roadmap.md` §7.0 의 「(지금)」을 옮기면 머지 전 전체
-> 검증(CI)과 등급 3 의 잠금이 함께 돌아온다. 잠금 쪽은 시험이 `docs/agents/delegation/permissions.md` 「공식 운영에
-> 들어가면 켜는 잠금」의 걸음으로 데려간다. 코드를 먼저 건네고 나중에 옮기지 않는다.
+> **테스트가 아닌 사람을 처음 들이기 전에 출시 단계를 옮긴다**(ADR 0093 · 0097). 코드가 없으면 주소를 아는 누구나 들어온다 —
+> 단계를 옮길지는 운영자가 정한다(`docs/product/gaps.md` G-136).
 
-코드에는 둘이 붙는다: **사는 기간**과 **최대 인원**. 기한 없는 코드는 새면 영원히 열린
-문이고, 수 없는 코드는 한 사람이 퍼뜨리면 정원이 없다. 둘을 함께 두면 새어도 N명까지다.
-
-**정원은 기간 전체에 누적이다**(ADR 0066). 이틀짜리 스무 명은 이틀 합쳐 스무 명이지
-날마다 스무 명이 아니다 — `app_user.signup_code` 로 세므로 자리가 안 돌아온다.
-**이틀을 덮겠다고 날짜만 다른 코드를 두 줄 넣지 마라.** 그러면 정원이 두 벌이 된다.
+**`signup_code` 표와 `app_user.signup_code` 는 운영 베타의 기록이다.** 어느 계정이 어느 코드로 들어왔는지가 남고, 새 가입자의 칸은
+비어 있다. 지우지 않는다(쓰인 코드는 FK 가 막는다). 틀린 시도를 세던 `signup_code_miss` 는 걷었다.
 
 ```sql
--- 오늘 하루, 열 명. 코드는 **대문자**로 넣는다(검사식이 그것만 받는다).
--- 코드는 순번이 아니라 무작위 글자로 짓는다 — 순번이면 받은 코드 하나로 다음 코드를 짐작한다.
--- 하루의 경계는 서울 자정이다 — 「오늘」이 사용자가 읽는 오늘과 같아야 한다.
--- `valid_until` 을 안 적으면 하루짜리다.
-insert into public.signup_code (code, note, valid_on, max_uses)
-values ('K7QXM4TR', '1차 테스터 · 오픈채팅방 공지', (now() at time zone 'Asia/Seoul')::date, 10);
-
--- 오늘부터 내일까지, 합쳐서 스무 명.
-insert into public.signup_code (code, note, valid_on, valid_until, max_uses)
-values ('P9WD3HZN', '2차 테스터 · 오픈채팅방 공지',
-        (now() at time zone 'Asia/Seoul')::date,
-        (now() at time zone 'Asia/Seoul')::date + 1, 20);
-
--- 오늘 살아 있는 코드와 남은 자리
-select c.code, c.note, c.valid_on, c.valid_until, c.max_uses,
-       count(u.id) as 들어온사람,
-       c.max_uses - count(u.id) as 남은자리
-from public.signup_code c
-left join public.app_user u on u.signup_code = c.code
-where (now() at time zone 'Asia/Seoul')::date between c.valid_on and c.valid_until
-group by c.code, c.note, c.valid_on, c.valid_until, c.max_uses;
-
--- 어느 계정이 어느 코드로 왔나
-select au.email, u.signup_code, u.signed_up_at, u.nickname
-from public.app_user u
-join auth.users au on au.id = u.id
-order by u.signed_up_at desc nulls last;
+-- 운영 베타에 코드로 들어온 계정 수 — 수만 본다
+select count(*) from public.app_user where signup_code is not null;
 ```
 
-**`signed_up_at` 이 비어 있는 계정은 「구글 로그인만 한 사람」이다.** 코드를 못 넣었거나
-안 넣은 것이고, 그 계정은 아무것도 못 한다 — 사주도 저장한 사람도 못 넣는다. 그대로 두면
-된다. 다시 코드를 주면 그 자리에서 가입이 끝난다.
+**`signed_up_at` 이 비어 있는 계정은 「로그인만 한 사람」이다.** 가입 폼을 안 마친 것이고, 그 계정은 아무것도 못 한다 — 그대로
+두면 된다.
 
-**코드를 지우는 것은 접근 회수가 아니다.** 이미 들어온 사람의 세션은 그대로 산다. 그리고
-**누가 그 코드로 들어왔는지가 곧 기록**이라 쓰인 코드는 지워지지 않는다(FK). 막으려면
-아래의 계정 중지를 쓴다.
-
-```sql
--- 아직 아무도 안 쓴 코드만 지워진다. 쓰인 코드는 FK 가 막는다 — 그게 맞다.
-delete from public.signup_code where code = 'K7QXM4TR';
-
--- 쓰인 코드는 하루를 어제로 옮겨 닫는다. 정원은 1 아래로 못 내린다(검사식 `max_uses between 1 and 1000`) —
--- `max_uses = 0` 은 검사식이 거절한다(20260911090000 의 `signup_code`)
-update public.signup_code set valid_on = (now() at time zone 'Asia/Seoul')::date - 1, valid_until = (now() at time zone 'Asia/Seoul')::date - 1 where code = 'K7QXM4TR';
-```
-
-> **훅은 껐다.** `[auth.hook.before_user_created]` 는 `config.toml` 에서 지웠다. **원격
-> 프로젝트에서는 손으로 꺼야 하고, 그것을 마이그레이션보다 먼저 해야 한다** — `docs/ops/runbook/deploy-once.md`
-> 「가입 코드 배포 — 훅을 먼저 끈다」.
+**다시 못 들어오게 하는 길은 계정 중지다** — 코드가 없으니 코드를 닫아 막는 길도 없다. 정지된 채 지운 로그인은 1년 동안 다시
+가입하면 정지가 이어진다(`docs/ops/runbook/erasure.md` 「제재 기록」, ADR 0218). 다른 로그인 계정은 못 가린다.
 
 ---
 
 ## 가입을 닫고 연다
 
-운영자가 **3영업일을 넘게** 자리를 비우면 떠나기 전에 닫는다. 닫힌 동안 새 사람은 코드가 살아 있어도 가입이 안 끝나고
-「지금 쓸 수 있는 코드가 아닙니다.」를 본다(기존 문장). 이미 가입한 사람은 그대로 쓴다 — 바뀐 안내의 재확인도 된다.
+운영자가 **3영업일을 넘게** 자리를 비우면 떠나기 전에 닫는다. 닫힌 동안 새 사람은 가입이 안 끝나고
+「지금은 신규 가입을 잠시 멈췄어요. 나중에 다시 시도해 주세요.」를 본다(ADR 0225). 이미 가입한 사람은 그대로 쓴다 — 바뀐 안내의 재확인도 된다.
 
 ```bash
 # 닫는다 — 까닭에 이용자 개인정보를 적지 않는다
