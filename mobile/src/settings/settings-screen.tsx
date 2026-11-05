@@ -61,7 +61,7 @@ export function SettingsScreen() {
     );
   }
 
-  const { state, account, discovery, email } = data;
+  const { state, account, discovery, accountLine } = data;
   const active = state.kind === 'active';
 
   return (
@@ -79,7 +79,7 @@ export function SettingsScreen() {
             <LinkRow
               big
               label={account.nickname ?? '내 프로필'}
-              help={email}
+              help={accountLine}
               onPress={() => router.push('/me/profile' as never)}
               leading={
                 face !== null ? (
@@ -126,7 +126,7 @@ export function SettingsScreen() {
         </SettingsGroup>
 
         <SettingsGroup title="계정">
-          {!active && email !== undefined && <Text style={styles.email}>{email}</Text>}
+          {!active && accountLine !== undefined && <Text style={styles.email}>{accountLine}</Text>}
           <SignOutRow />
         </SettingsGroup>
 
