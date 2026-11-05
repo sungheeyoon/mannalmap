@@ -192,8 +192,11 @@ test('사주 계산은 로그인 없이 열리고 궁합은 로그인으로 이�
     계정 메뉴가 서므로, 세션이 없을 때 그 자리가 로그인을 권하는지도 함께 잰다 —
     한쪽만 재면 둘 중 하나가 늘 틀린 채로 지나간다.
   */
-  await expect(page.getByRole('link', { name: '로그인', exact: true })).toBeVisible();
+  await expect(page.getByRole('banner').getByRole('link', { name: '로그인', exact: true })).toBeVisible();
   await expect(page.getByLabel(/^(전체|설정) 메뉴$/)).toHaveCount(0);
+  /* 주 단추 바로 아래 이미 쓰는 사람의 한 줄 — 목적지 없이 로그인으로 가서 홈에 선다(ADR 0226) */
+  await expect(page.getByText('이미 계정이 있으신가요?')).toBeVisible();
+  await expect(page.locator('main').getByRole('link', { name: '로그인', exact: true })).toHaveAttribute('href', '/auth');
   /* 로그인 전 첫 화면은 두 입구 아래 곧장 폼이다 — 폼 제목은 화면 밖에서만 읽힌다(흐름 시안 g) */
   await expect(page.getByRole('tab', { name: /내 사주 보기/ })).toBeVisible();
   await expect(page.getByRole('heading', { name: '출생 정보를 입력해 주세요' })).toBeAttached();

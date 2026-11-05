@@ -12,7 +12,7 @@ import { KakaoSignInButton } from './kakao-sign-in-button';
 import { SignInButton } from './sign-in-button';
 import { supabaseOnServer } from './server-client';
 import { signedInUser } from './signed-in';
-import { RESUME_PAIR_PATH, RESUME_READING_PATH, afterSignIn, safeReturnPath } from '@/src/lib/consent';
+import { RESUME_PAIR_PATH, RESUME_READING_PATH, afterSignIn, safeReturnPath, visitorExitOf } from '@/src/lib/consent';
 import { HomeLink } from '../home-link';
 import { matchOpenForSignedOut } from '../match-opening';
 import { matchEntriesStand } from '@/src/lib/matching/opening';
@@ -63,7 +63,7 @@ export default async function SignInPage({
         */
         <>
           <p>{SIGNED_OUT_REACH}</p>
-          <HomeLink className={`${BUTTON_TERTIARY} w-fit`}>{SIGNED_OUT_EXIT}</HomeLink>
+          <HomeLink className={`${BUTTON_TERTIARY} w-fit`} visitorHref={visitorExitOf(returnTo)}>{SIGNED_OUT_EXIT}</HomeLink>
         </>
       }
     >

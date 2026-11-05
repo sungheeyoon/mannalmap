@@ -22,15 +22,51 @@ describe('앱 입구', () => {
     expect(entry).toMatch(/<Text[^>]*>로그인<\/Text>/);
   });
 
-  it('입력 없이 들어가는 길 · 인연 소개 · 서비스 소개 · 고객센터 · 약관 및 정책이 로그인 없이 닿는다', () => {
+  it('입력 없이 들어가는 길 · 서비스 소개 · 고객센터 · 약관 및 정책이 로그인 없이 닿는다 — 첫 화면에 인연 입구는 없다(ADR 0226)', () => {
     expect(entry).toContain("router.push('/auth'");
-    expect(entry).toContain("router.push('/matching-intro'");
+    expect(entry).not.toContain('/matching-intro');
     expect(entry).toContain("router.push('/about'");
     expect(entry).toContain("router.push('/support'");
     expect(entry).toContain("router.push('/policies'");
   });
 
-  it('입구는 바닥글 나열을 옮기지 않고, 소개 판 없이 입력 화면 하나다', () => {
+  it('제목 아래는 웹 `/` 와 같은 두 탭이고, 궁합 탭은 로그인 전 궁합 결과 대신 기존 글자로 로그인에 잇는다(ADR 0226)', () => {
+    const web = read('app/home-hero.tsx');
+    expect(web).toContain("title: '내 사주 보기'");
+    expect(entry).toContain("label: '내 사주 보기'");
+    expect(entry).toContain('label: COMPAT_ENTRY');
+    expect(entry).toContain('accessibilityRole="tablist"');
+    /* 웹 탭의 면 — 판은 칸 모서리의 꺼진 면, 켜진 칸은 흰 면과 카드 그림자 */
+    expect(web).toContain('rounded-cell bg-surface-sunken p-0.5');
+    expect(entry).toMatch(/tabs: \{[^}]*RADIUS\.cell[^}]*COLOR\.surfaceSunken/);
+    expect(entry).toMatch(/tabOn: \{[^}]*COLOR\.surface,[^}]*ELEVATION\.card/);
+    /* 궁합 탭 — 로그인 화면의 그 제목, 웹 로그인 전 궁합 결과의 단추 · 풀이권 줄과 같은 상수, 갈 곳은 지금의 궁합 로그인 길 */
+    for (const name of ['COMPAT_SIGN_IN_TITLE', 'COMPAT_CREDIT_NOTE', 'COMPAT_SIGN_IN_ACTION']) expect(entry).toContain(name);
+    expect(read('app/pair-taste.tsx')).toContain('{COMPAT_SIGN_IN_ACTION}');
+    expect(read('app/pair-taste.tsx')).toContain('{COMPAT_CREDIT_NOTE}');
+    expect(entry).toContain("withReturnPath('/auth', '/me/compat')");
+    /* 주 단추는 웹 첫 화면과 같은 글자다 */
+    expect(entry).toContain("'무료로 내 사주 보기'");
+    expect(read('app/saju-calculator.tsx')).toContain("'무료로 내 사주 보기'");
+  });
+
+  it('주 단추 바로 아래 이미 쓰는 사람의 한 줄이 웹 첫 화면과 같은 글자로 선다 — 제목 아래 설명 줄은 없다(ADR 0226)', () => {
+    const button = entry.indexOf('<PrimaryButton label={signedOut');
+    const line = entry.indexOf('{MEMBER_SIGN_IN_ASK}');
+    expect(button).toBeGreaterThan(-1);
+    expect(line).toBeGreaterThan(button);
+    expect(read('app/saju-calculator.tsx')).toContain('{MEMBER_SIGN_IN_ASK}');
+    /* 웹 첫 화면처럼 제목 아래 설명 줄이 없다 — `ABOUT_LEAD` 는 서비스 소개의 글이다 */
+    expect(entry).not.toContain('ABOUT_LEAD');
+  });
+
+  it('입구는 관문의 답 하나로 고르고, 못 읽은 답은 다시 시도하기다', () => {
+    expect(entry).toContain('entryFor(gate.kind, opened)');
+    expect(entry).toContain('label="다시 시도하기"');
+    expect(entry).toContain("<Redirect href={'/signup' as never} />");
+  });
+
+  it('입구는 바닥글 나열을 옮기지 않고, 따로 된 소개 판 주소가 없다', () => {
     expect(entry).not.toContain('GUIDE_LINKS');
     expect(entry).not.toContain('/landing');
     expect(existsSync(join(import.meta.dirname, '../mobile/src/app/landing.tsx'))).toBe(false);

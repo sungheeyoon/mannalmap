@@ -109,6 +109,7 @@ export const GALLERY: readonly { web: string; app: string; text: string }[] = [
  */
 export const SURFACE_EXCEPTIONS: readonly { file: string; found: string; why: string }[] = [
   { file: 'mobile/src/matching/today.tsx', found: 'boxShadow:', why: '오늘의 인연 사진 카드 — 웹 `today-card.tsx` 가 `TILE` 에 없는 `shadow-float` 를 그 자리에서 입힌다' },
+  { file: 'mobile/src/app/index.tsx', found: 'boxShadow:', why: '첫 화면 두 입구의 켜진 칸 — 웹 `home-hero.tsx` 가 탭 칸에 상수 없이 `bg-surface shadow-card` 를 그 자리에서 입힌다(ADR 0226)' },
   { file: 'mobile/src/chat/room.tsx', found: 'RADIUS.card', why: '말풍선 — 면이 아니라 글자의 모양이고 위 한 귀만 다르다(웹 `bubble-row.tsx` 의 `rounded-card rounded-t*-md`)' },
   { file: 'mobile/src/chat/room.tsx', found: 'borderTopRightRadius: 6', why: '내 말 묶음의 첫 말 — 웹 `rounded-tr-md`' },
   { file: 'mobile/src/chat/room.tsx', found: 'borderTopLeftRadius: 6', why: '상대 말 묶음의 첫 말 — 웹 `rounded-tl-md`' },
