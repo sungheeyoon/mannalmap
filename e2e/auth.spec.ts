@@ -196,12 +196,10 @@ test('사주 계산은 로그인 없이 열리고 궁합은 로그인으로 이�
   */
   await expect(page.getByRole('banner').getByRole('link', { name: '로그인', exact: true })).toBeVisible();
   await expect(page.getByLabel(/^(전체|설정) 메뉴$/)).toHaveCount(0);
-  /*
-    로그인 전 첫 화면은 소개가 먼저이고 체험을 고르면 두 입구 아래 곧장 폼이다 — 폼 제목은 화면 밖에서만 읽힌다(ADR 0226).
-    소개의 「이미 이용 중인가요? 로그인」은 홈으로 간다 — 목적지를 싣지 않는다
-  */
+  /* 주 단추 바로 아래 이미 쓰는 사람의 한 줄 — 목적지 없이 로그인으로 가서 홈에 선다(ADR 0226) */
+  await expect(page.getByText('이미 계정이 있으신가요?')).toBeVisible();
   await expect(page.locator('main').getByRole('link', { name: '로그인', exact: true })).toHaveAttribute('href', '/auth');
-  await page.getByRole('button', { name: '로그인 없이 사주 보기' }).click();
+  /* 로그인 전 첫 화면은 두 입구 아래 곧장 폼이다 — 폼 제목은 화면 밖에서만 읽힌다(흐름 시안 g) */
   await expect(page.getByRole('tab', { name: /내 사주 보기/ })).toBeVisible();
   await expect(page.getByRole('heading', { name: '출생 정보를 입력해 주세요' })).toBeAttached();
 
@@ -216,8 +214,7 @@ test('사주 계산은 로그인 없이 열리고 궁합은 로그인으로 이�
  */
 test('현관의 궁합 입구는 로그인으로 내보내지 않고 같은 화면에서 두 사람을 받는다', async ({ page }) => {
   await page.goto('/');
-  await page.getByRole('button', { name: '로그인 없이 사주 보기' }).click();
   await page.getByRole('tab', { name: /궁합 보기/ }).click();
-  await expect(page).toHaveURL(/\/#start$/);
+  await expect(page).toHaveURL(/\/$/);
   await expect(page.getByRole('button', { name: '무료로 두 사람 궁합 보기' })).toBeVisible();
 });

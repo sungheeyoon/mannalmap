@@ -16,39 +16,28 @@ const read = (file: string) => readFileSync(join(import.meta.dirname, '..', file
 
 describe('앱 입구', () => {
   const entry = read('mobile/src/app/index.tsx');
-  const intro = read('mobile/src/home/intro.tsx');
 
-  it('로그인 글자는 웹 머리글의 그것이다 — 소개와 입력 화면 둘 다', () => {
+  it('로그인 글자는 웹 머리글의 그것이다', () => {
     expect(read('app/site-header.tsx')).toMatch(/^\s*로그인\s*$/m);
     expect(entry).toMatch(/<Text[^>]*>로그인<\/Text>/);
-    expect(intro).toMatch(/<Text[^>]*>로그인<\/Text>/);
   });
 
-  it('소개에서 로그인 · 인연 소개 · 서비스 소개 · 고객센터 · 약관 및 정책이 로그인 없이 닿는다', () => {
-    expect(intro).toContain("router.push('/auth'");
-    expect(intro).toContain("router.push('/matching-intro'");
-    expect(intro).toContain("router.push('/about'");
-    expect(intro).toContain("router.push('/support'");
-    expect(intro).toContain("router.push('/policies'");
+  it('입력 없이 들어가는 길 · 인연 소개 · 서비스 소개 · 고객센터 · 약관 및 정책이 로그인 없이 닿는다', () => {
+    expect(entry).toContain("router.push('/auth'");
+    expect(entry).toContain("router.push('/matching-intro'");
+    expect(entry).toContain("router.push('/about'");
+    expect(entry).toContain("router.push('/support'");
+    expect(entry).toContain("router.push('/policies'");
   });
 
-  it('소개는 웹 첫 화면과 같은 글자와 회원 홈의 내 사주 카드(예시)를 든다 — 기둥 표 · 풀이 글이 없고, 슬라이드가 없다(ADR 0226)', () => {
-    const web = read('app/first-intro.tsx');
-    for (const name of ['TRIAL_START', 'MEMBER_SIGN_IN_ASK', 'RESULT_EXAMPLE_STAMP', 'ABOUT_LEAD', 'calculateChart(EXAMPLE_QUERY)', 'PREVIEW_SELF_METAPHOR']) {
-      expect(intro).toContain(name);
-      expect(web).toContain(name);
-    }
-    /* 각 플랫폼의 홈 카드 그대로다 — 웹은 홈 탭의 줄인 판, 앱은 홈의 그 부품 */
-    expect(web).toContain("import { SelfCard } from './me/home/self-card'");
-    expect(web).toMatch(/<SelfCard [^>]*compact/);
-    expect(intro).toContain("import { SelfCard } from '@/home/self-card'");
-    /* 한줄평은 지어 쓰지 않는다 — 개발 기계의 예시 결과와 한 벌의 비유다 */
-    expect(read('app/me/reading/reading-state.ts')).toContain('PREVIEW_SELF_METAPHOR');
-    expect(intro).not.toMatch(/PillarStrip|Markdown/);
-    expect(web).not.toMatch(/Markdown|SajuView/);
-    expect(intro).not.toMatch(/setInterval|FlatList|pagingEnabled/);
-    /* 체험은 입력 화면을 스택에 올린다 — 뒤로 가면 소개다 */
-    expect(intro).toContain("router.push('/?start=1'");
+  it('주 단추 바로 아래 이미 쓰는 사람의 한 줄이 웹 첫 화면과 같은 글자로 선다 — 제목 아래 설명 줄은 없다(ADR 0226)', () => {
+    const button = entry.indexOf('<PrimaryButton label={signedOut');
+    const line = entry.indexOf('{MEMBER_SIGN_IN_ASK}');
+    expect(button).toBeGreaterThan(-1);
+    expect(line).toBeGreaterThan(button);
+    expect(read('app/saju-calculator.tsx')).toContain('{MEMBER_SIGN_IN_ASK}');
+    /* 웹 첫 화면처럼 제목 아래 설명 줄이 없다 — `ABOUT_LEAD` 는 서비스 소개의 글이다 */
+    expect(entry).not.toContain('ABOUT_LEAD');
   });
 
   it('입구는 관문의 답 하나로 고르고, 못 읽은 답은 다시 시도하기다', () => {

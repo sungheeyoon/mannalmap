@@ -10,7 +10,6 @@ import { Icon } from '../ui/icons';
 import { Logo } from '../ui/logo';
 import { CARD, COLUMN, PAPER, TYPE_META, TYPE_NAME, TYPE_SECTION, TYPE_TITLE } from '../ui/surfaces';
 import { HomeLink } from '../home-link';
-import { TRIAL_PATH } from '../saju-landing';
 
 export const metadata = {
   title: '서비스 소개',
@@ -82,7 +81,7 @@ export default function AboutPage() {
       </section>
 
       <p className="flex flex-col gap-2 sm:flex-row">
-        <HomeLink className={BUTTON_PRIMARY} visitorHref={TRIAL_PATH}>
+        <HomeLink className={BUTTON_PRIMARY}>
           무료로 내 사주 보기
         </HomeLink>
         <Link href="/help" className={BUTTON_SECONDARY}>

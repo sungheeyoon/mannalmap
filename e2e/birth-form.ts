@@ -18,16 +18,6 @@ import { CALENDAR_KO, type Calendar } from '@/src/lib/saju';
 
 type Scope = Page | Locator;
 
-/**
- * 로그인 전 첫 화면에서 **체험을 고른다**(ADR 0226) — 첫 화면은 소개가 먼저이고, 「로그인 없이 사주 보기」를 눌러야 폼이 선다.
- * `goto('/#start')` 대신 누른다 — 같은 주소의 `#` 만 바뀐 이동은 다시 읽지 않아 앞 시험의 화면이 남는다.
- */
-export async function openTrial(page: Page): Promise<void> {
-  await page.goto('/');
-  await page.getByRole('button', { name: '로그인 없이 사주 보기' }).click();
-  await expect(page.getByRole('tab', { name: /내 사주 보기/ })).toBeVisible();
-}
-
 /** 폼이 아는 유일한 날짜 모양 — 주소창에 실리는 것과 같다 */
 const DATE = /^(\d{4})-(\d{2})-(\d{2})$/;
 const TIME = /^(\d{2}):(\d{2})$/;

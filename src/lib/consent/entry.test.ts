@@ -19,13 +19,12 @@ describe('앱을 열었을 때 설 곳 (ADR 0226)', () => {
     expect(entryFor('failed', 'first')).toBe('retry');
   });
 
-  it('세션이 없으면 첫 화면(소개)이다 — 입력 폼이 먼저 서지 않는다', () => {
-    expect(entryFor('out', 'first')).toBe('intro');
+  it('세션이 없으면 로그인 전 첫 화면(입력)이다', () => {
+    expect(entryFor('out', 'first')).toBe('birth');
   });
 
-  it('「로그인 없이 사주 보기」와 회원의 「다른 사람 사주 보기」는 관문의 답과 상관없이 입력 화면이다', () => {
+  it('회원의 「다른 사람 사주 보기」는 관문의 답과 상관없이 입력 화면이다', () => {
     for (const gate of ['out', 'signup', 'closed', 'in', 'failed'] as const) {
-      expect(entryFor(gate, 'trial')).toBe('birth');
       expect(entryFor(gate, 'another')).toBe('birth');
     }
   });

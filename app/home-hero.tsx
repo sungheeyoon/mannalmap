@@ -4,18 +4,15 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useState, type KeyboardEvent, type ReactNode } from 'react';
 
 import { useBrowserSession } from './auth/browser-session';
-import { FirstIntro } from './first-intro';
-import { useHashParams, writeParams } from './hash-query';
 import { PairTaste } from './pair-taste';
-import { TRIAL_MARK, firstScreenStageOf, memberLandingOf } from './saju-landing';
+import { memberLandingOf } from './saju-landing';
 import { SignedInProvider } from './signed-in';
 import { SunMark, TaijiMark } from './ui/entry-marks';
 import { PAPER_TOP, TYPE_TITLE } from './ui/surfaces';
 
 /**
  * `/` 의 얼굴 — **로그인 전 첫 화면 하나다**(ADR 0144). 로그인한 사람은 세션을 안 순간 홈(`/me`)으로, 입력을 든 주소면
- * `/saju` 로 옮긴다(`saju-landing.ts`). 로그인하지 않은 사람에게는 **소개가 먼저**이고(`first-intro.tsx`), 「로그인 없이 사주 보기」를
- * 고르면 같은 주소의 `#start` 에 입력 폼이 선다(ADR 0226).
+ * `/saju` 로 옮긴다(`saju-landing.ts`).
  *
  * 이 화면은 미리 그려지고 세션을 브라우저에서 읽는다 — 서버가 방문마다 세션을 묻지 않게. 그래서 **미리 그려진 HTML 이
  * 곧 첫 화면**이고, 회원은 세션을 아는 한 틱 동안 이 화면을 본 뒤 옮긴다. 빈 화면 대신 덜 맞는 화면을 보는 것이 맞바꾼 값이다.
@@ -33,18 +30,6 @@ export function HomeHero({ calculator }: { calculator: ReactNode }) {
   }, [session, router]);
 
   /**
-   * **소개가 먼저다**(ADR 0226) — 주소가 입력 · 체험 표식 · 이어 보기 낱말을 들어야 입력과 결과가 선다(`firstScreenStageOf`).
-   * 미리 그려진 HTML 은 소개다 — 결과 링크로 온 사람은 주소를 읽은 한 틱 뒤 결과로 바뀐다.
-   */
-  const stage = firstScreenStageOf(useHashParams());
-  const start = () => {
-    /* 주소에 싣는다 — 폼에서 뒤로 가면 소개다. 입구 탭에 초점을 둔다(바로 아래가 입력 칸이다) */
-    writeParams(TRIAL_MARK, 'push');
-    window.scrollTo({ top: 0 });
-    requestAnimationFrame(() => document.getElementById('entry-self')?.focus());
-  };
-
-  /**
    * 두 입구 중 어느 쪽이 열려 있나. 계산기는 궁합 쪽이 열려 있는 동안에도 **내려 두지 않고 숨긴다** — 적던 생일과 선
    * 결과를 잃지 않게.
    */
@@ -60,15 +45,9 @@ export function HomeHero({ calculator }: { calculator: ReactNode }) {
   };
 
   return (
-    // 넓은 화면에서도 폼은 42rem 한 축이다 — 칸이 이름표와 값을 양 끝으로 가르지 않는 한 손 너비(PRD §3.1). 폼이 첫 화면에 바로
-    // 서던 판(운영자 2026-10-08)은 ADR 0226 이 바꿨다 — 소개가 먼저이고 폼은 체험을 고른 뒤다
+    // 넓은 화면에서도 폼은 42rem 한 축이다 — 칸이 이름표와 값을 양 끝으로 가르지 않는 한 손 너비(PRD §3.1). 위에 소개를 따로
+    // 세우지 않는다 — 폼이 첫 화면에 한 번에 보이는 쪽을 골랐다(운영자 2026-10-08)
     <div className="mx-auto w-full max-w-[42rem]">
-      {stage === 'intro' && <FirstIntro onStart={start} />}
-      {/*
-        체험은 소개 동안 내려 두지 않고 숨긴다 — 계산기의 `Suspense` 경계는 서버가 세운 것이고(`page.tsx`), 뒤로 가기로 소개와
-        폼을 오가도 적던 값이 남는다
-      */}
-      <div hidden={stage === 'intro'}>
       <header className={`relative ${PAPER_TOP}`}>
         <VisitorFace entry={entry} onEntry={open} />
       </header>
@@ -91,7 +70,6 @@ export function HomeHero({ calculator }: { calculator: ReactNode }) {
           </div>
         )}
       </section>
-      </div>
     </div>
   );
 }

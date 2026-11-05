@@ -19,12 +19,10 @@ export const SIGNED_OUT_REACH = '로그인 없이도 내 사주와 궁합 첫 �
 export const SIGNED_OUT_EXIT = '사주로 돌아가기';
 
 /**
- * **로그인 전 첫 화면의 두 입구**(ADR 0226) — 체험(입력 → 만세력, 로그인 없이)과 이미 쓰는 사람의 로그인을 가른다. 웹 `/` 와
- * 앱 입구가 같은 글자를 읽는다. 결과 예시 카드의 이름은 인연 소개의 예시 카드와 같은 글자다. 대장 first-04 「확인 전」
+ * **이미 쓰는 사람의 로그인 줄**(ADR 0226) — 로그인 전 첫 화면의 주 단추 바로 아래, 물음 하나와 「로그인」 링크. 웹 `/` 와 앱 입구가
+ * 같은 글자를 읽는다. 대장 first-04 「확인 전」(실사례: velog · TVING · 점신)
  */
-export const TRIAL_START = '로그인 없이 사주 보기';
-export const MEMBER_SIGN_IN_ASK = '이미 이용 중인가요?';
-export const RESULT_EXAMPLE_STAMP = '예시';
+export const MEMBER_SIGN_IN_ASK = '이미 계정이 있으신가요?';
 
 /** 앱의 결과 화면에서 누른 일마다 다른 로그인 까닭 — 저장은 풀이권을 안 쓰니 풀이권을 말하지 않는다(ADR 0213 추기) */
 export const CHART_SIGN_IN = {
