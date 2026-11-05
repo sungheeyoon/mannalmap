@@ -159,10 +159,13 @@ export const MATCHING_INTRO_EXAMPLE = {
 export const MATCHING_INTRO_AGE = '만 19세 이상만 가입할 수 있어요.';
 export const MATCHING_INTRO_START = '인연 시작하기';
 
-/** 로그인 뒤에 실제로 있는 것 — 수 · 가격은 안 적는다(바뀔 수 있다) */
-export const SIGN_IN_UNLOCKS: readonly { icon: 'reading' | 'people' | 'taiji'; text: string }[] = [
+/**
+ * 로그인 뒤에 실제로 있는 것 — 수 · 가격은 안 적는다(바뀔 수 있다).
+ * `match` 줄은 인연의 입구다 — 인연이 닫힌 동안(ADR 0222)은 화면이 `matchEntriesStand` 로 걷는다. 없는 화면을 약속하지 않는다.
+ */
+export const SIGN_IN_UNLOCKS: readonly { icon: 'reading' | 'people' | 'taiji'; text: string; match?: true }[] = [
   { icon: 'reading', text: '내 사주를 읽고 쓴 사주풀이' },
   { icon: 'people', text: '가족 · 친구를 저장하고 그 사람의 풀이도' },
   { icon: 'taiji', text: '두 사람의 궁합풀이와 점수' },
-  { icon: 'people', text: '사주로 어울리는 인연 만나기' },
+  { icon: 'people', text: '사주로 어울리는 인연 만나기', match: true },
 ];

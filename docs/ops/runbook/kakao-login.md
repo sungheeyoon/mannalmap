@@ -20,7 +20,9 @@
 
 하나라도 없으면 멈추고 조율자에게 돌려보낸다.
 
-1. **카카오의 답** — 운영정책 제4조 문의(<https://devtalk.kakao.com/t/topic/152589>)에 운영자가 받은 답. 인연은 ADR 0222 로 닫혀 있어야 한다(`docs/ops/runbook/match-opening.md` 「인연의 스위치」)
+1. **인연이 닫혀 있다** — ADR 0222 의 스위치가 닫힘이다(`docs/ops/runbook/match-opening.md` 「인연의 스위치」). 운영정책 제4조(만남주선) 문의
+   (<https://devtalk.kakao.com/t/topic/152589>)의 답은 **카카오 로그인을 켜는 조건이 아니라 인연을 여는 조건**이다(운영자 결정 2026-11-05 — 닫힌 동안 운영에는
+   만남주선 기능이 없다). 답을 기다리지 않고 켠다. 인연을 열 때 그 답을 `match-opening.md` 「여는 조건」이 본다
 2. **고지** — `docs/legal/kakao-login-notice-draft.md` 의 문장을 코드로 옮기고 판을 올릴지 운영자가 정했다(G-131)
 3. **웹 탈퇴의 연결 끊기** — 웹에서 탈퇴한 카카오 계정의 연결을 끊는 길(G-131). 없으면 카카오의 「반드시 탈퇴 과정에 연결 해제」를 웹에서 못 지킨다
 4. **심볼** — 단추의 카카오 말풍선을 카카오 디자인 가이드의 리소스로 갈아 끼웠다(`app/auth/kakao-sign-in-button.tsx` · `mobile/src/auth/kakao-button.tsx`)
