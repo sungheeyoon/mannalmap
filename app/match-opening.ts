@@ -19,3 +19,12 @@ export async function readMatchOpen(client: SupabaseClient<Database>): Promise<S
 
 /** 화면이 그리는 값 — 열렸다고 읽었으면 참, 닫혔으면 거짓, 못 읽었으면 `null` */
 export const openOf = (answer: SkippableRead<boolean>): boolean | null => (answer.ok ? answer.value : null);
+
+/**
+ * 로그인 전 화면이 묻는 열림 — 못 읽으면 닫힌 쪽(`false`)이고 **로그를 남기지 않는다**. `readMatchOpen` 의 `unread` 는 콘솔에 서는데,
+ * 로그인 전 화면의 콘솔은 비어야 한다(`e2e/auth.spec.ts` — DB 없는 차선에서 처음 걸렸다). 지금은 `/auth` 의 「인연 만나기」 줄 하나가 쓴다.
+ */
+export async function matchOpenForSignedOut(client: SupabaseClient<Database>): Promise<boolean> {
+  const { data, error } = await client.rpc('match_is_open');
+  return error === null && data === true;
+}
