@@ -60,7 +60,7 @@ export async function accountAnswer(): Promise<SignInAnswer> {
 }
 
 /**
- * 다른 계정으로 들어오는 길 — 구글 쪽도 끊어야 다음 로그인에서 계정을 고른다.
+ * 다른 계정으로 들어오는 길 — 구글 · 카카오 쪽도 끊어야 다음 로그인에서 계정을 고른다.
  * 애플은 앱이 끊을 길이 없다 — 다음 애플 로그인은 시스템 창이 다시 묻는다(ADR 0219).
  */
 export async function signOut(): Promise<boolean> {
@@ -77,5 +77,8 @@ export async function signOut(): Promise<boolean> {
     /* 네이티브 모듈이 없는 Expo Go · 구글 쪽 실패 — 우리 세션은 이미 끊겼다 */
     console.error('google sign-out', thrown);
   }
+  /* 카카오도 끊어야 다음 로그인에서 다른 카카오계정을 고를 수 있다(ADR 0224). 여기서 불러들인다 — `./kakao` 가 이 파일을 부른다 */
+  const kakao: typeof import('./kakao') = require('./kakao');
+  await kakao.signOutOfKakao();
   return true;
 }

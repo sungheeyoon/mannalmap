@@ -7,6 +7,8 @@ import { BUTTON_TERTIARY } from '../ui/buttons';
 import { Icon } from '../ui/icons';
 import { NoticeScreen } from '../ui/notice-screen';
 import { SIGNED_OUT_EXIT, SIGNED_OUT_REACH } from '../service-features';
+import { kakaoSignInReady } from './kakao/config';
+import { KakaoSignInButton } from './kakao-sign-in-button';
 import { SignInButton } from './sign-in-button';
 import { supabaseOnServer } from './server-client';
 import { signedInUser } from './signed-in';
@@ -41,7 +43,13 @@ export default async function SignInPage({
           필요해요.
         </p>
       }
-      actions={<SignInButton returnTo={returnTo} />}
+      actions={
+        /* 카카오는 키가 있을 때만 선다(ADR 0224) — 없으면 구글 하나다 */
+        <div className="flex flex-col items-stretch gap-2 sm:items-start">
+          <SignInButton returnTo={returnTo} />
+          {kakaoSignInReady() && <KakaoSignInButton returnTo={returnTo} />}
+        </div>
+      }
       note={
         /*
           코드가 없는 사람의 길 — 막다른 자리로 두지 않는다. 첫 화면은 로그인 없이 사주와 궁합 첫 신호까지 연다.

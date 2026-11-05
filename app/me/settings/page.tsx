@@ -1,3 +1,5 @@
+import { accountLineOf } from '@/src/lib/account/sign-in-line';
+
 import { supabaseOnServer } from '../../auth/server-client';
 import { signedInUser } from '../../auth/signed-in';
 import { redirectToSignIn } from '../../auth/sign-in-redirect';
@@ -43,7 +45,7 @@ export default async function SettingsPage() {
         discoveryProfile,
         photoless,
         matchOpen,
-        email: user.email,
+        accountLine: accountLineOf(user.email, user.providers),
         userId: user.id,
         pushAvailable: Boolean(process.env.NEXT_PUBLIC_WEB_PUSH_VAPID_PUBLIC_KEY),
       }}
