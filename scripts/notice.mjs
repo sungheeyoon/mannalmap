@@ -158,4 +158,15 @@ export async function passNotice(client, nickname) {
     p_contact: false,
   });
   if (error) throw new Error(`가입을 끝내지 못했습니다 — ${error.message}`);
+  await keepBetaFreeCredits(client);
+}
+
+/**
+ * 검사 계정은 **베타 회원의 무료 몫(다섯)**을 든다 — 검사는 풀이 여러 편을 밟는 흐름을 재지 무료 몫을 재지 않는다.
+ * 새 회원의 1장은 pgTAP `99_free_credit_one_for_new_members` 가 잰다(ADR 0227). 몇 장인지는 DB 에서 읽는다(`beta_free_credits()`).
+ */
+async function keepBetaFreeCredits(client) {
+  const { data, error } = await client.auth.getUser();
+  if (error || !data.user) throw new Error(`가입한 계정을 못 읽었습니다 — ${error?.message ?? '없음'}`);
+  psql(`update public.app_user set kept_free_credits = public.beta_free_credits() where id = '${data.user.id}'`);
 }

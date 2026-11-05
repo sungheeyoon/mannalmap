@@ -414,6 +414,13 @@ async function seed(
       p_contact: false,
     });
     if (passed.error) throw new Error(`가입을 끝내지 못했습니다 — ${passed.error.message}`);
+
+    /*
+      **시험 계정은 베타 회원의 무료 몫(다섯)을 든다** — 화면 시험은 풀이 여러 편과 「풀이권 5장」을 재지 무료 몫을 재지 않는다.
+      새 회원의 1장은 pgTAP `99_free_credit_one_for_new_members` 가 잰다(ADR 0227).
+    */
+    sql(`update public.app_user set kept_free_credits = public.beta_free_credits()
+           where id = (select id from auth.users where email = '${email}')`);
   }
 
   let selfPersonId: string | null = null;

@@ -160,6 +160,7 @@ export type Database = {
           id: string
           improvement_consent: boolean | null
           intro: string | null
+          kept_free_credits: number | null
           nickname: string | null
           notice_ack_at: string | null
           notice_ends_on: string | null
@@ -177,6 +178,7 @@ export type Database = {
           id: string
           improvement_consent?: boolean | null
           intro?: string | null
+          kept_free_credits?: number | null
           nickname?: string | null
           notice_ack_at?: string | null
           notice_ends_on?: string | null
@@ -194,6 +196,7 @@ export type Database = {
           id?: string
           improvement_consent?: boolean | null
           intro?: string | null
+          kept_free_credits?: number | null
           nickname?: string | null
           notice_ack_at?: string | null
           notice_ends_on?: string | null
@@ -2984,6 +2987,7 @@ export type Database = {
         Returns: undefined
       }
       begin_my_photo_upload: { Args: never; Returns: string }
+      beta_free_credits: { Args: never; Returns: number }
       beta_is_over: { Args: never; Returns: boolean }
       block_user: { Args: { p_user_id: string }; Returns: boolean }
       book_reading_credit_grant: {

@@ -97,6 +97,7 @@
 | 신고 스냅샷 | `chat_report_snapshot` · `report_chat_message` · `purge_closed_chat_messages` · `reportChatMessage` | 표 · 함수 · 액션 |
 | 접속 상태 | `user_activity` · `touch_activity` · `activity_band_of` · `presence_policy` · `ActivityBand` · `activityText` | 표 · 함수 · `src/lib/presence` |
 | 풀이권 | `my_reading_credits` · `reading_credits_for` · `reading_credit_limit_for` · `readReadingCredits` | 함수 · 읽는 문 |
+| 무료 몫 · 지킨 몫 | `reading_credit_limit` · `beta_free_credits` · `app_user.kept_free_credits` · `reading_credit_shares` | 함수 · 칸 (ADR 0227) |
 | 풀이권 예외 | `reading_credit_grant` | 표 |
 | 신고 처분 · 계정 상태 이력 | `report_review_entry` · `write_report_review` · `operator_review_report` · `operator_report_target` · `report_is_overdue` · `account_status_change` · `change_account_status` · `writeReview` · `reviewPlan` · `ReviewPanel` · `report-reviewed` | 표 · 함수 · `app/ops/reports/` (ADR 0188) |
 | 회원 정지 · 해제 · 처분 이력 | `operator_suspend_member` · `operator_unsuspend_member` · `screen_change_member_status` · `operator_member_sanctions` · `changeMemberStatus` · `statusPlan` · `StatusPanel` · `memberSanctions` · `member-status-changed` | 함수 · `app/ops/members/` (ADR 0189) |
