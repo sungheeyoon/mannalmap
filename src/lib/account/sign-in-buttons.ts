@@ -45,11 +45,11 @@ export const GOOGLE_BUTTON_COLOR = {
 export const GOOGLE_BUTTON_BORDER = 1;
 
 /**
- * 구글 단추의 글자 — 안내는 「Sign in with Google」의 번역을 「permitted and encouraged」로 둔다. 한국어는 애플 시스템 단추의 「Apple로 로그인」과
- * 같은 꼴로 「Google로 로그인」(왓챠피디아의 단추 글자와 같다, ADR 0228). 이름 「Google」은 번역하지 않는다
+ * 구글 단추의 글자 — 카카오의 「카카오 로그인」과 같은 꼴로 「구글 로그인」(운영자 결정 2026-11-05, ADR 0228). 구글 안내는 로마자 이름 「Google」을
+ * 권하지만 운영자가 한 화면의 두 단추를 같은 꼴로 골랐다. 이동 중 글자는 전부터 쓰던 「구글로 이동하는 중…」이다
  */
-export const GOOGLE_SIGN_IN = 'Google로 로그인';
-export const GOOGLE_SIGN_IN_GOING = 'Google로 이동하는 중…';
+export const GOOGLE_SIGN_IN = '구글 로그인';
+export const GOOGLE_SIGN_IN_GOING = '구글로 이동하는 중…';
 
 /**
  * 카카오 — 카카오 로그인 디자인 가이드(<https://developers.kakao.com/docs/ko/kakaologin/design-guide>, 확인 2026-11-05).

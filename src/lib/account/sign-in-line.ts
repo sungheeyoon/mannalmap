@@ -3,7 +3,7 @@
  */
 export const KAKAO_SIGN_IN = '카카오 로그인';
 
-/** 앱의 카카오 단추를 누른 뒤 — 구글 단추의 「Google로 이동하는 중…」과 같은 꼴 */
+/** 앱의 카카오 단추를 누른 뒤 — 구글 단추의 「구글로 이동하는 중…」과 같은 꼴 */
 export const KAKAO_SIGN_IN_GOING = '카카오로 이동하는 중…';
 
 /**

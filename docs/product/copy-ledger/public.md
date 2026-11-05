@@ -191,12 +191,13 @@ BoxHero 「support@boxhero.io로」(붙임)다 — 크몽 「help@kmong.com 으�
 
 ## public-08 확인 전 — 구글 로그인 단추의 글자 (PR #1010, ADR 0228)
 
-구글 단추를 구글 브랜딩 안내의 밝은 판으로 바꾸며 글자도 안내의 「Sign in with Google」 번역으로 맞췄다. 애플 시스템 단추의 「Apple로 로그인」과 같은 꼴이다.
+구글 단추를 구글 브랜딩 안내의 밝은 판으로 바꾸며 글자를 카카오 단추 「[심볼] 카카오 로그인」과 같은 꼴로 맞췄다. 처음 넣은 「Google로 로그인」(왓챠피디아 · 애플 시스템 단추의 꼴)은
+운영자가 받지 않았다(2026-11-05) — 「구글 로그인」으로 지시했다. 그래서 이 줄은 운영자가 불러 준 글자다.
 
 | 자리 | 이전 | 넣은 글자 | 출처 |
 | --- | --- | --- | --- |
-| 구글 단추 `src/lib/account/sign-in-buttons.ts` 의 `GOOGLE_SIGN_IN`(웹 `app/auth/sign-in-button.tsx` · 앱 `mobile/src/auth/google-button.tsx`) | 구글로 로그인 | Google로 로그인 | [왓챠피디아 로그인](https://pedia.watcha.com/ko-KR/sign_in) 「Google로 로그인」 · 같은 화면 「Apple로 로그인」 2026-11-05. [구글 브랜딩 안내](https://developers.google.com/identity/branding-guidelines) 「Localization … permitted and encouraged」 |
-| 구글 단추, 누른 뒤 `GOOGLE_SIGN_IN_GOING` | 구글로 이동하는 중… | Google로 이동하는 중… | 실사례 없음 — 이 대장의 「구글로 이동하는 중…」에서 이름만 위 줄에 맞췄다 |
+| 구글 단추 `src/lib/account/sign-in-buttons.ts` 의 `GOOGLE_SIGN_IN`(웹 `app/auth/sign-in-button.tsx` · 앱 `mobile/src/auth/google-button.tsx`) | 구글로 로그인 | 구글 로그인 | 운영자 지시 2026-11-05(PR #1010) — 카카오 가이드의 완성형 「카카오 로그인」과 같은 꼴. 구글 안내는 로마자 「Google」을 권한다([브랜딩 안내](https://developers.google.com/identity/branding-guidelines)) |
+| 구글 단추, 누른 뒤 `GOOGLE_SIGN_IN_GOING` | 구글로 이동하는 중… | 구글로 이동하는 중…(그대로) | 이 대장의 전 글자 |
 
 안내 · 가이드의 글(「구글로 로그인하고, …」 · 인연 단계 「구글로 로그인」, `src/lib/brand/guide.ts`)은 단추 글자가 아니라 그대로 두었다.
 
