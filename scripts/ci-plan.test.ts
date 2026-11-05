@@ -272,7 +272,6 @@ describe('CI 계획 — 관문 · 화면 · 인증은 베타에서도 전부다 
       'scripts/ci-plan.mjs',
       'scripts/fake-clock.mjs',
       'app/me/matching/deck-state.ts',
-      'app/api/portone/webhook/settle.ts',
       'app/me/(shelf)/readings/opening.ts',
       'app/pages.ts',
       'app/me/pageless.tsx',
@@ -902,7 +901,6 @@ describe('CI 계획 — 다른 화면이 가리키는 입구는 정말 없음이
       'app/terms/page.tsx': 'e2e/info-pages.spec.ts',
       'app/me/credits/page.tsx': 'e2e/signed-in.spec.ts',
       'app/me/credits/history/page.tsx': 'e2e/signed-in.spec.ts',
-      'app/me/credits/done/page.tsx': 'e2e/signed-in.spec.ts',
     };
     for (const [entry, spec] of Object.entries(opened)) expect(testsOfEntry(entry).tests, entry).toContain(spec);
     // 운영 화면은 운영 머리(`app/ops/layout.tsx` 아래)만 가리킨다 — 모든 화면이 아니다

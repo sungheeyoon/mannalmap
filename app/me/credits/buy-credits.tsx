@@ -42,7 +42,7 @@ export function useBuyCredits(): {
       try {
         shape = saleShapeOf(await saleIsOpenNow());
       } catch {
-        /* 부름이 던졌다(망) — 열린 꼴이다. 상품 화면이 다시 묻고 실패를 말한다 */
+        /* 부름이 던졌다(망) — 열린 꼴이다(`buy-path.ts`) */
       } finally {
         asking.current = false;
         setChecking(false);
@@ -67,7 +67,7 @@ export function useBuyCredits(): {
       confirmLabel={open ? BUY_CREDITS_LABEL : SALE_CLOSED_OK}
       onConfirm={() => {
         close();
-        /* 결제 뒤 이 화면으로 돌아오게 지금 주소를 싣는다(`return-to.ts`) */
+        /* 상품 화면의 ← 가 이 화면으로 돌아오게 지금 주소를 싣는다(`return-to.ts`) */
         if (open) router.push(creditsPathFrom(`${window.location.pathname}${window.location.search}`));
       }}
       firstFocus="confirm"
