@@ -243,6 +243,9 @@ export function RelationMap({ model, canAdd }: { model: MapModel; canAdd: boolea
   );
 }
 
+/** 이름표가 설 수 있는 폭 — 세 글자에 점수까지 들어간다 */
+const LABEL_ROOM = { still: 88, near: 140 } as const;
+
 type SeatState = 'still' | 'near' | 'linked' | 'receded';
 
 function Seat({ person, at, angle, phase, width, state, onPress }: { person: MapPerson; at: Point; angle: number; phase: number; width: number; state: SeatState; onPress: () => void }) {
@@ -255,10 +258,14 @@ function Seat({ person, at, angle, phase, width, state, onPress }: { person: Map
   const tone = toneOf(person.day?.element);
   const cx = (at.x / 100) * width;
   const cy = (at.y / 100) * width;
+  /* 이름표 자리는 원보다 넓게 잡는다 — 원의 폭 안에 가두면 이름이 「…」만 남는다 */
+  const room = near ? LABEL_ROOM.near : LABEL_ROOM.still;
   const label = (
-    <View pointerEvents="none" style={[styles.seatLabel, near && styles.seatLabelNear, above ? { bottom: size + 2 } : { top: size + 2 }]}>
-      <Text numberOfLines={1} style={[styles.seatName, near && styles.seatNameNear]}>{person.label}</Text>
-      {score !== null && <Text style={[styles.seatScore, { color: tone.ink }]}>{score}</Text>}
+    <View pointerEvents="none" style={[styles.seatLabelRoom, { width: room, left: (size - room) / 2 }, above ? { bottom: size + 2 } : { top: size + 2 }]}>
+      <View style={[styles.seatLabel, near && styles.seatLabelNear]}>
+        <Text numberOfLines={1} style={[styles.seatName, near && styles.seatNameNear]}>{person.label}</Text>
+        {score !== null && <Text style={[styles.seatScore, { color: tone.ink }]}>{score}</Text>}
+      </View>
     </View>
   );
   return (
@@ -403,8 +410,9 @@ const styles = StyleSheet.create({
   seatFace: { flex: 1, alignItems: 'center', justifyContent: 'center', borderWidth: 2, borderColor: COLOR.surface },
   seatUnread: { borderWidth: 2, borderStyle: 'dashed', borderColor: COLOR.borderStrong, backgroundColor: COLOR.surface },
   seatUnknown: { fontFamily: FONT.bold, fontSize: TYPE.body, color: COLOR.secondary },
-  seatLabel: { position: 'absolute', alignSelf: 'center', maxWidth: 88, minWidth: 40, flexDirection: 'row', alignItems: 'baseline', justifyContent: 'center', gap: 4, paddingHorizontal: 6, borderRadius: CORNER.pill, backgroundColor: 'rgba(255, 244, 230, 0.9)' },
-  seatLabelNear: { maxWidth: 140, paddingVertical: 2, backgroundColor: COLOR.surface },
+  seatLabelRoom: { position: 'absolute', alignItems: 'center' },
+  seatLabel: { maxWidth: '100%', minWidth: 40, flexDirection: 'row', alignItems: 'baseline', justifyContent: 'center', gap: 4, paddingHorizontal: 6, borderRadius: CORNER.pill, backgroundColor: 'rgba(255, 244, 230, 0.9)' },
+  seatLabelNear: { paddingVertical: 2, backgroundColor: COLOR.surface },
   seatName: { flexShrink: 1, fontFamily: FONT.bold, fontSize: TYPE.fine, lineHeight: 20, color: COLOR.secondary },
   seatNameNear: { fontSize: TYPE.body, color: COLOR.foreground },
   seatScore: { fontFamily: FONT.bold, fontSize: TYPE.fine, lineHeight: 20 },
