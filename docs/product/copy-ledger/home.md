@@ -258,3 +258,16 @@
 ## home-10 걷음 — 앱 저장한 사람의 관리 메뉴 「이름 변경」 (Expo 라운드, 2026-10-30)
 
 앱이 생년월일시를 고칠 문이 없어 넣었던 글자다. 앱의 문(ADR 0211)이 서서 메뉴 첫 줄이 웹과 같은 「출생 정보 수정」으로 돌아왔다 — 이름도 그 폼에서 고친다. 넣은 글자가 남지 않았다.
+
+## home-11 확인 전 — 인연이 닫힌 동안 홈의 「열리면 알려 주세요」 줄 (2026-11-05, ADR 0223)
+
+홈의 「다른 사람 사주 보기」 바로 아래 흰 판 한 줄 — 인연이 닫혔다고 읽었을 때만 선다(웹 `app/me/home/match-open-alert.tsx` · 앱 `mobile/src/home/match-open-alert.tsx`).
+제목 · 설명은 `src/lib/matching/copy.ts`, 단추는 `src/lib/matching/opening.ts` 의 `MATCH_OPEN_ALERT_BUTTON`(앱 단추가 프롭으로 받는다). 근거 문서 `docs/legal/match-open-alert-grounds.md`.
+
+| 자리 | 이전 | 넣은 글자 | 출처 |
+| --- | --- | --- | --- |
+| 제목 `MATCH_OPEN_ALERT_TITLE` | (없음) | 인연은 준비 중이에요 | 실사례 없음 — 닫힌 문의 거절(matching-22)과 같은 사실이라 같은 말을 쓰고, 줄 제목이라 마침표를 뗐다(2026-11-05) |
+| 신청 전 설명 `MATCH_OPEN_ALERT_ASK` | (없음) | 열리면 소식으로 알려 드릴까요? | 맡김의 「인연이 열리면 알려 드릴까요?」에 수단(소식, 종 목록의 이름)을 넣었다. 실사례 확인 전 — 가장 가까운 꼴: KT 샵 「재입고 알림신청」 창(<https://shop.kt.com/smart/restockNoticePopView.do?prodNo=AC00010409&sntyNo=&vndrNo=ACC7850&prodTypeCd=AC>, 검색 2026-11-05) |
+| 신청 뒤 설명 `MATCH_OPEN_ALERT_ASKED` | (없음) | 열리면 소식으로 알려 드릴게요. | 실사례 없음 — 가장 가까운 사례: 이 앱 소식 화면의 빈 줄 「새 요청이나 풀이 결과가 생기면 여기에 알려드릴게요.」(`app/me/requests/page.tsx`)의 끝말(2026-11-05) |
+| 단추 — 신청 · 취소 · 저장 중 `MATCH_OPEN_ALERT_BUTTON` | (없음) | 알림 받기 · 알림 끄기 · 저장하는 중… | 신청: 재입고 · 출시 「알림 받기」 단추 꼴(실사례 확인 전 — 같은 검색의 Shopify 앱 한국어 페이지 「"알림 받기" 버튼」 <https://apps.shopify.com/back-in-stock-notifications?locale=ko>, 2026-11-05). 취소: 대장 01 의 「취소」는 닫기의 말이라 설정의 「켜고 끄기」(처리방침 · 선택 동의)를 따랐다. 저장 중: 앱의 「저장하는 중…」 |
+

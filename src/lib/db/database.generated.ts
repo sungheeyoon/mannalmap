@@ -822,6 +822,29 @@ export type Database = {
           },
         ]
       }
+      match_open_alert: {
+        Row: {
+          asked_at: string
+          user_id: string
+        }
+        Insert: {
+          asked_at?: string
+          user_id: string
+        }
+        Update: {
+          asked_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "match_open_alert_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "app_user"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       match_open_switch: {
         Row: {
           changed_at: string
@@ -3582,6 +3605,7 @@ export type Database = {
           talk_status: string
         }[]
       }
+      my_match_open_alert: { Args: never; Returns: boolean }
       my_match_requests: {
         Args: never
         Returns: {
@@ -4767,6 +4791,7 @@ export type Database = {
         Args: { p_consent: boolean }
         Returns: undefined
       }
+      set_match_open_alert: { Args: { p_wanted: boolean }; Returns: boolean }
       set_my_photo_focus: {
         Args: {
           p_position: number
