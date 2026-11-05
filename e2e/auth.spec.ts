@@ -20,7 +20,7 @@ test('로그인하지 않으면 내 계정 화면에 들어가지 못한다', as
   await page.goto('/me');
 
   await expect(page).toHaveURL(/\/auth$/);
-  await expect(page.getByRole('button', { name: '구글로 로그인' })).toBeVisible();
+  await expect(page.getByRole('button', { name: '구글 로그인' })).toBeVisible();
 });
 
 /**
@@ -41,7 +41,7 @@ test('로그인하지 않은 채 회원 화면을 열어도 머리글이 회원 
   for (const path of ['/me', '/me/chat', '/compat']) {
     await page.goto(path);
     await expect(page).toHaveURL(/\/auth(\?|$)/);
-    await expect(page.getByRole('button', { name: '구글로 로그인' })).toBeVisible();
+    await expect(page.getByRole('button', { name: '구글 로그인' })).toBeVisible();
   }
 
   expect(doors).toEqual([]);

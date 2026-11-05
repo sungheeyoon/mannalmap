@@ -11,6 +11,7 @@ import { matchEntriesStand } from '@matching/opening';
 
 import { arriveAt } from '@/auth/arrive';
 import { AppleSignInButton } from '@/auth/apple-button';
+import { GoogleSignInButton } from '@/auth/google-button';
 import { signInWithApple } from '@/auth/apple';
 import { KakaoSignInButton } from '@/auth/kakao-button';
 import { signInWithKakao } from '@/auth/kakao';
@@ -21,7 +22,7 @@ import { goHome } from '@/info/go-home';
 import { useMatchOpen } from '@/matching/opening';
 import { Icon } from '@/ui/icons';
 import { NoticeLine, NoticeScreen } from '@/ui/notice-screen';
-import { PrimaryButton, SecondaryButton, TextButton } from '@/ui/parts';
+import { SecondaryButton, TextButton } from '@/ui/parts';
 import { COLOR, FONT, RADIUS, TYPE } from '@/ui/tokens';
 import { goBack } from '@/ui/top-bar';
 
@@ -71,15 +72,16 @@ export default function SignInScreen() {
       }
       actions={
         <>
-          <PrimaryButton
-            label={going === 'google' ? '구글로 이동하는 중…' : '구글로 로그인'}
-            onPress={() => void signIn('google', signInWithGoogle)}
-            disabled={going !== null}
-          />
+          {/* 카카오 → 구글 → 애플(운영자 결정 2026-11-05, ADR 0228) */}
           <KakaoSignInButton
             label={going === 'kakao' ? KAKAO_SIGN_IN_GOING : undefined}
             onPress={() => void signIn('kakao', signInWithKakao)}
             busy={going !== null}
+          />
+          <GoogleSignInButton
+            going={going === 'google'}
+            onPress={() => void signIn('google', signInWithGoogle)}
+            disabled={going !== null}
           />
           <AppleSignInButton onPress={() => void signIn('apple', signInWithApple)} busy={going !== null} />
           {fromChart && <SecondaryButton label="취소" onPress={() => goBack('/')} disabled={going !== null} />}
