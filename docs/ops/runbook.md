@@ -26,7 +26,7 @@
 | `docs/ops/runbook/jobs.md` | 「도는 잡이 정말 도나」 · 「제품 지표」 | 크론 실패 질의 · 지표 · 풀이 재사용 측정 |
 | `docs/ops/runbook/security.md` | 「보안 점검」 · 「운영 주기」 · 「운영 의존성 취약점」 | advisor · 운영자 접속기록과 반출 · 월 점검 · `audit` 이 붉을 때 |
 | `docs/ops/runbook/deploy.md` | 「배포」 | 묶음 배포 · 규약 넷(앱과 DB 는 따로) · CSP 되돌리기 |
-| `docs/ops/runbook/mobile-release.md` | 「앱 출시의 차례」 · 「EAS 프로필과 환경값」 · 「내부 트랙과 비공개 테스트는 다르다」 · 「애플 로그인을 켜는 차례」 · 「심사 계정과 테스트 코드」 · 「iOS 는 수동 출시로 낸다」 | 앱의 빌드 · 테스트 · 제출 — 웹 API 먼저 · 14일 요건 · 애플 로그인 키 · 심사 계정 |
+| `docs/ops/runbook/mobile-release.md` | 「앱 출시의 차례」 · 「EAS 프로필과 환경값」 · 「내부 트랙과 비공개 테스트는 다르다」 · 「애플 로그인을 켜는 차례」 · 「심사 계정」 · 「iOS 는 수동 출시로 낸다」 | 앱의 빌드 · 테스트 · 제출 — 웹 API 먼저 · 14일 요건 · 애플 로그인 키 · 심사 계정 |
 | `docs/ops/runbook/kakao-login.md` | 「카카오 로그인의 지금 상태」 · 「카카오 로그인을 켜기 전 조건」 · 「카카오 로그인을 켜는 차례」 · 「카카오 로그인 — 실기기 · 웹에서 볼 것」 · 「카카오 로그인을 끄기 · 되돌리기」 | 카카오 로그인 — 지금은 꺼짐 · 키 이름 넷 · 카카오 콘솔 · Supabase · Vercel · EAS · 새 빌드 · 실기기 확인 (ADR 0224) |
 | `docs/ops/runbook/deploy-once.md` | 「카드 점수 v2-beta 배포」 · 「가입 코드 배포」 | 한 번만 하는 배포 둘 — 마이그레이션 → 백필 → 앱 · 훅을 먼저 끈다 |
 | `docs/ops/runbook/push.md` | 「웹 푸시를 켠다」 | 새 메시지 알림을 운영에서 여는 날 — 배포 차례 · 열쇠와 Vault · Realtime 설정 · 확인 SQL |
