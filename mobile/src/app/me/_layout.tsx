@@ -20,6 +20,7 @@ import { Icon } from '@/ui/icons';
 import { Logo } from '@/ui/logo';
 import { SecondaryButton } from '@/ui/parts';
 import { COLOR, ELEMENT_TONE, FONT, RADIUS, TYPE } from '@/ui/tokens';
+import { KEEP_VIEW } from '@/ui/keep-view';
 
 /** 웹 머리글의 `MEMBER_TABS` 와 같은 넷 · 같은 글자다. 궁합의 첫 화면은 앱에서 `/me/compat` 다. 인연이 닫힌 동안은 홈 · 궁합 둘이다(ADR 0222) */
 const TABS = [
@@ -136,7 +137,7 @@ export default function MeLayout() {
                 onPress={() => goTab(tab.href)}
                 style={styles.tab}
               >
-                <View style={[styles.tabMark, active && styles.tabMarkOn]}>
+                <View {...KEEP_VIEW} style={[styles.tabMark, active && styles.tabMarkOn]}>
                   <Icon name={tab.icon} color={active ? ELEMENT_TONE.木.ink : COLOR.secondary} />
                 </View>
                 <Text style={[styles.tabLabel, active && styles.tabLabelOn]}>{tab.label}</Text>

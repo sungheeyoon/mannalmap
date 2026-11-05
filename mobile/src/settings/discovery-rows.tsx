@@ -7,6 +7,7 @@ import { PREFER_GENDER_KO } from '@discovery/copy';
 import { saveFailureOf, setParticipation } from '@/reading/chart-writes';
 import { followRefusal } from '@/reading/panel';
 import { COLOR, FONT, RADIUS, TYPE } from '@/ui/tokens';
+import { KEEP_VIEW } from '@/ui/keep-view';
 
 import { FailureLine, SwitchRow, useDoneNote } from './parts';
 import { savePreferGender } from './settings';
@@ -109,7 +110,7 @@ export function PreferenceRow({ current }: { current: PreferGender }) {
           {PREFER_GENDER_ORDER.map((value) => {
             const on = chosen === value;
             return (
-              <Pressable key={value} accessibilityRole="radio" accessibilityState={{ checked: on }} onPress={() => choose(value)} style={[styles.choice, on && styles.chosen]}>
+              <Pressable key={value} accessibilityRole="radio" accessibilityState={{ checked: on }} onPress={() => choose(value)} {...KEEP_VIEW} style={[styles.choice, on && styles.chosen]}>
                 <Text style={[styles.choiceText, on && styles.chosenText]}>{PREFER_GENDER_KO[value]}</Text>
               </Pressable>
             );

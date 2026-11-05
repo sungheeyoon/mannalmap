@@ -17,6 +17,7 @@ import { noteActivity, readRoomListScreen, type ChatRoom, type RoomListScreen } 
 import { Icon } from '@/ui/icons';
 import { LoadingMark } from '@/ui/loading';
 import { COLOR, FONT, RADIUS, TYPE } from '@/ui/tokens';
+import { KEEP_VIEW } from '@/ui/keep-view';
 
 /** 한 물결의 변경을 묶어 다시 읽는 간격 — 웹의 `REDRAW_AFTER_MS` 와 같다 */
 const REREAD_AFTER_MS = 400;
@@ -146,7 +147,7 @@ function RoomRow({ room }: { room: ChatRoom }) {
       accessibilityRole="link"
       accessibilityLabel={unread > 0 ? `${name} ${unread}건 안 읽음` : name}
       onPress={() => router.push(`/me/chat/${room.matchId}` as never)}
-      style={({ pressed }) => [styles.row, pressed && styles.pressed]}
+      {...KEEP_VIEW} style={({ pressed }) => [styles.row, pressed && styles.pressed]}
     >
       <Avatar nickname={name} size={56} tone={null} dim={closed} userId={room.partnerUserId} hasPhoto={room.partnerHasPhoto} focus={room.partnerPhotoFocus} />
       <View style={styles.rowBody}>
