@@ -11,6 +11,7 @@ import { matchEntriesStand } from '@matching/opening';
 
 import { arriveAt } from '@/auth/arrive';
 import { AppleSignInButton } from '@/auth/apple-button';
+import { GoogleSignInButton } from '@/auth/google-button';
 import { signInWithApple } from '@/auth/apple';
 import { KakaoSignInButton } from '@/auth/kakao-button';
 import { signInWithKakao } from '@/auth/kakao';
@@ -21,7 +22,7 @@ import { goHome } from '@/info/go-home';
 import { useMatchOpen } from '@/matching/opening';
 import { Icon } from '@/ui/icons';
 import { NoticeLine, NoticeScreen } from '@/ui/notice-screen';
-import { PrimaryButton, SecondaryButton, TextButton } from '@/ui/parts';
+import { SecondaryButton, TextButton } from '@/ui/parts';
 import { COLOR, FONT, RADIUS, TYPE } from '@/ui/tokens';
 import { goBack } from '@/ui/top-bar';
 import { WordText } from '@/ui/word-text';
@@ -73,8 +74,8 @@ export default function SignInScreen() {
       }
       actions={
         <>
-          <PrimaryButton
-            label={going === 'google' ? '구글로 이동하는 중…' : '구글로 로그인'}
+          <GoogleSignInButton
+            going={going === 'google'}
             onPress={() => void signIn('google', signInWithGoogle)}
             disabled={going !== null}
           />

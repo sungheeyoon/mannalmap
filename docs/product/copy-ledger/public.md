@@ -188,3 +188,15 @@ BoxHero 「support@boxhero.io로」(붙임)다 — 크몽 「help@kmong.com 으�
 | 카카오 단추 `src/lib/account/sign-in-line.ts` 의 `KAKAO_SIGN_IN`(웹 `app/auth/kakao-sign-in-button.tsx` · 앱 `mobile/src/auth/kakao-button.tsx`) | (없음) | 카카오 로그인 | 카카오 로그인 디자인 가이드의 완성형 레이블 「카카오 로그인」(<https://developers.kakao.com/docs/ko/kakaologin/design-guide>, 확인 2026-11-05) |
 | 앱 카카오 단추, 누른 뒤 `mobile/src/app/auth/index.tsx` | (없음) | 카카오로 이동하는 중… | 실사례 없음 — 이 대장의 구글 단추 「구글로 이동하는 중…」의 꼴 |
 | 웹 로그인 실패 화면 첫 줄 `app/auth/denied/page.tsx` | 구글 로그인을 마치지 못했어요. 중간에 취소했거나 연결이 끊겼을 수 있어요. … | 로그인을 마치지 못했어요. 중간에 취소했거나 연결이 끊겼을 수 있어요. … | 실사례 없음 — 앱의 같은 줄(public-06)과 같게, 카카오로 실패해도 오는 자리라 「구글」만 뺐다 |
+
+## public-08 확인 전 — 구글 로그인 단추의 글자 (PR #1010, ADR 0228)
+
+구글 단추를 구글 브랜딩 안내의 밝은 판으로 바꾸며 글자도 안내의 「Sign in with Google」 번역으로 맞췄다. 애플 시스템 단추의 「Apple로 로그인」과 같은 꼴이다.
+
+| 자리 | 이전 | 넣은 글자 | 출처 |
+| --- | --- | --- | --- |
+| 구글 단추 `src/lib/account/sign-in-buttons.ts` 의 `GOOGLE_SIGN_IN`(웹 `app/auth/sign-in-button.tsx` · 앱 `mobile/src/auth/google-button.tsx`) | 구글로 로그인 | Google로 로그인 | [왓챠피디아 로그인](https://pedia.watcha.com/ko-KR/sign_in) 「Google로 로그인」 · 같은 화면 「Apple로 로그인」 2026-11-05. [구글 브랜딩 안내](https://developers.google.com/identity/branding-guidelines) 「Localization … permitted and encouraged」 |
+| 구글 단추, 누른 뒤 `GOOGLE_SIGN_IN_GOING` | 구글로 이동하는 중… | Google로 이동하는 중… | 실사례 없음 — 이 대장의 「구글로 이동하는 중…」에서 이름만 위 줄에 맞췄다 |
+
+안내 · 가이드의 글(「구글로 로그인하고, …」 · 인연 단계 「구글로 로그인」, `src/lib/brand/guide.ts`)은 단추 글자가 아니라 그대로 두었다.
+
