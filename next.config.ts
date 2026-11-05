@@ -24,7 +24,7 @@ const supabaseSocket = supabaseUrl.replace(/^http(s?):\/\//, 'ws$1://');
  *
  * **아직 강제하지 않는 것 — `script-src` 의 `'unsafe-inline'`.** 그것을 빼려면 Next 가 페이지에
  * 심는 인라인 스크립트마다 nonce 가 필요하고, nonce 를 쓰면 지금 미리 만들어 두는 화면이 요청마다
- * 다시 그려진다. PG · 본인인증 도메인과 함께 정한다 — 잰 값은 G-23 ② 와
+ * 다시 그려진다. 본인인증 도메인과 함께 정한다 — 잰 값은 G-23 ② 와
  * `docs/notes/csp-nonce-2026-09-23.md`. `style-src` 의 `'unsafe-inline'` 도 같은 결정을 기다린다.
  *
  * `frame-ancestors` 는 `Report-Only` 에서 무시돼 따로 한 줄로 강제하던 것을 이 정책 하나에 합쳤다.
@@ -35,33 +35,21 @@ const supabaseSocket = supabaseUrl.replace(/^http(s?):\/\//, 'ws$1://');
  * 개발 서버는 `eval` 과 웹소켓(HMR)을 쓴다 — 그 둘은 개발에서만 연다. Supabase 의 Realtime 소켓(같은 호스트의
  * `wss:`)은 운영에서도 연다 — 화면이 스스로 갱신되는 채널이다(ADR 0155).
  */
-const policyWith = (open: { script: string; img: string; connect: string; frame: string; form: string }) =>
-  [
-    "default-src 'self'",
-    `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ''}${open.script}`,
-    "style-src 'self' 'unsafe-inline'",
-    `img-src 'self' data: blob:${open.img}`,
-    "font-src 'self' data:",
-    `connect-src 'self' ${supabaseUrl} ${supabaseSocket}${isDev ? ' ws: wss:' : ''}${open.connect}`.replace(/\s+/g, ' ').trimEnd(),
-    /* 웹 푸시의 서비스 워커(`/sw.js`)는 제 출처의 파일만 — 다른 출처 · blob 워커는 없다(ADR 0156) */
-    "worker-src 'self'",
-    `frame-src ${open.frame}`,
-    "object-src 'none'",
-    "base-uri 'self'",
-    `form-action 'self'${open.form}`,
-    "frame-ancestors 'none'",
-  ].join('; ');
-
-const contentSecurityPolicy = policyWith({ script: '', img: '', connect: '', frame: "'none'", form: '' });
-
-/**
- * **풀이권 상품 화면(`/me/credits`)만 결제창에 열린다**(G-21, ADR 0171).
- *
- * PortOne 브라우저 SDK(`https://cdn.portone.io`)는 PG 의 결제 모듈을 이 문서에 다시 싣고, 결제창은 PG 의 틀(iframe) · 창으로
- * 선다. PG 를 아직 안 정해(G-21) 어느 출처인지 미리 적을 수 없다 — 그래서 이 화면에서만 `https:` 를 연다. 다른 화면의 정책은
- * 그대로다. PG 가 정해지면 그 PG 의 출처로 좁힌다(G-23 ②).
- */
-const checkoutPolicy = policyWith({ script: ' https:', img: ' https:', connect: ' https:', frame: 'https:', form: ' https:' });
+const contentSecurityPolicy = [
+  "default-src 'self'",
+  `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ''}`,
+  "style-src 'self' 'unsafe-inline'",
+  "img-src 'self' data: blob:",
+  "font-src 'self' data:",
+  `connect-src 'self' ${supabaseUrl} ${supabaseSocket}${isDev ? ' ws: wss:' : ''}`.replace(/\s+/g, ' ').trimEnd(),
+  /* 웹 푸시의 서비스 워커(`/sw.js`)는 제 출처의 파일만 — 다른 출처 · blob 워커는 없다(ADR 0156) */
+  "worker-src 'self'",
+  "frame-src 'none'",
+  "object-src 'none'",
+  "base-uri 'self'",
+  "form-action 'self'",
+  "frame-ancestors 'none'",
+].join('; ');
 
 const nextConfig: NextConfig = {
   // The in-app preview reaches the dev server through IPv4 loopback.
@@ -93,18 +81,13 @@ const nextConfig: NextConfig = {
           /**
            * **강제하는 것 넷** — 부를 수 있는 출처(CSP, 위), 남의 틀 안에 못 들어가고(클릭재킹 —
            * CSP 의 `frame-ancestors` 를 모르는 옛 브라우저에는 `X-Frame-Options`), 파일 종류를
-           * 추측하지 않고, 쓰지 않는 기기 권한을 닫는다. 결제(`payment`)는 PG 가 정해질 때 본다.
+           * 추측하지 않고, 쓰지 않는 기기 권한을 닫는다. 웹에는 결제창이 없다(ADR 0212).
            */
           { key: 'Content-Security-Policy', value: contentSecurityPolicy },
           { key: 'X-Frame-Options', value: 'DENY' },
           { key: 'X-Content-Type-Options', value: 'nosniff' },
           { key: 'Permissions-Policy', value: 'camera=(), microphone=(), geolocation=(), browsing-topics=()' },
         ],
-      },
-      /* 같은 머리의 뒤 줄이 앞 줄을 덮는다 — 상품 화면과 결제 뒤 화면만 넓힌 정책을 받는다(위 `checkoutPolicy`) */
-      {
-        source: '/me/credits/:path*',
-        headers: [{ key: 'Content-Security-Policy', value: checkoutPolicy }],
       },
       /**
        * **서비스 워커는 늘 새로 받는다** — 낡은 워커가 캐시에 남으면 고친 알림 처리가 기기에 안 닿는다(ADR 0156). 종류를

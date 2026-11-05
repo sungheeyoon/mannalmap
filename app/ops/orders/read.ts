@@ -27,7 +27,7 @@ export type OrderLine = {
   readonly orderNumber: string;
   readonly status: string;
   readonly provider: string;
-  /** PG 의 거래 번호 — 승인 때 선다 */
+  /** 결제한 곳의 거래 번호 — 승인 때 선다 */
   readonly paymentId: string | null;
   readonly amount: number;
   readonly refundedAmount: number;
@@ -58,9 +58,9 @@ export type RefundHold = {
   readonly amount: number;
   readonly reason: string;
   readonly heldAt: string;
-  /** 가맹점 주문 번호(`rdo_…`) — PortOne 의 결제 번호 */
+  /** 가맹점 주문 번호(`rdo_…`) */
   readonly orderNumber: string;
-  /** PG 의 거래 번호 — 콘솔에서 이 결제를 찾는다 */
+  /** 결제한 곳의 거래 번호 — 콘솔에서 이 결제를 찾는다 */
   readonly paymentId: string | null;
   /** 결제액 */
   readonly paidAmount: number;
