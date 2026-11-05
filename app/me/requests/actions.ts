@@ -114,7 +114,7 @@ export async function requestAccountDeletion(): Promise<SaveResult> {
   const { error } = await supabase.rpc('request_account_deletion');
   if (error) return { ok: false, message: userFacingDbMessage(error, 'request_account_deletion') };
 
-  // 카카오 연결 끊기(ADR 0224 「2026-11-05 덧」) — 탈퇴가 **받아진 뒤에** 끊는다. 회원번호는 지금 읽고(크론이 지우면 신원이 사라진다)
+  // 카카오 연결 끊기(ADR 0224 「덧붙임 2026-11-05」) — 탈퇴가 **받아진 뒤에** 끊는다. 회원번호는 지금 읽고(크론이 지우면 신원이 사라진다)
   // 카카오는 응답 뒤에 부른다. 끊기가 실패해도 탈퇴는 이미 갔다 — 기록 `kakao unlink` 에만 남는다
   const memberId = await kakaoMemberOfCurrentUser(supabase);
   if (memberId !== null) after(() => unlinkKakaoOnLeaving(memberId));

@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 /**
- * **탈퇴 신청과 카카오 연결 끊기**(ADR 0224 「2026-11-05 덧」) — 끊기는 탈퇴가 받아진 뒤, 응답 뒤(`after`)에 돌고, 실패해도 탈퇴의 답을
+ * **탈퇴 신청과 카카오 연결 끊기**(ADR 0224 「덧붙임 2026-11-05」) — 끊기는 탈퇴가 받아진 뒤, 응답 뒤(`after`)에 돌고, 실패해도 탈퇴의 답을
  * 바꾸지 않는다. 카카오는 가짜 `fetch` 다.
  */
 const pending = vi.hoisted(() => [] as (() => Promise<unknown>)[]);

@@ -7,6 +7,7 @@ import { SERVICE_NAME } from '@brand';
 import { CHART_SIGN_IN, SIGN_IN_UNLOCKS, SIGNED_OUT_EXIT, COMPAT_SIGN_IN_TITLE } from '@brand/guide';
 import { chartWantOf, isChartPath } from '@consent/app-destination';
 import { safeReturnPath, withReturnPath } from '@consent/return-path';
+import { matchEntriesStand } from '@matching/opening';
 
 import { arriveAt } from '@/auth/arrive';
 import { AppleSignInButton } from '@/auth/apple-button';
@@ -17,6 +18,7 @@ import { MatchingSteps } from '@/auth/matching-steps';
 import { signInWithGoogle, type SignInAnswer } from '@/auth/sign-in';
 import { readGate } from '@/home/gate';
 import { goHome } from '@/info/go-home';
+import { useMatchOpen } from '@/matching/opening';
 import { Icon } from '@/ui/icons';
 import { NoticeLine, NoticeScreen } from '@/ui/notice-screen';
 import { PrimaryButton, SecondaryButton, TextButton } from '@/ui/parts';
@@ -36,6 +38,8 @@ export default function SignInScreen() {
   const want = chartWantOf(destination);
   const fromChart = isChartPath(destination);
   const [going, setGoing] = useState<'google' | 'apple' | 'kakao' | null>(null);
+  /* 인연이 닫힌 동안(ADR 0222) 「인연 만나기」를 약속하지 않는다 — 웹 `/auth` 와 같다 */
+  const matchOpen = useMatchOpen();
 
   useEffect(() => {
     let live = true;
@@ -94,7 +98,7 @@ export default function SignInScreen() {
       {destination.startsWith('/me/matching') && <MatchingSteps done={[]} />}
       {!fromChart && (
         <View style={styles.unlocks}>
-          {SIGN_IN_UNLOCKS.map(({ icon, text }) => (
+          {SIGN_IN_UNLOCKS.filter((one) => !one.match || matchEntriesStand(matchOpen)).map(({ icon, text }) => (
             <View key={text} style={styles.unlock}>
               <View style={styles.unlockIcon}>
                 <Icon name={icon} size={18} color={COLOR.creamInk} />

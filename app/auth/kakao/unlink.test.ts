@@ -3,7 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { KAKAO_UNLINK_URL, kakaoAdminKey, kakaoMemberIdOf, unlinkKakaoMember, unlinkKakaoOnLeaving } from './unlink';
 
 /**
- * **웹 탈퇴의 카카오 연결 끊기**(ADR 0224 「2026-11-05 덧」) — 카카오는 가짜 `fetch` 다. 진짜 카카오는 부르지 않는다.
+ * **웹 탈퇴의 카카오 연결 끊기**(ADR 0224 「덧붙임 2026-11-05」) — 카카오는 가짜 `fetch` 다. 진짜 카카오는 부르지 않는다.
  * 잴 것은 넷이다: 카카오에 무엇을 보내나 · 회원번호를 어디서 읽나 · 실패가 던지지 않고 기록에만 남나 · 기록에 키 · 회원번호가 안 실리나.
  */
 const ADMIN_KEY = 'admin-key-for-test';
