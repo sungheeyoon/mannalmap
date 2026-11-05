@@ -74,15 +74,16 @@ export default function SignInScreen() {
       }
       actions={
         <>
-          <GoogleSignInButton
-            going={going === 'google'}
-            onPress={() => void signIn('google', signInWithGoogle)}
-            disabled={going !== null}
-          />
+          {/* 카카오 → 구글 → 애플(운영자 결정 2026-11-05, ADR 0228) */}
           <KakaoSignInButton
             label={going === 'kakao' ? KAKAO_SIGN_IN_GOING : undefined}
             onPress={() => void signIn('kakao', signInWithKakao)}
             busy={going !== null}
+          />
+          <GoogleSignInButton
+            going={going === 'google'}
+            onPress={() => void signIn('google', signInWithGoogle)}
+            disabled={going !== null}
           />
           <AppleSignInButton onPress={() => void signIn('apple', signInWithApple)} busy={going !== null} />
           {fromChart && <SecondaryButton label="취소" onPress={() => goBack('/')} disabled={going !== null} />}
