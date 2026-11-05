@@ -9,7 +9,7 @@ import { readingGrounding } from './display';
  * 부른다 — 저장을 막지도 다시 부르지도 않는다(2026-10-02 운영자 확정). 근거 칸은 모델이 손으로 적는 목록이라
  * 경로 표기가 매번 조금씩 다르고, 이 파서는 그중 **확실히 읽히는 것만** 판정한다.
  *
- * 잰 값은 #427 결정 · 결과 댓글에 있다: https://github.com/sungheeyoon/saju/issues/427#issuecomment-5950748135
+ * 잰 값은 #427 결정 · 결과 댓글에 있다: https://github.com/sungheeyoon/mannalmap/issues/427#issuecomment-5950748135
  *
  * 규칙:
  * - 근거 절은 화면이 자르는 자리와 같은 제목으로 찾는다(`readingGrounding`). 못 찾으면 `grounding: false`.

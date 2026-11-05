@@ -78,3 +78,18 @@ Safari 는 SVG 파비콘을 안 읽고 `/favicon.ico` 는 404 였다. ICO · PNG
 
 앱 아이콘 · 안드로이드 적응형 셋 · 스플래시 · 파비콘은 `mobile/scripts/brand-icons.mjs` 가 `app/icon.svg` 의 밝은 짝에서 굽는다. 좌표를 옮겨 적지 않으므로 로고를
 바꾸면 그 도구를 다시 돌리면 된다. 바탕은 토큰(아이콘 `cream` · 스플래시 `background`)이고 `app.json` 의 글자는 `scripts/mobile-brand.test.ts` 가 견준다.
+
+## 추기 — 영문 식별자는 `mannalmap` 이고, `saju` 는 가칭이었다 (운영자 결정 2026-11-05)
+
+「만날지도」의 영문 이름은 **`mannalmap`**(소문자 한 낱말, 로마자 표기 MannalMap)이다. 저장소를 처음 열 때 쓴 `saju` 는 가칭이었다.
+기계가 읽는 이름은 이 하나로 맞춘다.
+
+| 자리 | 이름 | 상태 |
+| --- | --- | --- |
+| 도메인 · 앱 패키지 · 번들 ID · Expo slug · scheme | `mannalmap.com` · `com.mannalmap.app` · `mannalmap` | 이미 그랬다 |
+| GitHub 저장소 | `sungheeyoon/mannalmap` | 2026-11-05 바꿨다 — 옛 주소 `sungheeyoon/saju` 는 GitHub 가 넘긴다 |
+| Supabase 운영 프로젝트 표시 이름 | `mannalmap` (ref `xgdeguyxgkillndraonc` 그대로) | 2026-11-05 바꿨다 — 표시 이름만, 키 · 주소는 그대로다 |
+| Vercel 프로젝트 · `package.json` 의 `name` · 로컬 폴더 | `saju` | 남았다 — Vercel 은 CLI 연결 · `saju-snowy.vercel.app` 별칭을 보고 옮긴다 |
+
+지난 노트 · 이슈 댓글 링크의 `sungheeyoon/saju` 는 기록이라 고치지 않는다(넘김으로 열린다). 엔진의 타입 이름 `Saju`(명식)는 영문 서비스 이름이 아니다 —
+그대로 둔다.
