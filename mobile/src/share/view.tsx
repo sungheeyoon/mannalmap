@@ -114,7 +114,8 @@ function GoneScreen() {
       title="열 수 없는 링크예요"
       lines={['주소가 잘못됐거나 더 이상 남아 있지 않은 풀이예요.', '보낸 분에게 링크를 다시 받아 주세요.', `${SERVICE_NAME_TOPIC} 생일만 넣으면 로그인 없이 사주를 볼 수 있어요.`]}
     >
-      <PrimaryButton label="무료로 내 사주 보기" onPress={() => router.replace('/')} />
+      {/* 입력 화면으로 곧장 — 첫 화면의 소개를 다시 지나지 않는다(ADR 0226, 웹은 `TRIAL_PATH`) */}
+      <PrimaryButton label="무료로 내 사주 보기" onPress={() => router.replace('/?start=1' as never)} />
     </Notice>
   );
 }

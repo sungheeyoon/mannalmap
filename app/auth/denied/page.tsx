@@ -3,7 +3,7 @@ import Link from 'next/link';
 import { BUTTON_PRIMARY, BUTTON_SECONDARY } from '../../ui/buttons';
 import { NoticeScreen } from '../../ui/notice-screen';
 import { SIGNED_OUT_EXIT, SIGNED_OUT_REACH } from '../../service-features';
-import { withReturnPath } from '@/src/lib/consent';
+import { visitorExitOf, withReturnPath } from '@/src/lib/consent';
 import { HomeLink } from '../../home-link';
 
 /**
@@ -40,7 +40,7 @@ export default async function DeniedPage({
           <Link href={again} className={BUTTON_PRIMARY}>
             다시 로그인
           </Link>
-          <HomeLink className={BUTTON_SECONDARY}>{SIGNED_OUT_EXIT}</HomeLink>
+          <HomeLink className={BUTTON_SECONDARY} visitorHref={visitorExitOf(next)}>{SIGNED_OUT_EXIT}</HomeLink>
         </>
       }
       /*

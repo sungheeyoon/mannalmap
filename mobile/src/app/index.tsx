@@ -4,20 +4,16 @@ import { Keyboard, KeyboardAvoidingView, Pressable, ScrollView, StyleSheet, Text
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { SERVICE_NAME } from '@brand';
-import { ABOUT_LEAD, COMPAT_ENTRY, MATCHING_INTRO_TITLE } from '@brand/guide';
 import { calculateChart, dateRefusal } from '@input/chart';
 import { convertedLine, dateOfParts, limitsOf, timeOfParts } from '@input/entry';
 import { DEFAULT_QUERY, HOUR_UNKNOWN_CHOICE, NAME_MAX, TIME_BASES, TIME_BASIS, type Query } from '@input/query';
 import { CALENDARS, CALENDAR_KO, CITY_LONGITUDES, GENDERS, GENDER_KO, SUPPORTED_YEAR_RANGE, type CityName, type LateNightRule } from '@saju';
 
 import { chartPath } from '@consent/app-destination';
-import { withReturnPath } from '@consent/return-path';
-import { matchEntriesStand } from '@matching/opening';
+import { entryFor, type Entry, type EntryOpened } from '@consent/entry';
 import { readGate } from '@/home/gate';
-import { useMatchOpen } from '@/matching/opening';
-import { POLICY_TITLE, SUPPORT_TITLE } from '@/info/copy';
-import { Choices, DigitField, Field, FieldLabel, KeyboardDoneBar, PrimaryButton, Select } from '@/ui/parts';
-import { Mark } from '@/share/marks';
+import { FirstIntro } from '@/home/intro';
+import { Choices, DigitField, Field, FieldLabel, KeyboardDoneBar, PrimaryButton, SecondaryButton, Select } from '@/ui/parts';
 import { Logo } from '@/ui/logo';
 import { COLOR, FONT, RADIUS, TYPE } from '@/ui/tokens';
 import { CardFrame, Paper } from '@/ui/surfaces';
@@ -33,45 +29,58 @@ const RULES: readonly { value: LateNightRule; label: string; hint: string }[] = 
 ];
 
 /**
- * 입구 — 로그인과 가입을 끝낸 사람은 앱을 열면 홈이다. 아니면(모르면) 입력 화면이고, 만세력까지 로그인을 묻지 않는다(ADR 0213).
- * 홈의 「다른 사람 사주 보기」는 `another` 를 들고 와 입력 화면을 그대로 연다.
+ * 입구 — 앱을 열면 관문의 답 하나로 설 곳을 고른다(`entryFor`, ADR 0226). 가입을 마친 회원은 홈, 가입 · 다시 확인할 안내가 남았으면
+ * 가입 화면, 세션이 없으면 첫 화면(소개)이다. **관문을 못 읽었으면 로그인 전으로 읽지 않고 다시 시도하기를 세운다.**
  *
- * 돌아올 때마다 다시 본다 — 결과 화면에서 로그인하고 돌아온 사람에게 「로그인」이 남지 않고, 적어 둔 값 위에서 홈으로 튕기지도 않는다.
+ * 소개의 「로그인 없이 사주 보기」는 `start` 를, 홈의 「다른 사람 사주 보기」는 `another` 를 들고 와 입력 화면을 연다 — 만세력까지
+ * 로그인을 묻지 않는다(ADR 0213). 입력 화면은 돌아올 때마다 다시 본다 — 결과에서 로그인하고 돌아온 사람에게 「로그인」이 남지 않는다.
  */
 export default function EntryScreen() {
-  const { another } = useLocalSearchParams<{ another?: string }>();
-  const [entry, setEntry] = useState<'checking' | 'home' | 'birth'>(another === undefined ? 'checking' : 'birth');
-  const [signedIn, setSignedIn] = useState(another !== undefined);
+  const { another, start } = useLocalSearchParams<{ another?: string; start?: string }>();
+  const opened: EntryOpened = another !== undefined ? 'another' : start !== undefined ? 'trial' : 'first';
+  const [entry, setEntry] = useState<Entry | 'checking'>(opened === 'first' ? 'checking' : 'birth');
+  const [signedIn, setSignedIn] = useState(opened === 'another');
+  const [failure, setFailure] = useState<string | null>(null);
 
-  useFocusEffect(
-    useCallback(() => {
-      let watching = true;
-      void readGate().then((gate) => {
-        if (!watching) return;
-        setSignedIn(gate.kind === 'in');
-        setEntry((now) => (now !== 'checking' ? now : gate.kind === 'in' ? 'home' : 'birth'));
-      });
-      return () => {
-        watching = false;
-      };
-    }, []),
-  );
+  const check = useCallback(() => {
+    let watching = true;
+    void readGate().then((gate) => {
+      if (!watching) return;
+      setSignedIn(gate.kind === 'in');
+      setFailure(gate.kind === 'failed' ? gate.message : null);
+      /* 한 번 고른 자리는 다시 안 고른다 — 적어 둔 값 위에서 홈으로 튕기지 않는다. 다시 시도하기만 다시 고른다 */
+      setEntry((now) => (now !== 'checking' && now !== 'retry' ? now : entryFor(gate.kind, opened)));
+    });
+    return () => {
+      watching = false;
+    };
+  }, [opened]);
+
+  useFocusEffect(check);
 
   if (entry === 'checking') return <View style={styles.screen} />;
   if (entry === 'home') return <Redirect href={'/me' as never} />;
+  if (entry === 'signup') return <Redirect href={'/signup' as never} />;
+  if (entry === 'retry') {
+    return (
+      <SafeAreaView style={[styles.screen, styles.retry]}>
+        <Text style={styles.retryLine}>{failure}</Text>
+        <SecondaryButton
+          label="다시 시도하기"
+          onPress={() => {
+            setEntry('checking');
+            check();
+          }}
+        />
+      </SafeAreaView>
+    );
+  }
+  if (entry === 'intro') return <FirstIntro />;
   return <BirthScreen signedOut={!signedIn} />;
 }
 
-/** 로그인 전의 아래 길 — 웹 바닥글을 옮기지 않는다. 자주 묻는 질문 · 문의는 고객센터 안, 약관 셋과 사업자 정보는 약관 및 정책 안이다 */
-const ENTRY_LINKS = [
-  { label: '서비스 소개', open: () => router.push('/about') },
-  { label: SUPPORT_TITLE, open: () => router.push('/support') },
-  { label: POLICY_TITLE, open: () => router.push('/policies') },
-];
-
 /** 출생 정보 — 칸의 차례와 말은 웹의 `app/birth-form.tsx` 와 같다. 계산은 웹과 같은 `calculateChart` 다 */
 function BirthScreen({ signedOut }: { signedOut: boolean }) {
-  const matchOpen = useMatchOpen();
   const [name, setName] = useState('');
   const [gender, setGender] = useState<Query['gender']>(DEFAULT_QUERY.gender);
   const [year, setYear] = useState('');
@@ -151,28 +160,8 @@ function BirthScreen({ signedOut }: { signedOut: boolean }) {
             )}
           </View>
           <Paper style={styles.paper}>
-            {signedOut ? (
-              <View style={styles.head}>
-                <Text accessibilityRole="header" style={styles.title}>나는 어떤 사람일까?</Text>
-                <Text style={styles.lead}>{ABOUT_LEAD[0]}</Text>
-                <View style={styles.doors}>
-                  {/* 인연이 닫힌 동안은 소개도 안 선다(ADR 0222) */}
-                  {matchEntriesStand(matchOpen) && (
-                    <Pressable accessibilityRole="link" onPress={() => router.push('/matching-intro')} style={styles.intro}>
-                      <Text style={styles.introText}>{MATCHING_INTRO_TITLE}</Text>
-                      <Mark name="arrow" size={16} color={COLOR.secondary} />
-                    </Pressable>
-                  )}
-                  {/* 궁합은 로그인 뒤 궁합 탭이다 — 앱에는 로그인 전 궁합 결과가 없다(ADR 0213 의 11) */}
-                  <Pressable accessibilityRole="link" onPress={() => router.push(withReturnPath('/auth', '/me/compat') as never)} style={styles.intro}>
-                    <Text style={styles.introText}>{COMPAT_ENTRY}</Text>
-                    <Mark name="arrow" size={16} color={COLOR.secondary} />
-                  </Pressable>
-                </View>
-              </View>
-            ) : (
-              <Text style={[styles.title, styles.titleAlone]}>출생 정보를 입력해 주세요</Text>
-            )}
+            {/* 무엇을 하는 곳인지와 두 입구는 소개(`@/home/intro`)가 든다 — 여기는 입력 하나다(ADR 0226) */}
+            <Text accessibilityRole="header" style={[styles.title, styles.titleAlone]}>출생 정보를 입력해 주세요</Text>
 
             <CardFrame style={styles.form}>
               <View style={styles.pair}>
@@ -262,16 +251,6 @@ function BirthScreen({ signedOut }: { signedOut: boolean }) {
               <PrimaryButton label={signedOut ? '내 사주 보기' : '사주 보기'} onPress={submit} />
             </View>
           </Paper>
-
-          {signedOut && (
-            <View accessibilityLabel="안내" style={styles.links}>
-              {ENTRY_LINKS.map((link) => (
-                <Pressable key={link.label} accessibilityRole="link" onPress={link.open} style={styles.link}>
-                  <Text style={styles.linkText}>{link.label}</Text>
-                </Pressable>
-              ))}
-            </View>
-          )}
         </ScrollView>
         <KeyboardDoneBar />
       </KeyboardAvoidingView>
@@ -287,15 +266,9 @@ const styles = StyleSheet.create({
   brand: { fontSize: TYPE.heading, fontFamily: FONT.bold, color: COLOR.foreground },
   signIn: { minHeight: 44, justifyContent: 'center', marginLeft: 'auto', paddingLeft: 12 },
   signInText: { fontSize: TYPE.body, fontFamily: FONT.bold, color: COLOR.secondary },
-  links: { flexDirection: 'row', flexWrap: 'wrap', columnGap: 20, marginTop: 12, marginHorizontal: 4 },
-  link: { minHeight: 44, justifyContent: 'center' },
-  linkText: { fontSize: TYPE.small, fontFamily: FONT.bold, color: COLOR.secondary },
   titleAlone: { marginHorizontal: 4 },
-  head: { gap: 4, marginHorizontal: 4 },
-  lead: { fontSize: TYPE.body, lineHeight: 24, fontFamily: FONT.medium, color: COLOR.creamInk },
-  doors: { flexDirection: 'row', flexWrap: 'wrap', columnGap: 16 },
-  intro: { minHeight: 44, flexDirection: 'row', alignItems: 'center', gap: 4 },
-  introText: { fontSize: TYPE.body, fontFamily: FONT.bold, color: COLOR.secondary },
+  retry: { alignItems: 'center', justifyContent: 'center', gap: 12, padding: 24 },
+  retryLine: { fontSize: TYPE.body, lineHeight: 24, fontFamily: FONT.medium, color: COLOR.foreground, textAlign: 'center' },
   title: { fontSize: TYPE.title, lineHeight: 35, fontFamily: FONT.bold, color: COLOR.foreground },
   form: { padding: 16, gap: 18, borderWidth: 0 },
   pair: { flexDirection: 'row', gap: 12 },

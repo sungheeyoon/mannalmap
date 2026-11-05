@@ -31,6 +31,9 @@ const WEB = [
   'src/lib/chat/index.ts',
   'src/lib/survey/index.ts',
   'app/me/requests/manage.tsx',
+  /* 앱 입구의 소개(`mobile/src/home/intro.tsx`)는 웹 첫 화면의 소개 · 「할 수 있는 것」과 같은 글자다(ADR 0226) */
+  'app/first-intro.tsx',
+  'app/landing-guide.tsx',
 ]
   .map(read)
   .join('\n')

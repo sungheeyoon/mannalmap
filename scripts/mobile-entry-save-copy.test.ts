@@ -16,21 +16,40 @@ const read = (file: string) => readFileSync(join(import.meta.dirname, '..', file
 
 describe('앱 입구', () => {
   const entry = read('mobile/src/app/index.tsx');
+  const intro = read('mobile/src/home/intro.tsx');
 
-  it('로그인 글자는 웹 머리글의 그것이다', () => {
+  it('로그인 글자는 웹 머리글의 그것이다 — 소개와 입력 화면 둘 다', () => {
     expect(read('app/site-header.tsx')).toMatch(/^\s*로그인\s*$/m);
     expect(entry).toMatch(/<Text[^>]*>로그인<\/Text>/);
+    expect(intro).toMatch(/<Text[^>]*>로그인<\/Text>/);
   });
 
-  it('입력 없이 들어가는 길 · 인연 소개 · 서비스 소개 · 고객센터 · 약관 및 정책이 로그인 없이 닿는다', () => {
-    expect(entry).toContain("router.push('/auth'");
-    expect(entry).toContain("router.push('/matching-intro'");
-    expect(entry).toContain("router.push('/about'");
-    expect(entry).toContain("router.push('/support'");
-    expect(entry).toContain("router.push('/policies'");
+  it('소개에서 로그인 · 인연 소개 · 서비스 소개 · 고객센터 · 약관 및 정책이 로그인 없이 닿는다', () => {
+    expect(intro).toContain("router.push('/auth'");
+    expect(intro).toContain("router.push('/matching-intro'");
+    expect(intro).toContain("router.push('/about'");
+    expect(intro).toContain("router.push('/support'");
+    expect(intro).toContain("router.push('/policies'");
   });
 
-  it('입구는 바닥글 나열을 옮기지 않고, 소개 판 없이 입력 화면 하나다', () => {
+  it('소개는 웹 첫 화면과 같은 글자와 엔진이 계산한 예시 카드를 든다 — 슬라이드가 없다(ADR 0226)', () => {
+    for (const name of ['TRIAL_START', 'MEMBER_SIGN_IN_ASK', 'RESULT_EXAMPLE_STAMP', 'ABOUT_LEAD']) {
+      expect(intro).toContain(name);
+      expect(read('app/first-intro.tsx')).toContain(name);
+    }
+    expect(intro).toContain('calculateChart(EXAMPLE_QUERY)');
+    expect(intro).not.toMatch(/setInterval|FlatList|pagingEnabled/);
+    /* 체험은 입력 화면을 스택에 올린다 — 뒤로 가면 소개다 */
+    expect(intro).toContain("router.push('/?start=1'");
+  });
+
+  it('입구는 관문의 답 하나로 고르고, 못 읽은 답은 다시 시도하기다', () => {
+    expect(entry).toContain('entryFor(gate.kind, opened)');
+    expect(entry).toContain('label="다시 시도하기"');
+    expect(entry).toContain("<Redirect href={'/signup' as never} />");
+  });
+
+  it('입구는 바닥글 나열을 옮기지 않고, 따로 된 소개 판 주소가 없다', () => {
     expect(entry).not.toContain('GUIDE_LINKS');
     expect(entry).not.toContain('/landing');
     expect(existsSync(join(import.meta.dirname, '../mobile/src/app/landing.tsx'))).toBe(false);

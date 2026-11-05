@@ -49,5 +49,6 @@ test('로그인하지 않은 채 /saju 에 입력을 싣고 오면 첫 화면에
 
   await page.goto('/saju');
   await expect(page).toHaveURL(/localhost:\d+\/$/);
-  await expect(page.getByRole('button', { name: '무료로 내 사주 보기' })).toBeVisible();
+  /* 입력 없이 온 첫 화면은 소개다(ADR 0226) */
+  await expect(page.getByRole('button', { name: '로그인 없이 사주 보기' })).toBeVisible();
 });

@@ -2,7 +2,7 @@ import { expect, test } from './anon';
 
 import { TASTE_CLOSED_NOTE, TASTE_FAILED_NOTE, TASTE_RETRY_LABEL } from '@/src/lib/reading/copy';
 
-import { fillBirth } from './birth-form';
+import { fillBirth, openTrial } from './birth-form';
 
 /**
  * 로그인 전 첫 화면 — **두 입구 · 잠긴 목차(첫 절에 로그인 전 사주 문단) · 접힌 만세력**(흐름 시안 g, ADR 0131).
@@ -12,13 +12,25 @@ import { fillBirth } from './birth-form';
  * 잠긴 채 선다. 글이 서는 길과 가입 왕복은 로그인 차선(`signed-in.spec.ts`)이 DB 에 글을 심어 잰다.
  */
 
-test('첫 화면은 두 입구와 생일 칸이고, 코드 띠와 이야기 칸은 없다', async ({ page }) => {
+test('첫 화면은 소개 · 결과 예시 · 두 입구이고, 체험을 고르면 두 입구와 생일 칸이다 (ADR 0226)', async ({ page }) => {
   await page.goto('/');
 
+  /* 소개가 먼저다 — 폼은 아직 안 보이고, 엔진이 계산한 예시 카드와 체험 · 로그인 두 입구가 선다 */
+  await expect(page.getByRole('heading', { level: 1, name: '나는 어떤 사람일까?' })).toBeVisible();
+  await expect(page.getByRole('region', { name: '내 사주' })).toContainText('예시');
+  await expect(page.getByRole('tab', { name: /내 사주 보기/ })).toBeHidden();
+  await expect(page.locator('main').getByRole('link', { name: '로그인', exact: true })).toHaveAttribute('href', '/auth');
+
+  /* 체험은 주소에 실린다 — 뒤로 가면 소개다 */
+  await page.getByRole('button', { name: '로그인 없이 사주 보기' }).click();
+  await expect(page).toHaveURL(/\/#start$/);
   const entries = page.getByRole('tablist', { name: '무엇을 볼까요' });
   await expect(entries.getByRole('tab', { name: /내 사주 보기/ })).toHaveAttribute('aria-selected', 'true');
   await expect(entries.getByRole('tab', { name: /궁합 보기/ })).toHaveAttribute('aria-selected', 'false');
   await expect(page.getByRole('button', { name: '무료로 내 사주 보기' })).toBeVisible();
+  await page.goBack();
+  await expect(page.getByRole('button', { name: '로그인 없이 사주 보기' })).toBeVisible();
+  await page.goForward();
 
   /* 제목은 폼 종이의 물음이고, 폼 아래는 「할 수 있는 것」이다 — 조건(로그인 · 풀이권)은 안 싣는다 */
   await expect(page.getByRole('heading', { level: 1, name: '나는 어떤 사람일까?' })).toBeVisible();
@@ -33,13 +45,13 @@ test('첫 화면은 두 입구와 생일 칸이고, 코드 띠와 이야기 칸�
   */
   await expect(page.locator('main a[href^="/signup"]')).toHaveCount(0);
 
-  /* 로그인 전의 「처음으로」 링크는 이 화면이다 — 회원만 곧장 홈으로 간다(`HomeLink`) */
+  /* 서비스 소개의 「무료로 내 사주 보기」는 체험으로 곧장 연다 — 회원만 곧장 홈으로 간다(`HomeLink`) */
   await page.goto('/about');
-  await expect(page.getByRole('link', { name: '무료로 내 사주 보기' })).toHaveAttribute('href', '/');
+  await expect(page.getByRole('link', { name: '무료로 내 사주 보기' })).toHaveAttribute('href', '/#start');
 });
 
 test('무료로 내 사주 보기 → 결과 머리로 내려가고 · 잠긴 목차(첫 절에 로그인 전 사주 문단) · 접힌 만세력 → 로그인은 입력을 주소에 안 싣는다', async ({ page }) => {
-  await page.goto('/');
+  await openTrial(page);
   await fillBirth(page, { name: '민수', date: '1990-05-15', time: '14:30' });
   await page.getByRole('button', { name: '무료로 내 사주 보기' }).click();
 
@@ -88,10 +100,15 @@ test('무료로 내 사주 보기 → 결과 머리로 내려가고 · 잠긴 �
   await expect(page).toHaveURL(/\/auth\?next=%2Fsaju%23resume-reading$/);
   expect(page.url()).not.toContain('1990');
   expect(await page.evaluate(() => sessionStorage.getItem('saju:reading-draft'))).toContain('date=1990-05-15');
+
+  /* 로그인을 그만두면 소개가 아니라 그 결과로 돌아간다 — 첫 화면이 남은 입력을 되찾는다(ADR 0226) */
+  await page.getByRole('link', { name: '사주로 돌아가기' }).click();
+  await expect(page.getByRole('region', { name: '내 사주' })).toContainText('민수');
+  await expect(page.getByRole('button', { name: '로그인 없이 사주 보기' })).toBeHidden();
 });
 
 test('궁합 보기 → 두 사람의 한 줄 · 가린 점수 · 잠긴 목록 → 로그인은 두 사람을 주소에 안 싣는다', async ({ page }) => {
-  await page.goto('/');
+  await openTrial(page);
   await page.getByRole('tab', { name: /궁합 보기/ }).click();
 
   const panel = page.getByRole('tabpanel', { name: /궁합 보기/ });

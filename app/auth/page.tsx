@@ -10,7 +10,7 @@ import { SIGNED_OUT_EXIT, SIGNED_OUT_REACH } from '../service-features';
 import { SignInButton } from './sign-in-button';
 import { supabaseOnServer } from './server-client';
 import { signedInUser } from './signed-in';
-import { RESUME_PAIR_PATH, RESUME_READING_PATH, afterSignIn, safeReturnPath } from '@/src/lib/consent';
+import { RESUME_PAIR_PATH, RESUME_READING_PATH, afterSignIn, safeReturnPath, visitorExitOf } from '@/src/lib/consent';
 import { HomeLink } from '../home-link';
 
 export default async function SignInPage({
@@ -49,7 +49,7 @@ export default async function SignInPage({
         */
         <>
           <p>{SIGNED_OUT_REACH}</p>
-          <HomeLink className={`${BUTTON_TERTIARY} w-fit`}>{SIGNED_OUT_EXIT}</HomeLink>
+          <HomeLink className={`${BUTTON_TERTIARY} w-fit`} visitorHref={visitorExitOf(returnTo)}>{SIGNED_OUT_EXIT}</HomeLink>
         </>
       }
     >

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { RESUME_READING_PATH, afterSignIn, safeReturnPath, signInFrom, withReturnPath } from './return-path';
+import { RESUME_READING_PATH, afterSignIn, safeReturnPath, signInFrom, visitorExitOf, withReturnPath } from './return-path';
 
 describe('로그인 뒤 돌아갈 경로', () => {
   it('앱 안 경로는 쿼리와 # 까지 그대로 둔다', () => {
@@ -87,5 +87,19 @@ describe('로그인을 마친 사람이 처음 설 곳', () => {
     expect(afterSignIn('/compat')).toBe('/compat');
     expect(afterSignIn('/me/match/abc')).toBe('/me/match/abc');
     expect(afterSignIn('https://example.com')).toBe('/me');
+  });
+});
+
+describe('로그인하지 않고 나가는 곳 (ADR 0226)', () => {
+  it('결과에서 사주풀이를 누르고 온 사람은 그 결과로 — 첫 화면이 남은 입력을 되찾는다', () => {
+    expect(visitorExitOf('/saju#resume-reading')).toBe('/#resume-reading');
+    expect(visitorExitOf('/#resume-reading')).toBe('/#resume-reading');
+  });
+
+  it('첫 화면의 로그인 · 궁합 · 모르는 값은 첫 화면이다', () => {
+    expect(visitorExitOf(undefined)).toBe('/');
+    expect(visitorExitOf('/me')).toBe('/');
+    expect(visitorExitOf('/compat#resume-pair')).toBe('/');
+    expect(visitorExitOf('https://example.com')).toBe('/');
   });
 });
