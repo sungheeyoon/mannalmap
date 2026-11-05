@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { matchClosedDetours, matchClosedGuards, matchEntriesStand, tabsWhileShut } from './opening';
+import { matchClosedDetours, matchClosedGuards, matchEntriesStand, matchOpenAlertStands, tabsWhileShut } from './opening';
 
 const TABS = [{ href: '/me' }, { href: '/compat' }, { href: '/me/matching' }, { href: '/me/chat' }] as const;
 const APP_TABS = [{ href: '/me' }, { href: '/me/compat' }, { href: '/me/matching' }, { href: '/me/chat' }] as const;
@@ -52,5 +52,13 @@ describe('메뉴', () => {
     expect(matchEntriesStand(null)).toBe(false);
     expect(matchEntriesStand(false)).toBe(false);
     expect(matchEntriesStand(true)).toBe(true);
+  });
+});
+
+describe('홈의 「열리면 알려 주세요」 줄 (ADR 0223)', () => {
+  it('닫혔다고 읽었을 때만 선다 — 열렸거나 모르면 안 선다', () => {
+    expect(matchOpenAlertStands(false)).toBe(true);
+    expect(matchOpenAlertStands(true)).toBe(false);
+    expect(matchOpenAlertStands(null)).toBe(false);
   });
 });
