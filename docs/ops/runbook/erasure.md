@@ -273,6 +273,8 @@ update retention.report set hold_reason = null, held_at = null where report_id =
 - 크론 `account-disposal`(매시 23분)이 **신청 뒤 하루가 지난** 대기를 집어 `forget_user` 를 돌리고, 바로
   흔적을 잰다(`account_residue`). 흔적이 남으면 처분째 되감기고 계정은 대기에 남아 다음 시간에 다시 집힌다.
   하루를 두는 것은 되돌릴 틈이고, 남은 이틀은 다시 시도할 여유다.
+- **카카오 계정은 신청 때 카카오 연결이 끊긴다** — 앱은 기기의 SDK 가, 웹은 서버가 어드민 키로(ADR 0224). 처분을 기다리지 않는다. 웹의 끊기가 실패하면 처분 전에 다시 끊는다 —
+  `docs/ops/runbook/kakao-login.md` 「웹 탈퇴의 연결 끊기가 실패하면」.
 - **운영자가 할 일은 알림이 왔을 때뿐이다.** `account-disposal-failed`(실패) · `account-disposal-overdue`
   (신청 뒤 3일이 지난 대기가 있다). 성공은 안 알린다.
 

@@ -1,11 +1,14 @@
 'use server';
 
+import { after } from 'next/server';
+
 import type { RequestStatus } from '@/src/lib/consent';
 
 import { refresh } from '../../refresh';
 import type { SaveResult } from '../../save-result';
 import { supabaseOnServer } from '../../auth/server-client';
 import { userFacingDbMessage } from '../../db-error';
+import { kakaoMemberIdOf, unlinkKakaoOnLeaving } from '../../auth/kakao/unlink';
 import { respondAndSend, statusOf } from './respond';
 import { rpcArgs } from '@/src/lib/db';
 
@@ -111,9 +114,29 @@ export async function requestAccountDeletion(): Promise<SaveResult> {
   const { error } = await supabase.rpc('request_account_deletion');
   if (error) return { ok: false, message: userFacingDbMessage(error, 'request_account_deletion') };
 
+  // 카카오 연결 끊기(ADR 0224 「2026-11-05 덧」) — 탈퇴가 **받아진 뒤에** 끊는다. 회원번호는 지금 읽고(크론이 지우면 신원이 사라진다)
+  // 카카오는 응답 뒤에 부른다. 끊기가 실패해도 탈퇴는 이미 갔다 — 기록 `kakao unlink` 에만 남는다
+  const memberId = await kakaoMemberOfCurrentUser(supabase);
+  if (memberId !== null) after(() => unlinkKakaoOnLeaving(memberId));
+
   // 상태 하나가 모든 화면의 답을 바꾼다 — 한 자리만 다시 그리면 나머지가 낡는다.
   refresh('account-closed');
   return { ok: true };
+}
+
+/** 지금 사람의 카카오 회원번호 — Auth 서버에 묻는다(신원 목록은 쿠키의 클레임에 없다). 못 읽으면 `null` 이고 기록에 남긴다 */
+async function kakaoMemberOfCurrentUser(supabase: Awaited<ReturnType<typeof supabaseOnServer>>): Promise<string | null> {
+  try {
+    const { data, error } = await supabase.auth.getUser();
+    if (error !== null) {
+      console.error('kakao unlink: user', error.code);
+      return null;
+    }
+    return kakaoMemberIdOf(data.user.identities);
+  } catch (thrown) {
+    console.error('kakao unlink: user', thrown instanceof Error ? thrown.name : 'unknown');
+    return null;
+  }
 }
 
 /**
