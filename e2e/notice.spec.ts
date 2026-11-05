@@ -168,7 +168,7 @@ test.describe('시작하기 전에', () => {
       그것을 동의라고 부를 수 없다.
     */
     const improvement = page.getByRole('checkbox', { name: /풀이 개선/ });
-    const contact = page.getByRole('checkbox', { name: /다음 테스트 소식/ });
+    const contact = page.getByRole('checkbox', { name: /인터뷰 요청 받기/ });
     await expect(improvement).not.toBeChecked();
     await expect(contact).not.toBeChecked();
 

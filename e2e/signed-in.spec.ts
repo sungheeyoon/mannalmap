@@ -2249,7 +2249,7 @@ test.describe('초대된 사람의 로그인 흐름', () => {
     await expect(improvement).toHaveAttribute('aria-checked', 'true');
     /* 지움 문장은 제 줄이고 스위치의 설명으로 읽힌다 — 누르기 전에 들린다 */
     await expect(improvement).toHaveAccessibleDescription(/동의를 끄면 지금까지 남긴 설문 답변을 삭제합니다\./);
-    await expect(main.getByRole('switch', { name: '다음 테스트 소식 받기' })).toHaveAttribute('aria-checked', 'false');
+    await expect(main.getByRole('switch', { name: '인터뷰 요청 받기' })).toHaveAttribute('aria-checked', 'false');
     await expectTargets({ 개선: improvement });
 
     /* 누르면 창이 먼저 — 첫 초점은 「취소」이고, 취소하면 켜진 채 답도 그대로다 */
