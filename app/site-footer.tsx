@@ -14,7 +14,7 @@ import { GUIDE_LINKS, POLICY_LINKS } from '@/src/lib/brand/links';
  * 앞 판에는 바닥글이 없었다. 첫 화면은 입력 폼에서 끝났고, 처리방침으로 가는 길은 가입 폼과 설정 안에만 있었다 —
  * 처음 온 사람이 「이게 무엇을 하는 서비스이고 내 생년월일시를 어떻게 다루나」를 가입 전에 찾을 자리가 없었다.
  *
- * **사업자 정보와 약관 링크는 결제 페이지까지 상시 선다**(전자상거래법 제10조 · PG 심사, 운영자 결정 2026-10-12, ADR 0172).
+ * **사업자 정보와 약관 링크는 결제 페이지까지 상시 선다**(전자상거래법 제10조, 운영자 결정 2026-10-12, ADR 0172).
  * 값은 뿌리 레이아웃이 환경변수에서 읽어 넘긴다(`app/business-info.ts`) — 저장소에 적지 않는다. 값이 빈 줄은 그리지 않는다.
  *
  * 앱 안(`/me/**` · `/compat`)은 이름 · 소개 · 안내 링크를 빼고 **약관 링크 셋과 사업자 정보만** 든다 — 거기는 하단 독과 톱니가
@@ -60,7 +60,7 @@ export function SiteFooter({ business }: { business: BusinessInfo }) {
       <div className="app-shell flex flex-col gap-4 pt-8 pb-8 sm:flex-row sm:items-end sm:justify-between">
         <div className="flex flex-col gap-1">
           <p className="font-rounded text-lead text-foreground">{SERVICE_NAME}</p>
-          <p className="text-small leading-5 text-secondary">{SERVICE_TAGLINE} · 비공개 베타</p>
+          <p className="text-small leading-5 text-secondary">{SERVICE_TAGLINE}</p>
         </div>
         {nav}
       </div>

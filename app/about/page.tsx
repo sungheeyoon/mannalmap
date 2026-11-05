@@ -3,7 +3,6 @@ import Link from 'next/link';
 import { SERVICE_NAME, SERVICE_NAME_TOPIC, SERVICE_TAGLINE } from '@/src/lib/brand';
 import { ABOUT_LEAD, ABOUT_STEPS } from '@/src/lib/brand/guide';
 import { SERVICE_FEATURES } from '@/src/lib/brand/features';
-import { BETA_SIGNUP_CODE_NOTE } from '@/src/lib/account/copy';
 
 import { BUTTON_PRIMARY, BUTTON_SECONDARY } from '../ui/buttons';
 import { Icon } from '../ui/icons';
@@ -75,9 +74,6 @@ export default function AboutPage() {
             </li>
           ))}
         </ol>
-        <p className="text-sm leading-6 text-secondary">
-          {BETA_SIGNUP_CODE_NOTE}
-        </p>
       </section>
 
       <p className="flex flex-col gap-2 sm:flex-row">

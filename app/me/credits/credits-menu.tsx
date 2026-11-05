@@ -54,7 +54,7 @@ export function CreditsMenu({ available, label, children, className }: {
     try {
       next = saleShapeOf(await saleIsOpenNow());
     } catch {
-      // 못 물었으면 상품 화면이 다시 확인한다(ADR 0171).
+      // 못 물었으면 열린 꼴이다(`buy-path.ts`).
     }
     if (turn === request.current && menu.current?.open) setShape(next);
   };

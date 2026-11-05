@@ -12,7 +12,7 @@
  * 그것이 우연히 참인 것이 아니라 **늘 참이게** 둘이 든다.
  *
  * - `secret-env.test.ts` — 앱이 읽는 이름은 전부 아래 갈래에 있고, 비밀은 `NEXT_PUBLIC_` 이 아니며,
- *   비밀을 읽는 모듈은 `import 'server-only'` 로 잠겨 있다. 새 비밀(무료 지급 HMAC · PG · 본인확인)이
+ *   비밀을 읽는 모듈은 `import 'server-only'` 로 잠겨 있다. 새 비밀(무료 지급 HMAC · 스토어 결제 · 본인확인)이
  *   들어오면 이 목록에 먼저 서야 시험이 초록이다.
  * - 이 파일의 실행 — `npm run build` 끝에 돈다. 브라우저로 가는 파일에서 **비밀 이름**과, 그 빌드의
  *   환경에 있는 **비밀 값**을 찾는다. 값은 찍지 않고 이름과 파일만 말한다. Vercel 의 운영 빌드는
@@ -48,9 +48,6 @@ export const SECRET_ENV = [
    * `20261014090000`). 짧게 살지만 그동안은 역할의 자격이다
    */
   'VERCEL_OIDC_TOKEN',
-  /** PortOne V2 — 결제 알림의 서명 비밀(`whsec_…`)과 결제 단건 조회의 API 비밀 (G-23 ⑥, `app/api/portone/webhook`) */
-  'PORTONE_WEBHOOK_SECRET',
-  'PORTONE_API_SECRET',
   /**
    * 로그인 전 사주 문단의 HMAC 비밀 둘(ADR 0143, `app/taste/taste-visitor.ts`) — 브라우저 묶음 쿠키의 안정 비밀과 IP 날짜별 키의
    * 뿌리. 없으면 그 문단이 닫힌다
@@ -113,13 +110,6 @@ export const CONFIG_ENV = [
   'PHOTO_STORE_BUCKET',
   'PHOTO_STORE_REGION',
   'PHOTO_STORE_ROLE_ARN',
-  /** PortOne 의 상점 번호 — 비밀이 아니다(브라우저의 결제 창도 든다). 없으면 결제 알림은 503 이다 */
-  'PORTONE_STORE_ID',
-  /**
-   * PortOne 의 채널 키 — 비밀이 아니다(브라우저의 결제 창이 싣는다). 어느 PG 로 가는지를 이 값이 정한다. 상점 번호와 함께
-   * 있어야 풀이권 상품 화면에 결제 단추가 선다 — 그것도 판매가 열린 사람에게만(`app/me/credits/`, ADR 0171)
-   */
-  'PORTONE_CHANNEL_KEY',
   /** VAPID 의 주체(`mailto:` · `https:`) — 없으면 배포의 https 주소를 쓴다(`app/api/push/dispatch/send.ts`) */
   'WEB_PUSH_SUBJECT',
   /**

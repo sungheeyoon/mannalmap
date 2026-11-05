@@ -22,16 +22,26 @@ group by u.id, u.email
 order by 쓴것 desc;
 ```
 
-모두에게 더 주려면 상한을 옮긴다 — 값이 하나뿐인 것이 이 설계의 요점이다. **한 사람에게만** 더 주는 것은 상한이 아니라
-아래 「무상 풀이권 지급 · 회수」다(ADR 0043 · 0187).
+새 회원의 무료 몫은 **1** 이고, 그 변경(`20270112090000`)이 오르기 전에 가입을 마친 계정은 **5** 를 지킨다(운영자 결정 2026-11-05, ADR 0227).
+한 계정의 무료 몫은 `greatest(reading_credit_limit(), app_user.kept_free_credits)` 다 — 지킨 몫은 바닥이고, 그 칸은 마이그레이션이 한 번 적은 뒤로
+적는 문이 없다. 몇 계정이 지켰는지는 집계로만 본다:
+
+```sql
+select count(*) filter (where kept_free_credits is not null) as 지킨_계정,
+       count(*) filter (where signed_up_at is not null and kept_free_credits is null) as 새_회원
+from public.app_user;
+```
+
+새 회원 모두에게 더 주려면 상한을 옮긴다 — 값이 하나뿐인 것이 이 설계의 요점이다. 옛 회원은 그 수가 다섯을 넘을 때만 따라온다.
+**한 사람에게만** 더 주는 것은 상한이 아니라 아래 「무상 풀이권 지급 · 회수」다(ADR 0043 · 0187).
 
 ```sql
 create or replace function public.reading_credit_limit()
-returns integer language sql immutable set search_path = '' as $$ select 5 $$;
+returns integer language sql immutable set search_path = '' as $$ select 1 $$;
 ```
 
 > 옮기기 전에 **무엇을 근거로 옮기는지 적어 둔다.** 처음 다섯은 재어 보고 정한 값이
-> 아니다(ADR 0021). 「달라고 해서」와 「테스터 대부분이 다섯에서 멈춰서」는 다른 근거이고,
+> 아니다(ADR 0021). 1 은 가입이 코드 없이 열리며 계정을 여럿 만들어 받는 값을 줄이려고 정했다(ADR 0227). 「달라고 해서」와 「테스터 대부분이 다섯에서 멈춰서」는 다른 근거이고,
 > 뒤의 것만 다음 판을 정하는 데 쓸 수 있다.
 >
 > **2026-09-05 에 여덟으로 올렸다가 같은 날 다섯으로 되돌렸다.** 여덟의 근거는 셈이었다 —
@@ -120,7 +130,7 @@ npm run db:remote -- --purpose "무상 지급 장부와 예외 몫의 대조" \
 
 ### 산 풀이권 — 주문 · 묶음 · 쓰임 · 환불 (G-21 ⑤ ④, ADR 0106)
 
-**PG 는 하지 않는다 — 판매는 스토어 인앱결제이고 산 몫은 만료되지 않는다(운영자 2026-11-01, ADR 0212).** 이 절의 PG 콘솔 · PortOne 걸음과 산 몫 5년은 판매 없이 서 있는 지금 코드의 모양이고, 밟을 일이 없다. 장부 조회는 그대로 쓴다. 스토어 환불 절차는 #937 이 이 절을 다시 쓴다.
+**PG 는 하지 않는다 — 판매는 스토어 인앱결제이고 산 몫은 만료되지 않는다(운영자 2026-11-01, ADR 0212).** PortOne 결제창 · 결제 알림 · 취소 조회 코드는 걷었다(2026-11-05, ADR 0212 추기). 장부 · 환불 세 걸음은 제공자에 중립이라 그대로 쓰고, 이 절의 「결제한 곳의 콘솔」은 스토어 결제가 서면 그 스토어의 콘솔이다. 산 몫 5년은 #938 이 고친다. 스토어 환불 절차는 #937 이 이 절을 다시 쓴다.
 
 **판매는 닫혀 있다**(`reading_sale_is_open()` = false) — 주문이 0건이다. 장부만 먼저 섰다. 잔액은 여전히 센다 — 한도가
 `무료 + 예외 + Σ(묶음의 산 수 − 걷은 수)` 로 한 칸 늘었을 뿐이고, 쓰임 장부(`reading_credit_use`)는 **환불 셈의 입력**이다.
@@ -189,15 +199,13 @@ npm run db:remote -- --purpose "환불수수료 셈 전 진행 중인 unused 확
 
 1. **준비** — 걷을 회차 · 사유를 고르고 「환불 준비」 → 확인창의 대상(주문 번호 · 닉네임 · 계정 앞자리) · 회차 · 금액을 보고 「N장 · …원 환불 준비」. 창에 보인 금액이 지금 셈과 다르면 DB 가 거절한다. 그 회차가 잠겨 이용자가 못 쓰고(한도에서 빠진다), 금액이 정해져 「환불 진행
    중」 판이 선다(`operator_hold_reading_refund`, 접속기록 `credits.refund_hold`). 주문 하나에 진행 중인 것은 하나다
-2. **PG 콘솔에서 그 판의 「취소할 금액」을 취소한다** — 판의 결제 번호 · 거래 번호로 결제를 찾는다. 화면은 PG 취소를 부르지 않는다.
-   아래의 「PortOne 결제 조회」 · 「PortOne 콘솔」은 지금 코드의 모양이다(ADR 0212)
+2. **결제한 곳의 콘솔에서 그 판의 「취소할 금액」을 취소한다** — 판의 결제 번호 · 거래 번호로 결제를 찾는다. 화면은 결제 취소를 부르지 않는다
 3. **확정** — 콘솔이 준 취소 번호를 적고 「장부에 확정」(`operator_book_reading_refund`, `credits.refund_book`). 같은 번호로 다시 눌러도
    한 번만 적힌다
 
 콘솔 취소 전에 멈추려면 「준비 취소」(`operator_release_reading_refund`, `credits.refund_release`)로 잠근 회차를 푼다. **콘솔에서 취소한
-뒤에는 준비 취소하지 않는다** — 확정한다. 화면의 준비 취소는 풀기 전에 PortOne 결제 조회로 취소 상태 · 금액을 장부와 견주고, 요청 중인
-취소가 있거나 성공한 취소액이 장부보다 크면 「취소 번호로 확정」을, 조회가 안 되면(열쇠 없음 · 실패 · 결과 불명 · 장부보다 작음)
-「확인하지 못해 막았다」를 세운다 — 그때는 아래 「준비 취소를
+뒤에는 준비 취소하지 않는다** — 확정한다. 화면의 준비 취소는 풀기 전에 결제한 곳의 취소 내역을 장부와 견주는데(`app/ops/orders/cancellations.ts`),
+**지금은 물을 곳이 없어 늘 「확인하지 못해 막았다」를 세운다** — 스토어 결제(#937)가 그 조회를 붙일 때까지 아래 「준비 취소를
 손으로」. 화면을 닫아도 진행 중인 것은 남고, 주문을 다시 찾으면 그 판이 다시 선다. **산 사람이 탈퇴해도 진행 중인 확보는 남는다** —
 주문 번호로 찾으면 「탈퇴한 계정의 주문」 판이 서고 같은 방법으로 확정 · 준비 취소한다(아래 「떠난 사람의 결제 기록」). 진행 중인 확보가
 있는 동안 그 주문에는 SQL 환불(`refund_reading_order`)도 막힌다. 진행 중으로 오래 남은 것이 있는지는 아래로 본다(개인을 가리키지 않는다):
@@ -207,13 +215,13 @@ npm run db:remote -- --purpose "진행 중인 환불 수" \
   "select count(*), min(held_at) from public.reading_refund_hold where state = 'held'"
 ```
 
-**준비 취소를 손으로**(화면이 PortOne 을 조회하지 못할 때만 — break-glass). 화면과 같은 규칙으로 본다 — **시각이 아니라 상태와
+**준비 취소를 손으로**(화면이 결제한 곳을 조회하지 못할 때 — 지금은 늘, break-glass). 화면과 같은 규칙으로 본다 — **시각이 아니라 상태와
 금액이다**(ADR 0184 결정 6).
 
-1. PortOne 콘솔에서 그 결제(판의 결제 번호 `rdo_…`)의 취소 내역을 연다. **`요청`(REQUESTED) 등 성공 · 실패 밖의 취소가 하나라도 있으면
+1. 결제한 곳의 콘솔에서 그 결제(판의 결제 번호 `rdo_…`)의 취소 내역을 연다. **요청 중 등 성공 · 실패 밖의 취소가 하나라도 있으면
    풀지 않는다** — 언제 요청했든 돈이 나가는 중이다. 끝날 때까지 기다렸다가 다시 본다.
 2. **성공한 취소액의 합**(콘솔의 「취소 금액」)을 아래 실행 전 확인의 `장부_환불액` 과 견준다. **정확히 같을 때만** 푼다. 크면 장부에
-   안 적힌 취소가 있다 — 풀지 말고 그 취소 번호로 화면에서 확정한다. 작으면 장부가 PG 보다 많이 적었다 — 멈추고 조율자에게 올린다.
+   안 적힌 취소가 있다 — 풀지 말고 그 취소 번호로 화면에서 확정한다. 작으면 장부가 결제한 곳보다 많이 적었다 — 멈추고 조율자에게 올린다.
 3. 같으면 break-glass 대장에 적고 아래 차례로 푼다 — 무엇을 확인했는지 · 누가 했는지가 사유다(10자 이상, 확보 줄의 `release_note` 에
    「by hand: 」를 붙여 남는다). 사유 · 실행자가 남는 이 함수만 쓴다 — 확보 줄을 `update` 로 고치지 않는다.
 
@@ -228,7 +236,7 @@ cross join lateral (select left(h.user_id::text, 8) as owner_ref, h.id as hold_i
 where h.id = '<hold-id>' and h.state = 'held';
 
 begin;
-select public.release_reading_refund_by_hand('<hold-id>', '<이름> PortOne 콘솔 <YYYY-MM-DD HH:MM> 확인 — 요청 중 없음, 성공 취소 합 <N>원 = 장부');
+select public.release_reading_refund_by_hand('<hold-id>', '<이름> <결제한 곳> 콘솔 <YYYY-MM-DD HH:MM> 확인 — 요청 중 없음, 성공 취소 합 <N>원 = 장부');
 -- 결과 확인 — state = released · release_note 가 위 사유면 commit, 아니면 rollback
 select state, closed_at, release_note from public.reading_refund_hold where id = '<hold-id>';
 commit;
@@ -243,20 +251,20 @@ SQL 차례의 금액은 사람이 넣는다 — 이 길로 `unused` 를 적으�
 
 **수동 환불 — SQL 차례(화면이 못 하는 것만).**
 
-1. 요청을 받는다 — 주문 번호(`rdo_…`)나 PG 의 거래 번호로 주문을 가리키게 한다. 이메일로 주문을 찾지 않는다. 그 계정이 산 회차 ·
+1. 요청을 받는다 — 주문 번호(`rdo_…`)나 결제한 곳의 거래 번호로 주문을 가리키게 한다. 이메일로 주문을 찾지 않는다. 그 계정이 산 회차 ·
    쓴 회차는 `/ops/members` 에서 닉네임이나 계정 id 로 본다(ADR 0185)
 2. **환불 셈의 입력을 읽는다** — `operator_reading_refund_basis(<주문 id>)` 가 그 계정의 주문 전부를 묶음별로 낸다(산 수 ·
    걷은 수 · 쓴 수 · 예약 중 수 · 안 쓴 수 · 결제 금액 · 환불한 금액 · 결제 시각). 운영자만 부르고 읽을 때마다 접속기록에
    남는다. 같은 값을 `/ops/orders` 가 보인다
 3. **예약 중인 몫은 풀릴 때까지 기다린다** — 안 쓴 것이 아니다(G-21 ③). 무료 · 예외 · 몫 밖은 어떤 경우에도 돌려주지 않는다
-4. **PG 콘솔에서 먼저 환불한다** — 돈이 나간 뒤에 적는다. 적은 뒤 PG 가 거절하면 장부가 거짓말을 한다
+4. **결제한 곳의 콘솔에서 먼저 환불한다** — 돈이 나간 뒤에 적는다. 적은 뒤 결제한 곳이 거절하면 장부가 거짓말을 한다
 5. **사람이 적는다** — 주문 하나를 가리키는 쓰기라 break-glass 대장에 먼저 적고, `refund_reading_order` 를 서버 열쇠
    (`service_role`) 나 운영 SQL(`postgres`)로 부른다. 사유는 분류 하나(`withdrawal` 청약철회 · `unused` 안 쓴 몫 ·
-   `duplicate` 중복결제 · `failure` 미제공 · `other`)이고 자유 글을 받지 않는다. 같은 PG 환불 번호로 두 번 불러도 한 번만 적힌다.
+   `duplicate` 중복결제 · `failure` 미제공 · `other`)이고 자유 글을 받지 않는다. 같은 환불 번호로 두 번 불러도 한 번만 적힌다.
    안 쓴 것보다 많이 걷으려 하면 거절된다
 
 **실행 전 확인** — 영향받는 주문 · 회원(계정 앞 8자) · 금액을 먼저 select 로 보고, 트랜잭션 안에서 부른 뒤 결과를 select 로 본다.
-맞으면 commit, 아니면 rollback. 사유는 분류 하나로 남고 실행자는 break-glass 대장과 PG 환불 번호로 잇는다 — 이 함수는 실행자 칸이 없다.
+맞으면 commit, 아니면 rollback. 사유는 분류 하나로 남고 실행자는 break-glass 대장과 환불 번호로 잇는다 — 이 함수는 실행자 칸이 없다.
 
 ```sql
 -- 실행 전 확인 — 대상 주문 · 회원 · 금액 · 진행 중인 확보(있으면 이 환불은 거절된다)
@@ -267,7 +275,7 @@ from public.reading_order o join public.reading_bundle b on b.order_id = o.id
 where o.id = '<order-id>';
 
 begin;
--- break-glass 대장 번호를 목적에 — 금액(원) · 걷을 회차 · 사유 · PG 환불 번호
+-- break-glass 대장 번호를 목적에 — 금액(원) · 걷을 회차 · 사유 · 환불 번호
 select public.refund_reading_order('<order-id>', <amount>, <credits>, 'unused', '<pg-refund-id>');
 -- 결과 확인 — refunded_amount 가 <amount> 만큼, refunded_credits 가 <credits> 만큼 늘었으면 commit, 아니면 rollback
 select o.status, o.refunded_amount, b.refunded_credits
@@ -284,7 +292,7 @@ commit;
 거절 알림)만 옮긴다(`20261018090000`, ADR 0106 추기 — 법적 범위는 변호사 검토 B-8). 크론 `payment-retention-purge`(매일 04:53 UTC)의
 `retention.purge_expired_payments()` 가 두 표에서 `keep_until`(앞은 마지막 승인 · 환불, 뒤는 마지막 거절 알림 + 5년)이 지난 줄을
 함께 지운다. **탈퇴 뒤에 확정한 환불**(진행 중인 확보가 탈퇴를 넘어 남았던 것)은 고칠 수 없는 `retention.reading_payment` 대신
-`retention.reading_refund_after_leave` 에 한 줄로 남고(확보 번호 · 주문 · 계정 내부 번호 · 가맹점 주문 번호 · 금액 · 회차 · 사유 · PG 취소
+`retention.reading_refund_after_leave` 에 한 줄로 남고(확보 번호 · 주문 · 계정 내부 번호 · 가맹점 주문 번호 · 금액 · 회차 · 사유 · 취소
 번호, ADR 0184), 같은 크론이 환불 + 5년 뒤 지운다. 탈퇴 뒤 닫힌 확보 줄도 그 크론이 걷는다. 분쟁이나 수사기관의 요청이 걸리면 보류를 건다 — 신고 기록의 보류(`docs/ops/runbook/erasure.md` 「떠난 사람의 신고 기록」)와 같은 모양이다.
 
 ```sql
@@ -298,34 +306,15 @@ update retention.reading_payment set hold_reason = '<사유> <문서 번호> <�
 update retention.reading_payment set hold_reason = null, held_at = null where order_id = '<order-id>';
 ```
 
-#### 결제 알림 — PortOne 웹훅 (G-23 ⑥)
+#### 결제 알림 (G-23 ⑥)
 
-**켜지 않는다 — PG 를 하지 않는다(ADR 0212).** 이 절은 지금 코드(PortOne V2 전제)의 동작을 적은 것이고, 아래 「켜는 날」은 밟지 않는다. 문을 어떻게 닫나는 #937.
-
-**문은 섰고 꺼져 있다.** `POST /api/portone/webhook`(`app/api/portone/webhook/`)이 PortOne V2 의 결제 알림을 받는다. 켜는 값
-셋(`PORTONE_WEBHOOK_SECRET` · `PORTONE_API_SECRET` · `PORTONE_STORE_ID`)이 없으면 503 이고, 판매가 닫혀 있는 동안에는 주문이 없어
-값을 넣어도 세울 것이 없다. 한 알림에 하는 일은 넷이다.
-
-1. **서명** — Standard Webhooks(`webhook-id` · `webhook-timestamp` · `webhook-signature`), 시각은 앞뒤 5분. 틀리면 401
-2. **`Transaction.Paid` 만** — 나머지(실패 · 취소 · 환불)는 200 으로 받고 아무것도 안 한다. 실패에 주문을 닫지 않는다(같은 결제
-   번호로 다시 낼 수 있다). 환불은 위 「수동 환불」이다
-3. **결제를 PortOne 에서 다시 받는다** — `GET https://api.portone.io/payments/{paymentId}`. 알림 본문에는 금액이 없고, 있어도 안
-   믿는다. 상태 `PAID` · 우리 상점 · `KRW` 가 아니면 승인하지 않는다(200, 기록에만)
-4. **승인 문** — `approve_reading_order(주문, 거래 번호 = PortOne transactionId, 받은 금액, 알림 번호 = webhook-id)`. 주문은 결제
-   번호(`rdo_…`)에서 되짚는다. 금액 대조와 「같은 알림은 한 번」은 DB 가 한다 — 금액이 다르면 `refused` 가 `payment_event` 에
-   남고(200), 이미 닫힌 주문의 결제(`55000`)는 **돈이 들어왔는데 묶음이 없다** — PG 콘솔에서 환불한다
-
-답은 다시 보내도 같을 것이면 2xx · 401 · 400, 우리 쪽이 잠깐 못 한 것(설정 · PortOne · DB)이면 503 이다 — PortOne 이 다섯 번까지
-다시 보낸다. 까닭은 답에 안 싣고 Vercel 로그의 `portone webhook` 줄에 남는다 — 결제 이상이면 알림도 온다(아래 「결제 이상 알림」).
-
-**켜는 날**(가맹 · 샌드박스 뒤, 사람) — ① Vercel **Production** 에 위 셋을 넣고 재배포 ② PortOne 콘솔 → 웹훅에 `<운영 주소>/api/portone/webhook`
-을 넣는다(버전 V2 — `<운영 주소>` 는 `docs/ops/runbook/domain.md` 맨 위, 넣은 날은 그 문서 「확인 기록」의 7 에 적는다) ③ 샌드박스 채널로 1회권 하나를 결제하고 묶음이 선 것을 본다 — 판매 스위치는 운영에서 켜지 않는다. 운영에서 밟을 때는 아래
-「심사 계정」에 제 계정을 넣고 `/me/credits` 에서 결제한다 ④ 콘솔의 테스트
-호출이 200 인지 본다. 판매를 여는 것은 `reading_sale_is_open()` 을 `true` 로 바꾸는 마이그레이션이다 — 결제 전 고지 · 철회
-기준(G-25) · 탈퇴 판의 남은 수량(G-25 ⑦) · 환불 셈 화면이 먼저 선다. **샌드박스에서 볼 것** — 알림 본문과 결제 조회의 모양이
-문서대로인가, 환불 번호를 주문 사이에 겹쳐 쓰는가(`20261015090000`), 거래 번호로 `transactionId` 와 `pgTxId` 중 무엇을 남길까.
+**지금 결제 알림을 받는 문이 없다.** PortOne 결제 알림 문(`/api/portone/webhook`)은 걷었다(2026-11-05, ADR 0212 추기). 주문을 승인하는
+DB 문(`approve_reading_order` — 금액 대조 · 같은 알림은 한 번)은 남았고, 스토어 결제의 통지 문(#937)이 그것을 부른다. 걸음은 그 PR 이 이 절에 적는다.
 
 #### 결제 이상 알림 — 알림이 오면 (G-110 ④)
+
+**지금 이 알림을 보내는 문이 없다** — 부르던 PortOne 결제 알림 문을 걷었다(2026-11-05). DB 쪽(`report_payment_trouble` · 아래 질의)은
+남았고 스토어 통지 문(#937)이 다시 부른다. 아래의 「PortOne 콘솔」은 그날까지의 모양이고, 그 문이 서면 그 스토어의 콘솔로 고친다.
 
 결제 알림의 문이 **서명이 맞은 알림**에서 이상을 보면 장애 알림과 같은 주소(Vault `ops_alert_url`)로 한 줄이 온다 —
 `report_payment_trouble`(`20261213090000`) → `notify_ops`, **결제 하나 · 갈래 하나에 하루 한 줄**이고 Production 에서만 보낸다. 알림의
@@ -356,7 +345,7 @@ npm run db:remote -- --purpose "결제 이상 알림 <rdo_…>" \
 | 갈래(`kind`) | 무엇이 일어났나 | 하는 일 |
 | --- | --- | --- |
 | `payment-amount-mismatch` | PortOne 의 결제 금액이 주문 금액과 달라 승인 문이 거절했다(`payment_event.outcome = 'refused'`). 묶음은 없다 | ① PortOne 콘솔에서 그 결제의 금액 · 상태를 본다 ② 위 질의의 `amount` 와 견준다 ③ **받은 돈 전부를 PG 콘솔에서 취소한다** — 주문은 `pending` 그대로라 장부에 적을 환불이 없다 ④ 같은 일이 둘 이상이면 결제창이 금액을 어떻게 싣는지(`app/me/credits/`)부터 본다 |
-| `payment-paid-without-bundle` | 돈은 들어왔는데 묶음을 세우지 않았고, 다시 와도 같다. 까닭으로 가른다 — `no such order`(떠난 사람의 주문 — 정상 결제의 재전송일 수 있다 · 우리 주문 아님) · `order already closed - refund by hand`(이미 승인된 주문에 다른 거래로 또 냄) · `event id belongs to another request` · `currency …` · `paid without transactionId` · `not a reading order`(우리 상점에 `rdo_` 가 아닌 결제 — 콘솔의 시험 결제 등) | ① **먼저 위 질의로 세 자리를 찾는다** — `retained` · `refused-retained` · 줄 없음이면 위 갈래 표대로 하고 여기서 끝(`no such order` 는 대개 이 셋이다) ② `current` 이고 이미 승인된 주문의 두 번째 결제(`order already closed …`)면 **두 번째 거래만** PG 콘솔에서 취소한다 — 첫 거래의 묶음은 그대로 ③ `current` 의 그 밖(`currency …` · `paid without transactionId` · `event id …`)은 PortOne 콘솔에서 결제가 정말 `PAID` 인지 본 뒤 받은 돈을 PG 콘솔에서 취소한다. 장부(`refund_reading_order`)는 승인된 주문의 환불만 받으므로 여기서는 적지 않는다 ④ `event id …` · `paid without transactionId` · `currency …` 는 PortOne 의 모양이 바뀐 신호다 — 둘 이상이면 `app/api/portone/webhook/` 을 고칠 일로 올린다 |
+| `payment-paid-without-bundle` | 돈은 들어왔는데 묶음을 세우지 않았고, 다시 와도 같다. 까닭으로 가른다 — `no such order`(떠난 사람의 주문 — 정상 결제의 재전송일 수 있다 · 우리 주문 아님) · `order already closed - refund by hand`(이미 승인된 주문에 다른 거래로 또 냄) · `event id belongs to another request` · `currency …` · `paid without transactionId` · `not a reading order`(우리 상점에 `rdo_` 가 아닌 결제 — 콘솔의 시험 결제 등) | ① **먼저 위 질의로 세 자리를 찾는다** — `retained` · `refused-retained` · 줄 없음이면 위 갈래 표대로 하고 여기서 끝(`no such order` 는 대개 이 셋이다) ② `current` 이고 이미 승인된 주문의 두 번째 결제(`order already closed …`)면 **두 번째 거래만** PG 콘솔에서 취소한다 — 첫 거래의 묶음은 그대로 ③ `current` 의 그 밖(`currency …` · `paid without transactionId` · `event id …`)은 PortOne 콘솔에서 결제가 정말 `PAID` 인지 본 뒤 받은 돈을 PG 콘솔에서 취소한다. 장부(`refund_reading_order`)는 승인된 주문의 환불만 받으므로 여기서는 적지 않는다 ④ `event id …` · `paid without transactionId` · `currency …` 는 PortOne 의 모양이 바뀐 신호다 — 둘 이상이면 통지 문을 고칠 일로 올린다 |
 | `payment-webhook-failed` | 서명은 맞았는데 처리하지 못했다 — `payment lookup: …`(PortOne 에 못 닿음) · `approve: …`(DB 에 못 닿음 · 열쇠 없음 · 모르는 코드) · `payment not found at portone` · `unreadable body` · `paid notice without paymentId` | ① **503 갈래(`payment lookup` · `approve`)는 PortOne 이 다섯 번까지 다시 보낸다** — 한 시간 뒤 위 질의로 묶음이 섰는지 본다. 섰으면 끝 ② 안 섰으면 PortOne 콘솔 → 웹훅 내역에서 그 알림을 다시 보낸다(재발송 단추가 있는지는 켜는 날 샌드박스에서 본다) ③ 다시 보내도 안 서면 Vercel 로그의 `portone webhook` 줄로 까닭을 보고 고친 뒤 ② ④ `unreadable body` · `paid notice without paymentId` · `payment not found` 는 PortOne 의 모양 · 상점 설정이 어긋난 신호다 — 콘솔의 상점 아이디 · API 비밀이 Vercel 의 셋과 같은지 본다 |
 
 **이 알림이 못 잡는 것.** 서명 앞의 실패(설정 셋이 빠짐 · 웹훅 비밀이 어긋남 → 503 · 401)는 아무나 일으킬 수 있어 알리지 않는다 —
@@ -365,14 +354,11 @@ PortOne 콘솔의 웹훅 내역에 실패가 쌓인다. DB 가 내려가 승인�
 
 #### 심사 계정 — 카드사 심사 때만 결제창이 선다 (G-21, ADR 0171)
 
-**쓰지 않는다 — PG 를 하지 않아 카드사 심사가 없다(ADR 0212).** 이 절은 지금 코드의 모양이다. 아래의 `PORTONE_*` 값 · PortOne 콘솔 걸음은 밟지 않는다. 표와 코드를 걷을지는 #937.
+**쓰지 않는다 — PG 를 하지 않아 카드사 심사가 없다(ADR 0212).** 웹의 결제 단추와 `PORTONE_*` 는 걷었다(2026-11-05) — 표에 넣어도
+웹에서 결제할 길은 없고, 주문 문(`open_reading_order`)과 풀이권 창의 「풀이권 구매」 단추만 그 계정에게 열린다. 표를 스토어 결제 심사에
+쓸지 걷을지는 #937. 아래는 표를 다루는 걸음만 남긴다.
 
-**판매는 닫힌 채다.** `reading_sale_reviewer` 에 든 계정만 `/me/credits` 에서 「결제하기」가 서고 주문이 열린다 — 다른 계정은 가격과 결제 전
-고지만 보고 「풀이권 판매 준비 중이에요.」를 본다. 결제 단추는 Vercel **Production** 에 `PORTONE_STORE_ID` · `PORTONE_CHANNEL_KEY`(PortOne 콘솔 →
-결제 연동 → 연동 정보의 상점 아이디 · 채널 키 — 비밀이 아니다)가 둘 다 있어야 선다. 결제가 끝나 묶음이 서는 것은 위 「결제 알림」의
-웹훅이 하므로 그 셋도 함께 넣는다. 메뉴는 없다 — 심사 계정에게 `<운영 주소>/me/credits` 주소를 건넨다(`docs/ops/runbook/domain.md` 맨 위).
-
-1. **계정을 만든다** — 심사 담당이 구글로 로그인하고 가입(테스트 코드 · 닉네임 · 안내 확인)을 마친다. 코드는 `docs/ops/runbook/signup.md` 「초대」대로 따로 낸다
+1. **계정을 만든다** — 심사 담당이 구글로 로그인하고 가입(닉네임 · 안내 확인)을 마친다. 테스트 코드는 걷었다(ADR 0225)
 2. **넣는다 — break-glass**(이메일로 계정을 찾는다, `docs/ops/runbook/access.md`). 대장에 먼저 적고 운영 SQL Editor 에서:
 
 ```sql
@@ -381,14 +367,13 @@ insert into public.reading_sale_reviewer (user_id, note)
 select id, '<카드사> 심사 <YYYY-MM>' from auth.users where email = '<심사 계정 이메일>';
 ```
 
-3. **본다** — 그 계정으로 `/me/credits` 에 「4,900원 결제하기」가 서는지, 다른 계정에는 안 서는지. 결제가 승인되면 결과 화면의 「결제 내역 보기」
-   (`/me/credits/history`, ADR 0174)에 그 주문 번호(`rdo_…`) · 남은 회차가 서는지 — 환불을 신청하는 사람이 알려 주는 번호가 이것이다. 몇 계정이 들었는지는 개인을 안 가리킨다:
+3. **본다** — 몇 계정이 들었는지는 개인을 안 가리킨다:
 
 ```bash
 npm run db:remote -- --purpose "심사 계정 수" "select count(*), min(added_at) from public.reading_sale_reviewer"
 ```
 
-4. **심사가 끝나면 걷는다** — 걷지 않으면 그 계정은 판매가 닫힌 동안에도 계속 산다. 심사 결제로 선 묶음은 PG 콘솔에서 돌려준 뒤 위
+4. **심사가 끝나면 걷는다** — 걷지 않으면 그 계정은 판매가 닫힌 동안에도 계속 산다. 심사 결제로 선 묶음은 결제한 곳의 콘솔에서 돌려준 뒤 위
    「수동 환불」 차례로 적는다(사유 `other`)
 
 ```sql

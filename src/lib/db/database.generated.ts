@@ -160,6 +160,7 @@ export type Database = {
           id: string
           improvement_consent: boolean | null
           intro: string | null
+          kept_free_credits: number | null
           nickname: string | null
           notice_ack_at: string | null
           notice_ends_on: string | null
@@ -177,6 +178,7 @@ export type Database = {
           id: string
           improvement_consent?: boolean | null
           intro?: string | null
+          kept_free_credits?: number | null
           nickname?: string | null
           notice_ack_at?: string | null
           notice_ends_on?: string | null
@@ -194,6 +196,7 @@ export type Database = {
           id?: string
           improvement_consent?: boolean | null
           intro?: string | null
+          kept_free_credits?: number | null
           nickname?: string | null
           notice_ack_at?: string | null
           notice_ends_on?: string | null
@@ -2466,29 +2469,6 @@ export type Database = {
         }
         Relationships: []
       }
-      signup_code_miss: {
-        Row: {
-          missed_at: string
-          user_id: string
-        }
-        Insert: {
-          missed_at?: string
-          user_id: string
-        }
-        Update: {
-          missed_at?: string
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "signup_code_miss_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "app_user"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       signup_pause: {
         Row: {
           id: number
@@ -3007,6 +2987,7 @@ export type Database = {
         Returns: undefined
       }
       begin_my_photo_upload: { Args: never; Returns: string }
+      beta_free_credits: { Args: never; Returns: number }
       beta_is_over: { Args: never; Returns: boolean }
       block_user: { Args: { p_user_id: string }; Returns: boolean }
       book_reading_credit_grant: {
@@ -4848,8 +4829,6 @@ export type Database = {
           score: number
         }[]
       }
-      signup_code_miss_limit: { Args: never; Returns: number }
-      signup_code_miss_window: { Args: never; Returns: string }
       signup_today: { Args: never; Returns: string }
       start_reading_run: {
         Args: {

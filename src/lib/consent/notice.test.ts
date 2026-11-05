@@ -228,7 +228,7 @@ describe('선택 항목', () => {
 
 /** 문구가 바뀌면 판본도 바뀐다 — 「보여 준 적 있다」가 아니라 「무엇을 보여 줬나」다 */
 it('안내 판본이 값으로 서 있다', () => {
-  expect(NOTICE_VERSION).toBe('notice-v14');
+  expect(NOTICE_VERSION).toBe('notice-v15');
 });
 
 /**
@@ -256,9 +256,9 @@ describe('사진 저장소', () => {
     expect(purge).not.toContain('반드시');
   });
 
-  /* v9 당시에는 기준을 v8 에 두었다(운영자 결정 2026-10-23). 그 뒤 v13(ADR 0220)과 v14(대화가 유일한 흐름)의 내용 개정이 기준을 올렸다 */
-  it('재확인 기준은 마지막 내용 개정 v14 다', () => {
-    expect(NOTICE_ACK_FLOOR).toBe('notice-v14');
+  /* v9 당시에는 기준을 v8 에 두었다(운영자 결정 2026-10-23). 그 뒤 v13(ADR 0220) · v14(대화가 유일한 흐름) · v15(공개 서비스 · 카카오, ADR 0225 추기)의 내용 개정이 기준을 올렸다 */
+  it('재확인 기준은 마지막 내용 개정 v15 다', () => {
+    expect(NOTICE_ACK_FLOOR).toBe('notice-v15');
   });
 });
 
@@ -406,7 +406,34 @@ it('가입 안내가 대화 · 상세 궁합 줄을 그대로 싣고 옛 공개 
 /** v14 는 내용 개정이다 — 국외 이전의 시기와 상대에게 보이는 것이 달라져 v13 을 본 사람도 다시 본다(ADR 0095) */
 it('v13 을 본 사람도 v14 를 다시 본다', () => {
   expect(noticeAckHolds('notice-v13')).toBe(false);
-  expect(noticeAckHolds('notice-v14')).toBe(true);
+});
+
+/**
+ * v15 — 공개 서비스 · 카카오 로그인을 한 판으로(운영자 결정 2026-11-05, ADR 0225 추기). 받는 항목(카카오 회원번호)이 늘고 선택 동의의
+ * 목적이 바뀐 내용 개정이라 v14 를 본 사람도 한 번 다시 읽는다.
+ */
+describe('공개 서비스 · 카카오 로그인 (notice-v15)', () => {
+  const sections = noticeFor(
+    { endsOn: '2026-11-30', purgeBy: '2026-12-30', purgeWithinDays: 30 },
+    { name: '만세력 운영자', officer: '홍길동', contact: 'ops@example.com' },
+  );
+  const text = JSON.stringify(sections);
+
+  it('v14 를 본 사람도 v15 를 다시 본다', () => {
+    expect(noticeAckHolds('notice-v14')).toBe(false);
+    expect(noticeAckHolds('notice-v15')).toBe(true);
+  });
+
+  it('초대 · 비공개 베타를 말하지 않는다 — 기간은 운영 기간이다', () => {
+    expect(text).not.toMatch(/비공개|초대|베타/);
+    expect(text).toContain('지금 정한 운영 기간은 2026년 11월 30일까지입니다.');
+  });
+
+  it('카카오에서는 회원번호만 받고, 탈퇴 때 연결 끊기를 요청하며 그 번호를 보낸다', () => {
+    expect(text).toContain('카카오로 로그인하시면 카카오가 이 서비스에 주는 회원번호를 받습니다');
+    expect(text).toContain('카카오에서는 이메일 · 닉네임 · 프로필 사진을 받지 않습니다');
+    expect(text).toContain('카카오에 이 서비스와의 연결을 끊어 달라고 요청하며, 이때 카카오 회원번호를 카카오에 보냅니다');
+  });
 });
 
 /** v12 — 출생 정보를 고치는 자리는 둘이다: 내 것은 프로필 화면, 가족·친구 것은 저장한 사람 화면(#852 · #853). 옛 「내 사주 화면」은 없다 */

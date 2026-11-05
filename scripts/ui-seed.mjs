@@ -57,7 +57,7 @@ export function localStack() {
   };
 }
 
-/** 운영자 자리 — 테스트 코드와 베타 일정은 `service_role` 에도 안 열려 있다 */
+/** 운영자 자리 — 베타 일정은 `service_role` 에도 안 열려 있다 */
 export const sql = (statement) =>
   execFileSync(
     'docker',
@@ -65,7 +65,6 @@ export const sql = (statement) =>
     { encoding: 'utf8' },
   ).trim();
 
-const CODE = 'UIWALK';
 
 /**
  * 로컬 스택의 종료일 — **날짜를 적는 자리는 여기 하나다.**
@@ -125,10 +124,6 @@ function openTheDoor() {
                <> '${BETA_ENDS_ON}'
           or coalesce((select s.operator_contact from public.current_beta_schedule() s), '')
                <> first.operator_contact`);
-  sql(`insert into public.signup_code (code, note, valid_on, max_uses)
-       values ('${CODE}', 'ui-walk', (now() at time zone 'Asia/Seoul')::date, 1000)
-       on conflict (code) do update
-         set valid_on = excluded.valid_on, max_uses = excluded.max_uses`);
 }
 
 const BIRTH = {
@@ -173,7 +168,7 @@ export async function seed(local, wanted, tag) {
     openTheDoor();
     const current = await client.rpc('current_beta_schedule');
     const passed = await client.rpc('complete_signup', {
-      p_code: CODE,
+      p_code: null,
       p_nickname: nickname,
       p_version: noticeVersion(),
       p_schedule_id: current.data?.[0]?.schedule_id,

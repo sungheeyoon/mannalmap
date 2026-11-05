@@ -31,7 +31,7 @@
 | 궁합 | `/compat` · `/me/compat` | `docs/product/copy-ledger/compat.md` | 06 · 14 · 21 · 30 · 32 |
 | 인연 · 채팅 · 소식 | `/me/matching` · `/me/matching/history` · `/me/match/[id]` · `/me/chat` · `/me/requests` | `docs/product/copy-ledger/matching.md` | 02 · 03 · 06 · 07 · 19 · 21 · 23 · 24 · 25 · 28 · 30 · 33 · 37 · 38 · 43 · 45 |
 | 설정 · 프로필 · 설문 | `/me/profile` · `/me/settings` · `/me/survey` | `docs/product/copy-ledger/settings.md` | 03 · 06 · 16 · 25 · 27 · 29 · 31 · 33 · 36 · 40 · 44 · 46 · 47 |
-| 결제 · 풀이권 | `/me/credits` · `/me/credits/done` · `/me/credits/history` | `docs/product/copy-ledger/credits.md` | — |
+| 결제 · 풀이권 | `/me/credits` · `/me/credits/history` | `docs/product/copy-ledger/credits.md` | — |
 | 운영 화면 · 작업대 | `/ops/**` · `/me/reading/inspect` | `docs/product/copy-ledger/ops.md` | — |
 | 여러 무리에 걸친 줄 · 머리말 | 규칙 · 탭 · 서비스 이름 · 확인창 닫기 · 출생 정보 폼 · 하는 일 넷 … | 이 파일 | 01 · 02 · 03 · 04 · 05 · 06 · 11 · 12 · 18 · 21 · 25 · 39 · 42 |
 
@@ -315,6 +315,16 @@ DB 에 남긴 「번」은 풀이권의 수가 아니다 — 가입 코드의 �
 | --- | --- | --- |
 | 처리 안내 「권리와 행사 방법」 둘째 줄 `src/lib/consent/notice.ts` | 저장된 출생 정보는 내 사주 화면에서 직접 고치실 수 있고, 선택 동의는 설정 화면에서 켜고 끄실 수 있습니다. | 내 출생 정보는 프로필 화면에서, 등록한 가족·친구의 출생 정보는 저장한 사람 화면에서 직접 고치실 수 있고, 선택 동의는 설정 화면에서 켜고 끄실 수 있습니다. |
 | `/privacy` 「확인하고 고치고 지우는 방법」 첫 줄 `app/privacy/page.tsx` | 저장된 출생 정보는 내 사주 화면에서 언제든 고칠 수 있습니다. | 내 출생 정보는 프로필 화면에서, 등록한 가족·친구의 출생 정보는 저장한 사람 화면에서 언제든 고칠 수 있습니다. |
+
+## all-08 확인 전 — 다 쓴 풀이의 DB 거절에서 「테스트 기간에는 N회까지」를 뺀다 (운영자 결정 2026-11-05 — 서비스가 공개로 간다, #1012)
+
+무료 풀이권이 새 회원 1장 · 그 전 계정 5장으로 갈리면서(ADR 0227) 「N회까지」가 계정마다 다르고, 「테스트 기간」은 공개 운영에 맞지 않는다.
+앞머리는 앱이 풀이권 창을 여는 열쇠라 그대로 두고(`OUT_OF_CREDITS_REFUSALS`) 꼬리만 걷었다 — 화면은 이 문장 대신 풀이권 창을 열고, 창을 못 열 때만
+이 문장이 선다(`app/me/reading/pipeline.ts`). all-02 의 「회」 줄은 이 줄이 대체한다.
+
+| 자리 | 이전 | 넣은 글자 | 출처 |
+| --- | --- | --- | --- |
+| 풀이를 다 썼을 때 — DB 거절 `start_reading_run_for`(`20270112090000`), 앱이 그대로 세운다(`app/db-error.ts`) | 풀이권을 다 쓰셨습니다. 테스트 기간에는 {N}회까지 만들 수 있어요. | 풀이권을 다 쓰셨습니다. | 실사례 없음 — 있던 앞머리 그대로(all-02)이고 새 낱말이 없다. 상세 궁합 요청의 거절 「풀이권이 없어요.」(`request_match_detail`)처럼 수를 말하지 않는다 |
 
 ## 검토 대기
 

@@ -97,6 +97,7 @@
 | 신고 스냅샷 | `chat_report_snapshot` · `report_chat_message` · `purge_closed_chat_messages` · `reportChatMessage` | 표 · 함수 · 액션 |
 | 접속 상태 | `user_activity` · `touch_activity` · `activity_band_of` · `presence_policy` · `ActivityBand` · `activityText` | 표 · 함수 · `src/lib/presence` |
 | 풀이권 | `my_reading_credits` · `reading_credits_for` · `reading_credit_limit_for` · `readReadingCredits` | 함수 · 읽는 문 |
+| 무료 몫 · 지킨 몫 | `reading_credit_limit` · `beta_free_credits` · `app_user.kept_free_credits` · `reading_credit_shares` | 함수 · 칸 (ADR 0227) |
 | 풀이권 예외 | `reading_credit_grant` | 표 |
 | 신고 처분 · 계정 상태 이력 | `report_review_entry` · `write_report_review` · `operator_review_report` · `operator_report_target` · `report_is_overdue` · `account_status_change` · `change_account_status` · `writeReview` · `reviewPlan` · `ReviewPanel` · `report-reviewed` | 표 · 함수 · `app/ops/reports/` (ADR 0188) |
 | 회원 정지 · 해제 · 처분 이력 | `operator_suspend_member` · `operator_unsuspend_member` · `screen_change_member_status` · `operator_member_sanctions` · `changeMemberStatus` · `statusPlan` · `StatusPanel` · `memberSanctions` · `member-status-changed` | 함수 · `app/ops/members/` (ADR 0189) |
@@ -108,12 +109,12 @@
 | 산 묶음 | `reading_bundle` · `reading_order` · `approve_reading_order` · `READING_BUNDLES` | 표 · 함수 · `src/lib/reading` |
 | 사용 이력 | `reading_credit_use` · `operator_reading_refund_basis` | 표 · 함수 |
 | 환불 | `reading_order_refund` · `refund_reading_order` · `refundOwed` | 표 · 함수 · `src/lib/reading` |
-| 환불 진행 중(확보) | `reading_refund_hold` · `operator_hold_reading_refund` · `operator_book_reading_refund` · `operator_release_reading_refund` · `operator_reading_refund_hold` · `release_reading_refund_by_hand` · `retention.reading_refund_after_leave` · `holdRefund` · `bookRefund` · `releaseRefund` · `RefundHold` · `releaseCheckOf` · `cancellationCheck` · `preparePlan` | 표 · 함수 · `app/ops/orders/` |
+| 환불 진행 중(확보) | `reading_refund_hold` · `operator_hold_reading_refund` · `operator_book_reading_refund` · `operator_release_reading_refund` · `operator_reading_refund_hold` · `release_reading_refund_by_hand` · `retention.reading_refund_after_leave` · `holdRefund` · `bookRefund` · `releaseRefund` · `RefundHold` · `cancellationCheck` · `preparePlan` | 표 · 함수 · `app/ops/orders/` |
 | 심사 계정 | `reading_sale_reviewer` · `reading_sale_is_open_for` · `my_reading_sale_is_open` · `mySaleIsOpen` | 표 · 함수 · `app/me/credits/sale.ts` |
 | 결제 내역 | `my_reading_orders` · `myPaidOrders` · `PaidOrder` · `readingBundleValidUntil` · `refundRequestLine` · `checkoutRefundLine`(결제 화면 유의사항) | 함수 · `app/me/credits/history/orders.ts` · `src/lib/reading` · `src/lib/brand` |
 | Person 한도 | `person_limit` · `my_person_slots` · `PersonSlots` | 함수 · `src/lib/people` |
 | 운영 베타 | `beta_schedule` · `BetaDates` | 표 · `src/lib/consent` |
-| 테스트 코드 | `signup_code` · `valid_on` · `max_uses` | 표 · 칸 |
+| 테스트 코드(걷음, ADR 0225 — 운영 베타의 기록) | `signup_code` · `valid_on` · `max_uses` · `app_user.signup_code` | 표 · 칸 |
 | 가입 완료 | `signed_up_at` · `complete_signup` | `app_user` 칸 · 함수 |
 | 앱 내 알림 | `notification` · `NotificationKind` · `my_notifications` | 표 · `src/lib/consent` · 함수 |
 | 만드는 중인 풀이 | `my_running_readings` · `RunningReading` · `runningReadings` | 함수 · `app/me/home/running.ts` |

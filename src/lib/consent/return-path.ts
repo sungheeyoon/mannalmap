@@ -113,3 +113,14 @@ export function afterSignIn(next: string): string {
   const destination = safeReturnPath(next);
   return RESUMES.includes(destination) ? withReturnPath('/signup', destination) : destination;
 }
+
+/**
+ * 로그인 · 로그인 실패 화면에서 **로그인하지 않고 나가는 곳**(ADR 0226) — 결과에서 사주풀이를 누르고 온 사람은 그 결과로 돌아간다.
+ *
+ * 로그인 전 첫 화면은 소개가 먼저라 `/` 로 나가면 적던 입력과 결과를 잃은 것처럼 보인다. 사주 이어 보기를 든 사람은
+ * `/#resume-reading` 으로 나간다 — 첫 화면이 탭의 `sessionStorage` 에 남은 입력을 되찾아 그 결과를 다시 세운다(ADR 0144 의 7).
+ * 그 밖(첫 화면의 「로그인」 · 궁합)은 첫 화면이다. 회원은 이 값을 안 쓴다(`HomeLink` 가 홈으로 보낸다).
+ */
+export function visitorExitOf(next: string | string[] | null | undefined): string {
+  return safeReturnPath(next) === RESUME_READING_PATH ? LEGACY_RESUME_READING_PATH : '/';
+}

@@ -171,7 +171,7 @@ export function PrepareForm({
       </div>
 
       <p className="text-sm text-secondary">
-        준비하면 이 회차가 잠겨 이용자가 쓰지 못합니다. 그다음 PortOne 콘솔에서 취소합니다.
+        준비하면 이 회차가 잠겨 이용자가 쓰지 못합니다. 그다음 결제한 곳의 콘솔에서 취소합니다.
       </p>
 
       {failure !== null && !confirming && <FailureLine>{failure}</FailureLine>}
@@ -203,7 +203,7 @@ export function PrepareForm({
             <dt className="text-muted">사유</dt>
             <dd>{refundReasonLabel(plan.request.reason)}</dd>
           </dl>
-          <p>이 회차가 잠겨 이용자가 쓰지 못합니다. 그다음 PortOne 콘솔에서 이 금액을 취소합니다.</p>
+          <p>이 회차가 잠겨 이용자가 쓰지 못합니다. 그다음 결제한 곳의 콘솔에서 이 금액을 취소합니다.</p>
         </ConfirmDialog>
       )}
     </form>
@@ -211,9 +211,9 @@ export function PrepareForm({
 }
 
 /**
- * **진행 중인 환불** — 확보된 금액 · 결제 번호 · 취소 후 잔액 · 사유를 보이고(PG 부분취소 화면의 칸), 운영자가 PortOne 콘솔에서
+ * **진행 중인 환불** — 확보된 금액 · 결제 번호 · 취소 후 잔액 · 사유를 보이고(부분취소 화면의 칸), 운영자가 결제한 곳의 콘솔에서
  * 그 금액을 취소한 뒤 취소 번호를 적어 「장부에 확정」을 누른다. 확정 전에는 「준비 취소」로 잠근 회차를 푼다 — 콘솔에서 아직
- * 취소하지 않았을 때만이고, 서버가 PortOne 의 취소 내역을 장부와 견준 뒤에 푼다. 두 동작 다 확인창이 대상 · 금액 · 회차를
+ * 취소하지 않았을 때만이고, 서버가 결제한 곳의 취소 내역을 장부와 견준 뒤에 푼다(`cancellations.ts`). 두 동작 다 확인창이 대상 · 금액 · 회차를
  * 다시 보이고, 창을 연 순간의 취소 번호를 낸다. 확보 번호가 금액 · 회차를 고정하므로 서버는 그 확보로만 셈한다. 화면을 닫았다
  * 다시 열어도, 산 사람이 떠났어도 문이 진행 중인 것을 다시 내주므로 이 판이 그대로 선다.
  */
@@ -300,13 +300,13 @@ export function HoldPanel({ hold, orderId }: { readonly hold: RefundHold; readon
       </div>
 
       <ol className="flex list-decimal flex-col gap-1 pl-5 text-sm text-secondary">
-        <li>PortOne 콘솔에서 이 결제를 {won(hold.amount)} 취소합니다.</li>
+        <li>결제한 곳의 콘솔에서 이 결제를 {won(hold.amount)} 취소합니다.</li>
         <li>취소 번호를 적고 장부에 확정합니다.</li>
       </ol>
 
       <div className={ROW}>
         <label htmlFor={`${ids}-refund-id`} className={LABEL}>
-          PG 취소 번호
+          취소 번호
         </label>
         <input
           id={`${ids}-refund-id`}
@@ -351,7 +351,7 @@ export function HoldPanel({ hold, orderId }: { readonly hold: RefundHold; readon
       >
         {facts}
         <dl className={FACTS}>
-          <dt className="text-muted">PG 취소 번호</dt>
+          <dt className="text-muted">취소 번호</dt>
           <dd className="break-all font-mono text-xs leading-5">{frozenRefundId}</dd>
         </dl>
         <p>콘솔에서 이 금액을 취소한 뒤에만 누릅니다. 장부에 환불이 적히고 회차가 걷힙니다.</p>
