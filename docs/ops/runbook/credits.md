@@ -10,14 +10,15 @@
 
 ```sql
 -- 누가 얼마나 썼나. `reserved` 는 지금 만들고 있는 것이 잡고 있는 자리다.
-select u.email,
+-- 계정(UUID)으로 묶는다 — 카카오로만 들어온 계정은 이메일이 없어(ADR 0224) 이메일로 묶으면 그 계정들이 한 줄로 합쳐진다.
+select u.id, u.email,
        count(*) filter (where r.status = 'succeeded') as 쓴것,
        count(*) filter (where r.status = 'running'
          and r.created_at > now() - public.reading_run_timeout()) as 만드는중,
        count(*) filter (where r.status = 'failed') as 실패
 from auth.users u
 left join public.reading_run r on r.user_id = u.id
-group by u.email
+group by u.id, u.email
 order by 쓴것 desc;
 ```
 
