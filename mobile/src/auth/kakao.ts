@@ -8,8 +8,8 @@ import { FAILED } from './signup';
  * 카카오 로그인 — 네이티브 SDK(`@react-native-kakao/user`)로 ID 토큰을 받아 `signInWithIdToken({ provider: 'kakao' })` 으로 들어간다(ADR 0224).
  * 구글 · 애플과 같은 꼴이고 같은 답을 낸다.
  *
- * **동의항목을 묻지 않는다** — `scopes` 를 비워 카카오 앱에 설정한 기본 동의만 받는다. 이메일은 받지 않으므로 Supabase 의 카카오
- * 공급자에 「Allow users without an email」이 켜져 있어야 한다(둘은 함께 움직인다, `docs/ops/runbook/kakao-login.md`).
+ * **동의항목을 따로 묻지 않는다** — `scopes` 를 비워 카카오 앱에 설정한 동의(이메일 필수, ADR 0224 추기)를 받는다. 그 전에 이메일 없이
+ * 들어온 계정이 있어 Supabase 의 카카오 공급자에 「Allow users without an email」은 켜 둔다(`docs/ops/runbook/kakao-login.md`).
  *
  * 키(`EXPO_PUBLIC_KAKAO_NATIVE_APP_KEY`)가 없으면 단추가 안 서고(`kakaoSignInAvailable`), 이 함수도 「준비 안 됨」이다.
  */

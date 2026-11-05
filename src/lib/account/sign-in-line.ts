@@ -9,7 +9,7 @@ export const KAKAO_SIGN_IN_GOING = '카카오로 이동하는 중…';
 /**
  * 설정의 계정 줄 — 로그인 이메일, 없으면 로그인 수단의 이름.
  *
- * 카카오로만 들어온 계정은 이메일이 없다(ADR 0224 — 받지 않는다). 그때 Auth 의 JWT 는 이메일을 `undefined` 가 아니라
+ * 카카오 이메일은 이제 필수 동의로 받는다(ADR 0224 추기). 그 전에 카카오로만 들어온 계정은 이메일이 없다. 그때 Auth 의 JWT 는 이메일을 `undefined` 가 아니라
  * **빈 글자**로 싣는다(#970 실측 N2) — 빈 글자를 그대로 세우면 빈 줄이 선다. 이메일도 카카오 신원도 없으면 줄이 없다.
  */
 export function accountLineOf(email: string | null | undefined, providers: unknown): string | undefined {

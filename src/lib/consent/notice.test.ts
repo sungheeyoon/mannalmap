@@ -228,7 +228,7 @@ describe('선택 항목', () => {
 
 /** 문구가 바뀌면 판본도 바뀐다 — 「보여 준 적 있다」가 아니라 「무엇을 보여 줬나」다 */
 it('안내 판본이 값으로 서 있다', () => {
-  expect(NOTICE_VERSION).toBe('notice-v15');
+  expect(NOTICE_VERSION).toBe('notice-v16');
 });
 
 /**
@@ -256,9 +256,9 @@ describe('사진 저장소', () => {
     expect(purge).not.toContain('반드시');
   });
 
-  /* v9 당시에는 기준을 v8 에 두었다(운영자 결정 2026-10-23). 그 뒤 v13(ADR 0220) · v14(대화가 유일한 흐름) · v15(공개 서비스 · 카카오, ADR 0225 추기)의 내용 개정이 기준을 올렸다 */
-  it('재확인 기준은 마지막 내용 개정 v15 다', () => {
-    expect(NOTICE_ACK_FLOOR).toBe('notice-v15');
+  /* v9 당시에는 기준을 v8 에 두었다(운영자 결정 2026-10-23). 그 뒤 v13(ADR 0220) · v14(대화가 유일한 흐름) · v15(공개 서비스 · 카카오, ADR 0225 추기) · v16(카카오계정 이메일 · 계정 합침, ADR 0224 추기)의 내용 개정이 기준을 올렸다 */
+  it('재확인 기준은 마지막 내용 개정 v16 이다', () => {
+    expect(NOTICE_ACK_FLOOR).toBe('notice-v16');
   });
 });
 
@@ -421,7 +421,6 @@ describe('공개 서비스 · 카카오 로그인 (notice-v15)', () => {
 
   it('v14 를 본 사람도 v15 를 다시 본다', () => {
     expect(noticeAckHolds('notice-v14')).toBe(false);
-    expect(noticeAckHolds('notice-v15')).toBe(true);
   });
 
   it('초대 · 비공개 베타를 말하지 않는다 — 기간은 운영 기간이다', () => {
@@ -429,10 +428,41 @@ describe('공개 서비스 · 카카오 로그인 (notice-v15)', () => {
     expect(text).toContain('지금 정한 운영 기간은 2026년 11월 30일까지입니다.');
   });
 
-  it('카카오에서는 회원번호만 받고, 탈퇴 때 연결 끊기를 요청하며 그 번호를 보낸다', () => {
-    expect(text).toContain('카카오로 로그인하시면 카카오가 이 서비스에 주는 회원번호를 받습니다');
-    expect(text).toContain('카카오에서는 이메일 · 닉네임 · 프로필 사진을 받지 않습니다');
+  it('탈퇴 때 카카오에 연결 끊기를 요청하며 회원번호를 보낸다', () => {
     expect(text).toContain('카카오에 이 서비스와의 연결을 끊어 달라고 요청하며, 이때 카카오 회원번호를 카카오에 보냅니다');
+  });
+});
+
+/**
+ * v16 — 카카오 앱이 비즈 앱이 되어 카카오계정 이메일을 필수 동의로 받고, 같은 이메일이면 Auth 가 로그인을 한 계정으로 잇는다(운영자 결정
+ * 2026-11-05, ADR 0224 추기 · G-138). 받는 항목이 늘어 v15 를 본 사람도 한 번 다시 읽는다.
+ */
+describe('카카오계정 이메일 · 계정 합침 (notice-v16)', () => {
+  const sections = noticeFor(
+    { endsOn: '2026-11-30', purgeBy: '2026-12-30', purgeWithinDays: 30 },
+    { name: '만세력 운영자', officer: '홍길동', contact: 'ops@example.com' },
+  );
+  const text = JSON.stringify(sections);
+
+  it('v15 를 본 사람도 v16 을 다시 본다', () => {
+    expect(noticeAckHolds('notice-v15')).toBe(false);
+    expect(noticeAckHolds('notice-v16')).toBe(true);
+  });
+
+  it('카카오에서 회원번호와 이메일(필수)을 받고 그 쓰임을 말한다', () => {
+    expect(text).toContain('카카오가 이 서비스에 주는 회원번호와 카카오계정 이메일(필수)을 받습니다');
+    expect(text).toContain('카카오에서는 닉네임 · 프로필 사진을 받지 않습니다');
+    expect(text).toContain('카카오계정 이메일은 이미 가입한 계정을 확인하고 문의에 답하는 데도 씁니다');
+  });
+
+  it('같은 이메일이면 로그인이 한 계정으로 합쳐진다고 말한다', () => {
+    expect(text).toContain('같은 이메일로 구글 · 카카오 · 애플 가운데 다른 로그인을 쓰시면 하나의 계정으로 합쳐집니다.');
+  });
+
+  it('카카오에서 이메일을 받지 않는다는 줄이 없다', () => {
+    expect(text).not.toContain('이메일 · 닉네임 · 프로필 사진을 받지 않습니다');
+    expect(text).not.toContain('이메일이 없습니다');
+    expect(text).not.toContain('이메일이 없는 카카오 계정');
   });
 });
 
