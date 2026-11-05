@@ -34,7 +34,8 @@ export type SettingsData = {
   photoless: boolean;
   /** 인연이 열려 있는가 — 닫혔거나 못 읽었으면 인연 무리 · 새 메시지 알림이 안 선다(ADR 0222) */
   matchOpen: boolean | null;
-  email: string | undefined;
+  /** 로그인 이메일, 없으면 로그인 수단의 이름(카카오) — 둘 다 없으면 줄이 없다(`accountLineOf`, ADR 0223) */
+  accountLine: string | undefined;
   userId: string;
   /** 푸시 공개 열쇠가 있는 배포인가(G-71) */
   pushAvailable: boolean;
@@ -49,7 +50,7 @@ export type SettingsData = {
  * 줄 전체가 프로필 화면(`/me/profile`)으로 가고 오른쪽은 「›」 하나다 — 「사진 추가」 글자는 걷었다(운영자 2026-10-26). 이름 · 사진 · 소개는 앱 전체에서 불리는 값이라 제 화면이 있다.
  */
 export function SettingsView({ data }: { data: SettingsData }): ReactNode {
-  const { state, account, discoveryProfile, photoless, matchOpen, email, userId, pushAvailable } = data;
+  const { state, account, discoveryProfile, photoless, matchOpen, accountLine, userId, pushAvailable } = data;
   const active = state.kind === 'active';
   /** 인연 찾기 · 새 메시지 알림은 인연의 입구다 — 닫힌 동안은 안 선다(ADR 0222) */
   const matching = active && matchEntriesStand(matchOpen);
@@ -88,7 +89,7 @@ export function SettingsView({ data }: { data: SettingsData }): ReactNode {
                 )
               }
               label={account.nickname ?? '내 프로필'}
-              help={email}
+              help={accountLine}
             />
           </section>
         )}
@@ -143,8 +144,8 @@ export function SettingsView({ data }: { data: SettingsData }): ReactNode {
           스토어의 계정 삭제 요건(ADR 0218)
         */}
         <SettingsGroup title="계정">
-          {!active && email !== undefined && (
-            <p className="px-6 py-3 text-small leading-5 text-secondary">{email}</p>
+          {!active && accountLine !== undefined && (
+            <p className="px-6 py-3 text-small leading-5 text-secondary">{accountLine}</p>
           )}
           <SignOutRow />
         </SettingsGroup>

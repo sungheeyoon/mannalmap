@@ -7,7 +7,8 @@ import type { Database } from '@/src/lib/db';
 
 import { LIVE_REDRAW_COOKIE } from '../live/redraw-mark';
 
-type SignedInUser = { id: string; email: string | undefined };
+/** `providers` 는 그 계정에 붙은 로그인 수단(`app_metadata.providers`) — 카카오로만 들어온 계정은 이메일이 빈 글자다(ADR 0223) */
+type SignedInUser = { id: string; email: string | undefined; providers?: unknown };
 
 /**
  * 화면이 **스스로 묻는** 로그인 — 쿠키의 JWT 서명을 이 서버에서 확인한다(ADR 0117).
@@ -34,7 +35,7 @@ export async function signedInUser(supabase: SupabaseClient<Database>): Promise<
   const { data } = await supabase.auth.getClaims();
   if (data === null) return null;
   if (!(await redrawnByTheApp())) noteActivity(supabase);
-  return { id: data.claims.sub, email: data.claims.email };
+  return { id: data.claims.sub, email: data.claims.email, providers: data.claims.app_metadata?.providers };
 }
 
 /**

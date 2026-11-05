@@ -1,4 +1,5 @@
 import { accountStateOf, type AccountState, type Suspension } from '@account/index';
+import { accountLineOf } from '@account/sign-in-line';
 import { preferGenderOf, type PreferGender } from '@discovery';
 import { userFacingDbMessage } from '@db-error';
 
@@ -55,13 +56,14 @@ export type SettingsData = {
   state: AccountState;
   account: SettingsAccount | null;
   discovery: DiscoveryRead;
-  email: string | undefined;
+  /** 로그인 이메일, 없으면 로그인 수단의 이름(카카오) — 둘 다 없으면 줄이 없다(`accountLineOf`, ADR 0223) */
+  accountLine: string | undefined;
   userId: string | null;
 };
 
 /** 못 읽은 때의 답 — 계정을 못 물은 줄과 다시 시도가 선다 */
 export function settingsUnreachable(): SettingsData {
-  return { state: accountStateOf({ ok: false, reason: 'unreachable' }), account: null, discovery: { ok: false, reason: NOT_READY }, email: undefined, userId: null };
+  return { state: accountStateOf({ ok: false, reason: 'unreachable' }), account: null, discovery: { ok: false, reason: NOT_READY }, accountLine: undefined, userId: null };
 }
 
 export async function readSettings(): Promise<SettingsData> {
@@ -83,7 +85,7 @@ export async function readSettings(): Promise<SettingsData> {
             optedOut: profile.data?.opted_out_at != null,
             preferGender: profile.data === null ? 'any' : preferGenderOf(profile.data.prefer_gender),
           },
-    email: user?.email,
+    accountLine: accountLineOf(user?.email, user?.app_metadata.providers),
     userId: user?.id ?? null,
   };
 }

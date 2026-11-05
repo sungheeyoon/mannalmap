@@ -48,8 +48,8 @@ select id, ends_on, purge_within_days, note, set_at from public.beta_schedule or
 못 본다. 날짜는 판본에 없다 — 둘은 따로 움직이고 관문이 둘 다 본다.
 
 ```sql
--- 누가 어느 판본·어느 날짜에서 무엇을 골랐나
-select u.email, a.notice_version, a.notice_ends_on, a.notice_ack_at,
+-- 누가 어느 판본·어느 날짜에서 무엇을 골랐나 — 카카오로만 들어온 계정은 이메일이 비어 있다(ADR 0223). 계정은 `a.id` 로 가른다
+select a.id, u.email, a.notice_version, a.notice_ends_on, a.notice_ack_at,
        a.improvement_consent as 개선활용, a.contact_consent as 후속연락
 from public.app_user a join auth.users u on u.id = a.id
 order by a.notice_ack_at desc nulls first;
@@ -97,8 +97,8 @@ left join public.app_user u on u.signup_code = c.code
 where (now() at time zone 'Asia/Seoul')::date between c.valid_on and c.valid_until
 group by c.code, c.note, c.valid_on, c.valid_until, c.max_uses;
 
--- 어느 계정이 어느 코드로 왔나
-select au.email, u.signup_code, u.signed_up_at, u.nickname
+-- 어느 계정이 어느 코드로 왔나 — 이메일이 빈 계정(카카오, ADR 0223)은 `u.id` 로 가른다
+select u.id, au.email, u.signup_code, u.signed_up_at, u.nickname
 from public.app_user u
 join auth.users au on au.id = u.id
 order by u.signed_up_at desc nulls last;

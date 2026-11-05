@@ -68,6 +68,11 @@ export const SECRET_ENV = [
    * 없으면 끊기가 503 이고 탈퇴는 그대로 간다. 팀 ID · 키 ID 는 비밀이 아니다(아래 설정)
    */
   'APPLE_SIGN_IN_PRIVATE_KEY',
+  /**
+   * 카카오 REST API 키의 클라이언트 시크릿(ADR 0223) — 웹의 카카오 로그인이 인가 코드를 토큰으로 바꿀 때 싣는다(`app/auth/kakao/`).
+   * 카카오 콘솔에서 시크릿을 켰을 때만 든다
+   */
+  'KAKAO_CLIENT_SECRET',
 ];
 
 /** 브라우저가 본다 — 빌드 때 번들에 박힌다. 비밀을 여기 두는 순간 공개된다 */
@@ -133,6 +138,11 @@ export const CONFIG_ENV = [
   /** 애플 로그인 키의 팀 ID · 키 ID — 비밀이 아니다(클라이언트 비밀의 머리 · 몸에 그대로 실린다, ADR 0219) */
   'APPLE_TEAM_ID',
   'APPLE_SIGN_IN_KEY_ID',
+  /**
+   * 카카오 REST API 키 — 비밀이 아니다(인가 주소에 실려 브라우저가 본다, ADR 0223). 없으면 웹의 카카오 로그인 단추가 안 선다.
+   * Production 에만 둔다 — 미리보기 주소는 카카오에 등록할 수 없다
+   */
+  'KAKAO_REST_API_KEY',
 ];
 
 /** 제 안에서 비밀을 읽는 패키지 — 이것을 부르는 모듈도 비밀을 읽는 모듈이다 */
