@@ -9,7 +9,7 @@ const MIGRATIONS = resolve(__dirname, '../../../supabase/migrations');
 
 describe('refusedForCredits', () => {
   it('풀이를 여는 문이 잔액으로 막은 거절을 알아본다', () => {
-    expect(refusedForCredits({ code: '23514', message: '풀이권을 다 쓰셨습니다. 테스트 기간에는 5회까지 만들 수 있어요.' })).toBe(true);
+    expect(refusedForCredits({ code: '23514', message: '풀이권을 다 쓰셨습니다.' })).toBe(true);
   });
 
   it('옛 인연 요청의 거절 문장은 더 풀이권 창이 아니다 — 그 문장을 던지는 문이 없다(대화가 유일한 흐름, `20270109090000`)', () => {
@@ -27,6 +27,7 @@ describe('refusedForCredits', () => {
    */
   it('옛 꼬리의 문장도 알아본다 — 마이그레이션과 앱 배포의 순서가 상관없다', () => {
     expect(refusedForCredits({ code: '23514', message: '풀이권을 다 쓰셨습니다. 테스트 기간에는 5번까지 만들 수 있어요.' })).toBe(true);
+    expect(refusedForCredits({ code: '23514', message: '풀이권을 다 쓰셨습니다. 테스트 기간에는 5회까지 만들 수 있어요.' })).toBe(true);
     for (const lead of OUT_OF_CREDITS_REFUSALS) {
       expect(lead, lead).not.toMatch(/[번회개장]/);
     }

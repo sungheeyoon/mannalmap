@@ -8,7 +8,7 @@
 -- 대화 요청은 풀이권을 안 잡아(대화가 유일한 흐름, `20270109090000`) 옛 요청의 거절 문장을 던지는 함수가 없다 — 셋째 줄이 잰다.
 -- 풀이권은 상세 궁합을 청할 때 잡고, 그 거절은 `99_match_talk_and_detail` 이 잰다.
 begin;
-select plan(4);
+select plan(5);
 
 select is(
   (select count(*)::int
@@ -35,9 +35,16 @@ select is(
   (select array_agg(p.proname::text order by p.proname)
      from pg_proc p join pg_namespace n on n.oid = p.pronamespace
     where n.nspname = 'public'
-      and p.prosrc like '%''풀이권을 다 쓰셨습니다. 테스트 기간에는 \%회까지 만들 수 있어요.''%'),
+      and p.prosrc like '%''풀이권을 다 쓰셨습니다.''%'),
   array['start_reading_run_for'],
-  '2. 다 쓴 풀이는 만들 수 있는 횟수를 「회」로 센다');
+  '2. 다 쓴 풀이의 거절은 「풀이권을 다 쓰셨습니다.」 한 문장이다 — 테스트 기간의 수를 말하지 않는다(`20270112090000`)');
+
+select is(
+  (select count(*)::int
+     from pg_proc p join pg_namespace n on n.oid = p.pronamespace
+    where n.nspname = 'public' and p.prosrc like '%테스트 기간에는%'),
+  0,
+  '3. 「테스트 기간에는」을 던지는 함수는 없다 — 서비스가 공개로 갔다(운영자 결정 2026-11-05)');
 
 select * from finish();
 rollback;

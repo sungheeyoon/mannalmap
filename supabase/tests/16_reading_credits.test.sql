@@ -210,8 +210,8 @@ select is(
 select throws_like(
   format($$select * from public.start_reading_run('private', 'credit-priv-0008', %L::uuid, %L::uuid)$$,
     (select bro from kin), (select self_person_id from public.app_user)),
-  '풀이권을 다 쓰셨습니다. 테스트 기간에는 %회까지 만들 수 있어요.',
-  '다 쓰면 풀이권이라는 말로 거절하고, 만들 수 있는 횟수를 「회」로 센다(`20261209090000`)');
+  '풀이권을 다 쓰셨습니다.',
+  '다 쓰면 풀이권이라는 말로 거절한다 — 테스트 기간의 수는 말하지 않는다(`20270112090000`)');
 
 -- ── 손으로 셀 길이 없다 ─────────────────────────────────────────────────────
 
