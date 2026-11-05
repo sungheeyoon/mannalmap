@@ -9,6 +9,7 @@ import { Icon } from '@/ui/icons';
 import { ConfirmDialog, DialogText } from '@/ui/confirm-dialog';
 import { DialogPanel } from '@/ui/surfaces';
 import { COLOR, CONTROL, FONT, RADIUS, TYPE } from '@/ui/tokens';
+import { KEEP_VIEW } from '@/ui/keep-view';
 
 import { blockUser, reportMessage, reportUser, type SaveAnswer } from './reads';
 
@@ -129,7 +130,7 @@ export function ReportDialog({
                         accessibilityRole="button"
                         accessibilityState={{ selected: chosen }}
                         onPress={() => setPicked(chosen ? null : message.id)}
-                        style={[styles.pick, chosen && styles.picked]}
+                        {...KEEP_VIEW} style={[styles.pick, chosen && styles.picked]}
                       >
                         <View style={styles.pickText}>
                           <Text numberOfLines={2} style={styles.pickBody}>

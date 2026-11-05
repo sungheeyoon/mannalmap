@@ -20,6 +20,7 @@ import { Icon } from '@/ui/icons';
 import { Logo } from '@/ui/logo';
 import { SecondaryButton } from '@/ui/parts';
 import { COLOR, ELEMENT_TONE, FONT, RADIUS, TYPE } from '@/ui/tokens';
+import { KEEP_VIEW } from '@/ui/keep-view';
 
 /** 웹 머리글의 `MEMBER_TABS` 와 같은 넷 · 같은 글자다. 궁합의 첫 화면은 앱에서 `/me/compat` 다. 인연이 닫힌 동안은 홈 · 궁합 둘이다(ADR 0222) */
 const TABS = [
@@ -136,7 +137,7 @@ export default function MeLayout() {
                 onPress={() => goTab(tab.href)}
                 style={styles.tab}
               >
-                <View style={[styles.tabMark, active && styles.tabMarkOn]}>
+                <View {...KEEP_VIEW} style={[styles.tabMark, active && styles.tabMarkOn]}>
                   <Icon name={tab.icon} color={active ? ELEMENT_TONE.木.ink : COLOR.secondary} />
                 </View>
                 <Text style={[styles.tabLabel, active && styles.tabLabelOn]}>{tab.label}</Text>
@@ -168,8 +169,7 @@ const styles = StyleSheet.create({
   body: { flex: 1 },
   dock: { flexDirection: 'row', paddingHorizontal: 6, paddingTop: 6, borderTopWidth: 1, borderTopColor: COLOR.border, backgroundColor: COLOR.surface },
   tab: { flex: 1, minHeight: 56, alignItems: 'center', justifyContent: 'center', gap: 2 },
-  /** 불 켠 탭의 표시는 Material 3 내비게이션 막대의 활성 표시(64×32dp 알약, 아이콘 뒤 · 이름은 아래)다 — https://m3.material.io/components/navigation-bar/specs. 웹 하단 독(`app/site-header.tsx`)과 같은 크기다 */
-  tabMark: { width: 64, height: 32, alignItems: 'center', justifyContent: 'center', borderRadius: RADIUS.pill },
+  tabMark: { width: 56, height: 32, alignItems: 'center', justifyContent: 'center', borderRadius: RADIUS.pill },
   tabMarkOn: { backgroundColor: ELEMENT_TONE.木.soft },
   tabLabel: { fontFamily: FONT.bold, fontSize: TYPE.fine, color: COLOR.secondary },
   tabLabelOn: { color: COLOR.foreground },

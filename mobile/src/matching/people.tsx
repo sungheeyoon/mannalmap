@@ -12,6 +12,7 @@ import { Photo } from '@/ui/photo';
 import { ConfirmDialog, DialogText } from '@/ui/confirm-dialog';
 import { DetailSheet } from '@/ui/sheet';
 import { COLOR, ELEMENT_TONE, FONT, RADIUS, TYPE } from '@/ui/tokens';
+import { KEEP_VIEW } from '@/ui/keep-view';
 import { Tile } from '@/ui/surfaces';
 
 import { blockUser, reportUser } from './doors';
@@ -254,7 +255,7 @@ export function ReportBlock({ userId, nickname, onPhoto = false, onBlocked }: { 
         accessibilityRole="button"
         accessibilityLabel="신고 · 차단"
         onPress={() => setMenu(true)}
-        style={[styles.more, onPhoto && styles.moreOnPhoto]}
+        {...KEEP_VIEW} style={[styles.more, onPhoto && styles.moreOnPhoto]}
       >
         <Icon size={20} name="more" color={onPhoto ? '#ffffff' : COLOR.foreground} />
       </Pressable>

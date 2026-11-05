@@ -458,13 +458,13 @@ function Dock({
               >
                 <span
                   aria-hidden="true"
-                  className={`grid h-8 w-16 place-items-center rounded-full ${active ? 'bg-wood-soft text-wood' : ''}`}
+                  className={`grid h-8 w-14 place-items-center rounded-full ${active ? 'bg-wood-soft text-wood' : ''}`}
                 >
                   <Icon name={tab.icon} />
                 </span>
                 {tab.label}
                 {(badges[tab.href] ?? 0) > 0 && (
-                  <span className="absolute right-[calc(50%-2rem)] top-0.5">
+                  <span className="absolute right-[calc(50%-1.75rem)] top-0.5">
                     <UnreadBadge count={badges[tab.href] ?? 0} words={BADGE_WORDS[tab.href]} />
                   </span>
                 )}
