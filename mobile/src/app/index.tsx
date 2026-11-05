@@ -22,6 +22,7 @@ import { Icon } from '@/ui/icons';
 import { Logo } from '@/ui/logo';
 import { COLOR, FONT, RADIUS, TYPE } from '@/ui/tokens';
 import { CardFrame, Paper } from '@/ui/surfaces';
+import { KEEP_VIEW } from '@/ui/keep-view';
 
 const CITIES = Object.keys(CITY_LONGITUDES) as CityName[];
 const HOUR_CHOICES = [
@@ -55,7 +56,7 @@ function EntryTabs({ value, onPick }: { value: Doorway; onPick: (next: Doorway) 
             accessibilityRole="tab"
             accessibilityState={{ selected: on }}
             onPress={() => onPick(door.key)}
-            style={[styles.tab, on && styles.tabOn]}
+            {...KEEP_VIEW} style={[styles.tab, on && styles.tabOn]}
           >
             {door.key === 'self' ? <SunMark size={20} color={color} /> : <Icon name="taiji" size={20} color={color} />}
             <Text style={[styles.tabText, on && styles.tabTextOn]}>{door.label}</Text>
