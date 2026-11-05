@@ -28,6 +28,9 @@ import { storedInputOf, storedInputsOf } from '../person-input';
 import { myReadings } from '../reading/current';
 import { FailureLine } from '../../ui/failure-line';
 import { HOME_ROW_LINK } from '../home/home-list';
+import { MatchOpenAlert } from '../home/match-open-alert';
+import { openOf, readMatchOpen, readMatchOpenAlert } from '../../match-opening';
+import { matchOpenAlertStands } from '@/src/lib/matching/opening';
 
 /**
  * 로그인한 사람이 도착하는 자리 — **홈.**
@@ -124,13 +127,15 @@ async function Home({
 }) {
   const supabase = await supabaseOnServer();
 
-  const [circle, self, readings, profile, runningRead, faceRead] = await Promise.all([
+  const [circle, self, readings, profile, runningRead, faceRead, openRead, alertRead] = await Promise.all([
     myCircle(supabase, selfPersonId),
     storedInputOf(supabase, selfPersonId),
     myReadings(),
     myDiscoveryProfile(),
     runningReadings(),
     myHomeFace(supabase, userId),
+    readMatchOpen(supabase),
+    readMatchOpenAlert(supabase),
   ]);
   /* 내 사진들 — 꾸밈이다. 못 읽었으면 사진 없는 나(일간 그림)로 선다(ADR 0078). 원을 누르면 오는 「내 프로필」 시트가 같은 값을 쓴다 */
   const face = { userId, nickname, intro, ...(faceRead.ok ? faceRead.value : NO_FACE) };
@@ -172,6 +177,13 @@ async function Home({
       />
     );
 
+  /*
+    **인연이 닫힌 동안의 「열리면 알려 주세요」 줄**(ADR 0223) — 닫혔다고 읽었고 신청 여부도 읽었을 때만 선다. 둘 중 하나라도 못 읽었으면
+    안 선다 — 부속 정보다(ADR 0078). 「다른 사람 사주 보기」 바로 아래다
+  */
+  const openAlert =
+    matchOpenAlertStands(openOf(openRead)) && alertRead.ok ? <MatchOpenAlert asked={alertRead.value} /> : null;
+
   const myPeople = (
     <MyPeople
       selfPersonId={selfPersonId}
@@ -194,6 +206,7 @@ async function Home({
         <div className="min-w-0">{selfCard}</div>
         {myPeople}
         <OtherSaju />
+        {openAlert}
       </>
     );
   }
@@ -210,6 +223,7 @@ async function Home({
       <div className="flex min-w-0 flex-col gap-3">
         {selfCard}
         <OtherSaju />
+        {openAlert}
       </div>
 
       <ReceivedReadings readings={readings} />

@@ -80,11 +80,11 @@ const MOBILE_RPCS = [
   'acknowledge_warning', 'add_my_photo', 'block_user', 'cancel_match_request', 'complete_signup', 'create_managed_person',
   'create_pair_for_reading', 'current_beta_schedule', 'leave_reading_feedback', 'mark_chat_read', 'mark_notifications_read',
   'mark_reading_ready_read', 'move_my_photo', 'my_adult_check', 'my_chat_messages', 'my_chat_rooms', 'my_discovery_board', 'my_ended_talk_messages', 'my_ended_talks',
-  'my_match_detail_state', 'my_match_requests', 'my_match_scope', 'my_matches', 'my_notifications', 'my_passed_connections', 'my_person_slots', 'my_photos',
+  'my_match_detail_state', 'my_match_open_alert', 'my_match_requests', 'my_match_scope', 'my_matches', 'my_notifications', 'my_passed_connections', 'my_person_slots', 'my_photos',
   'match_is_open', 'my_reading', 'my_reading_credits', 'my_reading_orders', 'my_readings', 'my_running_readings', 'my_service_survey', 'my_suspension',
   'my_warning_notice', 'nickname_is_available', 'pair_relation_of', 'photo_at', 'remove_my_photo', 'replace_my_photo',
   'report_chat_message', 'report_user', 'request_account_deletion', 'request_match', 'restore_passed_connection', 'save_my_profile',
-  'save_service_survey', 'send_chat_message', 'service_survey_context', 'set_contact_consent', 'set_improvement_consent',
+  'save_service_survey', 'send_chat_message', 'service_survey_context', 'set_contact_consent', 'set_improvement_consent', 'set_match_open_alert',
   'set_my_photo_focus', 'set_pair_relation', 'share_my_reading', 'shared_reading', 'touch_activity', 'unread_chat_count',
 ];
 const MOBILE_TABLES = ['app_user', 'block', 'discovery_passed', 'discovery_profile', 'person', 'user_person_access'];
@@ -131,6 +131,7 @@ const statelessReads = (client) => ({
   my_adult_check: () => client.rpc('my_adult_check'),
   my_chat_rooms: () => client.rpc('my_chat_rooms'),
   my_discovery_board: () => client.rpc('my_discovery_board'),
+  my_match_open_alert: () => client.rpc('my_match_open_alert'),
   my_match_requests: () => client.rpc('my_match_requests'),
   my_matches: () => client.rpc('my_matches'),
   my_notifications: () => client.rpc('my_notifications'),

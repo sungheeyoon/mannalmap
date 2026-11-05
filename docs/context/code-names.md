@@ -15,6 +15,7 @@
 | selfPerson | `self_person_id` · `create_self_person` | `app_user` 칸 · 함수 |
 | 성인 확인 | `adult_check` · `adult_check_switch` · `adult_check_passed` · `my_adult_check` · `confirm_adult_check` | 표 · 판정 · 문(ADR 0214) |
 | 인연의 열림 | `match_open_switch` · `match_is_open` · `match_open_to` · `match_must_be_open_to` · `src/lib/matching/opening.ts` | 스위치 · 화면이 읽는 값 · 문의 판정(열림 + 성인 확인) · 거절(ADR 0222) |
+| 인연 열림 알림 | `match_open_alert` · `my_match_open_alert` · `set_match_open_alert` · `matchOpenAlertStands` | 닫힌 동안 홈에서 받는 「열리면 알려 주세요」 신청 — 사람마다 한 줄, 운영자는 수만 센다(ADR 0223) |
 | 대화 · 상세 궁합 | `match_request.kind` · `request_match_detail` · `my_match_detail_state` | 칸 · 문(ADR 0215 · 0221) |
 | localLabel | `local_label` | `user_person_access` 칸 |
 | 닉네임 | `nickname` · `nicknameKey` | `app_user` 칸 · `src/lib/profile` |
