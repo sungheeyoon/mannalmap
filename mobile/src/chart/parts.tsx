@@ -6,6 +6,7 @@ import type { Rich as RichParts, RichPart } from '@saju-view/notes';
 
 import { Card as CardFace } from '@/ui/surfaces';
 import { COLOR, CONTROL, FONT, RADIUS, TYPE } from '@/ui/tokens';
+import { KEEP_VIEW } from '@/ui/keep-view';
 
 /** 한자 — 부산단디명조에 없어 기기 서체다(웹의 `.glyph`) */
 const GLYPH_FONT = Platform.select({ ios: 'System', android: 'sans-serif', default: 'system-ui' });
@@ -147,7 +148,7 @@ export function Tabs({ tabs, initial, label, small = false }: { tabs: readonly T
               accessibilityRole="tab"
               accessibilityState={{ selected }}
               onPress={() => setView(tab.key)}
-              style={[styles.tab, selected && styles.tabChosen]}
+              {...KEEP_VIEW} style={[styles.tab, selected && styles.tabChosen]}
             >
               <T size={small ? 'small' : 'sm'} tone={selected ? 'foreground' : 'secondary'} bold>
                 {tab.label}

@@ -1,6 +1,9 @@
 'use client';
 
+import Link from 'next/link';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+
+import { MEMBER_SIGN_IN_ASK } from '@/src/lib/brand/guide';
 
 import { BirthFields, focusBirthGap } from './birth-form';
 import { CopyLinkButton } from './copy-link';
@@ -49,6 +52,7 @@ import { CARD, PAPER_BOTTOM } from './ui/surfaces';
  */
 export function SajuCalculator({ outline }: { outline: readonly string[] }) {
   const signedIn = useSignedIn();
+  const sessionKnown = useSessionKnown();
   const searchParams = useHashParams();
   const query = useMemo(() => queryFromSearchParams(searchParams), [searchParams]);
 
@@ -173,6 +177,19 @@ export function SajuCalculator({ outline }: { outline: readonly string[] }) {
             */}
             {query !== null ? '수정하고 다시 보기' : signedIn ? '사주 보기' : '무료로 내 사주 보기'}
           </button>
+
+          {/*
+            **이미 쓰는 사람의 길은 주 단추 바로 아래 한 줄이다**(ADR 0226) — 생년월일을 안 적어도 들어가 홈에 선다(`/auth`, 목적지 기본값).
+            로그인하지 않은 것을 **안 뒤에만** 세운다 — 회원에게 한 번 깜빡이지 않게. 결과가 선 뒤에는 결과의 로그인 단추가 그 일을 한다
+          */}
+          {query === null && !signedIn && sessionKnown && (
+            <p className="flex w-full flex-wrap items-center justify-center gap-x-1 text-small text-secondary">
+              {MEMBER_SIGN_IN_ASK}
+              <Link href="/auth" className="inline-flex min-h-11 items-center px-1 font-semibold text-foreground underline underline-offset-4">
+                로그인
+              </Link>
+            </p>
+          )}
 
           {/*
             **링크 복사는 제출 버튼 옆이다.**

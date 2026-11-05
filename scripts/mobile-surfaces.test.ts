@@ -67,3 +67,51 @@ describe('앱 화면의 면', () => {
     for (const fine of ['borderRadius: RADIUS.cell', 'borderRadius: RADIUS.pill']) expect(handMadeIn(fine), fine).toEqual([]);
   });
 });
+
+/**
+ * **바탕이 나중에 서는 둥근 자리는 `KEEP_VIEW` 를 펼친다**(`mobile/src/ui/keep-view.ts`). 안드로이드는 바탕 없는 뷰를 펼쳐 없앴다가 바탕이
+ * 서면 새로 짓는데, 그때 `borderRadius` 를 잃어 둥근 표시가 네모로 선다(RN #52415 — 2026-11-05 운영 APK 의 하단 탭). 웹 번들 · 단위 시험은
+ * 이것을 못 본다 — 글자로 읽는다. 한 줄로 쓴 스타일만 읽는다: 모서리만 있고 바탕 · 테두리가 없는 스타일에 `조건 && styles.X` 로 바탕이나
+ * 테두리를 붙이는 자리. `ui/` 의 부품은 위 `files` 처럼 빠진다 — 거기서 같은 꼴을 쓰면 손으로 펼친다.
+ */
+const STYLE_LINE = /^\s+(\w+): \{(.*)\},?$/gm;
+const TOGGLED = /styles\.(\w+)\b[^\]\n]*?&&[^\]\n]*?styles\.(\w+)/g;
+const PAINTS = /\b(?:backgroundColor|borderWidth):/;
+
+function roundedWithoutKeep(text: string): string[] {
+  const styles = new Map([...text.matchAll(STYLE_LINE)].map((match) => [match[1], match[2]]));
+  const bare = (key: string) => /\bborderRadius:/.test(styles.get(key) ?? '') && !PAINTS.test(styles.get(key) ?? '');
+  const paints = (key: string) => PAINTS.test(styles.get(key) ?? '');
+  return [...text.matchAll(TOGGLED)]
+    /* 같은 배열에 늘 서는 바탕(`{ backgroundColor: soft }`)이 끼면 처음부터 네이티브 뷰다 */
+    .filter((match) => bare(match[1]) && paints(match[2]) && !PAINTS.test(match[0].split('&&')[0]))
+    .filter((match) => {
+      const before = text.slice(0, match.index);
+      const tag = Math.max(...[...before.matchAll(/<[A-Z]/g)].map((open) => open.index ?? 0), 0);
+      return !before.slice(tag).includes('KEEP_VIEW');
+    })
+    .map((match) => `styles.${match[1]} + styles.${match[2]}`);
+}
+
+describe('앱의 둥근 자리', () => {
+  it('바탕이 나중에 서는 둥근 자리는 `KEEP_VIEW` 를 펼친다', () => {
+    const found = files.flatMap(({ file, text }) => roundedWithoutKeep(text).map((what) => `${file}: ${what}`));
+    expect(found).toEqual([]);
+  });
+
+  it('빠뜨린 자리를 잡는다 — 누를 때 · 고를 때 둘 다', () => {
+    const sheet = `
+  mark: { width: 56, height: 32, borderRadius: RADIUS.pill },
+  markOn: { backgroundColor: COLOR.accent },
+  row: { padding: 8, borderRadius: RADIUS.cell },
+  pressed: { backgroundColor: COLOR.surfaceSoft },
+  face: { borderRadius: RADIUS.pill, backgroundColor: COLOR.surface },
+`;
+    expect(roundedWithoutKeep(`<View style={[styles.mark, on && styles.markOn]} />${sheet}`)).toEqual(['styles.mark + styles.markOn']);
+    expect(roundedWithoutKeep(`<Pressable\n  onPress={go}\n  style={({ pressed }) => [styles.row, pressed && styles.pressed]}\n>${sheet}`)).toEqual(['styles.row + styles.pressed']);
+    expect(roundedWithoutKeep(`<View {...KEEP_VIEW} />\n<View style={[styles.mark, on && styles.markOn]} />${sheet}`)).toEqual(['styles.mark + styles.markOn']);
+    expect(roundedWithoutKeep(`<View {...KEEP_VIEW} style={[styles.mark, on && styles.markOn]} />${sheet}`)).toEqual([]);
+    expect(roundedWithoutKeep(`<View style={[styles.face, on && styles.markOn]} />${sheet}`)).toEqual([]);
+    expect(roundedWithoutKeep(`<View style={[styles.mark, { backgroundColor: soft }, on && styles.markOn]} />${sheet}`)).toEqual([]);
+  });
+});

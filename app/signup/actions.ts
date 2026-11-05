@@ -5,15 +5,15 @@ import { redirect } from 'next/navigation';
 import { refresh } from '../refresh';
 import { supabaseOnServer } from '../auth/server-client';
 import { userFacingDbMessage } from '../db-error';
-import { WRONG_CODE_NOTE, refusedField, safeReturnPath, signupRequest, type SignupField } from '@/src/lib/consent';
+import { refusedField, safeReturnPath, signupRequest, type SignupField } from '@/src/lib/consent';
 import { rpcArgs } from '@/src/lib/db';
 
 /**
  * 가입을 끝낸다 — **성공하면 안 돌아온다.**
  *
- * 코드·이름·안내 확인이 **한 번에** 나간다(`complete_signup`). 갈라 보내면 「코드는
- * 썼는데 이름이 없는」 계정이 생기고, 관문이 그런 사람을 어디로 보낼지 다시 정해야
- * 한다 — 그 자리를 없애려고 폼을 하나로 합친 것이다(ADR 0042).
+ * 이름·안내 확인·선택 답이 **한 번에** 나간다(`complete_signup`). 갈라 보내면 「확인은
+ * 했는데 이름이 없는」 계정이 생기고, 관문이 그런 사람을 어디로 보낼지 다시 정해야
+ * 한다 — 그 자리를 없애려고 폼을 하나로 합친 것이다(ADR 0042). 테스트 코드는 걷었다(ADR 0225).
  *
  * 판본과 **본 안내의 줄**을 화면이 들고 온다. 서버가 스스로 「지금 값」을 적으면 사용자가
  * 읽은 것과 남는 기록이 갈린다 — 읽은 것을 적어야 그 기록이 뜻이 있다. 그 사이에
@@ -27,7 +27,6 @@ import { rpcArgs } from '@/src/lib/db';
 export async function completeSignup(answer: {
   /** 가입을 마치고 갈 곳 — 화면이 보낸 값이라 여기서 다시 좁힌다(ADR 0128) */
   returnTo: string;
-  code: string;
   nickname: string;
   version: string;
   scheduleId: number;
@@ -36,19 +35,13 @@ export async function completeSignup(answer: {
 }): Promise<{ ok: false; message: string; field: SignupField | null }> {
   const supabase = await supabaseOnServer();
 
-  const { data: signedUp, error } = await supabase.rpc('complete_signup', rpcArgs<'complete_signup'>(signupRequest(answer)));
+  const { error } = await supabase.rpc('complete_signup', rpcArgs<'complete_signup'>(signupRequest(answer)));
 
   if (error) {
     const message = userFacingDbMessage(error, 'complete_signup');
     /* 어느 칸의 거절인지 함께 낸다 — 화면이 그 칸 곁에 세운다(`refusedField`) */
     return { ok: false, message, field: refusedField(error.code, message) };
   }
-  /*
-    **틀린 코드는 거절이 아니라 `false` 로 온다** — DB 가 틀린 시도를 적고 세어야 해서 던지지 않는다
-    (`20261101090000`, ADR 0124). 문장은 던지던 때와 같다: 없는 코드와 지난 코드를 가르지 않는다.
-  */
-  if (signedUp === false) return { ok: false, message: WRONG_CODE_NOTE, field: 'code' };
-
   refresh('signed-up');
 
   /*

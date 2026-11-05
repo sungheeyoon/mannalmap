@@ -1,7 +1,7 @@
 import { accountFailureOf, type AccountState } from '@account/index';
 import { betaIsOver, signupDone } from '@consent/gate';
 import { NOTICE_NOT_READY, NOTICE_VERSION } from '@consent/notice';
-import { refusedField, signupRequest, WRONG_CODE_NOTE, type SignupField } from '@consent/signup';
+import { refusedField, signupRequest, type SignupField } from '@consent/signup';
 import { rpcArgs } from '@db';
 import { userFacingDbMessage } from '@db-error';
 
@@ -15,7 +15,7 @@ export const FAILED = '로그인을 끝내지 못했어요. 잠시 뒤 다시 �
 
 export type SignupState =
   | { kind: 'done' }
-  | { kind: 'form'; needsCode: boolean; needsName: boolean; again: boolean; scheduleId: number; endsOn: string; purgeBy: string }
+  | { kind: 'form'; needsName: boolean; again: boolean; scheduleId: number; endsOn: string; purgeBy: string }
   /** 폼이 안 서는 까닭 — 일정이 없거나 못 읽었다(ADR 0024) */
   | { kind: 'blocked'; message: string }
   /** 테스트가 끝났다 — 말은 `/closed` 가 한다 */
@@ -63,7 +63,6 @@ export async function readSignup(): Promise<SignupState> {
 
   return {
     kind: 'form',
-    needsCode: !signedUp,
     needsName: account.data === null || account.data.nickname === null,
     again: signedUp,
     scheduleId: notice.scheduleId,
@@ -79,16 +78,15 @@ export async function checkNickname(nickname: string): Promise<{ ok: true; avail
   return { ok: true, available: data === true };
 }
 
-/** 코드 · 이름 · 안내 확인이 **한 번에** 나간다(ADR 0042). 판본과 본 안내의 줄은 화면이 들고 온다 — 그 사이 바뀌었으면 DB 가 거절한다 */
+/** 이름 · 안내 확인 · 선택 답이 **한 번에** 나간다(ADR 0042). 테스트 코드는 걷었다(ADR 0225). 판본과 본 안내의 줄은 화면이 들고 온다 — 그 사이 바뀌었으면 DB 가 거절한다 */
 export async function completeSignup(answer: {
-  code: string;
   nickname: string;
   scheduleId: number;
   improvement: boolean;
   contact: boolean;
 }): Promise<{ ok: true } | { ok: false; message: string; field: SignupField | null }> {
   if (supabase === null) return { ok: false, message: NOT_READY, field: null };
-  const { data, error } = await supabase.rpc(
+  const { error } = await supabase.rpc(
     'complete_signup',
     rpcArgs<'complete_signup'>(signupRequest({ ...answer, version: NOTICE_VERSION })),
   );
@@ -96,7 +94,5 @@ export async function completeSignup(answer: {
     const message = userFacingDbMessage(error, 'complete_signup');
     return { ok: false, message, field: refusedField(error.code, message) };
   }
-  /* 틀린 코드는 거절이 아니라 `false` 로 온다 — DB 가 틀린 시도를 적고 세어야 해서 던지지 않는다(ADR 0124) */
-  if (data === false) return { ok: false, message: WRONG_CODE_NOTE, field: 'code' };
   return { ok: true };
 }

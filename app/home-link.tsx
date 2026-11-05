@@ -12,10 +12,22 @@ import { useBrowserSession } from './auth/browser-session';
  * 눌러 오면 dev 서버에서 230~450ms 였다(2026-10-08 잼). 머리글 로고가 이미 하는 일을 화면 안 링크도 한다 — 도착지는 같고
  * 그 틱만 건너뛴다. 세션을 모르는 동안은 `/` 다(미리 그린 HTML 에서도 그렇다) — 거기서 현관이 옮긴다.
  */
-export function HomeLink({ className, children }: { className?: string; children: ReactNode }) {
+export function HomeLink({
+  className,
+  children,
+  visitorHref = '/',
+}: {
+  className?: string;
+  children: ReactNode;
+  /**
+   * 로그인 전에 갈 곳 — 기본은 첫 화면(소개)이다. 체험으로 바로 여는 입구는 `TRIAL_PATH`, 결과에서 로그인하러 온 사람의
+   * 출구는 그 결과(`visitorExitOf`)를 준다(ADR 0226). 회원은 언제나 홈이다
+   */
+  visitorHref?: string;
+}) {
   const { session } = useBrowserSession();
   return (
-    <Link href={session === 'in' ? '/me' : '/'} className={className}>
+    <Link href={session === 'in' ? '/me' : visitorHref} className={className}>
       {children}
     </Link>
   );

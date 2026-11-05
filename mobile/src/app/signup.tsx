@@ -6,14 +6,12 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { SIGN_OUT_PENDING } from '@account/copy';
 import { mayRequestDeletion } from '@account/index';
 import { safeReturnPath } from '@consent/return-path';
-import { NOTICE_ACK_LABEL, NOTICE_ACK_NOTE, OPTIONAL_CONSENTS, OPTIONAL_CONSENT_NOTE, SIGNUP_CODE_NOTE } from '@consent/notice';
+import { NOTICE_ACK_LABEL, NOTICE_ACK_NOTE, OPTIONAL_CONSENTS, OPTIONAL_CONSENT_NOTE } from '@consent/notice';
 import {
-  SIGNUP_CODE_MAX,
   SIGNUP_HEAD,
   SIGNUP_LABEL,
   SIGNUP_NOTICE_DISCOVERY,
   SIGNUP_NOTICE_USE,
-  signupCodeOf,
   signupGap,
   signupNoticeDates,
   type SignupField,
@@ -105,8 +103,7 @@ export default function SignupScreen() {
 }
 
 function SignupForm({ form, onDone }: { form: Extract<SignupState, { kind: 'form' }>; onDone: () => void }) {
-  const { needsCode, needsName, scheduleId, endsOn, purgeBy } = form;
-  const [code, setCode] = useState('');
+  const { needsName, again, scheduleId, endsOn, purgeBy } = form;
   const [nickname, setNickname] = useState('');
   const [acknowledged, setAcknowledged] = useState(false);
   const [chosen, setChosen] = useState<Record<string, boolean>>({ improvement: false, contact: false });
@@ -116,17 +113,17 @@ function SignupForm({ form, onDone }: { form: Extract<SignupState, { kind: 'form
   const [checking, setChecking] = useState(false);
   const [checkTried, setCheckTried] = useState(false);
   const [tried, setTried] = useState(false);
-  const codeField = useRef<ComponentRef<typeof TextInput>>(null);
   const nicknameField = useRef<ComponentRef<typeof TextInput>>(null);
 
   const missing = needsName ? missingNickname(nickname) : null;
   const answer = checked?.key === nicknameKey(nickname) ? checked : null;
   /* 단추를 잠그지 않고, 누르면 처음 걸린 칸 하나를 말한다 — 웹과 같다 */
-  const gap = signupGap({ needsCode, code, nicknameGap: missing, acknowledged });
+  const gap = signupGap({ nicknameGap: missing, acknowledged });
   const shownGap = tried ? gap : null;
   const dates = signupNoticeDates(endsOn, purgeBy);
   const refusedHere = (field: SignupField) => failure?.field === field;
-  const focus = (field: SignupField) => (field === 'code' ? codeField : nicknameField).current?.focus();
+  /* 칸은 닉네임 하나다 — 테스트 코드 칸은 걷었다(ADR 0225) */
+  const focusName = () => nicknameField.current?.focus();
 
   const check = async () => {
     if (missing !== null) {
@@ -147,13 +144,12 @@ function SignupForm({ form, onDone }: { form: Extract<SignupState, { kind: 'form
     setFailure(null);
     if (gap !== null) {
       setTried(true);
-      if (gap.field !== 'ack') focus(gap.field);
+      if (gap.field === 'nickname') focusName();
       return;
     }
     setTried(false);
     setWorking(true);
     const result = await completeSignup({
-      code,
       nickname,
       scheduleId,
       improvement: chosen.improvement === true,
@@ -165,32 +161,11 @@ function SignupForm({ form, onDone }: { form: Extract<SignupState, { kind: 'form
       return;
     }
     setFailure({ message: result.message, field: result.field });
-    if (result.field !== null) focus(result.field);
+    if (result.field !== null) focusName();
   };
 
   return (
     <CardFrame style={styles.form}>
-      {needsCode && (
-        <View style={styles.group}>
-          <FieldLabel>{SIGNUP_LABEL.code}</FieldLabel>
-          <Field
-            inputRef={codeField}
-            label={SIGNUP_LABEL.code}
-            value={code}
-            maxLength={SIGNUP_CODE_MAX}
-            autoCapitalize="characters"
-            placeholder={SIGNUP_LABEL.codePlaceholder}
-            refused={shownGap?.field === 'code' || refusedHere('code')}
-            onChange={(typed) => {
-              setCode(signupCodeOf(typed));
-              if (failure?.field === 'code') setFailure(null);
-            }}
-          />
-          {refusedHere('code') && <Text style={styles.failure}>{failure?.message}</Text>}
-          <Text style={styles.fine}>{SIGNUP_CODE_NOTE}</Text>
-        </View>
-      )}
-
       {needsName && (
         <View style={styles.group}>
           <FieldLabel>{SIGNUP_LABEL.nickname}</FieldLabel>
@@ -264,7 +239,7 @@ function SignupForm({ form, onDone }: { form: Extract<SignupState, { kind: 'form
         {failure !== null && failure.field === null && <Text style={styles.failure}>{failure.message}</Text>}
         {shownGap !== null && <Text style={styles.failure}>{shownGap.message}</Text>}
         <PrimaryButton
-          label={working ? SIGNUP_LABEL.signingUp : needsCode ? SIGNUP_LABEL.signUp : SIGNUP_LABEL.confirm}
+          label={working ? SIGNUP_LABEL.signingUp : again ? SIGNUP_LABEL.confirm : SIGNUP_LABEL.signUp}
           onPress={send}
           disabled={working}
         />
@@ -282,7 +257,7 @@ function NoticeLine({ children }: { children: React.ReactNode }) {
   );
 }
 
-/** 나가는 길 — 코드가 없는 사람, 다른 구글 계정으로 들어와야 하는 사람의 자리. 적어 둔 출생 정보는 앞 화면에 그대로 있다 */
+/** 나가는 길 — 다른 계정으로 들어와야 하는 사람, 가입하지 않고 떠나는 사람의 자리. 적어 둔 출생 정보는 앞 화면에 그대로 있다 */
 function LeaveLink() {
   const [leaving, setLeaving] = useState(false);
   const [failed, setFailed] = useState(false);

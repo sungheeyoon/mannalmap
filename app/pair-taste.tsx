@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 
+import { COMPAT_CREDIT_NOTE, COMPAT_SIGN_IN_ACTION } from '@/src/lib/brand/guide';
 import { RESUME_PAIR_PATH } from '@/src/lib/consent';
 import { calculateChart } from '@/src/lib/input/chart';
 import { DEFAULT_QUERY, mergeSearchParams, missingAnswer, toSearchParams, type Query } from '@/src/lib/input/query';
@@ -167,10 +168,11 @@ function PairTasteResult({ taste, names, draft }: { taste: Taste; names: { a: st
         </ol>
         <div className="mt-5 flex flex-col gap-2">
           <SignInCarrying draftKey={PAIR_DRAFT_KEY} draft={draft} next={RESUME_PAIR_PATH} className={`${BUTTON_PRIMARY} w-full`}>
-            로그인하고 궁합풀이 받기
+            {COMPAT_SIGN_IN_ACTION}
           </SignInCarrying>
+          {/* 둘째 문장은 앱 첫 화면의 「궁합 보기」 탭과 같은 상수다(ADR 0226) */}
           <p className="text-center text-xs leading-5 text-secondary">
-            로그인하면 입력한 두 사람으로 이어서 볼 수 있어요. 가입하면 풀이권으로 궁합풀이를 받을 수 있어요.
+            로그인하면 입력한 두 사람으로 이어서 볼 수 있어요. {COMPAT_CREDIT_NOTE}
           </p>
         </div>
       </section>

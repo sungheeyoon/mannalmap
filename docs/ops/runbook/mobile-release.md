@@ -15,7 +15,7 @@
 | 3 | iOS → TestFlight, Android → 내부 트랙 | 조율자(계정은 운영자, #304) | 처리가 끝나 테스터에게 보인다 |
 | 4 | 실기기 확인 | 운영자(#770) | 가입부터 풀이 · 궁합 · 인연 · 채팅까지 |
 | 5 | Android 비공개 테스트 | 운영자 · 조율자 | 아래 「내부 트랙과 비공개 테스트는 다르다」 |
-| 6 | iOS 심사 제출(수동 출시), Android 프로덕션 신청 | 운영자 · 조율자 | 아래 「심사 계정과 테스트 코드」 · 「iOS 는 수동 출시로 낸다」 |
+| 6 | iOS 심사 제출(수동 출시), Android 프로덕션 신청 | 운영자 · 조율자 | 아래 「심사 계정」 · 「iOS 는 수동 출시로 낸다」 |
 
 ### 앱의 문이 운영에 섰나
 
@@ -145,18 +145,18 @@ iOS 앱의 애플 로그인(ADR 0219)은 코드만 main 에 있고 **운영자�
 
 **키가 새면** `docs/ops/runbook/secret-leak.md` 「비밀이 새면」의 `APPLE_SIGN_IN_PRIVATE_KEY` 줄. 키가 없거나 틀리면 탈퇴는 그대로 가고 애플 연결 끊기만 503 이다.
 
-## 심사 계정과 테스트 코드
+## 심사 계정
 
-로그인이 있는 앱은 심사에 데모 계정 정보를 주고 백엔드를 켜 둔다([Apple 2.1(a)](https://developer.apple.com/app-store/review/guidelines/)). Google 도 로그인으로 막힌 앱은 들어갈 정보를 다 달라고 한다([Google 「Prepare your app for review」](https://support.google.com/googleplay/android-developer/answer/9859455) 「Sign-in details」). **심사자도 로그인 뒤 테스트 코드로 가입을 지나므로 둘을 함께 준다.**
+로그인이 있는 앱은 심사에 데모 계정 정보를 주고 백엔드를 켜 둔다([Apple 2.1(a)](https://developer.apple.com/app-store/review/guidelines/)). Google 도 로그인으로 막힌 앱은 들어갈 정보를 다 달라고 한다([Google 「Prepare your app for review」](https://support.google.com/googleplay/android-developer/answer/9859455) 「Sign-in details」). **심사자는 로그인 뒤 닉네임 · 안내 확인으로 가입을 지난다 — 테스트 코드는 걷었다(ADR 0225).**
 
 제출 전에:
 
 1. **로그인 길을 정한다 — 아직 안 정했다.** 앱의 로그인은 지금 구글이고 iOS 에는 애플이 함께 선다(ADR 0219, 위 「애플 로그인을 켜는 차례」 뒤에), 비밀번호 계정(`docs/agents/delegation/local-env.md` 의 `createUser`)은 앱에서 쓸 길이 없다. 심사 전용 구글 계정은 운영자만 만든다. 그 계정이 낯선 기기 확인에 막히지 않는지를 실기기로 재고, 막히면 다른 길은 보고 뒤 결정이다 — 앱에 데모 길을 더하면 새 흐름이다. Apple 의 내장 데모 모드는 사전 승인이 든다
-2. **테스트 코드를 넣는다** — `docs/ops/runbook/signup.md` 「초대」 그대로다. 심사 전용 줄 하나, `valid_until` 은 심사가 끝날 때까지 넉넉히, 정원은 작게. 운영 DB 쓰기라 조율자가 밟고, 코드 글자는 저장소에 적지 않는다
-3. **그 절의 경고를 본다** — 「테스트가 아닌 사람을 처음 들이기 전에 출시 단계를 옮긴다」. 심사 전용 계정만이면 실제 사용자 자료가 아니지만, 비공개 테스터를 받기 전에는 조율자가 운영자에게 묻는다
-4. **로그인 → 코드 → 가입 → 풀이까지 그 계정으로 실기기에서 한 번 간다.** 배포된 문(「앱의 문이 운영에 섰나」)과 베타 일정이 살아 있어야 한다
-5. 계정 · 코드는 **App Store Connect 의 App Review Information** 과 **Play Console 의 App access** 에만 적는다. 저장소 · 이슈에 적지 않는다
-6. 심사가 끝나면 코드를 지우고 계정을 정리한다(`forget_user`)
+2. **베타 일정이 심사가 끝날 때까지 살아 있는지 본다** — 종료일이 지나면 가입도 이용도 닫힌다(`docs/ops/runbook/signup.md` 「테스트 시작하기」)
+3. **「초대」 절의 경고를 본다** — 「테스트가 아닌 사람을 처음 들이기 전에 출시 단계를 옮긴다」. 심사 전용 계정만이면 실제 사용자 자료가 아니지만, 비공개 테스터를 받기 전에는 조율자가 운영자에게 묻는다
+4. **로그인 → 가입 → 풀이까지 그 계정으로 실기기에서 한 번 간다.** 배포된 문(「앱의 문이 운영에 섰나」)과 베타 일정이 살아 있어야 한다
+5. 계정은 **App Store Connect 의 App Review Information** 과 **Play Console 의 App access** 에만 적는다. 저장소 · 이슈에 적지 않는다
+6. 심사가 끝나면 계정을 정리한다(`forget_user`)
 
 ## iOS 는 수동 출시로 낸다
 

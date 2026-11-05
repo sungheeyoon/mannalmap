@@ -114,7 +114,7 @@
 | 결제 내역 | `my_reading_orders` · `myPaidOrders` · `PaidOrder` · `readingBundleValidUntil` · `refundRequestLine` · `checkoutRefundLine`(결제 화면 유의사항) | 함수 · `app/me/credits/history/orders.ts` · `src/lib/reading` · `src/lib/brand` |
 | Person 한도 | `person_limit` · `my_person_slots` · `PersonSlots` | 함수 · `src/lib/people` |
 | 운영 베타 | `beta_schedule` · `BetaDates` | 표 · `src/lib/consent` |
-| 테스트 코드 | `signup_code` · `valid_on` · `max_uses` | 표 · 칸 |
+| 테스트 코드(걷음, ADR 0225 — 운영 베타의 기록) | `signup_code` · `valid_on` · `max_uses` · `app_user.signup_code` | 표 · 칸 |
 | 가입 완료 | `signed_up_at` · `complete_signup` | `app_user` 칸 · 함수 |
 | 앱 내 알림 | `notification` · `NotificationKind` · `my_notifications` | 표 · `src/lib/consent` · 함수 |
 | 만드는 중인 풀이 | `my_running_readings` · `RunningReading` · `runningReadings` | 함수 · `app/me/home/running.ts` |

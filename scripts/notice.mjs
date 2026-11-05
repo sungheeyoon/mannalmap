@@ -76,39 +76,9 @@ export const chartArgs = (seed = '', hasHour = true) => ({
   p_chart_engine_version: CHECK_CHART_ENGINE,
 });
 
-/** 검사가 쓰는 테스트 코드 — 오늘 하루, 넉넉한 정원 */
-export const CHECK_CODE = 'CHECKCODE';
-
 const psql = (statement) =>
   execFileSync('docker', ['exec', '-i', worktreeStack().dbContainer, 'psql', '-U', 'postgres', '-tAq',
     '-c', statement], { encoding: 'utf8' });
-
-/**
- * 오늘 쓸 수 있는 코드를 세운다 — **운영자가 SQL 로 넣는 그 길로.**
- *
- * `signup_code` 는 `service_role` 에도 닫혀 있다. 그 키가 새면 살아 있는 코드가 통째로
- * 열리기 때문이다(`invite` 가 그랬던 것과 같은 까닭). 그래서 이 검사도 앱이 쓰는 길이
- * 아니라 운영자가 쓰는 길로 넣는다.
- *
- * **날짜가 서울 자정으로 넘어가면 어제 코드가 된다.** 그래서 부를 때마다 `valid_on` 을
- * 오늘로 밀어 둔다 — 자정을 걸친 검사가 이유 없이 빨간불이 되지 않게.
- */
-export function seedSignupCode(code = CHECK_CODE, maxUses = 100) {
-  /*
-    **정원은 쌓인다.** 「오늘 정원」이라고 말하지만 세는 것은 이 코드로 가입한 계정
-    전부(`complete_signup`)다. 검사가 계정을 하나씩 만들고 지우지 않으므로, 백 번쯤
-    돌면 그 뒤로는 **아무것도 안 고쳐도 빨간불**이 된다 — 재려던 것과 상관없는 자리에서.
-
-    벽을 넓히지 않는다(정원 자체는 pgTAP 이 잰다). 검사가 만든 계정에서 **이 코드의
-    표식만 뗀다** — 사람이 만든 계정에는 안 닿는다.
-  */
-  psql(`update public.app_user set signup_code = null where signup_code = '${code}'`);
-  psql(`insert into public.signup_code (code, note, valid_on, max_uses)
-        values ('${code}', '검사', (now() at time zone 'Asia/Seoul')::date, ${maxUses})
-        on conflict (code) do update
-          set valid_on = excluded.valid_on, valid_until = excluded.valid_on, max_uses = excluded.max_uses`);
-  clearMachineRunsFromToday();
-}
 
 /**
  * 도구가 만든 시도를 **오늘에서 비켜 둔다.**
@@ -176,11 +146,11 @@ export function scheduleBeta(endsOn = checkEndsOn()) {
  */
 export async function passNotice(client, nickname) {
   scheduleBeta();
-  seedSignupCode();
+  clearMachineRunsFromToday();
 
   const current = await client.rpc('current_beta_schedule');
   const { error } = await client.rpc('complete_signup', {
-    p_code: CHECK_CODE,
+    p_code: null,
     p_nickname: nickname ?? `벗${Math.random().toString(36).slice(2, 8)}`,
     p_version: NOTICE_VERSION,
     p_schedule_id: current.data?.[0]?.schedule_id,

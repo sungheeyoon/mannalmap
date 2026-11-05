@@ -37,14 +37,12 @@ select pg_temp.acting((select kim from fresh));
 
 /** 일정이 없으면 확인 자체가 안 남는다 — 안내가 만들어지지 않기 때문이다 */
 select throws_like(
-  $$select public.complete_signup('NOTICE1', '김안', 'notice-v1', (select s.schedule_id from public.current_beta_schedule() s), false, true)$$,
+  $$select public.complete_signup(null, '김안', 'notice-v1', (select s.schedule_id from public.current_beta_schedule() s), false, true)$$,
   '%기간이 정해지지%',
   '일정이 없으면 확인이 남지 않는다');
 
 reset role;
 select tests.schedule_beta();
-insert into public.signup_code (code, note, valid_on, max_uses)
-values ('NOTICE1', '시험', public.signup_today(), 5);
 set local role authenticated;
 select pg_temp.acting((select kim from fresh));
 
@@ -70,7 +68,7 @@ select throws_like(
 
 /** 판본을 안 들고 오면 무엇을 보여 줬는지 못 남긴다 */
 select throws_ok(
-  $$select public.complete_signup('NOTICE1', '김안', '', (select s.schedule_id from public.current_beta_schedule() s), true, true)$$,
+  $$select public.complete_signup(null, '김안', '', (select s.schedule_id from public.current_beta_schedule() s), true, true)$$,
   '23514', null, '판본 없이는 확인이 남지 않는다');
 
 /**
@@ -80,11 +78,11 @@ select throws_ok(
  * 안 물어본 사람이 같은 값이 되고, 다시 물어야 할 사람을 못 고른다.
  */
 select throws_ok(
-  $$select public.complete_signup('NOTICE1', '김안', 'notice-v1', (select s.schedule_id from public.current_beta_schedule() s), null, false)$$,
+  $$select public.complete_signup(null, '김안', 'notice-v1', (select s.schedule_id from public.current_beta_schedule() s), null, false)$$,
   '23514', null, '선택 항목을 비운 채로는 지나갈 수 없다');
 
 select lives_ok(
-  $$select public.complete_signup('NOTICE1', '김안', 'notice-v1', (select s.schedule_id from public.current_beta_schedule() s), false, true)$$,
+  $$select public.complete_signup(null, '김안', 'notice-v1', (select s.schedule_id from public.current_beta_schedule() s), false, true)$$,
   '코드·이름·확인·선택 답이 한 번에 남는다');
 
 select is(

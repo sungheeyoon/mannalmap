@@ -88,6 +88,10 @@ test('무료로 내 사주 보기 → 결과 머리로 내려가고 · 잠긴 �
   await expect(page).toHaveURL(/\/auth\?next=%2Fsaju%23resume-reading$/);
   expect(page.url()).not.toContain('1990');
   expect(await page.evaluate(() => sessionStorage.getItem('saju:reading-draft'))).toContain('date=1990-05-15');
+
+  /* 로그인을 그만두면 빈 폼이 아니라 그 결과로 돌아간다 — 첫 화면이 남은 입력을 되찾는다(ADR 0226) */
+  await page.getByRole('link', { name: '사주로 돌아가기' }).click();
+  await expect(page.getByRole('region', { name: '내 사주' })).toContainText('민수');
 });
 
 test('궁합 보기 → 두 사람의 한 줄 · 가린 점수 · 잠긴 목록 → 로그인은 두 사람을 주소에 안 싣는다', async ({ page }) => {

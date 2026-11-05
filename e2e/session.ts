@@ -136,32 +136,6 @@ export const scheduledEndsOn = (): string => checkEndsOn();
 /** 운영자가 **미룬** 날 — 검사의 종료일보다 늦어야 「옮겼다」가 된다 */
 export const postponedEndsOn = (): string => checkEndsOn(new Date(), 3);
 
-/** e2e 가 쓰는 테스트 코드 — 한 자리에 두어 손잡이와 시험이 같은 값을 본다 */
-export const E2E_CODE = 'E2ECODE';
-
-/**
- * 오늘 쓸 수 있는 코드를 세운다.
- *
- * **부를 때마다 `valid_on` 을 오늘로 민다.** 코드는 하루만 사는데 검사는 자정을 걸쳐
- * 돌 수 있다 — 그러면 어제 코드가 되어, 시험이 재려던 것과 상관없는 자리에서 죽는다.
- *
- * 정원은 넉넉하게 둔다. 워커가 나란히 돌며 계정을 하나씩 만들므로, 좁게 잡으면
- * 「인원이 다 찼어요」가 이유 없는 빨간불이 된다 — 정원 자체는 pgTAP 이 잰다.
- */
-export function seedSignupCode(): void {
-  /*
-    **정원은 쌓인다.** 「오늘 정원」이라고 말하지만 세는 것은 이 코드로 가입한 계정
-    전부다(`complete_signup`). 시험이 계정을 하나씩 만들고 지우지 않으므로 천 번쯤
-    돌면 그 뒤로는 아무것도 안 고쳐도 빨간불이 된다. 벽을 넓히는 대신 **시험이 만든
-    계정에서 이 코드의 표식만 뗀다**(정원 자체는 pgTAP 이 잰다).
-  */
-  sql(`update public.app_user set signup_code = null where signup_code = '${E2E_CODE}'`);
-  sql(`insert into public.signup_code (code, note, valid_on, max_uses)
-       values ('${E2E_CODE}', 'e2e', (now() at time zone 'Asia/Seoul')::date, 1000)
-       on conflict (code) do update
-         set valid_on = excluded.valid_on, valid_until = excluded.valid_on, max_uses = excluded.max_uses`);
-}
-
 /**
  * 시험이 만든 시도를 **오늘에서 비켜 둔다.**
  *
@@ -430,11 +404,9 @@ async function seed(
   scheduleBeta(scheduledEndsOn());
 
   if (wanted.skipSignup !== true) {
-    seedSignupCode();
-
     const current = await client.rpc('current_beta_schedule');
     const passed = await client.rpc('complete_signup', {
-      p_code: E2E_CODE,
+      p_code: null,
       p_nickname: nickname,
       p_version: NOTICE_VERSION,
       p_schedule_id: current.data?.[0]?.schedule_id,
