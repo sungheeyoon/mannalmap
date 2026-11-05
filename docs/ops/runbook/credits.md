@@ -22,16 +22,26 @@ group by u.id, u.email
 order by 쓴것 desc;
 ```
 
-모두에게 더 주려면 상한을 옮긴다 — 값이 하나뿐인 것이 이 설계의 요점이다. **한 사람에게만** 더 주는 것은 상한이 아니라
-아래 「무상 풀이권 지급 · 회수」다(ADR 0043 · 0187).
+새 회원의 무료 몫은 **1** 이고, 그 변경(`20270112090000`)이 오르기 전에 가입을 마친 계정은 **5** 를 지킨다(운영자 결정 2026-11-05, ADR 0227).
+한 계정의 무료 몫은 `greatest(reading_credit_limit(), app_user.kept_free_credits)` 다 — 지킨 몫은 바닥이고, 그 칸은 마이그레이션이 한 번 적은 뒤로
+적는 문이 없다. 몇 계정이 지켰는지는 집계로만 본다:
+
+```sql
+select count(*) filter (where kept_free_credits is not null) as 지킨_계정,
+       count(*) filter (where signed_up_at is not null and kept_free_credits is null) as 새_회원
+from public.app_user;
+```
+
+새 회원 모두에게 더 주려면 상한을 옮긴다 — 값이 하나뿐인 것이 이 설계의 요점이다. 옛 회원은 그 수가 다섯을 넘을 때만 따라온다.
+**한 사람에게만** 더 주는 것은 상한이 아니라 아래 「무상 풀이권 지급 · 회수」다(ADR 0043 · 0187).
 
 ```sql
 create or replace function public.reading_credit_limit()
-returns integer language sql immutable set search_path = '' as $$ select 5 $$;
+returns integer language sql immutable set search_path = '' as $$ select 1 $$;
 ```
 
 > 옮기기 전에 **무엇을 근거로 옮기는지 적어 둔다.** 처음 다섯은 재어 보고 정한 값이
-> 아니다(ADR 0021). 「달라고 해서」와 「테스터 대부분이 다섯에서 멈춰서」는 다른 근거이고,
+> 아니다(ADR 0021). 1 은 가입이 코드 없이 열리며 계정을 여럿 만들어 받는 값을 줄이려고 정했다(ADR 0227). 「달라고 해서」와 「테스터 대부분이 다섯에서 멈춰서」는 다른 근거이고,
 > 뒤의 것만 다음 판을 정하는 데 쓸 수 있다.
 >
 > **2026-09-05 에 여덟으로 올렸다가 같은 날 다섯으로 되돌렸다.** 여덟의 근거는 셈이었다 —

@@ -87,7 +87,7 @@ npm run db:remote -- --purpose "검사를 적은 시도 수" \
 
 | | 값 | 어디 |
 |---|---|---|
-| 사람당 풀이권 | 5 | `reading_credit_limit()` |
+| 계정당 무료 풀이권 | 새 회원 1 · 그 전에 가입을 마친 계정 5(ADR 0227) | `reading_credit_limit()` · `app_user.kept_free_credits` |
 | 사람당 시간당 | 20 (실패한 시도도 든다) | `reading_rate_limit()` |
 | **전체 하루** | **500**(2026-09-23 에 100 → 500, G-03) | `reading_daily_budget()` |
 | 운영자 경고 | 상한의 80% — 400 | `reading_budget_warning()` |
