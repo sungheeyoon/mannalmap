@@ -31,3 +31,12 @@ export function tabsWhileShut<T extends { href: string }>(tabs: readonly T[], op
 
 /** 인연의 입구(설정의 인연 무리 · 새 메시지 알림 · 앱 첫 화면의 인연 소개 · 보관함의 「오늘의 인연」)를 세우는가 — 열렸다고 읽었을 때만 */
 export const matchEntriesStand = (open: boolean | null): boolean => open === true;
+
+/**
+ * 홈의 「열리면 알려 주세요」 줄(ADR 0223)의 단추 글자 — 앱의 단추가 프롭으로 받아 문구 파일(`copy.ts`)에 못 둔다(ADR 0159).
+ * 신청 전 · 신청 뒤 · 저장하는 동안. 제목과 설명 줄은 `copy.ts` 의 `MATCH_OPEN_ALERT_*` 다(대장 home-11).
+ */
+export const MATCH_OPEN_ALERT_BUTTON = { on: '알림 받기', off: '알림 끄기', saving: '저장하는 중…' } as const;
+
+/** 홈에 그 줄을 세우는가 — **닫혔다고 읽었을 때만**이다. 열렸거나 모르면 안 선다(열렸는데 「준비 중」을 세우지 않는다) */
+export const matchOpenAlertStands = (open: boolean | null): boolean => open === false;

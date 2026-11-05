@@ -10,6 +10,7 @@ import { signOut } from '@/auth/sign-in';
 import { listenLive } from '@/chat/live';
 import { OtherSaju, ReceivedReadings, RunningReadings, SavedPeople } from '@/home/lists';
 import { homeUnreachable, readHome, readRunning, type Home } from '@/home/read';
+import { MatchOpenAlert } from '@/home/match-open-alert';
 import { SelfCard } from '@/home/self-card';
 import { BirthFields, useBirthForm } from '@/people/birth-fields';
 import { openParticipation, saveFailureOf, saveSelfPerson } from '@/reading/chart-writes';
@@ -115,6 +116,7 @@ function Body({ home, retry }: { home: Home; retry: () => void }) {
         {self}
         <SavedPeople people={home.people} slots={home.slots} />
         <OtherSaju />
+        <MatchOpenAlert />
       </>
     );
   }
@@ -124,6 +126,7 @@ function Body({ home, retry }: { home: Home; retry: () => void }) {
       <View style={styles.stack}>
         {self}
         <OtherSaju />
+        <MatchOpenAlert />
       </View>
       <ReceivedReadings readings={home.received} />
       <SavedPeople people={home.people} slots={home.slots} />

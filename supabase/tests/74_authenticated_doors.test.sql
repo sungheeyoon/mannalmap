@@ -16,6 +16,8 @@
 -- `set_my_photo` 를 `20261115090000` 이 걷었다. 대화가 유일한 흐름이 되며 `match_request_ttl` 을
 -- `20270109090000` 이 걷었다. `match_talk_open` 은 그 마이그레이션의 임시 호환이고 인연의 스위치(`20270106120000`)만 따른다.
 -- 같은 마이그레이션이 화면이 메뉴 · 주소를 고르는 `match_is_open` 을 더했다 — 참 · 거짓 하나뿐이다(ADR 0222).
+-- 2026-11-05 에 인연이 열리면 알려 달라는 신청 · 취소와 그 여부를 읽는 문 둘(`set_match_open_alert` · `my_match_open_alert`, `20270110090000`, ADR 0223)이
+-- 더했다 — 사람 id 를 받지 않고 부른 사람 제 줄만 다룬다.
 begin;
 select plan(1);
 
@@ -58,6 +60,7 @@ select set_eq(
            ('my_ended_talk_messages(p_match_id uuid)'),
            ('my_ended_talks()'),
            ('my_match_detail_state(p_match_id uuid)'),
+           ('my_match_open_alert()'),
            ('my_match_requests()'),
            ('my_match_scope(p_match_id uuid)'),
            ('my_matches()'),
@@ -133,6 +136,7 @@ select set_eq(
            ('service_survey_context()'),
            ('set_contact_consent(p_consent boolean)'),
            ('set_improvement_consent(p_consent boolean)'),
+           ('set_match_open_alert(p_wanted boolean)'),
            ('set_my_photo_focus(p_position integer, p_x integer, p_y integer, p_version bigint)'),
            ('set_pair_relation(p_person_a uuid, p_person_b uuid, p_relation text)'),
            ('set_person_listed(p_person uuid, p_listed boolean)'),

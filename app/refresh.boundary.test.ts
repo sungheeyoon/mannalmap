@@ -170,6 +170,8 @@ describe('내보낸 액션은 바뀐 것의 이름을 고른다', () => {
     'app/me/compat/actions.ts::pairRelationFor': '읽기만 한다 — 적어 둔 사이를 화면에 세우려고',
     'app/me/home/actions.ts::runningLinesNow':
       '읽기만 한다 — 홈의 「만드는 중」 줄을 몇 초마다 다시 묻는다. 줄이 사라진 것을 본 섬이 홈을 다시 그린다(ADR 0157)',
+    'app/me/home/actions.ts::setMatchOpenAlert':
+      '홈의 그 줄이 누른 뒤의 값을 스스로 든다 — 서버가 그리는 다른 자리는 이 값을 안 읽는다(ADR 0223)',
     'app/me/reading/actions.ts::generateReading':
       '이 누름이 여는 것은 **시도**뿐이다. 글은 응답 뒤에 나고, 끝난 것을 확인한 자리가 무른다(ADR 0016)',
     'app/me/reading/actions.ts::markReadingReadyRead':
