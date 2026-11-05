@@ -37,7 +37,7 @@ async function readOrders(): Promise<Read<readonly PaidOrder[]>> {
 }
 
 /**
- * 풀이권 — **보유 수를 보기만 한다.** 구매 자리는 없다 — PG 가 정해지지 않았다. 판매가 열리면 그 차례(G-123 의 결제 줄)에 웹의 상품 화면을 옮긴다.
+ * 풀이권 — **보유 수를 보기만 한다.** 구매 자리는 없다 — 스토어 인앱결제가 붙는 차례(#937, ADR 0212)에 선다.
  */
 export function CreditsScreen() {
   const [read, setRead] = useState<Read<number | null> | null>(null);

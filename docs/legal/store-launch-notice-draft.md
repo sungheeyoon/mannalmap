@@ -18,7 +18,7 @@
 | 로그인 | 구글뿐(웹 · 앱) | `app/auth/sign-in-button.tsx:28` · `mobile/src/auth/sign-in.ts:41` |
 | 애플 로그인 | 없다 — #935 열림 | `mobile/package.json` 에 애플 인증 패키지 없음 |
 | 앱 푸시 | 없다 — #936 열림. 웹 푸시는 G-71 보류 | `mobile/package.json` 에 `expo-notifications` 없음 |
-| 결제 | 판매 스위치가 꺼져 있다. PG 는 하지 않는다(ADR 0212). 인앱결제는 출시 뒤(#937) | `app/me/credits/actions.ts:39` 의 `p_provider: 'portone'` 는 꺼진 길로 남았다 |
+| 결제 | 판매 스위치가 꺼져 있다. PG 는 하지 않는다(ADR 0212). 인앱결제는 출시 뒤(#937) | 웹의 PortOne 결제창 · 결제 알림 코드는 걷었다(2026-11-05) — `app/me/credits/checkout.tsx` 에 결제 단추가 없다. 장부의 제공자 칸(`reading_order.provider`)은 DB 값으로 남았다 |
 | 카카오 로그인 | 없다 — #970 출시 뒤 | — |
 | 앱 안 탈퇴 | 있다. 정지 · 가입 미완 계정까지 넓히는 일은 #946 | `mobile/src/settings/leaving.tsx` |
 | 본인확인 · 성인 확인 | 스위치 꺼짐(ADR 0214). 업체 미정(#947) | — |

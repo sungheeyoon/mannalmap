@@ -15,7 +15,7 @@ type Row = {
 
 /** 결제 내역 한 줄 — 웹과 앱의 화면이 그대로 그린다 */
 export type PaidOrder = {
-  /** 환불을 신청할 때 알려 주는 번호 — 결제창 · PG 가 아는 가맹점 주문 번호(`rdo_…`) */
+  /** 환불을 신청할 때 알려 주는 번호 — 가맹점 주문 번호(`rdo_…`) */
   readonly orderNumber: string;
   readonly product: string;
   readonly amount: number;

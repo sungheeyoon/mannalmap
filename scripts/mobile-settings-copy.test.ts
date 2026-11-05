@@ -58,7 +58,7 @@ describe('앱 설정 무리의 글자', () => {
 });
 
 describe('앱이 빼고 옮긴 것', () => {
-  it('풀이권 화면에 구매 자리가 없다 — PG 미정', () => {
+  it('풀이권 화면에 구매 자리가 없다 — 스토어 결제 전', () => {
     const credits = withoutComments(read('mobile/src/credits/credits.tsx'));
     expect(credits).not.toContain('BUY_CREDITS_LABEL');
     expect(credits).not.toContain('결제하기');
