@@ -9,11 +9,11 @@
 (Codex 처럼 `AGENTS.md` 를 입구로 삼는 것)에게는 이 표가 전부다. `deny` 는 도구가 막고, `ask` 는
 **어느 모드에서도 묻는다** — bypass 모드도 지나가지 않는다(2026-09-23 에 공식 문서로 확인).
 
-**등급 3 의 잠금은 공식 운영에 들어간 뒤에 켠다(ADR 0093).** 지금은 운영 베타라 실제 사용자가 없고,
-운영 DB 와 배포는 되돌려도 다치는 사람이 없다. 그래서 등급 3 의 잠금 칸은 비어 있고 에이전트는
-`db push` · `gh pr merge` · 운영 SQL 을 묻지 않고 밟되 **밟고 나서 본 값을 적는다**(아래). 실호출은 운영 베타에서도
-에이전트가 밟지 않고 운영자가 직접 돌린다 — `docs/agents/delegation/unattended.md` 「권한 봉투」의 기본값.
-켤 목록은 「공식 운영에 들어가면 켜는 잠금」 절이 든다. **지금이 어느 단계인가는 `docs/product/prd/roadmap.md` §7.0 표의
+**등급 3 의 잠금은 공식 운영에 들어간 뒤에 켠다(ADR 0093) — 2026-11-05 에 켰다.** 그날 운영자가 테스트 코드 없이 누구나
+가입하게 정했고(#1007) 단계가 공개 출시로 옮겨졌다 — 이제 운영 DB 에 실제 사용자의 자료가 들어온다. 그래서 등급 3 의 잠금 칸이
+「공식 운영에 들어가면 켜는 잠금」 절의 목록이고, 에이전트는 `db push` · 운영 SQL(`db:remote`) · Vercel 변수 · 원격 가지 삭제 ·
+`gh pr merge` 를 **사람이 답한 뒤에** 밟고, 밟고 나서 본 값을 적는다(아래). 운영 베타(2026-09-23 ~ 2026-11-05)에는 그 칸이 비어
+묻지 않고 밟았다. 실호출은 그때도 지금도 에이전트가 밟지 않고 운영자가 직접 돌린다 — `docs/agents/delegation/unattended.md` 「권한 봉투」의 기본값. **지금이 어느 단계인가는 `docs/product/prd/roadmap.md` §7.0 표의
 「(지금)」 한 곳**이고, 시험은 그 표시가 공개 출시가 아닌 동안 `ask` 가 빈 배열인지 잰다 — 문서의 이 표와
 설정을 함께 바꿔도 붉어진다. 잠금을 켜는 것은 단계를 옮기는 사람의 일이지 할 일 목록의 한 줄이 아니다.
 
@@ -22,13 +22,13 @@
 | **0 읽는다** | 저장소·로컬 스택·CI 로그·이슈를 읽는다 | `git log` · `npm test` · `gh run view` · 로컬 DB 질의 | 없음 |
 | **1 로컬에서 고친다** | 작업 가지에서 파일을 고치고 시험을 돌린다. 로컬 스택은 마음껏 되돌린다 | `npm run db:reset` · `npm run test:e2e:authed` | 없음 |
 | **2 밖으로 낸다 — 되돌릴 수 있게** | 가지를 밀고 PR 을 열고 이슈에 적는다. 리뷰 뒤 `--auto` 머지를 건다(gate 가 초록이 될 때까지 기다린다, ADR 0082). main 에 직접 미는 길은 없다 — 관리자까지 PR 로만 든다(ADR 0121) | `git push -u origin <가지>` · `gh pr create` · `gh pr merge --auto --squash` | 없음 — 단 아래 등급 3 의 예외 |
-| **3 사람이 답한 뒤에 — 운영 배포** | **프로덕션 배포**(`vercel deploy --prod` · 대시보드의 Create Deployment — 머지는 배포가 아니다, ADR 0110). **운영 베타에서도 사람이 답한 뒤다** — 라운드 끝의 묶음 배포 한 번을 조율자가 밟는다(`docs/agents/delegation/coordinator.md` 「머지는 배포가 아니다」, `docs/ops/runbook/deploy.md` 「묶음 배포」) | `vercel deploy --prod` · Create Deployment | 사람 — 도구 잠금은 공식 운영 전이라 없다. 켤 목록은 아래 절 |
-| **3 사람이 답한 뒤에** | 운영 DB 에 마이그레이션을 올리거나 임의 SQL 을 보내는 것, 토큰이 나가는 실호출, Vercel 변수, 원격 가지 삭제, 프로덕션 확인이 든 걸음 — **공식 운영에 들어간 뒤에 켠다(ADR 0093).** 운영 베타에서는 등급 2 처럼 밟고 값을 적는다 — 실호출만은 빼고 운영자가 직접 돌린다(`docs/agents/delegation/unattended.md` 「권한 봉투」) | `db push` · `db query --linked` · `READING_LIVE=1` · `vercel env` · `gh pr merge`(auto 아닌 즉시 머지) | 없음 — 공식 운영 전. 켤 목록은 아래 절 |
-| **3 사람이 답한 뒤에 — 도구 밖** | 남이 띄운 dev 서버는 죽이기 전에 묻는다. 운영 SQL Editor 의 문장을 건네기만 하는 것은 공식 운영 뒤의 일이다(ADR 0093) — 지금은 `npm run db:remote -- --purpose "<목적>" "<sql>"` 로 직접 돌리고 값을 적는다. **단 운영 개인정보는 예외 없이 직접 조회하지 않는다**(아래, ADR 0105) — 질의를 써서 건네고 사람이 검토해 돈다 | dev 서버 · 운영 개인정보 조회 | 사람 |
+| **3 사람이 답한 뒤에 — 운영 배포** | **프로덕션 배포**(`vercel deploy --prod` · 대시보드의 Create Deployment — 머지는 배포가 아니다, ADR 0110). **운영 베타에서도 사람이 답한 뒤였다** — 라운드 끝의 묶음 배포 한 번을 조율자가 밟는다(`docs/agents/delegation/coordinator.md` 「머지는 배포가 아니다」, `docs/ops/runbook/deploy.md` 「묶음 배포」) | `vercel deploy --prod` · Create Deployment | 사람 — 도구는 `Bash(vercel --prod:*)` · `Bash(npx vercel --prod:*)` · `Bash(vercel deploy:*)` · `Bash(npx vercel deploy:*)` |
+| **3 사람이 답한 뒤에** | 운영 DB 에 마이그레이션을 올리거나 임의 SQL 을 보내는 것, 토큰이 나가는 실호출, Vercel 변수, 원격 가지 삭제, 프로덕션 확인이 든 걸음 — **공식 운영에 들어간 뒤에 켠다(ADR 0093) — 2026-11-05 에 켰다.** 운영 베타에서는 등급 2 처럼 밟고 값을 적었다. 실호출은 그때도 운영자가 직접 돌렸다(`docs/agents/delegation/unattended.md` 「권한 봉투」) | `db push` · `db query --linked` · `READING_LIVE=1` · `vercel env` · `gh pr merge`(auto 아닌 즉시 머지) | `Bash(npx supabase db push:*)` · `Bash(supabase db push:*)` · `Bash(./node_modules/.bin/supabase db push:*)` · `Bash(npx supabase db query --linked:*)` · `Bash(supabase db query --linked:*)` · `Bash(./node_modules/.bin/supabase db query --linked:*)` · `Bash(npm run db:push:*)` · `Bash(npm run db:remote:*)` · `Bash(READING_LIVE=1:*)` · `Bash(READING_PAIR_LIVE=1:*)` · `Bash(READING_MATCH_INPUT_LIVE=1:*)` · `Bash(BACKFILL_CHART=1:*)` · `Bash(BACKFILL_READING_CHART=1:*)` · `Bash(vercel env:*)` · `Bash(npx vercel env:*)` · `Bash(gh pr merge:*)` · `Bash(git push origin --delete:*)` · `Bash(git push --delete:*)` · `Bash(git branch -D:*)` |
+| **3 사람이 답한 뒤에 — 도구 밖** | 남이 띄운 dev 서버는 죽이기 전에 묻는다. 운영 SQL Editor 의 문장을 건네기만 하는 것은 공식 운영 뒤의 일이다(ADR 0093) — 2026-11-05 부터 그렇다. `npm run db:remote -- --purpose "<목적>" "<sql>"` 도 잠금이 묻는다 — 사람이 답한 뒤에 돌리고 값을 적는다(운영 베타에서는 묻지 않고 돌렸다). **단 운영 개인정보는 예외 없이 직접 조회하지 않는다**(아래, ADR 0105) — 질의를 써서 건네고 사람이 검토해 돈다 | dev 서버 · 운영 개인정보 조회 | 사람 |
 | **4 안 한다** | 되돌릴 수 없는 것. 어느 가지에도 force push(PR 가지는 main 을 merge 해 올린다, ADR 0150), `supabase config push`(원격의 구글 설정을 지운다), main 가지 삭제, Vercel 변수 삭제, 비밀 값을 커밋 | | `Bash(git push --force:*)` · `Bash(git push -f:*)` · `Bash(git push --force-with-lease:*)` · `Bash(git push * --force*)` · `Bash(git push * -f*)` · `Bash(git push * +*)` · `Bash(npx supabase config push:*)` · `Bash(supabase config push:*)` · `Bash(./node_modules/.bin/supabase config push:*)` · `Bash(git push origin :main)` · `Bash(git push origin --delete main)` · `Bash(vercel env rm:*)` · `Bash(npx vercel env rm:*)` |
 
-**운영 개인정보 — 에이전트는 예외 없이 직접 조회하지 않는다(2026-09-24, ADR 0105).** 운영 베타에서 등급 3 을 묻지 않고
-밟는 것(ADR 0093)과 따로 선 경계이고, 공개 출시 전부터 지킨다. 이메일 · 닉네임과 계정의 짝 · 메시지 본문 · 출생정보 ·
+**운영 개인정보 — 에이전트는 예외 없이 직접 조회하지 않는다(2026-09-24, ADR 0105).** 등급 3 의 잠금(ADR 0093)과 따로 선
+경계이고, 잠금이 비어 있던 운영 베타에서도 지켰다. 이메일 · 닉네임과 계정의 짝 · 메시지 본문 · 출생정보 ·
 풀이를 운영 DB 에서 읽는 SQL 을 에이전트가 보내지 않는다 — 필요하면 질의를 써 주고 사람이 검토해 break-glass 로 돈다
 (`docs/ops/runbook/access.md` 「개인정보는 화면으로만」). 에이전트가 보내도 되는 원격 질의는 **개인을 가리키지 않는 것**뿐이다 —
 건수 · 집계 · `migration list` · 크론 · advisor · 설정 한 칸. 그것도 `npm run db:remote -- --purpose "<목적>" "<sql>"` 로만
@@ -49,13 +49,13 @@ ADR 0082). 보호 규칙의 strict 는 껐다(운영자 승인 2026-10-12 — 20
 
 `--auto` 없는 즉시 머지가 등급 3 인 까닭은 검사를 안 지난 코드가 main 에 들고, 다음 묶음 배포가 그것을
 그대로 싣기 때문이다(2026-09-20 에 한 번 그랬다 — 그때는 머지가 곧 배포였다). 잠금이 `gh pr merge` 전체를 묻는 것은 규칙이 인자를 못 가르기 때문이고, 물으면
-「`--auto` 다」로 답이 된다.
+「`--auto` 다」로 답이 된다. 그래서 공식 운영(2026-11-05 부터)에는 등급 2 의 `--auto` 머지도 창이 뜬다 — 사람이 답해야 걸린다.
 
 **예외 — 마이그레이션이 든 PR 은 `--auto` 도 등급 3 이다.** 머지가 곧 배포이던 때(ADR 0110 전)는 gate 초록 즉시
 앱이 나가 `docs/ops/runbook/deploy.md` 의 「마이그레이션이 먼저, 앱이 나중」이 뒤집혔다. 지금은 머지가 앱을 안 내보내지만, **그 main 을 올리는
 다음 묶음 배포가 DB 보다 먼저 나가지 않게** 순서를 머지에서부터 지킨다(`docs/ops/runbook/deploy.md` 「배포」 규약 넷 · 「묶음 배포」 0).
-그런 PR 은 `db push` 와 확인이 끝난 뒤에만 머지를 건다 — 운영 베타에서는 에이전트가 그 걸음을 직접 밟고 값을 적으며, 공식 운영 뒤에는 사람이
-끝냈다고 답한 뒤다(ADR 0093). 순서 자체는 언제나 지킨다. 앱이 새 함수를 부르는 변경이면 **넓히는 마이그레이션 PR 과 앱 PR 로 나눈다** —
+그런 PR 은 `db push` 와 확인이 끝난 뒤에만 머지를 건다 — 공식 운영(2026-11-05 부터)에서는 사람이 `db push` 에 답하고 끝냈다고 답한
+뒤다(운영 베타에서는 에이전트가 그 걸음을 직접 밟고 값을 적었다, ADR 0093). 순서 자체는 언제나 지킨다. 앱이 새 함수를 부르는 변경이면 **넓히는 마이그레이션 PR 과 앱 PR 로 나눈다** —
 앞 PR 은 옛 앱에 안전하니 먼저 들고 `db push` 를 지나며, 뒤 PR 이 그 뒤에 든다(ADR 0071 의 A 단계가
 그 모양이다). **있는 함수의 반환 칸만 느는 확장은 나누지 않는다** — 새 함수가 아니고 옛 앱은 아는 칸만 집으니 옛 앱에 안전하다
 (`docs/ops/runbook/deploy.md` 규약 넷의 3). 마이그레이션과 앱을 한 PR 에 두고, 그 PR 도 `db push` 와 확인 뒤에 머지한다. 이 예외는 시험이 안 잰다 — `ci-plan.mjs` 가 그 경로를 아니까 잠글 자리는 있다.
@@ -80,7 +80,8 @@ ADR 0082). 보호 규칙의 strict 는 껐다(운영자 승인 2026-10-12 — 20
 
 **사람이 `docs/product/prd/roadmap.md` §7.0 의 「(지금)」을 공개 출시로 옮기는 날의 걸음이다.** 그 전에는 아무도 이 절을
 밟지 않는다 — 간극 대장에 줄이 없는 까닭이다(2026-09-23, #142). 단계를 옮기면 시험이 붉어지고, 아래를
-다 하면 다시 초록이 된다.
+다 하면 다시 초록이 된다. **2026-11-05 에 옮겼다** — 1 은 그 PR 이 밟았고, 2 · 3 은 사람의 로컬 설정이라 운영자가 밟는다.
+목록은 지우지 않는다 — 시험이 `ask` 와 이 목록을 견준다.
 
 1. 아래 목록을 `.claude/settings.json` 의 `ask` 에 그대로 옮기고 등급 3 의 잠금 칸에 옮겨 적는다
 2. `.claude/settings.local.json` 의 넓은 `allow`(`Bash(gh pr *)` · `Bash(npx supabase *)` · `Bash(git push *)`
