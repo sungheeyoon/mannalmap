@@ -1,7 +1,6 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 
-import { BETA_SIGNUP_CODE_NOTE } from '@/src/lib/account/copy';
 import { SHARE_COPY, sharedTitle } from '@/src/lib/reading/shared';
 
 import { Markdown } from '../me/reading/markdown';
@@ -19,7 +18,7 @@ import { sharedReadingOf } from './read';
  * 사용자의 자리는 안 세운다」 같은 규칙이 세 곳에서 지켜져야 하고, 그중 하나를 안
  * 고치는 날이 온다.
  *
- * 로그인도 테스트 코드도 없이 열린다. 여기 있는 것은 보낸 사람이 그때 내놓기로 한
+ * 로그인 없이 열린다. 여기 있는 것은 보낸 사람이 그때 내놓기로 한
  * 사본 하나뿐이다 — 명식도, 근거도, 누가 보냈는지도 없다(`shared_reading` 이 일곱 칸만 낸다 —
  * 갈래 · 보낸 그때의 이름 둘 · 비유 · 점수 · 본문 · 만든 때).
  */
@@ -62,7 +61,7 @@ export async function SharedReadingView({
       */}
       {/*
         **머리에는 단추가 없다**(운영자 2026-10-09). 위아래 둘이던 「로그인하고 시작하기」에서 위의 것을 걷었다 — 시작하는 길은
-        다 읽은 자리의 초대 판 하나이고, 가입에 코드가 든다는 말이 그 곁에 함께 선다.
+        다 읽은 자리의 초대 판 하나다.
       */}
       <header className="flex min-w-0 flex-col gap-1.5">
           <p className="text-small font-semibold text-cream-ink">{eyebrow}</p>
@@ -115,10 +114,7 @@ export async function SharedReadingView({
 
       {/*
         **다 읽은 자리에서 묻는다** — 글을 읽고 나서 생긴 마음에 붙은 길이고, 이 화면의 유일한 시작 단추다.
-
-        가입에 코드가 필요하다는 것을 여기서 적는다. 이 화면은 코드 없이 열리지만
-        **가입은 아직 코드로만 열린다**(ADR 0042) — 누르고 나서 알게 하면, 그 사람은
-        읽은 글이 좋아서 눌렀다가 막힌 문을 만난다.
+        가입에 테스트 코드가 든다는 줄은 걷었다 — 가입은 코드를 묻지 않는다(ADR 0225).
       */}
       <section className="flex flex-col gap-3 rounded-card bg-cream px-5 py-7 sm:px-8">
         <span className="grid size-14 place-items-center rounded-full bg-surface shadow-card">
@@ -129,8 +125,6 @@ export async function SharedReadingView({
         <div className="mt-1">
           <StartButton />
         </div>
-        {/* 베타가 끝나 가입에서 코드를 빼면 이 줄을 지운다 — 서비스 소개와 같은 상수다 */}
-        <p className="text-small leading-5 text-secondary">{BETA_SIGNUP_CODE_NOTE}</p>
       </section>
     </main>
   );
@@ -140,8 +134,7 @@ export async function SharedReadingView({
  * 시작하는 자리로 보내는 버튼 — 초대 판 하나에만 선다(머리의 것은 2026-10-09 걷었다).
  *
  * **「내 사주풀이 보기」가 아니다.** 이 글을 읽는 사람에게는 열 풀이가 아직 없고, 이
- * 누름이 여는 것은 로그인이다(가입에는 테스트 코드가 더 필요하다 — 그 말은 바로 아래
- * 줄이 든다). 없는 것을 「보기」라고 적으면 눌러서 도착한 자리가 약속과 다르다.
+ * 누름이 여는 것은 로그인이다. 없는 것을 「보기」라고 적으면 눌러서 도착한 자리가 약속과 다르다.
  */
 function StartButton() {
   return (

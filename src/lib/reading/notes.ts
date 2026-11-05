@@ -235,7 +235,7 @@ export const readingCreditsNote = ({
  */
 export const BUY_CREDITS_LABEL = '풀이권 구매';
 export const CREDITS_DIALOG_CLOSE = '닫기';
-export const SALE_CLOSED_NOTE = '지금은 비공개 베타라 풀이권을 구매할 수 없어요.';
+export const SALE_CLOSED_NOTE = '지금은 풀이권을 구매할 수 없어요.';
 export const SALE_CLOSED_OK = '확인';
 /** 상단 펼침 메뉴 · 부족 창의 B안 문구(운영자 승인 2026-10-12, 대장 credits-06). */
 export const CREDITS_USAGE_NOTE = '사주풀이와 궁합풀이에 사용할 수 있어요.';
