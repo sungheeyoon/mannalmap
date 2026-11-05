@@ -70,7 +70,7 @@ echo '<SHA-1 hex, 콜론 없이>' | xxd -r -p | openssl base64
 9. **ID 토큰에 이메일이 없다** — 운영 Auth 로그(Supabase → Logs → Auth)에서 그 로그인의 사용자 이메일이 비어 있다. 이메일이 실려 있으면 **멈추고** ADR 0224 을 다시 연다
 10. 구글로 가입한 사람이 카카오로 들어오면 **다른 계정**이다(ADR 0224 ② — 합치지 않는다)
 
-## 웹 탈퇴의 연결 끊기 (ADR 0224 「덧붙임 2026-11-05」)
+## 카카오 로그인 — 웹 탈퇴의 연결 끊기
 
 웹의 「탈퇴」(`requestAccountDeletion`)가 받아지면 — 탈퇴 대기로 옮겨진 **뒤에** — 서버가 응답 뒤(`after`)에 카카오 REST API 「연결 해제」를 어드민 키 방식으로 부른다:
 `POST https://kapi.kakao.com/v1/user/unlink` · `Authorization: KakaoAK <어드민 키>` · `target_id_type=user_id&target_id=<회원번호>`. 회원번호는 그 계정의 카카오 신원(`auth.identities` 의
