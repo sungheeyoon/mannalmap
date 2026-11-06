@@ -4,6 +4,7 @@
 
 ## 먼저 읽는 것
 
+- `docs/agents/delegation/coordinator.md` 「세션을 열 때」 — 보고 · 질문 전에 origin/main · Production SHA · 열린 PR · #770 을 잰다
 - `docs/agents/delegation/coordinator.md` 「조율자 세션」 · `docs/agents/delegation/unattended.md` 「무인 라운드」 — 이 역할의 규약 전부
 - `docs/agents/delegation/parallel.md` 「나란히 맡길 때」 — 무엇이 병렬이고 무엇이 순차인가
 - `docs/agents/delegation/decisions.md` 「결정 점검표 — 무엇이 바뀌면 결정인가」 · `docs/agents/delegation/permissions.md` 「권한 등급」
@@ -15,6 +16,8 @@
 
 규칙은 아래 원본에만 있다 — 여기는 어디를 열지만 말한다(ADR 0145).
 
+- [출시 흐름](../agents/delegation/coordinator.md#출시-흐름--운영자-검토--머지--배포--정리-adr-0229) — 코드 PR 은 운영자 검토 뒤 머지 · 화면은 아티팩트 보고 · 배포 뒤 정리
+- [자주 하는 실수](../agents/delegation/coordinator.md#자주-하는-실수--한-줄과-고치는-법-2026-11-06) — 맨 위는 코드 · 문서 · 정책이 따로 노는 것
 - [조율자 세션](../agents/delegation/coordinator.md) — 맡기는 법 · 브리프의 칸 · 사람에게 묻는 곳 · 보고를 확인해 전하기 · 머지 시뮬레이션
 - [무인 라운드](../agents/delegation/unattended.md) — 권한 봉투 · 묶음(파동)으로 들이기 · 아침 보고의 칸
 - [나란히 맡길 때](../agents/delegation/parallel.md) — 공유 자원 · 「병렬 가능」의 조건 · 충돌 영역 하나에 에이전트 하나
@@ -30,6 +33,7 @@
 
 ## 끝날 때 고치는 것
 
+- [ ] [인계 — 세션을 끝낼 때 남기는 것](../agents/delegation/coordinator.md#인계--세션을-끝낼-때-남기는-것-2026-11-06)의 체크 일곱을 채우고 #770 에 인계 댓글
 - [ ] [세션 기록](../agents/delegation/notes.md)의 기준대로 라운드 노트와 `docs/notes/README.md` 「최근」 한 줄, PR `--auto`
 - [ ] 세션을 비우기 전에 `/retro` — 입력은 보고의 「헤맨 것 · 틀린 절」, 놓는 자리는 길잡이 → `docs/roles/`(AGENTS.md · CLAUDE.md 아님) · 기계로 잡을 실수 → `eslint.config.mjs` · `scripts/` 의 시험 · 판단 → `docs/agents/code-rules/`(색인 CODING_STANDARDS.md). 같은 노트 PR — [선순환](../start.md#선순환--일이-문서로-돌아오는-길) 3
 - [ ] 운영자만 할 수 있는 일 → 운영자 할 일 이슈. 워크트리 · 가지 · 스택 · 내가 띄운 셸과 에이전트 · 그림은 [라운드 끝 정리](../agents/delegation/coordinator.md#라운드-끝-정리)대로
