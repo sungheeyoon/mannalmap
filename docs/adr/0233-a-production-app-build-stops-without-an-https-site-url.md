@@ -28,7 +28,7 @@
 
 ## 추기 2026-11-06 — 출시 판은 네 값 가운데 하나라도 비면 멈추고, preview 판은 주소가 https 인지만 본다 (운영자 결정, 조율자가 옮김)
 
-> 결정 점검표의 「검증 · 배포의 문턱」에 걸린다. 운영자가 답했다(2026-11-06). 코드는 다음 라운드다 — G-145. 그때까지 `mobile/app.config.js` 는 위 결정(주소 하나)대로다.
+> 결정 점검표의 「검증 · 배포의 문턱」에 걸린다. 운영자가 답했다(2026-11-06). 코드는 #1043 이 넣었다(2026-11-07, G-145 를 닫음) — `mobile/app.config.js` 의 `buildEnvRefusal`.
 
 1. **`production` 판** — `EXPO_PUBLIC_SITE_URL` · `EXPO_PUBLIC_SUPABASE_URL` · `EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY` · `EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID` 넷 가운데 하나라도
    없거나 비면 설정 함수가 던져 빌드가 멈춘다. 주소 둘(`_SITE_URL` · `_SUPABASE_URL`)은 https 주소여야 한다. 까닭 한 줄에 **비어 있는 이름**만 싣고 값은 싣지 않는다.
