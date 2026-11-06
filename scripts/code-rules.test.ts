@@ -1119,7 +1119,6 @@ describe('간극 대장 (docs/product/gaps.md, ADR 0089)', () => {
   });
 
   it('G 번호는 한 줄에만 있다 — 나란히 쓴 둘이 같은 번호를 잡으면 겹친 번호를 든다', () => {
-    // 2026-11-06 에 두 PR 이 G-139 를 함께 썼다(#1027). 2026-11-06 main 에는 겹친 번호가 없어 허용 목록을 두지 않는다
     const seen = new Map<string, number>();
     for (const cells of rows) seen.set(cells[1], (seen.get(cells[1]) ?? 0) + 1);
     expect([...seen].filter(([, count]) => count > 1).map(([id, count]) => `${id} × ${count}`)).toEqual([]);

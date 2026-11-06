@@ -389,7 +389,7 @@ const PLAN = [
 const DEV_ONLY = 'nextjs-portal { display: none !important; }';
 
 /**
- * 폭 — **운영자는 전체 화면 1920 도 본다.** 두 폭뿐일 때는 세션마다 1920 을 따로 찍는 Playwright 스크립트를 썼다(#1027).
+ * 폭 — **운영자는 전체 화면 1920 도 본다.**
  * `UI_SIZES=wide,mobile` 처럼 id 로 고른다 — 빈 값이면 전부. 목록(`index.json`)과 「화면 밖의 준비」(`before`)는 고른 것의
  * 첫 폭에서 한 번만 한다.
  */
