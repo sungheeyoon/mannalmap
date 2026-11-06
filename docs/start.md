@@ -9,7 +9,8 @@
 ## 모두가 먼저 보는 것
 
 1. **붉은 main** — `gh issue list --label ci-main-red` 가 비어 있지 않으면 그것부터(`docs/agents/delegation/working.md` 「시작하기 전에」)
-2. **나란히 도는 세션** — `git worktree list`. 작업 가지는 워크트리로 연다(`docs/agents/delegation/working.md` 「일하는 법」)
+2. **나란히 도는 세션** — `git worktree list`. 작업 가지는 워크트리로 연다(`docs/agents/delegation/working.md` 「일하는 법」).
+   `npm run sweep:merged` 미리보기에 걷을 것이 있으면 먼저 걷는다(`docs/agents/delegation/coordinator.md` 「라운드 끝 정리」)
 3. **지금 단계** — `grep -n '(지금)' docs/product/prd/roadmap.md`. 그 단계에서 무엇을 묻지 않고 밟나는 `docs/agents/delegation/permissions.md` 「권한 등급」 이 든다 — 프로덕션 배포와 실호출은 그 표에 따로 선 줄이다(ADR 0093)
 4. **보류 줄** — `grep -n '| 보류 |' docs/product/gaps.md`. 그 줄은 조건이 올 때까지 권하지도 묻지도 않는다
 5. **로컬 환경** — 새 워크트리에서 무엇을 돌리기 전에, 또는 명령이 막히면 그때 `docs/agents/delegation/local-env.md` 「로컬 환경의 함정」 을 연다(ADR 0147) — `node_modules` 가 없는 워크트리 · 격리가 막는 명령 · 워크트리에 없는 원격 연결이 그 표에 있다
