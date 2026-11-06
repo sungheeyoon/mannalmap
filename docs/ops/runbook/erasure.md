@@ -430,3 +430,27 @@ select jobname, schedule, active from cron.job where jobname = 'sanction-retenti
 
 **잘못 이어졌을 때**(같은 이메일의 다른 사람이 들어온 경우 등) — 회원 화면에서 갈래 「잘못 정지」로 푼다. 기록 자체를 지워야 하면
 운영자의 SQL 로 그 한 줄만 지우고(`delete from retention.sanction where id = '<id>'` — id 는 알림 `sanction-carried:` 의 본문에 있다) 대장에 남긴다.
+
+### 구매 제한 기록 — 제한된 채 떠난 로그인, 처분일부터 1년 (ADR 0230 추기 B, G-142)
+
+정지 기록과 같은 꼴이다(위 「제재 기록」). 마이그레이션 `20270114100000`(회수한 장수의 `20270114090000` 과 따로다). 기간(1년)은 `retention.store_restriction_period()` 한 곳이다.
+
+**배포 순서** — `db push` 는 `20270114095000`(#1050) 뒤, 처리방침 notice-v17(#1050 의 `src/lib/consent/notice.ts` 「구매 제한 기록은 따로 둡니다」 절)이
+배포되는 때와 같거나 그 뒤다(ADR 0098 「알리기 전에 남기지 않는다」). 앱 · 웹은 이 기록을 부르지 않으므로 앱과의 순서는 없다.
+
+- **남는 때** — 구매 제한이 걸린 채(마지막 이력이 「건다」) `auth.users` 행이 지워질 때(트리거 `store_restriction_outlives_the_leaver`). 크론의 처분이든 `forget_user` 든 같다.
+  제한이 풀린 계정 · 한 번도 제한되지 않은 계정은 안 남는다. 든 것은 이메일(소문자) · 로그인 식별값 · 제한 갈래 · 건 운영자 · 건 시각 · 처분일 · 무효마다 시각 · Google 의 갈래 셋(사유 ·
+  환불을 시작한 쪽 · 환불 종류) · 회수한 장수 · 남긴 장수다 — 운영자 메모 · 주문 번호 · 금액은 없다.
+- **이어지는 때** — 새 계정이 가입을 마치는 순간 살아 있는 기록과 이메일 또는 `provider:provider_id` 가 겹치면 같은 갈래로 구매 제한이 걸린다. 이력 메모는
+  「탈퇴 전 계정의 구매 제한을 이었다 — 보관 기록 <id>」이고 장애 알림 길로 `store-restriction-carried:` 한 줄이 온다. 소명이 오면 보통 제한처럼 푼다(`docs/ops/runbook/credits.md` 「구매 제한 걸기 · 풀기」).
+- **지우는 때** — 크론 `store-restriction-retention-purge`(매일 05:13 UTC)가 처분일부터 1년 지난 줄을 지운다. 실패는 `cron-watch` 가 알린다.
+- **읽기** — 앱 역할은 못 읽는다. 운영자도 수만 본다.
+
+```sql
+select count(*) as 기록, min(retained_at) as 가장_오래된_처분일 from retention.store_purchase_restriction;
+select jobname, schedule, active from cron.job where jobname = 'store-restriction-retention-purge';
+```
+
+**잘못 이어졌을 때**(같은 이메일의 다른 사람이 들어온 경우 등) — 보통 제한처럼 `set_store_purchase_restriction` 의 `lift` · `mistake` 로 푼다(`docs/ops/runbook/credits.md`
+「구매 제한 걸기 · 풀기」). 기록 자체를 지워야 하면 운영자의 SQL 로 그 한 줄만 지우고(`delete from retention.store_purchase_restriction where id = '<id>'` — id 는 알림
+`store-restriction-carried:` 의 본문과 이은 제한의 메모에 있다) 대장에 남긴다.
