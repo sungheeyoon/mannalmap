@@ -1,9 +1,9 @@
 import Link from 'next/link';
 
 import { SERVICE_NAME } from '@/src/lib/brand';
+import { BUSINESS_INFO } from '@/src/lib/brand/business';
 import { REFUND_TERMS_POINTER, refundPolicyFor } from '@/src/lib/brand/refund';
 
-import { currentBusinessInfo } from '../business-info';
 import { HomeLink } from '../home-link';
 import { LegalBody } from '../legal-body';
 import { returnToOf, withReturnTo } from '../me/credits/return-to';
@@ -18,7 +18,7 @@ export const metadata = {
  * 환불정책 — **로그인 없이 열린다**(`proxy.ts` 의 matcher 밖). 약관 제12조 ~ 제17조의2 를 쉬운 말로 옮긴 글이라 새 규칙을 만들지
  * 않는다 — 끝 줄이 약관(`/terms`)을 가리킨다.
  *
- * 게시는 판매 개시가 아니다(운영자 결정 2026-10-07). 글자는 `src/lib/brand/refund.ts`, 사업자 빈칸은 환경변수(ADR 0172)에서 온다.
+ * 게시는 판매 개시가 아니다(운영자 결정 2026-10-07). 글자는 `src/lib/brand/refund.ts`, 사업자 줄은 상수 `BUSINESS_INFO`(ADR 0232)다.
  *
  * 풀이권 구매 화면의 「자세히 알아보기」로 왔으면(`?from=credits`) 끝 단추가 그 화면으로 돌아간다(운영자 결정 2026-10-29) — 실어 온
  * 돌아갈 곳(`?back=`)도 다시 싣는다. 바닥글 · 주소로 왔으면 「처음으로」다.
@@ -30,7 +30,7 @@ export default async function RefundPage({
 }) {
   const params = await searchParams;
   const fromCredits = params.from === 'credits';
-  const policy = refundPolicyFor(currentBusinessInfo());
+  const policy = refundPolicyFor(BUSINESS_INFO);
   return (
     <main className={`app-shell flex w-full ${COLUMN} flex-1 flex-col gap-4 py-8 sm:py-12`}>
       <header className="mb-2 rounded-card bg-cream px-6 py-7 sm:px-8">

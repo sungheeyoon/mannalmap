@@ -211,7 +211,7 @@ export function ReadingPanel({
         <ConfirmMake noun={noun} hasReading={reading !== null} onConfirm={panel.confirmGenerate} onClose={panel.closeAsking} />
       )}
       {panel.shortage !== null && (
-        <CreditsShortage available={panel.shortage.available} onClose={panel.closeShortage} />
+        <CreditsShortage available={panel.shortage.available} noun={noun} onClose={panel.closeShortage} />
       )}
     </View>
   );

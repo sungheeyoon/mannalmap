@@ -75,6 +75,12 @@ export const SECRET_ENV = [
    * 이 키 하나로 앱의 어느 회원이든 끊을 수 있다. 없으면 끊기가 기록 한 줄로 남고 탈퇴는 그대로 간다
    */
   'KAKAO_ADMIN_KEY',
+  /**
+   * Google Play 결제 검증용 서비스 계정 키(JSON 한 덩이, ADR 0230) — 구매 확인 · 소비 · 환불 · 무효 목록을 부른다
+   * (`app/api/store/google-play/play-api.ts`). EAS 제출용 키와 따로다. 없으면 구매 문 · 통지 문이 503, 무효 대조 크론은 「설정 안 됨」.
+   * **운영자가 Play 조직 계정 뒤에 넣는다**
+   */
+  'GOOGLE_PLAY_SERVICE_ACCOUNT_JSON',
 ];
 
 /** 브라우저가 본다 — 빌드 때 번들에 박힌다. 비밀을 여기 두는 순간 공개된다 */
@@ -117,19 +123,6 @@ export const CONFIG_ENV = [
    * 알려진 푸시 서비스 넷만 받는다(`app/me/push/hosts.ts`, ADR 0156)
    */
   'WEB_PUSH_EXTRA_HOSTS',
-  /**
-   * 사업자 정보 여덟 — 바닥글 · 이용약관 · 환불정책이 든다(`app/business-info.ts`, ADR 0172). 비밀이 아니지만 **저장소에 값을
-   * 적지 않는다**(저장소가 공개, ADR 0151). 비면 그 줄이 화면에 안 선다. 이메일은 환경변수가 아니라 `SUPPORT_EMAIL` 상수다
-   * (`src/lib/brand`, ADR 0172 덧 2026-10-16)
-   */
-  'BUSINESS_TRADE_NAME',
-  'BUSINESS_REPRESENTATIVE',
-  'BUSINESS_REGISTRATION_NUMBER',
-  'BUSINESS_ADDRESS',
-  'BUSINESS_PHONE',
-  'BUSINESS_MAIL_ORDER_NUMBER',
-  'BUSINESS_HOSTING_PROVIDER',
-  'BUSINESS_DISCLOSURE_URL',
   /** 애플 로그인 키의 팀 ID · 키 ID — 비밀이 아니다(클라이언트 비밀의 머리 · 몸에 그대로 실린다, ADR 0219) */
   'APPLE_TEAM_ID',
   'APPLE_SIGN_IN_KEY_ID',
@@ -138,6 +131,13 @@ export const CONFIG_ENV = [
    * Production 에만 둔다 — 미리보기 주소는 카카오에 등록할 수 없다
    */
   'KAKAO_REST_API_KEY',
+  /**
+   * Google Play 통지(RTDN)의 Pub/Sub 푸시 구독이 싣는 OIDC 토큰의 audience 와 서비스 계정 이메일(ADR 0230) — 비밀이 아니다. 믿는 쪽은
+   * Google 의 서명이고, 이 둘은 그 토큰이 우리 구독의 것인지만 가른다(`app/api/store/google-play/push-auth.ts`). 둘 중 하나라도 비면
+   * 통지 문이 503 이다. **운영자가 Play 조직 계정 뒤에 넣는다**
+   */
+  'GOOGLE_PLAY_PUBSUB_AUDIENCE',
+  'GOOGLE_PLAY_PUBSUB_SERVICE_ACCOUNT',
 ];
 
 /** 제 안에서 비밀을 읽는 패키지 — 이것을 부르는 모듈도 비밀을 읽는 모듈이다 */

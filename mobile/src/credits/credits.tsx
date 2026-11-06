@@ -1,4 +1,4 @@
-import { router, useFocusEffect } from 'expo-router';
+import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { useCallback, useState } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 
@@ -9,6 +9,7 @@ import { userFacingDbMessage } from '@db-error';
 import { won } from '@reading/bundle';
 import { CREDITS_AVAILABLE_LABEL, CREDITS_USAGE_NOTE, CREDITS_USAGE_RATE } from '@reading/notes';
 import { paidOrderOf, type PaidOrder } from '@reading/paid-order';
+import { purchaseReturnOf } from '@reading/store-purchase';
 
 import { supabase } from '@/auth/client';
 import { NOT_READY, UNREACHABLE } from '@/auth/signup';
@@ -18,6 +19,9 @@ import { COLOR, FONT, RADIUS, TYPE } from '@/ui/tokens';
 import { settled } from '@/ui/settled';
 import { TopBar } from '@/ui/top-bar';
 import { Card, Paper } from '@/ui/surfaces';
+
+import { storeAvailable } from './store';
+import { StoreSection } from './store-section';
 
 
 type Read<T> = { ok: true; value: T } | { ok: false; message: string };
@@ -37,13 +41,21 @@ async function readOrders(): Promise<Read<readonly PaidOrder[]>> {
 }
 
 /**
- * 풀이권 — **보유 수를 보기만 한다.** 구매 자리는 없다 — 스토어 인앱결제가 붙는 차례(#937, ADR 0212)에 선다.
+ * 풀이권 — 보유 수와, Android 에서는 Google Play 구매(ADR 0230, `store-section.tsx`). 구매가 서면 보유 수를 다시 읽는다. iOS 결제는 나중이다(지도 #932).
  */
 export function CreditsScreen() {
   const [read, setRead] = useState<Read<number | null> | null>(null);
-  const load = useCallback(() => {
-    void settled(readAvailable(), 'my_reading_credits', () => ({ ok: false, message: UNREACHABLE }) as const).then(setRead);
+  const params = useLocalSearchParams<{ back?: string; noun?: string }>();
+  const returnTo = purchaseReturnOf(params.back, params.noun);
+  /** 보유 수를 다시 읽는다 — 결제 완료 창이 그 값을 기다려 같은 수를 보인다. @returns 새 보유 수, 못 읽었으면 `null` */
+  const reload = useCallback(async (): Promise<number | null> => {
+    const next = await settled(readAvailable(), 'my_reading_credits', () => ({ ok: false, message: UNREACHABLE }) as const);
+    setRead(next);
+    return next.ok ? next.value : null;
   }, []);
+  const load = useCallback(() => {
+    void reload();
+  }, [reload]);
   useFocusEffect(load);
 
   return (
@@ -66,6 +78,7 @@ export function CreditsScreen() {
             ) : (
               <FailureLine onRetry={load}>{read.message}</FailureLine>
             )}
+            {storeAvailable && <StoreSection onBought={reload} returnTo={returnTo} />}
             <View style={styles.bleed}>
               <SettingsGroup>
                 <LinkRow label="결제 내역" onPress={() => router.push('/me/credits/history' as never)} />
