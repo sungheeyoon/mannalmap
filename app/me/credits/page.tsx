@@ -1,10 +1,10 @@
+import { BUSINESS_INFO } from '@/src/lib/brand/business';
 import { checkoutRefundLine } from '@/src/lib/brand/refund';
 import { CREDITS_AVAILABLE_LABEL, CREDITS_USAGE_NOTE } from '@/src/lib/reading/notes';
 
 import { supabaseOnServer } from '../../auth/server-client';
 import { signedInUser } from '../../auth/signed-in';
 import { redirectToSignIn } from '../../auth/sign-in-redirect';
-import { currentBusinessInfo } from '../../business-info';
 import { COLUMN, TYPE_META, TYPE_TITLE } from '../../ui/surfaces';
 import { TopBar } from '../../ui/top-bar';
 import { Checkout } from './checkout';
@@ -57,7 +57,7 @@ export default async function CreditsPage({
         </p>
       )}
 
-      <Checkout refundLine={checkoutRefundLine(currentBusinessInfo())} back={back} />
+      <Checkout refundLine={checkoutRefundLine(BUSINESS_INFO)} back={back} />
     </main>
   );
 }
