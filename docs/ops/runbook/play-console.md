@@ -14,7 +14,7 @@
 
 | 차례 | 걸음 | 누가 | 끝의 값 |
 | --- | --- | --- | --- |
-| 1 | 조직 개발자 계정을 만든다(아래 「조직 계정 만들기」) | **운영자** | 계정이 선 날 · 유형 「조직」을 #304 댓글로 |
+| 1 | 조직 개발자 계정을 만든다(아래 「조직 계정 만들기」) | **운영자** | 계정이 선 날 · 유형 「조직」을 #770 댓글로 |
 | 2 | 판매자(결제) 프로필 · 세금 · 정산 계좌 | **운영자** | 아래 「결제의 전제」 1 |
 | 3 | 앱을 만든다(무료 · 앱 · 한국어) | **운영자** | 앱이 대시보드에 선다 |
 | 4 | 서비스 계정 키 둘(제출 · 결제 검증)을 만들고 Play 에 초대 | **운영자** | 키 파일은 EAS · Vercel 에만 |
@@ -32,8 +32,8 @@
 2. 등록비 **US$25** 한 번. 「Google Play does not accept prepaid cards」
 3. 넣는 값: 조직 이름 · 주소 · **조직 전화**(조직 확인용, Play 에 안 보인다) · **조직 웹사이트**(`<운영 주소>`, `docs/ops/runbook/domain.md` 맨 위) · 담당자 이름 · 담당자 이메일 · 담당자 전화 · **개발자 이메일 · 개발자 전화**(「shown as part of your developer profile on Google Play」 — 등록정보에 공개된다)
 4. 담당자 이메일 · 전화와 개발자 이메일 · 전화는 **일회용 비밀번호로 확인**하고 계정이 사는 동안 살아 있어야 한다
-5. 개발자 이메일은 고객 문의 이메일 `mannalmap@gmail.com`(`SUPPORT_EMAIL`, #304 끝난 것)으로 둔다. 개발자 전화는 **운영자 질문**이다(#304 — `BUSINESS_PHONE` 070 이 아직이다)
-6. 계정에 2단계 인증을 켜고 #304 의 8(운영자 계정 MFA)에 날짜를 적는다
+5. 개발자 이메일은 고객 문의 이메일 `mannalmap@gmail.com`(`SUPPORT_EMAIL`, #770 F 「끝난 것」)으로 둔다. 개발자 전화는 `BUSINESS_PHONE` 의 070 이다 — 그 번호는 D-U-N-S 날 발급한다(#770 B)
+6. 계정에 2단계 인증을 켜고 #770 B 의 「MFA 확인」 줄에 날짜를 적는다
 
 **비공개 테스트 12명 · 14일 요건은 조직 계정에 없다.** 공식 쪽의 문장은 개인 계정만 말한다 — 「Google Play requires **personal** developer accounts created after November 13, 2023, to test their apps before those apps are eligible for distribution」([요건](https://support.google.com/googleplay/android-developer/answer/14151465)), 시작 안내의 그 걸음 이름도 「Meet testing requirements and device verification requirements (**Personal accounts only**)」([시작](https://support.google.com/googleplay/android-developer/answer/6112435)). 조직 계정에 대한 명시 문장은 없다 — 「없다」는 이 두 문장에서 읽은 것이다. 콘솔 대시보드에 「Apply for production」이 서지 않고 프로덕션 트랙이 바로 열리면 맞게 읽은 것이다.
 
@@ -77,7 +77,7 @@
 
 [Use Play App Signing](https://support.google.com/googleplay/android-developer/answer/9842756) · [Authenticating your client](https://developers.google.com/android/guides/client-auth) · [google-signin 문제 해결](https://react-native-google-signin.github.io/docs/troubleshooting) · [카카오 키 해시](https://developers.kakao.com/docs/latest/ko/android/getting-started) (2026-11-06).
 
-**Play 로 깐 앱은 Google 이 쥔 앱 서명 키로 다시 서명된다** — 「you must register the Google-held app signing key fingerprint with your API providers, not just your local upload key」. 지금 Google OAuth 의 안드로이드 클라이언트에 든 SHA-1 은 EAS 의 키(#304 인계의 `73:F0:…:CD`)뿐이라, 지문을 더하기 전에는 Play 로 깐 앱의 구글 로그인이 `DEVELOPER_ERROR` 로 선다(「always … a configuration mismatch」). 카카오도 같다 — 「키 해시가 등록되지 않은 앱에서는 카카오 API를 호출할 수 없습니다」.
+**Play 로 깐 앱은 Google 이 쥔 앱 서명 키로 다시 서명된다** — 「you must register the Google-held app signing key fingerprint with your API providers, not just your local upload key」. 지금 Google OAuth 의 안드로이드 클라이언트에 든 SHA-1 은 EAS 의 키(#770 B 「적어 둔 값」의 `73:F0:…:CD`)뿐이라, 지문을 더하기 전에는 Play 로 깐 앱의 구글 로그인이 `DEVELOPER_ERROR` 로 선다(「always … a configuration mismatch」). 카카오도 같다 — 「키 해시가 등록되지 않은 앱에서는 카카오 API를 호출할 수 없습니다」.
 
 1. **첫 AAB 를 올린다**(아래 「EAS 제출 잇기」). 앱 서명 키는 첫 업로드 때 Google 이 만든다
 2. **지문을 읽는다** — Protected with Play → Play Store protection → **Manage Play app signing** → 「App signing key」 절의 SHA-1(옛 이름 Release → Setup → App integrity, 카카오 문서는 「[설정] > [앱 무결성] > [앱 서명키 인증서]」). **새 앱은 「quantum-ready hybrid signing」으로 들어가 키가 셋일 수 있다** — 「you must copy the fingerprints for three keys and register each of them with your API providers」. 그 절에 선 SHA-1 을 **전부** 적는다. 업로드 키(EAS 의 키)는 그대로 둔다 — `preview` APK 와 내부 앱 공유가 쓴다
@@ -91,7 +91,7 @@ echo '<SHA-1, 예: 73:F0:D4:…:CD>' | tr -d ':' | xxd -r -p | openssl base64
 
 카카오 공식 문서의 줄은 `echo "${PRINTCERT}" | xxd -r -p | openssl base64` 다(콜론 없는 16진). 위는 콜론을 걷는 `tr` 를 앞에 둔 것이다.
 
-5. 지문 · 키 해시(비밀이 아니다)와 넣은 날을 #304 댓글로 남긴다 — 다음 사람이 「어느 키가 어디 들었나」를 다시 묻지 않게
+5. 지문 · 키 해시(비밀이 아니다)와 넣은 날을 #770 댓글로 남긴다 — 다음 사람이 「어느 키가 어디 들었나」를 다시 묻지 않게
 
 ## EAS 제출 잇기
 
@@ -110,14 +110,14 @@ echo '<SHA-1, 예: 73:F0:D4:…:CD>' | tr -d ':' | xxd -r -p | openssl base64
 1. **내부 테스트** — Test and release → Testing → **Internal testing** → Testers → Create email list(최대 100명). 「You can start an internal test before completing app setup」 — 등록정보가 덜 차도 테스터는 받는다
 2. 테스터 링크로 깐 앱에서 실기기 확인 — **구글 로그인 · 카카오 로그인이 먼저다**(앱 서명 키 지문이 맞았나). 볼 줄은 `docs/ops/runbook/kakao-login.md` 「카카오 로그인 — 실기기 · 웹에서 볼 것」 5 ~ 8 과 #770 의 앱 줄, 결제는 #937 의 PR 이 적는 확인 줄
 3. **비공개 테스트는 조직 계정에 필수가 아니다**(위 「조직 계정 만들기」). 거칠지는 운영자가 정한다 — 거치지 않으면 내부 테스트에서 바로 4
-4. **프로덕션** — Test and release → **Production** → Create new release → 내부 테스트의 판을 올린다(Promote release) → 출시 국가 「대한민국」 → 검토로 보낸다. 대시보드에 「Apply for production」이 서면 개인 계정 요건이 걸린 것이다 — 멈추고 #304 에 적는다(그 신청은 「Review usually takes seven days or less」)
+4. **프로덕션** — Test and release → **Production** → Create new release → 내부 테스트의 판을 올린다(Promote release) → 출시 국가 「대한민국」 → 검토로 보낸다. 대시보드에 「Apply for production」이 서면 개인 계정 요건이 걸린 것이다 — 멈추고 #770 에 적는다(그 신청은 「Review usually takes seven days or less」)
 5. **베타 일정과 견준다** — 앱이 공개되는 날 웹의 운영 기간이 살아 있어야 한다(`docs/ops/runbook/signup.md` 「테스트 시작하기」, 공개 전환은 #1011). 심사 중에도 살아 있어야 한다(`docs/ops/runbook/mobile-release.md` 「심사 계정」 2)
 
 ## 결제의 전제
 
 포인터만 둔다 — **상품 · 가격 · 서버 키 이름 · 알림 문의 차례는 #937 의 PR 이 적는다**(결제 코드와 그 절차서는 이 일이 안 만진다). [Payments profile](https://support.google.com/googleplay/android-developer/answer/7161426) · [Getting ready](https://developer.android.com/google/play/billing/getting-ready) · [One-time products](https://support.google.com/googleplay/android-developer/answer/16430488) · [Play Developer API](https://developers.google.com/android-publisher/getting_started) (2026-11-06).
 
-1. **판매자(결제) 프로필** — Settings → Monetization → **Payments profile**(쪽에 따라 Manage account → Play apps settings → Monetization settings → Payments profile). 「You can't change your business location country」 — 대한민국. 정산 계좌는 「How you get paid」 → Add payment method(확인에 「up to 5 days」), 세금 정보도 같은 쪽 — **운영자**(#304 「Google Play 판매자 계정 · 정산 · 세금」)
+1. **판매자(결제) 프로필** — Settings → Monetization → **Payments profile**(쪽에 따라 Manage account → Play apps settings → Monetization settings → Payments profile). 「You can't change your business location country」 — 대한민국. 정산 계좌는 「How you get paid」 → Add payment method(확인에 「up to 5 days」), 세금 정보도 같은 쪽 — **운영자**(#770 C 의 3)
 2. **상품은 결제 라이브러리가 든 판이 한 트랙에 올라간 뒤에 만든다** — 「you must publish a version of your app that includes the Google Play Billing Library … to enable billing-related features in the Google Play Console, such as configuring the products」, 「publish to any track, including the internal test track」. 그러니 **#937 이 든 AAB 가 첫 판이 아니면 결제가 든 판을 내부 테스트에 한 번 더 올린다.** 새 앱은 **Billing Library 8 이상**이어야 한다(그 쪽의 2026-08-31 기한 · 11-01 연장). 상품은 Monetize with Play → Products → **One-time products** → Create one-time product — **상품 ID · 가격은 #937 의 PR 대로 만든다**(PRD §7.0). 「You can't change or reuse a product ID」 — 글자를 PR 에서 그대로 옮긴다 — **운영자**
 3. **결제 검증용 서비스 계정** — 제출 키(「EAS 제출 잇기」 1)와 **따로** 만든다(권한을 나눈다). Users and permissions 에서 「View financial data, orders, and cancellation survey responses」 · 「Manage orders and subscriptions」. 「You no longer need to link your developer account to a Google Cloud Project」. 키를 넣는 자리(Vercel 의 이름)는 #937 의 PR — **운영자**(값)
 4. **RTDN** — Google Cloud Pub/Sub 에 주제(topic)를 만들고 `google-play-developer-notifications@system.gserviceaccount.com` 에 **Pub/Sub Publisher** 를 준다 → Play Console → Monetize(with Play) → **Monetization setup** → 「Enable real-time notifications」 → Topic name `projects/<프로젝트>/topics/<주제>` → 「Get all notifications for subscriptions and one-time products」 → Send Test Message. 구독(push 주소)은 우리 웹의 통지 문이다 — 그 문 · 주소는 #937 의 PR(`docs/ops/runbook/domain.md` 표 7 이 새 도메인을 쓴다) — **운영자**
