@@ -5,9 +5,8 @@ import { appBusinessInfo } from '@/info/business';
 import { InfoLine, InfoScreen, LegalHead } from '@/info/frame';
 import { LegalBody } from '@/info/legal-body';
 import { PoliciesLink } from '@/info/policy-links';
+import { SITE_URL } from '@/site';
 import { Card } from '@/ui/surfaces';
-
-const SITE_URL = process.env.EXPO_PUBLIC_SITE_URL;
 
 /** 이용약관 — 웹의 `/terms` 와 같은 `termsFor` 다. 약관 제1조가 서비스 주소를 적으므로 주소가 없는 빌드에는 글을 세우지 않는다 */
 export default function TermsScreen() {
