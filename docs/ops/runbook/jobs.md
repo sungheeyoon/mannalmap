@@ -74,8 +74,8 @@ group by 1, 2 order by 1, 2;
 「청소가 멈췄을 때 · 못 지운 줄이 쌓일 때」. `20270108154600`(ADR 0218)이 `sanction-retention-purge`(매일 05:17 UTC — 정지된 채 떠난 로그인의 제재 기록 1년, `docs/ops/runbook/erasure.md` 「제재 기록」)를 세운다. `20261230090000`(G-118)이 `ops-heartbeat`(10분마다, 매시 5 · 15 · 25 … 분 — `cron-watch` 와 5분 엇갈림)를
 세운다 — 바깥 감시에 「살아 있다」를 보낸다. Vault 의 `ops_heartbeat_url` 이 없으면 아무것도 안 한다(아래 「바깥 감시」).
 `20270107100000`(ADR 0217)이 `chat-purge-watch`(매일 06:57 UTC)를 세운다.
-Vercel Cron 은 넷이다(`vercel.json`) — 복구기의 하루 청소(`/api/cron/reading`), 접속기록 반출(`/api/cron/audit-export`,
-ADR 0105), 사진 청소의 예비(`/api/cron/photo-sweep`, 하루 한 번 — 매시 실행은 pg_cron 이 깨운다, ADR 0204), 닫힌 방의 메시지 파기(`/api/cron/chat-purge`, ADR 0217 — `chat-purge-watch` 가 남은 말을 본다). 넷은 `cron-watch` 가 못 본다 —
+Vercel Cron 은 다섯이다(`vercel.json`) — 복구기의 하루 청소(`/api/cron/reading`), 접속기록 반출(`/api/cron/audit-export`,
+ADR 0105), 사진 청소의 예비(`/api/cron/photo-sweep`, 하루 한 번 — 매시 실행은 pg_cron 이 깨운다, ADR 0204), 닫힌 방의 메시지 파기(`/api/cron/chat-purge`, ADR 0217 — `chat-purge-watch` 가 남은 말을 본다), Google Play 무효 대조(`/api/cron/store-voided`, 매일 20:57 UTC, ADR 0230 — 서비스 계정 키가 없으면 `{ configured: false }` 로 끝난다, `docs/ops/runbook/credits.md` 「Google Play 결제」). 다섯은 `cron-watch` 가 못 본다 —
 반출은 pg_cron 의 `audit-export-watch` 가 매일 본다(시도나 성공이 이틀 넘게 없으면 알린다), 사진 청소는 `photo-sweep-watch` 가 본다(끝까지 돈
 실행이 세 시간 넘게 없으면 — 어느 쪽이 깨웠든).
 **`failed` 가 한 줄이라도 있으면 그 잡은 지금 안 도는 것이다.**
@@ -108,7 +108,7 @@ Discord — Vault `ops_alert_url` 과 같은 채널)을 더한다. 채널의 웹
 
 #### 붙이는 차례 — UptimeRobot · Healthchecks.io
 
-1. **서비스 계정**을 만들고 MFA 를 켠다(#304 의 MFA 줄에 이 서비스를 더한다). 알림 받을 곳에 운영자 이메일을 넣고, 채널을 쓰면 그 연동을 더한다.
+1. **서비스 계정**을 만들고 MFA 를 켠다(#770 B 의 「MFA 확인」 줄에 이 서비스를 더한다). 알림 받을 곳에 운영자 이메일을 넣고, 채널을 쓰면 그 연동을 더한다.
    UptimeRobot Free 는 **가입한 메일 하나로만** 알린다 — 다른 메일을 더하는 것은 유료 판의 notify-only seat 다(공식 도움말 「Personal
    Notification Channels」, 2026-10-24). 알림을 개인 메일에서도 보려면 그 메일함을 휴대폰에 더하거나 메일 전달 필터를 건다.
    UptimeRobot 의 MFA 는 대시보드 왼쪽 아래 「…」 → Security → Set up 2FA 다(2026-10-24 화면).
@@ -129,7 +129,7 @@ Discord — Vault `ops_alert_url` 과 같은 채널)을 더한다. 채널의 웹
    주소를 바꿀 때는 `vault.update_secret((select id from vault.secrets where name = 'ops_heartbeat_url'), '<새 주소>')`.
    새면 `docs/ops/runbook/secret-leak.md` 「비밀이 새면」 표의 Vault `ops_heartbeat_url` 줄대로 바꾼다.
 
-**붙인 뒤 확인** — 값은 #304 의 그 줄 댓글에 날짜와 함께.
+**붙인 뒤 확인** — 값은 #770 댓글에 날짜와 함께.
 
 - `curl -s -o /dev/null -w '%{http_code}\n' <운영 주소>/api/health` 가 200, 서비스 화면의 두 감시가 「up」
 - 2분 뒤 `select status_code, created from net._http_response order by created desc limit 3;` 에 200 이 있고, 서비스 화면의 heartbeat 가 「up」
