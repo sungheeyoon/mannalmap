@@ -52,3 +52,4 @@
 - CI 기록을 읽으려면 → [CI](../agents/test-map/ci.md#ci) — 붉은 job 은 `gh run view <run id> --log-failed`, 빈 출력이면 `gh api --allow-escape-sequences "repos/{owner}/{repo}/actions/jobs/<job id>/logs"`
 - 셸 명령이 `cannot be shown …` 으로 거절되면(heredoc · `&&` · `for` · `$()`) → [로컬 환경의 함정](../agents/delegation/local-env.md#로컬-환경의-함정) — 워크트리 격리가 막는 명령과 돌아가는 길
 - 머지 전 PR 의 코드를 넓게 읽거나 판정 함수(`scripts/` 의 `.mjs`)를 그 PR 의 코드로 돌려 보려면 → [일하는 법](../agents/delegation/working.md#일하는-법--세션마다-다시-배우던-것) — `git fetch origin pull/<N>/head:pr-<N>` 뒤 `git archive pr-<N> | tar -x -C <스크래치>`(판정 함수만이면 `pr-<N> scripts/`; 격리가 파이프를 막으면 `git archive -o <스크래치>/x.tar pr-<N>` 뒤 `tar -xf`)로 풀어 거기서 읽고 부른다. 그 사본은 git 저장소가 아니라 `scripts/code-rules.test.ts` 의 `git ls-files` 잠금은 늘 붉다 — 판정이 아니다
+- 감사에서 최근 커밋의 파일 목록이 필요하면 → [로컬 환경의 함정](../agents/delegation/local-env.md#로컬-환경의-함정) — 셸 반복문(`for`)은 격리가 거절하므로 커밋마다 `git show --stat <SHA>`. 감사 중 기준 main 이 움직이면 보고 끝에 마지막으로 본 SHA 와 그사이 머지된 PR 을 적는다

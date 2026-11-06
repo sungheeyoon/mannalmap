@@ -29,7 +29,7 @@
 | 대기 고리가 끝나지 않고 `jq: command not found` 가 찍힌다 | 이 기계에 `jq` 가 없다(2026-10-07) | `gh … --json <칸> -q '<jq 식>'`. 에이전트 워크트리에서 `-q` 도 거절되면(위의 격리 줄) `--json <칸>` 만 받아 눈으로 읽는다 |
 | `gh pr update-branch` 가 없다 · `gh pr edit` 가 classic Projects 오류로 선다 | Ubuntu apt 의 `gh` 2.46 | cli.github.com 의 apt 저장소에서 공식 `gh` 를 깐다(이 기계는 2026-10-06 부터 2.102.0) |
 | 로컬 DB 자리 5 에서 `db:start` 가 `LegacyDbConnectError` · `ECONNREFUSED` 로 선다(2026-10-10) | 원인은 확인 전 | 다른 자리(`npm run stack:slot -- --auto`)를 쓴다 |
-| `supabase: command not found` | PATH 에 없다 | `npx supabase` 나 `./node_modules/.bin/supabase` |
+| `supabase: command not found` | PATH 에 없다 | 메인의 `node_modules/.bin/supabase` 를 절대경로로 부른다 — 워크트리의 `npx supabase` 는 아래 「`npx supabase db push` 가 로컬을 대상으로 잡는다」의 함정이 있다 |
 | WSL 에서 `db:start` · `npx supabase status` 가 Docker 에 못 닿는다 | Docker Desktop 이 꺼져 있다 — 또는 명령이 샌드박스 안에서 돈다(2026-10-08) | Docker Desktop 을 켜고, 샌드박스 밖에서 다시 부른다 |
 | `docker version` 이 「could not be found in this WSL 2 distro」이고 `/usr/bin/docker` 링크의 대상(`/mnt/wsl/docker-desktop/`)이 없다 | Docker Desktop 엔진이 꺼져 있다 — 설치가 없는 것이 아니다(2026-10-31). Windows 쪽 `docker.exe version` 이 `dockerDesktopLinuxEngine` 파이프를 못 찾는다고 답하면 이 줄이다 | 사람이 Docker Desktop 을 켠다. 아래 줄(CI 에 기대기)로 넘어가지 않는다 |
 | `docker` 명령이 아예 없고 `db:start` 가 `LegacyDockerLifecycleInspectError` 로 선다 | 이 WSL 에 Docker 가 없다(Docker Desktop 의 WSL 연동 꺼짐, 2026-10-12) — 로컬에서 pgTAP · `db:types` 를 못 돌린다 | 생성 타입(`src/lib/db/database.generated.ts`)은 손으로 고치고, CI 의 `test:db`(pgTAP)와 `db:types` 재생성 diff 에 기댄다. PR 에 「로컬에서 못 돌렸다 — CI 가 덮었다」를 적는다(#664) |
@@ -58,6 +58,8 @@
 | `.env.development.local` 의 값이 `"[SENSITIVE]"` 다 | Vercel 이 Secret 은 안 내려 준다. 그대로 두면 「있는」 값으로 세어져 401 로 떨어진다 | 주석 처리해 두면 오류가 이름을 대 준다. 실호출은 `OPENAI_API_KEY` 한 줄을 손으로 붙인다 |
 | 실호출 첫 콜이 `Incorrect API key` | `.env.development.local` 값이 `"…"` 로 감싸여 있다 | `loadLocalEnv` 가 벗긴다 — 새 읽는 자리를 만들면 같은 것을 한다 |
 | Production 배포가 전부 `Error` 인데 typecheck · lint · 단위 · e2e 는 초록이다 | `next build` 만 잡는 것이 있다 — 예: `app/**/icon.tsx` 는 메타데이터 라우트라 기본 내보내기가 없으면 「Export default doesn't exist」로 선다(2026-09-24). 파일 이름 `icon` · `apple-icon` · `opengraph-image` · `sitemap` · `robots` · `manifest` 는 `app/` 아래 어디서나 특별하다 | 로컬에서는 최소 셋(단위 · 타입 · 린트, `docs/agents/test-map/what-to-run.md`)만 돈다 — 빌드는 CI `core` 차선이 돈다. 이 특별한 이름의 파일을 더하거나 고쳤으면 그 PR 의 CI 빌드가 초록인지 본다. 공용 아이콘은 `app/ui/icons.tsx` 다. 배포 상태는 `vercel ls --prod` |
+| 워크트리에서 `npx supabase db push` 가 운영이 아니라 로컬을 대상으로 잡는다 | 워크트리에 `node_modules` 가 없으면 `npx` 가 새 CLI(3.x)를 받아 오고, 그 버전은 `db push` 의 기본 대상이 로컬이다(2026-11-07) | 메인의 `node_modules/.bin/supabase` 를 절대경로로 부른다 — `package.json` 의 2.x 다 |
+| 운영 화면(`/ops`)의 전후 그림이 2단계 인증 화면에서 멈춘다 · `scripts/ui-shots.mjs` 의 `PLAN` 에 `/ops` 가 없다 | `/ops` 는 2단계 인증을 지나야 열린다(2026-11-07) | `e2e/second-factor.ts` 의 `passSecondFactor`(`totpNow` 셈)로 인증을 지난 뒤 찍는다 |
 
 ## 앱을 웹 번들로 재기
 
