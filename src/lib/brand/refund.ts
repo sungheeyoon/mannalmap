@@ -13,6 +13,7 @@ import { type LegalDocument, type LegalSection, bullets, para, table } from './l
  * 새 규칙을 만들지 않는다. 사업자 빈칸은 `BusinessInfo` 에서 채우고, 값이 없으면 그 말을 빼거나 「판매자 정보의 연락처」로 가리킨다.
  * 「［서비스 안 결제 내역에 신청 칸이 생기면 …］」처럼 화면이 아직 없는 길은 싣지 않았다.
  */
+/** 첫 시행일 = 운영 게시일(운영자 답 2026-11-07, ADR 0234) — 약관과 같은 날, 배포 차례에서 채운다 */
 export const REFUND_EFFECTIVE_DATE: string | null = null;
 
 export function refundPolicyFor(info: BusinessInfo): LegalDocument {
@@ -119,7 +120,7 @@ export function refundPolicyFor(info: BusinessInfo): LegalDocument {
             title: '탈퇴할 때',
             blocks: [
               bullets(
-                `탈퇴해도 돌려받을 권리는 사라지지 않아요. 결제 기록을 보관하는 동안(마지막 결제 또는 환불일부터 5년) ${contact}로 주문 번호나 결제 내역을 알려 주시면 같은 계산으로 돌려드려요. Google Play 에 직접 환불을 요청할 수도 있어요.`,
+                `탈퇴해도 돌려받을 권리는 사라지지 않아요. 결제 기록을 보관하는 동안(각 결제의 결제일 또는 마지막 환불일부터 5년) ${contact}로 주문 번호나 결제 내역을 알려 주시면 같은 계산으로 돌려드려요. Google Play 에 직접 환불을 요청할 수도 있어요.`,
                 '무료 풀이권은 탈퇴와 함께 사라져요.',
               ),
             ],

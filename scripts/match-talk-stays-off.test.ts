@@ -47,9 +47,9 @@ describe('게시 고지는 대화 · 상세 궁합의 판이다', () => {
 
   /* v13 은 대화 · 상세 궁합과 무관한 내용 개정이다(애플 로그인 · 이용 정지 기록, ADR 0220) — 대화 · 상세 궁합의 판은 그 위의 v14 다 */
   it('내용 개정이라 판본과 재확인 기준을 함께 올려 확인한 사람 전원이 다시 읽는다', () => {
-    /* v15(공개 서비스 · 카카오, ADR 0225 추기) · v16(카카오계정 이메일, ADR 0224 추기) · v17(운영 기간 · Play 결제 · 구매 제한 기록 · 만 14세, ADR 0234)이 그 위에 올라 기준도 v17 이다 — 대화 · 상세 궁합의 줄은 그대로 실린다 */
+    /* v15(공개 서비스 · 카카오, ADR 0225 추기) · v16(카카오계정 이메일, ADR 0224 추기) · v17(운영 기간 · Play 결제 · 구매 제한 기록 · 만 14세, ADR 0234 — 기준은 v16 에 두었다, 운영자 답 2026-11-07)이 그 위에 올랐다 — 대화 · 상세 궁합의 줄은 그대로 실린다 */
     expect(NOTICE_VERSION).toBe('notice-v17');
-    expect(NOTICE_ACK_FLOOR).toBe('notice-v17');
+    expect(NOTICE_ACK_FLOOR).toBe('notice-v16');
     expect(noticeAckHolds('notice-v13')).toBe(false);
     expect(noticeAckHolds('notice-v17')).toBe(true);
   });

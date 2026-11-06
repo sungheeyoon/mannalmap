@@ -59,7 +59,7 @@ describe('안내 문구', () => {
   /** **보유기간을 규칙으로 말한다**(`notice-v17`, ADR 0234) — 고정 운영 기간 · 일괄 파기일을 지웠다. 날짜 대신 이용하는 동안 · 탈퇴 뒤 3일 · 법정 기간이다 */
   it('보유기간을 이용 기간 · 탈퇴 · 법정 보존으로 말하고 운영 기간의 날짜를 말하지 않는다', () => {
     expect(text).toContain('서비스를 이용하시는 동안 보관하고, 탈퇴를 신청하시면 3일 이내에 파기합니다');
-    expect(text).toContain('마지막 결제 또는 환불일부터 5년');
+    expect(text).toContain('각 결제의 결제일 또는 마지막 환불일부터 5년');
     expect(text).not.toMatch(/운영 기간|\d{4}년 \d{1,2}월 \d{1,2}일/);
   });
 
@@ -254,9 +254,9 @@ describe('사진 저장소', () => {
     expect(purge).not.toContain('반드시');
   });
 
-  /* v9 당시에는 기준을 v8 에 두었다(운영자 결정 2026-10-23). 그 뒤 v13(ADR 0220) · v14(대화가 유일한 흐름) · v15(공개 서비스 · 카카오, ADR 0225 추기) · v16(카카오계정 이메일 · 계정 합침, ADR 0224 추기) · v17(운영 기간 · Play 결제 · 구매 제한 기록 · 만 14세, ADR 0234)의 내용 개정이 기준을 올렸다 */
-  it('재확인 기준은 마지막 내용 개정 v17 이다', () => {
-    expect(NOTICE_ACK_FLOOR).toBe('notice-v17');
+  /* v9 당시에는 기준을 v8 에 두었다(운영자 결정 2026-10-23). 그 뒤 v13(ADR 0220) · v14(대화가 유일한 흐름) · v15(공개 서비스 · 카카오, ADR 0225 추기) · v16(카카오계정 이메일 · 계정 합침, ADR 0224 추기)의 내용 개정이 기준을 올렸다. v17 은 내용 개정이지만 기준을 두었다(운영자 답 2026-11-07, ADR 0234) */
+  it('재확인 기준은 v16 이다 — v17 은 새 가입자만 본다', () => {
+    expect(NOTICE_ACK_FLOOR).toBe('notice-v16');
   });
 });
 
@@ -499,16 +499,17 @@ describe('애플 로그인 · 이용 정지 기록', () => {
 
 /**
  * v17 — 운영 기간 · Play 결제 · 구매 제한 기록 · 만 14세를 한 판으로(ADR 0225 추기 2026-11-06 · ADR 0230 추기 B · ADR 0231 · ADR 0234, #938).
- * 보유기간과 받는 항목이 달라진 내용 개정이라 v16 을 본 사람도 한 번 다시 읽는다.
+ * 보유기간과 받는 항목이 달라진 내용 개정이지만 기준은 v16 에 둔다 — 새 가입자만 v17 을 본다(운영자 답 2026-11-07).
  */
 describe('운영 기간 · Play 결제 · 구매 제한 기록 · 만 14세 (notice-v17)', () => {
   const sections = noticeFor({ name: '만세력 운영자', officer: '홍길동', contact: 'ops@example.com' });
   const lines = (title: string) => sections.find((section) => section.title === title)?.lines.join(' ') ?? '';
   const titles = sections.map((section) => section.title);
 
-  it('v16 을 본 사람도 v17 을 다시 본다', () => {
-    expect(noticeAckHolds('notice-v16')).toBe(false);
+  it('v16 을 본 회원은 다시 안 보고, v15 를 본 사람은 다시 본다', () => {
+    expect(noticeAckHolds('notice-v16')).toBe(true);
     expect(noticeAckHolds('notice-v17')).toBe(true);
+    expect(noticeAckHolds('notice-v15')).toBe(false);
   });
 
   it('만 14세 미만의 가입 · 개인정보를 받지 않는다는 줄이 첫 절 끝에 선다', () => {
@@ -521,6 +522,7 @@ describe('운영 기간 · Play 결제 · 구매 제한 기록 · 만 14세 (not
     expect(pay).toContain('Google Play 가 처리합니다');
     expect(pay).toContain('카드 번호 등 결제수단 정보는 저희가 받지 않습니다');
     expect(pay).toContain('구매 확인 값과 Google 주문 번호');
+    for (const item of ['시험 구매 여부', '그 사유의 구분', '환불을 시작한 쪽', '환불 종류']) expect(pay, item).toContain(item);
   });
 
   /** 항목은 #1048 의 `retention.store_purchase_restriction` 칸과 하나씩 맞췄다 — 칸이 바뀌면 이 줄도 바뀐다 */

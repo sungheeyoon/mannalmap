@@ -6,8 +6,10 @@
 --
 --   1. **종료일 전** — 켜고 끈다(이 파일이 세운 열린 일정)
 --   2. **종료일 뒤** — 여는 문 · 켜는 문 · 끄는 문이 모두 그대로 돈다
+--   3. **서비스를 끝낸 뒤**(이 트랜잭션 안에서만 `beta_is_over()` 를 참으로 바꿔 잰다) — 켜기는 여는 문과 같은 말로 거절하고 풀의 줄은 그대로,
+--      끄기는 막지 않는다. 동의를 거두는 일은 끝난 뒤에도 된다(운영자 결정 2026-10-01, `20261110090000` 의 동의 문과 같은 결)
 begin;
-select plan(10);
+select plan(17);
 
 /** 열린 베타를 이 파일이 세운다 — 일정은 늘 가장 늦게 적은 줄이 이긴다(`current_beta_schedule`) */
 insert into public.beta_schedule (ends_on, note, operator_name, operator_officer, operator_contact)
@@ -63,6 +65,30 @@ select is(pg_temp.state(), 'in', '켜진 줄이 풀에 선다');
 select lives_ok(
   $$select tests.set_discovery_participation(false, null)$$,
   '끄는 것도 그대로 된다');
+select is(pg_temp.state(), 'out', '끈 것이 풀에 선다');
+
+-- ── 3. 서비스를 끝낸 뒤 ─────────────────────────────────────────────────────
+
+select ok(tests.set_discovery_participation(true, pg_temp.summary(), tests.need()), '끝나기 전에 켜 둔다');
+
+/** 끝내는 날의 몸을 흉내 낸다 — 파일 끝의 rollback 이 되돌린다(ADR 0234) */
+create or replace function public.beta_is_over()
+returns boolean language sql stable security definer set search_path = '' as $$ select true; $$;
+select ok(public.beta_is_over(), '이 트랜잭션에서는 서비스가 끝났다');
+
+select throws_ok(
+  $$select tests.ensure_discovery_participation((select person_id from who), pg_temp.summary(), tests.need())$$,
+  '42501', '이용이 정지된 계정입니다.',
+  '여는 문은 끝난 뒤에 거절한다 — 견줄 기준');
+select throws_ok(
+  $$select tests.set_discovery_participation(true, pg_temp.summary(), tests.need())$$,
+  '42501', '이용이 정지된 계정입니다.',
+  '켜는 문도 끝난 뒤에 같은 말로 거절한다');
+select is(pg_temp.state(), 'in', '거절당한 켜기는 풀의 줄을 안 바꾼다');
+
+select lives_ok(
+  $$select tests.set_discovery_participation(false, null)$$,
+  '끄는 것은 끝난 뒤에도 된다 — 동의를 거두는 길은 안 막는다');
 select is(pg_temp.state(), 'out', '끈 것이 풀에 선다');
 
 select * from finish();
