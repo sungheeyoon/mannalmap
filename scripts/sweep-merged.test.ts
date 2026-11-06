@@ -1,11 +1,6 @@
-import { readFileSync } from 'node:fs';
-import { dirname, join } from 'node:path';
-import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 
 import { judgeBranch, judgeWorktree, parseWorktrees, planSweep, prFor, reportOf } from './sweep-merged.mjs';
-
-const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 
 const merged = { number: 10, state: 'MERGED', headRefName: 'feat/a', headRefOid: 'a1' };
 const closed = { number: 11, state: 'CLOSED', headRefName: 'feat/b', headRefOid: 'b1' };
@@ -105,20 +100,6 @@ describe('planSweep — 남는 워크트리가 쥔 가지는 걷지 않는다', 
     expect(report).toContain('까닭별: 메인 체크아웃 1 · 잠김(돌고 있는 에이전트) 1 · main 가지 1 · 남는 워크트리가 쥐고 있다 1');
     expect(report).toContain('미리보기다');
     expect(reportOf(plan, { apply: true })).not.toContain('미리보기다');
-  });
-});
-
-describe('허용 목록 — 권한 표의 「허용」 칸과 .claude/settings.json 의 allow 가 같다 (운영자 답 2026-11-06)', () => {
-  it('표에 「허용」으로 적은 규칙과 allow 목록이 정확히 같고, sweep:merged 가 그 안에 있다', () => {
-    const table = readFileSync(join(ROOT, 'docs/agents/delegation/permissions.md'), 'utf8');
-    const settings = JSON.parse(readFileSync(join(ROOT, '.claude/settings.json'), 'utf8')) as { permissions?: { allow?: string[] } };
-    const allowed = table
-      .split('\n')
-      .map((line) => line.split('|').map((cell) => cell.trim()))
-      .filter((cells) => cells.length >= 6 && cells[1].startsWith('**') && cells[4].startsWith('허용 '))
-      .flatMap((cells) => [...cells[4].matchAll(/`(Bash\([^`]+\))`/g)].map((match) => match[1]));
-    expect([...allowed].sort()).toEqual([...(settings.permissions?.allow ?? [])].sort());
-    expect(allowed).toContain('Bash(npm run sweep:merged:*)');
   });
 });
 

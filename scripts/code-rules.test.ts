@@ -1497,7 +1497,7 @@ describe('위임 규약 (docs/agents/delegation.md 색인 → docs/agents/delega
   const part = (name: string) => readFileSync(join(ROOT, DELEGATION_DIR, name), 'utf8');
   const permissions = part('permissions.md');
   const settings = JSON.parse(readFileSync(join(ROOT, '.claude/settings.json'), 'utf8')) as {
-    permissions?: { ask?: string[]; deny?: string[] };
+    permissions?: { allow?: string[]; ask?: string[]; deny?: string[] };
   };
 
   /** 권한 표에서 첫 칸이 `**N ` 으로 시작하는 줄의 잠금 칸(넷째)에 적힌 `Bash(…)` 규칙 */
@@ -1525,6 +1525,16 @@ describe('위임 규약 (docs/agents/delegation.md 색인 → docs/agents/delega
     expect([...deny].sort()).toEqual([...(settings.permissions?.deny ?? [])].sort());
     // 같은 규칙이 두 등급에 서 있으면 어느 쪽이 이기는지 도구가 정한다 — 문서가 그것을 안 든다
     expect(ask.filter((rule) => deny.includes(rule))).toEqual([]);
+  });
+
+  it('권한 표에 「허용」으로 적은 규칙은 settings 의 allow 와 정확히 같은 목록이다', () => {
+    const allowed = permissions
+      .split('\n')
+      .map((line) => line.split('|').map((cell) => cell.trim()))
+      .filter((cells) => cells.length >= 6 && cells[1].startsWith('**') && cells[4].startsWith('허용 '))
+      .flatMap((cells) => [...cells[4].matchAll(/`(Bash\([^`]+\))`/g)].map((match) => match[1]));
+    expect([...allowed].sort()).toEqual([...(settings.permissions?.allow ?? [])].sort());
+    expect(allowed).toContain('Bash(npm run sweep:merged:*)');
   });
 
   /** 출시 단계의 표와 PRD 읽기는 `scripts/release-stage.mjs` 한 곳이다 — CI 계획도 같은 것을 읽는다 (ADR 0093 · 0097) */
