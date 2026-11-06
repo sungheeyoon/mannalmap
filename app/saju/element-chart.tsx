@@ -146,7 +146,7 @@ export function ElementChart({ saju }: { saju: Saju }) {
         정체 모를 수다 — 자를 밝히는 것은 설명이 아니다.
       */}
       <p className="mt-1 mb-4 text-xs text-secondary">
-        개수는 {glyphCount === 8 ? '여덟' : '여섯'} 글자, 점수는 지장간까지 편 값입니다
+        개수는 {glyphCount === 8 ? '여덟' : '여섯'} 글자, 점수는 지장간까지 포함한 값입니다
         {glyphCount !== 8 && <span className="text-muted"> · 시주 제외</span>}
       </p>
 

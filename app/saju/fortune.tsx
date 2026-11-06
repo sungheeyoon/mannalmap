@@ -28,6 +28,7 @@ import {
   subjectParticle,
 } from '@/src/lib/saju/view';
 import {
+  NOW_OVERLAPS_TITLE,
   OVERLAPS_NOTE,
   SAEUN_BOUNDARY_NOTE,
   SAEUN_NOTE,
@@ -42,7 +43,7 @@ import { CARD } from '../ui/surfaces';
 import { CurrentScroll } from './current-scroll';
 
 /**
- * 지금의 운이 **원국의 같은 자리를 다시 밟는 것** — 카드 하나가 이 칸만 남았다.
+ * 지금 운에서 **원국의 관계가 같은 자리에 다시 생긴 것** — 카드 하나가 이 칸만 남았다.
  *
  * 「지금의 운」 카드가 여기 있었다. 지금 도는 대운·세운·월운을 짚고, 그것이 원국과 맺는
  * 관계를 문장으로 폈다. 그중 **어느 운이 도는가는 아래 표가 이미 짚는다** — 표마다 지금
@@ -62,7 +63,7 @@ export function NowOverlaps({ now }: { now: CurrentFortune }) {
 
   return (
     <section className={CARD}>
-      <SectionTitle>지금이 원국의 같은 자리를 다시 밟는 것</SectionTitle>
+      <SectionTitle>{NOW_OVERLAPS_TITLE}</SectionTitle>
       {/*
         **글자로 묶는다.** 운이 데려온 한 자가 원국의 어느 글자와 같으면 그 자리의
         관계가 통째로 겹치므로, 줄로 풀면 다섯 줄이 한 사실을 다섯 번 말한다. 겹치게
@@ -80,9 +81,9 @@ export function NowOverlaps({ now }: { now: CurrentFortune }) {
               <span className="ml-0.5 text-secondary">{subjectParticle(group.char)}</span>
             </span>
             <span className="text-secondary">
-              {' '}원국{' '}
-              {group.seats.map((seat) => PILLAR_POSITION_KO[seat]).join('·')}의 같은 자리를
-              다시 밟습니다 —{' '}
+              {' '}들어와 원국{' '}
+              {group.seats.map((seat) => PILLAR_POSITION_KO[seat]).join('·')}에 있던 관계가
+              다시 생깁니다 —{' '}
               <span className="text-foreground">{group.names.join(' · ')}</span>
             </span>
           </li>

@@ -26,6 +26,7 @@ import {
   subjectParticle,
 } from '@saju-view';
 import {
+  NOW_OVERLAPS_TITLE,
   OVERLAPS_NOTE,
   SAEUN_BOUNDARY_NOTE,
   SAEUN_NOTE,
@@ -40,17 +41,17 @@ import { COLOR, ELEMENT_TONE, RADIUS, TYPE } from '@/ui/tokens';
 
 import { Card, CardTabs, Rich, Ruled, ScrollHint, T, shared } from './parts';
 
-/** 지금의 운이 원국의 같은 자리를 다시 밟는 것 — 겹칠 것이 없으면 안 선다(웹 `NowOverlaps`) */
+/** 지금 운에서 원국의 관계가 같은 자리에 다시 생긴 것 — 겹칠 것이 없으면 안 선다(웹 `NowOverlaps`) */
 export function NowOverlaps({ now }: { now: CurrentFortune }) {
   if (now.overlaps.length === 0) return null;
   return (
     <Card>
-      <T size="lead" bold>지금이 원국의 같은 자리를 다시 밟는 것</T>
+      <T size="lead" bold>{NOW_OVERLAPS_TITLE}</T>
       <View style={styles.overlaps}>
         {[...groupOverlaps(now.overlaps)].map(([key, group]) => (
           <T key={key} tone="secondary">
             <T bold glyph>{group.char}</T>
-            {subjectParticle(group.char)} 원국 {group.seats.map((seat) => PILLAR_POSITION_KO[seat]).join('·')}의 같은 자리를 다시 밟습니다 —{' '}
+            {subjectParticle(group.char)} 들어와 원국 {group.seats.map((seat) => PILLAR_POSITION_KO[seat]).join('·')}에 있던 관계가 다시 생깁니다 —{' '}
             <T>{group.names.join(' · ')}</T>
           </T>
         ))}

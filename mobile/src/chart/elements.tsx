@@ -72,7 +72,7 @@ export function ElementChart({ saju }: { saju: Saju }) {
     <Card>
       <T size="lead" bold>오행 분포</T>
       <T size="xs" tone="secondary" style={styles.lead}>
-        개수는 {glyphCount === 8 ? '여덟' : '여섯'} 글자, 점수는 지장간까지 편 값입니다
+        개수는 {glyphCount === 8 ? '여덟' : '여섯'} 글자, 점수는 지장간까지 포함한 값입니다
         {glyphCount !== 8 && <T size="xs" tone="muted"> · 시주 제외</T>}
       </T>
 

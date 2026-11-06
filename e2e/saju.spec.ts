@@ -462,9 +462,9 @@ test('운 표는 기준 시각을 밝히고 원국을 다시 밟는 자리를 �
     표 안에 흩어져 있어서, 줄이 스물에 가까우면 그 짝을 아무도 못 맞춘다.
   */
   await expect(
-    fortune.getByRole('heading', { name: '지금이 원국의 같은 자리를 다시 밟는 것' }),
+    fortune.getByRole('heading', { name: '지금 운에서 다시 생긴 원국의 관계' }),
   ).toBeVisible();
-  expect(text).toMatch(/원국 [년월일시]주.*의 같은 자리를 다시 밟습니다/);
+  expect(text).toMatch(/들어와 원국 [년월일시]주.*에 있던 관계가 다시 생깁니다/);
 
   // 표는 그대로 아래에 있다 — 접혀 있고, 펴면 선다.
   await unfold(page, '운 흐름');
