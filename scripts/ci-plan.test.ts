@@ -1170,10 +1170,12 @@ describe('CI 계획 — 앱 검사 (mobile 차선)', () => {
     expect(runs(`${before}await supabase.from('person').select('id');\n`)).toBe(true);
     expect(runs(before.replace('/api/mobile/readings', '/api/mobile/reading'))).toBe(true);
     expect(runs(before.replace("rpc('my_reading'", "rpc(\n  key === 'a' ? 'my_reading' : 'my_matches'"))).toBe(true);
-    // 안 바뀐 것 — 문구 · 차례 · 줄바꿈 · 인자
+    // 부르는 줄의 인자도 바뀐 것이다 — 「글자가 든 줄이 바뀌었으면」(ADR 0097 덧 2026-11-06)
+    expect(runs(before.replace('{ id }', '{ id, extra: 1 }'))).toBe(true);
+    // 안 바뀐 것 — 부르지 않는 줄의 문구 · 줄의 차례 · 들여쓰기
     expect(runs(before.replace('저장', '저장하기'))).toBe(false);
     expect(runs(before.split('\n').reverse().join('\n'))).toBe(false);
-    expect(runs(before.replace("{ id }", '{ id, extra: 1 }'))).toBe(false);
+    expect(runs(before.split('\n').map((line) => `    ${line}`).join('\n'))).toBe(false);
     // base 가 없으면(새 파일) 부르는 글자가 있을 때만
     expect(runs(before, null)).toBe(true);
     expect(runs("const label = '저장';\n", null)).toBe(false);
@@ -1206,9 +1208,10 @@ describe('CI 계획 — 앱 검사 (mobile 차선)', () => {
   });
 
   it('부르는 글자는 check-mobile.mjs 가 이름을 뽑는 꼴과 같은 자리를 본다', () => {
-    expect(appCallsOf("supabase.rpc('a', {}); supabase.rpc(\n  'b'\n); x.from('person').select(); door(`/api/mobile/reading?${q}`); door('/api/mobile/me/photo')")).toEqual(
-      ["/api/mobile/me/photo", '/api/mobile/reading?', "from('person')", "rpc('a')", "rpc('b')"],
+    expect(appCallsOf("supabase.rpc('a', {}); supabase.rpc(\n  'b'\n); x.from('person').select(); door(`/api/mobile/reading?${q}`); door('/api/mobile/me/photo')").filter((one) => !one.startsWith('line '))).toEqual(
+      ['/api/mobile/me/photo', '/api/mobile/reading?', "from('person')", "rpc('a')", "rpc('b')"],
     );
+    expect(appCallsOf("const a = 1;\n  await supabase.rpc('a', { id });\n").filter((one) => one.startsWith('line '))).toEqual(["line await supabase.rpc('a', { id });"]);
     // check-mobile 이 함수 이름을 뽑는 식 — 둘이 갈리면 한쪽이 놓친다
     const check = readFileSync(resolve(__dirname, 'check-mobile.mjs'), 'utf8');
     expect(check).toContain('source.matchAll(/\\.rpc\\(\\s*([^,)]*)/g)');

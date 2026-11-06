@@ -8,7 +8,7 @@ import { describe, expect, it } from 'vitest';
  * **앱이 웹의 주소를 읽는 자리는 `mobile/src/site.ts` 하나이고, 출시 빌드는 앱이 서는 값 넷 없이 서지 않는다.**
  *
  * 값이 없으면 풀이가 「닿지 못했다」로 서고 약관이 빈다 — 다섯 모듈이 저마다 읽던 때는 어느 것도 빠졌다고 말하지 않았다.
- * 검사는 `mobile/app.config.js` 가 EAS 의 `production` 판(값 넷 · https)과 `preview` 판(https 만)에서 한다. 로컬 개발 · 가짜 서버로
+ * 검사는 `mobile/app.config.js` 가 EAS 의 `production` 판(값 넷 · 주소 둘의 https)과 `preview` 판(https 만)에서 한다. 로컬 개발 · 가짜 서버로
  * 재기(`EAS_BUILD_PROFILE` 없음)는 안 막는다(ADR 0233, 운영자 2026-11-06).
  */
 const ROOT = join(import.meta.dirname, '..');
@@ -69,9 +69,13 @@ describe('앱의 웹 주소', () => {
     expect(refusal({ EAS_BUILD_PROFILE: 'production' })).toBe(`${appConfig.RELEASE_ENV.join(' · ')} 이 없다 — 출시 빌드는 이 값이 든다(EAS 환경 production 에 넣는다)`);
   });
 
-  it('출시 빌드는 웹의 주소가 주소가 아니거나 https 가 아니면 선다', () => {
-    expect(refusal({ ...release, EXPO_PUBLIC_SITE_URL: 'saju.example' })).toMatch(/주소가 아니다/);
-    expect(refusal({ ...release, EXPO_PUBLIC_SITE_URL: 'http://localhost:18999' })).toMatch(/https/);
+  it('출시 빌드는 주소 둘(웹 · Supabase)이 주소가 아니거나 https 가 아니면 선다 — 까닭에 값은 싣지 않는다', () => {
+    for (const name of ['EXPO_PUBLIC_SITE_URL', 'EXPO_PUBLIC_SUPABASE_URL']) {
+      expect(refusal({ ...release, [name]: 'saju.example' }), name).toBe(`${name} 이 주소가 아니다`);
+      expect(refusal({ ...release, [name]: 'http://localhost:18999' }), name).toBe(`${name} 이 https 주소가 아니다`);
+    }
+    // 열쇠 · 클라이언트 id 는 주소가 아니다 — 있기만 하면 된다
+    expect(refusal({ ...release, EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY: 'not a url', EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID: 'x' })).toBeNull();
   });
 
   it('내부 판(preview)은 웹의 주소가 https 인지만 본다 — 다른 값 셋은 안 본다', () => {
@@ -79,8 +83,9 @@ describe('앱의 웹 주소', () => {
     expect(refusal({ ...preview, EXPO_PUBLIC_SITE_URL: 'https://saju.example' })).toBeNull();
     expect(refusal({ ...preview })).toMatch(/EXPO_PUBLIC_SITE_URL 이 없다 — preview/);
     expect(refusal({ ...preview, EXPO_PUBLIC_SITE_URL: '' })).toMatch(/없다/);
-    expect(refusal({ ...preview, EXPO_PUBLIC_SITE_URL: 'saju.example' })).toMatch(/주소가 아니다/);
-    expect(refusal({ ...preview, EXPO_PUBLIC_SITE_URL: 'http://192.168.0.2:3000' })).toMatch(/https/);
+    expect(refusal({ ...preview, EXPO_PUBLIC_SITE_URL: 'saju.example' })).toBe('EXPO_PUBLIC_SITE_URL 이 주소가 아니다');
+    expect(refusal({ ...preview, EXPO_PUBLIC_SITE_URL: 'http://192.168.0.2:3000' })).toBe('EXPO_PUBLIC_SITE_URL 이 https 주소가 아니다');
+    expect(refusal({ ...preview, EXPO_PUBLIC_SITE_URL: 'https://saju.example', EXPO_PUBLIC_SUPABASE_URL: 'http://x' })).toBeNull();
   });
 
   it('로컬 개발 · 가짜 서버 재기 · 개발 판은 값 없이도 설정이 선다', () => {

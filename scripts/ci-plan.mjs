@@ -78,10 +78,10 @@
  * 그 PR 은 웹 빌드도 건너뛴다 — 웹은 `mobile/` 을 들이지 않으므로(뿌리 tsconfig 가 뺀다 · `scripts/mobile-closure.test.ts`) 빌드가 재는 것이
  * 그대로다. `core` 의 단위 · 타입 · 린트는 남는다 — `scripts` 잠금이 `mobile/` 글자를 읽는다.
  *
- * **다만 앱이 DB · 앱의 문을 부르는 글자가 바뀌면 `mobile-flow` 가 흐름 검사 하나(`scripts/check-mobile.mjs`)만 돈다**(운영자 2026-11-06, G-144).
+ * **다만 앱이 DB · 앱의 문을 부르는 글자가 바뀌면 `mobile-flow` 가 흐름 검사 하나(`scripts/check-mobile.mjs`)만 돈다**(ADR 0097 덧 2026-11-06).
  * 그 검사가 앱의 자격으로 함수 · 표 · `/api/mobile/**` 를 두드리는 유일한 자리인데, 앱만 바뀐 PR 은 `flow` 를 건너뛰어 앱이 새로 부른 함수가
  * `authenticated` 에 안 열려 있어도 머지 뒤 main 에서야 붉었다. 「부르는 글자」는 `mobile/src` 의 시험 아닌 코드에서 `.rpc(…` 의 첫 인자 ·
- * `.from('표')` · `/api/mobile/…` 글자다(`appCallsOf`) — base 와 HEAD 의 그 목록이 다르면 켠다. base 를 못 읽으면 새 파일로 보고 HEAD 에
+ * `.from('표')` · `/api/mobile/…` 글자와 그것이 든 줄이다(`appCallsOf`) — base 와 HEAD 의 그 목록이 다르면 켠다(줄의 차례는 안 본다). base 를 못 읽으면 새 파일로 보고 HEAD 에
  * 부르는 글자가 하나라도 있으면 켠다. 전부(`flow` 가 도는 계획)에서는 `flow` 가 이 검사를 이미 돌므로 켜지 않는다.
  *
  * ## 관문 · 화면 · 인증 · 그것을 재는 시험은 베타에서도 머지 전에 전부다 (2026-09-27, ADR 0119)
@@ -354,6 +354,8 @@ export function appCallsOf(source) {
     ...[...source.matchAll(/\.rpc\(\s*([^,)]*)/g)].map((found) => `rpc(${found[1].replace(/\s+/g, ' ').trim()})`),
     ...[...source.matchAll(/\.from\(\s*([^,)]*)\)/g)].map((found) => `from(${found[1].replace(/\s+/g, ' ').trim()})`),
     ...[...source.matchAll(/\/api\/mobile\/[^'"`\s$]*/g)].map((found) => found[0]),
+    // 그 글자가 든 줄 그대로 — 인자가 바뀐 줄도 바뀐 것이다(ADR 0097 덧 2026-11-06 「글자가 든 줄이 바뀌었으면」)
+    ...source.split('\n').filter((line) => /\.rpc\(|\.from\(|\/api\/mobile\//.test(line)).map((line) => `line ${line.trim()}`),
   ];
   return calls.sort();
 }
