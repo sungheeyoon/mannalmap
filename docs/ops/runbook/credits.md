@@ -144,9 +144,9 @@ ADR 0191 — 운영 판단). 소멸일 순(무료 · 예외는 받은 날부터 
 주문 · 매출 · 환불 수는 운영 화면 `/ops/today` 가 낸다(ADR 0183) — 아래 SQL 은 상태별 전체 합이다.
 
 ```bash
-# 상태별 주문 수 · 금액 · 돌려준 금액
+# 상태별 주문 수 · 금액 · 돌려준 금액 — 라이선스 테스터의 시험 구매(`store_purchase.is_test`, 돈이 안 오갔다)는 빼고 따로 센다(/ops/today 와 같다)
 npm run db:remote -- --purpose "풀이권 주문 상태별 집계" \
-  "select status, count(*) as 주문, sum(amount) as 금액, sum(refunded_amount) as 환불 from public.reading_order group by status order by status"
+  "select status, count(*) as 주문, sum(amount) as 금액, sum(refunded_amount) as 환불, (select count(*) from public.store_purchase s join public.reading_order t on t.id = s.order_id where s.is_test and t.status = o.status) as 시험구매_뺌 from public.reading_order o where not exists (select 1 from public.store_purchase s where s.order_id = o.id and s.is_test) group by status order by status"
 
 # 묶음 전체의 산 수 · 걷은 수 · 쓴 수 · 예약 중 수
 npm run db:remote -- --purpose "풀이권 묶음 쓰임 집계" \

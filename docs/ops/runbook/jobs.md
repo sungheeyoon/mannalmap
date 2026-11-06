@@ -71,7 +71,7 @@ group by 1, 2 order by 1, 2;
 `push-delivery-retention-purge`(매일 04:43 UTC)를 세웠다(ADR 0156) — 2026-10-22 에 다시 센 이 목록이 빠뜨린 둘이다. 웹 푸시를 켜는 걸음과
 확인은 `docs/ops/runbook/push.md`. `20261229090000`(ADR 0204)이 `photo-sweep-wake`(매시 33분 — 사진 청소를 깨운다, Vault 의 `photo_sweep_url` 이
 없으면 아무것도 안 한다) · `photo-sweep-watch`(매시 53분 — 멈춘 청소 · 남은 줄, 같은 조건)를 세운다 — 알림과 할 일은 `docs/ops/runbook/photo-store.md`
-「청소가 멈췄을 때 · 못 지운 줄이 쌓일 때」. `20270108154600`(ADR 0218)이 `sanction-retention-purge`(매일 05:17 UTC — 정지된 채 떠난 로그인의 제재 기록 1년, `docs/ops/runbook/erasure.md` 「제재 기록」)를 세운다. `20261230090000`(G-118)이 `ops-heartbeat`(10분마다, 매시 5 · 15 · 25 … 분 — `cron-watch` 와 5분 엇갈림)를
+「청소가 멈췄을 때 · 못 지운 줄이 쌓일 때」. `20270108154600`(ADR 0218)이 `sanction-retention-purge`(매일 05:17 UTC — 정지된 채 떠난 로그인의 제재 기록 1년, `docs/ops/runbook/erasure.md` 「제재 기록」)를 세운다. `20270114090000`(ADR 0230)이 `store-restriction-retention-purge`(매일 05:13 UTC — 구매가 제한된 채 떠난 로그인의 기록 1년, `docs/ops/runbook/erasure.md` 「구매 제한 기록」)를 세운다. `20261230090000`(G-118)이 `ops-heartbeat`(10분마다, 매시 5 · 15 · 25 … 분 — `cron-watch` 와 5분 엇갈림)를
 세운다 — 바깥 감시에 「살아 있다」를 보낸다. Vault 의 `ops_heartbeat_url` 이 없으면 아무것도 안 한다(아래 「바깥 감시」).
 `20270107100000`(ADR 0217)이 `chat-purge-watch`(매일 06:57 UTC)를 세운다.
 Vercel Cron 은 다섯이다(`vercel.json`) — 복구기의 하루 청소(`/api/cron/reading`), 접속기록 반출(`/api/cron/audit-export`,

@@ -112,7 +112,7 @@ export async function settlePurchase(
 
 /** 무효가 된 구매 하나를 장부로 — 통지든 목록이든 같은 문이다. @returns DB 의 결과, 못 닿았으면 `null` */
 export function settleVoided(
-  voided: PlayVoided & { readonly refundType: number | null },
+  voided: Omit<PlayVoided, 'voidedQuantity'> & { readonly refundType: number | null },
   source: 'notification' | 'voided_api',
   ledger: Ledger,
 ): Promise<{ outcome: string; revoked: number; kept: number } | null> {

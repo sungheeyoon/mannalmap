@@ -2663,6 +2663,39 @@ export type Database = {
           },
         ]
       }
+      store_purchase_void_take: {
+        Row: {
+          bundle_id: string
+          credits: number
+          void_id: string
+        }
+        Insert: {
+          bundle_id: string
+          credits: number
+          void_id: string
+        }
+        Update: {
+          bundle_id?: string
+          credits?: number
+          void_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "store_purchase_void_take_bundle_id_fkey"
+            columns: ["bundle_id"]
+            isOneToOne: false
+            referencedRelation: "reading_bundle"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "store_purchase_void_take_void_id_fkey"
+            columns: ["void_id"]
+            isOneToOne: false
+            referencedRelation: "store_purchase_void"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       taste_artifact: {
         Row: {
           answer_direction: string | null
@@ -4635,6 +4668,10 @@ export type Database = {
       reading_budget_warning: { Args: never; Returns: number }
       reading_bundle_held: { Args: { p_bundle_id: string }; Returns: number }
       reading_bundle_price: { Args: { p_credits: number }; Returns: number }
+      reading_bundle_taken_by_store: {
+        Args: { p_bundle_id: string }
+        Returns: number
+      }
       reading_credit_grant_left: { Args: { p_user: string }; Returns: number }
       reading_credit_limit: { Args: never; Returns: number }
       reading_credit_limit_for: { Args: { p_user: string }; Returns: number }
