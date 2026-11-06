@@ -1,9 +1,9 @@
+import { BUSINESS_INFO } from '@/src/lib/brand/business';
 import { refundRequestLine } from '@/src/lib/brand/refund';
 
 import { supabaseOnServer } from '../../../auth/server-client';
 import { signedInUser } from '../../../auth/signed-in';
 import { redirectToSignIn } from '../../../auth/sign-in-redirect';
-import { currentBusinessInfo } from '../../../business-info';
 import { HistoryView } from './history-view';
 import { myPaidOrders } from './orders';
 
@@ -25,5 +25,5 @@ export default async function CreditsHistoryPage() {
   if (!user) return redirectToSignIn();
 
   const orders = await myPaidOrders(supabase);
-  return <HistoryView orders={orders} refundLine={refundRequestLine(currentBusinessInfo())} />;
+  return <HistoryView orders={orders} refundLine={refundRequestLine(BUSINESS_INFO)} />;
 }

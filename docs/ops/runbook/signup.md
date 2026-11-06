@@ -11,17 +11,23 @@
 > (ADR 0042) 그 사람들은 다음 방문에 `/signup` 으로 돌아가 확인 하나만 다시 누른다 —
 > 닉네임은 다시 안 묻는다.
 
-**두 가지를 함께 넣는다** — 언제 끝나는가와 **누가 약속하는가**. 처리자와 연락처가 없으면
-열람·정정·삭제·처리정지가 적혀만 있는 권리가 되므로, 셋 중 하나라도 비면 안내가 안 선다.
+**넣는 것은 날짜 하나다.** 처리방침의 「개인정보처리자 · 보호책임자 · 연락처」는 코드 상수 `PRIVACY_OPERATOR`
+(`src/lib/brand/business.ts`, ADR 0232)이고 화면은 줄의 `operator_*` 칸을 읽지 않는다. 다만 **가입 문(DB)은 아직 지금 줄의
+`operator_contact` 가 비면 거절한다** — 아래 SQL 은 앞 줄의 세 칸을 그대로 옮겨 적으므로 다시 칠 것이 없다. 칸을 걷는 것은 뒤의
+마이그레이션 몫이다(ADR 0232). 처리자 · 연락처를 바꾸려면 상수를 고치는 PR 이다(처리방침 판본 `NOTICE_VERSION` 도 함께 올린다).
 
 ```sql
--- 정한다. 파기 기한은 종료일과 여유에서 나므로 따로 적지 않는다.
+-- 정한다. <YYYY-MM-DD> 를 끝나는 날로 바꾼다 — 지난 날짜를 넣으면 그 자리에서 가입 · 이용이 닫힌다.
+-- 파기 기한은 종료일과 여유에서 나므로 따로 적지 않는다. 운영자 세 칸은 앞 줄에서 옮긴다(화면은 안 읽는다).
 insert into public.beta_schedule (
   ends_on, purge_within_days, note,
   operator_name, operator_officer, operator_contact)
-values (
-  '2026-10-31', 30, '고정 종료일 — 초대 시점과 무관하다',
-  '<처리자 이름 또는 상호>', '<보호책임자 이름>', '<직접 닿는 이메일 또는 전화>');
+select
+  '<YYYY-MM-DD>', 30, '고정 종료일 — 초대 시점과 무관하다',
+  s.operator_name, s.operator_officer, s.operator_contact
+from public.beta_schedule s
+order by s.id desc
+limit 1;
 
 -- 지금 값과 이력
 select * from public.current_beta_schedule();
@@ -35,8 +41,8 @@ select id, ends_on, purge_within_days, note, set_at from public.beta_schedule or
 > 때문이다(`notice_ends_on`). 기간이 바뀌는 것은 알린 내용이 바뀌는 것이라 그게 맞다 —
 > 다시 안 물으면 11월에 지운다는 안내를 보고 확인한 사람의 자료를 이듬해까지 들게 된다.
 
-> **연락처는 공개 화면에 그대로 실린다.** `/privacy` 는 로그인 없이 열리므로 여기 적는
-> 주소는 누구나 본다. 개인 주소를 쓸지 별도 창구를 팔지는 정하고 넣는다.
+> **연락처는 공개 화면에 그대로 실린다.** `/privacy` 는 로그인 없이 열리므로 `PRIVACY_OPERATOR.contact` 는
+> 누구나 본다.
 
 **종료일은 초대와 무관하다.** 언제 몇 명을 초대하든 그날 끝난다 — 초대에서 며칠을 세는
 값이 아니므로, 테스터를 늦게 넣었다고 자동으로 밀리지 않는다. 밀려면 새 줄을 넣는다.
