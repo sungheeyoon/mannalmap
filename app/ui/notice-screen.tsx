@@ -23,6 +23,7 @@ export function NoticeScreen({
   children,
   actions,
   note,
+  narrow = false,
 }: {
   /** 제목 — 체언형 또는 해요체 한 문장. 마침표는 안 찍는다 */
   title: ReactNode;
@@ -34,10 +35,15 @@ export function NoticeScreen({
   actions?: ReactNode;
   /** 단추 아래 작은 한 줄 */
   note?: ReactNode;
+  /**
+   * 데스크톱(`sm:` 이상)에서 카드를 432px(여백 40, 글줄 352)로 좁힌다 — 숨고처럼 좁은 한 열에 글과 단추가 끝에서 끝까지 선다. 로그인 화면만 쓴다
+   * (운영자 결정 2026-11-06, ADR 0228 추기). 글줄은 로그인 단추의 천장(`SIGN_IN_BUTTON.maxWidth` 360)보다 좁아 천장이 닿지 않는다. 좁은 화면은 그대로다
+   */
+  narrow?: boolean;
 }) {
   return (
     <main className="app-shell grid w-full flex-1 place-items-center py-12 sm:py-20">
-      <section className="flex w-full max-w-lg flex-col gap-6 rounded-card bg-cream p-6 sm:p-10">
+      <section className={`flex w-full max-w-lg flex-col gap-6 rounded-card bg-cream p-6 sm:p-10 ${narrow ? 'sm:max-w-[432px]' : ''}`}>
         <header className="flex flex-col gap-2">
           <span className="grid size-16 place-items-center rounded-full bg-surface shadow-card">
             <Logo className="size-10" />

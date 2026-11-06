@@ -6,8 +6,11 @@
  * 틀(높이 · 모서리 · 아이콘 · 글자)은 세 공급자의 안내가 **모두 허락하는** 값이다. 고른 까닭과 한국 서비스 사례는 ADR 0228.
  * - 모서리 12px — 카카오는 「컨테이너 박스의 radius는 12 픽셀(Pixel)로 적용합니다」로 못 박는다. 애플은 「Adjust the corner radius to match
  *   the appearance of other buttons in your app」, 구글은 모서리 값을 정하지 않는다(사각형 · 알약 판을 낸다). 그래서 셋이 12 다
- * - 아이콘은 글자 바로 앞, 둘이 한 덩어리로 가운데 — 애플 시스템 단추가 로고와 글자를 그렇게 그리고(위치를 못 바꾼다), 카카오 완성형 · 구글 표준 단추도 같은 꼴이다
- * - 테두리는 구글만 — 구글의 밝은 판이 「1px inside stroke #747775」를 요구한다. 카카오 · 애플(검정)은 테두리가 없다
+ * - 아이콘은 글자 바로 앞, 둘이 한 덩어리로 가운데 — 애플 시스템 단추가 로고와 글자를 그렇게 그리고(위치를 못 바꾼다), 카카오 완성형 · 구글 표준 단추도 같은 꼴이다.
+ *   다만 글자 상자는 가장 긴 글자(「카카오 로그인」)만큼 넓고 그 안에서 왼쪽에 붙는다(`labelMinWidth`) — 그래서 두 단추의 아이콘이 한 세로줄에 선다
+ *   (운영자 결정 2026-11-06, ADR 0228 추기)
+ * - 단추는 카드 글줄을 끝에서 끝까지 채운다 — 두 단추가 늘 같은 너비로 한 열에 선다. 웹 데스크톱은 카드가 숨고처럼 좁은 한 열(글줄 352)이다(운영자 결정 2026-11-06)
+ * - 테두리는 구글만 — 흰 바탕의 1px 옅은 선 `#DDDDDD`(운영자 결정 2026-11-06 — 구글 밝은 판의 `#747775` 대신 29CM 흰 단추의 선). 카카오 · 애플(검정)은 테두리가 없다
  * - 글자는 기기의 시스템 서체 · 600 — 카카오 「OS 별 기본 시스템 서체」, 애플 「Prefer the system font」. 구글은 Google Sans Medium 을 적지만
  *   우리 단추를 직접 그리는 길(custom button)을 허락한다
  */
@@ -25,6 +28,17 @@ export const SIGN_IN_BUTTON = {
   /** 글자 크기(px) · 굵기 */
   fontSize: 16,
   fontWeight: '600',
+  /**
+   * 글자 상자의 최소 너비(px) — 가장 긴 글자 「카카오 로그인」(16px 600 시스템 서체로 약 100)에 서체 차이의 여유를 더했다. 글자는 이 상자 안에서
+   * 왼쪽에 붙고, 아이콘+상자 덩어리가 가운데 선다 — 그래서 카카오 · 구글의 아이콘이 단추 안의 같은 x 에 선다(ADR 0228 추기 2026-11-06).
+   * 더 긴 글자(「구글로 이동하는 중…」)는 상자를 넓힌다 — 줄을 바꾸지 않는다
+   */
+  labelMinWidth: 104,
+  /**
+   * 단추 너비의 천장(px) — 안전 한계다. 웹 `/auth` 는 글줄(데스크톱 352 · 390 모바일 310)이 이보다 좁아 닿지 않고, 앱은 안드로이드 태블릿처럼
+   * 넓은 화면에서만 닿는다. 1280 에서 잰 사례 왓챠피디아 370 · 숨고 338 · 29CM 335(운영자 결정 2026-11-06, ADR 0228 추기)
+   */
+  maxWidth: 360,
 } as const;
 
 /** 웹이 단추 글자에 거는 서체 — 기기의 시스템 서체. 앱은 `fontFamily` 를 안 주면 같다 */
@@ -34,10 +48,13 @@ export const SIGN_IN_FONT_STACK = 'system-ui, -apple-system, "Apple SD Gothic Ne
  * 구글 — 「Sign in with Google」 브랜딩 안내의 **밝은 판**(<https://developers.google.com/identity/branding-guidelines>, 확인 2026-11-05):
  * 「Fill #FFFFFF, 1px inside stroke #747775, font #1F1F1F」. G 는 「can't change the size or color」 · 「must … appear on a white background」 —
  * 그래서 흰 바탕이고, G 그림은 안내의 내려받기 묶음(`signin-assets.zip`)에서 잘라 왔다(`./google-g.png`).
+ *
+ * **선만 안내와 다르다 — `#DDDDDD`**(운영자 결정 2026-11-06, ADR 0228 추기): 바탕은 흰색을 지킨다 — G 의 속이 흰색이라 회색 바탕은
+ * 말이 안 된다(운영자). 선은 안내의 `#747775` 대신 한국 서비스의 흰 로그인 단추가 쓰는 옅은 선 — 29CM `#DDDDDD`(무신사 `#E0E0E0`).
  */
 export const GOOGLE_BUTTON_COLOR = {
   container: '#FFFFFF',
-  border: '#747775',
+  border: '#DDDDDD',
   label: '#1F1F1F',
 } as const;
 

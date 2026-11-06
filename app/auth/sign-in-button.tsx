@@ -13,7 +13,7 @@ import { FailureLine } from '../ui/failure-line';
 /**
  * 구글 로그인 — 여기서 브라우저가 통째로 이동한다.
  *
- * 모양은 구글 브랜딩 안내의 밝은 판(흰 바탕 · 1px 회색 안쪽 선 · 공식 G)이고 틀은 카카오 · 애플 단추와 한 벌이다
+ * 모양은 구글 브랜딩 안내의 밝은 판(흰 바탕 · 공식 G)에 1px 옅은 안쪽 선(`#DDDDDD`, 운영자 결정 2026-11-06)이고 틀은 카카오 · 애플 단추와 한 벌이다
  * (`src/lib/account/sign-in-buttons.ts`, ADR 0228). 우리 주 단추(검정 알약)를 쓰지 않는다.
  *
  * 돌아오는 자리는 `redirectTo` 에 적은 `/auth/callback` 이고, 그 주소는 구글 콘솔에도
@@ -44,12 +44,12 @@ export function SignInButton({ returnTo = '/me' }: { returnTo?: string }) {
   };
 
   return (
-    <div className="flex flex-col items-stretch gap-2 sm:items-start">
+    <div className="flex flex-col items-stretch gap-2">
       <button
         type="button"
         onClick={signIn}
         disabled={going}
-        className="inline-flex w-full items-center justify-center px-5 active:scale-[0.97] disabled:opacity-55 sm:w-auto"
+        className="inline-flex w-full items-center justify-center px-5 active:scale-[0.97] disabled:opacity-55"
         style={{
           minHeight: SIGN_IN_BUTTON.height,
           borderRadius: SIGN_IN_BUTTON.radius,
@@ -64,7 +64,10 @@ export function SignInButton({ returnTo = '/me' }: { returnTo?: string }) {
         }}
       >
         <Image src={googleG} alt="" width={SIGN_IN_BUTTON.icon} height={SIGN_IN_BUTTON.icon} unoptimized className="shrink-0" />
-        {going ? GOOGLE_SIGN_IN_GOING : GOOGLE_SIGN_IN}
+        {/* 글자 상자는 가장 긴 글자만큼 넓고 왼쪽에 붙는다 — 카카오 단추와 아이콘이 한 세로줄에 선다(ADR 0228 추기 2026-11-06) */}
+        <span className="whitespace-nowrap text-left" style={{ minWidth: SIGN_IN_BUTTON.labelMinWidth }}>
+          {going ? GOOGLE_SIGN_IN_GOING : GOOGLE_SIGN_IN}
+        </span>
       </button>
       {failure !== null && (
         <FailureLine>로그인을 시작하지 못했어요. {failure}</FailureLine>

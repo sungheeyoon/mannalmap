@@ -33,7 +33,9 @@ export function KakaoSignInButton({ onPress, busy, label = KAKAO_SIGN_IN }: { on
       >
         <Path fill={KAKAO_BUTTON_COLOR.symbol} d={KAKAO_SYMBOL.path} />
       </Svg>
-      <Text style={styles.label}>{label}</Text>
+      <Text style={styles.label} numberOfLines={1}>
+        {label}
+      </Text>
     </Pressable>
   );
 }
@@ -49,8 +51,17 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: SIGN_IN_BUTTON.gap,
     alignSelf: 'stretch',
+    /* 넓은 화면(태블릿)에서도 360 에서 멈춘다 — 웹과 같은 천장(ADR 0228 추기 2026-11-06) */
+    maxWidth: SIGN_IN_BUTTON.maxWidth,
   },
-  label: { fontWeight: SIGN_IN_BUTTON.fontWeight, fontSize: SIGN_IN_BUTTON.fontSize, color: KAKAO_BUTTON_COLOR.label },
+  /* 글자 상자는 가장 긴 글자만큼 넓고 왼쪽에 붙는다 — 구글 · 카카오의 아이콘이 한 세로줄에 선다(ADR 0228 추기 2026-11-06) */
+  label: {
+    fontWeight: SIGN_IN_BUTTON.fontWeight,
+    fontSize: SIGN_IN_BUTTON.fontSize,
+    color: KAKAO_BUTTON_COLOR.label,
+    minWidth: SIGN_IN_BUTTON.labelMinWidth,
+    textAlign: 'left',
+  },
   busy: { opacity: BUTTON_OFF_OPACITY },
   pressed: { transform: [{ scale: BUTTON_PRESSED_SCALE }] },
 });
