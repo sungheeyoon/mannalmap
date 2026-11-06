@@ -2,6 +2,7 @@ import { Platform } from 'react-native';
 import type { Purchase } from 'expo-iap';
 
 import { STORE_PRODUCTS, type StorePurchaseAnswer, type StorePurchaseOpen } from '@reading/store-products';
+import { creditsGrantedNow, storeReceiptDecision } from '@reading/store-purchase';
 
 import { supabase } from '@/auth/client';
 import { door, type DoorAnswer } from '@/reading/api';
@@ -86,10 +87,11 @@ export async function openPurchase(productId: string): Promise<'opened' | 'faile
   }
 }
 
-const tokenOf = (purchase: Purchase): string | null =>
-  typeof purchase.purchaseToken === 'string' && purchase.purchaseToken.length > 0 ? purchase.purchaseToken : null;
-
-/** 결제창의 결과를 듣는다 — 결제 완료면 서버에 보내고 그 답을, 취소 · 실패면 그 갈래를 넘긴다. @returns 듣기를 끄는 함수 */
+/**
+ * 결제창의 결과를 듣는다 — 결제 완료면 서버에 보내고 그 답을, 취소 · 실패면 그 갈래를 넘긴다. 보낼까는 다시 보내는 손과 같은 판정
+ * (`storeReceiptDecision`)이고, 끝난 결제인데 보낼 것이 없으면(토큰 없음 · 우리 상품 아님) 실패로 넘긴다 — 단추가 「결제 중」에 남지 않게.
+ * @returns 듣기를 끄는 함수
+ */
 export function listenStorePurchases(on: {
   answered: (answer: DoorAnswer<StorePurchaseAnswer>) => void;
   pending: () => void;
@@ -111,11 +113,12 @@ export function listenStorePurchases(on: {
     const { purchaseUpdatedListener, purchaseErrorListener } = module;
     if (stopped) return;
     const updated = purchaseUpdatedListener((purchase: Purchase) => {
-      const token = tokenOf(purchase);
-      if (purchase.purchaseState === 'pending') return on.pending();
-      if (token === null || purchase.purchaseState !== 'purchased') return;
+      const decided = storeReceiptDecision(purchase);
+      if (decided.kind === 'pending') return on.pending();
+      if (decided.kind === 'unusable') return on.failed();
+      if (decided.kind !== 'send') return;
       /* `sendPurchase` 는 던지지 않는다 — 못 닿으면 `unavailable` 값이다(`askDoor`) */
-      void (async () => on.answered(await sendPurchase(purchase.productId, token)))();
+      void (async () => on.answered(await sendPurchase(decided.productId, decided.purchaseToken)))();
     });
     const errored = purchaseErrorListener((error) => {
       if (error.code === 'user-cancelled') on.cancelled();
@@ -148,11 +151,9 @@ export async function resendUnfinishedPurchases(): Promise<number> {
   }
   let credits = 0;
   for (const purchase of purchases) {
-    const token = tokenOf(purchase);
-    if (token === null || purchase.purchaseState !== 'purchased') continue;
-    if (!STORE_PRODUCTS.some((product) => product.productId === purchase.productId)) continue;
-    const answer = await sendPurchase(purchase.productId, token);
-    if (answer.ok && answer.value.outcome === 'granted' && !answer.value.replayed) credits += answer.value.credits;
+    const decided = storeReceiptDecision(purchase);
+    if (decided.kind !== 'send') continue;
+    credits += creditsGrantedNow(await sendPurchase(decided.productId, decided.purchaseToken));
   }
   return credits;
 }
