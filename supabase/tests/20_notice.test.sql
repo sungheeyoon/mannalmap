@@ -9,7 +9,7 @@
 -- 3. **거절해도 서비스는 그대로다.** 닫히는 것은 설문 하나뿐이다.
 -- 4. **철회가 곧 지움이다.** 안내 화면에서 거절한 경우에도 같다.
 begin;
-select plan(40);
+select plan(37);
 
 create or replace function pg_temp.acting(uid uuid)
 returns void language plpgsql as $$
@@ -276,20 +276,13 @@ select is(
   '일정을 옮겨도 앞의 약속이 남는다');
 set local role authenticated;
 
--- ── 종료일이 끝낸다 ────────────────────────────────────────────────────────
+-- ── 종료일은 아무것도 끝내지 않는다 (ADR 0234, `20270114095000`) ─────────────
 
 /**
- * **적혀만 있던 날짜를 집행한다.**
- *
- * 일정은 안내에 날짜를 찍고 확인을 다시 받는 데만 쓰였다. 어느 접근 판정에도 안 걸려
- * 있어서 다음 날에도 그대로 돌았다 — 「10월 31일에 끝납니다」라고 적어 두고 안 끝나면
- * 그 문장은 지키는 것이 없다.
+ * **일정 줄의 종료일은 서비스를 끝내지 않는다.** 공개 고지가 고정 운영 기간을 지웠다(`notice-v17`, ADR 0225 추기 2026-11-06).
+ * 전에는 그 날이 지나면 `beta_is_over()` 가 참이 되어 쓰기 문이 모두 닫혔다 — 이제 그 함수는 늘 거짓이고, 서비스를 끝내는 날은
+ * 그때의 결정이 이 함수와 앱의 `SERVICE_ENDED_ON` 을 함께 고친다.
  */
-/*
-  **경계는 오늘에서 센다 — 이틀씩 비킨다.** 날짜를 적어 두면 그날이 지나는 순간 「전에는
-  안 끝났다」가 거짓이 된다. 판정이 UTC 날짜로 세든 서울 날짜로 세든 둘은 하루까지만
-  어긋나므로, 모레와 그저께는 어느 쪽으로 재도 같은 답을 낸다.
-*/
 reset role;
 insert into public.beta_schedule (ends_on, note, operator_name, operator_officer, operator_contact)
 values (current_date + 2, '모레 끝난다', '운영자', '담당', 'ops@example.com');
@@ -303,48 +296,22 @@ set local role authenticated;
 select pg_temp.acting((select kim from fresh));
 
 reset role;  -- 밖의 역할에는 닫힌 함수다(G-23 ⑪) — 판정만 잰다
-select is(public.beta_is_over(), true, '종료일이 지나면 끝난 것이다');
+select is(public.beta_is_over(), false, '종료일이 지나도 끝나지 않는다 — 일정 줄은 서비스를 끝내지 않는다');
 set local role authenticated;
 
-/** **한 자리에 걸어 모든 문이 닫힌다** — 문마다 날짜를 적으면 하나는 안 고쳐진다 */
-select is(public.is_active_account(), false, '끝나면 계정이 활성이 아니다');
+/** 한 자리에 걸린 문들이 그대로 열려 있다 — 계정의 활성은 상태만 본다 */
+select is(public.is_active_account(), true, '종료일이 지나도 계정이 활성이다');
 
-select throws_like(
-  $$select * from public.start_reading_run('self', 'over-0001')$$,
-  '%끝났습니다%',
-  '끝난 뒤에는 풀이를 만들 수 없다 — 돈이 나가는 문이라 따로 건다');
-
-select throws_like(
-  $$select public.complete_signup(null, null, 'notice-v3',
-      (select s.schedule_id from public.current_beta_schedule() s), false, false)$$,
-  '%끝났어요%',
-  '끝난 뒤에는 가입도 확인도 안 받는다');
-
-/**
- * **끝난 서비스가 새 자료를 받으면 안 된다.**
- *
- * 설문도 자격을 `reading_scope_for` 에 물었는데 그 함수는 `status` 열만 본다 —
- * 풀이 생성에서 이미 만난 자리이고, 같은 이유로 여기도 종료 뒤에 답이 들어갔다.
- */
-select throws_like(
-  format($$select public.leave_reading_feedback(%L::uuid, 4::smallint, 4::smallint, 'right')$$,
-    gen_random_uuid()),
-  '%',
-  '끝난 뒤에는 설문도 안 받는다');
-
-/**
- * **`status` 는 안 건드린다.** 그 값은 「이 사람을 중지했다」는 운영 판단이고, 베타가
- * 끝난 것은 그 사람에 대한 판단이 아니다 — 한 열에 적으면 종료 뒤에 중지를 풀 수 없다.
- */
+/** **`status` 는 안 건드린다.** 종료일이 계정 상태를 바꾸지 않는다 */
 reset role;
 select is(
   (select a.status from public.app_user a where a.id = (select kim from fresh)),
   'active',
-  '끝나도 계정 상태 자체는 그대로다');
+  '계정 상태 자체는 그대로다');
 set local role authenticated;
 select pg_temp.acting((select kim from fresh));
 
-/** 미루면 다시 열린다 */
+/** 미뤄도 같다 */
 reset role;
 insert into public.beta_schedule (ends_on, note, operator_name, operator_officer, operator_contact)
 values ('2099-12-31', '연장', '운영자', '담당', 'ops@example.com');
@@ -352,7 +319,7 @@ set local role authenticated;
 select pg_temp.acting((select kim from fresh));
 
 reset role;  -- 밖의 역할에는 닫힌 함수다(G-23 ⑪) — 판정만 잰다
-select is(public.beta_is_over(), false, '날짜를 미루면 다시 열린다');
+select is(public.beta_is_over(), false, '날짜를 미뤄도 열려 있다');
 set local role authenticated;
 
 /** 공백은 「있다」가 아니다 — 빈 문자열이 든 안내는 화면에 아무것도 안 적히는 자리를 만든다 */

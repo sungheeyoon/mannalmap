@@ -247,7 +247,7 @@ export const CREDITS_REQUIRED_LABEL = '필요 풀이권';
 /**
  * 결제 화면의 동의 체크 · 결제 단추 · 유의사항 — 리디 꼴(운영자 승인 2026-10-12, ADR 0175 · 대장 credits-03 · credits-09). 웹은 결제 단추를
  * 걷었고(ADR 0212) 앱의 Google Play 결제 화면이 같은 글자를 쓴다(ADR 0230). 유의사항 둘째 줄은 사업자 이메일로 짓는 `checkoutRefundLine`
- * (`src/lib/brand/refund.ts`)이다. 다섯째 줄(유효기간 5년)은 산 몫이 무기한이 되어(ADR 0212) #938 이 고칠 때까지 앱에 싣지 않는다.
+ * (`src/lib/brand/refund.ts`)이다. 옛 다섯째 줄(유효기간 5년)은 산 몫이 무기한이 되어(ADR 0212) 지웠다 — 약관 · 환불정책도 「유효기간이 없다」다(ADR 0234).
  */
 export const CHECKOUT_AGREE_LABEL = '상품, 가격, 할인 정보, 유의 사항 등을 확인하였으며 구매에 동의합니다. (필수)';
 export const CHECKOUT_AGREE_MISSING = '결제 전 안내를 확인해 주세요.';

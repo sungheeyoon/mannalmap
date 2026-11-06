@@ -1,4 +1,4 @@
-import { NOTICE_ACK_LABEL, NOTICE_AGAIN_NOTE, asKoreanDay } from './notice';
+import { NOTICE_ACK_LABEL, NOTICE_AGAIN_NOTE } from './notice';
 
 /**
  * **가입 폼의 판정과 글자** — 웹(`app/signup`)과 앱(`mobile/src/app/signup.tsx`)이 함께 쓴다.
@@ -25,18 +25,29 @@ export function refusedField(code: string | undefined, message: string): SignupF
   return null;
 }
 
+/**
+ * **가입은 만 14세 이상이다 — 필수 확인 한 칸**(ADR 0231, `docs/legal/under-14-draft.md` 「실을 줄」). 나이를 재지 않고 스스로 밝히는
+ * 확인이다 — 헬로우봇 가입 화면 「[필수] 만 14세 이상입니다.」의 꼴을 우리 확인 칸(`NOTICE_ACK_LABEL`)의 꼴에 맞췄다. 기록으로 남기지
+ * 않는다. 처음 가입하는 사람도, 바뀐 안내를 다시 확인하는 사람도 지난다.
+ */
+export const SIGNUP_AGE_LABEL = '만 14세 이상입니다';
+
 /** 눌렀을 때 안내 확인을 안 했으면 — 무엇에 표시하는지는 그 칸의 글자를 그대로 부른다 */
 const ACK_MISSING = `‘${NOTICE_ACK_LABEL}’에 표시해 주세요.`;
+const AGE_MISSING = `‘${SIGNUP_AGE_LABEL}’에 표시해 주세요.`;
 
-export type SignupGap = { field: SignupField | 'ack'; message: string };
+export type SignupGap = { field: SignupField | 'age' | 'ack'; message: string };
 
 /** 눌렀을 때 **위에서부터 처음 걸린 칸 하나** — 칸을 고치면 말도 다음 칸으로 넘어간다 */
 export function signupGap(form: {
   /** `missingNickname` 의 답 — 이름을 안 묻는 사람은 `null` */
   nicknameGap: string | null;
+  /** 만 14세 이상이라고 표시했나(`SIGNUP_AGE_LABEL`) */
+  fourteen: boolean;
   acknowledged: boolean;
 }): SignupGap | null {
   if (form.nicknameGap !== null) return { field: 'nickname', message: form.nicknameGap };
+  if (!form.fourteen) return { field: 'age', message: AGE_MISSING };
   if (!form.acknowledged) return { field: 'ack', message: ACK_MISSING };
   return null;
 }
@@ -91,14 +102,11 @@ export const SIGNUP_LABEL = {
 } as const;
 
 /**
- * 고지 세 줄의 앞뒤 — 가운데 줄은 날짜만 굵게 세우므로 조각으로 낸다. 첫 줄의 「로그인 이메일」은 구글 · 애플(iOS 앱) 둘 다다 —
+ * 고지 세 줄. 가운데 줄은 운영 기간 · 일괄 파기일을 말하던 자리다 — 고정 기간을 지우고(ADR 0225 추기 2026-11-06, `notice-v17`)
+ * 처리방침 「언제까지 두나요」의 일반 규칙(이용하는 동안 · 탈퇴 신청 뒤 3일)을 줄였다. 첫 줄의 「로그인 이메일」은 구글 · 애플(iOS 앱) 둘 다다 —
  * 「구글 이메일」이던 것을 애플 가입자에게도 맞게 고쳤다(G-134, ADR 0220). 처리방침의 신고 기록 절이 이미 쓰던 낱말이다. 카카오는 회원번호와
  * 이메일을 둘 다 받는다(`notice-v16`, ADR 0224 추기).
  */
 export const SIGNUP_NOTICE_USE = '로그인 정보(이메일, 카카오 회원번호)와 닉네임, 직접 저장한 사주 정보는 서비스 제공에 사용합니다.';
 export const SIGNUP_NOTICE_DISCOVERY = '내 사주를 저장하면 인연 찾기에 참여합니다. 참여는 설정에서 언제든 끌 수 있습니다.';
-export const signupNoticeDates = (endsOn: string, purgeBy: string) => ({
-  ends: asKoreanDay(endsOn),
-  purge: asKoreanDay(purgeBy),
-  parts: ['지금 정한 운영 기간은 ', '까지이며, 저장된 정보는 늦어도 ', '까지 삭제합니다.'] as const,
-});
+export const SIGNUP_NOTICE_KEEP = '저장된 정보는 탈퇴를 신청하시면 3일 안에 삭제합니다.';

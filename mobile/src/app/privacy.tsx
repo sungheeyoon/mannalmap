@@ -2,7 +2,7 @@ import { useEffect, useRef, useState, type ComponentRef } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { NOTICE_NOT_READY, noticeFor, OPTIONAL_CONSENTS, OPTIONAL_CONSENT_NOTE } from '@consent/notice';
-import { PRIVACY_INTRO, PRIVACY_OPTIONAL_TITLE, PRIVACY_RIGHTS_LINES, PRIVACY_RIGHTS_TITLE, privacyPurgeNote } from '@consent/privacy-page';
+import { PRIVACY_INTRO, PRIVACY_OPTIONAL_TITLE, PRIVACY_RIGHTS_LINES, PRIVACY_RIGHTS_TITLE, PRIVACY_CHANGE_NOTE } from '@consent/privacy-page';
 
 import { readSchedule, type ScheduleRead } from '@/auth/schedule';
 import { Clause, Dot, FinePrint, InfoLine, InfoScreen, LegalHead } from '@/info/frame';
@@ -37,7 +37,7 @@ export default function PrivacyScreen() {
   };
 
   const ready = schedule?.ok ? schedule.value : null;
-  const sections = ready === null ? [] : noticeFor(ready.dates, ready.operator);
+  const sections = ready === null ? [] : noticeFor(ready.operator);
   /* 목차와 조항 제목이 같은 글자를 쓴다 */
   const titles = [...sections.map((section) => section.title), PRIVACY_OPTIONAL_TITLE, PRIVACY_RIGHTS_TITLE];
   const anchor = (index: number) => ({
@@ -108,7 +108,7 @@ export default function PrivacyScreen() {
             </View>
           </Clause>
 
-          <FinePrint>{privacyPurgeNote(ready.dates.purgeWithinDays)}</FinePrint>
+          <FinePrint>{PRIVACY_CHANGE_NOTE}</FinePrint>
         </>
       )}
 
