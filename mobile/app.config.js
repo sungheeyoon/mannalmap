@@ -5,7 +5,7 @@
  * 빌드에는 넣지 않는다. 키는 EAS 환경값 `EXPO_PUBLIC_KAKAO_NATIVE_APP_KEY` 이고, 바꾸면 새 빌드가 든다(OTA 로는 안 바뀐다).
  *
  * 출시 빌드는 웹의 주소(`EXPO_PUBLIC_SITE_URL`, 앱에서 읽는 자리는 `src/site.ts` 하나)가 없으면 여기서 선다 — 없이 나가면 풀이가
- * 「닿지 못했다」로 서고 약관이 빈다. `EAS_BUILD_PROFILE` 은 EAS 의 빌드 기계에만 서므로 로컬 개발 · 가짜 서버로 재기는 안 막는다.
+ * 「닿지 못했다」로 서고 약관이 빈다. `EAS_BUILD_PROFILE` 은 EAS 의 빌드 기계에만 서므로 로컬 개발 · 가짜 서버로 재기는 안 막는다(ADR 0233).
  */
 module.exports = ({ config }) => {
   const refusal = siteUrlRefusal(process.env);
