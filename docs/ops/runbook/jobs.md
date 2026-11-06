@@ -108,7 +108,7 @@ Discord — Vault `ops_alert_url` 과 같은 채널)을 더한다. 채널의 웹
 
 #### 붙이는 차례 — UptimeRobot · Healthchecks.io
 
-1. **서비스 계정**을 만들고 MFA 를 켠다(#304 의 MFA 줄에 이 서비스를 더한다). 알림 받을 곳에 운영자 이메일을 넣고, 채널을 쓰면 그 연동을 더한다.
+1. **서비스 계정**을 만들고 MFA 를 켠다(#770 B 의 「MFA 확인」 줄에 이 서비스를 더한다). 알림 받을 곳에 운영자 이메일을 넣고, 채널을 쓰면 그 연동을 더한다.
    UptimeRobot Free 는 **가입한 메일 하나로만** 알린다 — 다른 메일을 더하는 것은 유료 판의 notify-only seat 다(공식 도움말 「Personal
    Notification Channels」, 2026-10-24). 알림을 개인 메일에서도 보려면 그 메일함을 휴대폰에 더하거나 메일 전달 필터를 건다.
    UptimeRobot 의 MFA 는 대시보드 왼쪽 아래 「…」 → Security → Set up 2FA 다(2026-10-24 화면).
@@ -129,7 +129,7 @@ Discord — Vault `ops_alert_url` 과 같은 채널)을 더한다. 채널의 웹
    주소를 바꿀 때는 `vault.update_secret((select id from vault.secrets where name = 'ops_heartbeat_url'), '<새 주소>')`.
    새면 `docs/ops/runbook/secret-leak.md` 「비밀이 새면」 표의 Vault `ops_heartbeat_url` 줄대로 바꾼다.
 
-**붙인 뒤 확인** — 값은 #304 의 그 줄 댓글에 날짜와 함께.
+**붙인 뒤 확인** — 값은 #770 댓글에 날짜와 함께.
 
 - `curl -s -o /dev/null -w '%{http_code}\n' <운영 주소>/api/health` 가 200, 서비스 화면의 두 감시가 「up」
 - 2분 뒤 `select status_code, created from net._http_response order by created desc limit 3;` 에 200 이 있고, 서비스 화면의 heartbeat 가 「up」
