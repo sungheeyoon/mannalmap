@@ -16,6 +16,7 @@ import { dirname, join } from 'node:path';
 import { createClient } from '@supabase/supabase-js';
 import { createServerClient } from '@supabase/ssr';
 
+import { checkEndsOn } from './beta-dates.mjs';
 import { keyedRpc } from './checks.mjs';
 import { clearMachineRunsFromToday, chartArgs } from './notice.mjs';
 import { worktreeStack } from '../src/lib/local-env.ts';
@@ -67,20 +68,20 @@ export const sql = (statement) =>
 
 
 /**
- * 로컬 스택의 종료일 — **날짜를 적는 자리는 여기 하나다.**
+ * 로컬 스택의 종료일 — **오늘에서 센다**(`checkEndsOn`, 서울 날짜로 다다음 달 1일).
  *
  * 화면도(`/privacy` · `/signup` · `/closed`), 끝난 뒤를 찍으려고 시계를 미는 자리도
- * 전부 표에서 읽는다(`current_beta_schedule`). 이 상수가 하는 일은 **빈 로컬 DB 에
- * 그 한 줄을 넣는 것**뿐이고, 넣고 나면 아무도 이 값을 다시 안 본다 — 두 번째로 적는
- * 자리가 생기면 그 둘은 갈리고, 갈린 날 화면 하나만 딴 날을 찍는다.
+ * 전부 표에서 읽는다(`current_beta_schedule`). 이 값이 하는 일은 **빈 로컬 DB 에
+ * 그 한 줄을 넣는 것**뿐이고, 넣고 나면 아무도 이 값을 다시 안 본다.
  *
- * **운영이 약속한 날과 같게 둔다.** 프로덕션의 진짜 값은 코드가 아니라 `beta_schedule`
- * 표에 있고(배포 없이 옮기려고 그렇게 뒀다), 옮겼으면 여기도 따라 고친다 —
- * `docs/ops/runbook/signup.md` 의 「테스트 시작하기」.
+ * 운영의 진짜 값은 운영 DB 의 `beta_schedule` 표에 있고 로컬은 그 표를 못 읽는다 — 그래서
+ * 흐름 검사 · 로그인 e2e 와 같은 규칙(`scripts/beta-dates.mjs`)으로 오늘에서 4주 넘게 열린 날을
+ * 짓는다. 날짜를 적어 두면 그날이 지나는 순간 가입이 닫힌다. 그림의 「N월 N일 종료」는 운영의 날과 다를 수 있다 — 문구의 모양을
+ * 보는 그림이지 날짜를 보는 그림이 아니다.
  *
  * 파기 기한은 `purge_within_days` 기본값(30일)에서 DB 가 짓는다.
  */
-const BETA_ENDS_ON = '2026-10-31';
+const BETA_ENDS_ON = checkEndsOn();
 
 /**
  * **훑기가 만든 시도를 오늘에서 비켜 둔다.**
@@ -124,6 +125,19 @@ function openTheDoor() {
                <> '${BETA_ENDS_ON}'
           or coalesce((select s.operator_contact from public.current_beta_schedule() s), '')
                <> first.operator_contact`);
+}
+
+/**
+ * **훑기가 쓰는 만큼 풀이권을 채운다.**
+ *
+ * 새 회원의 무료 몫은 1장이다(ADR 0227). `PLAN`(`ui-shots.mjs`)의 「쓰는 중」 한 사람은 씨앗의 풀이 둘에
+ * 「받는 중」 · 「만드는 중」 화면의 시도까지 네 장을 쓰므로, 1장으로는 둘째 풀이부터 「풀이권이 없어요」로 선다.
+ * **한도는 낮추지 않는다** — 그 벽이 서는지도 볼 값이다. 이 계정에만 베타 회원의 지킨 몫(`beta_free_credits()`, 5)을
+ * 적는다. 로그인 e2e 가 같은 일을 한다(`e2e/session.ts`).
+ */
+function fillTheCredits(email) {
+  sql(`update public.app_user set kept_free_credits = public.beta_free_credits()
+         where id = (select id from auth.users where email = '${email}')`);
 }
 
 const BIRTH = {
@@ -176,6 +190,7 @@ export async function seed(local, wanted, tag) {
       p_contact: false,
     });
     if (passed.error) throw new Error(`가입을 못 끝냈습니다 — ${passed.error.message}`);
+    fillTheCredits(email);
   }
 
   let selfPersonId = null;
@@ -387,4 +402,17 @@ export async function cookiesFor(local, email, password) {
   if (error) throw new Error(`${email} 로그인 실패 — ${error.message}`);
 
   return [...jar].map(([name, value]) => ({ name, value: encodeURIComponent(value) }));
+}
+
+/**
+ * **혼자 돌리면 문만 연다** — `node scripts/ui-seed.mjs`.
+ *
+ * 사람을 세우는 것은 `ui-shots` · `ui-walk` 가 상태마다 한다. 여기서는 일정 줄과 인연 스위치만 세우고 무엇을 넣었는지
+ * 찍는다 — 새 워크트리에서 날짜를 손대지 않고 열렸는지 먼저 보는 자리다.
+ */
+if (process.argv[1] === fileURLToPath(import.meta.url)) {
+  localStack();
+  openTheDoor();
+  const day = sql('select s.ends_on from public.current_beta_schedule() s');
+  console.log(`로컬 베타 일정: ${day} 까지 열림 · 인연 스위치 열림`);
 }

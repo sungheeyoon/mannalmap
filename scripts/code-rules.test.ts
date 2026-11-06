@@ -1110,14 +1110,18 @@ describe('간극 대장 (docs/product/gaps.md, ADR 0089)', () => {
     .map((line) => line.split('|').map((cell) => cell.trim()))
     .filter((cells) => cells.length >= 6 && /^G-\d{2,3}$/.test(cells[1]));
 
-  it('줄마다 번호가 하나씩이고 상태는 다섯 중 하나다', () => {
+  it('줄마다 상태는 다섯 중 하나다', () => {
     // 파싱이 0 으로 떨어지는 것을 막는 문턱이다 — 줄이 닫혀 줄어드는 것은 정상이다. 수를 걸면 닫을 때마다
     // 문턱을 내려야 한다(2026-09-23 에 21 → 16 → 12줄, § 17 → 10)
     expect(rows.length).toBeGreaterThan(0);
-    const ids = rows.map((cells) => cells[1]);
-    expect(new Set(ids).size).toBe(ids.length);
     const STATES = new Set(['정했다', '미정', '어긋남', '보류', '결정 대기']);
     expect(rows.filter((cells) => !STATES.has(cells[4])).map((cells) => `${cells[1]} :: ${cells[4]}`)).toEqual([]);
+  });
+
+  it('G 번호는 한 줄에만 있다 — 나란히 쓴 둘이 같은 번호를 잡으면 겹친 번호를 든다', () => {
+    const seen = new Map<string, number>();
+    for (const cells of rows) seen.set(cells[1], (seen.get(cells[1]) ?? 0) + 1);
+    expect([...seen].filter(([, count]) => count > 1).map(([id, count]) => `${id} × ${count}`)).toEqual([]);
   });
 
   it('출처의 § 는 PRD 본체에 실제로 있는 절이다 — 절을 옮기면 대장도 옮긴다', () => {
