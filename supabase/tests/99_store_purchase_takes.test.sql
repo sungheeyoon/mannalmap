@@ -8,8 +8,9 @@
 --   5. **떠난 사람의 결제 기록** — 돈 없이 걷힌 회차가 5년 결제 기록의 묶음 칸에 남는다
 --   6. **프로모션 코드 구매는 0원** — 주문 · 묶음은 서고 금액은 0, 무효면 장수만 걷고 돈의 환불 줄은 없다
 --   7. **시험 · 프로모션 구매는 매출이 아니다** — 운영 화면의 오늘 수가 그 주문을 세지 않는다
+--   8. **못 걷은 몫이 남아 있으면 다른 묶음에서 풀린 회차도 걷는다** — 무효 때 돌던 풀이가 잡은 다른 묶음의 한 장이 풀리면 걷힌다
 begin;
-select plan(30);
+select plan(36);
 
 /** 무료 몫을 1 로 — 무료를 안 건드리는지 본다(트랜잭션이 되돌린다) */
 create or replace function public.reading_credit_limit()
@@ -52,6 +53,7 @@ select
   tests.signup('take-floor@example.com') as floorer,
   tests.signup('take-chain@example.com') as chainer,
   tests.signup('take-promo@example.com') as promoter,
+  tests.signup('take-released@example.com') as releaser,
   tests.signup('keep-op@example.com') as op;
 grant select on folks to authenticated, service_role;
 
@@ -228,6 +230,54 @@ select is(
    from public.operator_today_figures() t, before_test b where t.period = 'today'),
   '0:0', '시험 구매 · 프로모션 구매는 주문 · 매출에 안 든다');
 reset role;
+
+
+-- ── 8. 못 걷은 몫이 남아 있으면 다른 묶음에서 풀린 회차도 걷는다 ───────────────
+
+set local role authenticated;
+select pg_temp.acting((select releaser from folks));
+create temporary table releaser_me as
+select tests.create_self_person(
+  '나', 'solar', '1990-05-15', '1990-05-15', '14:30', 'female', '서울', 'jo', 'localMean',
+  tests.chart(), 'chart-for-tests') as person;
+reset role;
+
+-- 무료 1장은 이미 썼다 — 다음 쓰임은 산 묶음에서 든다
+insert into public.reading_credit_use (user_id, share, source, state, confirmed_at)
+values ((select releaser from folks), 'free', 'run', 'confirmed', now());
+
+set local role service_role;
+select pg_temp.grant((select releaser from folks), 'reading_credits_1', 'tok-rq', 'GPA.6000-0000-0000-000RQ');
+reset role;
+insert into public.reading_run (user_id, kind, person_a, idempotency_key)
+values ((select releaser from folks), 'person', (select person from releaser_me), 'take-run-running');
+select is(
+  (select u.bundle_id = (pg_temp.bundle_of('tok-rq')).id and u.state = 'reserved' from public.reading_credit_use u
+   join public.reading_run r on r.id = u.run_id where r.idempotency_key = 'take-run-running'),
+  true, '도는 풀이가 Q 의 한 장을 잡았다');
+
+set local role service_role;
+select pg_temp.grant((select releaser from folks), 'reading_credits_3', 'tok-rp', 'GPA.6000-0000-0000-000RP');
+reset role;
+select pg_temp.use_up('tok-rp', 3);
+
+set local role service_role;
+select is(pg_temp.void('tok-rp', 'GPA.6000-0000-0000-000RP'), 'voided:0:3', 'P 를 다 썼고 Q 는 도는 중이라 지금은 0장 — 3장을 못 걷었다');
+reset role;
+
+update public.reading_run set status = 'failed', failure_code = 'model_error', finished_at = now()
+where idempotency_key = 'take-run-running';
+
+select is((pg_temp.bundle_of('tok-rq')).refunded_credits, 1, 'Q 에서 풀린 한 장을 걷었다');
+select is(
+  (select v.credits_revoked || ':' || v.credits_kept from public.store_purchase_void v
+   join public.store_purchase s on s.id = v.purchase_id where s.purchase_token = 'tok-rp'),
+  '1:2', '이력의 걷은 장수가 옮겨 가고 못 걷은 몫이 준다');
+select is(
+  (select t.credits from public.store_purchase_void_take t where t.bundle_id = (pg_temp.bundle_of('tok-rq')).id), 1,
+  '다른 묶음에서 걷은 것으로 남는다 — 운영자 환불의 금액 셈이 뺀다');
+select is(public.reading_credit_limit_for((select releaser from folks)), 1 + 3,
+  '한도는 무료 1 과 쓴 P 의 3 — 잔액이 음수가 아니다');
 
 select * from finish();
 rollback;

@@ -14,7 +14,10 @@
 
 -- ── 1. 구매 제한은 탈퇴 뒤에도 같은 로그인에 1년 ──────────────────────────────
 
-/** 얼마나 두나 — 처분일부터. 이용 정지의 제재 기록(`retention.sanction_period`)과 같다 */
+/**
+ * 얼마나 두나 — 처분일부터 1년. 이용 정지의 제재 기록(`retention.sanction_period`)과 같은 값이고, 카카오 처리방침의 「서비스 부정이용 기록
+ * 탈퇴일부터 최대 1년」과 같다(사례 범위 1 ~ 5년, 조율자 결정 2026-11-06 — `docs/product/gaps/records/g-142.md`). 기간을 바꾸면 이 값 하나다
+ */
 create function retention.store_restriction_period()
 returns interval
 language sql

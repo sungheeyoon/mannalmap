@@ -22,6 +22,8 @@
 -- 5. **시험 · 프로모션 구매는 매출이 아니다.** 운영 화면의 오늘 · 이번 주 수(`operator_today_figures`)가 라이선스 테스터의 시험 구매
 --    (`store_purchase.is_test`)와 프로모션 구매의 주문과 환불을 뺀다.
 -- 6. **운영 셈에 「스토어 환불로 걷힘」 칸** — `operator_reading_refund_basis` 끝에 `taken_by_store` 를 더해 주문 화면이 따로 보인다.
+-- 7. **못 걷은 몫이 남아 있으면 어느 산 묶음에서 풀린 회차든 걷는다**(조율자 결정 2026-11-06, 운영자 위임) — 트리거
+--    `revoke_released_credit_of_voided_purchase` 를 그 결제의 묶음 밖으로 넓힌다. 근거는 `docs/product/gaps/records/g-141.md`.
 --
 -- 반환 모양은 그대로다 — 옛 앱 빌드는 아무것도 안 바꿔도 된다. 재는 자리는 `supabase/tests/99_store_purchase_takes.test.sql`.
 
@@ -742,3 +744,73 @@ begin
   order by s.ord;
 end;
 $$;
+
+-- ── 7. 못 걷은 몫이 남아 있으면 어느 산 묶음에서 풀린 회차든 걷는다 ──────────────
+
+/**
+ * 돌던 풀이가 풀리면 — 그 사람의 스토어 환불에 **못 걷은 몫**(`credits_kept > 0`)이 남아 있으면 풀린 그 한 장을 걷는다. 몸은 `20270113090000`
+ * 의 것에서 「그 결제의 묶음에서 풀린 것만」을 **계정의 어느 산 묶음에서 풀린 것이든**으로 넓혔다 — 결정 A(그 결제가 준 장수만큼 계정에 남은
+ * 산 풀이권에서)와 같은 뜻이다. 나중에 보유가 된 몫도 보유분이다(카카오페이지 「미사용 이용권과 보유한 캐시에서 공제」 · 리디 「보유 중인
+ * 사이버머니에서 차감」, 조율자 결정 2026-11-06 — 근거는 `docs/product/gaps/records/g-141.md`).
+ *
+ * 어느 무효에 매기나: 풀린 회차의 묶음이 그 무효의 묶음이면 그것, 아니면 못 걷은 몫이 남은 가장 이른 무효. 다른 묶음에서 걷으면
+ * `store_purchase_void_take` 에 더한다(운영자 환불의 금액 셈이 뺀다). 그 묶음의 남은 것이 진행 중인 확보가 잡은 것뿐이면 걷지 않는다 —
+ * 확보는 그 회차를 돌려주기로 한 것이다. 무료 · 예외 몫의 쓰임(`bundle_id` 없음)은 이 트리거에 들지 않는다.
+ */
+create or replace function public.revoke_released_credit_of_voided_purchase()
+returns trigger
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  v public.store_purchase_void;
+  b public.reading_bundle;
+  own_bundle uuid;
+begin
+  select x.* into b from public.reading_bundle x where x.id = new.bundle_id for update;
+  if b.id is null then
+    return null;
+  end if;
+
+  select v0.* into v
+  from public.store_purchase_void v0
+  join public.store_purchase s on s.id = v0.purchase_id
+  join public.reading_bundle vb on vb.order_id = s.order_id
+  where v0.user_id = b.user_id and v0.credits_kept > 0
+  order by (vb.id = b.id) desc, v0.recorded_at, v0.id
+  limit 1
+  for update of v0;
+
+  if v.id is null then
+    return null;
+  end if;
+
+  -- 남은 것이 진행 중인 확보가 잡은 것뿐이면 걷지 않는다
+  if b.credits - b.refunded_credits - public.reading_bundle_held(b.id) - (
+       select count(*)::integer from public.reading_credit_use u
+       where u.bundle_id = b.id and u.state <> 'released') <= 0 then
+    return null;
+  end if;
+
+  update public.reading_bundle set refunded_credits = refunded_credits + 1 where id = b.id;
+
+  update public.store_purchase_void
+  set credits_revoked = credits_revoked + 1, credits_kept = credits_kept - 1
+  where id = v.id;
+
+  select vb.id into own_bundle
+  from public.store_purchase s join public.reading_bundle vb on vb.order_id = s.order_id
+  where s.id = v.purchase_id;
+
+  if own_bundle is distinct from b.id then
+    insert into public.store_purchase_void_take (void_id, bundle_id, credits)
+    values (v.id, b.id, 1)
+    on conflict (void_id, bundle_id) do update set credits = public.store_purchase_void_take.credits + 1;
+  end if;
+
+  return null;
+end;
+$$;
+
+revoke execute on function public.revoke_released_credit_of_voided_purchase() from public, anon, authenticated, service_role;

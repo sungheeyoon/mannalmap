@@ -205,14 +205,14 @@ function Credits({
       </h2>
       <p className="text-xs text-muted">출처별은 장부 기준이라 합이 잔액과 다를 수 있습니다.</p>
       <dl className="flex max-w-xl flex-col divide-y divide-border">
-        <Source title="가입 무료" receivedLabel="받은" source={credits.free} />
-        <Source title="운영 지급" receivedLabel="받은" source={credits.granted} />
-        <Source title="유료 구매" receivedLabel="구매한" source={credits.bought} />
+        <Source title="가입 무료" receivedLabel="지급" source={credits.free} />
+        <Source title="운영 지급" receivedLabel="지급" source={credits.granted} />
+        <Source title="유료 구매" receivedLabel="구매" source={credits.bought} />
       </dl>
       <ul aria-label="그 밖의 수" className="flex flex-wrap gap-2 text-xs">
-        <Chip>예약 중 {credits.reserved}장</Chip>
+        <Chip>사용 중 {credits.reserved}장</Chip>
         <Chip>환불 확보 중 {credits.held}장</Chip>
-        <Chip>환불한 풀이권 {credits.bought.refunded}장</Chip>
+        <Chip>환불 · 회수 {credits.bought.refunded}장</Chip>
         <Chip>풀이 {credits.usedAll}회</Chip>
         {credits.outsideUsed > 0 && <Chip>몫 밖 풀이 {credits.outsideUsed}회</Chip>}
       </ul>
@@ -237,7 +237,7 @@ function Credits({
           <p className="flex flex-wrap items-center gap-2 text-xs text-secondary">
             <span className="rounded-full bg-surface-soft px-2.5 py-1 font-semibold">현금 환불 대상 아님</span>
             운영 지급 중 회수할 수 있는 것 {ledger.value.revocable}장
-            {ledger.value.reserved > 0 && ` · 예약 중 ${ledger.value.reserved}장`}
+            {ledger.value.reserved > 0 && ` · 사용 중 ${ledger.value.reserved}장`}
           </p>
           <GrantPanel
             userId={member.userId}
@@ -387,7 +387,7 @@ function Source({ title, receivedLabel, source }: { title: string; receivedLabel
       <dt className="text-sm font-semibold">{title}</dt>
       <Figure label={receivedLabel} value={source.received} />
       <Figure label="사용" value={source.used} />
-      <Figure label="남은" value={source.left} />
+      <Figure label="잔여" value={source.left} />
     </div>
   );
 }
