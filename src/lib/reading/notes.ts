@@ -264,6 +264,8 @@ export const CHECKOUT_FREE_FIRST_NOTE = '구매 전 무료 풀이권으로 풀�
  */
 export const PURCHASE_DONE_TITLE = '결제가 완료됐어요';
 export const purchaseAddedNote = (credits: number): string => `풀이권 ${credits}장이 추가됐어요.`;
+/** 결제 완료 창의 단추 — 돌아갈 화면이 없을 때(대장 credits-04 의 「확인」 · 포스텔러 결제 완료 「확인」) */
+export const PURCHASE_DONE_OK = '확인';
 export const PURCHASE_RUNNING_LABEL = '결제 진행 중…';
 export const PURCHASE_FAILED_NOTE = '결제가 완료되지 않았어요.';
 export const PURCHASE_UNDELIVERED_NOTE = '풀이권 충전이 완료되지 않았어요.';
