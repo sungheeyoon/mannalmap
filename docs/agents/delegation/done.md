@@ -39,6 +39,10 @@ PR 틀(`.github/pull_request_template.md`)의 칸이다. 칸 이름은 이 표�
 거기에 같은 이름(`commit.txt` · `pr.md`)을 써서 서로 덮었다(#209, 2026-10-18 #750 · #751). 워크트리 안의 임시 파일은 커밋하지 않는다 —
 `git add` 는 파일 이름으로 하고 PR 전에 지운다. 그림은 크고 커밋하면 안 되니 위대로 스크래치패드에 두되 **제 이름의 하위 폴더**에 둔다.
 
+**PR 을 열기 직전 origin/main 과 열린 PR 에서 다음 빈 ADR · G 번호를 다시 본다** — 나란히 도는 세션이 같은 번호를 잡는다(2026-11-06 에
+#1030 · #1031 · #1032 가 #1028 이 먼저 쓴 0229 와 0230 을 함께 잡으려 했고, 둘이 G-139 를 썼다). 겹친 번호는 머지 뒤 main 에서야 `scripts/code-rules.test.ts` 가 붉힌다.
+`ls docs/adr | tail -3` · `grep -oE '^\| G-[0-9]+' docs/product/gaps.md | sort -t- -k2 -n | tail -1`(둘 다 origin/main 을 받은 뒤) · `gh pr list --state open --json number,title,files`.
+
 **커밋과 PR 제목**은 `type(scope): 한국어 문장 (ADR NNNN)` 이다(`docs/agents/code-rules/locks.md` 「커밋과 PR」).
 squash 본문은 PR 본문이 아니라 **커밋 메시지들을 이어 붙인 것**이라(저장소 설정
 `COMMIT_MESSAGES`) 커밋을 하나로 두거나 머지 화면에서 다듬는다. 원격 가지는 머지되면 GitHub 가

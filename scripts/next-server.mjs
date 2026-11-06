@@ -17,8 +17,47 @@
  * 그 값 없이 세운 서버까지 같은 것을 들고 돈다 — 훑기가 시계를 미는 자리가 그렇다.
  */
 import { execFileSync, spawn } from 'node:child_process';
+import { rmSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
 
 let built = false;
+
+const root = fileURLToPath(new URL('..', import.meta.url));
+
+/**
+ * **카카오 단추를 세우는 그림 전용 키** — 진짜 키가 아니다. 캡처 서버(`ui-dev.mjs` · `ui-shots.mjs` 가 세우는 서버)만 얹는다.
+ *
+ * 카카오 단추는 `KAKAO_REST_API_KEY` 가 있을 때만 선다(`app/auth/kakao/config.ts`). 운영 웹에는 서 있는데(G-131) 로컬 캡처
+ * 서버에는 값이 없어, 로그인 그림에서 단추가 **아무 말 없이** 빠졌다(#1027). 단추를 그리는 데는 값이 있기만 하면 되고, 누르면
+ * 카카오가 모르는 키라 거절한다 — 로그인을 재는 서버가 아니다. 검사(`check-*.mjs`)는 얹지 않는다 — 꺼진 카카오가 그 기본값이다.
+ */
+export const UI_FAKE_KAKAO_KEY = 'ui-shots-fake-kakao-rest-key';
+
+/**
+ * **옛 생성 타입을 걷는다.** `tsconfig.json` 이 `.next/types` 와 `.next-check/types` 를 함께 싣는데, 옛 체크아웃 · 지운 화면이 남긴
+ * 타입이 없는 주소를 가리키면 `next build` 의 타입 검사가 고친 코드와 상관없이 붉다(#1027). 둘 다 다시 지어지는 산출물이다 —
+ * 빌드가 `.next-check/types` 를, `npm run typecheck`(`next typegen`)가 `.next/types` 를 다시 짓는다.
+ */
+function clearStaleTypes() {
+  for (const dir of ['.next/types', '.next-check/types']) rmSync(`${root}${dir}`, { recursive: true, force: true });
+}
+
+/** 빌드가 붉으면 **까닭을 찍는다** — 출력을 버리면 「서버가 안 떴다」만 남는다 */
+function buildOrSayWhy(env) {
+  clearStaleTypes();
+  try {
+    execFileSync('npx', ['next', 'build'], { env, stdio: ['ignore', 'pipe', 'pipe'], maxBuffer: 64 * 1024 * 1024 });
+  } catch (error) {
+    const output = `${error.stdout ?? ''}${error.stderr ?? ''}`.trim().split('\n');
+    const typeLine = output.find((line) => /\.next(-check)?\/types\//.test(line));
+    console.error(
+      typeLine
+        ? `! 검사용 서버 빌드가 붉습니다 — 생성 타입(\`.next/types\`)이 낡았습니다: ${typeLine.trim()}`
+        : `! 검사용 서버 빌드가 붉습니다 — 끝의 출력:\n${output.slice(-15).join('\n')}`,
+    );
+    throw error;
+  }
+}
 
 /**
  * `listenAll` 은 **컨테이너가 두드리는 검사만** 켠다 — DB 의 `pg_net` 이 `host.docker.internal` 로 앱을 부르는 웹 푸시가
@@ -43,7 +82,7 @@ export async function startCheckServer({ port, supabaseUrl, anonKey, secretKey, 
 
   if (!built) {
     console.log('\n… 검사용 서버를 짓는다 (.next-check)');
-    execFileSync('npx', ['next', 'build'], { env, stdio: 'ignore' });
+    buildOrSayWhy(env);
     built = true;
   }
 

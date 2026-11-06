@@ -38,7 +38,7 @@
 | 스택을 다시 안 세우고 함수 하나만 바꿔 재고 싶다(돌연변이 · 고치기 전 재현) | 지금 DB 를 고치면 다음 시험까지 번진다 | 같은 스택의 psql 에서 `create database <복제> template postgres`(원본에 접속이 없어야 한다) 뒤 복제에만 `create or replace function` 을 넣어 재고 `drop database` 한다 |
 | `npm test` 를 나란히 돌리는 동안 vitest 일부가 붉고 단독으로 돌리면 초록이다(calibration · seoul-date · comparison 등) | 시간 초과다(2026-11-02, 15판 실패 전부 시간 초과 · 단언 불일치 0). 시험은 5초나 그 시험의 30초를, `calibration` 은 `beforeAll` 30초를 넘는다 — 그래서 시험 넷이 건너뛰어지고 파일만 붉다. **JSON 보고의 `STACK_TRACE_ERROR` 도 시간 초과다** — Vitest 가 붙이는 스택이라 원문은 텍스트 보고에서 읽는다. `calibration` 훅은 단독 6~7초, `--maxWorkers=4` 8~9초, `=8` 14~19초, 기본 23~28초(각 3판) | `--maxWorkers=4` 로 다시 돈다. 벽시계는 65~87초로 겹쳐 느려지지 않는다. 단독에서도 붉거나 메시지가 시간 초과가 아니면 코드로 본다 |
 | `npx tsc --noEmit` 이 `LayoutProps` 를 못 찾는다 | `next typegen` 이 먼저 돌아야 한다(2026-11-02) | `npm run typecheck` 로 돌린다 |
-| `scripts/ui-seed.mjs` 가 시드 중에 멈춘다 | 스크립트의 상수 `BETA_ENDS_ON`(`scripts/ui-seed.mjs` 에 `2026-10-31` 로 박혀 있다 — 운영 종료일(지금 `2026-11-30`, G-62)과 따로다)이 지난 날짜면 베타가 끝난 상태로 읽혀 쓰기 문이 닫힌다(2026-11-02, 코드는 안 고쳤다) | 제 워크트리에서만 그 값을 앞날로 올려 돌리고 커밋하지 않는다 |
+| `scripts/ui-seed.mjs` 가 시드 중에 멈춘다 · 그림이 「테스트가 끝났어요」를 찍는다 | 로컬 일정 줄이 지난 날짜다. 씨앗의 종료일은 오늘에서 센다(`BETA_ENDS_ON = checkEndsOn()` — 서울 날짜로 다다음 달 1일, 흐름 검사 · 로그인 e2e 와 같은 규칙, #1027). 그래서 그림의 종료일은 운영 종료일(G-62)과 다를 수 있다. 2026-11-06 전에는 `2026-10-31` 이 박혀 있어 손으로 올렸다 | `node scripts/ui-seed.mjs` 로 일정 줄을 다시 세우고 찍힌 날짜를 본다. 날짜를 손으로 고치지 않는다 |
 | e2e 가 시간 초과로 끝난 뒤 다음 e2e 가 옛 화면을 받는다 | 남은 dev 서버를 `reuseExistingServer` 가 붙잡는다 | `lsof -ti tcp:3000 \| xargs kill` 뒤 다시 |
 | `npx playwright test e2e/match.spec.ts` 만 붉다 | 그 spec 은 직렬이어야 한다 | `npm run test:e2e:match`(`--workers=1`) |
 | `db query` 가 `cannot insert multiple commands` | prepared statement 라 `begin; … rollback;` 을 못 받는다 | 트랜잭션이 필요하면 `docker exec -i supabase_db_<SAJU_STACK_ID> psql -U postgres -d postgres` |
@@ -107,7 +107,9 @@
 2. **진짜 `node_modules` 를 복사한다** — 심볼릭 링크는 Turbopack 이 거절한다(위 표). `cp -a --reflink=auto <메인>/node_modules .`.
 3. **화면 서버는 `node scripts/ui-dev.mjs`** — 로컬 스택에 붙이고 모델 열쇠를 비운 채 3100(`UI_PORT`)에 뜬다(`npm run dev:local`). `npm run dev` 를
    그냥 띄우면 운영 접속값이라 시작을 거절한다(`next.config.ts`).
-4. **찍기는 `UI_ONLY=<id,id> node scripts/ui-shots.mjs <폴더>`** — 고친 화면의 id 만 두 폭으로 찍는다(id 는 그 파일의 `PLAN`).
+4. **찍기는 `UI_ONLY=<id,id> node scripts/ui-shots.mjs <폴더>`** — 고친 화면의 id 만 세 폭(데스크톱 1280 · 모바일 390 · 전체 화면 1920)으로
+   찍는다(id 는 그 파일의 `PLAN`). 폭은 `UI_SIZES=desktop,mobile,wide` 의 id 로 고른다. 씨앗은 새 회원에게 베타 회원의 무료 몫(5)을 채우고,
+   캡처 서버(`ui-dev.mjs`)는 그림 전용 가짜 카카오 키를 얹는다 — `/auth` 에 카카오 단추가 없으면 도구가 경고를 찍는다(#1027).
    고치기 전 그림은 main 을 체크아웃한 같은 자리에서 먼저 찍는다. **로딩 뼈대(`loading.tsx`)는 뼈대 무리의 `skeleton-*` id 로**
    찍는다(#604) — 도구가 지은 서버(`UI_PORT`+2)를 따로 세워 이동을 붙잡는다. `next dev` 로는 뼈대가 안 선다(`scripts/ui-shots.mjs` 의
    `serverAsBuilt` 머리말).

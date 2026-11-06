@@ -13,10 +13,20 @@
 
 import { spawn } from 'node:child_process';
 
+import { UI_FAKE_KAKAO_KEY } from './next-server.mjs';
 import { localStack } from './ui-seed.mjs';
 
 const port = process.env.UI_PORT ?? '3100';
 const local = localStack();
+
+/**
+ * 카카오 단추는 키가 있을 때만 선다 — 그림 전용 가짜 키를 얹는다(`UI_FAKE_KAKAO_KEY` 머리말). 운영 값(`.env.development.local`)을
+ * 읽지 않도록 프로세스 환경으로 덮는다. 굳이 비우면(`KAKAO_REST_API_KEY=`) 비운 채 띄우고 경고를 찍는다.
+ */
+const kakaoKey = process.env.KAKAO_REST_API_KEY ?? UI_FAKE_KAKAO_KEY;
+if (kakaoKey.trim() === '') {
+  console.warn('! KAKAO_REST_API_KEY 가 비었습니다 — 로그인 그림에 카카오 단추가 안 섭니다(운영 웹에는 섭니다).');
+}
 
 const child = spawn('npx', ['next', 'dev', '--hostname', 'localhost', '--port', port], {
   stdio: 'inherit',
@@ -37,6 +47,8 @@ const child = spawn('npx', ['next', 'dev', '--hostname', 'localhost', '--port', 
      * 을 든다 — 그대로 두면 로컬에서만 여는 자리(해석 내부 보기, `inspectOpen`)가 404 로 찍힌다.
      */
     VERCEL_ENV: 'development',
+    KAKAO_REST_API_KEY: kakaoKey,
+    KAKAO_CLIENT_SECRET: '',
   },
 });
 
