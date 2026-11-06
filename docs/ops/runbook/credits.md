@@ -349,7 +349,7 @@ update retention.reading_payment set hold_reason = null, held_at = null where or
    (`service-<프로젝트 번호>@gcp-sa-pubsub.iam.gserviceaccount.com`)에 그 서비스 계정의 **Service Account Token Creator** 를 준다. Play Console → Monetize with Play → Monetization setup →
    Real-time developer notifications 에 주제 `projects/<프로젝트 id>/topics/play-billing`, 받을 것은 **「Get all notifications for subscriptions and one-time products」**(팔렸다 통지까지 —
    「… and all voided purchases」 만 고르면 결제 중 앱이 꺼진 구매를 통지로 못 줍는다). audience · 서비스 계정 이메일을 Vercel 의 둘에 — **운영자**
-5. **`db push`** — `20270113090000` → `20270114090000`(걷는 장수 · 시험 · 프로모션 구매, G-141 — 출시 전 언제든) 차례로. `20270114100000`(구매 제한 기록 1년, G-142)은
+5. **`db push`** — `20270113090000` → `20270114090000`(걷는 장수 · 시험 · 프로모션 구매, G-141 — 출시 전 언제든) 차례로. `20270114100000`(구매 제한 기록 1년, G-142 — #1048)은
    #938 의 처리방침에 「구매 제한 기록」 줄이 게시되는 판과 같은 판이거나 그 뒤에만 올린다(ADR 0098, `docs/ops/runbook/erasure.md` 「구매 제한 기록」). 등급 3, 운영자가 답한 뒤(`docs/ops/runbook/deploy.md` 「규약 넷」 — DB 가 먼저). 올린 뒤 `npm run db:remote -- --purpose "스토어 구매 표 확인" "select count(*) from public.store_purchase"` 가 0
 6. **배포** — 「배포」 답 뒤(`deploy.md`). 그 뒤 Monetization setup 의 **Send test message** → Vercel 로그에 `play notification: refused` · `not configured` 가 없다(문은 204)
 7. **라이선스 테스터** — Play Console → Settings → License testing 에 시험할 구글 계정. 시험 구매는 돈이 안 오가고 장부에 `is_test` 로 선다. Play 프로모션 코드로 받은 구매(`purchaseType = 1`)는 금액 0 의 주문으로 서고(`is_promo`) 매출 · 환불 금액에 안 든다(운영자 결정 2026-11-06, ADR 0230 추기)
