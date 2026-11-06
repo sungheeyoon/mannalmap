@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { BUSINESS, BUSINESS_INFO, type RawBusinessInfo, businessInfoFrom, businessInfoLines, contactPlace } from './business';
+import { BUSINESS, BUSINESS_INFO, PRIVACY_OPERATOR, type RawBusinessInfo, businessInfoFrom, businessInfoLines, contactPlace } from './business';
 import { SUPPORT_EMAIL } from './index';
 import type { LegalDocument } from './legal-text';
 import { checkoutRefundLine, refundPolicyFor, refundRequestLine } from './refund';
@@ -64,6 +64,14 @@ describe('사업자 정보 — 상수 (ADR 0229)', () => {
         ? ['상호', '대표자', '사업자등록번호', '사업장 주소', '이메일', '통신판매업 신고번호', '호스팅서비스 제공자']
         : ['상호', '대표자', '사업자등록번호', '사업장 주소', '대표전화', '이메일', '통신판매업 신고번호', '호스팅서비스 제공자'],
     );
+  });
+});
+
+describe('처리방침의 운영자 — 상수 (ADR 0229)', () => {
+  it('처리자 · 보호책임자 · 연락처가 다 차 있고 연락처는 이메일 꼴이다 — 하나라도 비면 처리방침이 안 선다', () => {
+    expect(PRIVACY_OPERATOR.name.trim()).not.toBe('');
+    expect(PRIVACY_OPERATOR.officer.trim()).not.toBe('');
+    expect(PRIVACY_OPERATOR.contact).toMatch(/^[^\s@]+@[^\s@]+\.[^\s@]+$/);
   });
 });
 

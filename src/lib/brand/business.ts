@@ -86,6 +86,16 @@ export const BUSINESS: { readonly [K in Exclude<BusinessKey, 'email'>]: string }
  */
 export const MAIL_ORDER_AUTHORITY = '';
 
+/**
+ * 처리방침의 「개인정보처리자 · 보호책임자 · 연락처」 — 웹 `/privacy` 와 앱의 처리방침이 같은 값을 읽는다(ADR 0229). 베타 일정 줄의
+ * `operator_*` 칸은 화면이 읽지 않는다. 값을 바꾸면 처리방침의 글이 바뀌므로 `NOTICE_VERSION` 도 함께 올린다
+ */
+export const PRIVACY_OPERATOR = {
+  name: '성희윤',
+  officer: '성희윤',
+  contact: 'torushy@gmail.com',
+} as const;
+
 /** 화면이 읽는 사업자 정보 — 웹과 앱이 같은 값이다 */
 export const BUSINESS_INFO: BusinessInfo = businessInfoFrom({ ...BUSINESS, email: SUPPORT_EMAIL });
 
