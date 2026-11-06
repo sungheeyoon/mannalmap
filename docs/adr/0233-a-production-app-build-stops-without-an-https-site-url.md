@@ -25,3 +25,15 @@
 - 출시 빌드 전에 EAS 환경 `production` 에 `EXPO_PUBLIC_SITE_URL` 이 https 로 있어야 한다 — `docs/ops/runbook/mobile-release.md` 의 환경값 표가 든다.
 - OTA(`eas update`)는 이 검사를 안 지난다 — `EAS_BUILD_PROFILE` 은 빌드에만 선다. 업데이트의 번들에도 이 값이 박히므로 업데이트를 내는 절차가 서면 그 절차가
   값을 확인한다(지금 절차서에는 OTA 차례가 없다).
+
+## 추기 2026-11-06 — 출시 판은 네 값 가운데 하나라도 비면 멈추고, preview 판은 주소가 https 인지만 본다 (운영자 결정, 조율자가 옮김)
+
+> 결정 점검표의 「검증 · 배포의 문턱」에 걸린다. 운영자가 답했다(2026-11-06). 코드는 다음 라운드다 — G-145. 그때까지 `mobile/app.config.js` 는 위 결정(주소 하나)대로다.
+
+1. **`production` 판** — `EXPO_PUBLIC_SITE_URL` · `EXPO_PUBLIC_SUPABASE_URL` · `EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY` · `EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID` 넷 가운데 하나라도
+   없거나 비면 설정 함수가 던져 빌드가 멈춘다. 주소 둘(`_SITE_URL` · `_SUPABASE_URL`)은 https 주소여야 한다. 까닭 한 줄에 **비어 있는 이름**만 싣고 값은 싣지 않는다.
+   넷은 하나라도 빠지면 앱이 안 도는 값이다(`docs/ops/runbook/mobile-release.md` 의 환경값 표 「비면」 칸) — 주소 하나만 막으면 나머지 셋이 빠진 출시본이 초록으로 나간다.
+2. **`preview` 판** — `EXPO_PUBLIC_SITE_URL` 이 https 주소인지만 본다(없거나 http 면 멈춘다). `preview` 는 운영 DB 에 쓰는 APK 라(같은 런북) 토큰을 http 로 보내지
+   않게 하는 위 「왜 https 인가」가 그대로 걸린다. 나머지 셋은 보지 않는다 — 시험 빌드에서 값 하나를 빼 볼 길을 막지 않는다.
+3. **`development` 판 · 로컬 개발 · 가짜 서버 재기**는 그대로 지나간다(위 4).
+4. **카카오 · iOS 값**(`EXPO_PUBLIC_KAKAO_NATIVE_APP_KEY` · `EXPO_PUBLIC_GOOGLE_IOS_*`)은 넷에 들지 않는다 — 없으면 그 플러그인을 빼고 빌드하는 지금 뜻(같은 파일 머리)을 지킨다.
