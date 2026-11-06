@@ -12,7 +12,7 @@ export function KakaoSignInButton({ returnTo }: { returnTo: string }) {
   return (
     <a
       href={`/auth/kakao?next=${encodeURIComponent(returnTo)}`}
-      className="inline-flex w-full items-center justify-center px-5 active:scale-[0.97] sm:w-auto"
+      className="inline-flex w-full items-center justify-center px-5 active:scale-[0.97]"
       style={{
         minHeight: SIGN_IN_BUTTON.height,
         borderRadius: SIGN_IN_BUTTON.radius,
@@ -27,7 +27,10 @@ export function KakaoSignInButton({ returnTo }: { returnTo: string }) {
       <svg aria-hidden="true" viewBox={KAKAO_SYMBOL.viewBox} width={SIGN_IN_BUTTON.icon} height={SIGN_IN_BUTTON.icon} className="shrink-0">
         <path d={KAKAO_SYMBOL.path} fill={KAKAO_BUTTON_COLOR.symbol} />
       </svg>
-      {KAKAO_SIGN_IN}
+      {/* 글자 상자는 구글 단추와 같은 최소 너비 — 두 아이콘이 한 세로줄에 선다(ADR 0228 추기 2026-11-06) */}
+      <span className="whitespace-nowrap text-left" style={{ minWidth: SIGN_IN_BUTTON.labelMinWidth }}>
+        {KAKAO_SIGN_IN}
+      </span>
     </a>
   );
 }

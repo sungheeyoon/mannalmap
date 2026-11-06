@@ -47,6 +47,6 @@ export function AppleSignInButton({ onPress, busy }: { onPress: () => void; busy
 }
 
 const styles = StyleSheet.create({
-  button: { height: SIGN_IN_BUTTON.height, alignSelf: 'stretch' },
+  button: { height: SIGN_IN_BUTTON.height, alignSelf: 'stretch', maxWidth: SIGN_IN_BUTTON.maxWidth },
   busy: { opacity: BUTTON_OFF_OPACITY },
 });

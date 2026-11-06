@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation';
 
 import { SERVICE_NAME } from '@/src/lib/brand';
 import { SIGN_IN_UNLOCKS } from '@/src/lib/brand/guide';
+import { SIGN_IN_BUTTON } from '@/src/lib/account/sign-in-buttons';
 
 import { BUTTON_TERTIARY } from '../ui/buttons';
 import { Icon } from '../ui/icons';
@@ -50,8 +51,11 @@ export default async function SignInPage({
         )
       }
       actions={
-        /* 카카오 → 구글(운영자 결정 2026-11-05, ADR 0228). 카카오는 키가 있을 때만 선다(ADR 0224) — 없으면 구글 하나다 */
-        <div className="flex flex-col items-stretch gap-2 sm:items-start">
+        /*
+          카카오 → 구글(운영자 결정 2026-11-05, ADR 0228). 카카오는 키가 있을 때만 선다(ADR 0224) — 없으면 구글 하나다.
+          두 단추는 같은 너비로 한 열에 서고, 카드 너비를 채우되 360px 에서 멈춘다(운영자 결정 2026-11-06, ADR 0228 추기)
+        */
+        <div className="flex w-full flex-col items-stretch gap-2" style={{ maxWidth: SIGN_IN_BUTTON.maxWidth }}>
           {kakaoSignInReady() && <KakaoSignInButton returnTo={returnTo} />}
           <SignInButton returnTo={returnTo} />
         </div>
