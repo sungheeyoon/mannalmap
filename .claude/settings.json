@@ -1,5 +1,8 @@
 {
   "permissions": {
+    "allow": [
+      "Bash(npm run sweep:merged:*)"
+    ],
     "ask": [],
     "deny": [
       "Bash(git push --force:*)",
