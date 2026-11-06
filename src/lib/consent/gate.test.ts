@@ -3,7 +3,8 @@ import { describe, expect, it } from 'vitest';
 import { NOTICE_ACK_FLOOR, NOTICE_VERSION, noticeEdition } from './notice';
 import {
   NOTICE_UNREAD,
-  betaIsOver,
+  SERVICE_ENDED_ON,
+  serviceIsOver,
   gateFor,
   signupDone,
   type GateAccount,
@@ -17,10 +18,12 @@ import {
  * 시험은 전체 적재로 다니므로 **앱 안 이동에서 관문이 아예 안 돈다는 사실을 한 번도
  * 못 재고 있었다**(2026-09-04). 규칙을 함수로 꺼낸 값이 이 파일이다.
  *
- * 묻는 것이 **둘로 줄었다**(ADR 0042) — 베타가 끝났나, 가입이 끝났나. 이름과 안내가
- * 각자 문을 세우던 것을 「가입」 하나가 든다.
+ * 묻는 것이 **둘로 줄었다**(ADR 0042) — 서비스가 끝났나, 가입이 끝났나. 이름과 안내가
+ * 각자 문을 세우던 것을 「가입」 하나가 든다. 서비스의 끝은 일정 줄의 종료일이 아니다(ADR 0234) — 아래 `ended` 가 끝낸 날을 넣어 그 갈래를 밟는다.
  */
 const dates = { endsOn: '2026-10-31', purgeBy: '2026-11-30', purgeWithinDays: 30 };
+/** 시험이 넣는 「서비스를 끝낸 날」 — 운영 값(`SERVICE_ENDED_ON`)은 끝내지 않은 `null` 이다 */
+const ended = '2026-10-31';
 const notice: GateNotice = { scheduleId: 7, dates };
 const during = new Date('2026-09-04T12:00:00+09:00');
 const after = new Date('2026-11-01T12:00:00+09:00');
@@ -34,11 +37,19 @@ const ready: GateAccount = {
 /** 구글 로그인만 하고 아무것도 안 한 사람 — 이제 이런 계정이 실재한다 */
 const fresh: GateAccount = { signedUp: false, noticeVersion: null, noticeScheduleId: null };
 
-describe('종료일', () => {
-  /** 날짜만 견주면 종료일 당일 오전에 이미 끝난 것이 된다 */
-  it('종료일 당일은 아직 끝난 것이 아니다', () => {
-    expect(betaIsOver(dates, new Date('2026-10-31T23:00:00+09:00'))).toBe(false);
-    expect(betaIsOver(dates, new Date('2026-11-01T00:30:00+09:00'))).toBe(true);
+describe('서비스 종료', () => {
+  /** 날짜만 견주면 마지막 날 오전에 이미 끝난 것이 된다 */
+  it('마지막 날 당일은 아직 끝난 것이 아니다', () => {
+    expect(serviceIsOver(new Date('2026-10-31T23:00:00+09:00'), ended)).toBe(false);
+    expect(serviceIsOver(new Date('2026-11-01T00:30:00+09:00'), ended)).toBe(true);
+  });
+
+  /** 공개 고지가 고정 운영 기간을 지웠다(ADR 0225 추기 2026-11-06 · ADR 0234) — 끝내지 않은 서비스는 언제도 끝나지 않는다 */
+  it('지금은 끝낸 날이 없고, 일정 줄의 종료일이 지나도 관문은 종료로 보내지 않는다', () => {
+    expect(SERVICE_ENDED_ON).toBeNull();
+    expect(serviceIsOver(after)).toBe(false);
+    expect(gateFor('/me', ready, notice, after)).toBeNull();
+    expect(gateFor('/me', fresh, notice, after)).toBe('/signup');
   });
 });
 
@@ -112,7 +123,7 @@ describe('가입', () => {
     expect(gateFor('/compat', fresh, notice, during)).toBe('/signup?next=%2Fcompat');
     expect(gateFor('/compat', ready, notice, during)).toBeNull();
     expect(gateFor('/compat', null, notice, during)).toBeNull();
-    expect(gateFor('/compat', ready, notice, after)).toBe('/closed');
+    expect(gateFor('/compat', ready, notice, after, ended)).toBe('/closed');
   });
 
   /**
@@ -211,16 +222,15 @@ describe('재확인 기준', () => {
 
 describe('종료', () => {
   it('끝났으면 끝났다고 말하는 자리로 보낸다', () => {
-    expect(gateFor('/me', ready, notice, after)).toBe('/closed');
-    expect(gateFor('/me/people', ready, notice, after)).toBe('/closed');
+    expect(gateFor('/me', ready, notice, after, ended)).toBe('/closed');
+    expect(gateFor('/me/people', ready, notice, after, ended)).toBe('/closed');
   });
 
   /**
-   * **끝나도 계정 관리는 연다.** 종료일과 파기 사이는 자료가 아직 남아 있는 기간이고,
-   * 그때야말로 철회와 삭제 요청이 필요하다.
+   * **끝나도 계정 관리는 연다.** 끝난 뒤에도 자료가 남아 있는 동안 철회와 삭제 요청이 필요하다.
    */
   it('끝나도 계정 관리는 열린다', () => {
-    expect(gateFor('/me/settings', ready, notice, after)).toBeNull();
+    expect(gateFor('/me/settings', ready, notice, after, ended)).toBeNull();
   });
 
   /**
@@ -228,7 +238,7 @@ describe('종료', () => {
    * 확인을 거절한다 — 물으면 `/signup` 과 `/closed` 사이를 돈다.
    */
   it('끝났으면 가입 안 한 사람도 종료 화면으로 간다', () => {
-    expect(gateFor('/me', { ...ready, noticeVersion: 'notice-v1' }, notice, after)).toBe('/closed');
-    expect(gateFor('/me', fresh, notice, after)).toBe('/closed');
+    expect(gateFor('/me', { ...ready, noticeVersion: 'notice-v1' }, notice, after, ended)).toBe('/closed');
+    expect(gateFor('/me', fresh, notice, after, ended)).toBe('/closed');
   });
 });

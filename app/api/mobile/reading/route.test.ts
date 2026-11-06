@@ -165,13 +165,14 @@ describe('관문 — 웹과 같은 `gateFor`', () => {
     expect(pipeline.beginReadingAs).not.toHaveBeenCalled();
   });
 
-  it('베타가 끝났으면 403 closed 다', async () => {
+  /** 일정 줄의 종료일은 서비스를 끝내지 않는다(ADR 0234) — 끝은 `SERVICE_ENDED_ON` 이 말한다 */
+  it('일정 줄의 종료일이 지나도 closed 로 거절하지 않는다', async () => {
     clientAnswering({ account: await signedUp(), schedule: [{ ...SCHEDULE[0], ends_on: '2020-01-01' }] });
+    pipeline.beginReadingAs.mockResolvedValue({ ok: true, started: true });
 
     const response = await press({ target: SELF, requestKey: KEY });
 
-    expect(response.status).toBe(403);
-    expect(await response.json()).toEqual({ refused: 'closed' });
+    expect(response.status).toBe(200);
   });
 });
 

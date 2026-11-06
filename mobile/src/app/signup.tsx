@@ -8,12 +8,13 @@ import { mayRequestDeletion } from '@account/index';
 import { safeReturnPath } from '@consent/return-path';
 import { NOTICE_ACK_LABEL, NOTICE_ACK_NOTE, OPTIONAL_CONSENTS, OPTIONAL_CONSENT_NOTE } from '@consent/notice';
 import {
+  SIGNUP_AGE_LABEL,
   SIGNUP_HEAD,
   SIGNUP_LABEL,
   SIGNUP_NOTICE_DISCOVERY,
+  SIGNUP_NOTICE_KEEP,
   SIGNUP_NOTICE_USE,
   signupGap,
-  signupNoticeDates,
   type SignupField,
 } from '@consent/signup';
 import { NICKNAME_AVAILABLE_NOTE, NICKNAME_MAX, NICKNAME_MIN, NICKNAME_TAKEN_NOTE, missingNickname, nicknameKey } from '@profile';
@@ -103,8 +104,9 @@ export default function SignupScreen() {
 }
 
 function SignupForm({ form, onDone }: { form: Extract<SignupState, { kind: 'form' }>; onDone: () => void }) {
-  const { needsName, again, scheduleId, endsOn, purgeBy } = form;
+  const { needsName, again, scheduleId } = form;
   const [nickname, setNickname] = useState('');
+  const [fourteen, setFourteen] = useState(false);
   const [acknowledged, setAcknowledged] = useState(false);
   const [chosen, setChosen] = useState<Record<string, boolean>>({ improvement: false, contact: false });
   const [failure, setFailure] = useState<{ message: string; field: SignupField | null } | null>(null);
@@ -118,9 +120,8 @@ function SignupForm({ form, onDone }: { form: Extract<SignupState, { kind: 'form
   const missing = needsName ? missingNickname(nickname) : null;
   const answer = checked?.key === nicknameKey(nickname) ? checked : null;
   /* 단추를 잠그지 않고, 누르면 처음 걸린 칸 하나를 말한다 — 웹과 같다 */
-  const gap = signupGap({ nicknameGap: missing, acknowledged });
+  const gap = signupGap({ nicknameGap: missing, fourteen, acknowledged });
   const shownGap = tried ? gap : null;
-  const dates = signupNoticeDates(endsOn, purgeBy);
   const refusedHere = (field: SignupField) => failure?.field === field;
   /* 칸은 닉네임 하나다 — 테스트 코드 칸은 걷었다(ADR 0225) */
   const focusName = () => nicknameField.current?.focus();
@@ -204,15 +205,14 @@ function SignupForm({ form, onDone }: { form: Extract<SignupState, { kind: 'form
           <TextButton label={SIGNUP_LABEL.privacy} onPress={() => router.push('/privacy')} />
         </View>
         <NoticeLine>{SIGNUP_NOTICE_USE}</NoticeLine>
-        <NoticeLine>
-          {dates.parts[0]}
-          <Text style={styles.strong}>{dates.ends}</Text>
-          {dates.parts[1]}
-          <Text style={styles.strong}>{dates.purge}</Text>
-          {dates.parts[2]}
-        </NoticeLine>
+        <NoticeLine>{SIGNUP_NOTICE_KEEP}</NoticeLine>
         <NoticeLine>{SIGNUP_NOTICE_DISCOVERY}</NoticeLine>
       </Tile>
+
+      {/* 만 14세 이상 — 필수 확인(ADR 0231), 웹과 같은 자리 */}
+      <CheckRow checked={fourteen} onToggle={setFourteen} refused={shownGap?.field === 'age'}>
+        <Text style={styles.checkLabel}>{SIGNUP_AGE_LABEL}</Text>
+      </CheckRow>
 
       <CheckRow checked={acknowledged} onToggle={setAcknowledged} refused={shownGap?.field === 'ack'}>
         <Text style={styles.checkLabel}>{NOTICE_ACK_LABEL}</Text>
@@ -301,7 +301,6 @@ const styles = StyleSheet.create({
   noticeRow: { flexDirection: 'row', gap: 8 },
   bullet: { fontSize: TYPE.note, lineHeight: 22, color: COLOR.muted },
   noticeText: { flex: 1, fontSize: TYPE.note, lineHeight: 22, fontFamily: FONT.medium, color: COLOR.secondary },
-  strong: { fontFamily: FONT.bold, color: COLOR.foreground },
   checkLabel: { fontSize: TYPE.note, lineHeight: 21, fontFamily: FONT.bold, color: COLOR.foreground },
   action: { gap: 10, paddingTop: 20, borderTopWidth: 1, borderTopColor: COLOR.border },
   leave: { alignItems: 'center' },

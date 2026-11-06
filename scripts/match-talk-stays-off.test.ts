@@ -42,17 +42,16 @@ describe('화면의 요청 문은 상대만 싣는다', () => {
 
 /** 대화가 유일한 흐름이 된 판이다 — `docs/legal/match-talk-notice-draft.md` 「켜는 날의 차례」 6. 판을 다시 올리면 이 시험을 함께 고친다 */
 describe('게시 고지는 대화 · 상세 궁합의 판이다', () => {
-  const dates = { endsOn: '2026-11-30', purgeBy: '2026-12-30', purgeWithinDays: 30 };
   const operator = { name: '만세력 운영자', officer: '홍길동', contact: 'ops@example.com' };
-  const noticeText = () => JSON.stringify(noticeFor(dates, operator));
+  const noticeText = () => JSON.stringify(noticeFor(operator));
 
   /* v13 은 대화 · 상세 궁합과 무관한 내용 개정이다(애플 로그인 · 이용 정지 기록, ADR 0220) — 대화 · 상세 궁합의 판은 그 위의 v14 다 */
   it('내용 개정이라 판본과 재확인 기준을 함께 올려 확인한 사람 전원이 다시 읽는다', () => {
-    /* v15(공개 서비스 · 카카오, ADR 0225 추기) · v16(카카오계정 이메일, ADR 0224 추기)이 그 위에 올라 기준도 v16 이다 — 대화 · 상세 궁합의 줄은 그대로 실린다 */
-    expect(NOTICE_VERSION).toBe('notice-v16');
-    expect(NOTICE_ACK_FLOOR).toBe('notice-v16');
+    /* v15(공개 서비스 · 카카오, ADR 0225 추기) · v16(카카오계정 이메일, ADR 0224 추기) · v17(운영 기간 · Play 결제 · 구매 제한 기록 · 만 14세, ADR 0234)이 그 위에 올라 기준도 v17 이다 — 대화 · 상세 궁합의 줄은 그대로 실린다 */
+    expect(NOTICE_VERSION).toBe('notice-v17');
+    expect(NOTICE_ACK_FLOOR).toBe('notice-v17');
     expect(noticeAckHolds('notice-v13')).toBe(false);
-    expect(noticeAckHolds('notice-v16')).toBe(true);
+    expect(noticeAckHolds('notice-v17')).toBe(true);
   });
 
   it('처리방침은 새 흐름의 글이고 옛 흐름의 줄이 없다', () => {

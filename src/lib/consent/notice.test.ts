@@ -5,6 +5,7 @@ import {
   MATCH_DETAIL_DISCLOSURE,
   NOTICE_ACK_FLOOR,
   NOTICE_VERSION,
+  UNDER_14_PRIVACY_LINE,
   OPTIONAL_CONSENT_NOTE,
   OPTIONAL_CONSENTS,
   noticeAckHolds,
@@ -50,16 +51,16 @@ describe('일정 한 줄을 안내로', () => {
 });
 
 describe('안내 문구', () => {
-  const dates = { endsOn: '2026-11-30', purgeBy: '2026-12-30', purgeWithinDays: 30 };
   const operator = { name: '만세력 운영자', officer: '홍길동', contact: 'ops@example.com' };
-  const text = noticeFor(dates, operator)
+  const text = noticeFor(operator)
     .flatMap((section) => [section.title, ...section.lines])
     .join('\n');
 
-  /** **날짜를 말한다.** 이것을 못 하면 안내를 세울 이유가 없다 */
-  it('종료일과 파기 기한을 날짜로 말한다', () => {
-    expect(text).toContain('2026년 11월 30일');
-    expect(text).toContain('2026년 12월 30일');
+  /** **보유기간을 규칙으로 말한다**(`notice-v17`, ADR 0234) — 고정 운영 기간 · 일괄 파기일을 지웠다. 날짜 대신 이용하는 동안 · 탈퇴 뒤 3일 · 법정 기간이다 */
+  it('보유기간을 이용 기간 · 탈퇴 · 법정 보존으로 말하고 운영 기간의 날짜를 말하지 않는다', () => {
+    expect(text).toContain('서비스를 이용하시는 동안 보관하고, 탈퇴를 신청하시면 3일 이내에 파기합니다');
+    expect(text).toContain('마지막 결제 또는 환불일부터 5년');
+    expect(text).not.toMatch(/운영 기간|\d{4}년 \d{1,2}월 \d{1,2}일/);
   });
 
   /** 「추후」로 미루는 말이 들어오면 그 문장은 아무것도 약속하지 않는다 */
@@ -103,8 +104,7 @@ describe('안내 문구', () => {
  */
 describe('처리방침이 갖춰야 하는 것', () => {
   const operator = { name: '만세력 운영자', officer: '홍길동', contact: 'ops@example.com' };
-  const dates = { endsOn: '2026-10-31', purgeBy: '2026-11-30', purgeWithinDays: 30 };
-  const text = noticeFor(dates, operator)
+  const text = noticeFor(operator)
     .flatMap((section) => [section.title, ...section.lines])
     .join('\n');
 
@@ -228,7 +228,7 @@ describe('선택 항목', () => {
 
 /** 문구가 바뀌면 판본도 바뀐다 — 「보여 준 적 있다」가 아니라 「무엇을 보여 줬나」다 */
 it('안내 판본이 값으로 서 있다', () => {
-  expect(NOTICE_VERSION).toBe('notice-v16');
+  expect(NOTICE_VERSION).toBe('notice-v17');
 });
 
 /**
@@ -238,9 +238,7 @@ it('안내 판본이 값으로 서 있다', () => {
  * 사람은 다시 안 본다(운영자 결정 2026-10-23).
  */
 describe('사진 저장소', () => {
-  const sections = noticeFor(
-    { endsOn: '2026-11-30', purgeBy: '2026-12-30', purgeWithinDays: 30 },
-    { name: '만세력 운영자', officer: '홍길동', contact: 'ops@example.com' },
+  const sections = noticeFor({ name: '만세력 운영자', officer: '홍길동', contact: 'ops@example.com' },
   );
   const lines = (title: string) => sections.find((section) => section.title === title)?.lines.join(' ') ?? '';
 
@@ -256,9 +254,9 @@ describe('사진 저장소', () => {
     expect(purge).not.toContain('반드시');
   });
 
-  /* v9 당시에는 기준을 v8 에 두었다(운영자 결정 2026-10-23). 그 뒤 v13(ADR 0220) · v14(대화가 유일한 흐름) · v15(공개 서비스 · 카카오, ADR 0225 추기) · v16(카카오계정 이메일 · 계정 합침, ADR 0224 추기)의 내용 개정이 기준을 올렸다 */
-  it('재확인 기준은 마지막 내용 개정 v16 이다', () => {
-    expect(NOTICE_ACK_FLOOR).toBe('notice-v16');
+  /* v9 당시에는 기준을 v8 에 두었다(운영자 결정 2026-10-23). 그 뒤 v13(ADR 0220) · v14(대화가 유일한 흐름) · v15(공개 서비스 · 카카오, ADR 0225 추기) · v16(카카오계정 이메일 · 계정 합침, ADR 0224 추기) · v17(운영 기간 · Play 결제 · 구매 제한 기록 · 만 14세, ADR 0234)의 내용 개정이 기준을 올렸다 */
+  it('재확인 기준은 마지막 내용 개정 v17 이다', () => {
+    expect(NOTICE_ACK_FLOOR).toBe('notice-v17');
   });
 });
 
@@ -269,9 +267,7 @@ describe('사진 저장소', () => {
  * 불렀다. 받는 때 · 기록의 보존 · 쿠키 · 계정에 이어진 예외 · 거부 방법이 다 서야 그 줄이 사실과 맞는다.
  */
 describe('첫 화면의 짧은 사주 문단', () => {
-  const sections = noticeFor(
-    { endsOn: '2026-11-30', purgeBy: '2026-12-30', purgeWithinDays: 30 },
-    { name: '만세력 운영자', officer: '홍길동', contact: 'ops@example.com' },
+  const sections = noticeFor({ name: '만세력 운영자', officer: '홍길동', contact: 'ops@example.com' },
   );
   const text = sections.flatMap((section) => section.lines).join(' ');
   const outward = sections.find((section) => section.title === '국외로 나가는 것')?.lines.join(' ') ?? '';
@@ -373,16 +369,13 @@ describe('첫 화면의 짧은 사주 문단', () => {
 
 /** v6 의 내용 개정 넷 — 한 판본에 다 서야 확인자가 한 번만 불려 온다(#165) */
 it('안내가 대화 90일 · OpenAI 의 때 셋 · 3일 자동 처분 · 신고 기록 6개월을 말한다', () => {
-  const text = noticeFor(
-    { endsOn: '2026-11-30', purgeBy: '2026-12-30', purgeWithinDays: 30 },
-    { name: '만세력 운영자', officer: '홍길동', contact: 'ops@example.com' },
-  )
+  const text = noticeFor({ name: '만세력 운영자', officer: '홍길동', contact: 'ops@example.com' })
     .flatMap((section) => section.lines)
     .join(' ');
 
   expect(text).toContain('닫힌 날부터 90일');
   expect(text).toContain('상세 궁합 요청을 받은 분이 동의했을 때');
-  expect(text).toContain('신청 후 3일 이내에 파기합니다');
+  expect(text).toContain('탈퇴를 신청하시면 3일 이내에 파기합니다');
   expect(text).toContain('탈퇴 처리일부터 6개월');
   expect(text).not.toContain('영업일');
   expect(text).not.toContain('운영자가 확인한 뒤');
@@ -390,10 +383,7 @@ it('안내가 대화 90일 · OpenAI 의 때 셋 · 3일 자동 처분 · 신고
 
 /** v14 — 대화가 유일한 흐름이다. 수락이 글자를 열지 않고, AI 로의 이전은 상세 궁합의 동의 때다(운영자 지시 2026-11-04) */
 it('가입 안내가 대화 · 상세 궁합 줄을 그대로 싣고 옛 공개 줄은 없다', () => {
-  const text = noticeFor(
-    { endsOn: '2026-11-30', purgeBy: '2026-12-30', purgeWithinDays: 30 },
-    { name: '만세력 운영자', officer: '홍길동', contact: 'ops@example.com' },
-  )
+  const text = noticeFor({ name: '만세력 운영자', officer: '홍길동', contact: 'ops@example.com' })
     .flatMap((section) => section.lines)
     .join(' ');
 
@@ -413,9 +403,7 @@ it('v13 을 본 사람도 v14 를 다시 본다', () => {
  * 목적이 바뀐 내용 개정이라 v14 를 본 사람도 한 번 다시 읽는다.
  */
 describe('공개 서비스 · 카카오 로그인 (notice-v15)', () => {
-  const sections = noticeFor(
-    { endsOn: '2026-11-30', purgeBy: '2026-12-30', purgeWithinDays: 30 },
-    { name: '만세력 운영자', officer: '홍길동', contact: 'ops@example.com' },
+  const sections = noticeFor({ name: '만세력 운영자', officer: '홍길동', contact: 'ops@example.com' },
   );
   const text = JSON.stringify(sections);
 
@@ -423,9 +411,8 @@ describe('공개 서비스 · 카카오 로그인 (notice-v15)', () => {
     expect(noticeAckHolds('notice-v14')).toBe(false);
   });
 
-  it('초대 · 비공개 베타를 말하지 않는다 — 기간은 운영 기간이다', () => {
+  it('초대 · 비공개 베타를 말하지 않는다', () => {
     expect(text).not.toMatch(/비공개|초대|베타/);
-    expect(text).toContain('지금 정한 운영 기간은 2026년 11월 30일까지입니다.');
   });
 
   it('탈퇴 때 카카오에 연결 끊기를 요청하며 회원번호를 보낸다', () => {
@@ -438,15 +425,12 @@ describe('공개 서비스 · 카카오 로그인 (notice-v15)', () => {
  * 2026-11-05, ADR 0224 추기 · G-138). 받는 항목이 늘어 v15 를 본 사람도 한 번 다시 읽는다.
  */
 describe('카카오계정 이메일 · 계정 합침 (notice-v16)', () => {
-  const sections = noticeFor(
-    { endsOn: '2026-11-30', purgeBy: '2026-12-30', purgeWithinDays: 30 },
-    { name: '만세력 운영자', officer: '홍길동', contact: 'ops@example.com' },
+  const sections = noticeFor({ name: '만세력 운영자', officer: '홍길동', contact: 'ops@example.com' },
   );
   const text = JSON.stringify(sections);
 
   it('v15 를 본 사람도 v16 을 다시 본다', () => {
     expect(noticeAckHolds('notice-v15')).toBe(false);
-    expect(noticeAckHolds('notice-v16')).toBe(true);
   });
 
   it('카카오에서 회원번호와 이메일(필수)을 받고 그 쓰임을 말한다', () => {
@@ -468,10 +452,7 @@ describe('카카오계정 이메일 · 계정 합침 (notice-v16)', () => {
 
 /** v12 — 출생 정보를 고치는 자리는 둘이다: 내 것은 프로필 화면, 가족·친구 것은 저장한 사람 화면(#852 · #853). 옛 「내 사주 화면」은 없다 */
 it('권리 줄이 내 출생 정보와 가족·친구의 출생 정보를 고치는 화면을 따로 말한다', () => {
-  const text = noticeFor(
-    { endsOn: '2026-11-30', purgeBy: '2026-12-30', purgeWithinDays: 30 },
-    { name: '만세력 운영자', officer: '홍길동', contact: 'ops@example.com' },
-  )
+  const text = noticeFor({ name: '만세력 운영자', officer: '홍길동', contact: 'ops@example.com' })
     .flatMap((section) => section.lines)
     .join(' ');
 
@@ -484,9 +465,7 @@ it('권리 줄이 내 출생 정보와 가족·친구의 출생 정보를 고치
  * 계정의 이용 정지 기록 1년(ADR 0218). 받는 항목 · 보유기간이 달라졌으므로 기준도 오른다.
  */
 describe('애플 로그인 · 이용 정지 기록', () => {
-  const sections = noticeFor(
-    { endsOn: '2026-11-30', purgeBy: '2026-12-30', purgeWithinDays: 30 },
-    { name: '만세력 운영자', officer: '홍길동', contact: 'ops@example.com' },
+  const sections = noticeFor({ name: '만세력 운영자', officer: '홍길동', contact: 'ops@example.com' },
   );
   const lines = (title: string) => sections.find((section) => section.title === title)?.lines.join(' ') ?? '';
 
@@ -515,5 +494,57 @@ describe('애플 로그인 · 이용 정지 기록', () => {
   /* 기준은 그 뒤 v14(대화가 유일한 흐름)가 다시 올렸다 — v12 를 본 사람이 다시 본다는 것만 여기서 본다 */
   it('받는 항목 · 보유기간이 달라져 기준도 오른다 — v12 를 본 사람도 다시 본다', () => {
     expect(noticeAckHolds('notice-v12')).toBe(false);
+  });
+});
+
+/**
+ * v17 — 운영 기간 · Play 결제 · 구매 제한 기록 · 만 14세를 한 판으로(ADR 0225 추기 2026-11-06 · ADR 0230 추기 B · ADR 0231 · ADR 0234, #938).
+ * 보유기간과 받는 항목이 달라진 내용 개정이라 v16 을 본 사람도 한 번 다시 읽는다.
+ */
+describe('운영 기간 · Play 결제 · 구매 제한 기록 · 만 14세 (notice-v17)', () => {
+  const sections = noticeFor({ name: '만세력 운영자', officer: '홍길동', contact: 'ops@example.com' });
+  const lines = (title: string) => sections.find((section) => section.title === title)?.lines.join(' ') ?? '';
+  const titles = sections.map((section) => section.title);
+
+  it('v16 을 본 사람도 v17 을 다시 본다', () => {
+    expect(noticeAckHolds('notice-v16')).toBe(false);
+    expect(noticeAckHolds('notice-v17')).toBe(true);
+  });
+
+  it('만 14세 미만의 가입 · 개인정보를 받지 않는다는 줄이 첫 절 끝에 선다', () => {
+    const first = sections[0].lines;
+    expect(first[first.length - 1]).toBe(UNDER_14_PRIVACY_LINE);
+  });
+
+  it('Play 결제는 Google 이 처리하고 카드 번호를 받지 않으며, 받는 값과 쓰임을 말한다', () => {
+    const pay = lines('풀이권을 결제하실 때');
+    expect(pay).toContain('Google Play 가 처리합니다');
+    expect(pay).toContain('카드 번호 등 결제수단 정보는 저희가 받지 않습니다');
+    expect(pay).toContain('구매 확인 값과 Google 주문 번호');
+  });
+
+  /** 항목은 #1048 의 `retention.store_purchase_restriction` 칸과 하나씩 맞췄다 — 칸이 바뀌면 이 줄도 바뀐다 */
+  it('구매 제한 기록의 대상 · 목적 · 항목 · 1년을 이용 정지 기록 곁에 따로 적는다', () => {
+    const kept = lines('구매 제한 기록은 따로 둡니다');
+    expect(kept).toContain('풀이권 구매가 제한된 상태에서 탈퇴하신 계정은');
+    expect(kept).toContain('탈퇴 처리일부터 1년');
+    expect(kept).toContain('구매 제한이 없거나 풀린 계정의 기록은 남기지 않습니다');
+    for (const item of [
+      '로그인 이메일',
+      '로그인 수단과 그 수단의 계정 식별값',
+      '구매 제한 사유의 구분과 제한한 시각',
+      '구매 제한을 건 운영자',
+      '환불 시각',
+      '환불 사유와 환불을 시작한 쪽 · 환불 종류의 구분',
+      '회수한 풀이권 수와 회수하지 못한 풀이권 수',
+      '탈퇴 처리일',
+    ]) {
+      expect(kept, item).toContain(item);
+    }
+    expect(titles.indexOf('구매 제한 기록은 따로 둡니다')).toBe(titles.indexOf('이용 정지 기록은 따로 둡니다') + 1);
+  });
+
+  it('파기는 일반 규칙이고 법정 보존은 분리 보관이다', () => {
+    expect(lines('파기 절차와 방법')).toContain('법령에 따라 보존해야 하는 기록은 그 기간 동안 다른 정보와 분리해 보관합니다');
   });
 });

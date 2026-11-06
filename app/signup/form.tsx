@@ -8,11 +8,12 @@ import {
   NOTICE_ACK_NOTE,
   OPTIONAL_CONSENTS,
   OPTIONAL_CONSENT_NOTE,
+  SIGNUP_AGE_LABEL,
   SIGNUP_LABEL,
   SIGNUP_NOTICE_DISCOVERY,
+  SIGNUP_NOTICE_KEEP,
   SIGNUP_NOTICE_USE,
   signupGap,
-  signupNoticeDates,
   type SignupField,
 } from '@/src/lib/consent';
 import {
@@ -66,8 +67,6 @@ export function SignupForm({
   needsName,
   version,
   scheduleId,
-  endsOn,
-  purgeBy,
 }: {
   /** 가입을 마치고 갈 곳 — 관문이 `next` 로 들려 보낸 목적지(ADR 0128) */
   returnTo: string;
@@ -76,10 +75,9 @@ export function SignupForm({
   needsName: boolean;
   version: string;
   scheduleId: number;
-  endsOn: string;
-  purgeBy: string;
 }) {
   const [nickname, setNickname] = useState('');
+  const [fourteen, setFourteen] = useState(false);
   const [acknowledged, setAcknowledged] = useState(false);
   const [chosen, setChosen] = useState<Record<string, boolean>>({
     improvement: false,
@@ -103,17 +101,17 @@ export function SignupForm({
   */
   const [tried, setTried] = useState(false);
   const nicknameField = useRef<HTMLInputElement>(null);
+  const ageField = useRef<HTMLInputElement>(null);
   const ackField = useRef<HTMLInputElement>(null);
-  const gap = signupGap({ nicknameGap: missing, acknowledged });
+  const gap = signupGap({ nicknameGap: missing, fourteen, acknowledged });
   const shownGap = tried ? gap : null;
-  const dates = signupNoticeDates(endsOn, purgeBy);
   /** 「중복 확인」을 눌렀는데 닉네임이 규칙에 안 맞았나 — 그 말이 닉네임 칸 아래에 선다 */
   const [checkTried, setCheckTried] = useState(false);
   const refusedHere = (field: SignupField) => failure !== null && failure.field === field;
-  const invalid = (field: 'nickname' | 'ack') =>
+  const invalid = (field: 'nickname' | 'age' | 'ack') =>
     shownGap?.field === field
       ? { 'aria-invalid': true, 'aria-describedby': 'signup-gap' }
-      : field !== 'ack' && refusedHere(field)
+      : field === 'nickname' && refusedHere(field)
         ? { 'aria-invalid': true, 'aria-describedby': `signup-${field}-refused` }
         : field === 'nickname' && checkTried && missing !== null
           ? { 'aria-invalid': true, 'aria-describedby': 'signup-nickname-check' }
@@ -142,7 +140,7 @@ export function SignupForm({
     setFailure(null);
     if (gap !== null) {
       setTried(true);
-      ({ nickname: nicknameField, ack: ackField })[gap.field].current?.focus();
+      ({ nickname: nicknameField, age: ageField, ack: ackField })[gap.field].current?.focus();
       return;
     }
     setTried(false);
@@ -257,16 +255,24 @@ export function SignupForm({
         </div>
         <ul className="mt-1 flex list-disc flex-col gap-1.5 pl-5 text-sm leading-6 text-secondary marker:text-muted">
           <li>{SIGNUP_NOTICE_USE}</li>
-          <li>
-            {dates.parts[0]}
-            <strong className="font-semibold text-foreground">{dates.ends}</strong>
-            {dates.parts[1]}
-            <strong className="font-semibold text-foreground">{dates.purge}</strong>
-            {dates.parts[2]}
-          </li>
+          <li>{SIGNUP_NOTICE_KEEP}</li>
           <li>{SIGNUP_NOTICE_DISCOVERY}</li>
         </ul>
       </div>
+
+      {/* 만 14세 이상 — 필수 확인(ADR 0231). 나이를 재지 않고 스스로 밝힌다 */}
+      <label htmlFor="signup-age" className={BOX}>
+        <input
+          type="checkbox"
+          id="signup-age"
+          ref={ageField}
+          {...invalid('age')}
+          checked={fourteen}
+          onChange={(event) => setFourteen(event.target.checked)}
+          className="mt-0.5 size-5 shrink-0 accent-[var(--accent)]"
+        />
+        <span className="block text-sm font-semibold">{SIGNUP_AGE_LABEL}</span>
+      </label>
 
       <label htmlFor="notice-ack" className={BOX}>
         <input

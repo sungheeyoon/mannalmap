@@ -9,7 +9,7 @@ import {
   PRIVACY_RIGHTS_LINES,
   PRIVACY_RIGHTS_TITLE,
   noticeFor,
-  privacyPurgeNote,
+  PRIVACY_CHANGE_NOTE,
 } from '@/src/lib/consent';
 
 import { supabaseOnServer } from '../auth/server-client';
@@ -43,12 +43,11 @@ export default async function PrivacyPage() {
   const schedule = await currentSchedule(supabase);
 
   /*
-    **둘 다 있어야 안내가 선다.** 날짜가 없으면 보유기간을 말할 수 없고, 처리자와
-    연락처가 없으면 열람·정정·삭제를 어디에 요구하는지 말할 수 없다 — 어느 쪽이
-    비어도 지키는 것이 없는 문장만 남는다.
+    **일정 줄이 있어야 안내가 선다.** 처리자와 연락처가 그 줄에 있고, 없으면 열람·정정·삭제를 어디에 요구하는지
+    말할 수 없다. 줄의 날짜는 더 안내에 서지 않는다(`notice-v17`, ADR 0234).
   */
   const ready = schedule.ok ? schedule.value : null;
-  const sections = ready === null ? [] : noticeFor(ready.dates, ready.operator);
+  const sections = ready === null ? [] : noticeFor(ready.operator);
   /* 목차와 조항 제목이 같은 글자를 쓴다 — 한쪽만 고쳐지면 목차가 없는 조항을 가리킨다 */
   const titles = [...sections.map((section) => section.title), PRIVACY_OPTIONAL_TITLE, PRIVACY_RIGHTS_TITLE];
 
@@ -134,7 +133,7 @@ export default async function PrivacyPage() {
             </ul>
           </section>
 
-          <p className="px-1 text-small leading-6 text-secondary">{privacyPurgeNote(ready.dates.purgeWithinDays)}</p>
+          <p className="px-1 text-small leading-6 text-secondary">{PRIVACY_CHANGE_NOTE}</p>
         </>
       )}
 

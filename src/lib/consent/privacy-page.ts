@@ -12,5 +12,8 @@ export const PRIVACY_RIGHTS_LINES = [
   '문의는 위 「권리와 행사 방법」의 연락처로 보내 주시면 됩니다. 운영자가 직접 답합니다.',
 ] as const;
 
-export const privacyPurgeNote = (purgeWithinDays: number): string =>
-  `정보 파기 시점은 위 운영 기간의 끝을 기준으로 합니다(끝난 후 ${purgeWithinDays}일 이내). 운영 기간이 바뀌면 이 방침을 다시 알려 드립니다.`;
+/**
+ * 처리방침 끝줄 — 운영 기간의 끝을 파기 기준으로 삼던 줄(`notice-v15`)을 고정 기간과 함께 지웠다(`notice-v17`, ADR 0234). 남는 것은
+ * 바뀔 때 알린다는 사실이다 — 내용이 바뀐 판은 기준을 올려 다시 확인을 받는다(ADR 0095). 며칠 전에 알릴지는 운영자 답을 기다린다(#938).
+ */
+export const PRIVACY_CHANGE_NOTE = '이 방침이 바뀌면 서비스 안에서 알려 드리고, 중요한 내용이 바뀌면 다시 확인을 받습니다.';

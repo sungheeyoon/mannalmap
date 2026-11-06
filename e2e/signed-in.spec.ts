@@ -3672,6 +3672,7 @@ test.describe('로그인 · 가입이 목적지를 든다', () => {
     await page.getByLabel('닉네임').fill(nickname);
     await page.getByRole('button', { name: '중복 확인' }).click();
     await expect(page.getByText('사용할 수 있는 닉네임입니다.')).toBeVisible();
+    await page.getByRole('checkbox', { name: '만 14세 이상입니다' }).check();
     await page.getByRole('checkbox', { name: /위 내용을 확인/ }).check();
     await page.getByRole('button', { name: '가입하고 시작하기' }).click();
     return nickname;

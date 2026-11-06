@@ -6,7 +6,7 @@
  *
  * 1. **앱이 부르는 함수 · 표가 그 세션에 열려 있는가** — 권한 거절 · 없는 칸 · 앱이 읽는 칸의 모양. `MOBILE_RPCS` 는 소스와 견준다
  * 2. **남의 행이 안 보이는가**
- * 3. **미가입 · 정지 · 탈퇴 신청 · 베타 종료에서 무엇이 되는가**
+ * 3. **미가입 · 정지 · 탈퇴 신청 · 일정 줄의 종료일이 지난 뒤에 무엇이 되는가**(종료일은 서비스를 끝내지 않는다 — ADR 0234)
  * 4. **앱의 문** — 토큰 없음 · 낡음 · 남의 id, 모델 없이 시도가 어디까지 가는가
  * 5. **흐름 하나** — 가입 → 저장 → 수정 → 참여 끔 → 다시 켬 → 앱을 껐다 켠 세션으로 복귀
  *
@@ -734,7 +734,7 @@ try {
     sql('update public.match_open_switch set open = true, changed_at = now()');
   }
 
-  /* ---------- 베타 종료 ---------- */
+  /* ---------- 일정 줄의 종료일이 지난 뒤 — 서비스는 끝나지 않는다(ADR 0234). 새 줄이라 다시 확인할 뿐이다 ---------- */
   const endedId = sql(`insert into public.beta_schedule (ends_on, note, operator_name, operator_officer, operator_contact)
     values ((now() at time zone 'Asia/Seoul')::date - 3, '앱 검사 — 끝남', '만세력 운영자', '검사 담당', 'ops@example.com') returning id`);
   try {
@@ -744,11 +744,11 @@ try {
       note(`${method} ${path}`, '베타 종료', said(answer));
     }
     const closedShelf = await door('/api/mobile/readings', { token: cToken });
-    check('종료: 읽기 문은 closed', closedShelf.status === 403 && closedShelf.body?.refused === 'closed', said(closedShelf));
+    check('종료일 뒤: 읽기 문은 closed 가 아니다', closedShelf.body?.refused !== 'closed', said(closedShelf));
     const closedPress = await door('/api/mobile/reading', { token: cToken, method: 'POST', json: { target: selfTarget, requestKey: randomUUID() } });
-    check('종료: 누름도 closed', closedPress.status === 403 && closedPress.body?.refused === 'closed', said(closedPress));
+    check('종료일 뒤: 누름도 closed 가 아니다', closedPress.body?.refused !== 'closed', said(closedPress));
     const closedOff = await door('/api/mobile/me/participation', { token: cToken, method: 'POST', json: { on: false } });
-    check('종료: 참여 끄기는 열려 있다 — 고지의 약속', closedOff.status === 200 && closedOff.body?.ok === true, said(closedOff));
+    note('POST 참여 끄기', '베타 종료', said(closedOff));
     const closedOn = await door('/api/mobile/me/participation', { token: cToken, method: 'POST', json: { on: true } });
     note('POST 참여 켜기', '베타 종료', said(closedOn));
     const closedPhotoMode = await door('/api/mobile/me/photo', { token: cToken });
@@ -761,11 +761,11 @@ try {
       send_chat_message: () => a.client.rpc('send_chat_message', { p_match_id: matchId, p_body: '끝', p_client_id: randomUUID() }),
     })) note(name, '베타 종료', shapeOf(await write()));
     const closedManaged = await c.client.rpc('create_managed_person', momArgs);
-    check('종료: 사람을 못 만든다', closedManaged.error?.code === '42501' && closedManaged.error.message === '비공개 테스트가 끝났습니다.', shapeOf(closedManaged));
+    check('종료일 뒤: 사람 만들기가 종료로 거절되지 않는다', closedManaged.error?.message !== '비공개 테스트가 끝났습니다.', shapeOf(closedManaged));
     const cSelf = sql(`select self_person_id from public.app_user where id = '${c.id}'`);
     const { p_local_label: _label, p_note: _note, ...momInput } = momArgs;
     const closedEdit = await keyed.rpc('edit_person_input', { p_user_id: c.id, p_person_id: cSelf, ...momInput });
-    check('종료: 입력을 못 고친다', closedEdit.error?.code === '42501' && closedEdit.error.message === '비공개 테스트가 끝났습니다.', shapeOf(closedEdit));
+    check('종료일 뒤: 입력 고치기가 종료로 거절되지 않는다', closedEdit.error?.message !== '비공개 테스트가 끝났습니다.', shapeOf(closedEdit));
   } finally {
     sql(`delete from public.beta_schedule where id = ${endedId}`);
   }

@@ -27,17 +27,18 @@ import { withReturnPath } from './return-path';
  * ## 여기서 하는 일은 여전히 길을 가리키는 것이다
  *
  * 막는 일은 DB 가 한다 — `create_self_person` 과 `create_managed_person` 이 가입을 묻고,
- * `is_active_account()` 가 종료일을 본다. 이 함수가 틀려도 열리는 문은 없다.
+ * `is_active_account()` 가 계정 상태를 본다. 이 함수가 틀려도 열리는 문은 없다.
  *
  * ## 문은 **둘**이다 (ADR 0042)
  *
  * 셋이었다 — 안내 · 이름 · (그리고 종료). 안내와 이름이 한 폼으로 합쳐지면서
- * (`/signup`) 남은 것은 **베타가 끝났나**와 **가입이 끝났나** 둘뿐이다.
+ * (`/signup`) 남은 것은 **서비스가 끝났나**와 **가입이 끝났나** 둘뿐이다. 서비스의 끝은 일정 줄의 종료일이 아니라
+ * `SERVICE_ENDED_ON` 이 말한다(ADR 0234).
  *
  * 「가입이 끝났나」에는 **지금 안내를 확인했는가**가 들어 있다. 안내가 새 판본이 되거나
- * 운영자가 일정을 옮기면 이미 가입한 사람도 다시 그 폼을 지난다 — 그때 폼은 코드와
- * 이름 칸을 안 세우고 확인만 받는다. 이 조건을 빼면 「11월에 지운다」를 읽고 확인한
- * 사람을 이듬해까지 들고 있게 된다(ADR 0024 가 막으려던 것이 그것이다).
+ * 운영자가 일정 줄을 새로 넣으면 이미 가입한 사람도 다시 그 폼을 지난다 — 그때 폼은 코드와
+ * 이름 칸을 안 세우고 확인만 받는다. 이 조건을 빼면 옛 운영자 정보를 읽고 확인한 사람을
+ * 새 줄 아래에서 들고 있게 된다.
  */
 
 /** 계정에서 관문이 보는 세 칸 */
@@ -90,12 +91,17 @@ const gated = (path: string): boolean =>
   path === '/compat' || ((path === '/me' || path.startsWith('/me/')) && !path.startsWith('/me/photo/'));
 
 /**
- * 베타가 끝났는가 — **한국 시각의 그날 끝까지**가 종료일이다.
+ * **서비스를 실제로 끝낸 날 — 끝내지 않았으면 `null`**(ADR 0225 추기 2026-11-06 · ADR 0234).
  *
- * 날짜만 견주면 종료일 당일 오전에 이미 끝난 것이 된다.
+ * 관문은 일정 줄의 종료일(`beta_schedule.ends_on`)을 서비스 종료로 읽었다 — 그 날이 지나면 모두를 `/closed` 로 보냈다. 공개 고지가
+ * 고정 운영 기간을 지운 뒤(`notice-v17`) 그 날은 아무것도 끝내지 않는다. 서비스를 끝내는 일은 약관 제17조의2 의 30일 공지와 정산을
+ * 거치는 결정이라 배포가 함께 간다 — 그때 이 값과 DB 의 `public.beta_is_over()`(`20270114095000` 부터 늘 거짓)를 함께 고친다.
  */
-export const betaIsOver = (dates: BetaDates, now: Date): boolean =>
-  new Date(`${dates.endsOn}T23:59:59+09:00`) < now;
+export const SERVICE_ENDED_ON: string | null = null;
+
+/** 서비스가 끝났는가 — **한국 시각의 그날 끝까지**가 마지막 날이다. 날짜만 견주면 그날 오전에 이미 끝난 것이 된다 */
+export const serviceIsOver = (now: Date, endedOn: string | null = SERVICE_ENDED_ON): boolean =>
+  endedOn !== null && new Date(`${endedOn}T23:59:59+09:00`) < now;
 
 /**
  * 어디로 보낼까 — 보낼 곳이 없으면 `null`.
@@ -114,6 +120,7 @@ export function gateFor(
   account: GateAccount | null,
   notice: GateNotice | null | typeof NOTICE_UNREAD,
   now: Date,
+  endedOn: string | null = SERVICE_ENDED_ON,
 ): string | null {
   const path = location.split('?')[0];
   if (!gated(path)) return null;
@@ -122,27 +129,24 @@ export function gateFor(
   /**
    * **일정을 못 읽었으면 가입했는가만 본다**(ADR 0078).
    *
-   * 종료 여부와 안내 판본 · 본 줄 대조는 **일정이 있어야 물을 수 있는 것**이라 건너뛴다. 못 읽은
+   * 안내 판본 · 본 줄 대조는 **일정이 있어야 물을 수 있는 것**이라 건너뛴다. 못 읽은
    * 것을 「바뀌었다」로 읽으면 일정 문 한 번의 실패가 가입을 마친 사람 전원을 `/signup` 으로
    * 튕긴다 — 두 값을 한 `null` 로 합쳤을 때 실제로 그랬다. 건너뛰어 놓치는 것은 이 요청 한 번의
-   * 재확인과 종료 안내뿐이고, 다음 요청이 일정을 읽으면 다시 묻는다. 여기는 접근 판정을 안 하므로
-   * (종료는 `is_active_account()` 가 막는다) 지나가게 해서 열리는 문은 없다.
+   * 재확인뿐이고, 다음 요청이 일정을 읽으면 다시 묻는다. 여기는 접근 판정을 안 하므로
+   * 지나가게 해서 열리는 문은 없다.
    *
    * 가입 전인 사람은 일정이 무엇이든 가입을 안 끝냈으므로 가입 화면으로 보낸다 — 그 화면은 같은
    * 문을 못 읽으면 폼 대신 못 읽은 까닭을 세운다.
    */
-  if (notice === NOTICE_UNREAD) return account.signedUp ? null : signupFor(location);
-
   /**
-   * **끝났으면 여기서 끝난다.**
+   * **서비스가 끝났으면 여기서 끝난다** — 일정을 읽었든 못 읽었든 같다. 일정 줄의 날짜는 묻지 않는다(ADR 0234).
    *
-   * 그래도 계정 관리는 연다. 종료일과 파기 사이는 자료가 아직 남아 있는 기간이고,
-   * 그때야말로 철회와 삭제 요청이 필요하다 — 「끝났다」가 「이제 아무것도 못 한다」가
-   * 되면 안 된다.
+   * 그래도 계정 관리는 연다. 끝난 뒤에도 자료가 남아 있는 동안 철회와 삭제 요청이 필요하다 — 「끝났다」가
+   * 「이제 아무것도 못 한다」가 되면 안 된다.
    */
-  if (notice !== null && betaIsOver(notice.dates, now)) {
-    return path.startsWith('/me/settings') ? null : '/closed';
-  }
+  if (serviceIsOver(now, endedOn)) return path.startsWith('/me/settings') ? null : '/closed';
+
+  if (notice === NOTICE_UNREAD) return account.signedUp ? null : signupFor(location);
 
   /**
    * **가입이 끝났는가** — 코드로 들어왔고, 이름이 있고, **지금** 안내를 확인했는가.
