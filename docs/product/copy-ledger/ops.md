@@ -35,6 +35,8 @@
 
 | 회원 화면 「풀이권 출처」의 칸 `app/ops/members/page.tsx` | 받은 · 구매한 · 사용 · 남은 | 지급 · 구매 · 사용 · 잔여 | 「구매」 · 「잔여」는 위 줄. 「지급」은 카카오페이지 「무료로 지급받은 캐시」(제9조의2 ①, 위 주소) — 출처: 포스타입 이용약관 <https://www.postype.com/tos> · 카카오페이지 유료서비스 이용약관 <https://page.kakao.com/policy/terms-paid> (확인 2026-11-06) |
 | 회원 화면 칩 — 유료 구매에서 빠진 수(운영자 환불 + 스토어 환불 회수) | 환불한 풀이권 N장 | 환불 · 회수 N장 | 위 「환불」 · 「회수」 — 스토어 환불이 돈 없이 회수한 수가 함께 들어 「환불」만으로는 틀린 말이었다 — 출처: 포스타입 이용약관 <https://www.postype.com/tos> · 카카오페이지 유료서비스 이용약관 <https://page.kakao.com/policy/terms-paid> (확인 2026-11-06) |
+| 회원 화면 칩 — 운영자 환불이 준비된 채 확정 전인 수 `app/ops/members/page.tsx` (2026-11-07) | 환불 확보 중 N장 | 환불 진행 중 N장 | 실사례 없음 — 「확보」는 내부 말(운영자 2026-11-07). 같은 수를 주문 화면이 이미 「환불 진행 중」(판 머리 · 풀이권 줄)으로 부른다 — 한 사실 한 표기. 가장 가까운 사례: Play Console 「환불 처리」(<https://support.google.com/googleplay/android-developer/answer/2741495?hl=ko>, 확인 2026-11-06) |
+| 주문 카드의 「유효기간 YYYY-MM-DD까지」 줄 `app/ops/orders/order-view.tsx` (2026-11-07) | 유효기간 2031-11-06까지(산 날부터 5년) | (줄 없음) | 실사례 없음 — 산 풀이권은 무기한(ADR 0212). 앱 결제 화면도 같은 까닭으로 5년 줄을 싣지 않았다(`docs/product/copy-ledger/credits.md` credits-11). 약관 · 환불정책의 5년 문장은 #938 몫으로 그대로 |
 | 회원 화면 회수가 막힌 까닭 `app/ops/members/credit-grant.ts` | 회수할 무상 지급분이 없습니다 — 예약 중 N장은 풀린 뒤 회수합니다. | 회수할 무상 지급분이 없습니다 — 사용 중 N장은 반환된 뒤 회수합니다. | 위 「사용 중」 · 「반환」 — 출처: 포스타입 이용약관 <https://www.postype.com/tos> · 카카오페이지 유료서비스 이용약관 <https://page.kakao.com/policy/terms-paid> (확인 2026-11-06) |
 | 설문 화면 `app/ops/survey/page.tsx` — 머리 설명 · 소제목 · 표 머리 · 빈 값 | 판본과 모델 · 판본별 · 판본 · 판본 없음 | 프롬프트 버전과 모델 · 버전별 · 버전 · 버전 없음 | Play Console 도움말 「앱 버전을 생성, 준비 및 출시」(<https://support.google.com/googleplay/android-developer/answer/9859348?hl=ko>, 확인 2026-11-06). 용어집도 화면에 「판본」을 쓰지 않는다(`docs/context/chart.md`) |
 

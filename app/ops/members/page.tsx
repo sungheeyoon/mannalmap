@@ -211,7 +211,7 @@ function Credits({
       </dl>
       <ul aria-label="그 밖의 수" className="flex flex-wrap gap-2 text-xs">
         <Chip>사용 중 {credits.reserved}장</Chip>
-        <Chip>환불 확보 중 {credits.held}장</Chip>
+        <Chip>환불 진행 중 {credits.held}장</Chip>
         <Chip>환불 · 회수 {credits.bought.refunded}장</Chip>
         <Chip>풀이 {credits.usedAll}회</Chip>
         {credits.outsideUsed > 0 && <Chip>몫 밖 풀이 {credits.outsideUsed}회</Chip>}

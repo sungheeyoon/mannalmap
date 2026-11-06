@@ -1,5 +1,5 @@
 import { rpcArgs, type RpcRow } from '@/src/lib/db';
-import { readingBundleValidUntil, refundOwed } from '@/src/lib/reading/bundle';
+import { refundOwed } from '@/src/lib/reading/bundle';
 
 import { supabaseOnServer } from '../../auth/server-client';
 import { read, unread, type SkippableRead } from '../../db-error';
@@ -49,8 +49,6 @@ export type OrderLine = {
     readonly reserved: number;
     /** 지금 걷을 수 있는 회차 — 쓴 것 · 예약 중 · 진행 중인 확보를 뺐다 */
     readonly unused: number;
-    /** 유효기간이 끝나는 날(서울, `YYYY-MM-DD`, ADR 0173) */
-    readonly validUntil: string;
   } | null;
 };
 
@@ -127,7 +125,6 @@ export const orderLineOf = (row: RpcRow<'operator_reading_refund_basis'>): Order
             used: row.used,
             reserved: row.reserved,
             unused: row.unused,
-            validUntil: readingBundleValidUntil(new Date(approvedAt)),
           },
   };
 };

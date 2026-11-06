@@ -44,8 +44,6 @@ export function Asked({ line, hold }: { line: OrderLine; hold: RefundHold | null
               {bundle.takenByStore > 0 && ` · 스토어 환불 회수 ${bundle.takenByStore}`}
               {hold !== null && ` · 환불 진행 중 ${hold.credits}`} · 잔여 <strong>{bundle.unused}</strong>
             </dd>
-            <dt className="text-muted">유효기간</dt>
-            <dd className="tabular-nums">{bundle.validUntil}까지</dd>
           </>
         )}
       </dl>
