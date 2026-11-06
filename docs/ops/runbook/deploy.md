@@ -34,7 +34,7 @@ npm run db:push               # 밀린 것 전부를 원격에 적용한다 — 
 앱의 빌드 · 제출 차례는 `docs/ops/runbook/mobile-release.md` 다. 머지는 운영에 아무것도 안 올린다. 묶음이 끝났을 때(하루 한 번, 또는 한 라운드를 닫을 때) 한 번 올린다.
 
 0. **올리기 전에.** 올리라고 한 변경은 그 PR 이 main 에 들면 올린다(ADR 0152). 묶음이면 머지를 기다리는 PR 이 없는지(`gh pr list`),
-   `node scripts/deploy-range.mjs` 가 `wait` 면 `main` CI 가 초록인지(ADR 0159), 지난
+   `node scripts/deploy-range.mjs` 가 `wait` 면 `main` CI 가 초록인지(ADR 0159 — #1043 뒤로는 full 실행도 `mobile-flow` 가 skipped 라 `main-red.mjs` 의 `measuredEverything` 이 거짓이고 답이 늘 `wait` 다, 2026-11-07. 그 머리의 verify 가 tier `full` · 초록이면 이 칸을 채운 것이다), 지난
    배포 뒤 `supabase/migrations/**` 가 바뀌었으면 **DB 를 먼저** 올리고 확인했는지(아래 규약 넷의 2 · 4) 본다.
    **운영에 아직 안 올린 마이그레이션과 그 차례는 간극 대장의 줄이 적는다 — 2026-11-07 에는 #1048 하나(G-142, 처리방침 게시 뒤에만 `db push`, ADR 0098)이고, 그 밖의 마이그레이션은 모두 원격에 있다.** 1 은
    출력의 `head` 를 그대로 올린다. 한도 창의 남은 자리를 본다 — 모자라면 기다린다. `--from <운영 SHA>` 가 `docs-only` 면 안 올린다(운영 SHA 는 근거가 아니다)
@@ -51,7 +51,7 @@ npm run db:push               # 밀린 것 전부를 원격에 적용한다 — 
 2. **배포 커밋 = 0 의 `head` 인지 본다** — `vercel api /v13/deployments/<배포 ID 나 배포 URL 의 호스트>` 의
    `meta.gitCommitSha`(또는 대시보드의 Source 커밋)가 그 SHA 여야 한다. `vercel inspect`(`--format json` 도)에는 커밋 SHA 가
    없다(CLI 62.2.0, #704). 다르면 판정하지 않은 코드가 Production 이다 — 1 로 돌아간다
-3. **Ready 를 본다** — `vercel ls saju` 에서 그 배포가 `● Ready` · `Production` 이고, `vercel inspect` 의 Aliases 에
+3. **Ready 를 본다** — 링크된 워크트리의 `vercel ls --prod` 에서(Vercel 프로젝트 이름이 `mannalmap` 으로 바뀌어 `vercel ls saju` 는 `project_not_found` 다, 2026-11-07) 그 배포가 `● Ready` · `Production` 이고, `vercel inspect` 의 Aliases 에
    운영 주소가 선다
 4. **smoke — 다섯 화면.** 각각 응답 200 으로 제 제목(그 화면의 제목 — 제목이 있기만 한 것이 아니다, 2026-10-18)이 서고 빈 화면 · 브라우저 콘솔의 CSP 위반이 없고 강제 CSP 헤더가 서야 통과다.
    **`npm run smoke:deploy`** 가 운영 주소(`docs/ops/runbook/domain.md` 맨 위의 그 줄을 읽는다 — 다른 주소면 `-- --url <주소>` 하나만 받고, 꼴이 틀리면 끝 코드 1)에 대고
