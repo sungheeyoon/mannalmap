@@ -338,7 +338,7 @@ update retention.reading_payment set hold_reason = null, held_at = null where or
    | `reading_credits_5` | 풀이권 5장 | 19,900원 |
    | `reading_credits_20` | 풀이권 20장 | 59,000원 |
 
-   소비형이다 — 서버가 소비한다. 다른 나라의 가격은 Play 가 바꿔 매기지만 장부는 위 원화 값을 적는다. 판매 국가는 대한민국만 고르기를 권한다(장부 · 고지가 원화 전제)
+   소비형이다 — 서버가 소비한다. **판매 국가는 대한민국만 고른다**(운영자 답 2026-11-06, ADR 0230 — 장부 · 고지가 원화 전제). 상품의 가격 · 국가와 앱의 국가/지역(Production → Countries / regions) 둘 다
 3. **결제 검증용 서비스 계정** — Google Cloud → IAM & Admin → Service Accounts → 새 계정 → Keys → JSON. 같은 프로젝트에서 **Google Play Android Developer API** 를 켠다.
    Play Console → Users and permissions → Invite → 그 이메일 → 이 앱에 **View financial data, orders, and cancellation survey responses** · **Manage orders and subscriptions** 둘만.
    키를 Vercel 의 `GOOGLE_PLAY_SERVICE_ACCOUNT_JSON` 에 — **운영자**
@@ -363,7 +363,7 @@ update retention.reading_payment set hold_reason = null, held_at = null where or
 | 6 | 산 계정을 탈퇴시킨 뒤 전액 환불 | 무효 결과 `departed`, `retention.reading_refund_after_leave` 에 사유 `store` 1줄 |
 | 7 | 지급이 안 선 구매(서버 키를 비운 Preview 등)를 소비하지 않은 채 둔다 | 3일 뒤 Google 이 돌려주고 무효가 4 처럼 적힌다 — 날짜가 걸려 따로 적는다 |
 | 8 | 구매 제한을 건 계정으로 결제를 시도 | 앱에 「지금은 풀이권을 구매할 수 없어요.」, 결제창이 안 열린다 |
-| 9 | 운영자 환불 — 확보(예: 3장 묶음에서 1장 · 청약철회) → Play Console 에서 **일부 환불** → 확정 | 콘솔의 일부 환불 칸이 **세전 금액**인지 본다 — 세전이면 확보 금액 ÷ 1.1 을 넣고, 이용자에게 돌아간 금액이 확보 금액과 같은지 Play 주문의 환불 내역으로 본다. 다르면 멈추고 조율자에게 |
+| 9 | 운영자 환불 — 확보(예: 3장 묶음에서 1장 · 청약철회) → Play Console 에서 **일부 환불** → 확정 | 콘솔의 일부 환불 칸이 **세전 금액**인지 본다 — 세전이면 확보 금액 ÷ 1.1 을 넣고, 이용자에게 돌아간 금액이 확보 금액과 같은지 Play 주문의 환불 내역으로 본다. 다르면 멈추고 조율자에게. 본 결과로 운영자 환불 2 의 금액 넣는 법을 고정한다(운영자 답 2026-11-06) |
 
 **운영자 환불(이용자가 우리에게 청한 것) — 세 걸음 그대로, 콘솔이 Play Console 이다.** 금액은 DB 의 셈(ADR 0148 · 0192)이다.
 
@@ -394,7 +394,7 @@ npm run db:remote -- --purpose "스토어 환불 반복 계정" \
   "select left(user_id::text, 8) as 계정, count(*) as 환불, sum(credits_kept) as 쓰고돌려받은장수, max(recorded_at) as 마지막 from public.store_purchase_void group by user_id having count(*) >= 2 order by 2 desc limit 50"
 ```
 
-**구매 제한 걸기 · 풀기 — break-glass**(회원 화면 단추는 아직 없다, ADR 0230 「답을 기다리는 것」 1). 무상 지급과 같은 꼴이다 — 대장에 먼저 적고,
+**구매 제한 걸기 · 풀기 — break-glass**(회원 화면 단추는 반복 악용이 실제로 보인 뒤에 세운다 — 운영자 답 2026-11-06, ADR 0230). 무상 지급과 같은 꼴이다 — 대장에 먼저 적고,
 moderation.md 「SQL 실행 전 확인」의 셋을 밟고, 요청 번호(`select gen_random_uuid()`)를 하나 지어 적는다. 갈래는 걸 때 `refund_abuse` · `other`, 풀 때 `appeal` · `mistake` · `other`, 메모 필수 200자.
 
 ```bash
@@ -416,7 +416,7 @@ SQL
 
 **통지 · 크론이 이상하면.** Vercel 로그의 `play notification: refused <까닭>`(403 — audience · 서비스 계정이 Vercel 값과 다르다), `not configured`(503 — 셋 중 하나가 비었다),
 `store ledger: <문> <코드>`(DB), `store purchase: consume failed <상태>`(소비 실패 — 다음에 다시 소비한다), `store-voided <건수>`(대조가 새로 적은 무효). Pub/Sub 구독의
-「Unacked messages」가 쌓이면 문이 503 을 주고 있다는 뜻이다. 차지백 검토 요청(`refund review`)은 받기만 한다 — 답하지 않는다(ADR 0230 「답을 기다리는 것」 3).
+「Unacked messages」가 쌓이면 문이 503 을 주고 있다는 뜻이다. 차지백 검토 요청(`refund review`)은 받기만 한다 — 답하지 않는다(운영자 답 2026-11-06, ADR 0230).
 
 #### 결제 알림 · 결제 이상 알림 (G-23 ⑥ · G-110 ④)
 
