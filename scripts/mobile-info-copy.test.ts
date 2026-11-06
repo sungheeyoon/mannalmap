@@ -63,3 +63,20 @@ describe('앱 안내 화면의 글자', () => {
     for (const route of ['privacy', 'terms', 'refund']) expect(read(`mobile/src/app/${route}.tsx`)).toContain('<PoliciesLink />');
   });
 });
+
+/**
+ * **앱 도움말에 빈 묶음이 서지 않는다.** 앱은 웹의 물음 하나(`without-sign-in`, ADR 0213)를 빼는데, 「시작하기」는 그 물음 하나뿐이라
+ * 제목과 빈 판만 남았다(2026-11-06 에뮬레이터 점검). 빼는 물음 때문에 비는 묶음이 있으면 화면이 묶음째 걷어야 한다.
+ */
+describe('앱 도움말의 묶음', () => {
+  it('빼는 물음으로 비는 묶음이 있으면 칩과 판 모두에서 걷는다', async () => {
+    const { HELP_GROUPS } = await import('../src/lib/brand/guide');
+    const screen = read('mobile/src/app/help.tsx');
+    const hidden = [...screen.matchAll(/const SIGNED_OUT_QUESTION = '([^']+)'/g)].map((match) => match[1]);
+    expect(hidden).toEqual(['without-sign-in']);
+    const emptied = HELP_GROUPS.filter((group) => group.items.every((item) => hidden.includes(item.id))).map((group) => group.title);
+    expect(emptied).toEqual(['시작하기']);
+    expect(flat(screen)).toContain('.filter( (group) => group.items.length > 0, )');
+    expect(screen).not.toMatch(/\{HELP_GROUPS\.map\(/);
+  });
+});
