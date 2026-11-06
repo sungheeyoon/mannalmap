@@ -33,7 +33,7 @@ const NO_BAR: Record<string, string> = {
   'app/signup.tsx': '나가는 길이 로그아웃을 함께 하는 「다른 구글 계정」 줄이다 — 세션을 든 채 앞으로 돌아가면 다시 이 화면이다',
   'app/auth/index.tsx': '막다른 안내 판 — replace 로만 오고 나가는 길은 「처음으로」다',
   'app/auth/denied.tsx': '막다른 안내 판 — replace 로만 오고 나가는 길은 판 안의 두 단추다',
-  'app/closed.tsx': '테스트 종료 고지 — 돌아갈 곳이 없게 관문이 보낸 자리다',
+  'app/closed.tsx': '서비스 종료 고지 — 돌아갈 곳이 없게 관문이 보낸 자리다',
   'app/me/index.tsx': '탭 첫 화면 — 앱 머리',
   'app/me/matching/index.tsx': '탭 첫 화면 — 앱 머리',
   'app/me/chat/index.tsx': '탭 첫 화면 — 앱 머리',

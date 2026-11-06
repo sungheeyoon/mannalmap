@@ -1,8 +1,9 @@
--- 가입 전 세션과 베타 종료 뒤의 쓰기를 DB 가 막는다 (`20270104090000`, G-123, #941)
+-- 가입 전 세션의 쓰기를 DB 가 막고, 일정 줄의 종료일은 쓰기를 막지 않는다 (`20270104090000`, G-123, #941 · `20270114095000`, ADR 0234)
 --
 --   1. **열린 베타 · 가입 마침** — 네 문이 그대로 돈다. 옛 앱이 부르는 정상 길이다
 --   2. **가입 전** — `save_my_profile` 과 사진의 문이 거절하고 아무것도 안 적는다
---   3. **종료 뒤** — `create_managed_person` · `edit_person_input` 이 거절하고 아무것도 안 적는다
+--   3. **종료일 뒤** — 일정 줄의 종료일이 지나도 `create_managed_person` · `edit_person_input` · `save_my_profile` 이 그대로 돈다(ADR 0234).
+--      서비스를 실제로 끝내는 날 `beta_is_over()` 를 고치면 이 절을 「거절하고 아무것도 안 적는다」로 되돌린다
 begin;
 select plan(17);
 
@@ -70,31 +71,27 @@ reset role;
 select is((select nickname from public.app_user where id = (select fresh from who)), null, '2. 이름이 안 적혔다');
 select is((select count(*)::int from public.profile_photo where user_id = (select fresh from who)), 0, '2. 사진이 안 적혔다');
 
--- ── 3. 종료 뒤 ──────────────────────────────────────────────────────────────
+-- ── 3. 종료일 뒤 ────────────────────────────────────────────────────────────
 
 insert into public.beta_schedule (ends_on, note, operator_name, operator_officer, operator_contact)
-values ((now() at time zone 'Asia/Seoul')::date - 1, '끝난 베타', '만세력 운영자', '시험 담당', 'ops@example.com');
+values ((now() at time zone 'Asia/Seoul')::date - 1, '종료일이 지난 줄', '만세력 운영자', '시험 담당', 'ops@example.com');
 
 create temporary table before_end as
 select
-  (select count(*)::int from public.user_person_access where user_id = (select joined from who)) as people,
-  (select original_date from public.person where id = (select person_id from who)) as born;
+  (select count(*)::int from public.user_person_access where user_id = (select joined from who)) as people;
 
 set local role authenticated;
 select pg_temp.acting((select joined from who));
 
-select throws_ok($$select pg_temp.manage()$$,
-  '42501', '비공개 테스트가 끝났습니다.', '3. 관리 사람을 못 만든다');
-select throws_ok($$select pg_temp.edit('1990-05-17')$$,
-  '42501', '비공개 테스트가 끝났습니다.', '3. 입력을 못 고친다');
-select throws_ok($$select public.save_my_profile('끝난뒤', null)$$,
-  '42501', '이용이 정지된 계정입니다.', '3. 프로필은 이미 막혀 있었다');
+select lives_ok($$select pg_temp.manage()$$, '3. 종료일이 지나도 관리 사람을 만든다');
+select lives_ok($$select pg_temp.edit('1990-05-17')$$, '3. 입력을 고친다');
+select lives_ok($$select public.save_my_profile('종료일뒤', null)$$, '3. 프로필을 저장한다');
 
 reset role;
 select is((select count(*)::int from public.user_person_access where user_id = (select joined from who)),
-  (select people from before_end), '3. 사람이 안 늘었다');
+  (select people from before_end) + 1, '3. 사람이 늘었다');
 select is((select original_date from public.person where id = (select person_id from who)),
-  (select born from before_end), '3. 입력이 그대로다');
+  '1990-05-17'::date, '3. 입력이 고쳐졌다');
 
 select * from finish();
 rollback;

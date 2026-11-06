@@ -155,23 +155,23 @@ select is(
   '수락된 요청이라도 차단 뒤에는 사진이 닫힌다');
 reset role;
 
--- ── 3. 종료일은 서울의 그날 끝까지다 ────────────────────────────────────────
+-- ── 3. 종료일은 아무것도 끝내지 않는다 (ADR 0234) ──────────────────────────
 
 /**
  * 일정은 늘 가장 늦게 적은 줄이 이긴다(`current_beta_schedule`). 줄을 더해 종료일을 바꾸고, 파일 끝의
- * `rollback` 이 걷는다. 이 절이 파일 끝에 있는 까닭이다 — 앞의 단언은 열린 베타 위에서 잰다.
+ * `rollback` 이 되돌린다. 전에는 서울의 그날 끝까지가 종료였다 — `20270114095000` 부터 `beta_is_over()` 는 시간대와 무관하게 늘 거짓이다.
  */
 insert into public.beta_schedule (ends_on, note, operator_name, operator_officer, operator_contact)
 values ((now() at time zone 'Asia/Seoul')::date - 1, '어제 끝났다', '만세력 운영자', '시험 담당', 'ops@example.com');
 
 set local timezone to 'Etc/GMT+12';
-select ok(public.beta_is_over(), '서울로 어제가 종료일이면 세션 시간대가 UTC-12 라도 끝났다');
+select ok(not public.beta_is_over(), '서울로 어제가 종료일이어도 끝나지 않는다 — 세션 시간대가 UTC-12 라도');
 
 insert into public.beta_schedule (ends_on, note, operator_name, operator_officer, operator_contact)
 values ((now() at time zone 'Asia/Seoul')::date, '오늘 끝난다', '만세력 운영자', '시험 담당', 'ops@example.com');
 
 set local timezone to 'Etc/GMT-14';
-select ok(not public.beta_is_over(), '서울로 오늘이 종료일이면 세션 시간대가 UTC+14 라도 아직 안 끝났다');
+select ok(not public.beta_is_over(), '서울로 오늘이 종료일이어도 끝나지 않는다 — 세션 시간대가 UTC+14 라도');
 
 select * from finish();
 rollback;

@@ -1,16 +1,14 @@
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
 
-import { supabaseOnServer } from '../auth/server-client';
-import { currentSchedule } from '../beta-schedule';
 import { BUTTON_PRIMARY } from '../ui/buttons';
 import { NoticeScreen } from '../ui/notice-screen';
 import { SUPPORT_EMAIL } from '@/src/lib/brand';
-import { betaIsOver, betaOverNote } from '@/src/lib/consent';
+import { SERVICE_ENDED_ON, SERVICE_ENDED_TITLE, serviceEndedNote, serviceIsOver } from '@/src/lib/consent';
 
 export const metadata = {
-  title: '비공개 테스트가 끝났습니다',
-  description: '언제 끝났고 언제까지 파기하는지 알려 드립니다.',
+  title: SERVICE_ENDED_TITLE,
+  description: '서비스가 언제 종료되었는지 알려 드립니다.',
 };
 
 /**
@@ -24,21 +22,13 @@ export const metadata = {
  * ## 여기서도 한 번 묻는다
  *
  * 끝나지 않았는데 이 주소로 들어오면 돌려보낸다. 안 물으면 링크 하나로 「끝났습니다」를
- * 아무 때나 띄울 수 있고, 그것은 거짓말이다.
+ * 아무 때나 띄울 수 있고, 그것은 거짓말이다. **실제 서비스 종료 때만 선다** — 일정 줄의 종료일이 아니라
+ * `SERVICE_ENDED_ON` 이 끝을 말한다(ADR 0225 추기 2026-11-06 · ADR 0234). 「비공개 테스트」 말은 지웠다.
  *
- * 계정 관리로 가는 길을 낸다. 종료일과 파기 사이는 자료가 아직 남아 있는 기간이고,
- * 그때야말로 철회와 삭제 요청이 필요하다.
+ * 계정 관리로 가는 길을 낸다. 끝난 뒤에도 자료가 남아 있는 동안 철회와 삭제 요청이 필요하다.
  */
-export default async function ClosedPage() {
-  const supabase = await supabaseOnServer();
-  const schedule = await currentSchedule(supabase);
-  const notice = schedule.ok ? schedule.value : null;
-
-  /*
-    못 읽었으면 끝났는지 모른다 — 「끝났습니다」를 날짜 없이 세우지 않고 돌려보낸다. 관문도 못 읽었으면
-    아무 데도 안 보내므로(`gateFor`) 여기로 되돌아오지 않는다.
-  */
-  if (notice === null || !betaIsOver(notice.dates, new Date())) redirect('/me');
+export default function ClosedPage() {
+  if (SERVICE_ENDED_ON === null || !serviceIsOver(new Date())) redirect('/me');
 
   /*
     인사하는 자리지만 다른 막힌 화면과 같은 안내 화면의 틀이다(2026-10-09 화면 점검 A5) — 앞서는 넓은 크림 판에 단추가
@@ -48,10 +38,10 @@ export default async function ClosedPage() {
   */
   return (
     <NoticeScreen
-      title="비공개 테스트가 끝났습니다"
+      title={SERVICE_ENDED_TITLE}
       description={
         <>
-          <p>{betaOverNote(notice.dates)}</p>
+          <p>{serviceEndedNote(SERVICE_ENDED_ON)}</p>
           <p>함께해 주셔서 고맙습니다. 남은 문의는 {SUPPORT_EMAIL}으로 보내 주세요.</p>
           {/* 파기 전까지는 자료가 아직 남아 있다. 그동안 철회와 탈퇴 신청이 닿아야 한다 */}
           <p>선택 동의 철회와 탈퇴 신청은 설정에서 계속하실 수 있습니다.</p>

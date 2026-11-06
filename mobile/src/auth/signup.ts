@@ -1,5 +1,5 @@
 import { accountFailureOf, type AccountState } from '@account/index';
-import { betaIsOver, signupDone } from '@consent/gate';
+import { serviceIsOver, signupDone } from '@consent/gate';
 import { NOTICE_NOT_READY, NOTICE_VERSION } from '@consent/notice';
 import { refusedField, signupRequest, type SignupField } from '@consent/signup';
 import { rpcArgs } from '@db';
@@ -15,17 +15,17 @@ export const FAILED = '로그인을 끝내지 못했어요. 잠시 뒤 다시 �
 
 export type SignupState =
   | { kind: 'done' }
-  | { kind: 'form'; needsName: boolean; again: boolean; scheduleId: number; endsOn: string; purgeBy: string }
+  | { kind: 'form'; needsName: boolean; again: boolean; scheduleId: number }
   /** 폼이 안 서는 까닭 — 일정이 없거나 못 읽었다(ADR 0024) */
   | { kind: 'blocked'; message: string }
-  /** 테스트가 끝났다 — 말은 `/closed` 가 한다 */
+  /** 서비스가 끝났다(`SERVICE_ENDED_ON`, ADR 0234) — 말은 `/closed` 가 한다 */
   | { kind: 'closed' }
   /** 가입을 안 마친 채 정지 · 탈퇴 대기다 — 폼 대신 그 상태의 안내가 선다(ADR 0218) */
   | { kind: 'halted'; account: AccountState }
   | { kind: 'failed'; message: string };
 
 /**
- * 가입이 끝났는가, 아니면 무엇을 물어야 하나 — `app/signup/page.tsx` 와 같은 차례다: 계정 → 끝난 테스트 → 관문과 같은 판정(`signupDone`).
+ * 가입이 끝났는가, 아니면 무엇을 물어야 하나 — `app/signup/page.tsx` 와 같은 차례다: 계정 → 끝난 서비스 → 관문과 같은 판정(`signupDone`).
  * 못 읽으면 가입한 것으로 치지 않는다.
  */
 export async function readSignup(): Promise<SignupState> {
@@ -47,8 +47,8 @@ export async function readSignup(): Promise<SignupState> {
   const previewing = __DEV__ && session.data.session === null;
   if (account.data === null && !previewing) return { kind: 'failed', message: FAILED };
 
+  if (serviceIsOver(new Date())) return { kind: 'closed' };
   if (notice === null) return { kind: 'blocked', message: NOTICE_NOT_READY };
-  if (betaIsOver(notice.dates, new Date())) return { kind: 'closed' };
 
   const signedUp = account.data !== null && account.data.signed_up_at !== null;
   const done =
@@ -66,8 +66,6 @@ export async function readSignup(): Promise<SignupState> {
     needsName: account.data === null || account.data.nickname === null,
     again: signedUp,
     scheduleId: notice.scheduleId,
-    endsOn: notice.dates.endsOn,
-    purgeBy: notice.dates.purgeBy,
   };
 }
 

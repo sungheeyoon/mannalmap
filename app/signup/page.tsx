@@ -15,7 +15,7 @@ import {
   NOTICE_NOT_READY,
   NOTICE_VERSION,
   SIGNUP_HEAD,
-  betaIsOver,
+  serviceIsOver,
   safeReturnPath,
   signupDone,
   withReturnPath,
@@ -112,10 +112,10 @@ export default async function SignupPage({ searchParams }: {
   }
 
   /*
-    **끝났으면 여기서 아무도 가입하지 않는다.** 안 막으면 종료일 다음 날에 들어온 사람이
-    「10월 31일에 끝납니다」를 읽고 확인을 남긴다 — 이미 지난 날짜에 대고 하는 확인이다.
+    **서비스가 끝났으면 여기서 아무도 가입하지 않는다**(`SERVICE_ENDED_ON`, ADR 0234). 일정 줄의 종료일은 묻지 않는다 —
+    공개 고지가 고정 운영 기간을 지웠다(ADR 0225 추기 2026-11-06).
   */
-  if (notice !== null && betaIsOver(notice.dates, new Date())) redirect('/closed');
+  if (serviceIsOver(new Date())) redirect('/closed');
 
   /**
    * **관문과 같은 것을 본다.**
@@ -167,8 +167,6 @@ export default async function SignupPage({ searchParams }: {
             needsName={account.nickname === null}
             version={NOTICE_VERSION}
             scheduleId={notice.scheduleId}
-            endsOn={notice.dates.endsOn}
-            purgeBy={notice.dates.purgeBy}
           />
         </section>
       )}
