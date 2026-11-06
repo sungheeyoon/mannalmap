@@ -7,7 +7,7 @@ import {
   SALE_CLOSED_NOTE,
   purchaseAddedNote,
 } from './notes';
-import type { StorePurchaseAnswer } from './store-products';
+import { STORE_PRODUCTS, type StorePurchaseAnswer } from './store-products';
 
 /**
  * **Google Play 결제의 결과를 화면의 줄로**(ADR 0230) — 앱의 풀이권 화면이 그린다. 흐름은 네이버웹툰 쿠키샵(안드로이드 · Google Play)을 따랐다:
@@ -55,4 +55,43 @@ export function storePurchaseNotice(answer: DoorAnswer<StorePurchaseAnswer>): St
     case 'not-found':
       return { kind: 'failed', body: PURCHASE_FAILED_NOTE };
   }
+}
+
+/**
+ * **결제창 · Play 가 돌려준 구매 하나를 어떻게 다루나**(ADR 0230) — 결과를 듣는 손(`listenStorePurchases`)과 소비되지 않은 구매를 다시 보내는 손
+ * (`resendUnfinishedPurchases`)이 이 한 판정을 쓴다. 두 손이 저마다 가르던 때는 상품을 거르는 것이 다시 보내는 손에만 있었다.
+ *
+ * - `send` — 결제가 끝났고 토큰이 있고 우리 상품이다. 서버에 보낸다
+ * - `pending` — Google 에서 결제가 아직 끝나지 않았다(보류 결제). 보내지 않는다
+ * - `unusable` — 결제는 끝났는데 토큰이 없거나 우리 상품이 아니다. 보낼 것이 없다
+ * - `ignore` — 끝나지 않은 그 밖의 상태(`unknown`)
+ *
+ * 받는 모양은 `expo-iap` 의 `Purchase` 에서 판정이 읽는 칸만이다 — 이 층은 네이티브 모듈을 모른다.
+ */
+export type StoreReceipt = {
+  readonly productId: string;
+  readonly purchaseToken?: string | null;
+  readonly purchaseState: string;
+};
+
+export type StoreReceiptDecision =
+  | { readonly kind: 'send'; readonly productId: string; readonly purchaseToken: string }
+  | { readonly kind: 'pending' | 'unusable' | 'ignore' };
+
+export function storeReceiptDecision(receipt: StoreReceipt): StoreReceiptDecision {
+  if (receipt.purchaseState === 'pending') return { kind: 'pending' };
+  if (receipt.purchaseState !== 'purchased') return { kind: 'ignore' };
+  const token = receipt.purchaseToken;
+  if (typeof token !== 'string' || token.length === 0) return { kind: 'unusable' };
+  if (!STORE_PRODUCTS.some((product) => product.productId === receipt.productId)) return { kind: 'unusable' };
+  return { kind: 'send', productId: receipt.productId, purchaseToken: token };
+}
+
+/**
+ * 다시 보낸 구매의 답이 **이번에** 지급한 장수 — 앞서 선 지급(`replayed`: 재시도 · 통지가 먼저)과 못 닿은 답 · 지급 아닌 답은 0 이다.
+ * 결제 완료 창은 이 합이 0 보다 클 때만 뜬다 — 이미 선 구매를 화면을 열 때마다 「충전됐다」고 다시 말하지 않는다.
+ */
+export function creditsGrantedNow(answer: DoorAnswer<StorePurchaseAnswer>): number {
+  if (!answer.ok || answer.value.outcome !== 'granted' || answer.value.replayed) return 0;
+  return answer.value.credits;
 }
