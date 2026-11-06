@@ -1,9 +1,10 @@
+import { SUPPORT_EMAIL } from './index';
+
 /**
- * **사업자 정보 — 바닥글과 이용약관 · 환불정책이 같은 값 한 벌을 읽는다**(운영자 결정 2026-10-12, ADR 0172).
+ * **사업자 정보 — 바닥글 · 이용약관 · 환불정책과 앱의 약관 및 정책이 같은 상수 한 벌을 읽는다**(ADR 0229 · 0172).
  *
- * 전자상거래법 제10조의 사이버몰 표시가 결제 페이지까지 상시 보는 줄이다. **값은 저장소에 적지
- * 않는다** — 저장소가 공개이고 사업장 주소가 아직 운영자의 집이다(ADR 0151 「정한 것」 2). 값은 배포의 환경변수에서 온다
- * (`app/business-info.ts` 가 이름으로 읽어 여기로 넘긴다). 이메일만은 `SUPPORT_EMAIL` 상수다(ADR 0172 덧, 2026-10-16). 이 모듈은 환경을 모른다 — 받은 값을 고르고 줄로 짓기만 한다.
+ * 전자상거래법 제10조의 사이버몰 표시가 결제 페이지까지 상시 보는 줄이다. 값은 법으로 공개하는 것이라 저장소에 적는다(ADR 0229).
+ * 이메일은 `SUPPORT_EMAIL` 상수다.
  *
  * **빈 값은 줄째 안 선다.** 「000-00-00000」 · 「홍길동」 · 「［기입］」 같은 자리표시나 꼴이 틀린 사업자등록번호 · 전화 · 이메일 · 공개 페이지 주소(https 가 아닌 것)도 빈 값으로
  * 본다 — 화면에 나가면 거짓 표시다.
@@ -31,7 +32,7 @@ export type BusinessInfo = {
 
 export type BusinessKey = keyof BusinessInfo;
 
-/** 환경에서 받은 날 값 — 이름으로 읽는 자리는 `app/business-info.ts` 하나다 */
+/** 고르기 전의 날 값 */
 export type RawBusinessInfo = { readonly [K in BusinessKey]?: string | undefined };
 
 const PLACEHOLDER = /［|\[|기입|TODO|TBD|홍길동|^0{3}-0{2}-0{5}$|^x+$/i;
@@ -65,6 +66,28 @@ export function businessInfoFrom(raw: RawBusinessInfo): BusinessInfo {
   };
   return Object.fromEntries(KEYS.map((key) => [key, pick(key)])) as BusinessInfo;
 }
+
+/** 사업자 정보의 값 — 이메일은 `SUPPORT_EMAIL` 이 채운다. 빈 문자열인 칸은 화면에 안 선다 */
+export const BUSINESS: { readonly [K in Exclude<BusinessKey, 'email'>]: string } = {
+  tradeName: '갑자기탐구생활',
+  representative: '성희윤',
+  registrationNumber: '482-14-02944',
+  address: '인천광역시 부평구 부개로 11, 505동 1601호 (부개동, 부개5단지 주공아파트)',
+  /** D-U-N-S 날 발급 — 운영자가 알려주면 넣는다 */
+  phone: '',
+  mailOrderNumber: '제2026-인천부평-1748호',
+  hostingProvider: 'Vercel Inc.',
+  disclosureUrl: 'https://www.ftc.go.kr/bizCommPop.do?wrkr_no=4821402944',
+};
+
+/**
+ * 통신판매업 신고증의 신고기관 — 운영자가 알려주면 넣는다. 화면의 줄이 아니라 Google Play 「개발자 연락처」(사업자등록번호 · 통신판매업
+ * 신고번호와 함께)에 적는 값이다
+ */
+export const MAIL_ORDER_AUTHORITY = '';
+
+/** 화면이 읽는 사업자 정보 — 웹과 앱이 같은 값이다 */
+export const BUSINESS_INFO: BusinessInfo = businessInfoFrom({ ...BUSINESS, email: SUPPORT_EMAIL });
 
 export type BusinessInfoLine = {
   readonly key: BusinessKey;

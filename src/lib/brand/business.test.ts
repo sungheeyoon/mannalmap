@@ -1,11 +1,12 @@
 import { describe, expect, it } from 'vitest';
 
-import { type RawBusinessInfo, businessInfoFrom, businessInfoLines, contactPlace } from './business';
+import { BUSINESS, BUSINESS_INFO, type RawBusinessInfo, businessInfoFrom, businessInfoLines, contactPlace } from './business';
+import { SUPPORT_EMAIL } from './index';
 import type { LegalDocument } from './legal-text';
 import { checkoutRefundLine, refundPolicyFor, refundRequestLine } from './refund';
 import { termsFor } from './terms';
 
-/** 시험용 값 — 실제 사업자 값이 아니다(저장소에 실제 값을 적지 않는다, ADR 0151) */
+/** 시험용 값 — 실제 사업자 값(`BUSINESS`)과 따로 둔다. 고르는 규칙만 잰다 */
 const FULL: RawBusinessInfo = {
   tradeName: '시험상호',
   representative: '시험대표',
@@ -41,7 +42,32 @@ const textsOf = (document: LegalDocument): string[] =>
 /** 초안의 빈칸 · 검토 표지 · 비어 새는 값 — 화면에 나가면 안 되는 꼴 */
 const LEAK = /［|］|기입|변호사 검토|표준 제\d|운영자 결정|undefined|null/;
 
-describe('사업자 정보 — 환경변수에서 고른다 (ADR 0172)', () => {
+describe('사업자 정보 — 상수 (ADR 0229)', () => {
+  it('적어 둔 값은 꼴이 맞아 고르는 동안 하나도 빠지지 않는다 — 빈 칸만 null 이다', () => {
+    for (const [key, value] of Object.entries(BUSINESS)) {
+      expect(BUSINESS_INFO[key as keyof typeof BUSINESS], key).toBe(value === '' ? null : value);
+    }
+    expect(BUSINESS_INFO.email).toBe(SUPPORT_EMAIL);
+  });
+
+  it('사업자등록번호는 `123-45-67890` 꼴이고 공개 페이지 주소가 그 번호를 가리킨다', () => {
+    expect(BUSINESS.registrationNumber).toMatch(/^\d{3}-\d{2}-\d{5}$/);
+    expect(BUSINESS.disclosureUrl).toBe(
+      `https://www.ftc.go.kr/bizCommPop.do?wrkr_no=${BUSINESS.registrationNumber.replace(/-/g, '')}`,
+    );
+  });
+
+  it('전화가 비어 있는 동안 대표전화 줄은 안 서고 나머지 일곱 줄은 선다', () => {
+    const labels = businessInfoLines(BUSINESS_INFO).map((line) => line.label);
+    expect(labels).toEqual(
+      BUSINESS.phone === ''
+        ? ['상호', '대표자', '사업자등록번호', '사업장 주소', '이메일', '통신판매업 신고번호', '호스팅서비스 제공자']
+        : ['상호', '대표자', '사업자등록번호', '사업장 주소', '대표전화', '이메일', '통신판매업 신고번호', '호스팅서비스 제공자'],
+    );
+  });
+});
+
+describe('사업자 정보 — 날 값을 고른다 (ADR 0172)', () => {
   it('비면 모든 줄이 null 이고 줄이 하나도 안 선다', () => {
     const info = businessInfoFrom({});
     expect(Object.values(info).every((value) => value === null)).toBe(true);
