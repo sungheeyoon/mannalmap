@@ -32,7 +32,7 @@
 2. 등록비 **US$25** 한 번. 「Google Play does not accept prepaid cards」
 3. 넣는 값: 조직 이름 · 주소 · **조직 전화**(조직 확인용, Play 에 안 보인다) · **조직 웹사이트**(`<운영 주소>`, `docs/ops/runbook/domain.md` 맨 위) · 담당자 이름 · 담당자 이메일 · 담당자 전화 · **개발자 이메일 · 개발자 전화**(「shown as part of your developer profile on Google Play」 — 등록정보에 공개된다)
 4. 담당자 이메일 · 전화와 개발자 이메일 · 전화는 **일회용 비밀번호로 확인**하고 계정이 사는 동안 살아 있어야 한다
-5. 개발자 이메일은 고객 문의 이메일 `mannalmap@gmail.com`(`SUPPORT_EMAIL`, #304 끝난 것)으로 둔다. 개발자 전화는 **운영자 질문**이다(#304 — `BUSINESS_PHONE` 070 이 아직이다)
+5. 개발자 이메일은 고객 문의 이메일 `mannalmap@gmail.com`(`SUPPORT_EMAIL`, #304 끝난 것)으로 둔다. 개발자 전화는 **D-U-N-S 가 나오는 날 발급한다** — 운영자가 그날 번호를 받아 여기와 등록정보 연락처에 넣는다(운영자 답 2026-11-06). 약관 · 바닥글의 `BUSINESS_PHONE`(#304 의 5)에도 같은 번호를 쓸지는 그날 함께 본다
 6. 계정에 2단계 인증을 켜고 #304 의 8(운영자 계정 MFA)에 날짜를 적는다
 
 **비공개 테스트 12명 · 14일 요건은 조직 계정에 없다.** 공식 쪽의 문장은 개인 계정만 말한다 — 「Google Play requires **personal** developer accounts created after November 13, 2023, to test their apps before those apps are eligible for distribution」([요건](https://support.google.com/googleplay/android-developer/answer/14151465)), 시작 안내의 그 걸음 이름도 「Meet testing requirements and device verification requirements (**Personal accounts only**)」([시작](https://support.google.com/googleplay/android-developer/answer/6112435)). 조직 계정에 대한 명시 문장은 없다 — 「없다」는 이 두 문장에서 읽은 것이다. 콘솔 대시보드에 「Apply for production」이 서지 않고 프로덕션 트랙이 바로 열리면 맞게 읽은 것이다.
@@ -67,7 +67,7 @@
 **경로**: Monitor and improve → Policy and programs → **App content**(쪽에 따라 「Policy and programs > App content」 · 「Policy > App content」). 답은 전부 `docs/ops/play-listing.md` 「콘솔 양식의 답」이다. 차례가 있다:
 
 1. **Privacy policy · Ads · Sign-in details(옛 「App access」)** 먼저 — 「Before filling out the Target audience and content section, you must have declared whether or not your app contains ads, and provided instructions for app access. You must also have added a privacy policy」
-2. Target audience and content — 심사가 「up to 7 days or longer」 걸릴 수 있다
+2. Target audience and content — **13–15 · 16–17 · 18+** 를 고르고 12세 이하는 안 고른다(가입은 만 14세 이상, 인연 · 대화방은 열 때 성인 확인 — 근거와 정한 것은 `docs/ops/play-listing.md` 「타겟층 및 콘텐츠」). 심사가 「up to 7 days or longer」 걸릴 수 있다
 3. Content ratings — 설문 연락 이메일은 IARC 와의 연락에 쓰인다. 한국의 앱 등급은 Google Play 등급(3+ · 7+ · 12+ · 16+ · 19+)이다
 4. Data safety — 「Collect」는 기기 밖으로 보내는 것이고, 우리 대신 처리하는 **서비스 제공업체로의 이전은 「Sharing」이 아니다**(「Transferring user data to a "service provider" that processes it on behalf of the developer」). 계정을 만드는 앱은 **앱 안 삭제 길과 웹 링크 둘 다** 든다 — 웹 링크의 쪽은 「reference the app or developer name … as it appears on your store listing」이고 「without sending the user back to the app」
 5. Financial features · Health apps · Government apps — **기능이 없어도 모든 앱이 낸다**(「Even developers with apps that do not offer any financial features must complete this form」). 금융은 「My app doesn't provide any financial features」를 고른다
