@@ -12,10 +12,9 @@ import type { DoorAnswer } from '@/reading/api';
 import { saveFailureOf } from '@/reading/chart-writes';
 import { followRefusal } from '@/reading/panel';
 import { addStoredPhoto, readPhotoUploadMode, replaceStoredPhoto, type BakedVariants } from '@/reading/photo-writes';
+import { SITE_URL } from '@/site';
 
 import type { Answer } from './settings';
-
-const SITE_URL = process.env.EXPO_PUBLIC_SITE_URL;
 
 /** 내 사진 한 장 — 자리와 판본(웹 `app/me/profile/photos.ts`) */
 export type MyPhoto = { readonly position: number; readonly version: number; readonly focus: PhotoFocus };

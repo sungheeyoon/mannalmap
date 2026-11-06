@@ -2,6 +2,7 @@ import { useMemo, type ReactNode } from 'react';
 import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { buildMatchPreview, matchBasisOf } from '@matching';
+import { MATCH_INDEX_BADGE, MATCH_INDEX_NOTE, MATCH_INDEX_POLICY_BADGE, MATCH_INDEX_SCALE, MATCH_INDEX_UNSCALED } from '@matching/copy';
 import { pairSeatsOf } from '@reading-display';
 import { RELATION_LABEL, relationOf, type Relation } from '@people';
 import {
@@ -38,8 +39,6 @@ type Ok = Extract<PairOutcome, { kind: 'ok' }>;
 
 const SIDES: readonly CompatSide[] = ['a', 'b'];
 const SIDE_PERSON: Record<CompatSide, string> = { a: '첫 번째 사람', b: '두 번째 사람' };
-/** 카드 위 딱지 — 운영자 확정 문구 #7(2026-09-25) */
-const POLICY_BADGE = { romantic: '연인·배우자 기준', general: '일반 관계 기준' } as const;
 
 /** 궁합 결과 — 두 명식 → 접은 표 → 베타 지표 → 사이 → 풀이 칸, 웹과 같은 차례다(`app/me/compat/screen.tsx`) */
 export function CompatResult({ outcome, onReadingChanged }: { outcome: Ok; onReadingChanged: () => void }) {
@@ -79,11 +78,11 @@ export function CompatResult({ outcome, onReadingChanged }: { outcome: Ok; onRea
 
       <Card style={styles.index}>
         <View style={styles.indexHead}>
-          <Text style={styles.betaTag}>궁합 베타</Text>
+          <Text style={styles.betaTag}>{MATCH_INDEX_BADGE}</Text>
           {preview.policy === null ? (
-            <Text style={shared.meta}>검증 중인 판정은 지표에서 제외</Text>
+            <Text style={shared.meta}>{MATCH_INDEX_UNSCALED}</Text>
           ) : (
-            <Text style={styles.policyTag}>{POLICY_BADGE[preview.policy]}</Text>
+            <Text style={styles.policyTag}>{MATCH_INDEX_POLICY_BADGE[preview.policy]}</Text>
           )}
         </View>
         <Paper style={styles.score}>
@@ -91,7 +90,7 @@ export function CompatResult({ outcome, onReadingChanged }: { outcome: Ok; onRea
             {names.a} × {names.b}
           </Text>
           <Text style={styles.scoreValue}>{preview.index}</Text>
-          <Text style={styles.scoreNames}>100점 만점 베타 탐색 지표</Text>
+          <Text style={styles.scoreNames}>{MATCH_INDEX_SCALE}</Text>
         </Paper>
         {preview.dimensions.map((dimension) => (
           <View key={dimension.key}>
@@ -110,7 +109,7 @@ export function CompatResult({ outcome, onReadingChanged }: { outcome: Ok; onRea
         ))}
       </Card>
 
-      <Text style={shared.meta}>이 점수는 명리 자료에서 자주 다루는 기준을 조합한 베타 참고값입니다. 실제 관계의 결과를 예측하거나 두 사람의 좋고 나쁨을 판정하지 않습니다.</Text>
+      <Text style={shared.meta}>{MATCH_INDEX_NOTE}</Text>
 
       <PairReadingPanel
         personA={personA}

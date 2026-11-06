@@ -4,10 +4,9 @@ import { sharePath, type ShareKind } from '@reading/share-path';
 import { isShareable, shareTargetArgs } from '@reading/target';
 
 import { supabase } from '@/auth/client';
+import { SITE_URL } from '@/site';
 
 import { readReadingView, type ReadingTarget } from './api';
-
-const SITE_URL = process.env.EXPO_PUBLIC_SITE_URL;
 
 /** 링크를 못 냈다 — 까닭을 우리가 못 고를 때 이 단추가 세우는 한 문장 */
 const NOT_ISSUED = '공유 링크를 만들지 못했어요. 잠시 뒤 다시 시도해 주세요.';

@@ -23,3 +23,20 @@ export const SELF_NEEDED = {
 export const MATCH_OPEN_ALERT_TITLE = '인연은 준비 중이에요';
 export const MATCH_OPEN_ALERT_ASK = '열리면 소식으로 알려 드릴까요?';
 export const MATCH_OPEN_ALERT_ASKED = '열리면 소식으로 알려 드릴게요.';
+
+/**
+ * 궁합 결과의 「궁합 베타」 카드 — 웹 `app/match-index.tsx` 와 앱 `mobile/src/compat/result.tsx` 가 같은 글자를 쓴다.
+ * 딱지와 점수 밑 이름은 ADR 0026 이 남긴 말이고, 사이 딱지는 운영자 확정 문구 #7(2026-09-25)이다.
+ */
+export const MATCH_INDEX_BADGE = '궁합 베타';
+export const MATCH_INDEX_SCALE = '100점 만점 베타 탐색 지표';
+/** 사이를 몰랐던 옛 판(`discovery-v1`)으로 난 풀이를 다시 열 때 사이 딱지 대신 선다(ADR 0113) */
+export const MATCH_INDEX_UNSCALED = '검증 중인 판정은 지표에서 제외';
+/** 무슨 눈금으로 쟀는지 — 키는 `ScorePolicy` 다 */
+export const MATCH_INDEX_POLICY_BADGE = {
+  romantic: '연인·배우자 기준',
+  general: '일반 관계 기준',
+} as const;
+/** 카드 밖 면책 한 줄 — 운영자 확정 문구 #8(2026-09-25). 고지라 합니다체 그대로다 */
+export const MATCH_INDEX_NOTE =
+  '이 점수는 명리 자료에서 자주 다루는 기준을 조합한 베타 참고값입니다. 실제 관계의 결과를 예측하거나 두 사람의 좋고 나쁨을 판정하지 않습니다.';
