@@ -42,7 +42,7 @@ const textsOf = (document: LegalDocument): string[] =>
 /** 초안의 빈칸 · 검토 표지 · 비어 새는 값 — 화면에 나가면 안 되는 꼴 */
 const LEAK = /［|］|기입|변호사 검토|표준 제\d|운영자 결정|undefined|null/;
 
-describe('사업자 정보 — 상수 (ADR 0229)', () => {
+describe('사업자 정보 — 상수 (ADR 0232)', () => {
   it('적어 둔 값은 꼴이 맞아 고르는 동안 하나도 빠지지 않는다 — 빈 칸만 null 이다', () => {
     for (const [key, value] of Object.entries(BUSINESS)) {
       expect(BUSINESS_INFO[key as keyof typeof BUSINESS], key).toBe(value === '' ? null : value);
@@ -67,7 +67,7 @@ describe('사업자 정보 — 상수 (ADR 0229)', () => {
   });
 });
 
-describe('처리방침의 운영자 — 상수 (ADR 0229)', () => {
+describe('처리방침의 운영자 — 상수 (ADR 0232)', () => {
   it('처리자 · 보호책임자 · 연락처가 다 차 있고 연락처는 이메일 꼴이다 — 하나라도 비면 처리방침이 안 선다', () => {
     expect(PRIVACY_OPERATOR.name.trim()).not.toBe('');
     expect(PRIVACY_OPERATOR.officer.trim()).not.toBe('');

@@ -13,7 +13,7 @@ import { COLOR, FONT, TYPE } from '@/ui/tokens';
 
 /**
  * 약관 및 정책 — 웹 바닥글의 약관 셋과 사업자 정보 줄이 앱에서 서는 한 장이다(같은 `POLICY_LINKS` · `businessInfoLines`, 전자상거래법 제10조 · ADR 0172).
- * 로그인 없이 열린다. 값은 웹과 같은 상수 `BUSINESS_INFO`(ADR 0229)이고 빈 줄은 안 선다.
+ * 로그인 없이 열린다. 값은 웹과 같은 상수 `BUSINESS_INFO`(ADR 0232)이고 빈 줄은 안 선다.
  */
 export default function PoliciesScreen() {
   const info = BUSINESS_INFO;

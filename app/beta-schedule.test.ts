@@ -54,7 +54,7 @@ describe('지금 일정 읽기', () => {
     expect(await currentSchedule(answering(null).client)).toEqual(NONE);
   });
 
-  it('줄의 운영자 칸은 안 읽는다 — 비어도 처리방침의 운영자는 상수다 (ADR 0229)', async () => {
+  it('줄의 운영자 칸은 안 읽는다 — 비어도 처리방침의 운영자는 상수다 (ADR 0232)', async () => {
     for (const row of [{ ...ROW, operator_contact: null }, { ...ROW, operator_officer: '' }, { ...ROW, operator_name: undefined }]) {
       const answer = await currentSchedule(answering([row]).client);
       expect(answer.ok && answer.value?.operator).toEqual(PRIVACY_OPERATOR);

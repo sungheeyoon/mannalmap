@@ -59,7 +59,7 @@ npx eas-cli@latest env:list production --format short
 | `EXPO_PUBLIC_SUPABASE_URL` · `_PUBLISHABLE_KEY` · `EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID` · `EXPO_PUBLIC_SITE_URL` | 있다 — 운영 프로젝트 · 운영 주소 | 앱이 안 돈다 · 처리방침 링크가 안 선다 |
 | `EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID` · `_URL_SCHEME` | 없다 — Google iOS 클라이언트가 먼저다 | **iOS 빌드 전에 `production` 에 넣는다** — `app.config.js` 가 이 값으로 URL 스킴을 세운다 |
 | `EXPO_PUBLIC_KAKAO_NATIVE_APP_KEY` | 있다 — `production` · `preview`(2026-11-05, #770). 이 값이 든 빌드는 아직 없다(`docs/ops/runbook/kakao-login.md` 「카카오 로그인을 켜는 차례」 10) | 카카오 단추가 안 서고 `app.config.js` 가 카카오 플러그인을 뺀다. 넣으면 **새 빌드**가 든다 — URL 스킴이 빌드에 박힌다 |
-| 사업자 정보 | 환경값이 아니다 — 웹과 같은 상수 `BUSINESS`(`src/lib/brand/business.ts`)가 번들에 든다(ADR 0229). EAS 에 남은 `EXPO_PUBLIC_BUSINESS_*` 여덟은 아무도 안 읽는다 — 지운다(#770 B) | 상수의 빈 칸(대표전화)만 줄이 안 선다 |
+| 사업자 정보 | 환경값이 아니다 — 웹과 같은 상수 `BUSINESS`(`src/lib/brand/business.ts`)가 번들에 든다(ADR 0232). EAS 에 남은 `EXPO_PUBLIC_BUSINESS_*` 여덟은 아무도 안 읽는다 — 지운다(#770 B) | 상수의 빈 칸(대표전화)만 줄이 안 선다 |
 
 **`preview` 빌드는 운영 DB 에 쓴다. `development` 빌드가 어디를 보는지는 Metro 를 띄운 자리의 `mobile/.env.local` 이 정한다** — 운영 값이면 운영 DB 다. 시험 계정의 규칙은 `docs/agents/delegation/local-env.md` 「로컬 환경의 함정」 그대로다.
 

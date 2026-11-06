@@ -8,7 +8,7 @@ export type ScheduleRead = { ok: true; value: BetaSchedule | null } | { ok: fals
 
 /**
  * 지금 베타 일정 — 웹의 `app/beta-schedule.ts` 와 같은 문이다. 로그인 없이 읽힌다(처리방침).
- * 운영자는 상수 `PRIVACY_OPERATOR`(ADR 0229)다 — 줄의 `operator_*` 칸은 안 읽는다.
+ * 운영자는 상수 `PRIVACY_OPERATOR`(ADR 0232)다 — 줄의 `operator_*` 칸은 안 읽는다.
  * 못 읽은 것과 없는 것을 가른다(ADR 0078). 연결이 없는 빌드는 일정이 없는 것으로 친다 — 날짜를 지어내지 않는다.
  */
 export async function readSchedule(): Promise<ScheduleRead> {

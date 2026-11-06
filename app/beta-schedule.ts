@@ -8,7 +8,7 @@ import { read, unread, type SkippableRead } from './db-error';
 
 /**
  * **지금 베타 일정을 읽는 문** — 관문(`proxy.ts`)과 세 화면(`/signup` · `/privacy` · `/closed`)이
- * 같은 문을 지난다. 날짜는 일정 줄에서, 처리방침의 운영자는 상수 `PRIVACY_OPERATOR`(ADR 0229)에서 온다 — 줄의 `operator_*` 칸은 안 읽는다.
+ * 같은 문을 지난다. 날짜는 일정 줄에서, 처리방침의 운영자는 상수 `PRIVACY_OPERATOR`(ADR 0232)에서 온다 — 줄의 `operator_*` 칸은 안 읽는다.
  *
  * 2026-09-25 까지는 `src/lib/consent` 가 부를 문을 콜백으로 받아 이름(`current_beta_schedule`)과
  * snake_case 를 직접 들었고, 세 화면은 그 콜백을 넘기려고 `.rpc()` 를 `.tsx` 안에 적었다.

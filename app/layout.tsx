@@ -93,7 +93,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         {/* 이 브라우저의 푸시 구독이 앞 계정의 것이면 푼다 — 그리는 것은 없다(ADR 0156) */}
         <PushOwnerCheck />
         {children}
-        {/* 사업자 정보는 상수 한 벌이다(`src/lib/brand/business.ts`, ADR 0229) */}
+        {/* 사업자 정보는 상수 한 벌이다(`src/lib/brand/business.ts`, ADR 0232) */}
         <SiteFooter business={BUSINESS_INFO} />
         {/* 바닥 스낵바 한 자리 — 화면은 `showSnackbar` 만 부른다(ADR 0109 추기 2026-10-24) */}
         <SnackbarHost />
