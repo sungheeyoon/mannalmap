@@ -75,6 +75,12 @@ export const SECRET_ENV = [
    * 이 키 하나로 앱의 어느 회원이든 끊을 수 있다. 없으면 끊기가 기록 한 줄로 남고 탈퇴는 그대로 간다
    */
   'KAKAO_ADMIN_KEY',
+  /**
+   * Google Play 결제 검증용 서비스 계정 키(JSON 한 덩이, ADR 0230) — 구매 확인 · 소비 · 환불 · 무효 목록을 부른다
+   * (`app/api/store/google-play/play-api.ts`). EAS 제출용 키와 따로다. 없으면 구매 문 · 통지 문이 503, 무효 대조 크론은 「설정 안 됨」.
+   * **운영자가 Play 조직 계정 뒤에 넣는다**
+   */
+  'GOOGLE_PLAY_SERVICE_ACCOUNT_JSON',
 ];
 
 /** 브라우저가 본다 — 빌드 때 번들에 박힌다. 비밀을 여기 두는 순간 공개된다 */
@@ -125,6 +131,13 @@ export const CONFIG_ENV = [
    * Production 에만 둔다 — 미리보기 주소는 카카오에 등록할 수 없다
    */
   'KAKAO_REST_API_KEY',
+  /**
+   * Google Play 통지(RTDN)의 Pub/Sub 푸시 구독이 싣는 OIDC 토큰의 audience 와 서비스 계정 이메일(ADR 0230) — 비밀이 아니다. 믿는 쪽은
+   * Google 의 서명이고, 이 둘은 그 토큰이 우리 구독의 것인지만 가른다(`app/api/store/google-play/push-auth.ts`). 둘 중 하나라도 비면
+   * 통지 문이 503 이다. **운영자가 Play 조직 계정 뒤에 넣는다**
+   */
+  'GOOGLE_PLAY_PUBSUB_AUDIENCE',
+  'GOOGLE_PLAY_PUBSUB_SERVICE_ACCOUNT',
 ];
 
 /** 제 안에서 비밀을 읽는 패키지 — 이것을 부르는 모듈도 비밀을 읽는 모듈이다 */

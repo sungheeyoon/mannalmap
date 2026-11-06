@@ -967,6 +967,12 @@ select is(
     'ensure_discovery_participation',
     'fail_reading_job',
     'finish_taste',
+    /**
+     * Google Play 구매의 서버 문 넷(`20270113090000`, ADR 0230) — 서버가 Play Developer API 로 확인한 구매를 토큰마다 한 번
+     * 지급하고, 소비를 적고, 스토어가 돌려준 결제의 남은 풀이권을 걷고, 살 수 있는가를 판정한다. 로그인한 사람은 넷 다 못 부른다
+     * (`99_store_purchase`)
+     */
+    'grant_store_purchase',
     'link_taste_reading_run',
     'mark_reading_webhook_processed',
     /** 누름이 연 시도를 서버가 찾아 제출한다 — 부르는 사람은 구매자가 아니다(ADR 0215) */
@@ -981,6 +987,7 @@ select is(
     'note_reading_checks',
     /** 만드는 동안 몇 번째 절까지 썼는지 적는 문 — 절 번호만, 글은 안 받는다(`20261103090000`) */
     'note_reading_progress',
+    'note_store_purchase_consumed',
     'note_taste_checks',
     'open_reading_jobs',
     /**
@@ -1037,10 +1044,12 @@ select is(
      */
     'set_person_chart',
     'settle_push_delivery',
+    'store_purchase_refusal',
     /** 얼린 작업을 집는 문 — 조회가 아니라 `frozen` → `preparing` 전이다(ADR 0071 · #66) */
     'take_reading_job',
     'taste_continuation_of_run',
-    'taste_session_view'
+    'taste_session_view',
+    'void_store_purchase'
   ]::text[],
   'service_role 이 부를 수 있는 public 함수는 이 목록뿐이다');
 

@@ -243,7 +243,7 @@ bash scripts/aws-wizard.sh
 - **400일은 전환 뒤 올라오는 객체의 기본값이다** — Governance 시험 기간(12 의 첫 반출 · 시험 객체)의 객체는 Governance 1일
   그대로라 하루 뒤 보존이 풀린다. 그 객체도 지켜야 하면 아래 4 대로 객체마다 올린다
 - `select * from audit.export_status()`(위 「상태를 본다」)의 `last_outcome` 이 `succeeded`, `consecutive_failures` 0, `pending_rows` 가 작다
-- `audit.operator_access_export` 에 범위가 적혀 있다 — #304 의 7 이 「끝」으로 보는 것이다
+- `audit.operator_access_export` 에 범위가 적혀 있다 — #770 B 의 「AWS 반출」 줄이 「끝」으로 보는 것이다
 - 버킷의 기본 보존이 `COMPLIANCE 400`(또는 그 이상 — `aws --profile saju-admin s3api get-object-lock-configuration --bucket <버킷>`)
 - 이튿날 · 달마다 `npm run audit:verify`(아래 9)가 초록
 

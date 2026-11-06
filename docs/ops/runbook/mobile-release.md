@@ -12,7 +12,7 @@
 | --- | --- | --- | --- |
 | 1 | 앱이 부르는 웹 문을 운영에 올린다 | 조율자(`deploy.md` 「묶음 배포」, 「배포」 답 뒤) | 아래 「앱의 문이 운영에 섰나」 |
 | 2 | EAS 환경값을 채우고 빌드한다 | 에이전트 · 조율자 | 빌드 링크 · 빌드에 든 값 확인 |
-| 3 | iOS → TestFlight, Android → 내부 트랙 | 조율자(계정은 운영자, #304) | 처리가 끝나 테스터에게 보인다 |
+| 3 | iOS → TestFlight, Android → 내부 트랙 | 조율자(계정은 운영자, #770) | 처리가 끝나 테스터에게 보인다 |
 | 4 | 실기기 확인 | 운영자(#770) | 가입부터 풀이 · 궁합 · 인연 · 채팅까지 |
 | 5 | Android 비공개 테스트(조직 계정이면 고를 일) | 운영자 · 조율자 | 아래 「내부 트랙과 비공개 테스트는 다르다」 · Play 계정이 서는 날의 차례는 `docs/ops/runbook/play-console.md` |
 | 6 | iOS 심사 제출(수동 출시), Android 프로덕션 신청 | 운영자 · 조율자 | 아래 「심사 계정」 · 「iOS 는 수동 출시로 낸다」 |
@@ -116,13 +116,13 @@ npx eas-cli@latest submit --profile production --platform ios                   
 
 **내부 트랙의 날짜를 14일로 세지 않는다.** 공식 요건은 **2023-11-13 이후에 만든 개인 계정**에 걸리고, 비공개 테스트에 **테스터 12명 이상이 연속 14일** 옵트인해 있어야 한다. 옵트아웃했다 돌아오면 그 사람의 날짜는 처음부터다. 그 뒤 Play Console 대시보드의 「Apply for production」에서 질문에 답한다.
 
-- 계정의 유형 · 생성일이 요건에 드는지를 먼저 본다 — #304 의 「Google Play 개발자 계정」 칸. 안 들면 이 요건이 없다. **운영자는 조직 계정을 만든다(D-U-N-S 대기, 2026-11-06) — 공식 문장은 개인 계정만 말하므로 이 요건이 없다고 읽는다**(`docs/ops/runbook/play-console.md` 「조직 계정 만들기」). 아래 두 줄은 개인 계정일 때다.
-- 12명은 문턱이다. 나가는 사람을 세어 15~20명을 모은다(#304).
+- 계정의 유형 · 생성일이 요건에 드는지를 먼저 본다 — #770 B 「적어 둔 값」의 Play 개발자 계정 줄. 안 들면 이 요건이 없다. **운영자는 조직 계정을 만든다(D-U-N-S 대기, 2026-11-06) — 공식 문장은 개인 계정만 말하므로 이 요건이 없다고 읽는다**(`docs/ops/runbook/play-console.md` 「조직 계정 만들기」). 아래 두 줄은 개인 계정일 때다.
+- 12명은 문턱이다. 나가는 사람을 세어 15~20명을 모은다(#770).
 - **베타 종료일과 견준다.** 테스트 환경의 종료일은 `2026-11-30` 이고(지도 #932), 종료 뒤 앱의 문은 `closed` 를 답한다. 그 안에 14일을 채우려면 **2026-11-16 까지** 시작해야 한다 — 종료일에서 거슬러 센 일정이고 Google 의 마감이 아니며, 11-02 빌드의 `expirationDate` 와 날짜가 같을 뿐 관계없다. 넘기면 일정을 옮기는 것은 운영자 결정이다(`docs/ops/runbook/signup.md` 「테스트 시작하기」).
 
 ## 애플 로그인을 켜는 차례
 
-iOS 앱의 애플 로그인(ADR 0219)은 코드만 main 에 있고 **운영자의 Apple Developer 가입(#304) 뒤에 선다.** 웹(Services ID · OAuth)은 안 쓴다 — 네이티브 ID 토큰뿐이다. 공식 문서를 본 날은 2026-11-03 이다([Supabase Apple](https://supabase.com/docs/guides/auth/social-login/auth-apple) · [Expo AppleAuthentication](https://docs.expo.dev/versions/v58.0.0/sdk/apple-authentication/) · [Apple 탈퇴 안내](https://developer.apple.com/support/offering-account-deletion-in-your-app/)).
+iOS 앱의 애플 로그인(ADR 0219)은 코드만 main 에 있고 **운영자의 Apple Developer 가입(#770 B 「iOS 때」) 뒤에 선다.** 웹(Services ID · OAuth)은 안 쓴다 — 네이티브 ID 토큰뿐이다. 공식 문서를 본 날은 2026-11-03 이다([Supabase Apple](https://supabase.com/docs/guides/auth/social-login/auth-apple) · [Expo AppleAuthentication](https://docs.expo.dev/versions/v58.0.0/sdk/apple-authentication/) · [Apple 탈퇴 안내](https://developer.apple.com/support/offering-account-deletion-in-your-app/)).
 
 | 차례 | 걸음 | 누가 | 끝의 값 |
 | --- | --- | --- | --- |

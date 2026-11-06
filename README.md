@@ -286,7 +286,8 @@ npm run test:e2e:signed-in   # 차선 하나만 — match · notice 도 같은 �
 - **격국은 판정하되 억부를 안 뒤집는다** — 월령의 투출로 격을 잡고 성패를 참·거짓이 아니라
   **확인된 조건의 목록**으로 낸다(섞이거나 둘 다 없으면 `unresolved`). 자평 계열 한 계통
   **74건 중 72건**으로 대조해 이름 하나로 맞힌 것이 63건이다. 계통이 하나뿐이라 게이트는
-  닫혀 있다. 통관도 같은 자리에 있다 — 세기는 하되 억부·조후와 갈리는지를 말할 뿐이다
+  닫혀 있다. 통관도 같은 자리에 있다 — 세기는 하되 억부·조후와 갈리는지를 말할 뿐이다.
+  격국 · 오신 · 조후 조건 · 암합 · 통관 다섯의 근거와 상한은 [해석 체계](docs/analysis/interpretation-layers.md)
 - **신살 채택 계통** — 관귀학관은 [《삼명통회》 학당사관](https://xiaozhiliaoo.github.io/reading-note/guoxue/materials/zhcscs/zha11j.pdf),
   현침은 [《오행정기》의 다섯 글자·3자 이상](https://www.suanzhun.net/book/2676.html),
   태극귀인은 [《연해자평》의 년간 기준](https://www.luckclub.cn/bazi/001/026/)을 따른다.

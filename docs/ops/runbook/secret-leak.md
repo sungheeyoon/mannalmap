@@ -45,6 +45,7 @@
 | `APPLE_SIGN_IN_PRIVATE_KEY` | Apple Developer → Certificates, Identifiers & Profiles → Keys 에서 **Sign in with Apple** 을 켠 새 키(주 App ID `com.mannalmap.app`). `.p8` 는 만들 때 한 번만 받는다. 키 ID 가 바뀌므로 `APPLE_SIGN_IN_KEY_ID` 도 함께 바꾼다(ADR 0219) | Vercel **Production** 에 둘 다 → 재배포. 그 뒤 옛 키를 Keys 에서 Revoke | 탈퇴 때 애플 연결 끊기(`/api/mobile/me/apple-revoke`)가 503 이다. **탈퇴는 그대로 간다** — 그 동안 지운 애플 계정의 연결만 남는다. 앱의 애플 로그인 자체는 이 키를 안 쓴다(네이티브 ID 토큰) | 새 배포 Ready 뒤 Vercel 로그에 `apple revoke: keys not set` · `apple revoke token` 이 없는지 본다. 실제 끊기는 시험 계정의 탈퇴로만 잰다 |
 | `KAKAO_CLIENT_SECRET` | 카카오 디벨로퍼스 「만날지도」 → REST API 키의 클라이언트 시크릿을 새로 만든다(ADR 0224) | Vercel **Production** → 재배포, 그리고 Supabase 대시보드 Authentication → Providers → Kakao 의 Client Secret(재배포 없음). **`supabase config push` 로 넣지 않는다** | 둘이 다른 동안 웹의 카카오 로그인이 로그인 실패 화면이다(토큰 교환 거절). 앱의 카카오 로그인은 이 값을 안 쓴다(네이티브 ID 토큰) | 새 배포 Ready 뒤 웹에서 카카오로 로그인이 되고 Vercel 로그에 `kakao token` 이 없는지 본다 |
 | `KAKAO_ADMIN_KEY` | 카카오 디벨로퍼스 「만날지도」 → 앱 키 → **어드민 키**를 재발급한다(ADR 0224 「덧붙임 2026-11-05」). 이 키 하나로 앱의 어느 회원이든 연결을 끊고 조회할 수 있다 — 새면 곧바로 바꾼다 | Vercel **Production** → 재배포. 새 키에도 「사용 가능 API」에서 연결 해제를 허용한다(`docs/ops/runbook/kakao-login.md`) | 바꾸는 동안 웹 탈퇴의 카카오 연결 끊기가 실패한다(`kakao unlink` 401). **탈퇴는 그대로 간다** — 그 사이 탈퇴한 사람은 `kakao-login.md` 「웹 탈퇴의 연결 끊기가 실패하면」으로 다시 끊는다 | 새 배포 Ready 뒤 Vercel 로그에 `kakao unlink` 줄이 없는지 본다. 실제 끊기는 시험 계정의 탈퇴로만 잰다 |
+| `GOOGLE_PLAY_SERVICE_ACCOUNT_JSON` | Google Cloud → IAM & Admin → Service Accounts → 결제 검증용 서비스 계정(EAS 제출용과 다른 계정) → Keys → 새 **JSON** 키를 만들고 옛 키를 지운다(ADR 0230). 이 키는 구매 확인 · 소비와 **주문 환불**(Manage orders and subscriptions)을 할 수 있다 — 새면 곧바로 바꾼다 | Vercel **Production** → 재배포 | 바꾸는 동안 앱의 구매 문 · 통지 문이 503 이다. 산 구매는 소비되지 않은 채 남아 앱이 다시 보내고 Pub/Sub 이 다시 보낸다 — 3일 안에 새 키가 서면 잃는 것이 없다 | 새 배포 Ready 뒤 Vercel 로그에 `store purchase: not configured` · `play notification: not configured` 가 없는지 본다. 라이선스 테스터의 시험 구매 한 번 |
 | Vault `push_dispatch_url` | 비밀이 아니다 — 공개 주소(`/api/push/dispatch`). 도메인이 바뀔 때만 고친다 — 지금 값의 상태는 `docs/ops/runbook/domain.md` 「확인 기록」의 10 | Vault | — | — |
 | Vault `push_extra_hosts` | 비밀이 아니다 — 시험용으로 더 받는 푸시 호스트(로컬의 가짜 푸시 서비스). **운영 Vault 에는 없어야 한다** — 있으면 그 호스트의 구독을 받고 배달 문이 그리로 보낸다(ADR 0156) | 운영에서 보이면 지운다: `delete from vault.secrets where name = 'push_extra_hosts';` | 그 호스트로 남긴 구독의 배달 줄은 다음 잡기에 `skipped` 로 접힌다 | `select count(*) from vault.secrets where name = 'push_extra_hosts';` 가 0 |
 | Vault `reading_recovery_url` | 비밀이 아니다 — 공개 주소(`/api/cron/reading`). 도메인이 바뀔 때만 고친다 — 지금 값의 상태는 `docs/ops/runbook/domain.md` 「확인 기록」의 5 | Vault | — | — |
@@ -63,7 +64,7 @@
   같은 사람을 다시 알아보는 값이라 키가 새면 식별값이 곧 그 사람을 가리킨다. 그래서 식별값은 서버 열쇠의 문만
   읽고(API 역할에 닫는다), 운영자는 SQL 로 읽지 않으며(읽어야 하면 break-glass), 키는 서버 환경변수 · Vault 에만 둔다.
   교체는 위 순서 넷을 따르되 옛 키로 지은 식별값을 새 키로 옮길 길이 없다는 것을 먼저 정한다.
-- **PortOne 키 두 줄은 걷었다** — PG 를 하지 않아(ADR 0212) 코드가 읽지 않는다(2026-11-05). 스토어 키는 #937 이 줄을 더한다. **본인확인 키는 아직 없다** — 들어올 때 이 표에 줄을 더한다.
+- **PortOne 키 두 줄은 걷었다** — PG 를 하지 않아(ADR 0212) 코드가 읽지 않는다(2026-11-05). Google Play 결제 키는 위 표의 `GOOGLE_PLAY_SERVICE_ACCOUNT_JSON` 줄이다(ADR 0230). Pub/Sub 의 audience · 서비스 계정 이메일은 비밀이 아니다. **본인확인 키는 아직 없다** — 들어올 때 이 표에 줄을 더한다.
 
 **git 기록에 새었을 때.** 푸시된 순간 샌 것으로 본다 — 클론 · 포크 · CI 로그가 이미 들고 있다.
 

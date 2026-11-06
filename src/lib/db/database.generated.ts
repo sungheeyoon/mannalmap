@@ -2490,6 +2490,179 @@ export type Database = {
         }
         Relationships: []
       }
+      store_purchase: {
+        Row: {
+          consumed_at: string | null
+          granted_at: string
+          id: string
+          is_test: boolean
+          order_id: string
+          product_id: string
+          purchase_token: string
+          purchased_at: string
+          store: string
+          store_order_id: string | null
+          user_id: string
+          voided_at: string | null
+        }
+        Insert: {
+          consumed_at?: string | null
+          granted_at?: string
+          id?: string
+          is_test?: boolean
+          order_id: string
+          product_id: string
+          purchase_token: string
+          purchased_at: string
+          store: string
+          store_order_id?: string | null
+          user_id: string
+          voided_at?: string | null
+        }
+        Update: {
+          consumed_at?: string | null
+          granted_at?: string
+          id?: string
+          is_test?: boolean
+          order_id?: string
+          product_id?: string
+          purchase_token?: string
+          purchased_at?: string
+          store?: string
+          store_order_id?: string | null
+          user_id?: string
+          voided_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "store_purchase_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: true
+            referencedRelation: "reading_order"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "store_purchase_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "app_user"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      store_purchase_restriction: {
+        Row: {
+          action: string
+          actor_user_id: string | null
+          at: string
+          id: string
+          note: string
+          reason: string
+          request_id: string
+          user_id: string
+        }
+        Insert: {
+          action: string
+          actor_user_id?: string | null
+          at?: string
+          id?: string
+          note: string
+          reason: string
+          request_id: string
+          user_id: string
+        }
+        Update: {
+          action?: string
+          actor_user_id?: string | null
+          at?: string
+          id?: string
+          note?: string
+          reason?: string
+          request_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "store_purchase_restriction_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "app_user"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      store_purchase_void: {
+        Row: {
+          credits_bought: number
+          credits_kept: number
+          credits_revoked: number
+          hold_outcome: string | null
+          id: string
+          paid_amount: number
+          purchase_id: string
+          recorded_at: string
+          refund_type: number | null
+          refunded_amount: number
+          share_amount: number
+          source: string
+          user_id: string
+          voided_at: string
+          voided_reason: number | null
+          voided_source: number | null
+        }
+        Insert: {
+          credits_bought: number
+          credits_kept: number
+          credits_revoked: number
+          hold_outcome?: string | null
+          id?: string
+          paid_amount: number
+          purchase_id: string
+          recorded_at?: string
+          refund_type?: number | null
+          refunded_amount: number
+          share_amount: number
+          source: string
+          user_id: string
+          voided_at: string
+          voided_reason?: number | null
+          voided_source?: number | null
+        }
+        Update: {
+          credits_bought?: number
+          credits_kept?: number
+          credits_revoked?: number
+          hold_outcome?: string | null
+          id?: string
+          paid_amount?: number
+          purchase_id?: string
+          recorded_at?: string
+          refund_type?: number | null
+          refunded_amount?: number
+          share_amount?: number
+          source?: string
+          user_id?: string
+          voided_at?: string
+          voided_reason?: number | null
+          voided_source?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "store_purchase_void_purchase_id_fkey"
+            columns: ["purchase_id"]
+            isOneToOne: true
+            referencedRelation: "store_purchase"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "store_purchase_void_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "app_user"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       taste_artifact: {
         Row: {
           answer_direction: string | null
@@ -3374,6 +3547,22 @@ export type Database = {
         }
         Returns: undefined
       }
+      grant_store_purchase: {
+        Args: {
+          p_is_test: boolean
+          p_product_id: string
+          p_purchase_token: string
+          p_purchased_at: string
+          p_store: string
+          p_store_order_id: string
+          p_user_id: string
+        }
+        Returns: {
+          credits: number
+          order_id: string
+          outcome: string
+        }[]
+      }
       hold_report_quota: { Args: { p_actor: string }; Returns: undefined }
       invalidate_pending_requests: {
         Args: { p_user_id: string }
@@ -3880,6 +4069,10 @@ export type Database = {
           p_run_id: string
           p_sections_begun: number
         }
+        Returns: boolean
+      }
+      note_store_purchase_consumed: {
+        Args: { p_purchase_token: string }
         Returns: boolean
       }
       note_taste_checks: {
@@ -4799,6 +4992,20 @@ export type Database = {
         Args: { p_listed: boolean; p_person: string }
         Returns: undefined
       }
+      set_store_purchase_restriction: {
+        Args: {
+          p_action: string
+          p_actor: string
+          p_note: string
+          p_reason: string
+          p_request_id: string
+          p_user_id: string
+        }
+        Returns: {
+          entry_id: string
+          replayed: boolean
+        }[]
+      }
       settle_push_delivery: {
         Args: { p_delivery_id: string; p_result: string }
         Returns: string
@@ -4867,6 +5074,16 @@ export type Database = {
           viewer_is_first: boolean
         }[]
       }
+      store_payment_id: {
+        Args: { p_purchase_token: string; p_store_order_id: string }
+        Returns: string
+      }
+      store_product_credits: { Args: { p_product_id: string }; Returns: number }
+      store_purchase_is_restricted: {
+        Args: { p_user_id: string }
+        Returns: boolean
+      }
+      store_purchase_refusal: { Args: { p_user_id: string }; Returns: string }
       survey_sole_conflict: {
         Args: { p_picked: string[]; p_sole: string[] }
         Returns: boolean
@@ -4989,6 +5206,23 @@ export type Database = {
           isOneToOne: false
           isSetofReturn: true
         }
+      }
+      void_store_purchase: {
+        Args: {
+          p_purchase_token: string
+          p_refund_type: number
+          p_source: string
+          p_store: string
+          p_store_order_id: string
+          p_voided_at: string
+          p_voided_reason: number
+          p_voided_source: number
+        }
+        Returns: {
+          credits_kept: number
+          credits_revoked: number
+          outcome: string
+        }[]
       }
       wake_photo_sweep: { Args: never; Returns: undefined }
       wake_push_dispatch: { Args: never; Returns: undefined }
