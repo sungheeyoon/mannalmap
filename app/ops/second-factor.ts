@@ -3,7 +3,7 @@ import { notFound, redirect } from 'next/navigation';
 
 import type { Database } from '@/src/lib/db';
 
-import { SIGN_IN_AGAIN_NOTE } from '../ui/sign-in-again';
+import { SIGN_IN_AGAIN_NOTE } from '@/src/lib/account/sign-in-again';
 import { refuseBeforeTheDoor, type DeniedAction, type RefusedTarget, type WriteAction } from './denial';
 
 /**

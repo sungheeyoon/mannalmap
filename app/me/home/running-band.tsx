@@ -1,6 +1,6 @@
 import { runningLinesOf } from './running-line';
 import { RunningBandLive } from './running-band-live';
-import type { RunningReading } from './running';
+import type { RunningReading } from '@/src/lib/reading/running';
 
 /**
  * **만드는 중인 풀이** — 있을 때만 선다(ADR 0157).

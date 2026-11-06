@@ -17,6 +17,7 @@ import type { PhotoFocus } from '@profile';
 import { supabase } from '@/auth/client';
 import { respondToMatchRequest } from '@/reading/api';
 import { openParticipation, saveFailureOf } from '@/reading/chart-writes';
+import { readMyReadings } from '@/reading/my-readings';
 
 import { readDetail } from './talk-doors';
 
@@ -158,13 +159,13 @@ export type MatchBook = { key: string; matchId: string; href: string; label: str
 export function readMatchBooks(): Promise<Read<readonly MatchBook[]>> {
   return guarded(async () => {
     if (supabase === null) return { ok: false, reason: NOT_READY };
-    const { data, error } = await supabase.rpc('my_readings');
-    if (error !== null) return { ok: false, reason: userFacingDbMessage(error, 'my_readings') };
+    const readings = await readMyReadings(supabase);
+    if (!readings.ok) return readings;
     return {
       ok: true,
-      value: (data ?? []).flatMap((row) =>
-        row.kind === 'match' && row.match_id !== null
-          ? [{ key: row.match_id, matchId: row.match_id, href: withFrom(`/me/match/${row.match_id}`, 'history'), label: row.label_b ?? '' }]
+      value: readings.value.flatMap(({ kind, matchId, labelB }) =>
+        kind === 'match' && matchId !== null
+          ? [{ key: matchId, matchId, href: withFrom(`/me/match/${matchId}`, 'history'), label: labelB ?? '' }]
           : [],
       ),
     };

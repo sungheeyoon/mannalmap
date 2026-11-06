@@ -60,9 +60,6 @@
       "@brand/*": [
         "../src/lib/brand/*"
       ],
-      "@sign-in-again": [
-        "../app/ui/sign-in-again.ts"
-      ],
       "@chat": [
         "../src/lib/chat/index.ts"
       ],

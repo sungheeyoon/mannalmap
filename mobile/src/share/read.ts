@@ -3,16 +3,15 @@ import { createClient } from '@supabase/supabase-js';
 import type { Database } from '@db';
 import { sharedReadingOfRow, type ShareKind, type SharedReading } from '@reading/shared';
 
-const url = process.env.EXPO_PUBLIC_SUPABASE_URL;
-const publishableKey = process.env.EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
+import { SUPABASE_ENV } from '@/supabase-env';
 
 /**
  * 공유본이 드는 Supabase — **세션을 아예 안 든다**(웹의 `app/share/public-client.ts` 와 같다). 내주는 것은 누가 보든 같은 한 덩어리이고
  * 여는 열쇠는 주소의 토큰 하나다. 로그인한 사람의 만료된 세션이 갱신을 시도하다 이 읽기를 망치는 길을 두지 않는다.
  */
 const client =
-  url && publishableKey
-    ? createClient<Database>(url, publishableKey, { auth: { persistSession: false, autoRefreshToken: false } })
+  SUPABASE_ENV !== null
+    ? createClient<Database>(SUPABASE_ENV.url, SUPABASE_ENV.publishableKey, { auth: { persistSession: false, autoRefreshToken: false } })
     : null;
 
 export type ShareRead = { kind: 'open'; shared: SharedReading } | { kind: 'gone' } | { kind: 'failed' };
