@@ -1,22 +1,22 @@
 -- 구매 제한이 걸린 채 떠난 로그인의 기록을 1년 두고, 같은 로그인이 다시 가입을 마치면 제한이 이어진다
--- (G-142, ADR 0230 추기 B — 운영자 답 2026-11-06)
+-- (G-142, ADR 0230 추기 B)
 --
--- **올리는 차례: #938 의 처리방침에 「구매 제한 기록」 줄이 게시되는 판과 같은 판이거나 그 뒤다**(ADR 0098 「알리기 전에 남기지
--- 않는다」). 앞의 `20270114090000`(걷는 장수 · 시험 구매)은 먼저 올려도 된다. 앱 · 웹은 이 기록을 부르지 않는다.
+-- **올리는 차례: `20270114095000` 뒤, 처리방침 notice-v17(「구매 제한 기록은 따로 둡니다」 절)이 배포되는 때와 같거나 그 뒤다**
+-- (ADR 0098 「알리기 전에 남기지 않는다」). 앱 · 웹은 이 기록을 부르지 않는다.
 --
 -- 제한된 채 지워지는 계정의 로그인 식별값 · 제한 갈래 · 건 운영자 · 시각 · 무효 이력의 요약을 `retention.store_purchase_restriction` 에
--- 옮기고, 같은 로그인이 1년 안에 가입을 마치면 제한이 다시 선다. 이용 정지의 제재 기록(`retention.sanction`, `20270108154600`, ADR 0218)과
+-- 옮기고, 같은 로그인이 1년 안에 가입을 마치면 제한이 다시 걸린다. 이용 정지의 제재 기록(`retention.sanction`, `20270108154600`, ADR 0218)과
 -- 같은 꼴 · 같은 식별(이메일 또는 `provider:provider_id`)이다. 운영자 메모와 주문 번호는 옮기지 않는다 — 메모는 자유 글이라 개인정보가
 -- 섞일 수 있고, 주문은 결제 기록이 든다. 지우는 크론은 정지 기록의 것과 따로 둔다(`store-restriction-retention-purge`) — 두 기록의 기간 ·
 -- 대상이 따로 바뀔 수 있다.
 --
--- 재는 자리는 `supabase/tests/99_store_restriction_kept.test.sql`.
+-- 시험은 `supabase/tests/99_store_restriction_kept.test.sql`.
 
 -- ── 1. 구매 제한은 탈퇴 뒤에도 같은 로그인에 1년 ──────────────────────────────
 
 /**
- * 얼마나 두나 — 처분일부터 1년. 이용 정지의 제재 기록(`retention.sanction_period`)과 같은 값이고, 카카오 처리방침의 「서비스 부정이용 기록
- * 탈퇴일부터 최대 1년」과 같다(사례 범위 1 ~ 5년, 조율자 결정 2026-11-06 — `docs/product/gaps/records/g-142.md`). 기간을 바꾸면 이 값 하나다
+ * 얼마나 두나 — 처분일부터 1년. 이용 정지의 제재 기록(`retention.sanction_period`)과 같은 값이다(근거는 ADR 0230 추기 B).
+ * 기간을 바꾸면 이 값 하나다
  */
 create function retention.store_restriction_period()
 returns interval
@@ -42,7 +42,7 @@ create table retention.store_purchase_restriction (
   restricted_at timestamptz not null,
   /**
    * 제한의 근거 — 그 계정의 스토어 환불 이력(`store_purchase_void`)의 요약: 무효마다 시각 · Google 의 갈래 셋(사유 · 누가 · 환불 갈래) ·
-   * 걷은 장수 · 남긴 장수(ADR 0230 추기 B). 금액 · 주문은 결제 기록(`retention.reading_payment`)이 든다
+   * 회수한 장수 · 남긴 장수(ADR 0230 추기 B). 금액 · 주문은 결제 기록(`retention.reading_payment`)이 든다
    */
   voids jsonb not null default '[]'::jsonb check (jsonb_typeof(voids) = 'array'),
   /** 처분일 — 옮긴 때. 1년을 여기서 센다 */
@@ -111,7 +111,7 @@ for each row execute function retention.keep_store_restriction_of_leaver();
 /**
  * 가입을 처음 마친 순간 살아 있는 기록과 로그인이 겹치면 구매 제한을 다시 건다 — 이력 줄은 앞 제한의 갈래 · 운영자 그대로이고 메모가
  * 이어진 것을 말한다. 운영자에게 한 줄 알린다(`store-restriction-carried:`). 기록이 여럿 겹치면 가장 최근 처분의 것이다. 정지가 함께
- * 이어져도(`carry_sanction_on_signup`) 따로 선다.
+ * 이어져도(`carry_sanction_on_signup`) 따로 걸린다.
  */
 create function public.carry_store_restriction_on_signup()
 returns trigger

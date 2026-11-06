@@ -151,7 +151,7 @@ function Following({ saju }: { saju: Saju }) {
         <T size="xs" tone="muted">종격</T>
         <T size="lg">{FOLLOWING_PATTERN_STATUS_KO[following.verdict]}</T>
         <T tone="secondary">
-          자당(비겁·인성) 몫 <T tone="secondary" num>{percent1(following.selfShare)}</T>
+          내 편 기운(비겁·인성) 비율 <T tone="secondary" num>{percent1(following.selfShare)}</T>
           <T tone="muted"> (밖으로 종 ≤{percentOfRatio(dominance.outwardMaxSelfShare)} · 안으로 종 ≥{percentOfRatio(dominance.inwardMinSelfShare)})</T>
           {following.direction && <T tone="secondary"> {FOLLOWING_DIRECTION_KO[following.direction]}</T>}
         </T>

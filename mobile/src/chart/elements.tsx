@@ -72,7 +72,7 @@ export function ElementChart({ saju }: { saju: Saju }) {
     <Card>
       <T size="lead" bold>오행 분포</T>
       <T size="xs" tone="secondary" style={styles.lead}>
-        개수는 {glyphCount === 8 ? '여덟' : '여섯'} 글자, 점수는 지장간까지 편 값입니다
+        개수는 {glyphCount === 8 ? '여덟' : '여섯'} 글자, 점수는 글자 속 숨은 기운까지 더한 값입니다
         {glyphCount !== 8 && <T size="xs" tone="muted"> · 시주 제외</T>}
       </T>
 
@@ -115,7 +115,7 @@ export function ElementChart({ saju }: { saju: Saju }) {
         <Ruled>
           <T size="xs" tone="secondary">
             여덟 글자에 없는 오행 {missing.map((element) => ELEMENT_KO[element]).join(', ')}
-            <T size="xs" tone="muted"> (지장간에는 있을 수 있습니다 — 점수 칸을 보세요)</T>
+            <T size="xs" tone="muted"> (숨은 기운으로는 있을 수 있습니다 — 점수 칸을 보세요)</T>
             {glyphCount !== 8 && <T size="xs" tone="muted"> · 시주에 있었을지는 알 수 없습니다</T>}
           </T>
         </Ruled>

@@ -2495,6 +2495,7 @@ export type Database = {
           consumed_at: string | null
           granted_at: string
           id: string
+          is_promo: boolean
           is_test: boolean
           order_id: string
           product_id: string
@@ -2509,6 +2510,7 @@ export type Database = {
           consumed_at?: string | null
           granted_at?: string
           id?: string
+          is_promo?: boolean
           is_test?: boolean
           order_id: string
           product_id: string
@@ -2523,6 +2525,7 @@ export type Database = {
           consumed_at?: string | null
           granted_at?: string
           id?: string
+          is_promo?: boolean
           is_test?: boolean
           order_id?: string
           product_id?: string
@@ -2659,6 +2662,39 @@ export type Database = {
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "app_user"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      store_purchase_void_take: {
+        Row: {
+          bundle_id: string
+          credits: number
+          void_id: string
+        }
+        Insert: {
+          bundle_id: string
+          credits: number
+          void_id: string
+        }
+        Update: {
+          bundle_id?: string
+          credits?: number
+          void_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "store_purchase_void_take_bundle_id_fkey"
+            columns: ["bundle_id"]
+            isOneToOne: false
+            referencedRelation: "reading_bundle"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "store_purchase_void_take_void_id_fkey"
+            columns: ["void_id"]
+            isOneToOne: false
+            referencedRelation: "store_purchase_void"
             referencedColumns: ["id"]
           },
         ]
@@ -3549,6 +3585,7 @@ export type Database = {
       }
       grant_store_purchase: {
         Args: {
+          p_is_promo?: boolean
           p_is_test: boolean
           p_product_id: string
           p_purchase_token: string
@@ -4255,6 +4292,7 @@ export type Database = {
           refunded_credits: number
           reserved: number
           status: string
+          taken_by_store: number
           unused: number
           used: number
         }[]
@@ -4635,6 +4673,10 @@ export type Database = {
       reading_budget_warning: { Args: never; Returns: number }
       reading_bundle_held: { Args: { p_bundle_id: string }; Returns: number }
       reading_bundle_price: { Args: { p_credits: number }; Returns: number }
+      reading_bundle_taken_by_store: {
+        Args: { p_bundle_id: string }
+        Returns: number
+      }
       reading_credit_grant_left: { Args: { p_user: string }; Returns: number }
       reading_credit_limit: { Args: never; Returns: number }
       reading_credit_limit_for: { Args: { p_user: string }; Returns: number }

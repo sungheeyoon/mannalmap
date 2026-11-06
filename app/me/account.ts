@@ -1,4 +1,4 @@
-import { accountStateOf, type AccountState, type Suspension } from '@/src/lib/account';
+import { accountStateOf, suspensionOf, type AccountState, type Suspension } from '@/src/lib/account';
 import type { Database } from '@/src/lib/db';
 
 import type { supabaseOnServer } from '../auth/server-client';
@@ -111,6 +111,5 @@ async function readSuspension(supabase: ServerClient): Promise<Suspension | null
     recordDbFailure(error, 'my_suspension');
     return null;
   }
-  const found = data?.[0];
-  return found === undefined ? null : { nickname: found.nickname, reason: found.reason };
+  return suspensionOf(data);
 }

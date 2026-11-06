@@ -2,7 +2,7 @@ import { runningStageOf } from '@/src/lib/reading/running-stage';
 
 import { readingHrefOf, type ReadingTarget } from '../reading/target';
 import { withFromMe } from '@/src/lib/home/from-me';
-import type { RunningReading } from './running';
+import type { RunningReading } from '@/src/lib/reading/running';
 
 /**
  * **만드는 중인 풀이 한 줄이 뭐라고 적히고 어디로 가는가**(ADR 0157) — 홈의 띠가 그리기만 하도록 여기서 짓는다.

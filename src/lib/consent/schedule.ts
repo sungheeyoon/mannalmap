@@ -8,10 +8,10 @@ export type BetaSchedule = {
 };
 
 /**
- * 문이 읽어 온 일정 한 줄 — 이름은 이미 도메인의 말이다.
+ * 일정 한 줄 — 이름은 이미 도메인의 말이다.
  *
- * DB 를 부르는 일과 snake_case 를 옮기는 일은 앱의 문(`app/beta-schedule.ts`)이 한다.
- * 여기 남는 것은 **셋이 다 있어야 안내가 선다**는 규칙 하나다. 운영자 칸이 `string` 만이
+ * DB 를 부르는 일은 문(웹 `app/beta-schedule.ts` · 앱 `mobile/src/auth/schedule.ts`)이 하고, snake_case 는 둘이 함께 쓰는
+ * `scheduleOfDbRow` 가 옮긴다. 여기 남는 것은 **셋이 다 있어야 안내가 선다**는 규칙 하나다. 운영자 칸이 `string` 만이
  * 아닌 것은 그 규칙이 빈 값과 `undefined` 를 재기 때문이다.
  */
 type ScheduleRow = {
@@ -62,4 +62,31 @@ export function scheduleOf(row: ScheduleRow): BetaSchedule | null {
     },
     operator: { name, officer, contact },
   };
+}
+
+/** `current_beta_schedule` 이 내주는 칸 가운데 읽는 넷 — 칸 이름은 생성 타입과 같아야 문이 넘길 수 있다. 줄의 `operator_*` 칸은 안 읽는다 */
+type ScheduleDbRow = {
+  readonly schedule_id: number;
+  readonly ends_on: string;
+  readonly purge_by: string;
+  readonly purge_within_days: number;
+};
+
+/**
+ * `current_beta_schedule` 의 답을 안내로 — 웹과 앱의 문이 함께 쓴다. 줄이 없으면 `null` 이다(문이 성공했고 일정이 없다).
+ *
+ * 운영자는 줄이 아니라 부르는 쪽이 넘기는 상수 `PRIVACY_OPERATOR`(`src/lib/brand/business.ts`, ADR 0232)다 — `consent` 는 `brand` 를 부르지 않는다.
+ */
+export function scheduleOfDbRow(rows: readonly ScheduleDbRow[] | null, operator: Operator): BetaSchedule | null {
+  const row = rows?.[0];
+  if (row === undefined) return null;
+  return scheduleOf({
+    scheduleId: row.schedule_id,
+    endsOn: row.ends_on,
+    purgeBy: row.purge_by,
+    purgeWithinDays: row.purge_within_days,
+    operatorName: operator.name,
+    operatorOfficer: operator.officer,
+    operatorContact: operator.contact,
+  });
 }

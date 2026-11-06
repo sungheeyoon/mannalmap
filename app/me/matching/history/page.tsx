@@ -18,7 +18,7 @@ import { matchesForViewer, type InboxMatch } from '../../requests/inbox';
 import { makingMatches, matchBooks } from '../history';
 import { COUNT_CHIP } from '../history-row';
 import { FailureLine } from '../../../ui/failure-line';
-import { SIGN_IN_AGAIN_NOTE } from '../../../ui/sign-in-again';
+import { SIGN_IN_AGAIN_NOTE } from '@/src/lib/account/sign-in-again';
 
 export const metadata = {
   title: '인연 기록',

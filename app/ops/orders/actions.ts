@@ -44,7 +44,7 @@ export async function holdRefund(input: PrepareRequest): Promise<Answer<{ readon
   const problem = !isRefundReason(input.reason)
     ? '환불 사유를 골라 주세요.'
     : !Number.isInteger(input.credits) || input.credits < 1
-      ? '걷을 회차를 1장 이상 골라 주세요.'
+      ? '환불 수량을 1장 이상 골라 주세요.'
       : null;
   const supabase = await supabaseOnServer();
   const unpassed = await writeWithoutSecondFactor(supabase, 'credits.refund_hold', { orderId: input.orderId });

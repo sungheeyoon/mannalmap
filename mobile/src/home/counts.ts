@@ -5,6 +5,7 @@ import { readingCreditsLabel } from '@reading/notes';
 
 import { supabase } from '@/auth/client';
 import { listenLive } from '@/chat/live';
+import { readReadingCredits } from '@/credits/remaining';
 import { settled } from '@/ui/settled';
 
 export type Counts = { chat: number; news: number; credits: string | null };
@@ -28,17 +29,17 @@ export function useCounts(pathname: string, enabled: boolean): Counts {
       const reads = Promise.all([
         client.rpc('unread_chat_count'),
         client.rpc('my_notifications'),
-        client.rpc('my_reading_credits'),
+        readReadingCredits(client),
       ]);
       /* 배지는 부속이다 — 못 읽으면 그 자리를 비운다 */
       void settled(reads, 'counts', () => null).then((read) => {
         if (mine !== asked.current || read === null) return;
         const [chat, news, credits] = read;
-        const left = credits.data?.[0]?.available;
+        const left = credits.ok ? credits.value?.available : undefined;
         setCounts({
           chat: chat.error === null ? Number(chat.data ?? 0) : 0,
           news: news.error === null ? bellCount((news.data ?? []).map((row) => ({ kind: row.kind, unread: row.read_at === null }))) : 0,
-          credits: credits.error === null && left !== undefined ? readingCreditsLabel({ available: left }) : null,
+          credits: left !== undefined ? readingCreditsLabel({ available: left }) : null,
         });
       });
     };

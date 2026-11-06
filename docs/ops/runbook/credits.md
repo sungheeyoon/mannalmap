@@ -144,9 +144,9 @@ ADR 0191 — 운영 판단). 소멸일 순(무료 · 예외는 받은 날부터 
 주문 · 매출 · 환불 수는 운영 화면 `/ops/today` 가 낸다(ADR 0183) — 아래 SQL 은 상태별 전체 합이다.
 
 ```bash
-# 상태별 주문 수 · 금액 · 돌려준 금액
+# 상태별 주문 수 · 금액 · 돌려준 금액 — 라이선스 테스터의 시험 구매(`is_test`)와 0원 프로모션 구매(`is_promo`)는 빼고 따로 센다(/ops/today 와 같다)
 npm run db:remote -- --purpose "풀이권 주문 상태별 집계" \
-  "select status, count(*) as 주문, sum(amount) as 금액, sum(refunded_amount) as 환불 from public.reading_order group by status order by status"
+  "select status, count(*) as 주문, sum(amount) as 금액, sum(refunded_amount) as 환불, (select count(*) from public.store_purchase s join public.reading_order t on t.id = s.order_id where (s.is_test or s.is_promo) and t.status = o.status) as 시험_프로모션_뺌 from public.reading_order o where not exists (select 1 from public.store_purchase s where s.order_id = o.id and (s.is_test or s.is_promo)) group by status order by status"
 
 # 묶음 전체의 산 수 · 걷은 수 · 쓴 수 · 예약 중 수
 npm run db:remote -- --purpose "풀이권 묶음 쓰임 집계" \
@@ -176,7 +176,7 @@ npm run db:remote -- --purpose "풀이권 장부와 셈의 대조" \
 | 경우 | 사유 | 환불수수료 |
 | --- | --- | --- |
 | 청약철회 기간 안의 요청 · 기점을 확인할 수 없는 요청 | 청약철회(기간 내) `withdrawal` | 없음 |
-| 청약철회 기간이 지난 뒤의 단순 변심 요청(탈퇴 전) | 안 쓴 몫 환불(청약철회 기간 경과 후 · 10% 공제) `unused` | 10% |
+| 청약철회 기간이 지난 뒤의 단순 변심 요청(탈퇴 전) | 미사용분 환불(청약철회 기간 경과 후 · 10% 공제) `unused` | 10% |
 | 자진 탈퇴 뒤의 청구 | 주문이 지워져 이 화면으로 확보하지 못한다 — 길이 아직 없다(G-21, [기록](../../product/gaps/records/g-21.md) 「판매를 열 때 남은 것」). 금액 규칙은 위 줄과 같다 | 10% |
 | 중복 결제 | `duplicate` | 없음 |
 | 생성 실패 · 계약과 다른 제공 | 미제공(장애) `failure` — 쓴 회차까지면 아래 SQL 차례 | 없음 |
@@ -268,8 +268,9 @@ SQL 차례의 금액은 사람이 넣는다 — 이 길로 `unused` 를 적으�
 
 ```sql
 -- 실행 전 확인 — 대상 주문 · 회원 · 금액 · 진행 중인 확보(있으면 이 환불은 거절된다)
+-- 걷은 회차는 둘로 본다 — 돈을 돌려주고 걷은 것(금액 셈의 입력)과 다른 결제의 스토어 환불이 돈 없이 걷어 간 것(ADR 0230 추기 A)
 select o.provider_order_id, left(o.user_id::text, 8) as owner_ref, o.status, o.amount, o.refunded_amount,
-       b.credits, b.refunded_credits,
+       b.credits, b.refunded_credits - public.reading_bundle_taken_by_store(b.id) as 돈으로_걷은, public.reading_bundle_taken_by_store(b.id) as 스토어_환불로_걷힘,
        exists (select 1 from public.reading_refund_hold h where h.order_id = o.id and h.state = 'held') as hold_open
 from public.reading_order o join public.reading_bundle b on b.order_id = o.id
 where o.id = '<order-id>';
@@ -315,7 +316,7 @@ update retention.reading_payment set hold_reason = null, held_at = null where or
 `/api/cron/store-voided`(Voided Purchases API, 지난 사흘)가 `void_store_purchase` 로 적는다 — **지금 코드는 그 결제의 묶음에서 안 쓴 풀이권만 걷고 바닥은 0** 이다.
 **운영자 결정(2026-11-06, ADR 0230 추기 A)은 「그 결제가 준 장수만큼, 계정에 남은 유료 풀이권에서(그 묶음 → 늦게 산 묶음), 바닥 0」이다 — G-141 이 코드를 고친 뒤부터
 그렇게 걷힌다.** 어느 쪽이든 무료 · 예외 몫과 다음 구매에서는 빼지 않는다. 주문은 장부 그대로(`provider = 'google_play'`, 주문 번호 `rdo_…`, 거래 번호 = Google 주문 번호 `GPA.…`)라
-`/ops/orders` · `/ops/members` 가 다른 주문처럼 보인다. 스토어가 돌려준 환불 줄은 「스토어 환불(Google 이 돌려줌 · 안 쓴 풀이권 회수)」이다.
+`/ops/orders` · `/ops/members` 가 다른 주문처럼 보인다. 스토어가 돌려준 환불 줄은 「스토어 환불(Google 환불 · 잔여 풀이권 회수)」이다.
 
 **환경 변수 셋 — 운영자가 Play 계정 뒤에 넣는다**(Vercel **Production**, 값은 저장소 · 이슈에 적지 않는다). 하나라도 비면 구매 문 · 통지 문이 503 이고
 대조 크론은 `{ configured: false }` 로 끝난다.
@@ -348,9 +349,10 @@ update retention.reading_payment set hold_reason = null, held_at = null where or
    (`service-<프로젝트 번호>@gcp-sa-pubsub.iam.gserviceaccount.com`)에 그 서비스 계정의 **Service Account Token Creator** 를 준다. Play Console → Monetize with Play → Monetization setup →
    Real-time developer notifications 에 주제 `projects/<프로젝트 id>/topics/play-billing`, 받을 것은 **「Get all notifications for subscriptions and one-time products」**(팔렸다 통지까지 —
    「… and all voided purchases」 만 고르면 결제 중 앱이 꺼진 구매를 통지로 못 줍는다). audience · 서비스 계정 이메일을 Vercel 의 둘에 — **운영자**
-5. **`db push`** — `20270113090000` 하나. 등급 3, 운영자가 답한 뒤(`docs/ops/runbook/deploy.md` 「규약 넷」 — DB 가 먼저). 올린 뒤 `npm run db:remote -- --purpose "스토어 구매 표 확인" "select count(*) from public.store_purchase"` 가 0
+5. **`db push`** — `20270113090000` → `20270114090000`(걷는 장수 · 시험 · 프로모션 구매, G-141 — 출시 전 언제든) 차례로. `20270114100000`(구매 제한 기록 1년, G-142 — #1048)은
+   #938 의 처리방침에 「구매 제한 기록」 줄이 게시되는 판과 같은 판이거나 그 뒤에만 올린다(ADR 0098, `docs/ops/runbook/erasure.md` 「구매 제한 기록」). 등급 3, 운영자가 답한 뒤(`docs/ops/runbook/deploy.md` 「규약 넷」 — DB 가 먼저). 올린 뒤 `npm run db:remote -- --purpose "스토어 구매 표 확인" "select count(*) from public.store_purchase"` 가 0
 6. **배포** — 「배포」 답 뒤(`deploy.md`). 그 뒤 Monetization setup 의 **Send test message** → Vercel 로그에 `play notification: refused` · `not configured` 가 없다(문은 204)
-7. **라이선스 테스터** — Play Console → Settings → License testing 에 시험할 구글 계정. 시험 구매는 돈이 안 오가고 장부에 `is_test` 로 선다
+7. **라이선스 테스터** — Play Console → Settings → License testing 에 시험할 구글 계정. 시험 구매는 돈이 안 오가고 장부에 `is_test` 로 선다. Play 프로모션 코드로 받은 구매(`purchaseType = 1`)는 금액 0 의 주문으로 서고(`is_promo`) 매출 · 환불 금액에 안 든다(운영자 결정 2026-11-06, ADR 0230 추기)
 
 **샌드박스 확인 — 그날 밟고 값을 #937 에 적는다**(#937 「끝났다고 말할 조건」). 장부는 개인을 안 가리키는 질의로 본다(아래).
 
@@ -378,9 +380,9 @@ update retention.reading_payment set hold_reason = null, held_at = null where or
 `store_purchase_void.share_amount` 다(ADR 0230 의 4 — G-141 뒤에는 걷은 것이 「그 결제가 준 장수만큼 남은 유료 풀이권에서」다). 이용자에게 차이를 청구하지 않는다. 진행 중인 확보가 있었는데 금액이 달랐으면 확보는 「google play: the store refunded the payment on its own」 사유로 풀린다.
 
 ```bash
-# 스토어가 돌려준 결제 — 날짜별 건수 · 돌려준 돈 · 우리 셈의 몫 · 걷은 장수 · 남긴 장수(개인을 가리키지 않는다)
+# 스토어가 돌려준 결제 — 날짜별 건수 · 돌려준 돈 · 우리 셈의 몫 · 걷은 장수 · 못 걷은 장수(개인을 가리키지 않는다). 시험 · 프로모션 구매의 무효는 뺀다(매출과 같은 기준)
 npm run db:remote -- --purpose "스토어 환불 집계" \
-  "select date_trunc('day', recorded_at)::date as 날, count(*), sum(refunded_amount) as 돌려준돈, sum(share_amount) as 우리셈, sum(credits_revoked) as 걷은장수, sum(credits_kept) as 남긴장수 from public.store_purchase_void group by 1 order by 1 desc limit 30"
+  "select date_trunc('day', v.recorded_at)::date as 날, count(*), sum(v.refunded_amount) as 돌려준돈, sum(v.share_amount) as 우리셈, sum(v.credits_revoked) as 걷은장수, sum(v.credits_kept) as 못걷은장수 from public.store_purchase_void v join public.store_purchase s on s.id = v.purchase_id where not s.is_test and not s.is_promo group by 1 order by 1 desc limit 30"
 
 # 지급 · 소비 — 소비 안 된 지급이 하루 넘게 남았나(0 이어야 한다. 남으면 앱이 다시 보내거나 3일 뒤 Google 이 돌려준다)
 npm run db:remote -- --purpose "스토어 구매 소비 대조" \
@@ -392,11 +394,17 @@ npm run db:remote -- --purpose "스토어 구매 소비 대조" \
 ```bash
 # 스토어 환불이 여러 번인 계정 — 계정 앞 8자와 수만. 닉네임 · 주문은 /ops/members?q=<계정 id> 의 화면으로 본다(개인정보는 화면으로만)
 npm run db:remote -- --purpose "스토어 환불 반복 계정" \
-  "select left(user_id::text, 8) as 계정, count(*) as 환불, sum(credits_kept) as 쓰고돌려받은장수, max(recorded_at) as 마지막 from public.store_purchase_void group by user_id having count(*) >= 2 order by 2 desc limit 50"
+  "select left(user_id::text, 8) as 계정, count(*) as 환불, sum(credits_kept) as 못걷은장수, max(recorded_at) as 마지막 from public.store_purchase_void group by user_id having count(*) >= 2 order by 2 desc limit 50"
 ```
 
 **구매 제한 걸기 · 풀기 — break-glass**(회원 화면 단추는 반복 악용이 실제로 보인 뒤에 세운다 — 운영자 답 2026-11-06, ADR 0230). 무상 지급과 같은 꼴이다 — 대장에 먼저 적고,
 moderation.md 「SQL 실행 전 확인」의 셋을 밟고, 요청 번호(`select gen_random_uuid()`)를 하나 지어 적는다. 갈래는 걸 때 `refund_abuse` · `other`, 풀 때 `appeal` · `mistake` · `other`, 메모 필수 200자.
+
+**걸기 전에 통지하고 10일 소명을 받는다**(조율자 결정 2026-11-06, 운영자 위임 — ADR 0230 추기 B, 사례는 `docs/product/gaps/records/g-142.md`).
+
+1. 이용자에게 알린다 — 계정의 연락 길(가입 이메일 · 문의 답장)로 사유(스토어 환불 반복 · 횟수와 날짜) · 범위(새 구매만 막는다, 산 풀이권은 그대로 쓴다) · 적용일(통지 다음 날부터 10일 뒤) · 소명 방법(문의 답장)
+2. 10일 동안 소명을 받는다 — 소명이 맞으면 걸지 않고 대장에 남긴다
+3. 10일이 지나면 아래 SQL 로 건다. 메모에 통지 날짜와 소명 여부를 적는다(메모는 탈퇴 뒤 보관 기록에 옮겨지지 않는다)
 
 ```bash
 npm run db:remote -- --purpose "구매 제한 <계정 앞 8자> — 환불 반복 검토" "$(cat <<'SQL'

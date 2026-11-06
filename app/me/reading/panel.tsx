@@ -11,7 +11,7 @@ import { BUTTON_PRIMARY_FACE, BUTTON_SECONDARY_FACE } from '../../ui/buttons';
 import { ConfirmDialog } from '../../ui/confirm-dialog';
 import { Icon } from '../../ui/icons';
 import { TYPE_NAME } from '../../ui/surfaces';
-import type { ReadingCredits } from '../credits/remaining';
+import type { ReadingCredits } from '@/src/lib/reading/credits';
 import { ReadingFeedback } from './feedback';
 import { ShareReadingButton } from './share-button';
 import { READING_COLUMN } from './markdown';

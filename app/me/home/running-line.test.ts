@@ -11,7 +11,7 @@ import {
   runningName,
   runningStage,
 } from './running-line';
-import type { RunningReading } from './running';
+import type { RunningReading } from '@/src/lib/reading/running';
 
 const fresh = { jobStatus: 'frozen', sectionsBegun: 0, bodyWritten: false } as const;
 
