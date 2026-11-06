@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import type { ReadingCredits } from '../credits/remaining';
+import type { ReadingCredits } from '@/src/lib/reading/credits';
 import type { CurrentReading } from '@/src/lib/reading';
 import { panelChrome } from './panel-chrome';
 

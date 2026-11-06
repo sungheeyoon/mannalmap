@@ -41,7 +41,7 @@
  * 「이 오류를 사용자에게 옮긴다」고 적는 것뿐이다.
  */
 
-import { SIGN_IN_AGAIN_NOTE } from './ui/sign-in-again';
+import { SIGN_IN_AGAIN_NOTE } from '../src/lib/account/sign-in-again';
 
 /** 우리 문장은 전부 한국어다 — 84종을 재어 확인했다 */
 const KOREAN = /[가-힣]/;

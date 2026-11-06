@@ -18,7 +18,13 @@ import { reachesMobile } from './ci-plan.mjs';
 const ROOT = join(import.meta.dirname, '..');
 
 /** 웹 쪽 코드가 머물 곳 — `mobile/metro.config.js` 의 watchFolders. 밖의 파일은 Metro 가 못 본다 */
-const SHARED_ROOTS = ['src/lib', 'app'];
+const SHARED_ROOTS = ['src/lib'];
+/**
+ * `app/` 에서 앱이 닿아도 되는 파일 — **DB 거절을 옮기는 `app/db-error.ts` 하나다.** 웹의 문 · 화면 · 부품은 웹 별칭과 서버 모듈을 끌고 와
+ * 앱 번들에서 깨지므로, 함께 쓸 것은 `src/lib` 으로 내린다(로그인 다시 안내 `SIGN_IN_AGAIN_NOTE` 가 2026-11-06 에 그렇게 내려갔다).
+ * Metro 는 `app/` 폴더를 통째로 보지만(`watchFolders`) 앱이 닿는 것은 이 목록뿐이다.
+ */
+const SHARED_APP_FILES = ['app/db-error.ts'];
 const EXTENSIONS = ['', '.ts', '.tsx', '.js', '.json', '/index.ts', '/index.tsx'];
 /** 네이티브에서 안 돌거나 앱에 없는 패키지 — 앱 의존성 목록에 들어와도 어김이다 */
 const WEB_ONLY = new Set(['next', 'server-only', ...builtinModules]);
@@ -110,8 +116,8 @@ function closureOf(root: string) {
         continue;
       }
       const seenFrom = relative(root, target);
-      if (!inMobile(target) && !SHARED_ROOTS.some((dir) => seenFrom.startsWith(dir + sep))) {
-        fail('Metro 가 안 보는 자리다(watchFolders)');
+      if (!inMobile(target) && !SHARED_ROOTS.some((dir) => seenFrom.startsWith(dir + sep)) && !SHARED_APP_FILES.includes(seenFrom.split(sep).join('/'))) {
+        fail(seenFrom.startsWith('app' + sep) ? '앱이 닿는 app/ 파일은 app/db-error.ts 하나다 — 함께 쓸 것은 src/lib 으로' : 'Metro 가 안 보는 자리다(watchFolders)');
         continue;
       }
       visit(target);
@@ -213,6 +219,8 @@ describe('닫힘 재기는 어김을 잡는다', () => {
       write('src/lib/b.ts', shared);
       write('src/lib/c.ts', 'export const c = 1;\n');
       write('scripts/out.ts', 'export const o = 1;\n');
+      write('app/ui/note.ts', 'export const u = 1;\n');
+      write('app/db-error.ts', `import { u } from './ui/note';\nexport const d = u;\n`);
       return closureOf(root).violations;
     } finally {
       rmSync(root, { recursive: true, force: true });
@@ -234,12 +242,19 @@ describe('닫힘 재기는 어김을 잡는다', () => {
     ['앱에 없는 패키지', `import z from 'zod';\nexport const b = z;\n`, 'package.json'],
     ['없는 파일', `import { x } from './nope';\nexport const b = x;\n`, '안 풀린다'],
     ['Metro 밖', `import { o } from '../../scripts/out';\nexport const b = o;\n`, 'watchFolders'],
+    ['db-error 밖의 app/ 파일', `import { u } from '../../app/ui/note';\nexport const b = u;\n`, 'app/db-error.ts 하나'],
     ['Hermes 에 없는 내장', `export const b = [2, 1].toSorted();\n`, 'Hermes'],
   ])('%s', (_name, shared, why) => {
     const found = caught(shared);
     expect(found).toHaveLength(1);
     expect(found[0]).toContain(why);
     expect(found[0]).toMatch(/^src\/lib\/b\.ts → /);
+  });
+
+  it('app/db-error.ts 는 지나가지만, 그 파일이 부르는 app/ 의 다른 파일은 어김이다', () => {
+    expect(caught(`import { d } from '../../app/db-error';\nexport const b = d;\n`)).toEqual([
+      'app/db-error.ts → ./ui/note — 앱이 닿는 app/ 파일은 app/db-error.ts 하나다 — 함께 쓸 것은 src/lib 으로',
+    ]);
   });
 
   it('주석 속 글자는 어김이 아니다', () => {

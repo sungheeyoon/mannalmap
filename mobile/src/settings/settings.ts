@@ -1,21 +1,13 @@
-import { accountStateOf, type AccountState, type Suspension } from '@account/index';
+import { accountStateOf, type AccountState } from '@account/index';
 import { accountLineOf } from '@account/sign-in-line';
 import { preferGenderOf, type PreferGender } from '@discovery';
 import { userFacingDbMessage } from '@db-error';
 
 import { supabase } from '@/auth/client';
 import { NOT_READY } from '@/auth/signup';
+import { readSuspension } from '@/auth/suspension';
 
 export type Answer = { ok: true } | { ok: false; message: string };
-
-/** 정지의 닉네임 · 갈래 — 부속 정보다. 못 읽으면 그 구를 뺀 문장이 선다(웹 `app/me/account.ts`) */
-async function readSuspension(): Promise<Suspension | null> {
-  if (supabase === null) return null;
-  const { data, error } = await supabase.rpc('my_suspension');
-  if (error !== null) return null;
-  const found = data?.[0];
-  return found === undefined ? null : { nickname: found.nickname, reason: found.reason };
-}
 
 /** 정책이 자기 행만 내주므로 `where` 를 안 적는다. 어디에 서 있는지는 웹과 같은 `accountStateOf` 가 답한다 */
 export async function readAccount<T extends { status: string; self_person_id?: string | null }>(columns: string): Promise<{ state: AccountState; row: T | null }> {
@@ -33,7 +25,7 @@ export async function readAccount<T extends { status: string; self_person_id?: s
       account: {
         status: row.status,
         selfPersonId: 'self_person_id' in row ? row.self_person_id : undefined,
-        suspension: row.status === 'suspended' ? await readSuspension() : undefined,
+        suspension: row.status === 'suspended' ? await readSuspension(supabase) : undefined,
       },
     }),
     row,

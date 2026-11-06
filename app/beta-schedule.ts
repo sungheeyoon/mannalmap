@@ -1,7 +1,7 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 
 import { PRIVACY_OPERATOR } from '@/src/lib/brand/business';
-import { scheduleOf, type BetaSchedule } from '@/src/lib/consent';
+import { scheduleOfDbRow, type BetaSchedule } from '@/src/lib/consent';
 import type { Database } from '@/src/lib/db';
 
 import { read, unread, type SkippableRead } from './db-error';
@@ -11,8 +11,8 @@ import { read, unread, type SkippableRead } from './db-error';
  * 같은 문을 지난다. 날짜는 일정 줄에서, 처리방침의 운영자는 상수 `PRIVACY_OPERATOR`(ADR 0232)에서 온다 — 줄의 `operator_*` 칸은 안 읽는다.
  *
  * 2026-09-25 까지는 `src/lib/consent` 가 부를 문을 콜백으로 받아 이름(`current_beta_schedule`)과
- * snake_case 를 직접 들었고, 세 화면은 그 콜백을 넘기려고 `.rpc()` 를 `.tsx` 안에 적었다.
- * 이제 이름과 모양은 여기서 한 번 옮기고, lib 은 옮겨진 줄에 규칙 하나만 건다(`scheduleOf`).
+ * 실패의 갈래까지 들었고, 세 화면은 그 콜백을 넘기려고 `.rpc()` 를 `.tsx` 안에 적었다.
+ * 이제 이름과 실패는 문이 들고, 줄을 옮기는 일은 앱의 문(`mobile/src/auth/schedule.ts`)과 함께 쓰는 `scheduleOfDbRow` 가 한다.
  *
  * 클라이언트를 **받기만** 한다. 관문은 요청의 쿠키로 만든 것을, 화면은 `supabaseOnServer()` 를
  * 넘긴다 — 여기서 서버 클라이언트를 들면 관문이 `next/headers` 를 끌고 간다.
@@ -34,18 +34,5 @@ export async function currentSchedule(
   const { data, error } = await client.rpc('current_beta_schedule');
   if (error) return unread(error, 'current_beta_schedule');
 
-  const row = (data ?? [])[0];
-  if (row === undefined) return read(null);
-
-  return read(
-    scheduleOf({
-      scheduleId: row.schedule_id,
-      endsOn: row.ends_on,
-      purgeBy: row.purge_by,
-      purgeWithinDays: row.purge_within_days,
-      operatorName: PRIVACY_OPERATOR.name,
-      operatorOfficer: PRIVACY_OPERATOR.officer,
-      operatorContact: PRIVACY_OPERATOR.contact,
-    }),
-  );
+  return read(scheduleOfDbRow(data, PRIVACY_OPERATOR));
 }
