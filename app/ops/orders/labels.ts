@@ -17,8 +17,14 @@ export const REFUND_REASONS = [
 
 export type RefundReason = (typeof REFUND_REASONS)[number]['value'];
 
+/**
+ * 스토어가 돌려준 결제(`store`, ADR 0230) — 고르는 사유가 아니라 장부만 적는다. 금액은 Google 이 돌려준 돈이고, 걷은 것은 그때 안 쓴 풀이권이다.
+ * 우리 셈의 몫과의 차이는 `store_purchase_void` 가 든다(런북 credits.md 「Google Play 결제」).
+ */
+const STORE_REFUND_LABEL = '스토어 환불(Google 이 돌려줌 · 안 쓴 풀이권 회수)';
+
 export const refundReasonLabel = (value: string): string =>
-  REFUND_REASONS.find((reason) => reason.value === value)?.label ?? value;
+  value === 'store' ? STORE_REFUND_LABEL : (REFUND_REASONS.find((reason) => reason.value === value)?.label ?? value);
 
 export const isRefundReason =(value: string): value is RefundReason =>
   REFUND_REASONS.some((reason) => reason.value === value);

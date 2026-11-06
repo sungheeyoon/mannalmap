@@ -12,6 +12,8 @@ import {
   won,
 } from '@/src/lib/reading/bundle';
 
+import { CHECKOUT_FREE_FIRST_NOTE, CHECKOUT_PROVIDED_NOTE, CHECKOUT_REFUND_NOTE } from '@/src/lib/reading/notes';
+
 import { BUTTON_TERTIARY_FACE } from '../../ui/buttons';
 import { TYPE_META, TYPE_NAME } from '../../ui/surfaces';
 import { withReturnTo, type ReturnTo } from './return-to';
@@ -71,16 +73,10 @@ export function Checkout({ refundLine, back }: { refundLine: string; back: Retur
         <p className={TYPE_META}>풀이권 판매 준비 중이에요.</p>
 
         <ul aria-label="유의사항" className="mt-2 flex list-disc flex-col gap-1.5 pl-4 text-fine leading-[1.125rem] text-secondary">
-          <li>
-            미사용 유료 풀이권은 실제 결제한 금액을 기준으로 환불합니다. 청약철회 기간(7일)이 지난 뒤 단순 변심으로 환불하면,
-            미사용분에 해당하는 금액의 10%를 환불수수료로 공제합니다.
-          </li>
+          <li>{CHECKOUT_REFUND_NOTE}</li>
           <li>{refundLine}</li>
-          <li>
-            정상적으로 제공된 풀이는 단순 변심으로 환불되지 않습니다. 풀이가 제공되지 않거나 표시·광고 또는 계약 내용과
-            다르게 제공된 경우에는 관계 법령에 따라 재제공 또는 환불을 요청할 수 있습니다.
-          </li>
-          <li>구매 전 무료 풀이권으로 풀이 한 편을 먼저 받아 볼 수 있습니다.</li>
+          <li>{CHECKOUT_PROVIDED_NOTE}</li>
+          <li>{CHECKOUT_FREE_FIRST_NOTE}</li>
           <li>
             {/* 시행일 전에 받은 몫은 시행일부터 센다 — 약관 제13조⑥ · 환불정책과 같은 기준(ADR 0173 추기) */}
             유료 풀이권은 구매일로부터 {READING_BUNDLE_VALID_YEARS}년, 무료로 받은 풀이권은 받은 날(약관 시행일 전에 받은 풀이권은

@@ -243,3 +243,30 @@ export const CREDITS_USAGE_RATE = '풀이 한 편당 풀이권 1장';
 export const CREDITS_SHORTAGE_TITLE = '풀이권이 부족해요';
 export const CREDITS_AVAILABLE_LABEL = '보유 풀이권';
 export const CREDITS_REQUIRED_LABEL = '필요 풀이권';
+
+/**
+ * 결제 화면의 동의 체크 · 결제 단추 · 유의사항 — 리디 꼴(운영자 승인 2026-10-12, ADR 0175 · 대장 credits-03 · credits-09). 웹은 결제 단추를
+ * 걷었고(ADR 0212) 앱의 Google Play 결제 화면이 같은 글자를 쓴다(ADR 0230). 유의사항 둘째 줄은 사업자 이메일로 짓는 `checkoutRefundLine`
+ * (`src/lib/brand/refund.ts`)이다. 다섯째 줄(유효기간 5년)은 산 몫이 무기한이 되어(ADR 0212) #938 이 고칠 때까지 앱에 싣지 않는다.
+ */
+export const CHECKOUT_AGREE_LABEL = '상품, 가격, 할인 정보, 유의 사항 등을 확인하였으며 구매에 동의합니다. (필수)';
+export const CHECKOUT_AGREE_MISSING = '결제 전 안내를 확인해 주세요.';
+export const checkoutPayLabel = (price: string): string => `${price} 결제하기`;
+export const CHECKOUT_REFUND_NOTE =
+  '미사용 유료 풀이권은 실제 결제한 금액을 기준으로 환불합니다. 청약철회 기간(7일)이 지난 뒤 단순 변심으로 환불하면, 미사용분에 해당하는 금액의 10%를 환불수수료로 공제합니다.';
+export const CHECKOUT_PROVIDED_NOTE =
+  '정상적으로 제공된 풀이는 단순 변심으로 환불되지 않습니다. 풀이가 제공되지 않거나 표시·광고 또는 계약 내용과 다르게 제공된 경우에는 관계 법령에 따라 재제공 또는 환불을 요청할 수 있습니다.';
+export const CHECKOUT_FREE_FIRST_NOTE = '구매 전 무료 풀이권으로 풀이 한 편을 먼저 받아 볼 수 있습니다.';
+
+/**
+ * Google Play 결제의 결과 줄(ADR 0230) — 성공 두 줄은 결제 뒤 화면의 확정 문구(대장 credits-01, 단위는 all-02 의 「장」)이고, 나머지는
+ * 대장 credits-11 「확인 전」이다(네이버웹툰 · 포스텔러 · 헬로우봇 · Google 의 실제 글, 출처는 그 절).
+ */
+export const PURCHASE_DONE_TITLE = '결제가 완료됐어요';
+export const purchaseAddedNote = (credits: number): string => `풀이권 ${credits}장이 추가됐어요.`;
+/** 결제 완료 창의 단추 — 돌아갈 화면이 없을 때(대장 credits-04 의 「확인」 · 포스텔러 결제 완료 「확인」) */
+export const PURCHASE_DONE_OK = '확인';
+export const PURCHASE_RUNNING_LABEL = '결제 진행 중…';
+export const PURCHASE_FAILED_NOTE = '결제가 완료되지 않았어요.';
+export const PURCHASE_UNDELIVERED_NOTE = '풀이권 충전이 완료되지 않았어요.';
+export const PURCHASE_PENDING_NOTE = '결제가 완료되면 풀이권이 추가돼요.';

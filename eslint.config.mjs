@@ -126,6 +126,7 @@ export const KEY_HOLDERS = [
   "app/api/cron/reading/route.ts",
   "app/api/openai/webhook/route.ts",
   "app/api/push/dispatch/route.ts",
+  "app/api/store/google-play/ledger.ts",
   "app/me/keyed-chart-writes.ts",
   "app/me/reading/collect.ts",
   "app/me/reading/pipeline.ts",
