@@ -47,8 +47,8 @@ PR 틀(`.github/pull_request_template.md`)의 칸이다. 칸 이름은 이 표�
 **커밋과 PR 제목**은 `type(scope): 한국어 문장 (ADR NNNN)` 이다(`docs/agents/code-rules/locks.md` 「커밋과 PR」).
 squash 본문은 PR 본문이 아니라 **커밋 메시지들을 이어 붙인 것**이라(저장소 설정
 `COMMIT_MESSAGES`) 커밋을 하나로 두거나 머지 화면에서 다듬는다. 원격 가지는 머지되면 GitHub 가
-지운다(`delete_branch_on_merge: true`, 2026-10-12 에 봤다). 로컬 가지만 남는다 — 머지 뒤 `git fetch --prune` 하고 `git branch -d <가지>` 로
-걷는다(라운드 끝은 `docs/agents/delegation/coordinator.md` 「라운드 끝 정리」).
+지운다(`delete_branch_on_merge: true`, 2026-10-12 에 봤다). 로컬 가지와 워크트리만 남는다 — 스쿼시 머지 가지는 `git branch -d` 가 「안 합쳐짐」으로 거절하니, `npm run sweep:merged` 로 PR 상태를 보고
+`--apply` 로 걷는다(라운드 끝은 `docs/agents/delegation/coordinator.md` 「라운드 끝 정리」).
 
 ## 읽기량 예상치는 보고다
 
