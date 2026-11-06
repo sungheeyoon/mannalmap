@@ -3,11 +3,10 @@ import type { DoorRespond, ReadingPress, ReadingView, RunView, ShelfView } from 
 import { readingTargetQuery, type ReadingTarget } from '@reading/target';
 
 import { supabase } from '@/auth/client';
+import { SITE_URL } from '@/site';
 
 export type { ReadingTarget } from '@reading/target';
 export type { DoorRefusal, DoorRespond, ReadingPress, ReadingView, RunView, ShelfView } from '@reading/door';
-
-const SITE_URL = process.env.EXPO_PUBLIC_SITE_URL;
 
 export type { DoorAnswer } from '@reading/door-answer';
 

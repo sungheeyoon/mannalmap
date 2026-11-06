@@ -1,14 +1,8 @@
-import type { ScorePolicy } from '@/src/lib/discovery';
 import type { MatchPreview } from '@/src/lib/matching';
+import { MATCH_INDEX_BADGE, MATCH_INDEX_NOTE, MATCH_INDEX_POLICY_BADGE, MATCH_INDEX_SCALE, MATCH_INDEX_UNSCALED } from '@/src/lib/matching/copy';
 
 import { Icon } from './ui/icons';
 import { CARD } from './ui/surfaces';
-
-/** 카드 위 딱지 — 운영자 확정 문구 #7(2026-09-25) */
-const POLICY_BADGE: Record<ScorePolicy, string> = {
-  romantic: '연인·배우자 기준',
-  general: '일반 관계 기준',
-};
 
 /**
  * 「궁합 베타」 지표를 화면에 세우는 자리 — **여기서는 아무것도 계산하지 않는다.**
@@ -42,7 +36,7 @@ export function MatchIndexCard({
         */}
         <span className="inline-flex items-center gap-1.5 rounded-full bg-cream px-3 py-1 text-small font-semibold text-cream-ink">
           <Icon name="taiji" className="size-4" />
-          궁합 베타
+          {MATCH_INDEX_BADGE}
         </span>
         {/*
           **무슨 눈금으로 쟀는지 딱지가 말한다**(ADR 0113) — 연인 · 배우자와 그 밖의 사이는 축과 무게가 다르다.
@@ -50,10 +44,10 @@ export function MatchIndexCard({
           「검증 중인 판정은 지표에서 제외」가 그대로 선다 — 새 판은 필요한 기운(억부)을 쓰므로 그 말이 거짓이 된다.
         */}
         {preview.policy === null ? (
-          <span className="text-small text-secondary">검증 중인 판정은 지표에서 제외</span>
+          <span className="text-small text-secondary">{MATCH_INDEX_UNSCALED}</span>
         ) : (
           <span className="rounded-full border border-border px-3 py-1 text-small font-semibold text-secondary">
-            {POLICY_BADGE[preview.policy]}
+            {MATCH_INDEX_POLICY_BADGE[preview.policy]}
           </span>
         )}
       </div>
@@ -68,7 +62,7 @@ export function MatchIndexCard({
             {names.a} × {names.b}
           </p>
           <p className="font-rounded text-[3.5rem] leading-none tabular-nums text-foreground">{preview.index}</p>
-          <p className="text-small text-cream-ink">100점 만점 베타 탐색 지표</p>
+          <p className="text-small text-cream-ink">{MATCH_INDEX_SCALE}</p>
         </div>
 
         <div className="flex flex-col gap-5">
@@ -117,9 +111,6 @@ export function ScoringNote() {
     운영자 확정 문구 #8(2026-09-25). **판본 이름(`v2`)을 쓰지 않는다** — 내부 이름은 사용자에게 뜻이 없다(ADR 0026).
   */
   return (
-    <p className="text-small leading-5 text-secondary">
-      이 점수는 명리 자료에서 자주 다루는 기준을 조합한 베타 참고값입니다. 실제 관계의 결과를 예측하거나 두 사람의
-      좋고 나쁨을 판정하지 않습니다.
-    </p>
+    <p className="text-small leading-5 text-secondary">{MATCH_INDEX_NOTE}</p>
   );
 }
