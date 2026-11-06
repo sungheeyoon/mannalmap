@@ -114,7 +114,7 @@
 | 구매 제한 | `store_purchase_restriction` · `set_store_purchase_restriction` · `store_purchase_is_restricted` · `store_purchase_refusal` | 표 · 함수 — 운영 SQL 만 건다 (ADR 0230) |
 | 환불 진행 중(확보) | `reading_refund_hold` · `operator_hold_reading_refund` · `operator_book_reading_refund` · `operator_release_reading_refund` · `operator_reading_refund_hold` · `release_reading_refund_by_hand` · `retention.reading_refund_after_leave` · `holdRefund` · `bookRefund` · `releaseRefund` · `RefundHold` · `cancellationCheck` · `preparePlan` | 표 · 함수 · `app/ops/orders/` |
 | 심사 계정 | `reading_sale_reviewer` · `reading_sale_is_open_for` · `my_reading_sale_is_open` · `mySaleIsOpen` | 표 · 함수 · `app/me/credits/sale.ts` |
-| 결제 내역 | `my_reading_orders` · `myPaidOrders` · `PaidOrder` · `readingBundleValidUntil` · `refundRequestLine` · `checkoutRefundLine`(결제 화면 유의사항) | 함수 · `app/me/credits/history/orders.ts` · `src/lib/reading` · `src/lib/brand` |
+| 결제 내역 | `my_reading_orders` · `myPaidOrders` · `PaidOrder` · `refundRequestLine` · `checkoutRefundLine`(결제 화면 유의사항) | 함수 · `app/me/credits/history/orders.ts` · `src/lib/reading` · `src/lib/brand` |
 | Person 한도 | `person_limit` · `my_person_slots` · `PersonSlots` | 함수 · `src/lib/people` |
 | 운영 베타 | `beta_schedule` · `BetaDates` | 표 · `src/lib/consent` |
 | 테스트 코드(걷음, ADR 0225 — 운영 베타의 기록) | `signup_code` · `valid_on` · `max_uses` · `app_user.signup_code` | 표 · 칸 |

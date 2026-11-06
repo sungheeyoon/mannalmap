@@ -44,3 +44,4 @@
 - 새 비밀(환경 변수)을 들이면 → [비밀의 갈래](../../scripts/secret-env.mjs)
 - DB 함수(RPC)의 입력 경계(길이 · 범위 · 허용 값)를 시험에 옮기면 → [그 함수의 최신 마이그레이션](../../supabase/migrations/) — 옛 정의의 값은 바뀌었을 수 있다. `grep -l 'function public.<이름>' supabase/migrations/* | sort | tail -1`
 - 열린 PR 밑에서 main 이 움직여 가지를 올려야 하면 → [로컬 환경의 함정](../agents/delegation/local-env.md#로컬-환경의-함정) — 격리에서는 rebase 뒤 force-push 가 거절된다. main 을 merge 해 올린다
+- 웹 · 앱이 같은 읽기 함수를 함께 쓰게 하려면 → [층 시험](../../scripts/layers.test.ts)(`src/lib` 에 DB 함수 이름 금지)과 [CI 계획](../../scripts/ci-plan.mjs)의 `MOBILE_REACH` 를 먼저 본다 — 어디에 두면 시험이 실패하고 어느 PR 이 앱 검사를 부르는지

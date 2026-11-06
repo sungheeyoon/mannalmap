@@ -43,3 +43,4 @@
 - 궁합 프롬프트를 고치면 → [match-reading-guide.ts](../../src/lib/reading/match-reading-guide.ts) · [prompt.ts](../../src/lib/reading/prompt.ts) — 이 둘이 입구다
 - `app/` 을 못 건드리는 일을 맡았으면 → [잠긴 시험 넷](../agents/test-map/live.md#잠긴-시험-넷--livetestts) — 실호출 문이 `app/me/reading/` 에 있어 그 범위에는 문이 없다
 - 시험이 로컬 5초에 붙거나 모집단 시험을 더하면 → [시험 하나의 시간](../agents/test-map/kinds.md#시험-하나의-시간--로컬-5초) — `POPULATION_TIMEOUT_MS` 와 시험마다 시간 재는 법
+- 화면 고정 문구(사주 · 궁합 화면의 설명 상수)를 고치면 → [화면 문구](../agents/code-rules/screen-copy.md) · [문구 대장](../product/copy-ledger.md) · [근거 사전](../context/evidence.md) 「용어 판」 — 명리 이름을 이용자 화면에 부를지, 대신 쓸 일상어

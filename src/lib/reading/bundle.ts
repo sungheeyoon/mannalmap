@@ -10,8 +10,6 @@
  * `app/me/credits/bundle-price.test.ts` 가 마이그레이션의 마지막 정의와 견준다 — 가격을 바꾸면 둘을 같은 PR 에서 고친다(ADR 0176).
  */
 
-import { seoulWallClock } from './seoul-date';
-
 /** 파는 묶음 넷 — 회차 수와 가격(원, 부가세 포함) */
 export const READING_BUNDLES = [
   { credits: 1, price: 4900 },
@@ -24,27 +22,6 @@ const SINGLE_PRICE = READING_BUNDLES[0].price;
 
 /** 원 단위 금액 — 「4,900원」. 사람이 읽는 금액은 결제 · 주문 · 약관 어디서나 이것 하나로 적는다 */
 export const won = (amount: number): string => `${amount.toLocaleString('ko-KR')}원`;
-
-/**
- * 산 풀이권의 유효기간(년) — 구매일로부터. 운영자 결정 2026-10-12(G-21) — 산 몫이 무기한이 되어(ADR 0212) 화면은 이 값을 말하지 않는다. 약관 · 환불정책의 5년은 #938 이 고친다.
- * 만료를 DB 가 걷는 일은 아직 없다 — 첫 판매 뒤 5년 안에 선다.
- */
-export const READING_BUNDLE_VALID_YEARS = 5;
-
-/**
- * 묶음의 유효기간이 끝나는 날(서울 날짜, `YYYY-MM-DD`) — 산 날부터 `READING_BUNDLE_VALID_YEARS` 년(ADR 0173).
- *
- * 민법 제157조 · 제160조의 셈이다: 산 날은 안 세고 다음 날부터 세므로, 끝나는 날은 **5년 뒤 같은 날**이다(2026-10-12 → 2031-10-12).
- * 그 해에 같은 날이 없으면(2월 29일) 그 달의 끝날이다. 결제 내역 화면이 이 날을 말한다 — DB 는 아직 만료를 걷지 않는다.
- */
-export function readingBundleValidUntil(paidAt: Date): string {
-  const seoul = seoulWallClock(paidAt);
-  const year = seoul.getUTCFullYear() + READING_BUNDLE_VALID_YEARS;
-  const month = seoul.getUTCMonth();
-  const lastDay = new Date(Date.UTC(year, month + 1, 0)).getUTCDate();
-  const day = Math.min(seoul.getUTCDate(), lastDay);
-  return new Date(Date.UTC(year, month, day)).toISOString().slice(0, 10);
-}
 
 /**
  * 1회권을 같은 횟수만큼 살 때와 견준 할인율(%) — **정수 내림**(운영자 결정 2026-09-24, G-21). 실제 값은
