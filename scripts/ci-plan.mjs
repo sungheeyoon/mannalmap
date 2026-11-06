@@ -62,7 +62,7 @@
  *
  * ## 운영 의존성 감사는 단계와 따로 켠다 (2026-09-23, G-23 ①, ADR 0104)
  *
- * `audit` 차선은 `npm audit --omit=dev --audit-level=high` 를 뿌리와 `mobile/` 에서 한 번씩 돈다(앱은 2026-11-06 부터). 위 단계들과 달리 **바뀐 파일이 아니라 밖의
+ * `audit` 차선은 `npm audit --omit=dev --audit-level=high` 를 뿌리에서, 같은 문턱을 `mobile/` 에서(`scripts/audit-app.mjs` — 이름 지정 예외를 뺀다, ADR 0104 추기 2026-11-06) 돈다. 위 단계들과 달리 **바뀐 파일이 아니라 밖의
  * advisory DB 가 결과를 바꾼다** — 모든 PR 에 걸면 아무것도 안 바꾼 PR 이 어느 날 붉어지고, 나란히 선 세션이
  * 그것을 제 빨간불로 읽는다. 그래서 PR 에서는 **의존성 목록(뿌리 · `mobile/` 의 `package.json` · `package-lock.json`)을 바꾼 PR 에만**
  * 머지를 막고, 새로 뜬 advisory 는 main 푸시 · 하루 한 번의 일정이 잡아 `ci-main-red` 이슈로 알린다.
@@ -403,7 +403,7 @@ export const HARNESS = ['next.config.ts', 'playwright.config.ts', 'src/lib/local
  * 새 도우미(`scripts/beta-dates.mjs` 같은 것)는 이름을 안 적어도 걸리고, 여기 든 이름이 없어져도 넓어질 뿐이다
  */
 const NOT_HARNESS =
-  /^scripts\/(?:ci-plan|release-stage|main-red|audit-verify|vercel-ignore|secret-env|remote-lock|db-remote|stack-slot|merge-sim|sweep-merged|read-budget|deploy-range|brand-share-images|brand-icons|checkout-hint|pr-title|deploy-smoke|push-vapid-keys|generate-[^/]+|fake-clock|ui-[^/]+)\.mjs$/;
+  /^scripts\/(?:ci-plan|release-stage|main-red|audit-verify|audit-app|vercel-ignore|secret-env|remote-lock|db-remote|stack-slot|merge-sim|sweep-merged|read-budget|deploy-range|brand-share-images|brand-icons|checkout-hint|pr-title|deploy-smoke|push-vapid-keys|generate-[^/]+|fake-clock|ui-[^/]+)\.mjs$/;
 const isHarness = (file) => HARNESS.includes(file) || (/^scripts\/[^/]+\.mjs$/.test(file) && !NOT_HARNESS.test(file));
 /** 관문 — 여기서 import 를 따라가 닿는 `app/` 파일은 입구다(위 「관문이 import 하는 `app/` 파일」) */
 const GATE = 'proxy.ts';

@@ -361,7 +361,7 @@ jobs:
   # **이 차선만 밖의 advisory DB 가 결과를 바꾼다.** 그래서 PR 에서는 의존성 목록을 바꾼 PR 에만 켜고
   # (`ci-plan.mjs`), 새로 뜬 advisory 는 main 푸시와 하루 한 번의 일정이 잡아 `ci-main-red` 이슈로 든다 —
   # 아무것도 안 바꾼 PR 이 어느 날 붉어져 남의 빨간불을 제 것으로 읽는 일이 없게. 잠금 파일만 읽으므로
-  # `npm ci` 가 없다. 개발 의존성은 운영에 안 실려 여기서 안 막는다(G-23 ⑫). 앱(`mobile/`)도 제 잠금 파일로 같은 명령을 돈다 —
+  # `npm ci` 가 없다. 개발 의존성은 운영에 안 실려 여기서 안 막는다(G-23 ⑫). 앱(`mobile/`)도 제 잠금 파일로 같은 문턱을 돈다 —
   # 뿌리가 붉어도 앱은 돈다.
   audit:
     needs: plan
@@ -374,9 +374,9 @@ jobs:
         with:
           node-version-file: .nvmrc
       - run: npm audit --omit=dev --audit-level=high
-      - run: npm audit --omit=dev --audit-level=high
+      # 앱은 이름 지정 예외(`mobile/audit-exceptions.json`)를 빼고 같은 문턱으로 잰다 — 예외 밖의 high 와 낡은 예외가 붉다(ADR 0104 추기 2026-11-06)
+      - run: node scripts/audit-app.mjs
         if: ${{ !cancelled() }}
-        working-directory: mobile
 
   # ---------------------------------------------------------------------------
   # 앱 — `mobile/` 의 타입과 번들. 앱이 부르는 자리가 바뀐 PR 에만 돈다(`ci-plan.mjs` 「앱 검사」)

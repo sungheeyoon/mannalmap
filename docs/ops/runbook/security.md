@@ -455,5 +455,8 @@ npm audit --omit=dev --audit-level=high ; echo $?   # 0 이어야 한다
 4. **고친 판이 아직 없으면** 막을 자리를 본다 — 그 경로를 우리가 부르나(`npm audit` 의 advisory 본문). 안 부르면
    간극 대장 G-23 ① 에 패키지 · advisory · 까닭 · 다시 볼 날을 적고, 그동안 붉은 main 은 이슈가 들고 있다.
    `--audit-level` 을 critical 로 올리거나 차선을 끄지 않는다.
+5. **앱(`mobile/`)은 `node scripts/audit-app.mjs` 가 같은 문턱으로 잰다.** 앱 번들에 안 실리는 빌드 도구의 high 이고 같은 메이저에 고친 판이 없을 때만
+   운영자에게 물어 `mobile/audit-exceptions.json` 에 한 줄(GHSA id · 패키지 · 사유 · 걷을 조건 · 결정)을 더한다. 감사에 더는 안 나오는 줄은 붉으니 걷는다.
+   Expo SDK 를 올리는 PR 은 예외를 다 걷고 다시 잰다(ADR 0104 추기 2026-11-06).
 
 개발 의존성(`npm audit` 전체)은 CI 가 안 막는다 — 운영에 안 실린다. 같은 절차로 손으로 정리한다(G-23 ⑫).
