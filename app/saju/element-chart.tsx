@@ -146,7 +146,7 @@ export function ElementChart({ saju }: { saju: Saju }) {
         정체 모를 수다 — 자를 밝히는 것은 설명이 아니다.
       */}
       <p className="mt-1 mb-4 text-xs text-secondary">
-        개수는 {glyphCount === 8 ? '여덟' : '여섯'} 글자, 점수는 지장간까지 포함한 값입니다
+        개수는 {glyphCount === 8 ? '여덟' : '여섯'} 글자, 점수는 글자 속 숨은 기운까지 더한 값입니다
         {glyphCount !== 8 && <span className="text-muted"> · 시주 제외</span>}
       </p>
 
@@ -219,7 +219,7 @@ export function ElementChart({ saju }: { saju: Saju }) {
       {missing.length > 0 && (
         <p className="mt-3 border-t border-border pt-3 text-xs text-secondary">
           여덟 글자에 없는 오행 {missing.map((e) => ELEMENT_KO[e]).join(', ')}
-          <span className="text-muted"> (지장간에는 있을 수 있습니다 — 점수 칸을 보세요)</span>
+          <span className="text-muted"> (숨은 기운으로는 있을 수 있습니다 — 점수 칸을 보세요)</span>
           {glyphCount !== 8 && (
             <span className="text-muted"> · 시주에 있었을지는 알 수 없습니다</span>
           )}

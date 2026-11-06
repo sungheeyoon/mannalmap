@@ -81,8 +81,8 @@ export function NowOverlaps({ now }: { now: CurrentFortune }) {
               <span className="ml-0.5 text-secondary">{subjectParticle(group.char)}</span>
             </span>
             <span className="text-secondary">
-              {' '}들어와 원국{' '}
-              {group.seats.map((seat) => PILLAR_POSITION_KO[seat]).join('·')}에 있던 관계가
+              {' '}들어와{' '}
+              {group.seats.map((seat) => PILLAR_POSITION_KO[seat]).join('·')}에 원래 있던 관계가
               다시 생깁니다 —{' '}
               <span className="text-foreground">{group.names.join(' · ')}</span>
             </span>

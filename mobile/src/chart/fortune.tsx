@@ -51,7 +51,7 @@ export function NowOverlaps({ now }: { now: CurrentFortune }) {
         {[...groupOverlaps(now.overlaps)].map(([key, group]) => (
           <T key={key} tone="secondary">
             <T bold glyph>{group.char}</T>
-            {subjectParticle(group.char)} 들어와 원국 {group.seats.map((seat) => PILLAR_POSITION_KO[seat]).join('·')}에 있던 관계가 다시 생깁니다 —{' '}
+            {subjectParticle(group.char)} 들어와 {group.seats.map((seat) => PILLAR_POSITION_KO[seat]).join('·')}에 원래 있던 관계가 다시 생깁니다 —{' '}
             <T>{group.names.join(' · ')}</T>
           </T>
         ))}
