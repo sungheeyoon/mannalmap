@@ -27,8 +27,8 @@ import { type LegalDocument, bullets, numbered, para, table } from './legal-text
  *
  * 초안을 고치면 이 파일도 고친다 — 둘이 갈리면 초안이 원본이다.
  */
-/** 첫 시행일 = 운영 게시일(운영자 답 2026-11-07, ADR 0234) — 배포 차례에서 채운다(`docs/ops/runbook/deploy.md` 「묶음 배포」 0). 지어낸 날을 넣지 않는다 */
-export const TERMS_EFFECTIVE_DATE: string | null = null;
+/** 첫 시행일 = 운영 게시일(운영자 답 2026-11-07, ADR 0234). 지어낸 날을 넣지 않는다 */
+export const TERMS_EFFECTIVE_DATE: string | null = '2026-11-07';
 
 /**
  * @param site 서비스 주소(`https://…`) — 운영 주소는 한 자리에만 산다(ADR 0152). 화면이 `siteUrl()` 로 넘긴다

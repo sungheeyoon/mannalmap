@@ -13,8 +13,8 @@ import { type LegalDocument, type LegalSection, bullets, para, table } from './l
  * 새 규칙을 만들지 않는다. 사업자 빈칸은 `BusinessInfo` 에서 채우고, 값이 없으면 그 말을 빼거나 「판매자 정보의 연락처」로 가리킨다.
  * 「［서비스 안 결제 내역에 신청 칸이 생기면 …］」처럼 화면이 아직 없는 길은 싣지 않았다.
  */
-/** 첫 시행일 = 운영 게시일(운영자 답 2026-11-07, ADR 0234) — 약관과 같은 날, 배포 차례에서 채운다 */
-export const REFUND_EFFECTIVE_DATE: string | null = null;
+/** 첫 시행일 = 운영 게시일(운영자 답 2026-11-07, ADR 0234) — 약관과 같은 날 */
+export const REFUND_EFFECTIVE_DATE: string | null = '2026-11-07';
 
 export function refundPolicyFor(info: BusinessInfo): LegalDocument {
   const seller = businessInfoLines(info).map((line) => `${line.label} ${line.value}`);

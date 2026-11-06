@@ -93,7 +93,9 @@ test.describe('시작하기 전에', () => {
 
     await page.goto('/me');
     await expect(page).toHaveURL(/\/signup$/);
-    await expect(page.getByText(asKoreanDay(postponedEndsOn()), { exact: false })).toBeVisible();
+    /* 날짜는 안내에 보이지 않는다(`notice-v17`, ADR 0234) — 새 일정 줄이면 다시 묻는 것은 그대로다(`signupDone` 이 본 줄을 견준다) */
+    await expect(page.getByText('저장된 정보는 탈퇴를 신청하시면 3일 안에 삭제합니다.')).toBeVisible();
+    await expect(page.getByText(asKoreanDay(postponedEndsOn()), { exact: false })).toHaveCount(0);
 
     /* 이미 가진 사람에게는 이름 칸이 안 선다 */
     await expect(page.getByLabel('닉네임')).toHaveCount(0);

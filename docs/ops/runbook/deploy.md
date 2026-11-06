@@ -39,8 +39,8 @@ npm run db:push               # 밀린 것 전부를 원격에 적용한다 — 
    **지금 걸린 것(ADR 0221, G-130): 운영에 안 오른 넷(`20270107090000` → `20270107100000` → `20270108154600` → `20270109090000`)을 먼저 올리고 확인하기 전에 묶음 배포 금지 — 어기면 인연 요청이 전부 `PGRST202` 로 닫힌다(돈은 안 나간다). 올리기 전 옛 궁합 요청 집계는 `docs/ops/runbook/match-talk.md` 「배포 순서」.** 1 은
    출력의 `head` 를 그대로 올린다. 한도 창의 남은 자리를 본다 — 모자라면 기다린다. `--from <운영 SHA>` 가 `docs-only` 면 안 올린다(운영 SHA 는 근거가 아니다)
    **`vercel.json` 의 크론은 Production 배포와 함께 등록되어 돌기 시작한다**. `/api/cron/chat-purge` 가 처음 드는 배포는 이미 90일 지난 말을 그날 밤 지우므로, 승인 전에 `docs/ops/runbook/moderation.md` 「배포 승인 전에 건수를 잰다」의 값을 적고, `20270107100000` 을 먼저 올린다
-   **`notice-v17`(ADR 0234)이 처음 드는 배포면** 그 배포일을 `TERMS_EFFECTIVE_DATE`(`src/lib/brand/terms.ts`) · `REFUND_EFFECTIVE_DATE`(`src/lib/brand/refund.ts`)에
-   `YYYY-MM-DD` 로 채운 PR 을 먼저 머지하고 그 `head` 를 올린다 — 첫 시행일은 게시일이다(운영자 답 2026-11-07). 앞으로의 개정은 약관 제4조②대로 시행 7일 전(불리하면 30일 전) 공지다
+   **`notice-v17`(ADR 0234)의 첫 시행일 — 채웠다(2026-11-07).** `TERMS_EFFECTIVE_DATE`(`src/lib/brand/terms.ts`) · `REFUND_EFFECTIVE_DATE`(`src/lib/brand/refund.ts`)는
+   게시일(운영자 답 2026-11-07)이다 — 그날 배포가 못 나가면 배포 날로 고친 PR 을 먼저 머지한다. 앞으로의 개정은 약관 제4조②대로 시행 7일 전(불리하면 30일 전) 공지다
 1. **0 의 `head` 를 Production 으로 올린다.** 그 SHA 의 워크트리(아래)에서 `vercel deploy --prod`, 아니면
    Vercel → Deployments → 「Create Deployment」에 그 SHA 를 넣는다. Production 은 `ignoreCommand` 가 건너뛰지 않는다. 빈 커밋을
    밀어 깨우지 않는다 — Git 배포는 꺼져 있어 아무 일도 안 일어난다
