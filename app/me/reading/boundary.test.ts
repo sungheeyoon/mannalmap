@@ -200,7 +200,8 @@ describe('되짚기용 값이 사용자 화면으로 새지 않는다', () => {
    * `/api` 는 `proxy.ts` 를 지나지 않는다. 그래서 아무나 두드릴 수 있고, 복구기는
    * 두드리면 남의 시도를 닫는다. webhook 은 서명이, 크론 주소는 `CRON_SECRET` 을 보는 `cronAuthorized` 가 든다 —
    * 둘 중 하나라도 빠지면 그 문은 열린 문이다. 웹 푸시의
-   * 배달 문은 제 비밀(`PUSH_DISPATCH_SECRET`)로 `bearerAuthorized` 를 부른다(ADR 0156).
+   * 배달 문은 제 비밀(`PUSH_DISPATCH_SECRET`)로 `bearerAuthorized` 를 부른다(ADR 0156). Google Play 의 통지 문은 Pub/Sub 이 실은
+   * OIDC 토큰을 `verifyPushToken` 으로 본다 — Google 키의 서명 · 대상 · 서비스 계정(ADR 0230).
    */
   it('관문 밖 주소는 저마다 자격을 묻는다', () => {
     const routes = files.filter(({ path }) => path.startsWith('app/api/') && path.endsWith('route.ts') && !(path in OPEN_ROUTES));
@@ -208,7 +209,7 @@ describe('되짚기용 값이 사용자 화면으로 새지 않는다', () => {
     expect(routes.length, 'api 라우트를 못 찾았다').toBeGreaterThan(0);
 
     for (const { path, text } of routes) {
-      const asks = /verifyReadingWebhook|cronAuthorized\(|bearerAuthorized\(|mobileSession\(|photoClientOf\(/.test(text);
+      const asks = /verifyReadingWebhook|cronAuthorized\(|bearerAuthorized\(|mobileSession\(|photoClientOf\(|verifyPushToken\(/.test(text);
       expect(asks, `${path} 이 자격을 묻지 않는다`).toBe(true);
     }
   });

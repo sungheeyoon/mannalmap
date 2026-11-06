@@ -19,6 +19,9 @@ import { settled } from '@/ui/settled';
 import { TopBar } from '@/ui/top-bar';
 import { Card, Paper } from '@/ui/surfaces';
 
+import { storeAvailable } from './store';
+import { StoreSection } from './store-section';
+
 
 type Read<T> = { ok: true; value: T } | { ok: false; message: string };
 
@@ -37,7 +40,7 @@ async function readOrders(): Promise<Read<readonly PaidOrder[]>> {
 }
 
 /**
- * 풀이권 — **보유 수를 보기만 한다.** 구매 자리는 없다 — 스토어 인앱결제가 붙는 차례(#937, ADR 0212)에 선다.
+ * 풀이권 — 보유 수와, Android 에서는 Google Play 구매(ADR 0230, `store-section.tsx`). 구매가 서면 보유 수를 다시 읽는다. iOS 결제는 나중이다(지도 #932).
  */
 export function CreditsScreen() {
   const [read, setRead] = useState<Read<number | null> | null>(null);
@@ -66,6 +69,7 @@ export function CreditsScreen() {
             ) : (
               <FailureLine onRetry={load}>{read.message}</FailureLine>
             )}
+            {storeAvailable && <StoreSection onBought={load} />}
             <View style={styles.bleed}>
               <SettingsGroup>
                 <LinkRow label="결제 내역" onPress={() => router.push('/me/credits/history' as never)} />
