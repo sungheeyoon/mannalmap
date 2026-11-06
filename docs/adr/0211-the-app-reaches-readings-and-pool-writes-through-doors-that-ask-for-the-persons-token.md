@@ -89,3 +89,23 @@
 
 - 저장소 쓰기 수는 하루 한도(20회)가 막고 요청 수 · 읽기 수는 안 막는다.
 - 서버는 머리만 재고 파일을 그대로 저장한다 — 웹과 같은 몸통이고 공개 주소가 없으며 `nosniff` 다, 받아들인다.
+
+## 추기 2026-11-06 — 앱의 읽기는 웹의 읽는 문을 함께 쓰고, 앱 화면의 DB 직접 호출은 시험이 잠근다 (운영자 결정, 조율자가 옮김)
+
+> 결정 점검표의 「검증 · 배포의 문턱」(무엇이 잠기나)에 걸린다. 운영자가 답했다(2026-11-06). 코드는 다음 라운드다 — G-143.
+
+**재확인 — 위 「코드의 모양」의 「읽기는 앱이 RPC 를 바로 안 부르고 문을 지난다」는 지금 사실이 아니다.** 2026-11-06 main 에서 `mobile/src` 의 `.rpc(` 가
+74곳이고, 그중 화면 파일(`.tsx`) 일곱이 DB 를 바로 부른다 — `credits/credits.tsx` · `home/warning-notice.tsx` · `home/match-open-alert.tsx` · `settings/survey-screen.tsx` ·
+`settings/profile-screen.tsx` · `reading/save-self.tsx`(`.from('app_user')`) · `reading/feedback.tsx`. 웹은 화면이 DB 를 부르지 못하게 잠갔는데(`docs/architecture.md` 「문」) 앱에는
+그 잠금이 없다 — `eslint.config.mjs` 가 `mobile/**` 를 빼고, `scripts/layers.test.ts` 의 `SOURCE_FILES` 에 `mobile` 이 없다.
+
+정한 것:
+
+1. **앱의 읽기는 웹의 읽는 문을 함께 쓴다.** 웹의 문 가운데 클라이언트를 인자로 받는 것(예: `readReadingCredits(client)` — `app/me/credits/remaining.ts`)은 앱이
+   그 사람의 세션 클라이언트를 넘겨 그대로 부른다. 어댑터(snake_case → 도메인 말)와 실패를 말하는 법(ADR 0078)이 한 벌이 된다. 그 문은 RLS · `security definer`
+   의 판정을 그 사람의 JWT 로 타므로 앱의 문(`/api/mobile/**`)을 새로 세우지 않는다 — 앱의 문은 지금처럼 쿠키에 묶였거나 열쇠가 드는 일(풀이 · 풀 쓰기 · 사진 ·
+   스토어 구매)에만 둔다.
+2. **앱 화면 `.tsx` 의 DB 직접 호출(`.rpc(` · `.from(`)은 시험이 잠근다** — 웹의 화면 층과 같은 결(줄어들기만 하는 지문). 지금 일곱은 그 PR 이 문으로 옮기거나
+   지문 목록에 들고 시작한다. 앱의 `.ts` 모듈(`mobile/src/**/*.ts`)은 문의 자리로 남는다.
+3. **잠금의 자리** — `scripts/layers.test.ts` 가 `mobile/src` 를 읽게 하거나 같은 꼴의 시험을 따로 둔다. 어느 쪽인지와 앱이 웹 문을 부르는 경로 별칭은 그 PR 이 정하고
+   `docs/architecture.md` 「그 밖의 자리」의 `mobile/` 줄을 함께 고친다.

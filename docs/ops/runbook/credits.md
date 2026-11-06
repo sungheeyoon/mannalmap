@@ -312,8 +312,9 @@ update retention.reading_payment set hold_reason = null, held_at = null where or
 서버가 `purchases.products.get` 으로 확인한 뒤 `grant_store_purchase` 로 **토큰마다 한 번** 지급하고 `purchases.products.consume` 으로 소비한다 — 앱은
 소비하지 않는다. 결제 중 앱이 꺼진 구매는 앱을 켤 때 · 풀이권 화면을 열 때 다시 보내고, RTDN 의 「팔렸다」 통지로도 선다. 무효(이용자의 Play 환불 · Google 의
 취소 · 차지백 · 3일 미소비 자동 환불 · 운영자의 Play Console 전액 환불)는 통지 문 `POST /api/store/google-play`(Pub/Sub 푸시)와 날마다의 대조
-`/api/cron/store-voided`(Voided Purchases API, 지난 사흘)가 `void_store_purchase` 로 적는다 — **그 결제의 남은 풀이권만 걷고 바닥은 0**, 쓴 몫은
-다른 몫 · 다음 구매에서 빼지 않는다. 주문은 장부 그대로(`provider = 'google_play'`, 주문 번호 `rdo_…`, 거래 번호 = Google 주문 번호 `GPA.…`)라
+`/api/cron/store-voided`(Voided Purchases API, 지난 사흘)가 `void_store_purchase` 로 적는다 — **지금 코드는 그 결제의 묶음에서 안 쓴 풀이권만 걷고 바닥은 0** 이다.
+**운영자 결정(2026-11-06, ADR 0230 추기 A)은 「그 결제가 준 장수만큼, 계정에 남은 유료 풀이권에서(그 묶음 → 늦게 산 묶음), 바닥 0」이다 — G-141 이 코드를 고친 뒤부터
+그렇게 걷힌다.** 어느 쪽이든 무료 · 예외 몫과 다음 구매에서는 빼지 않는다. 주문은 장부 그대로(`provider = 'google_play'`, 주문 번호 `rdo_…`, 거래 번호 = Google 주문 번호 `GPA.…`)라
 `/ops/orders` · `/ops/members` 가 다른 주문처럼 보인다. 스토어가 돌려준 환불 줄은 「스토어 환불(Google 이 돌려줌 · 안 쓴 풀이권 회수)」이다.
 
 **환경 변수 셋 — 운영자가 Play 계정 뒤에 넣는다**(Vercel **Production**, 값은 저장소 · 이슈에 적지 않는다). 하나라도 비면 구매 문 · 통지 문이 503 이고
@@ -359,7 +360,7 @@ update retention.reading_payment set hold_reason = null, held_at = null where or
 | 2 | 결제창에서 결제한 직후 앱을 강제 종료 → 다시 연다 | 지급이 한 번만 선다(통지가 먼저 세웠으면 화면은 조용하고 보유 수만 늘었다) |
 | 3 | 같은 통지를 다시 보낸다(Pub/Sub 구독의 메시지 다시 보내기, 또는 같은 토큰으로 앱 문을 두 번) | `store_purchase` · 주문이 늘지 않는다, 답이 재시도 |
 | 4 | 안 쓴 구매를 Play Console 에서 **전액 환불** | 통지 뒤 그 묶음의 장수가 모두 걷힌다, 환불 줄 사유 `store`, `store_purchase_void` 1줄 |
-| 5 | 3장 중 1장을 쓰고 전액 환불 | 2장만 걷히고 쓴 1장은 그대로, 보유 수가 음수가 아니다 |
+| 5 | 3장 중 1장을 쓰고 전액 환불 | 2장만 걷히고 쓴 1장은 그대로, 보유 수가 음수가 아니다. **G-141 뒤** — 다른 묶음을 함께 가진 계정이면 모자란 1장이 늦게 산 묶음에서 걷히고, 산 몫이 없으면 2장에서 멈춘다(바닥 0) |
 | 6 | 산 계정을 탈퇴시킨 뒤 전액 환불 | 무효 결과 `departed`, `retention.reading_refund_after_leave` 에 사유 `store` 1줄 |
 | 7 | 지급이 안 선 구매(서버 키를 비운 Preview 등)를 소비하지 않은 채 둔다 | 3일 뒤 Google 이 돌려주고 무효가 4 처럼 적힌다 — 날짜가 걸려 따로 적는다 |
 | 8 | 구매 제한을 건 계정으로 결제를 시도 | 앱에 「지금은 풀이권을 구매할 수 없어요.」, 결제창이 안 열린다 |
@@ -374,7 +375,7 @@ update retention.reading_payment set hold_reason = null, held_at = null where or
    `void_store_purchase` 가 그 확보로 스스로 확정한다(확보 금액 = 남은 결제액일 때, 환불 번호 `gpv:<GPA 주문 번호>`) — 판이 확정됐는지만 본다. 통지 전에 확정해도 된다
 
 **Google 이 먼저 전액을 돌려준 결제** — 걷은 것은 그때 안 쓴 풀이권, 장부의 환불 금액은 Google 이 돌려준 돈(남은 결제액 전부), 우리 셈이었다면의 몫은
-`store_purchase_void.share_amount` 다(ADR 0230 의 4). 이용자에게 차이를 청구하지 않는다. 진행 중인 확보가 있었는데 금액이 달랐으면 확보는 「google play: the store refunded the payment on its own」 사유로 풀린다.
+`store_purchase_void.share_amount` 다(ADR 0230 의 4 — G-141 뒤에는 걷은 것이 「그 결제가 준 장수만큼 남은 유료 풀이권에서」다). 이용자에게 차이를 청구하지 않는다. 진행 중인 확보가 있었는데 금액이 달랐으면 확보는 「google play: the store refunded the payment on its own」 사유로 풀린다.
 
 ```bash
 # 스토어가 돌려준 결제 — 날짜별 건수 · 돌려준 돈 · 우리 셈의 몫 · 걷은 장수 · 남긴 장수(개인을 가리키지 않는다)
@@ -413,6 +414,8 @@ SQL
 
 걸린 계정은 앱의 결제창이 안 열리고, 그래도 온 구매는 지급하지 않고 서버가 Google 에 환불 · 회수(`orders.refund`, revoke)를 부른다 — 이미 산 풀이권은 그대로 쓴다.
 결제 부정이 분명하면 회원 화면의 이용 정지(갈래 「결제 부정」, ADR 0189)는 지금처럼 쓴다.
+**탈퇴하면 지금은 제한 · 무효 이력이 계정과 함께 지워진다** — 같은 로그인으로 다시 가입하면 제한이 없다. 운영자 결정(2026-11-06, ADR 0230 추기 B)은 정지 기록처럼
+로그인 식별값으로 1년 두고 다시 가입하면 이어지게 하는 것이고, G-142 가 코드를 세운 뒤부터다.
 
 **통지 · 크론이 이상하면.** Vercel 로그의 `play notification: refused <까닭>`(403 — audience · 서비스 계정이 Vercel 값과 다르다), `not configured`(503 — 셋 중 하나가 비었다),
 `store ledger: <문> <코드>`(DB), `store purchase: consume failed <상태>`(소비 실패 — 다음에 다시 소비한다), `store-voided <건수>`(대조가 새로 적은 무효). Pub/Sub 구독의
