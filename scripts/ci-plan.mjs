@@ -1998,6 +1998,16 @@ const picked = ({ policy = false, core = false, anon = false, authedLanes = [], 
 const EVERYTHING = { core: true, anon: true, authedLanes: AUTHED_LANES, flow: true };
 
 /**
+ * 전부(`tier: 'full'`)일 때도 켜지 않는 차선 — `verify.yml` 의 job 이름. `policy` 는 정책만일 때의 차선이고,
+ * `mobile-flow` 는 좁은 PR 에서 앱만 바뀌었을 때의 차선이라 전부일 때는 `flow` 가 대신한다(ADR 0097 덧 2026-11-06).
+ * `main-red.mjs` 의 `measuredEverything` 이 이 job 들의 건너뜀을 빼고 센다 — 손 목록을 따로 두지 않는다
+ */
+export const offWhenFull = () =>
+  Object.entries(picked(EVERYTHING).lanes)
+    .filter(([, on]) => !on)
+    .map(([name]) => name);
+
+/**
  * `stage` 는 `release-stage.mjs` 의 `currentStageOf` 가 낸 값이다 — `null` 이나 빠진 값은 모르는 단계다.
  * `pushed` 는 main 푸시의 범위다(위 「문서만 바뀐 main 푸시」) — `before` 는 푸시 전 SHA, `forced` 는 강제 갱신,
  * `beforeGreen` 은 그 SHA 의 verify 가 초록으로 끝났는가(`settledGreen`). 빠지면 범위를 모르는 것이라 전부다.
