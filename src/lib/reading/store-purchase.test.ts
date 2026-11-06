@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
-import { purchaseReturnOf, storePurchaseNotice } from './store-purchase';
+import { STORE_PRODUCTS } from './store-products';
+import { creditsGrantedNow, purchaseReturnOf, storePurchaseNotice, storeReceiptDecision } from './store-purchase';
 
 /** Google Play 결제의 결과 줄 — 문의 답마다 화면이 무엇을 말하는가(ADR 0230 · 대장 credits-11) */
 describe('Google Play 결제의 결과 줄', () => {
@@ -51,5 +52,55 @@ describe('결제 뒤 이어 갈 곳', () => {
     expect(purchaseReturnOf('/me/credits', '사주풀이')).toBeNull();
     expect(purchaseReturnOf('/me/readings/self', '아무거나')).toBeNull();
     expect(purchaseReturnOf(undefined, undefined)).toBeNull();
+  });
+});
+
+/**
+ * 결제창 · Play 가 돌려준 구매 하나 — 앱의 듣는 손과 다시 보내는 손이 같은 판정을 쓴다(ADR 0230). 앱 쪽(`mobile/src/credits/store.ts`)은
+ * 네이티브 모듈을 들여 뿌리 vitest 가 못 연다 — 판정을 여기로 옮겨 잰다.
+ */
+describe('Google Play 구매 하나를 보낼까', () => {
+  const ours = STORE_PRODUCTS[0].productId;
+
+  it('끝난 결제 · 토큰 있음 · 우리 상품이면 보낸다', () => {
+    expect(storeReceiptDecision({ productId: ours, purchaseToken: 'tok', purchaseState: 'purchased' })).toEqual({
+      kind: 'send',
+      productId: ours,
+      purchaseToken: 'tok',
+    });
+    for (const { productId } of STORE_PRODUCTS) {
+      expect(storeReceiptDecision({ productId, purchaseToken: 't', purchaseState: 'purchased' }).kind, productId).toBe('send');
+    }
+  });
+
+  it('보류 결제는 보내지 않고 기다림 — 토큰이 있어도', () => {
+    expect(storeReceiptDecision({ productId: ours, purchaseToken: 'tok', purchaseState: 'pending' })).toEqual({ kind: 'pending' });
+    expect(storeReceiptDecision({ productId: ours, purchaseState: 'pending' })).toEqual({ kind: 'pending' });
+  });
+
+  it('끝난 결제인데 토큰이 없거나 비었거나 우리 상품이 아니면 보낼 것이 없다', () => {
+    for (const purchaseToken of [undefined, null, '']) {
+      expect(storeReceiptDecision({ productId: ours, purchaseToken, purchaseState: 'purchased' }), String(purchaseToken)).toEqual({ kind: 'unusable' });
+    }
+    expect(storeReceiptDecision({ productId: 'reading_credits_999', purchaseToken: 'tok', purchaseState: 'purchased' })).toEqual({ kind: 'unusable' });
+    expect(storeReceiptDecision({ productId: 'other_app_item', purchaseToken: 'tok', purchaseState: 'purchased' })).toEqual({ kind: 'unusable' });
+  });
+
+  it('끝나지 않은 그 밖의 상태는 아무것도 안 한다', () => {
+    expect(storeReceiptDecision({ productId: ours, purchaseToken: 'tok', purchaseState: 'unknown' })).toEqual({ kind: 'ignore' });
+  });
+});
+
+describe('다시 보낸 구매가 이번에 선 장수', () => {
+  it('이번에 선 지급만 센다 — 앞서 선 것(replayed)은 0', () => {
+    expect(creditsGrantedNow({ ok: true, value: { outcome: 'granted', credits: 5, replayed: false } })).toBe(5);
+    expect(creditsGrantedNow({ ok: true, value: { outcome: 'granted', credits: 5, replayed: true } })).toBe(0);
+  });
+
+  it('보류 · 거절 · 없음 · 못 닿음은 0', () => {
+    expect(creditsGrantedNow({ ok: true, value: { outcome: 'pending' } })).toBe(0);
+    expect(creditsGrantedNow({ ok: true, value: { outcome: 'refused', why: 'restricted' } })).toBe(0);
+    expect(creditsGrantedNow({ ok: true, value: { outcome: 'not-found' } })).toBe(0);
+    expect(creditsGrantedNow({ ok: false, refused: { refused: 'unavailable', message: '계정을 확인하지 못했어요.' } })).toBe(0);
   });
 });
