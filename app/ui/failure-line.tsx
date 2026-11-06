@@ -6,7 +6,7 @@ import { useTransition, type ReactNode } from 'react';
 
 import { signInFrom } from '@/src/lib/consent';
 import { BUTTON_TERTIARY } from './buttons';
-import { SIGN_IN_AGAIN_NOTE } from './sign-in-again';
+import { SIGN_IN_AGAIN_NOTE } from '@/src/lib/account/sign-in-again';
 
 /** 화면 안 실패 줄의 글자 모양 — 붉은 글씨 한 줄. 부품을 못 쓰는 자리(문장만 세우는 곳)도 이 상수를 든다 */
 export const FAILURE_TEXT = 'text-sm leading-6 text-danger';

@@ -5,10 +5,9 @@ import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SUPPORT_EMAIL } from '@brand';
 import { businessInfoFrom } from '@brand/business';
 import { refundRequestLine } from '@brand/refund';
-import { userFacingDbMessage } from '@db-error';
 import { won } from '@reading/bundle';
 import { CREDITS_AVAILABLE_LABEL, CREDITS_USAGE_NOTE, CREDITS_USAGE_RATE } from '@reading/notes';
-import { paidOrderOf, type PaidOrder } from '@reading/paid-order';
+import type { PaidOrder } from '@reading/paid-order';
 import { purchaseReturnOf } from '@reading/store-purchase';
 
 import { supabase } from '@/auth/client';
@@ -20,6 +19,7 @@ import { settled } from '@/ui/settled';
 import { TopBar } from '@/ui/top-bar';
 import { Card, Paper } from '@/ui/surfaces';
 
+import { readReadingCredits, readReadingOrders } from './remaining';
 import { storeAvailable } from './store';
 import { StoreSection } from './store-section';
 
@@ -28,16 +28,14 @@ type Read<T> = { ok: true; value: T } | { ok: false; message: string };
 
 async function readAvailable(): Promise<Read<number | null>> {
   if (supabase === null) return { ok: false, message: NOT_READY };
-  const { data, error } = await supabase.rpc('my_reading_credits');
-  if (error !== null) return { ok: false, message: userFacingDbMessage(error, 'my_reading_credits') };
-  return { ok: true, value: data?.[0]?.available ?? null };
+  const credits = await readReadingCredits(supabase);
+  return credits.ok ? { ok: true, value: credits.value?.available ?? null } : { ok: false, message: credits.reason };
 }
 
 async function readOrders(): Promise<Read<readonly PaidOrder[]>> {
   if (supabase === null) return { ok: false, message: NOT_READY };
-  const { data, error } = await supabase.rpc('my_reading_orders');
-  if (error !== null) return { ok: false, message: userFacingDbMessage(error, 'my_reading_orders') };
-  return { ok: true, value: (data ?? []).map(paidOrderOf) };
+  const orders = await readReadingOrders(supabase);
+  return orders.ok ? orders : { ok: false, message: orders.reason };
 }
 
 /**
