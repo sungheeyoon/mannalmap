@@ -54,10 +54,12 @@
 ```bash
 # EAS 의 키 — Android → production(또는 해당 프로필) → Keystore 의 SHA1 Fingerprint
 npx eas-cli@latest credentials -p android
-# Play 의 키 — Play Console → 앱 → 테스트 및 출시 → 앱 무결성 → 앱 서명 키 인증서의 SHA-1
-# 콜론을 뺀 SHA-1 을 Base64 로
-echo '<SHA-1 hex, 콜론 없이>' | xxd -r -p | openssl base64
+# Play 의 키 — Play Console → Protected with Play → Play Store protection → Manage Play app signing → App signing key 의 SHA-1(옛 이름: 설정 → 앱 무결성)
+# 콜론을 걷고 Base64 로 — 28자이고 = 로 끝난다
+echo '<SHA-1, 콜론 든 꼴 그대로>' | tr -d ':' | xxd -r -p | openssl base64
 ```
+
+**Play 의 새 앱은 앱 서명 키가 셋일 수 있다**(quantum-ready hybrid signing) — 그 절에 선 SHA-1 마다 한 줄씩 넣는다. 차례와 출처는 `docs/ops/runbook/play-console.md` 「첫 AAB 와 앱 서명 키」.
 
 ## 카카오 로그인 — 실기기 · 웹에서 볼 것
 

@@ -15,7 +15,8 @@
 | 항목 | 기본값 |
 | --- | --- |
 | 코드 · 문서 수정, 작업 가지 커밋 · 푸시, PR 생성 · 갱신 | 허용 |
-| gate 통과 뒤 `--auto` 머지 — 결정이 아닌 PR | 허용 |
+| gate 통과 뒤 `--auto` 머지 — 문서 PR · 정해진 문구 한 줄 | 허용 |
+| 코드 PR 의 머지 | 하지 않는다 — PR 까지 만들고 아침 보고에 싣는다. 운영자 검토 뒤에 머지한다(`docs/agents/delegation/coordinator.md` 「출시 흐름」, ADR 0229) |
 | main 직접 푸시 | 금지 — 보호 규칙이 막는다(ADR 0121) |
 | `docs/agents/delegation/decisions.md` 「결정 점검표」에 걸리는 PR — 정책 · 접근 · 실패 때 여닫음 · 보존 · 비용 · 검증 · 배포의 문턱 · 화면 흐름 · 메뉴 구조 | PR 까지 만들고 머지하지 않는다. 아침 보고의 「결정 대기」로 |
 | 운영 `db push` | 운영 베타에서는 묻지 않고 밟고 **본 값을 적는다** — `migration list` 의 remote 칸과 PostgREST 캐시(`docs/agents/delegation/permissions.md` 「권한 등급」 표, ADR 0093). 마이그레이션이 든 PR 은 push 와 확인이 끝난 뒤에 `--auto` 다 |
@@ -28,7 +29,8 @@
 머지를 허락한 뒤에 섰다(2026-10-06, `docs/notes/2026-10-06-night-skills-and-read-budget.md`). 운영자가 제
 `.claude/settings.local.json` 에 `Bash(gh pr merge --auto:*)` 허용을 넣어 두었으면 그 말 없이도 선다.
 
-**자동으로 고쳐도 되는 경계.**
+**자동으로 고쳐도 되는 경계.** 2026-11-06 부터 아래의 코드 PR 도 `--auto` 대신 PR 까지 만들고 아침 보고에 싣는다. 운영자가 검토한 뒤 머지한다
+(`docs/agents/delegation/coordinator.md` 「출시 흐름」, ADR 0229). 경계는 「무엇을 고쳐 PR 로 올려도 되나」로 남는다.
 
 - 기존 규칙 · 디자인 체계(ADR 0109, `app/ui/`) · 접근성 규칙 · 이미 승인된 문구나 디자인을 **어긴 것을 되돌리는** 수정 —
   고치고 검증해서 `--auto`.
