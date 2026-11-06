@@ -339,7 +339,7 @@ const ENGINE = [/^src\/lib\/saju\//, /^app\/saju\//];
 /** 의존성 목록 — 이것을 바꾼 PR 만 `audit` 이 머지를 막는다 */
 export const DEPENDENCY_LISTS = ['package.json', 'package-lock.json', 'mobile/package.json', 'mobile/package-lock.json'];
 /** 앱이 부르는 자리와 CI 자체 — 위 「앱 검사」. `app/` 은 파일로 적는다 — 앱이 닿는 것이 그 파일들뿐이고, 시험이 닫힘과 견준다 */
-const MOBILE_REACH = [/^mobile\//, /^src\/lib\//, /^app\/db-error\.ts$/, /^app\/ui\/sign-in-again\.ts$/, /^\.github\/workflows\//, /^\.nvmrc$/];
+const MOBILE_REACH = [/^mobile\//, /^src\/lib\//, /^app\/db-error\.ts$/, /^\.github\/workflows\//, /^\.nvmrc$/];
 /** 문서는 앱을 안 바꾼다. 웹 쪽 시험은 앱에 안 닿지만 `mobile/` 의 시험은 앱의 `tsc` 가 함께 읽는다 */
 export const reachesMobile = (file) => matches(MOBILE_REACH, file) && !/\.md$/.test(file) && (file.startsWith('mobile/') || !/\.test\.tsx?$/.test(file));
 /**

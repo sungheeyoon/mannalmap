@@ -1121,7 +1121,7 @@ describe('CI 계획 — 앱 검사 (mobile 차선)', () => {
   const yml = readFileSync(resolve(__dirname, '../.github/workflows/verify.yml'), 'utf8');
 
   it('앱이 부르는 자리가 바뀐 PR 만 돈다 — 어느 단계든', () => {
-    for (const file of ['mobile/src/app/index.tsx', 'mobile/src/a.test.ts', 'mobile/package-lock.json', 'mobile/app.json', 'src/lib/saju/index.ts', 'src/lib/design/tokens.json', 'app/db-error.ts', 'app/ui/sign-in-again.ts', '.github/workflows/verify.yml', '.nvmrc']) {
+    for (const file of ['mobile/src/app/index.tsx', 'mobile/src/a.test.ts', 'mobile/package-lock.json', 'mobile/app.json', 'src/lib/saju/index.ts', 'src/lib/design/tokens.json', 'app/db-error.ts', 'src/lib/account/sign-in-again.ts', '.github/workflows/verify.yml', '.nvmrc']) {
       expect(beta([file]).lanes.mobile, file).toBe(true);
       expect(beta(['docs/prd.md', file]).lanes.mobile, file).toBe(true);
     }
