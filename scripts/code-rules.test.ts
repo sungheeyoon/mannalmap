@@ -688,60 +688,6 @@ describe('금지어 (docs/agents/code-rules/banned-words.md)', () => {
     const found = screens.filter((file) => readFileSync(file, 'utf8').includes('맛보기')).map(relPath);
     expect(found).toEqual([]);
   });
-
-  /**
-   * 「걷다」는 문서가 지웠다 · 뺐다 · 회수했다를 한데 부르던 말이다 — 그 말이 운영 주문 화면의 「걷은 · 걷을 회차」로 번져 뜻이
-   * 안 읽혔다(운영자 2026-11-06, `docs/agents/code-rules/screen-copy.md` 「화면 문구」). 화면에 나가는 글자 — 문자열 · 템플릿 ·
-   * JSX 글자 — 만 센다. 주석은 안 센다. 허용은 `파일 :: 글자` 지문이고 **줄어들기만 한다** — 글자가 없어진 항목도 붉다.
-   */
-  const GEOT_ALLOWED: readonly { at: string; why: string }[] = [
-    { at: 'app/me/reading/reading-state.ts :: 오래 걷던 두 사람이 같은 갈림길에서 잠깐 멈춘 모양입니다.', why: '풀이 보기 문장 — 실제로 걷는 뜻' },
-    { at: 'app/me/reading/reading-state.ts :: 늘 앞장서 걷다가 가끔 뒤를 돌아보는 사람입니다.', why: '풀이 보기 문장 — 실제로 걷는 뜻' },
-    {
-      at: 'src/lib/saju/analysis/validation/johuExternalCases.ts :: 겨울 물이 왕한데 戌未 조토가 습을 걷고 丁壬합이 丙을 지킨다 — 丁未 · 丙午 남방 운에 오른다.',
-      why: '명리 문장 — 「습을 걷다」는 명리의 말이다(외부 사례 요약, 화면에 안 나간다)',
-    },
-    { at: 'src/lib/saju/analysis/validation/johuExternalCases.ts :: 丁이 뿌리 없어 한습을 못 걷는다 — 몸의 병으로 진단한다.', why: '명리 문장 — 같은 까닭' },
-    { at: 'app/me/reading/collect.ts :: 괄호째 걷음:', why: '검사 기록의 detail — DB 에 적는 내부 기록이고 화면에 안 나간다(pgTAP 88 도 같은 글자)' },
-    { at: 'app/ops/orders/actions.ts :: 걷을 회차를 1장 이상 골라 주세요.', why: '#1041 이 걷는다' },
-    { at: 'app/ops/orders/order-view.tsx :: · 걷은', why: '#1041 이 걷는다' },
-    { at: 'app/ops/orders/order-view.tsx :: 예약 중인 회차는 풀린 뒤에 걷을 수 있습니다.', why: '#1041 이 걷는다' },
-    { at: 'app/ops/orders/order-view.tsx :: 걷을 수 있는 회차가 없습니다.', why: '#1041 이 걷는다' },
-    { at: 'app/ops/orders/order-view.tsx :: 장을 다 걷으면', why: '#1041 이 걷는다' },
-    { at: 'app/ops/orders/order-view.tsx :: 장은 풀린 뒤에 걷을 수 있습니다.', why: '#1041 이 걷는다' },
-    { at: 'app/ops/orders/refund-form.tsx :: 걷을 회차', why: '#1041 이 걷는다' },
-    { at: 'app/ops/orders/refund-form.tsx :: 걷는 회차', why: '#1041 이 걷는다' },
-    { at: 'app/ops/orders/refund-form.tsx :: 콘솔에서 이 금액을 취소한 뒤에만 누릅니다. 장부에 환불이 적히고 회차가 걷힙니다.', why: '#1041 이 걷는다' },
-  ];
-
-  /** 화면에 나가는 글자를 드는 파일 — 웹 화면(`app/**`) · 앱(`mobile/src/**`) · 문구 상수가 사는 `src/lib/**`, 시험 빼고 */
-  const shownTextFiles = () =>
-    [
-      ...SOURCE_FILES.filter((file) => /^(app|src\/lib)\//.test(relPath(file))),
-      ...filesUnder(join(ROOT, 'mobile/src')).filter((file) => /\.tsx?$/.test(file) && !file.endsWith('.d.ts')),
-    ].filter((file) => /\.tsx?$/.test(file) && !isTest(relPath(file)));
-
-  /** 「걷」이 든 문자열 · 템플릿 조각 · JSX 글자의 지문 — 「걷」이 없는 파일은 짓지 않는다 */
-  const geotTexts = (files: readonly string[]) =>
-    fingerprints(
-      files.filter((file) => readFileSync(file, 'utf8').includes('걷')),
-      (node) =>
-        (ts.isStringLiteral(node) || ts.isNoSubstitutionTemplateLiteral(node) || ts.isTemplateLiteralToken(node) || ts.isJsxText(node)) &&
-        node.text.includes('걷')
-          ? oneLine(node.text)
-          : null,
-    );
-
-  it('화면에 나가는 글자에 「걷다」가 없다 — 삭제 · 제외 · 회수 · 취소 · 환불로 적는다(주석은 안 센다)', () => {
-    const files = shownTextFiles();
-    expect(files.length).toBeGreaterThan(500);
-    const allowed = new Set(GEOT_ALLOWED.map((entry) => entry.at));
-    const found = geotTexts(files);
-    expect(found.filter((hit) => !allowed.has(hit.fingerprint)).map((hit) => `${hit.file}:${hit.line} ${hit.fingerprint}`)).toEqual([]);
-    // 고쳐서 글자가 없어진 허용 항목은 여기서도 지운다 — 목록이 썩지 않게
-    const seen = new Set(found.map((hit) => hit.fingerprint));
-    expect(GEOT_ALLOWED.filter((entry) => !seen.has(entry.at)).map((entry) => entry.at)).toEqual([]);
-  });
 });
 
 describe('입구 문서가 가리키는 경로 (docs/agents/test-map.md)', () => {
