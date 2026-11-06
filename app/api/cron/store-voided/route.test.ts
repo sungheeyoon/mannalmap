@@ -21,7 +21,7 @@ const { GET } = await import('./route');
  * **무효 대조 크론은 올바른 `CRON_SECRET` 에만 열리고, Play 키가 없으면 조용히 서고, 하나라도 못 적으면 붉다**(ADR 0230).
  *
  * Play API 와 장부 문은 가짜다 — 걷는 셈은 DB 가 잰다(`supabase/tests/99_store_purchase.test.sql` ·
- * `99_store_purchase_takes_and_keeps.test.sql`).
+ * `99_store_purchase_takes.test.sql`).
  */
 const SECRET = 'cron-secret-for-test';
 const KEY = JSON.stringify({ client_email: 'billing@proj.iam.gserviceaccount.com', private_key: 'not-used' });

@@ -54,6 +54,7 @@ describe('Google Play 구매 — 확인 · 지급 · 소비', () => {
       orderId: 'GPA.1111-2222-3333-44444',
       purchasedAt: '2026-11-06T03:00:00.000Z',
       isTest: false,
+      isPromo: false,
     });
     expect(deps.play.consume).toHaveBeenCalledWith('reading_credits_3', TOKEN);
     expect(deps.ledger.consumed).toHaveBeenCalledWith(TOKEN);
@@ -77,7 +78,14 @@ describe('Google Play 구매 — 확인 · 지급 · 소비', () => {
   it('라이선스 테스터의 시험 구매는 시험으로 적는다', async () => {
     const deps = fakes({ ok: true, value: bought({ purchaseType: 0 }) });
     await settle(deps);
-    expect(deps.ledger.grant).toHaveBeenCalledWith(expect.objectContaining({ isTest: true }));
+    expect(deps.ledger.grant).toHaveBeenCalledWith(expect.objectContaining({ isTest: true, isPromo: false }));
+  });
+
+  it('프로모션 코드 구매는 0원 주문으로 적는다 — 지급 · 소비는 보통 결제와 같다', async () => {
+    const deps = fakes({ ok: true, value: bought({ purchaseType: 1 }) });
+    expect(await settle(deps)).toEqual({ kind: 'granted', credits: 3, replayed: false });
+    expect(deps.ledger.grant).toHaveBeenCalledWith(expect.objectContaining({ isTest: false, isPromo: true }));
+    expect(deps.play.consume).toHaveBeenCalledWith('reading_credits_3', TOKEN);
   });
 
   it('보류 결제는 지급하지 않고 기다린다', async () => {

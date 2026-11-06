@@ -15,7 +15,7 @@ export function storeLedger(what: string): Ledger & { refusal(userId: string): P
   const keyed = keyedClient(what);
 
   return {
-    async grant({ userId, productId, purchaseToken, orderId, purchasedAt, isTest }) {
+    async grant({ userId, productId, purchaseToken, orderId, purchasedAt, isTest, isPromo }) {
       const { data, error } = await keyed.rpc(
         'grant_store_purchase',
         rpcArgs<'grant_store_purchase'>({
@@ -26,6 +26,7 @@ export function storeLedger(what: string): Ledger & { refusal(userId: string): P
           p_store_order_id: orderId,
           p_purchased_at: purchasedAt,
           p_is_test: isTest,
+          p_is_promo: isPromo,
         }),
       );
       const row = data?.[0];

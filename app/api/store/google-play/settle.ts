@@ -24,6 +24,8 @@ export type Ledger = {
     orderId: string | null;
     purchasedAt: string | null;
     isTest: boolean;
+    /** Play 프로모션 코드로 받은 구매(`purchaseType = 1`) — 주문 금액 0(운영자 결정 2026-11-06, ADR 0230) */
+    isPromo: boolean;
   }): Promise<{ outcome: 'granted' | 'replayed' | 'restricted' | 'inactive'; credits: number } | null>;
   consumed(purchaseToken: string): Promise<void>;
   void(input: {
@@ -87,6 +89,7 @@ export async function settlePurchase(
     orderId: purchase.orderId,
     purchasedAt: purchase.purchaseTimeMillis === null ? null : new Date(purchase.purchaseTimeMillis).toISOString(),
     isTest: purchase.purchaseType === 0,
+    isPromo: purchase.purchaseType === 1,
   });
   if (granted === null) return { kind: 'unavailable', step: 'ledger' };
 

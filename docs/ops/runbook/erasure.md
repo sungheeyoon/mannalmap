@@ -433,10 +433,10 @@ select jobname, schedule, active from cron.job where jobname = 'sanction-retenti
 
 ### 구매 제한 기록 — 제한된 채 떠난 로그인, 처분일부터 1년 (ADR 0230 추기 B, G-142)
 
-정지 기록과 같은 꼴이다(위 「제재 기록」). 마이그레이션 `20270114090000`.
+정지 기록과 같은 꼴이다(위 「제재 기록」). 마이그레이션 `20270114100000`(걷는 장수의 `20270114090000` 과 따로다). 기간(1년)은 `retention.store_restriction_period()` 한 곳이다.
 
 **배포 순서** — `db push` 는 #938 의 처리방침에 「구매 제한 기록」 줄(초안 `docs/legal/store-launch-notice-draft.md` 「구매 제한 기록 — 기다리는 줄」)이 게시되는 판과
-같은 판이거나 그 뒤다(ADR 0098 「알리기 전에 남기지 않는다」). 앱 · 웹은 이 기록을 부르지 않으므로 앱과의 순서는 없다.
+같은 판이거나 그 뒤다(ADR 0098 「알리기 전에 남기지 않는다」). 앞의 `20270114090000` 은 먼저 올려도 된다. 앱 · 웹은 이 기록을 부르지 않으므로 앱과의 순서는 없다.
 
 - **남는 때** — 구매 제한이 걸린 채(마지막 이력이 「건다」) `auth.users` 행이 지워질 때(트리거 `store_restriction_outlives_the_leaver`). 크론의 처분이든 `forget_user` 든 같다.
   제한이 풀린 계정 · 한 번도 제한되지 않은 계정은 안 남는다. 든 것은 이메일(소문자) · 로그인 식별값 · 제한 갈래 · 건 운영자 · 건 시각 · 무효마다 시각 · Google 의 갈래 ·
@@ -450,3 +450,7 @@ select jobname, schedule, active from cron.job where jobname = 'sanction-retenti
 select count(*) as 기록, min(retained_at) as 가장_오래된_처분일 from retention.store_purchase_restriction;
 select jobname, schedule, active from cron.job where jobname = 'store-restriction-retention-purge';
 ```
+
+**잘못 이어졌을 때**(같은 이메일의 다른 사람이 들어온 경우 등) — 보통 제한처럼 `set_store_purchase_restriction` 의 `lift` · `mistake` 로 푼다(`docs/ops/runbook/credits.md`
+「구매 제한 걸기 · 풀기」). 기록 자체를 지워야 하면 운영자의 SQL 로 그 한 줄만 지우고(`delete from retention.store_purchase_restriction where id = '<id>'` — id 는 알림
+`store-restriction-carried:` 의 본문과 이은 제한의 메모에 있다) 대장에 남긴다.

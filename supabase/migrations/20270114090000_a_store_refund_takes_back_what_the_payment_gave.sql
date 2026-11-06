@@ -1,7 +1,8 @@
--- 스토어가 돌려준 결제는 그 결제가 준 장수만큼 계정의 남은 산 풀이권에서 걷고, 구매 제한은 탈퇴 뒤에도 같은 로그인에 1년 이어진다
--- (G-126, ADR 0230 — 운영자 답 2026-11-06)
+-- 스토어가 돌려준 결제는 그 결제가 준 장수만큼 계정의 남은 산 풀이권에서 걷고, 시험 · 프로모션 구매는 매출에서 빠진다
+-- (G-141, ADR 0230 추기 A — 운영자 답 2026-11-06)
 --
--- `20270113090000` 위에 넷이 선다. 그 파일은 고치지 않는다.
+-- `20270113090000` 위에 선다. 그 파일은 고치지 않는다. 구매 제한의 탈퇴 뒤 보존(G-142)은 따로 `20270114100000` 이다 — 그것은 처리방침
+-- 게시 뒤에만 올리고(ADR 0098), 이 파일은 출시 전에 먼저 올려도 된다.
 --
 -- 1. **걷는 장수(운영자 답 2026-11-06 A).** 지금까지 `void_store_purchase` 는 그 묶음 안의 안 쓴 장수만 걷었다 — 묶음 A · B 를 사고 A 를
 --    다 쓴 뒤 A 를 환불하면 0장을 걷었다(B 는 그대로). 이제 **그 결제가 준 장수(아직 걷지 않은 것)만큼, 계정에 남은 산 풀이권에서** 걷는다.
@@ -12,16 +13,17 @@
 --    무엇이 얼마나 걷었는지를 `store_purchase_void_take` 에 남긴다. 운영자 환불의 금액 셈(ADR 0148 · 0192 — ⌊결제액 × (걷은 회차 + 이번
 --    회차) ÷ 산 회차⌋)은 **돈이 돌아간 회차**만 세야 하므로, 확보(`operator_hold_reading_refund`)와 운영자 셈
 --    (`operator_reading_refund_basis` 의 `refunded_credits`)이 그 수를 뺀다 — 빼지 않으면 B 를 나중에 환불할 때 A 의 무효로 걷힌 회차까지
---    돈으로 돌려준다. 안 쓴 회차(`unused`)는 그대로 전부를 뺀 값이다 — 걷힌 것은 쓸 수도 돌려받을 수도 없다.
--- 3. **구매 제한과 그 근거는 탈퇴 뒤 1년(운영자 답 2026-11-06 B).** 제한된 채 지워지는 계정의 로그인 식별값 · 제한 갈래 · 건 운영자 ·
---    시각 · 무효 이력의 요약을 `retention.store_purchase_restriction` 에 옮기고, 같은 로그인이 1년 안에 가입을 마치면 제한이 다시 선다. 이용 정지의
---    제재 기록(`retention.sanction`, `20270108154600`, ADR 0218)과 같은 꼴 · 같은 식별(이메일 또는 `provider:provider_id`)이다. 운영자
---    메모와 주문 번호는 옮기지 않는다 — 메모는 자유 글이라 개인정보가 섞일 수 있고, 주문은 결제 기록이 든다(ADR 0230 추기 B). 지우는
---    크론은 정지 기록의 것과 따로 둔다(`store-restriction-retention-purge`) — 두 기록의 기간 · 대상이 따로 바뀔 수 있다.
--- 4. **시험 구매는 매출이 아니다.** 운영 화면의 오늘 · 이번 주 수(`operator_today_figures`)가 라이선스 테스터의 시험 구매
---    (`store_purchase.is_test`)의 주문과 환불을 뺀다. 프로모션 코드 구매(`purchaseType = 1`)는 정하지 않았다 — 지금처럼 매출로 센다.
+--    돈으로 돌려준다. 안 쓴 회차(`unused`)는 그대로 전부를 뺀 값이다 — 걷힌 것은 쓸 수도 돌려받을 수도 없다. 그 묶음이 나중에 제 무효로
+--    걷을 장수도 같은 까닭으로 그 수를 뺀 값에서 센다(연쇄 무효).
+-- 3. **떠난 사람의 결제 기록에도 남는다.** `store_purchase_void_take` 는 계정과 함께 지워지므로, 5년 결제 기록(`retention.reading_payment`)의
+--    묶음 칸에 `taken_by_store`(다른 결제의 무효가 돈 없이 걷은 회차)를 더한다 — 걷은 회차와 환불 줄이 안 맞는 까닭이 남는다.
+-- 4. **프로모션 코드 구매는 0원(운영자 결정 2026-11-06).** Play 프로모션 코드로 받은 구매(`purchaseType = 1`)는 주문 · 묶음을 남기되 금액이
+--    0 이다 — `grant_store_purchase` 가 인자 `p_is_promo`(기본 거짓)를 받고 `store_purchase.is_promo` 로 남긴다. 무효가 돼도 돌려줄 돈이 없다.
+-- 5. **시험 · 프로모션 구매는 매출이 아니다.** 운영 화면의 오늘 · 이번 주 수(`operator_today_figures`)가 라이선스 테스터의 시험 구매
+--    (`store_purchase.is_test`)와 프로모션 구매의 주문과 환불을 뺀다.
+-- 6. **운영 셈에 「스토어 환불로 걷힘」 칸** — `operator_reading_refund_basis` 끝에 `taken_by_store` 를 더해 주문 화면이 따로 보인다.
 --
--- 반환 모양은 그대로다 — 옛 앱 빌드는 아무것도 안 바꿔도 된다. 재는 자리는 `supabase/tests/99_store_purchase_takes_and_keeps.test.sql`.
+-- 반환 모양은 그대로다 — 옛 앱 빌드는 아무것도 안 바꿔도 된다. 재는 자리는 `supabase/tests/99_store_purchase_takes.test.sql`.
 
 -- ── 1. 다른 묶음에서 걷은 것 ───────────────────────────────────────────────────
 
@@ -199,8 +201,10 @@ begin
 
   select * into b from public.reading_bundle x where x.order_id = o.id for update;
 
-  -- 이 결제가 준 것 가운데 아직 걷지 않은 것 — 이만큼을 걷는다
-  owed := b.credits - b.refunded_credits;
+  -- 이 결제가 준 것 가운데 아직 걷지 않은 것 — 이만큼을 걷는다. 이 묶음의 걷은 회차에는 **다른** 결제의 무효가 여기서 걷은 몫도 들어
+  -- 있다(`store_purchase_void_take`) — 그것은 이 결제가 준 것을 걷은 것이 아니므로 뺀다. 빼지 않으면 연쇄 무효(A 의 무효가 C 에서 걷은 뒤
+  -- C 가 무효)에서 C 가 준 장수를 덜 걷는다
+  owed := b.credits - (b.refunded_credits - public.reading_bundle_taken_by_store(b.id));
 
   -- 먼저 그 묶음의 안 쓴 것
   own := least(owed, greatest(b.credits - b.refunded_credits - (
@@ -388,9 +392,13 @@ $$;
 /**
  * 주문 하나를 들고 그 계정의 주문 전부를 묶음별로 — 몸은 `20261221090000` 그대로다. `refunded_credits` 만 **돈이 돌아간 걷은 회차**다
  * (다른 결제의 스토어 환불이 돈 없이 걷은 것을 뺀다) — 화면이 같은 값으로 금액을 미리 셈한다(`refundBreakdown`). `unused` 는 그대로
- * 걷힌 것 전부를 뺀 값이다.
+ * 걷힌 것 전부를 뺀 값이다. 칸 하나를 끝에 더했다: `taken_by_store` — 돈 없이 걷힌 회차. 화면이 「스토어 환불로 걷힘」으로 따로 보여
+ * 산 = 걷은 + 스토어 환불로 걷힘 + 쓴 + 예약 중 + 안 쓴(+ 확보 중)이 맞는다(운영자 결정 2026-11-06). 반환 칸만 느는 확장이라 지우고 다시
+ * 짓는다 — 옛 앱은 더한 칸을 무시한다.
  */
-create or replace function public.operator_reading_refund_basis(p_order_id uuid)
+drop function public.operator_reading_refund_basis(uuid);
+
+create function public.operator_reading_refund_basis(p_order_id uuid)
 returns table (
   order_id uuid,
   asked boolean,
@@ -412,7 +420,8 @@ returns table (
   last_used_at timestamptz,
   owner_nickname text,
   owner_ref text,
-  penalized_credits integer
+  penalized_credits integer,
+  taken_by_store integer
 )
 language plpgsql
 volatile
@@ -461,7 +470,8 @@ begin
     (select a.nickname from public.app_user a where a.id = o.user_id),
     left(o.user_id::text, 8),
     coalesce((select sum(f.credits) from public.reading_order_refund f
-              where f.order_id = o.id and f.reason = 'unused'), 0)::integer
+              where f.order_id = o.id and f.reason = 'unused'), 0)::integer,
+    case when b.id is null then null else public.reading_bundle_taken_by_store(b.id) end
   from public.reading_order o
   left join public.reading_bundle b on b.order_id = o.id
   left join lateral (
@@ -477,182 +487,206 @@ begin
 end;
 $$;
 
--- ── 4. 구매 제한은 탈퇴 뒤에도 같은 로그인에 1년 ──────────────────────────────
+revoke execute on function public.operator_reading_refund_basis(uuid) from public, anon, authenticated, service_role;
+grant execute on function public.operator_reading_refund_basis(uuid) to authenticated;
 
-/** 얼마나 두나 — 처분일부터. 이용 정지의 제재 기록(`retention.sanction_period`)과 같다 */
-create function retention.store_restriction_period()
-returns interval
-language sql
-immutable
-set search_path = ''
-as $$ select interval '1 year' $$;
+-- ── 4. 떠난 사람의 결제 기록에 돈 없이 걷은 회차 ─────────────────────────────
 
 /**
- * 구매가 제한된 채 지워진 로그인 계정 하나 — 같은 로그인의 재가입에 제한을 잇는 데만 쓴다. 계정 id · 닉네임 · 제한 메모 · 구매 토큰 ·
- * 주문 번호는 두지 않는다. 어느 계정에도 FK 로 매지 않는다.
+ * 떠나기 **전에** 그 사람의 결제를 옮긴다 — 몸은 `20261211090000` 그대로이고 묶음 칸에 `taken_by_store` 하나를 더했다: 그 묶음의 걷은
+ * 회차 가운데 다른 결제의 스토어 환불이 돈 없이 걷은 것. `store_purchase_void_take` 는 계정과 함께 지워진다.
  */
-create table retention.store_purchase_restriction (
-  id uuid primary key default gen_random_uuid(),
-  /** 떠날 때의 로그인 이메일 — 소문자 */
-  email text check (email is null or email = lower(email)),
-  /** 로그인 제공자와 그 제공자의 계정 번호 — `provider:provider_id` */
-  identities text[] not null default '{}',
-  /** 제한 갈래 — `refund_abuse` · `other` */
-  reason text not null check (reason in ('refund_abuse', 'other')),
-  /** 건 운영자 */
-  restricted_by uuid,
-  restricted_at timestamptz not null,
-  /**
-   * 제한의 근거 — 그 계정의 스토어 환불 이력(`store_purchase_void`)의 요약: 무효마다 시각 · Google 의 갈래 셋(사유 · 누가 · 환불 갈래) ·
-   * 걷은 장수 · 남긴 장수(ADR 0230 추기 B). 금액 · 주문은 결제 기록(`retention.reading_payment`)이 든다
-   */
-  voids jsonb not null default '[]'::jsonb check (jsonb_typeof(voids) = 'array'),
-  /** 처분일 — 옮긴 때. 1년을 여기서 센다 */
-  retained_at timestamptz not null default now(),
-  constraint store_restriction_names_a_login check (email is not null or cardinality(identities) > 0)
-);
-
-comment on table retention.store_purchase_restriction is
-  '구매가 제한된 채 지워진 로그인 계정과 그 근거(스토어 환불 이력) — 처분일(retained_at)부터 1년 뒤 크론이 지운다. 같은 로그인의 재가입에 제한을 잇는다 (ADR 0230).';
-
-create index retention_store_restriction_by_email on retention.store_purchase_restriction (email);
-create index retention_store_restriction_by_identity on retention.store_purchase_restriction using gin (identities);
-create index retention_store_restriction_expiry on retention.store_purchase_restriction (retained_at);
-
-alter table retention.store_purchase_restriction enable row level security;
-revoke all on retention.store_purchase_restriction from public, anon, authenticated, service_role;
-
-/**
- * 떠나기 **전에** 구매가 제한된 계정이면 기록을 남긴다 — `auth.users` 의 `before delete`(제재 기록과 같은 자리). 크론의 처분이든 운영자의
- * `forget_user` 든 같다. 제한이 풀린 계정 · 한 번도 제한되지 않은 계정은 안 남는다.
- */
-create function retention.keep_store_restriction_of_leaver()
+create or replace function retention.keep_payments_of_leaver()
 returns trigger
 language plpgsql
 security definer
 set search_path = ''
 as $$
-declare
-  last public.store_purchase_restriction;
-  mail text := nullif(lower(btrim(coalesce(old.email, ''))), '');
-  logins text[];
 begin
-  select * into last
-  from public.store_purchase_restriction r
-  where r.user_id = old.id
-  order by r.at desc, r.id desc
-  limit 1;
+  perform public.settle_reading_credit_uses(old.id);
 
-  if not found or last.action <> 'restrict' then
-    return old;
-  end if;
-
-  logins := retention.login_identities_of(old.id);
-  if mail is null and cardinality(logins) = 0 then
-    return old;
-  end if;
-
-  insert into retention.store_purchase_restriction (email, identities, reason, restricted_by, restricted_at, voids)
-  values (
-    mail, logins, last.reason, last.actor_user_id, last.at,
+  insert into retention.reading_payment (
+    order_id, user_id, provider, provider_order_id, provider_payment_id, bundle_credits, amount, currency,
+    status, refunded_amount, ordered_at, approved_at, last_refunded_at, bundle, refunds, events, keep_until)
+  select
+    o.id, o.user_id, o.provider, o.provider_order_id, o.provider_payment_id, o.bundle_credits, o.amount,
+    o.currency, o.status, o.refunded_amount, o.created_at, o.approved_at, o.last_refunded_at,
+    jsonb_build_object(
+      'credits', b.credits,
+      'price', b.price,
+      'acquired_at', b.acquired_at,
+      'refunded_credits', b.refunded_credits,
+      'taken_by_store', public.reading_bundle_taken_by_store(b.id),
+      'uses', coalesce((
+        select jsonb_agg(jsonb_build_object(
+                 'source', u.source, 'state', u.state, 'reserved_at', u.reserved_at,
+                 'confirmed_at', u.confirmed_at, 'released_at', u.released_at)
+               order by u.id)
+        from public.reading_credit_use u where u.bundle_id = b.id), '[]'::jsonb)),
     coalesce((
       select jsonb_agg(jsonb_build_object(
-               'voided_at', v.voided_at, 'voided_reason', v.voided_reason, 'voided_source', v.voided_source,
-               'refund_type', v.refund_type, 'credits_revoked', v.credits_revoked, 'credits_kept', v.credits_kept)
-             order by v.voided_at, v.id)
-      from public.store_purchase_void v where v.user_id = old.id), '[]'::jsonb));
+               'amount', f.amount, 'credits', f.credits, 'reason', f.reason,
+               'provider_refund_id', f.provider_refund_id, 'refunded_at', f.refunded_at)
+             order by f.refunded_at, f.id)
+      from public.reading_order_refund f where f.order_id = o.id), '[]'::jsonb),
+    coalesce((
+      select jsonb_agg(jsonb_build_object(
+               'provider_event_id', e.provider_event_id, 'kind', e.kind, 'amount', e.amount,
+               'received_at', e.received_at, 'outcome', e.outcome)
+             order by e.id)
+      from public.payment_event e where e.order_id = o.id), '[]'::jsonb),
+    greatest(o.approved_at, coalesce(o.last_refunded_at, o.approved_at)) + retention.payment_period()
+  from public.reading_order o
+  join public.reading_bundle b on b.order_id = o.id
+  where o.user_id = old.id and o.approved_at is not null
+  on conflict (order_id) do nothing;
+
+  -- 승인된 적 없는 주문은 거절 알림이 있을 때만, 최소 칸으로 (20261018090000)
+  insert into retention.refused_reading_payment (
+    order_id, user_id, provider, provider_order_id, amount, ordered_at, events, keep_until)
+  select
+    o.id, o.user_id, o.provider, o.provider_order_id, o.amount, o.created_at,
+    r.events, r.last_at + retention.payment_period()
+  from public.reading_order o
+  cross join lateral (
+    select jsonb_agg(jsonb_build_object(
+             'provider_event_id', e.provider_event_id, 'kind', e.kind, 'amount', e.amount,
+             'received_at', e.received_at, 'outcome', e.outcome)
+           order by e.id) as events,
+           max(e.received_at) as last_at
+    from public.payment_event e where e.order_id = o.id and e.outcome = 'refused'
+  ) r
+  where o.user_id = old.id and o.approved_at is null and r.events is not null
+  on conflict (order_id) do nothing;
+
+  -- 닫힌 확보는 걷는다 — 진행 중인 것은 남아 확정 · 준비 취소를 기다린다 (20261211090000)
+  delete from public.reading_refund_hold h where h.user_id = old.id and h.state <> 'held';
 
   return old;
 end;
 $$;
 
-create trigger store_restriction_outlives_the_leaver
-before delete on auth.users
-for each row execute function retention.keep_store_restriction_of_leaver();
+-- ── 5. 프로모션 코드 구매는 0원 ──────────────────────────────────────────────
+
+/*
+ * Play 프로모션 코드로 받은 구매(`purchaseType = 1`)는 돈이 오가지 않았다 — 주문 · 묶음은 남기되 금액은 0 이다(운영자 결정 2026-11-06).
+ * 그래서 매출에 안 들고, 스토어가 무효로 해도 돌려줄 돈이 없으며(장부의 환불 줄이 서지 않는다), 운영자 환불의 금액 셈도 0 이다.
+ * 주문 · 묶음 · 무효 이력의 「금액 > 0」 검사를 스토어 구매에 한해 0 까지 연다 — 웹의 주문 문은 가격표에서 금액을 지어 0 이 서지 않는다.
+ */
+alter table public.reading_order drop constraint reading_order_amount_check;
+alter table public.reading_order add constraint reading_order_amount_check
+  check (amount > 0 or (amount = 0 and provider = 'google_play'));
+
+alter table public.reading_bundle drop constraint reading_bundle_price_check;
+alter table public.reading_bundle add constraint reading_bundle_price_check check (price >= 0);
+
+alter table public.store_purchase_void drop constraint store_purchase_void_paid_amount_check;
+alter table public.store_purchase_void add constraint store_purchase_void_paid_amount_check check (paid_amount >= 0);
+
+/** 프로모션 코드 구매(Google `purchaseType = 1`) — 금액 0 으로 섰다. 매출을 셀 때 뺀다 */
+alter table public.store_purchase add column is_promo boolean not null default false;
 
 /**
- * 가입을 처음 마친 순간 살아 있는 기록과 로그인이 겹치면 구매 제한을 다시 건다 — 이력 줄은 앞 제한의 갈래 · 운영자 그대로이고 메모가
- * 이어진 것을 말한다. 운영자에게 한 줄 알린다(`store-restriction-carried:`). 기록이 여럿 겹치면 가장 최근 처분의 것이다. 정지가 함께
- * 이어져도(`carry_sanction_on_signup`) 따로 선다.
+ * 서버가 Google 에서 확인한 구매를 지급한다 — 몸은 `20270113090000` 그대로이고 인자 하나(`p_is_promo`, 기본 거짓)를 더했다: 참이면 주문
+ * 금액이 0 이다. 옛 서명(일곱)을 지우고 새 서명이 기본값으로 옛 호출을 받는다 — 같은 이름의 둘이 나란히 서면 일곱 인자 호출이 어느 쪽인지
+ * 모호해진다. DB 가 먼저 오르면 옛 앱의 호출은 그대로 선다(규약 넷의 2).
  */
-create function public.carry_store_restriction_on_signup()
-returns trigger
+drop function public.grant_store_purchase(uuid, text, text, text, text, timestamptz, boolean);
+
+create function public.grant_store_purchase(
+  p_user_id uuid, p_store text, p_product_id text, p_purchase_token text,
+  p_store_order_id text, p_purchased_at timestamptz, p_is_test boolean, p_is_promo boolean default false)
+returns table (outcome text, order_id uuid, credits integer)
 language plpgsql
+volatile
 security definer
 set search_path = ''
 as $$
+#variable_conflict use_column
 declare
-  mail text;
-  logins text[];
-  kept retention.store_purchase_restriction;
+  bought integer := public.store_product_credits(p_product_id);
+  price integer;
+  earlier public.store_purchase;
+  refusal text;
+  payment_id text;
   made uuid;
+  approved record;
 begin
-  select nullif(lower(btrim(coalesce(u.email, ''))), '') into mail from auth.users u where u.id = new.id;
-  logins := retention.login_identities_of(new.id);
-
-  select * into kept
-  from retention.store_purchase_restriction s
-  where s.retained_at > now() - retention.store_restriction_period()
-    and ((mail is not null and s.email = mail) or s.identities && logins)
-  order by s.retained_at desc, s.id desc
-  limit 1;
-
-  if not found or public.store_purchase_is_restricted(new.id) then
-    return new;
+  if p_store is distinct from 'google_play' then
+    raise exception 'store purchase: google_play only' using errcode = '22023';
   end if;
 
-  insert into public.store_purchase_restriction (user_id, action, reason, note, actor_user_id, request_id)
-  values (new.id, 'restrict', kept.reason, '탈퇴 전 계정의 구매 제한을 이었다 — 보관 기록 ' || kept.id::text || ' (ADR 0230)',
-          kept.restricted_by, gen_random_uuid())
+  if bought is null then
+    raise exception 'store purchase: no such product' using errcode = '22023';
+  end if;
+
+  if p_purchase_token is null or length(p_purchase_token) not between 1 and 4096 then
+    raise exception 'store purchase: a purchase token is required' using errcode = '22023';
+  end if;
+
+  -- 같은 토큰이 나란히 와도 하나만 — 둘째는 첫째의 커밋 뒤에 찾는다
+  perform pg_advisory_xact_lock(hashtext('store:purchase:' || p_purchase_token));
+
+  select * into earlier from public.store_purchase s where s.purchase_token = p_purchase_token;
+  if found then
+    if earlier.user_id is distinct from p_user_id or earlier.product_id is distinct from p_product_id then
+      raise exception 'store purchase: the token belongs to another purchase' using errcode = '22023';
+    end if;
+    outcome := 'replayed';
+    order_id := earlier.order_id;
+    credits := bought;
+    return next;
+    return;
+  end if;
+
+  refusal := public.store_purchase_refusal(p_user_id);
+  if refusal <> 'open' then
+    outcome := refusal;
+    credits := bought;
+    return next;
+    return;
+  end if;
+
+  payment_id := public.store_payment_id(p_store_order_id, p_purchase_token);
+  price := case when coalesce(p_is_promo, false) then 0 else public.reading_bundle_price(bought) end;
+
+  insert into public.reading_order (
+    id, user_id, bundle_credits, amount, provider, provider_order_id, idempotency_key)
+  select g.id, p_user_id, bought, price, p_store,
+         'rdo_' || replace(g.id::text, '-', ''), 'gp_' || md5(p_purchase_token)
+  from (select gen_random_uuid() as id) g
   returning id into made;
 
-  perform public.notify_ops(
-    'store-restriction-carried:' || made::text,
-    format('구매가 제한된 채 떠난 로그인이 다시 가입해 구매 제한을 이었다 — 계정 %s · 보관 기록 %s', new.id, kept.id));
+  select * into approved
+  from public.approve_reading_order(made, payment_id, price, payment_id) a;
 
-  return new;
+  if approved.outcome is distinct from 'applied' then
+    raise exception 'store purchase: the order was not approved' using errcode = '55000';
+  end if;
+
+  insert into public.store_purchase (
+    user_id, store, product_id, purchase_token, store_order_id, order_id, is_test, is_promo, purchased_at)
+  values (
+    p_user_id, p_store, p_product_id, p_purchase_token, nullif(btrim(p_store_order_id), ''), made,
+    coalesce(p_is_test, false), coalesce(p_is_promo, false), coalesce(p_purchased_at, now()));
+
+  outcome := 'granted';
+  order_id := made;
+  credits := bought;
+  return next;
 end;
 $$;
 
-revoke execute on function public.carry_store_restriction_on_signup() from public, anon, authenticated, service_role;
+revoke execute on function public.grant_store_purchase(uuid, text, text, text, text, timestamptz, boolean, boolean)
+  from public, anon, authenticated;
+grant execute on function public.grant_store_purchase(uuid, text, text, text, text, timestamptz, boolean, boolean)
+  to service_role;
 
-create trigger store_restriction_is_carried_on_signup
-after update of signed_up_at on public.app_user
-for each row when (old.signed_up_at is null and new.signed_up_at is not null)
-execute function public.carry_store_restriction_on_signup();
-
-/** 처분일부터 1년이 지난 기록을 지운다. 여러 번 돌아도 안전하다. 실패는 `cron-watch` 가 알린다. @returns 이번에 지운 수 */
-create function retention.purge_expired_store_restrictions()
-returns integer
-language plpgsql
-set search_path = ''
-as $$
-declare
-  gone integer;
-begin
-  with purged as (
-    delete from retention.store_purchase_restriction s
-    where s.retained_at <= now() - retention.store_restriction_period()
-    returning 1
-  )
-  select count(*)::integer into gone from purged;
-  return gone;
-end;
-$$;
-
-revoke execute on all functions in schema retention from public, anon, authenticated, service_role;
-
-/** 매일 05:13 UTC — 다른 매일 잡(04:37 · 04:43 · 04:53 · 05:17 · 05:41 · 06:29 · 06:57)과 안 겹친다 */
-select cron.unschedule('store-restriction-retention-purge')
-where exists (select 1 from cron.job where jobname = 'store-restriction-retention-purge');
-
-select cron.schedule('store-restriction-retention-purge', '13 5 * * *', 'select retention.purge_expired_store_restrictions()');
-
--- ── 5. 시험 구매는 매출이 아니다 ───────────────────────────────────────────────
+-- ── 6. 시험 · 프로모션 구매는 매출이 아니다 ───────────────────────────────────────────────
 
 /**
  * 오늘과 이번 주의 수 — 몸은 `20261210090000` 그대로이고 주문 · 매출 · 환불에서 라이선스 테스터의 시험 구매(`store_purchase.is_test` —
- * 돈이 오가지 않았다, ADR 0230)를 뺀다. 프로모션 코드 구매는 정하지 않아 그대로 센다.
+ * 돈이 오가지 않았다, ADR 0230)와 프로모션 코드 구매(`is_promo` — 0원, 운영자 결정 2026-11-06)를 뺀다.
  */
 create or replace function public.operator_today_figures()
 returns table (
@@ -688,11 +722,11 @@ begin
   ),
   paid as (
     select o.id, o.amount, o.approved_at from public.reading_order o
-    where not exists (select 1 from public.store_purchase s where s.order_id = o.id and s.is_test)
+    where not exists (select 1 from public.store_purchase s where s.order_id = o.id and (s.is_test or s.is_promo))
   ),
   given_back as (
     select f.amount, f.refunded_at from public.reading_order_refund f
-    where not exists (select 1 from public.store_purchase s where s.order_id = f.order_id and s.is_test)
+    where not exists (select 1 from public.store_purchase s where s.order_id = f.order_id and (s.is_test or s.is_promo))
   )
   select
     s.period,

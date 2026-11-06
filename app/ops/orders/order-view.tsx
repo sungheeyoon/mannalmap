@@ -41,6 +41,7 @@ export function Asked({ line, hold }: { line: OrderLine; hold: RefundHold | null
             <dt className="text-muted">회차</dt>
             <dd className="tabular-nums">
               산 {bundle.credits} · 쓴 {bundle.used} · 예약 중 {bundle.reserved} · 걷은 {bundle.refundedCredits}
+              {bundle.takenByStore > 0 && ` · 스토어 환불로 걷힘 ${bundle.takenByStore}`}
               {hold !== null && ` · 환불 진행 중 ${hold.credits}`} · 안 쓴 <strong>{bundle.unused}</strong>
             </dd>
             <dt className="text-muted">유효기간</dt>
