@@ -1730,15 +1730,19 @@ describe('공개 저장소의 개인정보 (docs/agents/delegation/working.md, A
   /** 사람을 가리키는 꼴 — 아파트 동 · 호, 휴대폰 번호, 주민등록번호 */
   const PERSONAL = [/\d+동 \d+호/, /\b01[016789]-?\d{3,4}-?\d{4}\b/, /\b\d{6}-[1-4]\d{6}\b/];
   const TEXT = /\.(ts|tsx|mts|mjs|js|json|md|sql|ya?ml|toml|txt|css|sh)$/;
+  /** 법이 공개하라는 사업장 주소를 적는 자리 하나 — 동 · 호 꼴만 여기서 비킨다(ADR 0232) */
+  const BUSINESS_CONSTANTS = 'src/lib/brand/business.ts';
 
-  it('추적하는 글자 파일 어디에도 집 주소 · 휴대폰 · 주민번호 꼴이 없다', () => {
+  it('추적하는 글자 파일 어디에도 집 주소 · 휴대폰 · 주민번호 꼴이 없다 — 사업장 주소는 사업자 정보 상수 하나에만 선다', () => {
     const tracked = execFileSync('git', ['ls-files'], { cwd: ROOT, encoding: 'utf8' })
       .split('\n')
       .filter((rel) => TEXT.test(rel) && rel !== 'package-lock.json' && existsSync(join(ROOT, rel)));
     expect(tracked.length).toBeGreaterThan(500);
     const hits = tracked.flatMap((rel) => {
       const text = readFileSync(join(ROOT, rel), 'utf8');
-      return PERSONAL.filter((pattern) => pattern.test(text)).map((pattern) => `${rel} ${pattern}`);
+      return PERSONAL.filter((pattern) => pattern.test(text) && !(rel === BUSINESS_CONSTANTS && pattern === PERSONAL[0])).map(
+        (pattern) => `${rel} ${pattern}`,
+      );
     });
     expect(hits).toEqual([]);
   });

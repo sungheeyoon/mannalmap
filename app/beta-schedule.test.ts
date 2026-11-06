@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
+import { PRIVACY_OPERATOR } from '@/src/lib/brand/business';
+
 import { currentSchedule } from './beta-schedule';
 
 /**
@@ -52,11 +54,11 @@ describe('지금 일정 읽기', () => {
     expect(await currentSchedule(answering(null).client)).toEqual(NONE);
   });
 
-  it('운영자 칸이 하나라도 비면 없는 것으로 답한다', async () => {
-    expect(await currentSchedule(answering([{ ...ROW, operator_contact: null }]).client)).toEqual(NONE);
-    expect(await currentSchedule(answering([{ ...ROW, operator_officer: '' }]).client)).toEqual(NONE);
-    // 마이그레이션보다 앱이 먼저 배포되면 칸 자체가 없다
-    expect(await currentSchedule(answering([{ ...ROW, operator_name: undefined }]).client)).toEqual(NONE);
+  it('줄의 운영자 칸은 안 읽는다 — 비어도 처리방침의 운영자는 상수다 (ADR 0232)', async () => {
+    for (const row of [{ ...ROW, operator_contact: null }, { ...ROW, operator_officer: '' }, { ...ROW, operator_name: undefined }]) {
+      const answer = await currentSchedule(answering([row]).client);
+      expect(answer.ok && answer.value?.operator).toEqual(PRIVACY_OPERATOR);
+    }
   });
 
   it('다 찬 줄은 도메인의 말로 옮겨 낸다 — 첫 줄만 본다', async () => {
@@ -67,7 +69,7 @@ describe('지금 일정 읽기', () => {
       value: {
         scheduleId: 7,
         dates: { endsOn: '2026-10-31', purgeBy: '2026-11-30', purgeWithinDays: 30 },
-        operator: { name: '만세력 운영자', officer: '홍길동', contact: 'ops@example.com' },
+        operator: PRIVACY_OPERATOR,
       },
     });
     expect(called).toEqual(['current_beta_schedule']);

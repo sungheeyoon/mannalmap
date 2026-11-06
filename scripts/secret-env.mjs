@@ -123,19 +123,6 @@ export const CONFIG_ENV = [
    * 알려진 푸시 서비스 넷만 받는다(`app/me/push/hosts.ts`, ADR 0156)
    */
   'WEB_PUSH_EXTRA_HOSTS',
-  /**
-   * 사업자 정보 여덟 — 바닥글 · 이용약관 · 환불정책이 든다(`app/business-info.ts`, ADR 0172). 비밀이 아니지만 **저장소에 값을
-   * 적지 않는다**(저장소가 공개, ADR 0151). 비면 그 줄이 화면에 안 선다. 이메일은 환경변수가 아니라 `SUPPORT_EMAIL` 상수다
-   * (`src/lib/brand`, ADR 0172 덧 2026-10-16)
-   */
-  'BUSINESS_TRADE_NAME',
-  'BUSINESS_REPRESENTATIVE',
-  'BUSINESS_REGISTRATION_NUMBER',
-  'BUSINESS_ADDRESS',
-  'BUSINESS_PHONE',
-  'BUSINESS_MAIL_ORDER_NUMBER',
-  'BUSINESS_HOSTING_PROVIDER',
-  'BUSINESS_DISCLOSURE_URL',
   /** 애플 로그인 키의 팀 ID · 키 ID — 비밀이 아니다(클라이언트 비밀의 머리 · 몸에 그대로 실린다, ADR 0219) */
   'APPLE_TEAM_ID',
   'APPLE_SIGN_IN_KEY_ID',
