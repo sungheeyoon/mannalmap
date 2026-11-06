@@ -39,7 +39,7 @@ export const ABOUT_LEAD = [
 /** 서비스 소개 「시작하는 차례」 */
 export const ABOUT_STEPS: readonly { title: string; body: string }[] = [
   { title: '사주 보기', body: '첫 화면에서 생년월일시를 넣고 내 사주를 봐요.' },
-  { title: '로그인 · 가입', body: '구글로 로그인하고, 닉네임으로 가입해요.' },
+  { title: '로그인 · 가입', body: '카카오 · 구글로 로그인하고, 닉네임으로 가입해요.' },
   { title: '내 사주 저장', body: '내 출생 정보를 저장하면 홈에 내 사주 카드가 서요.' },
   { title: '풀이 받기', body: '사주풀이 · 궁합 · 인연 중 마음 가는 것부터 시작해요.' },
 ];
@@ -135,12 +135,12 @@ export const HELP_GROUPS: readonly {
   },
 ];
 
-/** 앱의 인연 입구 — 시작 전에 남은 단계를 미리 말한다(ADR 0213). 차례가 곧 걷는 차례이고, 끝낸 단계는 뺀다. 대장 public-03 「확인 전」 */
+/** 앱의 인연 입구 — 시작 전에 남은 단계를 미리 말한다(ADR 0213). 차례가 곧 걷는 차례이고, 끝낸 단계는 뺀다. 대장 public-03 · public-12 「확인 전」 */
 export const MATCHING_START_HEAD = '인연을 시작하려면 이 단계가 필요해요';
 export const MATCHING_START_LEAVE = '그만둬도 사주는 그대로 볼 수 있어요.';
 export type MatchingStartStep = 'sign-in' | 'signup' | 'self';
 const MATCHING_START_STEPS: readonly { key: MatchingStartStep; text: string }[] = [
-  { key: 'sign-in', text: '구글로 로그인' },
+  { key: 'sign-in', text: '카카오 · 구글 로그인' },
   { key: 'signup', text: '닉네임으로 가입' },
   { key: 'self', text: '내 사주 저장' },
 ];

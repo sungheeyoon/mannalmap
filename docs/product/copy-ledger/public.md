@@ -235,7 +235,7 @@ BoxHero 「support@boxhero.io로」(붙임)다 — 크몽 「help@kmong.com 으�
 | 구글 단추 `src/lib/account/sign-in-buttons.ts` 의 `GOOGLE_SIGN_IN`(웹 `app/auth/sign-in-button.tsx` · 앱 `mobile/src/auth/google-button.tsx`) | 구글로 로그인 | 구글 로그인 | 운영자 지시 2026-11-05(PR #1010) — 카카오 가이드의 완성형 「카카오 로그인」과 같은 꼴. 구글 안내는 로마자 「Google」을 권한다([브랜딩 안내](https://developers.google.com/identity/branding-guidelines)) |
 | 구글 단추, 누른 뒤 `GOOGLE_SIGN_IN_GOING` | 구글로 이동하는 중… | 구글로 이동하는 중…(그대로) | 이 대장의 전 글자 |
 
-안내 · 가이드의 글(「구글로 로그인하고, …」 · 인연 단계 「구글로 로그인」, `src/lib/brand/guide.ts`)은 단추 글자가 아니라 그대로 두었다.
+안내 · 가이드의 글(「구글로 로그인하고, …」 · 인연 단계 「구글로 로그인」, `src/lib/brand/guide.ts`)은 단추 글자가 아니라 그대로 두었다 — 카카오를 더한 글자는 public-12.
 
 ## public-11 확인 전 — 카카오계정 이메일 · 같은 이메일의 계정 합침과 `notice-v16` (ADR 0224 추기 · G-138)
 
@@ -250,3 +250,12 @@ BoxHero 「support@boxhero.io로」(붙임)다 — 크몽 「help@kmong.com 으�
 | 선택 동의 설명 `OPTIONAL_CONSENTS` contact | 서비스 개선 인터뷰 요청을 이메일로 보내드립니다. 이메일이 없는 카카오 계정에는 보내지 않습니다. 광고성 메시지는 보내지 않습니다. | 서비스 개선 인터뷰 요청을 이메일로 보내드립니다. 광고성 메시지는 보내지 않습니다. | [Google Workspace 「설문조사 및 사용자 환경 연구에 참여하도록 허용」](https://knowledge.workspace.google.com/admin/generative-ai/workspace-with-gemini/let-users-participate-in-surveys-and-user-experience-studies?hl=ko) 2026-11-05 — public-09 에서 가운데 문장만 뺐다 |
 | 가입 고지 첫 줄 `SIGNUP_NOTICE_USE` | 로그인 정보(이메일 또는 카카오 회원번호)와 닉네임, … | 로그인 정보(이메일, 카카오 회원번호)와 닉네임, … | 실사례 없음 — 「또는」만 뺐다 |
 
+## public-12 확인 전 — 안내의 로그인 줄에 카카오를 더한다 (ADR 0224 · 0228)
+
+카카오 로그인이 운영 웹에 섰는데(2026-11-05, 앱은 새 빌드부터) 서비스 소개 · 앱 인연 단계가 구글만 말했다. `docs/legal/kakao-login-notice-draft.md` 「고지가 아닌 안내」가
+켜는 날 함께 고칠 줄로 적어 둔 두 줄이다. 웹과 앱이 같은 글자를 읽는다. 단추 차례(카카오 · 구글)와 단추 이름(public-07 · public-10)을 따랐다. 애플은 iOS 때 더한다(G-134).
+
+| 자리 | 이전 | 넣은 글자 | 출처 |
+| --- | --- | --- | --- |
+| 서비스 소개 단계 「로그인 · 가입」 `ABOUT_STEPS`(`src/lib/brand/guide.ts`, 웹 `/about` · 앱 소개) | 구글로 로그인하고, 닉네임으로 가입해요. | 카카오 · 구글로 로그인하고, 닉네임으로 가입해요. | 실사례 없음 — 가장 가까운 사례는 [LG전자 고객지원 공지](https://www.lge.co.kr/support/notice-NTC20220407151001)의 「카카오, 구글 등의 계정」 간편 로그인 안내(확인 2026-11-06). 이 대장의 전 글자에 「카카오 ·」만 더했다 |
+| 앱 인연 입구의 단계 `MATCHING_START_STEPS` sign-in(`src/lib/brand/guide.ts`) | 구글로 로그인 | 카카오 · 구글 로그인 | 실사례 없음 — 단추 이름 「카카오 로그인」(public-07, [카카오 로그인 디자인 가이드](https://developers.kakao.com/docs/ko/kakaologin/design-guide)) · 「구글 로그인」(public-10)을 한 줄에 묶었다(확인 2026-11-06) |
