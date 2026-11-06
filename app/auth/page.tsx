@@ -36,6 +36,7 @@ export default async function SignInPage({
 
   return (
     <NoticeScreen
+      narrow
       title={forCompat ? '궁합풀이는 로그인하면 볼 수 있어요' : forReading ? '내 사주풀이로 이어갈까요?' : `${SERVICE_NAME} 시작하기`}
       description={
         /*
@@ -53,7 +54,8 @@ export default async function SignInPage({
       actions={
         /*
           카카오 → 구글(운영자 결정 2026-11-05, ADR 0228). 카카오는 키가 있을 때만 선다(ADR 0224) — 없으면 구글 하나다.
-          두 단추는 같은 너비로 한 열에 서고, 카드 너비를 채우되 360px 에서 멈춘다(운영자 결정 2026-11-06, ADR 0228 추기)
+          두 단추는 같은 너비로 한 열에 서서 카드 글줄을 끝에서 끝까지 채운다. 데스크톱은 카드가 좁은 한 열이다(`narrow`, 숨고의 꼴).
+          360px 천장은 안전 한계일 뿐 글줄(352)보다 넓어 닿지 않는다(운영자 결정 2026-11-06, ADR 0228 추기)
         */
         <div className="flex w-full flex-col items-stretch gap-2" style={{ maxWidth: SIGN_IN_BUTTON.maxWidth }}>
           {kakaoSignInReady() && <KakaoSignInButton returnTo={returnTo} />}
