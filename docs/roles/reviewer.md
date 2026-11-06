@@ -1,6 +1,6 @@
 # 역할 — 검토 · 감사 (읽기만)
 
-조율자가 두 번째 의견을 모을 때 띄우는 역할이다. 관점 하나(아래 열셋 가운데)를 받고, 고치지 않고 보고한다.
+조율자가 두 번째 의견을 모을 때 띄우는 역할이다. 관점 하나(아래 열넷 가운데)를 받고, 고치지 않고 보고한다.
 
 ## 먼저 읽는 것
 
@@ -9,13 +9,14 @@
   - 코드 규칙 — `CODING_STANDARDS.md` 의 차례에서 [그 주제 파일](../agents/code-rules/)
   - 아키텍트 — `docs/architecture.md`
   - 시험 — `docs/agents/test-map.md` 의 차례에서 [그 주제 파일](../agents/test-map/) · ADR 0079(부재 단언은 반증할 수 있어야 한다)
-  - 보안 — `docs/ops/runbook/security.md` 「보안 점검」 · `docs/ops/runbook/access.md` 「개인정보는 화면으로만」 · `app/ops/denial.ts`(운영자 문의 거절을 적는 갈래) · ADR 0191 · ADR 0209(운영자 로그인 · 2단계 인증)
+  - 보안 — `docs/ops/runbook/security.md` 「보안 점검」 · `docs/ops/runbook/access.md` 「개인정보는 화면으로만」 · `app/ops/denial.ts`(운영자 문의 거절을 적는 갈래) · ADR 0191 · ADR 0209(운영자 로그인 · 2단계 인증) · 결제 정합은 ADR 0230 · `docs/ops/runbook/credits.md` 「Google Play 결제 — 확인 · 한 번 지급 · 소비, 스토어 환불의 회수」 · ADR 0184 · ADR 0192
   - DB — `docs/ops/runbook/deploy.md` 「규약 넷 — 앱과 DB 는 따로 간다」 · ADR 0084(모양을 잠근다)
   - 프런트 — `docs/agents/code-rules/screen-copy.md` 「화면 문구」 · `docs/product/copy-ledger.md`(규칙 · 여러 화면 · 무리 색인) · ADR 0109(디자인 체계) · 본 화면의 [PRD 무리 파일](../product/prd/screens/)과 [문구 무리 파일](../product/copy-ledger/)
   - 문서 — `docs/prd.md` 의 차례에서 [그 영역 파일](../product/prd/) · `docs/product/gaps.md`
   - SRE — `docs/ops/runbook.md` 의 차례에서 [그 작업 파일](../ops/runbook/)
   - 문서 규칙 · 프로세스 — `docs/start.md` 「원본 — 무엇이 무엇을 답하나」 · `docs/agents/delegation.md` 의 차례에서 [그 주제 파일](../agents/delegation/) · `docs/agents/domain.md` 「Writing an ADR」
   - CI · 워크플로 — `docs/agents/test-map/ci.md` 「CI」 · `docs/agents/test-map/what-to-run.md` · `.github/workflows/` — 차선 판정 코드는 `ci.md` 가 가리킨다
+  - 모바일(Expo) — `mobile/AGENTS.md` · `docs/ops/runbook/mobile-release.md` · ADR 0211 · ADR 0230 · ADR 0233
   - 세션 잔재 — `docs/agents/delegation/coordinator.md` 「라운드 끝 정리」 · `docs/agents/delegation/local-env.md` 「로컬 환경의 함정」
   - UI 집중화(디자인 체계) — ADR 0109 · `docs/adr/README.md` 「디자인 체계 · 화면 문구」 · `docs/architecture.md` 「그 밖의 자리」 · `app/ui/`
   - 남은 일 흔적 · 죽은 코드 — `docs/agents/delegation/working.md` 「일하는 법」(죽은 코드는 셋으로 가른다) · `docs/product/gaps.md` — knip 은 설치돼 있지 않다(`package.json` 에 없다). `npx knip` 으로 받아 돌리면 설정(진입점)이 없어 오탐이 많다 — 나온 이름은 grep 으로 다시 잰다

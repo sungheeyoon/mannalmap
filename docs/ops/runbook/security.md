@@ -29,7 +29,7 @@ macOS 키체인에 둔 것, 문서에 적지 않는다). **로컬 스택의 `--l
 | INFO `rls_enabled_no_policy` | 26 | 26 → 29(ADR 0105 의 `audit.operator_access` · `audit.operator_access_export` · `signup_pause`, 운영에서 잼) | **남긴다 — 의도다**(아래) |
 
 잠금은 pgTAP `44_advisor_lints`(invoker 까지 search_path · 닫은 셋) 와 `33_function_shape`(anon 에 열린 문은
-둘 — `current_beta_schedule()` · `shared_reading(text)`).
+넷 — `current_beta_schedule()` · `match_is_open()` · `match_talk_open()` · `shared_reading(text)`, 원본은 그 시험의 집합 — 2026-11-06 에 쟀다).
 
 **남긴 것과 까닭.**
 

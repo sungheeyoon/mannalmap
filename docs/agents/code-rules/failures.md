@@ -35,13 +35,19 @@
 (`hour: null` · `unresolved` · `candidate`), 고칠 수 없는 것은 **예외**로(`InvalidSajuInputError`).
 `docs/context/chart.md` 「입력」 항목이 그 경계다.
 
-**`console`** — 앱(`src/` · `app/`)에 `console.log` 는 없다. `console.error` 는 답을 안 바꾸고 **기록에만**
-남기는 자리뿐이고, 2026-10-22 에 잰 값으로 줄 마흔여덟 · 파일 스물다섯이다(`grep -rn 'console\.error' app src`, 시험 파일 제외).
-갈래는 다섯이다 — ① 못 옮긴 DB 오류의 원문(`app/db-error.ts` 한 곳). ② 답에 안 싣는 거절 까닭: webhook 의
-서명 거절(G-23 ⑧)과 결제 알림을 반영하지 않은 까닭(서명 · 금액 거절 · 닫힌 주문, G-23 ⑥). ③ 운영자 거절 기록을
-못 적은 것과 ④ 접속기록 반출 실패(ADR 0105). ⑤ **뒤에서 받치는 쓰기를 못 한 것** — 복구기 · 만료가 닫을 일감을
-못 닫음(응답 뒤 `after` 에서 풀이를 못 떠나보낸 것 포함), 오행 요약 · 발견 참여 갱신 실패, webhook 처리 표시, 동의 당시 명식이 없는 옛 Match, 활동을 못 적음(`app/auth/signed-in.ts`, ADR 0118). ⑤ 는 결과를 버리는
-쓰기의 대신이다(`docs/agents/code-rules/escapes.md` 의 탈출구 표). 새 자리는 이 다섯 중 하나여야 한다. 찍어 보는 자리는 `scripts/` 와, 사람이 읽으려고
+**`console`** — 앱(`src/` · `app/`)에 `console.log` · `console.info` 는 없다. `console.error` 는 답을 안 바꾸고 **기록에만**
+남기는 자리뿐이고, 2026-11-06 에 잰 값으로 줄 일흔여덟 · 파일 마흔둘이다(`grep -rn 'console\.error' app src --include=*.ts --include=*.tsx`, 시험 파일 제외 —
+2026-10-22 에는 마흔여덟 · 스물다섯). 갈래는 일곱이다 — ① 못 옮긴 DB 오류의 원문(`app/db-error.ts` 한 곳), 그리고 장부 문이 코드만 남기는 DB 실패(`app/api/store/google-play/ledger.ts`).
+② 답에 안 싣는 거절 까닭 — webhook 의 서명 거절(G-23 ⑧). ③ 운영자 거절 기록을 못 적은 것(`app/ops/denial.ts`) · 환불 확보를 못 푼 까닭(`app/ops/orders`). ④ 크론 · 반출의 실패 —
+접속기록 반출(ADR 0105) · 사진 쓸기 · 닫힌 방 파기 · 스토어 무효 대조 · 풀이 크론. ⑤ **뒤에서 받치는 쓰기를 못 한 것** — 복구기 · 만료가 닫을 일감을
+못 닫음(응답 뒤 `after` 에서 풀이를 못 떠나보낸 것 포함), 오행 요약 · 발견 참여 갱신 실패, webhook 처리 표시, 활동을 못 적음(`app/auth/signed-in.ts` · `app/api/mobile/session.ts`, ADR 0118),
+로그인 전 사주 문단의 귀속 · 닫기. ⑥ **설정이 비어 문을 닫은 것** — 열쇠 없음 · `not configured` · `misconfigured` · 키가 없다(카카오 · 애플 · Play · 사진 저장소 · 로그인 전 문단의 비밀).
+⑦ **밖의 서비스가 거절하거나 닿지 않은 것** — 카카오 토큰 · 연결 끊기, 애플 연결 끊기, Google Play API(소비 · 거절한 구매의 환불), 사진 저장소(S3), 상태 점검(`app/api/health`),
+세션 봉투(`src/lib/account/sealed-session.ts`). ⑤ 는 결과를 버리는 쓰기의 대신이다(`docs/agents/code-rules/escapes.md` 의 탈출구 표). 새 자리는 이 일곱 중 하나여야 한다.
+PortOne 결제 알림을 반영하지 않은 까닭(옛 ②)은 그 문과 함께 걷었다(2026-11-05).
+**`console.warn`** 은 실패가 아니라 **지나간 일의 기록**이다 — 줄 여덟 · 파일 넷(같은 날, 같은 grep): 크론이 지운 · 적은 수(`chat-purge deleted` · `store-voided`)와
+Play 통지 · 구매 문이 받지 않거나 넘긴 까닭(`play notification: refused` · `unreadable` · `ignored` · `voided` · `purchase`, `store purchase: account marker differs`).
+런북은 이 글자로 로그를 찾는다(`docs/ops/runbook/credits.md` 「통지 · 크론이 이상하면」). 찍어 보는 자리는 `scripts/` 와, 사람이 읽으려고
 돌리는 `*.live.test.ts` 다.
 
 **화면이 서버보다 먼저 서는 누름**(낙관적 갱신 — 덱의 지나치기, ADR 0115 「2026-10-08 덧」)은 실패하면 누르기 전 상태로 돌아가야 한다.
