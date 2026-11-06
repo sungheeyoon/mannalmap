@@ -38,4 +38,4 @@ CI 가 왜 그 차선을 돌았나는 추측하지 말고 `plan` 로그의 `reas
 
 - **코드가 용어집과 다른 말을 쓰는 자리**는 `docs/context/code-names.md` §10 「어긋난 이름」이 든다 — 고칠 것은 2026-09-23 에 다 고쳤고(G-43),
   「그대로 둔다」로 정한 넷(`metaphor` · 후보 목록의 RPC 이름 · 사유값 `unreadable-revision` · 탈퇴 대기)이 까닭과 함께 남았다. 그 표의 이름이 코드에 아직 있는지는 시험이 잰다(ADR 0088).
-- `if (error) return null` 하나, `!` 열둘, `as unknown as` 일곱, — `docs/agents/code-rules/escapes.md` 의 탈출구 표(결과를 버리는 DB 쓰기는 2026-09-26 에 일곱을 다 기록으로 옮겨 0 이다). 목록은 시험에 있다.
+- `if (error) return null` 하나, `!` 열둘, `as unknown as` 다섯(2026-11-06 에 쟀다), — `docs/agents/code-rules/escapes.md` 의 탈출구 표(결과를 버리는 DB 쓰기는 2026-09-26 에 일곱을 다 기록으로 옮겨 0 이다). 목록은 시험에 있다.
