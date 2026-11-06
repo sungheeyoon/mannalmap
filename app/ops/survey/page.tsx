@@ -30,7 +30,7 @@ import { secondFactorGate } from '../second-factor';
 
 export const metadata = {
   title: '설문 요약',
-  description: '풀이마다 받은 답을 판본별로 봅니다.',
+  description: '풀이마다 받은 답을 버전별로 봅니다.',
 };
 
 /**
@@ -86,7 +86,7 @@ export default async function OperatorSurveyPage() {
         <>
           <Head
             title="풀이 설문"
-            note="풀이를 읽은 그 자리에서 남긴 답입니다. 답이 그 글을 만든 시도에 매여 있어 판본과 모델이 옆에 함께 보입니다."
+            note="풀이를 읽은 그 자리에서 남긴 답입니다. 답이 그 글을 만든 시도에 매여 있어 프롬프트 버전과 모델이 옆에 함께 보입니다."
           />
           <Overview counts={survey.overview} />
           {survey.overview.answers === 0 ? (
@@ -195,9 +195,9 @@ function Versions({ rows }: { rows: readonly VersionRow[] }) {
   return (
     <section className={`${CARD} flex flex-col gap-4`}>
       <div>
-        <h2 className="text-base font-bold">판본별</h2>
+        <h2 className="text-base font-bold">버전별</h2>
         <p className="mt-1 text-sm text-secondary">
-          답은 그 글을 만든 시도에 매여 있어 판본을 바꾼 뒤의 답과 그 전의 답이 섞이지
+          답은 그 글을 만든 시도에 매여 있어 버전을 바꾼 뒤의 답과 그 전의 답이 섞이지
           않습니다.
         </p>
       </div>
@@ -206,7 +206,7 @@ function Versions({ rows }: { rows: readonly VersionRow[] }) {
         <table className="w-full min-w-[42rem] border-collapse text-sm">
           <thead>
             <tr className="border-b border-border text-left text-xs font-semibold text-muted">
-              <th className="py-2 pr-3 font-semibold">판본</th>
+              <th className="py-2 pr-3 font-semibold">버전</th>
               <th className="py-2 pr-3 font-semibold">모델</th>
               <th className="py-2 pr-3 font-semibold">종류</th>
               <th className="py-2 pr-3 text-right font-semibold">답</th>
@@ -221,7 +221,7 @@ function Versions({ rows }: { rows: readonly VersionRow[] }) {
                 key={`${row.promptVersion}:${row.model}:${row.kind}`}
                 className="border-b border-border last:border-0"
               >
-                <td className="py-2.5 pr-3 font-semibold">{row.promptVersion ?? '판본 없음'}</td>
+                <td className="py-2.5 pr-3 font-semibold">{row.promptVersion ?? '버전 없음'}</td>
                 <td className="py-2.5 pr-3 text-secondary">{row.model ?? '모델 없음'}</td>
                 <td className="py-2.5 pr-3 text-secondary">{KIND_LABEL[row.kind] ?? row.kind}</td>
                 <td className="py-2.5 pr-3 text-right font-semibold tabular-nums">{row.answers}</td>
@@ -283,7 +283,7 @@ function Tags({ rows }: { rows: readonly TagRow[] }) {
       <div className="flex flex-col gap-5">
         {versions.map((version) => (
           <div key={version ?? 'none'} className="flex flex-col gap-2">
-            <p className="text-xs font-semibold text-muted">{version ?? '판본 없음'}</p>
+            <p className="text-xs font-semibold text-muted">{version ?? '버전 없음'}</p>
             {rows
               .filter((row) => row.promptVersion === version)
               .map((row) => (
@@ -336,7 +336,7 @@ function Comments({ rows }: { rows: readonly CommentRow[] }) {
               <span className="font-semibold text-secondary">
                 {KIND_LABEL[row.kind] ?? row.kind}
               </span>
-              <span>{row.promptVersion ?? '판본 없음'}</span>
+              <span>{row.promptVersion ?? '버전 없음'}</span>
               <span aria-hidden="true">·</span>
               <span className="tabular-nums">
                 도움 {row.usefulness} · 체감 {row.perceivedFit} ·{' '}

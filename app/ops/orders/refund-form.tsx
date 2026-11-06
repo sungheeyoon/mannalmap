@@ -126,7 +126,7 @@ export function PrepareForm({
     <form onSubmit={open} className="flex flex-col gap-4">
       <div className={ROW}>
         <label htmlFor={`${ids}-take`} className={LABEL}>
-          걷을 회차
+          환불 수량
         </label>
         <select
           id={`${ids}-take`}
@@ -161,17 +161,17 @@ export function PrepareForm({
       </div>
 
       <div className="rounded-card bg-surface-soft p-4">
-        <p className="text-xs text-muted">돌려줄 금액</p>
+        <p className="text-xs text-muted">환불 금액</p>
         <p className="mt-1 text-2xl font-bold tabular-nums tracking-[-0.02em]">{won(amount)}</p>
         <p className="mt-1 text-xs tabular-nums text-secondary">
           {won(paid)} × {refundedCredits + take} ÷ {credits}
           {penalty > 0 && (penalizedNow ? ` − 환불수수료 ${won(penalty)}` : ` − 앞서 공제한 환불수수료 ${won(penalty)}`)}
-          {refundedAmount > 0 && ` − 이미 돌려준 ${won(refundedAmount)}`}
+          {refundedAmount > 0 && ` − 환불 완료 ${won(refundedAmount)}`}
         </p>
       </div>
 
       <p className="text-sm text-secondary">
-        준비하면 이 회차가 잠겨 이용자가 쓰지 못합니다. 그다음 결제한 곳의 콘솔에서 취소합니다.
+        준비하면 환불 수량만큼 풀이권이 잠겨 이용자가 쓰지 못합니다. 그다음 결제한 곳의 콘솔에서 취소합니다.
       </p>
 
       {failure !== null && !confirming && <FailureLine>{failure}</FailureLine>}
@@ -196,14 +196,14 @@ export function PrepareForm({
         >
           <dl className={FACTS}>
             <Target orderNumber={orderNumber} owner={owner} />
-            <dt className="text-muted">회차 · 금액</dt>
+            <dt className="text-muted">수량 · 금액</dt>
             <dd className="tabular-nums">
               {plan.request.credits}장 · {won(plan.request.expectedAmount)}
             </dd>
             <dt className="text-muted">사유</dt>
             <dd>{refundReasonLabel(plan.request.reason)}</dd>
           </dl>
-          <p>이 회차가 잠겨 이용자가 쓰지 못합니다. 그다음 결제한 곳의 콘솔에서 이 금액을 취소합니다.</p>
+          <p>환불 수량만큼 풀이권이 잠겨 이용자가 쓰지 못합니다. 그다음 결제한 곳의 콘솔에서 이 금액을 취소합니다.</p>
         </ConfirmDialog>
       )}
     </form>
@@ -263,7 +263,7 @@ export function HoldPanel({ hold, orderId }: { readonly hold: RefundHold; readon
   const facts = (
     <dl className={FACTS}>
       <Target orderNumber={hold.orderNumber} owner={hold.owner} />
-      <dt className="text-muted">회차 · 금액</dt>
+      <dt className="text-muted">수량 · 금액</dt>
       <dd className="tabular-nums">
         {hold.credits}장 · {won(hold.amount)}
       </dd>
@@ -286,7 +286,7 @@ export function HoldPanel({ hold, orderId }: { readonly hold: RefundHold; readon
           <dd className="tabular-nums">{won(hold.paidAmount)}</dd>
           <dt className="text-muted">취소 후 잔액</dt>
           <dd className="tabular-nums">{won(hold.remainingAmount)}</dd>
-          <dt className="text-muted">걷는 회차</dt>
+          <dt className="text-muted">환불 수량</dt>
           <dd className="tabular-nums">{hold.credits}장</dd>
           <dt className="text-muted">사유</dt>
           <dd>{refundReasonLabel(hold.reason)}</dd>
@@ -354,7 +354,7 @@ export function HoldPanel({ hold, orderId }: { readonly hold: RefundHold; readon
           <dt className="text-muted">취소 번호</dt>
           <dd className="break-all font-mono text-xs leading-5">{frozenRefundId}</dd>
         </dl>
-        <p>콘솔에서 이 금액을 취소한 뒤에만 누릅니다. 장부에 환불이 적히고 회차가 걷힙니다.</p>
+        <p>콘솔에서 이 금액을 취소한 뒤에만 누릅니다. 장부에 환불이 기록되고 환불 수량만큼 풀이권이 회수됩니다.</p>
       </ConfirmDialog>
 
       <ConfirmDialog
@@ -368,7 +368,7 @@ export function HoldPanel({ hold, orderId }: { readonly hold: RefundHold; readon
         failure={dialog === 'release' ? failure : null}
       >
         {facts}
-        <p>콘솔에서 아직 취소하지 않았을 때만 누릅니다. 잠근 회차가 이용자에게 돌아갑니다.</p>
+        <p>콘솔에서 아직 취소하지 않았을 때만 누릅니다. 잠근 풀이권이 이용자에게 반환됩니다.</p>
       </ConfirmDialog>
     </form>
   );

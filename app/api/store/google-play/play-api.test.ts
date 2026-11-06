@@ -2,7 +2,7 @@ import { generateKeyPairSync, verify } from 'node:crypto';
 
 import { describe, expect, it, vi } from 'vitest';
 
-import { assertionOf, playApi, playServiceAccountFromEnv } from './play-api';
+import { assertionOf, playApi, playServiceAccountFromEnv, refundTypeOf, voidedOf } from './play-api';
 
 /** Play Developer API — 가짜 `fetch` 로 토큰 받기 · 문 넷의 주소와 답 옮기기를 잰다 */
 const { privateKey, publicKey } = generateKeyPairSync('rsa', { modulusLength: 2048 });
@@ -82,5 +82,16 @@ describe('문 넷', () => {
     const answer = await playApi(account, { fetch: send as unknown as typeof fetch }).listVoided(0);
     expect(answer.ok && answer.value.map((one) => one.purchaseToken)).toEqual(['a', 'b']);
     expect(String(send.mock.calls[2]?.[0])).toContain('token=n');
+  });
+});
+
+describe('무효 한 줄', () => {
+  it('수량 일부 환불의 수(voidedQuantity)를 읽고, 있으면 일부(2) 없으면 전액(1)이다', () => {
+    const full = voidedOf({ purchaseToken: 'a', orderId: 'GPA.a', voidedTimeMillis: '1', voidedSource: 0, voidedReason: 1 });
+    const part = voidedOf({ purchaseToken: 'b', voidedQuantity: 1 });
+    expect(full?.voidedQuantity).toBeNull();
+    expect(part?.voidedQuantity).toBe(1);
+    expect(full && refundTypeOf(full)).toBe(1);
+    expect(part && refundTypeOf(part)).toBe(2);
   });
 });

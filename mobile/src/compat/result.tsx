@@ -22,7 +22,7 @@ import {
   type Stem,
 } from '@saju';
 import { TOPICS_THE_TABLE_HOLDS, TOPIC_TABLE_FOOTNOTE, said, warningsToShow } from '@saju-view';
-import { CLAIM_STRENGTH_LEGEND } from '@saju-view/notes';
+import { BETWEEN_RELATIONS_NOTE, CLAIM_STRENGTH_LEGEND, DAY_TO_DAY_NOTE } from '@saju-view/notes';
 
 import { Fold, Rich, Ruled, ScrollHint, T } from '@/chart/parts';
 import { UtteranceList } from '@/chart/relations';
@@ -220,7 +220,7 @@ function Between({ compat, names }: { compat: Compatibility; names: Record<Compa
         <T tone="secondary">{relations.length === 0 ? '걸리는 것이 없습니다' : `${relations.length}개`}</T>
         {dayToDay.length > 0 && (
           <View style={styles.dayToDay}>
-            <T size="xs" tone="muted">일지끼리 — 부부 자리로 읽는 자리입니다</T>
+            <T size="xs" tone="muted">{DAY_TO_DAY_NOTE}</T>
             {dayToDay.map((relation) => (
               <T key={relation.id}>
                 <T glyph>{relation.participants.map((one) => one.char).join(' ')}</T> {relation.ko}
@@ -270,7 +270,7 @@ function Between({ compat, names }: { compat: Compatibility; names: Record<Compa
           </Ruled>
         )}
         <Ruled>
-          <T size="xs" tone="muted">각자의 원국 안에서 닫힌 관계는 빠져 있습니다 — 그건 각자의 명식이 이미 보여준 사실입니다. 두 사람의 기둥 사이에는 거리라는 것이 없어 몇 칸 떨어졌는지는 적지 않습니다. 성립 여부만 적고 좋고 나쁨은 판정하지 않습니다.</T>
+          <T size="xs" tone="muted">{BETWEEN_RELATIONS_NOTE}</T>
         </Ruled>
       </View>
 

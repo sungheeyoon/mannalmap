@@ -75,7 +75,21 @@ export type PlayVoided = {
   readonly voidedTimeMillis: number | null;
   readonly voidedSource: number | null;
   readonly voidedReason: number | null;
+  /**
+   * 수량 일부 환불로 무효가 된 수 — 「The voided quantity as the result of a quantity-based partial refund」. 목록은
+   * `includeQuantityBasedPartialRefund` 를 켜야 그런 줄을 준다(기본 꺼짐 — 우리는 켜지 않는다). 그래도 오면 일부 환불이다
+   * (https://developers.google.com/android-publisher/api-ref/rest/v3/purchases.voidedpurchases, 2026-11-06)
+   */
+  readonly voidedQuantity: number | null;
 };
+
+/**
+ * 목록의 무효 한 줄이 통지의 `refundType` 으로 무엇인가 — 목록에는 그 칸이 없다. `voidedQuantity` 가 있으면 수량 일부 환불(2),
+ * 없으면 전액(1). 통지 길과 같은 갈래로 DB 문(`void_store_purchase`)이 일부 환불을 걷지 않는다(ADR 0230 의 3).
+ */
+export function refundTypeOf(voided: PlayVoided): 1 | 2 {
+  return voided.voidedQuantity !== null && voided.voidedQuantity > 0 ? 2 : 1;
+}
 
 export type PlayAnswer<T> = { readonly ok: true; readonly value: T } | { readonly ok: false; readonly status: number | null };
 
@@ -112,6 +126,7 @@ export function voidedOf(body: Record<string, unknown>): PlayVoided | null {
     voidedTimeMillis: numberOf(body.voidedTimeMillis),
     voidedSource: numberOf(body.voidedSource),
     voidedReason: numberOf(body.voidedReason),
+    voidedQuantity: numberOf(body.voidedQuantity),
   };
 }
 

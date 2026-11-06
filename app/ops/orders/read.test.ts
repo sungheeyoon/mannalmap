@@ -26,22 +26,31 @@ const row = (over: Partial<RpcRow<'operator_reading_refund_basis'>> = {}): RpcRo
   owner_nickname: '하늘',
   owner_ref: '2658fc70',
   penalized_credits: 0,
+  taken_by_store: 0,
   ...over,
 });
 
 describe('주문 화면의 문', () => {
-  it('결제된 주문은 묶음 · 유효기간(산 날부터 5년)과 함께 옮긴다', () => {
+  it('결제된 주문은 묶음과 함께 옮기고 만료일은 싣지 않는다 — 산 풀이권은 무기한(ADR 0212)', () => {
     const line = orderLineOf(row());
     expect(line.orderNumber).toBe('rdo_0f1e2d3c4b5a49688776655443322110');
     expect(line.bundle).toEqual({
       credits: 20,
       refundedCredits: 0,
+      takenByStore: 0,
       penalizedCredits: 0,
       used: 3,
       reserved: 0,
       unused: 17,
-      validUntil: '2031-10-16',
     });
+    expect(line.bundle).not.toHaveProperty('validUntil');
+  });
+
+  it('다른 결제의 스토어 환불로 걷힌 회차는 따로 옮기고 금액 셈에 안 든다 — 20장 중 3장 쓰고 5장 걷혔으면 안 쓴 12장의 몫', () => {
+    const line = orderLineOf(row({ taken_by_store: 5, unused: 12 }));
+    expect(line.bundle?.takenByStore).toBe(5);
+    expect(line.bundle?.refundedCredits).toBe(0);
+    expect(refundForAllUnused(line, false)).toBe(Math.floor((59000 * 12) / 20));
   });
 
   it('결제 전 주문은 묶음이 없다 — 비는 칸을 null 로 받는다', () => {

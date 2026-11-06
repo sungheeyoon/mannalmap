@@ -9,7 +9,7 @@
 
 export const REFUND_REASONS = [
   { value: 'withdrawal', label: '청약철회(기간 내)' },
-  { value: 'unused', label: '안 쓴 몫 환불(청약철회 기간 경과 후 · 10% 공제)' },
+  { value: 'unused', label: '미사용분 환불(청약철회 기간 경과 후 · 10% 공제)' },
   { value: 'duplicate', label: '중복 결제' },
   { value: 'failure', label: '미제공(장애)' },
   { value: 'other', label: '그 밖(심사 결제 · 정지 · 서비스 종료 등)' },
@@ -21,7 +21,7 @@ export type RefundReason = (typeof REFUND_REASONS)[number]['value'];
  * 스토어가 돌려준 결제(`store`, ADR 0230) — 고르는 사유가 아니라 장부만 적는다. 금액은 Google 이 돌려준 돈이고, 걷은 것은 그때 안 쓴 풀이권이다.
  * 우리 셈의 몫과의 차이는 `store_purchase_void` 가 든다(런북 credits.md 「Google Play 결제」).
  */
-const STORE_REFUND_LABEL = '스토어 환불(Google 이 돌려줌 · 안 쓴 풀이권 회수)';
+const STORE_REFUND_LABEL = '스토어 환불(Google 환불 · 잔여 풀이권 회수)';
 
 export const refundReasonLabel = (value: string): string =>
   value === 'store' ? STORE_REFUND_LABEL : (REFUND_REASONS.find((reason) => reason.value === value)?.label ?? value);

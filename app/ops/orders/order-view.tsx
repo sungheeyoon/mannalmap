@@ -34,17 +34,16 @@ export function Asked({ line, hold }: { line: OrderLine; hold: RefundHold | null
         <dd className="tabular-nums">{line.approvedAt === null ? '결제 전' : seoulTime(line.approvedAt)}</dd>
         <dt className="text-muted">거래 번호</dt>
         <dd className="break-all font-mono text-xs leading-5">{line.paymentId ?? '없음'}</dd>
-        <dt className="text-muted">돌려준 금액</dt>
+        <dt className="text-muted">환불 금액</dt>
         <dd className="tabular-nums">{won(line.refundedAmount)}</dd>
         {bundle !== null && (
           <>
-            <dt className="text-muted">회차</dt>
+            <dt className="text-muted">풀이권</dt>
             <dd className="tabular-nums">
-              산 {bundle.credits} · 쓴 {bundle.used} · 예약 중 {bundle.reserved} · 걷은 {bundle.refundedCredits}
-              {hold !== null && ` · 환불 진행 중 ${hold.credits}`} · 안 쓴 <strong>{bundle.unused}</strong>
+              구매 {bundle.credits} · 사용 {bundle.used} · 사용 중 {bundle.reserved} · 환불 {bundle.refundedCredits}
+              {bundle.takenByStore > 0 && ` · 스토어 환불 회수 ${bundle.takenByStore}`}
+              {hold !== null && ` · 환불 진행 중 ${hold.credits}`} · 잔여 <strong>{bundle.unused}</strong>
             </dd>
-            <dt className="text-muted">유효기간</dt>
-            <dd className="tabular-nums">{bundle.validUntil}까지</dd>
           </>
         )}
       </dl>
@@ -58,17 +57,17 @@ export function Asked({ line, hold }: { line: OrderLine; hold: RefundHold | null
       ) : bundle.unused === 0 ? (
         <p className="text-sm text-secondary">
           {bundle.reserved > 0
-            ? '예약 중인 회차는 풀린 뒤에 걷을 수 있습니다.'
-            : '걷을 수 있는 회차가 없습니다.'}
+            ? '사용 중인 풀이권은 반환된 뒤에 환불할 수 있습니다.'
+            : '환불할 수 있는 잔여 풀이권이 없습니다.'}
         </p>
       ) : line.status !== 'approved' && line.status !== 'partially_refunded' ? (
         <p className="text-sm text-secondary">환불할 수 없는 상태의 주문입니다.</p>
       ) : (
         <div className="flex flex-col gap-4 border-t border-border pt-5">
           <p className="text-sm text-secondary">
-            안 쓴 {bundle.unused}장을 다 걷으면 {won(refundForAllUnused(line, false))}, 청약철회 기간 경과 후(10% 공제)면{' '}
+            잔여 {bundle.unused}장을 모두 환불하면 {won(refundForAllUnused(line, false))}, 청약철회 기간 경과 후(10% 공제)면{' '}
             {won(refundForAllUnused(line, true))}입니다.
-            {bundle.reserved > 0 && ` 예약 중 ${bundle.reserved}장은 풀린 뒤에 걷을 수 있습니다.`}
+            {bundle.reserved > 0 && ` 사용 중 ${bundle.reserved}장은 반환된 뒤에 환불할 수 있습니다.`}
           </p>
           <PrepareForm
             orderId={line.orderId}
@@ -125,7 +124,7 @@ export function Others({ lines }: { lines: readonly OrderLine[] }) {
               </span>
               <span className="text-xs text-muted">{orderStatusLabel(line.status)}</span>
               {line.bundle !== null && (
-                <span className="text-xs tabular-nums text-muted">안 쓴 {line.bundle.unused}장</span>
+                <span className="text-xs tabular-nums text-muted">잔여 {line.bundle.unused}장</span>
               )}
             </p>
             <Link
