@@ -275,13 +275,33 @@ describe('앱에 있는 화면은 앱에서 연다', () => {
   });
 });
 
-describe('앱은 풀이권을 팔지 않는다', () => {
-  it('풀이권 부족 창에 구매 단추가 없고 판매가 닫힌 웹의 글자가 선다', () => {
+/**
+ * **앱은 Android 에서만 Google Play 로 판다**(ADR 0230). 풀이권 부족 창은 Android 에서 판매가 열린 꼴 「풀이권 구매」 · 「닫기」(대장 credits-04)이고,
+ * 「풀이권 구매」는 지금 화면과 그 이름을 싣고 `/me/credits` 로 간다 — 결제 완료 창이 그 화면으로 돌려보낸다. iOS 는 아직 팔지 않아 닫힌 꼴(한 줄과 「확인」)이다.
+ * 판매가 열렸는지를 묻는 웹의 문(`my_reading_sale_is_open`)은 앱이 부르지 않는다 — 앱의 판매는 그 스위치가 아니라 Play 와 서버의 판정(`store_purchase_refusal`)이다.
+ */
+describe('앱은 Android 에서만 Google Play 로 판다 (ADR 0230)', () => {
+  it('판매 여부는 플랫폼 하나가 가른다 — Android 만', () => {
+    expect(read('mobile/src/credits/store.ts')).toMatch(/export const storeAvailable = Platform\.OS === 'android';/);
+  });
+
+  it('풀이권 부족 창 — Android 는 「풀이권 구매」 · 「닫기」로 돌아갈 곳을 싣고 상품 화면에, iOS 는 판매가 닫힌 글자', () => {
     const dialogs = read('mobile/src/reading/dialogs.tsx');
-    expect(dialogs).not.toContain('BUY_CREDITS_LABEL');
-    expect(dialogs).not.toContain('/me/credits');
-    expect(dialogs).toContain('SALE_CLOSED_NOTE');
-    expect(dialogs).toContain('SALE_CLOSED_OK');
+    expect(dialogs).toContain("import { storeAvailable } from '@/credits/store';");
+    expect(dialogs).toContain('confirmLabel={storeAvailable ? BUY_CREDITS_LABEL : SALE_CLOSED_OK}');
+    expect(dialogs).toContain('onConfirm={storeAvailable ? buy : onClose}');
+    expect(dialogs).toContain('cancelLabel={storeAvailable ? CREDITS_DIALOG_CLOSE : null}');
+    expect(dialogs).toContain('{!storeAvailable && <Text style={styles.line}>{SALE_CLOSED_NOTE}</Text>}');
+    expect(dialogs).toMatch(/router\.push\(`\/me\/credits\?back=\$\{back\}&noun=\$\{encodeURIComponent\(noun\)\}`/);
+    /* 판매 여부를 다른 값으로 가르지 않는다 — iOS 에 구매 단추가 생기는 길을 막는다 */
+    expect(dialogs.match(/BUY_CREDITS_LABEL/g)?.length).toBe(2);
+  });
+
+  it('상품 화면의 구매 판은 Android 에서만 선다', () => {
+    expect(read('mobile/src/credits/credits.tsx')).toContain('{storeAvailable && <StoreSection');
+  });
+
+  it('웹의 판매 스위치 문은 앱이 부르지 않는다 · 인연 쪽에는 구매 단추가 없다', () => {
     expect(read('mobile/src/reading/api.ts')).not.toContain('my_reading_sale_is_open');
     expect(read('mobile/src/matching/today.tsx')).not.toContain('BUY_CREDITS_LABEL');
     expect(read('mobile/src/matching/doors.ts')).not.toContain('my_reading_sale_is_open');
