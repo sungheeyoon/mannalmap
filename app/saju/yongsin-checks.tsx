@@ -164,7 +164,7 @@ export function FollowingCandidacyNote({ saju }: { saju: Saju }) {
           {FOLLOWING_PATTERN_STATUS_KO[following.verdict]}
         </span>
         <span className="text-sm text-secondary">
-          자당(비겁·인성) 몫{' '}
+          내 편 기운(비겁·인성) 비율{' '}
           <span className="tabular-nums">{percent(following.selfShare)}</span>
           <span className="text-muted">
             {' '}
