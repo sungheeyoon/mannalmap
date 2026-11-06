@@ -131,7 +131,7 @@ export function grantBlocked(status: string): string | null {
 /** 회수 단추를 잠글 까닭 — 회수할 것이 없으면 한 줄, 있으면 `null` */
 export function revokeBlocked(revocable: number, reserved: number): string | null {
   if (revocable > 0) return null;
-  return reserved > 0 ? `회수할 무상 지급분이 없습니다 — 예약 중 ${reserved}장은 풀린 뒤 회수합니다.` : '회수할 무상 지급분이 없습니다.';
+  return reserved > 0 ? `회수할 무상 지급분이 없습니다 — 사용 중 ${reserved}장은 반환된 뒤 회수합니다.` : '회수할 무상 지급분이 없습니다.';
 }
 
 // ── 이력 ─────────────────────────────────────────────────────────────────────
@@ -243,7 +243,7 @@ export function historyCause(line: HistoryLine): string {
 export function historyAmount(line: HistoryLine): string {
   if (line.kind === 'use') {
     if (line.state === 'released') return '';
-    if (line.state === 'reserved') return '예약 중';
+    if (line.state === 'reserved') return '사용 중';
   }
   if (line.delta === null) return '';
   if (line.kind === 'refund' && line.delta === 0) return '';
