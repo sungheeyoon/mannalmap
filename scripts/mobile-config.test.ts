@@ -5,7 +5,7 @@ import ts from 'typescript';
 import { describe, expect, it } from 'vitest';
 
 /**
- * **앱의 설정 파일이 저장소의 다른 원본과 어긋나지 않는다** — EAS 빌드의 Node 판 · 경로 별칭 · 의존성 범위.
+ * **앱의 설정 파일이 저장소의 다른 원본과 어긋나지 않는다** — EAS 빌드의 Node 판 · 경로 별칭 · 의존성 범위 · 네이티브 SDK 의 저장소.
  *
  * 셋 다 어긋나도 로컬과 CI 가 초록인 자리다. EAS 빌더는 `eas.json` 의 `node` 로 돌고 CI 는 `.nvmrc` 로 돈다(2026-11-02 첫 빌드가
  * 판 차이로 `npm ci` 에서 섰다 — `docs/ops/runbook/mobile-release.md` 「EAS 프로필과 환경값」). `tsconfig.json` 의 겹친 열쇠는 JSON 이
@@ -16,6 +16,12 @@ const read = (file: string) => readFileSync(join(MOBILE, file), 'utf8');
 
 /** 네이티브 코드가 없어 `^` 로 두는 의존성 — 여기 없는 이름에 `^` 를 쓰면 붉다. 네이티브 모듈은 잠금 파일의 판으로 고정한다 */
 const PURE_JS_CARET = ['@supabase/supabase-js', 'astronomy-engine'];
+
+/**
+ * 카카오 SDK(`com.kakao.sdk:v2-*`)는 Maven Central 에 없고 카카오의 저장소에만 있다. `@react-native-kakao/core` 의 config plugin 은 이 저장소를
+ * 더하지 않아 `expo-build-properties` 로 넣는다(그 라이브러리의 Expo 설정 문서). 없으면 Gradle 이 jitpack 에 물어 401 로 선다(2026-11-07 preview 빌드)
+ */
+const KAKAO_MAVEN = 'https://devrepo.kakao.com/nexus/content/groups/public/';
 
 /** JSON 객체 글자의 열쇠를 차례대로 — 겹친 열쇠도 그대로 남는다(`JSON.parse` 는 뒤의 것으로 덮는다) */
 const keysOf = (node: ts.ObjectLiteralExpression) =>
@@ -73,5 +79,15 @@ describe('앱의 설정 파일', () => {
     expect(caret.sort()).toEqual([...PURE_JS_CARET].sort());
     expect(manifest.dependencies['eslint-config-expo']).toBeUndefined();
     expect(manifest.devDependencies['eslint-config-expo']).toBeDefined();
+  });
+
+  it('카카오 SDK 를 부르면 안드로이드 빌드가 카카오 Maven 저장소를 든다 — 키가 없는 빌드도', () => {
+    const manifest = JSON.parse(read('package.json')) as { dependencies: Record<string, string> };
+    expect(Object.keys(manifest.dependencies).some((name) => name.startsWith('@react-native-kakao/'))).toBe(true);
+    const plugins = JSON.parse(read('app.json')).expo.plugins as (string | [string, unknown])[];
+    const buildProperties = plugins.find((plugin) => Array.isArray(plugin) && plugin[0] === 'expo-build-properties') as
+      | [string, { android?: { extraMavenRepos?: string[] } }]
+      | undefined;
+    expect(buildProperties?.[1].android?.extraMavenRepos).toContain(KAKAO_MAVEN);
   });
 });
