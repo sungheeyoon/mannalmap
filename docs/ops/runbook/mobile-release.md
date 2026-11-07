@@ -74,6 +74,10 @@ select public.android_min_version_code(), public.notice_ack_floor();
 **iOS 는 `preview` 를 쓰지 않고 `production` 빌드를 TestFlight 로 낸다.** `preview` 는 Android APK 를 위한 것이다. **Play 에는 APK 를 못 올린다** — AAB 인 `production` 만 간다([Expo](https://docs.expo.dev/submit/android.md)).
 
 **프로필마다 `node` 를 저장소의 `.nvmrc` 와 같게 둔다.** SDK 58 빌더의 기본은 Node 22 · npm 10.9.9 인데([Expo](https://docs.expo.dev/build-reference/infrastructure.md)), 그 npm 은 npm 11 이 쓴 `mobile/package-lock.json` 을 `npm ci` 가 거절한다(`EUSAGE` · `Missing: @emnapi/core`, 2026-11-02 첫 빌드). `.nvmrc` 를 올리면 `eas.json` 도 올린다.
+`eas.json` 에는 npm 판 칸이 없어 빌더의 npm 은 그 Node 에 든 것이다(Node 24.12.0 이면 npm 11.6.2). 그런데 npm 판마다 `npm ci` 의 짝 맞춤이 달라
+같은 잠금을 11.6.2 는 받고 로컬의 npm 11.14.0 · 빌더 기본 10.9.9 는 거절했다(#1043 의 잠금, 2026-11-07 #1062). 그래서 CI `mobile` 차선은 `.nvmrc` 의
+Node 로 `npm ci` 를 돌고, 박은 로컬 판(`verify.yml` 의 `MOBILE_LOCK_NPM`, 지금 npm 11.14.0)으로 `npm ci --dry-run` 을 한 번 더 돈다 — 둘 중 하나라도 거절하면 붉다.
+로컬 npm 을 올리면 그 판도 올린다(`scripts/mobile-config.test.ts` 가 런북의 판과 견준다).
 
 **`mobile/app.json` 의 `web.output` 은 `single` 이다.** `server` 면 출시 빌드의 번들 걸음이 서버까지 내보내다 `ReferenceError: window is not defined` 로 선다(2026-11-02). 개발 빌드와 CI 의 `expo export` 는 이 걸음을 안 지나 못 잡는다 — 출시 번들은 로컬에서 `npx expo export:embed --eager --platform android --dev false` 로 잰다.
 

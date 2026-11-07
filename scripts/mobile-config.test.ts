@@ -55,6 +55,13 @@ describe('앱의 설정 파일', () => {
     );
   });
 
+  it('CI 가 잠금 파일을 재는 박은 로컬 npm 판(MOBILE_LOCK_NPM)을 런북이 든다', () => {
+    const yml = readFileSync(join(MOBILE, '..', '.github', 'workflows', 'verify.yml'), 'utf8');
+    const pinned = /MOBILE_LOCK_NPM: (\d+\.\d+\.\d+)$/m.exec(yml)?.[1];
+    expect(pinned).toBeDefined();
+    expect(readFileSync(join(MOBILE, '..', 'docs', 'ops', 'runbook', 'mobile-release.md'), 'utf8')).toContain(`npm ${pinned}`);
+  });
+
   it('tsconfig.json 에 겹친 열쇠가 없다 — 경로 별칭은 한 번씩', () => {
     expect(duplicateKeysIn(read('tsconfig.json'))).toEqual([]);
     expect(duplicateKeysIn('{ "compilerOptions": { "paths": { "@a": ["x"], "@b": ["y"], "@a": ["x"] } } }')).toEqual(['compilerOptions.paths: @a']);

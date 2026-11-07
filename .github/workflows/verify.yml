@@ -399,6 +399,7 @@ jobs:
           node-version-file: .nvmrc
           cache: npm
           cache-dependency-path: mobile/package-lock.json
+      # `.nvmrc` 의 Node 에 든 npm 이다 — EAS 빌더가 `eas.json` 의 `node` 로 `npm ci` 를 도는 그 판(eas.json 에 npm 판 칸은 없다)
       - run: npm ci
         id: install
       # 함께 쓰는 `src/lib` 의 import 는 위로 올라가며 찾으므로 뿌리에 앱의 패키지를 잇는다 — Metro 의 `nodeModulesPaths` 와 같은 답이다.
@@ -417,6 +418,13 @@ jobs:
         if: ${{ !cancelled() && steps.install.outcome == 'success' }}
         env:
           EXPO_OFFLINE: '1'
+      # 잠금 파일을 쓰는 로컬 npm(`MOBILE_LOCK_NPM`)도 같은 잠금을 받는가. npm 판마다 `npm ci` 의 짝 맞춤 검사가 달라
+      # #1043 의 잠금은 Node 24.12.0 에 든 npm 11.6.2 는 받고 11.14.0 · 10.9.9 는 `EUSAGE Missing: @emnapi/core` 로 거절했다(2026-11-07, #1062).
+      # 맨 끝에 둔다 — 앞에 두면 붉을 때 `if` 없는 `tsc` 가 건너뛰어진다. 판을 박는다 — `npm@11` 이면 새 npm 이 나온 날 아무것도 안 바꾼 PR 이 붉다. 로컬 npm 을 올리면 이 판도 올린다.
+      - run: npx -y "npm@$MOBILE_LOCK_NPM" ci --dry-run --ignore-scripts
+        if: ${{ !cancelled() }}
+        env:
+          MOBILE_LOCK_NPM: 11.14.0
 
   # ---------------------------------------------------------------------------
   # 필수 검사는 **이것 하나** — 건너뛴 차선은 통과, 실패·취소는 실패
