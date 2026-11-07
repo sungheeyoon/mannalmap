@@ -1,8 +1,22 @@
 import { readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
-const DEFINITION = 'function public.notice_ack_floor()';
-const CREATED = /create (?:or replace )?function public\.notice_ack_floor\(\)/g;
+/** 정의 — 대소문자를 가리지 않는다(`pg_dump` 꼴의 `CREATE OR REPLACE FUNCTION` 도 정의다) */
+const CREATED = /create\s+(?:or\s+replace\s+)?function\s+public\.notice_ack_floor\(\)/gi;
+
+/**
+ * 마이그레이션 한 파일의 글에서 **마지막 `notice_ack_floor()` 정의가 돌려주는 판본** — 정의가 없으면 `null`.
+ *
+ * @param {string} source 마이그레이션 글
+ * @returns {string | null} `notice-v18` 꼴
+ */
+export function noticeFloorOf(source) {
+  const created = [...source.matchAll(CREATED)].at(-1);
+  if (created === undefined) return null;
+  const body = source.slice(created.index);
+  const found = /select\s+'(notice-v[1-9]\d*)'::text/i.exec(body.slice(0, body.indexOf('$$;')));
+  return found === null ? null : found[1];
+}
 
 /**
  * **서버의 재확인 기준** — 마지막으로 `public.notice_ack_floor()` 를 정의한 마이그레이션이 돌려주는 판본(ADR 0237).
@@ -18,14 +32,10 @@ export function serverNoticeFloor(root = process.cwd()) {
   const last = readdirSync(dir)
     .filter((name) => name.endsWith('.sql'))
     .sort()
-    .filter((name) => new RegExp(CREATED.source).test(readFileSync(join(dir, name), 'utf8')))
+    .filter((name) => new RegExp(CREATED.source, 'i').test(readFileSync(join(dir, name), 'utf8')))
     .at(-1);
-  if (last === undefined) throw new Error(`${DEFINITION} 를 정의한 마이그레이션이 없다`);
-  const source = readFileSync(join(dir, last), 'utf8');
-  const created = [...source.matchAll(CREATED)].at(-1);
-  if (created === undefined) throw new Error(`${last} 에 ${DEFINITION} 의 정의가 없다`);
-  const body = source.slice(created.index);
-  const found = /select\s+'(notice-v[1-9]\d*)'::text/.exec(body.slice(0, body.indexOf('$$;')));
-  if (found === null) throw new Error(`${last} 의 ${DEFINITION} 에서 판본을 못 읽었다`);
-  return found[1];
+  if (last === undefined) throw new Error('public.notice_ack_floor() 를 정의한 마이그레이션이 없다');
+  const floor = noticeFloorOf(readFileSync(join(dir, last), 'utf8'));
+  if (floor === null) throw new Error(`${last} 의 public.notice_ack_floor() 에서 판본을 못 읽었다`);
+  return floor;
 }

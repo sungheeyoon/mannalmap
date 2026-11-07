@@ -1,4 +1,5 @@
 import * as Application from 'expo-application';
+import * as WebBrowser from 'expo-web-browser';
 import { useEffect, useState } from 'react';
 import { AppState, Linking, Platform } from 'react-native';
 
@@ -6,6 +7,7 @@ import { buildIsBelowFloor } from '@app-shell';
 import { PLAY_PACKAGE_NAME } from '@reading/store-products';
 
 import { supabase } from '@/auth/client';
+import { SITE_URL } from '@/site';
 import { settled } from '@/ui/settled';
 
 /**
@@ -19,32 +21,26 @@ async function readAndroidFloor(): Promise<number | null> {
   return data;
 }
 
-/** 첫 판정이 이만큼 안에 안 오면 막지 않고 연다 — 업데이트 화면은 빈 화면에 머물게 하지 않는다 */
-const FLOOR_DEADLINE_MS = 5_000;
-
-/** 이 빌드가 낮은가 — 안드로이드만 묻는다. 답이 늦거나 못 읽으면 `false` */
+/** 이 빌드가 낮은가 — 안드로이드만 묻는다. 못 읽으면 `false` */
 function askBelowFloor(): Promise<boolean> {
   if (Platform.OS !== 'android') return Promise.resolve(false);
-  let timer: ReturnType<typeof setTimeout> | undefined;
-  const deadline = new Promise<null>((resolve) => {
-    timer = setTimeout(() => resolve(null), FLOOR_DEADLINE_MS);
-  });
-  return settled(Promise.race([readAndroidFloor(), deadline]), 'android_min_version_code', () => null)
-    .then((floor) => buildIsBelowFloor(Application.nativeBuildVersion, floor))
-    .finally(() => clearTimeout(timer));
+  return settled(readAndroidFloor(), 'android_min_version_code', () => null).then((floor) =>
+    buildIsBelowFloor(Application.nativeBuildVersion, floor),
+  );
 }
 
 /**
- * 켤 때와 앞으로 다시 가져올 때 묻는다 — 첫 답 전에는 `checking` 이다. 한 번 낮다고 답하면 그 실행 동안 그대로다(업데이트 말고는 풀 길이 없다).
+ * 켤 때와 앞으로 다시 가져올 때 묻는다. **답을 기다리지 않는다** — 앱은 곧바로 서고, 낮다는 답이 오면 그때 업데이트 화면으로 바뀐다.
+ * 답이 늦거나 안 오면 그대로 열린 채다(못 읽으면 막지 않는다, 운영자 답 2026-11-07). 한 번 낮다고 답하면 그 실행 동안 그대로다.
  */
-export function useBuildFloor(): 'checking' | 'below' | 'fine' {
-  const [state, setState] = useState<'checking' | 'below' | 'fine'>('checking');
+export function useBuildFloor(): 'below' | 'fine' {
+  const [state, setState] = useState<'below' | 'fine'>('fine');
 
   useEffect(() => {
     let live = true;
     const check = () =>
       void settled(askBelowFloor(), 'useBuildFloor', () => false).then((below) => {
-        if (live) setState((now) => (now === 'below' || below ? 'below' : 'fine'));
+        if (live && below) setState('below');
       });
     check();
     const foreground = AppState.addEventListener('change', (next) => {
@@ -57,6 +53,17 @@ export function useBuildFloor(): 'checking' | 'below' | 'fine' {
   }, []);
 
   return state;
+}
+
+/**
+ * 웹의 계정 관리(`/me/settings`) — 업데이트 화면이 앱의 설정을 가리므로, 업데이트하지 않고도 선택 동의 철회와 탈퇴 신청에 닿는 길이다(ADR 0237).
+ * 로그인 전이면 웹이 로그인으로 보내고 마친 뒤 이 자리로 돌려보낸다(`next`, ADR 0128). 웹 주소가 없는 빌드에는 없다.
+ */
+export const webAccountOpen = SITE_URL !== null;
+
+export function openWebAccount(): void {
+  if (SITE_URL === null) return;
+  void WebBrowser.openBrowserAsync(`${SITE_URL}/me/settings`).catch(() => undefined);
 }
 
 /** Play 의 이 앱 자리 — 스토어 앱이 없으면 웹의 같은 자리 */

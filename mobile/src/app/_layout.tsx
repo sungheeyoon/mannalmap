@@ -19,8 +19,8 @@ export default function RootLayout() {
 
   const floor = useBuildFloor();
 
-  /* 글꼴을 못 받아도 화면은 선다 — 기기 서체로 그려진다. 옛 빌드인지의 첫 답(늦어도 5초)도 기다린다 — 막을 화면이 먼저 서지 않게 */
-  if ((!loaded && failed === null) || floor === 'checking') return null;
+  /* 글꼴을 못 받아도 화면은 선다 — 기기 서체로 그려진다. 옛 빌드인지는 기다리지 않는다 — 낮다는 답이 오면 그때 바뀐다(ADR 0237) */
+  if (!loaded && failed === null) return null;
 
   /* 받아 주는 가장 옛 빌드보다 낮으면 이 화면뿐이다 — 스택 · 알림 열기도 세우지 않는다(ADR 0237) */
   if (floor === 'below') {

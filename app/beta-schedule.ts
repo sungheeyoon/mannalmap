@@ -1,7 +1,7 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 
 import { PRIVACY_OPERATOR } from '@/src/lib/brand/business';
-import { scheduleOfDbRow, type BetaSchedule } from '@/src/lib/consent';
+import { NOTICE_UNREAD, scheduleOfDbRow, type BetaSchedule } from '@/src/lib/consent';
 import type { Database } from '@/src/lib/db';
 
 import { read, unread, type SkippableRead } from './db-error';
@@ -34,5 +34,8 @@ export async function currentSchedule(
   const { data, error } = await client.rpc('current_beta_schedule');
   if (error) return unread(error, 'current_beta_schedule');
 
-  return read(scheduleOfDbRow(data, PRIVACY_OPERATOR));
+  const schedule = scheduleOfDbRow(data, PRIVACY_OPERATOR);
+  /* 재확인 기준 칸이 없다 — 웹이 마이그레이션(`20270116090000`)보다 먼저 섰다. 없는 일정이 아니라 못 읽은 일정이다(ADR 0078 · 0237) */
+  if (schedule === NOTICE_UNREAD) return unread({ message: 'current_beta_schedule.notice_ack_floor missing' }, 'current_beta_schedule');
+  return read(schedule);
 }

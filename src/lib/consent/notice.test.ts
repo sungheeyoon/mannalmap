@@ -10,9 +10,10 @@ import {
   noticeAckHolds,
   noticeFor,
 } from './notice';
+import { NOTICE_UNREAD } from './gate';
 import { scheduleOf } from './schedule';
 
-/** 서버의 재확인 기준(`public.notice_ack_floor()`, ADR 0237) — 마이그레이션의 값과 같은지는 `app/notice-floor.test.ts` 가 잰다 */
+/** 서버의 재확인 기준(`public.notice_ack_floor()`, ADR 0237) — 마이그레이션의 값과 같은지는 `scripts/notice-floor.test.ts` 가 잰다 */
 const FLOOR = 'notice-v18';
 
 /**
@@ -42,11 +43,11 @@ describe('일정 한 줄을 안내로', () => {
     });
   });
 
-  /** 기준을 못 읽으면 번들의 값으로 갈음하지 않는다 — 웹 · 앱이 마이그레이션보다 먼저 섰을 때다(ADR 0237) */
-  it('재확인 기준이 없거나 읽을 수 없으면 안내가 안 선다', () => {
-    expect(scheduleOf({ ...full, ackFloor: undefined })).toBeNull();
-    expect(scheduleOf({ ...full, ackFloor: null })).toBeNull();
-    expect(scheduleOf({ ...full, ackFloor: 'notice-for-tests' })).toBeNull();
+  /** 기준을 못 읽으면 번들의 값으로 갈음하지 않고, 없는 일정(`null`)으로도 내지 않는다 — 못 읽은 일정이다(ADR 0078 · 0237) */
+  it('재확인 기준이 없거나 읽을 수 없으면 못 읽은 일정이다', () => {
+    expect(scheduleOf({ ...full, ackFloor: undefined })).toBe(NOTICE_UNREAD);
+    expect(scheduleOf({ ...full, ackFloor: null })).toBe(NOTICE_UNREAD);
+    expect(scheduleOf({ ...full, ackFloor: 'notice-for-tests' })).toBe(NOTICE_UNREAD);
   });
 
   /**

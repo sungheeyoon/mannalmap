@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { NOTICE_VERSION, noticeEdition } from './notice';
+import { scheduleOfDbRow } from './schedule';
 import {
   NOTICE_UNREAD,
   SERVICE_ENDED_ON,
@@ -252,5 +253,23 @@ describe('종료', () => {
   it('끝났으면 가입 안 한 사람도 종료 화면으로 간다', () => {
     expect(gateFor('/me', { ...ready, noticeVersion: 'notice-v1' }, notice, after, ended)).toBe('/closed');
     expect(gateFor('/me', fresh, notice, after, ended)).toBe('/closed');
+  });
+});
+
+/**
+ * **마이그레이션(`20270116090000`)보다 웹 · 앱이 먼저 서면**(ADR 0078 · 0237) — 일정 줄에 재확인 기준 칸이 없다. 그 답을 관문까지 옮겨
+ * 본다: 가입을 마친 사람은 지나가고, 가입 전인 사람은 가입 화면(거기서 못 읽은 까닭을 본다)으로 간다. 「일정 없음」으로 읽으면 회원 전원이 막힌다.
+ */
+describe('기준 칸이 없는 서버', () => {
+  const operator = { name: '운영자', officer: '담당', contact: 'ops@example.com' };
+  const before = scheduleOfDbRow([{ schedule_id: 7, ends_on: '2026-10-31', purge_by: '2026-11-30', purge_within_days: 30 }], operator);
+
+  it('일정은 못 읽은 것이 된다', () => {
+    expect(before).toBe(NOTICE_UNREAD);
+  });
+
+  it('가입한 사람은 지나가고 가입 전인 사람만 가입 화면으로 간다', () => {
+    expect(gateFor('/me', ready, before as typeof NOTICE_UNREAD, during)).toBeNull();
+    expect(gateFor('/me', fresh, before as typeof NOTICE_UNREAD, during)).toBe('/signup');
   });
 });

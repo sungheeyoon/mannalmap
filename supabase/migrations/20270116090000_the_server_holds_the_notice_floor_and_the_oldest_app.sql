@@ -8,15 +8,17 @@
 --    읽는다 — 관문이 이미 부르는 문이라 요청마다 왕복이 늘지 않는다. 올리는 것은 마이그레이션이다(내용이 바뀐 개정만, ADR 0095).
 --    **좁히기다** — 새 판본을 보내는 웹 · 앱이 먼저 서고 그 뒤에 올린다(ADR 0071). 먼저 올리면 옛 판본을 보내는 가입이 다 선다.
 -- 2. **`complete_signup` 이 기준보다 낮은 판본을 거절한다.** 읽을 수 없는 판본도 같다. 문장은 일정 줄이 바뀌었을 때와 같다 — 웹의 낡은
---    탭은 새로고침하면 새 판본을 보내고, 옛 앱은 최소 버전(3)이 업데이트 화면으로 먼저 막는다. 정지 · 가입 닫기의 거절이 먼저다.
+--    탭은 새로고침하면 새 판본을 보낸다. 옛 앱은 최소 빌드(4)를 그 앱보다 높이 올린 뒤에야 업데이트 화면으로 먼저 막힌다 — 지금 값 1 은
+--    아무도 안 막고, 이 판정이 없는 옛 빌드(2026-11-02 내부 빌드)는 이 거절만 받는다. 정지 · 가입 닫기의 거절이 먼저다.
 -- 3. **`current_beta_schedule()` 은 칸이 하나 는다** — 반환 모양이 바뀌어 지우고 다시 짓는다. 옛 앱 · 옛 웹은 모르는 칸을 읽지 않는다
---    (넓히기). 권한은 그대로 `anon` · `authenticated` 다.
+--    (넓히기). 권한은 그대로 `anon` · `authenticated` 다. **이 마이그레이션은 웹 배포보다 먼저 `db push` 한다** — 칸이 없으면 새 웹 · 앱은
+--    일정을 못 읽은 것으로 친다(가입한 사람은 지나가고 가입 전인 사람은 가입 화면에서 못 읽은 까닭을 본다, ADR 0078).
 -- 4. **`public.android_min_version_code()` — 받아 주는 가장 옛 안드로이드 빌드(versionCode).** 앱이 켜질 때 로그인 없이 읽고, 제 빌드가
 --    그보다 낮으면 업데이트 화면만 세운다. 지금 값 1 은 아무도 막지 않는다. 올리는 때는 `docs/ops/runbook/mobile-release.md`
 --    「옛 앱을 막는다」 — 재확인 기준을 올릴 때 · 앱에 든 글이나 판정이 틀렸을 때 · 앱이 부르는 문의 계약을 깰 때.
 --
 -- 재는 자리는 `supabase/tests/20_notice.test.sql` 「재확인 기준」 · `33_function_shape` · `74_authenticated_doors`,
--- 값이 웹 · 앱의 판본과 어긋나지 않는지는 `src/lib/consent/notice-floor.test.ts` 가 이 파일을 읽어 견준다.
+-- 값이 웹 · 앱의 판본과 어긋나지 않는지는 `scripts/notice-floor.test.ts` 가 이 파일을 읽어 견준다.
 
 /** 판본의 차례 — `notice-v18` → 18. 모양이 다르면 `null`(웹 · 앱의 `noticeEdition` 과 같은 규칙) */
 create or replace function public.notice_edition(p_version text)
@@ -37,7 +39,7 @@ $$;
 create or replace function public.notice_ack_floor()
 returns text
 language sql
-immutable
+stable
 set search_path = ''
 as $$
   select 'notice-v18'::text;
@@ -50,7 +52,7 @@ $$;
 create or replace function public.android_min_version_code()
 returns integer
 language sql
-immutable
+stable
 set search_path = ''
 as $$
   select 1;
