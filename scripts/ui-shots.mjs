@@ -306,9 +306,11 @@ const PLAN = [
       },
     ],
   },
+  /* 「지나친 인연」 두 줄이 한 사람을 지나친다 — 폭마다 새로 지어야 다음 폭의 오늘의 인연이 같은 장 수로 선다(#1036) */
   {
     state: 'board',
     group: '인연',
+    fresh: true,
     shots: [
       { id: 'me-board', at: '/me', name: '내 계정 (홈) — 오늘의 인연이 섰을 때' },
       { id: 'matching-board', at: '/me/matching', name: '인연 탭 — 오늘의 인연' },
