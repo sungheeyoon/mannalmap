@@ -49,6 +49,15 @@ export type Suspension = {
   readonly reason: string | null;
 };
 
+/**
+ * `my_suspension` 의 답을 `Suspension` 으로 — 웹의 문(`app/me/account.ts`)과 앱의 문(`mobile/src/auth/suspension.ts`)이 함께 쓴다.
+ * 부르는 일과 실패를 가르는 일은 문이 한다. 줄이 없으면 `null` 이다 — 정지 화면은 닉네임 · 갈래 구를 뺀 문장으로 선다.
+ */
+export const suspensionOf = (rows: readonly { readonly nickname: string | null; readonly reason: string | null }[] | null): Suspension | null => {
+  const found = rows?.[0];
+  return found === undefined ? null : { nickname: found.nickname ?? null, reason: found.reason ?? null };
+};
+
 const suspensionReasonText = (reason: string | null): string | null =>
   reason === null ? null : (SUSPENSION_REASON_TEXT[reason as SuspensionReason] ?? null);
 

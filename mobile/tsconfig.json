@@ -60,9 +60,6 @@
       "@brand/*": [
         "../src/lib/brand/*"
       ],
-      "@sign-in-again": [
-        "../app/ui/sign-in-again.ts"
-      ],
       "@chat": [
         "../src/lib/chat/index.ts"
       ],
@@ -81,20 +78,11 @@
       "@matching/*": [
         "../src/lib/matching/*"
       ],
-      "@discovery": [
-        "../src/lib/discovery/index.ts"
-      ],
       "@discovery/*": [
         "../src/lib/discovery/*"
       ],
-      "@presence": [
-        "../src/lib/presence/index.ts"
-      ],
       "@reading/*": [
         "../src/lib/reading/*"
-      ],
-      "@chat/*": [
-        "../src/lib/chat/*"
       ],
       "@people": [
         "../src/lib/people/index.ts"

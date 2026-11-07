@@ -2,9 +2,10 @@
  * 화면을 전부 **찍는다** — 눈으로 훑을 한 벌을 만들려고.
  *
  *     node scripts/ui-shots.mjs [내보낼 곳]
+ *     UI_SIZES=wide,mobile UI_ONLY=auth node scripts/ui-shots.mjs [내보낼 곳]
  *
  * `ui-walk.mjs` 와 같은 상태를 쓴다. 다른 것은 사람이 모는 대신 목록을 따라 돌며
- * 데스크톱·모바일 두 폭으로 한 장씩 남긴다는 것뿐이다.
+ * 폭마다 한 장씩 남긴다는 것뿐이다 — 데스크톱 1280 · 모바일 390 · 전체 화면 1920(`SIZES`).
  *
  * **한 경로에 한 화면이 아니다.** `/me` 는 자기 사주가 없을 때와 있을 때가 다른 화면이고,
  * `/signup` 은 가입 전에만 선다. 그래서 목록의 단위가 상태 안의 경로다.
@@ -15,7 +16,7 @@ import { join } from 'node:path';
 
 import { chromium } from '@playwright/test';
 
-import { startCheckServer } from './next-server.mjs';
+import { UI_FAKE_KAKAO_KEY, startCheckServer } from './next-server.mjs';
 import { build } from './ui-states.mjs';
 import { localStack, sql } from './ui-seed.mjs';
 
@@ -82,6 +83,7 @@ async function serverAsBuilt() {
     supabaseUrl: local.api,
     anonKey: local.publishableKey,
     secretKey: local.secretKey,
+    whileRunning: { KAKAO_REST_API_KEY: UI_FAKE_KAKAO_KEY },
   });
 }
 
@@ -116,6 +118,7 @@ async function serverPastTheEnd(day) {
     whileRunning: {
       NODE_OPTIONS: `${process.env.NODE_OPTIONS ?? ''} --import ./scripts/fake-clock.mjs`.trim(),
       UI_FAKE_NOW: now.toISOString(),
+      KAKAO_REST_API_KEY: UI_FAKE_KAKAO_KEY,
     },
   });
 }
@@ -367,17 +370,20 @@ const PLAN = [
     ],
   },
   /*
-    **맨 끝에 둔다.** 베타를 끝내는 것은 이 DB 전체에 걸리는 값이라, 앞에 두면 뒤의
-    상태들이 전부 관문에 막힌다. 찍고 나서 되돌린다.
+    **맨 끝에 둔다.** 시계를 민 서버라 앞의 상태들과 따로 선다.
+
+    일정 줄의 종료일은 이제 서비스를 끝내지 않는다(ADR 0234) — 이 무리는 그날이 지난 뒤에도 `/closed` 가 내 계정으로 돌려보내고
+    내 계정이 그대로 열리는 것을 찍는다. 「서비스가 종료되었습니다」 화면 자체는 `SERVICE_ENDED_ON`(`src/lib/consent/gate.ts`)에 날을
+    넣어야 서므로 이 도구가 찍지 않는다.
   */
   {
     state: 'full',
-    group: '베타 종료',
+    group: '종료일 뒤',
     /* 이 무리만 시계를 민 서버에서 찍는다 — 일정 줄은 안 건드린다 */
     from: 'later',
     shots: [
-      { id: 'closed', at: '/closed', name: '베타가 끝났습니다' },
-      { id: 'me-closed', at: '/me', name: '끝난 뒤 내 계정을 열면' },
+      { id: 'closed', at: '/closed', name: '종료일 뒤 /closed — 내 계정으로 돌아간다' },
+      { id: 'me-closed', at: '/me', name: '종료일 뒤 내 계정을 열면' },
     ],
   },
 ];
@@ -385,10 +391,25 @@ const PLAN = [
 /** 개발 서버가 얹는 표시(왼쪽 아래 N · Rendering…)는 화면이 아니다 */
 const DEV_ONLY = 'nextjs-portal { display: none !important; }';
 
+/**
+ * 폭 — **운영자는 전체 화면 1920 도 본다.**
+ * `UI_SIZES=wide,mobile` 처럼 id 로 고른다 — 빈 값이면 전부. 목록(`index.json`)과 「화면 밖의 준비」(`before`)는 고른 것의
+ * 첫 폭에서 한 번만 한다.
+ */
 const SIZES = [
   { id: 'desktop', width: 1280, height: 900 },
   { id: 'mobile', width: 390, height: 844 },
+  { id: 'wide', width: 1920, height: 1080 },
 ];
+
+const wantedSizes = (process.env.UI_SIZES ?? '').split(',').map((one) => one.trim()).filter((one) => one !== '');
+const unknownSizes = wantedSizes.filter((one) => !SIZES.some((size) => size.id === one));
+if (unknownSizes.length > 0) {
+  console.error(`UI_SIZES 에 없는 폭: ${unknownSizes.join(', ')} — 고를 수 있는 것은 ${SIZES.map((size) => size.id).join(' · ')}`);
+  process.exit(1);
+}
+const sizes = wantedSizes.length === 0 ? SIZES : SIZES.filter((size) => wantedSizes.includes(size.id));
+const firstSize = sizes[0].id;
 
 const ready = await fetch(baseURL).then(
   () => true,
@@ -428,7 +449,7 @@ for (const step of PLAN) {
   }
   const from = step.from === 'later' ? later.base : step.from === 'built' ? asBuilt.base : baseURL;
 
-  for (const size of SIZES) {
+  for (const size of sizes) {
     const context = await browser.newContext({
       viewport: { width: size.width, height: size.height },
       /*
@@ -445,8 +466,8 @@ for (const step of PLAN) {
     const page = await context.newPage();
 
     for (const shot of shots) {
-      /* 화면 밖에서 상태를 먼저 세울 줄이 있다 — 한 번만(데스크톱 차례에서) */
-      if (shot.before && size.id === 'desktop') await shot.before(person, built);
+      /* 화면 밖에서 상태를 먼저 세울 줄이 있다 — 한 번만(첫 폭 차례에서) */
+      if (shot.before && size.id === firstSize) await shot.before(person, built);
       const at = typeof shot.at === 'function' ? shot.at(person, built) : shot.at;
       await page.goto(`${from}${shot.via ?? at}`, { waitUntil: 'networkidle' }).catch(() => {});
       /* 뼈대는 옮겨 가는 도중을 붙잡아 찍는다 — 안 서면 그 까닭을 적고 그대로 찍는다 */
@@ -473,8 +494,16 @@ for (const step of PLAN) {
       /* 붙잡은 응답을 놓는다 — 다음 화면은 보통으로 연다 */
       if (shot.via) await page.unrouteAll({ behavior: 'ignoreErrors' });
 
-      if (size.id === 'desktop') {
+      if (size.id === firstSize) {
         index.push({ id: shot.id, group: step.group, name: shot.name, at, landed });
+      }
+
+      /*
+        **로그인 화면에 카카오 단추가 없으면 말한다.** 키가 빈 서버에서는 단추가 아무 말 없이 빠지고, 그 그림은 운영 웹과 다르다
+        (운영에는 서 있다, G-131). 캡처 서버(`ui-dev.mjs`)는 그림 전용 키를 얹는다 — 이 경고는 그 키 없이 띄운 서버를 잡는다.
+      */
+      if (shot.id === 'auth' && (await page.locator('a[href^="/auth/kakao"]').count()) === 0) {
+        console.warn(`  ! /auth 에 카카오 단추가 없습니다 (${size.id}) — 서버의 KAKAO_REST_API_KEY 가 비었습니다. \`node scripts/ui-dev.mjs\` 로 다시 띄우세요.`);
       }
 
       /*
@@ -513,7 +542,7 @@ for (const step of PLAN) {
           type: 'jpeg',
           quality: 72,
         });
-        if (size.id === 'desktop') {
+        if (size.id === firstSize) {
           index.push({ id: popup, group: step.group, name: `${shot.name} — 팝업: ${label}`, at, landed });
         }
         console.log(`  ${step.group} · ${shot.name} — 팝업 ${n + 1} (${size.id})`);
@@ -550,4 +579,4 @@ await writeFile(join(out, 'index.json'), `${JSON.stringify(merged, null, 2)}\n`)
 await browser.close();
 later?.stop();
 asBuilt?.stop();
-console.log(`\n${index.length}개 화면 × 2폭 → ${out}/`);
+console.log(`\n${index.length}개 화면 × ${sizes.length}폭(${sizes.map((size) => size.width).join(' · ')}) → ${out}/`);

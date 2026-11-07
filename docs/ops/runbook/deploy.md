@@ -36,9 +36,11 @@ npm run db:push               # 밀린 것 전부를 원격에 적용한다 — 
 0. **올리기 전에.** 올리라고 한 변경은 그 PR 이 main 에 들면 올린다(ADR 0152). 묶음이면 머지를 기다리는 PR 이 없는지(`gh pr list`),
    `node scripts/deploy-range.mjs` 가 `wait` 면 `main` CI 가 초록인지(ADR 0159), 지난
    배포 뒤 `supabase/migrations/**` 가 바뀌었으면 **DB 를 먼저** 올리고 확인했는지(아래 규약 넷의 2 · 4) 본다.
-   **지금 걸린 것(ADR 0221, G-130): 운영에 안 오른 넷(`20270107090000` → `20270107100000` → `20270108154600` → `20270109090000`)을 먼저 올리고 확인하기 전에 묶음 배포 금지 — 어기면 인연 요청이 전부 `PGRST202` 로 닫힌다(돈은 안 나간다). 올리기 전 옛 궁합 요청 집계는 `docs/ops/runbook/match-talk.md` 「배포 순서」.** 1 은
+   **운영에 아직 안 올린 마이그레이션과 그 차례는 간극 대장의 줄이 적는다 — 2026-11-07 #1048 을 올린 뒤로 main 의 마이그레이션은 모두 원격에 있다.** 1 은
    출력의 `head` 를 그대로 올린다. 한도 창의 남은 자리를 본다 — 모자라면 기다린다. `--from <운영 SHA>` 가 `docs-only` 면 안 올린다(운영 SHA 는 근거가 아니다)
-   **`vercel.json` 의 크론은 Production 배포와 함께 등록되어 돌기 시작한다**. `/api/cron/chat-purge` 가 처음 드는 배포는 이미 90일 지난 말을 그날 밤 지우므로, 승인 전에 `docs/ops/runbook/moderation.md` 「배포 승인 전에 건수를 잰다」의 값을 적고, `20270107100000` 을 먼저 올린다
+   **`vercel.json` 의 크론은 Production 배포와 함께 등록되어 돌기 시작한다**. `/api/cron/chat-purge` 가 처음 드는 배포는 이미 90일 지난 말을 그날 밤 지우므로, 승인 전에 `docs/ops/runbook/moderation.md` 「배포 승인 전에 건수를 잰다」의 값을 적는다. 그 크론이 부르는 `20270107100000` 은 이미 원격에 있다(2026-11-07 migration list)
+   **`notice-v17`(ADR 0234)의 첫 시행일 — 채웠다(2026-11-07).** `TERMS_EFFECTIVE_DATE`(`src/lib/brand/terms.ts`) · `REFUND_EFFECTIVE_DATE`(`src/lib/brand/refund.ts`)는
+   게시일(운영자 답 2026-11-07)이고, 그날 02:37 KST 배포(#1050 `9e5ba00f`, smoke 다섯 화면 통과)로 `/terms` 에 시행일 2026-11-07 이 보인다. 앞으로의 개정은 약관 제4조②대로 시행 7일 전(불리하면 30일 전) 공지다
 1. **0 의 `head` 를 Production 으로 올린다.** 그 SHA 의 워크트리(아래)에서 `vercel deploy --prod`, 아니면
    Vercel → Deployments → 「Create Deployment」에 그 SHA 를 넣는다. Production 은 `ignoreCommand` 가 건너뛰지 않는다. 빈 커밋을
    밀어 깨우지 않는다 — Git 배포는 꺼져 있어 아무 일도 안 일어난다
@@ -49,7 +51,7 @@ npm run db:push               # 밀린 것 전부를 원격에 적용한다 — 
 2. **배포 커밋 = 0 의 `head` 인지 본다** — `vercel api /v13/deployments/<배포 ID 나 배포 URL 의 호스트>` 의
    `meta.gitCommitSha`(또는 대시보드의 Source 커밋)가 그 SHA 여야 한다. `vercel inspect`(`--format json` 도)에는 커밋 SHA 가
    없다(CLI 62.2.0, #704). 다르면 판정하지 않은 코드가 Production 이다 — 1 로 돌아간다
-3. **Ready 를 본다** — `vercel ls saju` 에서 그 배포가 `● Ready` · `Production` 이고, `vercel inspect` 의 Aliases 에
+3. **Ready 를 본다** — 링크된 워크트리의 `vercel ls --prod` 에서(Vercel 프로젝트 이름이 `mannalmap` 으로 바뀌어 `vercel ls saju` 는 `project_not_found` 다, 2026-11-07) 그 배포가 `● Ready` · `Production` 이고, `vercel inspect` 의 Aliases 에
    운영 주소가 선다
 4. **smoke — 다섯 화면.** 각각 응답 200 으로 제 제목(그 화면의 제목 — 제목이 있기만 한 것이 아니다, 2026-10-18)이 서고 빈 화면 · 브라우저 콘솔의 CSP 위반이 없고 강제 CSP 헤더가 서야 통과다.
    **`npm run smoke:deploy`** 가 운영 주소(`docs/ops/runbook/domain.md` 맨 위의 그 줄을 읽는다 — 다른 주소면 `-- --url <주소>` 하나만 받고, 꼴이 틀리면 끝 코드 1)에 대고
@@ -62,7 +64,7 @@ npm run db:push               # 밀린 것 전부를 원격에 적용한다 — 
      명령은 로그인 없이 닿는 데까지만 본다(셋 다 `/auth?next=<그 주소>` 로 넘기는지 — `/compat` 은 넘긴 화면이 궁합의 로그인 안내다). 운영 계정의
      비밀번호 · 세션을 쓰지 않는다 — 로그인한 화면은 이용자 정보를 읽는 자리다([운영 개인정보](../../agents/delegation/permissions.md#권한-등급--무엇을-해도-되고-무엇은-묻는가),
      ADR 0105)
-5. **적는다** — 배포 SHA · Production URL · Ready 시각(서울) · smoke 표(4 가 찍은 것)를 「운영자 확인 모음」 이슈 #770 에 댓글로 단다 —
+5. **적는다** — 배포 SHA · Production URL · Ready 시각(서울) · smoke 표(4 가 찍은 것)를 「운영자 할 일 · 확인」 이슈 #770 에 댓글로 단다 —
    배포마다 새 확인 이슈를 열지 않는다(운영자 결정 2026-10-20). 로그인이 드는 셋과 그 묶음에서 로그인 · 실기기로만 보이는 변경은 #770 본문에
    체크 줄로 더한다 — 운영자가 모아서 한 번에 확인한다. 그 묶음에 든 「확인 전」 문구(대장 무리 파일의 「확인 전」 절)도 목록으로 함께
    올린다 — 배포를 막지 않고 보이기만 한다(ADR 0196). G-24 검증은 따로 `ops-verification` 이슈다. 실패가 있으면 「CSP 가 화면을 막을 때」의 1 처럼 앞 배포를 Promote 해 되돌린다.
@@ -71,6 +73,8 @@ npm run db:push               # 밀린 것 전부를 원격에 적용한다 — 
    **Promote 할 앞 배포는 지금 운영 DB 에서 서야 한다** — 좁히기(「규약 넷」의 3)가 지운 문을 부르는 앱은 그 자리가 실패한다.
    2026-10-11 G-96 좁히기(`20261204090000`) 뒤로 `ca4b1924`(#624 · #627 이 든 묶음 배포) 앞의 앱은 채팅 보내기가 실패한다(`PGRST202`) —
    이 바닥이 G-77 좁히기(`20261127090000`)의 `41a91368`(#526, 채팅 읽음)보다 뒤라 그것을 덮는다
+6. **정리한다** — 5 를 적은 뒤 이 묶음에 든 PR 의 워크트리와 로컬 가지를 묻지 않고 걷는다(`docs/agents/delegation/coordinator.md` 「출시 흐름」 4).
+   `npm run sweep:merged` 로 미리보기를 보고 `npm run sweep:merged -- --apply` 로 걷는다 — 스쿼시 머지라 PR 상태로 판정한다(그 문서의 「라운드 끝 정리」)
 
 `/api/cron/chat-purge` 가 처음 든 배포면 **다음 날** `docs/ops/runbook/moderation.md` 「첫 파기를 확인한다 — 배포 다음 날」을 밟는다 — 같은 건수 SQL · Cron Jobs 응답, 값은 #770 에 수만.
 

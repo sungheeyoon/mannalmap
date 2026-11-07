@@ -11,6 +11,7 @@ import { matchEntriesStand } from '@matching/opening';
 
 import { arriveAt } from '@/auth/arrive';
 import { AppleSignInButton } from '@/auth/apple-button';
+import { GoogleSignInButton } from '@/auth/google-button';
 import { signInWithApple } from '@/auth/apple';
 import { KakaoSignInButton } from '@/auth/kakao-button';
 import { signInWithKakao } from '@/auth/kakao';
@@ -21,10 +22,9 @@ import { goHome } from '@/info/go-home';
 import { useMatchOpen } from '@/matching/opening';
 import { Icon } from '@/ui/icons';
 import { NoticeLine, NoticeScreen } from '@/ui/notice-screen';
-import { PrimaryButton, SecondaryButton, TextButton } from '@/ui/parts';
+import { SecondaryButton, TextButton } from '@/ui/parts';
 import { COLOR, FONT, RADIUS, TYPE } from '@/ui/tokens';
 import { goBack } from '@/ui/top-bar';
-import { WordText } from '@/ui/word-text';
 
 /**
  * 로그인 — 웹의 `/auth` 와 같은 글자이고 로그인은 네이티브 구글, 키가 든 빌드에서는 그 밑에 카카오(ADR 0224), iOS 에서는 애플이 나란히 선다(ADR 0219). 돌아갈 곳은 앱에 있는 `/me` 아래와 결과 화면이다 —
@@ -67,21 +67,21 @@ export default function SignInScreen() {
       title={want !== null ? CHART_SIGN_IN[want].title : destination === '/me/compat' ? COMPAT_SIGN_IN_TITLE : `${SERVICE_NAME} 시작하기`}
       description={
         <NoticeLine>
-          {want !== null ? CHART_SIGN_IN[want].note : '로그인하면 저장한 사람과 사주풀이를 다음에도 이어서 볼 수 있어요.'}{' '}
-          지금은 비공개 베타라, 처음 오셨다면 로그인 뒤에 <WordText style={styles.strong}>테스트 코드</WordText>가 필요해요.
+          {want !== null ? CHART_SIGN_IN[want].note : '로그인하면 저장한 사람과 사주풀이를 다음에도 이어서 볼 수 있어요.'}
         </NoticeLine>
       }
       actions={
         <>
-          <PrimaryButton
-            label={going === 'google' ? '구글로 이동하는 중…' : '구글로 로그인'}
-            onPress={() => void signIn('google', signInWithGoogle)}
-            disabled={going !== null}
-          />
+          {/* 카카오 → 구글 → 애플(운영자 결정 2026-11-05, ADR 0228) */}
           <KakaoSignInButton
             label={going === 'kakao' ? KAKAO_SIGN_IN_GOING : undefined}
             onPress={() => void signIn('kakao', signInWithKakao)}
             busy={going !== null}
+          />
+          <GoogleSignInButton
+            going={going === 'google'}
+            onPress={() => void signIn('google', signInWithGoogle)}
+            disabled={going !== null}
           />
           <AppleSignInButton onPress={() => void signIn('apple', signInWithApple)} busy={going !== null} />
           {fromChart && <SecondaryButton label="취소" onPress={() => goBack('/')} disabled={going !== null} />}
@@ -113,7 +113,6 @@ export default function SignInScreen() {
 }
 
 const styles = StyleSheet.create({
-  strong: { fontFamily: FONT.bold },
   unlocks: { gap: 10 },
   unlock: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   unlockIcon: { width: 36, height: 36, alignItems: 'center', justifyContent: 'center', borderRadius: RADIUS.pill, backgroundColor: COLOR.surface },

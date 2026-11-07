@@ -12,7 +12,7 @@
  * 그것이 우연히 참인 것이 아니라 **늘 참이게** 둘이 든다.
  *
  * - `secret-env.test.ts` — 앱이 읽는 이름은 전부 아래 갈래에 있고, 비밀은 `NEXT_PUBLIC_` 이 아니며,
- *   비밀을 읽는 모듈은 `import 'server-only'` 로 잠겨 있다. 새 비밀(무료 지급 HMAC · PG · 본인확인)이
+ *   비밀을 읽는 모듈은 `import 'server-only'` 로 잠겨 있다. 새 비밀(무료 지급 HMAC · 스토어 결제 · 본인확인)이
  *   들어오면 이 목록에 먼저 서야 시험이 초록이다.
  * - 이 파일의 실행 — `npm run build` 끝에 돈다. 브라우저로 가는 파일에서 **비밀 이름**과, 그 빌드의
  *   환경에 있는 **비밀 값**을 찾는다. 값은 찍지 않고 이름과 파일만 말한다. Vercel 의 운영 빌드는
@@ -48,9 +48,6 @@ export const SECRET_ENV = [
    * `20261014090000`). 짧게 살지만 그동안은 역할의 자격이다
    */
   'VERCEL_OIDC_TOKEN',
-  /** PortOne V2 — 결제 알림의 서명 비밀(`whsec_…`)과 결제 단건 조회의 API 비밀 (G-23 ⑥, `app/api/portone/webhook`) */
-  'PORTONE_WEBHOOK_SECRET',
-  'PORTONE_API_SECRET',
   /**
    * 로그인 전 사주 문단의 HMAC 비밀 둘(ADR 0143, `app/taste/taste-visitor.ts`) — 브라우저 묶음 쿠키의 안정 비밀과 IP 날짜별 키의
    * 뿌리. 없으면 그 문단이 닫힌다
@@ -73,6 +70,17 @@ export const SECRET_ENV = [
    * 카카오 콘솔에서 시크릿을 켰을 때만 든다
    */
   'KAKAO_CLIENT_SECRET',
+  /**
+   * 카카오 앱 어드민 키(ADR 0224 「덧붙임 2026-11-05」) — 웹 탈퇴 뒤 그 사람의 카카오 연결을 회원번호로 끊는다(`app/auth/kakao/unlink.ts`).
+   * 이 키 하나로 앱의 어느 회원이든 끊을 수 있다. 없으면 끊기가 기록 한 줄로 남고 탈퇴는 그대로 간다
+   */
+  'KAKAO_ADMIN_KEY',
+  /**
+   * Google Play 결제 검증용 서비스 계정 키(JSON 한 덩이, ADR 0230) — 구매 확인 · 소비 · 환불 · 무효 목록을 부른다
+   * (`app/api/store/google-play/play-api.ts`). EAS 제출용 키와 따로다. 없으면 구매 문 · 통지 문이 503, 무효 대조 크론은 「설정 안 됨」.
+   * **운영자가 Play 조직 계정 뒤에 넣는다**
+   */
+  'GOOGLE_PLAY_SERVICE_ACCOUNT_JSON',
 ];
 
 /** 브라우저가 본다 — 빌드 때 번들에 박힌다. 비밀을 여기 두는 순간 공개된다 */
@@ -108,13 +116,6 @@ export const CONFIG_ENV = [
   'PHOTO_STORE_BUCKET',
   'PHOTO_STORE_REGION',
   'PHOTO_STORE_ROLE_ARN',
-  /** PortOne 의 상점 번호 — 비밀이 아니다(브라우저의 결제 창도 든다). 없으면 결제 알림은 503 이다 */
-  'PORTONE_STORE_ID',
-  /**
-   * PortOne 의 채널 키 — 비밀이 아니다(브라우저의 결제 창이 싣는다). 어느 PG 로 가는지를 이 값이 정한다. 상점 번호와 함께
-   * 있어야 풀이권 상품 화면에 결제 단추가 선다 — 그것도 판매가 열린 사람에게만(`app/me/credits/`, ADR 0171)
-   */
-  'PORTONE_CHANNEL_KEY',
   /** VAPID 의 주체(`mailto:` · `https:`) — 없으면 배포의 https 주소를 쓴다(`app/api/push/dispatch/send.ts`) */
   'WEB_PUSH_SUBJECT',
   /**
@@ -122,19 +123,6 @@ export const CONFIG_ENV = [
    * 알려진 푸시 서비스 넷만 받는다(`app/me/push/hosts.ts`, ADR 0156)
    */
   'WEB_PUSH_EXTRA_HOSTS',
-  /**
-   * 사업자 정보 여덟 — 바닥글 · 이용약관 · 환불정책이 든다(`app/business-info.ts`, ADR 0172). 비밀이 아니지만 **저장소에 값을
-   * 적지 않는다**(저장소가 공개, ADR 0151). 비면 그 줄이 화면에 안 선다. 이메일은 환경변수가 아니라 `SUPPORT_EMAIL` 상수다
-   * (`src/lib/brand`, ADR 0172 덧 2026-10-16)
-   */
-  'BUSINESS_TRADE_NAME',
-  'BUSINESS_REPRESENTATIVE',
-  'BUSINESS_REGISTRATION_NUMBER',
-  'BUSINESS_ADDRESS',
-  'BUSINESS_PHONE',
-  'BUSINESS_MAIL_ORDER_NUMBER',
-  'BUSINESS_HOSTING_PROVIDER',
-  'BUSINESS_DISCLOSURE_URL',
   /** 애플 로그인 키의 팀 ID · 키 ID — 비밀이 아니다(클라이언트 비밀의 머리 · 몸에 그대로 실린다, ADR 0219) */
   'APPLE_TEAM_ID',
   'APPLE_SIGN_IN_KEY_ID',
@@ -143,6 +131,13 @@ export const CONFIG_ENV = [
    * Production 에만 둔다 — 미리보기 주소는 카카오에 등록할 수 없다
    */
   'KAKAO_REST_API_KEY',
+  /**
+   * Google Play 통지(RTDN)의 Pub/Sub 푸시 구독이 싣는 OIDC 토큰의 audience 와 서비스 계정 이메일(ADR 0230) — 비밀이 아니다. 믿는 쪽은
+   * Google 의 서명이고, 이 둘은 그 토큰이 우리 구독의 것인지만 가른다(`app/api/store/google-play/push-auth.ts`). 둘 중 하나라도 비면
+   * 통지 문이 503 이다. **운영자가 Play 조직 계정 뒤에 넣는다**
+   */
+  'GOOGLE_PLAY_PUBSUB_AUDIENCE',
+  'GOOGLE_PLAY_PUBSUB_SERVICE_ACCOUNT',
 ];
 
 /** 제 안에서 비밀을 읽는 패키지 — 이것을 부르는 모듈도 비밀을 읽는 모듈이다 */

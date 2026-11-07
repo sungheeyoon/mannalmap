@@ -10,8 +10,6 @@
  * `app/me/credits/bundle-price.test.ts` 가 마이그레이션의 마지막 정의와 견준다 — 가격을 바꾸면 둘을 같은 PR 에서 고친다(ADR 0176).
  */
 
-import { seoulWallClock } from './seoul-date';
-
 /** 파는 묶음 넷 — 회차 수와 가격(원, 부가세 포함) */
 export const READING_BUNDLES = [
   { credits: 1, price: 4900 },
@@ -24,27 +22,6 @@ const SINGLE_PRICE = READING_BUNDLES[0].price;
 
 /** 원 단위 금액 — 「4,900원」. 사람이 읽는 금액은 결제 · 주문 · 약관 어디서나 이것 하나로 적는다 */
 export const won = (amount: number): string => `${amount.toLocaleString('ko-KR')}원`;
-
-/**
- * 산 풀이권의 유효기간(년) — 구매일로부터. 상품 화면의 유의사항(ADR 0175)이 이 값을 말한다(운영자 결정 2026-10-12, G-21).
- * 만료를 DB 가 걷는 일은 아직 없다 — 첫 판매 뒤 5년 안에 선다.
- */
-export const READING_BUNDLE_VALID_YEARS = 5;
-
-/**
- * 묶음의 유효기간이 끝나는 날(서울 날짜, `YYYY-MM-DD`) — 산 날부터 `READING_BUNDLE_VALID_YEARS` 년(ADR 0173).
- *
- * 민법 제157조 · 제160조의 셈이다: 산 날은 안 세고 다음 날부터 세므로, 끝나는 날은 **5년 뒤 같은 날**이다(2026-10-12 → 2031-10-12).
- * 그 해에 같은 날이 없으면(2월 29일) 그 달의 끝날이다. 결제 내역 화면이 이 날을 말한다 — DB 는 아직 만료를 걷지 않는다.
- */
-export function readingBundleValidUntil(paidAt: Date): string {
-  const seoul = seoulWallClock(paidAt);
-  const year = seoul.getUTCFullYear() + READING_BUNDLE_VALID_YEARS;
-  const month = seoul.getUTCMonth();
-  const lastDay = new Date(Date.UTC(year, month + 1, 0)).getUTCDate();
-  const day = Math.min(seoul.getUTCDate(), lastDay);
-  return new Date(Date.UTC(year, month, day)).toISOString().slice(0, 10);
-}
 
 /**
  * 1회권을 같은 횟수만큼 살 때와 견준 할인율(%) — **정수 내림**(운영자 결정 2026-09-24, G-21). 실제 값은
@@ -66,11 +43,10 @@ export const bundleMark = (credits: number): '추천' | '최대 할인' | null =
   credits === 5 ? '추천' : credits === 20 ? '최대 할인' : null;
 
 /**
- * 결제창 · 카드 명세에 서는 상품 이름. 카드사 심사는 상품 이름에 「TEST」가 들면 반려하므로 시험 표식을 싣지 않는다
- * (PortOne 필수 구축요건). PG 이름도 싣지 않는다 — PG 는 아직 안 정했다(G-21).
+ * 묶음의 상품 이름.
  *
  * 상품 화면의 묶음 이름과 결제 내역의 상품 칸도 이 값이다. 이름은 DB 에 두지 않는다 — 결제 내역은 묶음 수량(`bundle_credits`)에서
- * 다시 짓고, 웹훅 · 정산은 이름을 견주지 않는다. 그래서 단위가 「회」에서 「장」으로 바뀐 날(대장 all-02) 앞의 주문도 「장」으로 읽힌다.
+ * 다시 짓고, 정산은 이름을 견주지 않는다. 그래서 단위가 「회」에서 「장」으로 바뀐 날(대장 all-02) 앞의 주문도 「장」으로 읽힌다.
  */
 export const bundleOrderName = (credits: number): string => `풀이권 ${credits}장`;
 

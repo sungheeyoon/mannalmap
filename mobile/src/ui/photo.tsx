@@ -3,9 +3,9 @@ import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
 import { StyleSheet, View } from 'react-native';
 
 import { supabase } from '@/auth/client';
-import { settled } from './settled';
+import { SITE_URL } from '@/site';
 
-const SITE_URL = process.env.EXPO_PUBLIC_SITE_URL;
+import { settled } from './settled';
 
 /**
  * **사진 한 장** — 앱의 사진 문(`/api/mobile/photo/{id}`, ADR 0211)을 그 사람의 토큰으로 연다. 볼 수 있는가는 서버의 `photo_at` 이 답한다.

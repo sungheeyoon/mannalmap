@@ -16,8 +16,10 @@
 | 픽스처가 `Something went wrong` 으로 죽는다 | 로컬 스택의 하루 풀이 한도(`reading_daily_budget()`)가 찼다. 도구가 제 줄을 어제로 밀지만 다른 표식의 줄은 안 민다 | `docker logs supabase_db_<SAJU_STACK_ID> --tail 30 \| grep -i error` 로 확인(main 은 `saju`, 워크트리는 `saju_wtN`), `npm run db:reset` |
 | pgTAP 이 e2e 뒤에 붉다 | 표를 전역으로 세는 자리가 남은 계정에 걸린다 | `npm run db:reset` 뒤 다시. 새로 쓰는 시험은 자기가 만든 행만 센다 |
 | 로그인 e2e 가 `PGRST202 Could not find the function …` 로 붉다(예: 사진 지우기 `remove_my_photo(p_position, p_version)`) | 스택 자리에 옛 볼륨이 남아 있으면 `db:start` 는 새 마이그레이션을 올리지 않는다 — 앱은 새 서명을 부르고 로컬 DB 는 옛 함수를 든다(2026-09-26) | `npm run db:reset` 뒤 다시 |
+| 오래 쉰 체크아웃에서 받아 온 뒤 `npm run typecheck` 가 `.next/dev/types/validator.ts` 에서 지워진 페이지(2026-11-07 에는 `app/` 아래 `me/credits/done/page.js` · `api/portone/webhook/route.js`)를 못 찾는다고 실패한다 | 옛 dev 서버가 남긴 생성 타입 캐시다. **원본은 멀쩡하다** | 그 체크아웃의 dev 서버가 꺼졌는지 본다(남이 띄운 것이면 끄지 않는다). 꺼졌으면 `rm -rf .next/dev/types` 뒤 다시(2026-11-07) |
 | localhost 의 dev 서버만 탭 이동이 아주 느리다 · 서버 로그의 요청 시간은 멀쩡하다 | 메인 폴더 **안의** 워크트리(`.claude/worktrees/`)가 저마다 `node_modules` 를 복제해 메인의 dev 서버가 함께 감시한다(2026-09-27, 다섯 벌 8.3GB) | 머지된 워크트리를 `git worktree remove` 로 걷고 dev 서버를 다시 띄운다(`docs/agents/delegation/coordinator.md` 「끝난 워크트리를 걷는다」) |
 | 새 워크트리에서 vitest 가 `server-only` 를 못 찾거나 dev 서버가 `node_modules` 를 거절한다 | 워크트리에는 `node_modules` 가 없다. 심볼릭 링크는 Turbopack 이 거절한다(2026-09-28) | 단위 · 타입 · 린트만이면 `ln -s <메인>/node_modules .`. dev 서버 · 흐름 · e2e 면 복사한다 — macOS `cp -Rc`(APFS 복제), Linux `cp -a --reflink=auto`(ext4 는 통째 — 759MB · 4초) |
+| 앱을 고치는 워크트리에서 `npx tsc --noEmit` · `npx expo lint` 가 `expo-iap` 같은 패키지를 못 찾는다(`import/no-unresolved`) | 메인의 `mobile/node_modules` 링크는 낡을 수 있다 — 2026-11-06 메인에는 `expo-iap` 가 없었다. 판 고정 · 린트 설정 탓이 아니다 | 앱을 고치는 워크트리는 `mobile` 에서 `npm ci` 로 제 `node_modules` 를 깐다(약 850 패키지 · 30초). 링크하지 않는다 |
 | 워크트리에 `node_modules` 가 **있는데도** vitest 가 `server-only` 를 못 찾는다 | 그 폴더가 캐시만 든 껍데기다(`.vite` 하나뿐, 2026-10-10) — 이름이 있어 위 줄을 안 밟고, vitest 는 위 폴더로 올라가 찾다 선다 | `ls node_modules` 로 패키지가 있는지 보고, 껍데기면 지우고 위 줄대로 링크하거나 복사한다 |
 | 워크트리에서 `npm run db:remote` · `supabase migration list` · `db push` 가 `LegacyProjectNotLinkedError` 로 선다 | 원격 프로젝트 연결(project-ref)은 `supabase/` 아래 `.temp` 폴더에 있고 gitignore 라 git 이 안 든다 — 새 워크트리에는 없다(2026-10-10 · 2026-10-14) | 메인 체크아웃의 그 `.temp` 를 열어 `project-ref` 가 운영 프로젝트인지 본 뒤 워크트리의 `supabase/` 아래로 복사한다(`cp -a` 로 폴더째) |
 | 에이전트 워크트리에서 `cannot be shown …` 으로 거절된다 — 변수 · 명령 치환(`$()`) · heredoc(특히 `git` 글자가 든 것) · `for` 루프 · `xargs` · `git` 출력을 받는 파이프 · `&&` 로 이은 `git` · `gh` 명령 · `vercel inspect <url> \| grep alias` 처럼 운영 CLI 출력을 받는 파이프 · `gh … -q '<jq 식>'` · `git` 글자가 든 스크립트를 heredoc 으로 넘긴 `python3` · `node` | Claude Code 의 워크트리 격리가 실행 때 정해지는 명령을 막는다 — 2026-10-14 라운드의 에이전트 다섯이 다 겪었다. `vercel` 파이프는 2026-10-18 배포 에이전트들, `gh -q` 는 2026-10-23 라운드의 에이전트 넷 다(같은 날 다른 세션에서는 통과했다 — 늘 막히는 것은 아니다). 2026-10-30 Expo 라운드에서도 되풀이됐다 — `cd <경로>; git merge …` 처럼 앞에 `cd` 를 붙인 `git` 도 걸린다 | `git` · `gh` 명령은 하나씩 따로 부르고 값은 글자로 옮긴다. `vercel inspect <url>` 은 파이프 없이 불러 출력의 Aliases 를 눈으로 읽는다(`docs/ops/runbook/deploy.md` 「배포」 3 단계). 커밋 · PR 본문처럼 긴 글은 파일로 써서 `-F` · `--body-file` 로 준다. 여러 파일이나 이어진 걸음은 스크립트 파일(`node` · `sh`)에 절대 경로를 주고 그 파일을 돌린다. 그 파일을 두는 자리는 `docs/agents/delegation/done.md` 「끝났다는 것」의 「임시 파일」 줄 — 제 워크트리 안이다 |
@@ -28,7 +30,7 @@
 | 대기 고리가 끝나지 않고 `jq: command not found` 가 찍힌다 | 이 기계에 `jq` 가 없다(2026-10-07) | `gh … --json <칸> -q '<jq 식>'`. 에이전트 워크트리에서 `-q` 도 거절되면(위의 격리 줄) `--json <칸>` 만 받아 눈으로 읽는다 |
 | `gh pr update-branch` 가 없다 · `gh pr edit` 가 classic Projects 오류로 선다 | Ubuntu apt 의 `gh` 2.46 | cli.github.com 의 apt 저장소에서 공식 `gh` 를 깐다(이 기계는 2026-10-06 부터 2.102.0) |
 | 로컬 DB 자리 5 에서 `db:start` 가 `LegacyDbConnectError` · `ECONNREFUSED` 로 선다(2026-10-10) | 원인은 확인 전 | 다른 자리(`npm run stack:slot -- --auto`)를 쓴다 |
-| `supabase: command not found` | PATH 에 없다 | `npx supabase` 나 `./node_modules/.bin/supabase` |
+| `supabase: command not found` | PATH 에 없다 | 메인의 `node_modules/.bin/supabase` 를 절대경로로 부른다 — 워크트리의 `npx supabase` 는 아래 「`npx supabase db push` 가 로컬을 대상으로 잡는다」의 함정이 있다 |
 | WSL 에서 `db:start` · `npx supabase status` 가 Docker 에 못 닿는다 | Docker Desktop 이 꺼져 있다 — 또는 명령이 샌드박스 안에서 돈다(2026-10-08) | Docker Desktop 을 켜고, 샌드박스 밖에서 다시 부른다 |
 | `docker version` 이 「could not be found in this WSL 2 distro」이고 `/usr/bin/docker` 링크의 대상(`/mnt/wsl/docker-desktop/`)이 없다 | Docker Desktop 엔진이 꺼져 있다 — 설치가 없는 것이 아니다(2026-10-31). Windows 쪽 `docker.exe version` 이 `dockerDesktopLinuxEngine` 파이프를 못 찾는다고 답하면 이 줄이다 | 사람이 Docker Desktop 을 켠다. 아래 줄(CI 에 기대기)로 넘어가지 않는다 |
 | `docker` 명령이 아예 없고 `db:start` 가 `LegacyDockerLifecycleInspectError` 로 선다 | 이 WSL 에 Docker 가 없다(Docker Desktop 의 WSL 연동 꺼짐, 2026-10-12) — 로컬에서 pgTAP · `db:types` 를 못 돌린다 | 생성 타입(`src/lib/db/database.generated.ts`)은 손으로 고치고, CI 의 `test:db`(pgTAP)와 `db:types` 재생성 diff 에 기댄다. PR 에 「로컬에서 못 돌렸다 — CI 가 덮었다」를 적는다(#664) |
@@ -38,7 +40,7 @@
 | 스택을 다시 안 세우고 함수 하나만 바꿔 재고 싶다(돌연변이 · 고치기 전 재현) | 지금 DB 를 고치면 다음 시험까지 번진다 | 같은 스택의 psql 에서 `create database <복제> template postgres`(원본에 접속이 없어야 한다) 뒤 복제에만 `create or replace function` 을 넣어 재고 `drop database` 한다 |
 | `npm test` 를 나란히 돌리는 동안 vitest 일부가 붉고 단독으로 돌리면 초록이다(calibration · seoul-date · comparison 등) | 시간 초과다(2026-11-02, 15판 실패 전부 시간 초과 · 단언 불일치 0). 시험은 5초나 그 시험의 30초를, `calibration` 은 `beforeAll` 30초를 넘는다 — 그래서 시험 넷이 건너뛰어지고 파일만 붉다. **JSON 보고의 `STACK_TRACE_ERROR` 도 시간 초과다** — Vitest 가 붙이는 스택이라 원문은 텍스트 보고에서 읽는다. `calibration` 훅은 단독 6~7초, `--maxWorkers=4` 8~9초, `=8` 14~19초, 기본 23~28초(각 3판) | `--maxWorkers=4` 로 다시 돈다. 벽시계는 65~87초로 겹쳐 느려지지 않는다. 단독에서도 붉거나 메시지가 시간 초과가 아니면 코드로 본다 |
 | `npx tsc --noEmit` 이 `LayoutProps` 를 못 찾는다 | `next typegen` 이 먼저 돌아야 한다(2026-11-02) | `npm run typecheck` 로 돌린다 |
-| `scripts/ui-seed.mjs` 가 시드 중에 멈춘다 | `BETA_ENDS_ON`(지금 `2026-10-31`)이 지난 날짜면 베타가 끝난 상태로 읽혀 쓰기 문이 닫힌다(2026-11-02, 코드는 안 고쳤다) | 제 워크트리에서만 그 값을 앞날로 올려 돌리고 커밋하지 않는다 |
+| `scripts/ui-seed.mjs` 가 시드 중에 멈춘다 · 그림이 「테스트가 끝났어요」를 찍는다 | 로컬 일정 줄이 지난 날짜다. 씨앗의 종료일은 오늘에서 센다(`BETA_ENDS_ON = checkEndsOn()` — 서울 날짜로 다다음 달 1일, 흐름 검사 · 로그인 e2e 와 같은 규칙, #1027). 그래서 그림의 종료일은 운영 종료일(G-62)과 다를 수 있다. 2026-11-06 전에는 `2026-10-31` 이 박혀 있어 손으로 올렸다 | `node scripts/ui-seed.mjs` 로 일정 줄을 다시 세우고 찍힌 날짜를 본다. 날짜를 손으로 고치지 않는다 |
 | e2e 가 시간 초과로 끝난 뒤 다음 e2e 가 옛 화면을 받는다 | 남은 dev 서버를 `reuseExistingServer` 가 붙잡는다 | `lsof -ti tcp:3000 \| xargs kill` 뒤 다시 |
 | `npx playwright test e2e/match.spec.ts` 만 붉다 | 그 spec 은 직렬이어야 한다 | `npm run test:e2e:match`(`--workers=1`) |
 | `db query` 가 `cannot insert multiple commands` | prepared statement 라 `begin; … rollback;` 을 못 받는다 | 트랜잭션이 필요하면 `docker exec -i supabase_db_<SAJU_STACK_ID> psql -U postgres -d postgres` |
@@ -57,6 +59,8 @@
 | `.env.development.local` 의 값이 `"[SENSITIVE]"` 다 | Vercel 이 Secret 은 안 내려 준다. 그대로 두면 「있는」 값으로 세어져 401 로 떨어진다 | 주석 처리해 두면 오류가 이름을 대 준다. 실호출은 `OPENAI_API_KEY` 한 줄을 손으로 붙인다 |
 | 실호출 첫 콜이 `Incorrect API key` | `.env.development.local` 값이 `"…"` 로 감싸여 있다 | `loadLocalEnv` 가 벗긴다 — 새 읽는 자리를 만들면 같은 것을 한다 |
 | Production 배포가 전부 `Error` 인데 typecheck · lint · 단위 · e2e 는 초록이다 | `next build` 만 잡는 것이 있다 — 예: `app/**/icon.tsx` 는 메타데이터 라우트라 기본 내보내기가 없으면 「Export default doesn't exist」로 선다(2026-09-24). 파일 이름 `icon` · `apple-icon` · `opengraph-image` · `sitemap` · `robots` · `manifest` 는 `app/` 아래 어디서나 특별하다 | 로컬에서는 최소 셋(단위 · 타입 · 린트, `docs/agents/test-map/what-to-run.md`)만 돈다 — 빌드는 CI `core` 차선이 돈다. 이 특별한 이름의 파일을 더하거나 고쳤으면 그 PR 의 CI 빌드가 초록인지 본다. 공용 아이콘은 `app/ui/icons.tsx` 다. 배포 상태는 `vercel ls --prod` |
+| 워크트리에서 `npx supabase db push` 가 운영이 아니라 로컬을 대상으로 잡는다 | 워크트리에 `node_modules` 가 없으면 `npx` 가 새 CLI(3.x)를 받아 오고, 그 버전은 `db push` 의 기본 대상이 로컬이다(2026-11-07) | 메인의 `node_modules/.bin/supabase` 를 절대경로로 부른다 — `package.json` 의 2.x 다 |
+| 운영 화면(`/ops`)의 전후 그림이 2단계 인증 화면에서 멈춘다 · `scripts/ui-shots.mjs` 의 `PLAN` 에 `/ops` 가 없다 | `/ops` 는 2단계 인증을 지나야 열린다(2026-11-07) | `e2e/second-factor.ts` 의 `passSecondFactor`(`totpNow` 셈)로 인증을 지난 뒤 찍는다 |
 
 ## 앱을 웹 번들로 재기
 
@@ -107,7 +111,9 @@
 2. **진짜 `node_modules` 를 복사한다** — 심볼릭 링크는 Turbopack 이 거절한다(위 표). `cp -a --reflink=auto <메인>/node_modules .`.
 3. **화면 서버는 `node scripts/ui-dev.mjs`** — 로컬 스택에 붙이고 모델 열쇠를 비운 채 3100(`UI_PORT`)에 뜬다(`npm run dev:local`). `npm run dev` 를
    그냥 띄우면 운영 접속값이라 시작을 거절한다(`next.config.ts`).
-4. **찍기는 `UI_ONLY=<id,id> node scripts/ui-shots.mjs <폴더>`** — 고친 화면의 id 만 두 폭으로 찍는다(id 는 그 파일의 `PLAN`).
+4. **찍기는 `UI_ONLY=<id,id> node scripts/ui-shots.mjs <폴더>`** — 고친 화면의 id 만 세 폭(데스크톱 1280 · 모바일 390 · 전체 화면 1920)으로
+   찍는다(id 는 그 파일의 `PLAN`). 폭은 `UI_SIZES=desktop,mobile,wide` 의 id 로 고른다. 씨앗은 새 회원에게 베타 회원의 무료 몫(5)을 채우고,
+   캡처 서버(`ui-dev.mjs`)는 그림 전용 가짜 카카오 키를 얹는다 — `/auth` 에 카카오 단추가 없으면 도구가 경고를 찍는다(#1027).
    고치기 전 그림은 main 을 체크아웃한 같은 자리에서 먼저 찍는다. **로딩 뼈대(`loading.tsx`)는 뼈대 무리의 `skeleton-*` id 로**
    찍는다(#604) — 도구가 지은 서버(`UI_PORT`+2)를 따로 세워 이동을 붙잡는다. `next dev` 로는 뼈대가 안 선다(`scripts/ui-shots.mjs` 의
    `serverAsBuilt` 머리말).

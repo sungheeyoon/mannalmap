@@ -1,4 +1,5 @@
 import { Redirect, Stack, router, useGlobalSearchParams, usePathname } from 'expo-router';
+import { useEffect } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -20,6 +21,8 @@ import { Icon } from '@/ui/icons';
 import { Logo } from '@/ui/logo';
 import { SecondaryButton } from '@/ui/parts';
 import { COLOR, ELEMENT_TONE, FONT, RADIUS, TYPE } from '@/ui/tokens';
+import { KEEP_VIEW } from '@/ui/keep-view';
+import { resendUnfinishedPurchases } from '@/credits/store';
 
 /** 웹 머리글의 `MEMBER_TABS` 와 같은 넷 · 같은 글자다. 궁합의 첫 화면은 앱에서 `/me/compat` 다. 인연이 닫힌 동안은 홈 · 궁합 둘이다(ADR 0222) */
 const TABS = [
@@ -55,6 +58,11 @@ export default function MeLayout() {
   useMatchClosedGuard(pathname, matchOpen);
   useAdultCheckGuard(pathname, currentPath(pathname, search), gate.kind === 'in' && matchOpen !== false);
   const tabs = tabsWhileShut(TABS, matchOpen);
+  /* 결제 중 앱이 꺼진 Google Play 구매를 켤 때 한 번 다시 보낸다 — 서버가 확인 · 지급 · 소비한다(ADR 0230). Android 가 아니면 아무것도 안 한다 */
+  const signedIn = gate.kind === 'in';
+  useEffect(() => {
+    if (signedIn) void resendUnfinishedPurchases();
+  }, [signedIn]);
 
   if (gate.kind === 'checking') return <View style={styles.screen} />;
   /* 이 주소로 바로 들어온 사람은 로그인 · 가입 뒤 여기로 돌아온다(ADR 0213). 로그아웃한 사람은 돌아올 뜻이 없다 */
@@ -136,7 +144,7 @@ export default function MeLayout() {
                 onPress={() => goTab(tab.href)}
                 style={styles.tab}
               >
-                <View style={[styles.tabMark, active && styles.tabMarkOn]}>
+                <View {...KEEP_VIEW} style={[styles.tabMark, active && styles.tabMarkOn]}>
                   <Icon name={tab.icon} color={active ? ELEMENT_TONE.木.ink : COLOR.secondary} />
                 </View>
                 <Text style={[styles.tabLabel, active && styles.tabLabelOn]}>{tab.label}</Text>

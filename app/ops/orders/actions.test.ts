@@ -15,7 +15,7 @@ vi.mock('../../auth/server-client', () => ({
   }),
 }));
 vi.mock('next/cache', () => ({ refresh: () => {}, revalidatePath: () => {} }));
-vi.mock('./portone-cancellations', () => ({ cancellationCheck: vi.fn() }));
+vi.mock('./cancellations', () => ({ cancellationCheck: vi.fn() }));
 
 const { bookRefund, holdRefund, releaseRefund } = await import('./actions');
 
@@ -44,7 +44,7 @@ describe('환불 누름의 거절 기록', () => {
     aal = 'aal1';
     const answers = [
       await holdRefund({ orderId: ORDER, credits: 1, reason: 'other', expectedAmount: 0, requestId: HOLD }),
-      await bookRefund({ orderId: ORDER, holdId: HOLD, refundId: 'pg-1' }),
+      await bookRefund({ orderId: ORDER, holdId: HOLD, refundId: 'refund-1' }),
       await releaseRefund({ orderId: ORDER, holdId: HOLD }),
     ];
     expect(answers.every((answer) => !answer.ok)).toBe(true);

@@ -29,7 +29,7 @@ macOS 키체인에 둔 것, 문서에 적지 않는다). **로컬 스택의 `--l
 | INFO `rls_enabled_no_policy` | 26 | 26 → 29(ADR 0105 의 `audit.operator_access` · `audit.operator_access_export` · `signup_pause`, 운영에서 잼) | **남긴다 — 의도다**(아래) |
 
 잠금은 pgTAP `44_advisor_lints`(invoker 까지 search_path · 닫은 셋) 와 `33_function_shape`(anon 에 열린 문은
-둘 — `current_beta_schedule()` · `shared_reading(text)`).
+넷 — `current_beta_schedule()` · `match_is_open()` · `match_talk_open()` · `shared_reading(text)`, 원본은 그 시험의 집합 — 2026-11-06 에 쟀다).
 
 **남긴 것과 까닭.**
 
@@ -243,7 +243,7 @@ bash scripts/aws-wizard.sh
 - **400일은 전환 뒤 올라오는 객체의 기본값이다** — Governance 시험 기간(12 의 첫 반출 · 시험 객체)의 객체는 Governance 1일
   그대로라 하루 뒤 보존이 풀린다. 그 객체도 지켜야 하면 아래 4 대로 객체마다 올린다
 - `select * from audit.export_status()`(위 「상태를 본다」)의 `last_outcome` 이 `succeeded`, `consecutive_failures` 0, `pending_rows` 가 작다
-- `audit.operator_access_export` 에 범위가 적혀 있다 — #304 의 7 이 「끝」으로 보는 것이다
+- `audit.operator_access_export` 에 범위가 적혀 있다 — #770 B 의 「AWS 반출」 줄이 「끝」으로 보는 것이다
 - 버킷의 기본 보존이 `COMPLIANCE 400`(또는 그 이상 — `aws --profile saju-admin s3api get-object-lock-configuration --bucket <버킷>`)
 - 이튿날 · 달마다 `npm run audit:verify`(아래 9)가 초록
 
@@ -455,5 +455,8 @@ npm audit --omit=dev --audit-level=high ; echo $?   # 0 이어야 한다
 4. **고친 판이 아직 없으면** 막을 자리를 본다 — 그 경로를 우리가 부르나(`npm audit` 의 advisory 본문). 안 부르면
    간극 대장 G-23 ① 에 패키지 · advisory · 까닭 · 다시 볼 날을 적고, 그동안 붉은 main 은 이슈가 들고 있다.
    `--audit-level` 을 critical 로 올리거나 차선을 끄지 않는다.
+5. **앱(`mobile/`)은 `node scripts/audit-app.mjs` 가 같은 문턱으로 잰다.** 앱 번들에 안 실리는 빌드 도구의 high 이고 같은 메이저에 고친 판이 없을 때만
+   운영자에게 물어 `mobile/audit-exceptions.json` 에 한 줄(GHSA id · 패키지 · 사유 · 걷을 조건 · 결정)을 더한다. 감사에 더는 안 나오는 줄은 붉으니 걷는다.
+   Expo SDK 를 올리는 PR 은 예외를 다 걷고 다시 잰다(ADR 0104 추기 2026-11-06).
 
 개발 의존성(`npm audit` 전체)은 CI 가 안 막는다 — 운영에 안 실린다. 같은 절차로 손으로 정리한다(G-23 ⑫).

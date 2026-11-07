@@ -24,9 +24,8 @@ describe('결제 내역 한 줄 (G-21, ADR 0174)', () => {
     });
   });
 
-  it('유효기간은 결제한 서울 날짜부터 5년 뒤 같은 날까지다', () => {
-    expect(paidOrderOf(ROW).validUntil).toBe('2031년 10월 12일');
-    expect(paidOrderOf({ ...ROW, paid_at: '2026-10-12T15:30:00+00:00' }).validUntil).toBe('2031년 10월 13일');
+  it('유효기간 칸은 없다 — 산 몫은 무기한이다 (ADR 0212)', () => {
+    expect(paidOrderOf(ROW)).not.toHaveProperty('validUntil');
   });
 
   it('결제 시각은 한국 시간이다', () => {

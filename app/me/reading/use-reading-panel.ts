@@ -30,7 +30,7 @@ import type { ReadingTarget } from './target';
 import type { TasteCarryView } from '../../taste/taste-carry';
 import { useBuyCredits } from '../credits/buy-credits';
 import { announceCreditsMoved } from '../credits/credits-signal';
-import type { ReadingCredits } from '../credits/remaining';
+import type { ReadingCredits } from '@/src/lib/reading/credits';
 
 /** 이 탭이 보이는가 — 지켜보는 고리(`watchRun`)가 숨긴 탭에서 쉬게 */
 const documentVisibility: PageVisibility = {

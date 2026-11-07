@@ -108,7 +108,8 @@ function look(cwd) {
   };
 }
 
-const LOCK = process.env.SAJU_SLOT_LOCK ?? join(homedir(), '.cache', 'saju', 'slot.lock');
+/** 할당 잠금 — `scripts/sweep-docker.mjs` 도 볼륨을 지우는 동안 같은 것을 쥔다 */
+export const LOCK = process.env.SAJU_SLOT_LOCK ?? join(homedir(), '.cache', 'saju', 'slot.lock');
 
 function alive(pid) {
   try {

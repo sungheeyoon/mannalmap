@@ -12,8 +12,8 @@ import type { Database } from '@/src/lib/db';
  * 풀이 제출(`app/me/reading/pipeline.ts` 둘) · 결과 회수(`app/me/reading/collect.ts`) ·
  * 서버 오류 알림(`app/request-error.ts`, `instrumentation.ts` 가 부른다) ·
  * 결과 복구 크론(`app/api/cron/reading/route.ts`) · 접속기록 반출 크론
- * (`app/api/cron/audit-export/route.ts`) · 닫힌 방의 메시지 파기 크론(`app/api/cron/chat-purge/route.ts`, ADR 0217) · 웹 푸시 배달 문(`app/api/push/dispatch/route.ts`, ADR 0156) · OpenAI webhook · 결제 webhook
- * (`app/api/openai/webhook/route.ts` · `app/api/portone/webhook/route.ts`), 그리고 **사용자 경로의 제한된 예외 하나** —
+ * (`app/api/cron/audit-export/route.ts`) · 닫힌 방의 메시지 파기 크론(`app/api/cron/chat-purge/route.ts`, ADR 0217) · 웹 푸시 배달 문(`app/api/push/dispatch/route.ts`, ADR 0156) · OpenAI webhook
+ * (`app/api/openai/webhook/route.ts`), 그리고 **사용자 경로의 제한된 예외 하나** —
  * 풀에 오르는 요약과 내 사람의 여덟 글자를 쓰는 문 넷(`app/me/keyed-chart-writes.ts`, G-64 · ADR 0136), 그리고 로그인 전
  * 사주 문단의 문 일곱(로그인 전 쪽 넷 `app/taste/keyed-taste.ts` · 가입한 회원 쪽 셋 `app/taste/keyed-taste-claims.ts`, ADR 0143 —
  * 방문자는 로그인 전이고, 지문 · HMAC 은 서버만 짓는다).

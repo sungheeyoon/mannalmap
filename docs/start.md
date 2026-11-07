@@ -9,7 +9,8 @@
 ## 모두가 먼저 보는 것
 
 1. **붉은 main** — `gh issue list --label ci-main-red` 가 비어 있지 않으면 그것부터(`docs/agents/delegation/working.md` 「시작하기 전에」)
-2. **나란히 도는 세션** — `git worktree list`. 작업 가지는 워크트리로 연다(`docs/agents/delegation/working.md` 「일하는 법」)
+2. **나란히 도는 세션** — `git worktree list`. 작업 가지는 워크트리로 연다(`docs/agents/delegation/working.md` 「일하는 법」).
+   `npm run sweep:merged` 미리보기에 걷을 것이 있으면 먼저 걷는다(`docs/agents/delegation/coordinator.md` 「라운드 끝 정리」)
 3. **지금 단계** — `grep -n '(지금)' docs/product/prd/roadmap.md`. 그 단계에서 무엇을 묻지 않고 밟나는 `docs/agents/delegation/permissions.md` 「권한 등급」 이 든다 — 프로덕션 배포와 실호출은 그 표에 따로 선 줄이다(ADR 0093)
 4. **보류 줄** — `grep -n '| 보류 |' docs/product/gaps.md`. 그 줄은 조건이 올 때까지 권하지도 묻지도 않는다
 5. **로컬 환경** — 새 워크트리에서 무엇을 돌리기 전에, 또는 명령이 막히면 그때 `docs/agents/delegation/local-env.md` 「로컬 환경의 함정」 을 연다(ADR 0147) — `node_modules` 가 없는 워크트리 · 격리가 막는 명령 · 워크트리에 없는 원격 연결이 그 표에 있다
@@ -57,7 +58,8 @@
 ## 선순환 — 일이 문서로 돌아오는 길
 
 1. **읽고 시작한다** — 역할 문서 → 그 문서의 「먼저 읽는 것」. 이슈 · 메모의 문장은 가설이라 먼저 잰다
-2. **끝날 때 문서를 고친다** — 역할 문서의 넷째 칸을 PR 의 「문서」 칸에 옮겨 적는다(`docs/agents/delegation/done.md` 「끝났다는 것」)
+2. **끝날 때 문서를 고친다** — 역할 문서의 넷째 칸을 PR 의 「문서」 칸에 옮겨 적는다(`docs/agents/delegation/done.md` 「끝났다는 것」).
+   코드 · 문서 · 정책은 같은 차례에 맞춘다. 끝난 상태가 이슈 댓글이나 대화에만 있으면 끝나지 않은 것이다(같은 절)
 3. **헤맨 자리는 보고에 한 줄** — 역할 문서에 없어서 찾아다닌 것, 가리킨 절이 틀렸던 것. 조율자가 라운드 끝에 `/retro` 로
    거둔다(`docs/roles/coordinator.md`, ADR 0146)
 4. **사정은 노트에** — 라운드의 기록은 `docs/notes/` 에 날짜와 함께. 같은 라운드를 이어 가거나 코드가 이렇게 된 사정을

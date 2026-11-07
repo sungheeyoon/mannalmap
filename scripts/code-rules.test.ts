@@ -1110,14 +1110,18 @@ describe('간극 대장 (docs/product/gaps.md, ADR 0089)', () => {
     .map((line) => line.split('|').map((cell) => cell.trim()))
     .filter((cells) => cells.length >= 6 && /^G-\d{2,3}$/.test(cells[1]));
 
-  it('줄마다 번호가 하나씩이고 상태는 다섯 중 하나다', () => {
+  it('줄마다 상태는 다섯 중 하나다', () => {
     // 파싱이 0 으로 떨어지는 것을 막는 문턱이다 — 줄이 닫혀 줄어드는 것은 정상이다. 수를 걸면 닫을 때마다
     // 문턱을 내려야 한다(2026-09-23 에 21 → 16 → 12줄, § 17 → 10)
     expect(rows.length).toBeGreaterThan(0);
-    const ids = rows.map((cells) => cells[1]);
-    expect(new Set(ids).size).toBe(ids.length);
     const STATES = new Set(['정했다', '미정', '어긋남', '보류', '결정 대기']);
     expect(rows.filter((cells) => !STATES.has(cells[4])).map((cells) => `${cells[1]} :: ${cells[4]}`)).toEqual([]);
+  });
+
+  it('G 번호는 한 줄에만 있다 — 나란히 쓴 둘이 같은 번호를 잡으면 겹친 번호를 든다', () => {
+    const seen = new Map<string, number>();
+    for (const cells of rows) seen.set(cells[1], (seen.get(cells[1]) ?? 0) + 1);
+    expect([...seen].filter(([, count]) => count > 1).map(([id, count]) => `${id} × ${count}`)).toEqual([]);
   });
 
   it('출처의 § 는 PRD 본체에 실제로 있는 절이다 — 절을 옮기면 대장도 옮긴다', () => {
@@ -1493,7 +1497,7 @@ describe('위임 규약 (docs/agents/delegation.md 색인 → docs/agents/delega
   const part = (name: string) => readFileSync(join(ROOT, DELEGATION_DIR, name), 'utf8');
   const permissions = part('permissions.md');
   const settings = JSON.parse(readFileSync(join(ROOT, '.claude/settings.json'), 'utf8')) as {
-    permissions?: { ask?: string[]; deny?: string[] };
+    permissions?: { allow?: string[]; ask?: string[]; deny?: string[] };
   };
 
   /** 권한 표에서 첫 칸이 `**N ` 으로 시작하는 줄의 잠금 칸(넷째)에 적힌 `Bash(…)` 규칙 */
@@ -1521,6 +1525,16 @@ describe('위임 규약 (docs/agents/delegation.md 색인 → docs/agents/delega
     expect([...deny].sort()).toEqual([...(settings.permissions?.deny ?? [])].sort());
     // 같은 규칙이 두 등급에 서 있으면 어느 쪽이 이기는지 도구가 정한다 — 문서가 그것을 안 든다
     expect(ask.filter((rule) => deny.includes(rule))).toEqual([]);
+  });
+
+  it('권한 표에 「허용」으로 적은 규칙은 settings 의 allow 와 정확히 같은 목록이다', () => {
+    const allowed = permissions
+      .split('\n')
+      .map((line) => line.split('|').map((cell) => cell.trim()))
+      .filter((cells) => cells.length >= 6 && cells[1].startsWith('**') && cells[4].startsWith('허용 '))
+      .flatMap((cells) => [...cells[4].matchAll(/`(Bash\([^`]+\))`/g)].map((match) => match[1]));
+    expect([...allowed].sort()).toEqual([...(settings.permissions?.allow ?? [])].sort());
+    expect(allowed).toContain('Bash(npm run sweep:merged:*)');
   });
 
   /** 출시 단계의 표와 PRD 읽기는 `scripts/release-stage.mjs` 한 곳이다 — CI 계획도 같은 것을 읽는다 (ADR 0093 · 0097) */
@@ -1725,15 +1739,19 @@ describe('공개 저장소의 개인정보 (docs/agents/delegation/working.md, A
   /** 사람을 가리키는 꼴 — 아파트 동 · 호, 휴대폰 번호, 주민등록번호 */
   const PERSONAL = [/\d+동 \d+호/, /\b01[016789]-?\d{3,4}-?\d{4}\b/, /\b\d{6}-[1-4]\d{6}\b/];
   const TEXT = /\.(ts|tsx|mts|mjs|js|json|md|sql|ya?ml|toml|txt|css|sh)$/;
+  /** 법이 공개하라는 사업장 주소를 적는 자리 하나 — 동 · 호 꼴만 여기서 비킨다(ADR 0232) */
+  const BUSINESS_CONSTANTS = 'src/lib/brand/business.ts';
 
-  it('추적하는 글자 파일 어디에도 집 주소 · 휴대폰 · 주민번호 꼴이 없다', () => {
+  it('추적하는 글자 파일 어디에도 집 주소 · 휴대폰 · 주민번호 꼴이 없다 — 사업장 주소는 사업자 정보 상수 하나에만 선다', () => {
     const tracked = execFileSync('git', ['ls-files'], { cwd: ROOT, encoding: 'utf8' })
       .split('\n')
       .filter((rel) => TEXT.test(rel) && rel !== 'package-lock.json' && existsSync(join(ROOT, rel)));
     expect(tracked.length).toBeGreaterThan(500);
     const hits = tracked.flatMap((rel) => {
       const text = readFileSync(join(ROOT, rel), 'utf8');
-      return PERSONAL.filter((pattern) => pattern.test(text)).map((pattern) => `${rel} ${pattern}`);
+      return PERSONAL.filter((pattern) => pattern.test(text) && !(rel === BUSINESS_CONSTANTS && pattern === PERSONAL[0])).map(
+        (pattern) => `${rel} ${pattern}`,
+      );
     });
     expect(hits).toEqual([]);
   });

@@ -147,9 +147,8 @@ begin
   end loop;
 
   /*
-    **가입이 끝난 것으로 둔다**(ADR 0042). 코드는 안 붙인다 — 코드가 서기 전에 들어온
-    계정이 그 모양이고, 여기서 재려는 것은 코드가 아니라 그다음이다. 코드 자체는
-    `01_signup_code` 가 실제 문(`complete_signup`)으로 잰다.
+    **가입이 끝난 것으로 둔다**(ADR 0042). 코드는 안 붙인다 — 가입은 코드를 묻지 않는다(ADR 0225).
+    가입 문 자체는 `01_signup` 이 실제 문(`complete_signup`)으로 잰다.
   */
   update public.app_user set nickname = taken, signed_up_at = now() where id = new_id;
 

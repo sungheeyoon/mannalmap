@@ -160,6 +160,7 @@ export type Database = {
           id: string
           improvement_consent: boolean | null
           intro: string | null
+          kept_free_credits: number | null
           nickname: string | null
           notice_ack_at: string | null
           notice_ends_on: string | null
@@ -177,6 +178,7 @@ export type Database = {
           id: string
           improvement_consent?: boolean | null
           intro?: string | null
+          kept_free_credits?: number | null
           nickname?: string | null
           notice_ack_at?: string | null
           notice_ends_on?: string | null
@@ -194,6 +196,7 @@ export type Database = {
           id?: string
           improvement_consent?: boolean | null
           intro?: string | null
+          kept_free_credits?: number | null
           nickname?: string | null
           notice_ack_at?: string | null
           notice_ends_on?: string | null
@@ -2466,29 +2469,6 @@ export type Database = {
         }
         Relationships: []
       }
-      signup_code_miss: {
-        Row: {
-          missed_at: string
-          user_id: string
-        }
-        Insert: {
-          missed_at?: string
-          user_id: string
-        }
-        Update: {
-          missed_at?: string
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "signup_code_miss_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "app_user"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       signup_pause: {
         Row: {
           id: number
@@ -2509,6 +2489,215 @@ export type Database = {
           resumed_at?: string | null
         }
         Relationships: []
+      }
+      store_purchase: {
+        Row: {
+          consumed_at: string | null
+          granted_at: string
+          id: string
+          is_promo: boolean
+          is_test: boolean
+          order_id: string
+          product_id: string
+          purchase_token: string
+          purchased_at: string
+          store: string
+          store_order_id: string | null
+          user_id: string
+          voided_at: string | null
+        }
+        Insert: {
+          consumed_at?: string | null
+          granted_at?: string
+          id?: string
+          is_promo?: boolean
+          is_test?: boolean
+          order_id: string
+          product_id: string
+          purchase_token: string
+          purchased_at: string
+          store: string
+          store_order_id?: string | null
+          user_id: string
+          voided_at?: string | null
+        }
+        Update: {
+          consumed_at?: string | null
+          granted_at?: string
+          id?: string
+          is_promo?: boolean
+          is_test?: boolean
+          order_id?: string
+          product_id?: string
+          purchase_token?: string
+          purchased_at?: string
+          store?: string
+          store_order_id?: string | null
+          user_id?: string
+          voided_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "store_purchase_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: true
+            referencedRelation: "reading_order"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "store_purchase_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "app_user"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      store_purchase_restriction: {
+        Row: {
+          action: string
+          actor_user_id: string | null
+          at: string
+          id: string
+          note: string
+          reason: string
+          request_id: string
+          user_id: string
+        }
+        Insert: {
+          action: string
+          actor_user_id?: string | null
+          at?: string
+          id?: string
+          note: string
+          reason: string
+          request_id: string
+          user_id: string
+        }
+        Update: {
+          action?: string
+          actor_user_id?: string | null
+          at?: string
+          id?: string
+          note?: string
+          reason?: string
+          request_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "store_purchase_restriction_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "app_user"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      store_purchase_void: {
+        Row: {
+          credits_bought: number
+          credits_kept: number
+          credits_revoked: number
+          hold_outcome: string | null
+          id: string
+          paid_amount: number
+          purchase_id: string
+          recorded_at: string
+          refund_type: number | null
+          refunded_amount: number
+          share_amount: number
+          source: string
+          user_id: string
+          voided_at: string
+          voided_reason: number | null
+          voided_source: number | null
+        }
+        Insert: {
+          credits_bought: number
+          credits_kept: number
+          credits_revoked: number
+          hold_outcome?: string | null
+          id?: string
+          paid_amount: number
+          purchase_id: string
+          recorded_at?: string
+          refund_type?: number | null
+          refunded_amount: number
+          share_amount: number
+          source: string
+          user_id: string
+          voided_at: string
+          voided_reason?: number | null
+          voided_source?: number | null
+        }
+        Update: {
+          credits_bought?: number
+          credits_kept?: number
+          credits_revoked?: number
+          hold_outcome?: string | null
+          id?: string
+          paid_amount?: number
+          purchase_id?: string
+          recorded_at?: string
+          refund_type?: number | null
+          refunded_amount?: number
+          share_amount?: number
+          source?: string
+          user_id?: string
+          voided_at?: string
+          voided_reason?: number | null
+          voided_source?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "store_purchase_void_purchase_id_fkey"
+            columns: ["purchase_id"]
+            isOneToOne: true
+            referencedRelation: "store_purchase"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "store_purchase_void_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "app_user"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      store_purchase_void_take: {
+        Row: {
+          bundle_id: string
+          credits: number
+          void_id: string
+        }
+        Insert: {
+          bundle_id: string
+          credits: number
+          void_id: string
+        }
+        Update: {
+          bundle_id?: string
+          credits?: number
+          void_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "store_purchase_void_take_bundle_id_fkey"
+            columns: ["bundle_id"]
+            isOneToOne: false
+            referencedRelation: "reading_bundle"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "store_purchase_void_take_void_id_fkey"
+            columns: ["void_id"]
+            isOneToOne: false
+            referencedRelation: "store_purchase_void"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       taste_artifact: {
         Row: {
@@ -3007,6 +3196,7 @@ export type Database = {
         Returns: undefined
       }
       begin_my_photo_upload: { Args: never; Returns: string }
+      beta_free_credits: { Args: never; Returns: number }
       beta_is_over: { Args: never; Returns: boolean }
       block_user: { Args: { p_user_id: string }; Returns: boolean }
       book_reading_credit_grant: {
@@ -3392,6 +3582,23 @@ export type Database = {
           p_run_id: string
         }
         Returns: undefined
+      }
+      grant_store_purchase: {
+        Args: {
+          p_is_promo?: boolean
+          p_is_test: boolean
+          p_product_id: string
+          p_purchase_token: string
+          p_purchased_at: string
+          p_store: string
+          p_store_order_id: string
+          p_user_id: string
+        }
+        Returns: {
+          credits: number
+          order_id: string
+          outcome: string
+        }[]
       }
       hold_report_quota: { Args: { p_actor: string }; Returns: undefined }
       invalidate_pending_requests: {
@@ -3901,6 +4108,10 @@ export type Database = {
         }
         Returns: boolean
       }
+      note_store_purchase_consumed: {
+        Args: { p_purchase_token: string }
+        Returns: boolean
+      }
       note_taste_checks: {
         Args: { p_artifact_id: string; p_attempt: number; p_findings: Json }
         Returns: boolean
@@ -4081,6 +4292,7 @@ export type Database = {
           refunded_credits: number
           reserved: number
           status: string
+          taken_by_store: number
           unused: number
           used: number
         }[]
@@ -4461,6 +4673,10 @@ export type Database = {
       reading_budget_warning: { Args: never; Returns: number }
       reading_bundle_held: { Args: { p_bundle_id: string }; Returns: number }
       reading_bundle_price: { Args: { p_credits: number }; Returns: number }
+      reading_bundle_taken_by_store: {
+        Args: { p_bundle_id: string }
+        Returns: number
+      }
       reading_credit_grant_left: { Args: { p_user: string }; Returns: number }
       reading_credit_limit: { Args: never; Returns: number }
       reading_credit_limit_for: { Args: { p_user: string }; Returns: number }
@@ -4818,6 +5034,20 @@ export type Database = {
         Args: { p_listed: boolean; p_person: string }
         Returns: undefined
       }
+      set_store_purchase_restriction: {
+        Args: {
+          p_action: string
+          p_actor: string
+          p_note: string
+          p_reason: string
+          p_request_id: string
+          p_user_id: string
+        }
+        Returns: {
+          entry_id: string
+          replayed: boolean
+        }[]
+      }
       settle_push_delivery: {
         Args: { p_delivery_id: string; p_result: string }
         Returns: string
@@ -4848,8 +5078,6 @@ export type Database = {
           score: number
         }[]
       }
-      signup_code_miss_limit: { Args: never; Returns: number }
-      signup_code_miss_window: { Args: never; Returns: string }
       signup_today: { Args: never; Returns: string }
       start_reading_run: {
         Args: {
@@ -4888,6 +5116,16 @@ export type Database = {
           viewer_is_first: boolean
         }[]
       }
+      store_payment_id: {
+        Args: { p_purchase_token: string; p_store_order_id: string }
+        Returns: string
+      }
+      store_product_credits: { Args: { p_product_id: string }; Returns: number }
+      store_purchase_is_restricted: {
+        Args: { p_user_id: string }
+        Returns: boolean
+      }
+      store_purchase_refusal: { Args: { p_user_id: string }; Returns: string }
       survey_sole_conflict: {
         Args: { p_picked: string[]; p_sole: string[] }
         Returns: boolean
@@ -5010,6 +5248,23 @@ export type Database = {
           isOneToOne: false
           isSetofReturn: true
         }
+      }
+      void_store_purchase: {
+        Args: {
+          p_purchase_token: string
+          p_refund_type: number
+          p_source: string
+          p_store: string
+          p_store_order_id: string
+          p_voided_at: string
+          p_voided_reason: number
+          p_voided_source: number
+        }
+        Returns: {
+          credits_kept: number
+          credits_revoked: number
+          outcome: string
+        }[]
       }
       wake_photo_sweep: { Args: never; Returns: undefined }
       wake_push_dispatch: { Args: never; Returns: undefined }

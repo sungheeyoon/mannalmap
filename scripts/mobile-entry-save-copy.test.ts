@@ -22,15 +22,51 @@ describe('앱 입구', () => {
     expect(entry).toMatch(/<Text[^>]*>로그인<\/Text>/);
   });
 
-  it('입력 없이 들어가는 길 · 인연 소개 · 서비스 소개 · 고객센터 · 약관 및 정책이 로그인 없이 닿는다', () => {
+  it('입력 없이 들어가는 길 · 서비스 소개 · 고객센터 · 약관 및 정책이 로그인 없이 닿는다 — 첫 화면에 인연 입구는 없다(ADR 0226)', () => {
     expect(entry).toContain("router.push('/auth'");
-    expect(entry).toContain("router.push('/matching-intro'");
+    expect(entry).not.toContain('/matching-intro');
     expect(entry).toContain("router.push('/about'");
     expect(entry).toContain("router.push('/support'");
     expect(entry).toContain("router.push('/policies'");
   });
 
-  it('입구는 바닥글 나열을 옮기지 않고, 소개 판 없이 입력 화면 하나다', () => {
+  it('제목 아래는 웹 `/` 와 같은 두 탭이고, 궁합 탭은 로그인 전 궁합 결과 대신 기존 글자로 로그인에 잇는다(ADR 0226)', () => {
+    const web = read('app/home-hero.tsx');
+    expect(web).toContain("title: '내 사주 보기'");
+    expect(entry).toContain("label: '내 사주 보기'");
+    expect(entry).toContain('label: COMPAT_ENTRY');
+    expect(entry).toContain('accessibilityRole="tablist"');
+    /* 웹 탭의 면 — 판은 칸 모서리의 꺼진 면, 켜진 칸은 흰 면과 카드 그림자 */
+    expect(web).toContain('rounded-cell bg-surface-sunken p-0.5');
+    expect(entry).toMatch(/tabs: \{[^}]*RADIUS\.cell[^}]*COLOR\.surfaceSunken/);
+    expect(entry).toMatch(/tabOn: \{[^}]*COLOR\.surface,[^}]*ELEVATION\.card/);
+    /* 궁합 탭 — 로그인 화면의 그 제목, 웹 로그인 전 궁합 결과의 단추 · 풀이권 줄과 같은 상수, 갈 곳은 지금의 궁합 로그인 길 */
+    for (const name of ['COMPAT_SIGN_IN_TITLE', 'COMPAT_CREDIT_NOTE', 'COMPAT_SIGN_IN_ACTION']) expect(entry).toContain(name);
+    expect(read('app/pair-taste.tsx')).toContain('{COMPAT_SIGN_IN_ACTION}');
+    expect(read('app/pair-taste.tsx')).toContain('{COMPAT_CREDIT_NOTE}');
+    expect(entry).toContain("withReturnPath('/auth', '/me/compat')");
+    /* 주 단추는 웹 첫 화면과 같은 글자다 */
+    expect(entry).toContain("'무료로 내 사주 보기'");
+    expect(read('app/saju-calculator.tsx')).toContain("'무료로 내 사주 보기'");
+  });
+
+  it('주 단추 바로 아래 이미 쓰는 사람의 한 줄이 웹 첫 화면과 같은 글자로 선다 — 제목 아래 설명 줄은 없다(ADR 0226)', () => {
+    const button = entry.indexOf('<PrimaryButton label={signedOut');
+    const line = entry.indexOf('{MEMBER_SIGN_IN_ASK}');
+    expect(button).toBeGreaterThan(-1);
+    expect(line).toBeGreaterThan(button);
+    expect(read('app/saju-calculator.tsx')).toContain('{MEMBER_SIGN_IN_ASK}');
+    /* 웹 첫 화면처럼 제목 아래 설명 줄이 없다 — `ABOUT_LEAD` 는 서비스 소개의 글이다 */
+    expect(entry).not.toContain('ABOUT_LEAD');
+  });
+
+  it('입구는 관문의 답 하나로 고르고, 못 읽은 답은 다시 시도하기다', () => {
+    expect(entry).toContain('entryFor(gate.kind, opened)');
+    expect(entry).toContain('label="다시 시도하기"');
+    expect(entry).toContain("<Redirect href={'/signup' as never} />");
+  });
+
+  it('입구는 바닥글 나열을 옮기지 않고, 따로 된 소개 판 주소가 없다', () => {
     expect(entry).not.toContain('GUIDE_LINKS');
     expect(entry).not.toContain('/landing');
     expect(existsSync(join(import.meta.dirname, '../mobile/src/app/landing.tsx'))).toBe(false);
@@ -60,7 +96,7 @@ describe('인연 소개 (#940)', () => {
 
   it('규칙은 카드 · 방 · 약관과 같은 상수를 읽고, 없는 본인인증을 약속하지 않는다', () => {
     for (const name of ['TALK_START_NOTE', 'CHAT_USES_NO_CREDIT', 'DETAIL_INTRO', 'SIGNUP_NOTICE_DISCOVERY']) expect(intro).toContain(name);
-    expect(read('src/lib/brand/terms.ts')).toContain('만 19세 이상만 가입할 수 있습니다');
+    expect(read('src/lib/brand/terms.ts')).toContain('인연 찾기와 대화방은 휴대폰 본인확인을 마친 만 19세 이상 이용자만 이용할 수 있습니다');
     expect(intro).not.toMatch(/본인인증|본인확인|성인 확인/);
   });
 
@@ -239,13 +275,33 @@ describe('앱에 있는 화면은 앱에서 연다', () => {
   });
 });
 
-describe('앱은 풀이권을 팔지 않는다', () => {
-  it('풀이권 부족 창에 구매 단추가 없고 판매가 닫힌 웹의 글자가 선다', () => {
+/**
+ * **앱은 Android 에서만 Google Play 로 판다**(ADR 0230). 풀이권 부족 창은 Android 에서 판매가 열린 꼴 「풀이권 구매」 · 「닫기」(대장 credits-04)이고,
+ * 「풀이권 구매」는 지금 화면과 그 이름을 싣고 `/me/credits` 로 간다 — 결제 완료 창이 그 화면으로 돌려보낸다. iOS 는 아직 팔지 않아 닫힌 꼴(한 줄과 「확인」)이다.
+ * 판매가 열렸는지를 묻는 웹의 문(`my_reading_sale_is_open`)은 앱이 부르지 않는다 — 앱의 판매는 그 스위치가 아니라 Play 와 서버의 판정(`store_purchase_refusal`)이다.
+ */
+describe('앱은 Android 에서만 Google Play 로 판다 (ADR 0230)', () => {
+  it('판매 여부는 플랫폼 하나가 가른다 — Android 만', () => {
+    expect(read('mobile/src/credits/store.ts')).toMatch(/export const storeAvailable = Platform\.OS === 'android';/);
+  });
+
+  it('풀이권 부족 창 — Android 는 「풀이권 구매」 · 「닫기」로 돌아갈 곳을 싣고 상품 화면에, iOS 는 판매가 닫힌 글자', () => {
     const dialogs = read('mobile/src/reading/dialogs.tsx');
-    expect(dialogs).not.toContain('BUY_CREDITS_LABEL');
-    expect(dialogs).not.toContain('/me/credits');
-    expect(dialogs).toContain('SALE_CLOSED_NOTE');
-    expect(dialogs).toContain('SALE_CLOSED_OK');
+    expect(dialogs).toContain("import { storeAvailable } from '@/credits/store';");
+    expect(dialogs).toContain('confirmLabel={storeAvailable ? BUY_CREDITS_LABEL : SALE_CLOSED_OK}');
+    expect(dialogs).toContain('onConfirm={storeAvailable ? buy : onClose}');
+    expect(dialogs).toContain('cancelLabel={storeAvailable ? CREDITS_DIALOG_CLOSE : null}');
+    expect(dialogs).toContain('{!storeAvailable && <Text style={styles.line}>{SALE_CLOSED_NOTE}</Text>}');
+    expect(dialogs).toMatch(/router\.push\(`\/me\/credits\?back=\$\{back\}&noun=\$\{encodeURIComponent\(noun\)\}`/);
+    /* 판매 여부를 다른 값으로 가르지 않는다 — iOS 에 구매 단추가 생기는 길을 막는다 */
+    expect(dialogs.match(/BUY_CREDITS_LABEL/g)?.length).toBe(2);
+  });
+
+  it('상품 화면의 구매 판은 Android 에서만 선다', () => {
+    expect(read('mobile/src/credits/credits.tsx')).toContain('{storeAvailable && <StoreSection');
+  });
+
+  it('웹의 판매 스위치 문은 앱이 부르지 않는다 · 인연 쪽에는 구매 단추가 없다', () => {
     expect(read('mobile/src/reading/api.ts')).not.toContain('my_reading_sale_is_open');
     expect(read('mobile/src/matching/today.tsx')).not.toContain('BUY_CREDITS_LABEL');
     expect(read('mobile/src/matching/doors.ts')).not.toContain('my_reading_sale_is_open');

@@ -10,6 +10,13 @@
 begin;
 select plan(17);
 
+/**
+ * **이 파일은 무료 몫을 재지 않는다** — 다섯 장으로 짜인 셈이다. 정책을 베타의 몫으로 올려 둔다(트랜잭션이 되돌린다).
+ * 새 회원의 1장은 `99_free_credit_one_for_new_members` 가 잰다(ADR 0227).
+ */
+create or replace function public.reading_credit_limit()
+returns integer language sql immutable set search_path = '' as $limit$ select public.beta_free_credits() $limit$;
+
 create or replace function pg_temp.acting(uid uuid)
 returns void language plpgsql as $$
 begin

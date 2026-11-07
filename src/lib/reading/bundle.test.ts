@@ -6,7 +6,6 @@ import {
   bundleOrderName,
   discountAgainstSingles,
   READING_BUNDLES,
-  readingBundleValidUntil,
   isPenalizedRefund,
   readingOrderIdOf,
   refundBreakdown,
@@ -60,18 +59,6 @@ describe('상품 화면의 판단', () => {
       expect(bundleOrderName(b.credits)).not.toMatch(/test/i);
       expect(b.price).toBeGreaterThan(0);
     }
-  });
-});
-
-describe('유효기간이 끝나는 날 (ADR 0173 · 0174)', () => {
-  it('산 날부터 5년 뒤 같은 날이다 — 서울 날짜로 센다', () => {
-    expect(readingBundleValidUntil(new Date('2026-10-12T05:03:00Z'))).toBe('2031-10-12');
-    /* 서울로 자정을 넘긴 결제는 다음 날에 산 것이다 */
-    expect(readingBundleValidUntil(new Date('2026-10-12T15:30:00Z'))).toBe('2031-10-13');
-  });
-
-  it('5년 뒤에 같은 날이 없으면 그 달의 끝날이다', () => {
-    expect(readingBundleValidUntil(new Date('2028-02-29T03:00:00Z'))).toBe('2033-02-28');
   });
 });
 

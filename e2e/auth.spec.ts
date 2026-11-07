@@ -20,7 +20,7 @@ test('로그인하지 않으면 내 계정 화면에 들어가지 못한다', as
   await page.goto('/me');
 
   await expect(page).toHaveURL(/\/auth$/);
-  await expect(page.getByRole('button', { name: '구글로 로그인' })).toBeVisible();
+  await expect(page.getByRole('button', { name: '구글 로그인' })).toBeVisible();
 });
 
 /**
@@ -41,7 +41,7 @@ test('로그인하지 않은 채 회원 화면을 열어도 머리글이 회원 
   for (const path of ['/me', '/me/chat', '/compat']) {
     await page.goto(path);
     await expect(page).toHaveURL(/\/auth(\?|$)/);
-    await expect(page.getByRole('button', { name: '구글로 로그인' })).toBeVisible();
+    await expect(page.getByRole('button', { name: '구글 로그인' })).toBeVisible();
   }
 
   expect(doors).toEqual([]);
@@ -104,16 +104,14 @@ test('로그인이 끊겨도 다시 로그인이 같은 곳으로 간다 — 밖
   await expect(page.getByRole('link', { name: '다시 로그인' })).toHaveAttribute('href', '/auth');
 });
 
-test('로그인 화면은 코드가 한 번 필요하다고 미리 말한다', async ({ page }) => {
+test('로그인 화면은 테스트 코드를 말하지 않는다', async ({ page }) => {
   await page.goto('/auth');
 
   /*
-    **로그인 버튼을 누르기 전에 알려 준다.** 이메일 명단이 문을 지킬 때는 「초대받은
-    분만」이었고, 그때는 명단에 없으면 로그인 자체가 안 됐다. 지금은 로그인이 되고
-    그다음에 코드를 묻는다(ADR 0042) — 코드가 없는 사람이 로그인부터 하고 나서
-    막다른 화면을 만나지 않게, 필요한 것을 여기서 먼저 말한다.
+    **가입은 코드를 묻지 않는다**(ADR 0225). 운영 베타 동안 이 화면은 로그인 뒤에 코드가 필요하다고 미리 말했다(ADR 0042) —
+    그 줄이 남으면 코드가 없는 사람이 들어오지 않는다. 출구는 그대로 선다.
   */
-  await expect(page.getByText('테스트 코드', { exact: false })).toBeVisible();
+  await expect(page.getByText('테스트 코드', { exact: false })).toHaveCount(0);
   await expect(page.getByRole('link', { name: '사주로 돌아가기' })).toBeVisible();
 });
 
@@ -194,8 +192,11 @@ test('사주 계산은 로그인 없이 열리고 궁합은 로그인으로 이�
     계정 메뉴가 서므로, 세션이 없을 때 그 자리가 로그인을 권하는지도 함께 잰다 —
     한쪽만 재면 둘 중 하나가 늘 틀린 채로 지나간다.
   */
-  await expect(page.getByRole('link', { name: '로그인', exact: true })).toBeVisible();
+  await expect(page.getByRole('banner').getByRole('link', { name: '로그인', exact: true })).toBeVisible();
   await expect(page.getByLabel(/^(전체|설정) 메뉴$/)).toHaveCount(0);
+  /* 주 단추 바로 아래 이미 쓰는 사람의 한 줄 — 목적지 없이 로그인으로 가서 홈에 선다(ADR 0226) */
+  await expect(page.getByText('이미 계정이 있으신가요?')).toBeVisible();
+  await expect(page.locator('main').getByRole('link', { name: '로그인', exact: true })).toHaveAttribute('href', '/auth');
   /* 로그인 전 첫 화면은 두 입구 아래 곧장 폼이다 — 폼 제목은 화면 밖에서만 읽힌다(흐름 시안 g) */
   await expect(page.getByRole('tab', { name: /내 사주 보기/ })).toBeVisible();
   await expect(page.getByRole('heading', { name: '출생 정보를 입력해 주세요' })).toBeAttached();

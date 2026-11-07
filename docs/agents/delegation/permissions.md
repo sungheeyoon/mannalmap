@@ -5,7 +5,7 @@
 ## 권한 등급 — 무엇을 해도 되고 무엇은 묻는가
 
 등급은 **되돌릴 수 있는가**로 갈린다. 잠금 칸의 규칙은 `.claude/settings.json` 의 `ask`·`deny`
-목록과 **같은 표**다 — 시험이 둘을 견준다. **그 설정 파일은 Claude Code 만 읽는다** — 다른 에이전트
+목록과, 「허용」으로 적은 규칙은 `allow` 목록과 **같은 표**다 — 시험이 둘을 견준다. **그 설정 파일은 Claude Code 만 읽는다** — 다른 에이전트
 (Codex 처럼 `AGENTS.md` 를 입구로 삼는 것)에게는 이 표가 전부다. `deny` 는 도구가 막고, `ask` 는
 **어느 모드에서도 묻는다** — bypass 모드도 지나가지 않는다(2026-09-23 에 공식 문서로 확인).
 
@@ -21,6 +21,8 @@
 | --- | --- | --- | --- |
 | **0 읽는다** | 저장소·로컬 스택·CI 로그·이슈를 읽는다 | `git log` · `npm test` · `gh run view` · 로컬 DB 질의 | 없음 |
 | **1 로컬에서 고친다** | 작업 가지에서 파일을 고치고 시험을 돌린다. 로컬 스택은 마음껏 되돌린다 | `npm run db:reset` · `npm run test:e2e:authed` | 없음 |
+| **1 로컬에서 고친다 — 묻지 않게 허용** | 머지되거나 닫힌 PR 의 워크트리 · 로컬 가지를 걷는다. 기본은 미리보기이고 `--apply` 도 PR 이 끝났고 push 안 된 커밋 · 더러운 변경이 없는 것만 걷는다(`docs/agents/delegation/coordinator.md` 「출시 흐름」 4 · 「라운드 끝 정리」, 운영자 답 2026-11-06) | `npm run sweep:merged` · `npm run sweep:merged -- --apply` | 허용 `Bash(npm run sweep:merged:*)` |
+| **1 로컬에서 고친다 — 지울 때마다 사람이 본다** | 이 저장소의 로컬 스택 볼륨을 지운다. 기본은 진단만이고, `--apply` 는 이름을 댄 볼륨 가운데 컨테이너가 붙지 않고 어느 워크트리도 쥐지 않은 것만 지운다. 로컬 DB 데이터를 영구히 없애 되돌릴 수 없다. 이미지는 지우지 않는다(`docs/agents/delegation/coordinator.md` 「라운드 끝 정리」, 운영자 답 2026-11-07) | `npm run sweep:docker` · `npm run sweep:docker -- --apply <볼륨>` | 사람 — allow 에 넣지 않는다 |
 | **2 밖으로 낸다 — 되돌릴 수 있게** | 가지를 밀고 PR 을 열고 이슈에 적는다. 리뷰 뒤 `--auto` 머지를 건다(gate 가 초록이 될 때까지 기다린다, ADR 0082). main 에 직접 미는 길은 없다 — 관리자까지 PR 로만 든다(ADR 0121) | `git push -u origin <가지>` · `gh pr create` · `gh pr merge --auto --squash` | 없음 — 단 아래 등급 3 의 예외 |
 | **3 사람이 답한 뒤에 — 운영 배포** | **프로덕션 배포**(`vercel deploy --prod` · 대시보드의 Create Deployment — 머지는 배포가 아니다, ADR 0110). **운영 베타에서도 사람이 답한 뒤였다** — 라운드 끝의 묶음 배포 한 번을 조율자가 밟는다(`docs/agents/delegation/coordinator.md` 「머지는 배포가 아니다」, `docs/ops/runbook/deploy.md` 「묶음 배포」) | `vercel deploy --prod` · Create Deployment | 사람 — 도구는 `Bash(vercel --prod:*)` · `Bash(npx vercel --prod:*)` · `Bash(vercel deploy:*)` · `Bash(npx vercel deploy:*)` |
 | **3 사람이 답한 뒤에** | 운영 DB 에 마이그레이션을 올리거나 임의 SQL 을 보내는 것, 토큰이 나가는 실호출, Vercel 변수, 원격 가지 삭제, 프로덕션 확인이 든 걸음 — **공식 운영에 들어간 뒤에 켠다(ADR 0093) — 2026-11-05 에 켰다.** 운영 베타에서는 등급 2 처럼 밟고 값을 적었다. 실호출은 그때도 운영자가 직접 돌렸다(`docs/agents/delegation/unattended.md` 「권한 봉투」) | `db push` · `db query --linked` · `READING_LIVE=1` · `vercel env` · `gh pr merge`(auto 아닌 즉시 머지) | `Bash(npx supabase db push:*)` · `Bash(supabase db push:*)` · `Bash(./node_modules/.bin/supabase db push:*)` · `Bash(npx supabase db query --linked:*)` · `Bash(supabase db query --linked:*)` · `Bash(./node_modules/.bin/supabase db query --linked:*)` · `Bash(npm run db:push:*)` · `Bash(npm run db:remote:*)` · `Bash(READING_LIVE=1:*)` · `Bash(READING_PAIR_LIVE=1:*)` · `Bash(READING_MATCH_INPUT_LIVE=1:*)` · `Bash(BACKFILL_CHART=1:*)` · `Bash(BACKFILL_READING_CHART=1:*)` · `Bash(vercel env:*)` · `Bash(npx vercel env:*)` · `Bash(gh pr merge:*)` · `Bash(git push origin --delete:*)` · `Bash(git push --delete:*)` · `Bash(git branch -D:*)` |

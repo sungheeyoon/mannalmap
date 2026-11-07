@@ -17,7 +17,7 @@
 길이 없고 `service_role` 에도 안 열려 있다 — SQL Editor 에서만 넣는다.
 
 ```sql
--- 세운다 — 이메일로 찾는다. 카카오로만 들어온 계정은 이메일이 없다(ADR 0224) — 운영자는 구글 계정으로 세운다
+-- 세운다 — 이메일로 찾는다. 이메일 필수 동의 전(2026-11-05)에 카카오로만 들어온 계정은 이메일이 없다(ADR 0224 추기) — 운영자는 구글 계정으로 세운다
 insert into public.operator (user_id, note)
 select id, '누구에게 왜 주었는지'
 from auth.users where email = '<그 사람의 구글 계정>';

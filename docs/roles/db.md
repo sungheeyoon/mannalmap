@@ -47,3 +47,4 @@
 - `security definer` 함수를 만들거나 고치면 → [공개 출시](../product/gaps.md#공개-출시) — `search_path` 를 재는 줄
 - 접속기록(`audit.operator_access`)의 칸을 바꾸면 → [반출](../ops/runbook/security.md#반출--매일-s3-한-번에-하나-결과는-db-에) — 묶음 `version` · 검증 허용 목록이 따라 바뀐다
 - PR 제목을 쓰면 → [커밋과 PR](../agents/code-rules/locks.md#커밋과-pr) — type 목록에 `db` 가 없다. 마이그레이션 PR 도 그 목록의 type 을 쓴다(목록은 `scripts/pr-title.mjs` 의 `TYPES`, 틀리면 `verify` 의 `plan` 이 붉다)
+- `reading_bundle.refunded_credits` 를 바꾸면 → [그 두 함수의 최신 마이그레이션](../../supabase/migrations/) — 운영자 환불 금액 산식(`operator_hold_reading_refund` · `operator_reading_refund_basis`)의 입력이라 값이 바뀌면 환불 금액이 바뀐다. 두 함수를 함께 고치고 pgTAP 으로 금액을 확인한다

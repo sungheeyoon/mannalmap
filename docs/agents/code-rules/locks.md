@@ -24,7 +24,9 @@ CI 가 왜 그 차선을 돌았나는 추측하지 말고 `plan` 로그의 `reas
 | `import/no-default-export` | `src/` · `scripts/` · `e2e/` | `export default` |
 | `reportUnusedDisableDirectives` | 전부 | 안 걸리는 예외 표시 |
 | `scripts/code-rules.test.ts` | — | 파일·폴더 이름 두 규약, 시험의 자리와 중간 이름, 마이그레이션·pgTAP·ADR 이름, ADR 참조가 실제 파일, 입구 문서와 운영 소스 주석(`app/**` · `src/**` · `proxy.ts`)의 백틱 속 뿌리 경로가 실제 파일(옛 자리를 말하는 역사 설명은 이름과 까닭으로 든 허용 목록, 2026-09-28), 탈출구 지문(남은 자리의 목록은 시험 안에 산다), `@ts-expect-error` 0, import 홑따옴표, `CLAUDE.md` 는 `@AGENTS.md` 와 Claude Code 호출법만(600 바이트, 2026-10-06) |
-| `scripts/mobile-closure.test.ts` | `mobile/src` 에서 import 로 닿는 파일 전부 | 앱 번들에서 안 풀리는 것 — 함께 쓰는 코드의 웹 별칭(`@/`), `next` · `server-only` · Node 내장, `mobile/package.json` 에 없는 패키지, Metro 가 안 보는 자리, Hermes 에 없는 내장(`.toSorted`). 뿌리 `scripts/` · `src/` · `app/` 이 `mobile/` 을 import 하는 것(CI 에 `mobile/node_modules` 가 없다) |
+| `scripts/mobile-closure.test.ts` | `mobile/src` 에서 import 로 닿는 파일 전부 | 앱 번들에서 안 풀리는 것 — 함께 쓰는 코드의 웹 별칭(`@/`), `next` · `server-only` · Node 내장, `mobile/package.json` 에 없는 패키지, Metro 가 안 보는 자리, Hermes 에 없는 내장(`.toSorted`), `app/` 에서 `app/db-error.ts` 밖의 파일. 뿌리 `scripts/` · `src/` · `app/` 이 `mobile/` 을 import 하는 것(CI 에 `mobile/node_modules` 가 없다) |
+| `scripts/mobile-screen-db.test.ts` | `mobile/src` 전부(시험 제외) | 앱 화면(`mobile/src/app/**` · `*.tsx`)의 `.rpc()` · `.from()` 이 줄어들기만 하는 지문 목록 밖에 있는 것, 웹과 같은 옮기기를 쓰는 RPC 를 앱의 문 둘 이상이 부르는 것(G-143) |
+| `scripts/mobile-supabase-env.test.ts` | `mobile/src` 전부 | `EXPO_PUBLIC_SUPABASE_*` 를 `mobile/src/supabase-env.ts` 밖에서 읽는 것 |
 
 규칙마다 일부러 어긴 파일로 걸리는 것을 확인하고 지웠다(ADR 0086).
 
@@ -38,4 +40,4 @@ CI 가 왜 그 차선을 돌았나는 추측하지 말고 `plan` 로그의 `reas
 
 - **코드가 용어집과 다른 말을 쓰는 자리**는 `docs/context/code-names.md` §10 「어긋난 이름」이 든다 — 고칠 것은 2026-09-23 에 다 고쳤고(G-43),
   「그대로 둔다」로 정한 넷(`metaphor` · 후보 목록의 RPC 이름 · 사유값 `unreadable-revision` · 탈퇴 대기)이 까닭과 함께 남았다. 그 표의 이름이 코드에 아직 있는지는 시험이 잰다(ADR 0088).
-- `if (error) return null` 하나, `!` 열둘, `as unknown as` 일곱, — `docs/agents/code-rules/escapes.md` 의 탈출구 표(결과를 버리는 DB 쓰기는 2026-09-26 에 일곱을 다 기록으로 옮겨 0 이다). 목록은 시험에 있다.
+- `if (error) return null` 하나, `!` 열둘, `as unknown as` 다섯(2026-11-06 에 쟀다), — `docs/agents/code-rules/escapes.md` 의 탈출구 표(결과를 버리는 DB 쓰기는 2026-09-26 에 일곱을 다 기록으로 옮겨 0 이다). 목록은 시험에 있다.

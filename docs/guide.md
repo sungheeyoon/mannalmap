@@ -297,11 +297,11 @@ flowchart LR
 | 말 | 쉬운 뜻 | 어디서 정하나 |
 | --- | --- | --- |
 | **등급 0~4** | 되돌릴 수 있는지로 나눈 권한 단계. 0 읽기 · 1 로컬 수정 · 2 밖으로 내되 되돌릴 수 있게 · 3 사람이 답한 뒤 · 4 안 함 | [권한 등급](agents/delegation/permissions.md) |
-| **등급 3 을 밟고 값을 적는다** | 운영 베타 동안 에이전트가 운영 DB 변경 같은 일을 묻지 않고 하되, 본 결과를 기록한다는 뜻 | [ADR 0093](adr/0093-tier-three-locks-turn-on-at-official-operation.md) |
-| **공식 운영에 들어가면 켜는 잠금** | 공개 출시 날 다시 켤 확인 목록 | [권한 등급](agents/delegation/permissions.md) |
-| **운영 베타** | 지금 단계. 테스트 코드로 초대받은 사람만 써요 | [`docs/product/prd/roadmap.md` §7.0](product/prd/roadmap.md) |
+| **등급 3 을 밟고 값을 적는다** | 등급 3 을 밟은 뒤 본 결과를 기록한다는 뜻. 운영 베타에는 묻지 않고 밟았고, 공개 출시부터는 사람이 답한 뒤에 밟아요 | [ADR 0093](adr/0093-tier-three-locks-turn-on-at-official-operation.md) |
+| **공식 운영에 들어가면 켜는 잠금** | 공개 출시 날 켠 확인 목록 — `ask` 와 같은 목록이에요 | [권한 등급](agents/delegation/permissions.md) |
+| **운영 베타** | 첫 단계. 테스트 코드로 초대받은 사람이 쓰다가 2026-11-05 에 코드를 걷고 공개 출시로 옮겼어요(ADR 0225) | [`docs/product/prd/roadmap.md` §7.0](product/prd/roadmap.md) |
 | **(지금)** | 출시 단계 표에서 현재 단계를 가리키는 표시. CI 와 권한 시험이 이 표시를 읽어요 | [`docs/product/prd/roadmap.md` §7.0](product/prd/roadmap.md) |
-| **채팅 안전 베타 · 공개 출시** | 운영 베타 다음 단계들. 공개 출시는 테스트 코드 없이 누구나 가입하는 단계 | [`docs/product/prd/roadmap.md` §7.0](product/prd/roadmap.md) |
+| **채팅 안전 베타 · 공개 출시** | 운영 베타 다음 단계들. 공개 출시는 테스트 코드 없이 누구나 가입하는 단계이고 지금 단계예요 — 채팅 안전 베타는 밟지 않았어요 | [`docs/product/prd/roadmap.md` §7.0](product/prd/roadmap.md) |
 | **정비** | 간극 대장의 띠 하나 — 제품 기능이 아니라 일하는 방식을 다듬는 일 | [`docs/product/gaps.md`](product/gaps.md) |
 | **머지는 배포가 아니다** | main 에 머지해도 운영 사이트가 바뀌지 않는다는 원칙 | [ADR 0110](adr/0110-merging-is-not-deploying-production-ships-once-per-bundle.md) |
 | **묶음 배포** | 라운드 끝에 최신 main 을 운영에 한 번 올리는 것 | [배포 「묶음 배포」](ops/runbook/deploy.md) |

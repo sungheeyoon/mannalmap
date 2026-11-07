@@ -1,5 +1,8 @@
 {
   "permissions": {
+    "allow": [
+      "Bash(npm run sweep:merged:*)"
+    ],
     "ask": [
       "Bash(npx supabase db push:*)",
       "Bash(supabase db push:*)",

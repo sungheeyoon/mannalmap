@@ -18,6 +18,12 @@ export const SIGNED_OUT_REACH = '로그인 없이도 내 사주와 궁합 첫 �
 /** 로그인하지 않고 첫 화면으로 가는 출구의 이름 — 로그인 화면 · 로그인 실패가 같이 쓴다(`e2e/auth.spec.ts` 가 잰다) */
 export const SIGNED_OUT_EXIT = '사주로 돌아가기';
 
+/**
+ * **이미 쓰는 사람의 로그인 줄**(ADR 0226) — 로그인 전 첫 화면의 주 단추 바로 아래, 물음 하나와 「로그인」 링크. 웹 `/` 와 앱 입구가
+ * 같은 글자를 읽는다. 대장 first-04 「확인 전」(실사례: velog · TVING · 점신)
+ */
+export const MEMBER_SIGN_IN_ASK = '이미 계정이 있으신가요?';
+
 /** 앱의 결과 화면에서 누른 일마다 다른 로그인 까닭 — 저장은 풀이권을 안 쓰니 풀이권을 말하지 않는다(ADR 0213 추기) */
 export const CHART_SIGN_IN = {
   save: { title: '저장은 로그인하면 할 수 있어요', note: '로그인하면 이 입력으로 돌아와요.' },
@@ -33,7 +39,7 @@ export const ABOUT_LEAD = [
 /** 서비스 소개 「시작하는 차례」 */
 export const ABOUT_STEPS: readonly { title: string; body: string }[] = [
   { title: '사주 보기', body: '첫 화면에서 생년월일시를 넣고 내 사주를 봐요.' },
-  { title: '로그인 · 가입', body: '구글로 로그인하고, 테스트 코드와 닉네임으로 가입해요.' },
+  { title: '로그인 · 가입', body: '카카오 · 구글로 로그인하고, 닉네임으로 가입해요.' },
   { title: '내 사주 저장', body: '내 출생 정보를 저장하면 홈에 내 사주 카드가 서요.' },
   { title: '풀이 받기', body: '사주풀이 · 궁합 · 인연 중 마음 가는 것부터 시작해요.' },
 ];
@@ -46,14 +52,6 @@ export const HELP_GROUPS: readonly {
   {
     title: '시작하기',
     items: [
-      {
-        id: 'signup-code',
-        q: '테스트 코드는 어디서 받나요?',
-        a: [
-          '지금은 비공개 베타라 운영자가 테스터에게 직접 알려 드려요.',
-          '구글로 로그인한 뒤 가입 화면에서 코드와 닉네임을 넣으면 가입이 끝나요.',
-        ],
-      },
       {
         id: 'without-sign-in',
         q: '로그인하지 않고 무엇을 볼 수 있나요?',
@@ -137,13 +135,13 @@ export const HELP_GROUPS: readonly {
   },
 ];
 
-/** 앱의 인연 입구 — 시작 전에 남은 단계를 미리 말한다(ADR 0213). 차례가 곧 걷는 차례이고, 끝낸 단계는 뺀다. 대장 public-03 「확인 전」 */
+/** 앱의 인연 입구 — 시작 전에 남은 단계를 미리 말한다(ADR 0213). 차례가 곧 걷는 차례이고, 끝낸 단계는 뺀다. 대장 public-03 · public-12 「확인 전」 */
 export const MATCHING_START_HEAD = '인연을 시작하려면 이 단계가 필요해요';
 export const MATCHING_START_LEAVE = '그만둬도 사주는 그대로 볼 수 있어요.';
 export type MatchingStartStep = 'sign-in' | 'signup' | 'self';
 const MATCHING_START_STEPS: readonly { key: MatchingStartStep; text: string }[] = [
-  { key: 'sign-in', text: '구글로 로그인' },
-  { key: 'signup', text: '테스트 코드로 가입' },
+  { key: 'sign-in', text: '카카오 · 구글 로그인' },
+  { key: 'signup', text: '닉네임으로 가입' },
   { key: 'self', text: '내 사주 저장' },
 ];
 export const matchingStartSteps = (done: readonly MatchingStartStep[]) => MATCHING_START_STEPS.filter((step) => !done.includes(step.key));
@@ -155,6 +153,12 @@ export const matchingStartSteps = (done: readonly MatchingStartStep[]) => MATCHI
 /** 앱에서 궁합으로 가려다 로그인에 선 사람의 제목(대장 public 17, 웹은 `app/auth/page.tsx` 의 글자) · 앱 입구의 궁합 입구 */
 export const COMPAT_SIGN_IN_TITLE = '궁합풀이는 로그인하면 볼 수 있어요';
 export const COMPAT_ENTRY = '궁합 보기';
+/**
+ * 로그인 전 궁합 결과의 로그인 단추와 풀이권 한 줄 — 웹 `app/pair-taste.tsx` 의 확정 글자(대장 06)이고, 로그인 전 궁합 결과가 없는 앱 첫 화면의
+ * 「궁합 보기」 탭이 같은 글자를 쓴다(ADR 0226). 풀이권의 수는 적지 않는다 — 무료 몫이 바뀔 수 있다(#1012)
+ */
+export const COMPAT_SIGN_IN_ACTION = '로그인하고 궁합풀이 받기';
+export const COMPAT_CREDIT_NOTE = '가입하면 풀이권으로 궁합풀이를 받을 수 있어요.';
 
 export const MATCHING_INTRO_TITLE = '인연은 어떻게 찾나요?';
 export const MATCHING_INTRO_EXAMPLE = {
@@ -164,7 +168,7 @@ export const MATCHING_INTRO_EXAMPLE = {
   verdict: '아주 좋은 궁합일 수 있어요.',
   supply: '이 사람이 채워 주는 기운',
 } as const;
-export const MATCHING_INTRO_AGE = '만 19세 이상만 가입할 수 있어요.';
+export const MATCHING_INTRO_AGE = '인연은 만 19세 이상만 이용할 수 있어요.';
 export const MATCHING_INTRO_START = '인연 시작하기';
 
 /**

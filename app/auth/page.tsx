@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation';
 
 import { SERVICE_NAME } from '@/src/lib/brand';
 import { SIGN_IN_UNLOCKS } from '@/src/lib/brand/guide';
+import { SIGN_IN_BUTTON } from '@/src/lib/account/sign-in-buttons';
 
 import { BUTTON_TERTIARY } from '../ui/buttons';
 import { Icon } from '../ui/icons';
@@ -12,7 +13,7 @@ import { KakaoSignInButton } from './kakao-sign-in-button';
 import { SignInButton } from './sign-in-button';
 import { supabaseOnServer } from './server-client';
 import { signedInUser } from './signed-in';
-import { RESUME_PAIR_PATH, RESUME_READING_PATH, afterSignIn, safeReturnPath } from '@/src/lib/consent';
+import { RESUME_PAIR_PATH, RESUME_READING_PATH, afterSignIn, safeReturnPath, visitorExitOf } from '@/src/lib/consent';
 import { HomeLink } from '../home-link';
 import { matchOpenForSignedOut } from '../match-opening';
 import { matchEntriesStand } from '@/src/lib/matching/opening';
@@ -35,34 +36,40 @@ export default async function SignInPage({
 
   return (
     <NoticeScreen
+      narrow
       title={forCompat ? '궁합풀이는 로그인하면 볼 수 있어요' : forReading ? '내 사주풀이로 이어갈까요?' : `${SERVICE_NAME} 시작하기`}
       description={
-        <p>
-          {/*
-            궁합 쪽은 제목이 이미 「왜 여기 섰는가」를 다 말한다 — 본문이 그 이유를 한 번 더
-            적으면 바로 아래 선 베타 안내까지 같이 안 읽힌다.
-          */}
-          {forReading && '로그인하면 방금 본 사주로 돌아와요. 출생 정보를 저장하면 사주풀이를 받을 수 있어요. '}
-          {!forCompat && !forReading && '로그인하면 저장한 사람과 사주풀이를 다음에도 이어서 볼 수 있어요. '}
-          지금은 비공개 베타라, 처음 오셨다면 로그인 뒤에 <strong className="font-semibold">테스트 코드</strong>가
-          필요해요.
-        </p>
+        /*
+          궁합 쪽은 제목이 이미 「왜 여기 섰는가」를 다 말한다 — 본문이 그 이유를 한 번 더 적지 않는다.
+          테스트 코드의 줄은 걷었다 — 가입은 코드를 묻지 않는다(ADR 0225).
+        */
+        forCompat ? undefined : (
+          <p>
+            {forReading
+              ? '로그인하면 방금 본 사주로 돌아와요. 출생 정보를 저장하면 사주풀이를 받을 수 있어요.'
+              : '로그인하면 저장한 사람과 사주풀이를 다음에도 이어서 볼 수 있어요.'}
+          </p>
+        )
       }
       actions={
-        /* 카카오는 키가 있을 때만 선다(ADR 0224) — 없으면 구글 하나다 */
-        <div className="flex flex-col items-stretch gap-2 sm:items-start">
-          <SignInButton returnTo={returnTo} />
+        /*
+          카카오 → 구글(운영자 결정 2026-11-05, ADR 0228). 카카오는 키가 있을 때만 선다(ADR 0224) — 없으면 구글 하나다.
+          두 단추는 같은 너비로 한 열에 서서 카드 글줄을 끝에서 끝까지 채운다. 데스크톱은 카드가 좁은 한 열이다(`narrow`, 숨고의 꼴).
+          360px 천장은 안전 한계일 뿐 글줄(352)보다 넓어 닿지 않는다(운영자 결정 2026-11-06, ADR 0228 추기)
+        */
+        <div className="flex w-full flex-col items-stretch gap-2" style={{ maxWidth: SIGN_IN_BUTTON.maxWidth }}>
           {kakaoSignInReady() && <KakaoSignInButton returnTo={returnTo} />}
+          <SignInButton returnTo={returnTo} />
         </div>
       }
       note={
         /*
-          코드가 없는 사람의 길 — 막다른 자리로 두지 않는다. 첫 화면은 로그인 없이 사주와 궁합 첫 신호까지 연다.
+          로그인하지 않을 사람의 길 — 막다른 자리로 두지 않는다. 첫 화면은 로그인 없이 사주와 궁합 첫 신호까지 연다.
           까닭 한 줄과 출구 이름은 로그인 실패 화면과 같은 상수다(`SIGNED_OUT_REACH` · `SIGNED_OUT_EXIT`, e2e 가 잰다).
         */
         <>
           <p>{SIGNED_OUT_REACH}</p>
-          <HomeLink className={`${BUTTON_TERTIARY} w-fit`}>{SIGNED_OUT_EXIT}</HomeLink>
+          <HomeLink className={`${BUTTON_TERTIARY} w-fit`} visitorHref={visitorExitOf(returnTo)}>{SIGNED_OUT_EXIT}</HomeLink>
         </>
       }
     >

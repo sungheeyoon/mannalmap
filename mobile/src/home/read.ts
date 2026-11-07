@@ -4,7 +4,8 @@ import { userFacingDbMessage } from '@db-error';
 import type { Query } from '@input/query';
 import { UNREADABLE_INPUT_NOTE, storedChartOf, type StoredInput } from '@input/stored';
 import { runningStageOf } from '@reading/running-stage';
-import { READING_KINDS, type ReadingKind } from '@reading/policy';
+import type { RunningReading } from '@reading/running';
+import type { ReadingTarget } from '@reading/target';
 import { focusOf, type PhotoFocus } from '@profile';
 import type { Saju, Stem } from '@saju';
 import { withFromMe } from '@web-home/from-me';
@@ -12,6 +13,9 @@ import { isFirstVisit } from '@web-home/first-visit';
 
 import { supabase } from '@/auth/client';
 import { NOT_READY, UNREACHABLE } from '@/auth/signup';
+import { readSuspension } from '@/auth/suspension';
+import { readRunningReadings } from '@/reading/running';
+import { readMyReadings } from '@/reading/my-readings';
 
 const PERSON_INPUT_COLUMNS = 'calendar, original_date, solar_date, birth_time, gender, city, late_night_rule, time_basis';
 
@@ -71,69 +75,46 @@ const faceOf = (userId: string | undefined, nickname: string | null, intro: stri
 const called = (label: string | null) => label ?? '이름 없음';
 
 /** 웹의 `runningName` 과 같은 갈래다 — `scripts/mobile-shell-copy.test.ts` 가 글자를 잰다 */
-function runningName(row: { kind: string; label_a: string | null; label_b: string | null }): string | null {
-  switch (row.kind) {
+function runningName({ target, labelA, labelB }: RunningReading): string {
+  switch (target.kind) {
     case 'self':
       return '내 사주풀이';
     case 'person':
-      return row.label_a === null ? '사주풀이' : `${row.label_a} 사주풀이`;
+      return labelA === null ? '사주풀이' : `${labelA} 사주풀이`;
     case 'private':
-      return `${called(row.label_a)} × ${called(row.label_b)} 궁합풀이`;
+      return `${called(labelA)} × ${called(labelB)} 궁합풀이`;
     case 'match':
-      return row.label_a === null ? '인연 궁합' : `${row.label_a} 님과의 인연 궁합`;
-    default:
-      return null;
+      return labelA === null ? '인연 궁합' : `${labelA} 님과의 인연 궁합`;
   }
 }
 
-type RunningRow = {
-  kind: string;
-  label_a?: string | null;
-  label_b?: string | null;
-  person_a?: string | null;
-  person_b?: string | null;
-  match_id?: string | null;
-  created_at: string;
-  job_status?: string | null;
-  sections_begun?: number | null;
-  body_written?: boolean | null;
-};
-
-/** 웹의 `readingHrefOf` 와 같은 갈래다 — 가는 길이 없는 줄은 눌리지 않는다 */
-function runningHref(kind: ReadingKind, row: RunningRow): string | null {
-  switch (kind) {
+/** 웹의 `readingHrefOf` 와 같은 갈래다 */
+function runningHref(target: ReadingTarget): string {
+  switch (target.kind) {
     case 'self':
       return '/me/readings/self';
     case 'person':
-      return row.person_a ? `/me/readings/${row.person_a}` : null;
+      return `/me/readings/${target.personId}`;
     case 'private':
-      return row.person_a && row.person_b ? `/me/compat?a=${row.person_a}&b=${row.person_b}` : null;
+      return `/me/compat?a=${target.personA}&b=${target.personB}`;
     case 'match':
-      return row.match_id ? `/me/match/${row.match_id}` : null;
+      return `/me/match/${target.matchId}`;
   }
 }
 
-const runningLinesOf = (rows: readonly RunningRow[]): RunningLine[] =>
-  rows.flatMap((row) => {
-    const kind = READING_KINDS.find((known) => known === row.kind);
-    const name = runningName({ kind: row.kind, label_a: row.label_a ?? null, label_b: row.label_b ?? null });
-    if (kind === undefined || name === null) return [];
-    const href = runningHref(kind, row);
-    return [
-      {
-        key: `${row.kind}:${row.created_at}`,
-        name,
-        stage: runningStageOf(kind, { jobStatus: row.job_status ?? null, sectionsBegun: row.sections_begun ?? 0, bodyWritten: row.body_written ?? false }),
-        href: href === null ? null : withFromMe(href),
-      },
-    ];
-  });
+const runningLinesOf = (running: readonly RunningReading[]): RunningLine[] =>
+  running.map((one) => ({
+    key: `${one.target.kind}:${one.createdAt}`,
+    name: runningName(one),
+    stage: runningStageOf(one.target.kind, one.progress),
+    href: withFromMe(runningHref(one.target)),
+  }));
 
 /** 만드는 중인 줄만 다시 묻는다 — 홈에 머무는 동안. 못 읽으면 `null` 이고 지금 줄을 그대로 둔다 */
 export async function readRunning(): Promise<readonly RunningLine[] | null> {
   if (supabase === null) return null;
-  const { data, error } = await supabase.rpc('my_running_readings');
-  return error === null ? runningLinesOf(data ?? []) : null;
+  const running = await readRunningReadings(supabase);
+  return running === null ? null : runningLinesOf(running);
 }
 
 /** 읽기가 답 없이 던진 때 — 계정을 못 물은 때와 같은 글자로 다시 시도를 세운다 */
@@ -152,8 +133,7 @@ export async function readHome(): Promise<Home> {
 
   const account = await supabase.from('app_user').select('status, self_person_id, nickname, intro').maybeSingle();
   if (account.error !== null) console.error('app_user', account.error.code);
-  const suspension = account.data?.status === 'suspended' ? await supabase.rpc('my_suspension') : null;
-  const found = suspension?.data?.[0];
+  const suspension = account.data?.status === 'suspended' ? await readSuspension(supabase) : undefined;
   const state = accountStateOf(
     account.error !== null
       ? { ok: false, reason: 'unreachable' }
@@ -164,7 +144,7 @@ export async function readHome(): Promise<Home> {
             account: {
               status: account.data.status,
               selfPersonId: account.data.self_person_id,
-              suspension: account.data.status === 'suspended' ? (found === undefined ? null : { nickname: found.nickname, reason: found.reason }) : undefined,
+              suspension,
             },
           },
   );
@@ -178,14 +158,14 @@ export async function readHome(): Promise<Home> {
 
   const [edges, readings, running, slots, photos, session] = await Promise.all([
     supabase.from('user_person_access').select('person_id, local_label, note, listed').order('created_at', { ascending: true }),
-    supabase.rpc('my_readings'),
-    supabase.rpc('my_running_readings'),
+    readMyReadings(supabase),
+    readRunningReadings(supabase),
     supabase.rpc('my_person_slots'),
     supabase.rpc('my_photos'),
     supabase.auth.getSession(),
   ]);
   if (edges.error !== null) return { kind: 'failed', message: userFacingDbMessage(edges.error, 'user_person_access.select') };
-  if (readings.error !== null) return { kind: 'failed', message: userFacingDbMessage(readings.error, 'my_readings') };
+  if (!readings.ok) return { kind: 'failed', message: readings.reason };
 
   const selfEdge = (edges.data ?? []).find((edge) => edge.person_id === selfPersonId) ?? null;
   const listed = (edges.data ?? []).filter((edge) => edge.listed && edge.person_id !== selfPersonId);
@@ -202,18 +182,18 @@ export async function readHome(): Promise<Home> {
       .map((row) => [row.id, row as StoredInput]),
   );
 
-  const rows: ReadingRow[] = (readings.data ?? []).map((row) => ({
-    kind: row.kind,
-    personA: row.person_a ?? null,
-    personB: row.person_b ?? null,
-    label: row.label_a ?? null,
-    metaphor: row.metaphor ?? null,
-    score: row.score ?? null,
-    createdAt: row.created_at,
-    stale: !row.from_current_chart,
-    stem: (row.day_master_a ?? null) as Stem | null,
+  const rows: ReadingRow[] = readings.value.map((entry) => ({
+    kind: entry.kind,
+    personA: entry.personA,
+    personB: entry.personB,
+    label: entry.labelA,
+    metaphor: entry.metaphor,
+    score: entry.score,
+    createdAt: entry.createdAt,
+    stale: !entry.fromCurrentChart,
+    stem: entry.dayMasterA,
   }));
-  const runningRows = running.error === null ? (running.data ?? []) : [];
+  const runningRows = running ?? [];
   const selfReading = rows.find((row) => row.kind === 'self') ?? null;
 
   const selfInput = inputs.get(selfPersonId);
@@ -231,7 +211,7 @@ export async function readHome(): Promise<Home> {
             saju: stood.saju,
             metaphor: selfReading?.metaphor ?? null,
             hasReading: selfReading !== null,
-            making: runningRows.some((row) => row.kind === 'self'),
+            making: runningRows.some(({ target }) => target.kind === 'self'),
             face: faceOf(session.data.session?.user.id, account.data?.nickname ?? null, account.data?.intro ?? null, photos.error === null ? (photos.data ?? []) : []),
           };
 
@@ -249,7 +229,7 @@ export async function readHome(): Promise<Home> {
       note: edge.note,
       chart: chart.ok ? { ok: true, saju: chart.saju } : { ok: false, message: chart.message },
       reading: rows.find((row) => row.kind === 'person' && row.personA === edge.person_id) ?? null,
-      making: runningRows.some((row) => row.kind === 'person' && row.person_a === edge.person_id),
+      making: runningRows.some(({ target }) => target.kind === 'person' && target.personId === edge.person_id),
       score: pair?.score ?? null,
     };
   });

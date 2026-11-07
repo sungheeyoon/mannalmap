@@ -1,3 +1,4 @@
+import type { ReadingCredits } from './credits';
 import type { CurrentReading } from './current-reading';
 import type { LastRun } from './run';
 
@@ -21,15 +22,6 @@ export type DoorRefusal =
   /** 못 읽었거나 못 닿았다 — 문을 안 열었다. 다시 시도할 수 있다 */
   | { readonly refused: 'unavailable'; readonly message: string };
 
-/** 만드는 버튼이 말하는 데 드는 풀이권 — 못 물었으면 통째로 `null` */
-export type DoorCredits = {
-  readonly limit: number;
-  readonly used: number;
-  readonly reserved: number;
-  readonly requested: number;
-  readonly available: number;
-};
-
 /** 일간 — 표지의 색과 머리 딱지 */
 export type DoorDayMaster = { readonly stem: string; readonly element: string };
 
@@ -45,7 +37,8 @@ export type ReadingView =
       readonly createdLabel: string | null;
       readonly minutes: number | null;
       readonly run: LastRun | null;
-      readonly credits: DoorCredits | null;
+      /** 만드는 버튼이 말하는 데 드는 풀이권 — 못 물었으면 통째로 `null` */
+      readonly credits: ReadingCredits | null;
       /** 기다리는 동안의 절 이름 — 이름을 미리 모르는 궁합이면 `null`(ADR 0127) */
       readonly outline: readonly string[] | null;
       /** 기다림의 길이를 말하는 한 줄 — 상한에서 지은 글자 */

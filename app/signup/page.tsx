@@ -15,7 +15,7 @@ import {
   NOTICE_NOT_READY,
   NOTICE_VERSION,
   SIGNUP_HEAD,
-  betaIsOver,
+  serviceIsOver,
   safeReturnPath,
   signupDone,
   withReturnPath,
@@ -25,7 +25,7 @@ import { SignupForm } from './form';
 
 export const metadata = {
   title: '가입하기',
-  description: `테스트 코드와 닉네임을 입력하고 ${SERVICE_NAME_OBJECT} 시작합니다.`,
+  description: `닉네임을 입력하고 ${SERVICE_NAME_OBJECT} 시작합니다.`,
 };
 
 /**
@@ -35,8 +35,8 @@ export const metadata = {
  * 로그인부터 사주 등록까지 화면 넷을 지나야 했고, 그 사이마다 튕김이 있었다 — 튕김이
  * 둘 겹치면 화면이 비는 고장을 실제로 만났다(커밋 `2cbb31f`).
  *
- * 이제 문은 여기 하나다. 코드로 들어오고, 이름을 짓고, 안내를 확인하는 일이 한 번의
- * 누름으로 끝난다.
+ * 이제 문은 여기 하나다. 이름을 짓고 안내를 확인하는 일이 한 번의 누름으로 끝난다.
+ * 테스트 코드는 걷었다(ADR 0225).
  *
  * ## `/me` 밖에 선다
  *
@@ -51,7 +51,7 @@ export const metadata = {
  * ## 전문을 되풀이하지 않는다
  *
  * 처리방침 전문은 `/privacy` 에 로그인 없이 열린다. 가입 화면까지 전문을 복제하면 사용자가
- * 해야 할 코드·이름 입력이 문서 뒤로 밀리고, 두 화면의 역할도 흐려진다. 여기에는 가입 전에
+ * 해야 할 이름 입력이 문서 뒤로 밀리고, 두 화면의 역할도 흐려진다. 여기에는 가입 전에
  * 놓치면 안 되는 세 사실만 둔다: 어떤 정보를 쓰는지, 언제 파기하는지, 사주 저장 뒤 인연
  * 찾기에 참여한다는 것. 위탁·국외이전·파기 방법·권리 행사는 전문에서 읽는다.
  */
@@ -112,10 +112,10 @@ export default async function SignupPage({ searchParams }: {
   }
 
   /*
-    **끝났으면 여기서 아무도 가입하지 않는다.** 안 막으면 종료일 다음 날에 들어온 사람이
-    「10월 31일에 끝납니다」를 읽고 확인을 남긴다 — 이미 지난 날짜에 대고 하는 확인이다.
+    **서비스가 끝났으면 여기서 아무도 가입하지 않는다**(`SERVICE_ENDED_ON`, ADR 0234). 일정 줄의 종료일은 묻지 않는다 —
+    공개 고지가 고정 운영 기간을 지웠다(ADR 0225 추기 2026-11-06).
   */
-  if (notice !== null && betaIsOver(notice.dates, new Date())) redirect('/closed');
+  if (serviceIsOver(new Date())) redirect('/closed');
 
   /**
    * **관문과 같은 것을 본다.**
@@ -163,19 +163,17 @@ export default async function SignupPage({ searchParams }: {
         <section className="rounded-card border border-border bg-surface p-5 sm:p-7">
           <SignupForm
             returnTo={returnTo}
-            needsCode={account.signed_up_at === null}
+            firstSignup={account.signed_up_at === null}
             needsName={account.nickname === null}
             version={NOTICE_VERSION}
             scheduleId={notice.scheduleId}
-            endsOn={notice.dates.endsOn}
-            purgeBy={notice.dates.purgeBy}
           />
         </section>
       )}
 
       {/*
-        **나가는 길을 낸다.** 코드가 없는 사람은 여기서 할 수 있는 일이 없고, 다른 구글
-        계정으로 들어와야 할 수도 있다. 길이 없으면 주소를 직접 쳐야 한다.
+        **나가는 길을 낸다.** 다른 계정으로 들어와야 할 수도 있고, 가입하지 않고 떠날 수도 있다.
+        길이 없으면 주소를 직접 쳐야 한다.
       */}
       <LeavingLinks deletable />
     </main>

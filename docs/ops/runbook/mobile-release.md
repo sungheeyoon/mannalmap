@@ -12,10 +12,10 @@
 | --- | --- | --- | --- |
 | 1 | 앱이 부르는 웹 문을 운영에 올린다 | 조율자(`deploy.md` 「묶음 배포」, 「배포」 답 뒤) | 아래 「앱의 문이 운영에 섰나」 |
 | 2 | EAS 환경값을 채우고 빌드한다 | 에이전트 · 조율자 | 빌드 링크 · 빌드에 든 값 확인 |
-| 3 | iOS → TestFlight, Android → 내부 트랙 | 조율자(계정은 운영자, #304) | 처리가 끝나 테스터에게 보인다 |
+| 3 | iOS → TestFlight, Android → 내부 트랙 | 조율자(계정은 운영자, #770) | 처리가 끝나 테스터에게 보인다 |
 | 4 | 실기기 확인 | 운영자(#770) | 가입부터 풀이 · 궁합 · 인연 · 채팅까지 |
-| 5 | Android 비공개 테스트 | 운영자 · 조율자 | 아래 「내부 트랙과 비공개 테스트는 다르다」 |
-| 6 | iOS 심사 제출(수동 출시), Android 프로덕션 신청 | 운영자 · 조율자 | 아래 「심사 계정과 테스트 코드」 · 「iOS 는 수동 출시로 낸다」 |
+| 5 | Android 비공개 테스트(조직 계정이면 고를 일) | 운영자 · 조율자 | 아래 「내부 트랙과 비공개 테스트는 다르다」 · Play 계정이 서는 날의 차례는 `docs/ops/runbook/play-console.md` |
+| 6 | iOS 심사 제출(수동 출시), Android 프로덕션 신청 | 운영자 · 조율자 | 아래 「심사 계정」 · 「iOS 는 수동 출시로 낸다」 |
 
 ### 앱의 문이 운영에 섰나
 
@@ -56,10 +56,10 @@ npx eas-cli@latest env:list production --format short
 
 | 값 | `preview` · `production` (2026-11-02) | 비면 |
 | --- | --- | --- |
-| `EXPO_PUBLIC_SUPABASE_URL` · `_PUBLISHABLE_KEY` · `EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID` · `EXPO_PUBLIC_SITE_URL` | 있다 — 운영 프로젝트 · 운영 주소 | 앱이 안 돈다 · 처리방침 링크가 안 선다 |
+| `EXPO_PUBLIC_SUPABASE_URL` · `_PUBLISHABLE_KEY` · `EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID` · `EXPO_PUBLIC_SITE_URL` | 있다 — 운영 프로젝트 · 운영 주소 | 앱이 안 돈다 · 처리방침 링크가 안 선다. `production` 빌드는 이 넷 가운데 하나라도 비거나 주소 둘(`EXPO_PUBLIC_SITE_URL` · `EXPO_PUBLIC_SUPABASE_URL`)이 https 가 아니면, `preview` 빌드는 `EXPO_PUBLIC_SITE_URL` 이 없거나 https 가 아니면 `app.config.js` 에서 선다 — 까닭 한 줄에 빈 이름만 싣는다. 앱에서 웹의 주소를 읽는 자리는 `mobile/src/site.ts` 하나다(ADR 0233 · 추기 2026-11-06) |
 | `EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID` · `_URL_SCHEME` | 없다 — Google iOS 클라이언트가 먼저다 | **iOS 빌드 전에 `production` 에 넣는다** — `app.config.js` 가 이 값으로 URL 스킴을 세운다 |
-| `EXPO_PUBLIC_KAKAO_NATIVE_APP_KEY` | 없다 — 카카오를 켜는 날 넣는다(`docs/ops/runbook/kakao-login.md`) | 카카오 단추가 안 서고 `app.config.js` 가 카카오 플러그인을 뺀다. 넣으면 **새 빌드**가 든다 — URL 스킴이 빌드에 박힌다 |
-| `EXPO_PUBLIC_BUSINESS_*` 여덟 | 없다 — 웹 배포의 `BUSINESS_*` 와 같은 값이고 저장소에 안 적는다 | 약관 · 환불정책의 그 줄이 안 선다(ADR 0172). **제출할 `production` 빌드 전에 넣는다** |
+| `EXPO_PUBLIC_KAKAO_NATIVE_APP_KEY` | 있다 — `production` · `preview`(2026-11-05, #770). 이 값이 든 빌드는 아직 없다(`docs/ops/runbook/kakao-login.md` 「카카오 로그인을 켜는 차례」 10) | 카카오 단추가 안 서고 `app.config.js` 가 카카오 플러그인을 뺀다. 넣으면 **새 빌드**가 든다 — URL 스킴이 빌드에 박힌다 |
+| 사업자 정보 | 환경값이 아니다 — 웹과 같은 상수 `BUSINESS`(`src/lib/brand/business.ts`)가 번들에 든다(ADR 0232). EAS 에 남은 `EXPO_PUBLIC_BUSINESS_*` 여덟은 아무도 안 읽는다 — 지운다(#770 B) | 상수의 빈 칸(대표전화)만 줄이 안 선다 |
 
 **`preview` 빌드는 운영 DB 에 쓴다. `development` 빌드가 어디를 보는지는 Metro 를 띄운 자리의 `mobile/.env.local` 이 정한다** — 운영 값이면 운영 DB 다. 시험 계정의 규칙은 `docs/agents/delegation/local-env.md` 「로컬 환경의 함정」 그대로다.
 
@@ -116,13 +116,13 @@ npx eas-cli@latest submit --profile production --platform ios                   
 
 **내부 트랙의 날짜를 14일로 세지 않는다.** 공식 요건은 **2023-11-13 이후에 만든 개인 계정**에 걸리고, 비공개 테스트에 **테스터 12명 이상이 연속 14일** 옵트인해 있어야 한다. 옵트아웃했다 돌아오면 그 사람의 날짜는 처음부터다. 그 뒤 Play Console 대시보드의 「Apply for production」에서 질문에 답한다.
 
-- 계정의 유형 · 생성일이 요건에 드는지를 먼저 본다 — #304 의 「Google Play 개발자 계정」 칸. 안 들면 이 요건이 없다.
-- 12명은 문턱이다. 나가는 사람을 세어 15~20명을 모은다(#304).
-- **베타 종료일과 견준다.** 테스트 환경의 종료일은 `2026-11-30` 이고(지도 #932), 종료 뒤 앱의 문은 `closed` 를 답한다. 그 안에 14일을 채우려면 **2026-11-16 까지** 시작해야 한다 — 종료일에서 거슬러 센 일정이고 Google 의 마감이 아니며, 11-02 빌드의 `expirationDate` 와 날짜가 같을 뿐 관계없다. 넘기면 일정을 옮기는 것은 운영자 결정이다(`docs/ops/runbook/signup.md` 「테스트 시작하기」).
+- 계정의 유형 · 생성일이 요건에 드는지를 먼저 본다 — #770 B 「적어 둔 값」의 Play 개발자 계정 줄. 안 들면 이 요건이 없다. **운영자는 조직 계정을 만든다(D-U-N-S 대기, 2026-11-06) — 공식 문장은 개인 계정만 말하므로 이 요건이 없다고 읽는다**(`docs/ops/runbook/play-console.md` 「조직 계정 만들기」). 아래 두 줄은 개인 계정일 때다.
+- 12명은 문턱이다. 나가는 사람을 세어 15~20명을 모은다(#770).
+- **일정 줄의 종료일은 테스트 날짜를 막지 않는다.** `notice-v17` 배포와 `20270114095000` 의 `db push`(둘 다 2026-11-07)로 종료일(지금 `2026-11-30`)은 아무것도 끝내지 않는다(ADR 0234). 2026-11-02 의 옛 내부 테스트 빌드만 앱 안에서 그 날을 견줘 12-01 부터 닫힌다 — 운영자가 받아들였고 새 내부 빌드는 내지 않는다(#1050 댓글, `docs/ops/runbook/signup.md`).
 
 ## 애플 로그인을 켜는 차례
 
-iOS 앱의 애플 로그인(ADR 0219)은 코드만 main 에 있고 **운영자의 Apple Developer 가입(#304) 뒤에 선다.** 웹(Services ID · OAuth)은 안 쓴다 — 네이티브 ID 토큰뿐이다. 공식 문서를 본 날은 2026-11-03 이다([Supabase Apple](https://supabase.com/docs/guides/auth/social-login/auth-apple) · [Expo AppleAuthentication](https://docs.expo.dev/versions/v58.0.0/sdk/apple-authentication/) · [Apple 탈퇴 안내](https://developer.apple.com/support/offering-account-deletion-in-your-app/)).
+iOS 앱의 애플 로그인(ADR 0219)은 코드만 main 에 있고 **운영자의 Apple Developer 가입(#770 B 「iOS 때」) 뒤에 선다.** 웹(Services ID · OAuth)은 안 쓴다 — 네이티브 ID 토큰뿐이다. 공식 문서를 본 날은 2026-11-03 이다([Supabase Apple](https://supabase.com/docs/guides/auth/social-login/auth-apple) · [Expo AppleAuthentication](https://docs.expo.dev/versions/v58.0.0/sdk/apple-authentication/) · [Apple 탈퇴 안내](https://developer.apple.com/support/offering-account-deletion-in-your-app/)).
 
 | 차례 | 걸음 | 누가 | 끝의 값 |
 | --- | --- | --- | --- |
@@ -136,7 +136,7 @@ iOS 앱의 애플 로그인(ADR 0219)은 코드만 main 에 있고 **운영자�
 
 **실기기에서 볼 것**
 
-1. 로그인 화면에 「구글로 로그인」 밑으로 애플 단추가 같은 크기로 서고 글자가 한국어다
+1. 로그인 화면에 (카카오 키가 든 빌드면 「카카오 로그인」 다음) 「구글 로그인」 밑으로 애플 단추가 같은 높이 · 같은 모서리(12)로 서고 글자가 한국어다
 2. 애플로 처음 가입 — 애플 창의 「나의 이메일 가리기」를 골라 가입이 끝나고 목적지로 돌아온다
 3. 로그아웃 → 다시 애플로 로그인 — **같은 계정**(저장한 사주가 그대로)
 4. 설정 → 탈퇴하기 → 「탈퇴」 → 애플 창이 한 번 더 뜬다 → 탈퇴 대기 안내. 그 뒤 기기의 설정 → (이름) → 로그인 및 보안 → 「Apple로 로그인」 목록에서 만날지도가 사라진다. Vercel 로그에 `apple revoke` 줄이 없어야 한다
@@ -145,18 +145,18 @@ iOS 앱의 애플 로그인(ADR 0219)은 코드만 main 에 있고 **운영자�
 
 **키가 새면** `docs/ops/runbook/secret-leak.md` 「비밀이 새면」의 `APPLE_SIGN_IN_PRIVATE_KEY` 줄. 키가 없거나 틀리면 탈퇴는 그대로 가고 애플 연결 끊기만 503 이다.
 
-## 심사 계정과 테스트 코드
+## 심사 계정
 
-로그인이 있는 앱은 심사에 데모 계정 정보를 주고 백엔드를 켜 둔다([Apple 2.1(a)](https://developer.apple.com/app-store/review/guidelines/)). Google 도 로그인으로 막힌 앱은 들어갈 정보를 다 달라고 한다([Google 「Prepare your app for review」](https://support.google.com/googleplay/android-developer/answer/9859455) 「Sign-in details」). **심사자도 로그인 뒤 테스트 코드로 가입을 지나므로 둘을 함께 준다.**
+로그인이 있는 앱은 심사에 데모 계정 정보를 주고 백엔드를 켜 둔다([Apple 2.1(a)](https://developer.apple.com/app-store/review/guidelines/)). Google 도 로그인으로 막힌 앱은 들어갈 정보를 다 달라고 한다([Google 「Prepare your app for review」](https://support.google.com/googleplay/android-developer/answer/9859455) 「Sign-in details」). **심사자는 로그인 뒤 닉네임 · 안내 확인으로 가입을 지난다 — 테스트 코드는 걷었다(ADR 0225).**
 
 제출 전에:
 
 1. **로그인 길을 정한다 — 아직 안 정했다.** 앱의 로그인은 지금 구글이고 iOS 에는 애플이 함께 선다(ADR 0219, 위 「애플 로그인을 켜는 차례」 뒤에), 비밀번호 계정(`docs/agents/delegation/local-env.md` 의 `createUser`)은 앱에서 쓸 길이 없다. 심사 전용 구글 계정은 운영자만 만든다. 그 계정이 낯선 기기 확인에 막히지 않는지를 실기기로 재고, 막히면 다른 길은 보고 뒤 결정이다 — 앱에 데모 길을 더하면 새 흐름이다. Apple 의 내장 데모 모드는 사전 승인이 든다
-2. **테스트 코드를 넣는다** — `docs/ops/runbook/signup.md` 「초대」 그대로다. 심사 전용 줄 하나, `valid_until` 은 심사가 끝날 때까지 넉넉히, 정원은 작게. 운영 DB 쓰기라 조율자가 밟고, 코드 글자는 저장소에 적지 않는다
-3. **그 절의 경고를 본다** — 「테스트가 아닌 사람을 처음 들이기 전에 출시 단계를 옮긴다」. 심사 전용 계정만이면 실제 사용자 자료가 아니지만, 비공개 테스터를 받기 전에는 조율자가 운영자에게 묻는다
-4. **로그인 → 코드 → 가입 → 풀이까지 그 계정으로 실기기에서 한 번 간다.** 배포된 문(「앱의 문이 운영에 섰나」)과 베타 일정이 살아 있어야 한다
-5. 계정 · 코드는 **App Store Connect 의 App Review Information** 과 **Play Console 의 App access** 에만 적는다. 저장소 · 이슈에 적지 않는다
-6. 심사가 끝나면 코드를 지우고 계정을 정리한다(`forget_user`)
+2. **심사에 내는 빌드가 2026-11-02 의 옛 내부 빌드가 아닌지 본다** — 일정 줄의 종료일은 2026-11-07 부터 가입 · 이용을 닫지 않지만(ADR 0234), 그 빌드만 앱 안에서 종료일을 견줘 12-01 부터 닫힌다(`docs/ops/runbook/signup.md` 「테스트 시작하기」)
+3. **「초대」 절의 경고를 본다** — 「테스트가 아닌 사람을 처음 들이기 전에 출시 단계를 옮긴다」. 심사 전용 계정만이면 실제 사용자 자료가 아니지만, 비공개 테스터를 받기 전에는 조율자가 운영자에게 묻는다
+4. **로그인 → 가입 → 풀이까지 그 계정으로 실기기에서 한 번 간다.** 배포된 문(「앱의 문이 운영에 섰나」)과 베타 일정이 살아 있어야 한다
+5. 계정은 **App Store Connect 의 App Review Information** 과 **Play Console 의 App access** 에만 적는다. 저장소 · 이슈에 적지 않는다
+6. 심사가 끝나면 계정을 정리한다(`forget_user`)
 
 ## iOS 는 수동 출시로 낸다
 

@@ -1,4 +1,3 @@
-import { BETA_SIGNUP_CODE_NOTE } from '@account/copy';
 import { SERVICE_NAME, SERVICE_NAME_TOPIC } from '@brand';
 import { SHARE_COPY, sharedTitle, type ShareKind, type SharedReading } from '@reading/shared';
 import { router } from 'expo-router';
@@ -19,7 +18,7 @@ import { Mark } from './marks';
 import { readShared, type ShareRead } from './read';
 import { useStart } from './start';
 
-/** 받은 사람이 보는 화면 — 세 주소가 같은 이것을 쓴다(웹의 `app/share/view.tsx`). 로그인도 테스트 코드도 없이 열린다 */
+/** 받은 사람이 보는 화면 — 세 주소가 같은 이것을 쓴다(웹의 `app/share/view.tsx`). 로그인 없이 열린다 */
 export function SharedReadingScreen({ token, expect }: { token: string; expect: ShareKind }) {
   const [read, setRead] = useState<ShareRead | null>(null);
 
@@ -89,7 +88,7 @@ function OpenScreen({ shared, expect }: { shared: SharedReading; expect: ShareKi
           <Markdown source={body} />
         </Card>
 
-        {/* 다 읽은 자리에서 묻는다 — 이 화면의 유일한 시작 단추다. 가입에 코드가 든다는 말이 곁에 함께 선다 */}
+        {/* 다 읽은 자리에서 묻는다 — 이 화면의 유일한 시작 단추다. 가입에 코드가 든다는 줄은 걷었다(ADR 0225) */}
         <Paper style={styles.invitation}>
           <BrandCircle size={56} mark={36} />
           <Text accessibilityRole="header" style={styles.section}>
@@ -98,7 +97,6 @@ function OpenScreen({ shared, expect }: { shared: SharedReading; expect: ShareKi
           <Text style={styles.note}>{invitation.note}</Text>
           {failure !== null && <Text style={styles.failure}>{failure}</Text>}
           <PrimaryButton label="로그인하고 시작하기" onPress={start} disabled={going} />
-          <Text style={styles.fine}>{BETA_SIGNUP_CODE_NOTE}</Text>
         </Paper>
       </ScrollView>
     </SafeAreaView>

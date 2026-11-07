@@ -1,6 +1,6 @@
 # 역할 — 검토 · 감사 (읽기만)
 
-조율자가 두 번째 의견을 모을 때 띄우는 역할이다. 관점 하나(아래 열셋 가운데)를 받고, 고치지 않고 보고한다.
+조율자가 두 번째 의견을 모을 때 띄우는 역할이다. 관점 하나(아래 열넷 가운데)를 받고, 고치지 않고 보고한다.
 
 ## 먼저 읽는 것
 
@@ -9,13 +9,14 @@
   - 코드 규칙 — `CODING_STANDARDS.md` 의 차례에서 [그 주제 파일](../agents/code-rules/)
   - 아키텍트 — `docs/architecture.md`
   - 시험 — `docs/agents/test-map.md` 의 차례에서 [그 주제 파일](../agents/test-map/) · ADR 0079(부재 단언은 반증할 수 있어야 한다)
-  - 보안 — `docs/ops/runbook/security.md` 「보안 점검」 · `docs/ops/runbook/access.md` 「개인정보는 화면으로만」 · `app/ops/denial.ts`(운영자 문의 거절을 적는 갈래) · ADR 0191 · ADR 0209(운영자 로그인 · 2단계 인증)
+  - 보안 — `docs/ops/runbook/security.md` 「보안 점검」 · `docs/ops/runbook/access.md` 「개인정보는 화면으로만」 · `app/ops/denial.ts`(운영자 문의 거절을 적는 갈래) · ADR 0191 · ADR 0209(운영자 로그인 · 2단계 인증) · 결제 정합은 ADR 0230 · `docs/ops/runbook/credits.md` 「Google Play 결제 — 확인 · 한 번 지급 · 소비, 스토어 환불의 회수」 · ADR 0184 · ADR 0192
   - DB — `docs/ops/runbook/deploy.md` 「규약 넷 — 앱과 DB 는 따로 간다」 · ADR 0084(모양을 잠근다)
   - 프런트 — `docs/agents/code-rules/screen-copy.md` 「화면 문구」 · `docs/product/copy-ledger.md`(규칙 · 여러 화면 · 무리 색인) · ADR 0109(디자인 체계) · 본 화면의 [PRD 무리 파일](../product/prd/screens/)과 [문구 무리 파일](../product/copy-ledger/)
   - 문서 — `docs/prd.md` 의 차례에서 [그 영역 파일](../product/prd/) · `docs/product/gaps.md`
   - SRE — `docs/ops/runbook.md` 의 차례에서 [그 작업 파일](../ops/runbook/)
   - 문서 규칙 · 프로세스 — `docs/start.md` 「원본 — 무엇이 무엇을 답하나」 · `docs/agents/delegation.md` 의 차례에서 [그 주제 파일](../agents/delegation/) · `docs/agents/domain.md` 「Writing an ADR」
   - CI · 워크플로 — `docs/agents/test-map/ci.md` 「CI」 · `docs/agents/test-map/what-to-run.md` · `.github/workflows/` — 차선 판정 코드는 `ci.md` 가 가리킨다
+  - 모바일(Expo) — `mobile/AGENTS.md` · `docs/ops/runbook/mobile-release.md` · ADR 0211 · ADR 0230 · ADR 0233
   - 세션 잔재 — `docs/agents/delegation/coordinator.md` 「라운드 끝 정리」 · `docs/agents/delegation/local-env.md` 「로컬 환경의 함정」
   - UI 집중화(디자인 체계) — ADR 0109 · `docs/adr/README.md` 「디자인 체계 · 화면 문구」 · `docs/architecture.md` 「그 밖의 자리」 · `app/ui/`
   - 남은 일 흔적 · 죽은 코드 — `docs/agents/delegation/working.md` 「일하는 법」(죽은 코드는 셋으로 가른다) · `docs/product/gaps.md` — knip 은 설치돼 있지 않다(`package.json` 에 없다). `npx knip` 으로 받아 돌리면 설정(진입점)이 없어 오탐이 많다 — 나온 이름은 grep 으로 다시 잰다
@@ -51,3 +52,4 @@
 - CI 기록을 읽으려면 → [CI](../agents/test-map/ci.md#ci) — 붉은 job 은 `gh run view <run id> --log-failed`, 빈 출력이면 `gh api --allow-escape-sequences "repos/{owner}/{repo}/actions/jobs/<job id>/logs"`
 - 셸 명령이 `cannot be shown …` 으로 거절되면(heredoc · `&&` · `for` · `$()`) → [로컬 환경의 함정](../agents/delegation/local-env.md#로컬-환경의-함정) — 워크트리 격리가 막는 명령과 돌아가는 길
 - 머지 전 PR 의 코드를 넓게 읽거나 판정 함수(`scripts/` 의 `.mjs`)를 그 PR 의 코드로 돌려 보려면 → [일하는 법](../agents/delegation/working.md#일하는-법--세션마다-다시-배우던-것) — `git fetch origin pull/<N>/head:pr-<N>` 뒤 `git archive pr-<N> | tar -x -C <스크래치>`(판정 함수만이면 `pr-<N> scripts/`; 격리가 파이프를 막으면 `git archive -o <스크래치>/x.tar pr-<N>` 뒤 `tar -xf`)로 풀어 거기서 읽고 부른다. 그 사본은 git 저장소가 아니라 `scripts/code-rules.test.ts` 의 `git ls-files` 잠금은 늘 붉다 — 판정이 아니다
+- 감사에서 최근 커밋의 파일 목록이 필요하면 → [로컬 환경의 함정](../agents/delegation/local-env.md#로컬-환경의-함정) — 셸 반복문(`for`)은 격리가 거절하므로 커밋마다 `git show --stat <SHA>`. 감사 중 기준 main 이 움직이면 보고 끝에 마지막으로 본 SHA 와 그사이 머지된 PR 을 적는다

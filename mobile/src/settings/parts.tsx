@@ -5,7 +5,7 @@ import Svg, { Path } from 'react-native-svg';
 
 import { accountFailureOf, accountNoticeOf, type AccountState } from '@account/index';
 import { SUPPORT_EMAIL } from '@brand';
-import { SIGN_IN_AGAIN_NOTE } from '@sign-in-again';
+import { SIGN_IN_AGAIN_NOTE } from '@account/sign-in-again';
 
 import { Switch } from '@/ui/switch';
 import { COLOR, CONTROL, FONT, TYPE } from '@/ui/tokens';

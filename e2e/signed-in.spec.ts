@@ -1,13 +1,11 @@
 import { INPUT_EDIT_CHANGE_CONFIRM } from '@/src/lib/consent';
 import { endsWithBatchim } from '@/src/lib/saju/text/batchim';
 import {
-  E2E_CODE,
   answerReading,
   expect,
   leavePersonSlots,
   makeOperator,
   personLimit,
-  seedSignupCode,
   sql,
   test,
 } from './session';
@@ -2251,7 +2249,7 @@ test.describe('초대된 사람의 로그인 흐름', () => {
     await expect(improvement).toHaveAttribute('aria-checked', 'true');
     /* 지움 문장은 제 줄이고 스위치의 설명으로 읽힌다 — 누르기 전에 들린다 */
     await expect(improvement).toHaveAccessibleDescription(/동의를 끄면 지금까지 남긴 설문 답변을 삭제합니다\./);
-    await expect(main.getByRole('switch', { name: '다음 테스트 소식 받기' })).toHaveAttribute('aria-checked', 'false');
+    await expect(main.getByRole('switch', { name: '인터뷰 요청 받기' })).toHaveAttribute('aria-checked', 'false');
     await expectTargets({ 개선: improvement });
 
     /* 누르면 창이 먼저 — 첫 초점은 「취소」이고, 취소하면 켜진 채 답도 그대로다 */
@@ -3035,7 +3033,7 @@ test.describe('가입 관문', () => {
 
     await expect(newcomer.page).toHaveURL(/\/signup$/);
     await expect(
-      newcomer.page.getByRole('heading', { name: /테스트 코드와 닉네임/ }),
+      newcomer.page.getByRole('heading', { name: '닉네임을 입력해 주세요' }),
     ).toBeVisible();
   });
 
@@ -3670,12 +3668,11 @@ test.describe('자바스크립트 없이 여는 홈', () => {
 test.describe('로그인 · 가입이 목적지를 든다', () => {
   /** 가입 한 장을 채운다 — 가입 화면의 모양은 그대로다(`notice.spec.ts` 가 모양을 잰다) */
   const signUp = async (page: Page): Promise<string> => {
-    seedSignupCode();
     const nickname = `벗${String(Date.now()).slice(-4)}${Math.floor(Math.random() * 90 + 10)}`;
-    await page.getByLabel('테스트 코드').fill(E2E_CODE);
     await page.getByLabel('닉네임').fill(nickname);
     await page.getByRole('button', { name: '중복 확인' }).click();
     await expect(page.getByText('사용할 수 있는 닉네임입니다.')).toBeVisible();
+    await page.getByRole('checkbox', { name: '만 14세 이상입니다' }).check();
     await page.getByRole('checkbox', { name: /위 내용을 확인/ }).check();
     await page.getByRole('button', { name: '가입하고 시작하기' }).click();
     return nickname;
@@ -3687,7 +3684,7 @@ test.describe('로그인 · 가입이 목적지를 든다', () => {
     await newcomer.page.goto('/auth?next=%2Fcompat');
     /* 가입 화면이 끼어들어도 `next` 는 최종 목적지 하나다 — 겹치지 않는다 */
     await expect(newcomer.page).toHaveURL(/\/signup\?next=%2Fcompat$/);
-    await expect(newcomer.page.getByRole('heading', { name: /테스트 코드와 닉네임/ })).toBeVisible();
+    await expect(newcomer.page.getByRole('heading', { name: '닉네임을 입력해 주세요' })).toBeVisible();
 
     await signUp(newcomer.page);
     await expect(newcomer.page).toHaveURL(/\/compat$/);
@@ -4194,12 +4191,12 @@ test.describe('누름 하나는 요청 하나다', () => {
 });
 
 /**
- * **풀이권 화면 셋을 주소로 연다**(G-116) — 상품 · 결제 내역 · 결제 뒤. 전에는 회원 머리의 풀이권 메뉴 링크로만 닿아 그 주소를 직접
- * 여는 시험이 없었다. 판매는 닫혀 있고(심사 계정만 — `reading_sale_reviewer`) 시험 계정은 산 적이 없으므로, 여기서 서는 것은
- * 닫힌 판매 · 빈 내역 · 주문 없는 결과의 자리다.
+ * **풀이권 화면 둘을 주소로 연다**(G-116) — 상품 · 결제 내역. 전에는 회원 머리의 풀이권 메뉴 링크로만 닿아 그 주소를 직접
+ * 여는 시험이 없었다. 웹에는 결제 단추가 없고(ADR 0212) 시험 계정은 산 적이 없으므로, 여기서 서는 것은 판매 준비 줄 · 빈 내역의
+ * 자리다.
  */
 test.describe('풀이권 화면', () => {
-  test('상품 화면은 묶음을 세우고 판매가 닫혔으면 결제 단추 대신 준비 중이라 말한다', async ({ page, signedIn }) => {
+  test('상품 화면은 묶음을 세우고 결제 단추 대신 판매 준비 중이라 말한다', async ({ page, signedIn }) => {
     expect(signedIn.label).not.toBe('');
     await page.goto('/me/credits');
     await expect(page.getByRole('heading', { level: 1, name: '풀이권 구매' })).toBeVisible();
@@ -4215,16 +4212,5 @@ test.describe('풀이권 화면', () => {
     await expect(page.getByText('결제 내역이 없어요.')).toBeVisible();
     const refund = page.getByRole('region', { name: '환불 신청' });
     await expect(refund.getByRole('link', { name: '환불정책 보기' })).toHaveAttribute('href', '/refund');
-  });
-
-  test('결제 뒤 화면은 주문이 없으면 찾지 못했다 하고, 결제창이 실패를 말하면 다시 고르게 한다', async ({ page, signedIn }) => {
-    expect(signedIn.label).not.toBe('');
-    await page.goto('/me/credits/done');
-    await expect(page.getByRole('heading', { level: 1, name: '주문을 찾지 못했어요' })).toBeVisible();
-    await expect(page.getByRole('link', { name: '풀이권 다시 고르기' })).toHaveAttribute('href', '/me/credits');
-
-    await page.goto('/me/credits/done?code=FAILURE_TYPE_PG');
-    await expect(page.getByRole('heading', { level: 1, name: '결제를 마치지 못했어요' })).toBeVisible();
-    await expect(page.getByRole('link', { name: '풀이권 다시 고르기' })).toHaveAttribute('href', '/me/credits');
   });
 });

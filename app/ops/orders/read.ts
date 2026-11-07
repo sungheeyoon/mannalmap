@@ -1,5 +1,5 @@
 import { rpcArgs, type RpcRow } from '@/src/lib/db';
-import { readingBundleValidUntil, refundOwed } from '@/src/lib/reading/bundle';
+import { refundOwed } from '@/src/lib/reading/bundle';
 
 import { supabaseOnServer } from '../../auth/server-client';
 import { read, unread, type SkippableRead } from '../../db-error';
@@ -27,7 +27,7 @@ export type OrderLine = {
   readonly orderNumber: string;
   readonly status: string;
   readonly provider: string;
-  /** PG 의 거래 번호 — 승인 때 선다 */
+  /** 결제한 곳의 거래 번호 — 승인 때 선다 */
   readonly paymentId: string | null;
   readonly amount: number;
   readonly refundedAmount: number;
@@ -38,7 +38,10 @@ export type OrderLine = {
   /** 묶음 — 승인된 적 없는 주문이면 `null` */
   readonly bundle: {
     readonly credits: number;
+    /** 돈을 돌려주고 걷은 회차 — 다른 결제의 스토어 환불이 돈 없이 걷은 것은 빠졌다(`takenByStore`). 금액 셈의 입력이다 */
     readonly refundedCredits: number;
+    /** 다른 결제가 스토어 환불로 무효가 될 때 이 묶음에서 돈 없이 걷어 간 회차(ADR 0230 추기 A) — 환불 금액에 안 든다 */
+    readonly takenByStore: number;
     /** 걷은 회차 가운데 위약금을 뗀 사유(「안 쓴 몫 환불」)로 걷은 것 — 다음 환불의 누적 위약금이 이것을 센다(ADR 0192) */
     readonly penalizedCredits: number;
     readonly used: number;
@@ -46,8 +49,6 @@ export type OrderLine = {
     readonly reserved: number;
     /** 지금 걷을 수 있는 회차 — 쓴 것 · 예약 중 · 진행 중인 확보를 뺐다 */
     readonly unused: number;
-    /** 유효기간이 끝나는 날(서울, `YYYY-MM-DD`, ADR 0173) */
-    readonly validUntil: string;
   } | null;
 };
 
@@ -58,9 +59,9 @@ export type RefundHold = {
   readonly amount: number;
   readonly reason: string;
   readonly heldAt: string;
-  /** 가맹점 주문 번호(`rdo_…`) — PortOne 의 결제 번호 */
+  /** 가맹점 주문 번호(`rdo_…`) */
   readonly orderNumber: string;
-  /** PG 의 거래 번호 — 콘솔에서 이 결제를 찾는다 */
+  /** 결제한 곳의 거래 번호 — 콘솔에서 이 결제를 찾는다 */
   readonly paymentId: string | null;
   /** 결제액 */
   readonly paidAmount: number;
@@ -119,11 +120,11 @@ export const orderLineOf = (row: RpcRow<'operator_reading_refund_basis'>): Order
         : {
             credits,
             refundedCredits: row.refunded_credits,
+            takenByStore: row.taken_by_store ?? 0,
             penalizedCredits: row.penalized_credits,
             used: row.used,
             reserved: row.reserved,
             unused: row.unused,
-            validUntil: readingBundleValidUntil(new Date(approvedAt)),
           },
   };
 };

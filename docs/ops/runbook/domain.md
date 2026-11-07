@@ -18,10 +18,10 @@ OAuth 되돌아옴 · 복구기 주소 · OpenAI 웹훅 · 옛 주소 넘김이 
 | 1 | 했다 | 2026-10-23 `curl` — 맨 도메인 `/` 200 · `www` 308 → 맨 도메인 | — |
 | 2 | 했다 | 2026-10-23 `curl` — `og:image` 가 새 도메인의 `/brand/…` | — |
 | 3 | 했다 | 2026-10-08 운영자 — Site URL 을 새 주소로, Redirect URLs 에 새 도메인의 `/**` 를 더함, 새 주소에서 구글 로그인 → `/me` | 옛 주소의 Redirect URLs 셋은 8 뒤에 걷는다. 지금 남아 있는지는 **확인 전**(대시보드를 안 봤다) |
-| 4 | **확인 전** | 저장소에서 못 잰다 | 운영자 — Google Cloud Console → OAuth consent screen 의 승인된 도메인 · 앱 홈 · 처리방침 링크가 새 도메인인지 본다(#304) |
+| 4 | **확인 전** | 저장소에서 못 잰다 | 운영자 — Google Cloud Console → OAuth consent screen 의 승인된 도메인 · 앱 홈 · 처리방침 링크가 새 도메인인지 본다(#770 B) |
 | 5 | **안 했다** | 2026-10-23 `db:remote` — Vault `reading_recovery_url` 의 호스트가 **옛 별칭**이다(호스트만 읽었다 — 비밀이 아닌 공개 주소). 지난 한 시간 복구기 부름 60번이 모두 200 — 옛 별칭이 200 이라 지금은 돈다 | 8 **전에** 아래 5 의 한 줄. 운영 SQL 이라 공식 운영(2026-11-05 부터)에서는 사람이 답한 뒤에 밟고 값을 적는다(`docs/agents/delegation/permissions.md` 「권한 등급」) |
-| 6 | **확인 전** | 저장소에서 못 잰다 — 결과가 웹훅으로 왔는지 복구기로 왔는지 DB 에 남지 않는다 | 운영자 — platform.openai.com → Settings → Webhooks 의 endpoint 호스트가 새 도메인인지 본다(#304). 옛 별칭이면 아래 6 |
-| 7 | 해당 없음 | 결제 알림이 꺼져 있다(`docs/ops/runbook/credits.md` 「결제 알림」) | 켜는 날 새 도메인으로 |
+| 6 | **확인 전** | 저장소에서 못 잰다 — 결과가 웹훅으로 왔는지 복구기로 왔는지 DB 에 남지 않는다 | 운영자 — platform.openai.com → Settings → Webhooks 의 endpoint 호스트가 새 도메인인지 본다(#770 B). 옛 별칭이면 아래 6 |
+| 7 | 해당 없음 | Google Play 통지의 Pub/Sub 푸시 구독이 아직 없다 — D-U-N-S 날 만든다(`docs/ops/runbook/credits.md` 「Google Play 결제」, ADR 0230) | 만들 때 그날의 도메인으로 |
 | 8 | 안 했다 | 2026-10-23 `curl` — 옛 별칭 `/` 200 | 5 · 6 이 새 도메인으로 선 뒤 |
 | 9 | 했다 | `deploy.md` 는 주소 대신 이 문서를 가리킨다(ADR 0152) | — |
 | 10 | 해당 없음 | 2026-10-23 `db:remote` — Vault `push_dispatch_url` 이 없다(웹 푸시는 G-71 보류) | 켜는 날 새 도메인으로 넣는다(`docs/ops/runbook/push.md`) |
@@ -45,7 +45,7 @@ OAuth 되돌아옴 · 복구기 주소 · OpenAI 웹훅 · 옛 주소 넘김이 
 | 4 | **구글 OAuth 동의 화면** | Google Cloud Console → OAuth consent screen 의 승인된 도메인 · 앱 홈 · 처리방침 링크가 있으면 새 도메인으로. 승인된 리디렉션 URI 는 **Supabase 의 `…supabase.co/auth/v1/callback`** 이라 그대로다 | 브랜드 확인을 받은 뒤라면 동의 화면이 경고를 띄울 수 있다 | 3 과 같은 로그인이 경고 없이 지난다 |
 | 5 | **Vault `reading_recovery_url`** | `select vault.update_secret((select id from vault.secrets where name = 'reading_recovery_url'), 'https://<새 도메인>/api/cron/reading');` — 1분 복구기가 `pg_net` 으로 부르는 주소(`docs/ops/runbook/secret-leak.md` 「비밀이 새면」 표) | 넘김으로 바꾼 뒤 복구기가 308 을 받는다 → `cron-watch` 가 `net-request-failed` 를 보낸다. 결과는 webhook 이 살아 있으면 붙지만 멈춘 풀이를 아무도 안 줍는다 | 2분 뒤 `select status_code, created from net._http_response order by created desc limit 3;` 가 200 |
 | 6 | **OpenAI webhook** | platform.openai.com → Settings → Webhooks 의 endpoint 를 `https://<새 도메인>/api/openai/webhook` 으로. 주소를 고칠 수 없어 새로 만들면 **서명 비밀이 바뀐다** — `docs/ops/runbook/secret-leak.md` 「비밀이 새면」의 `OPENAI_WEBHOOK_SECRET` 줄을 그대로 밟는다 | 결과가 1분 늦게 복구기로만 붙는다(ADR 0020). 비밀만 바뀌고 Vercel 에 안 넣으면 401 | 새 풀이 하나가 끝나고 `reading_run` 의 그 줄이 1분 안에 `succeeded` |
-| 7 | **스토어 결제 통지** | **아직 없다** — PG 를 하지 않아(ADR 0212) PortOne 웹훅은 켜지 않는다(`docs/ops/runbook/credits.md` 「결제 알림」). 스토어 통지 문이 서면 Apple · Google 콘솔에 넣는 주소가 새 도메인이다(#937) | — | 문이 선 뒤 |
+| 7 | **스토어 결제 통지** | Google Play 의 통지(RTDN)는 Pub/Sub **푸시 구독의 끝점**이 `https://<도메인>/api/store/google-play` 이다(ADR 0230, `docs/ops/runbook/credits.md` 「Google Play 결제」). Google Cloud → Pub/Sub → 구독 → 수정에서 끝점과 **audience** 를 새 주소로 바꾸고, audience 를 바꿨으면 Vercel 의 `GOOGLE_PLAY_PUBSUB_AUDIENCE` 도 같은 값으로 → 재배포 | 옛 주소가 308 을 주면 Pub/Sub 이 실패로 보고 다시 보낸다 — 무효 통지가 늦는다(날마다의 대조 크론이 그물이다). audience 가 어긋나면 403 | Play Console → Monetization setup 의 「Send test message」 뒤 Vercel 로그에 `play notification: refused` 가 없다 |
 | 8 | **옛 주소를 넘김으로** | 1~6 을 새 주소로 본 뒤, Vercel Domains 에서 `saju-snowy.vercel.app` 을 새 도메인으로 308 넘긴다. **지우지 않는다** — 이미 보낸 공유 링크(`/share/…`)가 그 주소를 들고 있다 | 옛 링크가 죽는다 | `curl -sI https://saju-snowy.vercel.app/share/x` 가 308 · `location: https://<새 도메인>/share/x` |
 | 9 | **`docs/ops/runbook/deploy.md`** | 「배포」의 운영 주소 · 「묶음 배포」 3 의 Aliases · 「CSP 가 화면을 막을 때」의 `curl` 이 옛 별칭을 든다. 새 도메인으로 고치는 PR 을 같은 날 넣는다. `scripts/check-share.mjs` 의 `HOST` 는 흉내 낸 값이라 그대로다 | 다음 사람이 옛 주소로 smoke 한다 | `grep -rn saju-snowy docs/ops` 가 넘김 설명 한 줄만 |
 | 10 | **Vault `push_dispatch_url`** | 웹 푸시를 켰으면(G-71) **8 전에** `select vault.update_secret((select id from vault.secrets where name = 'push_dispatch_url'), 'https://<새 도메인>/api/push/dispatch');` — 배달 줄이 생길 때와 1분마다 `pg_net` 이 부르는 주소(`docs/ops/runbook/push.md`). 켜지 않았으면 켜는 날 새 도메인으로 넣는다 | 넘김으로 바꾼 뒤 배달 깨움이 308 을 받는다 → `net-request-failed` · 새 메시지 알림이 안 간다 | 2분 뒤 `net._http_response` 에 200 |

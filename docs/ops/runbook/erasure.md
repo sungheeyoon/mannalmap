@@ -37,32 +37,25 @@ select * from public.forget_user('<user uuid>');
   그 사람이 든 신고와 스냅샷을 `retention.report` 로 옮기고 일반 표에서는 사라진다. 처분일부터 6개월
   뒤 크론이 지운다 — 아래 「떠난 사람의 신고 기록」.
 
-**다시 못 들어오게 하는 것은 이 문이 아니다.** 삭제는 접근 회수가 아니고(`docs/ops/runbook/signup.md` 「초대」 절과
-같은 구분), 코드는 사람에 매여 있지 않다 — 지운 사람이 같은 코드를 아직 들고 있으면 그
-코드가 살아 있는 동안에는 다시 들어올 수 있다. 막으려면 **그 코드를 닫는다.** 정지된 채 지운 로그인은 1년 동안 다시 가입하면 정지가
-이어진다(아래 「제재 기록」, ADR 0218) — 그래도 다른 로그인 계정은 못 가린다.
+**다시 못 들어오게 하는 것은 이 문이 아니다.** 삭제는 접근 회수가 아니다 — 가입은 코드를 묻지 않으므로(ADR 0225) 지운 사람은
+다시 로그인해 새로 가입할 수 있다. 정지된 채 지운 로그인은 1년 동안 다시 가입하면 정지가 이어진다(아래 「제재 기록」, ADR 0218) —
+그래도 다른 로그인 계정은 못 가린다.
+
+### 서비스를 끝낼 때 — **일정 줄의 종료일은 아무것도 닫지 않는다**
+
+**2026-11-07 부터 종료일이 지나도 닫히지 않는다**(ADR 0234) — `20270114095000` 을 `db push` 해 `beta_is_over()` 가 늘 거짓이고, 그래서
+`is_active_account()` 도 날짜를 묻지 않는다. 웹 관문(`notice-v17`, 같은 날 02:37 KST 배포)도 그 날을 보지 않는다. 예외 하나 — 2026-11-02 의 옛 내부 테스트 빌드는
+앱 안에서 종료일을 견줘 12-01 부터 닫힌다(운영자가 받아들였다, #1050 댓글).
+
+서비스를 실제로 끝내는 일은 약관 제17조의2 의 30일 공지 · 정산을 거치는 결정이고 배포가 함께 간다 — 코드 상수 `SERVICE_ENDED_ON`(`src/lib/consent/gate.ts`)과
+`beta_is_over()` 의 몸을 함께 그날로 고친다. 그때 `/closed` 가 「서비스가 종료되었습니다」를 보인다.
 
 ```sql
--- 정원은 1 아래로 못 내린다(검사식 `max_uses between 1 and 1000`) — 사는 하루를 어제로 옮겨 닫는다
-update public.signup_code set valid_on = (now() at time zone 'Asia/Seoul')::date - 1, valid_until = (now() at time zone 'Asia/Seoul')::date - 1
-where code = '<그 사람에게 준 코드>';
-```
-
-### 종료일이 되면 — **저절로 닫힌다**
-
-종료일이 지나면 `is_active_account()` 가 거짓이 되어 discovery·요청·수락·풀이 생성·설문이
-한꺼번에 닫히고, `/me` 아래는 「비공개 테스트가 끝났습니다」로 선다. 운영자가 그날 무엇을
-누르지 않아도 된다 — 날짜가 집행한다.
-
-```sql
--- 닫혔는지 본다
+-- 지금은 늘 false 다
 select public.beta_is_over(), * from public.current_beta_schedule();
 ```
 
-미루려면 새 줄을 넣는다(`docs/ops/runbook/signup.md` 「테스트 시작하기」). 넣는 순간 다시 열리고, **모두가 안내를
-다시 본다** — 기간이 바뀌는 것은 알린 내용이 바뀌는 것이다.
-
-파기는 저절로 안 된다. 아래를 손으로 돈다.
+파기는 저절로 안 된다. 끝낸 뒤 아래를 손으로 돈다.
 
 **확인 전 — Supabase Free 의 저활동 일시정지.** Free 는 한 주 동안 데이터베이스 활동이 적은 프로젝트를 멈춘다
 (<https://supabase.com/docs/guides/platform/free-project-pausing>, 2026-10-22 확인). 멈춘 동안 `pg_cron` 의 보존 · 파기 잡(`docs/ops/runbook/jobs.md`
@@ -273,6 +266,8 @@ update retention.report set hold_reason = null, held_at = null where report_id =
 - 크론 `account-disposal`(매시 23분)이 **신청 뒤 하루가 지난** 대기를 집어 `forget_user` 를 돌리고, 바로
   흔적을 잰다(`account_residue`). 흔적이 남으면 처분째 되감기고 계정은 대기에 남아 다음 시간에 다시 집힌다.
   하루를 두는 것은 되돌릴 틈이고, 남은 이틀은 다시 시도할 여유다.
+- **카카오 계정은 신청 때 카카오 연결이 끊긴다** — 앱은 기기의 SDK 가, 웹은 서버가 어드민 키로(ADR 0224). 처분을 기다리지 않는다. 웹의 끊기가 실패하면 처분 전에 다시 끊는다 —
+  `docs/ops/runbook/kakao-login.md` 「웹 탈퇴의 연결 끊기가 실패하면」.
 - **운영자가 할 일은 알림이 왔을 때뿐이다.** `account-disposal-failed`(실패) · `account-disposal-overdue`
   (신청 뒤 3일이 지난 대기가 있다). 성공은 안 알린다.
 
@@ -364,7 +359,7 @@ where m.id in ('<match-id>');
    (`docs/ops/runbook/access.md` 「개인정보는 화면으로만」 — 대장을 먼저 적고 사람이 돈다). 질의는 참 · 거짓만 돌려주고 이메일을 꺼내지
    않는다. 거짓이면 옮기지 않는다 — 가입한 구글 계정의 주소로 다시 보내 달라고 답한다.
 
-   **로그인 이메일이 없는 계정(카카오로만 가입, ADR 0224)은 이 걸음을 밟을 수 없다** — 대조할 값이 없다. 위 3 의 질의를 돌리지 않고(그 계정은
+   **로그인 이메일이 없는 계정(이메일 필수 동의 전인 2026-11-05 에 카카오로만 가입, ADR 0224 추기)은 이 걸음을 밟을 수 없다** — 대조할 값이 없다. 위 3 의 질의를 돌리지 않고(그 계정은
    늘 거짓이다) 옮기지도 않는다. 먼저 정한 길로 답한다: **정지된 사람도 카카오로 로그인해 설정 맨 아래 「탈퇴하기」로 스스로 신청한다**(ADR 0218).
    2 의 화면에서 로그인 수단이 카카오인지는 알 수 없으니, 답장은 처음부터 두 길을 함께 적는다 — 「가입한 구글 계정의 주소로 보내 주시거나,
    카카오로 가입하셨다면 앱에 카카오로 로그인해 설정의 탈퇴하기를 눌러 주세요.」 카카오계정을 잃어 로그인할 수 없는 사람의 길은 없다 — 그 문의는
@@ -409,7 +404,7 @@ select public.change_account_status('<운영자 UUID>', '<계정 UUID>', 'suspen
 **다시 들어오면 정지가 이어진다**(ADR 0218) — 정지된 채 지워진 계정(스스로 신청했든 운영자가 옮겼든)은 `auth.users` 의 지우기 직전에
 `retention.sanction` 에 로그인 이메일 · 로그인 식별값 · 정지 갈래 · 관련 신고 id · 정지한 운영자 · 정지 시각이 남고, 처분일부터 1년
 안에 같은 로그인으로 가입을 마치면 같은 갈래로 정지된다(아래 「제재 기록」). 다른 로그인 계정은 못 가린다 — 정지의 까닭이 남아
-있으면(결제 부정 · 이용 자격) 그 사람에게 준 가입 코드를 닫을지 함께 본다.
+있으면(결제 부정 · 이용 자격) 다른 계정으로 돌아오는 것은 막을 길이 없다 — 가입 코드는 걷었다(ADR 0225).
 
 ### 제재 기록 — 정지된 채 떠난 로그인, 처분일부터 1년 (ADR 0218)
 
@@ -435,3 +430,27 @@ select jobname, schedule, active from cron.job where jobname = 'sanction-retenti
 
 **잘못 이어졌을 때**(같은 이메일의 다른 사람이 들어온 경우 등) — 회원 화면에서 갈래 「잘못 정지」로 푼다. 기록 자체를 지워야 하면
 운영자의 SQL 로 그 한 줄만 지우고(`delete from retention.sanction where id = '<id>'` — id 는 알림 `sanction-carried:` 의 본문에 있다) 대장에 남긴다.
+
+### 구매 제한 기록 — 제한된 채 떠난 로그인, 처분일부터 1년 (ADR 0230 추기 B, G-142)
+
+정지 기록과 같은 꼴이다(위 「제재 기록」). 마이그레이션 `20270114100000`(회수한 장수의 `20270114090000` 과 따로다). 기간(1년)은 `retention.store_restriction_period()` 한 곳이다.
+
+**올렸다(2026-11-07)** — 처리방침 notice-v17 「구매 제한 기록은 따로 둡니다」를 02:37 KST 에 배포한 뒤 02:55 에 `db push` 했다(ADR 0098 「알리기 전에 남기지 않는다」).
+옮긴 줄 0, 크론 `store-restriction-retention-purge` 는 `13 5 * * *` · 켜짐, 표의 RLS 켜짐. 앱 · 웹은 이 기록을 부르지 않으므로 앱과의 순서는 없다.
+
+- **남는 때** — 구매 제한이 걸린 채(마지막 이력이 「건다」) `auth.users` 행이 지워질 때(트리거 `store_restriction_outlives_the_leaver`). 크론의 처분이든 `forget_user` 든 같다.
+  제한이 풀린 계정 · 한 번도 제한되지 않은 계정은 안 남는다. 든 것은 이메일(소문자) · 로그인 식별값 · 제한 갈래 · 건 운영자 · 건 시각 · 처분일 · 무효마다 시각 · Google 의 갈래 셋(사유 ·
+  환불을 시작한 쪽 · 환불 종류) · 회수한 장수 · 남긴 장수다 — 운영자 메모 · 주문 번호 · 금액은 없다.
+- **이어지는 때** — 새 계정이 가입을 마치는 순간 살아 있는 기록과 이메일 또는 `provider:provider_id` 가 겹치면 같은 갈래로 구매 제한이 걸린다. 이력 메모는
+  「탈퇴 전 계정의 구매 제한을 이었다 — 보관 기록 <id>」이고 장애 알림 길로 `store-restriction-carried:` 한 줄이 온다. 소명이 오면 보통 제한처럼 푼다(`docs/ops/runbook/credits.md` 「구매 제한 걸기 · 풀기」).
+- **지우는 때** — 크론 `store-restriction-retention-purge`(매일 05:13 UTC)가 처분일부터 1년 지난 줄을 지운다. 실패는 `cron-watch` 가 알린다.
+- **읽기** — 앱 역할은 못 읽는다. 운영자도 수만 본다.
+
+```sql
+select count(*) as 기록, min(retained_at) as 가장_오래된_처분일 from retention.store_purchase_restriction;
+select jobname, schedule, active from cron.job where jobname = 'store-restriction-retention-purge';
+```
+
+**잘못 이어졌을 때**(같은 이메일의 다른 사람이 들어온 경우 등) — 보통 제한처럼 `set_store_purchase_restriction` 의 `lift` · `mistake` 로 푼다(`docs/ops/runbook/credits.md`
+「구매 제한 걸기 · 풀기」). 기록 자체를 지워야 하면 운영자의 SQL 로 그 한 줄만 지우고(`delete from retention.store_purchase_restriction where id = '<id>'` — id 는 알림
+`store-restriction-carried:` 의 본문과 이은 제한의 메모에 있다) 대장에 남긴다.

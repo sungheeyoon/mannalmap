@@ -1,11 +1,9 @@
 import {
-  E2E_CODE,
   expect,
   postponedEndsOn,
   test,
   scheduleBeta,
   scheduledEndsOn,
-  seedSignupCode,
   sql,
 } from './session';
 
@@ -49,7 +47,7 @@ test.describe('시작하기 전에', () => {
 
     /* 화면은 길을 가리키고, 막는 일은 DB 가 한다(`create_self_person`) */
     await expect(page).toHaveURL(/\/signup$/);
-    await expect(page.getByRole('heading', { name: /테스트 코드와 닉네임/ })).toBeVisible();
+    await expect(page.getByRole('heading', { name: '닉네임을 입력해 주세요' })).toBeVisible();
   });
 
   test('종료일이 없으면 아무도 지나갈 수 없다', async ({ page, newcomerRaw }) => {
@@ -95,13 +93,15 @@ test.describe('시작하기 전에', () => {
 
     await page.goto('/me');
     await expect(page).toHaveURL(/\/signup$/);
-    await expect(page.getByText(asKoreanDay(postponedEndsOn()), { exact: false })).toBeVisible();
+    /* 날짜는 안내에 보이지 않는다(`notice-v17`, ADR 0234) — 새 일정 줄이면 다시 묻는 것은 그대로다(`signupDone` 이 본 줄을 견준다) */
+    await expect(page.getByText('저장된 정보는 탈퇴를 신청하시면 3일 안에 삭제합니다.')).toBeVisible();
+    await expect(page.getByText(asKoreanDay(postponedEndsOn()), { exact: false })).toHaveCount(0);
 
-    /* 이미 가진 사람에게는 코드 칸도 이름 칸도 안 선다 */
-    await expect(page.getByLabel('테스트 코드')).toHaveCount(0);
+    /* 이미 가진 사람에게는 이름 칸이 안 선다 */
     await expect(page.getByLabel('닉네임')).toHaveCount(0);
 
     /* 다시 확인하면 돌아온다 — 여기서 루프면 이 줄이 타임아웃으로 죽는다 */
+    await page.getByRole('checkbox', { name: '만 14세 이상입니다' }).check();
     await page.getByRole('checkbox', { name: /위 내용을 확인/ }).check();
     await page.getByRole('button', { name: '확인하고 계속하기' }).click();
     await expect(page).toHaveURL(/\/me$/);
@@ -111,24 +111,15 @@ test.describe('시작하기 전에', () => {
   });
 
   /**
-   * **종료일이 지나면 저절로 닫힌다.** 날짜가 적혀만 있고 집행되지 않으면 「10월 31일에
-   * 끝납니다」는 지키는 것이 없는 문장이다.
+   * **일정 줄의 종료일이 지나도 닫히지 않는다**(ADR 0225 추기 2026-11-06 · ADR 0234). 공개 고지가 고정 운영 기간을 지웠다 —
+   * 서비스의 끝은 `SERVICE_ENDED_ON` 이 말한다. 새 줄이라 다시 확인할 뿐이다.
    */
-  test('종료일이 지나면 내 사주가 끝났다고 말한다', async ({ page, signedIn }) => {
+  test('종료일이 지나도 끝났다는 화면으로 가지 않는다', async ({ page, signedIn }) => {
     expect(signedIn.label).not.toBe('');
     scheduleBeta('2020-01-01');
 
     await page.goto('/me');
-
-    /* 그리는 것이 아니라 튕긴다 — 관문 둘이 다 `proxy.ts` 로 옮겨 갔다 */
-    await expect(page).toHaveURL(/\/closed$/);
-    await expect(page.getByRole('heading', { name: '비공개 테스트가 끝났습니다' })).toBeVisible();
-    await expect(page.getByRole('button', { name: '사주풀이 받기' })).toHaveCount(0);
-
-    /* 끝나도 나가는 길은 열려 있다 */
-    await page.goto('/me/settings');
-    await expect(page).toHaveURL(/\/me\/settings$/);
-    await expect(page.getByRole('heading', { name: '설정', exact: true })).toBeVisible();
+    await expect(page).not.toHaveURL(/\/closed$/);
 
     scheduleBeta(scheduledEndsOn());
   });
@@ -138,7 +129,7 @@ test.describe('시작하기 전에', () => {
    *
    * 이 주소는 링크 하나로 아무 때나 열 수 있다. 안 물으면 「끝났습니다」가 거짓말이 된다.
    */
-  test('아직 안 끝났으면 끝났다는 화면은 열리지 않는다', async ({ page, signedIn }) => {
+  test('서비스가 안 끝났으면 끝났다는 화면은 열리지 않는다', async ({ page, signedIn }) => {
     expect(signedIn.label).not.toBe('');
     scheduleBeta(scheduledEndsOn());
 
@@ -146,14 +137,13 @@ test.describe('시작하기 전에', () => {
     await expect(page).toHaveURL(/\/me$/);
   });
 
-  test('코드와 이름과 확인이 한 폼에서 끝난다', async ({ page, newcomerRaw }) => {
+  test('이름과 확인이 한 폼에서 끝난다 — 코드는 묻지 않는다', async ({ page, newcomerRaw }) => {
     expect(newcomerRaw.email).not.toBe('');
     scheduleBeta(scheduledEndsOn());
-    seedSignupCode();
 
     await page.goto('/signup');
 
-    /* 전문은 링크로 갈라 두고, 가입 화면에는 코드 앞의 핵심 안내만 선다 */
+    /* 전문은 링크로 갈라 두고, 가입 화면에는 핵심 안내만 선다 */
     await expect(page.getByRole('heading', { name: '가입 전에 확인해 주세요' })).toBeVisible();
     await expect(page.getByRole('link', { name: '개인정보 처리방침' })).toHaveAttribute(
       'href',
@@ -161,18 +151,16 @@ test.describe('시작하기 전에', () => {
     );
     await expect(page.getByText('무엇을 받고 무엇에 쓰나요', { exact: true })).toHaveCount(0);
 
-    /*
-      **날짜가 문장 안에 실제로 서 있어야 한다** — 그것이 이 화면이 있는 이유다.
-      「파기합니다」 같은 낱말로 재면 날짜 없이도 지나가는 문장이 통과한다.
-    */
-    await expect(page.getByText(asKoreanDay(scheduledEndsOn()), { exact: false })).toBeVisible();
+    /* 운영 기간의 날짜는 더 서지 않는다(`notice-v17`, ADR 0234) — 탈퇴 뒤 3일의 일반 규칙이 선다 */
+    await expect(page.getByText(asKoreanDay(scheduledEndsOn()), { exact: false })).toHaveCount(0);
+    await expect(page.getByText('저장된 정보는 탈퇴를 신청하시면 3일 안에 삭제합니다.')).toBeVisible();
 
     /*
       **선택은 꺼진 채로 열린다.** 미리 켜 두면 고른 것이 아니라 안 끈 것이 되고,
       그것을 동의라고 부를 수 없다.
     */
     const improvement = page.getByRole('checkbox', { name: /풀이 개선/ });
-    const contact = page.getByRole('checkbox', { name: /다음 테스트 소식/ });
+    const contact = page.getByRole('checkbox', { name: /인터뷰 요청 받기/ });
     await expect(improvement).not.toBeChecked();
     await expect(contact).not.toBeChecked();
 
@@ -186,14 +174,19 @@ test.describe('시작하기 전에', () => {
     */
     const start = page.getByRole('button', { name: '가입하고 시작하기' });
     const gap = page.locator('#signup-gap');
+    /* 코드 칸은 없다(ADR 0225) — 처음 걸리는 칸은 닉네임이다 */
+    await expect(page.getByLabel('테스트 코드')).toHaveCount(0);
     await start.click();
-    await expect(gap).toHaveText('테스트 코드를 입력해 주세요.');
-    await expect(page.getByLabel('테스트 코드')).toBeFocused();
+    await expect(page.getByLabel('닉네임')).toBeFocused();
 
-    await page.getByLabel('테스트 코드').fill(E2E_CODE);
     await page.getByLabel('닉네임').fill(`벗${String(Date.now()).slice(-6)}`);
     await page.getByRole('button', { name: '중복 확인' }).click();
     await expect(page.getByText('사용할 수 있는 닉네임입니다.')).toBeVisible();
+
+    await start.click();
+    await expect(gap).toHaveText('‘만 14세 이상입니다’에 표시해 주세요.');
+    await expect(page.getByRole('checkbox', { name: '만 14세 이상입니다' })).toBeFocused();
+    await page.getByRole('checkbox', { name: '만 14세 이상입니다' }).check();
 
     await start.click();
     await expect(gap).toHaveText('‘위 내용을 확인했습니다’에 표시해 주세요.');
@@ -264,6 +257,7 @@ test.describe('재확인 기준', () => {
     await page.goto('/me/settings');
     await expect(page).toHaveURL(/\/signup\?next=%2Fme%2Fsettings$/);
 
+    await page.getByRole('checkbox', { name: '만 14세 이상입니다' }).check();
     await page.getByRole('checkbox', { name: /위 내용을 확인/ }).check();
     await page.getByRole('button', { name: '확인하고 계속하기' }).click();
     /* 다시 확인한 사람은 가려던 화면으로 돌아간다(ADR 0128) */

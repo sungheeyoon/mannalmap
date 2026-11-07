@@ -12,6 +12,7 @@ import {
 } from '@/src/lib/saju';
 
 import { ClaimStrengthLegend, UtteranceList } from './utterances';
+import { BETWEEN_RELATIONS_NOTE, DAY_TO_DAY_NOTE } from '@/src/lib/saju/view/notes';
 import { TOPICS_THE_TABLE_HOLDS, TOPIC_TABLE_FOOTNOTE, said, warningsToShow } from '@/src/lib/saju/view';
 import { CARD, TYPE_NAME } from './ui/surfaces';
 
@@ -120,7 +121,7 @@ function BetweenRelations({
 
       {dayToDay.length > 0 && (
         <div className="mt-3 rounded-cell border border-border bg-surface-sunken p-3">
-          <p className="text-xs text-muted">일지끼리 — 부부 자리로 읽는 자리입니다</p>
+          <p className="text-xs text-muted">{DAY_TO_DAY_NOTE}</p>
           <ul className="mt-1.5 flex flex-col gap-1 text-sm">
             {dayToDay.map((relation) => (
               <li key={relation.id}>
@@ -193,9 +194,7 @@ function BetweenRelations({
       )}
 
       <p className="mt-3 border-t border-border pt-3 text-xs text-muted">
-        각자의 원국 안에서 닫힌 관계는 빠져 있습니다 — 그건 각자의 명식이 이미 보여준
-        사실입니다. 두 사람의 기둥 사이에는 거리라는 것이 없어 몇 칸 떨어졌는지는 적지
-        않습니다. 성립 여부만 적고 좋고 나쁨은 판정하지 않습니다.
+        {BETWEEN_RELATIONS_NOTE}
       </p>
     </section>
   );

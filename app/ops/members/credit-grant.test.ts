@@ -91,10 +91,10 @@ describe('갈래 · 대상 · 회수 잠금', () => {
     expect(grantBlocked('active')).toBeNull();
   });
 
-  it('회수할 것이 없으면 까닭 한 줄 — 예약 중이 있으면 풀린 뒤라고 말한다', () => {
+  it('회수할 것이 없으면 까닭 한 줄 — 사용 중이 있으면 반환된 뒤라고 말한다', () => {
     expect(revokeBlocked(1, 3)).toBeNull();
     expect(revokeBlocked(0, 0)).toBe('회수할 무상 지급분이 없습니다.');
-    expect(revokeBlocked(0, 2)).toContain('예약 중 2장은 풀린 뒤');
+    expect(revokeBlocked(0, 2)).toContain('사용 중 2장은 반환된 뒤');
   });
 });
 
@@ -116,12 +116,12 @@ describe('이력의 말', () => {
     ...over,
   });
 
-  it('확정 사용만 −1장, 예약은 부호 없이 「예약 중」, 반환은 숫자 없이 「반환 · 차감 없음」', () => {
+  it('확정 사용만 −1장, 사용 중은 부호 없이 「사용 중」, 반환은 숫자 없이 「반환 · 차감 없음」', () => {
     expect(historyAmount(line({ delta: -1, state: 'confirmed', cause: 'run' }))).toBe('−1장');
     expect(historyCause(line({ delta: -1, state: 'confirmed', cause: 'run' }))).toBe('풀이 사용');
     expect(historyAmount(line({ state: 'released', cause: 'run' }))).toBe('');
     expect(historyCause(line({ state: 'released', cause: 'run' }))).toBe('반환 · 차감 없음');
-    expect(historyAmount(line({ state: 'reserved', cause: 'request' }))).toBe('예약 중');
+    expect(historyAmount(line({ state: 'reserved', cause: 'request' }))).toBe('사용 중');
     expect(historyCause(line({ state: 'reserved', cause: 'request' }))).toBe('인연 요청');
   });
 
@@ -154,7 +154,7 @@ describe('이력의 말', () => {
 
   it('증감이 0 인 환불 줄은 빈 칸이다 — 「+0장」이 서지 않는다(G-113, 운영자 결정 2026-10-18)', () => {
     expect(historyAmount(line({ kind: 'refund', source: 'bundle', delta: 0, reason: 'unused' }))).toBe('');
-    expect(historyCause(line({ kind: 'refund', source: 'bundle', delta: 0, reason: 'unused' }))).toBe('환불 — 안 쓴 몫 환불(청약철회 기간 경과 후 · 10% 공제)');
+    expect(historyCause(line({ kind: 'refund', source: 'bundle', delta: 0, reason: 'unused' }))).toBe('환불 — 미사용분 환불(청약철회 기간 경과 후 · 10% 공제)');
   });
 
   it('거르기는 주소에서 읽고, 모르는 값은 기본으로', () => {

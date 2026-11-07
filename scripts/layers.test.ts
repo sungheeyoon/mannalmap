@@ -497,9 +497,13 @@ describe('열쇠를 드는 자리 (G-64, ADR 0136)', () => {
     'app/api/cron/photo-sweep/route.ts',
     'app/api/cron/reading/route.ts',
     'app/api/openai/webhook/route.ts',
-    'app/api/portone/webhook/route.ts',
     /** 웹 푸시의 배달 문 — 배달 줄을 잠그고 닫는 문 둘만 부른다(ADR 0156) */
     'app/api/push/dispatch/route.ts',
+    /**
+     * 스토어 결제의 장부 문 — 지급 · 소비 · 무효 · 살 수 있나의 넷만 부른다(ADR 0230). 사람 id 는 앱 문이 세션에서, 통지 문이 Google 의
+     * 계정 표지에서 넘긴다 — 확인은 늘 Play Developer API 뒤다
+     */
+    'app/api/store/google-play/ledger.ts',
     POOL_MODULE,
     /** 로그인 전 사주 문단의 문 아홉 — 지문 · HMAC 은 서버가 짓고, 회원 id 는 세션에서(ADR 0143) */
     ...Object.keys(TASTE_MODULES),

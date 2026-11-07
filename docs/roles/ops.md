@@ -25,13 +25,14 @@
 - 등급 4 — force push · `supabase config push` · Vercel 변수 삭제 · main 가지 삭제([권한 등급](../agents/delegation/permissions.md))
 - 운영 개인정보를 직접 조회하지 않는다 — break-glass 는 사람이 돈다([개인정보는 화면으로만](../ops/runbook/access.md#개인정보는-화면으로만--원격-sql-의-경계-adr-0105) · ADR 0105)
 - `app/api/**` 에 자격을 묻지 않는 문(상태 문 · 감시 문)을 더하면 결정이다([결정 점검표](../agents/delegation/decisions.md))
+- `docs/ops/**` 에 운영 주소를 글자로 적지 않는다 — `docs/ops/runbook/domain.md` 맨 위만 든다([운영 주소의 자리](../ops/runbook/domain.md) · ADR 0152 — `scripts/code-rules.test.ts` 가 잰다)
 - 운영자가 미룬 것(간극 대장의 `보류`)을 다시 권하지 않는다([조율자 세션](../agents/delegation/coordinator.md))
 
 ## 끝날 때 고치는 것
 
 - [ ] 배포 · DB 의 끝 상태는 [묶음 배포](../ops/runbook/deploy.md#묶음-배포--최신-main-을-production-으로-한-번) 5 의 #770 댓글이나 그 PR 에 — 노트는 [세션 기록](../agents/delegation/notes.md) 기준만
 - [ ] 절차가 바뀌었거나 틀렸으면 → `docs/ops/runbook/` 의 그 작업 파일(새 파일이면 색인에 한 줄)
-- [ ] 운영자만 할 수 있는 새 일 → 운영자 할 일 이슈(#304)
+- [ ] 운영자만 할 수 있는 새 일 → 운영자 할 일 · 확인 이슈(#770)
 
 ## 닿을 때 여는 것
 

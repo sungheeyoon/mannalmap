@@ -1,4 +1,4 @@
-import { accountStateOf, type AccountState, type Suspension } from '@account/index';
+import { accountStateOf, type AccountState } from '@account/index';
 import { rpcArgs } from '@db';
 import { userFacingDbMessage } from '@db-error';
 import { chartFingerprint, chartOf } from '@input/chart';
@@ -7,11 +7,13 @@ import { missingAnswer, type Query } from '@input/query';
 import { sameChartAmong, type SameChart } from '@input/same-chart';
 import { PERSON_INPUT_COLUMNS, storedChartOf, storedInputFilled, type StoredInput } from '@input/stored';
 import { personSlotsFrom, type PersonSlots } from '@people';
-import { listedPairSummary } from '@reading-display';
 import type { Saju } from '@saju';
 
 import { NOT_READY } from '@/auth/signup';
 import { supabase } from '@/auth/client';
+import { readSuspension } from '@/auth/suspension';
+import { readRunningReadings } from '@/reading/running';
+import { readMyReadings } from '@/reading/my-readings';
 
 export type { SameChart };
 
@@ -53,12 +55,7 @@ export async function readAccount(): Promise<{ state: AccountState; selfPersonId
   if (error !== null) return { state: accountStateOf({ ok: false, reason: 'unreachable' }), ...none };
   if (data === null) return { state: accountStateOf({ ok: false, reason: 'missing' }), ...none };
 
-  let suspension: Suspension | null | undefined;
-  if (data.status === 'suspended') {
-    const reason = await supabase.rpc('my_suspension');
-    const row = reason.error !== null ? undefined : (reason.data ?? [])[0];
-    suspension = row === undefined ? null : { nickname: row.nickname ?? null, reason: row.reason ?? null };
-  }
+  const suspension = data.status === 'suspended' ? await readSuspension(supabase) : undefined;
   return {
     state: accountStateOf({ ok: true, account: { status: data.status, selfPersonId: data.self_person_id, suspension } }),
     selfPersonId: data.self_person_id,
@@ -89,41 +86,35 @@ export async function readInputs(personIds: readonly string[]): Promise<{ ok: tr
   return { ok: true, inputs: new Map(rows.filter((row) => storedInputFilled(row)).map((row) => [row.id, row])) };
 }
 
-/** 내 글 목록 — 사주풀이와 내 궁합만 추린다. 요약의 자리 호칭은 웹과 같은 함수로 바꾼다. 부속 정보라 못 읽으면 비운다 */
+/** 내 글 목록 — 사주풀이와 내 궁합만 추린다. 줄을 옮기는 것은 웹과 같은 `readingEntriesOf` 다(`@/reading/my-readings`). 부속 정보라 못 읽으면 비운다 */
 export async function readReadings(): Promise<readonly MyReading[]> {
   if (supabase === null) return [];
-  const { data, error } = await supabase.rpc('my_readings');
-  if (error !== null) return [];
-  return (data ?? []).flatMap((row): MyReading[] => {
-    if (row.kind !== 'self' && row.kind !== 'person' && row.kind !== 'private') return [];
-    const labelA = row.label_a ?? null;
-    const labelB = row.label_b ?? null;
-    const summary = row.metaphor ?? null;
-    return [
-      {
-        kind: row.kind,
-        personA: row.person_a ?? null,
-        personB: row.person_b ?? null,
-        labelA,
-        labelB,
-        score: row.score ?? null,
-        metaphor:
-          row.kind === 'private'
-            ? listedPairSummary(summary, labelA !== null && labelB !== null ? { first: labelA, second: labelB } : null)
-            : summary,
-        fromCurrentChart: row.from_current_chart,
-        createdAt: row.created_at,
-      },
-    ];
-  });
+  const read = await readMyReadings(supabase);
+  if (!read.ok) return [];
+  return read.value.flatMap((entry): MyReading[] =>
+    entry.kind === 'match'
+      ? []
+      : [
+          {
+            kind: entry.kind,
+            personA: entry.personA,
+            personB: entry.personB,
+            labelA: entry.labelA,
+            labelB: entry.labelB,
+            score: entry.score,
+            metaphor: entry.metaphor,
+            fromCurrentChart: entry.fromCurrentChart,
+            createdAt: entry.createdAt,
+          },
+        ],
+  );
 }
 
 /** 사주풀이를 지금 만드는 중인 사람들 — 부속 정보다. 못 읽으면 단추는 「받기」로 선다 */
 export async function readMaking(): Promise<ReadonlySet<string>> {
   if (supabase === null) return new Set();
-  const { data, error } = await supabase.rpc('my_running_readings');
-  if (error !== null) return new Set();
-  return new Set((data ?? []).flatMap((row) => (row.kind === 'person' && row.person_a != null ? [row.person_a] : [])));
+  const running = await readRunningReadings(supabase);
+  return new Set((running ?? []).flatMap(({ target }) => (target.kind === 'person' ? [target.personId] : [])));
 }
 
 export async function readSlots(): Promise<PersonSlots | null> {

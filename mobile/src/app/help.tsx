@@ -14,6 +14,11 @@ import { Card } from '@/ui/surfaces';
 /** 답이 궁합 첫 신호까지 약속하는데 앱에는 로그인 전 궁합 결과가 없다 — 물음째 뺀다(ADR 0213) */
 const SIGNED_OUT_QUESTION = 'without-sign-in';
 
+/** 물음을 빼고 남은 묶음 — 물음이 하나도 안 남은 묶음은 칩도 판도 세우지 않는다(「시작하기」가 그 물음 하나뿐이었다) */
+const GROUPS = HELP_GROUPS.map((group) => ({ ...group, items: group.items.filter((item) => item.id !== SIGNED_OUT_QUESTION) })).filter(
+  (group) => group.items.length > 0,
+);
+
 /**
  * 자주 묻는 질문 — 웹의 `/help`. `/help#credits` 처럼 물음 하나를 가리켜 오면 펴서 연다(웹의 `open-hashed.tsx`).
  * 묶음 단추도 웹처럼 그 묶음의 첫 물음을 펴고 간다. 물음의 자리는 묶음 · 판 · 줄의 세 층을 더해 안다.
@@ -45,7 +50,7 @@ export default function HelpScreen() {
     /* 같은 번의 배치가 다 적힌 뒤에 더한다 — 세 층의 자리가 한꺼번에 온다 */
     requestAnimationFrame(() => {
       if (pending.current !== id) return;
-      const group = HELP_GROUPS.find((one) => one.items.some((item) => item.id === id));
+      const group = GROUPS.find((one) => one.items.some((item) => item.id === id));
       if (group === undefined || tops.current[`item:${id}`] === undefined) return;
       pending.current = null;
       scrollTo(id, group.title);
@@ -59,7 +64,7 @@ export default function HelpScreen() {
       </View>
 
       <View style={styles.chips}>
-        {HELP_GROUPS.map((group) => (
+        {GROUPS.map((group) => (
           <Pressable
             key={group.title}
             accessibilityRole="link"
@@ -74,12 +79,12 @@ export default function HelpScreen() {
         ))}
       </View>
 
-      {HELP_GROUPS.map((group) => (
+      {GROUPS.map((group) => (
         <View key={group.title} style={styles.group} onLayout={(event) => place(`group:${group.title}`, event.nativeEvent.layout.y)}>
           <Text style={styles.groupTitle}>{group.title}</Text>
           <View onLayout={(event) => place(`panel:${group.title}`, event.nativeEvent.layout.y)}>
             <Card style={styles.panel}>
-              {group.items.filter((item) => item.id !== SIGNED_OUT_QUESTION).map((item, index) => {
+              {group.items.map((item, index) => {
                 const isOpen = opened.has(item.id);
                 return (
                   <View
