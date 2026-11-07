@@ -437,13 +437,37 @@ jobs:
   # GitHub 의 필수 검사는 안 돈 job 을 「기다리는 중」으로 영원히 둔다. 선택으로 건너뛴
   # job 을 필수로 걸면 머지가 막힌다. 그래서 `gate` 는 항상 돌고, 위 job 전부를 물린다.
   # main 보호 규칙의 필수 검사는 `gate` 하나다 — 그래서 `gh pr merge --auto` 가 기다린다.
+  #
+  # PR 에서는 나란히 열린 PR 과 공유 번호(ADR · G · 문구 대장 절 · 마이그레이션 시각)가 겹치는지도 여기서 잰다(ADR 0238). 새 job 이 아니라
+  # 여기인 것은 — 차선을 건너뛰지 않고(plan 이 붉으면 차선이 다 선다) 맨 끝에서 그때 열린 PR 을 읽기 때문이다. API 를 못 읽으면 경고하고 통과다.
   gate:
     needs: [plan, policy, core, anon, authed, flow, mobile-flow, audit, mobile]
     if: always()
     runs-on: ubuntu-latest
-    timeout-minutes: 2
+    timeout-minutes: 3
+    permissions:
+      contents: read
+      pull-requests: read
     steps:
-      - if: contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled')
+      # 받기가 실패해도 gate 를 닫지 않는다 — 검사를 못 한 것은 API 를 못 읽은 것과 같은 갈래다(경고하고 통과)
+      - if: ${{ !cancelled() && github.event_name == 'pull_request' }}
+        id: numbers-checkout
+        continue-on-error: true
+        uses: actions/checkout@v7
+      - if: ${{ !cancelled() && github.event_name == 'pull_request' }}
+        id: numbers-node
+        continue-on-error: true
+        uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+      - if: ${{ !cancelled() && github.event_name == 'pull_request' && (steps.numbers-checkout.outcome != 'success' || steps.numbers-node.outcome != 'success') }}
+        run: echo '::warning::공유 번호 검사를 못 했다 — 저장소나 Node 를 못 받았다. 통과시킨다(ADR 0238)'
+      - if: ${{ !cancelled() && github.event_name == 'pull_request' && steps.numbers-checkout.outcome == 'success' && steps.numbers-node.outcome == 'success' }}
+        env:
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          GH_TOKEN: ${{ github.token }}
+        run: node scripts/shared-numbers.mjs
+      - if: ${{ !cancelled() && (contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled')) }}
         env:
           RESULTS: ${{ toJSON(needs) }}
         run: |

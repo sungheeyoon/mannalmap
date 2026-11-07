@@ -41,8 +41,9 @@ PR 틀(`.github/pull_request_template.md`)의 칸이다. 칸 이름은 이 표�
 
 **PR 을 열기 직전 origin/main 과 열린 PR 에서 다음 빈 ADR · G 번호를 다시 본다** — 나란히 도는 세션이 같은 번호를 잡고, 겹친 번호는
 머지 뒤 main 에서야 `scripts/code-rules.test.ts` 가 붉힌다(경위는 `docs/notes/2026-11-06-handoff-retro.md`). 작업 트리가 아니라 origin/main 을 읽는다 —
-`git fetch origin` 뒤 `git ls-tree --name-only origin/main docs/adr/ | tail -3` · `git show origin/main:docs/product/gaps.md | grep -oE '^\| G-[0-9]+' | sort -t- -k2 -n | tail -1` ·
-`gh pr list --state open --json number,title,files`.
+`git fetch origin` 뒤 `git ls-tree --name-only origin/main docs/adr/ | tail -3` · `gh pr list --state open --json number,title,files`. G 는 닫힌 줄이 표에서
+빠지므로 표의 끝 번호가 아니라 changelog 까지 본다(2026-11-07 에 표는 G-150, 닫힌 G-151 은 changelog 에만). 그래도 열린 PR 과 겹치면 늦게 연
+PR 의 `gate` 가 겹친 PR 과 다음 빈 번호를 들고 붉다(`scripts/shared-numbers.mjs`, ADR 0238) — 그 번호로 바꿔 다시 민다.
 
 **커밋과 PR 제목**은 `type(scope): 한국어 문장 (ADR NNNN)` 이다(`docs/agents/code-rules/locks.md` 「커밋과 PR」).
 squash 본문은 PR 본문이 아니라 **커밋 메시지들을 이어 붙인 것**이라(저장소 설정
