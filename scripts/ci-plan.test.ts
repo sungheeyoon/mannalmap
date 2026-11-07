@@ -116,15 +116,20 @@ describe('CI 계획 — 공개 출시 전 (ADR 0097)', () => {
     expect(beta(['app/page.tsx'], [FULL_LABEL]).tier).toBe('full');
   });
 
+  /** PRD 의 「(지금)」을 그 단계로 옮긴 본문 — 지금 어느 단계든(2026-11-05 에 공개 출시로 옮겼다) 같은 것을 잰다 */
+  const movedTo = (prd: string, stage: string) =>
+    prd.replace(/\| \*\*([^*]+)\*\* \(지금\) \|/, '| **$1** |').replace(`| **${stage}** |`, `| **${stage}** (지금) |`);
+
   it('PRD 의 「(지금)」을 공개 출시로 옮기면 머지 전 전체로 돌아간다', () => {
     const prd = readFileSync(resolve(__dirname, '..', STAGE_FILE), 'utf8');
-    const now = currentStageOf(prd);
-    expect(now).not.toBeNull();
-    const launched = prd.replace(/\| \*\*([^*]+)\*\* \(지금\) \|/, '| **$1** |').replace('| **공개 출시** |', '| **공개 출시** (지금) |');
+    expect(currentStageOf(prd)).not.toBeNull();
+    const betaPrd = movedTo(prd, '운영 베타');
+    const launched = movedTo(prd, '공개 출시');
+    expect(currentStageOf(betaPrd)).toBe('운영 베타');
     expect(currentStageOf(launched)).toBe('공개 출시');
     const files = ['src/lib/chat/index.ts'];
     expect(planFor({ files, stage: currentStageOf(launched) }).tier).toBe('full');
-    expect(planFor({ files, stage: now }).tier).toBe('core');
+    expect(planFor({ files, stage: currentStageOf(betaPrd) }).tier).toBe('core');
   });
 
   /**
@@ -190,7 +195,8 @@ describe('CI 계획 — 공개 출시 전 (ADR 0097)', () => {
   it('「(지금)」이 둘이거나 없으면 모르는 단계다', () => {
     const prd = readFileSync(resolve(__dirname, '..', STAGE_FILE), 'utf8');
     expect(currentStageOf(prd.replace(/ \(지금\) \|/, ' |'))).toBeNull();
-    expect(currentStageOf(prd.replace('| **공개 출시** |', '| **공개 출시** (지금) |'))).toBeNull();
+    const other = currentStageOf(prd) === '운영 베타' ? '공개 출시' : '운영 베타';
+    expect(currentStageOf(prd.replace(`| **${other}** |`, `| **${other}** (지금) |`))).toBeNull();
     expect(currentStageOf('')).toBeNull();
   });
 });

@@ -1,6 +1,6 @@
 # 만세력 (Saju Engine)
 
-**[만날지도](https://mannalmap.com)** — 이 저장소가 돌리는 사주 · 궁합 · 인연 서비스다(웹 · iOS · Android, 운영 베타).
+**[만날지도](https://mannalmap.com)** — 이 저장소가 돌리는 사주 · 궁합 · 인연 서비스다(웹 · iOS · Android, 공개 출시).
 구현은 AI 코딩 에이전트가 맡고, 사람은 무엇을 만들지 정하고 결과를 검증한다. 에이전트가 따르는 규칙은
 [`docs/start.md`](docs/start.md) 와 [`docs/agents/delegation.md`](docs/agents/delegation.md), 결정은 [`docs/adr/`](docs/adr) 에 있다.
 
@@ -317,7 +317,7 @@ npm run test:e2e:signed-in   # 차선 하나만 — match · notice 도 같은 �
 
 ## 운영
 
-지금은 운영 베타다. 운영자 화면은 `/ops` 에 있고(오늘의 숫자 · 회원 찾기 · 주문 · 신고 열람 · 설문 요약 —
+지금은 공개 출시다(2026-11-05 부터). 운영자 화면은 `/ops` 에 있고(오늘의 숫자 · 회원 찾기 · 주문 · 신고 열람 · 설문 요약 —
 무엇이 있는지는 [`docs/product/prd/screens/ops.md`](docs/product/prd/screens/ops.md)), 들어갈 때 2단계 인증을 다시 묻는다(ADR 0209).
 화면이 없는 절차 — 초대 · 이용 정지 · 탈퇴 대기 처리 · AI 호출량과 실패 조회 — 는
 [`docs/ops/runbook.md`](docs/ops/runbook.md) 에 SQL 로 적혀 있다.

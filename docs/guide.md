@@ -127,10 +127,10 @@ flowchart LR
 | **흐름** | `npm run test:flow` | 가입 → 저장 → 요청 · 수락 → 풀이 · 공유를 실제 로컬 스택에서 끝까지 (AI 모델만 빼고) |
 | **e2e** (Playwright) | `npm run test:e2e` 등 | 브라우저로 화면을 실제로 눌러 봐요 |
 
-**지금(공개 출시 전) 로컬에서 꼭 돌리는 건 셋이에요** — `npm test` · `npm run typecheck` · `npm run lint`
+**공개 출시 전(2026-11-05 까지) 로컬에서 꼭 돌리던 건 셋이에요** — `npm test` · `npm run typecheck` · `npm run lint`
 ([무엇을 고쳤으면 무엇을 돌리나](agents/test-map/what-to-run.md), [ADR 0097](adr/0097-before-launch-the-pr-passes-fast-checks-and-main-is-verified-after.md)).
-화면을 고쳤다고 e2e 를 일괄로 돌리지는 않아요. 그건 PR 의 CI 가 바뀐 주소에 닿는 시험만 골라 돌리고, 머지 뒤 main 에서 전부를
-돌려 잡아요. 예외 넷(e2e · 흐름 시험 자체를 고쳤을 때 · 새 잠금을 세웠을 때 · 마이그레이션 · 프롬프트 본문)만 로컬에서 더 돌려요.
+그때는 화면을 고쳤다고 e2e 를 일괄로 돌리지 않았어요. PR 의 CI 가 바뀐 주소에 닿는 시험만 골라 돌리고, 머지 뒤 main 에서 전부를
+돌려 잡았어요. 공개 출시부터는 PR 의 CI 가 머지 전에 전부를 돌고, 로컬 최소는 그 문서의 표예요.
 
 문서만 고쳤으면 `npx vitest run scripts/` 를 돌려요. 역할 문서의 가리킴을 바꿨으면 `npm run read-budget` 의 전후를 PR 에 적어요 — 보고이고 문턱은 없어요.
 
@@ -176,15 +176,15 @@ flowchart LR
 | **3** | 사람이 답한 뒤에 해요 | 운영 배포, 운영 DB 변경, AI 실호출 |
 | **4** | 절대 안 해요 | main 강제 푸시, 운영 설정 덮어쓰기, 비밀값 커밋 |
 
-**지금은 「운영 베타」라 등급 3 의 일부가 풀려 있어요**([ADR 0093](adr/0093-tier-three-locks-turn-on-at-official-operation.md)). 실제
-사용자가 아직 없어서, 운영 DB 마이그레이션 같은 일은 에이전트가 묻지 않고 하되 **한 뒤에 본 값을 기록**해요. 그래도 아래는 지금도
-사람 몫이에요.
+**2026-11-05 부터 공개 출시라 등급 3 이 모두 잠겨 있어요**([ADR 0093](adr/0093-tier-three-locks-turn-on-at-official-operation.md)). 운영 베타에는
+실제 사용자가 없어서 운영 DB 마이그레이션 같은 일을 에이전트가 묻지 않고 했어요. 이제는 사람이 답한 뒤에 하고 **한 뒤에 본 값을 기록**해요.
+아래는 운영 베타에도 사람 몫이었어요.
 
 - **운영 배포** — 운영자의 「배포」 답을 받은 뒤 조율자가 해요
 - **AI 실호출** (토큰이 나가는 호출) — 운영자가 직접 돌려요
 - **운영 개인정보 조회** — 에이전트는 절대 직접 하지 않아요. 질의를 써서 건네고 사람이 검토해서 돌려요([ADR 0105](adr/0105-the-operator-reads-leave-a-trace-from-the-first-read.md))
 
-공개 출시 때 이 잠금을 다시 켜요. 그 순서도 같은 문서의 「공식 운영에 들어가면 켜는 잠금」에 있어요.
+잠금을 켠 순서는 같은 문서의 「공식 운영에 들어가면 켜는 잠금」에 있어요.
 
 ## 6. 사내 용어 풀이표
 
@@ -297,11 +297,11 @@ flowchart LR
 | 말 | 쉬운 뜻 | 어디서 정하나 |
 | --- | --- | --- |
 | **등급 0~4** | 되돌릴 수 있는지로 나눈 권한 단계. 0 읽기 · 1 로컬 수정 · 2 밖으로 내되 되돌릴 수 있게 · 3 사람이 답한 뒤 · 4 안 함 | [권한 등급](agents/delegation/permissions.md) |
-| **등급 3 을 밟고 값을 적는다** | 운영 베타 동안 에이전트가 운영 DB 변경 같은 일을 묻지 않고 하되, 본 결과를 기록한다는 뜻 | [ADR 0093](adr/0093-tier-three-locks-turn-on-at-official-operation.md) |
-| **공식 운영에 들어가면 켜는 잠금** | 공개 출시 날 다시 켤 확인 목록 | [권한 등급](agents/delegation/permissions.md) |
-| **운영 베타** | 지금 단계. 테스트 코드로 초대받은 사람이 쓰다가 2026-11-05 에 코드를 걷었어요(ADR 0225) | [`docs/product/prd/roadmap.md` §7.0](product/prd/roadmap.md) |
+| **등급 3 을 밟고 값을 적는다** | 등급 3 을 밟은 뒤 본 결과를 기록한다는 뜻. 운영 베타에는 묻지 않고 밟았고, 공개 출시부터는 사람이 답한 뒤에 밟아요 | [ADR 0093](adr/0093-tier-three-locks-turn-on-at-official-operation.md) |
+| **공식 운영에 들어가면 켜는 잠금** | 공개 출시 날 켠 확인 목록 — `ask` 와 같은 목록이에요 | [권한 등급](agents/delegation/permissions.md) |
+| **운영 베타** | 첫 단계. 테스트 코드로 초대받은 사람이 쓰다가 2026-11-05 에 코드를 걷고 공개 출시로 옮겼어요(ADR 0225) | [`docs/product/prd/roadmap.md` §7.0](product/prd/roadmap.md) |
 | **(지금)** | 출시 단계 표에서 현재 단계를 가리키는 표시. CI 와 권한 시험이 이 표시를 읽어요 | [`docs/product/prd/roadmap.md` §7.0](product/prd/roadmap.md) |
-| **채팅 안전 베타 · 공개 출시** | 운영 베타 다음 단계들. 공개 출시는 테스트 코드 없이 누구나 가입하는 단계 | [`docs/product/prd/roadmap.md` §7.0](product/prd/roadmap.md) |
+| **채팅 안전 베타 · 공개 출시** | 운영 베타 다음 단계들. 공개 출시는 테스트 코드 없이 누구나 가입하는 단계이고 지금 단계예요 — 채팅 안전 베타는 밟지 않았어요 | [`docs/product/prd/roadmap.md` §7.0](product/prd/roadmap.md) |
 | **정비** | 간극 대장의 띠 하나 — 제품 기능이 아니라 일하는 방식을 다듬는 일 | [`docs/product/gaps.md`](product/gaps.md) |
 | **머지는 배포가 아니다** | main 에 머지해도 운영 사이트가 바뀌지 않는다는 원칙 | [ADR 0110](adr/0110-merging-is-not-deploying-production-ships-once-per-bundle.md) |
 | **묶음 배포** | 라운드 끝에 최신 main 을 운영에 한 번 올리는 것 | [배포 「묶음 배포」](ops/runbook/deploy.md) |
