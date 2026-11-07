@@ -1,4 +1,4 @@
-import { readFileSync, readdirSync } from 'node:fs';
+import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 
 import { describe, expect, it } from 'vitest';
@@ -34,7 +34,7 @@ const WEB = flat(
 );
 
 const SCREENS = [
-  ...['privacy', 'terms', 'refund', 'about', 'help', 'policies', 'support', 'closed', 'auth/index', 'auth/denied'].map((name) => `mobile/src/app/${name}.tsx`),
+  ...['about', 'help', 'policies', 'support', 'closed', 'auth/index', 'auth/denied'].map((name) => `mobile/src/app/${name}.tsx`),
   ...readdirSync(join(ROOT, 'mobile/src/info'))
     .filter((name) => name.endsWith('.tsx'))
     .map((name) => `mobile/src/info/${name}`),
@@ -57,10 +57,15 @@ describe('앱 안내 화면의 글자', () => {
 
   it('고지와 문의의 길이 다 있다 — 설정 → 처리방침 · 약관 및 정책 · 문의 · 로그아웃 · 탈퇴, 약관 및 정책 → 약관 셋 · 사업자 정보', () => {
     const settings = withoutComments(read('mobile/src/settings/settings-screen.tsx'));
-    for (const piece of ["'/privacy'", "'/policies'", "'/support'", '<SignOutRow />', '<RequestDeletion']) expect(settings).toContain(piece);
+    for (const piece of ["openLegalPage('/privacy')", "'/policies'", "'/support'", '<SignOutRow />', '<RequestDeletion']) expect(settings).toContain(piece);
     const policies = withoutComments(read('mobile/src/app/policies.tsx'));
-    for (const piece of ['POLICY_LINKS.map', 'businessInfoLines(info)', 'BUSINESS_DISCLOSURE_LINK']) expect(policies).toContain(piece);
-    for (const route of ['privacy', 'terms', 'refund']) expect(read(`mobile/src/app/${route}.tsx`)).toContain('<PoliciesLink />');
+    for (const piece of ['POLICY_LINKS.map', 'openLegalPage(link.href)', 'businessInfoLines(info)', 'BUSINESS_DISCLOSURE_LINK']) expect(policies).toContain(piece);
+  });
+
+  /** 앱은 OTA 가 없어 번들에 담은 약관은 웹이 개정돼도 옛 글로 남는다 — 웹의 현행 판을 앱 안 브라우저로 연다(ADR 0172 추기 2026-11-07, 운영자 답 2026-11-07) */
+  it('약관 셋은 앱에 화면이 없고 웹의 현행 판을 앱 안 브라우저로 연다', () => {
+    for (const route of ['privacy', 'terms', 'refund']) expect(existsSync(join(ROOT, `mobile/src/app/${route}.tsx`))).toBe(false);
+    expect(read('mobile/src/info/legal-web.ts')).toContain('WebBrowser.openBrowserAsync(`${SITE_URL}${path}`)');
   });
 });
 

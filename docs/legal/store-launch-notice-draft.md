@@ -40,7 +40,7 @@
 | 카카오 로그인 | 없다 — #970 출시 뒤 | — |
 | 앱 안 탈퇴 | 있다. 정지 · 가입 미완 계정까지 넓히는 일은 #946 | `mobile/src/settings/leaving.tsx` |
 | 본인확인 · 성인 확인 | 스위치 꺼짐(ADR 0214). 업체 미정(#947) | — |
-| 앱이 싣는 고지 | 웹과 같은 글을 앱 화면에서 그대로 연다 | `mobile/src/app/terms.tsx:2` · `mobile/src/app/refund.tsx:5` · `mobile/src/app/privacy.tsx:5` |
+| 앱이 싣는 고지 | 웹의 현행 판을 앱 안 브라우저로 연다(ADR 0172 추기 2026-11-07, 2026-11-07) | `mobile/src/info/legal-web.ts` |
 | 처리방침 판 | `notice-v12` · 기준 `notice-v8` — ADR 0220 뒤 `notice-v13` · 기준 `notice-v13` — 대화가 유일한 흐름이 된 뒤(`docs/legal/match-talk-notice-draft.md`) `notice-v14` · 기준 `notice-v14` | `src/lib/consent/notice.ts` 의 `NOTICE_VERSION` · `NOTICE_ACK_FLOOR` |
 | 약관 시행일 | 비어 있다 — 시행 전 고침의 길(ADR 0176 「덧」) | `src/lib/brand/terms.ts:27` |
 

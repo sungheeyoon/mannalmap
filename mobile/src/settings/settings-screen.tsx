@@ -15,6 +15,7 @@ import { signOut } from '@/auth/sign-in';
 import { readGate } from '@/home/gate';
 import { useMatchOpen } from '@/matching/opening';
 import { CONTACT_LABEL, POLICY_TITLE, SUPPORT_TITLE, SURVEY_LABEL } from '@/info/copy';
+import { legalPagesOpen, openLegalPage } from '@/info/legal-web';
 import { COLOR, FONT, RADIUS, TYPE } from '@/ui/tokens';
 import { settled } from '@/ui/settled';
 import { TopBar } from '@/ui/top-bar';
@@ -146,11 +147,12 @@ function goRow(link: { href: string; label: string }) {
   return <LinkRow key={link.href} label={link.label} onPress={() => router.push(link.href as never)} />;
 }
 
-/** 처리 안내 — 전문은 앱의 `/privacy` 다 */
+/** 처리 안내 — 전문은 웹의 `/privacy` 현행 판이다(ADR 0172 추기 2026-11-07). 웹 주소가 없는 빌드에는 안 선다 */
 function PrivacyRow({ ackAt }: { ackAt: string | null }) {
+  if (!legalPagesOpen) return null;
   const label = '개인정보 처리 안내';
   const help = ackAt === null ? '아직 확인하지 않았어요.' : `${asKoreanDay(ackAt.slice(0, 10))}에 확인했어요.`;
-  return <LinkRow label={label} help={help} onPress={() => router.push('/privacy' as never)} />;
+  return <LinkRow label={label} help={help} onPress={() => openLegalPage('/privacy')} />;
 }
 
 function SignOutRow() {
