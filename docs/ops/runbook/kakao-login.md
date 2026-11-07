@@ -44,7 +44,7 @@
 | 7 | 같은 화면의 Email 공급자에서 **Confirm email 이 켜져 있는지** 본다 — 꺼져 있으면 구글 · 애플의 미검증 이메일도 자동 연결된다(#970 실측 C1). 바꾸지 말고 값만 #770 에 적는다 | 운영자 | 켜짐 / 꺼짐 |
 | 8 | Vercel **Production** 에 `KAKAO_REST_API_KEY` · `KAKAO_CLIENT_SECRET` · `KAKAO_ADMIN_KEY`(셋 다 Sensitive). Preview · Development 에는 두지 않는다. 운영 배포는 「배포」 답 뒤다(`docs/ops/runbook/deploy.md`) | 운영자(값) · 조율자(배포) | `vercel env ls production` 에 이름 셋 |
 | 9 | EAS 에 `EXPO_PUBLIC_KAKAO_NATIVE_APP_KEY`(`docs/ops/runbook/mobile-release.md` 「EAS 프로필과 환경값」의 `env:set`) | 운영자(값) | `env:list production` 에 이름 하나 |
-| 10 | **새 빌드** — 카카오 네이티브 모듈과 URL 스킴(`kakao<네이티브 앱 키>`)이 빌드에 든다. OTA 로는 안 선다. 안드로이드는 `preview` APK, iOS 는 `production` → TestFlight | 조율자 · 운영자 | 빌드 링크 |
+| 10 | **새 빌드** — 카카오 네이티브 모듈과 URL 스킴(`kakao<네이티브 앱 키>`)이 빌드에 든다. OTA 로는 안 선다. 안드로이드는 `preview` APK, iOS 는 `production` → TestFlight. 카카오 SDK(`com.kakao.sdk:v2-*`)는 카카오의 Maven 저장소에만 있어 `mobile/app.json` 의 `expo-build-properties` 가 `android.extraMavenRepos` 로 그 저장소를 든다 — 없으면 Gradle 이 jitpack 에 물어 401 로 선다(2026-11-07 첫 카카오 빌드, [라이브러리의 Expo 설정](https://github.com/mym0404/react-native-kakao/blob/main/docs/docs/install-expo.mdx), `scripts/mobile-config.test.ts` 가 잰다) | 조율자 · 운영자 | 빌드 링크 |
 | 11 | 실기기 · 웹 확인(아래) 뒤 #770 에 줄을 더한다 | 운영자 | 아래 목록 |
 
 ### 안드로이드 키 해시

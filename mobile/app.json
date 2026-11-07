@@ -55,6 +55,14 @@
       ],
       "expo-iap",
       [
+        "expo-build-properties",
+        {
+          "android": {
+            "extraMavenRepos": ["https://devrepo.kakao.com/nexus/content/groups/public/"]
+          }
+        }
+      ],
+      [
         "expo-notifications",
         {
           "defaultChannel": "reading-ready",
