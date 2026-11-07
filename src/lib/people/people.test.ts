@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { RELATIONS, noRoomToSave, relationOf, relationSentence, type PersonSlots } from '.';
+import { RELATIONS, noRoomToSave, relationOf, relationSentence, selfPersonStateOf, type PersonSlots } from '.';
 
 /**
  * DB 가 내주는 한 줄 — 수는 `person_limit()` 이 들고 화면은 그것을 옮기기만 한다.
@@ -84,5 +84,19 @@ describe('사이는 안 골라도 값이다', () => {
     for (const raw of ['동창', '', null, undefined, 'other']) {
       expect(relationOf(raw), String(raw)).toBeNull();
     }
+  });
+});
+
+describe('selfPersonStateOf — 웹 · 앱의 문이 함께 쓰는 줄 옮기기', () => {
+  it('내 사주가 있으면 저장했고, 이름은 닉네임이다', () => {
+    expect(selfPersonStateOf({ self_person_id: 'p-1', nickname: '하늘' })).toEqual({ saved: true, nickname: '하늘' });
+  });
+
+  it('내 사주 칸이 비었으면 아직 안 저장했다', () => {
+    expect(selfPersonStateOf({ self_person_id: null, nickname: '하늘' })).toEqual({ saved: false, nickname: '하늘' });
+  });
+
+  it('계정 줄이 없으면(가입 전) 저장하지 않았고 이름도 없다', () => {
+    expect(selfPersonStateOf(null)).toEqual({ saved: false, nickname: null });
   });
 });

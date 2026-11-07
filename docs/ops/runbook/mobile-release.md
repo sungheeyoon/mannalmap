@@ -29,6 +29,8 @@ curl -s -o /dev/null -w "%{http_code}\n" "<운영 주소>/api/mobile/readings"  
 
 ### 스토어에 나간 앱은 되돌리지 못한다
 
+**약관 · 환불정책을 고친 개정은 그 PR 이 머지된 뒤의 커밋으로 빌드한다** — 앱은 OTA 가 없어 약관 글이 번들에 박힌다(`mobile/src/app/terms.tsx` · `refund.tsx` 가 `src/lib/brand/terms.ts` · `refund.ts` 를 그대로 그린다). 첫 쓰임은 ADR 0235 의 개정 시행일 커밋이다.
+
 웹은 앞 배포를 Promote 하면 되지만 깔린 앱은 사람이 업데이트해야 바뀐다. 그래서 `deploy.md` 「규약 넷」의 3 에서 **「옛 앱」에 스토어에 나간 판이 든다** — 좁히기 전에 그 판이 새 문을 부르는지 본다. 앱이 새 문을 부르는 빌드는 그 문이 운영에 선 뒤에 굽고 낸다.
 
 ## EAS 프로필과 환경값

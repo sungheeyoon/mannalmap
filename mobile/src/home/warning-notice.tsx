@@ -3,12 +3,12 @@ import { StyleSheet, Text, View } from 'react-native';
 
 import { WARNING_ACKNOWLEDGE_LABEL, WARNING_NOTICE_TITLE, warningNoticeLines, type WarningNotice as Notice } from '@account/warning';
 import { SUPPORT_EMAIL } from '@brand';
-import { userFacingDbMessage } from '@db-error';
 
-import { supabase } from '@/auth/client';
 import { PrimaryButton } from '@/ui/parts';
 import { COLOR, FONT, TYPE } from '@/ui/tokens';
 import { CardFrame } from '@/ui/surfaces';
+
+import { acknowledgeWarning, readWarningNotice } from './warning';
 
 /** 웹의 `--danger-wash` */
 const DANGER_WASH = '#faeae7';
@@ -22,13 +22,7 @@ export function WarningNotice() {
   const [failure, setFailure] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
-  const read = useCallback(async () => {
-    if (supabase === null) return;
-    const { data, error } = await supabase.rpc('my_warning_notice');
-    const row = data?.[0];
-    if (error !== null || row === undefined) setNotice(null);
-    else setNotice({ ref: row.warning_ref, category: row.category, warnedOn: row.warned_on });
-  }, []);
+  const read = useCallback(async () => setNotice(await readWarningNotice()), []);
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect -- 여는 때 읽는다 - setState 는 await 뒤라 렌더와 겹치지 않는다
@@ -38,12 +32,10 @@ export function WarningNotice() {
   if (notice === null) return null;
 
   const acknowledge = async () => {
-    if (supabase === null) return;
     setFailure(null);
     setSaving(true);
-    /* 문이 `false` 를 내는 것(이미 확인했거나 내 번호가 아니다)도 성공이다 — 어느 쪽이든 다시 안 선다 */
-    const { error } = await supabase.rpc('acknowledge_warning', { p_ref: notice.ref });
-    if (error !== null) setFailure(userFacingDbMessage(error, 'acknowledge_warning'));
+    const refused = await acknowledgeWarning(notice.ref);
+    if (refused !== null) setFailure(refused);
     else await read();
     setSaving(false);
   };

@@ -41,6 +41,7 @@ npm run db:push               # 밀린 것 전부를 원격에 적용한다 — 
    **`vercel.json` 의 크론은 Production 배포와 함께 등록되어 돌기 시작한다**. `/api/cron/chat-purge` 가 처음 드는 배포는 이미 90일 지난 말을 그날 밤 지우므로, 승인 전에 `docs/ops/runbook/moderation.md` 「배포 승인 전에 건수를 잰다」의 값을 적는다. 그 크론이 부르는 `20270107100000` 은 이미 원격에 있다(2026-11-07 migration list)
    **`notice-v17`(ADR 0234)의 첫 시행일 — 채웠다(2026-11-07).** `TERMS_EFFECTIVE_DATE`(`src/lib/brand/terms.ts`) · `REFUND_EFFECTIVE_DATE`(`src/lib/brand/refund.ts`)는
    게시일(운영자 답 2026-11-07)이고, 그날 02:37 KST 배포(#1050 `9e5ba00f`, smoke 다섯 화면 통과)로 `/terms` 에 시행일 2026-11-07 이 보인다. 앞으로의 개정은 약관 제4조②대로 시행 7일 전(불리하면 30일 전) 공지다
+   **개정 시행일 `TERMS_REVISED_ON` · `REFUND_REVISED_ON`(ADR 0235 — 무료 · 예외 풀이권 무기한)은 배포일 2026-11-07 로 채웠다**(#1060 의 가지에 조율자가 더한 커밋, 그날의 묶음 배포가 올린다). 앞으로 개정 시행일을 비운 채 운영에 올리면 바뀐 글이 앞 시행일의 글로 읽힌다. 이번은 공지 받을 이용자가 없어 공지 없이 배포일 시행이다 — 다음 개정부터는 약관 제4조② 의 공지 뒤다(G-149)
 1. **0 의 `head` 를 Production 으로 올린다.** 그 SHA 의 워크트리(아래)에서 `vercel deploy --prod`, 아니면
    Vercel → Deployments → 「Create Deployment」에 그 SHA 를 넣는다. Production 은 `ignoreCommand` 가 건너뛰지 않는다. 빈 커밋을
    밀어 깨우지 않는다 — Git 배포는 꺼져 있어 아무 일도 안 일어난다

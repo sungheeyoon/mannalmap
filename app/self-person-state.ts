@@ -1,18 +1,11 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 
 import type { Database } from '@/src/lib/db';
+import { selfPersonStateOf, type SelfPersonState } from '@/src/lib/people';
 
 import { read, unread, type SkippableRead } from './db-error';
 
-/** 내 사주를 등록했는가와, 등록하면 설 이름 */
-export type SelfPersonState = {
-  readonly saved: boolean;
-  /**
-   * 내 사주의 이름은 **닉네임이다** — 등록할 때 DB 가 닉네임으로 적고, 닉네임을 고치면 함께 옮는다.
-   * 그래서 「이 사주가 내 사주 맞나요?」의 카드도 적은 이름이 아니라 이 이름으로 선다. 가입 전이면 `null`.
-   */
-  readonly nickname: string | null;
-};
+export type { SelfPersonState };
 
 /**
  * **내 사주를 등록했는가를 읽는 문** — 사주 이어 보기(`app/save-for-reading.tsx`)가 부른다(ADR 0128).
@@ -21,6 +14,7 @@ export type SelfPersonState = {
  * 이어 보기의 저장은 언제나 「저장한 사람」이라, 처음 온 사람이 같은 생일을 온보딩에서 한 번 더 넣었고 첫 풀이권이
  * 「다른 사람 풀이」에 쓰였다. 내 사주가 아직 없으면 화면이 「이 사주가 내 사주 맞나요?」를 먼저 묻는다.
  *
+ * 줄을 옮기는 것은 앱의 문(`mobile/src/people/self-person.ts`)과 같은 `selfPersonStateOf` 다.
  * 클라이언트를 **받기만** 한다 — `/` 는 공개 화면이라 브라우저가 부른다(`beta-schedule.ts` 와 같은 결).
  *
  * @returns 못 읽었으면 `{ ok: false }` — 화면은 묻지 않고 지금 흐름(저장한 사람)을 연다. 이미 내 사주가 있는 사람에게
@@ -30,5 +24,5 @@ export type SelfPersonState = {
 export async function selfPersonState(supabase: SupabaseClient<Database>): Promise<SkippableRead<SelfPersonState>> {
   const { data, error } = await supabase.from('app_user').select('self_person_id, nickname').maybeSingle();
   if (error !== null) return unread(error, 'app_user.self_person_id');
-  return read({ saved: data !== null && data.self_person_id !== null, nickname: data?.nickname ?? null });
+  return read(selfPersonStateOf(data));
 }

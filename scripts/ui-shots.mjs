@@ -9,6 +9,9 @@
  *
  * **한 경로에 한 화면이 아니다.** `/me` 는 자기 사주가 없을 때와 있을 때가 다른 화면이고,
  * `/signup` 은 가입 전에만 선다. 그래서 목록의 단위가 상태 안의 경로다.
+ *
+ * **빠진 그림이 있으면 0 으로 끝나지 않는다.** 화면 밖의 준비(`before`) · 열기 · 누름(`act`) · 뼈대가 실패해도 그 화면은
+ * 그대로 찍지만(그것도 값이다), 끝에 빠진 것의 목록을 찍고 종료 1 로 끝난다 — 「종료 0」이 곧 모든 상태가 찍혔다는 뜻이다(#1036).
  */
 
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
@@ -220,6 +223,17 @@ const PLAN = [
       { id: 'person-self', at: (one) => `/me/people/${one.selfPersonId}`, name: '내 사주 상세' },
       { id: 'readings', at: '/me/readings', name: '사주풀이 목록' },
       { id: 'inspect', at: '/me/reading/inspect?kind=self', name: '해석 내부 보기 (검산)' },
+    ],
+  },
+  /*
+    **풀이를 여는 화면은 폭마다 새 사람으로 찍는다**(`fresh`, #1036). 「받는 중」은 「받기」 단추를 눌러야 서고, 「만드는 중」은
+    시도를 연다 — 한 사람을 세 폭이 같이 쓰면 첫 폭이 연 시도를 다음 폭이 보고 단추가 없다. 상태를 바꾸는 줄은 이 무리에 둔다.
+  */
+  {
+    state: 'full',
+    group: '쓰는 중',
+    fresh: true,
+    shots: [
       {
         id: 'reading-making',
         at: (one) => `/me/readings/${one.managed[1].personId}`,
@@ -249,7 +263,7 @@ const PLAN = [
             p_model: 'gpt-ui-walk',
             p_prompt_version: 'reading-prompt-v7',
           });
-          if (started.error) console.log(`    ↳ ${started.error.message}`);
+          if (started.error) throw new Error(started.error.message);
         },
       },
       {
@@ -258,6 +272,12 @@ const PLAN = [
         name: '사주풀이 — 다시 열었을 때도 만드는 중',
       },
       { id: 'requests-after-reading', at: '/me/requests', name: '소식 — 풀이를 만든 뒤' },
+    ],
+  },
+  {
+    state: 'full',
+    group: '쓰는 중',
+    shots: [
       { id: 'discovery', at: '/me/discovery', name: '인연 찾기 설정' },
       { id: 'requests', at: '/me/requests', name: '소식' },
       { id: 'matching', at: '/me/matching', name: '인연 탭' },
@@ -286,9 +306,11 @@ const PLAN = [
       },
     ],
   },
+  /* 「지나친 인연」 두 줄이 한 사람을 지나친다 — 폭마다 새로 지어야 다음 폭의 오늘의 인연이 같은 장 수로 선다(#1036) */
   {
     state: 'board',
     group: '인연',
+    fresh: true,
     shots: [
       { id: 'me-board', at: '/me', name: '내 계정 (홈) — 오늘의 인연이 섰을 때' },
       { id: 'matching-board', at: '/me/matching', name: '인연 탭 — 오늘의 인연' },
@@ -393,8 +415,8 @@ const DEV_ONLY = 'nextjs-portal { display: none !important; }';
 
 /**
  * 폭 — **운영자는 전체 화면 1920 도 본다.**
- * `UI_SIZES=wide,mobile` 처럼 id 로 고른다 — 빈 값이면 전부. 목록(`index.json`)과 「화면 밖의 준비」(`before`)는 고른 것의
- * 첫 폭에서 한 번만 한다.
+ * `UI_SIZES=wide,mobile` 처럼 id 로 고른다 — 빈 값이면 전부. 목록(`index.json`)은 고른 것의 첫 폭에서 한 번만 적는다.
+ * 「화면 밖의 준비」(`before`)는 지은 상태마다 한 번이다 — 보통은 첫 폭에서, `fresh` 무리는 폭마다.
  */
 const SIZES = [
   { id: 'desktop', width: 1280, height: 900 },
@@ -431,11 +453,19 @@ let asBuilt = null;
 /** 몇 화면만 다시 찍을 때 — 빈 값이면 전부 */
 const only = (process.env.UI_ONLY ?? '').split(',').filter((one) => one !== '');
 
+/** 찍기 단계가 실패한 화면 — 끝에 목록으로 찍고 종료 값을 1 로 둔다 */
+const failures = [];
+const fail = (shot, size, stage) => (error) => {
+  const message = String(error?.message ?? error).split('\n')[0];
+  failures.push({ id: shot.id, size: size.id, stage, message });
+  console.log(`    ↳ ${stage}: ${message}`);
+};
+
 for (const step of PLAN) {
   const shots = only.length === 0 ? step.shots : step.shots.filter((one) => only.includes(one.id));
   if (shots.length === 0) continue;
-  const built = step.state === null ? null : await build(step.state);
-  const person = built?.people[0] ?? null;
+  /* `fresh` 무리는 폭마다 새로 짓는다 — 나머지는 한 번 지은 상태를 세 폭이 같이 본다 */
+  const shared = step.state === null || step.fresh ? null : await build(step.state);
 
   /* 시계를 민 서버 · 지은 서버는 **쓸 때 세운다** — 앞의 스물여덟 화면에는 필요 없다 */
   if (step.from === 'later' && later === null) {
@@ -450,6 +480,10 @@ for (const step of PLAN) {
   const from = step.from === 'later' ? later.base : step.from === 'built' ? asBuilt.base : baseURL;
 
   for (const size of sizes) {
+    const built = step.fresh ? await build(step.state) : shared;
+    const person = built?.people[0] ?? null;
+    /* 화면 밖에서 상태를 먼저 세울 줄(`before`)은 지은 상태마다 한 번 */
+    const prepares = step.fresh || size.id === firstSize;
     const context = await browser.newContext({
       viewport: { width: size.width, height: size.height },
       /*
@@ -466,14 +500,18 @@ for (const step of PLAN) {
     const page = await context.newPage();
 
     for (const shot of shots) {
-      /* 화면 밖에서 상태를 먼저 세울 줄이 있다 — 한 번만(첫 폭 차례에서) */
-      if (shot.before && size.id === firstSize) await shot.before(person, built);
+      if (shot.before && prepares) await shot.before(person, built).catch(fail(shot, size, '준비'));
       const at = typeof shot.at === 'function' ? shot.at(person, built) : shot.at;
-      await page.goto(`${from}${shot.via ?? at}`, { waitUntil: 'networkidle' }).catch(() => {});
+      /*
+        **열기는 실패로 센다 · 조용해지기는 안 센다.** 만드는 중인 화면은 진행을 계속 물어 네트워크가 안 조용해진다 — 그 화면은
+        제대로 섰다. 그래서 문서가 서는 것(`load`)까지만 재고, 조용해지기는 기다리기만 한다.
+      */
+      await page.goto(`${from}${shot.via ?? at}`, { waitUntil: 'load' }).catch(fail(shot, size, '열기'));
+      await page.waitForLoadState('networkidle').catch(() => {});
       /* 뼈대는 옮겨 가는 도중을 붙잡아 찍는다 — 안 서면 그 까닭을 적고 그대로 찍는다 */
-      if (shot.via) await holdOnSkeleton(page, at).catch((error) => console.log(`    ↳ 뼈대가 안 섰습니다: ${error.message}`));
+      if (shot.via) await holdOnSkeleton(page, at).catch(fail(shot, size, '뼈대가 안 섰습니다'));
       /* 화면이 누름 뒤에만 서면 그 누름까지 하고 찍는다 — 실패해도 찍는다(그 화면도 값이다) */
-      if (shot.act) await shot.act(page).catch((error) => console.log(`    ↳ ${error.message}`));
+      if (shot.act) await shot.act(page).catch(fail(shot, size, '누름'));
       /*
         **주소가 갈렸으면 그대로 적는다.** 관문이 다른 데로 보냈다는 뜻이고, 그것도
         훑을 값이 있는 사실이다 — 찍힌 그림만 남기면 「이 경로가 이 화면」으로 읽힌다.
@@ -580,3 +618,9 @@ await browser.close();
 later?.stop();
 asBuilt?.stop();
 console.log(`\n${index.length}개 화면 × ${sizes.length}폭(${sizes.map((size) => size.width).join(' · ')}) → ${out}/`);
+
+if (failures.length > 0) {
+  console.error(`\n찍기가 실패한 그림 ${failures.length}장 — 그림은 남았지만 그 상태가 아니다:`);
+  for (const one of failures) console.error(`  - ${one.id} (${one.size}) · ${one.stage}: ${one.message}`);
+  process.exitCode = 1;
+}

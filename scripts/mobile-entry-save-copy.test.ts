@@ -148,7 +148,9 @@ describe('로그인 시점과 목적지 (ADR 0213)', () => {
     expect(gate.indexOf("data.session === null) return { kind: 'out' }")).toBeLessThan(gate.indexOf("from('app_user')"));
     const context = save.slice(save.indexOf('function useSaveContext'), save.indexOf('export function SavePersonForReading'));
     expect(context.indexOf('readGate()')).toBeGreaterThan(-1);
-    expect(context.indexOf('readGate()')).toBeLessThan(context.indexOf("from('app_user')"));
+    /* 계정 줄은 문(`mobile/src/people/self-person.ts`)이 읽는다 — 화면에서는 그 문을 부르는 자리가 관문 뒤다 */
+    expect(context.indexOf('readGate()')).toBeLessThan(context.indexOf('readSelfPerson('));
+    expect(read('mobile/src/people/self-person.ts')).toContain("from('app_user')");
   });
 
   it.each(['이 사주가 내 삶에서는 어떤 뜻일까요?', '성향부터 일과 연애, 운의 흐름까지 글로 풀어드려요.'])('로그인 전 다음 행동의 글자는 웹의 것 — %s', (words) => {
