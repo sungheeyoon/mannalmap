@@ -14,6 +14,8 @@
 3. **지금 단계** — `grep -n '(지금)' docs/product/prd/roadmap.md`. 그 단계에서 무엇을 묻지 않고 밟나는 `docs/agents/delegation/permissions.md` 「권한 등급」 이 든다 — 프로덕션 배포와 실호출은 그 표에 따로 선 줄이다(ADR 0093)
 4. **보류 줄** — `grep -n '| 보류 |' docs/product/gaps.md`. 그 줄은 조건이 올 때까지 권하지도 묻지도 않는다
 5. **로컬 환경** — 새 워크트리에서 무엇을 돌리기 전에, 또는 명령이 막히면 그때 `docs/agents/delegation/local-env.md` 「로컬 환경의 함정」 을 연다(ADR 0147) — `node_modules` 가 없는 워크트리 · 격리가 막는 명령 · 워크트리에 없는 원격 연결이 그 표에 있다
+6. **전역 스킬** — `npm run skills:check`. 규약이 이름으로 부르는 스킬(`/retro` 등) 가운데 이 홈에 없는 것과 까는 명령을 찍는다 — 까는 것은
+   운영자다(`docs/agents/delegation/local-env.md` 「전역 스킬」)
 
 ## 역할 고르기
 
