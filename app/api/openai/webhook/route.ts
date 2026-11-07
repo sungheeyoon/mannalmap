@@ -4,6 +4,7 @@ import { recordDbFailure } from '@/app/db-error';
 import { keyedClient } from '@/app/keyed-client';
 
 import { collectReadingResult } from '../../../me/reading/collect';
+import { pushReadingReady } from '../../../me/reading/ready-push';
 import { verifyReadingWebhook } from '../../../me/reading/model';
 
 /**
@@ -90,6 +91,16 @@ export async function POST(request: Request): Promise<Response> {
       if (outcome.done !== 'pending' && outcome.done !== 'released') {
         const { error: unmarked } = await keyed.rpc('mark_reading_webhook_processed', { p_event_id: event.id });
         if (unmarked) console.error('webhook 처리 표시', unmarked.code);
+      }
+
+      /*
+        **앱 푸시는 처리 표시 뒤다**(ADR 0236, #936) — 저장 · 표시가 끝난 뒤 한 번. 그 함수는 던지지 않지만 던져도 여기서 삼킨다 —
+        알림 하나가 사건의 마무리를 되돌리지 않는다
+      */
+      if (outcome.done === 'saved') {
+        await pushReadingReady(keyed, outcome.runId).catch((thrown: unknown) => {
+          console.error('webhook: ready-push', thrown instanceof Error ? thrown.name : 'unknown');
+        });
       }
     });
   }

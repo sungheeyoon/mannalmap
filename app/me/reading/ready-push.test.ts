@@ -19,7 +19,19 @@ const PERSON = '6f1d2c4e-1a2b-4c3d-8e9f-0a1b2c3d4e5f';
 
 const asFetch = (send: unknown) => send as typeof fetch;
 const rpc = vi.fn();
-const keyed = { rpc: (...args: unknown[]) => rpc(...args) } as unknown as SupabaseClient<Database>;
+/** 부름마다 상한을 건다(`.abortSignal`) — 가짜 문은 그것을 받아 그대로 답한다 */
+const aborts = vi.fn();
+const keyed = {
+  rpc: (...args: unknown[]) => {
+    const answer = Promise.resolve().then(() => rpc(...args)) as Promise<unknown>;
+    return Object.assign(answer, {
+      abortSignal: (signal: AbortSignal) => {
+        aborts(args[0], signal);
+        return answer;
+      },
+    });
+  },
+} as unknown as SupabaseClient<Database>;
 
 type Target = { token: string; kind: string; person_a: string | null; person_b: string | null; match_id: string | null };
 const target = (token: string, over: Partial<Target> = {}): Target => ({ token, kind: 'person', person_a: PERSON, person_b: null, match_id: null, ...over });
@@ -42,6 +54,7 @@ const sentBodies = (send: ReturnType<typeof vi.fn>) =>
 
 beforeEach(() => {
   rpc.mockReset();
+  aborts.mockReset();
   forgetFcmBearer();
 });
 
@@ -60,6 +73,7 @@ describe('보낸다', () => {
     await expect(pushReadingReady(keyed, 'run-1', { fetch: asFetch(send), serviceAccount: ACCOUNT_JSON })).resolves.toBe(2);
 
     expect(rpc).toHaveBeenCalledWith('reading_ready_push_targets', { p_run_id: 'run-1' });
+    expect(aborts.mock.calls.map(([name]) => name)).toEqual(['reading_ready_push_targets']);
     const bodies = sentBodies(send);
     expect(bodies.map((one) => one.message.token)).toEqual(['tok-a', 'tok-b']);
     expect(bodies[0].message).toEqual({

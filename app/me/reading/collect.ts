@@ -24,7 +24,6 @@ import { failReadingJob } from './fail-job';
 import type { ModelUsage } from './generator';
 import { DB_CALL_MS } from './lease';
 import { retrieveBackgroundReading } from './model';
-import { pushReadingReady } from './ready-push';
 import { rpcArgs } from '@/src/lib/db';
 
 /**
@@ -55,7 +54,7 @@ import { rpcArgs } from '@/src/lib/db';
  * 망을 지나는 부름마다 상한이 있다(`app/me/reading/lease.ts`).
  */
 type CollectOutcome =
-  | { done: 'saved' }
+  | { done: 'saved'; runId: string }
   | { done: 'failed'; code: string }
   | { done: 'pending' }
   | { done: 'released'; why: string }
@@ -307,19 +306,11 @@ export async function collectReadingResult(responseId: string): Promise<CollectO
   if (saveError) return close('save-rejected', saveError.message, retrieved.usage);
   await noteChecks();
 
-  /*
-    앱(Android)에 「완성됐어요」 한 번(ADR 0236, #936). 저장은 끝났다 — 그 함수는 던지지 않지만, 던져도 여기서 삼킨다. 못 보내도
-    저장 · 완료는 그대로다(`collect.test.ts` 「앱 푸시」)
-  */
-  await pushReadingReady(keyed, job.run_id).catch((thrown: unknown) => {
-    console.error('collect: ready-push', thrown instanceof Error ? thrown.name : 'unknown');
-    return 0;
-  });
-
   /* 퍼널의 끝 — 이어 쓴 풀이가 섰다. 날짜와 단계만 센다(ADR 0143 의 8). 못 세도 저장은 그대로다 */
   if (continuation !== null) await countTasteStep('reading_succeeded');
 
-  return { done: 'saved' };
+  /* 저장한 시도를 돌려준다 — 앱 푸시(ADR 0236)는 부르는 쪽이 제 마무리(webhook 의 처리 표시 등) 뒤에 이 id 로 보낸다(`pushReadingReady`) */
+  return { done: 'saved', runId: job.run_id };
 }
 
 /**

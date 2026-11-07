@@ -5,6 +5,8 @@ import { Platform } from 'react-native';
 
 import { isAppPushPath } from '@push/app';
 
+import { supabase } from '@/auth/client';
+
 import { refreshThisDevice } from './device';
 
 /**
@@ -12,7 +14,8 @@ import { refreshThisDevice } from './device';
  * 꼴은 Expo 문서의 `useNotificationObserver` 그대로다(https://docs.expo.dev/versions/v58.0.0/sdk/notifications/ , 2026-11-07 확인).
  * 주소는 FCM 을 지나 온 값이라 앱 안의 주소인지 다시 본다(`isAppPushPath`). 로그인이 풀렸으면 `/me` 의 관문이 로그인으로 보낸다.
  *
- * 켠 기기는 앱을 열 때와 FCM 이 토큰을 바꿨을 때 토큰을 다시 남긴다(`refreshThisDevice`).
+ * 앱을 열 때 · 로그인한 뒤 · FCM 이 토큰을 바꿨을 때 `refreshThisDevice` 가 돈다 — 켠 기기는 토큰을 다시 남기고, 켜지 않은 기기는 앞 계정이
+ * 남긴 토큰(서버에서 못 지운 로그아웃)을 걷는다.
  *
  * 앱이 앞에 있을 때 온 알림은 배너로 세우지 않는다 — 처리기를 두지 않으면 expo-notifications 는 앞에 있는 앱의 알림을 안 보인다.
  * 그때는 기다리는 화면이 스스로 다 된 것을 본다.
@@ -37,10 +40,14 @@ function useReadyPushOpener(): void {
     const tapped = Notifications.addNotificationResponseReceivedListener(open);
     const rotated = Notifications.addPushTokenListener(() => void refreshThisDevice());
     void refreshThisDevice();
+    const signedIn = supabase?.auth.onAuthStateChange((event) => {
+      if (event === 'SIGNED_IN') void refreshThisDevice();
+    });
 
     return () => {
       tapped.remove();
       rotated.remove();
+      signedIn?.data.subscription.unsubscribe();
     };
   }, []);
 }

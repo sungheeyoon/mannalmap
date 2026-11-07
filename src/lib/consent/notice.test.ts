@@ -588,5 +588,8 @@ describe('풀이 완성 알림 (notice-v18)', () => {
     expect(abroad).toContain('길어야 1시간만 보관하도록 요청합니다');
     expect(abroad).toContain('https://firebase.google.com/support/privacy');
     expect(abroad).not.toContain('Google LLC(미국');
+    /* 주소에 저장한 사람 · Match 의 DB id 가 든다(`privacy-grounds.md` 「앱 푸시(FCM)」) — 고지가 그것을 숨기지 않는다 */
+    expect(abroad).toContain('화면을 가리키는 내부 식별번호 포함');
+    expect(lines('풀이 완성 알림을 켜시면')).toContain('화면 주소(화면을 가리키는 내부 식별번호 포함)만 싣습니다');
   });
 });

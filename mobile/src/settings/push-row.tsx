@@ -44,8 +44,9 @@ export function PushRow() {
       if (after === 'off') setFailure(COPY.notAllowed);
       if (after === 'unsupported') setFailure(COPY.onFailed);
     } else {
+      /* 서버에서 지운 뒤에만 꺼진다 — 못 지우면 켬 그대로 실패 줄이 선다 */
       const done = await turnOff();
-      setState('off');
+      setState(done ? 'off' : 'on');
       if (!done) setFailure(COPY.offFailed);
     }
     setBusy(false);

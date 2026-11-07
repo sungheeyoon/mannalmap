@@ -18,11 +18,13 @@ import {
 } from '@/src/lib/push/app';
 import { READING_KINDS } from '@/src/lib/reading';
 
+import { DB_CALL_MS } from './lease';
+
 /**
  * **풀이가 저장된 뒤 그 주인의 앱(Android)에 한 번 알린다** — FCM HTTP v1 에 서버가 직접 보낸다(ADR 0236, 운영자 결정 2026-11-07).
  *
  * **던지지 않는다.** 저장 · 완료는 이미 끝났고, 여기의 실패(설정 없음 · DB · 토큰 받기 · FCM)는 기록 한 줄로 남고 풀이에 닿지 않는다 —
- * `collect.ts` 가 저장 뒤에 이 함수를 부르고 그 답을 보지 않는다. 다시 보내지 않는다 — 못 간 알림은 앱 안의 완성 소식(종)이 대신한다.
+ * 회수(`collect.ts`)가 저장한 시도의 id 를 돌려주면 webhook(처리 표시 뒤) · 복구 크론이 이 함수를 부르고 그 답을 보지 않는다. 다시 보내지 않는다 — 못 간 알림은 앱 안의 완성 소식(종)이 대신한다.
  *
  * 서비스 계정(`FCM_SERVICE_ACCOUNT_JSON`)이 없으면 **조용히 꺼진다** — DB 에도 묻지 않는다. 운영자가 Firebase 프로젝트를 만들고 넣는
  * 값이다(`docs/ops/runbook/push.md` 「앱 푸시를 켠다」). 라이브러리를 들이지 않고 OAuth 2.0 서비스 계정 흐름(JWT → 토큰)을 `node:crypto` 로
@@ -126,7 +128,10 @@ export async function pushReadingReady(
     const account = fcmServiceAccountOf(serviceAccount);
     if (account === null) return 0;
 
-    const { data, error } = await keyed.rpc('reading_ready_push_targets', { p_run_id: runId });
+    /* DB 부름마다 상한을 건다 — 회수와 같은 `DB_CALL_MS`. 멈춘 DB 가 함수 시간을 붙들지 않는다 */
+    const { data, error } = await keyed
+      .rpc('reading_ready_push_targets', { p_run_id: runId })
+      .abortSignal(AbortSignal.timeout(DB_CALL_MS));
     if (error !== null) {
       console.error('ready-push: targets', error.code);
       return 0;
@@ -145,7 +150,9 @@ export async function pushReadingReady(
     const results = await Promise.all(targets.map((one) => sendOne(account, bearer, one.token, path, send)));
     const gone = targets.filter((_, at) => results[at] === 'gone');
     for (const one of gone) {
-      const { error: notDropped } = await keyed.rpc('drop_app_push_token', { p_token: one.token });
+      const { error: notDropped } = await keyed
+        .rpc('drop_app_push_token', { p_token: one.token })
+        .abortSignal(AbortSignal.timeout(DB_CALL_MS));
       if (notDropped !== null) console.error('ready-push: drop', notDropped.code);
     }
     return results.filter((one) => one === 'sent').length;
