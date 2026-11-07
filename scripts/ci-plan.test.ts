@@ -1261,12 +1261,12 @@ describe('CI 계획 — 앱 검사 (mobile 차선)', () => {
     expect(job.split('\n').filter((line) => !/^\s*#/.test(line)).join('\n')).not.toMatch(/continue-on-error/);
     expect([...job.matchAll(/^\s+- run: (.+)$/gm)].map((one) => one[1].trim())).toEqual([
       'npm ci',
-      'npx -y "npm@$MOBILE_LOCK_NPM" ci --dry-run --ignore-scripts',
       'ln -s mobile/node_modules ../node_modules',
       'npx tsc --noEmit',
       'npx expo lint',
       'npx expo export --platform android --output-dir dist',
       'npx expo install --check',
+      'npx -y "npm@$MOBILE_LOCK_NPM" ci --dry-run --ignore-scripts',
     ]);
     // SDK 정합은 잠금 파일의 expo 가 든 표(`expo/bundledNativeModules.json`)로만 잰다 — Expo 서버의 최신 판과 견주면 아무것도 안 바꾼 PR 이
     // 새 패치가 나온 날 붉다(ADR 0104 의 밖의 DB 와 같은 까닭)
