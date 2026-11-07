@@ -34,7 +34,7 @@ export const TERMS_EFFECTIVE_DATE: string | null = '2026-11-07';
  * 개정 약관의 시행일 — 제13조⑥ · 제14조④ 를 고친 판(ADR 0235). 공지 받을 이용자가 없어(운영자 확인 2026-11-07) 공지 없이 배포일에 시행하고,
  * 묶음 배포 때 그 배포일로 채운다. **비어 있는 채 운영에 올리지 않는다** — 바뀐 글이 첫 시행일(2026-11-07)의 글로 읽힌다. 지어낸 날을 넣지 않는다
  */
-export const TERMS_REVISED_ON: string | null = null;
+export const TERMS_REVISED_ON: string | null = '2026-11-07';
 
 /**
  * @param site 서비스 주소(`https://…`) — 운영 주소는 한 자리에만 산다(ADR 0152). 화면이 `siteUrl()` 로 넘긴다
