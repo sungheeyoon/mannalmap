@@ -31,8 +31,8 @@ import { type LegalDocument, bullets, numbered, para, table } from './legal-text
 export const TERMS_EFFECTIVE_DATE: string | null = '2026-11-07';
 
 /**
- * 개정 약관의 시행일 — 제13조⑥ · 제14조④ 를 고친 판(ADR 0235). 제4조② 대로 이 날 7일 전부터 공지한 뒤의 날이고, 운영자가 공지일을
- * 정하면 채운다. **비어 있는 채 운영에 올리지 않는다** — 바뀐 글이 첫 시행일(2026-11-07)의 글로 읽힌다. 지어낸 날을 넣지 않는다
+ * 개정 약관의 시행일 — 제13조⑥ · 제14조④ 를 고친 판(ADR 0235). 공지 받을 이용자가 없어(운영자 확인 2026-11-07) 공지 없이 배포일에 시행하고,
+ * 묶음 배포 때 그 배포일로 채운다. **비어 있는 채 운영에 올리지 않는다** — 바뀐 글이 첫 시행일(2026-11-07)의 글로 읽힌다. 지어낸 날을 넣지 않는다
  */
 export const TERMS_REVISED_ON: string | null = null;
 

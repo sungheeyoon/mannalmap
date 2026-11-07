@@ -17,7 +17,7 @@ import { type LegalDocument, type LegalSection, bullets, para, table } from './l
 export const REFUND_EFFECTIVE_DATE: string | null = '2026-11-07';
 
 /**
- * 개정 시행일 — 「한눈에」의 무료 풀이권 줄을 고친 판(ADR 0235). 약관 제4조② 의 공지 뒤 약관 개정(`TERMS_REVISED_ON`)과 같은 날이다.
+ * 개정 시행일 — 「한눈에」의 무료 풀이권 줄을 고친 판(ADR 0235). 약관 개정(`TERMS_REVISED_ON`)과 같은 날 — 배포일이다.
  * **비어 있는 채 운영에 올리지 않는다.** 지어낸 날을 넣지 않는다
  */
 export const REFUND_REVISED_ON: string | null = null;
