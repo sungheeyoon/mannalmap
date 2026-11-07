@@ -168,7 +168,7 @@ export const MATCHING_INTRO_EXAMPLE = {
   verdict: '아주 좋은 궁합일 수 있어요.',
   supply: '이 사람이 채워 주는 기운',
 } as const;
-export const MATCHING_INTRO_AGE = '만 19세 이상만 가입할 수 있어요.';
+export const MATCHING_INTRO_AGE = '인연은 만 19세 이상만 이용할 수 있어요.';
 export const MATCHING_INTRO_START = '인연 시작하기';
 
 /**
