@@ -15,17 +15,25 @@
 import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 
+import { offWhenFull } from './ci-plan.mjs';
+
 const LABEL = 'ci-main-red';
 /** 붉은 실행의 결론 — `ci-plan.mjs` 도 푸시 전 SHA 의 실행을 이것으로 가른다 */
 export const FAILED = new Set(['failure', 'timed_out', 'startup_failure', 'action_required']);
 
 /**
- * 전부를 잰 실행인가 — `policy` 말고 건너뛴 job 이 없다. `policy` 는 전부일 때 건너뛰는 차선이라 빼고 센다. 정책만 바꾼
- * main 푸시(ADR 0154)는 `core` · e2e · 흐름 · `audit` 을 건너뛴다
+ * 전부를 잰 실행인가 — 전부일 때도 켜지 않는 차선(`ci-plan.mjs` 의 `offWhenFull` — 지금 `policy` · `mobile-flow`) 말고 건너뛴
+ * job 이 없다. 정책만 바꾼 main 푸시(ADR 0154)는 `core` · e2e · 흐름 · `audit` 을 건너뛴다
+ *
+ * `offWhenFull` 은 부를 때 읽는다 — `ci-plan.mjs` 가 이 파일의 `FAILED` 를 들여 서로 들이는 사이라, 맨 위에서 부르면 먼저 열린
+ * 쪽에 따라 아직 서지 않은 값을 읽는다
  *
  * @param {readonly { name: string, conclusion: string | null }[]} jobs
  */
-export const measuredEverything = (jobs) => jobs.length > 0 && jobs.every((job) => job.name === 'policy' || job.conclusion !== 'skipped');
+export const measuredEverything = (jobs) => {
+  const off = new Set(offWhenFull());
+  return jobs.length > 0 && jobs.every((job) => off.has(job.name) || job.conclusion !== 'skipped');
+};
 
 /**
  * @param {{ branch: string, conclusion: string, sha: string, mainHead: string, openIssue: number | null, everything?: boolean }} run — `everything` 이 빠지면 전부를 잰 것으로 안 본다(닫지 않는 쪽)
