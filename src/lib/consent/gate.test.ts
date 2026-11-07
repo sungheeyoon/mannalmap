@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { NOTICE_ACK_FLOOR, NOTICE_VERSION, noticeEdition } from './notice';
+import { NOTICE_VERSION, noticeEdition } from './notice';
 import {
   NOTICE_UNREAD,
   SERVICE_ENDED_ON,
@@ -24,7 +24,9 @@ import {
 const dates = { endsOn: '2026-10-31', purgeBy: '2026-11-30', purgeWithinDays: 30 };
 /** 시험이 넣는 「서비스를 끝낸 날」 — 운영 값(`SERVICE_ENDED_ON`)은 끝내지 않은 `null` 이다 */
 const ended = '2026-10-31';
-const notice: GateNotice = { scheduleId: 7, dates };
+/** 서버의 재확인 기준 — 일정의 문이 함께 낸다(ADR 0237) */
+const FLOOR = 'notice-v18';
+const notice: GateNotice = { scheduleId: 7, dates, ackFloor: FLOOR };
 const during = new Date('2026-09-04T12:00:00+09:00');
 const after = new Date('2026-11-01T12:00:00+09:00');
 
@@ -181,10 +183,10 @@ describe('가입', () => {
  * 표현만 고친 개정은 화면에 보인 판본만 올리고, 기준 이상을 본 사람은 그대로 지나간다.
  */
 describe('재확인 기준', () => {
-  const floor = noticeEdition(NOTICE_ACK_FLOOR) as number;
+  const floor = noticeEdition(FLOOR) as number;
 
   it('기준 이상 판본을 확인한 사람은 다시 안 보낸다', () => {
-    for (const seen of [NOTICE_ACK_FLOOR, NOTICE_VERSION, `notice-v${floor + 1}`]) {
+    for (const seen of [FLOOR, NOTICE_VERSION, `notice-v${floor + 1}`]) {
       expect(gateFor('/me', { ...ready, noticeVersion: seen }, notice, during)).toBeNull();
     }
   });
@@ -196,13 +198,23 @@ describe('재확인 기준', () => {
   });
 
   /**
+   * **기준은 서버가 든다**(ADR 0237). 번들의 판본과 상수가 그대로여도 서버가 기준을 올리면 같은 기록이 다시 묻는다 — OTA 가 없는
+   * 앱이 내용 개정 뒤에도 옛 기준으로 들여보내던 자리다.
+   */
+  it('서버가 기준을 올리면 번들의 판본을 확인한 사람도 다시 보낸다', () => {
+    const raised: GateNotice = { ...notice, ackFloor: `notice-v${(noticeEdition(NOTICE_VERSION) as number) + 1}` };
+    expect(gateFor('/me', ready, raised, during)).toBe('/signup');
+    expect(signupDone(ready, raised)).toBe(false);
+  });
+
+  /**
    * **지나가게 두는 것이지 고쳐 적는 것이 아니다.** 판정은 기록을 읽기만 하고, 그 사람이
    * 본 판본은 원래 값 그대로 남는다 — 새 판본을 본 것으로 적지 않는다.
    */
   it('확인 기록의 판본은 원래 본 판본 그대로 남는다', () => {
-    const seenFloor: GateAccount = { ...ready, noticeVersion: NOTICE_ACK_FLOOR };
+    const seenFloor: GateAccount = { ...ready, noticeVersion: FLOOR };
     expect(signupDone(seenFloor, notice)).toBe(true);
-    expect(seenFloor.noticeVersion).toBe(NOTICE_ACK_FLOOR);
+    expect(seenFloor.noticeVersion).toBe(FLOOR);
   });
 
   /** 글자째 견주면 `notice-v10` 이 `notice-v9` 보다 앞서고, 모르는 모양은 확인한 것이 아니다 */

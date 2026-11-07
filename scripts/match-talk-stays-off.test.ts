@@ -2,7 +2,8 @@ import { readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 
-import { NOTICE_ACK_FLOOR, NOTICE_VERSION, noticeAckHolds, noticeFor } from '../src/lib/consent/notice';
+import { NOTICE_VERSION, noticeAckHolds, noticeFor } from '../src/lib/consent/notice';
+import { serverNoticeFloor } from './notice-floor.mjs';
 
 /**
  * **대화가 유일한 흐름이다**(`20270109090000`) — 스위치 표가 지워진 채 남고, 새 화면은 요청 문에 기대 종류를 싣지 않는다.
@@ -49,9 +50,10 @@ describe('게시 고지는 대화 · 상세 궁합의 판이다', () => {
   it('내용 개정이라 판본과 재확인 기준을 함께 올려 확인한 사람 전원이 다시 읽는다', () => {
     /* v15(공개 서비스 · 카카오, ADR 0225 추기) · v16(카카오계정 이메일, ADR 0224 추기) · v17(운영 기간 · Play 결제 · 구매 제한 기록 · 만 14세, ADR 0234 — 기준은 v16 에 두었다, 운영자 답 2026-11-07) · v18(앱 푸시, ADR 0236 — 기준도 올렸다)이 그 위에 올랐다 — 대화 · 상세 궁합의 줄은 그대로 실린다 */
     expect(NOTICE_VERSION).toBe('notice-v18');
-    expect(NOTICE_ACK_FLOOR).toBe('notice-v18');
-    expect(noticeAckHolds('notice-v13')).toBe(false);
-    expect(noticeAckHolds('notice-v18')).toBe(true);
+    const floor = serverNoticeFloor();
+    expect(floor).toBe('notice-v18');
+    expect(noticeAckHolds('notice-v13', floor)).toBe(false);
+    expect(noticeAckHolds('notice-v18', floor)).toBe(true);
   });
 
   it('처리방침은 새 흐름의 글이고 옛 흐름의 줄이 없다', () => {

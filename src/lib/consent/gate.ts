@@ -63,10 +63,11 @@ export type GateAccount = {
  */
 const signupFor = (location: string): string => withReturnPath('/signup', location);
 
-/** 지금 안내 한 벌 */
+/** 지금 안내 한 벌 — 재확인 기준은 서버가 든다(`BetaSchedule.ackFloor`, ADR 0237) */
 export type GateNotice = {
   readonly scheduleId: number;
   readonly dates: BetaDates;
+  readonly ackFloor: string;
 };
 
 /**
@@ -165,13 +166,13 @@ export function gateFor(
  *
  * 가입 화면이 이 조건을 한 벌 더 적고 있었다. 둘이 갈리면 관문은 가입 화면으로 보내고
  * 가입 화면은 돌려보낸다. 판본은 `noticeAckHolds` 가 견준다 — 지금 판본과 같은가가 아니라
- * 재확인 기준 이상인가다(ADR 0095).
+ * 서버가 든 재확인 기준 이상인가다(ADR 0095 · 0237).
  */
 export function signupDone(account: GateAccount, notice: GateNotice | null): boolean {
   return (
     account.signedUp &&
     notice !== null &&
-    noticeAckHolds(account.noticeVersion) &&
+    noticeAckHolds(account.noticeVersion, notice.ackFloor) &&
     account.noticeScheduleId === notice.scheduleId
   );
 }

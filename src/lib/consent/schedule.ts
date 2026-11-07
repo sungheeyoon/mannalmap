@@ -1,10 +1,12 @@
-import type { BetaDates, Operator } from './notice';
+import { noticeEdition, type BetaDates, type Operator } from './notice';
 
-/** 지금 안내 한 벌 — 날짜와 **누가 약속하는가** */
+/** 지금 안내 한 벌 — 날짜와 **누가 약속하는가**, 그리고 서버의 재확인 기준 */
 export type BetaSchedule = {
   readonly scheduleId: number;
   readonly dates: BetaDates;
   readonly operator: Operator;
+  /** 이 판본 이상을 확인했으면 다시 묻지 않는다 — 원본은 DB 의 `public.notice_ack_floor()`(ADR 0237) */
+  readonly ackFloor: string;
 };
 
 /**
@@ -22,6 +24,7 @@ type ScheduleRow = {
   readonly operatorName: string | null | undefined;
   readonly operatorOfficer: string | null | undefined;
   readonly operatorContact: string | null | undefined;
+  readonly ackFloor: string | null | undefined;
 };
 
 /**
@@ -53,6 +56,13 @@ export function scheduleOf(row: ScheduleRow): BetaSchedule | null {
   const contact = filled(row.operatorContact);
   if (name === null || officer === null || contact === null) return null;
 
+  /*
+    **기준을 못 읽으면 안내를 세우지 않는다**(ADR 0237). 칸이 없는 것은 웹 · 앱이 마이그레이션보다 먼저 섰을 때다 — 그때 번들의 값으로
+    갈음하면 서버가 기준을 든 까닭이 없다. 화면은 「아직 시작할 수 없습니다」를 말하고, 가입을 마친 사람만 관문을 지난다(`gateFor`).
+  */
+  const floor = filled(row.ackFloor);
+  if (floor === null || noticeEdition(floor) === null) return null;
+
   return {
     scheduleId: row.scheduleId,
     dates: {
@@ -61,15 +71,18 @@ export function scheduleOf(row: ScheduleRow): BetaSchedule | null {
       purgeWithinDays: row.purgeWithinDays,
     },
     operator: { name, officer, contact },
+    ackFloor: floor,
   };
 }
 
-/** `current_beta_schedule` 이 내주는 칸 가운데 읽는 넷 — 칸 이름은 생성 타입과 같아야 문이 넘길 수 있다. 줄의 `operator_*` 칸은 안 읽는다 */
+/** `current_beta_schedule` 이 내주는 칸 가운데 읽는 다섯 — 칸 이름은 생성 타입과 같아야 문이 넘길 수 있다. 줄의 `operator_*` 칸은 안 읽는다 */
 type ScheduleDbRow = {
   readonly schedule_id: number;
   readonly ends_on: string;
   readonly purge_by: string;
   readonly purge_within_days: number;
+  /** 마이그레이션(`20270116090000`)보다 웹 · 앱이 먼저 서면 없다 */
+  readonly notice_ack_floor?: string | null;
 };
 
 /**
@@ -88,5 +101,6 @@ export function scheduleOfDbRow(rows: readonly ScheduleDbRow[] | null, operator:
     operatorName: operator.name,
     operatorOfficer: operator.officer,
     operatorContact: operator.contact,
+    ackFloor: row.notice_ack_floor,
   });
 }

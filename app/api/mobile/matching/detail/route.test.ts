@@ -33,7 +33,7 @@ function answering(detail: { data: unknown; error: unknown }) {
   const rpc = vi.fn(async (name: string) => {
     if (name === 'request_match_detail') return detail;
     if (name === 'current_beta_schedule') {
-      return { data: [{ schedule_id: 7, ends_on: '2099-12-01', purge_by: '2099-12-31', purge_within_days: 30, operator_name: 'a', operator_officer: 'b', operator_contact: 'c' }], error: null };
+      return { data: [{ schedule_id: 7, ends_on: '2099-12-01', purge_by: '2099-12-31', purge_within_days: 30, operator_name: 'a', operator_officer: 'b', operator_contact: 'c', notice_ack_floor: 'notice-v18' }], error: null };
     }
     return { data: [], error: null };
   });

@@ -2,7 +2,7 @@ import type { ReactNode } from 'react';
 
 import type { AccountState } from '@/src/lib/account';
 import { isBlocked, mayRequestDeletion } from '@/src/lib/account';
-import { OPTIONAL_CONSENT_NOTE, asKoreanDay, noticeAckHolds } from '@/src/lib/consent';
+import { OPTIONAL_CONSENT_NOTE, asKoreanDay } from '@/src/lib/consent';
 import type { DiscoveryProfile } from '@/src/lib/discovery';
 import { matchEntriesStand } from '@/src/lib/matching/opening';
 import { initialOf } from '@/src/lib/profile';
@@ -134,7 +134,6 @@ export function SettingsView({ data }: { data: SettingsData }): ReactNode {
                   ? '아직 확인하지 않았어요.'
                   : `${asKoreanDay(account.notice_ack_at.slice(0, 10))}에 확인했어요.`
               }
-              note={!noticeAckHolds(account.notice_version) ? '안내가 바뀌어 다시 보여 드려요.' : undefined}
             />
           </SettingsGroup>
         )}

@@ -18,6 +18,8 @@
 -- 같은 마이그레이션이 화면이 메뉴 · 주소를 고르는 `match_is_open` 을 더했다 — 참 · 거짓 하나뿐이다(ADR 0222).
 -- 2026-11-05 에 인연이 열리면 알려 달라는 신청 · 취소와 그 여부를 읽는 문 둘(`set_match_open_alert` · `my_match_open_alert`, `20270110090000`, ADR 0223)이
 -- 더했다 — 사람 id 를 받지 않고 부른 사람 제 줄만 다룬다.
+-- 2026-11-07 에 받아 주는 가장 옛 안드로이드 빌드를 읽는 문(`android_min_version_code`, `20270116090000`, ADR 0237)이 더했다 — 수 하나뿐이고
+-- 로그인 전에도 열렸다(`33_function_shape`).
 begin;
 select plan(1);
 
@@ -26,6 +28,7 @@ select set_eq(
     from pg_proc p join pg_namespace n on n.oid = p.pronamespace
     where n.nspname = 'public' and has_function_privilege('authenticated', p.oid, 'EXECUTE')$$,
   $$values ('acknowledge_warning(p_ref text)'),
+           ('android_min_version_code()'),
            ('add_my_photo(p_content_type text, p_base64 text)'),
            ('add_my_photo_object(p_object_key text, p_content_type text)'),
            ('app_push_token_registered(p_token text)'),

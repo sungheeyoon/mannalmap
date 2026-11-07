@@ -145,12 +145,12 @@ set local role authenticated;
 select pg_temp.acting((select newcomer from folks));
 
 select throws_ok(
-  $$select public.complete_signup(null, '새사람', 'notice-v9', pg_temp.schedule_id(), false, false)$$,
+  $$select public.complete_signup(null, '새사람', 'notice-v109', pg_temp.schedule_id(), false, false)$$,
   '42501', '지금은 신규 가입을 잠시 멈췄어요. 나중에 다시 시도해 주세요.', '닫혀 있으면 새 사람은 못 들어온다 — 코드를 말하지 않는 문장으로');
 
 select pg_temp.acting((select reporter from folks));
 select lives_ok(
-  $$select public.complete_signup(null, null, 'notice-v9', pg_temp.schedule_id(), false, false)$$,
+  $$select public.complete_signup(null, null, 'notice-v109', pg_temp.schedule_id(), false, false)$$,
   '이미 가입한 사람은 닫힌 동안에도 바뀐 안내를 다시 확인한다');
 
 select throws_ok($$select 1 from public.signup_pause$$, '42501', null, '앱 역할은 닫힌 기간 표를 못 읽는다');
@@ -161,7 +161,7 @@ update public.signup_pause set resumed_at = now() where resumed_at is null;
 set local role authenticated;
 select pg_temp.acting((select later from folks));
 select lives_ok(
-  $$select public.complete_signup(null, '나중사람', 'notice-v9', pg_temp.schedule_id(), false, false)$$,
+  $$select public.complete_signup(null, '나중사람', 'notice-v109', pg_temp.schedule_id(), false, false)$$,
   '열면 다시 들어온다');
 
 select * from finish();

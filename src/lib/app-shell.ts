@@ -20,3 +20,16 @@ export function appHeadStands(pathname: string, params: { a?: unknown; b?: unkno
 export const tabRouteId = (name: string, params: { a?: unknown; b?: unknown } = {}) => `${name}:${String(params.a ?? '')}:${String(params.b ?? '')}`;
 
 export const dockStands = (pathname: string) => !/^\/me\/chat\/[^/]+\/?$/.test(pathname);
+
+/**
+ * **이 빌드가 서버가 받아 주는 가장 옛 빌드보다 낮은가**(ADR 0237) — 낮으면 앱은 업데이트 화면만 세운다.
+ *
+ * `installed` 는 기기가 말하는 빌드 번호(안드로이드 versionCode, 문자열), `floor` 는 `android_min_version_code()` 의 답이다.
+ * **둘 중 하나라도 못 읽으면 막지 않는다** — 망이 끊긴 사람을 업데이트 화면에 가두면 로그인 없이 도는 만세력까지 닫힌다. 옛 앱이 깨뜨릴
+ * 쓰기는 DB 가 따로 거절한다(가입의 재확인 기준 등). 그래서 이 판정은 막는 문이 아니라 길을 가리키는 것이다.
+ */
+export function buildIsBelowFloor(installed: string | null, floor: unknown): boolean {
+  const build = installed !== null && /^[1-9]\d*$/.test(installed) ? Number(installed) : null;
+  const least = typeof floor === 'number' && Number.isSafeInteger(floor) ? floor : null;
+  return build !== null && least !== null && build < least;
+}

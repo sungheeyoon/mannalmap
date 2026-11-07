@@ -7,7 +7,7 @@ import { isBlocked, mayRequestDeletion } from '@account/index';
 import { SIGN_OUT_PENDING } from '@account/copy';
 import { GUIDE_LINKS } from '@brand/links';
 import { OPTIONAL_CONSENT_NOTE } from '@consent/notice';
-import { asKoreanDay, noticeAckHolds } from '@consent/index';
+import { asKoreanDay } from '@consent/index';
 import { matchEntriesStand } from '@matching/opening';
 import { initialOf } from '@profile';
 
@@ -113,7 +113,7 @@ export function SettingsScreen() {
         {active && account !== null && (
           <SettingsGroup title="선택 동의" description={OPTIONAL_CONSENT_NOTE}>
             <ConsentControls key={`${account.improvement_consent}-${account.contact_consent}`} improvement={account.improvement_consent === true} contact={account.contact_consent === true} />
-            <PrivacyRow ackAt={account.notice_ack_at} version={account.notice_version} />
+            <PrivacyRow ackAt={account.notice_ack_at} />
           </SettingsGroup>
         )}
 
@@ -147,11 +147,10 @@ function goRow(link: { href: string; label: string }) {
 }
 
 /** 처리 안내 — 전문은 앱의 `/privacy` 다 */
-function PrivacyRow({ ackAt, version }: { ackAt: string | null; version: string | null }) {
+function PrivacyRow({ ackAt }: { ackAt: string | null }) {
   const label = '개인정보 처리 안내';
   const help = ackAt === null ? '아직 확인하지 않았어요.' : `${asKoreanDay(ackAt.slice(0, 10))}에 확인했어요.`;
-  const note = !noticeAckHolds(version) ? '안내가 바뀌어 다시 보여 드려요.' : undefined;
-  return <LinkRow label={label} help={help} note={note} onPress={() => router.push('/privacy' as never)} />;
+  return <LinkRow label={label} help={help} onPress={() => router.push('/privacy' as never)} />;
 }
 
 function SignOutRow() {

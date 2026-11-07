@@ -8,7 +8,6 @@ import {
 } from './session';
 
 import {
-  NOTICE_ACK_FLOOR,
   NOTICE_NOT_READY,
   NOTICE_VERSION,
   asKoreanDay,
@@ -216,7 +215,7 @@ test.describe('시작하기 전에', () => {
 /**
  * **표현만 고친 개정은 다시 묻지 않는다**(ADR 0095, G-05).
  *
- * 화면에 보인 판본(`NOTICE_VERSION`)과 재확인 기준(`NOTICE_ACK_FLOOR`)이 갈렸다. 기준 이상을
+ * 화면에 보인 판본(`NOTICE_VERSION`)과 재확인 기준이 갈렸다. 기준은 서버가 든다(`public.notice_ack_floor()`, ADR 0237). 기준 이상을
  * 확인한 사람은 관문도 계정 관리도 지나가고, 그 사람의 기록은 **원래 본 판본 그대로** 남는다.
  * 관문(`proxy.ts`)과 계정 관리 화면이 같은 판정을 부르는지는 화면을 열어야 재진다.
  */
@@ -224,6 +223,9 @@ test.describe('재확인 기준', () => {
   const versionOf = (email: string): string =>
     sql(`select notice_version from public.app_user
          where id = (select id from auth.users where email = '${email}')`);
+
+  /** 서버의 재확인 기준 — 관문 · 가입이 일정의 문으로 읽는 값 그대로다 */
+  const serverFloor = (): string => sql('select public.notice_ack_floor()');
 
   const recordAs = (email: string, version: string): void => {
     sql(`update public.app_user set notice_version = '${version}'
@@ -233,17 +235,17 @@ test.describe('재확인 기준', () => {
   test('기준 이상 판본을 확인한 사람은 다시 안 묻고, 기록은 그대로 남는다', async ({ page, signedIn }) => {
     scheduleBeta(scheduledEndsOn());
     /* 새 판본이 서기 전에 확인한 사람 — 이 판본이 곧 기준이다 */
-    recordAs(signedIn.email, NOTICE_ACK_FLOOR);
+    const floor = serverFloor();
+    recordAs(signedIn.email, floor);
 
     await page.goto('/me');
     await expect(page).toHaveURL(/\/me$/);
 
     await page.goto('/me/settings');
     await expect(page.getByText('에 확인했어요.', { exact: false })).toBeVisible();
-    await expect(page.getByText('안내가 바뀌어 다시 보여 드려요.')).toHaveCount(0);
 
     /* 지나가게 둔 것이지 새 판본을 본 것으로 고쳐 적은 것이 아니다 */
-    expect(versionOf(signedIn.email)).toBe(NOTICE_ACK_FLOOR);
+    expect(versionOf(signedIn.email)).toBe(floor);
   });
 
   test('기준보다 낮은 판본을 확인한 사람은 다시 확인하고, 그때 본 판본이 적힌다', async ({
@@ -251,7 +253,7 @@ test.describe('재확인 기준', () => {
     signedIn,
   }) => {
     scheduleBeta(scheduledEndsOn());
-    const below = `notice-v${(noticeEdition(NOTICE_ACK_FLOOR) as number) - 1}`;
+    const below = `notice-v${(noticeEdition(serverFloor()) as number) - 1}`;
     recordAs(signedIn.email, below);
 
     await page.goto('/me/settings');

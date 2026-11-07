@@ -20,8 +20,8 @@ import { ACTIVITY_PRIVACY_LINE } from '../presence';
  * 첫 문장이 하는 일을 두 번째 줄이 되풀이할 뿐이었다. 이 문자열은 우리가 기록에 쓰는
  * 열쇠다.
  *
- * **이 값이 오른다고 다시 보여 주지는 않는다**(ADR 0095). 다시 보여 줄지는
- * `NOTICE_ACK_FLOOR` 가 정한다 — 표현만 고친 개정은 이 값만 올리고, 내용이 바뀐 개정은
+ * **이 값이 오른다고 다시 보여 주지는 않는다**(ADR 0095). 다시 보여 줄지는 서버의 재확인 기준
+ * (`public.notice_ack_floor()`, ADR 0237)이 정한다 — 표현만 고친 개정은 이 값만 올리고, 내용이 바뀐 개정은
  * 기준까지 올린다. 「보여 준 적 있다」가 아니라 「무엇을 보여 주었는가」가 남아야 그 판단을
  * 할 수 있다.
  *
@@ -132,23 +132,6 @@ import { ACTIVITY_PRIVACY_LINE } from '../presence';
 export const NOTICE_VERSION = 'notice-v18';
 
 /**
- * 재확인 기준 — **이 판본 이상을 확인했으면 유효하다**(ADR 0095).
- *
- * 판본 하나가 두 일을 하고 있었다 — 무엇을 보여 줬나를 적는 열쇠이자, 다시 보여 줄지 정하는
- * 문턱. 그래서 낱말 하나를 맞추려 해도 확인한 사람 전원을 가입 폼으로 돌려보내야 했다(G-05).
- * 문턱을 떼어 여기 둔다.
- *
- * **내용이 바뀐 개정만 이 값을 올린다** — 처리 항목·목적·보유기간·국외 이전·상대에게
- * 보이는 것이 달라지면 이미 확인한 사람도 다시 읽어야 한다. 표현만 고친 개정은
- * `NOTICE_VERSION` 만 올리고 이 값은 둔다. 그 사람의 기록은 **원래 본 판본 그대로** 남는다 —
- * 새 판본을 본 것으로 고쳐 적지 않는다.
- *
- * 유효한 판본을 목록으로 드는 길은 안 갔다. 개정마다 길어지고, 하나를 빠뜨리면 그 판본을
- * 확인한 사람만 조용히 다시 불려 온다.
- */
-export const NOTICE_ACK_FLOOR = 'notice-v18';
-
-/**
  * 판본의 차례 — `notice-v4` → `4`. 모양이 다르면 `null`.
  *
  * 글자째 견주면 `notice-v10` 이 `notice-v9` 보다 앞선다. 2026-09-23 운영 기록의 판본은
@@ -166,12 +149,19 @@ export const noticeEdition = (version: string | null): number | null => {
  * 기준으로 옮기면 관문은 들여보내고 계정 관리는 「다시 보여 드립니다」라고 말한다 —
  * `app/notice-version.boundary.test.ts` 가 판본을 직접 견주는 자리를 훑는다.
  *
- * 읽을 수 없는 판본(빈칸 · 모양이 다른 값)은 확인하지 않은 것이다.
+ * **기준(`floor`)은 서버가 든다**(ADR 0095 · 0237) — `current_beta_schedule()` 의 `notice_ack_floor` 이고 원본은 DB 의
+ * `public.notice_ack_floor()` 다. 번들 상수로 두면 OTA 가 없는 앱은 내용 개정 뒤에도 옛 기준으로 들여보낸다.
+ * 내용이 바뀐 개정만 기준을 올리고, 그 사람의 기록은 **원래 본 판본 그대로** 남는다.
+ *
+ * 유효한 판본을 목록으로 드는 길은 안 갔다. 개정마다 길어지고, 하나를 빠뜨리면 그 판본을
+ * 확인한 사람만 조용히 다시 불려 온다.
+ *
+ * 읽을 수 없는 판본(빈칸 · 모양이 다른 값)은 확인하지 않은 것이다. 기준이 읽을 수 없는 값이어도 확인하지 않은 것으로 친다.
  */
-export const noticeAckHolds = (version: string | null): boolean => {
+export const noticeAckHolds = (version: string | null, floor: string): boolean => {
   const seen = noticeEdition(version);
-  const floor = noticeEdition(NOTICE_ACK_FLOOR);
-  return seen !== null && floor !== null && seen >= floor;
+  const least = noticeEdition(floor);
+  return seen !== null && least !== null && seen >= least;
 };
 
 /**

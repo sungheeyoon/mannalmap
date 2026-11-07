@@ -37,7 +37,7 @@ function signedIn(identities: { provider: string; id: string; identity_data?: Re
     }),
     rpc: async (name: string) =>
       name === 'current_beta_schedule'
-        ? { data: [{ schedule_id: 7, ends_on: '2099-12-01', purge_by: '2099-12-31', purge_within_days: 30, operator_name: 'a', operator_officer: 'b', operator_contact: 'c' }], error: null }
+        ? { data: [{ schedule_id: 7, ends_on: '2099-12-01', purge_by: '2099-12-31', purge_within_days: 30, operator_name: 'a', operator_officer: 'b', operator_contact: 'c', notice_ack_floor: 'notice-v18' }], error: null }
         : { data: null, error: null },
   });
 }

@@ -30,6 +30,7 @@ const ROW = {
   operator_name: '만세력 운영자',
   operator_officer: '홍길동',
   operator_contact: 'ops@example.com',
+  notice_ack_floor: 'notice-v18',
 };
 
 /** 읽었는데 없다 — 못 읽은 것과 다른 값 */
@@ -70,8 +71,15 @@ describe('지금 일정 읽기', () => {
         scheduleId: 7,
         dates: { endsOn: '2026-10-31', purgeBy: '2026-11-30', purgeWithinDays: 30 },
         operator: PRIVACY_OPERATOR,
+        ackFloor: 'notice-v18',
       },
     });
     expect(called).toEqual(['current_beta_schedule']);
+  });
+
+  /** 재확인 기준은 서버가 든다(ADR 0237) — 그 칸이 없는 답(마이그레이션보다 먼저 선 웹)은 안내를 세우지 않는다 */
+  it('재확인 기준이 없는 줄은 안내가 없는 것으로 낸다', async () => {
+    const older = { ...ROW, notice_ack_floor: undefined };
+    expect(await currentSchedule(answering([older]).client)).toEqual(NONE);
   });
 });
