@@ -611,6 +611,27 @@ WNS 를 말하지 않는다. 처리방침에 적을 때는 「Windows 의 Edge�
 있는 국가」로, Mozilla · Apple 을 「미국」으로. 보유기간은 「기기에 전달될 때까지, 길어야 1시간만 보관하도록 요청합니다」 — 우리가 아는
 것은 요청뿐이다. 이 초안은 빈칸이 남은 채라 운영자가 게시하지 않기로 했다.
 
+## 앱 푸시(FCM) — `notice-v18` (#936, ADR 0236, 2026-11-07)
+
+**재어 본 사실이다. 적법 판단이 아니다.** 위 「푸시 회사 넷」의 FCM 칸은 웹 푸시(브라우저 구독 주소, Firebase 프로젝트 없음)의 것이다 — 이번
+앱 푸시는 Firebase 프로젝트를 만들고 서버가 그 서비스 계정으로 FCM HTTP v1 에 보낸다(운영자 결정 2026-11-07). 그래서 칸을 따로 적는다.
+
+| 칸 | 값 | 근거 |
+| --- | --- | --- |
+| 받는 것 | 알림을 허용한 기기의 FCM 등록 토큰 하나(`app_push_token.token`) — 계정 id 에 매인다. 기기 이름 · 모델 · 광고 id 는 받지 않는다 | `supabase/migrations/20270115090000_the_app_tells_the_device_a_reading_is_ready.sql` · `mobile/src/push/device.ts` `registerThisDevice` |
+| 나가는 것(Google 로) | 그 토큰과 데이터 메시지 — `channelId` · `title`(서비스명) · `message`(「풀이가 완성됐어요」) · `body`(`{"path":"/me/…"}` — 저장한 사람 · Match 의 DB id 가 들 수 있다), `android.ttl` 3600s · `priority` HIGH · `collapse_key`. **풀이 글 · 점수 · 출생 정보 · 이름 · 닉네임은 없다** | `src/lib/push/app.ts` `readingReadyMessage` · `app/me/reading/ready-push.test.ts` 「주인의 기기마다 한 번」 |
+| 받는 법인 · 연락처 | Google LLC. 한국 보충 고지의 연락처 「googlekrsupport@google.com」 — 위 「푸시 회사 넷」의 Google 칸과 같은 곳 | https://policies.google.com/privacy/additional?hl=ko&gl=kr (2026-10-15 확인, 위 표) |
+| 처리 국가 | 「Unless a service or feature offers data location selection, Firebase may process and store your data anywhere Google or its agents maintain facilities.」 FCM 에 위치 선택은 없다. **나라 이름은 공식 문서에 없다** — 처리방침은 그 문장을 옮겨 「Google 과 그 대리인의 시설이 있는 여러 나라」로 적고 미국으로 대신하지 않는다(ADR 0180 의 8) | https://firebase.google.com/support/privacy (Last modified September 24, 2026 — 2026-11-07 확인) |
+| 보관 | 알림 — 보낸 쪽의 TTL 까지, 「The maximum time to live supported is 4 weeks」 — 우리는 1시간을 **요청**한다. 토큰 — Firebase 문서의 FCM 줄은 「Firebase installation IDs」를 「until the Firebase customer makes an API call to delete the ID … within 180 days」까지 둔다고 적고, FCM 등록 토큰의 기간은 적지 않는다 | https://firebase.google.com/docs/reference/fcm/rest/v1/projects.messages · 위 Firebase 개인정보 문서(2026-11-07 확인) |
+| 운영자에게 걸리는 약관 | 「Firebase terms include Data Processing and Security Terms」 — Firebase 프로젝트를 만들 때 받아들인다 | 위 Firebase 개인정보 문서 |
+| 우리가 지우는 때 | 끄기 · 로그아웃 · FCM 의 `UNREGISTERED` · 탈퇴 신청(트리거, 그 자리) · 탈퇴 처분(cascade) | `supabase/tests/99_app_push_token.test.sql` |
+| 거부 | 처음 물을 때 허용하지 않기 · 설정의 「풀이 완성 알림」 끄기 · 기기 설정에서 알림 끄기. 거부해도 풀이 · 그 밖의 이용은 그대로 | `mobile/src/push/device.ts` · `app/me/reading/collect.test.ts` 「앱 푸시」 |
+
+**견준 사례** — MT(https://www.heremt.com/legal/privacy/, 위 「참고한 다른 서비스」, 2026-10-15 확인)의 8절이 같은 자리다: 「Google LLC … 푸시 알림 식별자 …
+서비스 이용 시점에 네트워크를 통해 전송 … 푸시 알림 발송」, 근거 「「개인정보 보호법」 제28조의8 제1항 제3호」, 거부 「기기의 알림 권한을 해제하여 거부할 수
+있습니다. 거부하시면 알림을 받을 수 없습니다.」 `notice-v18` 의 국외 이전 줄 · 근거 조항 · 거부 줄은 이 꼴을 따랐다. `［변호사 검토 필요］` 알림 토큰의
+이전이 제28조의8 ① 3(계약 이행에 필요한 처리위탁)에 서는가 — 알림은 선택 기능이다.
+
 ## 상세 궁합 (#938 · #961, 2026-11-02 · 2026-11-04 `notice-v14` 로 옮김)
 
 **재어 본 사실이다. 적법 판단이 아니다.** 옛 흐름을 적은 `notice-v13`(애플 로그인 · 이용 정지 기록을 더한 판, ADR 0220)을 갈음하는 `notice-v14`(대화가 유일한 흐름이 되는 배포와 함께 게시) 문장(`docs/legal/match-talk-notice-draft.md`)의 근거다. 마이그레이션 줄(`:수`)은 `supabase/migrations/20270106090000_the_talk_opens_first_and_the_detail_waits_for_a_press.sql` 이다.

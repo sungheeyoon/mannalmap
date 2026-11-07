@@ -120,8 +120,15 @@ import { ACTIVITY_PRIVACY_LINE } from '../presence';
  * 안 지난다. 고지는 운영 처리방침의 게시로 선다. 구매 제한 기록을 켜는 마이그레이션(`20270114100000`, #1048)은 이 판본의 배포와 같거나
  * 그 뒤다(ADR 0098). 줄마다의 근거는
  * `docs/legal/privacy-grounds.md` 「운영 기간 · Play 결제 · 구매 제한 기록 · 만 14세 — `notice-v17`」.
+ *
+ * `v17` → `v18`: **내용 개정 — 안드로이드 앱의 풀이 완성 알림(ADR 0236, #936).** 알림을 허용한 기기의 알림 토큰(FCM 등록 토큰)을 받아
+ * 계정에 잇고, 풀이가 완성되면 Google(Firebase 클라우드 메시징)이 그 기기로 나른다 — 받는 항목 · 위탁 · 국외 이전이 는다. 알림에 싣지
+ * 않는 것(풀이 · 출생 정보 · 이름)과 끄는 법 · 토큰을 지우는 때를 적는다. ADR 0095 대로 **기준도 `notice-v18` 로 올린다 — 확인한 사람
+ * 전원이 한 번 다시 읽는다**(`notice-v17` 의 예외는 잇지 않는다, ADR 0234). 운영자가 `notice-v17` 처럼 새 가입자만으로 고르면 이 줄과
+ * `NOTICE_ACK_FLOOR` 를 함께 고친다 — PR 의 결정 줄. 알림을 켜는 값(Firebase 서비스 계정 · 설정 파일)은 이 판본의 게시 뒤에 넣는다(ADR 0098 의 꼴).
+ * 줄마다의 근거는 `docs/legal/privacy-grounds.md` 「앱 푸시(FCM) — `notice-v18`」.
  */
-export const NOTICE_VERSION = 'notice-v17';
+export const NOTICE_VERSION = 'notice-v18';
 
 /**
  * 재확인 기준 — **이 판본 이상을 확인했으면 유효하다**(ADR 0095).
@@ -138,7 +145,7 @@ export const NOTICE_VERSION = 'notice-v17';
  * 유효한 판본을 목록으로 드는 길은 안 갔다. 개정마다 길어지고, 하나를 빠뜨리면 그 판본을
  * 확인한 사람만 조용히 다시 불려 온다.
  */
-export const NOTICE_ACK_FLOOR = 'notice-v16';
+export const NOTICE_ACK_FLOOR = 'notice-v18';
 
 /**
  * 판본의 차례 — `notice-v4` → `4`. 모양이 다르면 `null`.
@@ -279,6 +286,21 @@ const TRANSFERS: readonly Transfer[] = [
     contact: 'privacy@vercel.com (440 N Barranca Avenue #4133, Covina, CA 91723, United States)',
   },
   {
+    /*
+      풀이 완성 앱 푸시(FCM, ADR 0236 · `notice-v18`). 나라는 Firebase 문서의 말 그대로다 — 「Firebase may process and store your data anywhere Google
+      or its agents maintain facilities」(https://firebase.google.com/support/privacy, Last modified September 24, 2026 — 2026-11-07 확인). 나라
+      이름을 적은 공식 문서가 없어 법인 소재지로 대신하지 않는다(ADR 0180 의 8). 보관은 우리가 요청하는 TTL(1시간)뿐이 확인된 값이다.
+    */
+    to: 'Google LLC',
+    country: 'Google 과 그 대리인의 시설이 있는 여러 나라 — Firebase 는 이 처리의 위치를 나라로 정하지 않습니다',
+    items: '알림을 허용하신 기기의 알림 토큰과 알림의 내용(서비스 이름 · 「풀이가 완성됐어요」 · 누르면 열릴 앱 안의 화면 주소)',
+    when: '안드로이드 앱에서 풀이 완성 알림을 허용하신 뒤 풀이가 완성될 때 네트워크를 통해 전송',
+    purpose: '풀이 완성 알림 발송',
+    period: '기기에 전달되지 못한 알림은 길어야 1시간만 보관하도록 요청합니다. 알림 토큰을 Google 이 얼마나 보관하는지는 Firebase 문서에 따로 적혀 있지 않습니다',
+    policy: 'https://firebase.google.com/support/privacy',
+    contact: 'googlekrsupport@google.com',
+  },
+  {
     to: 'OpenAI OpCo, LLC',
     country: '미국, 그리고 하위 처리자가 있는 여러 나라 — 목록: https://openai.com/policies/sub-processor-list/',
     items:
@@ -331,6 +353,20 @@ export function noticeFor(operator: Operator): readonly NoticeSection[] {
       ],
     },
     {
+      /*
+        **풀이 완성 알림**(ADR 0236, `notice-v18`) — 안드로이드 앱만이다. 받는 값은 `app_push_token.token` 하나(`20270115090000`)이고,
+        보내는 메시지는 `src/lib/push/app.ts` 의 `readingReadyMessage` 가 든 칸뿐이다. 지우는 때는 그 마이그레이션의 머리말 다섯 — 끄기 ·
+        로그아웃 · FCM 의 「등록 없음」 · 탈퇴 신청 · 탈퇴 처분.
+      */
+      title: '풀이 완성 알림을 켜시면',
+      lines: [
+        '안드로이드 앱에서 풀이 완성 알림을 허용하시면, 그 기기의 알림 토큰(Google 의 Firebase 클라우드 메시징이 앱 설치마다 발급하는 값)을 받아 계정에 연결해 둡니다. 풀이가 완성됐을 때 그 기기로 알림을 보내는 데만 씁니다.',
+        '알림에는 서비스 이름과 「풀이가 완성됐어요」 한 줄, 누르면 열릴 앱 안의 화면 주소만 싣습니다. 풀이 내용과 점수, 출생 정보, 이름 · 닉네임은 싣지 않습니다.',
+        '알림 토큰은 설정에서 알림을 끄시거나, 로그아웃하시거나, 탈퇴를 신청하시거나, Google 이 그 토큰이 더 이상 쓰이지 않는다고 알려 올 때 지웁니다.',
+        '알림을 원하지 않으시면 처음 물을 때 허용하지 않거나, 설정의 「풀이 완성 알림」이나 기기 설정에서 알림을 끄시면 됩니다. 알림을 받지 않으셔도 풀이와 그 밖의 이용에는 영향이 없습니다.',
+      ],
+    },
+    {
       title: '언제까지 두나요',
       lines: [
         '계정과 저장된 정보는 서비스를 이용하시는 동안 보관하고, 탈퇴를 신청하시면 3일 이내에 파기합니다. 탈퇴는 앱에서 언제든 신청할 수 있습니다.',
@@ -358,6 +394,7 @@ export function noticeFor(operator: Operator): readonly NoticeSection[] {
         '서비스 운영은 Vercel 에 맡기고, 입력을 데이터베이스로 넘기고 사주를 계산하는 서버 처리(함수 실행)는 서울 리전에서 합니다. 이때 서버를 지나가는 생년월일시·출생지·성별은 로그에 적지 않습니다. 서버의 실행 기록은 1시간 보관합니다(현재 요금제 기준).',
         '풀이와 첫 화면의 짧은 사주 문단 생성은 OpenAI 에 맡깁니다.',
         '프로필 사진 파일의 보관·제공·삭제는 Amazon Web Services 에 맡기고 서울 리전에서 처리합니다.',
+        '안드로이드 앱의 풀이 완성 알림 발송은 Google(Firebase 클라우드 메시징)에 맡깁니다.',
         '맡기는 범위는 이 서비스를 돌리는 데 필요한 저장·전송·생성뿐입니다. 국외에서 처리되거나 접근될 수 있는 부분은 아래에 따로 적습니다.',
       ],
     },
@@ -367,6 +404,7 @@ export function noticeFor(operator: Operator): readonly NoticeSection[] {
         ...transferLines(),
         '사주풀이·궁합풀이 생성을 위한 OpenAI 로의 이전은 개인정보 보호법 제28조의8 제1항 제3호(정보주체와의 계약 이행에 필요한 처리위탁)에 따라 이 처리방침에 공개하고 이전합니다.',
         'OpenAI 로의 이전은 사주풀이·궁합풀이를 받지 않고, 상세 궁합을 요청하거나 동의하지 않고, 첫 화면에 출생 정보를 넣거나 출생 정보가 담긴 주소를 열지 않으시면 일어나지 않습니다. 그 경우 풀이와 첫 화면의 짧은 사주 문단, 상세 궁합을 받을 수 없지만, 대화와 사주 계산 · 저장은 그대로 이용하실 수 있습니다.',
+        '풀이 완성 알림을 위한 Google 로의 이전도 같은 조항(정보주체와의 계약 이행에 필요한 처리위탁)에 따라 이 처리방침에 공개하고 이전합니다. 알림을 허용하지 않거나 끄시면 일어나지 않고, 알림을 받지 못할 뿐 그 밖의 이용은 그대로입니다.',
         'Supabase 의 이용 기록 저장과 기술 지원 접근, Vercel 의 지원 접근은 서비스를 이용하시는 동안 따로 거부할 수 없습니다. 원하지 않으시면 가입하지 않거나 설정에서 탈퇴를 신청하시면 됩니다.',
       ],
     },

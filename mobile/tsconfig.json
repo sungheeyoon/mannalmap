@@ -122,6 +122,9 @@
       ],
       "@reading/notes": [
         "../src/lib/reading/notes.ts"
+      ],
+      "@push/app": [
+        "../src/lib/push/app.ts"
       ]
     }
   },

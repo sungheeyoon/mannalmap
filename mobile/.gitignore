@@ -43,3 +43,7 @@ example
 # generated native folders
 /ios
 /android
+
+# Firebase 설정 파일(풀이 완성 알림, ADR 0235) — 운영자가 EAS 파일 환경값 `GOOGLE_SERVICES_JSON` 으로 올린다
+google-services.json
+GoogleService-Info.plist

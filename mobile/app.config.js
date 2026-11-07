@@ -8,14 +8,21 @@
  * 구글 웹 클라이언트 — 중 하나라도 비거나 주소 둘(웹 · Supabase)이 https 가 아니면 여기서 선다. 없이 나가면 풀이가 「닿지 못했다」로 서고 약관이 비며 로그인이 안 된다. 내부 판(`preview`)은
  * 웹의 주소가 https 인지만 본다 — 운영 DB 에 쓰는 판이라 토큰을 http 로 보내지 않는다. `EAS_BUILD_PROFILE` 은 EAS 의 빌드 기계에만 서므로
  * 로컬 개발 · 가짜 서버로 재기는 안 막는다(ADR 0233, 운영자 2026-11-06).
+ *
+ * 풀이 완성 알림(ADR 0236)은 Firebase 설정 파일이 있을 때만 선다 — EAS 의 파일 환경값 `GOOGLE_SERVICES_JSON`(그 파일의 경로)이 있으면
+ * `android.googleServicesFile` 로 넣고 `extra.readingPush` 를 켠다. 없으면 알림 줄이 안 서고 권한도 안 묻는다(풀이는 그대로). 그 파일은
+ * 운영자가 Firebase 콘솔에서 받아 EAS 에 올린다 — 저장소에 두지 않는다(`docs/ops/runbook/push.md` 「앱 푸시를 켠다」).
  */
 module.exports = ({ config }) => {
   const refusal = buildEnvRefusal(process.env);
   if (refusal !== null) throw new Error(refusal);
   const iosUrlScheme = process.env.EXPO_PUBLIC_GOOGLE_IOS_URL_SCHEME;
   const kakaoNativeAppKey = process.env.EXPO_PUBLIC_KAKAO_NATIVE_APP_KEY?.trim();
+  const googleServicesFile = process.env.GOOGLE_SERVICES_JSON?.trim();
   return {
     ...config,
+    android: { ...config.android, ...(googleServicesFile ? { googleServicesFile } : {}) },
+    extra: { ...config.extra, readingPush: Boolean(googleServicesFile) },
     plugins: [
       ...config.plugins.filter(
         (plugin) => (Array.isArray(plugin) ? plugin[0] : plugin) !== '@react-native-google-signin/google-signin',

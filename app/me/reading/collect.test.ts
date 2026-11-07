@@ -29,6 +29,12 @@ vi.mock('./model', () => ({
   retrieveBackgroundReading: (...args: unknown[]) => retrieve(...args),
 }));
 
+/** 앱 푸시는 가짜다 — 실제 송신은 `ready-push.test.ts` 가 잰다. 여기는 저장과의 순서 · 실패의 고립만 본다 */
+const pushReady = vi.fn();
+vi.mock('./ready-push', () => ({
+  pushReadingReady: (...args: unknown[]) => pushReady(...args),
+}));
+
 const { collectReadingResult, passingDbFailure } = await import('./collect');
 
 /**
@@ -125,6 +131,8 @@ beforeEach(() => {
   keyedRpc.mockReset();
   retrieve.mockReset();
   aborts.mockReset();
+  pushReady.mockReset();
+  pushReady.mockResolvedValue(0);
   job = jobOf('self');
 
   keyedRpc.mockImplementation(async (name: string) => {
@@ -436,6 +444,41 @@ describe('집은 일감은 임대다', () => {
     expect(keyedRpc.mock.calls.filter(([name]) => name === 'save_reading')).toHaveLength(1);
     expect(called('fail_reading_job')).toBeUndefined();
     logged.mockRestore();
+  });
+});
+
+/**
+ * **앱 푸시는 저장 뒤에 한 번이고, 그 실패는 저장 · 완료에 닿지 않는다**(ADR 0236, #936).
+ * 송신 함수는 던지지 않게 지었지만, 던져도 회수의 답은 「저장됨」이어야 한다 — 그 자리가 이 함수다.
+ */
+describe('앱 푸시', () => {
+  it('저장한 뒤에 그 시도로 한 번 부른다', async () => {
+    retrieve.mockResolvedValue(answered({ markdown: GOOD, score: null }));
+    await expect(collectReadingResult('resp-1')).resolves.toEqual({ done: 'saved' });
+    expect(pushReady).toHaveBeenCalledTimes(1);
+    expect(pushReady.mock.calls[0][1]).toBe('run-1');
+    const saveAt = keyedRpc.mock.invocationCallOrder[keyedRpc.mock.calls.findIndex(([name]) => name === 'save_reading')];
+    expect(pushReady.mock.invocationCallOrder[0]).toBeGreaterThan(saveAt);
+  });
+
+  it('푸시가 던져도 저장은 그대로이고 실패로 닫지 않는다', async () => {
+    retrieve.mockResolvedValue(answered({ markdown: GOOD, score: null }));
+    pushReady.mockRejectedValue(new Error('fcm down'));
+    await expect(collectReadingResult('resp-1')).resolves.toEqual({ done: 'saved' });
+    expect(called('save_reading')).toBeDefined();
+    expect(called('fail_reading_job')).toBeUndefined();
+    expect(called('release_reading_job')).toBeUndefined();
+  });
+
+  it('저장이 거절된 글 · 막힌 글에는 부르지 않는다', async () => {
+    retrieve.mockResolvedValue(answered({ markdown: GOOD, score: null }));
+    keyedRpc.mockImplementation(async (name: string) => {
+      if (name === 'claim_reading_job') return { data: [job], error: null };
+      if (name === 'save_reading') return { data: null, error: { code: '23514', message: '이미 끝난 시도입니다.' } };
+      return { data: true, error: null };
+    });
+    await expect(collectReadingResult('resp-1')).resolves.toMatchObject({ done: 'failed' });
+    expect(pushReady).not.toHaveBeenCalled();
   });
 });
 

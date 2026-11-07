@@ -1,4 +1,4 @@
-# 운영 절차 — 웹 푸시 · 계정 채널
+# 운영 절차 — 웹 푸시 · 앱 푸시 · 계정 채널
 
 색인은 `docs/ops/runbook.md` 다.
 
@@ -59,3 +59,49 @@ select status, count(*) from public.push_delivery group by status;
 
 `401` 이 보이면 Vercel 과 Vault 의 배달 비밀이 갈렸다. `gave_up` 이 늘면 대개 VAPID 쌍이 구독 때와 다르다(403) — 「비밀이 새면」 표의 그 줄.
 끝으로 켠 기기 하나에서 알림이 「새 메시지가 왔어요」 한 줄로 서고, 누르면 그 방이 열리는지 본다.
+
+## 앱 푸시를 켠다 — 안드로이드 앱의 풀이 완성 알림 (ADR 0236, #936)
+
+풀이 완성 알림은 코드가 운영에 올라도 **값 둘을 넣기 전에는 꺼진 채다** — 서버에 Firebase 서비스 계정이 없으면 보내지 않고(DB 에도 묻지 않는다),
+앱 빌드에 Firebase 설정 파일이 없으면 권한을 묻지도 설정 줄을 세우지도 않는다. 어느 쪽이든 풀이는 그대로다. **값을 넣기 전에 처리방침
+`notice-v18`(ADR 0236 의 10)이 운영에 게시돼 있어야 한다.** 값을 만들고 넣는 것은 사람이다 — 에이전트에게는 운영 설정 변경이다(`docs/agents/delegation/permissions.md`).
+비밀은 저장소에 두지 않는다(`mobile/.gitignore` 가 `google-services.json` 을 막는다).
+
+### 앱 푸시의 배포 차례 — DB 가 먼저
+
+마이그레이션 `20270115090000`(표 `app_push_token` · 앱의 문 셋 · 서버의 문 둘 · 탈퇴 신청 트리거)은 더하기만 한다 — 옛 앱 · 옛 서버에 안전하다.
+차례는 **`db push` → `migration list` 의 remote 칸 · PostgREST 캐시 확인 → 웹 배포(`notice-v18` 게시 · 보내는 코드) → 값 둘 → 새 앱 빌드**다.
+새 서버가 DB 보다 먼저 가도 `reading_ready_push_targets` 가 없다는 거절이 기록 한 줄로 남을 뿐 풀이는 저장된다.
+
+### 운영자 차례 — 만들고 넣는 것
+
+| # | 무엇 | 어디서 | 넣는 자리 · 이름 |
+| --- | --- | --- | --- |
+| 1 | Firebase 프로젝트를 만든다(Google Analytics 는 켜지 않아도 된다). Firebase 약관 · Data Processing and Security Terms 를 받아들인다 | <https://console.firebase.google.com> | — |
+| 2 | 그 프로젝트에 **안드로이드 앱**을 등록한다 — 패키지 이름 `com.mannalmap.app`(`mobile/app.json`) | 프로젝트 설정 → 일반 → 앱 추가 | — |
+| 3 | `google-services.json` 을 받는다 | 2 의 끝 화면 · 프로젝트 설정 → 일반 | **EAS 파일 환경값** `GOOGLE_SERVICES_JSON`(`production` · `preview`, 공개 범위 Secret) — Expo 대시보드의 환경 변수에서 파일로 올린다(「a secret file variable that is not readable outside of Expo servers」, <https://docs.expo.dev/eas/environment-variables/manage/> 「Secrets and file variables」, 2026-11-07 확인). 받은 파일은 올린 뒤 지운다. `mobile/app.config.js` 가 이 값이 있을 때만 `android.googleServicesFile` 을 넣고 알림을 켠다 |
+| 4 | **서비스 계정 키(JSON)** 를 만든다 — Firebase 의 기본 서비스 계정(`firebase-adminsdk-…`)이나 「Firebase Cloud Messaging API Admin」 역할만 준 새 계정. Play 결제 키(`GOOGLE_PLAY_SERVICE_ACCOUNT_JSON`)와 따로다 | 프로젝트 설정 → 서비스 계정 → 새 비공개 키 생성 | **Vercel Production** 환경 변수 `FCM_SERVICE_ACCOUNT_JSON` — JSON 한 덩이 그대로(줄바꿈이 `\n` 글자여도 된다). 새면 `docs/ops/runbook/secret-leak.md` 「비밀이 새면」의 그 줄 |
+| 5 | FCM HTTP v1 API 가 켜져 있는지 본다(새 프로젝트는 기본으로 켜져 있다) | Google Cloud 콘솔 → API 및 서비스 → 「Firebase Cloud Messaging API」 | — |
+| 6 | 4 를 넣은 뒤 웹을 다시 배포한다(`docs/ops/runbook/deploy.md` 「배포」) | Vercel | — |
+| 7 | 3 을 넣은 뒤 **새 앱 빌드**를 낸다 — OTA 가 없다(ADR 0221 덧) | `docs/ops/runbook/mobile-release.md` 「빌드와 제출」 | — |
+
+### 앱 푸시의 확인
+
+```sql
+-- 마이그레이션이 섰다 — 표 하나 · 함수 다섯 · 트리거 하나
+select count(*) from pg_proc p join pg_namespace n on n.oid = p.pronamespace
+where n.nspname = 'public' and p.proname in ('save_app_push_token', 'remove_app_push_token', 'app_push_token_registered', 'reading_ready_push_targets', 'drop_app_push_token');
+select tgname from pg_trigger where tgname = 'app_push_token_leaves_with_the_leaver';
+-- 켠 기기가 생긴 뒤 — 토큰 수만 센다(값 · 주인은 읽지 않는다, ADR 0105)
+select count(*) from public.app_push_token;
+```
+
+실기기(새 빌드) 하나에서 — 단계별 시나리오는 #770 D 의 「풀이 완성 알림」 줄이다.
+
+1. 로그인한 뒤 사주풀이 받기를 누른다 → 안드로이드의 알림 권한 창이 선다(처음 한 번). 허용한다.
+2. 앱을 홈으로 내리고 기다린다 → 「만날지도 · 풀이가 완성됐어요」 알림이 선다. 잠금 화면 · 알림 서랍에 풀이 내용 · 이름이 없다.
+3. 알림을 누른다 → 그 풀이 화면이 열린다(앱이 꺼져 있었어도).
+4. 설정 → 알림 → 「풀이 완성 알림」을 끈다 → 위 SQL 의 수가 하나 준다. 다시 풀이를 맡겨도 알림이 안 선다.
+5. 다른 기기 · 새 설치에서 권한 창에 「허용 안함」 → 풀이는 그대로 되고 알림만 없다. 설정 줄은 꺼짐이다.
+6. Vercel 로그에 `ready-push:` 줄이 이어지면 — `ready-push: token 4xx` 는 서비스 계정 · 범위, `ready-push: send 403 failed` 는 다른 Firebase 프로젝트의 앱(`SENDER_ID_MISMATCH`)이다. 토큰은 지우지 않으니 값을 고치면 다음 풀이부터 간다.
+

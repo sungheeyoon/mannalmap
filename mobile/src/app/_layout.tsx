@@ -2,6 +2,7 @@ import { useFonts } from 'expo-font';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 
+import { ReadyPushOpener } from '@/push/open';
 import { ErrorScreen } from '@/ui/error-screen';
 import { COLOR, FONT } from '@/ui/tokens';
 
@@ -21,6 +22,8 @@ export default function RootLayout() {
     <>
       {/* 앱은 라이트만이다 — 안 적으면 안드로이드 출시 빌드의 상태바 글자가 밝은 면 위에서 흰색으로 선다 */}
       <StatusBar style="dark" />
+      {/* 풀이 완성 알림을 누르면 그 결과로 — 스택이 선 뒤에 듣는다(ADR 0236) */}
+      <ReadyPushOpener />
       <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: COLOR.background } }} />
     </>
   );

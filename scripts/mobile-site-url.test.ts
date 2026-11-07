@@ -104,3 +104,28 @@ describe('앱의 웹 주소', () => {
     expect(configWith({})(input).plugins.length).toBeGreaterThan(0);
   });
 });
+
+/** 풀이 완성 알림(ADR 0236)은 Firebase 설정 파일을 넣고 지은 빌드에서만 선다 — 그 파일은 EAS 의 파일 환경값으로 오고 저장소에 없다 */
+describe('앱 푸시의 빌드 설정', () => {
+  const input = { config: { plugins: [], android: { package: 'com.mannalmap.app' }, extra: { eas: { projectId: 'x' } } } };
+  type Built = { android: Record<string, unknown>; extra: Record<string, unknown> };
+
+  it('GOOGLE_SERVICES_JSON 이 있으면 그 파일을 넣고 알림을 켠다', () => {
+    const built = configWith({ GOOGLE_SERVICES_JSON: '/eas/google-services.json' })(input as never) as unknown as Built;
+    expect(built.android).toEqual({ package: 'com.mannalmap.app', googleServicesFile: '/eas/google-services.json' });
+    expect(built.extra).toEqual({ eas: { projectId: 'x' }, readingPush: true });
+  });
+
+  it('없거나 비면 파일 칸이 없고 알림은 꺼진다 — 앱은 묻지도 줄을 세우지도 않는다', () => {
+    for (const env of [{}, { GOOGLE_SERVICES_JSON: ' ' }]) {
+      const built = configWith(env)(input as never) as unknown as Built;
+      expect(built.android).toEqual({ package: 'com.mannalmap.app' });
+      expect(built.extra.readingPush).toBe(false);
+    }
+  });
+
+  it('google-services.json 은 저장소에 두지 않는다', () => {
+    expect(readFileSync(join(MOBILE, '.gitignore'), 'utf8')).toMatch(/^google-services\.json$/m);
+  });
+});
+
