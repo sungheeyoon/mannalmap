@@ -331,7 +331,7 @@ iOS 가 사진 권한을 물을 때 띄우는 설명이다(`NSPhotoLibraryUsageD
 | --- | --- | --- | --- |
 | 내 프로필 줄의 둘째 줄 · 계정 무리의 이메일 줄(웹 `app/me/settings/view.tsx` · 앱 `mobile/src/settings/settings-screen.tsx`) — 이메일이 없고 카카오 신원일 때 | (빈 줄) | 카카오 로그인 | 실사례 없음 — 한국 서비스의 설정 화면이 이메일 대신 로그인 수단을 적는 원문을 웹에서 못 찾았다(검색 2026-11-05). 가장 가까운 사례는 카카오 디자인 가이드의 레이블 「카카오 로그인」(<https://developers.kakao.com/docs/ko/kakaologin/design-guide>, 확인 2026-11-05). 이메일이 있으면 이메일 그대로, 둘 다 없으면 줄이 없다 |
 
-## settings-16 확인 전 — 앱의 약관 셋에 웹의 최신 내용으로 가는 줄 (운영자 권고 2026-11-07)
+## settings-17 확인 전 — 앱의 약관 셋에 웹의 최신 내용으로 가는 줄 (운영자 권고 2026-11-07)
 
 앱은 OTA 가 없어 이용약관 · 환불정책 · 처리방침 글이 빌드에 박힌다 — 웹이 개정되면 설치된 앱은 옛 글을 보인다. 세 화면(`mobile/src/app/terms.tsx` · `refund.tsx` · `privacy.tsx`)의 머리 아래에 한 줄과 웹의 같은 주소(`SITE_URL` + `/terms` 등)를 앱 안 브라우저로 여는 단추를 둔다(`mobile/src/info/latest-on-web.tsx`). 웹 주소가 없는 빌드에는 서지 않는다. 글자는 `mobile/src/info/copy.ts` 이고 웹에는 없다.
 
