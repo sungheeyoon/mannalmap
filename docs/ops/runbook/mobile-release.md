@@ -29,7 +29,7 @@ curl -s -o /dev/null -w "%{http_code}\n" "<운영 주소>/api/mobile/readings"  
 
 ### 스토어에 나간 앱은 되돌리지 못한다
 
-**약관 · 환불정책을 고친 개정은 그 PR 이 머지된 뒤의 커밋으로 빌드한다** — 앱은 OTA 가 없어 약관 글이 번들에 박힌다(`mobile/src/app/terms.tsx` · `refund.tsx` 가 `src/lib/brand/terms.ts` · `refund.ts` 를 그대로 그린다). 첫 쓰임은 ADR 0235 의 개정 시행일 커밋이다.
+**앱은 약관 셋을 그리지 않는다 — 웹의 현행 판(`/terms` · `/refund` · `/privacy`)을 앱 안 브라우저로 연다**(ADR 0172 추기 2026-11-07). 약관 · 환불정책 · 처리방침 개정은 웹 배포만으로 앱에 닿는다. 앱 번들에 남은 법적 글은 가입 화면의 고지 요약뿐이다(처리방침의 내용 개정이면 새 빌드가 든다).
 
 웹은 앞 배포를 Promote 하면 되지만 깔린 앱은 사람이 업데이트해야 바뀐다. 그래서 `deploy.md` 「규약 넷」의 3 에서 **「옛 앱」에 스토어에 나간 판이 든다** — 좁히기 전에 그 판이 새 문을 부르는지 본다. 앱이 새 문을 부르는 빌드는 그 문이 운영에 선 뒤에 굽고 낸다.
 
@@ -58,7 +58,7 @@ npx eas-cli@latest env:list production --format short
 
 | 값 | `preview` · `production` (2026-11-02) | 비면 |
 | --- | --- | --- |
-| `EXPO_PUBLIC_SUPABASE_URL` · `_PUBLISHABLE_KEY` · `EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID` · `EXPO_PUBLIC_SITE_URL` | 있다 — 운영 프로젝트 · 운영 주소 | 앱이 안 돈다 · 처리방침 링크가 안 선다. `production` 빌드는 이 넷 가운데 하나라도 비거나 주소 둘(`EXPO_PUBLIC_SITE_URL` · `EXPO_PUBLIC_SUPABASE_URL`)이 https 가 아니면, `preview` 빌드는 `EXPO_PUBLIC_SITE_URL` 이 없거나 https 가 아니면 `app.config.js` 에서 선다 — 까닭 한 줄에 빈 이름만 싣는다. 앱에서 웹의 주소를 읽는 자리는 `mobile/src/site.ts` 하나다(ADR 0233 · 추기 2026-11-06) |
+| `EXPO_PUBLIC_SUPABASE_URL` · `_PUBLISHABLE_KEY` · `EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID` · `EXPO_PUBLIC_SITE_URL` | 있다 — 운영 프로젝트 · 운영 주소 | 앱이 안 돈다 · 약관 셋(이용약관 · 환불정책 · 처리방침)의 줄이 안 선다. `production` 빌드는 이 넷 가운데 하나라도 비거나 주소 둘(`EXPO_PUBLIC_SITE_URL` · `EXPO_PUBLIC_SUPABASE_URL`)이 https 가 아니면, `preview` 빌드는 `EXPO_PUBLIC_SITE_URL` 이 없거나 https 가 아니면 `app.config.js` 에서 선다 — 까닭 한 줄에 빈 이름만 싣는다. 앱에서 웹의 주소를 읽는 자리는 `mobile/src/site.ts` 하나다(ADR 0233 · 추기 2026-11-06) |
 | `EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID` · `_URL_SCHEME` | 없다 — Google iOS 클라이언트가 먼저다 | **iOS 빌드 전에 `production` 에 넣는다** — `app.config.js` 가 이 값으로 URL 스킴을 세운다 |
 | `EXPO_PUBLIC_KAKAO_NATIVE_APP_KEY` | 있다 — `production` · `preview`(2026-11-05, #770). 이 값이 든 빌드는 아직 없다(`docs/ops/runbook/kakao-login.md` 「카카오 로그인을 켜는 차례」 10) | 카카오 단추가 안 서고 `app.config.js` 가 카카오 플러그인을 뺀다. 넣으면 **새 빌드**가 든다 — URL 스킴이 빌드에 박힌다 |
 | `GOOGLE_SERVICES_JSON`(**파일** 환경값, ADR 0236) | 없다 — 운영자가 Firebase 프로젝트를 만든 뒤 넣는다(`docs/ops/runbook/push.md` 「앱 푸시를 켠다」 3) | 풀이 완성 알림이 꺼진다 — 권한을 안 묻고 설정의 알림 줄이 안 선다. 풀이는 그대로. 넣으면 **새 빌드**가 든다 — `google-services.json` 이 빌드에 든다 |

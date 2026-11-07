@@ -12,6 +12,7 @@ import { purchaseReturnOf } from '@reading/store-purchase';
 
 import { supabase } from '@/auth/client';
 import { NOT_READY, UNREACHABLE } from '@/auth/signup';
+import { legalPagesOpen, openLegalPage } from '@/info/legal-web';
 import { FailureLine, LinkRow, SettingsGroup, settingsText } from '@/settings/parts';
 import { TextButton } from '@/ui/parts';
 import { COLOR, FONT, RADIUS, TYPE } from '@/ui/tokens';
@@ -116,7 +117,7 @@ export function CreditsHistoryScreen() {
           {/* 사업자 정보 가운데 이메일만 공개 상수다 — 이 줄이 쓰는 값은 그것뿐이다 */}
           <Text style={settingsText.body}>{refundRequestLine(businessInfoFrom({ email: SUPPORT_EMAIL }))}</Text>
           <Text style={settingsText.body}>주문 번호를 함께 알려 주세요.</Text>
-          <TextButton label="환불정책 보기" onPress={() => router.push('/refund?from=credits' as never)} />
+          {legalPagesOpen && <TextButton label="환불정책 보기" onPress={() => openLegalPage('/refund')} />}
         </Card>
       </ScrollView>
     </View>
