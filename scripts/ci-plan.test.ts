@@ -1261,6 +1261,7 @@ describe('CI 계획 — 앱 검사 (mobile 차선)', () => {
     expect(job.split('\n').filter((line) => !/^\s*#/.test(line)).join('\n')).not.toMatch(/continue-on-error/);
     expect([...job.matchAll(/^\s+- run: (.+)$/gm)].map((one) => one[1].trim())).toEqual([
       'npm ci',
+      'npx -y "npm@$MOBILE_LOCK_NPM" ci --dry-run --ignore-scripts',
       'ln -s mobile/node_modules ../node_modules',
       'npx tsc --noEmit',
       'npx expo lint',
@@ -1270,6 +1271,9 @@ describe('CI 계획 — 앱 검사 (mobile 차선)', () => {
     // SDK 정합은 잠금 파일의 expo 가 든 표(`expo/bundledNativeModules.json`)로만 잰다 — Expo 서버의 최신 판과 견주면 아무것도 안 바꾼 PR 이
     // 새 패치가 나온 날 붉다(ADR 0104 의 밖의 DB 와 같은 까닭)
     expect(job).toContain(`- run: npx expo install --check\n        if: \${{ !cancelled() && steps.install.outcome == 'success' }}\n        env:\n          EXPO_OFFLINE: '1'`);
+    // 잠금 파일은 EAS 의 npm(`.nvmrc` 의 Node 에 든 것 — 위 `npm ci`)과 박은 로컬 npm 판 둘 다 받아야 한다 — 판마다 짝 맞춤이 다르다(#1062)
+    expect(job).toContain('node-version-file: .nvmrc');
+    expect(job).toMatch(/- run: npx -y "npm@\$MOBILE_LOCK_NPM" ci --dry-run --ignore-scripts\n {8}if: \$\{\{ !cancelled\(\) \}\}\n {8}env:\n {10}MOBILE_LOCK_NPM: \d+\.\d+\.\d+\n/);
   });
 });
 
