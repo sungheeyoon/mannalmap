@@ -8,13 +8,19 @@ import { type LegalDocument, type LegalSection, bullets, para, table } from './l
  *
  * 청약철회 기간이 지난 뒤 단순 변심 환불의 10% 환불수수료(생성 실패 · 정지 · 해지 · 서비스 종료는 공제하지 않는다)은 ADR 0192(운영자 결정 · 문구
  * 2026-10-20)다. 「얼마를 돌려받나요」의 「나눈 뒤 곱해요」는 설명 순서다 — 셈은 `refundOf` 대로 곱한 뒤 나눈다.
- * 유료 풀이권은 기한이 없다(ADR 0212 — 옛 「산 날부터 5년」을 지웠다, #938). 무료 1년(시행일 전에 받은 무료 몫은 시행일부터 1년)은 ADR 0173 · G-127 이다.
+ * 유료 풀이권은 기한이 없다(ADR 0212 — 옛 「산 날부터 5년」을 지웠다, #938). 무료 풀이권도 없다(ADR 0235 — 옛 「받은 날부터 1년」(ADR 0173)을 지웠다).
  * 판매는 안드로이드 앱의 Google Play 결제뿐이고(운영자 2026-11-06), 앱 마켓의 환불 · 구매 제한은 약관 제16조의2(ADR 0230 추기)를 옮겼다. 원본은 `docs/legal/refund-policy.md` 의 「만날지도 환불정책」이고, 그 글은 약관 제12조 ~ 제17조의2 를 쉬운 말로 옮긴 것이다 —
  * 새 규칙을 만들지 않는다. 사업자 빈칸은 `BusinessInfo` 에서 채우고, 값이 없으면 그 말을 빼거나 「판매자 정보의 연락처」로 가리킨다.
  * 「［서비스 안 결제 내역에 신청 칸이 생기면 …］」처럼 화면이 아직 없는 길은 싣지 않았다.
  */
 /** 첫 시행일 = 운영 게시일(운영자 답 2026-11-07, ADR 0234) — 약관과 같은 날 */
 export const REFUND_EFFECTIVE_DATE: string | null = '2026-11-07';
+
+/**
+ * 개정 시행일 — 「한눈에」의 무료 풀이권 줄을 고친 판(ADR 0235). 약관 제4조② 의 공지 뒤 약관 개정(`TERMS_REVISED_ON`)과 같은 날이다.
+ * **비어 있는 채 운영에 올리지 않는다.** 지어낸 날을 넣지 않는다
+ */
+export const REFUND_REVISED_ON: string | null = null;
 
 export function refundPolicyFor(info: BusinessInfo): LegalDocument {
   const seller = businessInfoLines(info).map((line) => `${line.label} ${line.value}`);
@@ -24,7 +30,7 @@ export function refundPolicyFor(info: BusinessInfo): LegalDocument {
     seller.length > 0 ? [{ title: '판매자 정보', blocks: [bullets(...seller)] }] : [];
 
   return {
-    effectiveDate: REFUND_EFFECTIVE_DATE,
+    effectiveDate: REFUND_REVISED_ON ?? REFUND_EFFECTIVE_DATE,
     parts: [
       {
         title: null,
@@ -39,7 +45,7 @@ export function refundPolicyFor(info: BusinessInfo): LegalDocument {
                 '청약철회 기간은 계약내용을 받은 날부터 7일이에요. 풀이권을 그보다 늦게 제공받았다면 제공받은 날부터 계산해요.',
                 '돌려드리는 돈은 낸 돈 × 안 쓴 장수 ÷ 산 장수예요.',
                 '이미 받아 본 풀이는 마음이 바뀌었다는 이유로는 돌려드리지 않아요. 풀이가 안 만들어졌거나 안내와 다르면 다시 만들어 드리거나 돌려드려요.',
-                '처음 받는 무료 풀이권은 받은 날부터 1년이 지나면 사라지고, 돈으로 바꿔 드리지 않아요. 이 정책의 시행일 전에 받은 무료 풀이권은 시행일부터 1년이에요.',
+                '처음 받는 무료 풀이권에도 유효기간이 없어요. 돈으로 바꿔 드리지는 않아요.',
               ),
             ],
           },

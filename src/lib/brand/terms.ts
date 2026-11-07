@@ -19,8 +19,8 @@ import { type LegalDocument, bullets, numbered, para, table } from './legal-text
  * - **제30조②는 운영자가 고른 표준 그대로다**(2026-10-12) — 1372 는 싣지 않는다(G-25 ④).
  * - **청약철회 기간(제15조①)이 지난 뒤 단순 변심 환불은 미사용분 금액의 10% 를 환불수수료로 공제한다**(제16조③) — 생성 실패 ·
  *   서비스 종료 · 이용 정지 · 해지는 공제하지 않는다. 운영자 결정 · 문구 2026-10-20, ADR 0192.
- * - **유료 풀이권에는 유효기간이 없다**(제12조②, ADR 0212 — 옛 「산 날부터 5년」(ADR 0173)을 지웠다, #938). 무료 · 예외 풀이권은
- *   받은 날부터 1년이다(제13조⑥, 시행일 전에 받은 몫은 시행일부터 1년 — 소급하지 않는다) — 운영자 결정 2026-10-12, ADR 0173 · G-127.
+ * - **유료 풀이권에는 유효기간이 없다**(제12조②, ADR 0212 — 옛 「산 날부터 5년」(ADR 0173)을 지웠다, #938). 무료 · 예외 풀이권에도
+ *   없다(제13조⑥, ADR 0235 — 옛 「받은 날부터 1년」(ADR 0173)을 지웠다, 운영자 2026-11-07). 탈퇴하면 소멸하는 것(제17조③)은 그대로다.
  * - **판매는 안드로이드 앱의 Google Play 결제뿐이다**(제12조③, 운영자 2026-11-06). 스토어가 돌려준 결제의 회수 · 반환 청구 · 구매 제한은
  *   제16조의2(ADR 0230 추기 A · B, `docs/legal/store-launch-notice-draft.md` 「스토어 환불 · 구매 제한」의 초안 그대로).
  * - **만 14세 미만은 가입할 수 없다**(제8조③, ADR 0231).
@@ -31,6 +31,12 @@ import { type LegalDocument, bullets, numbered, para, table } from './legal-text
 export const TERMS_EFFECTIVE_DATE: string | null = '2026-11-07';
 
 /**
+ * 개정 약관의 시행일 — 제13조⑥ · 제14조④ 를 고친 판(ADR 0235). 제4조② 대로 이 날 7일 전부터 공지한 뒤의 날이고, 운영자가 공지일을
+ * 정하면 채운다. **비어 있는 채 운영에 올리지 않는다** — 바뀐 글이 첫 시행일(2026-11-07)의 글로 읽힌다. 지어낸 날을 넣지 않는다
+ */
+export const TERMS_REVISED_ON: string | null = null;
+
+/**
  * @param site 서비스 주소(`https://…`) — 운영 주소는 한 자리에만 산다(ADR 0152). 화면이 `siteUrl()` 로 넘긴다
  */
 export function termsFor(info: BusinessInfo, site: string): LegalDocument {
@@ -39,7 +45,7 @@ export function termsFor(info: BusinessInfo, site: string): LegalDocument {
   const disclosed = businessInfoLines(info).map((line) => `${line.label}: ${line.value}`);
 
   return {
-    effectiveDate: TERMS_EFFECTIVE_DATE,
+    effectiveDate: TERMS_REVISED_ON ?? TERMS_EFFECTIVE_DATE,
     parts: [
       {
         title: '제1장 총칙',
@@ -210,7 +216,7 @@ export function termsFor(info: BusinessInfo, site: string): LegalDocument {
                 '무료 풀이권과 예외 풀이권은 대가 없이 준 것이므로 환불 · 현금 교환의 대상이 아닙니다.',
                 '무료 풀이권은 사기 전에 풀이 한 편을 받아 보는 체험의 뜻도 가집니다(제15조④).',
                 '풀이를 만들다 실패하거나 회사의 검사에 걸려 글이 저장되지 않으면 풀이권은 쓰이지 않은 것으로 봅니다.',
-                '무료 풀이권과 예외 풀이권은 받은 날부터 1년이 지나면 소멸합니다. 다만 이 약관 시행일 전에 받은 풀이권은 시행일부터 1년이 지나면 소멸합니다.',
+                '무료 풀이권과 예외 풀이권에도 유효기간이 없습니다. 탈퇴하면 제17조③에 따라 소멸합니다.',
               ),
             ],
           },
@@ -221,7 +227,7 @@ export function termsFor(info: BusinessInfo, site: string): LegalDocument {
                 '사주풀이 · 궁합풀이는 만들 때마다 풀이권 1장을 씁니다. 이미 만든 풀이를 다시 보는 데에는 쓰지 않습니다.',
                 '대화에는 풀이권을 쓰지 않습니다. 상세 궁합을 요청하면 풀이권 1장이 예약됩니다. 상대가 동의하면 예약이 사용으로 바뀌고, 요청한 이용자가 요청을 취소하거나, 72시간 안에 답이 없거나, 요청이 무효가 되면 예약이 풀려 다시 쓸 수 있습니다. 동의한 쪽은 풀이권을 쓰지 않습니다. 기술 문제로 만들지 못하면 풀이권은 돌아오고, 같은 동의로 다시 만들기를 누른 사람이 1장을 씁니다.',
                 '풀이권을 쓰거나 예약하는 누름 앞에는 그 사실을 알리는 확인 창이 섭니다.',
-                '어느 풀이권을 먼저 썼다고 보는가 — 무료 풀이권 → 예외 풀이권 → 유료 풀이권(산 때가 이른 묶음부터)의 순서로 썼다고 봅니다. 이 순서는 남은 수를 세는 데는 영향이 없고, 유효기간이 지나 소멸하는 무료 · 예외 풀이권과 환불할 금액을 정할 때 씁니다.',
+                '어느 풀이권을 먼저 썼다고 보는가 — 무료 풀이권 → 예외 풀이권 → 유료 풀이권(산 때가 이른 묶음부터)의 순서로 썼다고 봅니다. 이 순서는 남은 수를 세는 데는 영향이 없고, 환불할 금액을 정할 때 씁니다.',
                 '예약 중인 풀이권은 예약이 풀릴 때까지 환불 대상이 아닙니다. 이용자가 요청을 취소하면 예약이 곧바로 풀리고, 그 뒤에는 환불을 청구할 수 있습니다.',
               ),
             ],
@@ -487,6 +493,7 @@ export function termsFor(info: BusinessInfo, site: string): LegalDocument {
             title: '',
             blocks: [
               ...(TERMS_EFFECTIVE_DATE ? [para(`이 약관은 ${TERMS_EFFECTIVE_DATE}부터 시행합니다.`)] : []),
+              ...(TERMS_REVISED_ON ? [para(`개정 약관(제13조⑥ · 제14조④)은 ${TERMS_REVISED_ON}부터 시행합니다.`)] : []),
               para(
                 '이 약관 시행 전에 가입한 계정이 그때까지 받은 무료 풀이권은 그대로 둡니다 — 제13조①의 1장으로 바꾸지 않습니다.',
               ),
