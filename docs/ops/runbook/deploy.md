@@ -34,7 +34,7 @@ npm run db:push               # 밀린 것 전부를 원격에 적용한다 — 
 앱의 빌드 · 제출 차례는 `docs/ops/runbook/mobile-release.md` 다. 머지는 운영에 아무것도 안 올린다. 묶음이 끝났을 때(하루 한 번, 또는 한 라운드를 닫을 때) 한 번 올린다.
 
 0. **올리기 전에.** 올리라고 한 변경은 그 PR 이 main 에 들면 올린다(ADR 0152). 묶음이면 머지를 기다리는 PR 이 없는지(`gh pr list`),
-   `node scripts/deploy-range.mjs` 가 `wait` 면 `main` CI 가 초록인지(ADR 0159 — #1043 뒤로는 full 실행도 `mobile-flow` 가 skipped 라 `main-red.mjs` 의 `measuredEverything` 이 거짓이고 답이 늘 `wait` 다, 2026-11-07. 그 머리의 verify 가 tier `full` · 초록이면 이 칸을 채운 것이다), 지난
+   `node scripts/deploy-range.mjs` 가 `wait` 면 `main` CI 가 초록인지(ADR 0159), 지난
    배포 뒤 `supabase/migrations/**` 가 바뀌었으면 **DB 를 먼저** 올리고 확인했는지(아래 규약 넷의 2 · 4) 본다.
    **운영에 아직 안 올린 마이그레이션과 그 차례는 간극 대장의 줄이 적는다 — 2026-11-07 에는 #1048 하나(G-142, 처리방침 게시 뒤에만 `db push`, ADR 0098)이고, 그 밖의 마이그레이션은 모두 원격에 있다.** 1 은
    출력의 `head` 를 그대로 올린다. 한도 창의 남은 자리를 본다 — 모자라면 기다린다. `--from <운영 SHA>` 가 `docs-only` 면 안 올린다(운영 SHA 는 근거가 아니다)
