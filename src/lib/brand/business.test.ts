@@ -3,8 +3,8 @@ import { describe, expect, it } from 'vitest';
 import { BUSINESS, BUSINESS_INFO, PRIVACY_OPERATOR, type RawBusinessInfo, businessInfoFrom, businessInfoLines, contactPlace } from './business';
 import { SUPPORT_EMAIL } from './index';
 import type { LegalDocument } from './legal-text';
-import { checkoutRefundLine, refundPolicyFor, refundRequestLine } from './refund';
-import { termsFor } from './terms';
+import { REFUND_EFFECTIVE_DATE, REFUND_REVISED_ON, checkoutRefundLine, refundPolicyFor, refundRequestLine } from './refund';
+import { TERMS_EFFECTIVE_DATE, TERMS_REVISED_ON, termsFor } from './terms';
 
 /** 시험용 값 — 실제 사업자 값(`BUSINESS`)과 따로 둔다. 고르는 규칙만 잰다 */
 const FULL: RawBusinessInfo = {
@@ -181,5 +181,25 @@ describe('결제 화면 유의사항의 환불 신청 줄 (ADR 0175)', () => {
       '환불은 고객센터로 신청할 수 있으며, 3영업일 이내에 결제한 수단으로 환불합니다.',
     );
     expect(checkoutRefundLine(businessInfoFrom({ email: '［고객 문의 이메일 — 기입］' }))).not.toMatch(LEAK);
+  });
+});
+
+describe('무료 · 예외 풀이권의 기한 — 없다 (ADR 0235)', () => {
+  const terms = textsOf(termsFor(businessInfoFrom(FULL), 'https://example.com'));
+  const refund = textsOf(refundPolicyFor(businessInfoFrom(FULL)));
+
+  it('약관 · 환불정책은 무료 몫이 1년에 소멸한다고 말하지 않고, 탈퇴하면 소멸한다는 줄은 그대로 든다', () => {
+    for (const text of [...terms, ...refund]) expect(text).not.toMatch(/1년이 지나면 (소멸|사라)|시행일부터 1년/);
+    expect(terms).toContain('무료 풀이권과 예외 풀이권에도 유효기간이 없습니다. 탈퇴하면 제17조③에 따라 소멸합니다.');
+    expect(terms).toContain('무료 · 예외 풀이권은 탈퇴와 함께 소멸하며 돌려드리지 않습니다.');
+    expect(refund).toContain('처음 받는 무료 풀이권에도 유효기간이 없어요. 돈으로 바꿔 드리지는 않아요.');
+  });
+
+  it('시행일 줄은 개정 시행일이 서면 그 날이고, 비어 있으면 첫 시행일이다', () => {
+    expect(termsFor(businessInfoFrom(FULL), 'https://example.com').effectiveDate).toBe(TERMS_REVISED_ON ?? TERMS_EFFECTIVE_DATE);
+    expect(refundPolicyFor(businessInfoFrom(FULL)).effectiveDate).toBe(REFUND_REVISED_ON ?? REFUND_EFFECTIVE_DATE);
+    expect(TERMS_REVISED_ON).toBe(REFUND_REVISED_ON);
+    const revisedLine = terms.filter((text) => text.startsWith('개정 약관'));
+    expect(revisedLine).toEqual(TERMS_REVISED_ON ? [`개정 약관(제13조⑥ · 제14조④)은 ${TERMS_REVISED_ON}부터 시행합니다.`] : []);
   });
 });
