@@ -35,7 +35,7 @@
 
 - [ ] [인계 — 세션을 끝낼 때 남기는 것](../agents/delegation/coordinator.md#인계--세션을-끝낼-때-남기는-것-2026-11-06)의 체크 일곱을 채우고 #770 에 인계 댓글
 - [ ] [세션 기록](../agents/delegation/notes.md)의 기준대로 라운드 노트와 `docs/notes/README.md` 「최근」 한 줄, PR `--auto`
-- [ ] 세션을 비우기 전에 `/retro` — 입력은 보고의 「헤맨 것 · 틀린 절」, 놓는 자리는 길잡이 → `docs/roles/`(AGENTS.md · CLAUDE.md 아님) · 기계로 잡을 실수 → `eslint.config.mjs` · `scripts/` 의 시험 · 판단 → `docs/agents/code-rules/`(색인 CODING_STANDARDS.md). 같은 노트 PR — [선순환](../start.md#선순환--일이-문서로-돌아오는-길) 3
+- [ ] 세션을 비우기 전에 `/retro` — 운영자만 부르는 스킬이라(`disable-model-invocation`) 운영자에게 청하거나 그 `SKILL.md` 의 절차를 따른다([전역 스킬](../agents/delegation/local-env.md#전역-스킬--저장소가-이름으로-부르는-것)). 입력은 보고의 「헤맨 것 · 틀린 절」, 놓는 자리는 길잡이 → `docs/roles/`(AGENTS.md · CLAUDE.md 아님) · 기계로 잡을 실수 → `eslint.config.mjs` · `scripts/` 의 시험 · 판단 → `docs/agents/code-rules/`(색인 CODING_STANDARDS.md). 같은 노트 PR — [선순환](../start.md#선순환--일이-문서로-돌아오는-길) 3
 - [ ] 운영자만 할 수 있는 일 → 운영자 할 일 이슈. 워크트리 · 가지 · 스택 · 내가 띄운 셸과 에이전트 · 그림은 [라운드 끝 정리](../agents/delegation/coordinator.md#라운드-끝-정리)대로
 
 ## 닿을 때 여는 것
