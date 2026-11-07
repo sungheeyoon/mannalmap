@@ -39,6 +39,7 @@
     "stack:slot": "node scripts/stack-slot.mjs",
     "merge:sim": "node scripts/merge-sim.mjs",
     "sweep:merged": "node scripts/sweep-merged.mjs",
+    "sweep:docker": "node scripts/sweep-docker.mjs",
     "read-budget": "node scripts/read-budget.mjs",
     "test:flow": "node scripts/heavy.mjs node scripts/run-checks.mjs",
     "smoke:deploy": "node scripts/heavy.mjs node scripts/deploy-smoke.mjs",
