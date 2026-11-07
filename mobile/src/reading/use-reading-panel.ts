@@ -17,6 +17,7 @@ import { useEffect, useReducer, useRef, useState } from 'react';
 import { AppState } from 'react-native';
 
 import { improvementConsented, markReadingRead, newRequestKey, readReadingRun, readReadingView, startReading, type DoorRefusal, type ReadingTarget, type ReadingView } from './api';
+import { askOnFirstReading } from '@/push/device';
 import { settled } from '@/ui/settled';
 
 export type ShownView = Extract<ReadingView, { view: 'reading' }>;
@@ -161,6 +162,12 @@ export function useReadingPanel({
       onRefused(answer.refused);
       outcome = { kind: 'threw' };
     }
+
+    /*
+      풀이를 맡겼다 — 다 되면 알려 줄지 **여기서 처음 묻는다**(ADR 0236). 기다리지 않는다 — 묻는 창 · 거절 · 실패가 기다리는 화면을
+      막지 않는다. 이미 고른 기기는 묻지 않는다
+    */
+    if (outcome.kind === 'opened') void askOnFirstReading();
 
     /* 예시 글은 웹의 개발 기계 것이다 — 앱에서는 실패가 실패로 선다 */
     const decision = afterPress(outcome, null);

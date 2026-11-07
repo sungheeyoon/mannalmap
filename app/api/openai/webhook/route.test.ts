@@ -26,6 +26,12 @@ vi.mock('../../../me/reading/collect', () => ({
   collectReadingResult: (...args: unknown[]) => collect(...args),
 }));
 
+/** 앱 푸시는 가짜다 — 실제 송신은 `ready-push.test.ts` 가 잰다. 여기는 처리 표시와의 순서 · 실패의 고립만 본다 */
+const pushReady = vi.fn();
+vi.mock('../../../me/reading/ready-push', () => ({
+  pushReadingReady: (...args: unknown[]) => pushReady(...args),
+}));
+
 const { POST } = await import('./route');
 
 /**
@@ -83,6 +89,7 @@ beforeEach(() => {
   keyedClient.mockReset().mockReturnValue({ rpc });
   rpc.mockReset();
   collect.mockReset();
+  pushReady.mockReset().mockResolvedValue(0);
   vi.stubEnv('OPENAI_API_KEY', 'sk-test-not-used');
   vi.stubEnv('OPENAI_WEBHOOK_SECRET', SECRET);
   vi.spyOn(console, 'error').mockImplementation(() => {});
@@ -133,7 +140,7 @@ describe('서명이 자격이다', () => {
 describe('서명이 맞으면 — 적고 · 204 · 회수는 응답 뒤에', () => {
   it('영수증에 사건 · 응답 id · 종류를 적고, 처음 온 사건이면 응답 뒤에 그 응답을 가져와 집었다고 적는다', async () => {
     rpc.mockResolvedValueOnce({ data: true, error: null }).mockResolvedValueOnce({ data: null, error: null });
-    collect.mockResolvedValue({ done: 'saved' });
+    collect.mockResolvedValue({ done: 'saved', runId: 'run-1' });
 
     const response = await POST(signedRequest({ body: event('response.completed', 'resp_abc') }));
 
@@ -175,6 +182,46 @@ describe('서명이 맞으면 — 적고 · 204 · 회수는 응답 뒤에', () 
 
     expect(collect).toHaveBeenCalledTimes(1);
     expect(rpc).toHaveBeenCalledTimes(1);
+  });
+});
+
+/** **앱 푸시는 처리 표시 뒤에 한 번이고, 그 실패는 사건의 마무리에 닿지 않는다**(ADR 0236, #936) */
+describe('앱 푸시', () => {
+  it('저장했으면 처리 표시 뒤에 그 시도로 한 번 보낸다', async () => {
+    pushReady.mockReset().mockResolvedValue(1);
+    rpc.mockResolvedValueOnce({ data: true, error: null }).mockResolvedValueOnce({ data: null, error: null });
+    collect.mockResolvedValue({ done: 'saved', runId: 'run-1' });
+
+    await POST(signedRequest());
+    await runAfter();
+
+    expect(pushReady).toHaveBeenCalledTimes(1);
+    expect(pushReady.mock.calls[0][1]).toBe('run-1');
+    const markAt = rpc.mock.invocationCallOrder[rpc.mock.calls.findIndex(([name]) => name === 'mark_reading_webhook_processed')];
+    expect(pushReady.mock.invocationCallOrder[0]).toBeGreaterThan(markAt);
+  });
+
+  it('푸시가 던져도 처리 표시는 남고 응답 뒤의 일이 던지지 않는다', async () => {
+    pushReady.mockReset().mockRejectedValue(new Error('fcm down'));
+    rpc.mockResolvedValueOnce({ data: true, error: null }).mockResolvedValueOnce({ data: null, error: null });
+    collect.mockResolvedValue({ done: 'saved', runId: 'run-1' });
+
+    const response = await POST(signedRequest());
+    await expect(runAfter()).resolves.toBeUndefined();
+
+    expect(response.status).toBe(204);
+    expect(rpc).toHaveBeenCalledWith('mark_reading_webhook_processed', { p_event_id: 'evt_123' });
+  });
+
+  it('저장하지 않았으면(실패 · 도는 중) 보내지 않는다', async () => {
+    pushReady.mockReset();
+    for (const outcome of [{ done: 'failed', code: 'save-rejected' }, { done: 'pending' }]) {
+      rpc.mockResolvedValueOnce({ data: true, error: null }).mockResolvedValueOnce({ data: null, error: null });
+      collect.mockResolvedValue(outcome);
+      await POST(signedRequest());
+      await runAfter();
+    }
+    expect(pushReady).not.toHaveBeenCalled();
   });
 });
 

@@ -963,6 +963,8 @@ select is(
      * 로그인한 사람은 넷 다 직접 못 부른다(`72_pool_values_keyed`).
      */
     'create_self_person',
+    /** 앱 푸시(FCM)의 서버 문 둘 — 끝난 시도 주인의 토큰과 대상만, 이름 · 출생 정보는 없다 · 등록 없음 토큰 지우기(ADR 0236) */
+    'drop_app_push_token',
     'edit_person_input',
     'ensure_discovery_participation',
     'fail_reading_job',
@@ -1005,6 +1007,7 @@ select is(
     'prepare_reading_job',
     /** 닫힌 방의 메시지 파기 크론의 문 — 지운 수만 돌려준다(`20270107100000`, ADR 0217 · `99_chat_purge_cron`) */
     'purge_closed_chat_messages',
+    'reading_ready_push_targets',
     'record_reading_webhook_event',
     'refund_reading_order',
     'release_reading_job',

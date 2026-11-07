@@ -53,7 +53,14 @@
           "faceIDPermission": false
         }
       ],
-      "expo-iap"
+      "expo-iap",
+      [
+        "expo-notifications",
+        {
+          "defaultChannel": "reading-ready",
+          "enableRemoteNotifications": false
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true,

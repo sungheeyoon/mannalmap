@@ -122,6 +122,12 @@
       ],
       "@reading/notes": [
         "../src/lib/reading/notes.ts"
+      ],
+      "@push/app": [
+        "../src/lib/push/app.ts"
+      ],
+      "@push/device-token": [
+        "../src/lib/push/device-token.ts"
       ]
     }
   },

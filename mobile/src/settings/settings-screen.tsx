@@ -21,6 +21,7 @@ import { TopBar } from '@/ui/top-bar';
 
 import { ConsentControls } from './consent-controls';
 import { ParticipationRow, PreferenceRow } from './discovery-rows';
+import { PushRow } from './push-row';
 import { RequestDeletion } from './leaving';
 import { AccountNotice, FailureLine, LinkRow, SettingsGroup, TextRow } from './parts';
 import { myPhotos, photoSource } from './photos';
@@ -31,7 +32,7 @@ const SIGN_OUT_FAILED = '로그아웃하지 못했어요. 다시 시도해 주�
 /**
  * 설정 — 나 → 인연 → 동의 → 고객센터 → 약관 및 정책 · 소개 → 계정 → 탈퇴하기. 자주 바꾸는 것이 위, 되돌리기 어려운 것이 맨 아래.
  * 고객센터와 약관은 계정 상태와 무관하게 선다 — 정지되었거나 못 읽었을 때도 닿아야 하는 고지다.
- * 알림 무리는 없다 — 푸시는 옮기지 않는다. 프로필에서 돌아오면 이름 · 사진이 바뀌었을 수 있어 화면에 설 때마다 다시 읽는다.
+ * 알림 무리는 풀이 완성 알림 하나다(안드로이드, ADR 0236 — `./push-row.tsx`). 새 메시지 알림은 옮기지 않는다. 프로필에서 돌아오면 이름 · 사진이 바뀌었을 수 있어 화면에 설 때마다 다시 읽는다.
  */
 export function SettingsScreen() {
   const [data, setData] = useState<SettingsData | null>(null);
@@ -106,6 +107,8 @@ export function SettingsScreen() {
             )}
           </SettingsGroup>
         )}
+
+        {active && <PushRow />}
 
         {active && account !== null && (
           <SettingsGroup title="선택 동의" description={OPTIONAL_CONSENT_NOTE}>

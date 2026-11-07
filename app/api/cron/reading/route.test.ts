@@ -18,6 +18,12 @@ vi.mock('../../../me/reading/submit', () => ({
   resendStalledRun: (...args: unknown[]) => resend(...args),
 }));
 
+/** 앱 푸시는 가짜다 — 회수가 끝난 뒤의 순서 · 실패의 고립만 본다 */
+const pushReady = vi.fn();
+vi.mock('../../../me/reading/ready-push', () => ({
+  pushReadingReady: (...args: unknown[]) => pushReady(...args),
+}));
+
 const { GET, RESENDS_PER_ROUND } = await import('./route');
 
 /**
@@ -38,6 +44,7 @@ beforeEach(() => {
   rpc.mockReset();
   collect.mockReset();
   resend.mockReset();
+  pushReady.mockReset().mockResolvedValue(0);
   vi.stubEnv('CRON_SECRET', SECRET);
 });
 
@@ -80,7 +87,7 @@ describe('복구기의 자격', () => {
       data: [{ run_id: 'run-1', response_id: 'resp-1', overdue: false, failure_code: 'model-timeout' }],
       error: null,
     });
-    collect.mockResolvedValue({ done: 'saved' });
+    collect.mockResolvedValue({ done: 'saved', runId: 'run-1' });
 
     const response = await GET(request(`Bearer ${SECRET}`));
 
@@ -89,6 +96,35 @@ describe('복구기의 자격', () => {
     expect(rpc).toHaveBeenCalledWith('open_reading_jobs');
     expect(collect).toHaveBeenCalledWith('resp-1');
     expect(await response.json()).toEqual({ open: 1, collected: 1, closed: 0, resent: 0 });
+  });
+});
+
+/** **복구기가 가져와 저장한 풀이도 앱 푸시를 한 번 낸다 — 실패해도 다음 일감으로 간다**(ADR 0236, #936) */
+describe('앱 푸시', () => {
+  const two = [
+    { run_id: 'run-1', response_id: 'resp-1', overdue: false, failure_code: 'model-timeout' },
+    { run_id: 'run-2', response_id: 'resp-2', overdue: false, failure_code: 'model-timeout' },
+  ];
+
+  it('저장한 일감마다 회수 뒤에 그 시도로 보내고, 푸시가 던져도 나머지를 센다', async () => {
+    rpc.mockResolvedValue({ data: two, error: null });
+    collect.mockImplementation(async (responseId: string) => ({ done: 'saved', runId: responseId === 'resp-1' ? 'run-1' : 'run-2' }));
+    pushReady.mockRejectedValueOnce(new Error('fcm down')).mockResolvedValueOnce(1);
+
+    const response = await GET(request(`Bearer ${SECRET}`));
+
+    expect(response.status).toBe(200);
+    expect(pushReady.mock.calls.map(([, runId]) => runId)).toEqual(['run-1', 'run-2']);
+    expect(await response.json()).toEqual({ open: 2, collected: 2, closed: 0, resent: 0 });
+  });
+
+  it('저장하지 않은 일감에는 보내지 않는다', async () => {
+    rpc.mockResolvedValue({ data: [two[0]], error: null });
+    collect.mockResolvedValue({ done: 'failed', code: 'save-rejected' });
+
+    await GET(request(`Bearer ${SECRET}`));
+
+    expect(pushReady).not.toHaveBeenCalled();
   });
 });
 

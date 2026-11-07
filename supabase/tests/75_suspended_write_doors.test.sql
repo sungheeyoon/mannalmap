@@ -13,7 +13,7 @@
 -- `cancel_match_request` 는 **의도적으로 열어 둔다**(남에게 해가 없고 후속 피해를 줄인다), `clear_my_photo` 는 걷었고,
 -- `set_person_listed` 는 막았다(`20261110090000`). 옛 사진 문 `set_my_photo` 는 `20261115090000` 이 걷었다. 열린 둘은 아래 목록에 `OK` 로 적는다 — 누가 닫으면 붉어진다.
 begin;
-select plan(58);
+select plan(60);
 
 create or replace function pg_temp.summary(i integer)
 returns jsonb
@@ -163,6 +163,7 @@ from (values
   ('respond_to_match_request', format($$select public.respond_to_match_request(%L, true)$$, (select v from kept where k = 'to_park')),
                             '42501 이용이 정지된 계정입니다.', null),
   ('save_my_profile',       $$select public.save_my_profile('새이름', null)$$, '42501 이용이 정지된 계정입니다.', null),
+  ('save_app_push_token',   $$select public.save_app_push_token('susp-app-token')$$, '42501 이용이 정지된 계정입니다.', null),
   ('save_push_subscription', $$select public.save_push_subscription('https://fcm.googleapis.com/fcm/send/susp', 'BKey', 'auth')$$,
                             '42501 이용이 정지된 계정입니다.', null),
   ('save_service_survey',   $$select public.save_service_survey(array[]::text[], array[]::text[], array[]::text[], null, array[]::text[], array[]::text[], null, null, array[]::text[], null, array[]::text[], false)$$,
@@ -208,7 +209,9 @@ from (values
   ('cancel_match_request',  format($$select public.cancel_match_request(%L)$$, (select v from kept where k = 'to_park')), 'OK',
                             '의도적으로 열림 — 내가 보낸 요청을 거둔다'),
   ('remove_push_subscription', $$select public.remove_push_subscription('https://fcm.googleapis.com/fcm/send/susp')$$, 'OK',
-                            '의도적으로 열림 — 제 기기의 알림을 끈다(남에게 해가 없다, ADR 0156)')
+                            '의도적으로 열림 — 제 기기의 알림을 끈다(남에게 해가 없다, ADR 0156)'),
+  ('remove_app_push_token', $$select public.remove_app_push_token('susp-app-token')$$, 'OK',
+                            '의도적으로 열림 — 제 기기의 앱 알림을 끈다(남에게 해가 없다, ADR 0236)')
 ) as d(name, call, answer, why);
 
 /**

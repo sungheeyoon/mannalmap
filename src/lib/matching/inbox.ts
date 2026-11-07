@@ -169,17 +169,28 @@ function destinationFor(
 }
 
 function resultOf(readingKind: ReadingKind | null, row: NotificationRow): string | null {
+  return readingResultPath(readingKind, { personA: row.reading_person_a, personB: row.reading_person_b, matchId: row.match_id });
+}
+
+/** 풀이 하나의 대상 — 갈래 말고 주소에 드는 것. 이름 · 출생 정보는 없다 */
+export type ReadingResultPlace = { personA: string | null; personB: string | null; matchId: string | null };
+
+/**
+ * **완성된 풀이가 서는 화면의 주소** — 소식 줄과 앱 푸시(ADR 0236)가 함께 쓴다. 웹과 앱의 라우트가 같은 주소다
+ * (`mobile/src/app/me/readings/[subject].tsx` · `me/compat` · `me/match/[matchId]`). 못 알아보면 `null` 이다 — 지어 내지 않는다.
+ */
+export function readingResultPath(readingKind: ReadingKind | null, place: ReadingResultPlace): string | null {
   if (readingKind === 'self') return '/me/readings/self';
   /* 저장한 사람의 풀이는 그 사람의 풀이 화면에서 다시 누른다 */
   if (readingKind === 'person') {
-    return row.reading_person_a === null ? null : `/me/readings/${row.reading_person_a}`;
+    return place.personA === null ? null : `/me/readings/${place.personA}`;
   }
   if (readingKind === 'match') {
-    return row.match_id === null ? null : `/me/match/${row.match_id}`;
+    return place.matchId === null ? null : `/me/match/${place.matchId}`;
   }
   if (readingKind === 'private') {
-    if (row.reading_person_a === null || row.reading_person_b === null) return null;
-    return `/me/compat?a=${row.reading_person_a}&b=${row.reading_person_b}`;
+    if (place.personA === null || place.personB === null) return null;
+    return `/me/compat?a=${place.personA}&b=${place.personB}`;
   }
 
   return null;

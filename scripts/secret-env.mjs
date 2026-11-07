@@ -81,6 +81,11 @@ export const SECRET_ENV = [
    * **운영자가 Play 조직 계정 뒤에 넣는다**
    */
   'GOOGLE_PLAY_SERVICE_ACCOUNT_JSON',
+  /**
+   * 앱 푸시(FCM HTTP v1)용 Firebase 서비스 계정 키(JSON 한 덩이, ADR 0236) — 풀이 완성 알림을 보낸다(`app/me/reading/ready-push.ts`).
+   * Play 결제 키와 따로다. 없으면 앱 푸시는 조용히 꺼지고 풀이는 그대로다. **운영자가 Firebase 프로젝트를 만든 뒤 넣는다**
+   */
+  'FCM_SERVICE_ACCOUNT_JSON',
 ];
 
 /** 브라우저가 본다 — 빌드 때 번들에 박힌다. 비밀을 여기 두는 순간 공개된다 */
