@@ -21,6 +21,8 @@
   무엇을 어느 열쇠로 봤는지와 함께. 못 잰 것은 「익명까지 쟀고 나머지는 이 SQL 을 돌려 달라」로
   끝낸다. 「main 초록」은 `ci-main-red` 이슈가 없다는 뜻이 아니다 — main HEAD 의 `verify` run 이 completed · success 인지
   본다(`gh run list --branch main --workflow verify --limit 1 --json headSha,status,conclusion`, 2026-10-20).
+- **CI · 빌드는 끝나면 돌아오는 명령으로 기다린다** — `gh pr checks <n> --watch` · `gh run watch <run id> --exit-status` · `eas build:view <id>`
+  를 백그라운드로 걸고 그 끝을 받는다. 알림만 기다리면 끝난 뒤에도 깨지 않는다 — 2026-11-07 에 CI 가 끝난 뒤에도 에이전트가 멈춰 있었고 운영자가 「셸이 없다」로 찾았다.
 - **부재로 통과하는 검사는 안 잰 것이다.** 초록인데 안 이상하면 한 번 지워 보고 깨지는지 본다.
   잠금은 옛 상태를 되살려 증명하고, 「틀린 것을 맞다고 보는 경우」까지 두 방향을 밟는다.
 - **소스 글자를 세는 잠금은 글자가 바뀌면 조용히 0 이 된다** — 무늬가 아니라 읽기 자체를 센다.
