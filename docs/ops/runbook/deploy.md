@@ -24,6 +24,10 @@ npx supabase migration list   # remote 칸이 빈 줄이 밀린 것이다 — �
 npm run db:push               # 밀린 것 전부를 원격에 적용한다 — 잠금 하나를 잡고 돈다(ADR 0096)
 ```
 
+**에이전트 워크트리에서는 `npm run db:push` 를 부르지 않는다** — 속의 `npx supabase` 가 새 CLI(3.x)를 받아 로컬을 대상으로 잡는다.
+메인의 CLI 를 잠금에 바로 준다: `node scripts/remote-lock.mjs <메인 체크아웃>/node_modules/.bin/supabase db push --linked --dry-run` 으로
+목록을 보고 `--dry-run` 없이 부른다(`docs/agents/delegation/local-env.md` 「로컬 환경의 함정」, 2026-11-07).
+
 **`ignoreCommand` 는 빌드만 건너뛰고 배포 횟수는 줄이지 못한다.** Hobby 의 한도는 **24시간 이동 창에 100번**(그 밖에 한 시간
 100 · 5분 60)이고 건너뛴 · 실패한 · 취소된 배포도 센다(Vercel 「Limits」). 2026-09-24 에는 Preview 편의를 우선해 Git 배포를
 켜 두었는데(가지의 푸시 하나가 Preview 하나, 머지 하나가 Production 하나), 2026-09-25 에 하루 두 번 한도에 닿아 머지된 수정이
@@ -36,7 +40,7 @@ npm run db:push               # 밀린 것 전부를 원격에 적용한다 — 
 0. **올리기 전에.** 올리라고 한 변경은 그 PR 이 main 에 들면 올린다(ADR 0152). 묶음이면 머지를 기다리는 PR 이 없는지(`gh pr list`),
    `node scripts/deploy-range.mjs` 가 `wait` 면 `main` CI 가 초록인지(ADR 0159), 지난
    배포 뒤 `supabase/migrations/**` 가 바뀌었으면 **DB 를 먼저** 올리고 확인했는지(아래 규약 넷의 2 · 4) 본다.
-   **운영에 아직 안 올린 마이그레이션과 그 차례는 간극 대장의 줄이 적는다 — 2026-11-07 #1048 을 올린 뒤로 main 의 마이그레이션은 모두 원격에 있다.** **`20270116090000`(#1065, ADR 0237 — 재확인 기준 · 최소 앱 빌드)은 웹 배포보다 먼저 `db push` 한다** — 웹이 먼저 서면 기준 칸이 없어 일정을 못 읽은 것으로 친다(G-151). 1 은
+   **운영에 아직 안 올린 마이그레이션과 그 차례는 간극 대장의 줄이 적는다 — 2026-11-07 19:33 에 `20270116090000`(#1065, ADR 0237 — 재확인 기준 · 최소 앱 빌드)을 웹 배포보다 먼저 올린 뒤로 main 의 마이그레이션은 모두 원격에 있다(#770).** 1 은
    출력의 `head` 를 그대로 올린다. 한도 창의 남은 자리를 본다 — 모자라면 기다린다. `--from <운영 SHA>` 가 `docs-only` 면 안 올린다(운영 SHA 는 근거가 아니다)
    **`vercel.json` 의 크론은 Production 배포와 함께 등록되어 돌기 시작한다**. `/api/cron/chat-purge` 가 처음 드는 배포는 이미 90일 지난 말을 그날 밤 지우므로, 승인 전에 `docs/ops/runbook/moderation.md` 「배포 승인 전에 건수를 잰다」의 값을 적는다. 그 크론이 부르는 `20270107100000` 은 이미 원격에 있다(2026-11-07 migration list)
    **`notice-v17`(ADR 0234)의 첫 시행일 — 채웠다(2026-11-07).** `TERMS_EFFECTIVE_DATE`(`src/lib/brand/terms.ts`) · `REFUND_EFFECTIVE_DATE`(`src/lib/brand/refund.ts`)는

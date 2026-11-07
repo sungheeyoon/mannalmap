@@ -1,6 +1,6 @@
 # 역할 — 검토 · 감사 (읽기만)
 
-조율자가 두 번째 의견을 모을 때 띄우는 역할이다. 관점 하나(아래 열넷 가운데)를 받고, 고치지 않고 보고한다.
+조율자가 두 번째 의견을 모을 때 띄우는 역할이다. 관점 하나(아래 열여섯 가운데)를 받고, 고치지 않고 보고한다.
 
 ## 먼저 읽는 것
 
@@ -19,6 +19,8 @@
   - 모바일(Expo) — `mobile/AGENTS.md` · `docs/ops/runbook/mobile-release.md` · ADR 0211 · ADR 0230 · ADR 0233
   - 세션 잔재 — `docs/agents/delegation/coordinator.md` 「라운드 끝 정리」 · `docs/agents/delegation/local-env.md` 「로컬 환경의 함정」
   - UI 집중화(디자인 체계) — ADR 0109 · `docs/adr/README.md` 「디자인 체계 · 화면 문구」 · `docs/architecture.md` 「그 밖의 자리」 · `app/ui/`
+  - 사용자 약속 · 게시 문구 · 법적 절차 — `docs/legal/README.md` · `docs/legal/terms-grounds.md` · 약관 원본(`src/lib/brand/`) — 개정 공지 · 시행일 · 재확인 기준
+  - 리팩터의 동작 보존 — PR 의 diff 와 그 자리를 재는 시험(`docs/agents/test-map.md`) — 옮긴 뒤 같은 입력에 같은 결과인지, 시험이 옛 동작을 실제로 잡는지
   - 남은 일 흔적 · 죽은 코드 — `docs/agents/delegation/working.md` 「일하는 법」(죽은 코드는 셋으로 가른다) · `docs/product/gaps.md` — knip 은 설치돼 있지 않다(`package.json` 에 없다). `npx knip` 으로 받아 돌리면 설정(진입점)이 없어 오탐이 많다 — 나온 이름은 grep 으로 다시 잰다
 - `docs/architecture.md` 「무엇이 잠겨 있나 — 그리고 무엇이 아닌가」 — 잠기지 않은 자리가 볼 곳이다
 

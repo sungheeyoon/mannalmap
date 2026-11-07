@@ -55,13 +55,34 @@ curl -s -o /dev/null -w "%{http_code}\n" "<운영 주소>/api/mobile/readings"  
 2. 그 빌드가 **Play 의 프로덕션 트랙에서 이용자에게 보일 때까지** 기다린다 — 심사 · 단계적 출시가 끝난 뒤다. 그 빌드의 versionCode 는 Play Console 의 「App bundle explorer」에 있다
 3. 마이그레이션 하나가 `android_min_version_code()` 의 몸을 그 versionCode 로(내용 개정이면 `notice_ack_floor()` 도 새 판본으로) 고친다 — 함수 몸만
    `create or replace` 로 바꾼다. `scripts/notice-floor.test.ts` 의 「지금 기준」 줄도 함께 고친다
-4. `db push` 는 사람 답 뒤다(`docs/agents/delegation/permissions.md` 「권한 등급」). 밟은 뒤 본 값을 적는다:
+4. `db push` 는 묻지 않고 수행하고 본 값을 적는다(`docs/agents/delegation/permissions.md` 「권한 등급」, 2026-11-07 부터). 수행한 뒤 볼 값:
 
 ```sql
 select public.android_min_version_code(), public.notice_ack_floor();
 ```
 
 **되돌리기** — 잘못 올렸으면 앞의 값으로 몸을 고치는 마이그레이션을 같은 차례로 낸다. 함수 값이라 표의 자료는 안 바뀐다.
+
+**지금 값은 1 이다** — 2026-11-07 19:33 `db push` 뒤 `select public.android_min_version_code()` 가 `1`(#770). 아무 빌드도 막지 않는다. 올리는 때와 차례는 위 표 그대로다.
+
+## 버전 — Android SDK 와 의존
+
+| 무엇 | 값 | 근거 |
+| --- | --- | --- |
+| 앱의 `minSdk` · `compileSdk` · `targetSdk` | 24 · 37 · 36 | Expo SDK 58 의 기본값이다 — `mobile/app.json` 의 `expo-build-properties` 는 이 셋을 덮지 않는다. 2026-11-07 빌드 `63d07224` 의 Gradle 로그로 확인했다 |
+| Play 의 요구 | 2026-08-31 부터 새 앱 · 업데이트는 `targetSdk` 36 이상 | [Android 개발자 문서 「Target API level requirements」](https://developer.android.com/google/play/requirements/target-sdk) (2026-11-07 확인) |
+| `@react-native-kakao` 3.2.0 | 안드로이드 `minSdk` 23 · `compileSdk` 는 앱의 값을 따른다 | 그 패키지의 `package.json` `sdkVersions` 와 `android/package-json.gradle` 26행(`rootProject.findProperty('compileSdkVersion')`). 3.1.0 은 33 을 박아 빌드가 섰다(#1072) |
+| EAS 빌더의 Node · npm | Node 24.12.0 · npm 11.6.2 | 2026-11-07 빌드 로그의 `Now using node v24.12.0 (npm v11.6.2)` — 아래 「EAS 프로필과 환경값」 |
+
+Expo SDK 를 올리면 위 셋이 함께 바뀐다 — 첫 빌드 로그에서 다시 확인해 이 표를 고친다. `npx expo-doctor` 가 20/20 이어야 한다(#1073).
+
+### 새 네이티브 의존을 추가할 때
+
+네이티브 모듈이 포함된 라이브러리는 JS 시험 · `expo export` 가 초록이어도 **첫 EAS 빌드에서야** 저장소 · SDK 버전 문제가 드러난다(2026-11-07 — 카카오 Maven 저장소 #1071, `compileSdk` 33 고정 #1072).
+
+1. 라이브러리의 Android `minSdk` · `compileSdk` · `targetSdk` 와 받아야 할 Maven 저장소를 **그 라이브러리의 공식 문서 · 저장소 원본**에서 읽고 위 표의 앱 값과 견준다. 앱보다 높은 `minSdk` 나 앱과 다른 `compileSdk` 를 박은 버전이면 추가하지 않거나 고친 버전을 찾는다
+2. 같은 라이브러리를 쓰는 한국 서비스 · 사례가 그 버전에서 도는지 본다 — 출처와 함께 PR 에 적는다
+3. 추가한 PR 뒤에 `preview` 빌드를 한 번 굽는다. **빌드가 실패하면 Gradle 의 덮어쓰기(`resolutionStrategy` · `compileSdkVersion` 강제 등)로 막지 않는다** — 원인을 공식 문서와 고친 버전(커밋 · 릴리스)에서 찾는다(운영자 지시 2026-11-07)
 
 ## EAS 프로필과 환경값
 
@@ -74,7 +95,7 @@ select public.android_min_version_code(), public.notice_ack_floor();
 **iOS 는 `preview` 를 쓰지 않고 `production` 빌드를 TestFlight 로 낸다.** `preview` 는 Android APK 를 위한 것이다. **Play 에는 APK 를 못 올린다** — AAB 인 `production` 만 간다([Expo](https://docs.expo.dev/submit/android.md)).
 
 **프로필마다 `node` 를 저장소의 `.nvmrc` 와 같게 둔다.** SDK 58 빌더의 기본은 Node 22 · npm 10.9.9 인데([Expo](https://docs.expo.dev/build-reference/infrastructure.md)), 그 npm 은 npm 11 이 쓴 `mobile/package-lock.json` 을 `npm ci` 가 거절한다(`EUSAGE` · `Missing: @emnapi/core`, 2026-11-02 첫 빌드). `.nvmrc` 를 올리면 `eas.json` 도 올린다.
-`eas.json` 에는 npm 판 칸이 없어 빌더의 npm 은 그 Node 에 든 것이다(Node 24.12.0 이면 npm 11.6.2). 그런데 npm 판마다 `npm ci` 의 짝 맞춤이 달라
+`eas.json` 에는 npm 판 칸이 없어 빌더의 npm 은 그 Node 에 든 것이다(Node 24.12.0 이면 npm 11.6.2 — 2026-11-07 빌드 로그로 확인했다). 그런데 npm 판마다 `npm ci` 의 짝 맞춤이 달라
 같은 잠금을 11.6.2 는 받고 로컬의 npm 11.14.0 · 빌더 기본 10.9.9 는 거절했다(#1043 의 잠금, 2026-11-07 #1062). 그래서 CI `mobile` 차선은 `.nvmrc` 의
 Node 로 `npm ci` 를 돌고, 박은 로컬 판(`verify.yml` 의 `MOBILE_LOCK_NPM`, 지금 npm 11.14.0)으로 `npm ci --dry-run` 을 한 번 더 돈다 — 둘 중 하나라도 거절하면 붉다.
 로컬 npm 을 올리면 그 판도 올린다(`scripts/mobile-config.test.ts` 가 런북의 판과 견준다).
@@ -94,7 +115,7 @@ npx eas-cli@latest env:list production --format short
 | --- | --- | --- |
 | `EXPO_PUBLIC_SUPABASE_URL` · `_PUBLISHABLE_KEY` · `EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID` · `EXPO_PUBLIC_SITE_URL` | 있다 — 운영 프로젝트 · 운영 주소 | 앱이 안 돈다 · 약관 셋(이용약관 · 환불정책 · 처리방침)의 줄이 안 선다. `production` 빌드는 이 넷 가운데 하나라도 비거나 주소 둘(`EXPO_PUBLIC_SITE_URL` · `EXPO_PUBLIC_SUPABASE_URL`)이 https 가 아니면, `preview` 빌드는 `EXPO_PUBLIC_SITE_URL` 이 없거나 https 가 아니면 `app.config.js` 에서 선다 — 까닭 한 줄에 빈 이름만 싣는다. 앱에서 웹의 주소를 읽는 자리는 `mobile/src/site.ts` 하나다(ADR 0233 · 추기 2026-11-06) |
 | `EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID` · `_URL_SCHEME` | 없다 — Google iOS 클라이언트가 먼저다 | **iOS 빌드 전에 `production` 에 넣는다** — `app.config.js` 가 이 값으로 URL 스킴을 세운다 |
-| `EXPO_PUBLIC_KAKAO_NATIVE_APP_KEY` | 있다 — `production` · `preview`(2026-11-05, #770). 이 값이 든 빌드는 아직 없다(`docs/ops/runbook/kakao-login.md` 「카카오 로그인을 켜는 차례」 10) | 카카오 단추가 안 서고 `app.config.js` 가 카카오 플러그인을 뺀다. 넣으면 **새 빌드**가 든다 — URL 스킴이 빌드에 박힌다 |
+| `EXPO_PUBLIC_KAKAO_NATIVE_APP_KEY` | 있다 — `production` · `preview`(2026-11-05, #770). 이 값이 포함된 첫 빌드는 안드로이드 `preview` `63d07224`(2026-11-07)다 — `production` · iOS 빌드는 아직 없다(`docs/ops/runbook/kakao-login.md` 「카카오 로그인을 켜는 차례」 10) | 카카오 단추가 안 서고 `app.config.js` 가 카카오 플러그인을 뺀다. 넣으면 **새 빌드**가 든다 — URL 스킴이 빌드에 박힌다 |
 | `GOOGLE_SERVICES_JSON`(**파일** 환경값, ADR 0236) | 없다 — 운영자가 Firebase 프로젝트를 만든 뒤 넣는다(`docs/ops/runbook/push.md` 「앱 푸시를 켠다」 3) | 풀이 완성 알림이 꺼진다 — 권한을 안 묻고 설정의 알림 줄이 안 선다. 풀이는 그대로. 넣으면 **새 빌드**가 든다 — `google-services.json` 이 빌드에 든다 |
 | 사업자 정보 | 환경값이 아니다 — 웹과 같은 상수 `BUSINESS`(`src/lib/brand/business.ts`)가 번들에 든다(ADR 0232). EAS 에 남은 `EXPO_PUBLIC_BUSINESS_*` 여덟은 아무도 안 읽는다 — 지운다(#770 B) | 상수의 빈 칸(대표전화)만 줄이 안 선다 |
 
@@ -126,7 +147,7 @@ apksigner verify --print-certs <apk>                                   # 서명�
 
 ### 빌드와 제출
 
-**EAS 로그인을 먼저 본다** — `npx eas-cli@latest whoami`. 없으면 운영자가 `! npx eas-cli@latest login --device --non-interactive` → 브라우저에서 승인 → 받은 숫자로 `--resume <id> --match <숫자>` 를 부른다(2026-11-07 — 로그인이 없으면 빌드 앞에서 선다). 새 워크트리면 `mobile/` 의 `npm ci` 도 먼저다 — 없으면 `env:list` 부터 `expo-router` 플러그인을 못 찾고 선다.
+**EAS 로그인을 먼저 본다** — `npx eas-cli@latest whoami` 가 `sungheeyoon` 이어야 한다(`mobile/app.json` 의 `owner`). 없으면 운영자가 `! npx eas-cli@latest login --device --non-interactive` → 브라우저에서 승인 → 받은 숫자로 `--resume <id> --match <숫자>` 를 부른다(2026-11-07 — 로그인이 없으면 빌드 앞에서 선다). 새 워크트리면 `mobile/` 의 `npm ci` 도 먼저다 — 없으면 `env:list` 부터 `expo-router` 플러그인을 못 찾고 선다.
 
 ```bash
 npx eas-cli@latest build --profile preview --platform android --non-interactive     # 내부 배포 APK, 링크를 준다
@@ -137,6 +158,8 @@ npx eas-cli@latest submit --profile production --platform ios                   
 ```
 
 - **`submit` 은 스토어 제출이다 — 조율자 · 운영자 몫이다.** 빌드는 에이전트가 해도 된다.
+- **빌드는 끝나면 돌아오는 명령으로 기다린다** — `npx eas-cli@latest build:view <id>` (또는 `build:list --limit 1 --json`)의 `status` 가 `FINISHED` · `ERRORED` 일 때까지. 실패면 `logFiles` 의 Gradle 줄을 읽는다(위 「새 네이티브 의존을 추가할 때」)
+- **지금 나간 빌드** — 안드로이드 `preview` `63d07224`(커밋 `f112e2f6` · versionCode 1 · 1.0.0 · 만료 2026-11-21), 2026-11-07 의 첫 성공 빌드다. 앞선 둘은 실패했다 — `ebef4d0c` 는 카카오 SDK 를 jitpack 에서 찾다 401(→ #1071 카카오 Maven 저장소), `4b3d8c51` 은 카카오 모듈이 `compileSdk` 33 으로 컴파일돼 AAR metadata 검사에서 섰다(→ #1072 3.2.0). 링크 · 서명 대조는 #770 의 그날 댓글이다. 다음 빌드가 나가면 이 줄을 고친다
 - **CLI 는 Android 를 내부 트랙까지만 올린다**(`submit.production.android.track`). 비공개 테스트 · 프로덕션은 Play Console 에서 사람이 옮긴다.
 - Android 제출에는 Google 서비스 계정 키가 든다([Expo](https://docs.expo.dev/submit/android.md)). 키는 EAS 에 올리고 저장소에 두지 않는다.
 - iOS 를 `--non-interactive` 로 내려면 `submit.production.ios.ascAppId` 가 든다([Expo](https://docs.expo.dev/submit/ios.md)) — App Store Connect 에 앱을 만든 뒤 적는다. 앞서는 대화형으로 낸다.
