@@ -78,11 +78,15 @@ Expo SDK 를 올리면 위 셋이 함께 바뀐다 — 첫 빌드 로그에서 �
 
 ### 새 네이티브 의존을 추가할 때
 
-네이티브 모듈이 포함된 라이브러리는 JS 시험 · `expo export` 가 초록이어도 **첫 EAS 빌드에서야** 저장소 · SDK 버전 문제가 드러난다(2026-11-07 — 카카오 Maven 저장소 #1071, `compileSdk` 33 고정 #1072).
+네이티브 모듈은 JS 시험 · `expo export` 가 초록이어도 Gradle 을 도는 EAS 빌드에서야 저장소 · SDK 문제가 드러났다(2026-11-07 — 카카오 Maven 저장소 #1071, `compileSdk` 33 고정 #1072).
+그 둘은 이제 **`npm run mobile:native`**(`scripts/mobile-native.mjs`, CI `mobile` 차선)가 빌드 전에 잰다 — 연결되는 안드로이드 모듈마다 `compileSdk` · `minSdk` 를
+앱의 값(React Native 의 버전 카탈로그 · `expo-build-properties`)과 견주고, 모듈이 글자로 적은 Maven 좌표가 Google · Maven Central · `extraMavenRepos` 에 있는지 묻는다.
+붉은 줄이 고칠 자리를 말한다. `WARN` 은 판정 못 한 꼴이다 — 그 모듈의 `android/build.gradle` 을 열어 본다. 옮겨 오는 의존과 버전이 식인 좌표(끝 줄에 모인다)는 못 본다.
 
-1. 라이브러리의 Android `minSdk` · `compileSdk` · `targetSdk` 와 받아야 할 Maven 저장소를 **그 라이브러리의 공식 문서 · 저장소 원본**에서 읽고 위 표의 앱 값과 견준다. 앱보다 높은 `minSdk` 나 앱과 다른 `compileSdk` 를 박은 버전이면 추가하지 않거나 고친 버전을 찾는다
+1. 추가한 뒤 `npm run mobile:native` 가 붉지 않은지 본다. 붉으면 고친 버전을 찾거나 추가하지 않는다
 2. 같은 라이브러리를 쓰는 한국 서비스 · 사례가 그 버전에서 도는지 본다 — 출처와 함께 PR 에 적는다
-3. 추가한 PR 뒤에 `preview` 빌드를 한 번 굽는다. **빌드가 실패하면 Gradle 의 덮어쓰기(`resolutionStrategy` · `compileSdkVersion` 강제 등)로 막지 않는다** — 원인을 공식 문서와 고친 버전(커밋 · 릴리스)에서 찾는다(운영자 지시 2026-11-07)
+3. 추가한 PR 뒤에 `preview` 빌드를 한 번 굽는다. **빌드가 실패하면 Gradle 의 덮어쓰기(`resolutionStrategy` · `compileSdkVersion` 강제 등)로 막지 않는다** — 원인을 공식 문서와 고친 버전(커밋 · 릴리스)에서 찾는다(운영자 지시 2026-11-07).
+   검사가 못 본 꼴로 섰으면 그 꼴을 `scripts/mobile-native.mjs` 에 더한다
 
 ## EAS 프로필과 환경값
 

@@ -1,0 +1,20 @@
+{
+  "name": "@react-native-kakao/core",
+  "version": "3.2.0",
+  "license": "MIT",
+  "sdkVersions": {
+    "android": {
+      "minSdk": 23,
+      "targetSdk": 33,
+      "compileSdk": 33,
+      "ndk": "21.4.7075529",
+      "core": "2.25.1",
+      "share": "2.25.1",
+      "user": "2.25.1",
+      "navi": "2.25.1",
+      "friend": "2.25.1",
+      "talk": "2.25.1",
+      "cert": "2.25.1"
+    }
+  }
+}

@@ -418,6 +418,10 @@ jobs:
         if: ${{ !cancelled() && steps.install.outcome == 'success' }}
         env:
           EXPO_OFFLINE: '1'
+      # 네이티브 의존 — 연결되는 안드로이드 모듈이 앱의 compileSdk · minSdk 와 어긋나거나 박은 Maven 좌표가 앱이 받는 저장소 어디에도 없으면 붉다.
+      # Gradle 은 EAS 에서만 돌아 이 둘은 빌드에서야 드러났다(#1071 · #1072). 망에 닿지 못한 좌표는 경고다 — 붉음은 「없다」는 답뿐이다.
+      - run: node ../scripts/mobile-native.mjs
+        if: ${{ !cancelled() && steps.install.outcome == 'success' }}
       # 잠금 파일을 쓰는 로컬 npm(`MOBILE_LOCK_NPM`)도 같은 잠금을 받는가. npm 판마다 `npm ci` 의 짝 맞춤 검사가 달라
       # #1043 의 잠금은 Node 24.12.0 에 든 npm 11.6.2 는 받고 11.14.0 · 10.9.9 는 `EUSAGE Missing: @emnapi/core` 로 거절했다(2026-11-07, #1062).
       # 맨 끝에 둔다 — 앞에 두면 붉을 때 `if` 없는 `tsc` 가 건너뛰어진다. 판을 박는다 — `npm@11` 이면 새 npm 이 나온 날 아무것도 안 바꾼 PR 이 붉다. 로컬 npm 을 올리면 이 판도 올린다.
