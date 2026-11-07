@@ -70,6 +70,19 @@ describe('앱 안내 화면의 글자', () => {
 });
 
 /**
+ * **앱의 재확인 화면에서도 동의 없이 탈퇴를 신청할 수 있다**(ADR 0237 의 7 · ADR 0218). 기준보다 낮게 확인한 회원은 관문이 가입 화면으로 보내고
+ * 그 화면은 폼 상태(`form`)다 — 그 상태에 `RequestDeletion` 이 서야 한다. 앱 화면은 그리지 못하므로 원본의 조건을 읽어 잠근다.
+ */
+describe('앱 재확인 화면의 탈퇴 신청', () => {
+  it('가입 화면은 폼 상태(재확인 포함)에서 탈퇴 신청을 세운다', () => {
+    const screen = flat(withoutComments(read('mobile/src/app/signup.tsx')));
+    const shown = /\{\(([^{}]*)\) && \( <RequestDeletion /.exec(screen);
+    expect(shown?.[1]).toContain("state.kind === 'form'");
+    expect(read('mobile/src/auth/signup.ts')).toMatch(/kind: 'form',\s+needsName: [^,]+,\s+again: signedUp,/);
+  });
+});
+
+/**
  * **앱 도움말에 빈 묶음이 서지 않는다.** 앱은 웹의 물음 하나(`without-sign-in`, ADR 0213)를 빼는데, 「시작하기」는 그 물음 하나뿐이라
  * 제목과 빈 판만 남았다(2026-11-06 에뮬레이터 점검). 빼는 물음 때문에 비는 묶음이 있으면 화면이 묶음째 걷어야 한다.
  */

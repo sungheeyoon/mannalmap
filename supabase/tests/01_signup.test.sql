@@ -52,20 +52,20 @@ select is(
   '로그인만 한 사람은 가입이 안 끝난 상태다');
 
 select throws_like(
-  $$select public.complete_signup(null, '가', 'notice-v9', pg_temp.schedule_id(), false, false)$$,
+  $$select public.complete_signup(null, '가', 'notice-v109', pg_temp.schedule_id(), false, false)$$,
   '%2~8자%',
   '이름이 짧으면 거절된다');
 
 /** 그 사이에 운영자가 일정을 옮겼으면 지금 약속에 대한 확인이 아니다 */
 select throws_like(
-  $$select public.complete_signup(null, '민수', 'notice-v9', pg_temp.schedule_id() + 1, false, false)$$,
+  $$select public.complete_signup(null, '민수', 'notice-v109', pg_temp.schedule_id() + 1, false, false)$$,
   '%안내가 바뀌%',
   '본 줄이 다르면 거절된다');
 
 -- ── 3. 한 번에 적힌다 ──────────────────────────────────────────────────────
 
 select is(
-  public.complete_signup(null, '민수', 'notice-v9', pg_temp.schedule_id(), true, false),
+  public.complete_signup(null, '민수', 'notice-v109', pg_temp.schedule_id(), true, false),
   true,
   '코드 없이 이름 · 확인이 한 번에 지나간다');
 
@@ -73,7 +73,7 @@ select results_eq(
   $$select a.nickname, a.signup_code, a.notice_version, a.improvement_consent, a.contact_consent,
            a.signed_up_at is not null, a.notice_ack_at is not null
     from public.app_user a where a.id = (select kim from folks)$$,
-  $$values ('민수'::text, null::text, 'notice-v9'::text, true, false, true, true)$$,
+  $$values ('민수'::text, null::text, 'notice-v109'::text, true, false, true, true)$$,
   '이름 · 확인 · 선택 답이 함께 남고 코드 칸은 비어 있다');
 
 select is(
@@ -84,7 +84,7 @@ select is(
 /** 옛 앱 빌드는 아직 코드 칸을 보낸다 — 없는 코드 · 빈 글자여도 같은 답이다 */
 select pg_temp.acting((select lee from folks));
 select is(
-  public.complete_signup('NOSUCH', '영희', 'notice-v9', pg_temp.schedule_id(), false, false),
+  public.complete_signup('NOSUCH', '영희', 'notice-v109', pg_temp.schedule_id(), false, false),
   true,
   '옛 앱이 보낸 아무 코드도 읽지 않고 지난다');
 
@@ -95,7 +95,7 @@ select is(
 
 select pg_temp.acting((select park from folks));
 select is(
-  public.complete_signup('', '철수', 'notice-v9', pg_temp.schedule_id(), false, false),
+  public.complete_signup('', '철수', 'notice-v109', pg_temp.schedule_id(), false, false),
   true,
   '빈 코드도 같은 답이다');
 
@@ -105,7 +105,7 @@ select pg_temp.acting((select choi from folks));
 
 /** 코드가 빠져도 이름은 유일하다 — 코드가 걸러 주던 자리가 아니었다 */
 select throws_like(
-  $$select public.complete_signup(null, '민수', 'notice-v9', pg_temp.schedule_id(), false, false)$$,
+  $$select public.complete_signup(null, '민수', 'notice-v109', pg_temp.schedule_id(), false, false)$$,
   '%이미 사용 중인%',
   '같은 이름으로는 못 들어온다');
 
@@ -128,18 +128,18 @@ select throws_like(
 select pg_temp.acting((select kim from folks));
 
 select lives_ok(
-  $$select public.complete_signup(null, null, 'notice-v10', pg_temp.schedule_id(), false, true)$$,
+  $$select public.complete_signup(null, null, 'notice-v110', pg_temp.schedule_id(), false, true)$$,
   '이미 가진 사람은 이름 없이 다시 확인만 한다');
 
 select results_eq(
   $$select a.nickname, a.notice_version, a.contact_consent
     from public.app_user a where a.id = (select kim from folks)$$,
-  $$values ('민수'::text, 'notice-v10'::text, true)$$,
+  $$values ('민수'::text, 'notice-v110'::text, true)$$,
   '이름은 그대로이고 확인만 새로 남는다');
 
 select pg_temp.acting((select tester from folks));
 select lives_ok(
-  $$select public.complete_signup(null, null, 'notice-v10', pg_temp.schedule_id(), false, false)$$,
+  $$select public.complete_signup(null, null, 'notice-v110', pg_temp.schedule_id(), false, false)$$,
   '운영 베타의 테스터도 다시 확인만 한다');
 
 select results_eq(

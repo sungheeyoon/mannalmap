@@ -19,7 +19,7 @@ const ROOTS = ['app', 'src', 'proxy.ts'];
 const CODE = /\.tsx?$/;
 
 /** 판본을 `===` · `!==` 로 견주는 모양 — 상수든 행의 칸이든 */
-const VERSION = String.raw`(?:NOTICE_VERSION|NOTICE_ACK_FLOOR|notice_version|noticeVersion)`;
+const VERSION = String.raw`(?:NOTICE_VERSION|ackFloor|notice_ack_floor|notice_version|noticeVersion)`;
 const COMPARED = new RegExp(String.raw`${VERSION}\s*[!=]==|[!=]==\s*[\w.?]*${VERSION}`);
 
 /** 견주어도 되는 곳 — 판정 그 자체 */

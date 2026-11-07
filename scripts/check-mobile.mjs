@@ -77,7 +77,7 @@ const hasColumns = (row, names) => names.filter((name) => !(name in row));
 
 /** 앱이 부르는 함수 전부 — 아래 표가 빠뜨리면 소스와 견주는 첫 줄이 붉다 */
 const MOBILE_RPCS = [
-  'acknowledge_warning', 'add_my_photo', 'app_push_token_registered', 'block_user', 'cancel_match_request', 'complete_signup', 'create_managed_person',
+  'acknowledge_warning', 'add_my_photo', 'android_min_version_code', 'app_push_token_registered', 'block_user', 'cancel_match_request', 'complete_signup', 'create_managed_person',
   'create_pair_for_reading', 'current_beta_schedule', 'leave_reading_feedback', 'mark_chat_read', 'mark_notifications_read',
   'mark_reading_ready_read', 'move_my_photo', 'my_adult_check', 'my_chat_messages', 'my_chat_rooms', 'my_discovery_board', 'my_ended_talk_messages', 'my_ended_talks',
   'my_match_detail_state', 'my_match_open_alert', 'my_match_requests', 'my_match_scope', 'my_matches', 'my_notifications', 'my_passed_connections', 'my_person_slots', 'my_photos',
@@ -126,6 +126,7 @@ const accountRead = (who) => who.client.from('app_user').select(ACCOUNT_COLUMNS)
 
 /** 인자 없이 또는 제 값만으로 부르는 읽기 — 상태마다 돌린다 */
 const statelessReads = (client) => ({
+  android_min_version_code: () => client.rpc('android_min_version_code'),
   current_beta_schedule: () => client.rpc('current_beta_schedule'),
   match_is_open: () => client.rpc('match_is_open'),
   my_adult_check: () => client.rpc('my_adult_check'),
@@ -228,7 +229,7 @@ try {
   check('이름이 비었는지 묻는다', available.data === true, shapeOf(available));
   const schedule = await a.client.rpc('current_beta_schedule');
   check('일정을 읽는다 — 앱이 읽는 칸이 다 있다',
-    schedule.error === null && hasColumns(schedule.data[0], ['schedule_id', 'ends_on', 'purge_by', 'purge_within_days', 'operator_name', 'operator_officer', 'operator_contact']).length === 0,
+    schedule.error === null && hasColumns(schedule.data[0], ['schedule_id', 'ends_on', 'purge_by', 'purge_within_days', 'operator_name', 'operator_officer', 'operator_contact', 'notice_ack_floor']).length === 0,
     shapeOf(schedule));
 
   const signup = await a.client.rpc('complete_signup', { p_code: null, p_nickname: `벗${tag}`, p_version: NOTICE_VERSION, p_schedule_id: schedule.data[0].schedule_id, p_improvement: true, p_contact: false });
@@ -391,6 +392,9 @@ try {
   check('세션 없는 클라이언트가 공유본을 연다', shared.error === null && shared.data?.length === 1 && hasColumns(shared.data[0], ['kind', 'name_a', 'name_b', 'metaphor', 'score', 'body', 'created_at']).length === 0, shapeOf(shared));
   const sharedNone = await anon().rpc('shared_reading', { p_token: 'nope' });
   check('없는 토큰은 빈 답 — 앱은 gone', sharedNone.error === null && sharedNone.data?.length === 0, shapeOf(sharedNone));
+  /* 앱이 켜질 때 로그인보다 먼저 읽는다(ADR 0237) */
+  const floorAnon = await anon().rpc('android_min_version_code');
+  check('로그인 전에도 받아 주는 가장 옛 빌드를 읽는다', floorAnon.error === null && Number.isInteger(floorAnon.data), shapeOf(floorAnon));
 
   /* ---------- 사진 ---------- */
   const modeRead = await door('/api/mobile/me/photo', { token: aFresh });

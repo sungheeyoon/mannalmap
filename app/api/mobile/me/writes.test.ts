@@ -42,7 +42,7 @@ function signedIn() {
     }),
     rpc: vi.fn(async (name: string) =>
       name === 'current_beta_schedule'
-        ? { data: [{ schedule_id: 7, ends_on: '2099-12-01', purge_by: '2099-12-31', purge_within_days: 30, operator_name: 'a', operator_officer: 'b', operator_contact: 'c' }], error: null }
+        ? { data: [{ schedule_id: 7, ends_on: '2099-12-01', purge_by: '2099-12-31', purge_within_days: 30, operator_name: 'a', operator_officer: 'b', operator_contact: 'c', notice_ack_floor: 'notice-v18' }], error: null }
         : { data: null, error: null },
     ),
   };
@@ -121,7 +121,7 @@ describe('입력 고치기 · 참여', () => {
     const client = signedIn();
     client.rpc.mockImplementation(async (name: string) =>
       name === 'current_beta_schedule'
-        ? { data: [{ schedule_id: 7, ends_on: '2020-01-01', purge_by: '2099-12-31', purge_within_days: 30, operator_name: 'a', operator_officer: 'b', operator_contact: 'c' }], error: null }
+        ? { data: [{ schedule_id: 7, ends_on: '2020-01-01', purge_by: '2099-12-31', purge_within_days: 30, operator_name: 'a', operator_officer: 'b', operator_contact: 'c', notice_ack_floor: 'notice-v18' }], error: null }
         : { data: null, error: null },
     );
     keyedRpc.mockResolvedValue({ data: 'off', error: null });

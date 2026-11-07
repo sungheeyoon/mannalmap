@@ -30,6 +30,7 @@ const ROW = {
   operator_name: '만세력 운영자',
   operator_officer: '홍길동',
   operator_contact: 'ops@example.com',
+  notice_ack_floor: 'notice-v18',
 };
 
 /** 읽었는데 없다 — 못 읽은 것과 다른 값 */
@@ -70,8 +71,22 @@ describe('지금 일정 읽기', () => {
         scheduleId: 7,
         dates: { endsOn: '2026-10-31', purgeBy: '2026-11-30', purgeWithinDays: 30 },
         operator: PRIVACY_OPERATOR,
+        ackFloor: 'notice-v18',
       },
     });
     expect(called).toEqual(['current_beta_schedule']);
+  });
+
+  /**
+   * 재확인 기준은 서버가 든다(ADR 0237) — 그 칸이 없는 답(마이그레이션보다 먼저 선 웹)은 **못 읽은 것**이다(ADR 0078). 「일정 없음」으로 내면
+   * 관문이 회원 전원을 가입 화면으로 보낸다.
+   */
+  it('재확인 기준이 없거나 읽을 수 없는 줄은 못 읽었다고 답한다 — 없는 것이 아니다', async () => {
+    for (const row of [{ ...ROW, notice_ack_floor: undefined }, { ...ROW, notice_ack_floor: null }, { ...ROW, notice_ack_floor: 'v18' }]) {
+      expect(await currentSchedule(answering([row]).client)).toEqual({
+        ok: false,
+        reason: '요청을 처리하지 못했어요. 잠시 뒤 다시 시도해 주세요.',
+      });
+    }
   });
 });

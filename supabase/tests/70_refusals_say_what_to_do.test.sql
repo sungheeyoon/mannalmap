@@ -74,7 +74,7 @@ set local role authenticated;
 
 select set_config('request.jwt.claims', '{"role":"anon"}', true);
 select throws_ok(
-  $$select public.complete_signup(null, '김새사람', 'notice-v9', pg_temp.schedule_id(), false, false)$$,
+  $$select public.complete_signup(null, '김새사람', 'notice-v109', pg_temp.schedule_id(), false, false)$$,
   '28000', '로그인이 필요해요. 로그인한 뒤 다시 시도해 주세요.',
   '2. 로그인 안 한 사람은 로그인하라는 말을 듣는다');
 
@@ -86,17 +86,17 @@ select throws_ok(
   '2. 판본이 비면 새로고침하라고 한다');
 
 select throws_ok(
-  $$select public.complete_signup(null, '김새사람', 'notice-v9', pg_temp.schedule_id() + 1000, false, false)$$,
+  $$select public.complete_signup(null, '김새사람', 'notice-v109', pg_temp.schedule_id() + 1000, false, false)$$,
   '23514', '안내가 바뀌었어요. 새로고침한 뒤 다시 확인해 주세요.',
   '2. 안내가 바뀌었으면 새로고침하라고 한다');
 
 select throws_ok(
-  $$select public.complete_signup(null, '김', 'notice-v9', pg_temp.schedule_id(), false, false)$$,
+  $$select public.complete_signup(null, '김', 'notice-v109', pg_temp.schedule_id(), false, false)$$,
   '22023', '닉네임을 2~8자로 입력해 주세요.',
   '2. 닉네임 길이는 무엇을 넣을지로 말한다');
 
 select throws_ok(
-  $$select public.complete_signup(null, '이미있음', 'notice-v9', pg_temp.schedule_id(), false, false)$$,
+  $$select public.complete_signup(null, '이미있음', 'notice-v109', pg_temp.schedule_id(), false, false)$$,
   '23505', '이미 사용 중인 닉네임이에요. 다른 닉네임을 입력해 주세요.',
   '2. 가입에서 겹친 닉네임');
 
@@ -110,7 +110,7 @@ select throws_ok(
 /** `auth.uid()` 는 있는데 `app_user` 행이 없다 — `auth.users` 가 지워진 뒤 남은 토큰의 자리 */
 select pg_temp.acting(gen_random_uuid());
 select throws_ok(
-  $$select public.complete_signup(null, '김새사람', 'notice-v9', pg_temp.schedule_id(), false, false)$$,
+  $$select public.complete_signup(null, '김새사람', 'notice-v109', pg_temp.schedule_id(), false, false)$$,
   'P0002', '계정을 찾지 못했어요. 다시 로그인해 주세요.',
   '2. 계정 행이 없으면 다시 로그인하라고 한다');
 

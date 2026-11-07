@@ -9,7 +9,7 @@
 -- 3. **거절해도 서비스는 그대로다.** 닫히는 것은 설문 하나뿐이다.
 -- 4. **철회가 곧 지움이다.** 안내 화면에서 거절한 경우에도 같다.
 begin;
-select plan(37);
+select plan(41);
 
 create or replace function pg_temp.acting(uid uuid)
 returns void language plpgsql as $$
@@ -37,7 +37,7 @@ select pg_temp.acting((select kim from fresh));
 
 /** 일정이 없으면 확인 자체가 안 남는다 — 안내가 만들어지지 않기 때문이다 */
 select throws_like(
-  $$select public.complete_signup(null, '김안', 'notice-v1', (select s.schedule_id from public.current_beta_schedule() s), false, true)$$,
+  $$select public.complete_signup(null, '김안', 'notice-v101', (select s.schedule_id from public.current_beta_schedule() s), false, true)$$,
   '%기간이 정해지지%',
   '일정이 없으면 확인이 남지 않는다');
 
@@ -78,17 +78,17 @@ select throws_ok(
  * 안 물어본 사람이 같은 값이 되고, 다시 물어야 할 사람을 못 고른다.
  */
 select throws_ok(
-  $$select public.complete_signup(null, '김안', 'notice-v1', (select s.schedule_id from public.current_beta_schedule() s), null, false)$$,
+  $$select public.complete_signup(null, '김안', 'notice-v101', (select s.schedule_id from public.current_beta_schedule() s), null, false)$$,
   '23514', null, '선택 항목을 비운 채로는 지나갈 수 없다');
 
 select lives_ok(
-  $$select public.complete_signup(null, '김안', 'notice-v1', (select s.schedule_id from public.current_beta_schedule() s), false, true)$$,
+  $$select public.complete_signup(null, '김안', 'notice-v101', (select s.schedule_id from public.current_beta_schedule() s), false, true)$$,
   '코드·이름·확인·선택 답이 한 번에 남는다');
 
 select is(
   (select array[a.notice_version, a.improvement_consent::text, a.contact_consent::text]
    from public.app_user a where a.id = (select kim from fresh)),
-  array['notice-v1', 'false', 'true'],
+  array['notice-v101', 'false', 'true'],
   '판본과 두 답이 그대로 남는다');
 
 select isnt(
@@ -134,13 +134,13 @@ select is(
  * 동의를 근거로 처리하던 것은 동의가 사라지면 근거가 사라진다(ADR 0022).
  */
 select lives_ok(
-  $$select public.complete_signup(null, null, 'notice-v2', (select s.schedule_id from public.current_beta_schedule() s), true, false)$$,
+  $$select public.complete_signup(null, null, 'notice-v102', (select s.schedule_id from public.current_beta_schedule() s), true, false)$$,
   '새 판본을 다시 확인할 수 있다');
 
 select is(
   (select array[a.notice_version, a.improvement_consent::text, a.contact_consent::text]
    from public.app_user a where a.id = (select kim from fresh)),
-  array['notice-v2', 'true', 'false'],
+  array['notice-v102', 'true', 'false'],
   '새 판본과 바뀐 답이 남는다');
 
 reset role;
@@ -152,7 +152,7 @@ set local role authenticated;
 select pg_temp.acting((select kim from fresh));
 
 select lives_ok(
-  $$select public.complete_signup(null, null, 'notice-v3', (select s.schedule_id from public.current_beta_schedule() s), false, false)$$,
+  $$select public.complete_signup(null, null, 'notice-v103', (select s.schedule_id from public.current_beta_schedule() s), false, false)$$,
   '다시 물었을 때 거절할 수 있다');
 
 reset role;
@@ -174,14 +174,14 @@ set local role authenticated;
  */
 select pg_temp.acting(tests.signup('lee-notice@example.com'));
 select lives_ok(
-  $$select public.complete_signup(null, null, 'notice-v9', (select s.schedule_id from public.current_beta_schedule() s), true, true)$$,
+  $$select public.complete_signup(null, null, 'notice-v109', (select s.schedule_id from public.current_beta_schedule() s), true, true)$$,
   '남이 자기 확인을 남긴다');
 
 reset role;
 select is(
   (select array[notice_version, improvement_consent::text]
    from public.app_user where id = (select kim from fresh)),
-  array['notice-v3', 'false'],
+  array['notice-v103', 'false'],
   '남이 확인해도 내 답은 그대로다');
 
 -- ── 연락 동의는 설정에서 따로 켜고 끈다 ────────────────────────────────────
@@ -248,12 +248,12 @@ set local role authenticated;
 select pg_temp.acting((select kim from fresh));
 
 select throws_like(
-  $$select public.complete_signup(null, null, 'notice-v3', 1::bigint, false, false)$$,
+  $$select public.complete_signup(null, null, 'notice-v103', 1::bigint, false, false)$$,
   '%바뀌었어요%',
   '옛 안내를 들고 온 확인은 거절된다');
 
 select lives_ok(
-  $$select public.complete_signup(null, null, 'notice-v3',
+  $$select public.complete_signup(null, null, 'notice-v103',
       (select s.schedule_id from public.current_beta_schedule() s), false, false)$$,
   '지금 안내로는 확인된다');
 
@@ -334,6 +334,35 @@ select throws_ok(
   $$insert into public.beta_schedule (ends_on, operator_name)
     values ('2027-01-01', '운영자')$$,
   '23514', null, '셋 중 하나만 넣을 수 없다');
+
+-- ── 재확인 기준은 서버가 든다 (ADR 0237, `20270116090000`) ─────────────────
+
+/**
+ * **기준보다 낮은 판본은 적히지 않는다.** 웹 · 앱은 번들의 판본을 보낸다 — 옛 앱이 옛 판본으로 확인을 남기면 관문이 곧바로 다시
+ * 가입 화면으로 보내고, 기록은 확인을 안 끝낸 채 남는다. 이 파일의 다른 판본(`notice-v1xx`)이 기준보다 높은 것은 그래서다.
+ */
+select is(
+  (select s.notice_ack_floor from public.current_beta_schedule() s),
+  public.notice_ack_floor(),
+  '일정을 읽는 문이 재확인 기준을 함께 낸다');
+
+set local role authenticated;
+select pg_temp.acting((select kim from fresh));
+
+select throws_like(
+  $$select public.complete_signup(null, null, 'notice-v1', (select s.schedule_id from public.current_beta_schedule() s), false, false)$$,
+  '%안내가 바뀌었어요%',
+  '재확인 기준보다 낮은 판본으로는 확인이 남지 않는다');
+
+select throws_like(
+  $$select public.complete_signup(null, null, 'notice-for-tests', (select s.schedule_id from public.current_beta_schedule() s), false, false)$$,
+  '%안내가 바뀌었어요%',
+  '읽을 수 없는 판본으로도 확인이 남지 않는다');
+
+select ok(
+  public.complete_signup(null, null, (select s.notice_ack_floor from public.current_beta_schedule() s), (select s.schedule_id from public.current_beta_schedule() s), false, false),
+  '기준 판본 그대로는 확인된다');
+reset role;
 
 select * from finish();
 rollback;

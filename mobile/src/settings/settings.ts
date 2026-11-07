@@ -37,7 +37,6 @@ export type SettingsAccount = {
   nickname: string | null;
   improvement_consent: boolean | null;
   contact_consent: boolean | null;
-  notice_version: string | null;
   notice_ack_at: string | null;
 };
 
@@ -61,7 +60,7 @@ export function settingsUnreachable(): SettingsData {
 export async function readSettings(): Promise<SettingsData> {
   if (supabase === null) return settingsUnreachable();
   const [{ state, row }, profile, session] = await Promise.all([
-    readAccount<SettingsAccount>('status, nickname, improvement_consent, contact_consent, notice_version, notice_ack_at'),
+    readAccount<SettingsAccount>('status, nickname, improvement_consent, contact_consent, notice_ack_at'),
     supabase.from('discovery_profile').select('prefer_gender, opted_out_at').maybeSingle(),
     supabase.auth.getSession(),
   ]);

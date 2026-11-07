@@ -22,7 +22,7 @@ const KEY = 'photos/00000000-0000-4000-8000-000000000001/00000000-0000-4000-8000
 function signedIn(answers: Record<string, unknown> = {}, account: object | null = { signed_up_at: '2026-01-01', notice_version: NOTICE_VERSION, notice_schedule_id: 7 }) {
   const rpc = vi.fn(async (name: string, ..._args: object[]) => {
     if (name === 'current_beta_schedule') {
-      return { data: [{ schedule_id: 7, ends_on: '2099-12-01', purge_by: '2099-12-31', purge_within_days: 30, operator_name: 'a', operator_officer: 'b', operator_contact: 'c' }], error: null };
+      return { data: [{ schedule_id: 7, ends_on: '2099-12-01', purge_by: '2099-12-31', purge_within_days: 30, operator_name: 'a', operator_officer: 'b', operator_contact: 'c', notice_ack_floor: 'notice-v18' }], error: null };
     }
     if (name in answers) return answers[name] as { data: unknown; error: null };
     return { data: null, error: null };

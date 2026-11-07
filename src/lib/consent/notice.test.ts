@@ -3,7 +3,6 @@ import { describe, expect, it } from 'vitest';
 import { DISCOVERY_DISCLOSURE } from '../discovery';
 import {
   MATCH_DETAIL_DISCLOSURE,
-  NOTICE_ACK_FLOOR,
   NOTICE_VERSION,
   UNDER_14_PRIVACY_LINE,
   OPTIONAL_CONSENT_NOTE,
@@ -11,7 +10,11 @@ import {
   noticeAckHolds,
   noticeFor,
 } from './notice';
+import { NOTICE_UNREAD } from './gate';
 import { scheduleOf } from './schedule';
+
+/** 서버의 재확인 기준(`public.notice_ack_floor()`, ADR 0237) — 마이그레이션의 값과 같은지는 `scripts/notice-floor.test.ts` 가 잰다 */
+const FLOOR = 'notice-v18';
 
 /**
  * 일정은 **표에서 온다.** 코드 상수였다가 옮겼다 — 상수는 바꾸려면 배포해야 하고,
@@ -27,6 +30,7 @@ describe('일정 한 줄을 안내로', () => {
     operatorName: '만세력 운영자',
     operatorOfficer: '홍길동',
     operatorContact: 'ops@example.com',
+    ackFloor: FLOOR,
   };
 
   /** 파기 기한을 **여기서 짓지 않는다** — DB 가 낸 값을 그대로 든다 */
@@ -35,7 +39,15 @@ describe('일정 한 줄을 안내로', () => {
       scheduleId: 7,
       dates: { endsOn: '2026-10-31', purgeBy: '2026-11-30', purgeWithinDays: 30 },
       operator: { name: '만세력 운영자', officer: '홍길동', contact: 'ops@example.com' },
+      ackFloor: FLOOR,
     });
+  });
+
+  /** 기준을 못 읽으면 번들의 값으로 갈음하지 않고, 없는 일정(`null`)으로도 내지 않는다 — 못 읽은 일정이다(ADR 0078 · 0237) */
+  it('재확인 기준이 없거나 읽을 수 없으면 못 읽은 일정이다', () => {
+    expect(scheduleOf({ ...full, ackFloor: undefined })).toBe(NOTICE_UNREAD);
+    expect(scheduleOf({ ...full, ackFloor: null })).toBe(NOTICE_UNREAD);
+    expect(scheduleOf({ ...full, ackFloor: 'notice-for-tests' })).toBe(NOTICE_UNREAD);
   });
 
   /**
@@ -255,8 +267,8 @@ describe('사진 저장소', () => {
   });
 
   /* v9 당시에는 기준을 v8 에 두었다(운영자 결정 2026-10-23). 그 뒤 v13(ADR 0220) · v14(대화가 유일한 흐름) · v15(공개 서비스 · 카카오, ADR 0225 추기) · v16(카카오계정 이메일 · 계정 합침, ADR 0224 추기)의 내용 개정이 기준을 올렸다. v17 은 내용 개정이지만 기준을 두었다(운영자 답 2026-11-07, ADR 0234). v18(앱 푸시, ADR 0236)은 ADR 0095 대로 기준을 올린다 */
-  it('재확인 기준은 v18 이다 — 앱 푸시의 내용 개정', () => {
-    expect(NOTICE_ACK_FLOOR).toBe('notice-v18');
+  it('기준 판본은 지금 판본을 넘지 않는다 — 넘으면 웹 · 앱의 가입이 다 거절된다', () => {
+    expect(noticeAckHolds(NOTICE_VERSION, FLOOR)).toBe(true);
   });
 });
 
@@ -398,7 +410,7 @@ it('가입 안내가 대화 · 상세 궁합 줄을 그대로 싣고 옛 공개 
 
 /** v14 는 내용 개정이다 — 국외 이전의 시기와 상대에게 보이는 것이 달라져 v13 을 본 사람도 다시 본다(ADR 0095) */
 it('v13 을 본 사람도 v14 를 다시 본다', () => {
-  expect(noticeAckHolds('notice-v13')).toBe(false);
+  expect(noticeAckHolds('notice-v13', FLOOR)).toBe(false);
 });
 
 /**
@@ -411,7 +423,7 @@ describe('공개 서비스 · 카카오 로그인 (notice-v15)', () => {
   const text = JSON.stringify(sections);
 
   it('v14 를 본 사람도 v15 를 다시 본다', () => {
-    expect(noticeAckHolds('notice-v14')).toBe(false);
+    expect(noticeAckHolds('notice-v14', FLOOR)).toBe(false);
   });
 
   it('초대 · 비공개 베타를 말하지 않는다', () => {
@@ -433,7 +445,7 @@ describe('카카오계정 이메일 · 계정 합침 (notice-v16)', () => {
   const text = JSON.stringify(sections);
 
   it('v15 를 본 사람도 v16 을 다시 본다', () => {
-    expect(noticeAckHolds('notice-v15')).toBe(false);
+    expect(noticeAckHolds('notice-v15', FLOOR)).toBe(false);
   });
 
   it('카카오에서 회원번호와 이메일(필수)을 받고 그 쓰임을 말한다', () => {
@@ -496,7 +508,7 @@ describe('애플 로그인 · 이용 정지 기록', () => {
 
   /* 기준은 그 뒤 v14(대화가 유일한 흐름)가 다시 올렸다 — v12 를 본 사람이 다시 본다는 것만 여기서 본다 */
   it('받는 항목 · 보유기간이 달라져 기준도 오른다 — v12 를 본 사람도 다시 본다', () => {
-    expect(noticeAckHolds('notice-v12')).toBe(false);
+    expect(noticeAckHolds('notice-v12', FLOOR)).toBe(false);
   });
 });
 
@@ -511,9 +523,9 @@ describe('운영 기간 · Play 결제 · 구매 제한 기록 · 만 14세 (not
 
   /* v17 당시에는 v16 을 본 회원이 다시 안 봤다. v18(앱 푸시)이 기준을 올려 v16 · v17 을 본 회원도 이제 한 번 다시 본다 */
   it('v17 은 기준을 올리지 않았다 — 그 뒤 v18 이 올렸다', () => {
-    expect(noticeAckHolds('notice-v17')).toBe(false);
-    expect(noticeAckHolds('notice-v16')).toBe(false);
-    expect(noticeAckHolds('notice-v18')).toBe(true);
+    expect(noticeAckHolds('notice-v17', FLOOR)).toBe(false);
+    expect(noticeAckHolds('notice-v16', FLOOR)).toBe(false);
+    expect(noticeAckHolds('notice-v18', FLOOR)).toBe(true);
   });
 
   it('만 14세 미만의 가입 · 개인정보를 받지 않는다는 줄이 첫 절 끝에 선다', () => {
@@ -563,8 +575,8 @@ describe('풀이 완성 알림 (notice-v18)', () => {
   const lines = (title: string) => sections.find((section) => section.title === title)?.lines.join(' ') ?? '';
 
   it('v17 을 본 회원도 한 번 다시 본다', () => {
-    expect(noticeAckHolds('notice-v17')).toBe(false);
-    expect(noticeAckHolds('notice-v18')).toBe(true);
+    expect(noticeAckHolds('notice-v17', FLOOR)).toBe(false);
+    expect(noticeAckHolds('notice-v18', FLOOR)).toBe(true);
   });
 
   it('받는 것 · 싣지 않는 것 · 지우는 때 · 끄는 법을 한 절에 적는다', () => {

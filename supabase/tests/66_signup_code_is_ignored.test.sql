@@ -35,7 +35,7 @@ select pg_temp.acting((select kim from folks));
 
 /** 옛 문이면 열한 번 모두 `false` 였고 열한 번째는 「여러 번 잘못 입력했어요」로 막혔다. 첫 번째가 가입을 마치고 나머지는 다시 확인이다 */
 select is(
-  (select bool_and(public.complete_signup('NOPE' || lpad(i::text, 2, '0'), '김틀림', 'notice-v9', pg_temp.schedule_id(), false, false))
+  (select bool_and(public.complete_signup('NOPE' || lpad(i::text, 2, '0'), '김틀림', 'notice-v109', pg_temp.schedule_id(), false, false))
    from generate_series(1, 11) as i),
   true,
   '1. 없는 코드를 열한 번 보내도 매번 지난다');

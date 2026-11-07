@@ -55,6 +55,8 @@ select is(
 -- `20270109090000` 이 남긴 임시 호환이고 인연의 스위치(`20270106120000`)만 따른다 — OTA 전 깔린 앱이 로그인 전에도 읽는다. 걷히면 이 목록에서도 뺀다.
 -- 인연이 열려 있는가(`match_is_open()`, ADR 0222)는 앱의 첫 화면이 로그인 전에 인연 소개를 세울지 고르려고 읽는다 — 참 · 거짓 하나뿐이다. 로그인 전 사주 문단의 옛 문 `taste_passage(p_key)` 는
 -- 사람마다 쓰는 길(ADR 0143 — 문은 열쇠에만 열렸다)로 옮긴 뒤 `20261206090000` 이 걷었다(G-69).
+-- 받아 주는 가장 옛 안드로이드 빌드(`android_min_version_code()`, ADR 0237)는 앱이 켜질 때 로그인보다 먼저 읽는다 — 낮은 빌드는
+-- 로그인 화면도 안 세우고 업데이트 화면만 세운다. 수 하나뿐이다. 일정의 문이 함께 내는 재확인 기준(`notice_ack_floor`)은 새 문이 아니다.
 --
 -- 수가 아니라 **집합**을 잰다. 하나가 늘면 이름이 함께 드러나므로, 그때 물을 수 있다 —
 -- 「이 문이 로그인 앞에 서야 하는 까닭이 무엇인가」. 수만 재면 하나가 늘고 하나가 줄 때
@@ -63,11 +65,12 @@ select set_eq(
   $$select p.proname || '(' || pg_get_function_identity_arguments(p.oid) || ')'
     from pg_proc p join pg_namespace n on n.oid = p.pronamespace
     where n.nspname = 'public' and has_function_privilege('anon', p.oid, 'EXECUTE')$$,
-  $$values ('current_beta_schedule()'),
+  $$values ('android_min_version_code()'),
+           ('current_beta_schedule()'),
            ('match_is_open()'),
            ('match_talk_open()'),
            ('shared_reading(p_token text)')$$,
-  'anon 이 부를 수 있는 public 함수는 이 넷뿐이다');
+  'anon 이 부를 수 있는 public 함수는 이 다섯뿐이다');
 
 -- ---------------------------------------------------------------------------
 -- 3. 모든 표에 RLS 가 켜져 있다

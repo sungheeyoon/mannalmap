@@ -1,10 +1,13 @@
-import type { BetaDates, Operator } from './notice';
+import { NOTICE_UNREAD } from './gate';
+import { noticeEdition, type BetaDates, type Operator } from './notice';
 
-/** 지금 안내 한 벌 — 날짜와 **누가 약속하는가** */
+/** 지금 안내 한 벌 — 날짜와 **누가 약속하는가**, 그리고 서버의 재확인 기준 */
 export type BetaSchedule = {
   readonly scheduleId: number;
   readonly dates: BetaDates;
   readonly operator: Operator;
+  /** 이 판본 이상을 확인했으면 다시 묻지 않는다 — 원본은 DB 의 `public.notice_ack_floor()`(ADR 0237) */
+  readonly ackFloor: string;
 };
 
 /**
@@ -22,6 +25,7 @@ type ScheduleRow = {
   readonly operatorName: string | null | undefined;
   readonly operatorOfficer: string | null | undefined;
   readonly operatorContact: string | null | undefined;
+  readonly ackFloor: string | null | undefined;
 };
 
 /**
@@ -43,7 +47,7 @@ const filled = (value: unknown): string | null => {
  * `null` 을 「모른다」로 흘려보내지 않는다. 부르는 화면은 날짜를 못 받으면 안내를 세울
  * 수 없고, 그러면 스스로 「아직 시작할 수 없습니다」를 말한다(ADR 0024).
  */
-export function scheduleOf(row: ScheduleRow): BetaSchedule | null {
+export function scheduleOf(row: ScheduleRow): BetaSchedule | null | typeof NOTICE_UNREAD {
   /*
     **셋이 다 있어야 안내가 선다.** 날짜만 있고 연락처가 없으면 열람·정정·삭제를
     어디에 요구하는지 말할 수 없다 — 지키는 것이 없는 문장만 남는다. 반쪽은 안 낸다.
@@ -53,6 +57,14 @@ export function scheduleOf(row: ScheduleRow): BetaSchedule | null {
   const contact = filled(row.operatorContact);
   if (name === null || officer === null || contact === null) return null;
 
+  /*
+    **기준을 못 읽으면 일정을 못 읽은 것이다**(ADR 0078 · 0237) — 없는 것(`null`)이 아니다. 칸이 없는 것은 웹 · 앱이 마이그레이션보다 먼저
+    섰을 때다. 번들의 값으로 갈음하면 서버가 기준을 든 까닭이 없고, `null` 로 내면 관문이 회원 전원을 가입 화면의 「아직 시작할 수 없어요」로
+    보낸다. 못 읽은 것으로 내면 관문은 가입을 마친 사람을 들여보내고, 가입 화면은 못 읽은 까닭을 세운다(`gateFor`).
+  */
+  const floor = filled(row.ackFloor);
+  if (floor === null || noticeEdition(floor) === null) return NOTICE_UNREAD;
+
   return {
     scheduleId: row.scheduleId,
     dates: {
@@ -61,23 +73,27 @@ export function scheduleOf(row: ScheduleRow): BetaSchedule | null {
       purgeWithinDays: row.purgeWithinDays,
     },
     operator: { name, officer, contact },
+    ackFloor: floor,
   };
 }
 
-/** `current_beta_schedule` 이 내주는 칸 가운데 읽는 넷 — 칸 이름은 생성 타입과 같아야 문이 넘길 수 있다. 줄의 `operator_*` 칸은 안 읽는다 */
+/** `current_beta_schedule` 이 내주는 칸 가운데 읽는 다섯 — 칸 이름은 생성 타입과 같아야 문이 넘길 수 있다. 줄의 `operator_*` 칸은 안 읽는다 */
 type ScheduleDbRow = {
   readonly schedule_id: number;
   readonly ends_on: string;
   readonly purge_by: string;
   readonly purge_within_days: number;
+  /** 마이그레이션(`20270116090000`)보다 웹 · 앱이 먼저 서면 없다 */
+  readonly notice_ack_floor?: string | null;
 };
 
 /**
- * `current_beta_schedule` 의 답을 안내로 — 웹과 앱의 문이 함께 쓴다. 줄이 없으면 `null` 이다(문이 성공했고 일정이 없다).
+ * `current_beta_schedule` 의 답을 안내로 — 웹과 앱의 문이 함께 쓴다. 줄이 없으면 `null` 이다(문이 성공했고 일정이 없다). 줄은 있는데
+ * 재확인 기준을 못 읽으면 `NOTICE_UNREAD` 다 — 문은 그것을 못 읽은 답으로 옮긴다.
  *
  * 운영자는 줄이 아니라 부르는 쪽이 넘기는 상수 `PRIVACY_OPERATOR`(`src/lib/brand/business.ts`, ADR 0232)다 — `consent` 는 `brand` 를 부르지 않는다.
  */
-export function scheduleOfDbRow(rows: readonly ScheduleDbRow[] | null, operator: Operator): BetaSchedule | null {
+export function scheduleOfDbRow(rows: readonly ScheduleDbRow[] | null, operator: Operator): BetaSchedule | null | typeof NOTICE_UNREAD {
   const row = rows?.[0];
   if (row === undefined) return null;
   return scheduleOf({
@@ -88,5 +104,6 @@ export function scheduleOfDbRow(rows: readonly ScheduleDbRow[] | null, operator:
     operatorName: operator.name,
     operatorOfficer: operator.officer,
     operatorContact: operator.contact,
+    ackFloor: row.notice_ack_floor,
   });
 }

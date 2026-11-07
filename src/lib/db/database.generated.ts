@@ -3167,6 +3167,7 @@ export type Database = {
       }
       adult_check_must_pass: { Args: { p_user_id: string }; Returns: undefined }
       adult_check_passed: { Args: { p_user_id: string }; Returns: boolean }
+      android_min_version_code: { Args: never; Returns: number }
       app_push_token_limit: { Args: never; Returns: number }
       app_push_token_registered: { Args: { p_token: string }; Returns: boolean }
       approve_reading_order: {
@@ -3434,6 +3435,7 @@ export type Database = {
         Args: never
         Returns: {
           ends_on: string
+          notice_ack_floor: string
           operator_contact: string
           operator_name: string
           operator_officer: string
@@ -4154,6 +4156,8 @@ export type Database = {
         Args: { p_artifact_id: string; p_attempt: number; p_findings: Json }
         Returns: boolean
       }
+      notice_ack_floor: { Args: never; Returns: string }
+      notice_edition: { Args: { p_version: string }; Returns: number }
       notify_ops: {
         Args: { p_detail: string; p_kind: string }
         Returns: boolean
