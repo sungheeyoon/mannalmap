@@ -1,5 +1,3 @@
-import { rpcArgs } from '@db';
-import { userFacingDbMessage } from '@db-error';
 import {
   FEEDBACK_COMMENT,
   FEEDBACK_FOLDED_NOTE,
@@ -17,34 +15,15 @@ import {
   type IssueTag,
   type ReadingAnswer,
 } from '@reading/feedback';
-import { FEEDBACK_UNEXPECTED_NOTE } from '@reading/notes';
 import { useState, type ReactNode } from 'react';
 import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 
-import { supabase } from '@/auth/client';
-import { NOT_READY } from '@/auth/signup';
 import { Card, Paper, Tile } from '@/ui/surfaces';
 import { PrimaryButton, TextButton } from '@/ui/parts';
 import { COLOR, CONTROL, FONT, RADIUS, TYPE } from '@/ui/tokens';
 
 import type { ReadingTarget } from './api';
-
-/** 답을 남긴다 — 그 사람의 토큰으로 바로 부른다. 내 시도인지 · 동의했는지는 DB 가 본다(웹의 `submitReadingFeedback`) */
-async function leaveFeedback(runId: string, answer: ReadingAnswer): Promise<{ ok: true } | { ok: false; message: string }> {
-  if (supabase === null) return { ok: false, message: NOT_READY };
-  const { error } = await supabase.rpc(
-    'leave_reading_feedback',
-    rpcArgs<'leave_reading_feedback'>({
-      p_run_id: runId,
-      p_usefulness: answer.usefulness,
-      p_perceived_fit: answer.perceivedFit,
-      p_felt_length: answer.feltLength,
-      p_issue_tags: [...answer.issueTags],
-      p_comment: answer.comment,
-    }),
-  );
-  return error !== null ? { ok: false, message: userFacingDbMessage(error, 'leave_reading_feedback', FEEDBACK_UNEXPECTED_NOTE) } : { ok: true };
-}
+import { leaveFeedback } from './feedback-writes';
 
 /**
  * 읽고 나서 답하는 자리 — **글 바로 아래**다. 물음 · 글자는 웹과 같은 `@reading/feedback` 이고 차례도 `app/me/reading/feedback.tsx` 와 같다.

@@ -2,12 +2,10 @@ import { useCallback, useEffect, useRef, useState, type ComponentRef } from 'rea
 import { KeyboardAvoidingView, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 
 import { isBlocked, type AccountState } from '@account/index';
-import { rpcArgs } from '@db';
-import { userFacingDbMessage } from '@db-error';
 import { INTRO_MAX, NICKNAME_AVAILABLE_NOTE, NICKNAME_MAX, NICKNAME_MIN, NICKNAME_TAKEN_NOTE, missingInProfile, missingNickname, nicknameKey, type PhotoUploadMode, type ProfileInput } from '@profile';
 
 import { supabase } from '@/auth/client';
-import { NOT_READY, checkNickname } from '@/auth/signup';
+import { checkNickname } from '@/auth/signup';
 import { Field, PrimaryButton } from '@/ui/parts';
 import { COLOR, FONT, RADIUS, TYPE } from '@/ui/tokens';
 import { TopBar } from '@/ui/top-bar';
@@ -17,20 +15,13 @@ import { AccountNotice, FailureLine, settingsText, useDoneNote } from './parts';
 import { PhotoGrid } from './photo-grid';
 import { BirthSection } from './birth-section';
 import { myPhotos, photoUploadMode, type MyPhoto } from './photos';
-import { readAccount, type Answer } from './settings';
+import { saveProfile } from './profile';
+import { readAccount } from './settings';
 
 const NICKNAME_CHECK_AFTER_MS = 500;
 const READ_FAILED = '계정을 확인하지 못했어요.';
 
 type Loaded = { state: AccountState; current: ProfileInput | null; photos: readonly MyPhoto[]; uploads: PhotoUploadMode; userId: string | null } | { failed: true };
-
-async function saveProfile(profile: ProfileInput): Promise<Answer> {
-  const missing = missingInProfile(profile);
-  if (missing !== null) return { ok: false, message: missing };
-  if (supabase === null) return { ok: false, message: NOT_READY };
-  const { error } = await supabase.rpc('save_my_profile', rpcArgs<'save_my_profile'>({ p_nickname: profile.nickname.trim(), p_intro: profile.intro.trim() || null }));
-  return error !== null ? { ok: false, message: userFacingDbMessage(error, 'save_my_profile') } : { ok: true };
-}
 
 async function load(): Promise<Loaded> {
   const { state, row } = await readAccount<{ status: string; nickname: string | null; intro: string | null }>('status, nickname, intro');

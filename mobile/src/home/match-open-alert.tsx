@@ -1,32 +1,16 @@
 import { useEffect, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
-import { userFacingDbMessage } from '@db-error';
 import { MATCH_OPEN_ALERT_ASK, MATCH_OPEN_ALERT_ASKED, MATCH_OPEN_ALERT_TITLE } from '@matching/copy';
 import { MATCH_OPEN_ALERT_BUTTON, matchOpenAlertStands } from '@matching/opening';
 
-import { supabase } from '@/auth/client';
 import { NOT_READY } from '@/auth/signup';
-import { useMatchOpen } from '@/matching/opening';
+import { readMatchOpenAlert, setMatchOpenAlert, useMatchOpen } from '@/matching/opening';
 import { Button } from '@/ui/buttons';
 import { Icon } from '@/ui/icons';
 import { settled } from '@/ui/settled';
 import { CardFrame } from '@/ui/surfaces';
 import { COLOR, FONT, RADIUS, TYPE } from '@/ui/tokens';
-
-/** 내가 신청했는가 — 못 읽으면 `null` 이고 줄이 안 선다(웹의 `readMatchOpenAlert`) */
-async function readMatchOpenAlert(): Promise<boolean | null> {
-  if (supabase === null) return null;
-  const { data, error } = await supabase.rpc('my_match_open_alert');
-  return error === null ? data === true : null;
-}
-
-/** 신청 · 취소 — 판정은 DB 의 문이 한다(웹의 `setMatchOpenAlert`). 실패면 사람이 읽을 한 문장 */
-async function setMatchOpenAlert(wanted: boolean): Promise<string | null> {
-  if (supabase === null) return NOT_READY;
-  const { error } = await supabase.rpc('set_match_open_alert', { p_wanted: wanted });
-  return error === null ? null : userFacingDbMessage(error, 'set_match_open_alert');
-}
 
 /**
  * **인연이 닫힌 동안 홈의 한 줄 — 「열리면 알려 주세요」**(ADR 0223) — 웹의 `app/me/home/match-open-alert.tsx` 와 같은 글자 · 같은 갈래다.

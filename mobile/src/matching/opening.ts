@@ -1,9 +1,11 @@
 import { router } from 'expo-router';
 import { useEffect, useState } from 'react';
 
+import { userFacingDbMessage } from '@db-error';
 import { MATCH_CLOSED_HOME, matchClosedDetours } from '@matching/opening';
 
 import { supabase } from '@/auth/client';
+import { NOT_READY } from '@/auth/signup';
 import { settled } from '@/ui/settled';
 
 /**
@@ -19,6 +21,20 @@ export async function readMatchOpen(): Promise<boolean | null> {
     console.error('match_is_open', thrown);
     return null;
   }
+}
+
+/** 열리면 알려 달라고 신청했는가(ADR 0223) — 못 읽으면 `null` 이고 홈의 그 줄이 안 선다(웹의 `readMatchOpenAlert`, `app/match-opening.ts`) */
+export async function readMatchOpenAlert(): Promise<boolean | null> {
+  if (supabase === null) return null;
+  const { data, error } = await supabase.rpc('my_match_open_alert');
+  return error === null ? data === true : null;
+}
+
+/** 신청 · 취소 — 판정은 DB 의 문이 한다(웹의 `setMatchOpenAlert`, `app/me/home/actions.ts`). 실패면 사람이 읽을 한 문장 */
+export async function setMatchOpenAlert(wanted: boolean): Promise<string | null> {
+  if (supabase === null) return NOT_READY;
+  const { error } = await supabase.rpc('set_match_open_alert', { p_wanted: wanted });
+  return error === null ? null : userFacingDbMessage(error, 'set_match_open_alert');
 }
 
 /** 화면이 그리는 값 — 모르는 동안 · 못 읽었으면 `null` 이고, 탭 · 입구는 닫힌 쪽으로 선다(`tabsWhileShut` · `matchEntriesStand`) */

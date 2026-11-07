@@ -29,6 +29,17 @@ export type WarningNotice = {
 };
 
 /**
+ * `my_warning_notice` 의 줄을 안내로 — 웹의 문(`app/me/warning/notice.ts`)과 앱의 문(`mobile/src/home/warning.ts`)이 함께 쓴다(G-143).
+ * 줄이 없으면(확인할 경고가 없다) `null` 이다. 가장 오래된 하나만 오므로 첫 줄만 본다.
+ */
+export const warningNoticeOf = (
+  rows: readonly { readonly warning_ref: string; readonly category: string; readonly warned_on: string }[] | null,
+): WarningNotice | null => {
+  const row = rows?.[0];
+  return row === undefined ? null : { ref: row.warning_ref, category: row.category, warnedOn: row.warned_on };
+};
+
+/**
  * 경고한 날 — 앱의 다른 날짜와 같은 표기(「2026년 9월 24일」, `readingDate` · 채팅의 날짜). 문이 이미 한국 날짜로 잘라
  * 내주므로 여기서는 시간대를 옮기지 않는다 — 자정 언저리에 하루가 밀리지 않게 UTC 의 그날로 읽는다.
  */
