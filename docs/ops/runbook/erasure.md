@@ -41,21 +41,21 @@ select * from public.forget_user('<user uuid>');
 다시 로그인해 새로 가입할 수 있다. 정지된 채 지운 로그인은 1년 동안 다시 가입하면 정지가 이어진다(아래 「제재 기록」, ADR 0218) —
 그래도 다른 로그인 계정은 못 가린다.
 
-### 종료일이 되면 — **저절로 닫힌다**
+### 서비스를 끝낼 때 — **일정 줄의 종료일은 아무것도 닫지 않는다**
 
-종료일이 지나면 `is_active_account()` 가 거짓이 되어 discovery·요청·수락·풀이 생성·설문이
-한꺼번에 닫히고, `/me` 아래는 「비공개 테스트가 끝났습니다」로 선다. 운영자가 그날 무엇을
-누르지 않아도 된다 — 날짜가 집행한다.
+**2026-11-07 부터 종료일이 지나도 닫히지 않는다**(ADR 0234) — `20270114095000` 을 `db push` 해 `beta_is_over()` 가 늘 거짓이고, 그래서
+`is_active_account()` 도 날짜를 묻지 않는다. 웹 관문(`notice-v17`, 같은 날 02:37 KST 배포)도 그 날을 보지 않는다. 예외 하나 — 2026-11-02 의 옛 내부 테스트 빌드는
+앱 안에서 종료일을 견줘 12-01 부터 닫힌다(운영자가 받아들였다, #1050 댓글).
+
+서비스를 실제로 끝내는 일은 약관 제17조의2 의 30일 공지 · 정산을 거치는 결정이고 배포가 함께 간다 — 코드 상수 `SERVICE_ENDED_ON`(`src/lib/consent/gate.ts`)과
+`beta_is_over()` 의 몸을 함께 그날로 고친다. 그때 `/closed` 가 「서비스가 종료되었습니다」를 보인다.
 
 ```sql
--- 닫혔는지 본다
+-- 지금은 늘 false 다
 select public.beta_is_over(), * from public.current_beta_schedule();
 ```
 
-미루려면 새 줄을 넣는다(`docs/ops/runbook/signup.md` 「테스트 시작하기」). 넣는 순간 다시 열리고, **모두가 안내를
-다시 본다** — 기간이 바뀌는 것은 알린 내용이 바뀌는 것이다.
-
-파기는 저절로 안 된다. 아래를 손으로 돈다.
+파기는 저절로 안 된다. 끝낸 뒤 아래를 손으로 돈다.
 
 **확인 전 — Supabase Free 의 저활동 일시정지.** Free 는 한 주 동안 데이터베이스 활동이 적은 프로젝트를 멈춘다
 (<https://supabase.com/docs/guides/platform/free-project-pausing>, 2026-10-22 확인). 멈춘 동안 `pg_cron` 의 보존 · 파기 잡(`docs/ops/runbook/jobs.md`
@@ -435,8 +435,8 @@ select jobname, schedule, active from cron.job where jobname = 'sanction-retenti
 
 정지 기록과 같은 꼴이다(위 「제재 기록」). 마이그레이션 `20270114100000`(회수한 장수의 `20270114090000` 과 따로다). 기간(1년)은 `retention.store_restriction_period()` 한 곳이다.
 
-**배포 순서** — `db push` 는 `20270114095000`(#1050) 뒤, 처리방침 notice-v17(#1050 의 `src/lib/consent/notice.ts` 「구매 제한 기록은 따로 둡니다」 절)이
-배포되는 때와 같거나 그 뒤다(ADR 0098 「알리기 전에 남기지 않는다」). 앱 · 웹은 이 기록을 부르지 않으므로 앱과의 순서는 없다.
+**올렸다(2026-11-07)** — 처리방침 notice-v17 「구매 제한 기록은 따로 둡니다」를 02:37 KST 에 배포한 뒤 02:55 에 `db push` 했다(ADR 0098 「알리기 전에 남기지 않는다」).
+옮긴 줄 0, 크론 `store-restriction-retention-purge` 는 `13 5 * * *` · 켜짐, 표의 RLS 켜짐. 앱 · 웹은 이 기록을 부르지 않으므로 앱과의 순서는 없다.
 
 - **남는 때** — 구매 제한이 걸린 채(마지막 이력이 「건다」) `auth.users` 행이 지워질 때(트리거 `store_restriction_outlives_the_leaver`). 크론의 처분이든 `forget_user` 든 같다.
   제한이 풀린 계정 · 한 번도 제한되지 않은 계정은 안 남는다. 든 것은 이메일(소문자) · 로그인 식별값 · 제한 갈래 · 건 운영자 · 건 시각 · 처분일 · 무효마다 시각 · Google 의 갈래 셋(사유 ·
