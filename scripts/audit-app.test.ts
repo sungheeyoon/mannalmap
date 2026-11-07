@@ -41,7 +41,8 @@ describe('앱 의존성 감사의 예외', () => {
 
   it('예외 파일은 줄마다 GHSA id · 패키지 · 사유 · 걷을 조건 · 결정을 든다', () => {
     const list = exceptionsOf(readFileSync(join(ROOT, 'mobile', 'audit-exceptions.json'), 'utf8'));
-    expect(list.map((one: { id: string }) => one.id)).toEqual(['GHSA-mrhx-c7xc-m3w5']);
+    /* zod 의 예외는 Expo SDK 58 판 맞춤(2026-11-07)으로 감사에서 사라져 걷었다 — 지금 예외는 없다 */
+    expect(list.map((one: { id: string }) => one.id)).toEqual([]);
     expect(() => exceptionsOf('{"exceptions":[{"id":"GHSA-x","package":"zod","reason":"","until":"u","decided":"d"}]}')).toThrow(/reason/);
     expect(() => exceptionsOf('{"exceptions":[{"id":"CVE-1","package":"zod","reason":"r","until":"u","decided":"d"}]}')).toThrow(/GHSA/);
     expect(() => exceptionsOf('{}')).toThrow(/exceptions/);
