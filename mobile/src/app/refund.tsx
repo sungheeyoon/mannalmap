@@ -6,6 +6,7 @@ import { BUSINESS_INFO } from '@brand/business';
 import { REFUND_TERMS_POINTER, refundPolicyFor } from '@brand/refund';
 
 import { FinePrint, InfoScreen, LegalHead } from '@/info/frame';
+import { LatestOnWeb } from '@/info/latest-on-web';
 import { LegalBody } from '@/info/legal-body';
 import { PoliciesLink } from '@/info/policy-links';
 import { COLOR, FONT } from '@/ui/tokens';
@@ -17,6 +18,7 @@ export default function RefundScreen() {
   return (
     <InfoScreen title="환불정책" fallback={from === 'credits' ? '/me/credits' : '/'}>
       <LegalHead title={`${SERVICE_NAME} 환불정책`} note={policy.effectiveDate ? '시행일 ' + policy.effectiveDate : null} />
+      <LatestOnWeb path="/refund" />
       <LegalBody document={policy} />
       <FinePrint>
         {REFUND_TERMS_POINTER.before}

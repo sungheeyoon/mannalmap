@@ -3,6 +3,7 @@ import { BUSINESS_INFO } from '@brand/business';
 import { termsFor } from '@brand/terms';
 
 import { InfoLine, InfoScreen, LegalHead } from '@/info/frame';
+import { LatestOnWeb } from '@/info/latest-on-web';
 import { LegalBody } from '@/info/legal-body';
 import { PoliciesLink } from '@/info/policy-links';
 import { SITE_URL } from '@/site';
@@ -14,6 +15,7 @@ export default function TermsScreen() {
   return (
     <InfoScreen title="이용약관" fallback="/">
       <LegalHead title={`${SERVICE_NAME} 이용약관`} note={terms?.effectiveDate ? '시행일 ' + terms.effectiveDate : null} />
+      <LatestOnWeb path="/terms" />
       {terms === null ? (
         <Card>
           <InfoLine>화면을 불러오지 못했어요</InfoLine>

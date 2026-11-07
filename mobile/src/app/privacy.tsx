@@ -6,6 +6,7 @@ import { PRIVACY_INTRO, PRIVACY_OPTIONAL_TITLE, PRIVACY_RIGHTS_LINES, PRIVACY_RI
 
 import { readSchedule, type ScheduleRead } from '@/auth/schedule';
 import { Clause, Dot, FinePrint, InfoLine, InfoScreen, LegalHead } from '@/info/frame';
+import { LatestOnWeb } from '@/info/latest-on-web';
 import { PoliciesLink } from '@/info/policy-links';
 import { COLOR, FONT, TYPE } from '@/ui/tokens';
 import { SecondaryButton } from '@/ui/parts';
@@ -50,6 +51,7 @@ export default function PrivacyScreen() {
   return (
     <InfoScreen ref={scroller} title="처리방침" fallback="/">
       <LegalHead title="개인정보 처리방침" note={PRIVACY_INTRO} />
+      <LatestOnWeb path="/privacy" />
 
       {schedule === null ? null : !schedule.ok ? (
         <Card style={styles.failed}>
