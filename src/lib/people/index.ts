@@ -146,6 +146,24 @@ export function personSlotsFrom(
   return one === undefined ? null : { limit: one.person_limit, used: one.used, remaining: one.remaining };
 }
 
+/** 내 사주를 등록했는가와, 등록하면 설 이름 */
+export type SelfPersonState = {
+  readonly saved: boolean;
+  /**
+   * 내 사주의 이름은 **닉네임이다** — 등록할 때 DB 가 닉네임으로 적고, 닉네임을 고치면 함께 옮는다.
+   * 그래서 「이 사주가 내 사주 맞나요?」의 카드도 적은 이름이 아니라 이 이름으로 선다. 가입 전이면 `null`.
+   */
+  readonly nickname: string | null;
+};
+
+/**
+ * `app_user` 의 `self_person_id, nickname` 한 줄을 그 값으로 — 웹의 문(`app/self-person-state.ts`)과 앱의 문
+ * (`mobile/src/people/self-person.ts`)이 함께 쓴다(G-143). 계정 줄이 없으면(가입 전) 등록하지 않은 것이다.
+ */
+export const selfPersonStateOf = (
+  row: { readonly self_person_id: string | null; readonly nickname: string | null } | null,
+): SelfPersonState => ({ saved: row !== null && row.self_person_id !== null, nickname: row?.nickname ?? null });
+
 /**
  * 자리가 모자라서 못 저장할 때 하는 말 — **모자라지 않으면 `null`.**
  *

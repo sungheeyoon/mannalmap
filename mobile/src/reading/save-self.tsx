@@ -14,6 +14,7 @@ import { readGate } from '@/home/gate';
 import { useMatchOpen } from '@/matching/opening';
 import { goHome } from '@/info/go-home';
 import { addPerson, readSlots } from '@/people/data';
+import { readSelfPerson } from '@/people/self-person';
 import { SameChartAsk, type SameChartQuestion } from '@/people/same-chart-ask';
 import { settled } from '@/ui/settled';
 import { Icon } from '@/ui/icons';
@@ -46,8 +47,7 @@ function useSaveContext(): SaveContext | null {
           const gate = await readGate();
           /* 관문은 세션이 없으면 서버를 안 부른다 — 정책이 빈 답을 내 「내 사주가 없다」로 읽히지 않게 여기서 갈린다 */
           if (gate.kind === 'out' || gate.kind === 'signup' || supabase === null) return { state: 'out' };
-          const [account, slots] = await Promise.all([supabase.from('app_user').select('self_person_id, nickname').maybeSingle(), readSlots()]);
-          const self = account.error !== null ? null : { saved: account.data !== null && account.data.self_person_id !== null, nickname: account.data?.nickname ?? null };
+          const [self, slots] = await Promise.all([readSelfPerson(supabase), readSlots()]);
           return { state: 'in', self, slots };
         })(),
         'useSaveContext',
