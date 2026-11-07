@@ -70,6 +70,13 @@ describe('공유 번호 — 늦게 연 PR 이 겹침을 알린다 (ADR 0238)', (
     expect(answer.lines.join('\n')).toContain('다음 빈 번호는 0240');
   });
 
+  it('한 PR 에서 같은 갈래가 둘 겹치면 서로 다른 다음 번호를 내준다', async () => {
+    const answer = await run(1066, { 1060: [adr('0238'), adr('0239')], 1066: [adr('0238'), adr('0239')] });
+    const text = answer.lines.join('\n');
+    expect(text).toContain('ADR 번호 0238 은 먼저 연 #1060(PR 1060) 이 이미 잡았다 — 다음 빈 번호는 0240');
+    expect(text).toContain('ADR 번호 0239 은 먼저 연 #1060(PR 1060) 이 이미 잡았다 — 다음 빈 번호는 0241');
+  });
+
   it('번호가 다르면 통과한다', async () => {
     const answer = await run(1066, { 1060: [adr('0238'), gapRow('G-152'), copySection('settings-18')], 1066: [adr('0239'), gapRow('G-153'), copySection('public-16'), copySection('settings-19')] });
     expect(answer).toEqual({ code: 0, lines: ['공유 번호가 겹치지 않는다 — 이 PR 이 더한 번호 4개 · 열린 다른 PR 1개'] });
@@ -109,7 +116,14 @@ describe('공유 번호 — PR 이 새로 더한 번호만 센다', () => {
     const retitled: File = { filename: 'docs/adr/0237-new-title.md', status: 'renamed', previous_filename: 'docs/adr/0237-old-title.md' };
     const removed: File = { filename: 'docs/adr/0100-old.md', status: 'removed' };
     const renumbered: File = { filename: 'docs/adr/0239-a.md', status: 'renamed', previous_filename: 'docs/adr/0238-a.md' };
-    expect(numbersAdded([moved, amended, retitled, removed, renumbered])).toEqual({ added: [{ kind: 'gap', key: 'G-152' }, { kind: 'adr', key: '0239' }], blind: [] });
+    expect(numbersAdded([moved, amended, retitled, removed, renumbered])).toEqual({ added: [{ kind: 'adr', key: '0239' }, { kind: 'gap', key: 'G-152' }], blind: [] });
+  });
+
+  it('모드만 바꾼 파일은 새 번호가 아니고, 문구 대장 절을 무리 파일 사이로 옮긴 것도 아니다', () => {
+    const mode: File = { filename: 'docs/adr/0100-x.md', status: 'changed' };
+    const from: File = { filename: 'docs/product/copy-ledger.md', status: 'modified', patch: '@@\n-## settings-16 옮긴 절' };
+    const to: File = { filename: 'docs/product/copy-ledger/settings.md', status: 'modified', patch: '@@\n+## settings-16 옮긴 절' };
+    expect(numbersAdded([mode, to, from])).toEqual({ added: [], blind: [] });
   });
 
   it('머리 대장의 절은 `all-NN` 이고, 패치가 없는 대장 파일은 못 본 것으로 든다', () => {
@@ -131,7 +145,11 @@ describe('공유 번호 — verify 의 gate 가 PR 에서 돈다', () => {
   it('gate 는 PR 목록을 읽기만 하고, 앞 차선의 결과와 상관없이 검사를 돈다', () => {
     expect(gate).toMatch(/permissions:\n\s+contents: read\n\s+pull-requests: read\n/);
     expect(gate).toContain('run: node scripts/shared-numbers.mjs');
-    expect(gate).toContain("if: ${{ !cancelled() && github.event_name == 'pull_request' }}");
+    expect(gate).toMatch(/if: \$\{\{ !cancelled\(\) && github\.event_name == 'pull_request' && steps\.numbers-checkout\.outcome == 'success' && steps\.numbers-node\.outcome == 'success' \}\}\n {8}env:\n(?: {10}.+\n)+ {8}run: node scripts\/shared-numbers\.mjs/);
+    // 받기가 실패해도 gate 는 닫히지 않는다 — 두 받기 단계는 continue-on-error 다
+    expect(gate.match(/id: numbers-(?:checkout|node)\n {8}continue-on-error: true\n/g)?.length).toBe(2);
+    // 차선 실패를 모으는 단계는 공유 번호 단계가 붉어도 돈다
+    expect(gate).toContain("- if: ${{ !cancelled() && (contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled')) }}");
     expect(gate).toContain('PR_NUMBER: ${{ github.event.pull_request.number }}');
     expect(gate).toContain('GH_TOKEN: ${{ github.token }}');
   });

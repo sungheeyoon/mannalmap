@@ -30,27 +30,31 @@ const GAP_ROW = /^\| (G-\d+) \|/;
 const COPY_HEADING = /^## ([a-z]+-\d{2}) /;
 
 /**
- * 패치에서 더한 줄의 열쇠 가운데 지운 줄에 없는 것 — 줄을 고치거나 옮긴 것은 `-` 와 `+` 에 함께 서므로 새 번호가 아니다.
+ * 패치의 `+` · `-` 줄에 선 열쇠.
  *
  * @param {string} patch
  * @param {RegExp} line
  */
-function keysAddedIn(patch, line) {
-  const added = new Set();
-  const removed = new Set();
+function keysIn(patch, line) {
+  const added = [];
+  const removed = [];
   for (const raw of patch.split('\n')) {
     if (raw.startsWith('+++') || raw.startsWith('---')) continue;
     const match = line.exec(raw.slice(1));
     if (match === null) continue;
-    if (raw.startsWith('+')) added.add(match[1]);
-    else if (raw.startsWith('-')) removed.add(match[1]);
+    if (raw.startsWith('+')) added.push(match[1]);
+    else if (raw.startsWith('-')) removed.push(match[1]);
   }
-  return [...added].filter((key) => !removed.has(key));
+  return { added, removed };
 }
 
+/** 새 파일로 세는 GitHub 의 상태 — `modified`(덧을 단 ADR) · `changed`(모드만) · `unchanged` · `removed` 는 아니다 */
+const NEW_FILE = new Set(['added', 'copied', 'renamed']);
+
 /**
- * PR 이 바꾼 파일(GitHub 의 `pulls/{n}/files` 한 줄씩)에서 그 PR 이 새로 더한 공유 번호. 패치가 없는 대장 파일(너무 큰 diff)은
- * `blind` 에 든다 — 그 PR 의 대장 번호는 못 본다.
+ * PR 이 바꾼 파일(GitHub 의 `pulls/{n}/files` 한 줄씩)에서 그 PR 이 새로 더한 공유 번호. 대장은 `+` 줄의 열쇠 가운데 같은 대장의
+ * `-` 줄에 없는 것이다 — 줄을 고치거나 옮기면(문구 대장은 무리 파일 사이로 옮겨도) 둘 다에 선다. 패치가 없는 대장 파일(너무 큰
+ * diff)은 `blind` 에 든다 — 그 PR 의 대장 번호는 못 본다.
  *
  * @param {{ filename: string, status: string, patch?: string, previous_filename?: string }[]} files
  * @returns {{ added: { kind: keyof typeof KINDS, key: string }[], blind: string[] }}
@@ -58,22 +62,27 @@ function keysAddedIn(patch, line) {
 export function numbersAdded(files) {
   const added = [];
   const blind = [];
+  const ledgers = { gap: { added: new Set(), removed: new Set() }, copy: { added: new Set(), removed: new Set() } };
   for (const file of files) {
-    if (file.status === 'removed') continue;
     for (const [kind, pattern] of /** @type {const} */ ([['adr', ADR_FILE], ['migration', MIGRATION_FILE]])) {
       const key = pattern.exec(file.filename)?.[1];
-      // 있는 ADR 에 덧을 단 것(`modified`)과 제 파일의 이름만 바꾼 것(같은 번호)은 새 번호가 아니다
-      if (key === undefined || file.status === 'modified') continue;
+      if (key === undefined || !NEW_FILE.has(file.status)) continue;
+      // 제 파일의 이름만 바꾼 것(같은 번호)은 새 번호가 아니다
       if (file.previous_filename !== undefined && pattern.exec(file.previous_filename)?.[1] === key) continue;
       added.push({ kind, key });
     }
-    const ledger = file.filename === GAPS ? ['gap', GAP_ROW] : COPY_FILE.test(file.filename) ? ['copy', COPY_HEADING] : null;
-    if (ledger === null) continue;
+    const kind = file.filename === GAPS ? 'gap' : COPY_FILE.test(file.filename) ? 'copy' : null;
+    if (kind === null) continue;
     if (file.patch === undefined) {
-      blind.push(file.filename);
+      if (file.status !== 'removed') blind.push(file.filename);
       continue;
     }
-    for (const key of keysAddedIn(file.patch, ledger[1])) added.push({ kind: /** @type {'gap' | 'copy'} */ (ledger[0]), key });
+    const keys = keysIn(file.patch, kind === 'gap' ? GAP_ROW : COPY_HEADING);
+    for (const key of keys.added) ledgers[kind].added.add(key);
+    for (const key of keys.removed) ledgers[kind].removed.add(key);
+  }
+  for (const kind of /** @type {const} */ (['gap', 'copy'])) {
+    for (const key of ledgers[kind].added) if (!ledgers[kind].removed.has(key)) added.push({ kind, key });
   }
   return { added, blind };
 }
@@ -140,7 +149,10 @@ export function clashesOf(self, open, tree) {
   for (const mine of self.added) {
     const earlier = open.filter((pr) => pr.number < self.number && pr.added.some((one) => one.kind === mine.kind && one.key === mine.key));
     if (earlier.length === 0) continue;
-    clashes.push({ ...mine, prs: earlier.map((pr) => ({ number: pr.number, title: pr.title })), next: nextFree(mine, taken) });
+    const next = nextFree(mine, taken);
+    // 한 PR 에서 같은 갈래가 둘 겹치면 둘째는 첫째에 내준 번호 위다
+    taken.push({ kind: mine.kind, key: next });
+    clashes.push({ ...mine, prs: earlier.map((pr) => ({ number: pr.number, title: pr.title })), next });
   }
   return clashes;
 }

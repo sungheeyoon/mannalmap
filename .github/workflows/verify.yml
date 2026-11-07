@@ -445,13 +445,20 @@ jobs:
       contents: read
       pull-requests: read
     steps:
+      # 받기가 실패해도 gate 를 닫지 않는다 — 검사를 못 한 것은 API 를 못 읽은 것과 같은 갈래다(경고하고 통과)
       - if: ${{ !cancelled() && github.event_name == 'pull_request' }}
+        id: numbers-checkout
+        continue-on-error: true
         uses: actions/checkout@v7
       - if: ${{ !cancelled() && github.event_name == 'pull_request' }}
+        id: numbers-node
+        continue-on-error: true
         uses: actions/setup-node@v7
         with:
           node-version-file: .nvmrc
-      - if: ${{ !cancelled() && github.event_name == 'pull_request' }}
+      - if: ${{ !cancelled() && github.event_name == 'pull_request' && (steps.numbers-checkout.outcome != 'success' || steps.numbers-node.outcome != 'success') }}
+        run: echo '::warning::공유 번호 검사를 못 했다 — 저장소나 Node 를 못 받았다. 통과시킨다(ADR 0238)'
+      - if: ${{ !cancelled() && github.event_name == 'pull_request' && steps.numbers-checkout.outcome == 'success' && steps.numbers-node.outcome == 'success' }}
         env:
           PR_NUMBER: ${{ github.event.pull_request.number }}
           GH_TOKEN: ${{ github.token }}
