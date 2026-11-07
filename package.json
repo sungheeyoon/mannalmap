@@ -41,6 +41,7 @@
     "sweep:merged": "node scripts/sweep-merged.mjs",
     "sweep:docker": "node scripts/sweep-docker.mjs",
     "read-budget": "node scripts/read-budget.mjs",
+    "skills:check": "node scripts/skills-check.mjs",
     "test:flow": "node scripts/heavy.mjs node scripts/run-checks.mjs",
     "smoke:deploy": "node scripts/heavy.mjs node scripts/deploy-smoke.mjs",
     "verify": "npm test && npm run typecheck && npm run lint && npm run build"

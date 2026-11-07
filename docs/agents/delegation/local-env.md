@@ -132,3 +132,29 @@
    붉다 — 찍고 나서 지운 뒤 시험을 돈다 ② 지운 뒤 `.next` 도 지운다 — 남은 생성 타입이 없는 주소를 가리켜 타입 검사가 붉다
    ③ `/me` 의 시안 주소에서는 하단 독이 선다 — 대화방(독을 걷은 판)을 가린다. 그 판의 그림은 독이 없는 진짜 화면과 견주어 읽는다.
    PR 에 「꾸민 데이터로 찍었다」를 적는다.
+
+## 전역 스킬 — 저장소가 이름으로 부르는 것
+
+규약이 이름으로 부르는 스킬은 저장소가 아니라 사람의 홈(`~/.claude/skills` — `npx skills` 가 `~/.agents/skills` 에 받아 링크한다)에
+산다. 맥을 옮기면 따라오지 않는다 — 2026-11-07 이 맥에 `retro` 가 없었고 아무도 몰랐다. **`npm run skills:check`** 가 아래 표를 읽어
+`~/.claude/skills/<이름>/SKILL.md` 와 견주고, 없는 것과 까는 명령을 찍는다. 깔지는 않는다 — 까는 것은 운영자다. 표가 원본이고 스크립트
+(`scripts/skills-check.mjs`)는 이 표만 읽는다 — 이름을 더하면 줄 하나다.
+
+| 스킬 | 부르는 자리 | 출처 | 까는 명령 |
+| --- | --- | --- | --- |
+| `retro` | `docs/roles/coordinator.md` 「끝날 때 고치는 것」 · `docs/start.md` 「선순환」 3 · ADR 0146 | `mattpocock/skills` | `npx skills add mattpocock/skills@retro -g -y` |
+| `triage` | `docs/agents/issue-tracker.md` 「Pull requests as a triage surface」 · `docs/agents/triage-labels.md` | `mattpocock/skills` | `npx skills add mattpocock/skills@triage -g -y` |
+| `wayfinder` | `docs/agents/issue-tracker.md` 「Wayfinding operations」 | `mattpocock/skills` | `npx skills add mattpocock/skills@wayfinder -g -y` |
+| `wizard` | `scripts/aws-wizard.sh` 머리 — 마법사 라이브러리를 다시 낼 때 | `mattpocock/skills` | `npx skills add mattpocock/skills@wizard -g -y` |
+| `ego-browser` | 로컬 화면을 브라우저로 볼 때(`docs/notes/2026-10-03-ui-proposals.md`) | ego lite 앱 — 첫 실행 온보딩이 `~/.local/share/ego/ego-skills` 를 링크한다 | ego lite 앱을 깔고 첫 실행 온보딩을 마친다 |
+
+- **운영자만 부르는 것** — `retro` · `wayfinder` · `triage`(2026-11 버전)는 머리에 `disable-model-invocation: true` 가 있다. 에이전트는
+  스스로 부르지 못한다 — 운영자에게 `/<이름>` 을 청하거나 그 `SKILL.md` 를 읽고 절차를 따른다
+- **있어도 옛 버전일 수 있다** — 스크립트는 있는지만 확인한다. 2026-11-07 이 맥의 `triage` 는 2026-05-18 버전이라 `docs/agents/issue-tracker.md` 의
+  PR 표지를 모른다. 버전을 올리는 것은 `npx skills update <이름> -g -y`
+- **표에 넣지 않은 것** — 플러그인(`vercel` · `figma` · `pstack`)은 이 맥에 깔려 있지만 저장소 문서가 이름으로 부르지 않는다 — 스크립트도
+  확인하지 않는다. `/code-review` 는 Claude Code 내장을 쓴다 — `mattpocock/skills` 에도 같은 이름이 있고, 깔면 내장을 덮는다
+  (`docs/notes/2026-10-06-night-skills-and-read-budget.md`). `research`(`docs/notes/2026-10-07-reading-credit-refund-research.md`)는
+  한 번 쓴 기록이다. 운영자가 `retro` 와 함께 깐 `writing-for-agents` 는 저장소가 부르지 않는다
+- **이름이 바뀐 것**(2026-11-07 `mattpocock/skills`) — `to-issues` → `to-tickets` · `to-prd` → `to-spec` · `diagnose` → `diagnosing-bugs`,
+  `zoom-out` · `caveman` · `write-a-skill` 은 출처에 없다. 저장소 문서는 이 이름을 부르지 않는다 — 이 맥에 깔린 옛 이름은 그대로 돈다
