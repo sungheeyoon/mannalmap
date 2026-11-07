@@ -1127,7 +1127,7 @@ describe('CI 계획 — 앱 검사 (mobile 차선)', () => {
   const yml = readFileSync(resolve(__dirname, '../.github/workflows/verify.yml'), 'utf8');
 
   it('앱이 부르는 자리가 바뀐 PR 만 돈다 — 어느 단계든', () => {
-    for (const file of ['mobile/src/app/index.tsx', 'mobile/src/a.test.ts', 'mobile/package-lock.json', 'mobile/app.json', 'src/lib/saju/index.ts', 'src/lib/design/tokens.json', 'app/db-error.ts', 'src/lib/account/sign-in-again.ts', '.github/workflows/verify.yml', '.nvmrc']) {
+    for (const file of ['mobile/src/app/index.tsx', 'mobile/src/a.test.ts', 'mobile/package-lock.json', 'mobile/app.json', 'src/lib/saju/index.ts', 'src/lib/design/tokens.json', 'app/db-error.ts', 'src/lib/account/sign-in-again.ts', '.github/workflows/verify.yml', '.nvmrc', 'scripts/mobile-native.mjs']) {
       expect(beta([file]).lanes.mobile, file).toBe(true);
       expect(beta(['docs/prd.md', file]).lanes.mobile, file).toBe(true);
     }
@@ -1253,7 +1253,7 @@ describe('CI 계획 — 앱 검사 (mobile 차선)', () => {
 
   it('verify.yml 의 mobile job 은 mobile/ 에서 돌고, 앞이 붉어도 뒤가 돌며, 붉음을 삼키지 않는다', () => {
     const job = /\n {2}mobile:\n([\s\S]*?)\n {2}[a-z]+:\n/.exec(yml)?.[1] ?? '';
-    for (const run of ['npx expo lint', 'npx expo export --platform android --output-dir dist']) {
+    for (const run of ['npx expo lint', 'npx expo export --platform android --output-dir dist', 'node ../scripts/mobile-native.mjs']) {
       expect(job, run).toContain(`- run: ${run}\n        if: \${{ !cancelled() && steps.install.outcome == 'success' }}`);
     }
     expect(job).toContain('working-directory: mobile');
@@ -1266,6 +1266,7 @@ describe('CI 계획 — 앱 검사 (mobile 차선)', () => {
       'npx expo lint',
       'npx expo export --platform android --output-dir dist',
       'npx expo install --check',
+      'node ../scripts/mobile-native.mjs',
       'npx -y "npm@$MOBILE_LOCK_NPM" ci --dry-run --ignore-scripts',
     ]);
     // SDK 정합은 잠금 파일의 expo 가 든 표(`expo/bundledNativeModules.json`)로만 잰다 — Expo 서버의 최신 판과 견주면 아무것도 안 바꾼 PR 이

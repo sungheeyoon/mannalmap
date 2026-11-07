@@ -12,16 +12,22 @@
  *
  * 모델은 안 부른다 — 열쇠를 비우고 주소도 닫힌 포트로 돌린다. 저장소(S3)는 로컬에 없어 재지 않는다.
  */
-import { createClient } from '@supabase/supabase-js';
 import { execFileSync } from 'node:child_process';
 import { createHmac, randomUUID } from 'node:crypto';
 import { readFileSync, readdirSync, statSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
-import { startCheckServer } from './next-server.mjs';
-import { passNotice, clearMachineRunsFromToday, scheduleBeta, chartArgs, NOTICE_VERSION } from './notice.mjs';
-import { createChecks, sql } from './checks.mjs';
-import { worktreeStack } from '../src/lib/local-env.ts';
+import { stopIfMissing } from './preflight.mjs';
+
+// 패키지 · 스택이 없으면 여기서 고칠 명령을 찍고 선다. 그래서 아래 import 는 이 뒤에 푼다(`preflight.mjs`)
+stopIfMissing('check-mobile', fileURLToPath(new URL('..', import.meta.url)), ['root-modules', 'stack']);
+
+const { createClient } = await import('@supabase/supabase-js');
+const { startCheckServer } = await import('./next-server.mjs');
+const { passNotice, clearMachineRunsFromToday, scheduleBeta, chartArgs, NOTICE_VERSION } = await import('./notice.mjs');
+const { createChecks, sql } = await import('./checks.mjs');
+const { worktreeStack } = await import('../src/lib/local-env.ts');
 
 const status = JSON.parse(execFileSync('npx', ['supabase', 'status', '-o', 'json'], { encoding: 'utf8' }));
 const API = status.API_URL;

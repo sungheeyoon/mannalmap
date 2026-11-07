@@ -1,0 +1,91 @@
+/* groovylint-disable CatchException, CompileStatic, DuplicateStringLiteral, JavaIoPackageAccess */
+import groovy.json.JsonSlurper
+
+String fileName = 'package.json'
+String jsonRoot = 'react-native'
+String architectureCheckRegistration = 'RNCKakaoArchitectureCheckRegistered'
+String reactExtensionName = 'react'
+
+File _corePkg = file('../../core/package.json')
+File _pkg = file('../package.json')
+
+if (!_corePkg.exists()) {
+    throw new GradleException('Could not find the react-native-kakao/core package, have you installed it?')
+}
+if (!_pkg.exists()) {
+    throw new GradleException('Could not find the package.json')
+}
+
+rootProject.logger.info ":${project.name} ${fileName} found at ${_corePkg}"
+
+Object corePkg, pkg
+
+try {
+    corePkg = new JsonSlurper().parse(_corePkg)
+    ext.RNCKakaoSdkVersions = corePkg.sdkVersions.android
+    ext.RNCKakaoCorePkg = corePkg
+} catch (Exception ignored) {
+    throw new GradleException(":${project.name} failed to parse ${fileName} found at ${_corePkg}.")
+}
+
+try {
+    pkg = new JsonSlurper().parse(_pkg)
+    ext.RNCKakaoPkg = pkg
+} catch (Exception ignored) {
+    throw new GradleException(":${project.name} failed to parse ${fileName} found at ${_pkg}.")
+}
+
+ext.getWorkspaceProject = { name ->
+    Project ret
+    if (findProject(":@react-native-kakao_$name")) {
+        ret = project(":@react-native-kakao_$name")
+    } else if (findProject(":react-native-kakao_$name")) {
+        ret = project(":react-native-kakao_$name")
+    } else {
+        throw new GradleException("Could not find the react-native-kakao/$name package, have you installed it?")
+    }
+    return ret
+}
+
+ext.applyPlugins = {
+    project.pluginManager.apply('com.android.library')
+
+    // AGP 9 ships built-in Kotlin support and registers the `kotlin` extension
+    // itself. Applying the Kotlin plugin on top of it fails configuration with
+    // "Cannot add extension with name 'kotlin'". Only apply it when nothing has
+    // registered that extension yet.
+    if (project.extensions.findByName('kotlin') == null) {
+        project.pluginManager.apply('kotlin-android')
+    }
+
+    project.pluginManager.apply('com.facebook.react')
+}
+
+if (!rootProject.ext.has(architectureCheckRegistration)) {
+    rootProject.ext.set(architectureCheckRegistration, true)
+
+    gradle.projectsEvaluated {
+        rootProject.allprojects.findAll { appProject ->
+            appProject.pluginManager.hasPlugin('com.android.application') &&
+                appProject.extensions.findByName(reactExtensionName) != null
+        }.each { appProject ->
+            def reactExtension = appProject.extensions.findByName(reactExtensionName)
+            def reactNativePackage = reactExtension.reactNativeDir.file(fileName).get().asFile
+            def reactNativeVersion = new JsonSlurper().parse(reactNativePackage).version.tokenize('.')
+            int reactNativeMajor = reactNativeVersion[0] as int
+            int reactNativeMinor = reactNativeVersion[1] as int
+            boolean newArchitectureRequired = reactNativeMajor > 0 || reactNativeMinor >= 82
+            boolean newArchitectureEnabled = newArchitectureRequired ||
+                ['newArchEnabled', 'react.newArchEnabled'].any { propertyName ->
+                    appProject.findProperty(propertyName)?.toString()?.toBoolean()
+                }
+
+            if (!newArchitectureEnabled) {
+                throw new GradleException(
+                    '@react-native-kakao requires React Native\'s New Architecture. ' +
+                        'Set newArchEnabled=true or react.newArchEnabled=true.'
+                )
+            }
+        }
+    }
+}

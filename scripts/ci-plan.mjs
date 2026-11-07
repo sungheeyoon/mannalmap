@@ -70,7 +70,7 @@
  *
  * ## 앱 검사는 앱이 부르는 자리가 바뀔 때 켠다 (2026-10-31)
  *
- * `mobile` 차선은 `mobile/` 에서 `npm ci` · `tsc` · `expo lint` · 안드로이드 번들을 돈다. 뿌리 tsconfig 가 `mobile` 을 빼므로 그전까지 앱 파일의 타입 오류를 재는
+ * `mobile` 차선은 `mobile/` 에서 `npm ci` · `tsc` · `expo lint` · 안드로이드 번들 · 네이티브 의존 검사(`mobile-native.mjs`)를 돈다. 뿌리 tsconfig 가 `mobile` 을 빼므로 그전까지 앱 파일의 타입 오류를 재는
  * CI 가 없었다. 앱은 `src/lib` 와 `app/` 의 몇 파일을 함께 쓰므로 웹 쪽 수정도 앱을 깬다 — `MOBILE_REACH` 가 그 자리이고,
  * `scripts/mobile-closure.test.ts` 가 앱에서 import 를 따라 닿는 파일이 전부 여기 걸리는지 잰다. `audit` 처럼 단계와 따로 켠다.
  * 공개 출시 전에 `mobile/**` 만 바꾼 PR 은 `core` + `mobile` 이고 웹 e2e · 흐름을 건너뛴다(운영자 2026-10-31). 앱 밖 코드가 섞이면 전부다.
@@ -338,8 +338,11 @@ const POLICY = [/^docs\//, /\.md$/, /^\.claude\//, /^scripts\/[^/]+\.test\.ts$/]
 const ENGINE = [/^src\/lib\/saju\//, /^app\/saju\//];
 /** 의존성 목록 — 이것을 바꾼 PR 만 `audit` 이 머지를 막는다 */
 export const DEPENDENCY_LISTS = ['package.json', 'package-lock.json', 'mobile/package.json', 'mobile/package-lock.json'];
-/** 앱이 부르는 자리와 CI 자체 — 위 「앱 검사」. `app/` 은 파일로 적는다 — 앱이 닿는 것이 그 파일들뿐이고, 시험이 닫힘과 견준다 */
-const MOBILE_REACH = [/^mobile\//, /^src\/lib\//, /^app\/db-error\.ts$/, /^\.github\/workflows\//, /^\.nvmrc$/];
+/**
+ * 앱이 부르는 자리와 CI 자체 — 위 「앱 검사」. `app/` 은 파일로 적는다 — 앱이 닿는 것이 그 파일들뿐이고, 시험이 닫힘과 견준다.
+ * `scripts/mobile-native.mjs` 는 앱이 부르지 않지만 그 차선에서만 실제 의존에 대고 돈다 — 고치면 그 차선이 다시 잰다
+ */
+const MOBILE_REACH = [/^mobile\//, /^src\/lib\//, /^app\/db-error\.ts$/, /^\.github\/workflows\//, /^\.nvmrc$/, /^scripts\/mobile-native\.mjs$/];
 /** 문서는 앱을 안 바꾼다. 웹 쪽 시험은 앱에 안 닿지만 `mobile/` 의 시험은 앱의 `tsc` 가 함께 읽는다 */
 export const reachesMobile = (file) => matches(MOBILE_REACH, file) && !/\.md$/.test(file) && (file.startsWith('mobile/') || !/\.test\.tsx?$/.test(file));
 /**
