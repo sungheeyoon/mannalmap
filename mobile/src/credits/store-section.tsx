@@ -1,4 +1,4 @@
-import { router, useFocusEffect } from 'expo-router';
+import { useFocusEffect } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
@@ -20,6 +20,7 @@ import {
 import { STORE_PRODUCTS } from '@reading/store-products';
 import { storePurchaseNotice, type PurchaseReturn, type StorePurchaseNotice } from '@reading/store-purchase';
 
+import { legalPagesOpen, openLegalPage } from '@/info/legal-web';
 import { FailureLine, settingsText } from '@/settings/parts';
 import { CheckRow, PrimaryButton, TextButton } from '@/ui/parts';
 import { Card } from '@/ui/surfaces';
@@ -171,7 +172,7 @@ export function StoreSection({ onBought, returnTo }: { onBought: () => Promise<n
             </Text>
           ),
         )}
-        <TextButton label="자세히 알아보기" onPress={() => router.push('/refund?from=credits' as never)} />
+        {legalPagesOpen && <TextButton label="자세히 알아보기" onPress={() => openLegalPage('/refund')} />}
       </View>
 
       {done !== null && (

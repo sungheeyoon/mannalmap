@@ -24,6 +24,7 @@ import { MatchingSteps } from '@/auth/matching-steps';
 import { signOut } from '@/auth/sign-in';
 import { checkNickname, completeSignup, readSignup, UNREACHABLE, type SignupState } from '@/auth/signup';
 import { RequestDeletion } from '@/settings/leaving';
+import { legalPagesOpen, openLegalPage } from '@/info/legal-web';
 import { AccountNotice } from '@/settings/parts';
 import { Logo } from '@/ui/logo';
 import { CheckRow, Field, FieldLabel, PrimaryButton, SecondaryButton, TextButton } from '@/ui/parts';
@@ -202,7 +203,7 @@ function SignupForm({ form, onDone }: { form: Extract<SignupState, { kind: 'form
       <Tile tone={COLOR.surfaceSunken} style={styles.notice}>
         <View style={styles.noticeHead}>
           <Text style={styles.noticeTitle}>{SIGNUP_LABEL.noticeHead}</Text>
-          <TextButton label={SIGNUP_LABEL.privacy} onPress={() => router.push('/privacy')} />
+          {legalPagesOpen && <TextButton label={SIGNUP_LABEL.privacy} onPress={() => openLegalPage('/privacy')} />}
         </View>
         <NoticeLine>{SIGNUP_NOTICE_USE}</NoticeLine>
         <NoticeLine>{SIGNUP_NOTICE_KEEP}</NoticeLine>

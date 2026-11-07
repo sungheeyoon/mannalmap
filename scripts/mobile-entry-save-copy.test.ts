@@ -266,10 +266,13 @@ describe('결과 화면의 저장', () => {
   });
 });
 
-describe('앱에 있는 화면은 앱에서 연다', () => {
+/** 약관 셋은 웹의 현행 판을 앱 안 브라우저로 연다(ADR 0172 추기 2026-11-07) — 여는 길은 `info/legal-web.ts` 하나이고 화면은 그것만 부른다 */
+describe('약관 셋은 웹의 현행 판을 연다', () => {
   it.each([
-    ['mobile/src/settings/settings-screen.tsx', "router.push('/privacy'"],
-    ['mobile/src/credits/credits.tsx', "router.push('/refund?from=credits'"],
+    ['mobile/src/settings/settings-screen.tsx', "openLegalPage('/privacy')"],
+    ['mobile/src/app/signup.tsx', "openLegalPage('/privacy')"],
+    ['mobile/src/credits/credits.tsx', "openLegalPage('/refund')"],
+    ['mobile/src/credits/store-section.tsx', "openLegalPage('/refund')"],
   ])('%s', (file, path) => {
     const text = read(file);
     expect(text).toContain(path);
