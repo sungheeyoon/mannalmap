@@ -152,6 +152,41 @@ export type Database = {
         }
         Relationships: []
       }
+      app_push_token: {
+        Row: {
+          created_at: string
+          id: string
+          platform: string
+          token: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          platform?: string
+          token: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          platform?: string
+          token?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "app_push_token_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "app_user"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       app_user: {
         Row: {
           contact_consent: boolean | null
@@ -3132,6 +3167,8 @@ export type Database = {
       }
       adult_check_must_pass: { Args: { p_user_id: string }; Returns: undefined }
       adult_check_passed: { Args: { p_user_id: string }; Returns: boolean }
+      app_push_token_limit: { Args: never; Returns: number }
+      app_push_token_registered: { Args: { p_token: string }; Returns: boolean }
       approve_reading_order: {
         Args: {
           p_amount: number
@@ -3494,6 +3531,7 @@ export type Database = {
         Returns: boolean
       }
       dispose_requested_accounts: { Args: never; Returns: number }
+      drop_app_push_token: { Args: { p_token: string }; Returns: boolean }
       drop_my_photo_upload: {
         Args: { p_object_key: string }
         Returns: undefined
@@ -4721,6 +4759,16 @@ export type Database = {
       }
       reading_job_send_patience: { Args: never; Returns: string }
       reading_rate_limit: { Args: never; Returns: number }
+      reading_ready_push_targets: {
+        Args: { p_run_id: string }
+        Returns: {
+          kind: string
+          match_id: string
+          person_a: string
+          person_b: string
+          token: string
+        }[]
+      }
       reading_run_timeout: { Args: never; Returns: string }
       reading_sale_is_open: { Args: never; Returns: boolean }
       reading_sale_is_open_for: { Args: { p_user: string }; Returns: boolean }
@@ -4797,6 +4845,7 @@ export type Database = {
         Args: { p_hold_id: string; p_note: string }
         Returns: undefined
       }
+      remove_app_push_token: { Args: { p_token: string }; Returns: boolean }
       remove_my_photo: {
         Args: { p_position: number; p_version?: number }
         Returns: undefined
@@ -4912,6 +4961,7 @@ export type Database = {
         }
         Returns: string
       }
+      save_app_push_token: { Args: { p_token: string }; Returns: undefined }
       save_my_profile: {
         Args: { p_intro: string; p_nickname: string }
         Returns: undefined

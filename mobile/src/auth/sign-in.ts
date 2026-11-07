@@ -1,3 +1,5 @@
+import { forgetOnSignOut } from '@/push/device';
+
 import { supabase } from './client';
 import { FAILED, NOT_READY, readSignup } from './signup';
 
@@ -65,6 +67,8 @@ export async function accountAnswer(): Promise<SignInAnswer> {
  */
 export async function signOut(): Promise<boolean> {
   if (supabase === null) return true;
+  /* 세션이 있을 때 이 기기의 풀이 완성 알림 토큰부터 지운다 — 다음 사람이 앞 사람의 소식을 받지 않게(ADR 0236). 못 지워도 막지 않는다 */
+  await forgetOnSignOut();
   const { error } = await supabase.auth.signOut({ scope: 'local' });
   if (error !== null) {
     console.error('signOut', error.code, error.message);

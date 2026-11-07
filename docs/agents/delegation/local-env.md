@@ -116,7 +116,9 @@
    캡처 서버(`ui-dev.mjs`)는 그림 전용 가짜 카카오 키를 얹는다 — `/auth` 에 카카오 단추가 없으면 도구가 경고를 찍는다(#1027).
    고치기 전 그림은 main 을 체크아웃한 같은 자리에서 먼저 찍는다. **로딩 뼈대(`loading.tsx`)는 뼈대 무리의 `skeleton-*` id 로**
    찍는다(#604) — 도구가 지은 서버(`UI_PORT`+2)를 따로 세워 이동을 붙잡는다. `next dev` 로는 뼈대가 안 선다(`scripts/ui-shots.mjs` 의
-   `serverAsBuilt` 머리말).
+   `serverAsBuilt` 머리말). 상태를 바꾸는 무리(풀이를 여는 `reading-making` · `me-making` · `person-making`, 한 사람을 지나치는
+   인연 무리)는 폭마다 새로 지어 찍는다(`PLAN` 의 `fresh`) — 한 사람을 세 폭이 같이 쓰면 첫 폭이 바꾼 상태를 다음 폭이 본다. 준비 · 열기 · 누름 · 뼈대가 실패한 그림이 있으면 끝에 그
+   목록을 찍고 종료 1 로 끝난다(#1036).
 5. **`aria-disabled` 단추는 Playwright 에서 `force: true` 로 누른다** — 잠긴 단추가 「누른 뒤에 까닭을 말하는」 화면(ADR 0160)은
    보통의 `click()` 이 막혀 그 상태를 못 찍는다.
 6. **`ui-dev` 를 띄운 채 e2e 를 돌리면 `PLAYWRIGHT_PORT=<ui-dev 포트>`(기본 3100)를 준다** — Playwright 가 그 서버를 재사용한다

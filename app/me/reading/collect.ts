@@ -54,7 +54,7 @@ import { rpcArgs } from '@/src/lib/db';
  * 망을 지나는 부름마다 상한이 있다(`app/me/reading/lease.ts`).
  */
 type CollectOutcome =
-  | { done: 'saved' }
+  | { done: 'saved'; runId: string }
   | { done: 'failed'; code: string }
   | { done: 'pending' }
   | { done: 'released'; why: string }
@@ -309,7 +309,8 @@ export async function collectReadingResult(responseId: string): Promise<CollectO
   /* 퍼널의 끝 — 이어 쓴 풀이가 섰다. 날짜와 단계만 센다(ADR 0143 의 8). 못 세도 저장은 그대로다 */
   if (continuation !== null) await countTasteStep('reading_succeeded');
 
-  return { done: 'saved' };
+  /* 저장한 시도를 돌려준다 — 앱 푸시(ADR 0236)는 부르는 쪽이 제 마무리(webhook 의 처리 표시 등) 뒤에 이 id 로 보낸다(`pushReadingReady`) */
+  return { done: 'saved', runId: job.run_id };
 }
 
 /**

@@ -228,7 +228,7 @@ describe('선택 항목', () => {
 
 /** 문구가 바뀌면 판본도 바뀐다 — 「보여 준 적 있다」가 아니라 「무엇을 보여 줬나」다 */
 it('안내 판본이 값으로 서 있다', () => {
-  expect(NOTICE_VERSION).toBe('notice-v17');
+  expect(NOTICE_VERSION).toBe('notice-v18');
 });
 
 /**
@@ -254,9 +254,9 @@ describe('사진 저장소', () => {
     expect(purge).not.toContain('반드시');
   });
 
-  /* v9 당시에는 기준을 v8 에 두었다(운영자 결정 2026-10-23). 그 뒤 v13(ADR 0220) · v14(대화가 유일한 흐름) · v15(공개 서비스 · 카카오, ADR 0225 추기) · v16(카카오계정 이메일 · 계정 합침, ADR 0224 추기)의 내용 개정이 기준을 올렸다. v17 은 내용 개정이지만 기준을 두었다(운영자 답 2026-11-07, ADR 0234) */
-  it('재확인 기준은 v16 이다 — v17 은 새 가입자만 본다', () => {
-    expect(NOTICE_ACK_FLOOR).toBe('notice-v16');
+  /* v9 당시에는 기준을 v8 에 두었다(운영자 결정 2026-10-23). 그 뒤 v13(ADR 0220) · v14(대화가 유일한 흐름) · v15(공개 서비스 · 카카오, ADR 0225 추기) · v16(카카오계정 이메일 · 계정 합침, ADR 0224 추기)의 내용 개정이 기준을 올렸다. v17 은 내용 개정이지만 기준을 두었다(운영자 답 2026-11-07, ADR 0234). v18(앱 푸시, ADR 0236)은 ADR 0095 대로 기준을 올린다 */
+  it('재확인 기준은 v18 이다 — 앱 푸시의 내용 개정', () => {
+    expect(NOTICE_ACK_FLOOR).toBe('notice-v18');
   });
 });
 
@@ -359,9 +359,12 @@ describe('첫 화면의 짧은 사주 문단', () => {
     expect(text).toContain('계정의 풀이 기록으로 남고 탈퇴하실 때 지웁니다');
   });
 
-  /** 새 메시지 알림은 이 판에 없다 — 회사 표가 찬 뒤 알림을 켜기 전에 따로 올린다(ADR 0180) */
+  /**
+   * 새 메시지 알림(웹 푸시)은 이 판에 없다 — 회사 표가 찬 뒤 알림을 켜기 전에 따로 올린다(ADR 0180). `Google LLC` 는 v18 의 앱 푸시(FCM, ADR 0236)로
+   * 국외 이전 표에 섰다 — 웹 푸시의 구독 주소 · Apple 은 여전히 없다
+   */
   it('웹 푸시의 줄을 싣지 않는다', () => {
-    for (const absent of ['구독 주소', '푸시', 'Google LLC', 'Apple Inc.']) {
+    for (const absent of ['구독 주소', '푸시', 'Apple Inc.']) {
       expect(text, absent).not.toContain(absent);
     }
   });
@@ -506,10 +509,11 @@ describe('운영 기간 · Play 결제 · 구매 제한 기록 · 만 14세 (not
   const lines = (title: string) => sections.find((section) => section.title === title)?.lines.join(' ') ?? '';
   const titles = sections.map((section) => section.title);
 
-  it('v16 을 본 회원은 다시 안 보고, v15 를 본 사람은 다시 본다', () => {
-    expect(noticeAckHolds('notice-v16')).toBe(true);
-    expect(noticeAckHolds('notice-v17')).toBe(true);
-    expect(noticeAckHolds('notice-v15')).toBe(false);
+  /* v17 당시에는 v16 을 본 회원이 다시 안 봤다. v18(앱 푸시)이 기준을 올려 v16 · v17 을 본 회원도 이제 한 번 다시 본다 */
+  it('v17 은 기준을 올리지 않았다 — 그 뒤 v18 이 올렸다', () => {
+    expect(noticeAckHolds('notice-v17')).toBe(false);
+    expect(noticeAckHolds('notice-v16')).toBe(false);
+    expect(noticeAckHolds('notice-v18')).toBe(true);
   });
 
   it('만 14세 미만의 가입 · 개인정보를 받지 않는다는 줄이 첫 절 끝에 선다', () => {
@@ -548,5 +552,44 @@ describe('운영 기간 · Play 결제 · 구매 제한 기록 · 만 14세 (not
 
   it('파기는 일반 규칙이고 법정 보존은 분리 보관이다', () => {
     expect(lines('파기 절차와 방법')).toContain('법령에 따라 보존해야 하는 기록은 그 기간 동안 다른 정보와 분리해 보관합니다');
+  });
+});
+
+/**
+ * v18 — 안드로이드 앱의 풀이 완성 알림(ADR 0236, #936). 받는 항목(알림 토큰) · 위탁 · 국외 이전이 는 내용 개정이라 기준도 오른다(ADR 0095).
+ */
+describe('풀이 완성 알림 (notice-v18)', () => {
+  const sections = noticeFor({ name: '만세력 운영자', officer: '홍길동', contact: 'ops@example.com' });
+  const lines = (title: string) => sections.find((section) => section.title === title)?.lines.join(' ') ?? '';
+
+  it('v17 을 본 회원도 한 번 다시 본다', () => {
+    expect(noticeAckHolds('notice-v17')).toBe(false);
+    expect(noticeAckHolds('notice-v18')).toBe(true);
+  });
+
+  it('받는 것 · 싣지 않는 것 · 지우는 때 · 끄는 법을 한 절에 적는다', () => {
+    const push = lines('풀이 완성 알림을 켜시면');
+    expect(push).toContain('기기의 알림 토큰');
+    expect(push).toContain('풀이 내용과 점수, 출생 정보, 이름 · 닉네임은 싣지 않습니다');
+    for (const when of ['알림을 끄시거나', '로그아웃하시거나', '탈퇴를 신청하시거나', '더 이상 쓰이지 않는다고 알려 올 때']) expect(push, when).toContain(when);
+    expect(push).toContain('기기 설정에서 알림을 끄시면 됩니다');
+    expect(push).toContain('그 밖의 이용에는 영향이 없습니다');
+  });
+
+  /* 알림 본문 `READING_READY_PUSH_BODY`(`src/lib/push/app.ts`)와 같은 글자다 — 견주는 쪽은 `src/lib/push/app.test.ts`(consent → push 방향을 열지 않으려고) */
+  it('알림 본문을 글자 그대로 적는다', () => {
+    expect(lines('풀이 완성 알림을 켜시면')).toContain('「풀이가 완성됐어요」');
+  });
+
+  it('보내는 회사는 위탁 절과 국외 이전 절에 선다 — 나라는 Firebase 문서의 말로, 법인 소재지로 대신하지 않는다', () => {
+    expect(lines('맡겨서 처리하는 곳')).toContain('풀이 완성 알림 발송은 Google(Firebase 클라우드 메시징)에 맡깁니다');
+    const abroad = lines('국외로 나가는 것');
+    expect(abroad).toContain('Google LLC(Google 과 그 대리인의 시설이 있는 여러 나라');
+    expect(abroad).toContain('길어야 1시간만 보관하도록 요청합니다');
+    expect(abroad).toContain('https://firebase.google.com/support/privacy');
+    expect(abroad).not.toContain('Google LLC(미국');
+    /* 주소에 저장한 사람 · Match 의 DB id 가 든다(`privacy-grounds.md` 「앱 푸시(FCM)」) — 고지가 그것을 숨기지 않는다 */
+    expect(abroad).toContain('화면을 가리키는 내부 식별번호 포함');
+    expect(lines('풀이 완성 알림을 켜시면')).toContain('화면 주소(화면을 가리키는 내부 식별번호 포함)만 싣습니다');
   });
 });

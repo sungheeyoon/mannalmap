@@ -4,6 +4,7 @@ import { AppState } from 'react-native';
 import { gateFor, NOTICE_UNREAD, type GateAccount, type GateNotice } from '@consent/gate';
 
 import { supabase } from '@/auth/client';
+import { forgetChoiceOnSessionEnd } from '@/push/device';
 import { readSchedule } from '@/auth/schedule';
 import { UNREACHABLE } from '@/auth/signup';
 import { settled } from '@/ui/settled';
@@ -85,6 +86,8 @@ export function useGate(): { gate: Gate; retry: () => void; held: boolean } {
     });
     const auth = supabase?.auth.onAuthStateChange((event) => {
       if (event !== 'SIGNED_OUT') return;
+      /* 풀이 완성 알림의 기기 선택도 비운다(ADR 0236) — 서버에 남은 토큰은 다음 로그인이 걷는다(`refreshThisDevice`) */
+      void forgetChoiceOnSessionEnd();
       setHeld(false);
       setGate({ kind: 'out', left: true });
     });

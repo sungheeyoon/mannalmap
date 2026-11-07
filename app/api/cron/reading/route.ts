@@ -4,6 +4,7 @@ import { recordDbFailure } from '@/app/db-error';
 import { keyedClient } from '@/app/keyed-client';
 
 import { collectReadingResult } from '../../../me/reading/collect';
+import { pushReadingReady } from '../../../me/reading/ready-push';
 import { resendStalledRun } from '../../../me/reading/submit';
 import { cronAuthorized } from '../authorized';
 
@@ -131,6 +132,13 @@ export async function GET(request: Request): Promise<Response> {
 
     const outcome = await collectReadingResult(job.response_id);
     if (outcome.done === 'saved' || outcome.done === 'failed') collected += 1;
+
+    /* 앱 푸시는 회수가 끝난 뒤 한 번(ADR 0236) — 던지지 않지만 던져도 다음 일감으로 간다 */
+    if (outcome.done === 'saved') {
+      await pushReadingReady(keyed, outcome.runId).catch((thrown: unknown) => {
+        console.error('cron reading: ready-push', thrown instanceof Error ? thrown.name : 'unknown');
+      });
+    }
   }
 
   return Response.json({ open: jobs.length, collected, closed, resent });

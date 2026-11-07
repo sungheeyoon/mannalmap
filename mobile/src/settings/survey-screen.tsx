@@ -1,9 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { KeyboardAvoidingView, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 
-import { isBlocked, type AccountState } from '@account/index';
-import { rpcArgs } from '@db';
-import { userFacingDbMessage } from '@db-error';
 import {
   EMPTY_ANSWERS,
   IMPROVE_LABEL,
@@ -30,9 +27,6 @@ import {
   WANT_OPTIONS,
   afterPicking,
   isAnswered,
-  mySurveyOf,
-  surveyContextOf,
-  surveyRequest,
   withoutHidden,
   type MySurvey,
   type PriceOption,
@@ -41,8 +35,7 @@ import {
   type SurveyContext,
 } from '@survey';
 
-import { supabase } from '@/auth/client';
-import { NOT_READY, UNREACHABLE } from '@/auth/signup';
+import { UNREACHABLE } from '@/auth/signup';
 import { CheckRow, PrimaryButton, SecondaryButton } from '@/ui/parts';
 import { COLOR, FONT, RADIUS, TYPE } from '@/ui/tokens';
 import { settled } from '@/ui/settled';
@@ -50,35 +43,13 @@ import { TopBar } from '@/ui/top-bar';
 import { CardFrame, Paper } from '@/ui/surfaces';
 
 import { AccountNotice, FailureLine, settingsText } from './parts';
-import { readAccount, setOptionalConsent } from './settings';
-
-type Row = Record<string, unknown>;
-type SaveAnswer = { ok: true; submittedAt: string | null } | { ok: false; message: string };
-type Loaded = { kind: 'blocked'; state: AccountState } | { kind: 'failed' } | { kind: 'ready'; context: SurveyContext; given: MySurvey | null };
-
-/** 못 읽은 것을 「아직 안 썼다」로 내면 빈 칸으로 열리고 적어 둔 글이 덮인다 — 어느 하나라도 못 읽으면 실패 줄이다(웹 `read.ts`) */
-async function load(): Promise<Loaded> {
-  const { state } = await readAccount<{ status: string }>('status');
-  if (isBlocked(state)) return { kind: 'blocked', state };
-  if (supabase === null) return { kind: 'failed' };
-  const [context, given] = await Promise.all([supabase.rpc('service_survey_context'), supabase.rpc('my_service_survey')]);
-  if (context.error !== null || given.error !== null) return { kind: 'failed' };
-  const contextRow = ((context.data ?? []) as Row[])[0];
-  if (contextRow === undefined) return { kind: 'failed' };
-  const givenRow = ((given.data ?? []) as Row[])[0];
-  return { kind: 'ready', context: surveyContextOf(contextRow), given: givenRow === undefined ? null : mySurveyOf(givenRow) };
-}
-
-async function save(answers: SurveyAnswers, submit: boolean): Promise<SaveAnswer> {
-  if (supabase === null) return { ok: false, message: NOT_READY };
-  const { data, error } = await supabase.rpc('save_service_survey', rpcArgs<'save_service_survey'>(surveyRequest(answers, submit)));
-  return error !== null ? { ok: false, message: userFacingDbMessage(error, 'save_service_survey') } : { ok: true, submittedAt: (data as string | null) ?? null };
-}
+import { setOptionalConsent } from './settings';
+import { loadSurvey, saveSurvey, type Loaded } from './survey';
 
 /** 서비스 설문 — 웹 `app/me/survey/` 와 같다. 어느 문항이 서는지는 DB 가 답한다(`service_survey_context`) */
 export function SurveyScreen() {
   const [data, setData] = useState<Loaded | null>(null);
-  const reload = useCallback(async () => setData(await load()), []);
+  const reload = useCallback(async () => setData(await loadSurvey()), []);
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect -- 여는 때 읽는다 - setState 는 await 뒤라 렌더와 겹치지 않는다
     void reload();
@@ -168,7 +139,7 @@ function SurveyForm({ context, given }: { context: SurveyContext; given: MySurve
     if (next === saved.current) return;
     const timer = setTimeout(() => {
       setDraft('saving');
-      void settled(save(withoutHidden(answers, shown), false), 'survey draft', () => ({ ok: false, message: UNREACHABLE }) as const).then((result) => {
+      void settled(saveSurvey(withoutHidden(answers, shown), false), 'survey draft', () => ({ ok: false, message: UNREACHABLE }) as const).then((result) => {
         if (result.ok) {
           saved.current = next;
           setDraft('saved');
@@ -183,7 +154,7 @@ function SurveyForm({ context, given }: { context: SurveyContext; given: MySurve
   const send = async () => {
     setFailure(null);
     setSending(true);
-    const result = await save(withoutHidden(answers, shown), true);
+    const result = await saveSurvey(withoutHidden(answers, shown), true);
     setSending(false);
     if (!result.ok) {
       setFailure(result.message);

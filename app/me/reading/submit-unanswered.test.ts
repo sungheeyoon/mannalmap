@@ -278,7 +278,7 @@ describe('떠나보냈는데 답을 못 받은 제출', () => {
 
     expect(created).toHaveLength(1);
     expect(db.job).toMatchObject({ status: 'submitted', responseId: 'resp_1' });
-    await expect(collectReadingResult('resp_1')).resolves.toEqual({ done: 'saved' });
+    await expect(collectReadingResult('resp_1')).resolves.toMatchObject({ done: 'saved' });
     expect(db.run.status).toBe('succeeded');
   });
 
@@ -308,7 +308,7 @@ describe('떠나보냈는데 답을 못 받은 제출', () => {
     expect(db.run.status).toBe('running');
     expect(db.job).toMatchObject({ status: 'submitting', responseId: null });
 
-    await expect(collectReadingResult('resp_1')).resolves.toEqual({ done: 'saved' });
+    await expect(collectReadingResult('resp_1')).resolves.toMatchObject({ done: 'saved' });
     expect(db.run.status).toBe('succeeded');
   });
 
@@ -331,7 +331,7 @@ describe('떠나보냈는데 답을 못 받은 제출', () => {
     expect(db.run.status).toBe('running');
     expect(db.job).toMatchObject({ status: 'submitting', responseId: null });
 
-    await expect(collectReadingResult('resp_1')).resolves.toEqual({ done: 'saved' });
+    await expect(collectReadingResult('resp_1')).resolves.toMatchObject({ done: 'saved' });
   });
 
   /**
@@ -369,7 +369,7 @@ describe('떠나보냈는데 답을 못 받은 제출', () => {
     expect(db.run.status).toBe('running');
     expect(db.job).toMatchObject({ status: 'submitting', responseId: null });
 
-    await expect(collectReadingResult('resp_1')).resolves.toEqual({ done: 'saved' });
+    await expect(collectReadingResult('resp_1')).resolves.toMatchObject({ done: 'saved' });
   });
 
   it('상태 코드로 거절당하면 한 번만 보내고 바로 닫는다', async () => {
