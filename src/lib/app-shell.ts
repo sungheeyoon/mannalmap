@@ -33,3 +33,36 @@ export function buildIsBelowFloor(installed: string | null, floor: unknown): boo
   const least = typeof floor === 'number' && Number.isSafeInteger(floor) ? floor : null;
   return build !== null && least !== null && build < least;
 }
+
+/**
+ * **최소 빌드 판정의 상태기**(ADR 0237) — 앱의 훅(`mobile/src/release/floor.ts`)이 켤 때 · 앞으로 다시 가져올 때 `check` 를 부르고, 화면이 닫히면
+ * `stop` 을 부른다. 처음은 `fine` 이고 답을 기다리지 않는다. 규칙 셋:
+ *
+ * - 답이 영영 안 오면 `fine` 그대로다 — 막지 않는다(못 읽으면 막지 않는다, 운영자 답 2026-11-07).
+ * - 「낮다」가 언제 오든 그때 `below` 가 되고, 그 뒤의 「괜찮다」 · 다음 판정으로 되돌지 않는다 — 업데이트 말고는 풀 길이 없다.
+ * - `stop` 뒤에 온 답은 상태를 건드리지 않는다.
+ *
+ * 물음이 던져도 막지 않는다.
+ */
+export function buildFloorWatch(ask: () => Promise<boolean>, onBelow: () => void) {
+  let state: 'fine' | 'below' = 'fine';
+  let live = true;
+  return {
+    get state() {
+      return state;
+    },
+    check(): Promise<void> {
+      return ask().then(
+        (below) => {
+          if (!live || !below || state === 'below') return;
+          state = 'below';
+          onBelow();
+        },
+        () => undefined,
+      );
+    },
+    stop(): void {
+      live = false;
+    },
+  };
+}

@@ -3,7 +3,7 @@ import * as WebBrowser from 'expo-web-browser';
 import { useEffect, useState } from 'react';
 import { AppState, Linking, Platform } from 'react-native';
 
-import { buildIsBelowFloor } from '@app-shell';
+import { buildFloorWatch, buildIsBelowFloor } from '@app-shell';
 import { PLAY_PACKAGE_NAME } from '@reading/store-products';
 
 import { supabase } from '@/auth/client';
@@ -31,23 +31,19 @@ function askBelowFloor(): Promise<boolean> {
 
 /**
  * 켤 때와 앞으로 다시 가져올 때 묻는다. **답을 기다리지 않는다** — 앱은 곧바로 서고, 낮다는 답이 오면 그때 업데이트 화면으로 바뀐다.
- * 답이 늦거나 안 오면 그대로 열린 채다(못 읽으면 막지 않는다, 운영자 답 2026-11-07). 한 번 낮다고 답하면 그 실행 동안 그대로다.
+ * 시간 · 순서의 규칙(답이 안 옴 · 늦은 「낮다」 · 닫힌 뒤의 답 · 다시 묻기)은 `buildFloorWatch`(`src/lib/app-shell.ts`)가 든다.
  */
 export function useBuildFloor(): 'below' | 'fine' {
   const [state, setState] = useState<'below' | 'fine'>('fine');
 
   useEffect(() => {
-    let live = true;
-    const check = () =>
-      void settled(askBelowFloor(), 'useBuildFloor', () => false).then((below) => {
-        if (live && below) setState('below');
-      });
-    check();
+    const watch = buildFloorWatch(askBelowFloor, () => setState('below'));
+    void watch.check();
     const foreground = AppState.addEventListener('change', (next) => {
-      if (next === 'active') check();
+      if (next === 'active') void watch.check();
     });
     return () => {
-      live = false;
+      watch.stop();
       foreground.remove();
     };
   }, []);

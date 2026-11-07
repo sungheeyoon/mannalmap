@@ -248,6 +248,23 @@ test.describe('재확인 기준', () => {
     expect(versionOf(signedIn.email)).toBe(floor);
   });
 
+  /**
+   * **재확인에 동의하지 않는 사람의 길은 탈퇴 신청이다**(ADR 0237 의 7). 기준보다 낮게 확인한 회원은 관문이 설정 대신 가입 화면으로 보내므로,
+   * 그 화면이 탈퇴 신청을 세워야 동의 없이 떠날 수 있다(ADR 0218). 창을 열기만 하고 「탈퇴」는 누르지 않는다.
+   */
+  test('기준보다 낮은 판본을 확인한 사람은 재확인 화면에서 동의 없이 탈퇴를 신청할 수 있다', async ({ page, signedIn }) => {
+    scheduleBeta(scheduledEndsOn());
+    recordAs(signedIn.email, `notice-v${(noticeEdition(serverFloor()) as number) - 1}`);
+
+    await page.goto('/me/settings');
+    await expect(page).toHaveURL(/\/signup\?next=%2Fme%2Fsettings$/);
+
+    await page.getByRole('button', { name: '탈퇴하기', exact: true }).click();
+    const dialog = page.getByRole('dialog', { name: '정말 탈퇴할까요?' });
+    await expect(dialog).toBeVisible();
+    await expect(dialog.getByRole('button', { name: '탈퇴', exact: true })).toBeVisible();
+  });
+
   test('기준보다 낮은 판본을 확인한 사람은 다시 확인하고, 그때 본 판본이 적힌다', async ({
     page,
     signedIn,

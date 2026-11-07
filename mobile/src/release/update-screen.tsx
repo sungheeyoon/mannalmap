@@ -1,4 +1,4 @@
-import { NoticeLine, NoticeScreen } from '@/ui/notice-screen';
+import { NoticeLine, NoticeNote, NoticeScreen } from '@/ui/notice-screen';
 import { PrimaryButton, TextButton } from '@/ui/parts';
 
 import { openPlayListing, openWebAccount, webAccountOpen } from './floor';
@@ -8,7 +8,8 @@ export const UPDATE_REQUIRED = {
   title: '업데이트 알림',
   body: '안정적인 이용을 위해 최신 버전으로 업데이트한 뒤 이용해 주세요.',
   action: '업데이트하기',
-  account: '웹에서 탈퇴 · 동의 철회하기',
+  account: '웹에서 계정 관리',
+  accountNote: '탈퇴와 동의 철회는 웹 설정에서 할 수 있어요',
 } as const;
 
 /**
@@ -22,7 +23,14 @@ export function UpdateRequiredScreen() {
       title={UPDATE_REQUIRED.title}
       description={<NoticeLine>{UPDATE_REQUIRED.body}</NoticeLine>}
       actions={<PrimaryButton label={UPDATE_REQUIRED.action} onPress={openPlayListing} />}
-      note={webAccountOpen ? <TextButton label={UPDATE_REQUIRED.account} onPress={openWebAccount} /> : undefined}
+      note={
+        webAccountOpen ? (
+          <>
+            <TextButton label={UPDATE_REQUIRED.account} onPress={openWebAccount} />
+            <NoticeNote>{UPDATE_REQUIRED.accountNote}</NoticeNote>
+          </>
+        ) : undefined
+      }
     />
   );
 }
