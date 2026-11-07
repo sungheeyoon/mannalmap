@@ -5,6 +5,7 @@ import {
   WARNING_NOTICE_TITLE,
   warningDateLabel,
   warningNoticeLines,
+  warningNoticeOf,
   warningRefOf,
 } from '.';
 
@@ -59,5 +60,20 @@ describe('안내번호 — 운영자가 친 모양을 받는다', () => {
 
   it.each(['', 'W-', 'W-7K3', 'W-7K3FF', 'W-0OIL', 'W-7K3U', '가나다라'])('%s 는 안내번호가 아니다', (typed) => {
     expect(warningRefOf(typed)).toBeNull();
+  });
+});
+
+describe('warningNoticeOf — 웹 · 앱의 문이 함께 쓰는 줄 옮기기', () => {
+  it('첫 줄의 셋만 옮긴다', () => {
+    expect(warningNoticeOf([{ warning_ref: 'W-7K3F', category: 'harassment', warned_on: '2026-09-24' }])).toEqual({
+      ref: 'W-7K3F',
+      category: 'harassment',
+      warnedOn: '2026-09-24',
+    });
+  });
+
+  it('줄이 없으면 확인할 경고가 없다', () => {
+    expect(warningNoticeOf([])).toBeNull();
+    expect(warningNoticeOf(null)).toBeNull();
   });
 });
