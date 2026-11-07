@@ -126,6 +126,8 @@ apksigner verify --print-certs <apk>                                   # 서명�
 
 ### 빌드와 제출
 
+**EAS 로그인을 먼저 본다** — `npx eas-cli@latest whoami`. 없으면 운영자가 `! npx eas-cli@latest login --device --non-interactive` → 브라우저에서 승인 → 받은 숫자로 `--resume <id> --match <숫자>` 를 부른다(2026-11-07 — 로그인이 없으면 빌드 앞에서 선다). 새 워크트리면 `mobile/` 의 `npm ci` 도 먼저다 — 없으면 `env:list` 부터 `expo-router` 플러그인을 못 찾고 선다.
+
 ```bash
 npx eas-cli@latest build --profile preview --platform android --non-interactive     # 내부 배포 APK, 링크를 준다
 npx eas-cli@latest build --profile production --platform android                    # Play 용 AAB
