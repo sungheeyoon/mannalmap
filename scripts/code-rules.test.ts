@@ -1509,7 +1509,7 @@ describe('위임 규약 (docs/agents/delegation.md 색인 → docs/agents/delega
       .flatMap((cells) => [...cells[4].matchAll(/`(Bash\([^`]+\))`/g)].map((match) => match[1]));
   }
 
-  /** 「공식 운영에 들어가면 켜는 잠금」 절의 `Bash(…)` 규칙 — 공식 운영 뒤 `ask` 로 되돌릴 목록 (ADR 0093) */
+  /** 「공식 운영에 들어가면 켜는 잠금」 절의 `Bash(…)` 규칙 — 공식 운영 뒤 `ask` 와 같은 목록 (ADR 0093) */
   function deferredAskRules(): string[] {
     const start = permissions.indexOf('\n### 공식 운영에 들어가면 켜는 잠금');
     expect(start).toBeGreaterThan(-1);
@@ -1551,7 +1551,10 @@ describe('위임 규약 (docs/agents/delegation.md 색인 → docs/agents/delega
     const deferred = deferredAskRules();
     const deny = lockedRulesOfTier('4');
     const ask = settings.permissions?.ask ?? [];
-    expect(deferred.length).toBeGreaterThan(10);
+    // 2026-11-07 운영자 결정으로 프로덕션 배포 넷만 남겼다 — 배포를 빼면 실패한다 (ADR 0093 「배포만 묻는다」)
+    expect(deferred).toEqual(expect.arrayContaining([
+      'Bash(vercel --prod:*)', 'Bash(npx vercel --prod:*)', 'Bash(vercel deploy:*)', 'Bash(npx vercel deploy:*)',
+    ]));
     expect(deferred.filter((rule) => deny.includes(rule))).toEqual([]);
 
     const stages = stagesOfPrd().filter((stage) => stage.current).map((stage) => stage.name);
