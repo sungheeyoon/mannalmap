@@ -128,8 +128,14 @@ import { ACTIVITY_PRIVACY_LINE } from '../presence';
  * 게시 전 7일 공지는 하지 않고 배포일에 게시한다(같은 판단 — 공지 받을 이용자가 없다). 알림을 켜는 값(Firebase 서비스 계정 · 설정 파일)은
  * 이 판본의 게시 뒤에 넣는다(ADR 0098 의 꼴).
  * 줄마다의 근거는 `docs/legal/privacy-grounds.md` 「앱 푸시(FCM) — `notice-v18`」.
+ *
+ * `v18` → `v19`: **고지 보완 — 프로필 사진 · 소개**(G-153, 운영자 결정 (a) 2026-11-08, ADR 0245). 인연이 닫힌 지금도 프로필 화면이 사진(최대
+ * 6장)과 소개(500자)를 받아 저장하는데 「무엇을 받고 무엇에 쓰나요」가 그 둘을 안 들었다. 선택 항목이라는 것 · 지금은 본인에게만 보인다는 것 ·
+ * 인연을 열 때 먼저 안내한다는 것 · 등록하지 않아도 된다는 것을 운영자가 정한 글자로 더한다. 게시 뒤의 처리를 알리는 판이다 — 게시 전에
+ * 저장된 것의 처리 근거는 이 판이 정하지 않는다(G-153). **재확인 기준(`notice_ack_floor()`)을 올릴지는 운영자 선택으로 남았다** — 이 판은
+ * 기준을 `notice-v18` 에 둔다. 줄마다의 근거는 `docs/legal/privacy-grounds.md` 「프로필 사진 · 소개 — `notice-v19`」.
  */
-export const NOTICE_VERSION = 'notice-v18';
+export const NOTICE_VERSION = 'notice-v19';
 
 /**
  * 판본의 차례 — `notice-v4` → `4`. 모양이 다르면 `null`.
@@ -314,6 +320,19 @@ const transferLines = (): readonly string[] =>
       : `${one.to} — 개인정보 문의: ${one.contact} · 처리방침: ${one.policy}`,
   ]);
 
+/**
+ * 프로필 사진 · 소개의 네 줄 — 수집 항목 · 목적 / 지금의 공개 범위 / 인연을 열 때 / 등록 · 삭제(운영자가 정한 글자, 2026-11-08, G-153).
+ *
+ * 넷째 줄의 「삭제할 수 있습니다」는 정지된 계정에도 참이어야 한다 — 지금 사진 · 소개를 쓰는 문(`lock_my_photos` · `save_my_profile`)은 정지된
+ * 계정을 거절한다. 정지 계정의 삭제를 여는 db 의 PR(ADR 0244)이 이 판보다 먼저 선다(ADR 0245 「차례」).
+ */
+const PROFILE_PRIVACY_LINES = [
+  '프로필 사진과 소개는 선택 항목입니다. 이용자가 직접 등록한 정보를 저장하고 프로필을 표시하는 데 사용합니다.',
+  '현재 인연 기능은 준비 중이며, 등록한 사진과 소개는 본인에게만 표시됩니다.',
+  '인연 기능을 제공할 때에는 사진과 소개가 누구에게 표시되는지, 공개를 어떻게 설정하는지 먼저 안내합니다.',
+  '사진과 소개를 등록하지 않아도 다른 서비스를 이용할 수 있습니다. 등록한 내용은 프로필 화면에서 수정하거나 삭제할 수 있습니다.',
+] as const;
+
 export function noticeFor(operator: Operator): readonly NoticeSection[] {
   return [
     {
@@ -326,6 +345,13 @@ export function noticeFor(operator: Operator): readonly NoticeSection[] {
         '가입할 때 정하신 닉네임과, 가족·친구를 등록하실 때 붙인 이름을 받습니다. 화면과 풀이에서 그분을 부르는 데 씁니다.',
         ACTIVITY_PRIVACY_LINE,
         '이 정보가 없으면 사주를 계산할 수 없어 서비스를 제공하지 못합니다.',
+        /*
+          **프로필 사진 · 소개**(G-153, `notice-v19`, ADR 0245) — 글자는 운영자가 정했다(2026-11-08). 바로 앞 줄(「이 정보가 없으면」)이
+          출생 정보를 말하므로 그 뒤에 선다 — 앞에 두면 사진 · 소개도 없으면 안 되는 것으로 읽힌다. 「본인에게만」은 `may_see_photo` 와
+          후보 · 요청 · 인연의 문이 닫힘 판정(`match_open_to`, ADR 0222)을 묻는 동안의 사실이다. 사진의 자리 · 보일 자리 · 올린 시각은
+          문장이 아니라 근거 문서의 항목 표에 둔다(`docs/legal/privacy-grounds.md` 「프로필 사진 · 소개 — `notice-v19`」).
+        */
+        ...PROFILE_PRIVACY_LINES,
         UNDER_14_PRIVACY_LINE,
       ],
     },

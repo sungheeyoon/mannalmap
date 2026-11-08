@@ -240,7 +240,7 @@ describe('선택 항목', () => {
 
 /** 문구가 바뀌면 판본도 바뀐다 — 「보여 준 적 있다」가 아니라 「무엇을 보여 줬나」다 */
 it('안내 판본이 값으로 서 있다', () => {
-  expect(NOTICE_VERSION).toBe('notice-v18');
+  expect(NOTICE_VERSION).toBe('notice-v19');
 });
 
 /**
@@ -603,5 +603,41 @@ describe('풀이 완성 알림 (notice-v18)', () => {
     /* 주소에 저장한 사람 · Match 의 DB id 가 든다(`privacy-grounds.md` 「앱 푸시(FCM)」) — 고지가 그것을 숨기지 않는다 */
     expect(abroad).toContain('화면을 가리키는 내부 식별번호 포함');
     expect(lines('풀이 완성 알림을 켜시면')).toContain('화면 주소(화면을 가리키는 내부 식별번호 포함)만 싣습니다');
+  });
+});
+
+/**
+ * v19 — 프로필 사진 · 소개의 고지 보완(G-153, 운영자 결정 (a) 2026-11-08, ADR 0245). 글자는 운영자가 정했다. 재확인 기준을 올릴지는
+ * 운영자 선택으로 남아 기준은 v18 그대로다 — v18 을 본 회원은 다시 안 본다.
+ */
+describe('프로필 사진 · 소개 (notice-v19)', () => {
+  const sections = noticeFor({ name: '만세력 운영자', officer: '홍길동', contact: 'ops@example.com' });
+  const collected = sections.find((section) => section.title === '무엇을 받고 무엇에 쓰나요')?.lines ?? [];
+
+  it('운영자가 정한 네 줄을 글자 그대로 싣는다', () => {
+    for (const line of [
+      '프로필 사진과 소개는 선택 항목입니다. 이용자가 직접 등록한 정보를 저장하고 프로필을 표시하는 데 사용합니다.',
+      '현재 인연 기능은 준비 중이며, 등록한 사진과 소개는 본인에게만 표시됩니다.',
+      '인연 기능을 제공할 때에는 사진과 소개가 누구에게 표시되는지, 공개를 어떻게 설정하는지 먼저 안내합니다.',
+      '사진과 소개를 등록하지 않아도 다른 서비스를 이용할 수 있습니다. 등록한 내용은 프로필 화면에서 수정하거나 삭제할 수 있습니다.',
+    ]) expect(collected, line).toContain(line);
+  });
+
+  /* 「이 정보가 없으면 … 제공하지 못합니다」는 출생 정보의 줄이다 — 사진 · 소개가 그 앞에 서면 없으면 안 되는 것으로 읽힌다 */
+  it('선택 항목 줄은 출생 정보의 필수 줄 뒤에 선다', () => {
+    const required = collected.findIndex((line) => line.startsWith('이 정보가 없으면'));
+    const profile = collected.findIndex((line) => line.startsWith('프로필 사진과 소개는 선택 항목입니다'));
+    expect(required).toBeGreaterThanOrEqual(0);
+    expect(profile).toBeGreaterThan(required);
+  });
+
+  /* 포괄 표현을 쓰지 않는다(운영자 2026-11-08) */
+  it('「향후 서비스 확장」 같은 포괄 목적을 쓰지 않는다', () => {
+    expect(collected.join(' ')).not.toMatch(/향후|서비스 확장|서비스 개선 등/);
+  });
+
+  it('기준은 v18 그대로다 — v18 을 본 회원은 다시 안 보고, 새 판도 기준을 넘는다', () => {
+    expect(noticeAckHolds('notice-v18', FLOOR)).toBe(true);
+    expect(noticeAckHolds(NOTICE_VERSION, FLOOR)).toBe(true);
   });
 });
