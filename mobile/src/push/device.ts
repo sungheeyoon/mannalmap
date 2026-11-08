@@ -11,9 +11,11 @@ import {
   forgetOnSignOutWith,
   forgetServerToken,
   readPushChoice,
+  returnFromSettings,
   sweepLeftTokenWith,
   turnOffWith,
   type DeviceStore,
+  type SettingsTrip,
   type TokenServer,
 } from '@push/device-token';
 
@@ -183,6 +185,22 @@ export async function turnOn(client: Client): Promise<PushState> {
   } catch {
     return 'unsupported';
   }
+}
+
+/**
+ * 앱이 다시 앞으로 왔다 — 설정 줄의 「기기 설정 열기」로 나갔다가 알림을 허용하고 돌아왔으면 참이다. 그때 부르는 쪽이 그 자리에서
+ * 켠다(`turnOn`, 안 B — 운영자 결정 2026-11-08). 나간 표시는 여기서 지운다(`returnFromSettings`). 권한을 못 읽으면 거짓이다.
+ */
+export async function turnsOnReturn(trip: SettingsTrip): Promise<boolean> {
+  let granted = false;
+  if (trip.out && pushSupported()) {
+    try {
+      granted = (await Notifications.getPermissionsAsync()).granted;
+    } catch {
+      /* 못 읽으면 허용하지 않은 것으로 본다 — 저절로 켜지 않는다 */
+    }
+  }
+  return returnFromSettings(trip, granted) === 'turn-on';
 }
 
 /** 설정에서 끈다 — 서버에서 지운 뒤에만 「끔」을 적는다. 못 지웠으면 거짓이고 「켬」 그대로다(줄이 실패를 말한다) */

@@ -438,6 +438,19 @@ DB 에 남긴 「번」은 풀이권의 수가 아니다 — 가입 코드의 �
 | 사진 크게 보기 — 웹 `app/me/profile/photo-viewer.tsx` · 앱 `mobile/src/settings/photo-viewer.tsx` · `src/lib/profile` 의 `PHOTO_LOAD_FAILED_NOTE` | 불러오는 중에도 실패해도 검은 판뿐 | 불러오는 동안 가운데 오행 다섯 점(`LoadingDots`), 실패하면 검은 판 가운데 카드에 「사진을 불러오지 못했어요.」 + 「다시 시도하기」. 웹은 같은 주소를 먼저 받아 보고(`Image` 의 `load` · `error`) 받은 뒤에 바탕 그림으로 세운다 |
 | 사진 위치 조정 창 — 웹 `app/me/profile/photo-framer.tsx` · 앱 `mobile/src/settings/photo-framer.tsx` · `src/lib/profile` 의 `PHOTO_FRAME_HINT` | 제목 「위치 조정」 아래 바로 틀 둘 | 제목 아래 「사진을 움직여 보일 위치를 맞춰 주세요.」 — 「끌어서」는 마우스 · 화살표 키로 맞추는 사람에게 맞지 않아 「움직여」다 |
 
+## all-16 확정 문구 — 출생 정보 폼의 「모름」 덧말 · 고급 설정 두 줄을 앱까지 (운영자 승인 2026-11-08, 시안 뒤 구현)
+
+all-10 이 웹 출생 정보 폼에 넣은 세 줄을 앱의 같은 폼에도 세운다. 글자는 all-10 그대로이고, 상수 하나(`src/lib/input/copy.ts` 의
+`HOUR_UNKNOWN_HINT` · `ADVANCED_SETTINGS`, ADR 0159 의 `COPY_FILES`)를 웹 `app/birth-digits.tsx` · `app/birth-form.tsx` 와 앱이 함께
+부른다. 앱에서 이 폼을 쓰는 자리는 사람 추가 · 출생 정보 수정 · 궁합 직접 입력(`mobile/src/people/birth-fields.tsx`)과, 같은 칸을 따로
+그리는 앱 첫 화면(`mobile/src/app/index.tsx`)이다. 출생 시각 단추 「직접 입력 / 모름」은 그대로다.
+
+| 자리 | 이전 | 확정 |
+| --- | --- | --- |
+| 출생 시각 「모름」을 고른 뒤의 덧말 — 앱 폼 · 앱 첫 화면 | (없음) | 몰라도 괜찮아요, 여섯 글자로 봐요 |
+| 고급 설정의 요약(접힌 줄) — 같은 자리 | 자시 · 시간 기준 · 세운 | 기본 설정을 유지하는 걸 추천해요 |
+| 고급 설정을 펼친 안쪽 첫 줄 — 같은 자리 | (없음) | 자시 · 시간 기준 · 세운 설정을 바꿀 수 있어요. |
+
 ## 검토 대기
 
 새 말투 규칙(`docs/context/copy.md` §8 — 설명 · 도움말 · 빈 화면은 해요체 기본)과 어긋나는 옛 합쇼체 줄은 **지우지 않고**
