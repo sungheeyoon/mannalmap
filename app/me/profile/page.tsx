@@ -1,5 +1,6 @@
 
-import { isBlocked } from '@/src/lib/account';
+import { erasesProfileOnly, isBlocked } from '@/src/lib/account';
+import { PROFILE_ERASE_TITLE } from '@/src/lib/profile';
 
 import { supabaseOnServer } from '../../auth/server-client';
 import { signedInUser } from '../../auth/signed-in';
@@ -7,6 +8,7 @@ import { redirectToSignIn } from '../../auth/sign-in-redirect';
 import { COLUMN, TYPE_BODY, TYPE_META, TYPE_TITLE } from '../../ui/surfaces';
 import { AccountNotice } from '../account-notice';
 import { readAccount } from '../account';
+import { ProfileEraser } from './eraser';
 import { ProfileForm } from './form';
 import { photoUploadMode } from './photo-upload-mode';
 import { myPhotos } from './photos';
@@ -39,6 +41,23 @@ export default async function ProfilePage() {
   // 정책이 자기 행만 내주므로 `where` 를 적지 않는다. 적으면 판정하는 자리가 둘이 된다.
   /** 온보딩을 안 묻는 화면이다 — 이름 · 소개와 함께 내 사주(`self_person_id`)를 읽어, 등록했으면 출생 정보 판을 세운다 */
   const { state, row: account } = await readAccount(supabase, ['status', 'nickname', 'intro', 'self_person_id']);
+
+  /*
+    정지된 사람은 안내 상자 아래 **지우는 줄만** 본다(ADR 0244) — 처리방침의 「프로필 화면에서 삭제할 수 있습니다」가 이 사람에게도
+    참이도록. 고치는 칸은 안 선다 — 막는 것은 DB 다
+  */
+  if (erasesProfileOnly(state) && account !== null) {
+    const photos = await myPhotos();
+    return (
+      <main className={`app-shell flex w-full ${COLUMN} flex-1 flex-col gap-6 py-8 sm:py-12`}>
+        <AccountNotice state={state} />
+        <header className="flex flex-col gap-1">
+          <h1 className={TYPE_TITLE}>{PROFILE_ERASE_TITLE}</h1>
+        </header>
+        <ProfileEraser photos={photos} userId={user.id} hasIntro={(account.intro ?? '') !== ''} />
+      </main>
+    );
+  }
 
   if (isBlocked(state) || account === null) {
     return (

@@ -178,3 +178,16 @@ export async function replaceStoredPhoto(form: FormData): Promise<PhotoReplaced>
   if (placed) refresh('account-changed');
   return answer;
 }
+
+/**
+ * 내 소개를 비운다 — 지우기만 하는 문(`clear_my_intro`, ADR 0244). 닉네임은 안 실린다 — 정지된 사람의 닉네임 변경은 막혀 있다.
+ */
+export async function clearIntro(): Promise<SaveResult> {
+  const supabase = await supabaseOnServer();
+
+  const { error } = await supabase.rpc('clear_my_intro');
+  if (error) return { ok: false, message: userFacingDbMessage(error, 'clear_my_intro') };
+
+  refresh('account-changed');
+  return { ok: true };
+}
