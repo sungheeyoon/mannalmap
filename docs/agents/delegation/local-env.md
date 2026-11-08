@@ -41,6 +41,8 @@
 | `npm test` 를 나란히 돌리는 동안 vitest 일부가 붉고 단독으로 돌리면 초록이다(calibration · seoul-date · comparison 등) | 시간 초과다. 시험은 5초나 그 시험의 30초를, `calibration` 은 `beforeAll` 30초를 넘는다 — 그래서 시험 넷이 건너뛰어지고 파일만 붉다. **JSON 보고의 `STACK_TRACE_ERROR` 도 시간 초과다** — Vitest 가 붙이는 스택이라 원문은 텍스트 보고에서 읽는다. 일꾼 수가 늘수록 훅이 느려진다(측정한 값은 `docs/notes/2026-11-08-docs-diet.md`) | `--maxWorkers=4` 로 다시 돈다 — 벽시계는 느려지지 않는다. 단독에서도 붉거나 메시지가 시간 초과가 아니면 코드로 본다 |
 | `npx tsc --noEmit` 이 `LayoutProps` 를 못 찾는다 | `next typegen` 이 먼저 돌아야 한다 | `npm run typecheck` 로 돌린다 |
 | `scripts/ui-seed.mjs` 가 시드 중에 멈춘다 · 그림이 「테스트가 끝났어요」를 찍는다 | 로컬 일정 줄이 지난 날짜다. 씨앗의 종료일은 오늘에서 센다(`BETA_ENDS_ON = checkEndsOn()` — 서울 날짜로 다다음 달 1일, 흐름 검사 · 로그인 e2e 와 같은 규칙, #1027). 그래서 그림의 종료일은 운영 종료일(G-62)과 다를 수 있다 | `node scripts/ui-seed.mjs` 로 일정 줄을 다시 세우고 찍힌 날짜를 본다. 날짜를 손으로 고치지 않는다 |
+| `scripts/ui-seed.mjs` 가 「가입을 못 끝냈습니다」로 멈춘다(`app_user_nickname_is_unique`) | 기본 닉네임이 `벗` + 꼬리표(`tag`) 끝 네 자리다 — 같은 꼬리표로 두 번 만들거나, 같은 스택에 남은 앞 시드와 끝 네 자리가 겹치면 유일 색인에 걸린다 | 사람마다 `nickname` 을 따로 주거나 꼬리표를 바꾼다. 스택을 지우지 않는다 |
+| 셸이 `no matches found` 로 명령을 안 부른다 | 셸이 zsh 라 따옴표 없는 `[` · `?` · `*` 를 파일 이름으로 펼치려 한다 — 예: `app/share/people/[token]/page.tsx` · `gh … --jq .[]` · 주소의 `?next=` | 그 인자를 작은따옴표로 감싼다 |
 | e2e 가 시간 초과로 끝난 뒤 다음 e2e 가 옛 화면을 받는다 | 남은 dev 서버를 `reuseExistingServer` 가 붙잡는다 | `lsof -ti tcp:3000 \| xargs kill` 뒤 다시 |
 | `npx playwright test e2e/match.spec.ts` 만 붉다 | 그 spec 은 직렬이어야 한다 | `npm run test:e2e:match`(`--workers=1`) |
 | `db query` 가 `cannot insert multiple commands` | prepared statement 라 `begin; … rollback;` 을 못 받는다 | 트랜잭션이 필요하면 `docker exec -i supabase_db_<SAJU_STACK_ID> psql -U postgres -d postgres` |
