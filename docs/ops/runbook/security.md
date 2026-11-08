@@ -123,12 +123,12 @@ G-25 ③ 이 운영자의 개인정보처리시스템 접속기록을 **1년 이
 
 | 자리 | 기록 종류 — 누가 · 언제 · 무엇 | 보존 | 근거 · 확인 날짜 |
 | --- | --- | --- | --- |
-| 앱의 운영자 화면 `/ops/reports` | **DB 의 `audit.operator_access`** — 운영자 id · 시각 · 동작(목록 · 상세 · 스냅샷 · 대상 회원 요약 `reports.target` · 처분 `reports.review`) · 대상 신고 id(목록이면 거른 조건) · 성공/거절. 처분은 거른 조건 칸에 `version=<n>`(재시도면 ` replayed`), 대상 요약은 `reported=<id> reporter=<id>` 만 — 판단 근거 · 닉네임은 안 적는다(ADR 0188). 문이 읽거나 적을 때 같은 트랜잭션에서 적고, 거절은 앱의 문이 따로 적는다 — 운영자가 아니면 `denied`(액션이 문을 부르기 전에 거른 모양도, 2026-10-18 부터), 운영자의 처분이 버전 충돌 · 모양 등으로 거절되면 `refused`(거른 조건 칸 `refused=<SQLSTATE>`, 2026-10-17 부터 · ADR 0191). **`refused` 는 앱 액션이 받은 거절만이고 범위가 제한된다** — 한 운영자 한 시간 30줄까지(넘으면 버리고 장애 알림 `operator-refusal-cap:<운영자 id>` 하루 한 번, `20261220090000`), 앱을 거치지 않고 RPC 를 바로 부른 거절은 안 남는다 | DB 에 쌓이고 **매일 S3 로 반출, Object Lock 400일** — 아래 「반출」. AWS 가 켜지기 전에는 DB 에만 있다 | ADR 0105 · 0188 · 0191 · pgTAP `46_operator_access_log` · `99_operator_report_review` · `99_operator_write_refusals` |
+| 앱의 운영자 화면 `/ops/reports` | **DB 의 `audit.operator_access`** — 운영자 id · 시각 · 동작(목록 · 상세 · 스냅샷 · 대상 회원 요약 `reports.target` · 처분 `reports.review`) · 대상 신고 id(목록이면 거른 조건) · 성공/거절. 처분은 거른 조건 칸에 `version=<n>`(재시도면 ` replayed`), 대상 요약은 `reported=<id> reporter=<id>` 만 — 판단 근거 · 닉네임은 안 적는다(ADR 0188). 문이 읽거나 적을 때 같은 트랜잭션에서 적고, 거절은 앱의 문이 따로 적는다 — 운영자가 아니면 `denied`(액션이 문을 부르기 전에 거른 모양도), 운영자의 처분이 버전 충돌 · 모양 등으로 거절되면 `refused`(거른 조건 칸 `refused=<SQLSTATE>`). **`refused` 는 앱 액션이 받은 거절만이고 범위가 제한된다** — 한 운영자 한 시간 30줄까지(넘으면 버리고 장애 알림 `operator-refusal-cap:<운영자 id>` 하루 한 번, `20261220090000`), 앱을 거치지 않고 RPC 를 바로 부른 거절은 안 남는다 | DB 에 쌓이고 **매일 S3 로 반출, Object Lock 400일** — 아래 「반출」. AWS 가 켜지기 전에는 DB 에만 있다 | ADR 0105 · 0188 · 0191 · pgTAP `46_operator_access_log` · `99_operator_report_review` · `99_operator_write_refusals` |
 | `npm run db:remote` | **같은 표** — 실행자(git 이름, 에이전트면 `(agent)`) · 시각 · **목적 · SQL 의 sha256**. 원문은 안 적는다. 끝난 뒤 **결과 줄 하나**(`cli.result` — 앞 줄의 번호 · 성공/실패 · 오류 분류 `sql` · `connection` · `unknown`, `20261014090000`)가 더해진다 | 위와 같다 | `scripts/db-remote.mjs` · `db-remote.test.ts` |
-| `/ops/orders` | **같은 표** — 주문을 찾으면 `credits.refund_basis` · `credits.refund_status`(진행 중인 환불), 환불을 준비 · 확정 · 준비 취소하면 `credits.refund_hold` · `credits.refund_book` · `credits.refund_release` 한 줄씩(운영자 id · 시각 · 거른 조건 칸에 주문 id 만 · 성공/거절). 이메일 · 금액은 안 적는다. 거절은 앱의 문이 같은 동작 이름으로 따로 적는다(2026-10-16 부터) — 운영자의 확보 · 확정 · 준비 취소가 거절되면 `refused`(`order=<id> refused=<SQLSTATE>`, 2026-10-17 부터 · ADR 0191). 확정의 거절은 그 주문의 진행 중인 확보가 그 확보로 확인될 때만 주문 id 를 싣는다 — 확인 읽기가 `credits.refund_status` 한 줄을 더 남기고, 확보가 이미 닫혔으면 주문 칸이 빈다. 시간당 30줄 · 앱 밖의 RPC 는 위 `/ops/reports` 줄과 같다 | 위와 같다 | ADR 0184 · pgTAP `96_operator_refund_order` · `48_reading_bundle_ledger` |
-| `/ops/survey` | **같은 표** — 설문 문 일곱이 읽을 때마다 문마다 한 줄(동작 `survey.*` · 운영자 id · 시각 · 성공/거절). 대상 · 거른 조건 칸은 비고 **설문 답 · 글 원문은 안 적는다.** 거절은 앱의 문이 `survey.overview` 한 줄로 적는다(2026-10-01 부터) | 위와 같다 | ADR 0105 추기 2026-10-01 · pgTAP `78_operator_survey_access_log` |
+| `/ops/orders` | **같은 표** — 주문을 찾으면 `credits.refund_basis` · `credits.refund_status`(진행 중인 환불), 환불을 준비 · 확정 · 준비 취소하면 `credits.refund_hold` · `credits.refund_book` · `credits.refund_release` 한 줄씩(운영자 id · 시각 · 거른 조건 칸에 주문 id 만 · 성공/거절). 이메일 · 금액은 안 적는다. 거절은 앱의 문이 같은 동작 이름으로 따로 적는다 — 운영자의 확보 · 확정 · 준비 취소가 거절되면 `refused`(`order=<id> refused=<SQLSTATE>`). 확정의 거절은 그 주문의 진행 중인 확보가 그 확보로 확인될 때만 주문 id 를 싣는다 — 확인 읽기가 `credits.refund_status` 한 줄을 더 남기고, 확보가 이미 닫혔으면 주문 칸이 빈다. 시간당 30줄 · 앱 밖의 RPC 는 위 `/ops/reports` 줄과 같다 | 위와 같다 | ADR 0184 · 0191 · pgTAP `96_operator_refund_order` · `48_reading_bundle_ledger` |
+| `/ops/survey` | **같은 표** — 설문 문 일곱이 읽을 때마다 문마다 한 줄(동작 `survey.*` · 운영자 id · 시각 · 성공/거절). 대상 · 거른 조건 칸은 비고 **설문 답 · 글 원문은 안 적는다.** 거절은 앱의 문이 `survey.overview` 한 줄로 적는다 | 위와 같다 | ADR 0105 추기 2026-10-01 · pgTAP `78_operator_survey_access_log` |
 | `/ops/today` | **같은 표** — 오늘 · 이번 주의 숫자 문(`operator_today_figures`)이 읽을 때마다 한 줄(동작 `today.figures` · 운영자 id · 시각 · 성공/거절). 대상 · 거른 조건 칸은 비고 개인을 가리키는 값은 없다. 거절은 앱의 문이 같은 이름으로 적는다 | 위와 같다 | ADR 0183 · pgTAP `95_operator_today_figures` |
-| `/ops/members` | **같은 표** — 찾을 때 `members.find`, 경고 이력을 읽을 때 `members.warnings`, 무상 지급분 · 풀이권 이력을 읽을 때 `members.credits` · `members.credit_history`, 무상 풀이권을 지급 · 회수하면 `credits.grant` · `credits.revoke`(거른 조건 칸에 `user=<id> entry=<장부 줄 id>`, 관련 신고면 `report=<id>` — 메모는 안 적는다, ADR 0187) 한 줄씩. 처분 이력을 읽을 때 `members.sanctions`(`user=<id>`), 이용 정지 · 해제하면 `members.suspend` · `members.unsuspend`(거른 조건 칸에 `user=<id> entry=<상태 이력 줄 id>`, 재시도면 ` replayed` — 메모는 안 적는다, ADR 0189) 한 줄씩. 풀이권 이력은 쪽마다(「더 보기」 한 번에) `members.credit_history` 한 줄이고 커서는 안 적는다(ADR 0187 덧). 화면은 경고 이력(`members.warnings`)을 더는 안 읽는다. 거른 조건 칸에 무엇으로 찾았나(`by=nickname\|id`)와 찾은 계정 id(`user=<uuid>`, 없으면 `none`)만 — **찾은 닉네임은 안 적는다.** 거절은 앱의 문이 `members.find` 한 줄로 적는다. 운영자의 지급 · 회수 · 정지 · 해제가 거절되면(버전 충돌 `55000` · 상태 `23514` · 모양 `22023` …) `refused` 한 줄(`user=<id> refused=<SQLSTATE>` — 메모 · 오류 문장은 안 적는다, 2026-10-17 부터 · ADR 0191). 시간당 30줄 · 앱 밖의 RPC 는 위 `/ops/reports` 줄과 같다 | 위와 같다 | ADR 0185 · 0187 · 0189 · pgTAP `97_operator_member` · `99_operator_credit_grant` · `99_operator_member_suspension` · `99_operator_member_history_reads_back` |
+| `/ops/members` | **같은 표** — 찾을 때 `members.find`, 경고 이력을 읽을 때 `members.warnings`, 무상 지급분 · 풀이권 이력을 읽을 때 `members.credits` · `members.credit_history`, 무상 풀이권을 지급 · 회수하면 `credits.grant` · `credits.revoke`(거른 조건 칸에 `user=<id> entry=<장부 줄 id>`, 관련 신고면 `report=<id>` — 메모는 안 적는다, ADR 0187) 한 줄씩. 처분 이력을 읽을 때 `members.sanctions`(`user=<id>`), 이용 정지 · 해제하면 `members.suspend` · `members.unsuspend`(거른 조건 칸에 `user=<id> entry=<상태 이력 줄 id>`, 재시도면 ` replayed` — 메모는 안 적는다, ADR 0189) 한 줄씩. 풀이권 이력은 쪽마다(「더 보기」 한 번에) `members.credit_history` 한 줄이고 커서는 안 적는다(ADR 0187 덧). 화면은 경고 이력(`members.warnings`)을 더는 안 읽는다. 거른 조건 칸에 무엇으로 찾았나(`by=nickname\|id`)와 찾은 계정 id(`user=<uuid>`, 없으면 `none`)만 — **찾은 닉네임은 안 적는다.** 거절은 앱의 문이 `members.find` 한 줄로 적는다. 운영자의 지급 · 회수 · 정지 · 해제가 거절되면(버전 충돌 `55000` · 상태 `23514` · 모양 `22023` …) `refused` 한 줄(`user=<id> refused=<SQLSTATE>` — 메모 · 오류 문장은 안 적는다). 시간당 30줄 · 앱 밖의 RPC 는 위 `/ops/reports` 줄과 같다 | 위와 같다 | ADR 0185 · 0187 · 0189 · 0191 · pgTAP `97_operator_member` · `99_operator_credit_grant` · `99_operator_member_suspension` · `99_operator_member_history_reads_back` |
 | Supabase SQL Editor · Table Editor · `db query --linked` 를 직접 부르는 것 | Postgres 로그. **`log_statement = ddl` 이라 읽기(select)는 안 남는다**, `pgaudit` 은 설치 안 됨 | **읽기 0일** · DDL 1일 | 운영에서 `current_setting('log_statement')` · `pg_extension`(2026-09-24) · 로그 보존 Free 1일 <https://supabase.com/pricing>. **그래서 여기서 개인정보를 읽지 않는다**(`docs/ops/runbook/access.md` 「개인정보는 화면으로만」) |
 | Supabase 조직 · 프로젝트 설정(Management API 행위 포함) | Platform Audit Logs | **없음** — Team · Enterprise 만 | <https://supabase.com/docs/guides/security/platform-audit-logs>(2026-09-24) |
 | Supabase 계정 | Account Audit Logs(<https://supabase.com/dashboard/account/audit>) — 제 계정의 행위 | **모름** — 문서에 일수가 없고 API(PAT)로는 못 읽는다(`401`) | 같은 문서(2026-09-24). 사람이 화면에서 가장 오래된 줄을 본다 |
@@ -137,6 +137,9 @@ G-25 ③ 이 운영자의 개인정보처리시스템 접속기록을 **1년 이
 | AWS(반출 버킷) | CloudTrail 관리 이벤트(버킷 · IAM 변경) — 기본 90일. 객체 읽기(데이터 이벤트)는 켜야 남는다 | 90일 | 계정을 연 뒤 잰다 |
 | App Store Connect · Play Console | — | **아직 못 잼** | 스토어 계약 뒤 관리자 접속기록을 어디까지 볼 수 있는지 잰다 — PG 는 하지 않는다(ADR 0212) |
 
+**줄이 선 날** — 지난 기록을 읽을 때 그 전에는 없는 줄이다: 설문 문의 앱 거절 2026-10-01 · 주문 문의 앱 거절 2026-10-16 ·
+운영자 쓰기의 `refused` 2026-10-17(`20261219090000`) · 액션이 문을 부르기 전에 거른 `denied` 2026-10-18.
+
 **기록이 추가만 되는 것** — 모든 역할(소유자 `postgres` 포함)에서 `update` · `delete` · `truncate` 를 걷었고 트리거가 한
 번 더 막는다. 소유자는 트리거를 끌 수 있다 — DB 안에서는 그 이상 못 지키고, 그래서 **밖의 사본(Object Lock)이 지워지지
 않는 기록**이다. 월 점검의 「반출이 이어지는가」가 끊긴 자리를 드러낸다.
@@ -144,7 +147,7 @@ G-25 ③ 이 운영자의 개인정보처리시스템 접속기록을 **1년 이
 #### 반출 — 매일 S3, 한 번에 하나, 결과는 DB 에
 
 **접속기록 표에 칸을 더하거나 바꾸면 같은 PR 이 셋을 함께 고친다** — 묶음 머리의 `version`(`app/api/cron/audit-export/bundle.ts`) ·
-검증 스크립트의 허용 칸 목록(`scripts/audit-verify.mjs`) · 이 절. #588(`target_report_ids`)이 셋을 함께 바꿨다(2026-10-10).
+검증 스크립트의 허용 칸 목록(`scripts/audit-verify.mjs`) · 이 절.
 
 Vercel Cron `/api/cron/audit-export`(`vercel.json`, 매일 18:37 UTC = 서울 03:37 전후 — Hobby 는 ±59분)가 지난 반출 뒤의
 줄을 번호 차례로 읽어 한 파일로 올리고, **올린 뒤에** 범위를 `audit.operator_access_export` 에 적는다. 적는 문은 앞 반출에서
@@ -193,7 +196,7 @@ Vercel Cron `/api/cron/audit-export`(`vercel.json`, 매일 18:37 UTC = 서울 03
 - **실패** — 500 이고, Vercel 로그(1시간)만이 아니라 위 결과 표 · 알림 · 상태 질의에 선다. 기록은 DB 에 남아 다음 실행이
   이어 올린다
 
-**마법사로 켠다 — 아래 1 ~ 9 를 차례대로 (2026-10-23)**
+**마법사로 켠다 — 아래 1 ~ 9 를 차례대로**
 
 운영자는 AWS 계정을 만든 뒤 저장소 뿌리에서 한 줄을 친다:
 
@@ -320,8 +323,7 @@ bash scripts/aws-wizard.sh
 
       읽기 · 지우기 · 보존 변경 권한이 없다 — 자격이 새도 올린 객체를 못 지우고 못 읽는다
    5. 발급자 · audience · `sub` 의 정확한 모양은 켜는 날 Vercel 문서(<https://vercel.com/docs/oidc/aws>)로 다시 본다 —
-      2026-09-24 에는 계정이 없어 못 쟀다. 2026-10-23 에 문서(갱신 2026-08-28)로 다시 봤다 — Team 발급자 · audience ·
-      `sub` 의 모양이 위와 같다. 제공자를 만들 때 thumbprint 는 넣지 않아도 IAM 이 가져온다(`create-open-id-connect-provider`
+      문서로는 Team 발급자 · audience · `sub` 의 모양이 위와 같다(2026-10-23 확인). 제공자를 만들 때 thumbprint 는 넣지 않아도 IAM 이 가져온다(`create-open-id-connect-provider`
       CLI 참조). 코드는 `@vercel/oidc` 의 토큰을 `AssumeRoleWithWebIdentity`(세션 이름
       `saju-audit-export`)로 바꾼다(`app/api/cron/audit-export/s3.ts`)
 
@@ -342,7 +344,7 @@ bash scripts/aws-wizard.sh
    ```
 
    `scripts/audit-verify.mjs` 가 `npm run db:remote -- --json` 으로 반출 기록(범위 · 행 수 · sha256 · 객체 키)을 읽고(`--json` 은
-   본 질의도 JSON 으로 받는다 — 없으면 사람의 셸에서는 표가 온다, #431), 객체마다 내려받아
+   본 질의도 JSON 으로 받는다 — 없으면 사람의 셸에서는 표가 온다), 객체마다 내려받아
    머리와 기록 · 본문 해시 · 줄 수 · 번호 차례 · 범위 이음을 견준다. 어긋나면 키와 어긋남의 이름만 찍고 1 로 끝난다(본문은 안
    찍는다). `-- --since <첫 번호>` 로 그 뒤만 본다
 
@@ -450,7 +452,7 @@ npm audit --omit=dev --audit-level=high ; echo $?   # 0 이어야 한다
 1. **올린다.** 같은 메이저 안이면 올리고 끝이다. 메이저를 넘거나 `overrides` 로 누르면 그 판이 부모와 맞는지
    `npm run build` 와 e2e 로 본다 — `next` 가 그런 자리다(`1e1f6c8` 은 16.3.1 → 16.3.6).
 2. **잠금 파일이 맞는지 `npm ci` 로 본다.** `npm audit fix` 가 `@emnapi/*` 를 `package-lock.json` 과 어긋난 채 두었고,
-   `npm install` 한 번이 다시 맞췄다(2026-10-07, #515). CI 의 차선은 `npm ci` 로 깐다(`.github/workflows/verify.yml`).
+   `npm install` 한 번이 다시 맞췄다. CI 의 차선은 `npm ci` 로 깐다(`.github/workflows/verify.yml`).
 3. **PR 은 `fix(deps): ...`** 로 낸다. 잠금 파일이 바뀌므로 그 PR 에서 `audit` 이 다시 돌아 0 을 잰다.
 4. **고친 판이 아직 없으면** 막을 자리를 본다 — 그 경로를 우리가 부르나(`npm audit` 의 advisory 본문). 안 부르면
    간극 대장 G-23 ① 에 패키지 · advisory · 까닭 · 다시 볼 날을 적고, 그동안 붉은 main 은 이슈가 들고 있다.
