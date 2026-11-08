@@ -80,10 +80,12 @@ export function decodeFlow(raw: string | undefined): KakaoFlow | null {
 
 /**
  * 돌아온 쿼리를 가른다 — 넘어갈 인가 코드가 있을 때만 `code` 다.
- * 카카오 창에서 취소하면 `error=access_denied` 로 온다(카카오 REST 문서). 그것도 구글의 취소와 같이 로그인 실패 화면이다.
+ * 카카오 창에서 취소하면 `error=access_denied` 로 온다(카카오 REST 문서). 실패가 아니라 그 사람의 답이라 로그인 화면으로 돌아간다 — 구글의 취소와 같다.
  */
-export function callbackOf(query: URLSearchParams, flow: KakaoFlow): { kind: 'code'; code: string } | { kind: 'denied' } {
-  if (query.get('error') !== null) return { kind: 'denied' };
+export function callbackOf(query: URLSearchParams, flow: KakaoFlow): { kind: 'code'; code: string } | { kind: 'cancelled' } | { kind: 'denied' } {
+  const refused = query.get('error');
+  if (refused === 'access_denied') return { kind: 'cancelled' };
+  if (refused !== null) return { kind: 'denied' };
   const state = query.get('state');
   const code = query.get('code');
   if (state === null || code === null || code === '' || !sameText(state, flow.state)) return { kind: 'denied' };

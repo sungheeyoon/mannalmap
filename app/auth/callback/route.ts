@@ -9,7 +9,10 @@ import { afterSignIn, safeReturnPath, withReturnPath } from '@/src/lib/consent';
  * 여기 오는 길은 둘이다.
  *
  * - `code` 를 들고 온다 — 통과했다. 그 코드를 세션으로 바꾼다.
- * - `error` 를 들고 온다 — 구글 쪽에서 취소했거나 중간에 실패했다. 「로그인하지 못했어요」(`/auth/denied`)로 간다.
+ * - `error` 를 들고 온다 — 구글 창에서 취소했으면 로그인 화면(`/auth`)으로, 중간에 실패했으면 「로그인하지 못했어요」(`/auth/denied`)로 간다.
+ *   취소는 `error=access_denied` 에 `error_code` 가 없는 것이다 — Supabase Auth 는 구글이 준 `error` 를 그대로 옮기고(`OAuthError`),
+ *   제가 막은 것(가입 꺼짐 · 정지된 계정 · 이메일 확인 필요)은 같은 `access_denied` 에 `error_code` 를 단다
+ *   (supabase/auth `internal/api/external.go` 의 `getErrorQueryString`, 2026-11-08 확인).
  *
  * 로그인 앞에 서는 관문은 없다 — 들어오는 문(가입 코드)은 로그인한 다음의 `/signup` 이다(ADR 0042).
  *
@@ -47,9 +50,12 @@ export async function GET(request: Request) {
   const code = url.searchParams.get('code');
   const returnTo = safeReturnPath(url.searchParams.get('next'));
 
-  if (url.searchParams.get('error') !== null) {
+  const refused = url.searchParams.get('error');
+  if (refused !== null) {
     await dropSpentVerifiers();
-    return goTo(withReturnPath('/auth/denied', returnTo));
+    /* 구글 창에서 취소했다 — 실패가 아니라 그 사람의 답이라 로그인 화면에 그대로 둔다. `error_code` 가 붙었으면 Supabase 가 막은 실패다 */
+    const cancelled = refused === 'access_denied' && url.searchParams.get('error_code') === null;
+    return goTo(withReturnPath(cancelled ? '/auth' : '/auth/denied', returnTo));
   }
 
   /* 실패한 자리도 돌아갈 곳을 버리지 않는다 — 「다시 로그인」이 같은 곳으로 간다(ADR 0128) */

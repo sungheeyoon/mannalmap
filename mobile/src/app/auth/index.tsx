@@ -28,8 +28,8 @@ import { goBack } from '@/ui/top-bar';
 
 /**
  * 로그인 — 웹의 `/auth` 와 같은 글자이고 로그인은 네이티브 구글, 키가 든 빌드에서는 그 밑에 카카오(ADR 0224), iOS 에서는 애플이 나란히 선다(ADR 0219). 돌아갈 곳은 앱에 있는 `/me` 아래와 결과 화면이다 —
- * 웹의 두 갈래 제목(`/compat` · `/saju` 이어 보기)은 앱에 없는 주소에서 오는 말이라 세우지 않는다. 「로그인 없이도…」 줄은 궁합 첫 신호까지 약속하는데 앱에는 그 화면이 없어 뺀다. 실패와 취소는 로그인 실패 화면으로 간다.
- * 결과 화면에서 왔으면 누른 일의 까닭을 말하고, 취소는 그 결과로 돌아간다 — 구글 · 애플 창을 닫아도 제자리다.
+ * 웹의 두 갈래 제목(`/compat` · `/saju` 이어 보기)은 앱에 없는 주소에서 오는 말이라 세우지 않는다. 「로그인 없이도…」 줄은 궁합 첫 신호까지 약속하는데 앱에는 그 화면이 없어 뺀다. 실패만 로그인 실패 화면으로 간다.
+ * 카카오 · 구글 · 애플 창을 닫으면 어디서 왔든 제자리다. 결과 화면에서 왔으면 누른 일의 까닭을 말하고, 「취소」는 그 결과로 돌아간다.
  */
 export default function SignInScreen() {
   const { next } = useLocalSearchParams<{ next?: string }>();
@@ -59,7 +59,8 @@ export default function SignInScreen() {
     setGoing(null);
     if (answer.kind === 'signed-in') arriveAt(destination);
     else if (answer.kind === 'needs-signup') router.replace(withReturnPath('/signup', destination) as never);
-    else if (answer.kind !== 'cancelled' || !fromChart) router.replace(withReturnPath('/auth/denied', destination) as never);
+    /* 창을 닫은 것(`cancelled`)은 실패가 아니라 그 사람의 답이다 — 어디서 왔든 이 화면에 그대로 남는다. 실패만 실패 화면으로 간다 */
+    else if (answer.kind === 'failed') router.replace(withReturnPath('/auth/denied', destination) as never);
   };
 
   return (

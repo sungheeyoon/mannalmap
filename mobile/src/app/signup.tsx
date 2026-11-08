@@ -30,6 +30,7 @@ import { legalPagesOpen, openLegalPage } from '@/info/legal-web';
 import { AccountNotice } from '@/settings/parts';
 import { LoadingDots } from '@/ui/loading';
 import { Logo } from '@/ui/logo';
+import { FailureLine } from '@/ui/failure-line';
 import { CheckRow, Field, FieldLabel, PrimaryButton, SecondaryButton, TextButton } from '@/ui/parts';
 import { COLOR, FONT, TYPE } from '@/ui/tokens';
 import { settled } from '@/ui/settled';
@@ -110,6 +111,9 @@ function Signup() {
             <SignupForm form={state} onDone={finish} />
           ) : state.kind === 'halted' ? (
             <AccountNotice state={state.account} onRetry={() => setReads((n) => n + 1)} />
+          ) : state.kind === 'failed' || (state.kind === 'blocked' && state.unread) ? (
+            /* 계정 · 일정을 못 읽은 것은 실패 줄이다 — 로그아웃하지 않고 같은 읽기를 다시 한다. 일정이 없는 것(`NOTICE_NOT_READY`)은 다시 읽어도 같아 카드다 */
+            <FailureLine onRetry={() => setReads((n) => n + 1)}>{state.message}</FailureLine>
           ) : (
             <Card>
               <Text style={styles.line}>{state.message}</Text>
