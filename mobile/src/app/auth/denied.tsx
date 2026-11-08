@@ -19,7 +19,7 @@ export default function DeniedScreen() {
       title="로그인하지 못했어요"
       description={
         <>
-          <NoticeLine>로그인을 마치지 못했어요. 중간에 취소했거나 연결이 끊겼을 수 있어요. 아래 「다시 로그인」을 눌러 주세요.</NoticeLine>
+          <NoticeLine>로그인을 마치지 못했어요. 연결이 끊겼을 수 있어요. 아래 「다시 로그인」을 눌러 주세요.</NoticeLine>
           <NoticeLine>{SUPPORT_MAIL_LINE}</NoticeLine>
         </>
       }

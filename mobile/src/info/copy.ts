@@ -12,4 +12,7 @@ export const SURVEY_LABEL = '서비스 설문';
 export const BUSINESS_LABEL = '사업자 정보';
 /** 글자는 대장 public-02 확정이다 — 오류 화면 · 고객센터가 같은 줄을 쓴다 */
 export const SUPPORT_MAIL_LINE = `궁금한 점은 ${SUPPORT_EMAIL}으로 보내 주세요.`;
-export const MAIL_FAILED = '메일 앱을 열지 못했어요. 위 주소로 보내 주세요.';
+export const MAIL_FAILED = '메일 앱을 열지 못했어요. 주소를 복사해 보내 주세요.';
+export const COPY_EMAIL_LABEL = '이메일 주소 복사';
+export const COPY_EMAIL_DONE = '복사했어요';
+export const COPY_EMAIL_FAILED = '주소를 복사하지 못했어요. 위 주소를 직접 선택해 복사해 주세요.';

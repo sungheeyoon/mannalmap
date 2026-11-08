@@ -16,8 +16,8 @@ export const FAILED = '로그인을 끝내지 못했어요. 잠시 뒤 다시 �
 export type SignupState =
   | { kind: 'done' }
   | { kind: 'form'; needsName: boolean; again: boolean; scheduleId: number }
-  /** 폼이 안 서는 까닭 — 일정이 없거나 못 읽었다(ADR 0024) */
-  | { kind: 'blocked'; message: string }
+  /** 폼이 안 서는 까닭 — 일정이 없거나 못 읽었다(ADR 0024). 못 읽었으면 `unread` — 화면이 다시 읽는 단추를 단다 */
+  | { kind: 'blocked'; message: string; unread: boolean }
   /** 서비스가 끝났다(`SERVICE_ENDED_ON`, ADR 0234) — 말은 `/closed` 가 한다 */
   | { kind: 'closed' }
   /** 가입을 안 마친 채 정지 · 탈퇴 대기다 — 폼 대신 그 상태의 안내가 선다(ADR 0218) */
@@ -38,7 +38,7 @@ export async function readSignup(client: Client): Promise<SignupState> {
     console.error('account', account.error.code);
     return { kind: 'failed', message: FAILED };
   }
-  if (!schedule.ok) return { kind: 'blocked', message: schedule.reason };
+  if (!schedule.ok) return { kind: 'blocked', message: schedule.reason, unread: true };
   const notice = schedule.value;
 
   /* 세션 없는 Expo Go 는 계정 행이 없다 — 화면만 볼 수 있게 처음 가입하는 사람의 폼을 세운다. 출시 빌드에는 `__DEV__` 가 없다 */
@@ -46,7 +46,7 @@ export async function readSignup(client: Client): Promise<SignupState> {
   if (account.data === null && !previewing) return { kind: 'failed', message: FAILED };
 
   if (serviceIsOver(new Date())) return { kind: 'closed' };
-  if (notice === null) return { kind: 'blocked', message: NOTICE_NOT_READY };
+  if (notice === null) return { kind: 'blocked', message: NOTICE_NOT_READY, unread: false };
 
   const signedUp = account.data !== null && account.data.signed_up_at !== null;
   const done = account.data !== null && signupDone(gateAccountOf(account.data), notice);

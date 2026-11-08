@@ -7,8 +7,7 @@ import { useEffect, useRef, useState, type ReactNode } from 'react';
 import {
   BUY_CREDITS_LABEL,
   CREDITS_AVAILABLE_LABEL,
-  CREDITS_USAGE_NOTE,
-  CREDITS_USAGE_RATE,
+  CREDITS_SCREEN_LEAD,
   SALE_CLOSED_NOTE,
 } from '@/src/lib/reading/notes';
 
@@ -70,8 +69,8 @@ export function CreditsMenu({ available, label, children, className }: {
         <p className="mt-2 flex items-baseline gap-1.5 text-title font-bold leading-none tabular-nums text-foreground">
           {available}<span className="text-lead font-semibold">장</span>
         </p>
-        <p className="mt-4 text-body leading-6 text-secondary">{CREDITS_USAGE_NOTE}</p>
-        <p className={`mt-1 ${TYPE_META}`}>{CREDITS_USAGE_RATE}</p>
+        <p className="mt-4 text-body leading-6 text-secondary">{CREDITS_SCREEN_LEAD[0]}</p>
+        <p className={`mt-1 ${TYPE_META}`}>{CREDITS_SCREEN_LEAD[1]}</p>
         {shape === 'closed' ? (
           <p className="mt-4 border-t border-border pt-4 text-body leading-6 text-secondary">{SALE_CLOSED_NOTE}</p>
         ) : shape === 'open' ? (

@@ -132,7 +132,8 @@ function Notice({ title, lines, children }: { title: string; lines: readonly str
   return (
     <SafeAreaView style={styles.screen} edges={['left', 'right', 'bottom']}>
       <TopBar fallback="/" />
-      <View style={styles.noticeRoom}>
+      {/* 작은 화면 · 큰 글씨에서 단추가 잘리지 않게 민다 — 공통 안내 화면(`@/ui/notice-screen`)과 같다 */}
+      <ScrollView contentContainerStyle={styles.noticeRoom}>
         <Paper style={styles.notice}>
           <BrandCircle size={64} mark={40} />
           <Text accessibilityRole="header" style={styles.title}>
@@ -147,7 +148,7 @@ function Notice({ title, lines, children }: { title: string; lines: readonly str
           </View>
           <View style={styles.noticeActions}>{children}</View>
         </Paper>
-      </View>
+      </ScrollView>
     </SafeAreaView>
   );
 }
@@ -186,7 +187,7 @@ const styles = StyleSheet.create({
   noticeLine: { fontSize: TYPE.note, lineHeight: 24, fontFamily: FONT.medium, color: COLOR.secondary },
   fine: { fontSize: TYPE.small, lineHeight: 20, fontFamily: FONT.medium, color: COLOR.secondary },
   failure: { fontSize: TYPE.small, lineHeight: 19, fontFamily: FONT.medium, color: COLOR.danger },
-  noticeRoom: { flex: 1, justifyContent: 'center', padding: 16 },
+  noticeRoom: { flexGrow: 1, justifyContent: 'center', padding: 16 },
   notice: { gap: 16 },
   noticeActions: { gap: 8, marginTop: 8 },
 });

@@ -373,9 +373,9 @@ DB 에 남긴 「번」은 풀이권의 수가 아니다 — 가입 코드의 �
 | 서비스 소개 「시작하는 차례」 4, 인연이 닫힌 동안 — 같은 자리(웹 · 앱) · `ABOUT_STEPS` 의 `whileShut` | 사주풀이 · 궁합 · 인연 중 마음 가는 것부터 시작해요. | 사주풀이 · 궁합 중 마음 가는 것부터 시작해요. |
 
 인연이 열린 동안 서비스 소개의 두 줄은 이전 글 그대로다. 열림은 all-10 과 같은 길(`app/signed-out-match-open.ts`)로 그리는 서버가 묻고, 못 읽으면 닫힌 쪽이다.
-웹 풀이권 메뉴 · 풀이권 화면(`app/me/credits/credits-menu.tsx` · `page.tsx`)은 아직 `CREDITS_USAGE_NOTE` · `CREDITS_USAGE_RATE`(credits-06)를 쓴다 — 이번에 바꾸지 않았다.
+웹 풀이권 메뉴 · 풀이권 화면(`app/me/credits/credits-menu.tsx` · `page.tsx`)은 all-14 가 같은 두 줄로 맞췄다 — 옛 상수 `CREDITS_USAGE_NOTE` · `CREDITS_USAGE_RATE`(credits-06)는 걷었다.
 앱의 서비스 소개(`mobile/src/app/about.tsx`)도 열림을 묻고(`useMatchOpen`, 못 읽으면 닫힌 쪽) 인연 카드 · 맨 위 둘째 문장 · 「시작하는 차례」 4 를 웹과 같게 세운다(조율자 지시 2026-11-08). 홈 목록의 점수 칸과 웹의 사람 카드는 그대로다.
-닫힌 쪽이다. 앱의 소개 화면(`mobile/src/app/about.tsx`)은 아직 열림을 안 묻고 이전 글을 세운다.
+
 ## all-12 확정 문구 — 로딩은 글자 없이, 화면 낭독기에만 「불러오는 중」 (운영자 결정 2026-11-08, 로딩 애니메이션 시안 승인)
 
 운영자가 로딩 시안(B 오행 다섯 점 · A 궤도)을 승인하며 정했다 — 화면에는 설명 글자를 세우지 않고, 낭독기에만 「불러오는 중」이라 읽힌다.
@@ -407,6 +407,25 @@ DB 에 남긴 「번」은 풀이권의 수가 아니다 — 가입 코드의 �
 
 같은 사람 확인창이 서는 자리는 셋이다 — 로그인 뒤 사주 보기의 「저장하고 계속하기」 · 웹 · 앱 사람 추가. 인연 궁합 칩의 열림은 로그인한 화면이 이미 쓰는
 길(`readMatchOpen` → `openOf` → `matchEntriesStand`, 설정 · 홈과 같다)로 읽는다 — 로그인 전 화면의 `app/signed-out-match-open.ts` 는 세션 없이 그리는 화면의 것이다.
+
+## all-14 확정 문구 — 로그인 · 가입 · 공유 링크 · 풀이권 다듬기: 창을 닫으면 제자리 · 실패 화면의 「취소」 · 가입을 못 읽었을 때 다시 시도 · 웹 풀이권 두 줄 (운영자 승인 2026-11-08, 시안 뒤 구현)
+
+운영자가 시안(그림)을 보고 확정했다. 가입 일정을 못 읽은 때의 「다시 시도하기」는 시안 뒤 같은 날 더한 줄이다. 고객센터의 메일 줄 넷은 앱에만 서는 글자라
+[settings-21](copy-ledger/settings.md) 에 든다(`scripts/mobile-info-copy.test.ts` 가 settings-14 뒤와 견준다).
+
+| 자리 | 이전 | 확정 |
+| --- | --- | --- |
+| 로그인 창을 직접 닫았을 때 — 앱 `mobile/src/app/auth/index.tsx`(카카오 · 구글 · 애플) · 웹 `app/auth/callback/route.ts`(구글) · `app/auth/kakao/callback/route.ts`(카카오) | 「로그인하지 못했어요」 화면(앱의 결과 화면에서 온 로그인만 제자리) | 로그인 화면에 그대로 남는다 — 가려던 곳도 그대로. 진짜 실패만 「로그인하지 못했어요」 |
+| 로그인 실패 화면 첫 줄 — 웹 `app/auth/denied/page.tsx` · 앱 `mobile/src/app/auth/denied.tsx` | 로그인을 마치지 못했어요. 중간에 취소했거나 연결이 끊겼을 수 있어요. 아래 「다시 로그인」을 눌러 주세요. | 로그인을 마치지 못했어요. 연결이 끊겼을 수 있어요. 아래 「다시 로그인」을 눌러 주세요. |
+| 앱 가입 화면, 계정을 못 읽었을 때 — `mobile/src/app/signup.tsx` | 카드 안 글자만 「로그인을 끝내지 못했어요. 잠시 뒤 다시 시도해 주세요.」 | 같은 글자의 실패 줄 + 「다시 시도하기」 — 로그아웃하지 않고 다시 읽는다 |
+| 가입 화면, 가입 일정을 못 읽었을 때 — 앱 `mobile/src/app/signup.tsx` · 웹 `app/signup/page.tsx` | 카드 안 글자만(일정 읽기의 오류 문장) | 같은 글자의 실패 줄 + 「다시 시도하기」. 일정이 없는 때(`NOTICE_NOT_READY`)는 다시 읽어도 같아 카드 그대로 |
+| 앱 공유 링크의 「열 수 없는 링크예요」 · 「화면을 불러오지 못했어요」 — `mobile/src/share/view.tsx` | 고정 배치 — 작은 화면 · 큰 글씨에서 단추가 화면 밖으로 나갔다 | 글자는 그대로, 판이 밀린다(공통 안내 화면과 같은 틀) |
+| 웹 풀이권 구매 화면 머리 · 머리글 펼침 메뉴 — `app/me/credits/page.tsx` · `credits-menu.tsx` · `src/lib/reading/notes.ts` 의 `CREDITS_SCREEN_LEAD`(앱 all-11 과 같은 상수) | 사주풀이와 궁합풀이에 사용할 수 있어요. (메뉴는 그 아래 「풀이 한 편당 풀이권 1장」) | 사주풀이와 궁합풀이를 받아보세요. / 풀이 한 편에 풀이권 1장을 사용해요. — 메뉴의 「풀이 한 편당 풀이권 1장」 줄은 없다(둘째 줄과 같은 말) |
+
+창을 닫은 것은 공급자마다 이렇게 온다. 앱은 구글 `GoogleSignin.signIn()` 이 성공 응답이 아닐 때 · 카카오 `Cancelled` · `AccessDenied` · 애플 `ERR_REQUEST_CANCELED`
+(`mobile/src/auth/sign-in.ts` 의 `cancelled`). 웹 카카오는 `error=access_denied`(카카오 REST 문서). 웹 구글은 Supabase Auth 가 구글이 준 `error` 를 그대로 옮겨
+`error=access_denied` 에 `error_code` 가 없고, Supabase 가 막은 것(가입 꺼짐 · 정지된 계정 · 이메일 확인 필요)은 같은 `access_denied` 에 `error_code` 를 단다 —
+그래서 `error_code` 가 있으면 실패 화면이다(supabase/auth `internal/api/external.go` 의 `getErrorQueryString`, 2026-11-08 소스 확인 · 실기 확인은 아직).
 
 ## all-16 확정 문구 — 출생 정보 폼의 「모름」 덧말 · 고급 설정 두 줄을 앱까지 (운영자 승인 2026-11-08, 시안 뒤 구현)
 
