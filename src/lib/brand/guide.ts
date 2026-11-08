@@ -37,12 +37,12 @@ export const ABOUT_LEAD = [
 ] as const;
 
 /**
- * 인연이 닫힌 동안(ADR 0222) 웹 서비스 소개가 `ABOUT_LEAD[1]` 대신 세우는 둘째 문장(운영자 확정 2026-11-08, 대장 all-11).
- * 열림은 그리는 서버가 묻는다(`app/signed-out-match-open.ts`). 앱의 소개 화면은 아직 열림을 안 묻고 이전 글을 세운다
+ * 인연이 닫힌 동안(ADR 0222) 서비스 소개(웹 · 앱)가 `ABOUT_LEAD[1]` 대신 세우는 둘째 문장(운영자 확정 2026-11-08, 대장 all-11).
+ * 웹은 그리는 서버가(`app/signed-out-match-open.ts`), 앱은 화면이(`useMatchOpen`) 열림을 묻는다
  */
 export const ABOUT_LEAD_WHILE_SHUT = '인연 기능은 준비 중이에요.';
 
-/** 서비스 소개 「시작하는 차례」 — `whileShut` 은 인연이 닫힌 동안 웹이 `body` 대신 세우는 글(운영자 확정 2026-11-08, 대장 all-11) */
+/** 서비스 소개 「시작하는 차례」 — `whileShut` 은 인연이 닫힌 동안 웹 · 앱이 `body` 대신 세우는 글(운영자 확정 2026-11-08, 대장 all-11) */
 export const ABOUT_STEPS: readonly { title: string; body: string; whileShut?: string }[] = [
   { title: '사주 보기', body: '첫 화면에서 생년월일시를 넣고 내 사주를 봐요.' },
   { title: '로그인 · 가입', body: '카카오 · 구글로 로그인하고, 닉네임으로 가입해요.' },
