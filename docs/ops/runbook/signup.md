@@ -65,7 +65,7 @@ select id, ends_on, purge_within_days, note, set_at from public.beta_schedule or
 ```sql
 -- 누가 어느 판본·어느 날짜에서 무엇을 골랐나 — 이메일 필수 동의 전(2026-11-05)에 카카오로만 들어온 계정은 이메일이 비어 있다(ADR 0224 추기). 계정은 `a.id` 로 가른다
 select a.id, u.email, a.notice_version, a.notice_ends_on, a.notice_ack_at,
-       a.improvement_consent as 개선활용, a.contact_consent as 후속연락
+       a.improvement_consent as 개선활용
 from public.app_user a join auth.users u on u.id = a.id
 order by a.notice_ack_at desc nulls first;
 ```

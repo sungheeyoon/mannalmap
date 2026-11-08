@@ -50,7 +50,6 @@ export async function readSettings(client: Client): Promise<SettingsData> {
 
 /** 끄는 쪽의 지움은 DB 가 같은 트랜잭션에서 한다(ADR 0022). 웹의 `setOptionalConsent` 와 같다 */
 export async function setOptionalConsent(client: Client, consent: boolean): Promise<Done> {
-  /* 「인터뷰 요청 받기」(`set_contact_consent`)는 `notice-v19` 에서 걷었다(ADR 0245) — 칸 · 문은 별도 PR 이 지운다(G-159) */
   const { error } = await client.rpc('set_improvement_consent', { p_consent: consent });
   return error !== null ? { ok: false, message: userFacingDbMessage(error, 'set_optional_consent') } : { ok: true };
 }

@@ -9,7 +9,7 @@
 -- 3. **거절해도 서비스는 그대로다.** 닫히는 것은 설문 하나뿐이다.
 -- 4. **철회가 곧 지움이다.** 안내 화면에서 거절한 경우에도 같다.
 begin;
-select plan(41);
+select plan(40);
 
 create or replace function pg_temp.acting(uid uuid)
 returns void language plpgsql as $$
@@ -86,10 +86,10 @@ select lives_ok(
   '코드·이름·확인·선택 답이 한 번에 남는다');
 
 select is(
-  (select array[a.notice_version, a.improvement_consent::text, a.contact_consent::text]
+  (select array[a.notice_version, a.improvement_consent::text]
    from public.app_user a where a.id = (select kim from fresh)),
-  array['notice-v101', 'false', 'true'],
-  '판본과 두 답이 그대로 남는다');
+  array['notice-v101', 'false'],
+  '판본과 선택 답이 그대로 남는다');
 
 select isnt(
   (select a.notice_ack_at from public.app_user a where a.id = (select kim from fresh)),
@@ -138,9 +138,9 @@ select lives_ok(
   '새 판본을 다시 확인할 수 있다');
 
 select is(
-  (select array[a.notice_version, a.improvement_consent::text, a.contact_consent::text]
+  (select array[a.notice_version, a.improvement_consent::text]
    from public.app_user a where a.id = (select kim from fresh)),
-  array['notice-v102', 'true', 'false'],
+  array['notice-v102', 'true'],
   '새 판본과 바뀐 답이 남는다');
 
 reset role;
@@ -184,54 +184,43 @@ select is(
   array['notice-v103', 'false'],
   '남이 확인해도 내 답은 그대로다');
 
--- ── 연락 동의는 설정에서 따로 켜고 끈다 ────────────────────────────────────
+-- ── 「인터뷰 요청 받기」는 없다 (ADR 0245 추기, `20270118090000`) ──────────────
 
 /**
- * **철회는 들어올 때만큼 쉬워야 한다.** 안내에서 고른 연락 동의는 설정 화면에서 따로
- * 켜고 끈다(`set_contact_consent`, 화면은 `app/me/actions.ts` 의 `setOptionalConsent`).
- * 여기서 재는 것은 셋 — 켜고 끄는 대로 남는가, 개선 동의는 안 건드리는가, 남의 값은
- * 못 건드리는가. uuid 를 안 받으므로 「남의 것」은 **부른 사람의 값만 바뀌는가**로 잰다.
+ * **걷은 선택 동의는 칸도 문도 없다.** `notice-v19` 가 화면 · 처리방침에서 걷었고(#1089), 운영자가 승인한 적이 없는 항목이라
+ * 아무도 안 묻는 값이 계정에 남지 않게 DB 에서도 지웠다(G-159).
+ */
+reset role;
+select hasnt_column('public', 'app_user', 'contact_consent', '계정에 인터뷰 요청 동의 칸이 없다');
+select hasnt_function('public', 'set_contact_consent', '인터뷰 요청 동의를 켜고 끄는 문이 없다');
+
+/**
+ * **`p_contact` 는 받기만 하고 읽지 않는다.** `notice-v19` 전의 웹과 옛 앱 빌드가 그 인자를 이름으로 보내므로 서명에 남았다 —
+ * 무엇을 보내든 비워 두든 같은 답이다. 인자를 걷는 것은 다음 마이그레이션이다(G-160).
  */
 set local role authenticated;
 select pg_temp.acting((select kim from fresh));
 
-select lives_ok($$select public.set_contact_consent(true)$$, '연락 동의를 켠다');
+select lives_ok(
+  $$select public.complete_signup(null, null, 'notice-v103', (select s.schedule_id from public.current_beta_schedule() s), false, true)$$,
+  '옛 화면이 보낸 「받겠다」도 지난다');
+
+select lives_ok(
+  $$select public.complete_signup(null, null, 'notice-v103', (select s.schedule_id from public.current_beta_schedule() s), false, null)$$,
+  '비워 보내도 지난다 — 이제 묻지 않는 답이다');
+
+select lives_ok(
+  $$select public.complete_signup(p_code => null, p_nickname => null, p_version => 'notice-v103',
+      p_schedule_id => (select s.schedule_id from public.current_beta_schedule() s), p_improvement => false)$$,
+  '인자를 빼고 불러도 지난다 — 새 웹 · 앱은 안 보낸다');
 
 reset role;
 select is(
-  (select contact_consent from public.app_user where id = (select kim from fresh)),
-  true,
-  '켜면 연락 동의가 남는다');
+  (select array[a.notice_version, a.improvement_consent::text] from public.app_user a where a.id = (select kim from fresh)),
+  array['notice-v103', 'false'],
+  '무엇을 보냈든 남는 것은 판본과 개선 동의뿐이다');
 set local role authenticated;
 select pg_temp.acting((select kim from fresh));
-
-select lives_ok($$select public.set_contact_consent(false)$$, '연락 동의를 끈다');
-
-reset role;
-select is(
-  (select array[contact_consent, improvement_consent] from public.app_user
-   where id = (select kim from fresh)),
-  array[false, false],
-  '끄면 연락 동의가 풀리고 개선 동의는 그대로다');
-
-/** 남은 안내에서 연락을 받겠다고 했다 — 내가 끈 것이 거기까지 번지면 안 된다 */
-select is(
-  (select a.contact_consent from public.app_user a
-   join auth.users u on u.id = a.id where u.email = 'lee-notice@example.com'),
-  true,
-  '내가 꺼도 남의 연락 동의는 그대로다');
-set local role authenticated;
-select pg_temp.acting((select kim from fresh));
-
-select throws_ok(
-  $$select public.set_contact_consent(null)$$,
-  '23514', null, '연락 동의를 비워 둔 채 정할 수는 없다');
-
-set local role anon;
-select throws_ok(
-  $$select public.set_contact_consent(false)$$,
-  '42501', null, '로그인하지 않았으면 부를 수 없다');
-reset role;
 
 -- ── 일정을 옮기면 ─────────────────────────────────────────────────────────
 

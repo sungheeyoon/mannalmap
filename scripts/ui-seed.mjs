@@ -187,7 +187,6 @@ export async function seed(local, wanted, tag) {
       p_version: noticeVersion(),
       p_schedule_id: current.data?.[0]?.schedule_id,
       p_improvement: true,
-      p_contact: false,
     });
     if (passed.error) throw new Error(`가입을 못 끝냈습니다 — ${passed.error.message}`);
     fillTheCredits(email);

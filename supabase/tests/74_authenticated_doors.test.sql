@@ -21,6 +21,8 @@
 -- 2026-11-07 에 받아 주는 가장 옛 안드로이드 빌드를 읽는 문(`android_min_version_code`, `20270116090000`, ADR 0237)이 더했다 — 수 하나뿐이고
 -- 로그인 전에도 열렸다(`33_function_shape`).
 -- 2026-11-08 에 정지된 사람도 부르는 소개 비우기 문(`clear_my_intro`, `20270117090000`, ADR 0244)이 더했다 — 인자가 없고 제 소개만 비운다.
+-- 같은 날 「인터뷰 요청 받기」를 걷으며 `set_contact_consent` 를 `20270118090000` 이 걷었다(ADR 0245 추기). `complete_signup` 의 `p_contact` 는
+-- 옛 웹 · 앱 때문에 기본값을 들고 남았다 — 서명은 그대로다(G-160 이 걷는다).
 begin;
 select plan(1);
 
@@ -142,7 +144,6 @@ select set_eq(
            ('save_service_survey(p_liked text[], p_unknown text[], p_improve text[], p_improve_text text, p_wants text[], p_wants_new text[], p_price_solo text, p_price_pair text, p_price_factors text[], p_free_text text, p_price_options text[], p_submit boolean)'),
            ('send_chat_message(p_match_id uuid, p_body text, p_client_id uuid)'),
            ('service_survey_context()'),
-           ('set_contact_consent(p_consent boolean)'),
            ('set_improvement_consent(p_consent boolean)'),
            ('set_match_open_alert(p_wanted boolean)'),
            ('set_my_photo_focus(p_position integer, p_x integer, p_y integer, p_version bigint)'),

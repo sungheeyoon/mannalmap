@@ -37,7 +37,7 @@ function answering(detail: { data: unknown; error: unknown }) {
     }
     return { data: [], error: null };
   });
-  const account = { status: 'active', signed_up_at: '2026-10-01T00:00:00Z', notice_version: NOTICE_VERSION, notice_schedule_id: 7, self_person_id: null, nickname: 'n', improvement_consent: false, contact_consent: false, marketing_consent: false };
+  const account = { status: 'active', signed_up_at: '2026-10-01T00:00:00Z', notice_version: NOTICE_VERSION, notice_schedule_id: 7, self_person_id: null, nickname: 'n', improvement_consent: false, marketing_consent: false };
   const chain = { select: () => chain, eq: () => chain, maybeSingle: async () => ({ data: account, error: null }) };
   bearer.supabaseAsBearer.mockReturnValue({
     rpc,
