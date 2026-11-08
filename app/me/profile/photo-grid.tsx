@@ -34,6 +34,7 @@ import { usePhotoDrag } from './use-photo-drag';
 import { usePhotoRemoval } from './use-photo-removal';
 import { usePhotoUploads, type Upload } from './use-photo-uploads';
 import { FailureLine } from '../../ui/failure-line';
+import { PHOTO_LOAD_FAILED_NOTE } from '@/src/lib/profile';
 import { Icon } from '../../ui/icons';
 
 /** 빈 칸보다 많이 골랐을 때 — 앞의 장만 올리고 이 한 줄을 남긴다 */
@@ -44,6 +45,16 @@ const PHOTO_SAVES_ITSELF = '사진은 바로 저장돼요';
 const PHOTO_SECTION_TITLE = '프로필 사진';
 /** 두 장 이상일 때 격자 아래 — 길게 눌러 옮기는 길이 눈에 안 보였다(대장 settings-07) */
 const PHOTO_REORDER_HINT = '사진을 길게 눌러 순서를 바꿀 수 있어요';
+
+/** 사진 목록만 못 읽었을 때 — 판과 제목은 그대로, 칸 자리에 실패 줄. 「다시 시도하기」는 화면을 서버에서 다시 받는다(대장 all-18) */
+export function PhotoGridFailed() {
+  return (
+    <section className="flex flex-col gap-4 rounded-card bg-cream px-4 py-5 sm:px-6 sm:py-6">
+      <h2 className="text-body font-semibold text-foreground">{PHOTO_SECTION_TITLE}</h2>
+      <FailureLine retry>{PHOTO_LOAD_FAILED_NOTE}</FailureLine>
+    </section>
+  );
+}
 
 /**
  * 사진 여섯 칸 — **첫 칸이 두 배라 대표 사진으로 읽힌다**(G-60, 운영자 2026-09-25 시안).
