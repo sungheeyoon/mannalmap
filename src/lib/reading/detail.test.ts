@@ -6,7 +6,6 @@ import { markdownBlocks } from './markdown-blocks';
 import {
   CONTROL,
   DISCOVERY_PROPERTY,
-  LEGACY_PAIR_ASSEMBLY,
   READING_POLICY,
   READING_PROMPTS,
   blockingFindingsOf,
@@ -18,18 +17,21 @@ import {
   readingEvidenceOf,
   readingPromptOf,
   withDiscovery,
+  type PromptAssembly,
 } from '.';
 
 const A = computeSaju({ year: 1990, month: 5, day: 12, hour: 14, minute: 30, second: 0, gender: 'male' });
 const B = computeSaju({ year: 1993, month: 11, day: 3, hour: 8, minute: 10, second: 0, gender: 'female' });
 const AT = new Date('2026-08-25T13:00:00+09:00');
+/** 4판 이전의 궁합 지시(`plain-v1`) — 운영은 안 부르고 실험의 견줄 짝만 부른다(ADR 0239) */
+const OLD_PAIR_READING: PromptAssembly = { ...CONTROL, pairReading: 'plain-v1' };
 
 /** 글자의 지문은 `scripts/old-reading-prompts-unchanged.test.ts` 가 잰다 — 이 폴더는 `node:crypto` 를 안 부른다 */
 describe('인연 궁합은 상세 궁합 하나다 — 다른 kind 는 상세 지시를 모른다', () => {
-  it('상세 지시는 인연 궁합 4판에만 선다 — 비공개 궁합 · 옛 컷 · 개인 풀이에는 없다', () => {
+  it('상세 지시는 인연 궁합 4판에만 선다 — 비공개 궁합 · 옛 궁합 지시 · 개인 풀이에는 없다', () => {
     expect(promptSlotsOf('match', CONTROL)).toContain('detail');
     for (const kind of ['self', 'person', 'private'] as const) expect(promptSlotsOf(kind, CONTROL), kind).not.toContain('detail');
-    expect(promptSlotsOf('match', LEGACY_PAIR_ASSEMBLY)).not.toContain('detail');
+    expect(promptSlotsOf('match', OLD_PAIR_READING)).not.toContain('detail');
   });
 
   it('다른 kind 의 지시는 새 지시를 모른다', () => {
@@ -39,8 +41,8 @@ describe('인연 궁합은 상세 궁합 하나다 — 다른 kind 는 상세 �
     }
     expect(READING_PROMPTS.private).toContain('적어도 한 항목은 움직인다');
     expect(READING_PROMPTS.match).toContain('discovery');
-    const legacy = readingEvidenceOf('match', { a: A, b: B }, AT, LEGACY_PAIR_ASSEMBLY.matchInput);
-    expect(readingPromptOf(legacy, LEGACY_PAIR_ASSEMBLY)).not.toContain('discovery');
+    const old = readingEvidenceOf('match', { a: A, b: B }, AT, OLD_PAIR_READING.matchInput);
+    expect(readingPromptOf(old, OLD_PAIR_READING)).not.toContain('discovery');
   });
 
   it('인연 궁합의 판본은 상세 판본이고, 다른 궁합은 궁합 판본이다', () => {
