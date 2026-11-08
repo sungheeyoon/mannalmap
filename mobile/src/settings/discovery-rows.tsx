@@ -6,10 +6,11 @@ import { PREFER_GENDER_KO } from '@discovery/copy';
 
 import { saveFailureOf, setParticipation } from '@/reading/chart-writes';
 import { followRefusal } from '@/reading/panel';
+import { FailureLine } from '@/ui/failure-line';
 import { COLOR, FONT, RADIUS, TYPE } from '@/ui/tokens';
 import { KEEP_VIEW } from '@/ui/keep-view';
 
-import { FailureLine, SwitchRow, useDoneNote } from './parts';
+import { SwitchRow, useDoneNote, FAILURE_INSET } from './parts';
 import { savePreferGender } from './settings';
 
 /**
@@ -42,7 +43,7 @@ export function ParticipationRow({ resting }: { resting: boolean }) {
         onChange={(next) => void toggle(next)}
         busy={working}
       />
-      {failure !== null && <FailureLine inset>{failure}</FailureLine>}
+      {failure !== null && <FailureLine style={FAILURE_INSET}>{failure}</FailureLine>}
     </>
   );
 }
@@ -118,7 +119,7 @@ export function PreferenceRow({ current }: { current: PreferGender }) {
         </View>
         <Text style={styles.help}>서로 고른 성별이 맞을 때 소개돼요.</Text>
       </View>
-      {failure !== null && <FailureLine inset>{`저장하지 못했어요. ${failure}`}</FailureLine>}
+      {failure !== null && <FailureLine style={FAILURE_INSET}>{`저장하지 못했어요. ${failure}`}</FailureLine>}
     </>
   );
 }

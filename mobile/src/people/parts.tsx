@@ -1,6 +1,6 @@
 import { router, type Href } from 'expo-router';
 import type { ReactNode } from 'react';
-import { KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { accountFailureOf, accountNoticeOf, type AccountState } from '@account/index';
@@ -9,10 +9,12 @@ import { HOUR_UNKNOWN_LABEL } from '@input/query';
 import { BRANCH_INFO, STEM_INFO, type Branch, type Stem } from '@saju';
 import { PILLAR_COLUMNS, STEM_PICTURE } from '@saju-view';
 
-import { KeyboardDoneBar, TextButton } from '@/ui/parts';
-import { COLOR, ELEMENT_TONE, FONT, RADIUS, TYPE } from '@/ui/tokens';
+import { KeyboardDoneBar } from '@/ui/parts';
+import { alpha, COLOR, ELEMENT_TONE, FONT, RADIUS, TYPE } from '@/ui/tokens';
 
 import { StemSymbol } from '@/ui/stem-symbol';
+import { FailureLine } from '@/ui/failure-line';
+import { Scrim } from '@/ui/scrim';
 import { CardFrame, SheetPanel } from '@/ui/surfaces';
 
 /** 아직 없는 경로도 그대로 잇는다 — 나란히 짓는 화면이 그 자리에 선다 */
@@ -40,21 +42,15 @@ export function ScreenFrame({ children, keyboard = false, bar }: { children: Rea
   );
 }
 
-/** 못 읽었거나 못 한 일을 말하는 줄 — 읽기 실패에는 다시 읽는 단추가 붙는다(`app/ui/failure-line.tsx`) */
-export function FailureLine({ children, onRetry }: { children: ReactNode; onRetry?: () => void }) {
-  return (
-    <View accessibilityRole="alert" style={styles.failureBox}>
-      <Text style={styles.failure}>{children}</Text>
-      {onRetry !== undefined && <TextButton label="다시 시도하기" onPress={onRetry} />}
-    </View>
-  );
-}
-
 /** 계정이 막혀 있을 때 화면 대신 보는 것 — 문구와 판정은 `src/lib/account` 가 든다(`app/me/account-notice.tsx`) */
 export function AccountNotice({ state, onRetry }: { state: AccountState; onRetry: () => void }) {
   const failure = accountFailureOf(state);
   if (failure !== null) {
-    return <FailureLine onRetry={failure.next === 'retry' ? onRetry : undefined}>{failure.line}</FailureLine>;
+    return (
+      <FailureLine onRetry={failure.next === 'retry' ? onRetry : undefined} signIn={failure.next === 'signIn'}>
+        {failure.line}
+      </FailureLine>
+    );
   }
   const text = accountNoticeOf(state, SUPPORT_EMAIL);
   if (text === null) return null;
@@ -127,13 +123,9 @@ export function PillarStrip({
 /** 아래에서 뜨는 판 — 바깥을 누르면 닫힌다 */
 export function Sheet({ onClose, label, children }: { onClose: () => void; label: string; children: ReactNode }) {
   return (
-    <Modal transparent animationType="fade" onRequestClose={onClose}>
-      <Pressable accessibilityLabel={label} onPress={onClose} style={styles.backdrop}>
-        <Pressable onPress={() => undefined}>
-          <SheetPanel style={styles.sheet}>{children}</SheetPanel>
-        </Pressable>
-      </Pressable>
-    </Modal>
+    <Scrim place="bottom" animation="fade" onRequestClose={onClose} onOutside={onClose} outsideLabel={label}>
+      <SheetPanel style={styles.sheet}>{children}</SheetPanel>
+    </Scrim>
   );
 }
 
@@ -156,23 +148,20 @@ export const styles = StyleSheet.create({
   body: { fontSize: TYPE.body, lineHeight: 24, fontFamily: FONT.medium, color: COLOR.secondary },
   bodyStrong: { fontFamily: FONT.bold, color: COLOR.foreground },
   meta: { fontSize: TYPE.small, lineHeight: 20, fontFamily: FONT.medium, color: COLOR.secondary },
-  failureBox: { gap: 2 },
-  failure: { fontSize: TYPE.small, lineHeight: 19, fontFamily: FONT.medium, color: COLOR.danger },
   notice: { gap: 4, paddingHorizontal: 20, paddingVertical: 16 },
   noticeTitle: { fontSize: TYPE.body, lineHeight: 22, fontFamily: FONT.bold, color: COLOR.foreground },
   noticeBody: { fontSize: TYPE.note, lineHeight: 20, fontFamily: FONT.medium, color: COLOR.secondary },
   notFound: { gap: 6, paddingVertical: 40, alignItems: 'center' },
   notFoundActions: { alignSelf: 'stretch', gap: 8, marginTop: 16 },
-  chip: { flexDirection: 'row', alignItems: 'center', gap: 4, alignSelf: 'flex-start', paddingVertical: 4, paddingLeft: 4, paddingRight: 10, borderRadius: RADIUS.pill, backgroundColor: 'rgba(255, 253, 249, 0.72)' },
+  chip: { flexDirection: 'row', alignItems: 'center', gap: 4, alignSelf: 'flex-start', paddingVertical: 4, paddingLeft: 4, paddingRight: 10, borderRadius: RADIUS.pill, backgroundColor: alpha(COLOR.surface, 0.72) },
   chipText: { fontSize: TYPE.fine, fontFamily: FONT.bold },
   strip: { flexDirection: 'row', gap: 6 },
-  pillar: { flex: 1, alignItems: 'center', gap: 2, paddingHorizontal: 4, paddingTop: 4, paddingBottom: 6, borderRadius: RADIUS.cell, backgroundColor: 'rgba(255, 253, 249, 0.78)' },
-  pillarDay: { borderWidth: 2, borderColor: 'rgba(38, 36, 31, 0.22)' },
+  pillar: { flex: 1, alignItems: 'center', gap: 2, paddingHorizontal: 4, paddingTop: 4, paddingBottom: 6, borderRadius: RADIUS.cell, backgroundColor: alpha(COLOR.surface, 0.78) },
+  pillarDay: { borderWidth: 2, borderColor: alpha(COLOR.foreground, 0.22) },
   pillarLabel: { fontSize: 11, fontFamily: FONT.bold, color: COLOR.secondary },
   pillarRow: { flexDirection: 'row' },
   glyph: { fontSize: TYPE.lead, lineHeight: 22, fontWeight: '600', fontFamily: GLYPH_FONT, textAlign: 'center' },
   glyphLarge: { fontSize: TYPE.title, lineHeight: 32 },
-  backdrop: { flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(38, 36, 31, 0.4)' },
   sheet: { gap: 10, padding: 20, paddingBottom: 32 },
   sheetItem: { minHeight: 48, justifyContent: 'center', paddingHorizontal: 4 },
   sheetItemText: { fontSize: TYPE.field, fontFamily: FONT.bold, color: COLOR.foreground },

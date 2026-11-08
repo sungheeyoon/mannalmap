@@ -11,7 +11,7 @@ import { Icon } from '@/ui/icons';
 import { Photo } from '@/ui/photo';
 import { ConfirmDialog, DialogText } from '@/ui/confirm-dialog';
 import { DetailSheet } from '@/ui/sheet';
-import { COLOR, ELEMENT_TONE, FONT, RADIUS, TYPE } from '@/ui/tokens';
+import { alpha, COLOR, ELEMENT_TONE, FIXED, FONT, RADIUS, TYPE } from '@/ui/tokens';
 import { KEEP_VIEW } from '@/ui/keep-view';
 import { Tile } from '@/ui/surfaces';
 
@@ -257,7 +257,7 @@ export function ReportBlock({ userId, nickname, onPhoto = false, onBlocked }: { 
         onPress={() => setMenu(true)}
         {...KEEP_VIEW} style={[styles.more, onPhoto && styles.moreOnPhoto]}
       >
-        <Icon size={20} name="more" color={onPhoto ? '#ffffff' : COLOR.foreground} />
+        <Icon size={20} name="more" color={onPhoto ? COLOR.onPhoto : COLOR.foreground} />
       </Pressable>
       <DetailSheet open={menu} title="신고 · 차단" onClose={() => setMenu(false)}>
         <Pressable
@@ -313,8 +313,8 @@ const styles = StyleSheet.create({
   halfRight: { position: 'absolute', right: 0, top: 0, bottom: 0, width: '50%' },
   bars: { position: 'absolute', left: 12, right: 12, top: 6, flexDirection: 'row', gap: 4 },
   barHit: { flex: 1, height: 24, paddingTop: 4 },
-  bar: { height: 3, borderRadius: RADIUS.pill, backgroundColor: 'rgba(255, 255, 255, 0.4)' },
-  barOn: { backgroundColor: '#ffffff' },
+  bar: { height: 3, borderRadius: RADIUS.pill, backgroundColor: COLOR.photoLine },
+  barOn: { backgroundColor: COLOR.onPhoto },
   body: { fontFamily: FONT.medium, fontSize: TYPE.note, lineHeight: 24, color: COLOR.secondary },
   small: { fontFamily: FONT.medium, fontSize: TYPE.small, lineHeight: 20, color: COLOR.secondary },
   label: { fontFamily: FONT.bold, fontSize: TYPE.small, color: COLOR.secondary },
@@ -327,7 +327,7 @@ const styles = StyleSheet.create({
   reportQuietText: { fontFamily: FONT.bold, fontSize: TYPE.note, color: COLOR.danger },
   off: { opacity: 0.55 },
   more: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center', borderRadius: RADIUS.pill },
-  moreOnPhoto: { backgroundColor: 'rgba(0, 0, 0, 0.42)' },
+  moreOnPhoto: { backgroundColor: alpha(FIXED.black, 0.42) },
   menuRow: { flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: 44 },
   menuText: { fontFamily: FONT.bold, fontSize: TYPE.body, color: COLOR.foreground },
   dangerText: { color: COLOR.danger },

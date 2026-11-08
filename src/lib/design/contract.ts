@@ -80,6 +80,31 @@ export const PARTS: readonly PartContract[] = [
   },
   { name: 'EmptyState', web: { file: 'app/ui/empty-state.tsx', symbols: ['EmptyState'] }, app: { file: 'mobile/src/ui/empty-state.tsx', symbol: 'EmptyState' }, props: ['icon', 'art', 'title', 'action'] },
   { name: 'Logo', web: { file: 'app/ui/logo.tsx', symbols: ['Logo'] }, app: { file: 'mobile/src/ui/logo.tsx', symbol: 'Logo' } },
+  {
+    name: 'FailureLine',
+    web: { file: 'app/ui/failure-line.tsx', symbols: ['FailureLine', 'FAILURE_TEXT'] },
+    app: { file: 'mobile/src/ui/failure-line.tsx', symbol: 'FailureLine' },
+    props: ['signIn'],
+  },
+  { name: 'Scrim', web: { file: 'app/globals.css', symbols: ['--color-scrim'] }, app: { file: 'mobile/src/ui/scrim.tsx', symbol: 'Scrim' } },
+  {
+    name: 'ActionSheet',
+    web: { file: 'app/ui/action-sheet.tsx', symbols: ['ActionSheet'] },
+    app: { file: 'mobile/src/ui/action-sheet.tsx', symbol: 'ActionSheet' },
+    pending: '앱의 고르기 판은 아직 자리마다 다르다 — 사진 보기의 「⋯」 판(`settings/photo-viewer.tsx`) · 사람 관리 시트(`people/parts.tsx` 의 `Sheet`). 둘을 웹 `ActionChoice` 꼴로 모으는 일은 G-155',
+  },
+  {
+    name: 'Skeleton',
+    web: { file: 'app/ui/skeleton.tsx', symbols: ['SkeletonMain', 'Bone'] },
+    app: { file: 'mobile/src/ui/loading.tsx', symbol: 'Skeleton' },
+    pending: '앱은 첫 읽기를 뼈대 대신 도는 표시(`LoadingMark`) 하나로 기다린다 — 뼈대를 세우면 반짝임 시간은 `MOTION.shimmer` 다. G-155',
+  },
+  {
+    name: 'Snackbar',
+    web: { file: 'app/ui/snackbar.tsx', symbols: ['SnackbarHost'] },
+    app: { file: 'mobile/src/ui/snackbar.tsx', symbol: 'SnackbarHost' },
+    pending: '앱은 끝난 일을 제자리 글자로 잠깐 말한다(`settings/parts.tsx` 의 `useDoneNote`) — 바닥 스낵바는 아직 없다. G-155',
+  },
 ];
 
 /** 나란히 재는 그림의 차례(`scripts/design-compare.mjs`) — 두 쪽이 같은 글자 · 같은 차례로 그린다 */
@@ -105,7 +130,8 @@ export const GALLERY: readonly { web: string; app: string; text: string }[] = [
 ];
 
 /**
- * **앱 화면이 면을 손으로 쓰는 예외**(`scripts/mobile-surfaces.test.ts`) — 면 부품으로 못 세우는 자리만, 사유와 함께. 웹도 그 자리에서 상수를 안 쓴다.
+ * **앱 화면이 면 · 색 · 뜨는 판을 손으로 쓰는 예외**(`scripts/mobile-surfaces.test.ts`) — 부품 · 토큰으로 못 세우는 자리만, 사유와 함께. 웹도 그 자리에서 상수를 안 쓴다.
+ * 색 날값(`'#fff'` · `rgba(`)과 `<Modal` 은 2026-11-08 부터 같은 표로 잰다(ADR 0241).
  */
 export const SURFACE_EXCEPTIONS: readonly { file: string; found: string; why: string }[] = [
   { file: 'mobile/src/matching/today.tsx', found: 'boxShadow:', why: '오늘의 인연 사진 카드 — 웹 `today-card.tsx` 가 `TILE` 에 없는 `shadow-float` 를 그 자리에서 입힌다' },
@@ -114,4 +140,9 @@ export const SURFACE_EXCEPTIONS: readonly { file: string; found: string; why: st
   { file: 'mobile/src/chat/room.tsx', found: 'borderTopRightRadius: 6', why: '내 말 묶음의 첫 말 — 웹 `rounded-tr-md`' },
   { file: 'mobile/src/chat/room.tsx', found: 'borderTopLeftRadius: 6', why: '상대 말 묶음의 첫 말 — 웹 `rounded-tl-md`' },
   { file: 'mobile/src/app/me/chat/index.tsx', found: 'RADIUS.card', why: '대화방 줄 — 면 없는 줄의 눌림 모양이다(웹 `room-list.tsx` 의 `rounded-card`)' },
+  {
+    file: 'mobile/src/settings/photo-viewer.tsx',
+    found: '<Modal',
+    why: '사진 크게 보기 — 덮개가 아니라 불투명한 전체 화면이다(웹 `<dialog>` 의 `backdrop:bg-black`). 쓸어넘기는 손길과 iOS 의 「닫힌 뒤 다음 창」(`onDismiss`) 차례가 `Modal` 의 전체 화면 표시에 걸려 있어 `Scrim` 으로 옮기면 동작이 바뀐다(ADR 0241). 안의 「⋯」 판 덮개는 `COLOR.scrim` 이다',
+  },
 ];

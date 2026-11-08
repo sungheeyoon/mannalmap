@@ -1,6 +1,7 @@
 import type { MetadataRoute } from 'next';
 
 import { SERVICE_NAME, SERVICE_TAGLINE } from '@/src/lib/brand';
+import { COLOR } from '@/src/lib/design/tokens.generated';
 
 /**
  * 웹 앱 매니페스트 — **홈 화면에 추가한 앱이 웹 푸시를 받을 자격**이다(ADR 0156).
@@ -20,8 +21,8 @@ export default function manifest(): MetadataRoute.Manifest {
     start_url: '/me',
     scope: '/',
     display: 'standalone',
-    background_color: '#faf6ef',
-    theme_color: '#faf6ef',
+    background_color: COLOR.background,
+    theme_color: COLOR.background,
     icons: [
       { src: '/icon.svg', sizes: 'any', type: 'image/svg+xml' },
       { src: '/apple-icon.png', sizes: '180x180', type: 'image/png' },
