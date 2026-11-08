@@ -325,7 +325,7 @@ update retention.reading_payment set hold_reason = null, held_at = null where or
 | `GOOGLE_PLAY_PUBSUB_AUDIENCE` | 설정 | Pub/Sub 푸시 구독에 적은 audience — `https://<도메인>/api/store/google-play` 로 둔다 |
 | `GOOGLE_PLAY_PUBSUB_SERVICE_ACCOUNT` | 설정 | 푸시 구독의 인증에 고른 서비스 계정의 이메일(토큰의 `email`) |
 
-**D-U-N-S 날의 차례 — 조직 계정 · 앱이 선 뒤**(Play 콘솔 런북 「D-U-N-S 날의 차례」 8, #1023). 출처는 [Getting ready](https://developer.android.com/google/play/billing/getting-ready) ·
+**D-U-N-S 날의 차례 — 조직 계정 · 앱이 선 뒤**(Play 콘솔 런북 「D-U-N-S 날의 차례」 10, #1023). 출처는 [Getting ready](https://developer.android.com/google/play/billing/getting-ready) ·
 [Play Developer API](https://developers.google.com/android-publisher/getting_started) · [Pub/Sub 푸시 인증](https://docs.cloud.google.com/pubsub/docs/authenticate-push-subscriptions) (2026-11-06).
 
 1. **결제가 든 AAB 를 한 트랙(내부 테스트)에 올린다** — 상품은 Billing Library 가 든 판이 올라간 뒤에만 만든다. 이 앱의 라이브러리는 `expo-iap` 6.4.3(Play Billing Library 9.1.0 — 8 이상 요건을 넘는다) — **운영자**
