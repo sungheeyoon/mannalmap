@@ -8,7 +8,7 @@ import { COMPAT_CREDIT_NOTE, COMPAT_ENTRY, COMPAT_SIGN_IN_ACTION, COMPAT_SIGN_IN
 import { ELEVATION } from '@design';
 import { calculateChart, dateRefusal } from '@input/chart';
 import { convertedLine, dateOfParts, limitsOf, timeOfParts } from '@input/entry';
-import { DEFAULT_QUERY, HOUR_UNKNOWN_CHOICE, NAME_MAX, TIME_BASES, TIME_BASIS, type Query } from '@input/query';
+import { BIRTH_DIGIT_LABEL, DEFAULT_QUERY, HOUR_UNKNOWN_CHOICE, NAME_MAX, TIME_BASES, TIME_BASIS, type Query } from '@input/query';
 import { CALENDARS, CALENDAR_KO, CITY_LONGITUDES, GENDERS, GENDER_KO, SUPPORTED_YEAR_RANGE, type CityName, type LateNightRule } from '@saju';
 
 import { chartPath } from '@consent/app-destination';
@@ -244,9 +244,9 @@ function BirthScreen({ signedOut }: { signedOut: boolean }) {
               <View style={styles.group}>
                 <FieldLabel>생년월일</FieldLabel>
                 <View style={styles.row}>
-                  <DigitField value={year} onChange={setYear} unit="년" placeholder={String(years.max - 30)} digits={4} min={years.min} max={years.max} refused={refused === 'year'} onFull={() => monthRef.current?.focus()} />
-                  <DigitField inputRef={monthRef} value={month} onChange={setMonth} unit="월" placeholder="1~12" digits={2} min={1} max={12} advanceEarly refused={refused === 'month'} onFull={() => dayRef.current?.focus()} />
-                  <DigitField inputRef={dayRef} value={day} onChange={setDay} unit="일" placeholder={`1~${maxDay}`} digits={2} min={1} max={maxDay} advanceEarly refused={refused === 'day'} onFull={() => (hourKnown ? hourRef.current?.focus() : Keyboard.dismiss())} />
+                  <DigitField value={year} onChange={setYear} label={BIRTH_DIGIT_LABEL.year} unit="년" placeholder={String(years.max - 30)} digits={4} min={years.min} max={years.max} refused={refused === 'year'} onFull={() => monthRef.current?.focus()} />
+                  <DigitField inputRef={monthRef} value={month} onChange={setMonth} label={BIRTH_DIGIT_LABEL.month} unit="월" placeholder="1~12" digits={2} min={1} max={12} advanceEarly refused={refused === 'month'} onFull={() => dayRef.current?.focus()} />
+                  <DigitField inputRef={dayRef} value={day} onChange={setDay} label={BIRTH_DIGIT_LABEL.day} unit="일" placeholder={`1~${maxDay}`} digits={2} min={1} max={maxDay} advanceEarly refused={refused === 'day'} onFull={() => (hourKnown ? hourRef.current?.focus() : Keyboard.dismiss())} />
                 </View>
                 {converted !== null && (
                   <Text style={[styles.converted, !converted.ok && styles.failure]}>{converted.text}</Text>
@@ -268,8 +268,8 @@ function BirthScreen({ signedOut }: { signedOut: boolean }) {
                     <Text style={styles.railNote}>24시간</Text>
                   </View>
                   <View style={styles.railBody}>
-                    <DigitField inputRef={hourRef} value={hour} onChange={setHour} unit="시" placeholder="0~23" digits={2} min={0} max={23} onFull={() => minuteRef.current?.focus()} />
-                    <DigitField inputRef={minuteRef} value={minute} onChange={setMinute} unit="분" placeholder="0~59" digits={2} min={0} max={59} onFull={Keyboard.dismiss} />
+                    <DigitField inputRef={hourRef} value={hour} onChange={setHour} label={BIRTH_DIGIT_LABEL.hour} unit="시" placeholder="0~23" digits={2} min={0} max={23} onFull={() => minuteRef.current?.focus()} />
+                    <DigitField inputRef={minuteRef} value={minute} onChange={setMinute} label={BIRTH_DIGIT_LABEL.minute} unit="분" placeholder="0~59" digits={2} min={0} max={59} onFull={Keyboard.dismiss} />
                   </View>
                 </View>
               )}
@@ -306,7 +306,7 @@ function BirthScreen({ signedOut }: { signedOut: boolean }) {
                 </View>
                 <View style={styles.rail}>
                   <Text style={styles.railLabel}>세운 연도</Text>
-                  <DigitField value={saeunFrom} onChange={setSaeunFrom} unit="년" placeholder="2026" digits={4} min={SUPPORTED_YEAR_RANGE.min} max={SUPPORTED_YEAR_RANGE.max} />
+                  <DigitField value={saeunFrom} onChange={setSaeunFrom} label={BIRTH_DIGIT_LABEL.saeun} unit="년" placeholder="2026" digits={4} min={SUPPORTED_YEAR_RANGE.min} max={SUPPORTED_YEAR_RANGE.max} />
                 </View>
               </CardFrame>
             )}

@@ -33,9 +33,9 @@ export async function fillBirthDate(scope: Scope, date: string): Promise<void> {
   if (!match) throw new Error(`YYYY-MM-DD 가 아니다: ${date}`);
   const [, year, month, day] = match;
 
-  await scope.getByLabel('출생연도').fill(year);
-  await scope.getByLabel('출생월').fill(month);
-  await scope.getByLabel('출생일').fill(day);
+  await scope.getByLabel('출생 연도').fill(year);
+  await scope.getByLabel('출생 월').fill(month);
+  await scope.getByLabel('출생 일').fill(day);
 }
 
 /** 년·월·일 세 칸이 이 날짜를 들고 있는가 */
@@ -44,9 +44,9 @@ export async function expectBirthDate(scope: Scope, date: string): Promise<void>
   if (!match) throw new Error(`YYYY-MM-DD 가 아니다: ${date}`);
   const [, year, month, day] = match;
 
-  await expect(scope.getByLabel('출생연도')).toHaveValue(year);
-  await expect(scope.getByLabel('출생월')).toHaveValue(month);
-  await expect(scope.getByLabel('출생일')).toHaveValue(day);
+  await expect(scope.getByLabel('출생 연도')).toHaveValue(year);
+  await expect(scope.getByLabel('출생 월')).toHaveValue(month);
+  await expect(scope.getByLabel('출생 일')).toHaveValue(day);
 }
 
 /**

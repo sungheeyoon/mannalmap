@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 
-import { HOUR_UNKNOWN_CHOICE, type DatePart, type Query } from '@/src/lib/input/query';
+import { BIRTH_DIGIT_LABEL, HOUR_UNKNOWN_CHOICE, type DatePart, type Query } from '@/src/lib/input/query';
 
 import styles from './birth-form.module.css';
 import { ChoiceField, DigitsField } from './birth-choices';
@@ -128,7 +128,7 @@ export function DateFields({
   return (
     <DigitsField label="생년월일" groupStart>
       <NumberField
-        label="출생연도"
+        label={BIRTH_DIGIT_LABEL.year}
         suffix="년"
         value={parts.year}
         onChange={(next) => update('year', next)}
@@ -140,7 +140,7 @@ export function DateFields({
         refused={refused === 'year'}
       />
       <NumberField
-        label="출생월"
+        label={BIRTH_DIGIT_LABEL.month}
         suffix="월"
         value={parts.month}
         onChange={(next) => update('month', next)}
@@ -152,7 +152,7 @@ export function DateFields({
         refused={refused === 'month'}
       />
       <NumberField
-        label="출생일"
+        label={BIRTH_DIGIT_LABEL.day}
         suffix="일"
         value={parts.day}
         onChange={(next) => update('day', next)}
@@ -235,7 +235,7 @@ export function TimeFields({ value, onChange }: { value: Query; onChange: (next:
       {known && (
         <DigitsField label="시각" hint="24시간" rail>
           <NumberField
-            label="출생 시"
+            label={BIRTH_DIGIT_LABEL.hour}
             suffix="시"
             value={parts.hour}
             onChange={(next) => update('hour', next)}
@@ -245,7 +245,7 @@ export function TimeFields({ value, onChange }: { value: Query; onChange: (next:
             placeholder="0~23"
           />
           <NumberField
-            label="출생 분"
+            label={BIRTH_DIGIT_LABEL.minute}
             suffix="분"
             value={parts.minute}
             onChange={(next) => update('minute', next)}

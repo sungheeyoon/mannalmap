@@ -1,9 +1,10 @@
 import { useRef, useState, type ComponentRef } from 'react';
 import { Keyboard, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 
+import { BUTTON_OFF_OPACITY } from '@design';
 import { dateRefusal } from '@input/chart';
 import { convertedLine, dateOfParts, limitsOf, splitDate, splitTime, timeOfParts } from '@input/entry';
-import { DEFAULT_QUERY, HOUR_UNKNOWN_CHOICE, NAME_MAX, TIME_BASES, TIME_BASIS, type Query } from '@input/query';
+import { BIRTH_DIGIT_LABEL, DEFAULT_QUERY, HOUR_UNKNOWN_CHOICE, NAME_MAX, TIME_BASES, TIME_BASIS, type Query } from '@input/query';
 import { CALENDARS, CALENDAR_KO, CITY_LONGITUDES, GENDERS, GENDER_KO, SUPPORTED_YEAR_RANGE, type CityName, type LateNightRule } from '@saju';
 
 import { Choices, DigitField, Field, FieldLabel, Select } from '@/ui/parts';
@@ -72,7 +73,18 @@ export function useBirthForm(initial: Query = DEFAULT_QUERY) {
   };
 }
 
-export function BirthFields({ form, namePlaceholder, showName = true }: { form: ReturnType<typeof useBirthForm>; namePlaceholder?: string; showName?: boolean }) {
+export function BirthFields({
+  form,
+  namePlaceholder,
+  showName = true,
+  disabled = false,
+}: {
+  form: ReturnType<typeof useBirthForm>;
+  namePlaceholder?: string;
+  showName?: boolean;
+  /** 저장하는 동안 칸 · 고르기를 다 잠근다 — 저장이 끝나 폼이 비면 그 사이 고친 값이 사라진다 */
+  disabled?: boolean;
+}) {
   const { query, values, set, chooseHour } = form;
   const monthRef = useRef<ComponentRef<typeof TextInput>>(null);
   const dayRef = useRef<ComponentRef<typeof TextInput>>(null);
@@ -89,31 +101,31 @@ export function BirthFields({ form, namePlaceholder, showName = true }: { form: 
         {showName && (
           <View style={styles.half}>
             <FieldLabel>이름</FieldLabel>
-            <Field value={values.name} onChange={set.setName} maxLength={NAME_MAX} placeholder={namePlaceholder} label="이름" />
+            <Field value={values.name} onChange={set.setName} maxLength={NAME_MAX} placeholder={namePlaceholder} label="이름" disabled={disabled} />
           </View>
         )}
         <View style={styles.half}>
           <FieldLabel>성별</FieldLabel>
-          <Choices value={values.gender} onPick={set.setGender} options={GENDERS.map((one) => ({ value: one, label: GENDER_KO[one] }))} />
+          <Choices disabled={disabled} value={values.gender} onPick={set.setGender} options={GENDERS.map((one) => ({ value: one, label: GENDER_KO[one] }))} />
         </View>
       </View>
 
       <View style={styles.group}>
         <FieldLabel>생년월일</FieldLabel>
         <View style={styles.row}>
-          <DigitField value={values.year} onChange={set.setYear} unit="년" placeholder={String(years.max - 30)} digits={4} min={years.min} max={years.max} refused={refused === 'year'} onFull={() => monthRef.current?.focus()} />
-          <DigitField inputRef={monthRef} value={values.month} onChange={set.setMonth} unit="월" placeholder="1~12" digits={2} min={1} max={12} advanceEarly refused={refused === 'month'} onFull={() => dayRef.current?.focus()} />
-          <DigitField inputRef={dayRef} value={values.day} onChange={set.setDay} unit="일" placeholder={`1~${maxDay}`} digits={2} min={1} max={maxDay} advanceEarly refused={refused === 'day'} onFull={() => (values.hourChoice === 'known' ? hourRef.current?.focus() : Keyboard.dismiss())} />
+          <DigitField value={values.year} onChange={set.setYear} label={BIRTH_DIGIT_LABEL.year} disabled={disabled} unit="년" placeholder={String(years.max - 30)} digits={4} min={years.min} max={years.max} refused={refused === 'year'} onFull={() => monthRef.current?.focus()} />
+          <DigitField inputRef={monthRef} value={values.month} onChange={set.setMonth} label={BIRTH_DIGIT_LABEL.month} disabled={disabled} unit="월" placeholder="1~12" digits={2} min={1} max={12} advanceEarly refused={refused === 'month'} onFull={() => dayRef.current?.focus()} />
+          <DigitField inputRef={dayRef} value={values.day} onChange={set.setDay} label={BIRTH_DIGIT_LABEL.day} disabled={disabled} unit="일" placeholder={`1~${maxDay}`} digits={2} min={1} max={maxDay} advanceEarly refused={refused === 'day'} onFull={() => (values.hourChoice === 'known' ? hourRef.current?.focus() : Keyboard.dismiss())} />
         </View>
         {converted !== null && <Text style={[styles.converted, !converted.ok && styles.refused]}>{converted.text}</Text>}
         <View style={styles.row}>
-          <Choices value={values.calendar} onPick={set.setCalendar} options={CALENDARS.map((one) => ({ value: one, label: CALENDAR_KO[one] }))} />
+          <Choices disabled={disabled} value={values.calendar} onPick={set.setCalendar} options={CALENDARS.map((one) => ({ value: one, label: CALENDAR_KO[one] }))} />
         </View>
       </View>
 
       <View style={styles.rail}>
         <Text style={styles.railLabel}>출생 시각</Text>
-        <Choices value={values.hourChoice} onPick={chooseHour} options={HOUR_CHOICES} />
+        <Choices disabled={disabled} value={values.hourChoice} onPick={chooseHour} options={HOUR_CHOICES} />
       </View>
 
       {values.hourChoice === 'known' && (
@@ -123,18 +135,18 @@ export function BirthFields({ form, namePlaceholder, showName = true }: { form: 
             <Text style={styles.railNote}>24시간</Text>
           </View>
           <View style={styles.railBody}>
-            <DigitField inputRef={hourRef} value={values.hour} onChange={set.setHour} unit="시" placeholder="0~23" digits={2} min={0} max={23} onFull={() => minuteRef.current?.focus()} />
-            <DigitField inputRef={minuteRef} value={values.minute} onChange={set.setMinute} unit="분" placeholder="0~59" digits={2} min={0} max={59} onFull={Keyboard.dismiss} />
+            <DigitField inputRef={hourRef} value={values.hour} onChange={set.setHour} label={BIRTH_DIGIT_LABEL.hour} disabled={disabled} unit="시" placeholder="0~23" digits={2} min={0} max={23} onFull={() => minuteRef.current?.focus()} />
+            <DigitField inputRef={minuteRef} value={values.minute} onChange={set.setMinute} label={BIRTH_DIGIT_LABEL.minute} disabled={disabled} unit="분" placeholder="0~59" digits={2} min={0} max={59} onFull={Keyboard.dismiss} />
           </View>
         </View>
       )}
 
       <View style={styles.rail}>
         <Text style={styles.railLabel}>출생지</Text>
-        <Select value={values.city} onPick={set.setCity} options={CITIES.map((one) => ({ value: one, label: one }))} />
+        <Select disabled={disabled} value={values.city} onPick={set.setCity} options={CITIES.map((one) => ({ value: one, label: one }))} />
       </View>
 
-      <Pressable accessibilityRole="button" accessibilityState={{ expanded: values.advanced }} onPress={() => set.setAdvanced(!values.advanced)} style={styles.disclosure}>
+      <Pressable accessibilityRole="button" accessibilityState={{ expanded: values.advanced, disabled }} disabled={disabled} onPress={() => set.setAdvanced(!values.advanced)} style={[styles.disclosure, disabled && styles.off]}>
         <Text style={styles.disclosureLabel}>고급 설정</Text>
         <Text style={styles.disclosureSummary}>자시 · 시간 기준 · 세운 {values.advanced ? '⌃' : '⌄'}</Text>
       </Pressable>
@@ -143,15 +155,15 @@ export function BirthFields({ form, namePlaceholder, showName = true }: { form: 
         <View style={styles.fields}>
           <View style={styles.rail}>
             <Text style={styles.railLabel}>자시</Text>
-            <Select value={values.rule} onPick={set.setRule} options={RULES} disabled={values.hourChoice === 'unknown'} />
+            <Select value={values.rule} onPick={set.setRule} options={RULES} disabled={disabled || values.hourChoice === 'unknown'} />
           </View>
           <View style={styles.rail}>
             <Text style={styles.railLabel}>시간 기준</Text>
-            <Select value={values.basis} onPick={set.setBasis} options={TIME_BASES.map((one) => ({ value: one, label: TIME_BASIS[one].label, hint: TIME_BASIS[one].hint }))} />
+            <Select disabled={disabled} value={values.basis} onPick={set.setBasis} options={TIME_BASES.map((one) => ({ value: one, label: TIME_BASIS[one].label, hint: TIME_BASIS[one].hint }))} />
           </View>
           <View style={styles.rail}>
             <Text style={styles.railLabel}>세운 연도</Text>
-            <DigitField value={values.saeunFrom} onChange={set.setSaeunFrom} unit="년" placeholder="2026" digits={4} min={SUPPORTED_YEAR_RANGE.min} max={SUPPORTED_YEAR_RANGE.max} />
+            <DigitField value={values.saeunFrom} onChange={set.setSaeunFrom} label={BIRTH_DIGIT_LABEL.saeun} disabled={disabled} unit="년" placeholder="2026" digits={4} min={SUPPORTED_YEAR_RANGE.min} max={SUPPORTED_YEAR_RANGE.max} />
           </View>
         </View>
       )}
@@ -172,6 +184,7 @@ const styles = StyleSheet.create({
   railBody: { flex: 1, flexDirection: 'row', gap: 6 },
   converted: { fontFamily: FONT.medium, fontSize: TYPE.small, color: COLOR.secondary, marginVertical: 2 },
   refused: { color: COLOR.danger },
+  off: { opacity: BUTTON_OFF_OPACITY },
   disclosure: { minHeight: 44, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 14, borderRadius: RADIUS.cell, borderWidth: 1, borderColor: COLOR.borderStrong, backgroundColor: COLOR.surface },
   disclosureLabel: { fontSize: TYPE.body, fontFamily: FONT.bold, color: COLOR.foreground },
   disclosureSummary: { fontFamily: FONT.medium, fontSize: TYPE.small, color: COLOR.secondary },

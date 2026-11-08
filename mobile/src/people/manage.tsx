@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { StyleSheet, Text, TextInput, View } from 'react-native';
 
+import { BUTTON_OFF_OPACITY } from '@design';
 import { NOTE_MAX } from '@input/edit';
 import { missingAnswer } from '@input/query';
 import type { PersonSlots } from '@people';
@@ -19,12 +20,14 @@ import { go, styles as shared } from './parts';
 import { SameChartAsk, type SameChartQuestion } from './same-chart-ask';
 
 /** 메모 칸 — 사주 계산에 쓰지 않는다 */
-function NoteField({ value, onChange }: { value: string; onChange: (next: string) => void }) {
+function NoteField({ value, onChange, disabled = false }: { value: string; onChange: (next: string) => void; disabled?: boolean }) {
   return (
     <View>
       <FieldLabel>메모 (선택)</FieldLabel>
       <TextInput
-        style={styles.note}
+        style={[styles.note, disabled && styles.off]}
+        editable={!disabled}
+        accessibilityState={{ disabled }}
         value={value}
         onChangeText={(next) => onChange(next.slice(0, NOTE_MAX))}
         maxLength={NOTE_MAX}
@@ -135,8 +138,8 @@ function AddForm({ remaining, onCancel, onSaved }: { remaining: number | null; o
         이 이름은 내 목록에만 보여요.
         {remaining !== null && remaining <= 5 && ` 앞으로 ${remaining}명 더 저장할 수 있어요.`}
       </Text>
-      <BirthFields form={form} namePlaceholder="엄마" />
-      <NoteField value={note} onChange={setNote} />
+      <BirthFields form={form} namePlaceholder="엄마" disabled={saving} />
+      <NoteField value={note} onChange={setNote} disabled={saving} />
       {question !== null ? (
         <SameChartAsk question={question} busy={saving} />
       ) : (
@@ -213,6 +216,7 @@ const styles = StyleSheet.create({
   full: { paddingVertical: 16 },
   addRow: { gap: 8 },
   hidden: { display: 'none' },
+  off: { opacity: BUTTON_OFF_OPACITY },
   form: { gap: 20 },
   actions: { gap: 8 },
   warn: { fontSize: TYPE.note, fontFamily: FONT.medium, color: COLOR.danger },

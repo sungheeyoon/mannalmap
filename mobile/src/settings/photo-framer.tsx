@@ -2,7 +2,7 @@ import { Image } from 'expo-image';
 import { useLayoutEffect, useRef, useState } from 'react';
 import { PanResponder, StyleSheet, View, type LayoutChangeEvent, type StyleProp, type ViewStyle } from 'react-native';
 
-import { draggedFocus, PHOTO_FRAME_HINT, type PhotoFocus } from '@profile';
+import { draggedFocus, PHOTO_FOCUS_LABEL, PHOTO_FOCUS_MOVES, PHOTO_FRAME_HINT, photoFocusValue, steppedFocus, type PhotoFocus } from '@profile';
 
 import { ConfirmDialog, DialogText } from '@/ui/confirm-dialog';
 import { COLOR, RADIUS } from '@/ui/tokens';
@@ -36,7 +36,7 @@ export function PhotoFramer({
       <DialogText>{PHOTO_FRAME_HINT}</DialogText>
       {source !== null && (
         <View style={styles.frames}>
-          <FocusFrame source={source} focus={focus} onFocus={onFocus} style={styles.big} />
+          <FocusFrame source={source} focus={focus} onFocus={onFocus} style={styles.big} spoken />
           <FocusFrame source={source} focus={focus} onFocus={onFocus} style={styles.round} />
         </View>
       )}
@@ -44,7 +44,20 @@ export function PhotoFramer({
   );
 }
 
-function FocusFrame({ source, focus, onFocus, style }: { source: string; focus: PhotoFocus; onFocus: (focus: PhotoFocus) => void; style: StyleProp<ViewStyle> }) {
+function FocusFrame({
+  source,
+  focus,
+  onFocus,
+  style,
+  spoken = false,
+}: {
+  source: string;
+  focus: PhotoFocus;
+  onFocus: (focus: PhotoFocus) => void;
+  style: StyleProp<ViewStyle>;
+  /** 낭독기가 닿는 틀 — 큰 틀 하나다. 작은 틀은 같은 두 수를 보일 뿐이라 숨긴다(웹은 `aria-hidden`) */
+  spoken?: boolean;
+}) {
   const natural = useRef({ width: 0, height: 0 });
   const box = useRef({ width: 0, height: 0 });
   const latest = useRef({ focus, onFocus });
@@ -74,6 +87,19 @@ function FocusFrame({ source, focus, onFocus, style }: { source: string; focus: 
       onLayout={(event: LayoutChangeEvent) => {
         box.current = { width: event.nativeEvent.layout.width, height: event.nativeEvent.layout.height };
       }}
+      {...(spoken
+        ? {
+            accessible: true,
+            accessibilityLabel: PHOTO_FOCUS_LABEL,
+            accessibilityValue: { text: photoFocusValue(focus) },
+            accessibilityActions: PHOTO_FOCUS_MOVES.map(({ name, label }) => ({ name, label })),
+            onAccessibilityAction: (event: { nativeEvent: { actionName: string } }) => {
+              const key = PHOTO_FOCUS_MOVES.find((one) => one.name === event.nativeEvent.actionName)?.key;
+              const next = key === undefined ? null : steppedFocus(focus, key);
+              if (next !== null) onFocus(next);
+            },
+          }
+        : { accessibilityElementsHidden: true, importantForAccessibility: 'no-hide-descendants' as const })}
       style={[styles.frame, style]}
     >
       <Image

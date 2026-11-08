@@ -438,6 +438,15 @@ DB 에 남긴 「번」은 풀이권의 수가 아니다 — 가입 코드의 �
 | 사진 크게 보기 — 웹 `app/me/profile/photo-viewer.tsx` · 앱 `mobile/src/settings/photo-viewer.tsx` · `src/lib/profile` 의 `PHOTO_LOAD_FAILED_NOTE` | 불러오는 중에도 실패해도 검은 판뿐 | 불러오는 동안 가운데 오행 다섯 점(`LoadingDots`), 실패하면 검은 판 가운데 카드에 「사진을 불러오지 못했어요.」 + 「다시 시도하기」. 웹은 같은 주소를 먼저 받아 보고(`Image` 의 `load` · `error`) 받은 뒤에 바탕 그림으로 세운다 |
 | 사진 위치 조정 창 — 웹 `app/me/profile/photo-framer.tsx` · 앱 `mobile/src/settings/photo-framer.tsx` · `src/lib/profile` 의 `PHOTO_FRAME_HINT` | 제목 「위치 조정」 아래 바로 틀 둘 | 제목 아래 「사진을 움직여 보일 위치를 맞춰 주세요.」 — 「끌어서」는 마우스 · 화살표 키로 맞추는 사람에게 맞지 않아 「움직여」다 |
 
+## all-16 확정 문구 — 화면 낭독기가 읽는 이름: 출생 정보 숫자칸 · 사진 위치 (운영자 승인 2026-11-08, 시안 뒤 구현)
+
+화면에 보이는 글자는 그대로다 — 낭독기가 읽는 이름만이다. 같은 PR 이 앱의 사람 추가 · 풀이 의견을 저장하는 동안 칸을 잠갔다(글자 없음).
+
+| 자리 | 이전 | 확정 |
+| --- | --- | --- |
+| 출생 정보 숫자칸의 이름 — `src/lib/input/query.ts` 의 `BIRTH_DIGIT_LABEL` 하나를 웹 `app/birth-digits.tsx` · `app/birth-form.tsx` 와 앱 `mobile/src/ui/parts.tsx` 의 `DigitField`(필수 `label`)가 쓴다 | 웹 출생연도 · 출생월 · 출생일 · 출생 시 · 출생 분 · 세운 시작 / 앱 년 · 월 · 일 · 시 · 분 · 년(칸 안의 단위) | 출생 연도 · 출생 월 · 출생 일 · 출생 시 · 출생 분 · 세운 연도 — 웹과 앱이 같다 |
+| 앱 사진 위치 조정의 큰 틀 — `mobile/src/settings/photo-framer.tsx` | (이름 없음 · 끌기만) | 이름 「사진 위치」, 값 「가로 N%, 세로 N%」, 동작 「위로 옮기기 · 아래로 옮기기 · 왼쪽으로 옮기기 · 오른쪽으로 옮기기」(한 번에 5%, 웹 화살표 키와 같은 `steppedFocus`). 작은 둥근 틀은 낭독기에서 숨긴다 — 웹은 이미 「사진 위치」 · 화살표 키였다 |
+
 ## 검토 대기
 
 새 말투 규칙(`docs/context/copy.md` §8 — 설명 · 도움말 · 빈 화면은 해요체 기본)과 어긋나는 옛 합쇼체 줄은 **지우지 않고**

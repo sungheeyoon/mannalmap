@@ -298,7 +298,7 @@ test('있지도 않은 윤달은 계산하지 않고 어느 윤달이 있는지 
 test('생년월일시는 숫자로 적고 범위 밖이면 눌러도 안 넘어간다', async ({ page }) => {
   await page.goto('/');
 
-  const year = page.getByLabel('출생연도');
+  const year = page.getByLabel('출생 연도');
   const show = page.getByRole('button', { name: '사주 보기' });
   /* 폼 안에 서는 거절 하나 — 결과 자리의 알림과 섞이지 않게 폼으로 좁힌다 */
   const refusal = page.locator('form').getByRole('alert');
@@ -309,8 +309,8 @@ test('생년월일시는 숫자로 적고 범위 밖이면 눌러도 안 넘어�
   await expect(year).toHaveValue('190');
 
   // 네 자리가 다 적히기 전에는 날짜가 아니다.
-  await page.getByLabel('출생월').fill('05');
-  await page.getByLabel('출생일').fill('15');
+  await page.getByLabel('출생 월').fill('05');
+  await page.getByLabel('출생 일').fill('15');
   await fillBirthTime(page, '14:30');
 
   // **누르기 전에는 아무 말도 안 한다.** 어긴 것이 생기는 시점이 제출이다.
@@ -338,8 +338,8 @@ test('생년월일시는 숫자로 적고 범위 밖이면 눌러도 안 넘어�
   */
   await year.fill('1990');
   for (const [label, bad, good, said] of [
-    ['출생월', '13', '02', '월은 1~12로 입력해 주세요.'],
-    ['출생일', '30', '15', '2월은 28일까지예요.'],
+    ['출생 월', '13', '02', '월은 1~12로 입력해 주세요.'],
+    ['출생 일', '30', '15', '2월은 28일까지예요.'],
   ] as const) {
     await page.getByLabel(label).fill(bad);
     await expect(page.getByLabel(label)).toHaveAttribute('aria-invalid', 'true');
@@ -354,20 +354,20 @@ test('생년월일시는 숫자로 적고 범위 밖이면 눌러도 안 넘어�
   /*
     **달력을 바꿔도 적은 숫자는 남는다.** 양력 31일을 음력(30일까지)으로 옮기면 날 칸만 붉어진다 — 세 칸을 비우지 않는다.
   */
-  await page.getByLabel('출생월').fill('01');
-  await page.getByLabel('출생일').fill('31');
+  await page.getByLabel('출생 월').fill('01');
+  await page.getByLabel('출생 일').fill('31');
   await chooseCalendar(page, 'lunar');
   await expect(year).toHaveValue('1990');
-  await expect(page.getByLabel('출생월')).toHaveValue('01');
-  await expect(page.getByLabel('출생일')).toHaveValue('31');
-  await expect(page.getByLabel('출생일')).toHaveAttribute('aria-invalid', 'true');
+  await expect(page.getByLabel('출생 월')).toHaveValue('01');
+  await expect(page.getByLabel('출생 일')).toHaveValue('31');
+  await expect(page.getByLabel('출생 일')).toHaveAttribute('aria-invalid', 'true');
   await chooseCalendar(page, 'solar');
-  await expect(page.getByLabel('출생일')).not.toHaveAttribute('aria-invalid', 'true');
-  await page.getByLabel('출생월').fill('02');
-  await page.getByLabel('출생일').fill('15');
+  await expect(page.getByLabel('출생 일')).not.toHaveAttribute('aria-invalid', 'true');
+  await page.getByLabel('출생 월').fill('02');
+  await page.getByLabel('출생 일').fill('15');
 
   // 2월은 스물여덟까지다 — 그 달의 마지막 날을 칸이 안다.
-  await expect(page.getByLabel('출생일')).toHaveAttribute('placeholder', '1~28');
+  await expect(page.getByLabel('출생 일')).toHaveAttribute('placeholder', '1~28');
 
   // 시각도 같다. 25시는 계산으로 흘러가지 않는다.
   await page.getByLabel('출생 시', { exact: true }).fill('25');
@@ -523,7 +523,7 @@ test('기준 시각은 제출할 때마다 새로 잡힌다', async ({ page }) =
   expect(await asOf()).toBe('2026년 8월 17일 10시 0분');
 
   await page.getByRole('button', { name: /^고급 설정/ }).click();
-  await page.getByLabel('세운 시작').fill('2030');
+  await page.getByLabel('세운 연도').fill('2030');
   await page.getByRole('button', { name: '수정하고 다시 보기' }).click();
   await expect(page).toHaveURL(/saeun=2030/);
 
@@ -695,7 +695,7 @@ test('수정은 히스토리를 쌓지 않아 뒤로가기 한 번에 빈 화면
   await expect(page.getByRole('heading', { name: '사주팔자' })).toBeVisible();
 
   await page.getByRole('button', { name: /^고급 설정/ }).click();
-  await page.getByLabel('세운 시작').fill('2030');
+  await page.getByLabel('세운 연도').fill('2030');
   await page.getByRole('button', { name: '수정하고 다시 보기' }).click();
   await expect(page).toHaveURL(/saeun=2030/);
 
@@ -819,7 +819,7 @@ test('모바일에서 전역 가로 넘침이 없고 주요 조작 영역이 44p
     전에는 `boundingBox()` 의 높이만 쟀다 — 기다려 주지 않아 `Suspense` 뒤에서 오는 계산기와 경주했고, 폭은 안 봤다.
   */
   await expectTargets({
-    출생연도: page.getByLabel('출생연도'),
+    '출생 연도': page.getByLabel('출생 연도'),
     '출생 시': page.getByLabel('출생 시', { exact: true }),
     '사주 보기': page.getByRole('button', { name: '사주 보기' }),
     /*
@@ -852,7 +852,7 @@ test('모바일에서 전역 가로 넘침이 없고 주요 조작 영역이 44p
     '음력 윤달': option('음력 윤달'),
     모름: option('모름'),
     출생지: partner.getByRole('button', { name: /^출생지 / }),
-    출생일: partner.getByLabel('출생일', { exact: true }),
+    '출생 일': partner.getByLabel('출생 일', { exact: true }),
     '무료로 두 사람 궁합 보기': page.getByRole('button', { name: '무료로 두 사람 궁합 보기' }),
   });
   // 궁합 칸은 닫아도 숨겨진 채 남는다(`home-hero.tsx`) — 이름 칸이 셋이 되지 않게 새로 연다
@@ -913,7 +913,7 @@ test('입력 폼과 결과의 누르는 자리가 44px 이상이고, 초점은 �
     출생지: page.getByRole('button', { name: /^출생지 / }),
   });
 
-  const focused = await focusedOutline(page.getByLabel('출생연도'));
+  const focused = await focusedOutline(page.getByLabel('출생 연도'));
   expect.soft(focused.own).toBe('none');
   expect.soft(focused.ring).not.toBe('none');
 

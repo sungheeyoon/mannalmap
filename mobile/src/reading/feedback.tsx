@@ -1,3 +1,4 @@
+import { BUTTON_OFF_OPACITY } from '@design';
 import {
   FEEDBACK_COMMENT,
   FEEDBACK_FOLDED_NOTE,
@@ -93,7 +94,7 @@ export function ReadingFeedback({ target, runId, given }: { target: ReadingTarge
   return (
     <Card style={styles.frame}>
       {foldable ? (
-        <Pressable accessibilityRole="button" accessibilityState={{ expanded: shown }} onPress={() => setUnfolded(!shown)} style={styles.head}>
+        <Pressable accessibilityRole="button" accessibilityState={{ expanded: shown, disabled: saving }} disabled={saving} onPress={() => setUnfolded(!shown)} style={styles.head}>
           {head}
           <Text style={styles.chevron}>{shown ? '⌃' : '⌄'}</Text>
         </Pressable>
@@ -104,14 +105,14 @@ export function ReadingFeedback({ target, runId, given }: { target: ReadingTarge
       {shown && (
         <View style={styles.body}>
           {foldable && <Text style={styles.small}>{FEEDBACK_SCOPE_NOTE}</Text>}
-          <Scale question={questions.usefulness} value={usefulness} onChange={setUsefulness} />
-          <Scale question={questions.perceivedFit} value={fit} onChange={setFit} />
+          <Scale question={questions.usefulness} value={usefulness} onChange={setUsefulness} disabled={saving} />
+          <Scale question={questions.perceivedFit} value={fit} onChange={setFit} disabled={saving} />
 
           <View style={styles.part}>
             <Text style={styles.legend}>분량은 어땠나요?</Text>
             <View style={styles.chips}>
               {FELT_LENGTHS.map((choice) => (
-                <Chip key={choice} role="radio" grow picked={feltLength === choice} onPick={() => setFeltLength(choice)}>
+                <Chip key={choice} role="radio" grow disabled={saving} picked={feltLength === choice} onPick={() => setFeltLength(choice)}>
                   {FELT_LENGTH_LABEL[choice]}
                 </Chip>
               ))}
@@ -127,6 +128,7 @@ export function ReadingFeedback({ target, runId, given }: { target: ReadingTarge
                 <Chip
                   key={tag}
                   role="checkbox"
+                  disabled={saving}
                   picked={tags.includes(tag)}
                   onPick={() => setTags((now) => (now.includes(tag) ? now.filter((one) => one !== tag) : [...now, tag]))}
                 >
@@ -146,7 +148,9 @@ export function ReadingFeedback({ target, runId, given }: { target: ReadingTarge
               maxLength={FEEDBACK_COMMENT.limit}
               onChangeText={(next) => setComment(next.slice(0, FEEDBACK_COMMENT.limit))}
               accessibilityLabel={FEEDBACK_COMMENT.label}
-              style={styles.comment}
+              editable={!saving}
+              accessibilityState={{ disabled: saving }}
+              style={[styles.comment, saving && styles.off]}
             />
             <Text style={styles.count}>
               {comment.length} / {FEEDBACK_COMMENT.limit}자
@@ -164,7 +168,7 @@ export function ReadingFeedback({ target, runId, given }: { target: ReadingTarge
 }
 
 /** 1~5 눈금 — 양 끝의 말이 함께 선다. 숫자만 읽어 주면 무엇을 매기는지 안 들려 양 끝은 이름으로 읽힌다 */
-function Scale({ question, value, onChange }: { question: FeedbackQuestion; value: FeedbackScore | null; onChange: (next: FeedbackScore) => void }) {
+function Scale({ question, value, onChange, disabled }: { question: FeedbackQuestion; value: FeedbackScore | null; onChange: (next: FeedbackScore) => void; disabled: boolean }) {
   return (
     <Tile tone={COLOR.surfaceSoft} style={styles.scale}>
       <Text style={styles.legend}>{question.label}</Text>
@@ -174,6 +178,7 @@ function Scale({ question, value, onChange }: { question: FeedbackQuestion; valu
             key={score}
             role="radio"
             grow
+            disabled={disabled}
             picked={value === score}
             onPick={() => onChange(score)}
             label={score === 1 ? `1 — ${question.low}` : score === 5 ? `5 — ${question.high}` : String(score)}
@@ -196,6 +201,7 @@ function Chip({
   onPick,
   label,
   grow = false,
+  disabled = false,
   children,
 }: {
   role: 'radio' | 'checkbox';
@@ -203,15 +209,18 @@ function Chip({
   onPick: () => void;
   label?: string;
   grow?: boolean;
+  /** 보내는 동안 잠근다 — 그 사이 바꾼 답은 이미 떠난 답에 안 실린다. 고른 것은 흐리지 않는다 — 무엇을 보냈는지 보이게(운영자 확정 2026-11-08) */
+  disabled?: boolean;
   children: ReactNode;
 }) {
   return (
     <Pressable
       accessibilityRole={role}
-      accessibilityState={{ checked: picked }}
+      accessibilityState={{ checked: picked, disabled }}
       accessibilityLabel={label}
+      disabled={disabled}
       onPress={onPick}
-      style={[styles.chip, grow && styles.grow, picked && styles.chipOn]}
+      style={[styles.chip, grow && styles.grow, picked && styles.chipOn, disabled && !picked && styles.off]}
     >
       <Text style={[styles.chipText, picked && styles.chipTextOn]}>{children}</Text>
     </Pressable>
@@ -246,4 +255,5 @@ const styles = StyleSheet.create({
   count: { textAlign: 'right', fontFamily: FONT.medium, fontSize: TYPE.fine, color: COLOR.secondary },
   warn: { fontFamily: FONT.medium, fontSize: TYPE.small, lineHeight: 20, color: COLOR.danger },
   frame: { padding: 0, overflow: 'hidden' },
+  off: { opacity: BUTTON_OFF_OPACITY },
 });
