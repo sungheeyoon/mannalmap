@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { AppState } from 'react-native';
 
-import { gateFor, NOTICE_UNREAD, type GateAccount, type GateNotice } from '@consent/gate';
+import { GATE_ACCOUNT_COLUMNS, gateAccountOf, gateFor, NOTICE_UNREAD, type GateAccount, type GateNotice } from '@consent/gate';
 
 import { supabase } from '@/auth/client';
 import { forgetChoiceOnSessionEnd } from '@/push/device';
@@ -48,17 +48,13 @@ async function askGate(): Promise<Settled> {
   if (data.session === null) return { kind: 'out' };
 
   const [found, schedule] = await Promise.all([
-    supabase.from('app_user').select('signed_up_at, notice_version, notice_schedule_id').maybeSingle(),
+    supabase.from('app_user').select(GATE_ACCOUNT_COLUMNS).maybeSingle(),
     readSchedule(),
   ]);
   if (found.error !== null) console.error('account', found.error.code);
   if (found.error !== null || found.data === null) return closedGate();
 
-  const account: GateAccount = {
-    signedUp: found.data.signed_up_at !== null,
-    noticeVersion: found.data.notice_version,
-    noticeScheduleId: found.data.notice_schedule_id,
-  };
+  const account = gateAccountOf(found.data);
   const notice = schedule.ok ? schedule.value : NOTICE_UNREAD;
 
   const to = gateFor('/me', account, notice, new Date());

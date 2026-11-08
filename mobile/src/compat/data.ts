@@ -3,7 +3,7 @@ import { rpcArgs } from '@db';
 import { userFacingDbMessage } from '@db-error';
 import { pairSeatArgs, unsupportedForSaving } from '@input/edit';
 import { missingAnswer, type Query } from '@input/query';
-import { storedChartOf } from '@input/stored';
+import { chartOfStored, storedChartOf } from '@input/stored';
 import { relationOf, type Relation } from '@people';
 import { listedPairSummary, pairSeatsOf } from '@reading-display';
 import { STEM_INFO, type Element, type Saju, type Stem } from '@saju';
@@ -70,8 +70,7 @@ export async function readPicker(): Promise<Read<PickerData>> {
   const selfInput = selfId === null ? undefined : inputs.inputs.get(selfId);
   const stood = selfInput === undefined || selfEdge === undefined ? null : storedChartOf(selfInput, selfEdge.label);
   const mapPeople = listed.filter((edge) => edge.personId !== selfId).map((edge): HomePerson => {
-    const stored = inputs.inputs.get(edge.personId);
-    const chart = stored === undefined ? ({ ok: false, message: '출생 정보를 불러오지 못했어요.' } as const) : storedChartOf(stored, edge.label);
+    const chart = chartOfStored(inputs.inputs.get(edge.personId), edge.label);
     return { personId: edge.personId, label: edge.label, note: edge.note, chart: chart.ok ? { ok: true, saju: chart.saju } : { ok: false, message: chart.message } };
   });
   const map =

@@ -23,7 +23,7 @@ vi.mock('./chart', async (importOriginal) => {
 import { chartOf } from './chart';
 import { DEFAULT_QUERY, type Query } from './query';
 import { selfPersonArgs } from './edit';
-import { storedChartOf, type StoredInput } from './stored';
+import { STORED_INPUT_MISSING, chartOfStored, storedChartOf, storedInputOfRow, type StoredInput } from './stored';
 
 const stored: StoredInput = {
   calendar: 'solar',
@@ -276,5 +276,43 @@ describe('달력이 터진 것은 못 읽는 입력이 아니다', () => {
   /** 터뜨리기 전으로 돌아오면 다시 세워진다 — 위 시험이 뒷자리를 오염시키지 않았다 */
   it('꺼 두면 그대로 세워진다', () => {
     expect(storedChartOf(stored, '민수').ok).toBe(true);
+  });
+});
+
+describe('행을 입력으로 옮긴다 — 웹 · 앱의 문이 함께 쓴다(G-152)', () => {
+  const empty = {
+    calendar: null,
+    original_date: null,
+    solar_date: null,
+    birth_time: null,
+    gender: null,
+    city: null,
+    late_night_rule: null,
+    time_basis: null,
+  };
+
+  it('찬 행은 그 여덟 칸 그대로다 — 행의 다른 칸은 안 따라온다', () => {
+    const row = { ...stored, id: 'p1', input_version: 3 };
+    expect(storedInputOfRow(row)).toEqual(stored);
+  });
+
+  it('시간 미상은 빈 입력이 아니다', () => {
+    expect(storedInputOfRow({ ...stored, birth_time: null })).toEqual({ ...stored, birth_time: null });
+  });
+
+  it('빈 행은 `null` 이다', () => {
+    expect(storedInputOfRow(empty)).toBeNull();
+  });
+
+  it('반쯤 찬 행도 `null` 이다 — 빈 칸이 글자로 흘러 들어가지 않는다', () => {
+    expect(storedInputOfRow({ ...stored, city: null })).toBeNull();
+  });
+
+  it('입력이 없는 사람은 한 글자로 말한다', () => {
+    expect(chartOfStored(undefined, '민수')).toEqual({ ok: false, message: STORED_INPUT_MISSING });
+  });
+
+  it('입력이 있으면 세우는 문과 같은 답이다', () => {
+    expect(chartOfStored(stored, '민수')).toEqual(storedChartOf(stored, '민수'));
   });
 });

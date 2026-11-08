@@ -1,4 +1,4 @@
-import { PERSON_INPUT_COLUMNS, storedInputFilled, type StoredInput } from '@/src/lib/input/stored';
+import { PERSON_INPUT_COLUMNS, storedInputOfRow, type StoredInput } from '@/src/lib/input/stored';
 
 import type { supabaseOnServer } from '../auth/server-client';
 import { dbFailure } from '../db-error';
@@ -69,18 +69,15 @@ export async function storedInputOf(
      만들지 않는다(ADR 0004). */
   const { data, error } = await supabase
     .from('person')
-    .select(`id, input_version, chart_engine_version, ${PERSON_INPUT_COLUMNS}`)
+    .select(`id, input_version, chart_engine_version, ${PERSON_INPUT_COLUMNS}` as const)
     .eq('id', personId)
     .maybeSingle();
 
   if (error) throw dbFailure(error, 'person.select');
-  if (!storedInputFilled(data)) return null;
+  const input = data === null ? null : storedInputOfRow(data);
+  if (data === null || input === null) return null;
 
-  return {
-    id: data!.id as string,
-    input: data as unknown as StoredInput,
-    versions: versionsOf(data as { input_version: number; chart_engine_version: string }),
-  };
+  return { id: data.id, input, versions: versionsOf(data) };
 }
 
 /**
@@ -97,14 +94,15 @@ export async function storedInputsOf(
 
   const { data, error } = await supabase
     .from('person')
-    .select(`id, ${PERSON_INPUT_COLUMNS}`)
+    .select(`id, ${PERSON_INPUT_COLUMNS}` as const)
     .in('id', personIds);
 
   if (error) throw dbFailure(error, 'person.select.in');
 
   return new Map(
-    (data ?? [])
-      .filter((row) => storedInputFilled(row))
-      .map((row) => [row.id as string, row as unknown as StoredInput]),
+    (data ?? []).flatMap((row) => {
+      const input = storedInputOfRow(row);
+      return input === null ? [] : [[row.id, input] as const];
+    }),
   );
 }

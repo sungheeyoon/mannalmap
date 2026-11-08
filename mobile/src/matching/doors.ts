@@ -9,7 +9,7 @@ import { storedChartOf } from '@input/stored';
 import { publicCardFromRow } from '@matching/cards';
 import type { DeckCard } from '@matching/deck-card';
 import { withFrom } from '@matching/history';
-import { matchOf, notificationOf, requestOf, type Inbox, type InboxMatch, type Requests } from '@matching/inbox';
+import { matchOf, notificationOf, type Inbox, type InboxMatch } from '@matching/inbox';
 import { activityBandOf } from '@presence';
 import { ELEMENTS } from '@saju';
 import type { PhotoFocus } from '@profile';
@@ -18,6 +18,7 @@ import { supabase } from '@/auth/client';
 import { respondToMatchRequest } from '@/reading/api';
 import { openParticipation, saveFailureOf } from '@/reading/chart-writes';
 import { readMyReadings } from '@/reading/my-readings';
+import { readEdges, readInputs } from '@/people/data';
 
 import { readDetail } from './talk-doors';
 
@@ -53,21 +54,15 @@ export async function readAccountState(): Promise<AccountState> {
 }
 
 /** 내 오행 요약 — 카드의 문장을 지을 때만 쓴다. 풀에 올리지 않는다. 저장된 입력에서 웹과 같은 함수로 짓는다 */
-async function mySummary(selfPersonId: string): Promise<ElementSummary | null> {
-  if (supabase === null) return null;
-  const [person, edge] = await Promise.all([
-    supabase
-      .from('person')
-      .select('calendar, original_date, solar_date, birth_time, gender, city, late_night_rule, time_basis')
-      .eq('id', selfPersonId)
-      .maybeSingle(),
-    supabase.from('user_person_access').select('local_label').eq('person_id', selfPersonId).maybeSingle(),
-  ]);
-  if (person.error !== null) throw new Error(person.error.code);
-  if (edge.error !== null) throw new Error(edge.error.code);
-  if (person.data === null || person.data.calendar === null || edge.data === null) return null;
-  const stood = storedChartOf(person.data as Parameters<typeof storedChartOf>[0], edge.data.local_label);
-  return stood.ok ? elementSummaryOf(stood.saju.analysis.elements) : null;
+async function mySummary(selfPersonId: string): Promise<Read<ElementSummary | null>> {
+  const [edges, inputs] = await Promise.all([readEdges(), readInputs([selfPersonId])]);
+  if (!edges.ok) return { ok: false, reason: edges.message };
+  if (!inputs.ok) return { ok: false, reason: inputs.message };
+  const edge = edges.edges.find((one) => one.personId === selfPersonId);
+  const input = inputs.inputs.get(selfPersonId);
+  if (edge === undefined || input === undefined) return { ok: true, value: null };
+  const stood = storedChartOf(input, edge.label);
+  return { ok: true, value: stood.ok ? elementSummaryOf(stood.saju.analysis.elements) : null };
 }
 
 export type DeckPlace =
@@ -96,7 +91,9 @@ export function readDeck(selfPersonId: string | null): Promise<Read<DeckPlace>> 
   return guarded<DeckPlace>(async () => {
     if (supabase === null) return { ok: false, reason: NOT_READY };
     if (selfPersonId === null) return { ok: true, value: { kind: 'guide' } };
-    const summary = await mySummary(selfPersonId);
+    const mine = await mySummary(selfPersonId);
+    if (!mine.ok) return mine;
+    const summary = mine.value;
     if (summary === null) return { ok: true, value: { kind: 'guide' } };
 
     const profile = await supabase.from('discovery_profile').select('prefer_gender, opted_out_at').maybeSingle();
@@ -130,16 +127,6 @@ export function readDeck(selfPersonId: string | null): Promise<Read<DeckPlace>> 
         ...notes,
       },
     };
-  });
-}
-
-export function readRequests(): Promise<Read<Requests>> {
-  return guarded(async () => {
-    if (supabase === null) return { ok: false, reason: NOT_READY };
-    const [requests, blocked] = await Promise.all([supabase.rpc('my_match_requests'), supabase.from('block').select('blocked_user_id')]);
-    if (requests.error !== null) return { ok: false, reason: userFacingDbMessage(requests.error, 'inbox') };
-    if (blocked.error !== null) return { ok: false, reason: userFacingDbMessage(blocked.error, 'inbox') };
-    return { ok: true, value: { requests: (requests.data ?? []).flatMap(requestOf), blocked: (blocked.data ?? []).length } };
   });
 }
 
