@@ -12,8 +12,9 @@
 -- **열려 있는 문은 운영자가 정한 것뿐이다**(2026-09-30). 처음 잰 날 정지 판정이 없던 넷 가운데 `acknowledge_warning` ·
 -- `cancel_match_request` 는 **의도적으로 열어 둔다**(남에게 해가 없고 후속 피해를 줄인다), `clear_my_photo` 는 걷었고,
 -- `set_person_listed` 는 막았다(`20261110090000`). 옛 사진 문 `set_my_photo` 는 `20261115090000` 이 걷었다. 열린 둘은 아래 목록에 `OK` 로 적는다 — 누가 닫으면 붉어진다.
+-- 2026-11-08 에 지우기만 하는 둘(`remove_my_photo` · `clear_my_intro`)을 열었다(ADR 0244) — 처리방침의 「프로필 화면에서 삭제」가 정지된 사람에게도 참이도록.
 begin;
-select plan(60);
+select plan(61);
 
 create or replace function pg_temp.summary(i integer)
 returns jsonb
@@ -150,7 +151,6 @@ from (values
   ('move_my_photo',         $$select public.move_my_photo(1, 1, 0)$$, '42501 이용이 정지된 계정입니다.', null),
   ('my_discovery_board',    $$select * from public.my_discovery_board()$$, '42501 이용이 정지된 계정입니다.', null),
   ('my_passed_connections', $$select * from public.my_passed_connections()$$, '42501 이용이 정지된 계정입니다.', null),
-  ('remove_my_photo',       $$select public.remove_my_photo(1, 0)$$, '42501 이용이 정지된 계정입니다.', null),
   ('replace_my_photo',      $$select public.replace_my_photo(1, 0, 'image/jpeg', '/9j/4A==')$$, '42501 이용이 정지된 계정입니다.', null),
   ('replace_my_photo_object', $$select public.replace_my_photo_object(1, 0, 'photos/00000000-0000-4000-8000-000000000000/00000000-0000-4000-8000-000000000000', 'image/webp')$$, '42501 이용이 정지된 계정입니다.', null),
   ('report_chat_message',   $$select public.report_chat_message(gen_random_uuid(), 'etc', null)$$, '42501 이용이 정지된 계정입니다.', null),
@@ -211,7 +211,12 @@ from (values
   ('remove_push_subscription', $$select public.remove_push_subscription('https://fcm.googleapis.com/fcm/send/susp')$$, 'OK',
                             '의도적으로 열림 — 제 기기의 알림을 끈다(남에게 해가 없다, ADR 0156)'),
   ('remove_app_push_token', $$select public.remove_app_push_token('susp-app-token')$$, 'OK',
-                            '의도적으로 열림 — 제 기기의 앱 알림을 끈다(남에게 해가 없다, ADR 0236)')
+                            '의도적으로 열림 — 제 기기의 앱 알림을 끈다(남에게 해가 없다, ADR 0236)'),
+
+  -- 의도적으로 열려 있다 — 운영자 지시(2026-11-08, ADR 0244): 처리방침의 「프로필 화면에서 삭제」가 정지된 사람에게도 참이다.
+  -- 지우기만 열린다. 판본 0 은 그 자리의 장이 아니라 아무것도 안 지운다 — 실제로 지워지는지는 `99_suspended_erases_profile`
+  ('clear_my_intro',        $$select public.clear_my_intro()$$, 'OK', '의도적으로 열림 — 제 소개를 비운다(ADR 0244)'),
+  ('remove_my_photo',       $$select public.remove_my_photo(1, 0)$$, 'OK', '의도적으로 열림 — 제 사진을 내린다(ADR 0244)')
 ) as d(name, call, answer, why);
 
 /**
@@ -247,7 +252,7 @@ order by d.name;
 select is(
   (select count(*)::int from public.profile_photo where user_id = (select kim from folks)),
   1,
-  '사진은 그대로다 — 올리기 · 바꾸기 · 옮기기 · 지우기 문이 막혔고, 전부 내리던 옛 문(`clear_my_photo`)은 걷었다');
+  '사진은 그대로다 — 올리기 · 바꾸기 · 옮기기 문이 막혔고, 지우기는 열렸지만 판본이 다른 장은 안 지운다(ADR 0244)');
 
 select is(
   (select count(*)::int from public.match_request where requester_user_id = (select kim from folks) and status = 'pending'),
