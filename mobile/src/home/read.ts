@@ -1,8 +1,7 @@
 import { accountFailureOf, accountNoticeOf, accountStateOf } from '@account/index';
 import { SUPPORT_EMAIL } from '@brand';
-import { userFacingDbMessage } from '@db-error';
 import type { Query } from '@input/query';
-import { UNREADABLE_INPUT_NOTE, storedChartOf, type StoredInput } from '@input/stored';
+import { UNREADABLE_INPUT_NOTE, chartOfStored, storedChartOf } from '@input/stored';
 import { runningStageOf } from '@reading/running-stage';
 import type { RunningReading } from '@reading/running';
 import type { ReadingTarget } from '@reading/target';
@@ -16,8 +15,7 @@ import { NOT_READY, UNREACHABLE } from '@/auth/signup';
 import { readSuspension } from '@/auth/suspension';
 import { readRunningReadings } from '@/reading/running';
 import { readMyReadings } from '@/reading/my-readings';
-
-const PERSON_INPUT_COLUMNS = 'calendar, original_date, solar_date, birth_time, gender, city, late_night_rule, time_basis';
+import { readEdges, readInputs } from '@/people/data';
 
 export type ReadingRow = {
   kind: string;
@@ -157,30 +155,22 @@ export async function readHome(): Promise<Home> {
   const selfPersonId = state.selfPersonId;
 
   const [edges, readings, running, slots, photos, session] = await Promise.all([
-    supabase.from('user_person_access').select('person_id, local_label, note, listed').order('created_at', { ascending: true }),
+    readEdges(),
     readMyReadings(supabase),
     readRunningReadings(supabase),
     supabase.rpc('my_person_slots'),
     supabase.rpc('my_photos'),
     supabase.auth.getSession(),
   ]);
-  if (edges.error !== null) return { kind: 'failed', message: userFacingDbMessage(edges.error, 'user_person_access.select') };
+  if (!edges.ok) return { kind: 'failed', message: edges.message };
   if (!readings.ok) return { kind: 'failed', message: readings.reason };
 
-  const selfEdge = (edges.data ?? []).find((edge) => edge.person_id === selfPersonId) ?? null;
-  const listed = (edges.data ?? []).filter((edge) => edge.listed && edge.person_id !== selfPersonId);
+  const selfEdge = edges.edges.find((edge) => edge.personId === selfPersonId) ?? null;
+  const listed = edges.edges.filter((edge) => edge.listed && edge.personId !== selfPersonId);
 
-  const persons = await supabase
-    .from('person')
-    .select(`id, ${PERSON_INPUT_COLUMNS}`)
-    .in('id', [selfPersonId, ...listed.map((edge) => edge.person_id)]);
-  if (persons.error !== null) return { kind: 'failed', message: userFacingDbMessage(persons.error, 'person.select.in') };
-  /* 여덟 칸은 함께 차거나 함께 빈다 — 한 칸이 답을 든다(`app/me/person-input.ts`) */
-  const inputs = new Map(
-    ((persons.data ?? []) as unknown as (StoredInput & { id: string })[])
-      .filter((row) => row.calendar !== null)
-      .map((row) => [row.id, row as StoredInput]),
-  );
+  const read = await readInputs([selfPersonId, ...listed.map((edge) => edge.personId)]);
+  if (!read.ok) return { kind: 'failed', message: read.message };
+  const { inputs } = read;
 
   const rows: ReadingRow[] = readings.value.map((entry) => ({
     kind: entry.kind,
@@ -197,7 +187,7 @@ export async function readHome(): Promise<Home> {
   const selfReading = rows.find((row) => row.kind === 'self') ?? null;
 
   const selfInput = inputs.get(selfPersonId);
-  const stood = selfInput !== undefined && selfEdge !== null ? storedChartOf(selfInput, selfEdge.local_label) : null;
+  const stood = selfInput !== undefined && selfEdge !== null ? storedChartOf(selfInput, selfEdge.label) : null;
   const self: SelfCardData =
     stood === null
       ? { kind: 'failed', message: '내 사주를 불러오지 못했어요.' }
@@ -216,20 +206,19 @@ export async function readHome(): Promise<Home> {
           };
 
   const people: HomePerson[] = listed.map((edge) => {
-    const stored = inputs.get(edge.person_id);
-    const chart = stored === undefined ? ({ ok: false, message: '출생 정보를 불러오지 못했어요.' } as const) : storedChartOf(stored, edge.local_label);
+    const chart = chartOfStored(inputs.get(edge.personId), edge.label);
     const pair = rows.find(
       (row) =>
         row.kind === 'private' &&
-        ((row.personA === selfPersonId && row.personB === edge.person_id) || (row.personB === selfPersonId && row.personA === edge.person_id)),
+        ((row.personA === selfPersonId && row.personB === edge.personId) || (row.personB === selfPersonId && row.personA === edge.personId)),
     );
     return {
-      personId: edge.person_id,
-      label: edge.local_label,
+      personId: edge.personId,
+      label: edge.label,
       note: edge.note,
       chart: chart.ok ? { ok: true, saju: chart.saju } : { ok: false, message: chart.message },
-      reading: rows.find((row) => row.kind === 'person' && row.personA === edge.person_id) ?? null,
-      making: runningRows.some(({ target }) => target.kind === 'person' && target.personId === edge.person_id),
+      reading: rows.find((row) => row.kind === 'person' && row.personA === edge.personId) ?? null,
+      making: runningRows.some(({ target }) => target.kind === 'person' && target.personId === edge.personId),
       score: pair?.score ?? null,
     };
   });

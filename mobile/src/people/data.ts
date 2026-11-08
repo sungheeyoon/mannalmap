@@ -5,9 +5,8 @@ import { chartFingerprint, chartOf } from '@input/chart';
 import { managedPersonArgs, noteOrNull, unsupportedForSaving } from '@input/edit';
 import { missingAnswer, type Query } from '@input/query';
 import { sameChartAmong, type SameChart } from '@input/same-chart';
-import { PERSON_INPUT_COLUMNS, storedChartOf, storedInputFilled, type StoredInput } from '@input/stored';
+import { PERSON_INPUT_COLUMNS, chartOfStored, storedInputOfRow, type ListedChart, type StoredInput } from '@input/stored';
 import { personSlotsFrom, type PersonSlots } from '@people';
-import type { Saju } from '@saju';
 
 import { NOT_READY } from '@/auth/signup';
 import { supabase } from '@/auth/client';
@@ -20,7 +19,7 @@ export type { SameChart };
 export type MyEdge = { readonly personId: string; readonly label: string; readonly note: string | null; readonly listed: boolean };
 
 /** 한 사람의 명식 — 못 읽는 입력이면 그 사실을 든다. 기본값으로 메우지 않는다(`app/me/people/page.tsx`) */
-export type PersonChart = { ok: true; query: Query; saju: Saju } | { ok: false; message: string };
+export type PersonChart = ListedChart;
 
 /** 목록에 서는 내 글 한 줄 — 사주풀이와 내 궁합만 쓴다 */
 export type MyReading = {
@@ -80,10 +79,14 @@ export async function readEdges(): Promise<{ ok: true; edges: readonly MyEdge[] 
 export async function readInputs(personIds: readonly string[]): Promise<{ ok: true; inputs: Map<string, StoredInput> } | { ok: false; message: string }> {
   if (supabase === null) return { ok: false, message: NOT_READY };
   if (personIds.length === 0) return { ok: true, inputs: new Map() };
-  const { data, error } = await supabase.from('person').select(`id, ${PERSON_INPUT_COLUMNS}`).in('id', personIds as string[]);
+  const { data, error } = await supabase.from('person').select(`id, ${PERSON_INPUT_COLUMNS}` as const).in('id', [...personIds]);
   if (error !== null) return { ok: false, message: userFacingDbMessage(error, 'person.select.in') };
-  const rows = (data ?? []) as unknown as (StoredInput & { id: string })[];
-  return { ok: true, inputs: new Map(rows.filter((row) => storedInputFilled(row)).map((row) => [row.id, row])) };
+  const inputs = new Map<string, StoredInput>();
+  for (const row of data ?? []) {
+    const input = storedInputOfRow(row);
+    if (input !== null) inputs.set(row.id, input);
+  }
+  return { ok: true, inputs };
 }
 
 /** 내 글 목록 — 사주풀이와 내 궁합만 추린다. 줄을 옮기는 것은 웹과 같은 `readingEntriesOf` 다(`@/reading/my-readings`). 부속 정보라 못 읽으면 비운다 */
@@ -133,11 +136,6 @@ export type PeopleList = {
   readonly readings: readonly MyReading[];
   readonly making: ReadonlySet<string>;
 };
-
-export function chartOfStored(stored: StoredInput | undefined, label: string): PersonChart {
-  /* 입력이 없는 사람 — 읽을 것이 없다는 말과 못 읽는다는 말을 여기서 합친다 */
-  return stored === undefined ? { ok: false, message: '출생 정보를 불러오지 못했어요.' } : storedChartOf(stored, label);
-}
 
 /** 저장한 사람 화면이 읽는 것 — 차례와 갈래는 `app/me/people/page.tsx` 와 같다 */
 export async function readPeopleList(): Promise<Read<PeopleList>> {

@@ -106,11 +106,6 @@ export type Inbox = {
   readonly unread: number;
 };
 
-export type Requests = {
-  readonly requests: InboxRequest[];
-  readonly blocked: number;
-};
-
 export const matchOf = (row: MatchRow): InboxMatch => ({
   matchId: row.match_id,
   requestKind: row.request_kind,

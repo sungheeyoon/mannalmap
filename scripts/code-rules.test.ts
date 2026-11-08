@@ -369,15 +369,12 @@ describe('현재 결정 색인 (docs/adr/README.md)', () => {
 /** `x as unknown as T` — 타입이 못 잇는 자리를 손으로 잇는 것. `as never as` · `as any as` 도 같은 예산이다 */
 const DOUBLE_CASTS_STILL_THERE = [
   'app/me/account.ts :: data as unknown as T',
-  'app/me/person-input.ts :: data as unknown as StoredInput',
-  'app/me/person-input.ts :: row as unknown as StoredInput',
   'app/me/reading/pipeline.ts :: (data ?? []) as unknown as FrozenJob[]',
   'app/me/reading/pipeline.ts :: (data ?? []) as unknown as FrozenJob[]',
 ];
 
 /** `x!` — 「있다」를 타입 대신 사람이 주장하는 것 */
 const NON_NULL_STILL_THERE = [
-  'app/me/person-input.ts :: data!',
   'app/saju-calculator.tsx :: model!',
   'src/lib/reading/summary.ts :: pillars[position]!',
   'src/lib/saju/analysis/effectiveElements.ts :: pillars[key]!',
@@ -468,14 +465,14 @@ describe('탈출구의 지문 (docs/agents/code-rules/escapes.md) — 줄어들�
     expect(PRODUCT_FILES.length).toBeGreaterThan(150);
   });
 
-  it('`as unknown as` 는 옛 자리 여섯에만 있다 — `as never as` · `as any as` 도 같은 예산이다', () => {
+  it('`as unknown as` 는 옛 자리에만 있다 — `as never as` · `as any as` 도 같은 예산이다', () => {
     const found = fingerprints(PRODUCT_FILES, (node, source) =>
       isAs(node) && isAs(node.expression) && isUnknown(node.expression.type) ? oneLine(node.getText(source)) : null,
     );
     expectExactly(found, DOUBLE_CASTS_STILL_THERE);
   });
 
-  it('`!` 단언은 옛 자리 열둘에만 있다', () => {
+  it('`!` 단언은 옛 자리에만 있다', () => {
     const found = fingerprints(PRODUCT_FILES, (node, source) => (ts.isNonNullExpression(node) ? oneLine(node.getText(source)) : null));
     expectExactly(found, NON_NULL_STILL_THERE);
   });

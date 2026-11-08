@@ -8,7 +8,7 @@ import { supabaseOnServer } from '../../auth/server-client';
 import { signedInUser } from '../../auth/signed-in';
 import { redirectToSignIn } from '../../auth/sign-in-redirect';
 import { HOUR_UNKNOWN_LABEL, type Query } from '@/src/lib/input/query';
-import { UNREADABLE_INPUT_NOTE, storedChartOf } from '@/src/lib/input/stored';
+import { UNREADABLE_INPUT_NOTE, chartOfStored } from '@/src/lib/input/stored';
 import { READING_STALE_LABEL } from '@/src/lib/reading/notes';
 import { storedInputsOf } from '../person-input';
 import { managedEdges } from '../../person-slots';
@@ -235,18 +235,7 @@ async function peopleWithCharts(edges: readonly MyEdge[]): Promise<Person[]> {
     edges.map((edge) => edge.personId),
   );
 
-  return edges.map((edge) => {
-    const stored = byPerson.get(edge.personId);
-
-    return {
-      ...edge,
-      /* 입력이 없는 사람 — 읽을 것이 없다는 말과 못 읽는다는 말을 여기서 합친다 */
-      chart:
-        stored === undefined
-          ? ({ ok: false, message: '출생 정보를 불러오지 못했어요.' } as const)
-          : storedChartOf(stored, edge.label),
-    };
-  });
+  return edges.map((edge) => ({ ...edge, chart: chartOfStored(byPerson.get(edge.personId), edge.label) }));
 }
 
 /**
