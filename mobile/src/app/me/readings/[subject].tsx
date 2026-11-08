@@ -33,7 +33,7 @@ export default function ReadingScreen() {
   return (
     <SafeAreaView style={styles.screen} edges={['left', 'right']}>
       <TopBar title={view?.view === 'reading' ? view.subject?.name : undefined} fallback={from === 'shelf' ? '/me/readings' : '/me'} />
-      <ScrollView contentContainerStyle={styles.content}>
+      <ScrollView contentContainerStyle={[styles.content, answer === null && styles.waiting]}>
         {answer === null && <LoadingDots />}
         {answer !== null && 'refused' in answer && <ReadFailure refused={answer.refused} onRetry={reload} />}
 
@@ -58,6 +58,8 @@ export default function ReadingScreen() {
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: COLOR.background },
   content: { gap: 20, padding: 16, paddingBottom: 48 },
+  /* 처음 읽는 동안은 위아래 여백을 같게 — 오행 다섯 점이 맨 위 줄 아래 남은 높이의 가운데에 선다(`ui/loading.tsx`) */
+  waiting: { flexGrow: 1, paddingBottom: 16 },
   eyebrow: { fontFamily: FONT.bold, fontSize: TYPE.small, color: COLOR.secondary },
   noticeTitle: { fontFamily: FONT.bold, fontSize: TYPE.lead, color: COLOR.foreground },
   line: { marginTop: 4, fontFamily: FONT.medium, fontSize: TYPE.body, lineHeight: 24, color: COLOR.secondary },

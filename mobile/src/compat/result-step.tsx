@@ -6,13 +6,12 @@ import { UNREADABLE_INPUT_NOTE } from '@input/stored';
 
 import { useClient } from '@/auth/connected';
 import type { Read } from '@/people/data';
-import { AccountNotice, NotFound, ScreenFrame, styles as shared } from '@/people/parts';
+import { AccountNotice, LoadingFrame, NotFound, ScreenFrame, styles as shared } from '@/people/parts';
 import { FailureLine } from '@/ui/failure-line';
 import { PrimaryButton, SecondaryButton } from '@/ui/parts';
 import { TopBar } from '@/ui/top-bar';
 import { Card } from '@/ui/surfaces';
 import { settled } from '@/ui/settled';
-import { LoadingDots } from '@/ui/loading';
 import { UNREACHABLE } from '@/auth/signup';
 
 import { readPair, type PairOutcome } from './data';
@@ -20,9 +19,7 @@ import { CompatResult } from './result';
 
 function Loading({ bar }: { bar: ReactNode }) {
   return (
-    <ScreenFrame bar={bar}>
-      <LoadingDots />
-    </ScreenFrame>
+    <LoadingFrame bar={bar} />
   );
 }
 
