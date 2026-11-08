@@ -78,7 +78,7 @@
 
 - **경로**: Grow users → Store presence → Store listings(주 등록정보). 연락처는 같은 쪽의 Store settings → 「Contact Details」 — Google 의 쪽이 둘을 섞어 부른다
 - 글자 한도: 이름 30 · 간단한 설명 80 · 자세한 설명 4,000 — 「Character limits apply to both full-width and half-width characters」(한글 한 자가 한 자다)
-- 그림 규격과 저장소에 있는 것 · 없는 것은 `docs/ops/play-listing.md` 「그림」. **그래픽 이미지(1024 × 500)는 초안이 있고(#1080) 스크린샷은 아직 없다** — 이 둘이 없으면 등록정보가 저장되지 않는다. 스크린샷은 첫 AAB 를 기기에 깐 뒤에 찍는다(13 전) — 찍을 화면은 아래 「찍을 화면」
+- 그림 규격과 저장소에 있는 것 · 없는 것은 `docs/ops/play-listing.md` 「그림」. **그래픽 이미지(1024 × 500)는 있고(#1080, 운영자 확정 2026-11-08) 스크린샷은 아직 없다** — 이 둘이 없으면 등록정보가 저장되지 않는다. 스크린샷은 첫 AAB 를 기기에 깐 뒤에 찍는다(13 전) — 찍을 화면은 아래 「찍을 화면」
 - 카테고리 · 태그 · 연락처 · 처리방침 주소: `docs/ops/play-listing.md` 「분류 · 연락처 · 처리방침」. 처리방침은 「not a PDF」이고 앱 안에도 링크가 있어야 한다 — 앱 설정의 「정책」에 섰다
 
 ### 찍을 화면 — 스크린샷(운영자가 찍는다)

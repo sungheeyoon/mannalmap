@@ -22,7 +22,7 @@ group by u.id, u.email
 order by 쓴것 desc;
 ```
 
-새 회원의 무료 몫은 **1** 이고, 그 변경(`20270112090000`)이 오르기 전에 가입을 마친 계정은 **5** 를 지킨다(운영자 결정 2026-11-05, ADR 0227).
+새 회원의 무료 몫은 **1** 이고, 그 변경(`20270112090000`)이 오르기 전에 가입을 마친 계정은 **5** 를 지킨다(ADR 0227).
 한 계정의 무료 몫은 `greatest(reading_credit_limit(), app_user.kept_free_credits)` 다 — 지킨 몫은 바닥이고, 그 칸은 마이그레이션이 한 번 적은 뒤로
 적는 문이 없다. 몇 계정이 지켰는지는 집계로만 본다:
 
@@ -65,7 +65,7 @@ returns integer language sql immutable set search_path = '' as $$ select 1 $$;
 쓰고 예약도 안 된 것만이다 — 가입 무료분 · 유료 구매분은 줄지 않는다(유료분은 주문 화면의 환불). 지급마다 장애 알림 길에 한 줄,
 지급 · 회수마다 이용자 소식에 한 줄이 간다.
 
-**탈퇴 대기 계정에는 지급하지 않는다**(운영자 결정 2026-10-17, G-111 R-7 · ADR 0191) — 공통 함수가 「탈퇴 대기 계정이라 지급할 수
+**탈퇴 대기 계정에는 지급하지 않는다**(ADR 0191) — 공통 함수가 「탈퇴 대기 계정이라 지급할 수
 없습니다.」(`23514`)로 거절하고, 화면은 지급 단추를 잠근다. 회수는 받는다. **정지된 계정에는 지급한다** — 장애 보상은 정지 중에도
 그 사람의 몫이다. 탈퇴를 거둔(`deletion_withdrawn`) 뒤에 준다. 거절된 지급 · 회수는 접속기록에 `refused` 로 남는다(`security.md`).
 
@@ -130,12 +130,12 @@ npm run db:remote -- --purpose "무상 지급 장부와 예외 몫의 대조" \
 
 ### 산 풀이권 — 주문 · 묶음 · 쓰임 · 환불 (G-21 ⑤ ④, ADR 0106)
 
-**PG 는 하지 않는다 — 판매는 스토어 인앱결제이고 산 몫은 만료되지 않는다(운영자 2026-11-01, ADR 0212).** PortOne 결제창 · 결제 알림 · 취소 조회 코드는 걷었다(2026-11-05, ADR 0212 추기). 장부 · 환불 세 걸음은 제공자에 중립이라 그대로 쓰고, 이 절의 「결제한 곳의 콘솔」은 **Play Console → Order management** 다(Google Play 결제, ADR 0230 — 아래 「Google Play 결제」). 산 몫에 유효기간이 없다는 것은 `notice-v17` 의 약관 제12조②(2026-11-07 게시)가 든다.
+**PG 는 하지 않는다 — 판매는 스토어 인앱결제이고 산 몫은 만료되지 않는다(ADR 0212).** PortOne 결제창 · 결제 알림 · 취소 조회 코드는 걷었다(ADR 0212 추기). 장부 · 환불 세 걸음은 제공자에 중립이라 그대로 쓰고, 이 절의 「결제한 곳의 콘솔」은 **Play Console → Order management** 다(Google Play 결제, ADR 0230 — 아래 「Google Play 결제」). 산 몫에 유효기간이 없다는 것은 `notice-v17` 의 약관 제12조②(2026-11-07 게시)가 든다.
 
 **판매는 닫혀 있다**(`reading_sale_is_open()` = false) — 주문이 0건이다. 장부만 먼저 섰다. 잔액은 여전히 센다 — 한도가
 `무료 + 예외 + Σ(묶음의 산 수 − 걷은 수)` 로 한 칸 늘었을 뿐이고, 쓰임 장부(`reading_credit_use`)는 **환불 셈의 입력**이다.
 쓴 순서는 무료 → 예외 → 산 때가 이른 묶음이고, 자리를 잡는 순간 트리거가 정한다. 이 순서는 몫의 출처 순이다(G-111 R-9,
-ADR 0191 — 운영 판단). 몫에는 유효기간이 없다 — 산 몫(ADR 0212)도 무료 · 예외 몫(ADR 0235, 2026-11-07)도. 그래서 소멸일 순 · 「유효기간 임박」
+ADR 0191 — 운영 판단). 몫에는 유효기간이 없다 — 산 몫(ADR 0212)도 무료 · 예외 몫(ADR 0235)도. 그래서 소멸일 순 · 「유효기간 임박」
 안내(옛 ADR 0173 의 5년 · 1년 위에서 정했던 것)는 할 일이 아니다. 탈퇴하면 무료 · 예외 몫이 소멸하는 것은 그대로다. 지운 대상의 시도가 셈에서 빠져
 되돌아온 자리로 만든 것은 몫 밖(`outside`)이다 — 환불 대상이 아니다.
 
@@ -321,11 +321,11 @@ update retention.reading_payment set hold_reason = null, held_at = null where or
 
 | 이름 | 갈래 | 값 |
 | --- | --- | --- |
-| `GOOGLE_PLAY_SERVICE_ACCOUNT_JSON` | 비밀 | **결제 검증용** 서비스 계정의 JSON 키 한 덩이(EAS 제출용과 다른 계정 — Play 콘솔 런북 「결제의 전제」 3, #1023). 새면 `secret-leak.md` 의 줄 |
+| `GOOGLE_PLAY_SERVICE_ACCOUNT_JSON` | 비밀 | **결제 검증용** 서비스 계정의 JSON 키 한 덩이(EAS 제출용과 다른 계정 — Play 콘솔 런북 「결제의 전제」 3). 새면 `secret-leak.md` 의 줄 |
 | `GOOGLE_PLAY_PUBSUB_AUDIENCE` | 설정 | Pub/Sub 푸시 구독에 적은 audience — `https://<도메인>/api/store/google-play` 로 둔다 |
 | `GOOGLE_PLAY_PUBSUB_SERVICE_ACCOUNT` | 설정 | 푸시 구독의 인증에 고른 서비스 계정의 이메일(토큰의 `email`) |
 
-**D-U-N-S 날의 차례 — 조직 계정 · 앱이 선 뒤**(Play 콘솔 런북 「D-U-N-S 날의 차례」 10, #1023). 출처는 [Getting ready](https://developer.android.com/google/play/billing/getting-ready) ·
+**D-U-N-S 날의 차례 — 조직 계정 · 앱이 선 뒤**(Play 콘솔 런북 「D-U-N-S 날의 차례」 10). 출처는 [Getting ready](https://developer.android.com/google/play/billing/getting-ready) ·
 [Play Developer API](https://developers.google.com/android-publisher/getting_started) · [Pub/Sub 푸시 인증](https://docs.cloud.google.com/pubsub/docs/authenticate-push-subscriptions) (2026-11-06).
 
 1. **결제가 든 AAB 를 한 트랙(내부 테스트)에 올린다** — 상품은 Billing Library 가 든 판이 올라간 뒤에만 만든다. 이 앱의 라이브러리는 `expo-iap` 6.4.3(Play Billing Library 9.1.0 — 8 이상 요건을 넘는다) — **운영자**
@@ -338,7 +338,7 @@ update retention.reading_payment set hold_reason = null, held_at = null where or
    | `reading_credits_5` | 풀이권 5장 | 19,900원 |
    | `reading_credits_20` | 풀이권 20장 | 59,000원 |
 
-   소비형이다 — 서버가 소비한다. **판매 국가는 대한민국만 고른다**(운영자 답 2026-11-06, ADR 0230 — 장부 · 고지가 원화 전제). 상품의 가격 · 국가와 앱의 국가/지역(Production → Countries / regions) 둘 다
+   소비형이다 — 서버가 소비한다. **판매 국가는 대한민국만 고른다**(ADR 0230 — 장부 · 고지가 원화 전제). 상품의 가격 · 국가와 앱의 국가/지역(Production → Countries / regions) 둘 다
 3. **결제 검증용 서비스 계정** — Google Cloud → IAM & Admin → Service Accounts → 새 계정 → Keys → JSON. 같은 프로젝트에서 **Google Play Android Developer API** 를 켠다.
    Play Console → Users and permissions → Invite → 그 이메일 → 이 앱에 **View financial data, orders, and cancellation survey responses** · **Manage orders and subscriptions** 둘만.
    키를 Vercel 의 `GOOGLE_PLAY_SERVICE_ACCOUNT_JSON` 에 — **운영자**
@@ -350,7 +350,7 @@ update retention.reading_payment set hold_reason = null, held_at = null where or
 5. **`db push` — 했다(2026-11-07).** `20270113090000` · `20270114090000`(걷는 장수 · 시험 · 프로모션 구매) · `20270114100000`(구매 제한 기록 1년 — `notice-v17` 게시 02:37 KST 뒤 02:55, ADR 0098)이
    모두 운영 DB 에 있다. 그날은 `npm run db:remote -- --purpose "스토어 구매 표 확인" "select count(*) from public.store_purchase"` 가 0 인지만 본다
 6. **배포** — 「배포」 답 뒤(`deploy.md`). 그 뒤 Monetization setup 의 **Send test message** → Vercel 로그에 `play notification: refused` · `not configured` 가 없다(문은 204)
-7. **라이선스 테스터** — Play Console → Settings → License testing 에 시험할 구글 계정. 시험 구매는 돈이 안 오가고 장부에 `is_test` 로 선다. Play 프로모션 코드로 받은 구매(`purchaseType = 1`)는 금액 0 의 주문으로 서고(`is_promo`) 매출 · 환불 금액에 안 든다(운영자 결정 2026-11-06, ADR 0230 추기)
+7. **라이선스 테스터** — Play Console → Settings → License testing 에 시험할 구글 계정. 시험 구매는 돈이 안 오가고 장부에 `is_test` 로 선다. Play 프로모션 코드로 받은 구매(`purchaseType = 1`)는 금액 0 의 주문으로 서고(`is_promo`) 매출 · 환불 금액에 안 든다(ADR 0230 추기)
 
 **샌드박스 확인 — 그날 밟고 값을 #937 에 적는다**(#937 「끝났다고 말할 조건」). 장부는 개인을 안 가리키는 질의로 본다(아래).
 
@@ -364,7 +364,7 @@ update retention.reading_payment set hold_reason = null, held_at = null where or
 | 6 | 산 계정을 탈퇴시킨 뒤 전액 환불 | 무효 결과 `departed`, `retention.reading_refund_after_leave` 에 사유 `store` 1줄 |
 | 7 | 지급이 안 선 구매(서버 키를 비운 Preview 등)를 소비하지 않은 채 둔다 | 3일 뒤 Google 이 돌려주고 무효가 4 처럼 적힌다 — 날짜가 걸려 따로 적는다 |
 | 8 | 구매 제한을 건 계정으로 결제를 시도 | 앱에 「지금은 풀이권을 구매할 수 없어요.」, 결제창이 안 열린다 |
-| 9 | 운영자 환불 — 확보(예: 3장 묶음에서 1장 · 청약철회) → Play Console 에서 **일부 환불** → 확정 | 콘솔의 일부 환불 칸이 **세전 금액**인지 본다 — 세전이면 확보 금액 ÷ 1.1 을 넣고, 이용자에게 돌아간 금액이 확보 금액과 같은지 Play 주문의 환불 내역으로 본다. 다르면 멈추고 조율자에게. 본 결과로 운영자 환불 2 의 금액 넣는 법을 고정한다(운영자 답 2026-11-06) |
+| 9 | 운영자 환불 — 확보(예: 3장 묶음에서 1장 · 청약철회) → Play Console 에서 **일부 환불** → 확정 | 콘솔의 일부 환불 칸이 **세전 금액**인지 본다 — 세전이면 확보 금액 ÷ 1.1 을 넣고, 이용자에게 돌아간 금액이 확보 금액과 같은지 Play 주문의 환불 내역으로 본다. 다르면 멈추고 조율자에게. 본 결과로 운영자 환불 2 의 금액 넣는 법을 고정한다 |
 
 **운영자 환불(이용자가 우리에게 청한 것) — 세 걸음 그대로, 콘솔이 Play Console 이다.** 금액은 DB 의 셈(ADR 0148 · 0192)이다.
 
@@ -387,7 +387,7 @@ npm run db:remote -- --purpose "스토어 구매 소비 대조" \
   "select count(*) filter (where consumed_at is null and granted_at < now() - interval '1 day') as 소비안됨, count(*) filter (where is_test) as 시험구매, count(*) as 전체 from public.store_purchase"
 ```
 
-**반복 악용 — 검토 뒤에만 제한한다**(운영자 결정 2026-11-06, 자동 제한 없음). 무엇을 반복으로 볼지 정한 수는 없다 — 운영자가 본다.
+**반복 악용 — 검토 뒤에만 제한한다**(자동 제한 없음). 무엇을 반복으로 볼지 정한 수는 없다 — 운영자가 본다.
 
 ```bash
 # 스토어 환불이 여러 번인 계정 — 계정 앞 8자와 수만. 닉네임 · 주문은 /ops/members?q=<계정 id> 의 화면으로 본다(개인정보는 화면으로만)
@@ -395,10 +395,10 @@ npm run db:remote -- --purpose "스토어 환불 반복 계정" \
   "select left(user_id::text, 8) as 계정, count(*) as 환불, sum(credits_kept) as 못걷은장수, max(recorded_at) as 마지막 from public.store_purchase_void group by user_id having count(*) >= 2 order by 2 desc limit 50"
 ```
 
-**구매 제한 걸기 · 풀기 — break-glass**(회원 화면 단추는 반복 악용이 실제로 보인 뒤에 세운다 — 운영자 답 2026-11-06, ADR 0230). 무상 지급과 같은 꼴이다 — 대장에 먼저 적고,
+**구매 제한 걸기 · 풀기 — break-glass**(회원 화면 단추는 반복 악용이 실제로 보인 뒤에 세운다 — ADR 0230). 무상 지급과 같은 꼴이다 — 대장에 먼저 적고,
 moderation.md 「SQL 실행 전 확인」의 셋을 밟고, 요청 번호(`select gen_random_uuid()`)를 하나 지어 적는다. 갈래는 걸 때 `refund_abuse` · `other`, 풀 때 `appeal` · `mistake` · `other`, 메모 필수 200자.
 
-**걸기 전에 통지하고 10일 소명을 받는다**(조율자 결정 2026-11-06, 운영자 위임 — ADR 0230 추기 B, 사례는 `docs/legal/privacy-grounds.md` 「구매 제한 기록 1년 — 한국 서비스 사례」).
+**걸기 전에 통지하고 10일 소명을 받는다**(ADR 0230 추기 B, 사례는 `docs/legal/privacy-grounds.md` 「구매 제한 기록 1년 — 한국 서비스 사례」).
 
 1. 이용자에게 알린다 — 계정의 연락 길(가입 이메일 · 문의 답장)로 사유(스토어 환불 반복 · 횟수와 날짜) · 범위(새 구매만 막는다, 산 풀이권은 그대로 쓴다) · 적용일(통지 다음 날부터 10일 뒤) · 소명 방법(문의 답장)
 2. 10일 동안 소명을 받는다 — 소명이 맞으면 걸지 않고 대장에 남긴다
@@ -425,18 +425,18 @@ SQL
 
 **통지 · 크론이 이상하면.** Vercel 로그의 `play notification: refused <까닭>`(403 — audience · 서비스 계정이 Vercel 값과 다르다), `not configured`(503 — 셋 중 하나가 비었다),
 `store ledger: <문> <코드>`(DB), `store purchase: consume failed <상태>`(소비 실패 — 다음에 다시 소비한다), `store-voided <건수>`(대조가 새로 적은 무효). Pub/Sub 구독의
-「Unacked messages」가 쌓이면 문이 503 을 주고 있다는 뜻이다. 차지백 검토 요청(`refund review`)은 받기만 한다 — 답하지 않는다(운영자 답 2026-11-06, ADR 0230).
+「Unacked messages」가 쌓이면 문이 503 을 주고 있다는 뜻이다. 차지백 검토 요청(`refund review`)은 받기만 한다 — 답하지 않는다(ADR 0230).
 
 #### 결제 알림 · 결제 이상 알림 (G-23 ⑥ · G-110 ④)
 
 **위 「Google Play 결제」가 이 자리다** — 통지 문(`/api/store/google-play`) · 무효 대조 크론 · 로그 줄과 그때 할 일은 그 절의 「통지 · 크론이 이상하면」.
-PortOne 결제 알림 문(`/api/portone/webhook`)과 그 콘솔 걸음은 걷었다(2026-11-05, ADR 0212 추기 · #1015). DB 의 `report_payment_trouble` 은 남았지만
+PortOne 결제 알림 문(`/api/portone/webhook`)과 그 콘솔 걸음은 걷었다(ADR 0212 추기). DB 의 `report_payment_trouble` 은 남았지만
 Google Play 의 문은 부르지 않는다 — 못 닿은 통지는 503 으로 Pub/Sub 이 다시 보내고, 놓친 무효는 대조 크론이 줍는다(ADR 0230).
 떠난 사람의 결제 기록은 위 「떠난 사람의 결제 기록」 그대로다 — 스토어가 돌려준 떠난 사람의 결제는 `retention.reading_refund_after_leave` 에 사유 `store` 로 선다.
 
 #### 심사 계정 — 카드사 심사 때만 결제창이 선다 (G-21, ADR 0171)
 
-**쓰지 않는다 — PG 를 하지 않아 카드사 심사가 없다(ADR 0212).** 웹의 결제 단추와 `PORTONE_*` 는 걷었다(2026-11-05) — 표에 넣어도
+**쓰지 않는다 — PG 를 하지 않아 카드사 심사가 없다(ADR 0212).** 웹의 결제 단추와 `PORTONE_*` 는 걷었다 — 표에 넣어도
 웹에서 결제할 길은 없고, 주문 문(`open_reading_order`)과 풀이권 창의 「풀이권 구매」 단추만 그 계정에게 열린다. 표는 Google Play 결제에 쓰지 않는다 —
 스토어 구매는 판매 스위치 · 이 표를 지나지 않는다(ADR 0230). 걷는 것은 따로다. 아래는 표를 다루는 걸음만 남긴다.
 

@@ -19,7 +19,7 @@
 | 코드 PR 의 머지 | 하지 않는다 — PR 까지 만들고 아침 보고에 싣는다. 운영자 검토 뒤에 머지한다(`docs/agents/delegation/coordinator.md` 「출시 흐름」, ADR 0229) |
 | main 직접 푸시 | 금지 — 보호 규칙이 막는다(ADR 0121) |
 | `docs/agents/delegation/decisions.md` 「결정 점검표」에 걸리는 PR — 정책 · 접근 · 실패 때 여닫음 · 보존 · 비용 · 검증 · 배포의 문턱 · 화면 흐름 · 메뉴 구조 | PR 까지 만들고 머지하지 않는다. 아침 보고의 「결정 대기」로 |
-| 운영 `db push` | 묻지 않고 수행하고 **본 값을 적는다** — `migration list` 의 remote 칸과 PostgREST 캐시(`docs/agents/delegation/permissions.md` 「권한 등급」 표, ADR 0093). 2026-11-05 ~ 11-07 에만 사람이 답한 뒤였다(운영자 결정 2026-11-07 — 도구가 묻는 것은 프로덕션 배포뿐). 마이그레이션이 든 PR 은 push 와 확인이 끝난 뒤에 `--auto` 다 |
+| 운영 `db push` | 묻지 않고 수행하고 **본 값을 적는다** — `migration list` 의 remote 칸과 PostgREST 캐시(`docs/agents/delegation/permissions.md` 「권한 등급」 표). 마이그레이션이 든 PR 은 push 와 확인이 끝난 뒤에 `--auto` 다 |
 | 실호출 | 에이전트는 안 한다 — 운영자가 직접 돌린다(운영자 답 2026-09). 에이전트는 명령과 확인할 값을 PR 에 적어 건넨다 |
 | 운영 배포 | 「배포」 답을 받은 뒤다(`docs/agents/delegation/coordinator.md` 「머지는 배포가 아니다」) |
 | main 이 붉어짐 | 새 작업을 멈추고 먼저 복구한다(`docs/agents/delegation/working.md` 「시작하기 전에 — 붉은 main 이 먼저」) |
@@ -34,8 +34,8 @@
 
 - 기존 규칙 · 디자인 체계(ADR 0109, `app/ui/`) · 접근성 규칙 · 이미 승인된 문구나 디자인을 **어긴 것을 되돌리는** 수정 —
   고치고 검증해서 `--auto`.
-- 뜻을 바꾸지 않는 화면 다듬기(여백 · 정렬 · 반응형 · 포커스 · 오류 상태) — **전후 스크린샷**과 로컬 최소 셋(단위 · 타입 · 린트,
-  `docs/agents/test-map/what-to-run.md`)을 근거로 `--auto` 해도 된다. 화면 확인은 스크린샷이다 — e2e · 전체 CI 를 따로 돌리지 않는다.
+- 뜻을 바꾸지 않는 화면 다듬기(여백 · 정렬 · 반응형 · 포커스 · 오류 상태) — **전후 스크린샷**과 고친 자리의 로컬 시험
+  (`docs/agents/test-map/what-to-run.md` 「무엇을 고쳤으면 무엇을 돌리나」)을 근거로 `--auto` 해도 된다. 화면 확인은 스크린샷이다 — e2e · 전체 CI 를 따로 돌리지 않는다.
   아침 보고에 PR 번호를 싣고, 전후 스크린샷은 저장소 밖 제 폴더의 경로로 넘겨 조율자가 아티팩트로 보인다(`docs/agents/delegation/done.md`
   「끝났다는 것」) — 운영자가 곧바로 되돌릴 수 있게.
 - 화면 흐름 · 메뉴 구조 · 결정 점검표의 항목 — 수정안과 PR 은 만들되 결정 대기. 새 사용자 문구는 사후 확인이라 머지까지 가고 아침 보고에 「확인 전」으로 싣는다(`docs/agents/code-rules/screen-copy.md` 「화면 문구」).
