@@ -39,7 +39,7 @@ const VIEWED_AT = new Date('2026-08-25T13:00:00+09:00');
 const A = computeSaju({ year: 1990, month: 5, day: 12, hour: 14, minute: 30, second: 0, gender: 'male' });
 const B = computeSaju({ year: 1993, month: 11, day: 3, hour: 8, minute: 10, second: 0, gender: 'female' });
 
-/** 4판 이전의 궁합 지시(`plain-v1`) — 운영은 안 부르고 실험의 견줄 짝만 부른다. 옛 컷 원복 조립은 지웠다(ADR 0244) */
+/** 4판 이전의 궁합 지시(`plain-v1`) — 운영은 안 부르고 실험의 견줄 짝만 부른다. 옛 컷 원복 조립은 지웠다(ADR 0239) */
 const OLD_PAIR_READING: PromptAssembly = { ...CONTROL, pairReading: 'plain-v1' };
 
 const promptFor = (kind: ReadingKind, assembly: PromptAssembly): string =>
@@ -62,7 +62,7 @@ type Case = {
 /**
  * 도달하는 조합 전부 — 운영 넷 · 견줄 짝 셋, 그리고 **아직 아무 목록에도 없는 둘.**
  *
- * 옛 컷 원복 조립 둘(`private/legacy` · `match/legacy`)과 옛 컷에 4판을 건 조합은 지웠다(ADR 0244) — 조립이 옛 컷을 못 든다.
+ * 옛 컷 원복 조립 둘(`private/legacy` · `match/legacy`)과 옛 컷에 4판을 건 조합은 지웠다(ADR 0239) — 조립이 옛 컷을 못 든다.
  * 그 자리의 `private/plain`(옛 궁합 지시 + 다룰 것의 목록)은 변형 목록에 없지만 타입이 막지 않아 지을 수 있어 남긴다.
  *
  * 마지막 것(`private/guided+sections`)도 변형 목록에 없지만 타입이 막지 않아 **지을 수는

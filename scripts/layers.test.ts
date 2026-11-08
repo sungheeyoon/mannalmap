@@ -397,7 +397,7 @@ describe('브라우저로 가는 그래프', () => {
   const NOT_IN_BROWSER = new Set([
     'src/lib/reading/index.ts',
     'src/lib/reading/prompt.ts',
-    // 프롬프트 원문을 의미 단위로 나눈 조각(ADR 0244) — 입구를 거치지 않고 부르는 길도 막는다
+    // 프롬프트 원문을 의미 단위로 나눈 조각(ADR 0239) — 입구를 거치지 않고 부르는 길도 막는다
     'src/lib/reading/prompt-assembly.ts',
     'src/lib/reading/prompt-guided.ts',
     'src/lib/reading/prompt-pair.ts',

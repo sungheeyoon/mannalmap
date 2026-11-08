@@ -23,7 +23,7 @@ import {
 const A = computeSaju({ year: 1990, month: 5, day: 12, hour: 14, minute: 30, second: 0, gender: 'male' });
 const B = computeSaju({ year: 1993, month: 11, day: 3, hour: 8, minute: 10, second: 0, gender: 'female' });
 const AT = new Date('2026-08-25T13:00:00+09:00');
-/** 4판 이전의 궁합 지시(`plain-v1`) — 운영은 안 부르고 실험의 견줄 짝만 부른다(ADR 0244) */
+/** 4판 이전의 궁합 지시(`plain-v1`) — 운영은 안 부르고 실험의 견줄 짝만 부른다(ADR 0239) */
 const OLD_PAIR_READING: PromptAssembly = { ...CONTROL, pairReading: 'plain-v1' };
 
 /** 글자의 지문은 `scripts/old-reading-prompts-unchanged.test.ts` 가 잰다 — 이 폴더는 `node:crypto` 를 안 부른다 */

@@ -154,7 +154,7 @@ export type PromptAssembly = {
    * 자료를 짓는 쪽(`readingEvidenceOf`)과 지시를 짓는 쪽이 따로 고르면, 확장형 자료에
    * 제한형 점수표가 붙거나 그 반대가 된다. `readingPromptOf` 가 둘을 맞춰 보고 어긋나면 멈춘다.
    *
-   * 옛 컷(`legacy-v0`)은 여기 못 온다 — 그 지시와 원복 조립은 지웠다(ADR 0244). 옛 컷 자료는 저장된 풀이를 되짚을 때만 읽힌다.
+   * 옛 컷(`legacy-v0`)은 여기 못 온다 — 그 지시와 원복 조립은 지웠다(ADR 0239). 옛 컷 자료는 저장된 풀이를 되짚을 때만 읽힌다.
    */
   readonly matchInput: ComparedMatchInput;
   /**
@@ -195,7 +195,7 @@ export const carriesEokbu = (kind: PairKind, assembly: PromptAssembly): boolean 
 /**
  * 이 조립이 **궁합 읽는 법(4판)**을 쓰는가 — 공통 조각을 궁합용으로 갈아 끼우는 문이 이 한 곳이다. 개인 풀이는 해당하지 않는다.
  *
- * 인연 궁합의 옛 컷 입력을 빼던 조건은 원복 조립과 함께 지웠다 — 조립이 옛 컷을 못 든다(ADR 0244).
+ * 인연 궁합의 옛 컷 입력을 빼던 조건은 원복 조립과 함께 지웠다 — 조립이 옛 컷을 못 든다(ADR 0239).
  */
 export const usesPairGuide = (kind: ReadingKind, assembly: PromptAssembly): boolean =>
   !isSolo(kind) && assembly.pairReading === 'guide-v4';
@@ -210,7 +210,7 @@ export const guideScopeOf = (kind: ReadingKind, assembly: PromptAssembly): Guide
  * - `self` — 개인 풀이. 공통 조각(`PROMPT_PARTS`)과 용어 두 판을 그대로 쓴다.
  * - `pair-legacy` — 읽는 법 4판 이전의 궁합. **개인 풀이와 같은 조각을 쓴다** — 옛 절판
  *   프롬프트는 개인 풀이와 9,716자를 글자 그대로 공유한다. 운영은 이 세대를 안 부른다 — 원복 조립은
- *   지웠고(ADR 0244) 실험의 견줄 짝(`src/lab/reading/variants.ts` 의 `plain-v1` 셋)만 부른다.
+ *   지웠고(ADR 0239) 실험의 견줄 짝(`src/lab/reading/variants.ts` 의 `plain-v1` 셋)만 부른다.
  * - `pair-guided` — 지금 운영에 나가는 두 궁합(ADR 0067). 같은 자리마다 **제 벌**을
  *   들고, 개인 풀이와 공유하는 것은 1,878자뿐이다.
  *

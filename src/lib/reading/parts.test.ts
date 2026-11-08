@@ -18,7 +18,7 @@ import { FORMER_EXAMPLE_LINES } from './check';
 import { measureMarkdown, outputDeviations, pairOutputDeviations } from '@/src/lab/reading/measure';
 import { MATCH_INPUT_VARIANTS } from '@/src/lab/reading/variants';
 
-/** 4판 이전의 궁합 지시(`plain-v1`) — 운영은 안 부르고 실험의 견줄 짝만 부른다. 옛 컷 원복 조립은 지웠다(ADR 0244) */
+/** 4판 이전의 궁합 지시(`plain-v1`) — 운영은 안 부르고 실험의 견줄 짝만 부른다. 옛 컷 원복 조립은 지웠다(ADR 0239) */
 const OLD_PAIR_READING = { ...CONTROL, pairReading: 'plain-v1' } as const;
 
 /**

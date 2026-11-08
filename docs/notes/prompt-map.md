@@ -15,7 +15,7 @@
 
 - 개인 풀이(self·person) `READING_POLICY.version = reading-prompt-v10`, 궁합(match·private) `pairVersion = reading-prompt-v11`.
   저장·동결에 쓰는 이름은 `promptVersionOf(kind)` 하나다
-- 궁합은 `CONTROL.pairReading: 'guide-v4'` — `isMatchV3`/`isMatchV4` 문으로 공통 조각을 갈아 끼운다. 옛 판은 `LEGACY_PAIR_ASSEMBLY`(2026-11-08 에 지웠다 — ADR 0244)
+- 궁합은 `CONTROL.pairReading: 'guide-v4'` — `isMatchV3`/`isMatchV4` 문으로 공통 조각을 갈아 끼운다. 옛 판은 `LEGACY_PAIR_ASSEMBLY`(2026-11-08 에 지웠다 — ADR 0239)
 - 자세한 것은 `match-input-experiment-2026-09-15.md`
 
 ## 지금 판 (2026-09-14 사용자 확인) — 아래 v5~v7 기록보다 이것이 먼저다

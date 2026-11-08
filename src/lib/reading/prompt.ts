@@ -211,7 +211,7 @@ const planOf = (kind: ReadingKind, assembly: PromptAssembly, about: ReadingAbout
      *
      * **고른 세대를 그대로 넘긴다.** 여기가 `pairReading` 을 다시 읽으면 같은 사실을 두 번
      * 세게 되고, 그것이 이 파일이 방금 걷어낸 모양이다. 두 식이 갈리던 옛 컷은 조립이 더는 못 든다
-     * (ADR 0244) — 지금은 같은 글이고, **앞으로 갈릴 자리를 안 만든다.**
+     * (ADR 0239) — 지금은 같은 글이고, **앞으로 갈릴 자리를 안 만든다.**
      */
     scope: kind === 'match' ? matchScope(assembly.matchInput, guided) : null,
     guide: guided ? pairReadingGuideBlock(guideScopeOf(kind, assembly), ABSORPTION_RULE) : null,

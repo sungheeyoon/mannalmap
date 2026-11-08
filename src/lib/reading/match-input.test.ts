@@ -23,7 +23,7 @@ import { MATCH_INPUT_VARIANTS } from '@/src/lab/reading/variants';
  */
 
 const VIEWED_AT = new Date('2026-08-23T04:00:00Z');
-/** 4판 이전의 궁합 지시(`plain-v1`) — 운영은 안 부르고 실험의 견줄 짝만 부른다. 옛 컷 원복 조립은 지웠다(ADR 0244) */
+/** 4판 이전의 궁합 지시(`plain-v1`) — 운영은 안 부르고 실험의 견줄 짝만 부른다. 옛 컷 원복 조립은 지웠다(ADR 0239) */
 const OLD_PAIR_READING = { ...CONTROL, pairReading: 'plain-v1' } as const;
 const A = computeSaju({ year: 1988, month: 2, day: 4, hour: 23, minute: 30, second: 0, gender: 'male' });
 const B = computeSaju({ year: 1994, month: 8, day: 9, hour: 7, minute: 0, second: 0, gender: 'female' });
@@ -125,7 +125,7 @@ describe('두 판이 제각기 앞뒤가 맞는다', () => {
 
 /**
  * **운영은 제한형 A 와 읽는 법 4판이다**(2026-09-15). 옛 컷 자료는 저장된 풀이를 되짚을 때만 지어지고, 그것으로 프롬프트를
- * 짓는 조립은 없다(ADR 0244).
+ * 짓는 조립은 없다(ADR 0239).
  */
 describe('운영 기본값은 제한형 A 와 읽는 법 4판이다', () => {
   const reading = readingEvidenceOf('match', { a: A, b: B }, VIEWED_AT);

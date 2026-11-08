@@ -266,7 +266,7 @@ describe('고객이 읽는 글의 계약', () => {
    * 자리에서는 `READING_PROMPTS` 가 그대로 답이다.
    */
   const compatPrompt = (kind: 'private' | 'match') => READING_PROMPTS[kind];
-  /** 4판 이전의 궁합 지시(`plain-v1`) — 견줄 짝이 쓰는 옛 궁합 세대다. 옛 컷 원복 조립은 지웠다(ADR 0244) */
+  /** 4판 이전의 궁합 지시(`plain-v1`) — 견줄 짝이 쓰는 옛 궁합 세대다. 옛 컷 원복 조립은 지웠다(ADR 0239) */
   const OLD_PAIR_READING = { ...CONTROL, pairReading: 'plain-v1' } as const;
   const legacyCompat = (kind: 'private' | 'match') =>
     kind === 'private'

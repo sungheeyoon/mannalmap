@@ -32,7 +32,7 @@ export type MatchInput = (typeof MATCH_INPUTS)[number];
 
 /** 견주는 두 판 — 옛 컷은 비교 대상이 아니다 */
 export const COMPARED_MATCH_INPUTS = ['limited-v1', 'extended-v1'] as const satisfies readonly MatchInput[];
-/** 프롬프트를 지을 수 있는 판 — 옛 컷은 저장된 풀이를 되짚을 자료로만 남고 지시가 없다(ADR 0244) */
+/** 프롬프트를 지을 수 있는 판 — 옛 컷은 저장된 풀이를 되짚을 자료로만 남고 지시가 없다(ADR 0239) */
 export type ComparedMatchInput = (typeof COMPARED_MATCH_INPUTS)[number];
 
 /**

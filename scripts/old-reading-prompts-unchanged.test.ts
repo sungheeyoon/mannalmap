@@ -25,7 +25,7 @@ const privateOf = (relation: 'partner' | 'family' | 'friend'): string =>
  * 걷기 전 main(`a2b7c80c`)의 상세 조립이 같은 표본으로 지은 글의 것이다. 걷기가 상세 지시를 한 글자도 안 바꿨다는 뜻이다.
  * 판본 이름이 열쇠다 — 지시를 정말로 고쳐 판을 올리면 이 표도 함께 고친다. 같은 판에서 글자만 바뀌면 붉다.
  *
- * **옛 컷(원복 조립)의 지문은 뺐다**(ADR 0244) — 운영이 부르지 않는 그 조립을 지웠다. 남은 여섯은 지우기 전 main(`dc074b06`)의
+ * **옛 컷(원복 조립)의 지문은 뺐다**(ADR 0239) — 운영이 부르지 않는 그 조립을 지웠다. 남은 여섯은 지우기 전 main(`dc074b06`)의
  * 값 그대로다 — 지우기와 파일 나누기가 운영 글자를 한 바이트도 안 바꿨다는 뜻이다.
  */
 const UNCHANGED_AT: Readonly<Record<string, Readonly<Record<string, string>>>> = {
