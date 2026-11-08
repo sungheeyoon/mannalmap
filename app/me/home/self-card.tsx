@@ -29,8 +29,9 @@ import { SelfProfile } from './self-profile';
   고르게 편다(`justify-between`) — 이름과 한 줄 평 → 저장된 출생 정보 →
   오행 분포 → 단추. 무엇으로 계산했나가 결과 앞에 선다. 단추 줄이 지도의 범례 띠와 같은 바닥선에 선다. 남는 높이가 한 틈에 몰리지 않고 덩어리 사이에 나뉜다.
 
-  **이 카드에는 고치는 손잡이가 없다**(2026-10-26 운영자) — 모서리에 뜨던 연필(「출생 정보 수정」)은 걷었고, 출생 정보는 프로필
-  화면(`/me/profile`)의 「출생 정보」 판에서 고친다. 그 자리는 일간 딱지가 든다(아래 머리).
+  **고치는 길은 출생 정보 곁의 작은 글자 「수정」 하나다**(운영자 결정 2026-11-09 — 2026-10-26 의 「손잡이 없음」을 바꿨다). 모서리 연필은
+  걷은 채이고(그 자리는 일간 딱지가 든다), 「수정」은 프로필 화면의 「출생 정보」 판을 편 채 연다(`/me/profile#birth`). 고치는 폼은
+  거기 하나다 — 이 카드가 폼을 따로 들지 않는다. 저장 전 카드(`personId === null`)에는 안 선다.
 */
 
 /**
@@ -130,6 +131,7 @@ export function SelfCard({
                   <span className="whitespace-nowrap">{HOUR_UNKNOWN_LABEL}</span>
                 </>
               )}
+              {personId !== null && <BirthEditLink className="ml-2 inline-flex" />}
             </p>
           </div>
         </div>
@@ -240,6 +242,22 @@ function ElementCounts({ saju, compact }: { saju: Saju; compact: boolean }) {
 }
 
 /**
+ * 출생 정보 옆 작은 「수정」 — 프로필의 「출생 정보」 판을 펴서 연다(`#birth`, 운영자 결정 2026-11-09). 폰은 이름 아래 줄 끝, 넓은 화면은
+ * 「저장된 출생 정보」 이름 옆이다. 두 벌이 늘 그려지므로 **안 보이는 폭의 것은 `display: none` 이라 낭독기에도 하나만 읽힌다**
+ */
+function BirthEditLink({ className }: { className: string }) {
+  return (
+    <Link
+      href="/me/profile#birth"
+      aria-label="출생 정보 수정"
+      className={`${className} min-h-6 items-center text-small font-semibold text-secondary underline underline-offset-2 hover:text-foreground`}
+    >
+      수정
+    </Link>
+  );
+}
+
+/**
  * 출생 정보 — **이 사주가 무엇으로 계산됐나.** 저장된 카드는 「저장된」, 저장 전 카드는 「입력한」 출생 정보다. 폰에서는 상자를 벗고 한 줄(생년월일 · 출생지)로 선다
  * (2026-09-25) — 카드 한 장이 첫 화면에 들어야 해서다. 아예 빼면 고친 입력이 홈 어디에도 안 보인다. 성별과 자시
  * 규칙은 넓은 화면에만 서고, 폰에서는 「만세력 보기」에 있다. 두 폭이 **같은 글 한 벌**을 입는다.
@@ -265,7 +283,10 @@ function BirthLine({ query, saved }: { query: Query; saved: boolean }) {
       {/*
         저장 전 카드(로그인 전 결과 · 사주 이어 보기, `personId === null`)에는 저장된 것이 없다 — 방금 입력한 값이다(ADR 0157).
       */}
-      <h3 className="sr-only text-small font-semibold text-secondary sm:not-sr-only">{saved ? '저장된 출생 정보' : '입력한 출생 정보'}</h3>
+      <div className="sr-only sm:not-sr-only sm:flex sm:items-baseline sm:gap-2">
+        <h3 className="text-small font-semibold text-secondary">{saved ? '저장된 출생 정보' : '입력한 출생 정보'}</h3>
+        {saved && <BirthEditLink className="hidden sm:inline-flex" />}
+      </div>
       <dl className="flex flex-wrap gap-x-1.5 text-small leading-5 text-secondary sm:mt-1.5 sm:grid sm:grid-cols-[auto_1fr_auto_1fr] sm:gap-x-5 sm:gap-y-1 sm:text-note sm:leading-6">
         {rows.map(([term, value], at) => (
           <div key={term} className={at === 0 || at === 2 ? 'contents' : 'hidden sm:contents'}>

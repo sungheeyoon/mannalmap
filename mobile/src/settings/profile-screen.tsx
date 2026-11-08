@@ -1,3 +1,4 @@
+import { useLocalSearchParams } from 'expo-router';
 import { useCallback, useEffect, useRef, useState, type ComponentRef } from 'react';
 import { KeyboardAvoidingView, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 
@@ -61,6 +62,9 @@ export function ProfileScreen() {
   const client = useClient();
   const [data, setData] = useState<Loaded | null>(null);
   const [lifting, setLifting] = useState(false);
+  const startBirthEdit = useLocalSearchParams<{ edit?: string }>().edit === 'birth';
+  const scrollRef = useRef<ComponentRef<typeof ScrollView>>(null);
+  const scrolled = useRef(false);
   const reloadAll = useCallback(async () => setData(await load(client)), [client]);
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect -- 여는 때 읽는다 - setState 는 await 뒤라 렌더와 겹치지 않는다
@@ -89,7 +93,7 @@ export function ProfileScreen() {
     <View style={styles.screen}>
       <TopBar title="프로필" fallback="/me/settings" />
       <KeyboardAvoidingView style={styles.screen} behavior="padding">
-        <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled" keyboardDismissMode="on-drag" scrollEnabled={!lifting}>
+        <ScrollView ref={scrollRef} contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled" keyboardDismissMode="on-drag" scrollEnabled={!lifting}>
           <Text style={settingsText.meta}>앱에서 쓸 닉네임과 프로필을 정해요.</Text>
 
           {data.current === null ? (
@@ -102,7 +106,18 @@ export function ProfileScreen() {
                 <PhotoGrid userId={data.userId} photos={data.photos} uploads={data.uploads} reload={reloadPhotos} onLifting={setLifting} />
               )}
               <ProfileForm current={data.current} onSaved={(saved) => setData((was) => (was !== null ? { ...was, current: saved } : was))} />
-              <BirthSection />
+              {/* 홈 사주 카드의 「수정」으로 왔으면(`?edit=birth`) 폼을 펴서 열고 그 자리까지 내린다 */}
+              <View
+                onLayout={(event) => {
+                  const { y, height } = event.nativeEvent.layout;
+                  if (startBirthEdit && !scrolled.current && height > 0) {
+                    scrolled.current = true;
+                    scrollRef.current?.scrollTo({ y: Math.max(0, y - 16), animated: false });
+                  }
+                }}
+              >
+                <BirthSection startOpen={startBirthEdit} />
+              </View>
             </>
           )}
         </ScrollView>

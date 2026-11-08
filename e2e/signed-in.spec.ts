@@ -33,6 +33,9 @@ import { expectTargets, focusedOutline } from './target';
 import { writeSync } from 'node:fs';
 import type { Page } from '@playwright/test';
 
+/** 로그인 뒤 사주 보기에서 남의 사주를 저장하는 칸의 제목(운영자 결정 2026-11-09, 대장 all-19) */
+const SAVE_OTHER_TITLE = '이 사람의 사주는 어떤 뜻일까요?';
+
 /** 한 사람 명식의 자기 풀이 근거 — 서버가 맛보기 지문을 재는 그 길(`app/taste/taste-run.ts`)과 같다 */
 const readingEvidenceOfSelf = (saju: Saju) => {
   const built = readingEvidenceOf('self', { a: saju }, new Date());
@@ -476,7 +479,7 @@ test.describe('초대된 사람의 로그인 흐름', () => {
     await page.goto('/me');
 
     /*
-      홈의 내 카드 — 저장된 출생 정보, 고치는 손잡이, 상세로 가는 길. 여덟 글자(한자)는 카드에 없고 「만세력 보기」가
+      홈의 내 카드 — 저장된 출생 정보와 그 곁의 「수정」, 상세로 가는 길. 여덟 글자(한자)는 카드에 없고 「만세력 보기」가
       든다(운영자 2026-09-27). **폰에서는 줄인 판**이라 오행이 알약 다섯 개 한 줄이고(이름표 없이 읽는 이름만, 운영자 결정 2026-10-26 —
       u2 의 「폰에서 걷는다」를 바꿨다), 출생 정보는 이름 아래 한 줄이다. 넓은 화면은 다섯 칸 그대로다
     */
@@ -488,8 +491,18 @@ test.describe('초대된 사람의 로그인 흐름', () => {
     await expect(mine.getByRole('list', { name: '여덟 글자' })).toHaveCount(0);
     /* 폰은 이름 아래 줄, 넓은 화면은 출생 정보 상자 — 둘 다 그려 두고 폭마다 하나만 보인다 */
     await expect(mine.getByText('1990-05-15 14:30').filter({ visible: true })).toBeVisible();
-    /* 출생 정보를 고치는 연필은 카드에 없다 — 동그란 내 프로필이 「내 프로필」 시트를 열고, 그 「프로필 편집」이 한 화면에서 고친다(2026-10-26) */
-    await expect(mine.getByRole('button', { name: '출생 정보 수정' })).toHaveCount(0);
+    /*
+      출생 정보 곁의 「수정」 하나가 프로필의 「출생 정보」 판을 편 채 연다(운영자 결정 2026-11-09 — 2026-10-26 의 「손잡이 없음」을 바꿨다).
+      폰 · 넓은 화면의 두 벌 가운데 보이는 하나만 읽힌다
+    */
+    const edit = mine.getByRole('link', { name: '출생 정보 수정' });
+    await expect(edit).toHaveCount(1);
+    await expect(edit).toHaveAttribute('href', '/me/profile#birth');
+    await edit.click();
+    await expect(page).toHaveURL(/\/me\/profile#birth$/);
+    await expect(page.getByRole('heading', { name: '수정하기' })).toBeVisible();
+    await expect(page.getByRole('button', { name: '출생 정보 수정' })).toHaveCount(0);
+    await page.goto('/me');
     await mine.getByRole('button', { name: '내 프로필' }).click();
     await expect(page.getByRole('link', { name: MY_PROFILE_EDIT_LABEL, exact: true })).toHaveAttribute('href', '/me/profile');
     await page.keyboard.press('Escape');
@@ -1434,7 +1447,7 @@ test.describe('초대된 사람의 로그인 흐름', () => {
       어디에도 없는 세 번째 이름을 세우고 있었고, 그래서 제목과 버튼이 서로 다른 것을
       가리켰다(ADR 0026·0027).
     */
-    await expect(page.getByRole('heading', { name: '사주풀이로 이어 보기' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: SAVE_OTHER_TITLE })).toBeVisible();
     /*
       **이름을 재는 자리는 제목과 버튼이다** — 본문이 아니다.
 
@@ -1455,13 +1468,37 @@ test.describe('초대된 사람의 로그인 흐름', () => {
 
     /* 이름 뒤에 조사를 안 붙인다 — 갈리는 두 경우는 따로 잰다(「짝 조사」 시험) */
     await expect(page.locator('main')).toContainText('저장한 사람 목록에 「상우」 이름으로 추가돼요');
-    await page.getByRole('button', { name: '저장하고 계속하기' }).click();
+    await page.getByRole('button', { name: '사주풀이 받기', exact: true }).click();
 
     await expect(page).toHaveURL(/\/me\/readings\/[0-9a-f-]+$/);
     // 저장한 사람이라 이 화면에는 그 사람 이름으로 풀이를 만드는 자리가 있다.
     await expect(page.getByRole('heading', { name: '상우의 사주풀이' })).toBeVisible();
     // 이미 저장된 사람에게 「저장하세요」가 다시 서지 않는다.
-    await expect(page.getByRole('heading', { name: '사주풀이로 이어 보기' })).toHaveCount(0);
+    await expect(page.getByRole('heading', { name: SAVE_OTHER_TITLE })).toHaveCount(0);
+  });
+
+  /**
+   * **「저장하기」는 저장하고 제자리다**(운영자 결정 2026-11-09). 풀이 화면으로 데려가지 않고 그 칸에 「저장했어요」가 서며,
+   * 거기서 풀이 화면과 저장한 사람 화면으로 간다. 풀이권은 여전히 도착한 풀이 화면에서 쓴다.
+   */
+  test('「저장하기」는 저장하고 제자리에 「저장했어요」를 세운다', async ({ page, signedIn }) => {
+    expect(signedIn.label).not.toBe('');
+    await page.goto('/saju#date=1987-06-21&hour=10:40');
+    await expect(page.getByRole('heading', { name: SAVE_OTHER_TITLE })).toBeVisible();
+    await expect(page.locator('main')).toContainText('성향부터 일과 연애, 운의 흐름까지 글로 풀어드려요.');
+
+    await page.getByLabel('이름', { exact: true }).fill('지우');
+    await page.getByRole('button', { name: '수정하고 다시 보기' }).click();
+    await expect(page.locator('main')).toContainText('두 단추 모두 저장한 사람 목록에 「지우」 이름으로 추가돼요');
+    await page.getByRole('button', { name: '저장하기', exact: true }).click();
+
+    await expect(page.getByRole('heading', { name: '저장했어요' })).toBeVisible();
+    await expect(page).toHaveURL(/\/saju#/);
+    await expect(page.getByRole('heading', { name: SAVE_OTHER_TITLE })).toHaveCount(0);
+    await expect(page.getByRole('link', { name: '저장한 사람 보기' })).toHaveAttribute('href', '/me/people');
+    await page.getByRole('link', { name: '사주풀이 받기', exact: true }).click();
+    await expect(page).toHaveURL(/\/me\/readings\/[0-9a-f-]+$/);
+    await expect(page.getByRole('heading', { name: '지우의 사주풀이' })).toBeVisible();
   });
 
   /**
@@ -1491,11 +1528,11 @@ test.describe('초대된 사람의 로그인 흐름', () => {
     expect(signedIn.label).not.toBe('');
     await page.goto(SAME_AS_MOTHER);
     // 붙기 전에 채우면 React 가 그 값을 안 보고, 그러면 「다시 보기」가 영영 잠긴다.
-    await expect(page.getByRole('heading', { name: '사주풀이로 이어 보기' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: SAVE_OTHER_TITLE })).toBeVisible();
 
     await page.getByLabel('이름', { exact: true }).fill('엄마');
     await page.getByRole('button', { name: '수정하고 다시 보기' }).click();
-    await page.getByRole('button', { name: '저장하고 계속하기' }).click();
+    await page.getByRole('button', { name: '사주풀이 받기', exact: true }).click();
 
     const ask = page.getByRole('group', { name: '같은 사람인지 확인' });
     await expect(ask).toContainText('저장된 어머니 님과 같은 사람인가요?');
@@ -1508,7 +1545,7 @@ test.describe('초대된 사람의 로그인 흐름', () => {
       그때 사용자는 자기 답이 안 먹혔다고 읽는다.
     */
     await expect(
-      page.getByRole('button', { name: '저장하고 계속하기' }),
+      page.getByRole('button', { name: '사주풀이 받기', exact: true }),
     ).toHaveCount(0);
 
     await ask.getByRole('button', { name: '네, 같은 사람입니다' }).click();
@@ -1528,11 +1565,11 @@ test.describe('초대된 사람의 로그인 흐름', () => {
   test('다른 사람이라고 답하면 그대로 저장된다', async ({ page, signedIn }) => {
     expect(signedIn.label).not.toBe('');
     await page.goto(SAME_AS_MOTHER);
-    await expect(page.getByRole('heading', { name: '사주풀이로 이어 보기' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: SAVE_OTHER_TITLE })).toBeVisible();
 
     await page.getByLabel('이름', { exact: true }).fill('쌍둥이');
     await page.getByRole('button', { name: '수정하고 다시 보기' }).click();
-    await page.getByRole('button', { name: '저장하고 계속하기' }).click();
+    await page.getByRole('button', { name: '사주풀이 받기', exact: true }).click();
 
     const ask = page.getByRole('group', { name: '같은 사람인지 확인' });
     await expect(ask).toBeVisible();
@@ -3840,8 +3877,8 @@ test.describe('로그인 · 가입이 목적지를 든다', () => {
     await expect(page.getByRole('heading', { name: '이 사주가 내 사주 맞나요?' })).toBeVisible();
     await page.getByRole('button', { name: '다른 사람의 사주예요' }).click();
 
-    await expect(page.getByRole('heading', { name: '사주풀이로 이어 보기' })).toBeVisible();
-    await page.getByRole('button', { name: '저장하고 계속하기' }).click();
+    await expect(page.getByRole('heading', { name: SAVE_OTHER_TITLE })).toBeVisible();
+    await page.getByRole('button', { name: '사주풀이 받기', exact: true }).click();
     await expect(page).toHaveURL(/\/me\/readings\/[0-9a-f-]{36}$/);
   });
 
@@ -4017,7 +4054,7 @@ test.describe('로그인 · 가입이 목적지를 든다', () => {
     await expect(page.getByText('이어오지 못했어요.')).toBeVisible();
     await expect(page.getByRole('button', { name: '다시 시도하기' })).toBeVisible();
     await expect(page.getByRole('button', { name: '전체 풀이만 보기' })).toBeVisible();
-    await expect(page.getByRole('heading', { name: '사주풀이로 이어 보기' })).toHaveCount(0);
+    await expect(page.getByRole('heading', { name: SAVE_OTHER_TITLE })).toHaveCount(0);
     expect(dropped).toBe(2);
     expect(await page.evaluate(() => sessionStorage.getItem('saju:taste-session'))).toBe(sessionId);
 
@@ -4034,7 +4071,7 @@ test.describe('로그인 · 가입이 목적지를 든다', () => {
 
     /* 뒤로가기 — 붙은 뒤라 탭에 id 가 없다. 다시 붙이지 않고 보통 저장 입구가 선다 */
     await page.goBack();
-    await expect(page.getByRole('heading', { name: '사주풀이로 이어 보기' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: SAVE_OTHER_TITLE })).toBeVisible();
     await expect(page.getByText('이어오지 못했어요.')).toHaveCount(0);
 
     /*
@@ -4067,7 +4104,7 @@ test.describe('로그인 · 가입이 목적지를 든다', () => {
   test('내 사주가 이미 있으면 묻지 않는다', async ({ page, signedIn }) => {
     expect(signedIn.label).not.toBe('');
     await page.goto('/saju#date=1988-11-07&hour=09:15');
-    await expect(page.getByRole('heading', { name: '사주풀이로 이어 보기' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: SAVE_OTHER_TITLE })).toBeVisible();
     await expect(page.getByRole('heading', { name: '이 사주가 내 사주 맞나요?' })).toHaveCount(0);
   });
 });

@@ -253,7 +253,7 @@ describe('결과 화면의 저장', () => {
   const screen = read('mobile/src/reading/save-self.tsx');
   const web = read('app/save-for-reading.tsx');
 
-  it.each(['이 사주가 내 사주 맞나요?', '첫 화면에 입력한 정보예요.', '내 사주로 저장', '다른 사람의 사주예요', '저장하고 계속하기', '저장한 사람 관리 →'])('%s', (words) => {
+  it.each(['이 사주가 내 사주 맞나요?', '첫 화면에 입력한 정보예요.', '내 사주로 저장', '다른 사람의 사주예요', '이 사람의 사주는 어떤 뜻일까요?', '저장했어요', '저장한 사람 보기', '저장한 사람 관리 →'])('%s', (words) => {
     expect(web).toContain(words);
     expect(screen).toContain(words);
   });

@@ -1,6 +1,6 @@
 import { router } from 'expo-router';
 import type { ReactNode } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { HOUR_UNKNOWN_LABEL } from '@input/query';
 import { ELEMENT_PICTURE_KO, ELEMENTS, STEM_INFO } from '@saju';
@@ -57,11 +57,19 @@ export function SelfCard({
         )}
         <View style={styles.who}>
           {card.label !== '' && <Text style={[styles.name, styles.nameRoom]}>{card.label}</Text>}
-          <Text style={styles.birth}>
-            {query.date}
-            {query.hourKnown === false ? '' : ` ${query.time}`} · {query.city}
-            {query.hourKnown === false ? ` · ${HOUR_UNKNOWN_LABEL}` : ''}
-          </Text>
+          <View style={styles.birthRow}>
+            <Text style={styles.birth}>
+              {query.date}
+              {query.hourKnown === false ? '' : ` ${query.time}`} · {query.city}
+              {query.hourKnown === false ? ` · ${HOUR_UNKNOWN_LABEL}` : ''}
+            </Text>
+            {/* 홈의 내 사주만 — 결과 화면의 사주(`actions` 를 준 판)는 아직 저장 전이라 고칠 것이 없다. 고치는 폼은 프로필의 「출생 정보」 판이다 */}
+            {actions === undefined && (
+              <Pressable accessibilityRole="link" accessibilityLabel="출생 정보 수정" hitSlop={{ top: 12, bottom: 12, left: 8, right: 8 }} onPress={() => router.push('/me/profile?edit=birth' as never)}>
+                <Text style={styles.edit}>수정</Text>
+              </Pressable>
+            )}
+          </View>
         </View>
       </View>
 
@@ -108,7 +116,9 @@ const styles = StyleSheet.create({
   face: { width: 56, height: 56, borderRadius: RADIUS.pill, alignItems: 'center', justifyContent: 'center', backgroundColor: COLOR.surface },
   who: { flex: 1, minWidth: 0 },
   name: { fontFamily: FONT.bold, fontSize: TYPE.heading, color: COLOR.foreground },
-  birth: { fontFamily: FONT.medium, fontSize: TYPE.fine, color: COLOR.secondary, marginTop: 2 },
+  birthRow: { flexDirection: 'row', alignItems: 'baseline', flexWrap: 'wrap', columnGap: 8, marginTop: 2 },
+  birth: { fontFamily: FONT.medium, fontSize: TYPE.fine, color: COLOR.secondary },
+  edit: { fontFamily: FONT.bold, fontSize: TYPE.fine, color: COLOR.secondary, textDecorationLine: 'underline' },
   metaphor: { fontFamily: FONT.medium, fontSize: TYPE.lead, lineHeight: 26, color: COLOR.foreground, paddingHorizontal: 14, paddingVertical: 10, borderRadius: RADIUS.cell, backgroundColor: alpha(COLOR.surface, 0.55) },
   elements: { flexDirection: 'row' },
   element: { flex: 1, alignItems: 'center', gap: 2 },

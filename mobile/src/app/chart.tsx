@@ -45,7 +45,7 @@ function ChartBody({ query, want }: { query: Query; want: ChartWant | null }) {
 
   return (
     <SafeAreaView style={styles.screen} edges={['left', 'right', 'bottom']}>
-      <TopBar title="만세력 결과" fallback="/" />
+      <TopBar title="사주 결과" fallback="/" />
       <ScrollView contentContainerStyle={styles.content}>
         {!result.ok || model === null ? (
           <Text style={styles.failure}>{result.ok ? '' : result.message}</Text>
