@@ -54,7 +54,7 @@ export default async function ProfilePage() {
         <header className="flex flex-col gap-1">
           <h1 className={TYPE_TITLE}>{PROFILE_ERASE_TITLE}</h1>
         </header>
-        <ProfileEraser photoCount={photos.length} hasIntro={(account.intro ?? '') !== ''} />
+        <ProfileEraser photos={photos} userId={user.id} hasIntro={(account.intro ?? '') !== ''} />
       </main>
     );
   }

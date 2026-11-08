@@ -180,34 +180,6 @@ export async function replaceStoredPhoto(form: FormData): Promise<PhotoReplaced>
 }
 
 /**
- * 내 사진을 **모두** 내린다 — 정지된 사람의 프로필 화면이 부른다(ADR 0244). 정지된 사람은 그림을 못 보므로 장을 고르지 않는다.
- *
- * 문은 한 장씩 지우는 `remove_my_photo` 그대로다 — 뒤 장부터 지워 당겨 앉기가 남은 장의 자리를 안 바꾼다. 판본을 함께 보내므로
- * 그 사이 다른 탭이 바꾼 장은 안 지우고 지나간다.
- */
-export async function removeAllPhotos(): Promise<SaveResult> {
-  const supabase = await supabaseOnServer();
-
-  const { data, error: readError } = await supabase.rpc('my_photos');
-  if (readError) return { ok: false, message: userFacingDbMessage(readError, 'my_photos') };
-
-  const photos = [...(data ?? [])].sort((a, b) => b.position - a.position);
-  for (const photo of photos) {
-    const { error } = await supabase.rpc(
-      'remove_my_photo',
-      rpcArgs<'remove_my_photo'>({ p_position: photo.position, p_version: photo.version }),
-    );
-    if (error) {
-      refresh('account-changed');
-      return { ok: false, message: userFacingDbMessage(error, 'remove_my_photo') };
-    }
-  }
-
-  refresh('account-changed');
-  return { ok: true };
-}
-
-/**
  * 내 소개를 비운다 — 지우기만 하는 문(`clear_my_intro`, ADR 0244). 닉네임은 안 실린다 — 정지된 사람의 닉네임 변경은 막혀 있다.
  */
 export async function clearIntro(): Promise<SaveResult> {

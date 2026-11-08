@@ -22,8 +22,8 @@ import { PREFER_GENDER_KO } from '@/src/lib/discovery/copy';
 import { PROMPT_VARIANTS } from '@/src/lab/reading/variants';
 
 import { PRICE_STEM, PRICE_SUBJECT_LABEL, QUESTION, SURVEY_COPY } from '@/src/lib/survey';
-import { SERVICE_NAME, SUPPORT_EMAIL } from '@/src/lib/brand';
-import { PROFILE_ERASE_TITLE } from '@/src/lib/profile';
+import { SERVICE_NAME } from '@/src/lib/brand';
+import { PHOTO_REMOVE_TITLE, PROFILE_ERASE_TITLE } from '@/src/lib/profile';
 
 import { expectBirthDate, fillBirthDate, fillBirthTime } from './birth-form';
 import { hydrated } from './hydrated';
@@ -3461,7 +3461,7 @@ test.describe('가입 관문', () => {
     await expect.poll(() => versionAt(slot(page, 2, 2))).toBe(third);
   });
 
-  test('이용이 정지되면 프로필은 사진 · 소개를 지우는 줄만 서고, 지우면 사라진다 (ADR 0244)', async ({ openAs }) => {
+  test('이용이 정지되면 프로필은 제 사진을 보이고 한 장씩, 소개는 따로 지운다 (ADR 0244)', async ({ openAs }) => {
     const { page, account } = await openAs({ selfPerson: true });
     await page.goto('/me/profile');
     await (await hydrated(page.getByLabel('사진 추가'))).setInputFiles(['e2e/fixtures/harin.webp', 'e2e/fixtures/jiwoo.webp']);
@@ -3490,14 +3490,24 @@ test.describe('가입 관문', () => {
       await expect(dialog).toBeHidden();
     };
 
-    await expect(page.getByText(`사진을 골라 지우고 싶으시면 ${SUPPORT_EMAIL}로 알려 주세요.`)).toBeVisible();
-    await erase('프로필 사진 모두 삭제', '등록한 프로필 사진을 모두 삭제할까요?');
-    await expect(eraser.getByText('0장')).toBeVisible();
+    /* 정지돼도 제 사진은 보인다 — 그림이 실제로 내려온다(`photo_at`, ADR 0244) */
+    const picture = (n: number, total: number) => eraser.getByRole('img', { name: `사진 ${n} / ${total}`, exact: true });
+    await expect(picture(2, 2)).toBeVisible();
+    await expect.poll(() => picture(1, 2).evaluate((img: HTMLImageElement) => img.naturalWidth)).toBeGreaterThan(0);
+    const versionOf = async (img: ReturnType<typeof picture>) =>
+      new URL((await img.getAttribute('src')) ?? '', 'http://x').searchParams.get('v');
+    const second = await versionOf(picture(2, 2));
+
+    /* 한 장만 지운다 — 둘째 장이 대표 자리로 당겨 앉는다. 사진과 소개는 따로 지운다 */
+    await erase('사진 1 삭제', PHOTO_REMOVE_TITLE);
+    await expect(eraser.getByText('1장')).toBeVisible();
+    await expect.poll(() => versionOf(picture(1, 1))).toBe(second);
     await expect(eraser.getByRole('button', { name: '소개 삭제', exact: true })).toBeVisible();
     await erase('소개 삭제', '소개를 삭제할까요?');
     await expect(eraser.getByRole('button', { name: '소개 삭제', exact: true })).toHaveCount(0);
+    await expect(picture(1, 1)).toBeVisible();
 
-    expect(sql(`select count(*) from public.profile_photo where user_id = '${id}'`)).toBe('0');
+    expect(sql(`select count(*) from public.profile_photo where user_id = '${id}'`)).toBe('1');
     expect(sql(`select coalesce(intro, '비었음') from public.app_user where id = '${id}'`)).toBe('비었음');
   });
 });

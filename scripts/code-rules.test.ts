@@ -448,6 +448,7 @@ const COUNTED_BY_LAYERS = 'no-restricted-syntax';
 const DISABLES_STILL_THERE = [
   'app/me/avatar.tsx :: @next/next/no-img-element',
   'app/me/matching/candidate-photo.tsx :: @next/next/no-img-element',
+  'app/me/profile/eraser.tsx :: @next/next/no-img-element',
   'app/me/profile/photo-grid.tsx :: @next/next/no-img-element',
 ];
 /** 까닭(`-- …`) 없이 선 표시 — 새 표시는 까닭을 적는다 */
