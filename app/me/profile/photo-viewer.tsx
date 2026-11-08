@@ -2,9 +2,14 @@
 
 import { useEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react';
 
+import { PHOTO_LOAD_FAILED_NOTE } from '@/src/lib/profile';
+
 import { ActionSheet, type ActionChoice } from '../../ui/action-sheet';
-import { ICON_BUTTON_ON_PHOTO_FACE } from '../../ui/buttons';
+import { BUTTON_TERTIARY, ICON_BUTTON_ON_PHOTO_FACE } from '../../ui/buttons';
+import { FailureLine } from '../../ui/failure-line';
 import { Icon } from '../../ui/icons';
+import { LoadingDots } from '../../ui/loading';
+import { CARD } from '../../ui/surfaces';
 import type { MyPhoto } from './photos';
 
 /** 보기의 「⋯」 이름 — 머리글 톱니의 「설정 메뉴」와 같은 꼴(대장 settings-07) */
@@ -150,14 +155,7 @@ export function PhotoViewer({
               press.current = null;
             }}
           >
-            {/* 사진 전체가 보이게 담는다(자르지 않는다) — 바탕 그림이라 끌리지 않는다 */}
-            <div
-              key={photo.version}
-              aria-hidden="true"
-              data-photo-view=""
-              className="absolute inset-0 bg-contain bg-center bg-no-repeat"
-              style={{ backgroundImage: `url(/me/photo/${userId}/${photo.position}?v=${photo.version})` }}
-            />
+            <PhotoStage key={`${photo.position}-${photo.version}`} src={`/me/photo/${userId}/${photo.position}?v=${photo.version}`} />
             {position > 1 && (
               <button
                 type="button"
@@ -186,5 +184,56 @@ export function PhotoViewer({
       )}
       <ActionSheet open={menu} onClose={() => setMenu(false)} label={PHOTO_MENU_LABEL} choices={choices} />
     </dialog>
+  );
+}
+
+/**
+ * 그 장 하나 — 사진 전체가 보이게 담는다(자르지 않는다). 그리는 동안은 오행 다섯 점, 못 그리면 실패 줄과 「다시 시도하기」.
+ * 바탕 그림(`background-image`)만으로는 실패를 알 길이 없어 검은 판만 남았다 — 같은 주소를 `Image` 로 먼저 받아 `load` · `error` 로
+ * 가르고, 받은 뒤에 바탕 그림으로 세운다(같은 주소라 브라우저가 한 번만 받는다). 바탕 그림이라 끌리지 않는다.
+ */
+function PhotoStage({ src }: { src: string }) {
+  const [attempt, setAttempt] = useState(0);
+  const url = attempt === 0 ? src : `${src}&retry=${attempt}`;
+  /** 받은 주소 · 못 받은 주소 — 지금 주소와 같을 때만 그 판정이 선다 */
+  const [settledAt, setSettledAt] = useState<{ url: string; ok: boolean } | null>(null);
+  useEffect(() => {
+    const probe = new window.Image();
+    probe.onload = () => setSettledAt({ url, ok: true });
+    probe.onerror = () => setSettledAt({ url, ok: false });
+    probe.src = url;
+    return () => {
+      probe.onload = null;
+      probe.onerror = null;
+    };
+  }, [url]);
+  const stage = settledAt?.url !== url ? 'loading' : settledAt.ok ? 'shown' : 'failed';
+  return (
+    <>
+      {stage === 'shown' && (
+        <div
+          aria-hidden="true"
+          data-photo-view=""
+          className="absolute inset-0 bg-contain bg-center bg-no-repeat"
+          style={{ backgroundImage: `url(${url})` }}
+        />
+      )}
+      {stage === 'loading' && <LoadingDots className="absolute inset-0 grid place-items-center" />}
+      {stage === 'failed' && (
+        <div className="absolute inset-0 grid place-items-center px-6">
+          <div className={`${CARD} w-full max-w-sm`}>
+            <FailureLine
+              action={
+                <button type="button" onClick={() => setAttempt((n) => n + 1)} className={BUTTON_TERTIARY}>
+                  다시 시도하기
+                </button>
+              }
+            >
+              {PHOTO_LOAD_FAILED_NOTE}
+            </FailureLine>
+          </div>
+        </div>
+      )}
+    </>
   );
 }

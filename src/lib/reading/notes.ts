@@ -272,3 +272,5 @@ export const PURCHASE_RUNNING_LABEL = '결제 진행 중…';
 export const PURCHASE_FAILED_NOTE = '결제가 완료되지 않았어요.';
 export const PURCHASE_UNDELIVERED_NOTE = '풀이권 충전이 완료되지 않았어요.';
 export const PURCHASE_PENDING_NOTE = '결제가 완료되면 풀이권이 추가돼요.';
+/** 앱 풀이권 구매 칸이 서버에 못 닿았거나 Play 상품 조회가 실패한 때의 실패 줄 — 판매가 닫힌 `SALE_CLOSED_NOTE` 와 갈린다(대장 all-15) */
+export const STORE_LOAD_FAILED_NOTE = '풀이권 상품을 불러오지 못했어요.';
