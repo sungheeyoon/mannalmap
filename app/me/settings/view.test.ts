@@ -15,7 +15,7 @@ import { SettingsView, type SettingsData } from './view';
 
 /**
  * **인연이 닫힌 동안에도 「인연 찾기 참여」 스위치가 선다**(운영자 결정 2026-11-08, G-153 의 6). 가입 고지 · 처리방침이 「참여는 설정에서 언제든 끌 수
- * 있다」고 약속했는데 닫힌 동안 그 줄이 숨어 있었다. 스위치는 실제 참여 상태를 그대로 보이고, 아래 줄은 열림 · 성인 확인 · 켜짐에 따라 다섯 갈래다.
+ * 있다」고 약속했는데 닫힌 동안 그 줄이 숨어 있었다. 스위치는 실제 참여 상태를 그대로 보이고, 아래 줄은 열림 · 성인 확인 · 켜짐에 따라 갈린다.
  * 소개받을 성별은 여전히 열렸을 때만이다.
  */
 const base: SettingsData = {
@@ -86,14 +86,23 @@ describe('설정의 인연 무리 — 열린 동안', () => {
     expect(html).not.toMatch(ASSERTIVE);
   });
 
-  it('꺼짐 — 「켜면 …」', () => {
-    const html = shown({ matchOpen: true, discoveryProfile: OFF });
+  it('꺼짐 · 성인 확인을 지났거나 필요 없음 — 「켜면 …」', () => {
+    const html = shown({ matchOpen: true, discoveryProfile: OFF, adultCleared: true });
     expect(html).toContain(PARTICIPATION_HELP.openOff);
     expect(switchChecked(html)).toBe('false');
   });
 
-  it('성인 확인 상태를 못 읽으면 확인 전 줄', () => {
-    const html = shown({ matchOpen: true, adultCleared: null });
-    expect(html).toContain(PARTICIPATION_HELP.openBeforeAdult);
+  it('꺼짐 · 성인 확인 전 — 「켜고 성인 확인을 마치면 …」', () => {
+    const html = shown({ matchOpen: true, discoveryProfile: OFF, adultCleared: false });
+    expect(html).toContain(PARTICIPATION_HELP.openOffBeforeAdult);
+  });
+
+  it('성인 확인 상태를 못 읽으면 인증을 말하지 않는 중립 줄 — 켜짐 · 꺼짐 모두', () => {
+    for (const discoveryProfile of [base.discoveryProfile, OFF]) {
+      const html = shown({ matchOpen: true, adultCleared: null, discoveryProfile });
+      expect(html).toContain(PARTICIPATION_HELP.neutral);
+      expect(html).not.toContain(PARTICIPATION_HELP.openBeforeAdult);
+      expect(html).not.toContain(PARTICIPATION_HELP.openOffBeforeAdult);
+    }
   });
 });

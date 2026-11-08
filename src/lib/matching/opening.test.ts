@@ -71,7 +71,7 @@ describe('홈의 「열리면 알려 주세요」 줄 (ADR 0223)', () => {
   });
 });
 
-describe('설정의 「인연 찾기 참여」 스위치 아래 줄 — 상태 다섯 (운영자 결정 2026-11-08, G-153 의 6)', () => {
+describe('설정의 「인연 찾기 참여」 스위치 아래 줄 — 상태별 (운영자 결정 2026-11-08, G-153 의 6)', () => {
   it('준비 중 · 켜짐 — 열리고 성인 확인을 마치면 소개될 수 있다(성인 확인 상태와 무관)', () => {
     for (const adult of [true, false, null]) expect(participationHelp(false, true, adult)).toBe(PARTICIPATION_HELP.closedOn);
   });
@@ -88,12 +88,19 @@ describe('설정의 「인연 찾기 참여」 스위치 아래 줄 — 상태 �
     expect(participationHelp(true, true, true)).toBe(PARTICIPATION_HELP.openOn);
   });
 
-  it('열림 · 꺼짐 — 켜면 소개될 수 있다', () => {
-    for (const adult of [true, false, null]) expect(participationHelp(true, false, adult)).toBe(PARTICIPATION_HELP.openOff);
+  it('열림 · 꺼짐 · 성인 확인을 지났거나 필요 없음 — 켜면 소개될 수 있다', () => {
+    expect(participationHelp(true, false, true)).toBe(PARTICIPATION_HELP.openOff);
   });
 
-  it('성인 확인 상태를 못 읽으면 단정하지 않는 확인 전 줄을 고른다', () => {
-    expect(participationHelp(true, true, null)).toBe(PARTICIPATION_HELP.openBeforeAdult);
+  it('열림 · 꺼짐 · 성인 확인 전 — 켜고 성인 확인을 마치면 소개될 수 있다', () => {
+    expect(participationHelp(true, false, false)).toBe(PARTICIPATION_HELP.openOffBeforeAdult);
+  });
+
+  it('성인 확인 상태를 못 읽으면 켜짐 · 꺼짐 모두 인증을 말하지 않는 중립 줄', () => {
+    expect(participationHelp(true, true, null)).toBe(PARTICIPATION_HELP.neutral);
+    expect(participationHelp(true, false, null)).toBe(PARTICIPATION_HELP.neutral);
+    expect(PARTICIPATION_HELP.neutral).not.toContain('성인 확인');
+    expect(PARTICIPATION_HELP.neutral).not.toContain('인증');
   });
 
   it('열렸는지 못 읽으면 줄을 안 세운다', () => {

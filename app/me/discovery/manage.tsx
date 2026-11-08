@@ -133,7 +133,7 @@ export function PreferenceForm({ current }: { current: PreferGender }) {
  *
  * 누르면 스위치가 곧 넘어가고(`useOptimistic`), 거절되면 서버가 든 값으로 돌아오며 까닭이 선다.
  *
- * **인연이 닫힌 동안에도 선다**(운영자 결정 2026-11-08) — 이름은 「인연 찾기 참여」, 아래 줄은 열림 · 성인 확인 · 켜짐에 따라 다섯 갈래다(`participationHelp`).
+ * **인연이 닫힌 동안에도 선다**(운영자 결정 2026-11-08) — 이름은 「인연 찾기 참여」, 아래 줄은 열림 · 성인 확인 · 켜짐에 따라 갈린다(`participationHelp`).
  */
 export function ParticipationToggle({
   resting,
