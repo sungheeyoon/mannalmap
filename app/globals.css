@@ -219,7 +219,7 @@
   /* /design-tokens:radius */
 
   /*
-    **색 + 투명도의 이름**(2026-11-08, ADR 0242) — 덮개(`bg-scrim`) · 경고 테(`ring-danger-line`) · 사진 위 글자(`text-on-photo-soft`)처럼
+    **색 + 투명도의 이름**(2026-11-08, ADR 0241) — 덮개(`bg-scrim`) · 경고 테(`ring-danger-line`) · 사진 위 글자(`text-on-photo-soft`)처럼
     앱과 웹이 같이 쓰는 반투명 색이다. 값은 Tailwind 의 `/40` 과 같은 `color-mix` 라 어두운 화면에서는 제 토큰을 따른다. 앱은 같은 이름을
     `COLOR.scrim` 으로 부른다. 한 번만 쓰는 투명도는 이름 없이 `bg-surface/55` 그대로다(앱은 `alpha(COLOR.surface, 0.55)`).
   */
@@ -239,7 +239,7 @@
 }
 
 /*
-  **움직임의 시간 · 이징**(2026-11-08, ADR 0242) — 누름의 전환(`quick`) · 뼈대의 반짝임(`shimmer`) · 끝 모르는 띠(`flow`). 앱은 `MOTION` 으로
+  **움직임의 시간 · 이징**(2026-11-08, ADR 0241) — 누름의 전환(`quick`) · 뼈대의 반짝임(`shimmer`) · 끝 모르는 띠(`flow`). 앱은 `MOTION` 으로
   같은 값을 부르고, 줄인 움직임은 아래 `prefers-reduced-motion` 과 앱의 `useReducedMotion`(`mobile/src/ui/motion.ts`)이 듣는다.
 */
 :root {

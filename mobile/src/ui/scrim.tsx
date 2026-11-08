@@ -4,7 +4,7 @@ import { KeyboardAvoidingView, Modal, Pressable, StyleSheet, View } from 'react-
 import { COLOR } from './tokens';
 
 /**
- * **덮개 — 화면 위에 뜨는 판의 바닥 한 벌**(ADR 0242). 시트 · 확인 창 · 신고 창 · 「⋯」 판이 모두 이것 위에 선다 — 덮개 색은 웹의
+ * **덮개 — 화면 위에 뜨는 판의 바닥 한 벌**(ADR 0241). 시트 · 확인 창 · 신고 창 · 「⋯」 판이 모두 이것 위에 선다 — 덮개 색은 웹의
  * `backdrop:bg-scrim` 과 같은 `COLOR.scrim` 하나다. 앱 화면은 `Modal` 을 직접 안 쓴다(`scripts/mobile-surfaces.test.ts`).
  *
  * - `place` — `bottom` 은 아래에 붙는 시트, `center` 는 가운데 창(옆 16px), `free` 는 판이 제 자리를 스스로 잡는다(누른 자리 곁의 메뉴)

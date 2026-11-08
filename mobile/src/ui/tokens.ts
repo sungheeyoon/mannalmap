@@ -5,7 +5,7 @@ import { COLOR as DESIGN_COLOR, FIXED, RADIUS as DESIGN_RADIUS, TEXT, TONE } fro
  * 앱의 디자인 토큰 — 값의 원본은 `src/lib/design/tokens.json` 이다(웹 CSS 와 한 원본에서 난다, ADR 0109 추기 2026-10-31). 여기는 앱의 이름만 든다.
  * 어두운 화면은 아직 없다(`app.json` 의 `userInterfaceStyle`). 글씨는 부산단디명조 하나다(M · B). 한자는 그 글꼴에 없어 웹의 `.glyph` 처럼 기기 서체로 둔다.
  *
- * 화면은 색 글자(`#…` · `rgba(…)`)를 안 쓴다(ADR 0242, `scripts/mobile-surfaces.test.ts`) — 반투명 색은 이름 있는 것(`COLOR.scrim` · `COLOR.onPhotoSoft`)을
+ * 화면은 색 글자(`#…` · `rgba(…)`)를 안 쓴다(ADR 0241, `scripts/mobile-surfaces.test.ts`) — 반투명 색은 이름 있는 것(`COLOR.scrim` · `COLOR.onPhotoSoft`)을
  * 먼저 부르고, 한 자리만 쓰는 투명도는 웹의 `bg-surface/55` 처럼 `alpha(COLOR.surface, 0.55)` 로 토큰에 얹는다.
  */
 export const COLOR = {

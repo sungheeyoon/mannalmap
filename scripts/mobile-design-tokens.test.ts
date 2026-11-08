@@ -78,7 +78,7 @@ describe('면 · 칸 · 단추의 값', () => {
 });
 
 describe('앱이 값을 베끼지 않는다', () => {
-  it('`mobile/src/ui/tokens.ts` 에 색 글자가 없다 — 반투명도 원본의 `mix` 에서 난다(ADR 0242)', () => {
+  it('`mobile/src/ui/tokens.ts` 에 색 글자가 없다 — 반투명도 원본의 `mix` 에서 난다(ADR 0241)', () => {
     const tokens = read('mobile/src/ui/tokens.ts');
     expect(tokens.replace(/\/\*[\s\S]*?\*\//g, '').match(/['"`]#[0-9a-f]{3,8}['"`]|rgba\(\s*\d/g)).toBeNull();
     expect(tokens).toContain("from '@design'");

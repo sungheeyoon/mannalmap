@@ -5,7 +5,7 @@ import { EASING, MOTION } from '@design';
 
 import { settled } from './settled';
 
-/** 움직임의 시간(ms) — 웹 `--motion-*` 와 한 원본(`src/lib/design/tokens.json`, ADR 0242) */
+/** 움직임의 시간(ms) — 웹 `--motion-*` 와 한 원본(`src/lib/design/tokens.json`, ADR 0241) */
 export { MOTION };
 
 /** 웹의 이징 낱말을 앱의 `Easing` 으로 — 이름은 `EASING` 과 같다 */

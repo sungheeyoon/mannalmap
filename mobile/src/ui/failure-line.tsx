@@ -8,7 +8,7 @@ import { Button } from './buttons';
 import { COLOR, FONT, TYPE } from './tokens';
 
 /**
- * **화면 안에서 한 자리만 못 읽었거나 못 했을 때 서는 줄** — 웹 `app/ui/failure-line.tsx` 와 같은 꼴(ADR 0242): 붉은 글씨 14px · 줄 높이 24 ·
+ * **화면 안에서 한 자리만 못 읽었거나 못 했을 때 서는 줄** — 웹 `app/ui/failure-line.tsx` 와 같은 꼴(ADR 0241): 붉은 글씨 14px · 줄 높이 24 ·
  * 알림 역할, 읽기 실패에는 「다시 시도하기」(`onRetry`). 다시 로그인이 답인 문장(`SIGN_IN_AGAIN_NOTE`)이 들거나 `signIn` 이면 그 단추 대신
  * 「다시 로그인」이 선다 — 다시 읽어도 같은 거절이다(ADR 0128 · 0164 「덧」). 다섯 화면이 저마다 들던 줄을 여기로 모았다.
  */

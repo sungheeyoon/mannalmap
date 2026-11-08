@@ -131,7 +131,7 @@ export const GALLERY: readonly { web: string; app: string; text: string }[] = [
 
 /**
  * **앱 화면이 면 · 색 · 뜨는 판을 손으로 쓰는 예외**(`scripts/mobile-surfaces.test.ts`) — 부품 · 토큰으로 못 세우는 자리만, 사유와 함께. 웹도 그 자리에서 상수를 안 쓴다.
- * 색 날값(`'#fff'` · `rgba(`)과 `<Modal` 은 2026-11-08 부터 같은 표로 잰다(ADR 0242).
+ * 색 날값(`'#fff'` · `rgba(`)과 `<Modal` 은 2026-11-08 부터 같은 표로 잰다(ADR 0241).
  */
 export const SURFACE_EXCEPTIONS: readonly { file: string; found: string; why: string }[] = [
   { file: 'mobile/src/matching/today.tsx', found: 'boxShadow:', why: '오늘의 인연 사진 카드 — 웹 `today-card.tsx` 가 `TILE` 에 없는 `shadow-float` 를 그 자리에서 입힌다' },
@@ -143,6 +143,6 @@ export const SURFACE_EXCEPTIONS: readonly { file: string; found: string; why: st
   {
     file: 'mobile/src/settings/photo-viewer.tsx',
     found: '<Modal',
-    why: '사진 크게 보기 — 덮개가 아니라 불투명한 전체 화면이다(웹 `<dialog>` 의 `backdrop:bg-black`). 쓸어넘기는 손길과 iOS 의 「닫힌 뒤 다음 창」(`onDismiss`) 차례가 `Modal` 의 전체 화면 표시에 걸려 있어 `Scrim` 으로 옮기면 동작이 바뀐다(ADR 0242). 안의 「⋯」 판 덮개는 `COLOR.scrim` 이다',
+    why: '사진 크게 보기 — 덮개가 아니라 불투명한 전체 화면이다(웹 `<dialog>` 의 `backdrop:bg-black`). 쓸어넘기는 손길과 iOS 의 「닫힌 뒤 다음 창」(`onDismiss`) 차례가 `Modal` 의 전체 화면 표시에 걸려 있어 `Scrim` 으로 옮기면 동작이 바뀐다(ADR 0241). 안의 「⋯」 판 덮개는 `COLOR.scrim` 이다',
   },
 ];
