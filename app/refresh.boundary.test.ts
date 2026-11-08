@@ -125,6 +125,8 @@ describe('내보낸 액션은 바뀐 것의 이름을 고른다', () => {
     'app/me/profile/actions.ts::setPhotoFocus': 'account-changed',
     'app/me/profile/actions.ts::removePhoto': 'account-changed',
     'app/me/profile/actions.ts::movePhoto': 'account-changed',
+    'app/me/profile/actions.ts::removeAllPhotos': 'account-changed',
+    'app/me/profile/actions.ts::clearIntro': 'account-changed',
     'app/me/requests/actions.ts::respondToRequest': 'requests-changed',
     'app/me/requests/actions.ts::cancelRequest': 'requests-changed',
     'app/me/requests/actions.ts::blockUser': 'requests-changed',

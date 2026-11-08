@@ -358,3 +358,17 @@ iOS 가 사진 권한을 물을 때 띄우는 설명이다(`NSPhotoLibraryUsageD
 | 자리 | 이전 | 넣은 글자 | 출처 |
 | --- | --- | --- | --- |
 | 처리 안내 줄 아래의 다시 보임(웹 · 앱) | 안내가 바뀌어 다시 보여 드려요. | (걷음) | 실사례 없음 — 닿지 않는 줄을 걷었다. 근거는 [ADR 0237](../../adr/0237-the-server-holds-the-notice-floor-and-the-oldest-app-it-serves.md) 의 7(확인 2026-11-07) |
+
+## settings-18 확인 전 — 정지된 사람의 프로필 사진 · 소개 지우기 (2026-11-08, ADR 0244)
+
+이용이 정지된 사람의 설정에 서는 줄 하나와, 그 줄이 여는 프로필 화면의 지우는 판이다(웹 `app/me/settings/view.tsx` · `app/me/profile/eraser.tsx`). 앱에는 아직 없다.
+묻는 창의 꼴과 「삭제」 · 「삭제한 사진은 되돌릴 수 없어요.」 · 「사진을 지웠어요」는 사진 칸의 삭제 확인(ADR 0205, `src/lib/profile/photo-removal.ts`) 그대로다.
+삭제에 걸리는 문구라 결정 점검표의 「할 수 있는 것」 줄로도 묻는다.
+
+| 자리 | 이전 | 넣은 글자 | 출처 |
+| --- | --- | --- | --- |
+| 설정의 줄 · 프로필 화면 제목 | (없음 — 정지면 프로필 줄이 안 섰다) | 프로필 사진 · 소개 지우기 | 조율자 브리프(운영자 지시 전달, 2026-11-08)의 낱말. 가장 가까운 실사례는 카카오 개발자 공지 「사용자가 카카오톡 프로필 사진을 변경하거나 삭제할 경우」(<https://devtalk.kakao.com/t/api-change-notice-retrieving-kakao-talk-profile-api/112811>, 확인 2026-11-08) |
+| 지우는 판의 줄 이름 | (없음) | 프로필 사진 {n}장 · 소개 | 실사례 없음 — 가장 가까운 것은 같은 카카오 개발자 공지의 「프로필 사진」(<https://devtalk.kakao.com/t/api-change-notice-retrieving-kakao-talk-profile-api/112811>, 확인 2026-11-08) |
+| 사진 묻는 창 제목 | (없음) | 사진을 모두 삭제할까요? | 실사례 없음 — 사진 칸의 확정 「사진을 삭제할까요?」(ADR 0205)에 「모두」 — 장을 고르지 않는다. 가장 가까운 것은 카카오 개발자 공지(<https://devtalk.kakao.com/t/api-change-notice-retrieving-kakao-talk-profile-api/112811>, 확인 2026-11-08) |
+| 소개 묻는 창 제목 · 한 줄 | (없음) | 소개를 삭제할까요? · 삭제한 소개는 되돌릴 수 없어요. | 실사례 없음 — 사진 칸의 확정 두 줄(ADR 0205)의 꼴. 가장 가까운 것은 카카오 개발자 공지(<https://devtalk.kakao.com/t/api-change-notice-retrieving-kakao-talk-profile-api/112811>, 확인 2026-11-08) |
+| 소개를 지운 뒤 | (없음) | 소개를 지웠어요 | 실사례 없음 — 사진 칸의 「사진을 지웠어요」 꼴. 가장 가까운 것은 카카오 개발자 공지(<https://devtalk.kakao.com/t/api-change-notice-retrieving-kakao-talk-profile-api/112811>, 확인 2026-11-08) |

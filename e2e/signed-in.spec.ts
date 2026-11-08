@@ -3459,6 +3459,43 @@ test.describe('가입 관문', () => {
     await expect(slot(page, 3, 3)).toHaveCount(0);
     await expect.poll(() => versionAt(slot(page, 2, 2))).toBe(third);
   });
+
+  test('이용이 정지되면 프로필은 사진 · 소개를 지우는 줄만 서고, 지우면 사라진다 (ADR 0244)', async ({ openAs }) => {
+    const { page, account } = await openAs({ selfPerson: true });
+    await page.goto('/me/profile');
+    await (await hydrated(page.getByLabel('사진 추가'))).setInputFiles(['e2e/fixtures/harin.webp', 'e2e/fixtures/jiwoo.webp']);
+    await expect(page.getByLabel('사진 2 / 2, 길게 눌러 옮기기', { exact: true })).toBeVisible();
+
+    const id = sql(`select id from auth.users where email = '${account.email}'`);
+    sql(`update public.app_user set intro = '조용한 편입니다', status = 'suspended' where id = '${id}'`);
+
+    /* 설정에는 프로필을 고치는 줄 대신 지우는 화면으로 가는 줄 하나가 선다 */
+    await page.goto('/me/settings');
+    await expect(page.getByText('이용이 제한된 계정이에요')).toBeVisible();
+    await page.getByRole('link', { name: '프로필 사진 · 소개 지우기' }).click();
+    await expect(page).toHaveURL(/\/me\/profile$/);
+
+    const eraser = page.getByRole('region', { name: '프로필 사진 · 소개 지우기' });
+    await expect(eraser.getByText('2장')).toBeVisible();
+    await expect(page.getByLabel('닉네임')).toHaveCount(0);
+    await expect(page.getByLabel('사진 추가')).toHaveCount(0);
+
+    const erase = async (row: string, title: string) => {
+      await (await hydrated(eraser.locator('div', { hasText: new RegExp(`^${row}`) }).getByRole('button', { name: /^삭제$/ }))).click();
+      const dialog = page.getByRole('dialog');
+      await expect(dialog.getByText(title)).toBeVisible();
+      await dialog.getByRole('button', { name: /^삭제$/ }).click();
+      await expect(dialog).toBeHidden();
+    };
+
+    await erase('프로필 사진', '사진을 모두 삭제할까요?');
+    await expect(eraser.getByText('0장')).toBeVisible();
+    await erase('소개', '소개를 삭제할까요?');
+    await expect(eraser.getByText('소개', { exact: true })).toHaveCount(0);
+
+    expect(sql(`select count(*) from public.profile_photo where user_id = '${id}'`)).toBe('0');
+    expect(sql(`select coalesce(intro, '비었음') from public.app_user where id = '${id}'`)).toBe('비었음');
+  });
 });
 
 /**
