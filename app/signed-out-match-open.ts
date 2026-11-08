@@ -15,7 +15,14 @@ import { matchOpenForSignedOut } from './match-opening';
  * DB 없는 익명 차선에서 처음 걸렸다). 화면은 `revalidate` 로 다시 그려져 여닫음을 따라간다.
  */
 export async function matchOpenWhilePrerendered(): Promise<boolean> {
-  const { url, publishableKey } = supabaseEnv();
+  // 접속값 없이 짓는 빌드(CI 의 `core`)도 있다 — 못 읽은 것과 같이 닫힌 쪽으로 그린다
+  let env: ReturnType<typeof supabaseEnv>;
+  try {
+    env = supabaseEnv();
+  } catch {
+    return false;
+  }
+  const { url, publishableKey } = env;
   return matchOpenForSignedOut(
     createClient<Database>(url, publishableKey, { auth: { persistSession: false, autoRefreshToken: false } }),
   );
