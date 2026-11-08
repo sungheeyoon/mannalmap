@@ -1,14 +1,13 @@
-import { router } from 'expo-router';
 import { useCallback, useEffect, useState, type ReactNode } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 
 import { accountFailureOf, accountNoticeOf, type AccountState } from '@account/index';
 import { SUPPORT_EMAIL } from '@brand';
-import { SIGN_IN_AGAIN_NOTE } from '@account/sign-in-again';
 
+import { FailureLine } from '@/ui/failure-line';
 import { Switch } from '@/ui/switch';
-import { COLOR, CONTROL, FONT, TYPE } from '@/ui/tokens';
+import { COLOR, FONT, TYPE } from '@/ui/tokens';
 import { CardFrame } from '@/ui/surfaces';
 
 /** 줄 이름 · 아래 한 줄 · 그 아래 작은 줄 — 웹 `app/me/settings/card.tsx` 의 `ROW_LABEL` · `ROW_HELP` · `ROW_NOTE` */
@@ -29,28 +28,8 @@ export function useDoneNote() {
   return { note: said?.text ?? '', say, clear };
 }
 
-/** 화면 안 실패 줄 — 웹 `app/ui/failure-line.tsx`. 다시 로그인이 답인 문장이면 다시 읽기 대신 로그인으로 가는 글자를 단다 */
-export function FailureLine({ children, onRetry, signIn = false, inset = false }: { children: string; onRetry?: () => void; signIn?: boolean; inset?: boolean }) {
-  const signedOut = signIn || children.includes(SIGN_IN_AGAIN_NOTE);
-  return (
-    <View accessibilityRole="alert" style={[styles.failureRow, inset && styles.inset]}>
-      <Text style={styles.failure}>{children}</Text>
-      {signedOut ? (
-        <LineButton label="다시 로그인" onPress={() => router.replace('/')} />
-      ) : (
-        onRetry !== undefined && <LineButton label="다시 시도하기" onPress={onRetry} />
-      )}
-    </View>
-  );
-}
-
-function LineButton({ label, onPress }: { label: string; onPress: () => void }) {
-  return (
-    <Pressable accessibilityRole="button" onPress={onPress} style={styles.lineButton}>
-      <Text style={styles.lineButtonText}>{label}</Text>
-    </Pressable>
-  );
-}
+/** 설정 무리 안에서 실패 줄이 서는 자리 — 줄과 같은 옆 여백(`<FailureLine style={FAILURE_INSET}>`) */
+export const FAILURE_INSET = { paddingHorizontal: PAD, paddingBottom: 12 } as const;
 
 /** 계정이 막혔을 때 화면 대신 보는 것 — 웹 `app/me/account-notice.tsx`. 문구와 판정은 `src/lib/account` 가 든다 */
 export function AccountNotice({ state, onRetry }: { state: AccountState; onRetry: () => void }) {
@@ -103,18 +82,6 @@ export function SwitchRow({ label, help, note, checked, onChange, busy }: { labe
   );
 }
 
-/** 글만 서는 줄 — 손잡이가 없다 */
-export function PlainRow({ label, help }: { label: string; help?: string }) {
-  return (
-    <View style={styles.row}>
-      <View style={styles.fill}>
-        <Text style={styles.label}>{label}</Text>
-        {help !== undefined && <Text style={styles.help}>{help}</Text>}
-      </View>
-    </View>
-  );
-}
-
 /** 다른 화면으로 가는 줄 — 줄 전체가 누를 자리이고 오른쪽은 「›」 하나다 */
 export function LinkRow({ label, help, note, leading, big = false, onPress }: { label: string; help?: string; note?: string; leading?: ReactNode; big?: boolean; onPress: () => void }) {
   return (
@@ -160,11 +127,6 @@ export const settingsText = StyleSheet.create({
 
 const styles = StyleSheet.create({
   fill: { flex: 1, minWidth: 0, gap: 2 },
-  inset: { paddingHorizontal: PAD, paddingBottom: 12 },
-  failureRow: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', columnGap: 12 },
-  failure: { flexShrink: 1, fontSize: TYPE.note, lineHeight: 22, fontFamily: FONT.medium, color: COLOR.danger },
-  lineButton: { minHeight: CONTROL, justifyContent: 'center' },
-  lineButtonText: { fontSize: TYPE.small, fontFamily: FONT.bold, color: COLOR.secondary, textDecorationLine: 'underline' },
   notice: { gap: 4, paddingHorizontal: 20, paddingVertical: 16 },
   noticeTitle: { fontSize: TYPE.body, fontFamily: FONT.bold, color: COLOR.foreground },
   group: { paddingVertical: 8, backgroundColor: COLOR.surfaceRaised },

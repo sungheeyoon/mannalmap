@@ -6,6 +6,7 @@ import { missingAnswer } from '@input/query';
 import type { PersonSlots } from '@people';
 import { endsWithBatchim } from '@saju-text/batchim';
 
+import { FailureLine } from '@/ui/failure-line';
 import { FieldLabel, PrimaryButton, SecondaryButton, TextButton } from '@/ui/parts';
 import { COLOR, FONT, RADIUS, TYPE } from '@/ui/tokens';
 import { ConfirmDialog, DialogText } from '@/ui/confirm-dialog';
@@ -13,7 +14,7 @@ import { Card, EmptySlot } from '@/ui/surfaces';
 
 import { BirthFields, useBirthForm } from './birth-fields';
 import { addPerson, removeFromList, updateNote } from './data';
-import { FailureLine, go, styles as shared } from './parts';
+import { go, styles as shared } from './parts';
 import { SameChartAsk, type SameChartQuestion } from './same-chart-ask';
 
 /** 메모 칸 — 사주 계산에 쓰지 않는다 */

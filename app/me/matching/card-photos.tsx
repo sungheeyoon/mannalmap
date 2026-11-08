@@ -160,7 +160,7 @@ export function CardPhotos({
           >
             <span
               aria-hidden="true"
-              className={`h-[3px] w-full rounded-full shadow-[0_0_2px_rgb(0_0_0/0.4)] ${index === at ? 'bg-white' : 'bg-white/40'}`}
+              className={`h-[3px] w-full rounded-full shadow-[0_0_2px_rgb(0_0_0/0.4)] ${index === at ? 'bg-on-photo' : 'bg-photo-line'}`}
             />
           </button>
         ))}

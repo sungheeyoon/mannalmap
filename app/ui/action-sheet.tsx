@@ -83,7 +83,7 @@ export function ActionSheet({
         event.stopPropagation();
         onClose();
       }}
-      className="mx-auto mb-0 mt-auto w-full max-w-[28rem] rounded-t-card bg-background p-0 text-foreground backdrop:bg-black/40 lg:my-auto lg:w-[22rem] lg:rounded-card lg:shadow-float"
+      className="mx-auto mb-0 mt-auto w-full max-w-[28rem] rounded-t-card bg-background p-0 text-foreground backdrop:bg-scrim lg:my-auto lg:w-[22rem] lg:rounded-card lg:shadow-float"
     >
       <div className="flex flex-col gap-3 px-4 pb-[max(1.25rem,env(safe-area-inset-bottom))] pt-3 lg:p-4">
         <span aria-hidden="true" className="mx-auto h-1.5 w-10 rounded-full bg-border-strong lg:hidden" />

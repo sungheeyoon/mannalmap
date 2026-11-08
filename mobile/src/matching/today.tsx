@@ -18,7 +18,7 @@ import { PrimaryButton } from '@/ui/parts';
 import { ConfirmDialog, DialogText } from '@/ui/confirm-dialog';
 import { DetailSheet } from '@/ui/sheet';
 import { ELEVATION } from '@design';
-import { COLOR, ELEMENT_TONE, FONT, RADIUS, TYPE } from '@/ui/tokens';
+import { alpha, COLOR, ELEMENT_TONE, FIXED, FONT, RADIUS, TYPE } from '@/ui/tokens';
 import { Card, CardFrame, Paper, RowCard, Tile } from '@/ui/surfaces';
 
 import { PersonPhoto, PhotoBars, ReportBlock } from './people';
@@ -108,7 +108,7 @@ export function TodayCard({ card, onInfo, onBlocked }: { card: DeckCard; onInfo:
  * 글 밑의 어둠막 — 흰 사진 위에서도 흰 글자가 읽히게. 멈춤은 웹의 `FACE_SCRIM` 과 같다.
  * SVG 로 그리면 안드로이드에서 처음 잰 크기로 굳어 카드 일부만 덮는다 — 뷰의 그라디언트는 뷰를 따라간다.
  */
-const FACE_SCRIM = 'linear-gradient(to top, rgba(0,0,0,0.86) 0%, rgba(0,0,0,0.78) 30%, rgba(0,0,0,0.62) 55%, rgba(0,0,0,0.38) 72%, rgba(0,0,0,0.14) 86%, rgba(0,0,0,0) 100%)';
+const FACE_SCRIM = `linear-gradient(to top, ${[[0.86, 0], [0.78, 30], [0.62, 55], [0.38, 72], [0.14, 86], [0, 100]].map(([amount, at]) => `${alpha(FIXED.black, amount)} ${at}%`).join(', ')})`;
 
 function FaceScrim() {
   return <View style={[StyleSheet.absoluteFill, { backgroundImage: FACE_SCRIM }]} />;
@@ -400,20 +400,20 @@ const styles = StyleSheet.create({
   exploration: { position: 'absolute', left: 16, flexDirection: 'row', alignItems: 'center', gap: 6, minHeight: 32, paddingHorizontal: 12, borderRadius: RADIUS.pill, backgroundColor: COLOR.surface },
   explorationText: { fontFamily: FONT.bold, fontSize: TYPE.small, color: COLOR.foreground },
   onPhoto: { position: 'absolute', right: 12, flexDirection: 'row', gap: 8 },
-  info: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center', borderRadius: RADIUS.pill, backgroundColor: 'rgba(0, 0, 0, 0.42)' },
-  infoText: { fontFamily: FONT.bold, fontStyle: 'italic', fontSize: TYPE.heading, color: '#ffffff' },
+  info: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center', borderRadius: RADIUS.pill, backgroundColor: alpha(FIXED.black, 0.42) },
+  infoText: { fontFamily: FONT.bold, fontStyle: 'italic', fontSize: TYPE.heading, color: COLOR.onPhoto },
   face: { position: 'absolute', left: 0, right: 0, bottom: 0, gap: 10, paddingHorizontal: 20, paddingTop: 96, paddingBottom: 20 },
   faceHead: { flexDirection: 'row', alignItems: 'flex-end', gap: 12 },
-  nickname: { fontFamily: FONT.bold, fontSize: 32, lineHeight: 40, color: '#ffffff' },
-  activity: { fontFamily: FONT.bold, fontSize: TYPE.small, color: 'rgba(255, 255, 255, 0.85)' },
-  scoreTalk: { fontFamily: FONT.bold, fontSize: TYPE.lead, lineHeight: 28, color: '#ffffff' },
-  verdict: { fontFamily: FONT.medium, fontSize: TYPE.lead, lineHeight: 24, color: 'rgba(255, 255, 255, 0.95)' },
+  nickname: { fontFamily: FONT.bold, fontSize: 32, lineHeight: 40, color: COLOR.onPhoto },
+  activity: { fontFamily: FONT.bold, fontSize: TYPE.small, color: COLOR.onPhotoSoft },
+  scoreTalk: { fontFamily: FONT.bold, fontSize: TYPE.lead, lineHeight: 28, color: COLOR.onPhoto },
+  verdict: { fontFamily: FONT.medium, fontSize: TYPE.lead, lineHeight: 24, color: COLOR.onPhotoStrong },
   supply: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   dots: { flexDirection: 'row', paddingLeft: 4 },
   dot: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center', borderRadius: RADIUS.pill, borderWidth: 2, borderColor: COLOR.surface },
-  supplyHead: { fontFamily: FONT.bold, fontSize: TYPE.fine, lineHeight: 16, color: 'rgba(255, 255, 255, 0.75)' },
-  supplyNames: { fontFamily: FONT.bold, fontSize: TYPE.heading, lineHeight: 28, color: '#ffffff' },
-  introLine: { fontFamily: FONT.medium, fontSize: TYPE.note, lineHeight: 20, color: 'rgba(255, 255, 255, 0.85)' },
+  supplyHead: { fontFamily: FONT.bold, fontSize: TYPE.fine, lineHeight: 16, color: COLOR.onPhotoFaint },
+  supplyNames: { fontFamily: FONT.bold, fontSize: TYPE.heading, lineHeight: 28, color: COLOR.onPhoto },
+  introLine: { fontFamily: FONT.medium, fontSize: TYPE.note, lineHeight: 20, color: COLOR.onPhotoSoft },
   buttons: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   undo: { width: 56, height: 56, alignItems: 'center', justifyContent: 'center', borderRadius: RADIUS.pill, borderWidth: 1, borderColor: COLOR.border, backgroundColor: COLOR.surface },
   pass: { flex: 1, flexDirection: 'row', minHeight: 56, alignItems: 'center', justifyContent: 'center', gap: 6, paddingHorizontal: 12, borderRadius: RADIUS.pill, borderWidth: 1, borderColor: COLOR.borderStrong, backgroundColor: COLOR.surface },
