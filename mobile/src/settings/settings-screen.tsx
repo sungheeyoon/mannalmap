@@ -41,7 +41,7 @@ export function SettingsScreen() {
   const [face, setFace] = useState<string | null>(null);
   /* 테스트가 끝나면 관문이 설정만 연다 — 눌러도 종료 안내로 되돌아올 줄(프로필 · 설문)은 세우지 않는다 */
   const [ended, setEnded] = useState(false);
-  /** 인연 찾기는 인연의 입구다 — 닫혔거나 못 읽었으면 그 무리가 안 선다(ADR 0222) */
+  /** 소개받을 성별은 인연의 입구다 — 닫혔거나 못 읽었으면 안 선다(ADR 0222). 「인연 찾기」 스위치는 닫혀도 선다 */
   const matchOpen = useMatchOpen();
 
   const load = useCallback(() => {
@@ -97,12 +97,13 @@ export function SettingsScreen() {
           </SettingsGroup>
         )}
 
-        {active && matchEntriesStand(matchOpen) && (
+        {/* 닫힌 동안에도 「인연 찾기」 스위치 하나로 선다 — 고지가 「설정에서 언제든 끌 수 있다」고 약속한 자리다(운영자 결정 2026-11-08, 웹 `view.tsx`) */}
+        {active && (
           <SettingsGroup title="인연">
             {discovery.ok ? (
               <>
-                <ParticipationRow resting={discovery.optedOut} />
-                <PreferenceRow key={discovery.preferGender} current={discovery.preferGender} />
+                <ParticipationRow resting={discovery.optedOut} open={matchOpen} />
+                {matchEntriesStand(matchOpen) && <PreferenceRow key={discovery.preferGender} current={discovery.preferGender} />}
               </>
             ) : (
               <FailureLine style={FAILURE_INSET} onRetry={load}>{`인연 찾기 설정을 불러오지 못했어요. ${discovery.reason}`}</FailureLine>

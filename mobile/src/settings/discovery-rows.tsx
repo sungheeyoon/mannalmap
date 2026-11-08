@@ -3,6 +3,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { PREFER_GENDER_ORDER, type PreferGender } from '@discovery';
 import { PREFER_GENDER_KO } from '@discovery/copy';
+import { participationHelp } from '@matching/opening';
 
 import { saveFailureOf, setParticipation } from '@/reading/chart-writes';
 import { followRefusal } from '@/reading/panel';
@@ -15,9 +16,9 @@ import { savePreferGender } from './settings';
 
 /**
  * 「인연 찾기」 스위치 — 가입 고지가 「설정에서 언제든 끌 수 있습니다」라고 약속한 자리다. 누르면 곧 바뀌고 앱의 문을 지난다 — 요약은 서버가 짓는다(ADR 0211).
- * 실패하면 서버가 든 마지막 값으로 돌아오고 까닭이 선다(웹 `ParticipationToggle`).
+ * 실패하면 서버가 든 마지막 값으로 돌아오고 까닭이 선다(웹 `ParticipationToggle`). 인연이 닫힌 동안에도 서고 아래 줄이 「준비 중」을 말한다(2026-11-08).
  */
-export function ParticipationRow({ resting }: { resting: boolean }) {
+export function ParticipationRow({ resting, open }: { resting: boolean; open: boolean | null }) {
   const [on, setOn] = useState(!resting);
   const [working, setWorking] = useState(false);
   const [failure, setFailure] = useState<string | null>(null);
@@ -38,7 +39,7 @@ export function ParticipationRow({ resting }: { resting: boolean }) {
     <>
       <SwitchRow
         label="인연 찾기"
-        help={on ? '내 프로필과 오행 요약이 다른 사람에게 소개되고 있어요.' : '켜면 내 프로필과 오행 요약이 다른 사람에게 소개돼요.'}
+        help={participationHelp(open, on)}
         checked={on}
         onChange={(next) => void toggle(next)}
         busy={working}

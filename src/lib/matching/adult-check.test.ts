@@ -1,6 +1,30 @@
 import { describe, expect, it } from 'vitest';
 
-import { adultCheckAfter, adultCheckDetours, adultCheckGuards, adultCheckNeeded } from './adult-check';
+import {
+  ADULT_CHECK_OPTED_OUT,
+  ADULT_CHECK_VISIBLE,
+  adultCheckAfter,
+  adultCheckDetours,
+  adultCheckGuards,
+  adultCheckNeeded,
+  adultCheckParticipationLine,
+} from './adult-check';
+
+describe('안내 화면의 참여 줄 (조율자 2026-11-08)', () => {
+  it('끈 사람에게는 「기본으로 참여」 줄이 안 서고 꺼져 있다는 줄이 선다', () => {
+    expect(adultCheckParticipationLine(true)).toBe(ADULT_CHECK_OPTED_OUT);
+    expect(adultCheckParticipationLine(true)).not.toContain('기본으로 참여');
+  });
+
+  it('끄지 않은 사람에게는 확인 뒤 기본으로 참여한다는 줄이 선다', () => {
+    expect(adultCheckParticipationLine(false)).toBe(ADULT_CHECK_VISIBLE);
+    expect(ADULT_CHECK_VISIBLE).toContain('기본으로 참여');
+  });
+
+  it('참여 상태를 못 읽었으면 줄을 안 세운다', () => {
+    expect(adultCheckParticipationLine(null)).toBeNull();
+  });
+});
 
 const OFF = { required: false, confirmed: false };
 const ON = { required: true, confirmed: false };

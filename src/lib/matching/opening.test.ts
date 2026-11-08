@@ -1,6 +1,14 @@
 import { describe, expect, it } from 'vitest';
 
-import { matchClosedDetours, matchClosedGuards, matchEntriesStand, matchOpenAlertStands, tabsWhileShut } from './opening';
+import {
+  matchClosedDetours,
+  matchClosedGuards,
+  matchEntriesStand,
+  matchOpenAlertStands,
+  PARTICIPATION_HELP,
+  participationHelp,
+  tabsWhileShut,
+} from './opening';
 
 const TABS = [{ href: '/me' }, { href: '/compat' }, { href: '/me/matching' }, { href: '/me/chat' }] as const;
 const APP_TABS = [{ href: '/me' }, { href: '/me/compat' }, { href: '/me/matching' }, { href: '/me/chat' }] as const;
@@ -60,5 +68,22 @@ describe('홈의 「열리면 알려 주세요」 줄 (ADR 0223)', () => {
     expect(matchOpenAlertStands(false)).toBe(true);
     expect(matchOpenAlertStands(true)).toBe(false);
     expect(matchOpenAlertStands(null)).toBe(false);
+  });
+});
+
+describe('설정의 「인연 찾기」 스위치 아래 줄 (운영자 결정 2026-11-08, G-153 의 6)', () => {
+  it('닫힌 동안은 켜짐 · 꺼짐 모두 「준비 중이라 공개되지 않는다」를 말한다 — 「소개되고 있어요」는 거짓이다', () => {
+    expect(participationHelp(false, true)).toBe(PARTICIPATION_HELP.closed);
+    expect(participationHelp(false, false)).toBe(PARTICIPATION_HELP.closed);
+  });
+
+  it('열려 있으면 실제 상태대로 말한다', () => {
+    expect(participationHelp(true, true)).toBe(PARTICIPATION_HELP.on);
+    expect(participationHelp(true, false)).toBe(PARTICIPATION_HELP.off);
+  });
+
+  it('못 읽었으면 열렸는지 몰라 줄을 안 세운다', () => {
+    expect(participationHelp(null, true)).toBeUndefined();
+    expect(participationHelp(null, false)).toBeUndefined();
   });
 });

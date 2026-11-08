@@ -29,7 +29,10 @@ export function tabsWhileShut<T extends { href: string }>(tabs: readonly T[], op
   return open === true ? tabs : tabs.filter((tab) => !matchClosedGuards(tab.href));
 }
 
-/** 인연의 입구(설정의 인연 무리 · 새 메시지 알림 · 앱 첫 화면의 인연 소개 · 보관함의 「오늘의 인연」)를 세우는가 — 열렸다고 읽었을 때만 */
+/**
+ * 인연의 입구(설정의 소개받을 성별 · 새 메시지 알림 · 앱 첫 화면의 인연 소개 · 보관함의 「오늘의 인연」)를 세우는가 — 열렸다고 읽었을 때만.
+ * 설정의 「인연 찾기」 스위치는 입구가 아니라 참여를 끄는 약속의 자리라 닫혀도 선다(아래 `participationHelp`, 2026-11-08)
+ */
 export const matchEntriesStand = (open: boolean | null): boolean => open === true;
 
 /**
@@ -40,3 +43,22 @@ export const MATCH_OPEN_ALERT_BUTTON = { on: '알림 받기', off: '알림 끄�
 
 /** 홈에 그 줄을 세우는가 — **닫혔다고 읽었을 때만**이다. 열렸거나 모르면 안 선다(열렸는데 「준비 중」을 세우지 않는다) */
 export const matchOpenAlertStands = (open: boolean | null): boolean => open === false;
+
+/**
+ * 설정의 「인연 찾기」 스위치 아래 한 줄 — **닫힌 동안에도 스위치는 선다**(운영자 결정 2026-11-08, G-153 의 6). 가입 고지와 처리방침이
+ * 「참여는 설정에서 언제든 끌 수 있다」고 약속했고, 켜고 끄는 문(`set_discovery_participation`)은 닫혀 있어도 그대로 된다. 스위치는 실제
+ * 참여 상태를 그대로 보이고, 닫힌 동안 「소개되고 있어요」는 거짓이라 켜짐 · 꺼짐 모두 「준비 중이라 공개되지 않는다」를 말한다. 못 읽었으면
+ * (`null`) 열렸는지 닫혔는지 몰라 이 줄을 세우지 않는다 — 스위치만 선다. 웹 `ParticipationToggle` · 앱 `ParticipationRow` 가 프롭으로 넘기는
+ * 글자라 `copy.ts` 에 못 둔다(ADR 0159). 대장 settings-08.
+ */
+export const PARTICIPATION_HELP = {
+  on: '내 프로필과 오행 요약이 다른 사람에게 소개되고 있어요.',
+  off: '켜면 내 프로필과 오행 요약이 다른 사람에게 소개돼요.',
+  closed: '지금은 인연 기능이 준비 중이라 다른 사람에게 공개되지 않아요.',
+} as const;
+
+export function participationHelp(open: boolean | null, on: boolean): string | undefined {
+  if (open === null) return undefined;
+  if (!open) return PARTICIPATION_HELP.closed;
+  return on ? PARTICIPATION_HELP.on : PARTICIPATION_HELP.off;
+}

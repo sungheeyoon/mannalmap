@@ -27,7 +27,19 @@ export async function readAdultCheck(): Promise<AdultCheckState | null> {
   }
 }
 
-export const adultCheckPath = (next: string) => `${ADULT_CHECK_SCREEN}?next=${encodeURIComponent(safeReturnPath(next))}`;
+/** 참여를 껐는가(`discovery_profile.opted_out_at`) — 안내 화면의 참여 줄을 고른다. 줄이 없으면 끈 적이 없다. 못 읽으면 `null` */
+export async function readOptedOut(): Promise<boolean | null> {
+  if (supabase === null) return null;
+  try {
+    const { data, error } = await supabase.from('discovery_profile').select('opted_out_at').maybeSingle();
+    return error === null ? data?.opted_out_at != null : null;
+  } catch (thrown) {
+    console.error('discovery_profile', thrown);
+    return null;
+  }
+}
+
+export const adultCheckPath =(next: string) => `${ADULT_CHECK_SCREEN}?next=${encodeURIComponent(safeReturnPath(next))}`;
 
 /**
  * 인연 주소에 들어오면 묻고, 미확인이면 안내로 갈아 끼운다. 스위치가 꺼져 있으면 읽기만 하고 아무 일도 없다 — 화면은 그대로다.

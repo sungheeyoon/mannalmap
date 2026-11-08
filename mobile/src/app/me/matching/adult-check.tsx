@@ -10,13 +10,14 @@ import {
   ADULT_CHECK_LINE,
   ADULT_CHECK_TITLE,
   ADULT_CHECK_UNAVAILABLE,
-  ADULT_CHECK_VISIBLE,
   adultCheckAfter,
   adultCheckNeeded,
+  adultCheckParticipationLine,
 } from '@matching/adult-check';
 
-import { adultCheckProvider, readAdultCheck } from '@/matching/adult-check';
+import { adultCheckProvider, readAdultCheck, readOptedOut } from '@/matching/adult-check';
 import { PrimaryButton } from '@/ui/parts';
+import { settled } from '@/ui/settled';
 import { CardFrame } from '@/ui/surfaces';
 import { COLOR, FONT, TYPE } from '@/ui/tokens';
 import { TopBar } from '@/ui/top-bar';
@@ -30,12 +31,19 @@ export default function AdultCheckScreen() {
   const destination = safeReturnPath(next);
   const [working, setWorking] = useState(false);
   const [failed, setFailed] = useState(false);
+  /** 참여를 껐는가 — 못 읽었거나 아직이면 `null` 이고 참여 줄이 안 선다(웹 안내와 같다) */
+  const [optedOut, setOptedOut] = useState<boolean | null>(null);
+  const participation = adultCheckParticipationLine(optedOut);
 
   useEffect(() => {
     void readAdultCheck().then((state) => {
       if (state !== null && !adultCheckNeeded(state)) router.replace(destination as never);
     });
   }, [destination]);
+
+  useEffect(() => {
+    void settled(readOptedOut(), 'discovery_profile', () => null).then(setOptedOut);
+  }, []);
 
   const start = async () => {
     if (adultCheckProvider === null) return;
@@ -58,8 +66,8 @@ export default function AdultCheckScreen() {
             {ADULT_CHECK_TITLE}
           </Text>
           <Text style={styles.body}>{ADULT_CHECK_LINE}</Text>
-          {/* 확인이 곧 공개 시점이다 — 저장하면 참여가 자동으로 켜진다(운영자 결정 2026-11-02, #947) */}
-          <Text style={styles.body}>{ADULT_CHECK_VISIBLE}</Text>
+          {/* 확인이 곧 공개 시점이다 — 참여가 자동으로 켜진다(운영자 결정 2026-11-02, #947). 끈 사람에게는 꺼져 있다는 줄(조율자 2026-11-08) */}
+          {participation !== null && <Text style={styles.body}>{participation}</Text>}
           {failed && (
             <Text style={styles.failure} accessibilityRole="alert">
               {ADULT_CHECK_FAILED}
