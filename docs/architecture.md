@@ -63,7 +63,7 @@
 (`app/ops/denial.ts`)만 내고, `app/ops/denial.boundary.test.ts` 가 그 밖의 자리를 막는다(ADR 0105 · 0191).
 `if (error) return []` 는 셋을 하나로 합치므로 쓰지 않는다.
 
-**옛 자리는 없다.** 잠근 날(2026-09-22)에 열셋이었고, 2026-09-23 에 `discovery_profile` 둘이 문(`app/me/discovery/discovery-profile.ts`)으로, 2026-09-24 에 홈의 엣지 읽기가 문(`app/me/home/circle.ts`)으로, 2026-09-25 에 세 화면의 일정 읽기가 문(`app/beta-schedule.ts`)으로, 같은 날 G-60 에서 프로필의 사진 읽기가 문(`app/me/profile/photos.ts`)으로, 2026-09-30 에 매칭의 참여를 여는 부름이 열쇠 모듈(`app/me/keyed-chart-writes.ts`, G-64)로, 2026-10-01 에 사주풀이 글 화면의 엣지 읽기가 문(`app/me/(shelf)/readings/subject.ts` 의 `savedPersonOf`)으로, 2026-10-12 에 저장한 사람 · 궁합 탭의 엣지 · 자리 수 읽기 셋이 「내 사람」 문(`app/me/home/circle.ts` 의 `myPeople` — 한 그림 안에서 한 번 읽는다)으로 옮겼다. 마지막 하나 — 브라우저가 자리 수를 읽던 `app/save-for-reading.tsx` — 는 2026-10-14 에 문(`app/person-slots.ts` 의 `readPersonSlots`)으로 갔다(G-109). 목록은 비었고 잠금은 그대로다 — 새 호출은 빨개진다.
+**옛 자리는 없다.** 잠근 날(2026-09-22)에 열셋이던 목록은 하나씩 문으로 옮겨 2026-10-14 에 비었다(G-109) — 잠금은 그대로라 새 호출은 빨개진다. 옮긴 차례는 `docs/notes/2026-11-08-docs-diet.md` 에 있다.
 **호출 하나마다** 그 줄 위에 `eslint-disable-next-line no-restricted-syntax` 가 붙고,
 `scripts/layers.test.ts` 가 **호출의 지문**(`파일 :: supabase.from('표')`)을 목록으로 든다 —
 **줄어들기만 한다.** 하나를 문으로 옮기면 표시와 지문을 함께 지운다. 표시는 줄 하나를 통째로
@@ -74,7 +74,7 @@
 
 | 자리 | 무엇 | 아는 것 |
 | --- | --- | --- |
-| `mobile/` | Expo 앱. 제 설정(`mobile/tsconfig.json` · `mobile/metro.config.js` · `expo lint`)으로 돌고 웹 배포 밖이다. CI 에서는 `mobile` 차선(타입 · 린트 · 안드로이드 번들)이 앱이 부르는 자리가 바뀐 PR 을 막는다(`docs/agents/test-map/ci.md`, ADR 0097 덧) | `src/lib/` 의 순수 로직과 웹의 한 파일 — DB 거절을 옮기는 `app/db-error.ts`(`@db-error`) — 만 별칭으로 부른다(`mobile/tsconfig.json` · `mobile/metro.config.js`). `app/` 에서 닿는 파일이 그 하나뿐인지는 `scripts/mobile-closure.test.ts` 가 잰다 — 다시 로그인 줄은 `src/lib/account/sign-in-again.ts` 로 내려갔다(2026-11-06). 명식 결과의 판단 · 문단은 웹과 함께 `src/lib/saju/view` 를, 가입의 판정 · 글자는 `src/lib/consent/signup.ts` 를, 채팅의 합치기 · 보내기 줄 · 묶음은 `src/lib/chat/room` 을, 채널의 재접속 규칙은 `src/lib/live` 를, 디자인 값은 `src/lib/design`(`@design`)을 쓰고, 웹의 주소(`EXPO_PUBLIC_SITE_URL`)는 `mobile/src/site.ts` 하나가 읽고(`scripts/mobile-site-url.test.ts`), 칸 이름 같은 짧은 말은 `scripts/mobile-chart-copy.test.ts` 가 웹 글자와 견준다. 안내 화면의 글은 `src/lib/brand`(`guide`)를 함께 쓰고 — 약관 셋은 그리지 않고 웹의 현행 판을 앱 안 브라우저로 연다(`mobile/src/info/legal-web.ts`, ADR 0172 추기 2026-11-07) — `scripts/mobile-info-copy.test.ts` 가 짧은 말을 견준다. 사업자 값은 웹과 같은 상수 `BUSINESS_INFO`(`src/lib/brand/business.ts`, ADR 0232)다. **앱의 DB 읽기는 웹과 같은 옮기기를 쓴다**(ADR 0211 추기 2026-11-06, G-143) — 정지 · 풀이권 · 베타 일정 · 글 목록 · 만드는 중인 풀이 · 경고 안내 · 서비스 설문 · 내 사주 여부는 `src/lib` 의 `suspensionOf` · `readingCreditsOf` · `scheduleOfDbRow` · `readingEntriesOf` · `runningReadingsOf` · `warningNoticeOf` · `surveyContextOf` · `mySurveyOf` · `selfPersonStateOf` 를 웹의 문과 함께 쓰고, 앱에서 그 RPC 를 부르는 문은 하나씩이다. DB 함수 이름은 `src/lib` 에 못 들므로(`scripts/layers.test.ts`) 부르는 한 줄은 웹 · 앱의 문에 하나씩 남는다. 앱 화면(`mobile/src/app/**` · `*.tsx`)은 `.rpc()` · `.from()` 을 하나도 안 부른다 — 부르는 것은 화면 옆의 문(`.ts`)이고, `scripts/mobile-screen-db.test.ts` 가 화면 안의 호출과 같은 옮기기를 쓰는 RPC 의 둘째 문을 잠근다. Supabase 주소 · 공개 키는 `mobile/src/supabase-env.ts` 하나가 읽는다(`scripts/mobile-supabase-env.test.ts`). 처리방침의 재확인 기준은 번들 상수가 아니라 일정의 문이 함께 내는 서버 값이고, 앱은 켜질 때 서버가 받아 주는 가장 옛 빌드(`android_min_version_code`)를 `mobile/src/release/floor.ts` 에서 묻는다(ADR 0237) |
+| `mobile/` | Expo 앱. 제 설정(`mobile/tsconfig.json` · `mobile/metro.config.js` · `expo lint`)으로 돌고 웹 배포 밖이다. CI 에서는 `mobile` 차선(타입 · 린트 · 안드로이드 번들)이 앱이 부르는 자리가 바뀐 PR 을 막는다(`docs/agents/test-map/ci.md`, ADR 0097 덧) | `src/lib/` 의 순수 로직과 웹의 한 파일 `app/db-error.ts`(`@db-error`)만 — 아래 「`mobile/` 이 아는 것」 |
 | `app/api/mobile/` | **앱의 문**(ADR 0211) — 관문 밖이라 함수마다 `mobileSession` 이 토큰 · `gateFor` 를 먼저 본다(사진 문만 토큰의 클라이언트로 `photo_at` 이 판정한다). 웹의 읽는 문 · 몸통(`pipeline.ts` · `person-writes.ts` · `keyed-chart-writes.ts`)을 그대로 부르고 답의 모양은 `src/lib/reading/door.ts` 가 든다. 앱은 `mobile/src/reading/api.ts` · `chart-writes.ts` 로 부른다 | 문 · 세션(토큰). 열쇠를 직접 안 든다 |
 | `app/api/store/google-play/` | **Google Play 결제의 통지 문**(ADR 0230) — `POST /api/store/google-play` 는 세션이 없고 자격은 Pub/Sub 푸시의 OIDC 토큰이다(`push-auth.ts`). 장부 문 `ledger.ts` 는 서버 열쇠를 들고 사람 id 를 인자로 받는다 — 통지에는 세션이 없고 사람은 Google 이 돌려준 계정 표지뿐이라서다(ADR 0136 의 예외 근거는 ADR 0230 추기 2026-11-06). 앱의 구매 문 `app/api/mobile/credits/purchase` 와 무효 대조 크론 `app/api/cron/store-voided` 가 같은 `settle.ts` · `ledger.ts` 를 쓴다 | 도메인 lib · 열쇠 · Play Developer API. 열쇠를 드는 파일은 `KEY_HOLDERS` 가 이름으로 든다 |
 | `proxy.ts` | 관문 — 레이아웃에 못 사는 판단(ADR 0041) | `src/lib/consent` · `app/auth/config` · `app/beta-schedule`(일정을 읽는 문) |
@@ -89,6 +89,25 @@
 | `app/taste/` | **로그인 전 사주 문단 한 벌**(ADR 0143) — 서버 액션(`actions.ts`) · 받기(`taste-run.ts`) · 쿠키와 HMAC(`taste-visitor.ts`) · 열쇠 문 둘(아래 줄) · 가입 뒤 귀속(`taste-carry.ts`) · 탭에 들고 가는 세션(`carried-taste.ts`) · 화면(`taste.tsx`). `page` 가 없어 주소가 아니다. 폴더 밖이 부르는 이름은 `scripts/layers.test.ts` 의 입구 목록 그대로다. 순수한 절반(출력 계약 · 검사 · 화면 상태 · 실패 코드)은 `src/lib/reading/taste-run.ts` · `taste-visit.ts` 다 | 도메인 lib · 문 · 열쇠 · 세션 |
 | `app/taste/keyed-taste.ts` · `app/taste/keyed-taste-claims.ts` | **로그인 전 사주 문단의 문 일곱을 열쇠로 부르는 자리**(ADR 0143) — 로그인 전 쪽 넷(`reserve_taste` · `finish_taste` · `taste_session_view` · `count_taste_step`)은 방문자가 로그인 전이라, 가입한 회원 쪽 셋(`claim_taste_session` · `link_taste_reading_run` · `taste_continuation_of_run`)은 판정이 서버가 다시 잰 지문과 서버만 짓는 HMAC 에 기대서 열쇠에만 열렸다. 지문 · HMAC 은 서버가 짓고(`app/taste/taste-run.ts` · `app/taste/taste-visitor.ts`), 회원 id 는 세션에서 얻는다. 둘로 가른 것은 풀이 회수(webhook · 크론)가 퍼널을 세며 로그인 세션을 읽는 모듈에 닿지 않게다 | 도메인 lib · 열쇠 · 세션(회원 쪽만) |
 | 비밀을 읽는 모듈 | 원본은 `scripts/secret-env.mjs` 의 갈래(`SECRET_ENV` · `SECRET_READING_PACKAGES`)다 — 모듈을 여기에 손으로 옮겨 적지 않는다. 그 이름 · 패키지를 읽는 파일은 `scripts/secret-env.test.ts` 가 찾아 첫 줄이 `import 'server-only'` 인지 잰다 — 화면 층이 부르면 빌드가 선다. 새 비밀은 그 갈래에 먼저 선다(G-23 ⑧). 열쇠(`app/keyed-client.ts`)를 부르는 파일은 `eslint.config.mjs` 의 `KEY_HOLDERS` 가 든다 | 서버 환경변수 |
+
+### `mobile/` 이 아는 것
+
+- **부르는 것** — `src/lib/` 의 순수 로직과 웹의 한 파일 — DB 거절을 옮기는 `app/db-error.ts`(`@db-error`) — 만 별칭으로 부른다
+  (`mobile/tsconfig.json` · `mobile/metro.config.js`). `app/` 에서 닿는 파일이 그 하나뿐인지는 `scripts/mobile-closure.test.ts` 가 확인한다.
+- **웹과 함께 쓰는 것** — 명식 결과의 판단 · 문단은 `src/lib/saju/view`, 가입의 판정 · 글자는 `src/lib/consent/signup.ts`, 다시 로그인 줄은
+  `src/lib/account/sign-in-again.ts`, 채팅의 합치기 · 보내기 줄 · 묶음은 `src/lib/chat/room`, 채널의 재접속 규칙은 `src/lib/live`, 디자인 값은
+  `src/lib/design`(`@design`), 안내 화면의 글은 `src/lib/brand`(`guide`), 사업자 값은 `BUSINESS_INFO`(`src/lib/brand/business.ts`, ADR 0232)다.
+  칸 이름 같은 짧은 말은 `scripts/mobile-chart-copy.test.ts` · `scripts/mobile-info-copy.test.ts` 가 웹 글자와 견준다. 약관 셋은 그리지 않고
+  웹의 현행 판을 앱 안 브라우저로 연다(`mobile/src/info/legal-web.ts`, ADR 0172).
+- **DB 읽기 — 옮기기는 한 벌, 부르는 문은 양쪽에 하나씩**(ADR 0211 추기 2026-11-08) — 정지 · 풀이권 · 베타 일정 · 글 목록 · 만드는 중인 풀이 ·
+  경고 안내 · 서비스 설문 · 내 사주 여부는 `src/lib` 의 `suspensionOf` · `readingCreditsOf` · `scheduleOfDbRow` · `readingEntriesOf` ·
+  `runningReadingsOf` · `warningNoticeOf` · `surveyContextOf` · `mySurveyOf` · `selfPersonStateOf` 를 웹의 문과 함께 쓴다. DB 함수 이름은
+  `src/lib` 에 못 들므로(`scripts/layers.test.ts`) 부르는 한 줄은 웹 · 앱의 문에 하나씩 남는다. 앱 화면(`mobile/src/app/**` · `*.tsx`)은
+  `.rpc()` · `.from()` 을 하나도 안 부른다 — 부르는 것은 화면 옆의 문(`.ts`)이고, `scripts/mobile-screen-db.test.ts` 가 화면 안의 호출과
+  같은 옮기기를 쓰는 RPC 의 둘째 문을 잠근다.
+- **한 자리에서 읽는 값** — 웹의 주소(`EXPO_PUBLIC_SITE_URL`)는 `mobile/src/site.ts`(`scripts/mobile-site-url.test.ts`), Supabase 주소 · 공개 키는
+  `mobile/src/supabase-env.ts`(`scripts/mobile-supabase-env.test.ts`)가 읽는다. 처리방침의 재확인 기준은 번들 상수가 아니라 일정의 문이 함께 내는
+  서버 값이고, 앱은 켜질 때 서버가 받아 주는 가장 옛 빌드(`android_min_version_code`)를 `mobile/src/release/floor.ts` 에서 묻는다(ADR 0237).
 
 ## 새 것을 놓을 때
 

@@ -109,3 +109,19 @@
    지문 목록에 들고 시작한다. 앱의 `.ts` 모듈(`mobile/src/**/*.ts`)은 문의 자리로 남는다.
 3. **잠금의 자리** — `scripts/layers.test.ts` 가 `mobile/src` 를 읽게 하거나 같은 꼴의 시험을 따로 둔다. 어느 쪽인지와 앱이 웹 문을 부르는 경로 별칭은 그 PR 이 정하고
    `docs/architecture.md` 「그 밖의 자리」의 `mobile/` 줄을 함께 고친다.
+
+## 추기 2026-11-08 — 위 추기의 1 은 실제와 다르다 (정정)
+
+> 기록을 바로잡는 정정이다 — 정책은 바뀌지 않는다. 결정 점검표에 걸리지 않는다.
+
+위 추기 2026-11-06 의 1 「앱의 읽기는 웹의 읽는 문을 함께 쓴다 — 앱이 웹의 문을 그 사람의 세션 클라이언트로 그대로 부른다」는 G-143 을 닫은
+코드와 다르다. 지금 사실은 이렇다.
+
+- **앱은 `app/` 의 문을 부르지 못한다.** `app/` 에서 앱이 닿아도 되는 파일은 `app/db-error.ts` 하나이고, `scripts/mobile-closure.test.ts` 의
+  `SHARED_APP_FILES` 가 확인한다 — 웹의 문은 웹 별칭과 서버 모듈을 끌고 와 앱 번들에서 깨진다.
+- **함께 쓰는 것은 줄 옮기기(어댑터)다.** snake_case 를 도메인 말로 옮기는 `…Of` 함수(`suspensionOf` · `readingCreditsOf` 등)가 `src/lib` 에
+  한 벌로 살고, 웹의 문과 앱의 문이 그것을 함께 부른다.
+- **RPC 를 부르는 문은 웹 · 앱에 하나씩이다.** DB 함수 이름은 `src/lib` 에 못 들므로(`scripts/layers.test.ts`) 부르는 한 줄은 양쪽 문에 남고,
+  앱 쪽이 RPC 하나에 문 하나인지는 `scripts/mobile-screen-db.test.ts` 의 `ONE_DOOR` 가 확인한다.
+
+2 · 3(앱 화면의 DB 직접 호출을 시험이 잠근다)은 그대로 유효하다. 지금 모양의 원본은 `docs/architecture.md` 「그 밖의 자리」의 `mobile/` 줄이다.
