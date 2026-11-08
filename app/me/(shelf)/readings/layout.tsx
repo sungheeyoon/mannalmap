@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
 
 import { isBlocked, selfPersonIdOf } from '@/src/lib/account';
+import { matchShelfStands } from '@/src/lib/matching/opening';
 
 import { supabaseOnServer } from '../../../auth/server-client';
 import { signedInUser } from '../../../auth/signed-in';
@@ -13,6 +14,7 @@ import { runningReadings } from '../../home/running';
 import { runningName } from '../../home/running-line';
 import { readingHrefOf } from '../../reading/target';
 import { withCameFrom } from '../../../came-from';
+import { openOf, readMatchOpen } from '../../../match-opening';
 import { COMPAT_ENTRY_LABEL } from '../../../service-features';
 import { bookOf, shelfNamesOf } from './book';
 import { ReadingsFrame, ShelfItem, type NextBook } from './frame';
@@ -66,7 +68,7 @@ export default async function ReadingsLayout({ children }: { children: ReactNode
     시작하던 동안 탭 이동이 한 물결 더 길었다. 이용이 멈춘 계정이면 안 쓰고 버린다 — 아래에서 따로 받아 보므로, 여기서
     안 잡으면 버린 쪽의 실패가 처리되지 않은 거절로 뜬다.
   */
-  const reading = Promise.all([myReadings(), matchesForViewer(), runningReadings()]);
+  const reading = Promise.all([myReadings(), matchesForViewer(), runningReadings(), readMatchOpen(supabase)]);
   reading.catch(() => {});
 
   /** 빈 상태의 길이 내 사주 등록 여부를 묻는다 — 온보딩으로 보내지는 않는다 */
@@ -80,7 +82,7 @@ export default async function ReadingsLayout({ children }: { children: ReactNode
   }
   const selfPersonId = selfPersonIdOf(state);
 
-  const [readings, matches, runningRead] = await reading;
+  const [readings, matches, runningRead, matchOpenRead] = await reading;
   const madeMatchIds = new Set(
     readings.flatMap((reading) =>
       reading.kind === 'match' && reading.matchId !== null ? [reading.matchId] : [],
@@ -265,7 +267,15 @@ export default async function ReadingsLayout({ children }: { children: ReactNode
 
   return (
     <main className="app-shell flex flex-1 flex-col py-8 sm:py-12">
-      <ReadingsFrame account={user.id} shelves={shelves} lists={lists} nothing={nothing} singles={nextBooks} names={names}>
+      <ReadingsFrame
+        hideMatch={!matchShelfStands(openOf(matchOpenRead), fated.length > 0 || making.length > 0)}
+        account={user.id}
+        shelves={shelves}
+        lists={lists}
+        nothing={nothing}
+        singles={nextBooks}
+        names={names}
+      >
         {children}
       </ReadingsFrame>
     </main>

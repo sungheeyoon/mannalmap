@@ -1,4 +1,4 @@
-import { matchEntriesStand } from '@matching/opening';
+import { matchEntriesStand, matchShelfStands } from '@matching/opening';
 import { findStatus, findsInList, matchesName } from '@people/pick';
 import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { useCallback, useState } from 'react';
@@ -125,10 +125,14 @@ function ShelfBody({
     <BlankBook element="水" label="오늘의 인연" onPress={() => goTab('/me/matching')} />
   );
 
+  /* 닫힌 동안 빈 「인연 궁합」 칸은 칩을 안 세운다 — 눌러도 빈 화면이다(`matchShelfStands`) */
+  const matchShelf = matchShelfStands(matchOpen, books.some((book) => book.shelf === 'match') || makingOf('match'));
+  const chips = SHELF_CHIPS.filter((one) => one.chip !== 'match' || matchShelf);
+
   return (
     <View style={styles.body}>
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chips}>
-        {SHELF_CHIPS.map((one) => {
+        {chips.map((one) => {
           const on = one.chip === chip;
           return (
             <Pressable

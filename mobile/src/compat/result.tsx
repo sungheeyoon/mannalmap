@@ -40,7 +40,7 @@ type Ok = Extract<PairOutcome, { kind: 'ok' }>;
 const SIDES: readonly CompatSide[] = ['a', 'b'];
 const SIDE_PERSON: Record<CompatSide, string> = { a: '첫 번째 사람', b: '두 번째 사람' };
 
-/** 궁합 결과 — 두 명식 → 접은 표 → 베타 지표 → 사이 → 풀이 칸, 웹과 같은 차례다(`app/me/compat/screen.tsx`) */
+/** 궁합 결과 — 베타 지표(궁합풀이를 받기 전) → 참고 문단 → 풀이 칸 → 접힌 두 명식 · 표, 웹과 같은 차례다(`app/me/compat/screen.tsx`) */
 export function CompatResult({ outcome, onReadingChanged }: { outcome: Ok; onReadingChanged: () => void }) {
   const { charts, names, relation, reading, personA, personB } = outcome;
   const compat = analyzeCompatibility(charts.a, charts.b);
@@ -64,52 +64,45 @@ export function CompatResult({ outcome, onReadingChanged }: { outcome: Ok; onRea
         </View>
       </View>
 
-      <Paper style={styles.board}>
-        <Text style={styles.boardEyebrow}>각자의 사주</Text>
-        <Text style={shared.section}>궁합의 출발점</Text>
-        {SIDES.map((side) => (
-          <PairSide key={side} side={side} name={names[side]} saju={charts[side]} />
-        ))}
-      </Paper>
-
-      <Fold title="두 사주를 맞대어 본 표" note="사이에 걸리는 관계와, 그 표에서 말할 수 있는 것.">
-        <Between compat={compat} names={names} />
-      </Fold>
-
-      <Card style={styles.index}>
-        <View style={styles.indexHead}>
-          <Text style={styles.betaTag}>{MATCH_INDEX_BADGE}</Text>
-          {preview.policy === null ? (
-            <Text style={shared.meta}>{MATCH_INDEX_UNSCALED}</Text>
-          ) : (
-            <Text style={styles.policyTag}>{MATCH_INDEX_POLICY_BADGE[preview.policy]}</Text>
-          )}
-        </View>
-        <Paper style={styles.score}>
-          <Text style={styles.scoreNames}>
-            {names.a} × {names.b}
-          </Text>
-          <Text style={styles.scoreValue}>{preview.index}</Text>
-          <Text style={styles.scoreNames}>{MATCH_INDEX_SCALE}</Text>
-        </Paper>
-        {preview.dimensions.map((dimension) => (
-          <View key={dimension.key}>
-            <View style={styles.dimensionHead}>
-              <Text style={styles.dimensionLabel}>
-                {dimension.label}
-                <Text style={shared.meta}>{`  점수 반영 ${Math.round(dimension.weight * 100)}%`}</Text>
+      {/* 완성된 궁합풀이가 있으면 베타 지표와 그 참고 문단을 걷는다 — 풀이가 제 점수를 든다. 만드는 중 · 실패 동안은 선다(2026-11-08) */}
+      {reading === null && (
+        <>
+          <Card style={styles.index}>
+            <View style={styles.indexHead}>
+              <Text style={styles.betaTag}>{MATCH_INDEX_BADGE}</Text>
+              {preview.policy === null ? (
+                <Text style={shared.meta}>{MATCH_INDEX_UNSCALED}</Text>
+              ) : (
+                <Text style={styles.policyTag}>{MATCH_INDEX_POLICY_BADGE[preview.policy]}</Text>
+              )}
+            </View>
+            <Paper style={styles.score}>
+              <Text style={styles.scoreNames}>
+                {names.a} × {names.b}
               </Text>
-              <Text style={styles.dimensionValue}>{dimension.score}</Text>
-            </View>
-            <View style={styles.track}>
-              <View style={[styles.bar, { width: `${dimension.score}%` }]} />
-            </View>
-            <Text style={[shared.meta, styles.dimensionNote]}>{dimension.description}</Text>
-          </View>
-        ))}
-      </Card>
+              <Text style={styles.scoreValue}>{preview.index}</Text>
+              <Text style={styles.scoreNames}>{MATCH_INDEX_SCALE}</Text>
+            </Paper>
+            {preview.dimensions.map((dimension) => (
+              <View key={dimension.key}>
+                <View style={styles.dimensionHead}>
+                  <Text style={styles.dimensionLabel}>
+                    {dimension.label}
+                    <Text style={shared.meta}>{`  점수 반영 ${Math.round(dimension.weight * 100)}%`}</Text>
+                  </Text>
+                  <Text style={styles.dimensionValue}>{dimension.score}</Text>
+                </View>
+                <View style={styles.track}>
+                  <View style={[styles.bar, { width: `${dimension.score}%` }]} />
+                </View>
+                <Text style={[shared.meta, styles.dimensionNote]}>{dimension.description}</Text>
+              </View>
+            ))}
+          </Card>
 
-      <Text style={shared.meta}>{MATCH_INDEX_NOTE}</Text>
+          <Text style={shared.meta}>{MATCH_INDEX_NOTE}</Text>
+        </>
+      )}
 
       <PairReadingPanel
         personA={personA}
@@ -118,6 +111,22 @@ export function CompatResult({ outcome, onReadingChanged }: { outcome: Ok; onRea
         ask={relation.ok && relation.relation !== null ? <RelationNote readWith={readWith} next={relation.relation} /> : undefined}
         onReadingChanged={onReadingChanged}
       />
+
+      <Fold title="두 사람의 명식 보기">
+        <View style={styles.stack}>
+          <Paper style={styles.board}>
+            <Text style={styles.boardEyebrow}>각자의 사주</Text>
+            <Text style={shared.section}>궁합의 출발점</Text>
+            {SIDES.map((side) => (
+              <PairSide key={side} side={side} name={names[side]} saju={charts[side]} />
+            ))}
+          </Paper>
+
+          <Fold title="두 사주를 맞대어 본 표" note="사이에 걸리는 관계와, 그 표에서 말할 수 있는 것.">
+            <Between compat={compat} names={names} />
+          </Fold>
+        </View>
+      </Fold>
     </View>
   );
 }

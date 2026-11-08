@@ -68,10 +68,14 @@ export default function PeopleScreen() {
 
   return (
     <ScreenFrame keyboard bar={<TopBar title="저장한 사람" fallback="/me" right={<SecondaryButton label="궁합 보러 가기" onPress={() => goTab('/me/compat')} />} />}>
-      <Text style={shared.body}>
-        가족이나 친구의 출생 정보를 저장하고 관리하세요.
-        {slots !== null && <Text style={shared.bodyStrong}>{`  ${slots.used}/${slots.limit}명`}</Text>}
-      </Text>
+      {/*
+        설명과 「N/10명」은 자리를 나눈다(2026-11-08) — 한 글줄에 이어 붙이면 좁은 폭에서 「명」만 다음 줄로 넘어갔다.
+        수는 제 칸에서 줄어들지 않고, 설명만 접힌다. 웹은 수에 `whitespace-nowrap` 을 둔다(`app/me/people/page.tsx`)
+      */}
+      <View style={styles.lead}>
+        <Text style={[shared.body, styles.leadText]}>가족이나 친구의 출생 정보를 저장하고 관리하세요.</Text>
+        {slots !== null && <Text style={[shared.body, shared.bodyStrong, styles.count]}>{`${slots.used}/${slots.limit}명`}</Text>}
+      </View>
 
       {isBlocked(state) ? (
         <AccountNotice state={state} onRetry={load} />
@@ -112,4 +116,7 @@ export default function PeopleScreen() {
 const styles = StyleSheet.create({
   loading: { marginTop: 48 },
   find: { gap: 6 },
+  lead: { flexDirection: 'row', alignItems: 'flex-start', gap: 8 },
+  leadText: { flex: 1 },
+  count: { flexShrink: 0, fontVariant: ['tabular-nums'] },
 });

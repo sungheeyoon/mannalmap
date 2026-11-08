@@ -11,7 +11,7 @@ export function SameChartAsk({ question, busy }: { question: SameChartQuestion; 
   return (
     <CardFrame accessibilityLabel="같은 사람인지 확인" style={styles.box}>
       <Text style={styles.title}>저장된 {question.label} 님과 같은 사람인가요?</Text>
-      <Text style={styles.body}>여덟 글자와 태어난 시각이 같습니다. 같은 분이면 저장하지 않고 그분의 화면으로 갑니다 — 따로 저장하면 풀이권을 한 번 더 쓰게 됩니다.</Text>
+      <Text style={styles.body}>여덟 글자와 태어난 시각이 같습니다.</Text>
       <PrimaryButton label="네, 같은 사람입니다" disabled={busy} onPress={() => question.answer(true)} />
       <SecondaryButton label="아니요, 다른 사람입니다" disabled={busy} onPress={() => question.answer(false)} />
     </CardFrame>

@@ -5,6 +5,7 @@ import {
   matchClosedGuards,
   matchEntriesStand,
   matchOpenAlertStands,
+  matchShelfStands,
   PARTICIPATION_HELP,
   participationHelp,
   tabsWhileShut,
@@ -60,6 +61,16 @@ describe('메뉴', () => {
     expect(matchEntriesStand(null)).toBe(false);
     expect(matchEntriesStand(false)).toBe(false);
     expect(matchEntriesStand(true)).toBe(true);
+  });
+});
+
+describe('보관함의 「인연 궁합」 칩', () => {
+  it('열렸으면 서고, 닫혔거나 모르면 그 칸에 든 것이 있을 때만 선다', () => {
+    expect(matchShelfStands(true, false)).toBe(true);
+    expect(matchShelfStands(false, false)).toBe(false);
+    expect(matchShelfStands(null, false)).toBe(false);
+    expect(matchShelfStands(false, true)).toBe(true);
+    expect(matchShelfStands(null, true)).toBe(true);
   });
 });
 

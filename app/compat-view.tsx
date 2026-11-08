@@ -62,29 +62,45 @@ export function CompatView({
   names: Record<CompatSide, string>;
   compat: Compatibility;
   /**
-   * 무엇을 기준으로 본 결과인가 — **두 명식(「궁합의 출발점」) 아래에 선다.** 「고치면 다시 계산해요」가 말하는 것은
+   * 무엇을 기준으로 본 결과인가 — **두 명식(「궁합의 출발점」) 아래에 선다**(접힌 칸 안). 「고치면 다시 계산해요」가 말하는 것은
    * 출생 정보이고, 그 정보가 낸 여덟 글자가 바로 위에 서므로 그 자리에 붙인다.
    */
   notice?: ReactNode;
   /**
-   * 사실 **아래에 서는 판정** — 「궁합 베타」 카드와 궁합풀이. 카드의 수가 곧 풀이 점수의
+   * **맨 위에 서는 판정** — 「궁합 베타」 카드(궁합풀이를 받기 전)와 궁합풀이. 카드의 수가 곧 풀이 점수의
    * 기준점이라 **두 수가 같은 축에 선다**(ADR 0060) — 축이 다른 점수 둘을 한 화면에
    * 세우면 사용자가 무엇을 믿을지 정해야 하고, 그 물음에 우리가 답을 갖고 있지 않다.
    */
   verdict: ReactNode;
 }) {
+  /*
+    판정이 먼저 서고 두 명식 · 맞대어 본 표는 「두 사람의 명식 보기」 한 칸에 접는다(2026-11-08) — 명식이 맨 위에 서면
+    점수와 풀이까지 두 화면을 내려가야 했다. 접은 칸 안의 표는 제 접이칸을 그대로 든다(`FoldedAnalysis`).
+  */
   return (
     <div className="flex flex-col gap-6">
-      <PillarPair
-        charts={{
-          a: { ...sharedPillarChartOf(charts.a.pillars), gender: charts.a.meta.gender },
-          b: { ...sharedPillarChartOf(charts.b.pillars), gender: charts.b.meta.gender },
-        }}
-        names={names}
-        note={notice}
-      />
-      <FoldedAnalysis compat={compat} names={names} />
       {verdict}
+      <details className="group/pair">
+        <summary className="flex min-h-14 cursor-pointer list-none items-center justify-between gap-3 rounded-card border border-border bg-surface px-5 py-4 hover:border-border-strong active:scale-[0.99] sm:px-6 [&::-webkit-details-marker]:hidden">
+          <span className={TYPE_NAME}>두 사람의 명식 보기</span>
+          <span aria-hidden className="flex shrink-0 items-center gap-1 text-small font-semibold text-secondary">
+            <span className="group-open/pair:hidden">펼치기</span>
+            <span className="hidden group-open/pair:inline">접기</span>
+            <Icon name="chevron" className="size-3 rotate-90 stroke-[3.2] group-open/pair:-rotate-90" />
+          </span>
+        </summary>
+        <div className="mt-6 flex flex-col gap-6">
+          <PillarPair
+            charts={{
+              a: { ...sharedPillarChartOf(charts.a.pillars), gender: charts.a.meta.gender },
+              b: { ...sharedPillarChartOf(charts.b.pillars), gender: charts.b.meta.gender },
+            }}
+            names={names}
+            note={notice}
+          />
+          <FoldedAnalysis compat={compat} names={names} />
+        </div>
+      </details>
     </div>
   );
 }

@@ -370,12 +370,16 @@ async function Result({ outcome }: { outcome: Outcome }) {
       verdict={
         <>
           {/*
-            **두 길이 같은 차례로 선다** — 두 명식 → 베타 지표 → 사이 → 만드는 버튼.
-            직접 입력 화면에도 이 칸이 있었는데 여기만 없어서, 같은 흐름을 지나온
-            사람이 화면마다 다른 것을 보고 있었다.
+            **웹과 앱이 같은 차례로 선다** — 베타 지표 → 참고 문단 → 궁합풀이 → 접힌 두 명식(`CompatView`).
+            **완성된 궁합풀이가 있으면 베타 지표와 그 참고 문단을 걷는다**(2026-11-08) — 풀이가 제 점수를 들고 서므로 수가
+            둘이 된다. 만드는 중이거나 실패한 동안은 아직 받은 글이 없어(`currentReading` 은 완성된 글만 준다) 지표가 그대로 선다.
           */}
-          <MatchResult charts={charts} compat={compat} names={names} basis={basis} />
-          <ScoringNote />
+          {reading === null && (
+            <>
+              <MatchResult charts={charts} compat={compat} names={names} basis={basis} />
+              <ScoringNote />
+            </>
+          )}
           <ReadingSection
             target={target}
             reading={reading}

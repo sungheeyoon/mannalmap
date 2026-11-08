@@ -71,13 +71,10 @@ export function SameChartAsk({
           저장된 {question.label} 님과 같은 사람인가요?
         </p>
         {/*
-          왜 묻는지 적는다. 「이미 있습니다」로만 끝내면 사용자는 우리가 막는 줄 알고,
-          막는 것이 아니라 **한 번 더 값을 쓰지 않게** 하려는 것이다.
+          무엇이 같아서 묻는지 한 문장만 적는다(2026-11-08 운영자 결정) — 고르면 어떻게 되는지는 두 단추가 말한다.
+          풀이권 이야기는 걷었다: 저장은 무료이고 풀이권은 풀이를 받을 때 들어서, 「한 번 더 쓴다」는 저장의 값처럼 읽혔다.
         */}
-        <p className="mt-1 text-small leading-5 text-secondary">
-          여덟 글자와 태어난 시각이 같습니다. 같은 분이면 저장하지 않고 그분의 화면으로
-          갑니다 — 따로 저장하면 풀이권을 한 번 더 쓰게 됩니다.
-        </p>
+        <p className="mt-1 text-small leading-5 text-secondary">여덟 글자와 태어난 시각이 같습니다.</p>
       </div>
 
       <div className="flex flex-wrap gap-2">
