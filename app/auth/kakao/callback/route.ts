@@ -11,7 +11,7 @@ import { FLOW_COOKIE, FLOW_COOKIE_PATH, callbackOf, decodeFlow, exchangeCode } f
  * 카카오가 인가 코드를 들고 돌아오는 자리(ADR 0224) — 흐름 쿠키를 먼저 걷고, state 를 견주고, 코드를 ID 토큰으로 바꿔
  * `signInWithIdToken({ provider: 'kakao' })` 로 세션을 쿠키에 붙인다.
  *
- * 어느 갈래에서 멈춰도 로그인 실패 화면(`/auth/denied`)이다 — 구글의 `/auth/callback` 과 같다. 갈 곳은 쿠키에 둔 값이고,
+ * 카카오 창에서 취소했으면 로그인 화면(`/auth`)으로 돌아가고, 다른 어느 갈래에서 멈춰도 로그인 실패 화면(`/auth/denied`)이다 — 구글의 `/auth/callback` 과 같다. 갈 곳은 쿠키에 둔 값이고,
  * 쿠키가 없으면(시간이 지났거나 다른 브라우저) 기본값이다.
  */
 export async function GET(request: Request) {
@@ -27,6 +27,7 @@ export async function GET(request: Request) {
   if (keys === null) return denied;
 
   const answer = callbackOf(new URL(request.url).searchParams, flow);
+  if (answer.kind === 'cancelled') return goTo(withReturnPath('/auth', flow.next));
   if (answer.kind === 'denied') return denied;
 
   const idToken = await exchangeCode({ code: answer.code, verifier: flow.verifier, redirectUri: kakaoRedirectUri(), keys });

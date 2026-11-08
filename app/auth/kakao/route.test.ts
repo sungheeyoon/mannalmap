@@ -143,10 +143,19 @@ describe('돌아오는 문 `/auth/kakao/callback`', () => {
     expect(send).not.toHaveBeenCalled();
   });
 
-  it('카카오 창에서 취소하면(`error=access_denied`) 실패 화면이다', async () => {
+  it('카카오 창에서 취소하면(`error=access_denied`) 가려던 곳을 든 채 로그인 화면으로 돌아간다', async () => {
     const { flow } = await started();
     const send = kakaoAnswers(200, { id_token: 'x' });
     const response = await callback(at(`/auth/kakao/callback?error=access_denied&state=${flow.state}`));
+    expect(response.headers.get('location')).toBe('/auth?next=%2Fme%2Fcompat');
+    expect(jar.values.has(FLOW_COOKIE)).toBe(false);
+    expect(send).not.toHaveBeenCalled();
+  });
+
+  it('카카오가 다른 오류를 달고 오면(`error=server_error`) 실패 화면이다', async () => {
+    const { flow } = await started();
+    const send = kakaoAnswers(200, { id_token: 'x' });
+    const response = await callback(at(`/auth/kakao/callback?error=server_error&state=${flow.state}`));
     expect(response.headers.get('location')).toBe('/auth/denied?next=%2Fme%2Fcompat');
     expect(send).not.toHaveBeenCalled();
   });
