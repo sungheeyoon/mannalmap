@@ -86,12 +86,12 @@ test('돌아갈 곳 머리글을 지어 보내도 다른 사이트로 가지 않
  * 어느 자리에서도 싣지 않는다.
  */
 test('로그인이 끊겨도 다시 로그인이 같은 곳으로 간다 — 밖으로 가는 next 는 버린다', async ({ page, request }) => {
-  await page.goto('/auth/callback?error=access_denied&next=%2Fcompat');
+  await page.goto('/auth/callback?error=server_error&next=%2Fcompat');
   await expect(page).toHaveURL(/\/auth\/denied\?next=%2Fcompat$/);
   await expect(page.getByRole('link', { name: '다시 로그인' })).toHaveAttribute('href', '/auth?next=%2Fcompat');
 
   for (const outside of ['https://evil.example', '//evil.example', '/\\evil.example']) {
-    const denied = await request.get(`/auth/callback?error=access_denied&next=${encodeURIComponent(outside)}`, {
+    const denied = await request.get(`/auth/callback?error=server_error&next=${encodeURIComponent(outside)}`, {
       maxRedirects: 0,
     });
     expect(denied.headers()['location'], outside).toBe('/auth/denied');
@@ -147,9 +147,14 @@ test('구글 창에서 취소하면 로그인 화면에 남고, 막힌 것만 �
  * 초록으로 지나간다.
  */
 test('로그인 콜백은 오리진을 짓지 않고 경로만 돌려준다', async ({ request }) => {
-  const denied = await request.get('/auth/callback?error=access_denied', { maxRedirects: 0 });
+  const denied = await request.get('/auth/callback?error=server_error', { maxRedirects: 0 });
   expect(denied.status()).toBe(307);
   expect(denied.headers()['location']).toBe('/auth/denied');
+
+  /* 구글 창에서 취소한 것도 같은 꼴로 로그인 화면에 돌아온다 */
+  const cancelled = await request.get('/auth/callback?error=access_denied&next=%2Fcompat', { maxRedirects: 0 });
+  expect(cancelled.status()).toBe(307);
+  expect(cancelled.headers()['location']).toBe('/auth?next=%2Fcompat');
 
   const stray = await request.get('/auth/callback', { maxRedirects: 0 });
   expect(stray.status()).toBe(307);
@@ -181,8 +186,9 @@ test('로그인 흐름이 끝나면 쌓인 검증 쿠키를 쓸어 낸다', asyn
     ].map((cookie) => ({ ...cookie, url: 'http://localhost:3000' })),
   );
 
+  /* 취소도 흐름의 끝이다 — 로그인 화면으로 돌아가며 같이 쓸어 낸다 */
   await page.goto('/auth/callback?error=access_denied');
-  await expect(page).toHaveURL(/\/auth\/denied$/);
+  await expect(page).toHaveURL(/\/auth$/);
 
   const left = (await context.cookies()).map((cookie) => cookie.name);
   expect(left.filter((name) => name.endsWith('-code-verifier'))).toEqual([]);
