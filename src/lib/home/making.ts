@@ -17,13 +17,6 @@ export const READING_MAKING = '만드는 중…';
 export const SELF_READING_MAKING = `풀이 ${READING_MAKING}`;
 
 /**
- * 저장한 사람 타일(`person-tile.tsx`)의 단추만 드는 짧은 말. 타일은 폰 390px 에서 단추 칸이 「1fr + 궁합 단추」라
- * 「풀이 만드는 중…」이 잘렸다(2026-10-09 화면 점검). 무엇을 만드는지는 같은 타일의 한 줄이 `SELF_READING_MAKING` 으로 든다.
- * 운영자 결정 2026-10-09.
- */
-export const TILE_READING_MAKING = '풀이 중…';
-
-/**
  * 다 만든 풀이에 비유 한 줄이 없을 때 그 자리에 서는 말 — 홈의 저장한 사람 타일 · 저장한 사람 목록의 카드 · 사주풀이 책장의
  * 표지가 같이 쓴다. 아무것도 import 하지 않는 이 파일에 둔다(위 머리말 — 타일은 브라우저에서도 그려진다)
  */

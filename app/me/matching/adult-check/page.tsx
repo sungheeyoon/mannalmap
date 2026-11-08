@@ -6,14 +6,15 @@ import {
   ADULT_CHECK_LINE,
   ADULT_CHECK_TITLE,
   ADULT_CHECK_UNAVAILABLE,
-  ADULT_CHECK_VISIBLE,
   adultCheckNeeded,
+  adultCheckParticipationLine,
 } from '@/src/lib/matching/adult-check';
 
 import { supabaseOnServer } from '../../../auth/server-client';
 import { signedInUser } from '../../../auth/signed-in';
 import { redirectToSignIn } from '../../../auth/sign-in-redirect';
 import { NoticeScreen } from '../../../ui/notice-screen';
+import { myDiscoveryProfile } from '../../discovery/discovery-profile';
 import { myAdultCheck } from './state';
 
 export const metadata = {
@@ -34,8 +35,10 @@ export default async function AdultCheckPage({ searchParams }: PageProps<'/me/ma
   if (!user) return redirectToSignIn();
 
   const { next } = await searchParams;
-  const state = await myAdultCheck();
+  const [state, profile] = await Promise.all([myAdultCheck(), myDiscoveryProfile()]);
   if (state !== null && !adultCheckNeeded(state)) redirect(safeReturnPath(next));
+  /* 확인 뒤 일어나는 일을 미리 알리는 줄 — 끈 사람에게는 「기본으로 참여」 대신 꺼져 있다는 줄(조율자 2026-11-08). 못 읽었으면 안 선다 */
+  const participation = adultCheckParticipationLine(profile.ok ? (profile.value?.optedOut ?? false) : null);
 
   return (
     <NoticeScreen
@@ -43,7 +46,7 @@ export default async function AdultCheckPage({ searchParams }: PageProps<'/me/ma
       description={
         <>
           <p>{ADULT_CHECK_LINE}</p>
-          <p>{ADULT_CHECK_VISIBLE}</p>
+          {participation !== null && <p>{participation}</p>}
           <p>{ADULT_CHECK_UNAVAILABLE}</p>
         </>
       }

@@ -41,7 +41,7 @@ describe('흐름은 하나다', () => {
 describe('상세 궁합', () => {
   it('상세 칸은 동의만 보낸다 — 거절이 없다', () => {
     const panel = read('mobile/src/chat/detail-panel.tsx');
-    expect(panel).toContain('respondToRequest(detail.requestId)');
+    expect(panel).toContain('respondToRequest(client, detail.requestId)');
     expect(withoutComments(panel)).not.toContain('거절');
     expect(read('mobile/src/reading/api.ts')).toContain('JSON.stringify({ requestId, accept: true })');
   });

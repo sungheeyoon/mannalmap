@@ -3,7 +3,7 @@ import { isAuthApiError } from '@supabase/supabase-js';
 import { NextResponse, type NextRequest } from 'next/server';
 import { supabaseEnv } from '@/app/auth/config';
 import { currentSchedule } from '@/app/beta-schedule';
-import { NOTICE_UNREAD, RETURN_PATH_HEADER, gateFor, safeReturnPath } from '@/src/lib/consent';
+import { GATE_ACCOUNT_COLUMNS, NOTICE_UNREAD, RETURN_PATH_HEADER, gateAccountOf, gateFor, safeReturnPath } from '@/src/lib/consent';
 import { ADULT_CHECK_SCREEN, adultCheckDetours, adultCheckGuards, type AdultCheckState } from '@/src/lib/matching/adult-check';
 import { MATCH_CLOSED_HOME, matchClosedDetours, matchClosedGuards } from '@/src/lib/matching/opening';
 import { openOf, readMatchOpen } from '@/app/match-opening';
@@ -132,10 +132,7 @@ export async function proxy(request: NextRequest) {
     request.method !== 'GET' && request.method !== 'HEAD' && request.nextUrl.pathname !== PUSH_RESUBSCRIBE_PATH;
 
   const [{ data: account, error: accountError }, schedule, , adultCheck, matchOpen] = await Promise.all([
-    supabase
-      .from('app_user')
-      .select('signed_up_at, notice_version, notice_schedule_id')
-      .maybeSingle(),
+    supabase.from('app_user').select(GATE_ACCOUNT_COLUMNS).maybeSingle(),
     currentSchedule(supabase),
     pressed ? supabase.rpc('touch_activity') : Promise.resolve(),
     /* 화면을 여는 요청만 묻는다 — 서버 액션을 안내로 돌리지 않는다. 스위치가 꺼져 있으면 읽기만 하고 아무 데도 안 보낸다 */
@@ -151,13 +148,7 @@ export async function proxy(request: NextRequest) {
   */
   const where = gateFor(
     location,
-    accountError !== null || account === null
-      ? null
-      : {
-          signedUp: account.signed_up_at !== null,
-          noticeVersion: account.notice_version,
-          noticeScheduleId: account.notice_schedule_id,
-        },
+    accountError !== null || account === null ? null : gateAccountOf(account),
     /* 일정을 못 읽은 것은 「일정 없음」과 다르다 — 합치면 가입한 사람 전원이 `/signup` 으로 튕긴다(`gateFor` 가 가른다) */
     schedule.ok ? schedule.value : NOTICE_UNREAD,
     new Date(),

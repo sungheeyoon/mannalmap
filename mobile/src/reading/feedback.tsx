@@ -18,6 +18,7 @@ import {
 import { useState, type ReactNode } from 'react';
 import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 
+import { useClient } from '@/auth/connected';
 import { Card, Paper, Tile } from '@/ui/surfaces';
 import { PrimaryButton, TextButton } from '@/ui/parts';
 import { COLOR, CONTROL, FONT, RADIUS, TYPE } from '@/ui/tokens';
@@ -31,6 +32,7 @@ import { leaveFeedback } from './feedback-writes';
  * 셋을 다 골라야 보내지고, 단추를 잠그지 않아 덜 고르고 누르면 곁의 말이 경고가 된다(ADR 0160).
  */
 export function ReadingFeedback({ target, runId, given }: { target: ReadingTarget; runId: string; given: ReadingAnswer | null }) {
+  const client = useClient();
   const [answer, setAnswer] = useState(given);
   const [open, setOpen] = useState(given === null);
   const [unfolded, setUnfolded] = useState(false);
@@ -69,7 +71,7 @@ export function ReadingFeedback({ target, runId, given }: { target: ReadingTarge
       issueTags: tags,
       comment: comment.trim() === '' ? null : comment.trim(),
     };
-    const result = await leaveFeedback(runId, sent);
+    const result = await leaveFeedback(client, runId, sent);
     setSaving(false);
     if (result.ok) {
       setAnswer(sent);

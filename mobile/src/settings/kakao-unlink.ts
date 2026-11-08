@@ -1,3 +1,4 @@
+import type { Client } from '@/auth/client';
 import { signedInWithKakao, unlinkKakao } from '@/auth/kakao';
 
 /**
@@ -8,7 +9,7 @@ import { signedInWithKakao, unlinkKakao } from '@/auth/kakao';
  * - `done` — 끊었거나, 끊을 것이 없거나(카카오 계정이 아님), 끊기가 실패했다. **끊기가 실패해도 탈퇴는 간다**(ADR 0219 ③과 같다).
  *   실패는 기록에 남는다
  */
-export async function unlinkKakaoBeforeLeaving(): Promise<'done' | 'cancelled'> {
-  if (!(await signedInWithKakao())) return 'done';
+export async function unlinkKakaoBeforeLeaving(client: Client): Promise<'done' | 'cancelled'> {
+  if (!(await signedInWithKakao(client))) return 'done';
   return (await unlinkKakao()) === 'cancelled' ? 'cancelled' : 'done';
 }

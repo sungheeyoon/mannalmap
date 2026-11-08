@@ -1,11 +1,11 @@
 import { accountFailureOf, type AccountState } from '@account/index';
-import { serviceIsOver, signupDone } from '@consent/gate';
+import { gateAccountOf, serviceIsOver, signupDone } from '@consent/gate';
 import { NOTICE_NOT_READY, NOTICE_VERSION } from '@consent/notice';
 import { refusedField, signupRequest, type SignupField } from '@consent/signup';
 import { rpcArgs } from '@db';
 import { userFacingDbMessage } from '@db-error';
 
-import { supabase } from './client';
+import type { Client } from './client';
 import { readSchedule } from './schedule';
 
 export const NOT_READY = '이 빌드에서는 로그인할 수 없어요.';
@@ -28,13 +28,11 @@ export type SignupState =
  * 가입이 끝났는가, 아니면 무엇을 물어야 하나 — `app/signup/page.tsx` 와 같은 차례다: 계정 → 끝난 서비스 → 관문과 같은 판정(`signupDone`).
  * 못 읽으면 가입한 것으로 치지 않는다.
  */
-export async function readSignup(): Promise<SignupState> {
-  if (supabase === null) return { kind: 'failed', message: NOT_READY };
-
+export async function readSignup(client: Client): Promise<SignupState> {
   const [session, account, schedule] = await Promise.all([
-    supabase.auth.getSession(),
-    supabase.from('app_user').select('status, signed_up_at, nickname, notice_version, notice_schedule_id').maybeSingle(),
-    readSchedule(),
+    client.auth.getSession(),
+    client.from('app_user').select('status, signed_up_at, nickname, notice_version, notice_schedule_id').maybeSingle(),
+    readSchedule(client),
   ]);
   if (account.error !== null) {
     console.error('account', account.error.code);
@@ -51,12 +49,7 @@ export async function readSignup(): Promise<SignupState> {
   if (notice === null) return { kind: 'blocked', message: NOTICE_NOT_READY };
 
   const signedUp = account.data !== null && account.data.signed_up_at !== null;
-  const done =
-    account.data !== null &&
-    signupDone(
-      { signedUp, noticeVersion: account.data.notice_version, noticeScheduleId: account.data.notice_schedule_id },
-      notice,
-    );
+  const done = account.data !== null && signupDone(gateAccountOf(account.data), notice);
   if (done) return { kind: 'done' };
   /* 폼을 세우면 DB 가 「이용이 정지된 계정입니다.」로 거절할 누름을 권한다 — 웹 `/signup` 과 같다 */
   if (account.data !== null && account.data.status !== 'active') return { kind: 'halted', account: { kind: 'halted', status: account.data.status } };
@@ -69,21 +62,19 @@ export async function readSignup(): Promise<SignupState> {
   };
 }
 
-export async function checkNickname(nickname: string): Promise<{ ok: true; available: boolean } | { ok: false; message: string }> {
-  if (supabase === null) return { ok: false, message: NOT_READY };
-  const { data, error } = await supabase.rpc('nickname_is_available', { p_nickname: nickname.trim() });
+export async function checkNickname(client: Client, nickname: string): Promise<{ ok: true; available: boolean } | { ok: false; message: string }> {
+  const { data, error } = await client.rpc('nickname_is_available', { p_nickname: nickname.trim() });
   if (error !== null) return { ok: false, message: userFacingDbMessage(error, 'nickname_is_available') };
   return { ok: true, available: data === true };
 }
 
 /** 이름 · 안내 확인 · 선택 답이 **한 번에** 나간다(ADR 0042). 테스트 코드는 걷었다(ADR 0225). 판본과 본 안내의 줄은 화면이 들고 온다 — 그 사이 바뀌었으면 DB 가 거절한다 */
-export async function completeSignup(answer: {
+export async function completeSignup(client: Client, answer: {
   nickname: string;
   scheduleId: number;
   improvement: boolean;
 }): Promise<{ ok: true } | { ok: false; message: string; field: SignupField | null }> {
-  if (supabase === null) return { ok: false, message: NOT_READY, field: null };
-  const { error } = await supabase.rpc(
+  const { error } = await client.rpc(
     'complete_signup',
     rpcArgs<'complete_signup'>(signupRequest({ ...answer, version: NOTICE_VERSION })),
   );

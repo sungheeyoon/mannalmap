@@ -40,4 +40,3 @@ export const MATCH_DISCLOSURE = {
 
 /** 풀이권이 드는 자리와 안 드는 자리의 구분 — 인연 소개 · 상세 궁합 창이 같은 글자를 읽는다(대장 matching-17) */
 export const CHAT_USES_NO_CREDIT = '채팅은 풀이권을 쓰지 않아요.';
-export const RECEIVER_USES_NO_CREDIT = '요청을 받은 쪽은 풀이권을 쓰지 않아요.';

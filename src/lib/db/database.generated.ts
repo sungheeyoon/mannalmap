@@ -3340,6 +3340,7 @@ export type Database = {
         }[]
       }
       claimed_by: { Args: { target_person: string }; Returns: string }
+      clear_my_intro: { Args: never; Returns: undefined }
       close_talk_room: {
         Args: { p_by: string; p_request_id: string }
         Returns: undefined

@@ -1,7 +1,8 @@
 import type { ReactNode } from 'react';
-import { Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { Button } from './buttons';
+import { Scrim } from './scrim';
 import { DialogPanel } from './surfaces';
 import { COLOR, FONT, TYPE } from './tokens';
 
@@ -53,24 +54,21 @@ export function ConfirmDialog({
   const cancel = cancelLabel !== null && <Button label={cancelLabel} onPress={close} disabled={busy} variant="secondary" style={row && styles.half} />;
 
   return (
-    <Modal visible={open} transparent animationType="fade" onRequestClose={close} onDismiss={onDismissed}>
-      <View style={styles.scrim}>
-        <Pressable style={StyleSheet.absoluteFill} onPress={close} accessibilityElementsHidden importantForAccessibility="no" />
-        <DialogPanel style={styles.panel} accessibilityViewIsModal accessibilityRole="alert">
-          <ScrollView style={styles.scroll} contentContainerStyle={styles.body} bounces={false}>
-            {lead}
-            <Text accessibilityRole="header" style={styles.title}>{title}</Text>
-            {children}
-            {irreversible !== undefined && <Text style={styles.irreversible}>{irreversible}</Text>}
-            {failure !== null && <Text accessibilityRole="alert" style={styles.failure}>{failure}</Text>}
-          </ScrollView>
-          <View style={row ? styles.actionsRow : styles.actions}>
-            {row ? cancel : confirm}
-            {row ? confirm : cancel}
-          </View>
-        </DialogPanel>
-      </View>
-    </Modal>
+    <Scrim open={open} place="center" animation="fade" onRequestClose={close} onOutside={close} onDismiss={onDismissed}>
+      <DialogPanel style={styles.panel} accessibilityViewIsModal accessibilityRole="alert">
+        <ScrollView style={styles.scroll} contentContainerStyle={styles.body} bounces={false}>
+          {lead}
+          <Text accessibilityRole="header" style={styles.title}>{title}</Text>
+          {children}
+          {irreversible !== undefined && <Text style={styles.irreversible}>{irreversible}</Text>}
+          {failure !== null && <Text accessibilityRole="alert" style={styles.failure}>{failure}</Text>}
+        </ScrollView>
+        <View style={row ? styles.actionsRow : styles.actions}>
+          {row ? cancel : confirm}
+          {row ? confirm : cancel}
+        </View>
+      </DialogPanel>
+    </Scrim>
   );
 }
 
@@ -85,7 +83,6 @@ export function DialogStrong({ children }: { children: ReactNode }) {
 }
 
 const styles = StyleSheet.create({
-  scrim: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 16, backgroundColor: 'rgba(0, 0, 0, 0.4)' },
   panel: { width: '100%', maxWidth: 416, maxHeight: '85%', gap: 24 },
   scroll: { flexGrow: 0 },
   body: { gap: 8 },

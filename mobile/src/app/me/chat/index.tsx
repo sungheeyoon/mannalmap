@@ -7,11 +7,13 @@ import { ROOM_NO_MESSAGES_YET } from '@chat/copy';
 import { TALK_UNANSWERED_LABEL, TALK_WITHDRAWN } from '@chat/room/detail-copy';
 import { foldUnanswered } from '@chat/room/talk';
 
+import { useClient } from '@/auth/connected';
 import { Avatar } from '@/chat/avatar';
 import { EmptyChat } from '@/chat/empty';
 import { listenLive } from '@/chat/live';
 import { UNREACHABLE } from '@/auth/signup';
-import { AccountNotice, FailureLine } from '@/chat/notices';
+import { AccountNotice } from '@/chat/notices';
+import { FailureLine } from '@/ui/failure-line';
 import { settled } from '@/ui/settled';
 import { noteActivity, readRoomListScreen, type ChatRoom, type RoomListScreen } from '@/chat/reads';
 import { Icon } from '@/ui/icons';
@@ -26,6 +28,7 @@ const WITHDRAWN_NOTE_MS = 4000;
 
 /** 대화방 목록 — 누가 어느 방을 보는가는 읽는 문이 정한다(ADR 0091). 접속 상태는 여기 안 선다(ADR 0092) */
 export default function ChatRoomsScreen() {
+  const client = useClient();
   const [screen, setScreen] = useState<RoomListScreen | null>(null);
   const live = useRef(true);
   /* 방에서 대화를 취소하고 왔다 — 일이 된 뒤의 한 줄이고 잠시 뒤 걷힌다 */
@@ -38,12 +41,12 @@ export default function ChatRoomsScreen() {
   }, [withdrawn]);
 
   const load = useCallback(async () => {
-    const next = await settled(readRoomListScreen(), 'readRoomListScreen', () => ({ kind: 'failed', message: UNREACHABLE }) as const);
+    const next = await settled(readRoomListScreen(client), 'readRoomListScreen', () => ({ kind: 'failed', message: UNREACHABLE }) as const);
     if (!live.current) return;
     if (next.kind === 'signed-out') router.replace('/');
     /* 선 화면을 다시 읽다 실패하면 가진 것을 그대로 둔다 — 다음 다시 대조가 메운다 */
     else setScreen((now) => (now?.kind === 'ready' && next.kind === 'failed' ? now : next));
-  }, []);
+  }, [client]);
 
   useEffect(() => {
     live.current = true;
@@ -55,9 +58,9 @@ export default function ChatRoomsScreen() {
   /* 사람이 이 화면을 연 것은 활동이다 — 돌아올 때마다 다시 읽는다(방에서 읽은 수 · 마지막 말) */
   useFocusEffect(
     useCallback(() => {
-      noteActivity();
+      noteActivity(client);
       void load();
-    }, [load]),
+    }, [client, load]),
   );
 
   useEffect(() => {

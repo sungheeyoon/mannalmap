@@ -4,7 +4,7 @@ import type { Purchase } from 'expo-iap';
 import { STORE_PRODUCTS, type StorePurchaseAnswer, type StorePurchaseOpen } from '@reading/store-products';
 import { creditsGrantedNow, storeReceiptDecision } from '@reading/store-purchase';
 
-import { supabase } from '@/auth/client';
+import type { Client } from '@/auth/client';
 import { door, type DoorAnswer } from '@/reading/api';
 
 /**
@@ -60,13 +60,13 @@ export async function loadStorePrices(): Promise<StorePrices | null> {
 }
 
 /** 이 계정이 살 수 있나 — 결제창을 열기 전에 묻는다 */
-export function readStoreOpen(): Promise<DoorAnswer<StorePurchaseOpen>> {
-  return door('/api/mobile/credits/purchase', { method: 'GET' });
+export function readStoreOpen(client: Client): Promise<DoorAnswer<StorePurchaseOpen>> {
+  return door(client, '/api/mobile/credits/purchase', { method: 'GET' });
 }
 
 /** 결제창이 돌려준 구매를 서버에 — 같은 토큰은 몇 번 보내도 한 번만 지급된다 */
-export function sendPurchase(productId: string, purchaseToken: string): Promise<DoorAnswer<StorePurchaseAnswer>> {
-  return door('/api/mobile/credits/purchase', {
+export function sendPurchase(client: Client, productId: string, purchaseToken: string): Promise<DoorAnswer<StorePurchaseAnswer>> {
+  return door(client, '/api/mobile/credits/purchase', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ productId, purchaseToken }),
@@ -74,10 +74,10 @@ export function sendPurchase(productId: string, purchaseToken: string): Promise<
 }
 
 /** Google 결제창을 연다 — 결과는 `listenStorePurchases` 의 듣는 손으로 온다 */
-export async function openPurchase(productId: string): Promise<'opened' | 'failed'> {
-  if (!(await connectStore()) || supabase === null) return 'failed';
+export async function openPurchase(client: Client, productId: string): Promise<'opened' | 'failed'> {
+  if (!(await connectStore())) return 'failed';
   try {
-    const userId = (await supabase.auth.getSession()).data.session?.user.id;
+    const userId = (await client.auth.getSession()).data.session?.user.id;
     if (userId === undefined) return 'failed';
     const { requestPurchase } = await iap();
     await requestPurchase({ request: { google: { skus: [productId], obfuscatedAccountId: userId } }, type: 'in-app' });
@@ -92,7 +92,7 @@ export async function openPurchase(productId: string): Promise<'opened' | 'faile
  * (`storeReceiptDecision`)이고, 끝난 결제인데 보낼 것이 없으면(토큰 없음 · 우리 상품 아님) 실패로 넘긴다 — 단추가 「결제 중」에 남지 않게.
  * @returns 듣기를 끄는 함수
  */
-export function listenStorePurchases(on: {
+export function listenStorePurchases(client: Client, on: {
   answered: (answer: DoorAnswer<StorePurchaseAnswer>) => void;
   pending: () => void;
   cancelled: () => void;
@@ -118,7 +118,7 @@ export function listenStorePurchases(on: {
       if (decided.kind === 'unusable') return on.failed();
       if (decided.kind !== 'send') return;
       /* `sendPurchase` 는 던지지 않는다 — 못 닿으면 `unavailable` 값이다(`askDoor`) */
-      void (async () => on.answered(await sendPurchase(decided.productId, decided.purchaseToken)))();
+      void (async () => on.answered(await sendPurchase(client, decided.productId, decided.purchaseToken)))();
     });
     const errored = purchaseErrorListener((error) => {
       if (error.code === 'user-cancelled') on.cancelled();
@@ -140,7 +140,7 @@ export function listenStorePurchases(on: {
  * 소비되지 않은 구매를 다시 보낸다 — 결제 중 앱이 꺼졌거나 서버에 못 닿았던 구매. 앱을 켤 때 · 풀이권 화면을 열 때 부른다.
  * @returns 이번에 지급이 선 장수의 합(0 이면 보낼 것이 없었거나 이미 섰다)
  */
-export async function resendUnfinishedPurchases(): Promise<number> {
+export async function resendUnfinishedPurchases(client: Client): Promise<number> {
   if (!(await connectStore())) return 0;
   let purchases: Purchase[];
   try {
@@ -153,7 +153,7 @@ export async function resendUnfinishedPurchases(): Promise<number> {
   for (const purchase of purchases) {
     const decided = storeReceiptDecision(purchase);
     if (decided.kind !== 'send') continue;
-    credits += creditsGrantedNow(await sendPurchase(decided.productId, decided.purchaseToken));
+    credits += creditsGrantedNow(await sendPurchase(client, decided.productId, decided.purchaseToken));
   }
   return credits;
 }

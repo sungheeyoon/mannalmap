@@ -20,7 +20,7 @@ import { storeErrorClassOf } from './store';
  * ## 관문(`proxy.ts`)을 안 지난다
  *
  * 사진 주소는 관문의 matcher 밖이다(ADR 0200) — 한 장에 DB 왕복 하나다. 정지 · 탈퇴 신청 · 베타 종료는 `may_see_photo` 의
- * `is_active_account` 가, 로그인하지 않은 사람은 문의 grant 가 닫는다. 토큰이 만료됐으면 이 클라이언트가 `photo_at` 을 부르기
+ * `is_active_account` 가(본인의 제 사진만은 상태와 상관없이 열린다 — `photo_at`, ADR 0244), 로그인하지 않은 사람은 문의 grant 가 닫는다. 토큰이 만료됐으면 이 클라이언트가 `photo_at` 을 부르기
  * 전에 스스로 갱신하고 새 쿠키를 응답에 싣는다 — 라우트는 화면과 달리 쿠키를 쓸 수 있다. 여기서 `signedInUser` 를 부르면
  * 안 된다 — 서명만 보는 그 확인은 관문과 한 벌이다(`app/auth/signed-in.boundary.test.ts`).
  *

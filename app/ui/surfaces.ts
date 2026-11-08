@@ -146,7 +146,7 @@ export const BADGE = `${BADGE_FACE} px-1`;
  * 여백을 0 으로 되돌려, 브라우저가 가운데에 놓던 `margin: auto` 를 다시 세운다
  */
 export const DIALOG =
-  'm-auto w-[min(26rem,calc(100%-2rem))] rounded-card border border-border bg-surface p-6 text-foreground shadow-float backdrop:bg-black/40';
+  'm-auto w-[min(26rem,calc(100%-2rem))] rounded-card border border-border bg-surface p-6 text-foreground shadow-float backdrop:bg-scrim';
 
 /**
  * 묻는 자리의 단추 줄 — 누르는 쪽(실행)을 먼저 적고 「취소」를 뒤에 적는다. 넓으면 실행이 오른쪽, 좁은 화면에서는 위아래로 서며

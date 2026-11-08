@@ -3,20 +3,24 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { PREFER_GENDER_ORDER, type PreferGender } from '@discovery';
 import { PREFER_GENDER_KO } from '@discovery/copy';
+import { PARTICIPATION_LABEL, participationHelp } from '@matching/opening';
 
+import { useClient } from '@/auth/connected';
 import { saveFailureOf, setParticipation } from '@/reading/chart-writes';
 import { followRefusal } from '@/reading/panel';
+import { FailureLine } from '@/ui/failure-line';
 import { COLOR, FONT, RADIUS, TYPE } from '@/ui/tokens';
 import { KEEP_VIEW } from '@/ui/keep-view';
 
-import { FailureLine, SwitchRow, useDoneNote } from './parts';
+import { SwitchRow, useDoneNote, FAILURE_INSET } from './parts';
 import { savePreferGender } from './settings';
 
 /**
- * 「인연 찾기」 스위치 — 가입 고지가 「설정에서 언제든 끌 수 있습니다」라고 약속한 자리다. 누르면 곧 바뀌고 앱의 문을 지난다 — 요약은 서버가 짓는다(ADR 0211).
- * 실패하면 서버가 든 마지막 값으로 돌아오고 까닭이 선다(웹 `ParticipationToggle`).
+ * 「인연 찾기 참여」 스위치 — 가입 고지가 「설정에서 언제든 끌 수 있습니다」라고 약속한 자리다. 누르면 곧 바뀌고 앱의 문을 지난다 — 요약은 서버가 짓는다(ADR 0211).
+ * 실패하면 서버가 든 마지막 값으로 돌아오고 까닭이 선다(웹 `ParticipationToggle`). 인연이 닫힌 동안에도 서고, 아래 줄은 열림 · 성인 확인 · 켜짐에 따라 갈린다(`participationHelp`, 2026-11-08).
  */
-export function ParticipationRow({ resting }: { resting: boolean }) {
+export function ParticipationRow({ resting, open, adultCleared }: { resting: boolean; open: boolean | null; adultCleared: boolean | null }) {
+  const client = useClient();
   const [on, setOn] = useState(!resting);
   const [working, setWorking] = useState(false);
   const [failure, setFailure] = useState<string | null>(null);
@@ -25,7 +29,7 @@ export function ParticipationRow({ resting }: { resting: boolean }) {
     setFailure(null);
     setOn(next);
     setWorking(true);
-    const answer = await setParticipation(next);
+    const answer = await setParticipation(client, next);
     setWorking(false);
     if (answer.ok && answer.value.ok) return;
     setOn(!next);
@@ -36,13 +40,13 @@ export function ParticipationRow({ resting }: { resting: boolean }) {
   return (
     <>
       <SwitchRow
-        label="인연 찾기"
-        help={on ? '내 프로필과 오행 요약이 다른 사람에게 소개되고 있어요.' : '켜면 내 프로필과 오행 요약이 다른 사람에게 소개돼요.'}
+        label={PARTICIPATION_LABEL}
+        help={participationHelp(open, on, adultCleared)}
         checked={on}
         onChange={(next) => void toggle(next)}
         busy={working}
       />
-      {failure !== null && <FailureLine inset>{failure}</FailureLine>}
+      {failure !== null && <FailureLine style={FAILURE_INSET}>{failure}</FailureLine>}
     </>
   );
 }
@@ -52,6 +56,7 @@ export function ParticipationRow({ resting }: { resting: boolean }) {
  * 마지막 하나만 남겼다가 보낸다. 실패하면 서버가 든 마지막 값으로 돌아오고 까닭이 선다.
  */
 export function PreferenceRow({ current }: { current: PreferGender }) {
+  const client = useClient();
   const [chosen, setChosen] = useState(current);
   const [saving, setSaving] = useState(false);
   const [failure, setFailure] = useState<string | null>(null);
@@ -68,7 +73,7 @@ export function PreferenceRow({ current }: { current: PreferGender }) {
     while (next !== null) {
       const value: PreferGender = next;
       next = null;
-      const result = await savePreferGender(value);
+      const result = await savePreferGender(client, value);
       if (!result.ok) {
         refused = result.message;
         break;
@@ -118,7 +123,7 @@ export function PreferenceRow({ current }: { current: PreferGender }) {
         </View>
         <Text style={styles.help}>서로 고른 성별이 맞을 때 소개돼요.</Text>
       </View>
-      {failure !== null && <FailureLine inset>{`저장하지 못했어요. ${failure}`}</FailureLine>}
+      {failure !== null && <FailureLine style={FAILURE_INSET}>{`저장하지 못했어요. ${failure}`}</FailureLine>}
     </>
   );
 }

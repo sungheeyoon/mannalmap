@@ -20,6 +20,7 @@
 -- 더했다 — 사람 id 를 받지 않고 부른 사람 제 줄만 다룬다.
 -- 2026-11-07 에 받아 주는 가장 옛 안드로이드 빌드를 읽는 문(`android_min_version_code`, `20270116090000`, ADR 0237)이 더했다 — 수 하나뿐이고
 -- 로그인 전에도 열렸다(`33_function_shape`).
+-- 2026-11-08 에 정지된 사람도 부르는 소개 비우기 문(`clear_my_intro`, `20270117090000`, ADR 0244)이 더했다 — 인자가 없고 제 소개만 비운다.
 begin;
 select plan(1);
 
@@ -122,6 +123,7 @@ select set_eq(
            ('presence_policy()'),
            ('push_subscription_registered(p_endpoint text)'),
            ('reject_bad_chart(p_chart jsonb, p_chart_engine_version text, p_birth_time time without time zone)'),
+           ('clear_my_intro()'),
            ('remove_app_push_token(p_token text)'),
            ('remove_my_photo(p_position integer, p_version bigint)'),
            ('remove_push_subscription(p_endpoint text)'),

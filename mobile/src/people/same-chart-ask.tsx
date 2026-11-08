@@ -19,7 +19,7 @@ export function SameChartAsk({ question, busy }: { question: SameChartQuestion; 
 }
 
 const styles = StyleSheet.create({
-  box: { gap: 12, padding: 16, borderColor: 'rgba(138, 99, 32, 0.4)', backgroundColor: COLOR.warningWash },
+  box: { gap: 12, padding: 16, borderColor: COLOR.warningLine, backgroundColor: COLOR.warningWash },
   title: { fontSize: TYPE.body, lineHeight: 24, fontFamily: FONT.bold, color: COLOR.foreground },
   body: { fontSize: TYPE.small, lineHeight: 20, fontFamily: FONT.medium, color: COLOR.secondary },
 });

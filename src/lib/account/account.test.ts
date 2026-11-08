@@ -5,6 +5,7 @@ import {
   accountNoticeOf,
   accountStateOf,
   haltedText,
+  erasesProfileOnly,
   mayRequestDeletion,
   type AccountState,
 } from '.';
@@ -187,5 +188,19 @@ describe('mayRequestDeletion — 정지된 사람도 스스로 떠난다 (ADR 02
     expect(mayRequestDeletion({ kind: 'halted', status: 'deletion_requested' })).toBe(false);
     expect(mayRequestDeletion({ kind: 'missing' })).toBe(false);
     expect(mayRequestDeletion({ kind: 'unreachable' })).toBe(false);
+  });
+});
+
+describe('erasesProfileOnly — 정지된 사람은 프로필을 지우기만 한다 (ADR 0244)', () => {
+  it('이용 정지만 지우는 길이 선다', () => {
+    expect(erasesProfileOnly({ kind: 'halted', status: 'suspended' })).toBe(true);
+  });
+
+  it('이용 중 · 온보딩은 고치는 화면이고, 탈퇴 대기 · 못 읽은 계정은 길이 없다', () => {
+    expect(erasesProfileOnly({ kind: 'active', selfPersonId: 'p' })).toBe(false);
+    expect(erasesProfileOnly({ kind: 'onboarding' })).toBe(false);
+    expect(erasesProfileOnly({ kind: 'halted', status: 'deletion_requested' })).toBe(false);
+    expect(erasesProfileOnly({ kind: 'missing' })).toBe(false);
+    expect(erasesProfileOnly({ kind: 'unreachable' })).toBe(false);
   });
 });

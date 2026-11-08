@@ -11,7 +11,7 @@ import { DayMasterChip } from '@/people/parts';
 import { Button } from '@/ui/buttons';
 import { ElementSymbol } from '@/ui/element-symbol';
 import { StemSymbol } from '@/ui/stem-symbol';
-import { COLOR, ELEMENT_TONE, FONT, RADIUS, TYPE } from '@/ui/tokens';
+import { alpha, COLOR, ELEMENT_TONE, FONT, RADIUS, TYPE } from '@/ui/tokens';
 import { Tile } from '@/ui/surfaces';
 
 import type { SelfCardData } from './read';
@@ -109,7 +109,7 @@ const styles = StyleSheet.create({
   who: { flex: 1, minWidth: 0 },
   name: { fontFamily: FONT.bold, fontSize: TYPE.heading, color: COLOR.foreground },
   birth: { fontFamily: FONT.medium, fontSize: TYPE.fine, color: COLOR.secondary, marginTop: 2 },
-  metaphor: { fontFamily: FONT.medium, fontSize: TYPE.lead, lineHeight: 26, color: COLOR.foreground, paddingHorizontal: 14, paddingVertical: 10, borderRadius: RADIUS.cell, backgroundColor: 'rgba(255, 253, 249, 0.55)' },
+  metaphor: { fontFamily: FONT.medium, fontSize: TYPE.lead, lineHeight: 26, color: COLOR.foreground, paddingHorizontal: 14, paddingVertical: 10, borderRadius: RADIUS.cell, backgroundColor: alpha(COLOR.surface, 0.55) },
   elements: { flexDirection: 'row' },
   element: { flex: 1, alignItems: 'center', gap: 2 },
   elementName: { fontFamily: FONT.medium, fontSize: TYPE.fine },

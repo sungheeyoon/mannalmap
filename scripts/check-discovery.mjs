@@ -127,7 +127,7 @@ try {
     const body = await response.text();
     check('설정 화면이 열린다', response.status === 200, String(response.status));
     check('참여를 끄는 손잡이가 거기 있다',
-      body.includes('내 프로필과 오행 요약이 다른 사람에게 소개되고 있어요') && /role="switch" aria-checked="true" aria-labelledby="[^"]+"/.test(body));
+      body.includes('다른 참여자에게 내 프로필이 소개될 수 있어요') && /role="switch" aria-checked="true" aria-labelledby="[^"]+"/.test(body));
 
     /**
      * **켜기 전에 알린다.** 후보 카드가 내 오행을 이름으로 말하고 점수까지 세우므로,

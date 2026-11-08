@@ -105,6 +105,10 @@
   `src/lib` 에 못 들므로(`scripts/layers.test.ts`) 부르는 한 줄은 웹 · 앱의 문에 하나씩 남는다. 앱 화면(`mobile/src/app/**` · `*.tsx`)은
   `.rpc()` · `.from()` 을 하나도 안 부른다 — 부르는 것은 화면 옆의 문(`.ts`)이고, `scripts/mobile-screen-db.test.ts` 가 화면 안의 호출과
   같은 옮기기를 쓰는 RPC 의 둘째 문을 잠근다.
+- **문은 연결된 클라이언트를 인자로 받는다**(ADR 0243) — 주소 · 공개 키가 없는 빌드는 껍데기(관문 `useGate` · 로그인 · 가입 · 첫 화면)가 한 번
+  가르고, `/me` 아래 화면은 껍데기가 내준 클라이언트를 `useClient` 로 받는다. 저장된 입력 · 관문의 계정 줄은 웹과 같은 `storedInputOfRow` ·
+  `gateAccountOf` 로 옮기고, 계정 · 내 사람 · 차단 · 신고를 읽고 쓰는 문은 하나씩이다(`mobile/src/auth/account.ts` · `people/data.ts` ·
+  `chat/reads.ts`). 답의 모양은 `mobile/src/answer.ts` 다. 문은 vitest 에서 가짜 클라이언트로 돈다(`mobile/src/doors.test.ts`).
 - **한 자리에서 읽는 값** — 웹의 주소(`EXPO_PUBLIC_SITE_URL`)는 `mobile/src/site.ts`(`scripts/mobile-site-url.test.ts`), Supabase 주소 · 공개 키는
   `mobile/src/supabase-env.ts`(`scripts/mobile-supabase-env.test.ts`)가 읽는다. 처리방침의 재확인 기준은 번들 상수가 아니라 일정의 문이 함께 내는
   서버 값이고, 앱은 켜질 때 서버가 받아 주는 가장 옛 빌드(`android_min_version_code`)를 `mobile/src/release/floor.ts` 에서 묻는다(ADR 0237).

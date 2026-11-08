@@ -3,6 +3,7 @@ import { Pressable, StyleSheet, Text, type StyleProp, type ViewStyle } from 'rea
 
 import { DELETION_IRREVERSIBLE_NOTE, DELETION_NOTE, DELETION_SHARED_NOTE } from '@account/index';
 
+import { useClient } from '@/auth/connected';
 import { ConfirmDialog, DialogStrong, DialogText } from '@/ui/confirm-dialog';
 import { COLOR, CONTROL, FONT, TYPE } from '@/ui/tokens';
 
@@ -21,6 +22,7 @@ export function RequestDeletion({ onDone, style }: {
   /** 여는 글자의 자리 — 설정은 맨 아래 왼쪽, 가입 화면은 「다른 계정으로 로그인하기」 아래 가운데(ADR 0218) */
   style?: StyleProp<ViewStyle>;
 }) {
+  const client = useClient();
   const [asking, setAsking] = useState(false);
   const [failure, setFailure] = useState<string | null>(null);
   const [working, setWorking] = useState(false);
@@ -28,11 +30,11 @@ export function RequestDeletion({ onDone, style }: {
   const leave = async () => {
     setFailure(null);
     setWorking(true);
-    if ((await revokeAppleBeforeLeaving()) === 'cancelled' || (await unlinkKakaoBeforeLeaving()) === 'cancelled') {
+    if ((await revokeAppleBeforeLeaving(client)) === 'cancelled' || (await unlinkKakaoBeforeLeaving(client)) === 'cancelled') {
       setWorking(false);
       return;
     }
-    const result = await requestAccountDeletion();
+    const result = await requestAccountDeletion(client);
     setWorking(false);
     if (!result.ok) {
       setFailure(result.message);
