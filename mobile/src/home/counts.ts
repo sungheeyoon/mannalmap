@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from 'react';
 import { bellCount } from '@consent/counts';
 import { readingCreditsLabel } from '@reading/notes';
 
-import { supabase } from '@/auth/client';
+import type { Client } from '@/auth/client';
 import { listenLive } from '@/chat/live';
 import { readReadingCredits } from '@/credits/remaining';
 import { settled } from '@/ui/settled';
@@ -16,14 +16,13 @@ const NONE: Counts = { chat: 0, news: 0, credits: null };
  * 탭의 딱지와 남은 풀이권 — 웹 머리글과 같은 문이다. 못 읽었으면 안 세운다(모르는 수를 세어 보게 하지 않는다).
  * 화면을 옮길 때마다, 그리고 계정 채널이 무엇이 바뀌었다고 할 때마다 다시 센다 — 어느 탭에 있든 딱지가 따라온다.
  */
-export function useCounts(pathname: string, enabled: boolean): Counts {
+export function useCounts(client: Client | null, pathname: string): Counts {
   const [counts, setCounts] = useState(NONE);
   /* 늦게 온 답이 새 답을 덮지 않게 — 마지막 물음의 답만 받는다 */
   const asked = useRef(0);
 
   useEffect(() => {
-    if (!enabled || supabase === null) return;
-    const client = supabase;
+    if (client === null) return;
     const count = () => {
       const mine = ++asked.current;
       const reads = Promise.all([
@@ -50,7 +49,7 @@ export function useCounts(pathname: string, enabled: boolean): Counts {
       stop();
       asked.current += 1;
     };
-  }, [pathname, enabled]);
+  }, [client, pathname]);
 
   return counts;
 }

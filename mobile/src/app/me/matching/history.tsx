@@ -4,6 +4,7 @@ import { ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import type { InboxMatch } from '@matching/inbox';
 
+import { useClient } from '@/auth/connected';
 import { readMatchBooks, readMatches, type MatchBook, type Read } from '@/matching/doors';
 import { EndedTalks } from '@/chat/ended-talks';
 import { readEndedTalks, type EndedTalk } from '@/matching/talk-doors';
@@ -20,18 +21,19 @@ type Loaded = { books: Read<readonly MatchBook[]>; matches: Read<readonly InboxM
 
 /** 인연 기록 — 글이 선 상세 궁합과 끝난 대화. 둘은 나란히 읽고 따로 비운다(ADR 0078) */
 export default function MatchHistoryScreen() {
+  const client = useClient();
   const [loaded, setLoaded] = useState<Loaded | null>(null);
   const [ended, setEnded] = useState<readonly EndedTalk[]>([]);
 
   const load = useCallback(async () => {
-    const [books, matches, endedTalks] = await Promise.all([readMatchBooks(), readMatches(), readEndedTalks()]);
+    const [books, matches, endedTalks] = await Promise.all([readMatchBooks(client), readMatches(client), readEndedTalks(client)]);
     setEnded(endedTalks);
     /* 칸마다 — 선 칸을 다시 읽다 못 읽으면 가진 것을 그대로 둔다 */
     setLoaded((now) => ({
       books: books.ok || !now?.books.ok ? books : now.books,
       matches: matches.ok || !now?.matches.ok ? matches : now.matches,
     }));
-  }, []);
+  }, [client]);
 
   useFocusEffect(
     useCallback(() => {

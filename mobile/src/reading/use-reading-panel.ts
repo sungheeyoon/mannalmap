@@ -17,6 +17,7 @@ import { useEffect, useReducer, useRef, useState } from 'react';
 import { AppState } from 'react-native';
 
 import { improvementConsented, markReadingRead, newRequestKey, readReadingRun, readReadingView, startReading, type DoorRefusal, type ReadingTarget, type ReadingView } from './api';
+import { useClient } from '@/auth/connected';
 import { askOnFirstReading } from '@/push/device';
 import { settled } from '@/ui/settled';
 
@@ -49,6 +50,7 @@ export function useReadingPanel({
   /** 문이 자격으로 거절했다 — 부르는 칸이 길을 고른다 */
   onRefused: (refused: DoorRefusal) => void;
 }) {
+  const client = useClient();
   const [view, setView] = useState(initial);
   const [flow, dispatch] = useReducer(
     readingFlow,
@@ -63,13 +65,13 @@ export function useReadingPanel({
   const [consented, setConsented] = useState(false);
   useEffect(() => {
     let live = true;
-    void settled(improvementConsented(), 'improvementConsented', () => false).then((yes) => {
+    void settled(improvementConsented(client), 'improvementConsented', () => false).then((yes) => {
       if (live) setConsented(yes);
     });
     return () => {
       live = false;
     };
-  }, []);
+  }, [client]);
 
   const { phase, failure } = flow;
   const reading = view.reading;
@@ -84,12 +86,12 @@ export function useReadingPanel({
   useEffect(() => {
     if (newsKey === null || newsReadingId === null || newsSentFor.current === newsKey) return;
     newsSentFor.current = newsKey;
-    void markReadingRead(newsReadingId);
-  }, [newsKey, newsReadingId]);
+    void markReadingRead(client, newsReadingId);
+  }, [client, newsKey, newsReadingId]);
 
   /** 풀이 칸을 다시 읽는다 — 끝났을 때와 풀이권이 움직였을 때. 못 읽으면 지금 값을 둔다. 읽은 값을 답으로 준다 */
   const reread = async (): Promise<ShownView | null> => {
-    const answer = await readReadingView(target);
+    const answer = await readReadingView(client, target);
     if (!answer.ok) {
       if (answer.refused.refused !== 'unavailable') onRefused(answer.refused);
       return null;
@@ -107,7 +109,7 @@ export function useReadingPanel({
 
     let alive = true;
     const ask = async () => {
-      const asked = await readReadingRun(target);
+      const asked = await readReadingRun(client, target);
       if (!alive) return;
 
       let answer: RunAnswer;
@@ -147,7 +149,7 @@ export function useReadingPanel({
     setProgress(null);
     keyBeforeWait.current = newsKeyOf(view.reading);
 
-    const answer = await startReading(target, newRequestKey());
+    const answer = await startReading(client, target, newRequestKey());
     let outcome: PressOutcome;
     if (answer.ok) {
       const result = answer.value;
@@ -167,7 +169,7 @@ export function useReadingPanel({
       풀이를 맡겼다 — 다 되면 알려 줄지 **여기서 처음 묻는다**(ADR 0236). 기다리지 않는다 — 묻는 창 · 거절 · 실패가 기다리는 화면을
       막지 않는다. 이미 고른 기기는 묻지 않는다
     */
-    if (outcome.kind === 'opened') void askOnFirstReading();
+    if (outcome.kind === 'opened') void askOnFirstReading(client);
 
     /* 예시 글은 웹의 개발 기계 것이다 — 앱에서는 실패가 실패로 선다 */
     const decision = afterPress(outcome, null);

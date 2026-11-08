@@ -5,7 +5,7 @@ import { AppState } from 'react-native';
 import { LIVE_EVENT, liveChangeOf, userTopic, type LiveChange } from '@live/changes';
 import { startRunner } from '@live/runner';
 
-import { supabase } from '@/auth/client';
+import type { Client } from '@/auth/client';
 import { settled } from '@/ui/settled';
 
 /**
@@ -33,10 +33,8 @@ const shown = (): boolean => AppState.currentState === 'active';
  *
  * 구독 전에 `realtime.setAuth()` 를 부른다 — 비공개 채널의 권한은 구독할 때의 토큰으로 판정한다.
  */
-export function LiveChannel() {
+export function LiveChannel({ client }: { client: Client }) {
   useEffect(() => {
-    const client = supabase;
-    if (client === null) return;
     let stopped = false;
     let stop = () => {};
 
@@ -98,7 +96,7 @@ export function LiveChannel() {
       stopped = true;
       stop();
     };
-  }, []);
+  }, [client]);
 
   return null;
 }

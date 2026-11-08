@@ -6,12 +6,12 @@ import { router } from 'expo-router';
 import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
+import { useClient } from '@/auth/connected';
 import { Card, CardFrame, Tile } from '@/ui/surfaces';
 import { PrimaryButton, SecondaryButton, TextButton } from '@/ui/parts';
 import { COLOR, FONT, TYPE } from '@/ui/tokens';
 import { settled } from '@/ui/settled';
 import { UNREACHABLE } from '@/auth/signup';
-
 
 import { readReadingView, type DoorRefusal, type ReadingTarget, type ReadingView } from './api';
 import { ConfirmMake, CreditsShortage } from './dialogs';
@@ -47,6 +47,7 @@ export function ReadFailure({ refused, onRetry }: { refused: DoorRefusal; onRetr
 
 /** 대상의 풀이 칸을 읽는다 — 화면 머리가 값을 쓰려면 이것으로 먼저 읽고 `ReadingPanel` 에 넘긴다 */
 export function useReadingView(target: ReadingTarget) {
+  const client = useClient();
   const [answer, setAnswer] = useState<{ view: ReadingView } | { refused: DoorRefusal } | null>(null);
   const query = JSON.stringify(target);
 
@@ -57,7 +58,7 @@ export function useReadingView(target: ReadingTarget) {
     latest.current += 1;
     const mine = latest.current;
     setAnswer(null);
-    void settled(readReadingView(JSON.parse(query) as ReadingTarget), 'readReadingView', () => ({ ok: false, refused: { refused: 'unavailable', message: UNREACHABLE } }) as const).then((read) => {
+    void settled(readReadingView(client, JSON.parse(query) as ReadingTarget), 'readReadingView', () => ({ ok: false, refused: { refused: 'unavailable', message: UNREACHABLE } }) as const).then((read) => {
       if (mine !== latest.current) return;
       if (read.ok) setAnswer({ view: read.value });
       else {
@@ -65,7 +66,7 @@ export function useReadingView(target: ReadingTarget) {
         setAnswer({ refused: read.refused });
       }
     });
-  }, [query]);
+  }, [client, query]);
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect -- load 는 효과 안에서 동기로 칸을 비운다 - 대상이 바뀌면 옛 풀이가 한 번도 안 그려지게 하는 일이다

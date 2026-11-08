@@ -1,7 +1,7 @@
 import * as AppleAuthentication from 'expo-apple-authentication';
 import * as Crypto from 'expo-crypto';
 
-import { supabase } from './client';
+import { supabase, type Client } from './client';
 import { accountAnswer, notReady, type SignInAnswer } from './sign-in';
 import { FAILED } from './signup';
 
@@ -28,10 +28,11 @@ export function appleSignInAvailable(): Promise<boolean> {
  * 재전송을 막는 nonce 는 Supabase 안내대로 원문을 우리가 들고 해시를 애플에 준다 — 토큰에 실린 해시와 원문을 Auth 가 견준다.
  */
 export async function signInWithApple(): Promise<SignInAnswer> {
-  if (supabase === null) return notReady();
+  const client = supabase;
+  if (client === null) return notReady();
 
   try {
-    const { data: current } = await supabase.auth.getSession();
+    const { data: current } = await client.auth.getSession();
     if (current.session === null) {
       const nonce = Crypto.randomUUID();
       const hashed = await Crypto.digestStringAsync(Crypto.CryptoDigestAlgorithm.SHA256, nonce);
@@ -45,14 +46,14 @@ export async function signInWithApple(): Promise<SignInAnswer> {
       }
       if (credential.identityToken === null) return { kind: 'failed', message: FAILED };
 
-      const { error } = await supabase.auth.signInWithIdToken({ provider: 'apple', token: credential.identityToken, nonce });
+      const { error } = await client.auth.signInWithIdToken({ provider: 'apple', token: credential.identityToken, nonce });
       if (error !== null) {
         console.error('signInWithIdToken apple', error.code, error.message);
         return { kind: 'failed', message: FAILED };
       }
     }
 
-    return await accountAnswer();
+    return await accountAnswer(client);
   } catch (thrown) {
     console.error('apple sign-in', thrown);
     return { kind: 'failed', message: FAILED };
@@ -60,10 +61,9 @@ export async function signInWithApple(): Promise<SignInAnswer> {
 }
 
 /** 이 계정에 애플 신원이 붙어 있나 — 탈퇴 때 애플 연결을 끊을지 가른다. 못 읽었으면 거짓이다(끊기 없이 탈퇴는 간다) */
-export async function signedInWithApple(): Promise<boolean> {
-  if (supabase === null) return false;
+export async function signedInWithApple(client: Client): Promise<boolean> {
   try {
-    const { data } = await supabase.auth.getSession();
+    const { data } = await client.auth.getSession();
     const providers: unknown = data.session?.user.app_metadata.providers;
     return Array.isArray(providers) && providers.includes('apple');
   } catch (thrown) {

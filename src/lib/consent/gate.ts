@@ -56,6 +56,23 @@ export type GateAccount = {
 };
 
 /**
+ * 관문이 읽는 `app_user` 의 칸 — 웹의 관문(`proxy.ts`) · 앱의 문 세션(`app/api/mobile/session.ts`) · 앱의 관문(`mobile/src/home/gate.ts`)이
+ * 같은 칸을 읽고 같은 함수로 옮긴다. 세 자리가 저마다 줄을 옮겼다(2026-11-08, G-152).
+ */
+export const GATE_ACCOUNT_COLUMNS = 'signed_up_at, notice_version, notice_schedule_id';
+
+/** `app_user` 한 줄 → 관문의 세 칸. 가입을 끝냈는가는 `signed_up_at` 이 있는가다(위 `signedUp`) */
+export const gateAccountOf = (row: {
+  readonly signed_up_at: string | null;
+  readonly notice_version: string | null;
+  readonly notice_schedule_id: number | null;
+}): GateAccount => ({
+  signedUp: row.signed_up_at !== null,
+  noticeVersion: row.notice_version,
+  noticeScheduleId: row.notice_schedule_id,
+});
+
+/**
  * 가입을 끝내는 자리 — `/me` 밖이라 관문이 자기 자신을 막지 않는다.
  *
  * **가려던 곳을 `next` 로 들고 간다**(ADR 0128). `/me/match/…` 를 열다 가입 화면에 선 사람이 가입을 마치고

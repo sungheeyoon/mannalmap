@@ -2,7 +2,7 @@ import { messageTimeLabel } from '@chat';
 import { matchDetailOf, type MatchDetail } from '@chat/room/detail';
 import { userFacingDbMessage } from '@db-error';
 
-import { supabase } from '@/auth/client';
+import type { Client } from '@/auth/client';
 import { door } from '@/reading/api';
 
 /**
@@ -10,14 +10,12 @@ import { door } from '@/reading/api';
  * 흐름은 하나다 — 앱은 스위치를 묻지 않는다(운영자 2026-11-04).
  */
 
-const NOT_READY = '이 빌드에서는 로그인할 수 없어요.';
 const UNEXPECTED = '잠시 뒤 다시 시도해 주세요.';
 
 /** 못 읽으면 `null` — 그 방은 지금 앱 그대로다 */
-export async function readDetail(matchId: string): Promise<MatchDetail | null> {
-  if (supabase === null) return null;
+export async function readDetail(client: Client, matchId: string): Promise<MatchDetail | null> {
   try {
-    const { data, error } = await supabase.rpc('my_match_detail_state', { p_match_id: matchId });
+    const { data, error } = await client.rpc('my_match_detail_state', { p_match_id: matchId });
     if (error !== null) {
       console.error('my_match_detail_state', error.code);
       return null;
@@ -31,9 +29,8 @@ export async function readDetail(matchId: string): Promise<MatchDetail | null> {
 export type EndedTalk = { readonly matchId: string; readonly partnerUserId: string; readonly nickname: string; readonly closedAt: string };
 
 /** 끝난 답 전 대화 — 목록에서는 사라져도 보존 동안 신고는 닫히지 않는다. 사진 · 소개 · 까닭이 없다. 신고의 길이라 못 읽으면 칸이 안 선다 */
-export async function readEndedTalks(): Promise<readonly EndedTalk[]> {
-  if (supabase === null) return [];
-  const { data, error } = await supabase.rpc('my_ended_talks');
+export async function readEndedTalks(client: Client): Promise<readonly EndedTalk[]> {
+  const { data, error } = await client.rpc('my_ended_talks');
   if (error !== null) {
     console.error('my_ended_talks', error.code);
     return [];
@@ -42,9 +39,8 @@ export async function readEndedTalks(): Promise<readonly EndedTalk[]> {
 }
 
 /** 신고 창에 고를 상대의 말 — 최근 것부터. 못 읽으면 빈 목록이고 사람 신고는 그대로 된다 */
-export async function readEndedTalkMessages(matchId: string): Promise<readonly { id: string; body: string; time: string }[]> {
-  if (supabase === null) return [];
-  const { data, error } = await supabase.rpc('my_ended_talk_messages', { p_match_id: matchId });
+export async function readEndedTalkMessages(client: Client, matchId: string): Promise<readonly { id: string; body: string; time: string }[]> {
+  const { data, error } = await client.rpc('my_ended_talk_messages', { p_match_id: matchId });
   if (error !== null) {
     console.error('my_ended_talk_messages', error.code);
     return [];
@@ -60,11 +56,10 @@ export type TalkStart = { kind: 'room'; matchId: string } | { kind: 'no-room' } 
 /**
  * 대화 시작 — 문은 늘 대화를 연다. 부름이 던졌으면 던진다 — 서버가 받았는지 모른다. 방은 계약대로 상대로 찾는다.
  */
-export async function startTalk(candidateUserId: string): Promise<TalkStart> {
-  if (supabase === null) return { kind: 'refused', message: NOT_READY };
-  const { error } = await supabase.rpc('request_match', { p_candidate_user_id: candidateUserId });
+export async function startTalk(client: Client, candidateUserId: string): Promise<TalkStart> {
+  const { error } = await client.rpc('request_match', { p_candidate_user_id: candidateUserId });
   if (error !== null) return { kind: 'refused', message: userFacingDbMessage(error, 'request_match') };
-  const rooms = await supabase.rpc('my_chat_rooms');
+  const rooms = await client.rpc('my_chat_rooms');
   const room = (rooms.data ?? []).find((one) => one.partner_user_id === candidateUserId);
   return room === undefined ? { kind: 'no-room' } : { kind: 'room', matchId: room.match_id };
 }
@@ -75,8 +70,8 @@ export type DetailAsked = { ok: true } | { ok: false; message: string; unsure: b
  * 상세 청하기 · 다시 만들기 — **앱용 문으로 간다.** 동의가 살아 있으면 문이 새 누름 없이 시도를 여는데, RPC 를 앱에서 바로 부르면 제출할 곳이 없어 시도가 만료까지 돈다.
  * 키는 누름마다 새로, 재전송은 같게(부른 쪽이 든다). 문장으로 답했으면 거절이고, 닿지 못했으면 받았는지 모른다.
  */
-export async function requestDetail(matchId: string, clientKey: string): Promise<DetailAsked> {
-  const answer = await door<{ ok: true; iAmBuyer: boolean } | { ok: false; message: string }>('/api/mobile/matching/detail', {
+export async function requestDetail(client: Client, matchId: string, clientKey: string): Promise<DetailAsked> {
+  const answer = await door<{ ok: true; iAmBuyer: boolean } | { ok: false; message: string }>(client, '/api/mobile/matching/detail', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ matchId, clientKey }),

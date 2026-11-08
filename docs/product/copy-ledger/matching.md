@@ -365,7 +365,7 @@ matching-01 의 「이름 곁에 궁합 단추」 배치를 바꾸므로 운영�
 | 안내 단추 | 내 사주로 가기 | 내 사주 등록하기 | 실사례 없음 — 대장 matching-13 확정 |
 | 빈 덱 단추 `mobile/src/matching/today.tsx` | (없음) | 다시 확인하기 | [헬로우봇 문구표](https://hellobot.co/terms) 「다시 시도하기」 · 「상황 한 줄 + 행동 하나」는 [토스 원칙](https://toss.tech/article/how-to-write-error-message) 2026-11-02. 빈 줄의 「다시 확인해 주세요」(`DISCOVERY_EMPTY`)와 잇는다 |
 | 요청 창 끝 줄 `CHAT_USES_NO_CREDIT` | (없음) | 채팅은 풀이권을 쓰지 않아요. | 실사례 없음 — matching-15 의 글자, 채팅에 풀이권 차감이 없음(코드 확인) |
-| 받은 요청 카드 `RECEIVER_USES_NO_CREDIT` | (없음) | 요청을 받은 쪽은 풀이권을 쓰지 않아요. 채팅은 풀이권을 쓰지 않아요. | 실사례 없음 — matching-15 의 글자, 약관 제14조 · 자주 묻는 질문 `credits-match` |
+| 받은 요청 카드 `RECEIVER_USES_NO_CREDIT` | (없음) | 요청을 받은 쪽은 풀이권을 쓰지 않아요. 채팅은 풀이권을 쓰지 않아요. | 실사례 없음 — matching-15 의 글자, 약관 제14조 · 자주 묻는 질문 `credits-match` · 2026-11-08 상수를 지웠다 — 그 카드를 그리는 자리가 없었다(G-152) |
 
 ## matching-18 확인 전 — 대화 · 상세 궁합의 거절 문장 (#962, 2026-11-02, 스위치 꺼짐)
 

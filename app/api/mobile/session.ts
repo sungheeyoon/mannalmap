@@ -1,6 +1,6 @@
 import { isAuthApiError, isAuthSessionMissingError, type SupabaseClient, type User } from '@supabase/supabase-js';
 
-import { NOTICE_UNREAD, gateFor } from '@/src/lib/consent';
+import { GATE_ACCOUNT_COLUMNS, NOTICE_UNREAD, gateAccountOf, gateFor } from '@/src/lib/consent';
 import type { Database } from '@/src/lib/db';
 import type { DoorRefusal } from '@/src/lib/reading/door';
 
@@ -70,7 +70,7 @@ export async function mobileSession(
   }
 
   const [{ data: account, error: accountError }, schedule] = await Promise.all([
-    client.from('app_user').select('signed_up_at, notice_version, notice_schedule_id').maybeSingle(),
+    client.from('app_user').select(GATE_ACCOUNT_COLUMNS).maybeSingle(),
     currentSchedule(client),
     touches ? noteActivity(client) : Promise.resolve(),
   ]);
@@ -80,11 +80,7 @@ export async function mobileSession(
 
   const where = gateFor(
     gatedAs,
-    {
-      signedUp: account.signed_up_at !== null,
-      noticeVersion: account.notice_version,
-      noticeScheduleId: account.notice_schedule_id,
-    },
+    gateAccountOf(account),
     schedule.ok ? schedule.value : NOTICE_UNREAD,
     new Date(),
   );

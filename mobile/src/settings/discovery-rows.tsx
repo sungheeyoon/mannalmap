@@ -5,6 +5,7 @@ import { PREFER_GENDER_ORDER, type PreferGender } from '@discovery';
 import { PREFER_GENDER_KO } from '@discovery/copy';
 import { PARTICIPATION_LABEL, participationHelp } from '@matching/opening';
 
+import { useClient } from '@/auth/connected';
 import { saveFailureOf, setParticipation } from '@/reading/chart-writes';
 import { followRefusal } from '@/reading/panel';
 import { FailureLine } from '@/ui/failure-line';
@@ -19,6 +20,7 @@ import { savePreferGender } from './settings';
  * 실패하면 서버가 든 마지막 값으로 돌아오고 까닭이 선다(웹 `ParticipationToggle`). 인연이 닫힌 동안에도 서고, 아래 줄은 열림 · 성인 확인 · 켜짐에 따라 갈린다(`participationHelp`, 2026-11-08).
  */
 export function ParticipationRow({ resting, open, adultCleared }: { resting: boolean; open: boolean | null; adultCleared: boolean | null }) {
+  const client = useClient();
   const [on, setOn] = useState(!resting);
   const [working, setWorking] = useState(false);
   const [failure, setFailure] = useState<string | null>(null);
@@ -27,7 +29,7 @@ export function ParticipationRow({ resting, open, adultCleared }: { resting: boo
     setFailure(null);
     setOn(next);
     setWorking(true);
-    const answer = await setParticipation(next);
+    const answer = await setParticipation(client, next);
     setWorking(false);
     if (answer.ok && answer.value.ok) return;
     setOn(!next);
@@ -54,6 +56,7 @@ export function ParticipationRow({ resting, open, adultCleared }: { resting: boo
  * 마지막 하나만 남겼다가 보낸다. 실패하면 서버가 든 마지막 값으로 돌아오고 까닭이 선다.
  */
 export function PreferenceRow({ current }: { current: PreferGender }) {
+  const client = useClient();
   const [chosen, setChosen] = useState(current);
   const [saving, setSaving] = useState(false);
   const [failure, setFailure] = useState<string | null>(null);
@@ -70,7 +73,7 @@ export function PreferenceRow({ current }: { current: PreferGender }) {
     while (next !== null) {
       const value: PreferGender = next;
       next = null;
-      const result = await savePreferGender(value);
+      const result = await savePreferGender(client, value);
       if (!result.ok) {
         refused = result.message;
         break;

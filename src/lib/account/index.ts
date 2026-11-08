@@ -226,6 +226,15 @@ export const mayRequestDeletion = (state: AccountState): boolean =>
   state.kind === 'active' || state.kind === 'onboarding' || (state.kind === 'halted' && state.status === 'suspended');
 
 /**
+ * 프로필의 사진 · 소개를 **지우기만** 하는 상태인가 — 이용 정지(ADR 0244).
+ *
+ * 처리방침의 「프로필 화면에서 삭제할 수 있습니다」가 정지된 사람에게도 참이어야 한다. 프로필 화면은 이 상태에서 고치는 칸 대신
+ * 지우는 줄만 세운다. DB 문(`remove_my_photo` · `clear_my_intro`)은 탈퇴 대기도 받지만 그 계정은 이미 처분을 기다려 화면의 길을 안 낸다.
+ */
+export const erasesProfileOnly = (state: AccountState): boolean =>
+  state.kind === 'halted' && state.status === 'suspended';
+
+/**
  * 자기 사주가 무엇인가 — **없으면 `null`.**
  *
  * 온보딩과 막힌 자리를 같은 `null` 로 낸다. 이 값을 쓰는 화면들은 「내 것을 목록에서

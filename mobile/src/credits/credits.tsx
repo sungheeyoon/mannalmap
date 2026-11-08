@@ -10,8 +10,9 @@ import { CREDITS_AVAILABLE_LABEL, CREDITS_USAGE_NOTE, CREDITS_USAGE_RATE } from 
 import type { PaidOrder } from '@reading/paid-order';
 import { purchaseReturnOf } from '@reading/store-purchase';
 
-import { supabase } from '@/auth/client';
-import { NOT_READY, UNREACHABLE } from '@/auth/signup';
+import type { Client } from '@/auth/client';
+import { useClient } from '@/auth/connected';
+import { UNREACHABLE } from '@/auth/signup';
 import { legalPagesOpen, openLegalPage } from '@/info/legal-web';
 import { LinkRow, SettingsGroup, settingsText } from '@/settings/parts';
 import { FailureLine } from '@/ui/failure-line';
@@ -25,18 +26,15 @@ import { readReadingCredits, readReadingOrders } from './remaining';
 import { storeAvailable } from './store';
 import { StoreSection } from './store-section';
 
-
 type Read<T> = { ok: true; value: T } | { ok: false; message: string };
 
-async function readAvailable(): Promise<Read<number | null>> {
-  if (supabase === null) return { ok: false, message: NOT_READY };
-  const credits = await readReadingCredits(supabase);
+async function readAvailable(client: Client): Promise<Read<number | null>> {
+  const credits = await readReadingCredits(client);
   return credits.ok ? { ok: true, value: credits.value?.available ?? null } : { ok: false, message: credits.reason };
 }
 
-async function readOrders(): Promise<Read<readonly PaidOrder[]>> {
-  if (supabase === null) return { ok: false, message: NOT_READY };
-  const orders = await readReadingOrders(supabase);
+async function readOrders(client: Client): Promise<Read<readonly PaidOrder[]>> {
+  const orders = await readReadingOrders(client);
   return orders.ok ? orders : { ok: false, message: orders.reason };
 }
 
@@ -44,15 +42,16 @@ async function readOrders(): Promise<Read<readonly PaidOrder[]>> {
  * 풀이권 — 보유 수와, Android 에서는 Google Play 구매(ADR 0230, `store-section.tsx`). 구매가 서면 보유 수를 다시 읽는다. iOS 결제는 나중이다(지도 #932).
  */
 export function CreditsScreen() {
+  const client = useClient();
   const [read, setRead] = useState<Read<number | null> | null>(null);
   const params = useLocalSearchParams<{ back?: string; noun?: string }>();
   const returnTo = purchaseReturnOf(params.back, params.noun);
   /** 보유 수를 다시 읽는다 — 결제 완료 창이 그 값을 기다려 같은 수를 보인다. @returns 새 보유 수, 못 읽었으면 `null` */
   const reload = useCallback(async (): Promise<number | null> => {
-    const next = await settled(readAvailable(), 'my_reading_credits', () => ({ ok: false, message: UNREACHABLE }) as const);
+    const next = await settled(readAvailable(client), 'my_reading_credits', () => ({ ok: false, message: UNREACHABLE }) as const);
     setRead(next);
     return next.ok ? next.value : null;
-  }, []);
+  }, [client]);
   const load = useCallback(() => {
     void reload();
   }, [reload]);
@@ -93,10 +92,11 @@ export function CreditsScreen() {
 
 /** 결제 내역 — 웹 `history-view.tsx` 와 같다: 산 묶음 카드들과 환불 신청 절. 화면 안에서 취소하는 단추는 없다(ADR 0174) */
 export function CreditsHistoryScreen() {
+  const client = useClient();
   const [read, setRead] = useState<Read<readonly PaidOrder[]> | null>(null);
   const load = useCallback(() => {
-    void settled(readOrders(), 'my_reading_orders', () => ({ ok: false, message: UNREACHABLE }) as const).then(setRead);
-  }, []);
+    void settled(readOrders(client), 'my_reading_orders', () => ({ ok: false, message: UNREACHABLE }) as const).then(setRead);
+  }, [client]);
   useFocusEffect(load);
 
   return (

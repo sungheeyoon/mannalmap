@@ -6,6 +6,7 @@ import { missingAnswer } from '@input/query';
 import type { PersonSlots } from '@people';
 import { endsWithBatchim } from '@saju-text/batchim';
 
+import { useClient } from '@/auth/connected';
 import { FailureLine } from '@/ui/failure-line';
 import { FieldLabel, PrimaryButton, SecondaryButton, TextButton } from '@/ui/parts';
 import { COLOR, FONT, RADIUS, TYPE } from '@/ui/tokens';
@@ -80,6 +81,7 @@ export function AddPerson({ slots, startOpen, onSaved }: { slots: PersonSlots | 
 }
 
 function AddForm({ remaining, onCancel, onSaved }: { remaining: number | null; onCancel: () => void; onSaved: () => void }) {
+  const client = useClient();
   const form = useBirthForm();
   const [note, setNote] = useState('');
   const [failure, setFailure] = useState<string | null>(null);
@@ -91,7 +93,7 @@ function AddForm({ remaining, onCancel, onSaved }: { remaining: number | null; o
   const attempt = async (evenIfSameChart: boolean) => {
     setSaving(true);
     setFailure(null);
-    const result = await addPerson(form.query, note, evenIfSameChart);
+    const result = await addPerson(client, form.query, note, evenIfSameChart);
     setSaving(false);
     setQuestion(null);
     if (result.ok) {
@@ -150,6 +152,7 @@ function AddForm({ remaining, onCancel, onSaved }: { remaining: number | null; o
 }
 
 export function NoteEditor({ personId, note, onDone, onCancel }: { personId: string; note: string; onDone: () => void; onCancel: () => void }) {
+  const client = useClient();
   const [value, setValue] = useState(note);
   const [failure, setFailure] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
@@ -158,7 +161,7 @@ export function NoteEditor({ personId, note, onDone, onCancel }: { personId: str
   const save = async () => {
     setFailure(null);
     setSaving(true);
-    const result = await updateNote(personId, value);
+    const result = await updateNote(client, personId, value);
     setSaving(false);
     if (result.ok) onDone();
     else setFailure(result.message);
@@ -176,13 +179,14 @@ export function NoteEditor({ personId, note, onDone, onCancel }: { personId: str
 
 /** 목록에서 빼기 — 되돌릴 수 없는 누름이라 한 번 묻는다. 이름표 그대로에 조사만 붙인다(`RemoveConfirm`) */
 export function RemoveConfirm({ personId, label, onDone, onCancel }: { personId: string; label: string; onDone: () => void; onCancel: () => void }) {
+  const client = useClient();
   const [failure, setFailure] = useState<string | null>(null);
   const [removing, setRemoving] = useState(false);
 
   const remove = async () => {
     setFailure(null);
     setRemoving(true);
-    const result = await removeFromList(personId);
+    const result = await removeFromList(client, personId);
     setRemoving(false);
     if (result.ok) onDone();
     else setFailure(result.message);

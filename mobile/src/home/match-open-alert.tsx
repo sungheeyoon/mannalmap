@@ -4,6 +4,7 @@ import { StyleSheet, Text, View } from 'react-native';
 import { MATCH_OPEN_ALERT_ASK, MATCH_OPEN_ALERT_ASKED, MATCH_OPEN_ALERT_TITLE } from '@matching/copy';
 import { MATCH_OPEN_ALERT_BUTTON, matchOpenAlertStands } from '@matching/opening';
 
+import { useClient } from '@/auth/connected';
 import { NOT_READY } from '@/auth/signup';
 import { readMatchOpenAlert, setMatchOpenAlert, useMatchOpen } from '@/matching/opening';
 import { Button } from '@/ui/buttons';
@@ -17,6 +18,7 @@ import { COLOR, FONT, RADIUS, TYPE } from '@/ui/tokens';
  * 닫혔다고 읽었고 신청 여부를 읽었을 때만 선다. 인연으로 가는 길은 없다 — 신청 · 취소만 한다.
  */
 export function MatchOpenAlert() {
+  const client = useClient();
   const open = useMatchOpen();
   const [asked, setAsked] = useState<boolean | null>(null);
   const [saving, setSaving] = useState(false);
@@ -24,13 +26,13 @@ export function MatchOpenAlert() {
 
   useEffect(() => {
     let live = true;
-    void settled(readMatchOpenAlert(), 'my_match_open_alert', () => null).then((answer) => {
+    void settled(readMatchOpenAlert(client), 'my_match_open_alert', () => null).then((answer) => {
       if (live) setAsked(answer);
     });
     return () => {
       live = false;
     };
-  }, []);
+  }, [client]);
 
   if (!matchOpenAlertStands(open) || asked === null) return null;
 
@@ -38,7 +40,7 @@ export function MatchOpenAlert() {
     const next = !asked;
     setSaving(true);
     setFailure(null);
-    const refused = await settled(setMatchOpenAlert(next), 'set_match_open_alert', () => NOT_READY);
+    const refused = await settled(setMatchOpenAlert(client, next), 'set_match_open_alert', () => NOT_READY);
     setSaving(false);
     if (refused === null) setAsked(next);
     else setFailure(refused);

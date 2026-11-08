@@ -44,13 +44,12 @@ describe('ci-main-red — main 의 결과로 이슈 하나를 든다 (ADR 0097)'
     expect(measuredEverything([])).toBe(false);
   });
 
-  it('전부일 때도 켜지 않는 차선은 계획에서 읽는다 — full 의 mobile-flow 건너뜀은 전부를 잰 것이고, core 건너뜀은 아니다', () => {
-    expect(offWhenFull().sort()).toEqual(['mobile-flow', 'policy']);
+  it('전부일 때도 켜지 않는 차선은 계획에서 읽는다 — full 의 policy 건너뜀은 전부를 잰 것이고, core 건너뜀은 아니다', () => {
+    expect(offWhenFull().sort()).toEqual(['policy']);
     const ran = ['plan', 'core', 'anon', 'flow', 'audit', 'mobile', 'authed (notice)', 'gate'];
     const full = [
       ...ran.map((name) => ({ name, conclusion: 'success' })),
       { name: 'policy', conclusion: 'skipped' },
-      { name: 'mobile-flow', conclusion: 'skipped' },
     ];
     expect(measuredEverything(full)).toBe(true);
     const coreSkipped = full.map((job) => (job.name === 'core' ? { ...job, conclusion: 'skipped' } : job));

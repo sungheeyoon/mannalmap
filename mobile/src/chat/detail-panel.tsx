@@ -7,6 +7,7 @@ import { detailPanelOf, type MatchDetail } from '@chat/room/detail';
 import { DETAIL_CANCEL_NOTE, DETAIL_CANCEL_TITLE, DETAIL_CANCELLED } from '@chat/room/detail-copy';
 import { REQUEST_STATUS_TEXT } from '@consent/index';
 
+import { useClient } from '@/auth/connected';
 import { cancelRequest, respondToRequest } from '@/matching/doors';
 import { ConfirmDialog, DialogText } from '@/ui/confirm-dialog';
 import { requestDetail } from '@/matching/talk-doors';
@@ -17,6 +18,7 @@ import { COLOR, CONTROL, FONT, RADIUS, TYPE } from '@/ui/tokens';
  * 재전송은 같은 키다: 받았는지 모르는 실패면 키를 들고 있다가 다시 보낸다.
  */
 export function DetailPanelView({ detail, matchId, onChanged, onNote }: { detail: MatchDetail; matchId: string; onChanged: () => void; onNote: (note: string) => void }) {
+  const client = useClient();
   const [working, setWorking] = useState(false);
   const [failure, setFailure] = useState<string | null>(null);
   const key = useRef<string | null>(null);
@@ -27,7 +29,7 @@ export function DetailPanelView({ detail, matchId, onChanged, onNote }: { detail
     if (detail.requestId === null) return;
     setWorking(true);
     setFailure(null);
-    const result = await cancelRequest(detail.requestId);
+    const result = await cancelRequest(client, detail.requestId);
     setWorking(false);
     setAsking(false);
     if (!result.ok) {
@@ -42,7 +44,7 @@ export function DetailPanelView({ detail, matchId, onChanged, onNote }: { detail
   const ask = async () => {
     /* 앱에는 `crypto` 전역이 없을 수 있어 공용 `newDetailKey` 대신 기기의 난수로 짓는다 — 같은 uuid v4 다 */
     key.current ??= Crypto.randomUUID();
-    const result = await requestDetail(matchId, key.current);
+    const result = await requestDetail(client, matchId, key.current);
     if (!result.ok) {
       if (!result.unsure) key.current = null;
       setFailure(result.message);
@@ -54,7 +56,7 @@ export function DetailPanelView({ detail, matchId, onChanged, onNote }: { detail
 
   const consent = async () => {
     if (detail.requestId === null) return;
-    const result = await respondToRequest(detail.requestId);
+    const result = await respondToRequest(client, detail.requestId);
     if (!result.ok) {
       setFailure(result.message);
       return;

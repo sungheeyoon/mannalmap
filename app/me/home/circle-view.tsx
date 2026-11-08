@@ -1,6 +1,6 @@
 import Link from 'next/link';
 
-import { storedChartOf, type StoredInput } from '@/src/lib/input/stored';
+import { chartOfStored, type StoredInput } from '@/src/lib/input/stored';
 import type { PersonSlots } from '@/src/lib/people';
 
 import { Icon } from '../../ui/icons';
@@ -27,12 +27,7 @@ const PEOPLE_SHOWN = 5;
  */
 export function circlePeopleOf(circle: Circle, inputs: ReadonlyMap<string, StoredInput>): HomePerson[] {
   return circle.people.map((edge) => {
-    const stored = inputs.get(edge.personId);
-    /* 입력이 없는 사람 — 읽을 것이 없다는 말과 못 읽는다는 말을 여기서 합친다(저장한 사람 화면과 같다) */
-    const stood =
-      stored === undefined
-        ? ({ ok: false, message: '출생 정보를 불러오지 못했어요.' } as const)
-        : storedChartOf(stored, edge.label);
+    const stood = chartOfStored(inputs.get(edge.personId), edge.label);
     return {
       personId: edge.personId,
       label: edge.label,

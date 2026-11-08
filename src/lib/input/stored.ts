@@ -52,14 +52,31 @@ export type StoredInput = {
 export const PERSON_INPUT_COLUMNS =
   'calendar, original_date, solar_date, birth_time, gender, city, late_night_rule, time_basis';
 
+/** `person` 행의 여덟 칸 — DB 는 칸마다 `null` 을 허락한다(생성된 `Database` 의 `person.Row` 와 같은 모양) */
+export type StoredInputRow = { readonly [K in keyof StoredInput]: StoredInput[K] | null };
+
 /**
- * 여덟 칸이 **함께 차거나 함께 빈다** — 한 칸이 그 답을 든다.
+ * **행을 입력 한 벌로 옮긴다 — 입력이 비었으면 `null`.** 웹의 문(`app/me/person-input.ts`)과 앱의 문(`mobile/src/people/data.ts`)이
+ * 함께 쓴다. 앞서는 둘이 저마다 한 칸을 보고 `as unknown as StoredInput` 으로 행을 통째로 주장했다(2026-11-08, G-152).
  *
- * DB 검사식이 그렇게 걸려 있다(`num_nonnulls(...) in (0, 7)`). 그래서 한 칸만 보면
- * 되고, 여덟을 다 보면 그 검사식과 같은 말을 두 곳에서 하게 된다.
+ * 여덟 칸은 **함께 차거나 함께 빈다** — DB 검사식이 그렇게 걸려 있다(`num_nonnulls(...) in (0, 7)`, 시간은 미상이면 비어도 된다).
+ * 그래도 칸마다 좁힌다 — 주장 대신 타입이 답하고, 검사식 밖의 행이 와도 반쯤 찬 입력이 `string` 으로 흘러 들어가지 않는다.
  */
-export const storedInputFilled = (row: Record<string, unknown> | null): boolean =>
-  row !== null && row.calendar !== null && row.calendar !== undefined;
+export function storedInputOfRow(row: StoredInputRow): StoredInput | null {
+  const { calendar, original_date, solar_date, birth_time, gender, city, late_night_rule, time_basis } = row;
+  if (
+    calendar === null ||
+    original_date === null ||
+    solar_date === null ||
+    gender === null ||
+    city === null ||
+    late_night_rule === null ||
+    time_basis === null
+  ) {
+    return null;
+  }
+  return { calendar, original_date, solar_date, birth_time, gender, city, late_night_rule, time_basis };
+}
 
 /**
  * 못 읽었을 때 **덧붙이는 한 줄** — 세 화면이 같은 것을 말한다.
@@ -75,6 +92,18 @@ export const storedInputFilled = (row: Record<string, unknown> | null): boolean 
  */
 export const UNREADABLE_INPUT_NOTE =
   '저장된 출생 정보는 그대로 있어요. 지금 이 화면이 그 정보를 읽지 못하고 있어요.';
+
+/**
+ * 목록에 선 사람의 입력이 **없을 때** 그 자리의 말 — 웹의 홈 · 저장한 사람과 앱의 홈 · 저장한 사람 · 궁합 지도가 같은 글자를 쓴다.
+ * 다섯 자리에 손으로 적혀 있었다(2026-11-08, G-152).
+ */
+export const STORED_INPUT_MISSING = '출생 정보를 불러오지 못했어요.';
+
+/** 목록의 한 사람 — 입력이 없는 것과 못 읽는 것을 여기서 한 값으로 합친다. 둘 다 그 사람의 명식이 안 선다는 말이다 */
+export type ListedChart = { readonly ok: true; readonly query: Query; readonly saju: Saju } | { readonly ok: false; readonly message: string };
+
+export const chartOfStored = (stored: StoredInput | undefined, localLabel: string): ListedChart =>
+  stored === undefined ? { ok: false, message: STORED_INPUT_MISSING } : storedChartOf(stored, localLabel);
 
 /**
  * 저장된 입력 한 벌을 **입력과 명식으로 세운 결과.**

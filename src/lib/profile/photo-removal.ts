@@ -6,6 +6,11 @@ export const PHOTO_REMOVE_NOTE = '삭제한 사진은 되돌릴 수 없어요.';
 /** 지운 뒤 상태 줄(대장 36) */
 export const PHOTO_REMOVED = '사진을 지웠어요';
 
+/**
+ * 정지된 사람이 사진 · 소개를 지우는 길의 이름 — 웹 설정의 줄 · 그 화면 제목 · 앱 설정의 줄이 같은 글자다(운영자 답 2026-11-08, 대장 settings-18, ADR 0244)
+ */
+export const PROFILE_ERASE_TITLE = '프로필 사진 · 소개 삭제';
+
 type Removal = { ok: true } | { ok: false; message: string };
 
 /** 묻는 창에 답한 뒤 — 창이 닫혔나, 그 장을 지웠나, 거절됐으면 그 까닭(창은 열린 채 선다) */

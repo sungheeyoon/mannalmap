@@ -6,6 +6,7 @@ import { BLOCK_FINAL_NOTE, BLOCK_KEEPS_NOTE, BLOCK_NOTE } from '@consent/index';
 import { initialOf, type PhotoFocus } from '@profile';
 import type { Element } from '@saju';
 
+import { useClient } from '@/auth/connected';
 import { Field, Select } from '@/ui/parts';
 import { Icon } from '@/ui/icons';
 import { Photo } from '@/ui/photo';
@@ -15,7 +16,7 @@ import { alpha, COLOR, ELEMENT_TONE, FIXED, FONT, RADIUS, TYPE } from '@/ui/toke
 import { KEEP_VIEW } from '@/ui/keep-view';
 import { Tile } from '@/ui/surfaces';
 
-import { blockUser, reportUser } from './doors';
+import { blockUser, reportUser } from '@/chat/reads';
 
 /**
  * 사진 한 장 — 있으면 사진, 없거나 앱이 못 받는 장이면 **그 사람 색 판에 첫 글자**다(웹의 `CandidatePhoto` 와 같은 자리).
@@ -136,12 +137,13 @@ export function PhotoBars({ count, at, onPick }: { count: number; at: number; on
 
 /** 차단을 한 번 더 묻는 창 — 글자는 웹의 `BlockDialog` 와 같은 상수다. 첫 자리는 「취소」 */
 export function BlockDialog({ userId, nickname, open, onClose, onBlocked }: { userId: string; nickname: string; open: boolean; onClose: () => void; onBlocked?: () => void }) {
+  const client = useClient();
   const [failure, setFailure] = useState<string | null>(null);
   const [working, setWorking] = useState(false);
   const block = async () => {
     setFailure(null);
     setWorking(true);
-    const result = await blockUser(userId);
+    const result = await blockUser(client, userId);
     setWorking(false);
     if (!result.ok) {
       setFailure(result.message);
@@ -173,6 +175,7 @@ export function BlockDialog({ userId, nickname, open, onClose, onBlocked }: { us
 
 /** 신고 창 — 사유 넷과 덧붙일 말. 보내면 접수 문장과 「차단으로 넘어가기」가 선다. 신고는 관계를 끊지 않는다 */
 export function ReportDialog({ userId, nickname, open, onClose, onBlock }: { userId: string; nickname: string; open: boolean; onClose: () => void; onBlock?: () => void }) {
+  const client = useClient();
   const [reason, setReason] = useState<ReportReason>(REPORT_REASONS[0].value);
   const [detail, setDetail] = useState('');
   const [failure, setFailure] = useState<string | null>(null);
@@ -189,7 +192,7 @@ export function ReportDialog({ userId, nickname, open, onClose, onBlock }: { use
   const send = async () => {
     setFailure(null);
     setWorking(true);
-    const result = await reportUser(userId, reason, detail);
+    const result = await reportUser(client, userId, reason, detail);
     setWorking(false);
     if (result.ok) setReported(true);
     else setFailure(result.message);

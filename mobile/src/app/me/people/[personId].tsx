@@ -6,6 +6,7 @@ import { isBlocked } from '@account/index';
 import { UNREADABLE_INPUT_NOTE } from '@input/stored';
 import { STEM_INFO } from '@saju';
 
+import { useClient } from '@/auth/connected';
 import { Tabs } from '@/chart/parts';
 import { readPersonDetail, type MyReading, type PersonDetail, type Read } from '@/people/data';
 import { AccountNotice, DayMasterChip, NotFound, ScreenFrame, go, styles as shared } from '@/people/parts';
@@ -25,16 +26,17 @@ const NO_COMPAT_YET = '아직 본 궁합이 없어요.';
 
 /** 사람 하나 — 머리는 큰 이름 · 일간 딱지 · 단추 둘, 사주풀이 탭이 기본이다(`app/me/people/[personId]/page.tsx`) */
 export default function PersonScreen() {
+  const client = useClient();
   const params = useLocalSearchParams<{ personId: string; from?: string; tab?: string }>();
   const [read, setRead] = useState<Read<PersonDetail> | null>(null);
 
   const load = useCallback(() => {
-    void settled(readPersonDetail(params.personId), 'readPersonDetail', () => ({ kind: 'failed', message: UNREACHABLE }) as const).then((next) => {
+    void settled(readPersonDetail(client, params.personId), 'readPersonDetail', () => ({ kind: 'failed', message: UNREACHABLE }) as const).then((next) => {
       if (next.kind === 'signed-out') router.replace('/');
       /* 선 화면을 다시 읽다 못 읽으면 가진 것을 그대로 둔다 — 다음에 돌아올 때 메운다(채팅 목록과 같다) */
       else setRead((now) => (now?.kind === 'ok' && next.kind === 'failed' ? now : next));
     });
-  }, [params.personId]);
+  }, [client, params.personId]);
   useFocusEffect(load);
 
   const before = <TopBar fallback={params.from === 'me' ? '/me' : '/me/people'} />;
