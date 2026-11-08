@@ -27,7 +27,7 @@ export function ReadyPushOpener(): null {
 
 function useReadyPushOpener(): void {
   useEffect(() => {
-    /* 앱의 맨 바깥 껍데기다 — 주소 · 공개 키가 없는 빌드는 여기서 한 번 가른다(ADR 0244) */
+    /* 앱의 맨 바깥 껍데기다 — 주소 · 공개 키가 없는 빌드는 여기서 한 번 가른다(ADR 0243) */
     const client = supabase;
     if (Platform.OS !== 'android' || client === null) return;
 

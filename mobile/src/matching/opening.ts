@@ -37,7 +37,7 @@ export async function setMatchOpenAlert(client: Client, wanted: boolean): Promis
 export function useMatchOpen(): boolean | null {
   const [open, setOpen] = useState<boolean | null>(null);
   useEffect(() => {
-    /* 로그인 전 첫 화면도 부르는 껍데기의 손이다 — 주소 · 공개 키가 없는 빌드는 모르는 채(`null`)로 둔다(ADR 0244) */
+    /* 로그인 전 첫 화면도 부르는 껍데기의 손이다 — 주소 · 공개 키가 없는 빌드는 모르는 채(`null`)로 둔다(ADR 0243) */
     const client = supabase;
     if (client === null) return;
     let live = true;

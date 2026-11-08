@@ -65,7 +65,7 @@ const serverOf = (client: Client): TokenServer => ({
 
 /**
  * 이 빌드에서 쓸 수 있는가 — 안드로이드이고, Firebase 설정 파일을 넣고 지은 빌드다(`app.config.js` 의 `extra.readingPush`). DB 에 닿는가는
- * 부르는 쪽이 클라이언트를 들고 온 것으로 이미 답했다(ADR 0244). 아니면 묻지도 줄을 세우지도 않는다.
+ * 부르는 쪽이 클라이언트를 들고 온 것으로 이미 답했다(ADR 0243). 아니면 묻지도 줄을 세우지도 않는다.
  */
 export const pushSupported = (): boolean => Platform.OS === 'android' && Constants.expoConfig?.extra?.readingPush === true;
 

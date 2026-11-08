@@ -13,7 +13,7 @@
 
 **vitest 는 `.tsx` 를 불러올 수는 있어도 그리지는 못한다** — `vitest.config.mts` 의 include 가 `src/**` · `app/**` ·
 `scripts/**` · `mobile/src/**` 의 `*.test.ts` 이고(시험 파일은 `.ts` 뿐이다), 환경은 `node` 다. 앱의 문(`mobile/src`)은 클라이언트를 인자로 받아
-가짜 클라이언트로 돌고(`mobile/src/doors.test.ts`, ADR 0244), 앱의 별칭은 그 config 의 `mobileAliases` 가 푼다 — react-native 를 들이는 화면 · 훅은 못 돈다. jsdom 을 안 들였다(`<dialog>` 때문, ADR 0080).
+가짜 클라이언트로 돌고(`mobile/src/doors.test.ts`, ADR 0243), 앱의 별칭은 그 config 의 `mobileAliases` 가 푼다 — react-native 를 들이는 화면 · 훅은 못 돈다. jsdom 을 안 들였다(`<dialog>` 때문, ADR 0080).
 그래서 `.ts` 시험이 `.tsx` 모듈을 import 해 닿는 것은 둘이다.
 
 - **`.tsx` 가 내보내는 순수 함수** — `isNavigationActive`(`app/site-header.test.ts`) · `app/birth-form.test.ts` ·

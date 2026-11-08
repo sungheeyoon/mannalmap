@@ -271,7 +271,7 @@ async function pressed(client: Client, where: string, run: () => Promise<Done>):
   }
 }
 
-/** 차단 — **앱에서 `block_user` 를 부르는 유일한 자리.** 인연 카드(`matching/people.tsx`)와 대화방이 함께 쓴다(ADR 0244) */
+/** 차단 — **앱에서 `block_user` 를 부르는 유일한 자리.** 인연 카드(`matching/people.tsx`)와 대화방이 함께 쓴다(ADR 0243) */
 export const blockUser = (client: Client, userId: string): Promise<Done> =>
   pressed(client, 'block_user', async () => {
     const { error } = await client.rpc('block_user', { p_user_id: userId });

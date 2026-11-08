@@ -20,7 +20,7 @@ export type AccountRow = {
 export type MyAccount = { readonly state: AccountState; readonly row: AccountRow | null };
 
 /**
- * **내 계정을 읽는 앱의 문 — 하나다**(ADR 0244). 판정은 웹의 `readAccount`(`app/me/account.ts`)와 같은 `accountStateOf` 이고, 정지면 웹처럼
+ * **내 계정을 읽는 앱의 문 — 하나다**(ADR 0243). 판정은 웹의 `readAccount`(`app/me/account.ts`)와 같은 `accountStateOf` 이고, 정지면 웹처럼
  * 본인의 문(`my_suspension`)까지 읽어 안내 문장이 닉네임 · 갈래를 든다. 앞서는 홈 · 사람 · 설정 · 채팅 · 인연이 저마다 읽었고 채팅 · 인연은
  * 정지의 갈래를 안 읽었다(2026-11-08 감사).
  */

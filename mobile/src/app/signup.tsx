@@ -41,7 +41,7 @@ const SIGN_OUT_FAILED = '로그아웃하지 못했어요. 다시 시도해 주�
  * 가입 — 웹의 `/signup` 과 같은 한 폼이다(ADR 0042). 마치면 이 자리를 들고 온 목적지 `next` 로 갈아 끼운다(ADR 0128 · 0213).
  */
 export default function SignupScreen() {
-  /* 가입은 `/me` 밖이라 이 화면이 껍데기다 — 주소 · 공개 키가 없는 빌드는 그 까닭만 말하고, 아래는 연결된 클라이언트만 본다(ADR 0244) */
+  /* 가입은 `/me` 밖이라 이 화면이 껍데기다 — 주소 · 공개 키가 없는 빌드는 그 까닭만 말하고, 아래는 연결된 클라이언트만 본다(ADR 0243) */
   if (supabase === null) {
     return (
       <SafeAreaView style={styles.screen}>
