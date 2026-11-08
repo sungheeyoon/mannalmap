@@ -10,9 +10,6 @@ import { CardFrame } from '@/ui/surfaces';
 
 import { acknowledgeWarning, readWarningNotice } from './warning';
 
-/** 웹의 `--danger-wash` */
-const DANGER_WASH = '#faeae7';
-
 /**
  * 경고를 받은 사람에게 서는 안내 — 웹의 `app/me/warning/warning-notice.tsx` 와 같은 문 · 같은 글자다(ADR 0108).
  * 무엇을 내주는가는 문이 정한다. 못 읽었으면 안 그린다 — 부속 정보다. 못 적었으면 안내는 그대로 둔다 — 안 읽은 채 사라지면 「알렸는가」가 거짓이 된다.
@@ -58,7 +55,7 @@ export function WarningNotice() {
 
 const styles = StyleSheet.create({
   wrap: { paddingHorizontal: 16, paddingTop: 8, paddingBottom: 8 },
-  card: { gap: 12, padding: 20, borderColor: 'rgba(163, 71, 63, 0.4)', backgroundColor: DANGER_WASH },
+  card: { gap: 12, padding: 20, borderColor: COLOR.dangerLine, backgroundColor: COLOR.dangerWash },
   title: { fontFamily: FONT.bold, fontSize: TYPE.lead, color: COLOR.danger },
   lines: { gap: 4 },
   line: { fontFamily: FONT.medium, fontSize: TYPE.body, lineHeight: 24, color: COLOR.foreground },

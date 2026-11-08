@@ -1,6 +1,6 @@
 import { router } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
-import { AccessibilityInfo, Animated, Easing, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Animated, Easing, Pressable, StyleSheet, Text, View } from 'react-native';
 import Svg, { Circle, Defs, Line, Path, RadialGradient, Rect, Stop } from 'react-native-svg';
 
 import { READING_STALE_LABEL } from '@reading/notes';
@@ -10,10 +10,10 @@ import { linksOf, type MapModel, type MapPerson } from '@reading/relation-map';
 
 import { ElementSymbol } from '@/ui/element-symbol';
 import { PrimaryButton } from '@/ui/parts';
-import { settled } from '@/ui/settled';
+import { useReducedMotion } from '@/ui/motion';
 import { StemSymbol } from '@/ui/stem-symbol';
 import { Icon } from '@/ui/icons';
-import { COLOR, ELEMENT_TONE, FONT, RADIUS as CORNER, TYPE } from '@/ui/tokens';
+import { alpha, COLOR, ELEMENT_TONE, FONT, RADIUS as CORNER, TYPE } from '@/ui/tokens';
 import { CardFrame, Paper } from '@/ui/surfaces';
 
 /** 누른 뒤의 박자(ms) — 웹의 `BEAT` 와 같다 */
@@ -23,17 +23,6 @@ const MAX_WIDTH = 384;
 
 const go = (href: string) => router.push(href as never);
 const toneOf = (element: Element | null | undefined) => (element ? ELEMENT_TONE[element] : { ink: COLOR.none, soft: COLOR.noneSoft, mid: COLOR.noneMid });
-
-/** 움직임을 줄인 기기인가 — 줄였으면 숨도 만남도 안 돈다(웹의 `motion-reduce`) */
-function useReducedMotion(): boolean {
-  const [reduced, setReduced] = useState(false);
-  useEffect(() => {
-    void settled(AccessibilityInfo.isReduceMotionEnabled(), 'isReduceMotionEnabled', () => false).then(setReduced);
-    const listening = AccessibilityInfo.addEventListener('reduceMotionChanged', setReduced);
-    return () => listening.remove();
-  }, []);
-  return reduced;
-}
 
 /** 그림의 숨 — 아주 작고 느리고, 박자가 흩어져 한꺼번에 움직이지 않는다. 웹은 그림의 부분마다 움직이고 앱은 그림 하나가 숨 쉰다 */
 function Breathing({ stem, size, phase, hushed }: { stem: Stem; size: number; phase: number; hushed: boolean }) {
@@ -411,7 +400,7 @@ const styles = StyleSheet.create({
   seatUnread: { borderWidth: 2, borderStyle: 'dashed', borderColor: COLOR.borderStrong, backgroundColor: COLOR.surface },
   seatUnknown: { fontFamily: FONT.bold, fontSize: TYPE.body, color: COLOR.secondary },
   seatLabelRoom: { position: 'absolute', alignItems: 'center' },
-  seatLabel: { maxWidth: '100%', minWidth: 40, flexDirection: 'row', alignItems: 'baseline', justifyContent: 'center', gap: 4, paddingHorizontal: 6, borderRadius: CORNER.pill, backgroundColor: 'rgba(255, 244, 230, 0.9)' },
+  seatLabel: { maxWidth: '100%', minWidth: 40, flexDirection: 'row', alignItems: 'baseline', justifyContent: 'center', gap: 4, paddingHorizontal: 6, borderRadius: CORNER.pill, backgroundColor: alpha(COLOR.cream, 0.9) },
   seatLabelNear: { paddingVertical: 2, backgroundColor: COLOR.surface },
   seatName: { flexShrink: 1, fontFamily: FONT.bold, fontSize: TYPE.fine, lineHeight: 20, color: COLOR.secondary },
   seatNameNear: { fontSize: TYPE.body, color: COLOR.foreground },

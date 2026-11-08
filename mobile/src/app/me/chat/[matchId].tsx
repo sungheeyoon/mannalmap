@@ -6,7 +6,8 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { listenLive } from '@/chat/live';
 import { UNREACHABLE } from '@/auth/signup';
-import { AccountNotice, FailureLine, NoRoom } from '@/chat/notices';
+import { AccountNotice, NoRoom } from '@/chat/notices';
+import { FailureLine } from '@/ui/failure-line';
 import { settled } from '@/ui/settled';
 import { noteActivity, readRoomScreen, type RoomScreen } from '@/chat/reads';
 import { ChatRoomView } from '@/chat/room';

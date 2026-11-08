@@ -6,12 +6,13 @@ import { INTRO_MAX, NICKNAME_AVAILABLE_NOTE, NICKNAME_MAX, NICKNAME_MIN, NICKNAM
 
 import { supabase } from '@/auth/client';
 import { checkNickname } from '@/auth/signup';
+import { FailureLine } from '@/ui/failure-line';
 import { Field, PrimaryButton } from '@/ui/parts';
 import { COLOR, FONT, RADIUS, TYPE } from '@/ui/tokens';
 import { TopBar } from '@/ui/top-bar';
 import { CardFrame } from '@/ui/surfaces';
 
-import { AccountNotice, FailureLine, settingsText, useDoneNote } from './parts';
+import { AccountNotice, settingsText, useDoneNote } from './parts';
 import { PhotoGrid } from './photo-grid';
 import { BirthSection } from './birth-section';
 import { myPhotos, photoUploadMode, type MyPhoto } from './photos';

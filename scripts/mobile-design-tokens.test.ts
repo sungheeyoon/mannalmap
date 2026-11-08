@@ -78,9 +78,19 @@ describe('면 · 칸 · 단추의 값', () => {
 });
 
 describe('앱이 값을 베끼지 않는다', () => {
-  it('`mobile/src/ui/tokens.ts` 에 색 글자가 하나뿐이다 — 웹에 토큰이 없는 `border-warning/25`', () => {
+  it('`mobile/src/ui/tokens.ts` 에 색 글자가 없다 — 반투명도 원본의 `mix` 에서 난다(ADR 0242)', () => {
     const tokens = read('mobile/src/ui/tokens.ts');
-    expect(tokens.match(/#[0-9a-f]{6}|rgba\(/g)).toEqual(['rgba(']);
+    expect(tokens.replace(/\/\*[\s\S]*?\*\//g, '').match(/['"`]#[0-9a-f]{3,8}['"`]|rgba\(\s*\d/g)).toBeNull();
     expect(tokens).toContain("from '@design'");
+  });
+
+  it('덮개는 한 벌이다 — 앱 `COLOR.scrim` 과 웹의 `backdrop:bg-scrim` 이 같은 원본의 값이다', () => {
+    expect(COLOR.scrim).toBe('rgba(0, 0, 0, 0.4)');
+    expect(read('mobile/src/ui/scrim.tsx')).toContain('COLOR.scrim');
+    for (const path of ['app/ui/surfaces.ts', 'app/ui/sheet.tsx', 'app/ui/action-sheet.tsx']) {
+      const web = read(path);
+      expect(web, path).toContain('backdrop:bg-scrim');
+      expect(web, path).not.toMatch(/backdrop:bg-black/);
+    }
   });
 });

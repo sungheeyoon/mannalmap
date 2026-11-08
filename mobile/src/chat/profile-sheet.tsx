@@ -1,5 +1,5 @@
 import { useState, type ReactNode } from 'react';
-import { Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { initialOf, type PhotoFocus } from '@profile';
@@ -7,7 +7,8 @@ import type { Element } from '@saju';
 
 import { Photo } from '@/ui/photo';
 import { Icon } from '@/ui/icons';
-import { COLOR, CONTROL, ELEMENT_TONE, FONT, RADIUS, TYPE } from '@/ui/tokens';
+import { Scrim } from '@/ui/scrim';
+import { alpha, COLOR, CONTROL, ELEMENT_TONE, FONT, RADIUS, TYPE } from '@/ui/tokens';
 import { SheetPanel, Tile } from '@/ui/surfaces';
 
 
@@ -44,35 +45,32 @@ export function ProfileSheet({
   const shown = intro !== null && intro.trim() !== '' ? intro : null;
   const scale = tone === null ? { ink: COLOR.none, soft: COLOR.noneSoft } : ELEMENT_TONE[tone];
   return (
-    <Modal transparent visible animationType="slide" onRequestClose={onClose}>
-      <View style={styles.back}>
-        <Pressable style={styles.outside} onPress={onClose} />
-        <SheetPanel style={styles.sheet} accessibilityLabel={partnerSheetName(nickname)}>
-        <SafeAreaView edges={['bottom']} style={styles.sheetSafe}>
-          <View style={styles.head}>
-            <Text accessibilityRole="header" numberOfLines={1} style={styles.name}>
-              {nickname}
-            </Text>
-            {menu}
-            <Pressable accessibilityRole="button" accessibilityLabel="닫기" onPress={onClose} style={styles.close}>
-              <Icon name="close" color={COLOR.foreground} size={20} />
-            </Pressable>
-          </View>
-          <ScrollView contentContainerStyle={styles.body}>
-            <PhotoFrame nickname={nickname} soft={scale.soft} ink={scale.ink} photos={photos} empty={emptyPhoto} />
-            {toMatch}
-            {shown !== null && (
-              <View style={styles.intro}>
-                <Text style={styles.introHead}>소개</Text>
-                <Text style={styles.introBody}>{shown}</Text>
-              </View>
-            )}
-            {footer}
-          </ScrollView>
-        </SafeAreaView>
-        </SheetPanel>
-      </View>
-    </Modal>
+    <Scrim place="bottom" animation="slide" onRequestClose={onClose} onOutside={onClose}>
+      <SheetPanel style={styles.sheet} accessibilityLabel={partnerSheetName(nickname)}>
+      <SafeAreaView edges={['bottom']} style={styles.sheetSafe}>
+        <View style={styles.head}>
+          <Text accessibilityRole="header" numberOfLines={1} style={styles.name}>
+            {nickname}
+          </Text>
+          {menu}
+          <Pressable accessibilityRole="button" accessibilityLabel="닫기" onPress={onClose} style={styles.close}>
+            <Icon name="close" color={COLOR.foreground} size={20} />
+          </Pressable>
+        </View>
+        <ScrollView contentContainerStyle={styles.body}>
+          <PhotoFrame nickname={nickname} soft={scale.soft} ink={scale.ink} photos={photos} empty={emptyPhoto} />
+          {toMatch}
+          {shown !== null && (
+            <View style={styles.intro}>
+              <Text style={styles.introHead}>소개</Text>
+              <Text style={styles.introBody}>{shown}</Text>
+            </View>
+          )}
+          {footer}
+        </ScrollView>
+      </SafeAreaView>
+      </SheetPanel>
+    </Scrim>
   );
 }
 
@@ -126,8 +124,6 @@ function PhotoFrame({
 }
 
 const styles = StyleSheet.create({
-  back: { flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(38, 36, 31, 0.45)' },
-  outside: { ...StyleSheet.absoluteFill },
   sheet: { maxHeight: '90%' },
   head: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingLeft: 20, paddingRight: 8, paddingTop: 8 },
   name: { flex: 1, fontSize: TYPE.lead, fontFamily: FONT.bold, color: COLOR.foreground },
@@ -136,7 +132,7 @@ const styles = StyleSheet.create({
   photo: { width: '100%', maxWidth: 340, aspectRatio: 4 / 5, alignSelf: 'center', alignItems: 'center', justifyContent: 'center', padding: 0, overflow: 'hidden' },
   page: { height: '100%', alignItems: 'center', justifyContent: 'center' },
   bars: { position: 'absolute', top: 8, left: 8, right: 8, flexDirection: 'row', gap: 4 },
-  bar: { flex: 1, height: 3, borderRadius: RADIUS.pill, backgroundColor: 'rgba(255, 253, 249, 0.45)' },
+  bar: { flex: 1, height: 3, borderRadius: RADIUS.pill, backgroundColor: alpha(COLOR.surface, 0.45) },
   barOn: { backgroundColor: COLOR.surface },
   initial: { fontSize: TYPE.figure * 2, fontFamily: FONT.bold },
   intro: { gap: 8, paddingTop: 16, borderTopWidth: 1, borderTopColor: COLOR.border },

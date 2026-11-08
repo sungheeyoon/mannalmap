@@ -4,7 +4,7 @@ import type { Saju } from '@saju';
 import { STRENGTH_THRESHOLD, emergencesLine, rootsLine } from '@saju-view';
 import { ROOTING_NOTE, STRENGTH_OVERLAP_NOTE } from '@saju-view/notes';
 
-import { COLOR, RADIUS } from '@/ui/tokens';
+import { alpha, COLOR, RADIUS } from '@/ui/tokens';
 
 import { Disclosure, FactTag, Fold, T, shared } from './parts';
 
@@ -110,8 +110,8 @@ const styles = StyleSheet.create({
   ratio: { marginTop: 16, columnGap: 4 },
   meter: { marginTop: 20 },
   track: { height: 12, borderRadius: RADIUS.pill, backgroundColor: COLOR.track },
-  fill: { height: '100%', borderRadius: RADIUS.pill, backgroundColor: 'rgba(38, 36, 31, 0.55)' },
-  mark: { position: 'absolute', top: -4, bottom: -4, width: 2, backgroundColor: 'rgba(38, 36, 31, 0.45)' },
+  fill: { height: '100%', borderRadius: RADIUS.pill, backgroundColor: alpha(COLOR.foreground, 0.55) },
+  mark: { position: 'absolute', top: -4, bottom: -4, width: 2, backgroundColor: alpha(COLOR.foreground, 0.45) },
   scale: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 6 },
   scores: { flexDirection: 'row', gap: 8, marginTop: 16 },
   score: { flex: 1, borderRadius: RADIUS.cell, borderWidth: 1, borderColor: COLOR.border, paddingHorizontal: 12, paddingVertical: 10 },
@@ -121,7 +121,7 @@ const styles = StyleSheet.create({
   criterionMet: { borderColor: COLOR.borderStrong, backgroundColor: COLOR.surfaceSunken },
   criterionHead: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8 },
   pill: { borderRadius: RADIUS.pill, backgroundColor: COLOR.surfaceSunken, paddingHorizontal: 8, paddingVertical: 2 },
-  pillMet: { backgroundColor: 'rgba(38, 36, 31, 0.85)' },
+  pillMet: { backgroundColor: alpha(COLOR.foreground, 0.85) },
   detail: { marginTop: 6 },
   overlap: { marginTop: 8 },
   rooting: { marginTop: 16 },

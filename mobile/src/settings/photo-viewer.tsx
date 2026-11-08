@@ -108,7 +108,7 @@ export function PhotoViewer({
         <View style={styles.head}>
           <Pressable accessibilityRole="button" accessibilityLabel="닫기" onPress={onClose} style={styles.icon}>
             <Svg width={24} height={24} viewBox="0 0 24 24">
-              <Path d="M6 6 L18 18 M18 6 L6 18" stroke="#fff" strokeWidth={2} strokeLinecap="round" />
+              <Path d="M6 6 L18 18 M18 6 L6 18" stroke={COLOR.onPhoto} strokeWidth={2} strokeLinecap="round" />
             </Svg>
           </Pressable>
           <View style={styles.count}>
@@ -119,9 +119,9 @@ export function PhotoViewer({
           </View>
           <Pressable accessibilityRole="button" accessibilityLabel={PHOTO_MENU_LABEL} onPress={() => setMenu(true)} style={styles.icon}>
             <Svg width={24} height={24} viewBox="0 0 24 24">
-              <Circle cx={5} cy={12} r={1.8} fill="#fff" />
-              <Circle cx={12} cy={12} r={1.8} fill="#fff" />
-              <Circle cx={19} cy={12} r={1.8} fill="#fff" />
+              <Circle cx={5} cy={12} r={1.8} fill={COLOR.onPhoto} />
+              <Circle cx={12} cy={12} r={1.8} fill={COLOR.onPhoto} />
+              <Circle cx={19} cy={12} r={1.8} fill={COLOR.onPhoto} />
             </Svg>
           </Pressable>
         </View>
@@ -149,14 +149,14 @@ export function PhotoViewer({
 }
 
 const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: '#000' },
+  screen: { flex: 1, backgroundColor: COLOR.photoBack },
   head: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 8, paddingVertical: 4 },
   icon: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center' },
   count: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  lead: { overflow: 'hidden', paddingHorizontal: 8, paddingVertical: 2, borderRadius: RADIUS.pill, backgroundColor: '#fff', color: '#000', fontSize: TYPE.fine, fontFamily: FONT.bold },
-  countText: { color: '#fff', fontSize: TYPE.body, fontFamily: FONT.bold },
+  lead: { overflow: 'hidden', paddingHorizontal: 8, paddingVertical: 2, borderRadius: RADIUS.pill, backgroundColor: COLOR.onPhoto, color: COLOR.photoBack, fontSize: TYPE.fine, fontFamily: FONT.bold },
+  countText: { color: COLOR.onPhoto, fontSize: TYPE.body, fontFamily: FONT.bold },
   stage: { flex: 1 },
-  scrim: { ...StyleSheet.absoluteFill, justifyContent: 'flex-end', backgroundColor: 'rgba(0, 0, 0, 0.4)' },
+  scrim: { ...StyleSheet.absoluteFill, justifyContent: 'flex-end', backgroundColor: COLOR.scrim },
   sheet: { gap: 12, paddingHorizontal: 16, paddingTop: 16, paddingBottom: 24 },
   choice: { minHeight: 56, justifyContent: 'center', paddingHorizontal: 16 },
   choiceText: { fontSize: TYPE.lead, fontFamily: FONT.bold, color: COLOR.foreground },

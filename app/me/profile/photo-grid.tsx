@@ -340,7 +340,7 @@ export function PhotoGrid({
         >
           <span
             aria-hidden="true"
-            className="grid size-[1.625rem] place-items-center rounded-full bg-black/50 text-white ring-1 ring-white/40 backdrop-blur-sm"
+            className="grid size-[1.625rem] place-items-center rounded-full bg-photo-face text-on-photo ring-1 ring-photo-line backdrop-blur-sm"
           >
             <Icon name="close" className="size-3.5" />
           </span>

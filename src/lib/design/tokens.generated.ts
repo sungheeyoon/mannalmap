@@ -1,6 +1,6 @@
 /* 지은 파일이다 — 손대지 말고 `src/lib/design/tokens.json` 을 고친 뒤 `node scripts/design-tokens.mjs` 를 돈다. */
 
-/** 밝은 화면의 색 — Tailwind 의 `--color-*` 이름 */
+/** 밝은 화면의 색 — Tailwind 의 `--color-*` 이름. 뒤쪽은 색 + 투명도(`mix`) */
 export const COLOR = {
   "background": "#faf6ef",
   "foreground": "#26241f",
@@ -26,7 +26,18 @@ export const COLOR = {
   "cream": "#fff4e6",
   "creamInk": "#6b4a2b",
   "badge": "#c0442c",
-  "onBadge": "#ffffff"
+  "onBadge": "#ffffff",
+  "scrim": "rgba(0, 0, 0, 0.4)",
+  "dangerLine": "rgba(163, 71, 63, 0.4)",
+  "warningLine": "rgba(138, 99, 32, 0.4)",
+  "warningLineSoft": "rgba(138, 99, 32, 0.25)",
+  "onPhoto": "#ffffff",
+  "onPhotoStrong": "rgba(255, 255, 255, 0.95)",
+  "onPhotoSoft": "rgba(255, 255, 255, 0.85)",
+  "onPhotoFaint": "rgba(255, 255, 255, 0.75)",
+  "photoLine": "rgba(255, 255, 255, 0.4)",
+  "photoFace": "rgba(0, 0, 0, 0.5)",
+  "photoBack": "#000000"
 } as const;
 
 /** 어두운 화면의 색 — 앱은 아직 안 쓴다 */
@@ -55,7 +66,24 @@ export const COLOR_DARK = {
   "cream": "#2b2620",
   "creamInk": "#eed6b8",
   "badge": "#f09a84",
-  "onBadge": "#22120d"
+  "onBadge": "#22120d",
+  "scrim": "rgba(0, 0, 0, 0.4)",
+  "dangerLine": "rgba(239, 154, 142, 0.4)",
+  "warningLine": "rgba(232, 191, 116, 0.4)",
+  "warningLineSoft": "rgba(232, 191, 116, 0.25)",
+  "onPhoto": "#ffffff",
+  "onPhotoStrong": "rgba(255, 255, 255, 0.95)",
+  "onPhotoSoft": "rgba(255, 255, 255, 0.85)",
+  "onPhotoFaint": "rgba(255, 255, 255, 0.75)",
+  "photoLine": "rgba(255, 255, 255, 0.4)",
+  "photoFace": "rgba(0, 0, 0, 0.5)",
+  "photoBack": "#000000"
+} as const;
+
+/** 화면 색 모드를 안 따르는 색 — 사진 위 · 사진 보기의 흰 · 검정 */
+export const FIXED = {
+  "white": "#ffffff",
+  "black": "#000000"
 } as const;
 
 /** 오행 한 벌 — 글자 · 면 · 상징의 속. `none` 은 오행을 모를 때 */
@@ -166,13 +194,15 @@ export const RADIUS = {
   "pill": 999
 } as const;
 
-/** 간격의 단(px) */
-export const SPACE = [
-  4,
-  8,
-  12,
-  16,
-  24,
-  32,
-  48
-] as const;
+/** 움직임의 시간(ms) — 누름의 전환 · 뼈대의 반짝임 · 끝 모르는 띠 */
+export const MOTION = {
+  "quick": 160,
+  "shimmer": 1600,
+  "flow": 1800
+} as const;
+
+/** 움직임의 이징 — CSS 낱말. 앱은 `mobile/src/ui/motion.ts` 가 같은 이름의 `Easing` 으로 푼다 */
+export const EASING = {
+  "quick": "ease",
+  "loop": "ease-in-out"
+} as const;

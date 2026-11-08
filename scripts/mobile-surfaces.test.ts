@@ -9,6 +9,10 @@ import { SURFACE_EXCEPTIONS } from '../src/lib/design/contract';
  * **앱의 면은 `mobile/src/ui/` 의 부품으로만 선다**(ADR 0109 추기 2026-10-31). 운영자가 「카드가 화면마다 살짝씩 다르다」고 짚었다 — 면을 손으로 쓰는 길을
  * 닫는다. 값(카드 모서리 · 그림자)을 화면이 직접 들면 붉다. 칸(`RADIUS.cell`) · 알약(`RADIUS.pill`)은 면이 아니라 허락한다. 예외는 `SURFACE_EXCEPTIONS` 의 표다 —
  * 사유 없이 늘지 않고, 그 자리가 사라지면 표의 줄도 지운다. CI 에 앱 패키지가 없어 글자로 읽는다.
+ *
+ * **색 날값 · `Modal` 도 같은 길로 닫는다**(ADR 0242) — 화면이 `'#fff'` · `rgba(…)` 를 적으면 웹과 갈라진다(2026-11-08 감사: hex 15 · `rgba(` 30줄). 색은
+ * `COLOR` 의 이름(덮개 · 사진 위 글자 · 경고 테)이나 `alpha(COLOR.x, 0.5)` 로 토큰에 얹는다. 뜨는 판은 `ui/scrim.tsx` 의 `Scrim` 위에 선다 — 덮개 색이 세 벌이었다.
+ * 주석 속 글자(`#936` 같은 이슈 번호)는 안 센다.
  */
 const ROOT = join(__dirname, '..');
 const SRC = join(ROOT, 'mobile', 'src');
@@ -28,10 +32,17 @@ const HAND_MADE: readonly { what: string; pattern: RegExp }[] = [
   { what: '토큰 이름 바꿔 부르기', pattern: /\bRADIUS as (?!CORNER\b)\w+|\bCORNER\.(?:card|panel|control)\b/g },
   { what: '그림자 직접', pattern: /\bboxShadow:|\bshadow(?:Color|Offset|Opacity|Radius):|\belevation:\s*\d/g },
   { what: '옛 판 `Panel`', pattern: /<Panel(?=[\s>])(?!\s*\|)/g },
+  { what: '색 날값 hex', pattern: /['"`]#[0-9a-fA-F]{3,8}['"`]/g },
+  { what: '색 날값 rgba', pattern: /\brgba?\(\s*\d/g },
+  { what: '`Modal` 직접 — `Scrim` 위에 세운다', pattern: /<Modal\b/g },
 ];
 
+/** 주석은 안 센다 — 이슈 번호(`#936`) · 설명 속 `rgba(…)` */
+const codeOf = (text: string) => text.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '');
+
 function handMadeIn(text: string): { what: string; found: string }[] {
-  return HAND_MADE.flatMap(({ what, pattern }) => [...text.matchAll(pattern)].map((match) => ({ what, found: match[0] })));
+  const code = codeOf(text);
+  return HAND_MADE.flatMap(({ what, pattern }) => [...code.matchAll(pattern)].map((match) => ({ what, found: match[0] })));
 }
 
 const files = walk(SRC)
@@ -65,6 +76,15 @@ describe('앱 화면의 면', () => {
       expect(handMadeIn(bad), bad).not.toEqual([]);
     }
     for (const fine of ['borderRadius: RADIUS.cell', 'borderRadius: RADIUS.pill']) expect(handMadeIn(fine), fine).toEqual([]);
+  });
+
+  it('색 날값 · `Modal` 이 표기를 달리 써도 걸리고, 주석 · 토큰에 얹은 투명도는 안 걸린다', () => {
+    for (const bad of ["color: '#fff'", 'stroke="#ffffff"', 'fill={`#000`}', "backgroundColor: 'rgba(0, 0, 0, 0.4)'", "color: 'rgb(1,2,3)'", '<Modal transparent visible>']) {
+      expect(handMadeIn(bad), bad).not.toEqual([]);
+    }
+    for (const fine of ['/** 웹의 `rgba(0, 0, 0, 0.4)` · (#936) */', '// stroke="#fff" 였다', 'backgroundColor: alpha(COLOR.surface, 0.55)', 'color: COLOR.onPhoto', '{/* <Modal 이었다 */}']) {
+      expect(handMadeIn(fine), fine).toEqual([]);
+    }
   });
 });
 
