@@ -2,13 +2,17 @@ import Link from 'next/link';
 
 import { SERVICE_NAME, SERVICE_NAME_TOPIC, SERVICE_TAGLINE } from '@/src/lib/brand';
 import { ABOUT_LEAD, ABOUT_STEPS } from '@/src/lib/brand/guide';
-import { SERVICE_FEATURES } from '@/src/lib/brand/features';
+import { SERVICE_FEATURES, featureText } from '@/src/lib/brand/features';
 
 import { BUTTON_PRIMARY, BUTTON_SECONDARY } from '../ui/buttons';
 import { Icon } from '../ui/icons';
 import { Logo } from '../ui/logo';
 import { CARD, COLUMN, PAPER, TYPE_META, TYPE_NAME, TYPE_SECTION, TYPE_TITLE } from '../ui/surfaces';
 import { HomeLink } from '../home-link';
+import { matchOpenWhilePrerendered } from '../signed-out-match-open';
+
+/** 인연의 열림을 다시 묻는 간격(초) — 첫 화면(`app/page.tsx`)과 같다 */
+export const revalidate = 60;
 
 export const metadata = {
   title: '서비스 소개',
@@ -21,10 +25,11 @@ export const metadata = {
  * 앞 판의 첫 화면은 입력 폼 하나였다. 폼은 「사주를 본다」만 말하고, 그 뒤에 무엇이 이어지는지(사주풀이 · 궁합 · 인연 ·
  * 채팅)는 로그인한 뒤에야 탭으로 보였다. 이 화면은 그 넷을 가입 전에 한 장으로 보여 준다.
  *
- * **정적이다** — 세션도 DB 도 안 읽는다. 사실은 PRD 「화면」 · 「자원」 절이 말하는 것만 적는다 — 수(풀이권 · 저장 자리)는
+ * **미리 그려진다** — 세션은 안 읽고, DB 는 인연의 열림 하나만 묻는다(인연 카드의 「준비 중」 글, `signed-out-match-open.ts`). 사실은 PRD 「화면」 · 「자원」 절이 말하는 것만 적는다 — 수(풀이권 · 저장 자리)는
  * 운영 중에 바뀌므로 여기 적지 않고 그 수가 서는 자리를 가리킨다.
  */
-export default function AboutPage() {
+export default async function AboutPage() {
+  const matchOpen = await matchOpenWhilePrerendered();
   return (
     <main className={`app-shell flex w-full ${COLUMN} flex-1 flex-col gap-10 py-8 sm:py-12`}>
       <header className={`flex flex-col gap-3 ${PAPER}`}>
@@ -50,8 +55,7 @@ export default function AboutPage() {
                 <Icon name={feature.icon} />
               </span>
               <h3 className={TYPE_NAME}>{feature.title}</h3>
-              <p className="text-body leading-6 text-secondary">{feature.body}</p>
-              <p className={TYPE_META}>{feature.note}</p>
+              <FeatureBody {...featureText(feature, matchOpen)} />
             </li>
           ))}
         </ul>
@@ -85,5 +89,15 @@ export default function AboutPage() {
         </Link>
       </p>
     </main>
+  );
+}
+
+/** 카드의 본문과 조건 줄 — 닫힌 인연은 조건 줄이 없다(`featureText`) */
+function FeatureBody({ body, note }: { body: string; note: string | null }) {
+  return (
+    <>
+      <p className="text-body leading-6 text-secondary">{body}</p>
+      {note !== null && <p className={TYPE_META}>{note}</p>}
+    </>
   );
 }

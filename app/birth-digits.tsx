@@ -224,7 +224,7 @@ export function TimeFields({ value, onChange }: { value: Query; onChange: (next:
         onPick={(next) => choose(next === 'known')}
         options={[
           { value: 'known', label: '직접 입력' },
-          { value: 'unknown', label: HOUR_UNKNOWN_CHOICE, hint: '출생 시각 없이 풀이해요' },
+          { value: 'unknown', label: HOUR_UNKNOWN_CHOICE, hint: '몰라도 괜찮아요, 여섯 글자로 봐요' },
         ]}
       />
       {/*

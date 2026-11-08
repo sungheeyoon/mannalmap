@@ -8,7 +8,16 @@ export type ServiceFeatureIcon = 'spark' | 'reading' | 'taiji' | 'people';
  * 세운다. 첫 화면은 `note`(로그인 · 풀이권 조건)를 싣지 않는다 — 홈은 무엇을 하는지만 말한다(운영자 결정 2026-10-08).
  * 사실은 PRD 「화면」 · 「자원」 절이 말하는 것만 적는다 — 수(풀이권 몇 개 · 저장 몇 명)는 운영 중에 바뀌므로 안 적는다.
  */
-export const SERVICE_FEATURES: readonly { icon: ServiceFeatureIcon; title: string; body: string; note: string }[] = [
+export type ServiceFeature = {
+  icon: ServiceFeatureIcon;
+  title: string;
+  body: string;
+  note: string;
+  /** 인연이 닫힌 동안(ADR 0222) 본문 대신 서는 글자 — 조건 줄(`note`)은 안 선다(운영자 확정 2026-11-08, 대장 all-10) */
+  closedBody?: string;
+};
+
+export const SERVICE_FEATURES: readonly ServiceFeature[] = [
   {
     icon: 'spark',
     title: '사주',
@@ -32,5 +41,15 @@ export const SERVICE_FEATURES: readonly { icon: ServiceFeatureIcon; title: strin
     title: '인연',
     body: '마음이 가는 사람과 바로 대화를 시작하고, 서로 동의하면 상세 궁합을 함께 볼 수 있어요.',
     note: '로그인 · 대화는 무료 · 상세 궁합을 청할 때 풀이권 1장 예약',
+    closedBody: '인연은 준비 중이에요. 열리면 사주로 어울리는 사람을 소개해 드려요.',
   },
 ];
+
+/**
+ * 카드가 세우는 글 — 인연이 닫혔으면(`matchOpen` 거짓) `closedBody` 를 든 카드는 그 글만 세우고 조건 줄은 없다(`note: null`).
+ * 웹의 첫 화면 「할 수 있는 것」 · 서비스 소개가 같이 쓴다.
+ */
+export function featureText(feature: ServiceFeature, matchOpen: boolean): { body: string; note: string | null } {
+  if (feature.closedBody !== undefined && !matchOpen) return { body: feature.closedBody, note: null };
+  return { body: feature.body, note: feature.note };
+}
