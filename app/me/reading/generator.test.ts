@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { baselineIn, checkReading, LEGACY_PAIR_ASSEMBLY } from '@/src/lib/reading';
+import { baselineIn, checkReading } from '@/src/lib/reading';
 import { CITY_LONGITUDES, computeSaju } from '@/src/lib/saju';
 import { WITHHELD_PATHS } from '@/src/lib/saju/evidence/shared';
 
@@ -74,17 +74,10 @@ describe('Match 첫 세로 슬라이스의 생성 경계', () => {
 });
 
 /**
- * **원복은 조립 하나만 바꾸면 된다**(ADR 0067). 자료의 판을 생성기가 따로 고르던 동안에는 `CONTROL` 을 옛 조립으로
- * 바꾸면 자료는 제한형, 지시는 옛 컷이 되어 모든 인연 궁합 생성이 멈췄다.
+ * **자료와 지시가 같은 조립에서 나온다**(ADR 0067). 자료의 판을 생성기가 따로 고르던 동안에는 조립의 판을 바꾸면
+ * 자료와 지시가 갈려 모든 인연 궁합 생성이 멈췄다. 옛 컷 원복 조립은 지웠다(ADR 0239).
  */
-describe('원복 조립으로 바꿔도 생성 입력이 지어진다', () => {
-  it('옛 조립이면 자료도 옛 컷이다', () => {
-    const made = readingInputOf({ kind: 'match', charts: { a: A, b: B }, viewedAt: VIEWED_AT, assembly: LEGACY_PAIR_ASSEMBLY });
-    if (!made.ok) throw new Error(made.detail);
-    expect(JSON.parse(made.input.evidenceText).contract.matchInput).toBeUndefined();
-    expect(made.input.prompt).toContain('각자의 원국 하나에 대한 판정은 없다');
-  });
-
+describe('생성 입력의 자료는 조립의 판을 따른다', () => {
   it('기본 조립이면 자료는 운영 판이다', () => {
     const made = readingInputOf({ kind: 'match', charts: { a: A, b: B }, viewedAt: VIEWED_AT });
     if (!made.ok) throw new Error(made.detail);

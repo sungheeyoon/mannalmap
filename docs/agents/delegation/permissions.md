@@ -7,12 +7,10 @@
 등급은 **되돌릴 수 있는가**로 갈린다. 잠금 칸의 규칙은 `.claude/settings.json` 의 `ask`·`deny`
 목록과, 「허용」으로 적은 규칙은 `allow` 목록과 **같은 표**다 — 시험이 둘을 견준다. **그 설정 파일은 Claude Code 만 읽는다** — 다른 에이전트
 (Codex 처럼 `AGENTS.md` 를 입구로 삼는 것)에게는 이 표가 전부다. `deny` 는 도구가 막고, `ask` 는
-**어느 모드에서도 묻는다** — bypass 모드도 지나가지 않는다(2026-09-23 에 공식 문서로 확인).
+**어느 모드에서도 묻는다** — bypass 모드도 지나가지 않는다.
 
-**등급 3 의 잠금은 공식 운영에 들어간 뒤에 켠다(ADR 0093) — 2026-11-05 에 켰고, 2026-11-07 에 프로덕션 배포만 남겼다.** 11-05 에
-운영자가 테스트 코드 없이 누구나 가입하게 정해(#1007) 단계가 공개 출시로 옮겨졌고, 켤 목록 스물셋을 다 `ask` 에 넣었다(#1011).
-이틀 뒤 운영자가 「배포 전에만 물으면 된다」고 좁혔다 — 이용자가 아직 운영자뿐이고, 머지 · `db push` 는 질문창 · 독립 검토로
-이미 확인한 것을 `ask` 가 한 번 더 묻는 겹친 창이었다(ADR 0093 「배포만 묻는다」). 그래서 등급 3 의 잠금 칸은 **프로덕션 배포
+**등급 3 의 잠금은 공식 운영에 들어간 뒤에 켜고, 잠그는 것은 프로덕션 배포뿐이다(ADR 0093 「배포만 묻는다」).** 켜고 좁힌
+경위는 그 ADR 의 추기에 있다. 등급 3 의 잠금 칸은 **프로덕션 배포
 넷뿐**이고, 에이전트는 `db push` · 운영 SQL(`db:remote`) · Vercel 변수 · 원격 가지 삭제 · `gh pr merge` 를 묻지 않고 수행하되
 **수행하고 나서 본 값을 #770 · 접속기록에 적는다**(아래). 실호출은 도구가 묻지 않아도 에이전트가 하지 않고 운영자가 직접 돌린다 —
 `docs/agents/delegation/unattended.md` 「권한 봉투」의 기본값. **지금이 어느 단계인가는 `docs/product/prd/roadmap.md` §7.0 표의
@@ -27,25 +25,24 @@
 | **1 로컬에서 고친다 — 묻지 않게 허용** | 머지되거나 닫힌 PR 의 워크트리 · 로컬 가지를 걷는다. 기본은 미리보기이고 `--apply` 도 PR 이 끝났고 push 안 된 커밋 · 더러운 변경이 없는 것만 걷는다(`docs/agents/delegation/coordinator.md` 「출시 흐름」 4 · 「라운드 끝 정리」, 운영자 답 2026-11-06) | `npm run sweep:merged` · `npm run sweep:merged -- --apply` | 허용 `Bash(npm run sweep:merged:*)` |
 | **1 로컬에서 고친다 — 지울 때마다 사람이 본다** | 이 저장소의 로컬 스택 볼륨을 지운다. 기본은 진단만이고, `--apply` 는 이름을 댄 볼륨 가운데 컨테이너가 붙지 않고 어느 워크트리도 쥐지 않은 것만 지운다. 로컬 DB 데이터를 영구히 없애 되돌릴 수 없다. 이미지는 지우지 않는다(`docs/agents/delegation/coordinator.md` 「라운드 끝 정리」, 운영자 답 2026-11-07) | `npm run sweep:docker` · `npm run sweep:docker -- --apply <볼륨>` | 사람 — allow 에 넣지 않는다 |
 | **2 밖으로 낸다 — 되돌릴 수 있게** | 가지를 밀고 PR 을 열고 이슈에 적는다. 리뷰 뒤 `--auto` 머지를 건다(gate 가 초록이 될 때까지 기다린다, ADR 0082). main 에 직접 미는 길은 없다 — 관리자까지 PR 로만 든다(ADR 0121) | `git push -u origin <가지>` · `gh pr create` · `gh pr merge --auto --squash` | 없음 — 단 아래 등급 3 의 예외 |
-| **3 사람이 답한 뒤에 — 운영 배포** | **프로덕션 배포**(`vercel deploy --prod` · 대시보드의 Create Deployment — 머지는 배포가 아니다, ADR 0110). **운영 베타에서도 사람이 답한 뒤였고, 등급 3 가운데 도구가 묻는 것은 이것뿐이다(2026-11-07)** — 라운드 끝의 묶음 배포 한 번을 조율자가 밟는다(`docs/agents/delegation/coordinator.md` 「머지는 배포가 아니다」, `docs/ops/runbook/deploy.md` 「묶음 배포」) | `vercel deploy --prod` · Create Deployment | 사람 — 도구는 `Bash(vercel --prod:*)` · `Bash(npx vercel --prod:*)` · `Bash(vercel deploy:*)` · `Bash(npx vercel deploy:*)` |
-| **3 묻지 않고 하고 값을 적는다** | 운영 DB 에 마이그레이션을 올리거나 임의 SQL 을 보내는 것, Vercel 변수, 원격 가지 삭제, `--auto` 없는 즉시 머지, 프로덕션 확인이 포함된 걸음 — **2026-11-05 에 잠갔다가 2026-11-07 운영자 결정으로 묻지 않는다(ADR 0093 「배포만 묻는다」).** 묻지 않고 수행하되 본 값을 #770 · 접속기록에 적는다. 토큰이 나가는 실호출은 잠금이 없어도 운영자가 직접 돌린다(`docs/agents/delegation/unattended.md` 「권한 봉투」) | `db push` · `db query --linked` · `db:remote` · `vercel env` · `gh pr merge` · 원격 가지 삭제 · `READING_LIVE=1`(운영자만) | 없음 — 2026-11-07 부터. 머지에 `--auto` 를 거는 것 · 실호출을 운영자에게 두는 것은 이 문장이 정한다 |
-| **3 사람이 답한 뒤에 — 도구 밖** | 남이 띄운 dev 서버는 죽이기 전에 묻는다. 운영 SQL 은 `npm run db:remote -- --purpose "<목적>" "<sql>"` 로 묻지 않고 돌리고 값을 적는다(2026-11-05 ~ 11-07 에는 잠금이 물었다, ADR 0093). **단 운영 개인정보는 예외 없이 직접 조회하지 않는다**(아래, ADR 0105) — 질의를 써서 건네고 사람이 검토해 돈다 | dev 서버 · 운영 개인정보 조회 | 사람 |
+| **3 사람이 답한 뒤에 — 운영 배포** | **프로덕션 배포**(`vercel deploy --prod` · 대시보드의 Create Deployment — 머지는 배포가 아니다, ADR 0110). **등급 3 가운데 도구가 묻는 것은 이것뿐이다** — 라운드 끝의 묶음 배포 한 번을 조율자가 밟는다(`docs/agents/delegation/coordinator.md` 「머지는 배포가 아니다」, `docs/ops/runbook/deploy.md` 「묶음 배포」) | `vercel deploy --prod` · Create Deployment | 사람 — 도구는 `Bash(vercel --prod:*)` · `Bash(npx vercel --prod:*)` · `Bash(vercel deploy:*)` · `Bash(npx vercel deploy:*)` |
+| **3 묻지 않고 하고 값을 적는다** | 운영 DB 에 마이그레이션을 올리거나 임의 SQL 을 보내는 것, Vercel 변수, 원격 가지 삭제, `--auto` 없는 즉시 머지, 프로덕션 확인이 포함된 걸음 — **묻지 않는다(ADR 0093 「배포만 묻는다」).** 묻지 않고 수행하되 본 값을 #770 · 접속기록에 적는다. 토큰이 나가는 실호출은 잠금이 없어도 운영자가 직접 돌린다(`docs/agents/delegation/unattended.md` 「권한 봉투」) | `db push` · `db query --linked` · `db:remote` · `vercel env` · `gh pr merge` · 원격 가지 삭제 · `READING_LIVE=1`(운영자만) | 없음. 머지에 `--auto` 를 거는 것 · 실호출을 운영자에게 두는 것은 이 문장이 정한다 |
+| **3 사람이 답한 뒤에 — 도구 밖** | 남이 띄운 dev 서버는 죽이기 전에 묻는다. 운영 SQL 은 `npm run db:remote -- --purpose "<목적>" "<sql>"` 로 묻지 않고 돌리고 값을 적는다. **단 운영 개인정보는 예외 없이 직접 조회하지 않는다**(아래, ADR 0105) — 질의를 써서 건네고 사람이 검토해 돈다 | dev 서버 · 운영 개인정보 조회 | 사람 |
 | **4 안 한다** | 되돌릴 수 없는 것. 어느 가지에도 force push(PR 가지는 main 을 merge 해 올린다, ADR 0150), `supabase config push`(원격의 구글 설정을 지운다), main 가지 삭제, Vercel 변수 삭제, 비밀 값을 커밋 | | `Bash(git push --force:*)` · `Bash(git push -f:*)` · `Bash(git push --force-with-lease:*)` · `Bash(git push * --force*)` · `Bash(git push * -f*)` · `Bash(git push * +*)` · `Bash(npx supabase config push:*)` · `Bash(supabase config push:*)` · `Bash(./node_modules/.bin/supabase config push:*)` · `Bash(git push origin :main)` · `Bash(git push origin --delete main)` · `Bash(vercel env rm:*)` · `Bash(npx vercel env rm:*)` |
 
-**운영 개인정보 — 에이전트는 예외 없이 직접 조회하지 않는다(2026-09-24, ADR 0105).** 등급 3 의 잠금(ADR 0093)과 따로 선
-경계이고, 잠금이 비어 있던 운영 베타에서도 지켰다. 이메일 · 닉네임과 계정의 짝 · 메시지 본문 · 출생정보 ·
+**운영 개인정보 — 에이전트는 예외 없이 직접 조회하지 않는다(ADR 0105).** 등급 3 의 잠금(ADR 0093)과 따로 선
+경계다. 이메일 · 닉네임과 계정의 짝 · 메시지 본문 · 출생정보 ·
 풀이를 운영 DB 에서 읽는 SQL 을 에이전트가 보내지 않는다 — 필요하면 질의를 써 주고 사람이 검토해 break-glass 로 돈다
 (`docs/ops/runbook/access.md` 「개인정보는 화면으로만」). 에이전트가 보내도 되는 원격 질의는 **개인을 가리키지 않는 것**뿐이다 —
 건수 · 집계 · `migration list` · 크론 · advisor · 설정 한 칸. 그것도 `npm run db:remote -- --purpose "<목적>" "<sql>"` 로만
 보낸다 — 목적과 SQL 해시가 접속기록에 `(agent)` 로 남는다. `.claude/settings.json` 은 SQL 의 내용을 못 가르므로 이 경계는
 도구가 아니라 이 문장이 든다.
 
-**`gh pr merge --auto` 는 등급 2 다** — gate 가 필수 검사라 초록까지 기다린다(2026-09-22 부터,
-ADR 0082). 보호 규칙의 strict 는 껐다(운영자 승인 2026-10-12 — 2026-09-23 부터 켜져 있었다) — 가지가 최신 main 을
+**`gh pr merge --auto` 는 등급 2 다** — gate 가 필수 검사라 초록까지 기다린다(ADR 0082). 보호 규칙의 strict 는 껐다 — 가지가 최신 main 을
 품지 않아도 gate 가 초록이면 든다. 그래서 나란히 든 두 PR 이 합쳐서야 깨질 수 있고, 그것은 main 의 전체 검증과
 `ci-main-red` 이슈가 잡는다(`docs/agents/delegation/working.md` 「시작하기 전에 — 붉은 main 이 먼저」). 병렬 라운드는 머지 전에
 `npm run merge:sim` 으로 먼저 합쳐 본다(`docs/agents/delegation/coordinator.md` 「조율자 세션」).
-**main 은 PR 로만 — 관리자까지(2026-09-28, ADR 0121).** 보호 규칙의 `enforce_admins` 를 켰다 — 운영자 · 조율자 ·
+**main 은 PR 로만 — 관리자까지(ADR 0121).** 보호 규칙의 `enforce_admins` 를 켰다 — 운영자 · 조율자 ·
 에이전트 누구의 커밋도 main 에 직접 들지 않고 PR 의 `gate` 를 지나야 든다. 운영자와 에이전트가 같은 GitHub 계정을
 써서 GitHub 가 둘을 못 가르고, `.claude/settings.json` 은 Claude Code 만 읽으며 `deny` 는 우회된 적이 있어(아래 「잠그지
 않은 것」) 에이전트만 막을 방법이 없다. 문서 · 세션 기록도 가지 → PR → `--auto` 로 넣는다(문서만 바뀐 PR 은 `policy`
@@ -53,14 +50,14 @@ ADR 0082). 보호 규칙의 strict 는 껐다(운영자 승인 2026-10-12 — 20
 시각을 그날 노트에 적는다.
 
 `--auto` 없는 즉시 머지가 등급 3 인 까닭은 검사를 안 지난 코드가 main 에 들고, 다음 묶음 배포가 그것을
-그대로 싣기 때문이다(2026-09-20 에 한 번 그랬다 — 그때는 머지가 곧 배포였다). 규칙이 인자를 못 가르니 `gh pr merge` 를
-`ask` 에 두면 `--auto` 머지까지 묻는다 — 2026-11-05 ~ 11-07 에 그랬고, 2026-11-07 부터는 `ask` 에 없다(ADR 0093 「배포만 묻는다」). 머지에 `--auto` 를 거는 것은 도구가 아니라 이 문장이 정한다.
+그대로 싣기 때문이다. 규칙이 인자를 못 가르니 `gh pr merge` 를
+`ask` 에 두면 `--auto` 머지까지 묻는다 — 그래서 `ask` 에 두지 않는다(ADR 0093 「배포만 묻는다」). 머지에 `--auto` 를 거는 것은 도구가 아니라 이 문장이 정한다.
 
 **예외 — 마이그레이션이 든 PR 은 `--auto` 도 등급 3 이다.** 머지가 곧 배포이던 때(ADR 0110 전)는 gate 초록 즉시
 앱이 나가 `docs/ops/runbook/deploy.md` 의 「마이그레이션이 먼저, 앱이 나중」이 뒤집혔다. 지금은 머지가 앱을 안 내보내지만, **그 main 을 올리는
 다음 묶음 배포가 DB 보다 먼저 나가지 않게** 순서를 머지에서부터 지킨다(`docs/ops/runbook/deploy.md` 「배포」 규약 넷 · 「묶음 배포」 0).
 그런 PR 은 `db push` 와 확인이 끝난 뒤에만 머지를 건다 — 에이전트가 그 걸음을 직접 수행하고 값을 적은
-뒤다(2026-11-05 ~ 11-07 에는 사람이 `db push` 에 답한 뒤였다, ADR 0093). 순서 자체는 언제나 지킨다. 앱이 새 함수를 부르는 변경이면 **넓히는 마이그레이션 PR 과 앱 PR 로 나눈다** —
+뒤다. 순서 자체는 언제나 지킨다. 앱이 새 함수를 부르는 변경이면 **넓히는 마이그레이션 PR 과 앱 PR 로 나눈다** —
 앞 PR 은 옛 앱에 안전하니 먼저 들고 `db push` 를 지나며, 뒤 PR 이 그 뒤에 든다(ADR 0071 의 A 단계가
 그 모양이다). **있는 함수의 반환 칸만 느는 확장은 나누지 않는다** — 새 함수가 아니고 옛 앱은 아는 칸만 집으니 옛 앱에 안전하다
 (`docs/ops/runbook/deploy.md` 규약 넷의 3). 마이그레이션과 앱을 한 PR 에 두고, 그 PR 도 `db push` 와 확인 뒤에 머지한다. 이 예외는 시험이 안 잰다 — `ci-plan.mjs` 가 그 경로를 아니까 잠글 자리는 있다.
@@ -69,24 +66,21 @@ ADR 0082). 보호 규칙의 strict 는 껐다(운영자 승인 2026-10-12 — 20
 칸과 PostgREST 캐시(`docs/ops/runbook/deploy.md` 「배포」), 실호출은 운영자가 돌리므로 에이전트는 볼 값(저장된 판본과 검사 결과)을 PR 에 적어 건네고,
 묶음 배포 뒤에는 Vercel 의 Ready 와 배포 SHA = main HEAD.
 
-**잠그지 않은 것 — 2026-09-23 에 잰 값.** 규칙이 서 있다고 도구가 지키는 것이 아니다. 두 가지를 밟았다.
-① **사용자의 `allow` 가 프로젝트의 `ask` 를 이겼다.** `.claude/settings.local.json` 에 확인 창의 「항상 허용」으로
-쌓인 `Bash(gh pr *)` · `Bash(npx supabase *)` · `Bash(git push *)` 가 있는 동안 `ask` 21개가 켜져 있어도
-`gh pr merge` 는 묻지 않았고, 그 세 줄을 지우자 물었다. ② `deny` 는 `cd x && git push --force-with-lease` 를
-막지 않았다(같은 날, 작업 가지). 그러니 잠금을 켤 때는 `ask` 만 되돌리지 말고 `settings.local.json` 의 넓은
+**잠그지 않은 것.** 규칙이 서 있다고 도구가 지키는 것이 아니다(측정한 값은 `docs/notes/2026-11-08-docs-diet.md`).
+① **사용자의 `allow` 가 프로젝트의 `ask` 를 이긴다** — `.claude/settings.local.json` 에 확인 창의 「항상 허용」으로
+쌓인 넓은 `allow`(`Bash(gh pr *)` 같은 것)가 있으면 `ask` 가 묻지 않는다. ② `deny` 는 `cd x && git push --force-with-lease` 를
+막지 않는다. 그러니 잠금을 켤 때는 `ask` 만 되돌리지 말고 `settings.local.json` 의 넓은
 `allow` 를 함께 걷고, 켠 뒤 `gh pr merge --help` 같은 해 없는 명령으로 창이 뜨는지 재 본다. 가지를 main
-위로 옮길 때는 rebase 대신 main 을 merge 해 force push 가 필요 없게 한다. ③ 2026-10-07 에 PR 가지가 force push 로 다시
-쓰였다 — `deny` 는 깃발이 `git push` 바로 뒤일 때만 걸렸다. 원격 뒤의 깃발과 `+<ref>` 를 더했지만 규칙은 글자를 견줄
+위로 옮길 때는 rebase 대신 main 을 merge 해 force push 가 필요 없게 한다. ③ `deny` 는 글자를 견줄
 뿐이라(<https://code.claude.com/docs/en/permissions> 「Bash rule limits」) `git -C`/`-c` 가 낀 push · 묶은 깃발(`-uf`) ·
 따옴표 속 `'+ref'` · 별칭 · 변수 · `gh api` 는 못 잡는다 — 그 꼴은 이 문장이 막는다. 이 표는 도구가 지키는 담이
 아니라 **에이전트가 읽는 규약**이고, 설정은 그 규약을 도구가 아는 데까지 옮긴 것이다.
 
 ### 공식 운영에 들어가면 켜는 잠금 (ADR 0093)
 
-**사람이 `docs/product/prd/roadmap.md` §7.0 의 「(지금)」을 공개 출시로 옮기는 날의 걸음이다.** 그 전에는 아무도 이 절을
-밟지 않는다 — 간극 대장에 줄이 없는 까닭이다(2026-09-23, #142). 단계를 옮기면 시험이 붉어지고, 아래를
-다 하면 다시 초록이 된다. **2026-11-05 에 옮겼다** — 1 은 그 PR 이 밟았고, 2 · 3 은 사람의 로컬 설정이라 운영자가 밟는다.
-**2026-11-07 에 목록을 프로덕션 배포 넷으로 좁혔다**(운영자 결정, ADR 0093 「배포만 묻는다」) — 뺀 열아홉은 그 추기에 적었다.
+**사람이 `docs/product/prd/roadmap.md` §7.0 의 「(지금)」을 공개 출시로 옮기는 날의 걸음이다** — 이미 옮겼고(지금 공개 출시),
+2 · 3 은 사람의 로컬 설정이라 운영자가 수행한다. 단계를 옮기면 시험이 붉어지고, 아래를
+다 하면 다시 초록이 된다. 목록은 프로덕션 배포 넷이다 — 뺀 것은 ADR 0093 「배포만 묻는다」의 추기에 있다.
 목록은 지우지 않는다 — 시험이 `ask` 와 이 목록을 견준다.
 
 1. 아래 목록을 `.claude/settings.json` 의 `ask` 에 그대로 옮기고 등급 3 의 잠금 칸에 옮겨 적는다
