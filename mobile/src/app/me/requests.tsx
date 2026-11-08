@@ -10,7 +10,7 @@ import { useClient } from '@/auth/connected';
 import { markNotificationsRead, readInbox, type Read } from '@/matching/doors';
 import { Icon, type IconName } from '@/ui/icons';
 import { EmptyState } from '@/ui/empty-state';
-import { LoadingMark } from '@/ui/loading';
+import { LoadingDots } from '@/ui/loading';
 import { COLOR, FONT, RADIUS, TYPE } from '@/ui/tokens';
 import { TopBar } from '@/ui/top-bar';
 import { CardFrame } from '@/ui/surfaces';
@@ -66,7 +66,7 @@ export default function RequestsScreen() {
     <View style={styles.screen}>
       <TopBar title="소식" fallback="/me" />
       <ScrollView contentContainerStyle={styles.content}>
-        {inbox === null ? <LoadingMark /> : !inbox.ok ? (
+        {inbox === null ? <LoadingDots /> : !inbox.ok ? (
           <View>
             <Text style={styles.failure} accessibilityRole="alert">
               소식을 불러오지 못했어요. {inbox.reason}

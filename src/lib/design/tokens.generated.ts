@@ -194,11 +194,37 @@ export const RADIUS = {
   "pill": 999
 } as const;
 
-/** 움직임의 시간(ms) — 누름의 전환 · 뼈대의 반짝임 · 끝 모르는 띠 */
+/** 움직임의 시간(ms) — 누름의 전환 · 뼈대의 반짝임 · 끝 모르는 띠 · 로딩의 점 사이 늦춤(`stagger`) · 뜨기 전 기다림(`delay`) · 궤도의 바깥 둘 */
 export const MOTION = {
   "quick": 160,
   "shimmer": 1600,
-  "flow": 1800
+  "flow": 1800,
+  "stagger": 120,
+  "delay": 300,
+  "orbitMid": 2700,
+  "orbitFar": 3600
+} as const;
+
+/** 로딩 두 모양의 값 — 크기(px) · 투명도 · 비율 · 처음 각도(deg). 오행 다섯 점(`dot*` · `hop`)과 궤도(`orbit*` · `me*` · 물 · 나무 · 흙) */
+export const LOADING = {
+  "dot": 12,
+  "dotGap": 10,
+  "hop": 10,
+  "dotDim": 0.55,
+  "dotStill": 0.8,
+  "orbit": 84,
+  "orbitRing": 6,
+  "orbitLine": 2,
+  "orbitInk": 0.45,
+  "me": 26,
+  "meLine": 2.5,
+  "breathe": 0.9,
+  "water": 12,
+  "wood": 16,
+  "earth": 11,
+  "waterAt": 0,
+  "woodAt": 120,
+  "earthAt": 233
 } as const;
 
 /** 움직임의 이징 — CSS 낱말. 앱은 `mobile/src/ui/motion.ts` 가 같은 이름의 `Easing` 으로 푼다 */

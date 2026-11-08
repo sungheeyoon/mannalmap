@@ -12,7 +12,7 @@ import { FailureLine } from '@/ui/failure-line';
 import { settled } from '@/ui/settled';
 import { noteActivity, readRoomScreen, type RoomScreen } from '@/chat/reads';
 import { ChatRoomView } from '@/chat/room';
-import { LoadingMark } from '@/ui/loading';
+import { LoadingDots } from '@/ui/loading';
 import { TopBar } from '@/ui/top-bar';
 import { COLOR } from '@/ui/tokens';
 
@@ -70,7 +70,7 @@ export default function ChatRoomScreen() {
     return (
       <View style={styles.screen}>
         {bar}
-        <LoadingMark />
+        <LoadingDots />
       </View>
     );
   }

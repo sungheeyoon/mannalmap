@@ -70,6 +70,7 @@ export function regionsInto(css, tokens) {
     radius: lines(tokens.radius, 'radius-', '  '),
     mix: lines(mixCss(tokens), 'color-', '  '),
     motion: [lines(tokens.motion ?? {}, 'motion-', '  '), lines(tokens.easing ?? {}, 'motion-ease-', '  ')].join('\n'),
+    loading: lines(tokens.loading ?? {}, 'loading-', '  '),
   };
   return Object.entries(regions).reduce((text, [name, body]) => {
     const pattern = new RegExp(`(/\\* design-tokens:${name} [^\\n]*\\*/\\n)[\\s\\S]*?(\\n\\s*/\\* /design-tokens:${name} \\*/)`);
@@ -91,7 +92,12 @@ export function typescriptOf(tokens) {
     constant('ELEVATION_DARK', elevationsOf(tokens.dark), '어두운 화면의 그림자 — 앱은 아직 안 쓴다'),
     constant('TEXT', numbers(tokens.text), '글자 크기의 단(px)'),
     constant('RADIUS', { ...numbers(tokens.radius), pill: tokens.pill }, '모서리 세 단(px) — 카드 · 칸 · 알약'),
-    constant('MOTION', Object.fromEntries(Object.entries(tokens.motion).map(([name, value]) => [name, ms(value)])), '움직임의 시간(ms) — 누름의 전환 · 뼈대의 반짝임 · 끝 모르는 띠'),
+    constant('MOTION', Object.fromEntries(Object.entries(tokens.motion).map(([name, value]) => [camel(name), ms(value)])), '움직임의 시간(ms) — 누름의 전환 · 뼈대의 반짝임 · 끝 모르는 띠 · 로딩의 점 사이 늦춤(`stagger`) · 뜨기 전 기다림(`delay`) · 궤도의 바깥 둘'),
+    constant(
+      'LOADING',
+      Object.fromEntries(Object.entries(tokens.loading).map(([name, value]) => [camel(name), parseFloat(value)])),
+      '로딩 두 모양의 값 — 크기(px) · 투명도 · 비율 · 처음 각도(deg). 오행 다섯 점(`dot*` · `hop`)과 궤도(`orbit*` · `me*` · 물 · 나무 · 흙)',
+    ),
     constant('EASING', tokens.easing, '움직임의 이징 — CSS 낱말. 앱은 `mobile/src/ui/motion.ts` 가 같은 이름의 `Easing` 으로 푼다'),
   ].join('\n');
 }

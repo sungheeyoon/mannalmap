@@ -21,6 +21,7 @@ import { CONTACT_LABEL, POLICY_TITLE, SUPPORT_TITLE, SURVEY_LABEL } from '@/info
 import { legalPagesOpen, openLegalPage } from '@/info/legal-web';
 import { openWebAccount, webAccountOpen } from '@/release/floor';
 import { FailureLine } from '@/ui/failure-line';
+import { LoadingDots } from '@/ui/loading';
 import { COLOR, FONT, RADIUS, TYPE } from '@/ui/tokens';
 import { settled } from '@/ui/settled';
 import { TopBar } from '@/ui/top-bar';
@@ -68,6 +69,7 @@ export function SettingsScreen() {
     return (
       <View style={styles.screen}>
         <TopBar title="설정" fallback="/me" />
+        <LoadingDots />
       </View>
     );
   }

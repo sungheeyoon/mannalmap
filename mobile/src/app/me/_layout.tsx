@@ -20,6 +20,7 @@ import { appHeadStands, dockStands } from '@app-shell';
 import { WarningNotice } from '@/home/warning-notice';
 import { goTab } from '@/ui/go-tab';
 import { Icon } from '@/ui/icons';
+import { LoadingOrbit } from '@/ui/loading';
 import { Logo } from '@/ui/logo';
 import { SecondaryButton } from '@/ui/parts';
 import { COLOR, ELEMENT_TONE, FONT, RADIUS, TYPE } from '@/ui/tokens';
@@ -67,7 +68,14 @@ export default function MeLayout() {
     if (signedIn !== null) void resendUnfinishedPurchases(signedIn);
   }, [signedIn]);
 
-  if (gate.kind === 'checking') return <View style={styles.screen} />;
+  /* 앱의 첫 진입 — 로그인 · 계정을 읽는 동안. 오래 걸릴 수 있는 자리라 로고의 궤도가 돈다(운영자 결정 2026-11-08) */
+  if (gate.kind === 'checking') {
+    return (
+      <View style={[styles.screen, styles.checking]}>
+        <LoadingOrbit />
+      </View>
+    );
+  }
   /* 이 주소로 바로 들어온 사람은 로그인 · 가입 뒤 여기로 돌아온다(ADR 0213). 로그아웃한 사람은 돌아올 뜻이 없다 */
   if (gate.kind === 'out') return <Redirect href={(gate.left ? '/' : withReturnPath('/auth', currentPath(pathname, search))) as never} />;
   if (gate.kind === 'signup') return <Redirect href={withReturnPath('/signup', currentPath(pathname, search)) as never} />;
@@ -183,6 +191,7 @@ const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: COLOR.background },
   over: StyleSheet.absoluteFill,
   failed: { alignItems: 'center', justifyContent: 'center', gap: 12, padding: 24 },
+  checking: { alignItems: 'center', justifyContent: 'center' },
   failure: { fontFamily: FONT.medium, fontSize: TYPE.small, color: COLOR.danger, textAlign: 'center' },
   header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingLeft: 16, paddingRight: 4, backgroundColor: COLOR.background },
   logo: { minHeight: 44, justifyContent: 'center' },

@@ -97,7 +97,18 @@ export const PARTS: readonly PartContract[] = [
     name: 'Skeleton',
     web: { file: 'app/ui/skeleton.tsx', symbols: ['SkeletonMain', 'Bone'] },
     app: { file: 'mobile/src/ui/loading.tsx', symbol: 'Skeleton' },
-    pending: '앱은 첫 읽기를 뼈대 대신 도는 표시(`LoadingMark`) 하나로 기다린다 — 뼈대를 세우면 반짝임 시간은 `MOTION.shimmer` 다. G-155',
+    pending: '앱은 첫 읽기를 뼈대 대신 오행 다섯 점(`LoadingDots`)으로 기다린다 — 뼈대를 세우면 반짝임 시간은 `MOTION.shimmer` 다. G-155',
+  },
+  {
+    name: 'LoadingDots',
+    web: { file: 'app/ui/loading.tsx', symbols: ['LoadingDots'] },
+    app: { file: 'mobile/src/ui/loading.tsx', symbol: 'LoadingDots' },
+  },
+  {
+    name: 'LoadingOrbit',
+    web: { file: 'app/ui/loading.tsx', symbols: ['LoadingOrbit'] },
+    app: { file: 'mobile/src/ui/loading.tsx', symbol: 'LoadingOrbit' },
+    props: ['decorative'],
   },
   {
     name: 'Snackbar',

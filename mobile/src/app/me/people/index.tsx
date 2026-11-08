@@ -1,6 +1,6 @@
 import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { useCallback, useState } from 'react';
-import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 
 import { isBlocked } from '@account/index';
 import { findStatus, findsInList, pickable } from '@people/pick';
@@ -14,10 +14,10 @@ import { goTab } from '@/ui/go-tab';
 import { PersonCard } from '@/people/person-card';
 import { EmptyState } from '@/ui/empty-state';
 import { Field, SecondaryButton } from '@/ui/parts';
-import { COLOR } from '@/ui/tokens';
 import { settled } from '@/ui/settled';
 import { UNREACHABLE } from '@/auth/signup';
 import { TopBar } from '@/ui/top-bar';
+import { LoadingDots } from '@/ui/loading';
 
 /** 저장한 사람 — 가족 · 친구를 관리하는 자리. 나는 여기 없다(`app/me/people/page.tsx`) */
 export default function PeopleScreen() {
@@ -39,7 +39,7 @@ export default function PeopleScreen() {
   if (read === null || read.kind === 'signed-out') {
     return (
       <ScreenFrame bar={<TopBar title="저장한 사람" fallback="/me" />}>
-        <ActivityIndicator color={COLOR.secondary} style={styles.loading} />
+        <LoadingDots />
       </ScreenFrame>
     );
   }
@@ -110,6 +110,5 @@ export default function PeopleScreen() {
 }
 
 const styles = StyleSheet.create({
-  loading: { marginTop: 48 },
   find: { gap: 6 },
 });

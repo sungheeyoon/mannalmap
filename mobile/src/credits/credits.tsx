@@ -16,6 +16,7 @@ import { UNREACHABLE } from '@/auth/signup';
 import { legalPagesOpen, openLegalPage } from '@/info/legal-web';
 import { LinkRow, SettingsGroup, settingsText } from '@/settings/parts';
 import { FailureLine } from '@/ui/failure-line';
+import { LoadingDots } from '@/ui/loading';
 import { TextButton } from '@/ui/parts';
 import { COLOR, FONT, RADIUS, TYPE } from '@/ui/tokens';
 import { settled } from '@/ui/settled';
@@ -61,6 +62,7 @@ export function CreditsScreen() {
     <View style={styles.screen}>
       <TopBar title={CREDITS_AVAILABLE_LABEL} fallback="/me" />
       <ScrollView contentContainerStyle={styles.content}>
+        {read === null && <LoadingDots />}
         {read !== null && (
           <>
             <View>
@@ -108,6 +110,7 @@ export function CreditsHistoryScreen() {
     <View style={styles.screen}>
       <TopBar title="결제 내역" fallback="/me/credits" />
       <ScrollView contentContainerStyle={styles.content}>
+        {read === null && <LoadingDots />}
         {read !== null &&
           (!read.ok ? (
             <FailureLine onRetry={load}>{read.message}</FailureLine>

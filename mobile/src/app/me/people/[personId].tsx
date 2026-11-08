@@ -1,6 +1,6 @@
 import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { useCallback, useState } from 'react';
-import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { isBlocked } from '@account/index';
 import { UNREADABLE_INPUT_NOTE } from '@input/stored';
@@ -20,6 +20,7 @@ import { settled } from '@/ui/settled';
 import { UNREACHABLE } from '@/auth/signup';
 import { TopBar } from '@/ui/top-bar';
 import { CardFrame, Tile } from '@/ui/surfaces';
+import { LoadingDots } from '@/ui/loading';
 
 const NO_READING_YET = '아직 받은 사주풀이가 없어요.';
 const NO_COMPAT_YET = '아직 본 궁합이 없어요.';
@@ -44,7 +45,7 @@ export default function PersonScreen() {
   if (read === null || read.kind === 'signed-out') {
     return (
       <ScreenFrame bar={before}>
-        <ActivityIndicator color={COLOR.secondary} style={styles.loading} />
+        <LoadingDots />
       </ScreenFrame>
     );
   }
@@ -188,7 +189,6 @@ function Row({ title, sub, value, onPress }: { title: string; sub: string | null
 }
 
 const styles = StyleSheet.create({
-  loading: { marginTop: 48 },
   unreadable: { gap: 8, padding: 20 },
   header: { padding: 20, overflow: 'hidden' },
   watermark: { position: 'absolute', right: -32, bottom: -40 },

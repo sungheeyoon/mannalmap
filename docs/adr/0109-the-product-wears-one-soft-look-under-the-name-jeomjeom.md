@@ -356,3 +356,13 @@ Navigation) · 토스 TDS(Toast · Result) · Material 3 Snackbar 다(확인 202
 - **어절 단위 줄바꿈은 `mobile/src/ui/word-text.tsx` 의 `WordText` 다** — 웹 `word-break: keep-all` 의 앱 쪽. iOS 는 `lineBreakStrategyIOS="hangul-word"`, 안드로이드는 어절 안에 U+2060 을 끼운다(`src/lib/brand/keep-words.ts`). RN 0.88 의 안드로이드 `StaticLayout` 에는 어절 설정을 넘기는 속성이 없어 `textBreakStrategy` · `android_hyphenationFrequency` 로는 안 된다. 읽어 주는 글자(`accessibilityLabel`)는 원문이다.
 - **지금 쓰는 자리** — 안내 틀(`NoticeScreen` · `NoticeLine` · `NoticeNote`), 안내 글(`Dot` · `InfoLine` · `FinePrint`), 인연 소개의 단계 글. 나머지 화면은 아직 RN `Text` 다 — 고르는 입력의 값이나 복사되는 글(채팅)에는 넣지 않는다.
 - **상태바는 어두운 글자 하나다** — 앱이 라이트만이라 `_layout.tsx` 의 `StatusBar` 와 `app.json` 플러그인이 `dark` 로 고정한다.
+
+## 추기 — 로딩 두 모양 (2026-11-08, 운영자 결정)
+
+운영자가 로딩 시안 셋(A 궤도 · B 오행 다섯 점 · C 뼈대) 가운데 **B 를 앱 · 웹 공용 로딩으로, A 를 오래 걸리는 자리에만** 골랐다. C(화면마다 뼈대)는 웹의 `loading.tsx` 뼈대(ADR 0116) 그대로이고 앱에는 세우지 않는다.
+
+- **부품은 같은 이름이다** — 웹 `app/ui/loading.tsx`(+ `loading.module.css`) · 앱 `mobile/src/ui/loading.tsx` 의 `LoadingDots` · `LoadingOrbit`. 약속 표(`src/lib/design/contract.ts`)에 들었다. 앱은 react-native 의 `Animated` 로 돈다(웹 번들에서는 네이티브 모듈이 없어 JS 로).
+- **값은 한 원본이다** — 크기 · 투명도 · 비율 · 처음 각도는 `tokens.json` 의 `loading` 칸(웹 `--loading-*` · 앱 `LOADING`), 시간은 `motion` 칸에 셋을 더했다 — 점 사이 늦춤 `stagger` 120ms · 뜨기 전 기다림 `delay` 300ms · 궤도의 바깥 둘 `orbit-mid` 2.7s · `orbit-far` 3.6s. 점의 주기는 `shimmer`(1.6s), 궤도의 안쪽 원과 「나」의 숨은 `flow`(1.8s)다. 시안의 키프레임 · 크기 그대로다.
+- **멈춘 모양은 로고의 자리다** — 물은 위(0°) · 나무는 오른쪽 아래(120°) · 흙은 왼쪽 아래(233°), `app/ui/logo.tsx` 의 점 자리에서 잰 각도다. 시안은 흙만 200° 로 적었는데 그 값은 움직임이 덮어 안 보였고, 멈추면 물과 나무가 위에서 겹쳤다. 돌 때도 이 각도에서 출발한다.
+- **안 보이는 0.3초 · 동작 줄이기 · 낭독기** — 웹은 CSS 의 `animation-delay` 로, 앱은 타이머로 `delay` 뒤에 보인다. 동작 줄이기(웹 `prefers-reduced-motion` · 앱 `useReducedMotion`)에는 멈춘다. 글자는 없고 낭독기에만 「불러오는 중」(`src/lib/design/loading.ts`, 대장 all-12)이며, 곁에 상태 글이 있는 자리(`decorative`)는 숨긴다.
+- **그대로 둔 것** — 단추 안의 작은 고리(`LINK_PENDING_SPINNER`)와 테(`LINK_PENDING_RING`), 앱 채팅 상세 궁합 칸 제목 곁의 작은 고리(`mobile/src/chat/detail-panel.tsx`)는 화면이 아니라 한 줄 안의 표시라 바꾸지 않았다.

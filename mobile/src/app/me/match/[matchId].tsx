@@ -1,6 +1,6 @@
 import { router, useLocalSearchParams } from 'expo-router';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { CHAT_TAB_LABEL } from '@chat/index';
 import { DETAIL_MAKING, DETAIL_NOT_YET } from '@chat/room/detail-copy';
@@ -11,7 +11,7 @@ import { Face, PartnerSheet, ReportBlock } from '@/matching/people';
 import type { ReadingTarget } from '@/reading/api';
 import { ReadFailure, ReadingPanel, useReadingView } from '@/reading/panel';
 import { Icon } from '@/ui/icons';
-import { LoadingMark } from '@/ui/loading';
+import { LoadingDots } from '@/ui/loading';
 import { PrimaryButton } from '@/ui/parts';
 import { TopBar, goBack } from '@/ui/top-bar';
 import { COLOR, FONT, RADIUS, TYPE } from '@/ui/tokens';
@@ -56,7 +56,7 @@ export default function MatchScreen() {
     return (
       <View style={styles.screen}>
         <TopBar fallback={fallback} />
-        <LoadingMark />
+        <LoadingDots />
       </View>
     );
   }
@@ -156,7 +156,7 @@ function MatchReadingPanel({ matchId, nicknames }: { matchId: string; nicknames:
   const target = useMemo<ReadingTarget>(() => ({ kind: 'match', matchId }), [matchId]);
   const { answer, reload } = useReadingView(target);
 
-  if (answer === null) return <ActivityIndicator color={COLOR.secondary} />;
+  if (answer === null) return <LoadingDots inline />;
   if ('refused' in answer) return <ReadFailure refused={answer.refused} onRetry={reload} />;
   if (answer.view.view === 'blocked') {
     return (

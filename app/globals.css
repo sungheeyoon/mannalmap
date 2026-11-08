@@ -241,15 +241,40 @@
 /*
   **움직임의 시간 · 이징**(2026-11-08, ADR 0241) — 누름의 전환(`quick`) · 뼈대의 반짝임(`shimmer`) · 끝 모르는 띠(`flow`). 앱은 `MOTION` 으로
   같은 값을 부르고, 줄인 움직임은 아래 `prefers-reduced-motion` 과 앱의 `useReducedMotion`(`mobile/src/ui/motion.ts`)이 듣는다.
+  로딩 두 모양(`app/ui/loading.tsx` · `mobile/src/ui/loading.tsx`)의 크기 · 각도는 `--loading-*` 이고 앱은 `LOADING` 으로 같은 값을 부른다.
 */
 :root {
   /* design-tokens:motion — 지은 칸이다. 값은 `src/lib/design/tokens.json` 을 고치고 `node scripts/design-tokens.mjs` 를 돈다 */
   --motion-quick: 160ms;
   --motion-shimmer: 1.6s;
   --motion-flow: 1.8s;
+  --motion-stagger: 120ms;
+  --motion-delay: 300ms;
+  --motion-orbit-mid: 2.7s;
+  --motion-orbit-far: 3.6s;
   --motion-ease-quick: ease;
   --motion-ease-loop: ease-in-out;
   /* /design-tokens:motion */
+  /* design-tokens:loading — 지은 칸이다. 값은 `src/lib/design/tokens.json` 을 고치고 `node scripts/design-tokens.mjs` 를 돈다 */
+  --loading-dot: 12px;
+  --loading-dot-gap: 10px;
+  --loading-hop: 10px;
+  --loading-dot-dim: 0.55;
+  --loading-dot-still: 0.8;
+  --loading-orbit: 84px;
+  --loading-orbit-ring: 6px;
+  --loading-orbit-line: 2px;
+  --loading-orbit-ink: 0.45;
+  --loading-me: 26px;
+  --loading-me-line: 2.5px;
+  --loading-breathe: 0.9;
+  --loading-water: 12px;
+  --loading-wood: 16px;
+  --loading-earth: 11px;
+  --loading-water-at: 0deg;
+  --loading-wood-at: 120deg;
+  --loading-earth-at: 233deg;
+  /* /design-tokens:loading */
 }
 
 /*

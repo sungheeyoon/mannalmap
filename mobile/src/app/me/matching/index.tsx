@@ -17,7 +17,7 @@ import { CardSheet, DeckButtons, EmptyDeck, Feedback, PassedConnections, QuietPl
 import { useDeck } from '@/matching/use-deck';
 import { FailureLine } from '@/ui/failure-line';
 import { Icon } from '@/ui/icons';
-import { LoadingMark } from '@/ui/loading';
+import { LoadingDots } from '@/ui/loading';
 import { COLOR, FONT, RADIUS, TYPE } from '@/ui/tokens';
 import { CardFrame, RowCard } from '@/ui/surfaces';
 
@@ -56,7 +56,7 @@ export default function MatchingScreen() {
   if (loaded === null) {
     return (
       <View style={styles.screen}>
-        <LoadingMark />
+        <LoadingDots />
       </View>
     );
   }
