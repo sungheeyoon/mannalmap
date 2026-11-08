@@ -67,8 +67,8 @@ const OUTPUT_SHAPE = {
  * ADR 0207 추기 「v21」).
  *
  * 옛 모양(`OUTPUT_SHAPE`)은 `score · metaphor · markdown` 차례라 요약이 본문보다 먼저 지어진다. 구조화 출력은 속성 차례대로
- * 지으므로, 요약이 방금 쓴 본문에 기대게 하려면 차례를 바꿔야 한다. 필드와 뜻은 같다. 옛 모양은 원복 조립의 궁합
- * (`pair-legacy`)만 쓴다.
+ * 지으므로, 요약이 방금 쓴 본문에 기대게 하려면 차례를 바꿔야 한다. 필드와 뜻은 같다. 옛 모양은 옛 궁합 세대
+ * (`pair-legacy` — 운영은 안 부르고 실험의 견줄 짝만, ADR 0239)만 쓴다.
  */
 const SUMMARY_LAST_SHAPE = {
   ...OUTPUT_SHAPE,

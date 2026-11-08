@@ -5,7 +5,7 @@
 > **코드와 어긋나면 코드가 맞다.** 날짜가 붙은 문단은 그날의 사정이고 커밋 해시는 그날의 자리다.
 > 여기 적힌 경로가 실재하는지는 시험이 재지 않는다.
 >
-> **지금은:** 결정은 ADR 0067·0068·0069 와 `docs/analysis/match-input-comparison.md` 가 들고 프로덕션에는 제한형 A + 읽는 법 4판이 나간다(`reading-prompt-v12`). 원복은 `LEGACY_PAIR_ASSEMBLY`. 실험 코드는 걷었고(커밋 `e586152` 가 재현) 프롬프트 실험은 보류다(`docs/product/gaps.md` G-32~G-35). 아래 「호칭」과 「글 구성 기준」은 같은 실험에서 사용자가 정한 것이다.
+> **지금은:** 결정은 ADR 0067·0068·0069 와 `docs/analysis/match-input-comparison.md` 가 들고 프로덕션에는 제한형 A + 읽는 법 4판이 나간다(`reading-prompt-v12`). 원복 조립 `LEGACY_PAIR_ASSEMBLY` 는 2026-11-08 에 지웠다(ADR 0239). 실험 코드는 걷었고(커밋 `e586152` 가 재현) 프롬프트 실험은 보류다(`docs/product/gaps.md` G-32~G-35). 아래 「호칭」과 「글 구성 기준」은 같은 실험에서 사용자가 정한 것이다.
 
 2026-09-15. 사용자가 「개인 분석 일괄 삭제」를 **철회**하고 제한형 A / 확장형 B 를 견주게 했다
 (ADR 0067). 그 전 `shareEvidence` 는 `compatibility` 를 통째로 넘겨 억부 후보·가중 세력·원국 안

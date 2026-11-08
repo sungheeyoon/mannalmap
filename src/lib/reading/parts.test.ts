@@ -6,7 +6,6 @@ import { computeSaju } from '../saju';
 import { ABSORPTION_RULE, PROMPT_PARTS } from './parts';
 import {
   CONTROL,
-  LEGACY_PAIR_ASSEMBLY,
   READING_KINDS,
   READING_POLICY,
   READING_PROMPTS,
@@ -18,6 +17,9 @@ import {
 import { FORMER_EXAMPLE_LINES } from './check';
 import { measureMarkdown, outputDeviations, pairOutputDeviations } from '@/src/lab/reading/measure';
 import { MATCH_INPUT_VARIANTS } from '@/src/lab/reading/variants';
+
+/** 4판 이전의 궁합 지시(`plain-v1`) — 운영은 안 부르고 실험의 견줄 짝만 부른다. 옛 컷 원복 조립은 지웠다(ADR 0239) */
+const OLD_PAIR_READING = { ...CONTROL, pairReading: 'plain-v1' } as const;
 
 /**
  * 지시문 조각을 잰다 — **이 시험이 재는 대상이 바뀌었다**(ADR 0047).
@@ -289,7 +291,7 @@ describe('시키는 값과 막는 값', () => {
     const a = computeSaju({ year: 1990, month: 5, day: 12, hour: 14, minute: 30, second: 0, gender: 'male' });
     const b = computeSaju({ year: 1993, month: 11, day: 3, hour: 8, minute: 10, second: 0, gender: 'female' });
     const extended = MATCH_INPUT_VARIANTS.find((v) => v.id === 'match-extended-v1')!.assembly;
-    for (const assembly of [CONTROL, LEGACY_PAIR_ASSEMBLY, extended]) {
+    for (const assembly of [CONTROL, OLD_PAIR_READING, extended]) {
       for (const kind of ['private', 'match'] as const) {
         const prompt = readingPromptOf(readingEvidenceOf(kind, { a, b }, at, assembly.matchInput), assembly);
         const start = prompt.indexOf('## 점수');
@@ -452,11 +454,11 @@ describe('개인 풀이는 쉬운 말로 가르친다', () => {
     expect(READING_PROMPTS[kind]).not.toContain(DO);
   });
 
-  it('원복용 궁합 조립은 여전히 개인 풀이 조각을 쓰고 읽는 법 4판을 안 싣는다', () => {
+  it('옛 궁합 지시는 여전히 개인 풀이 조각을 쓰고 읽는 법 4판을 안 싣는다', () => {
     const at = new Date('2026-09-23T00:00:00Z');
     const a = computeSaju({ year: 1990, month: 5, day: 12, hour: 14, minute: 30, second: 0, gender: 'male' });
     const b = computeSaju({ year: 1993, month: 11, day: 3, hour: 8, minute: 10, second: 0, gender: 'female' });
-    const legacy = readingPromptOf(readingEvidenceOf('private', { a, b }, at), LEGACY_PAIR_ASSEMBLY);
+    const legacy = readingPromptOf(readingEvidenceOf('private', { a, b }, at), OLD_PAIR_READING);
 
     expect(legacy).toContain(PROMPT_PARTS.rules);
     expect(legacy).not.toContain('## 이 자료를 읽는 법');
