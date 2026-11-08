@@ -24,6 +24,7 @@
 
 규칙은 아래 원본에만 있다 — 여기는 어디를 열지만 말한다(ADR 0145).
 
+- [시안 먼저](../agents/delegation/working.md#화면은-시안-먼저) — 승인 전엔 화면만 꾸며 찍는다
 - [화면 문구](../agents/code-rules/screen-copy.md#화면-문구) · [문구 대장의 규칙](../product/copy-ledger.md#01-규칙--버튼은-결과를-말하고-닫는-것은-취소다) — 대장에 없으면 실사례를 출처와 함께 넣고 나중에 확인받는다 · 같은 사실은 상수 하나
 - [그 밖의 자리](../architecture.md#그-밖의-자리) · [새 것을 놓을 때](../architecture.md#새-것을-놓을-때) — 토큰과 `app/ui/` · 화면은 DB 를 부르지 않는다(ADR 0109 · 0080)
 - [무엇을 고쳤으면 무엇을 돌리나](../agents/test-map/what-to-run.md#무엇을-고쳤으면-무엇을-돌리나) — 로컬 최소 · e2e 의 예외
@@ -53,7 +54,7 @@
 - e2e 를 돌려야 하나 망설이거나 CI 의 주소 차선이 붉으면 → [CI](../agents/test-map/ci.md#ci)
 - dev 서버를 띄우거나 `next build` 를 돌리면 → [로컬 환경의 함정](../agents/delegation/local-env.md) — 남의 dev 서버 · `next build` 만 잡는 파일 이름
 - 무인(밤) 라운드로 맡았으면 → [무인 라운드](../agents/delegation/unattended.md) — 뜻을 바꾸지 않는 다듬기의 경계
-- 그림 도구(`ui-seed` · `ui-shots`)를 돌리면 → [자주 하는 실수](../agents/delegation/coordinator.md#자주-하는-실수--한-줄과-고치는-법-2026-11-06) — 먼저 씨앗 · 환경값(종료일 · 무료 몫 · 카카오 키)이 운영과 같은지 본다(도구 고침 #1027). `scripts/ui-shots.mjs` 는 1280 · 390 · 1920 세 폭을 찍고 `UI_SIZES=` 로 고른다 — 실측(px)만 제 Playwright 스크립트로 잰다
-- 전후 그림을 찍으면 → [워크트리에서 전후 그림 찍기](../agents/delegation/local-env.md#워크트리에서-전후-그림-찍기) — 자체 로컬 DB · 진짜 `node_modules` · `UI_ONLY` · `aria-disabled` 단추 · 로그인 spec 이름 · Docker 없이 꾸민 데이터로
+- 그림 도구(`ui-seed` · `ui-shots`)를 돌리면 → [자주 하는 실수](../agents/delegation/coordinator.md#자주-하는-실수--한-줄과-고치는-법-2026-11-06) — 먼저 씨앗 · 환경값(종료일 · 무료 몫 · 카카오 키)이 운영과 같은지 본다(도구 고침 #1027). `scripts/ui-shots.mjs` 는 1280 · 390 · 1920 세 폭을 찍고 `UI_SIZES=` 로 고른다
+- 전후 그림을 찍으면 → [워크트리에서 전후 그림 찍기](../agents/delegation/local-env.md#워크트리에서-전후-그림-찍기) — 자체 로컬 DB · 진짜 `node_modules` · `UI_ONLY` · `aria-disabled` 단추 · 로그인 spec 이름
 - 화면의 동작(흐름 · 상태)까지 바꾸면 → [PRD 색인](../prd.md) — 무리 파일 머리가 가리키는 그 영역 절(§4 · §5 · §6 · §7.1). 새 동작이면 `feature` 역할도 읽는다
 - 서비스 이름이나 로고가 바뀌면 → [ADR 0149](../adr/0149-the-service-is-named-mannaljido-and-the-footer-carries-the-business-information.md) 의 1 · 5 — 상수를 따라오지 않는 셋: 이름 뒤에 글자로 붙인 조사(은/는/을/를) · 이름이나 로고를 구운 그림(`scripts/brand-share-images.mjs`) · Next 가 빌드에서만 보는 탭 그림(`app/favicon.ico` · `app/apple-icon.png` · `app/icon.svg`, `scripts/brand-icons.mjs`) · 앱의 아이콘(`mobile/scripts/brand-icons.mjs`)

@@ -28,6 +28,12 @@ npm run db:push               # 밀린 것 전부를 원격에 적용한다 — 
 메인의 CLI 를 잠금에 바로 준다: `node scripts/remote-lock.mjs <메인 체크아웃>/node_modules/.bin/supabase db push --linked --dry-run` 으로
 목록을 보고 `--dry-run` 없이 부른다(`docs/agents/delegation/local-env.md` 「로컬 환경의 함정」, 2026-11-07).
 
+**부르는 폴더는 메인 체크아웃이다.** `--linked` 가 읽는 연결 정보(`supabase` 폴더의 `.temp`, 저장소에 없다)는 메인에만 있고(워크트리에는 없다), CLI 는 **부르는 폴더의**
+`supabase/migrations/` 를 올린다 — 메인을 올릴 SHA 까지 `git pull --ff-only` 로 당긴 뒤 거기서 부르고, `--dry-run` 목록이 그 SHA 의 새 마이그레이션과 같은지 본다.
+
+**「접근 기록」은 접속기록 `audit.operator_access` 다.** 운영 DB 에 보내는 SQL(`migration list` 뒤의 확인 질의 · 건수)은 `npm run db:remote -- --purpose "<목적>" "<sql>"` 로 보내고,
+그 명령이 보내기 전에 목적 · SQL 해시를, 끝난 뒤 결과를 그 표에 한 줄씩 남긴다(`docs/ops/runbook/access.md` 「개인정보는 화면으로만」). #770 에는 「접속기록 성공」으로 적는다.
+
 **`ignoreCommand` 는 빌드만 건너뛰고 배포 횟수는 줄이지 못한다.** Hobby 의 한도는 **24시간 이동 창에 100번**(그 밖에 한 시간
 100 · 5분 60)이고 건너뛴 · 실패한 · 취소된 배포도 센다(Vercel 「Limits」). 2026-09-24 에는 Preview 편의를 우선해 Git 배포를
 켜 두었는데(가지의 푸시 하나가 Preview 하나, 머지 하나가 Production 하나), 2026-09-25 에 하루 두 번 한도에 닿아 머지된 수정이
@@ -40,7 +46,7 @@ npm run db:push               # 밀린 것 전부를 원격에 적용한다 — 
 0. **올리기 전에.** 올리라고 한 변경은 그 PR 이 main 에 들면 올린다(ADR 0152). 묶음이면 머지를 기다리는 PR 이 없는지(`gh pr list`),
    `node scripts/deploy-range.mjs` 가 `wait` 면 `main` CI 가 초록인지(ADR 0159), 지난
    배포 뒤 `supabase/migrations/**` 가 바뀌었으면 **DB 를 먼저** 올리고 확인했는지(아래 규약 넷의 2 · 4) 본다.
-   **운영에 아직 안 올린 마이그레이션과 그 차례는 간극 대장의 줄이 적는다 — 2026-11-07 19:33 에 `20270116090000`(#1065, ADR 0237 — 재확인 기준 · 최소 앱 빌드)을 웹 배포보다 먼저 올린 뒤로 main 의 마이그레이션은 모두 원격에 있다(#770).** 1 은
+   **운영에 아직 안 올린 마이그레이션과 그 차례는 간극 대장의 줄이 적는다 — 2026-11-08 17:48 에 `20270118090000`(#1093, ADR 0245 — 「인터뷰 요청 받기」 칸 · 문 삭제)을 올린 뒤로 main 의 마이그레이션은 모두 원격에 있다(#770).** 1 은
    출력의 `head` 를 그대로 올린다. 한도 창의 남은 자리를 본다 — 모자라면 기다린다. `--from <운영 SHA>` 가 `docs-only` 면 안 올린다(운영 SHA 는 근거가 아니다)
    **`vercel.json` 의 크론은 Production 배포와 함께 등록되어 돌기 시작한다**. `/api/cron/chat-purge` 가 처음 드는 배포는 이미 90일 지난 말을 그날 밤 지우므로, 승인 전에 `docs/ops/runbook/moderation.md` 「배포 승인 전에 건수를 잰다」의 값을 적는다. 그 크론이 부르는 `20270107100000` 은 이미 원격에 있다(2026-11-07 migration list)
    **`notice-v17`(ADR 0234)의 첫 시행일 — 채웠다(2026-11-07).** `TERMS_EFFECTIVE_DATE`(`src/lib/brand/terms.ts`) · `REFUND_EFFECTIVE_DATE`(`src/lib/brand/refund.ts`)는
@@ -69,6 +75,8 @@ npm run db:push               # 밀린 것 전부를 원격에 적용한다 — 
      명령은 로그인 없이 닿는 데까지만 본다(셋 다 `/auth?next=<그 주소>` 로 넘기는지 — `/compat` 은 넘긴 화면이 궁합의 로그인 안내다). 운영 계정의
      비밀번호 · 세션을 쓰지 않는다 — 로그인한 화면은 이용자 정보를 읽는 자리다([운영 개인정보](../../agents/delegation/permissions.md#권한-등급--무엇을-해도-되고-무엇은-묻는가),
      ADR 0105)
+   - **처리방침 버전이 바뀐 묶음이면 `/privacy` 를 로그인 없이 연다 — 화면에 버전 글자(`notice-v19` 등)는 보이지 않는다.** 그 버전에 새로 포함된 문장
+     (`src/lib/consent/notice.ts` 의 그 버전 주석 · 대장의 문구)이 보이고, 그 버전이 뺀 말이 0건인지로 확인한다
 5. **적는다** — 배포 SHA · Production URL · Ready 시각(서울) · smoke 표(4 가 찍은 것)를 「운영자 할 일 · 확인」 이슈 #770 에 댓글로 단다 —
    배포마다 새 확인 이슈를 열지 않는다(운영자 결정 2026-10-20). 로그인이 드는 셋과 그 묶음에서 로그인 · 실기기로만 보이는 변경은 #770 본문에
    체크 줄로 더한다 — 운영자가 모아서 한 번에 확인한다. 그 묶음에 든 「확인 전」 문구(대장 무리 파일의 「확인 전」 절)도 목록으로 함께
