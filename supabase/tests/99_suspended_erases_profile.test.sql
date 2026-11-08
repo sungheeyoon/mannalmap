@@ -3,9 +3,10 @@
 --   1. **지우기는 된다** — 정지된 사람이 `remove_my_photo` 로 한 장을 내리면 뒤의 장이 당겨 앉고, `clear_my_intro` 로 소개가 빈다
 --   2. **저장소 객체는 지울 줄에 들어간다** — 열쇠로 선 장을 지우면 표의 트리거(`profile_photo_object_left`)가 그대로 돈다
 --   3. **올리기 · 고치기는 그대로 막힌다** — 사진 올리기 · 바꾸기 · 옮기기 · 보일 자리 · 프로필 저장(닉네임 · 소개)
+--   5. **본인은 정지돼도 제 사진을 읽고, 남은 정지된 사람의 사진을 계속 못 본다**(`photo_at`, 운영자 답 2026-11-08)
 --   4. **남의 것은 못 지우고**, 로그인 안 한 세션은 거절되며, `anon` 에게는 소개 비우기 문이 닫혀 있다
 begin;
-select plan(17);
+select plan(22);
 
 /** 사진은 저장 길 스위치를 따른다 — 이 파일은 `db` 길로 올리고, 열쇠 줄은 손으로 세운다 */
 update public.photo_upload_switch set mode = 'db', changed_at = now();
@@ -46,6 +47,19 @@ insert into public.profile_photo (user_id, position, content_type, object_key)
 values ((select kim from who), 3, 'image/webp', (select v from kept where k = 'key'));
 
 update public.app_user set status = 'suspended' where id = (select kim from who);
+
+-- ── 5. 읽기 — 본인은 보고 남은 못 본다 ───────────────────────────────────
+
+set local role authenticated;
+select pg_temp.acting((select kim from who));
+select is((select count(*)::int from public.photo_at((select kim from who), 1)), 1, '5. 정지된 사람이 제 첫째 장을 읽는다');
+select ok((select base64 is not null from public.photo_at((select kim from who), 2)), '5. 바이트까지 받는다');
+select is((select count(*)::int from public.photo_at((select lee from who), 1)), 0, '5. 정지된 사람은 남의 사진을 못 본다');
+
+select pg_temp.acting((select lee from who));
+select is((select count(*)::int from public.photo_at((select kim from who), 1)), 0, '5. 남은 정지된 사람의 사진을 못 본다');
+select is((select count(*)::int from public.photo_at((select lee from who), 1)), 1, '5. 이용 중인 사람은 제 사진을 그대로 본다');
+reset role;
 
 -- ── 1 · 2. 지우기는 된다 ─────────────────────────────────────────────────────
 
