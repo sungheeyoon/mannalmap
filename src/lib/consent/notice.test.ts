@@ -169,7 +169,7 @@ describe('처리방침이 갖춰야 하는 것', () => {
    * 빠지면 아무도 읽지 않은 채로 남에게 보이게 된다.
    */
   it('자동 참여와 끄는 길을 관문에서 말한다', () => {
-    expect(text).toContain('자동으로 참여합니다');
+    expect(text).toContain('기본으로 참여합니다');
     expect(text).toContain('끄실 수 있습니다');
   });
 
@@ -186,9 +186,9 @@ describe('처리방침이 갖춰야 하는 것', () => {
 });
 
 describe('선택 항목', () => {
-  /** 둘뿐이고 **거절해도 서비스는 그대로다** */
-  it('둘이고 각자 무엇에 쓰는지 적혀 있다', () => {
-    expect(OPTIONAL_CONSENTS.map((one) => one.key)).toEqual(['improvement', 'contact']);
+  /** 하나뿐이고 **거절해도 서비스는 그대로다** — 「인터뷰 요청 받기」는 `notice-v19` 에서 걷었다(운영자 지시 2026-11-08, ADR 0245) */
+  it('개선 활용 하나이고 무엇에 쓰는지 적혀 있다', () => {
+    expect(OPTIONAL_CONSENTS.map((one) => one.key)).toEqual(['improvement']);
 
     for (const one of OPTIONAL_CONSENTS) {
       expect(one.detail.length, one.key).toBeGreaterThan(20);
@@ -228,19 +228,16 @@ describe('선택 항목', () => {
     }
   });
 
-  /** 후속 연락은 **광고가 아니다** — 합치면 하나로 받아 둘 다 쓰게 된다 */
-  it('후속 연락에 홍보를 섞지 않고 보관 기한을 든다', () => {
-    const contact = OPTIONAL_CONSENTS.find((one) => one.key === 'contact');
-
-    expect(contact?.detail).toContain('광고성 메시지는 보내지 않습니다');
-    /* 이메일 보관 기한은 이 항목에만 적혀 있다 — 빠지면 안내 전체에서 사라진다 */
-    expect(contact?.erasure).toContain('1년');
+  /** 걷은 항목이 처리방침 · 가입 · 설정의 어느 글에도 남지 않는다 — 세 화면이 이 목록 하나를 그린다 */
+  it('「인터뷰 요청 받기」는 어느 글에도 없다', () => {
+    const text = JSON.stringify([OPTIONAL_CONSENTS, noticeFor({ name: '만세력 운영자', officer: '홍길동', contact: 'ops@example.com' })]);
+    expect(text).not.toContain('인터뷰');
   });
 });
 
 /** 문구가 바뀌면 판본도 바뀐다 — 「보여 준 적 있다」가 아니라 「무엇을 보여 줬나」다 */
 it('안내 판본이 값으로 서 있다', () => {
-  expect(NOTICE_VERSION).toBe('notice-v18');
+  expect(NOTICE_VERSION).toBe('notice-v19');
 });
 
 /**
@@ -603,5 +600,54 @@ describe('풀이 완성 알림 (notice-v18)', () => {
     /* 주소에 저장한 사람 · Match 의 DB id 가 든다(`privacy-grounds.md` 「앱 푸시(FCM)」) — 고지가 그것을 숨기지 않는다 */
     expect(abroad).toContain('화면을 가리키는 내부 식별번호 포함');
     expect(lines('풀이 완성 알림을 켜시면')).toContain('화면 주소(화면을 가리키는 내부 식별번호 포함)만 싣습니다');
+  });
+});
+
+/**
+ * v19 — 프로필 사진 · 소개의 고지 보완(G-153, 운영자 결정 (a) · 답 2026-11-08, ADR 0245). 글자는 운영자가 정했다. 기준은 v18 그대로다
+ * (운영자 답 — 공개 범위를 넓히지 않는 보완이다) — 진입 때 전원에게 재확인을 강제하지 않는다.
+ */
+describe('프로필 사진 · 소개 (notice-v19)', () => {
+  const sections = noticeFor({ name: '만세력 운영자', officer: '홍길동', contact: 'ops@example.com' });
+  const collected = sections.find((section) => section.title === '무엇을 받고 무엇에 쓰나요')?.lines ?? [];
+  const discovery = sections.find((section) => section.title === '인연 찾기에서 상대에게 보이는 것')?.lines ?? [];
+
+  it('수집 항목 절에 운영자가 고른 세 줄을 글자 그대로 싣는다', () => {
+    for (const line of [
+      '프로필 사진과 소개는 선택 항목입니다. 직접 등록하신 정보를 저장하고, 내 프로필 표시와 인연 찾기의 프로필 소개에 사용합니다.',
+      '현재 인연 기능은 준비 중이며, 등록한 사진과 소개는 본인에게만 표시됩니다.',
+      '사진과 소개를 등록하지 않아도 다른 서비스를 이용할 수 있습니다. 등록한 내용은 프로필 화면에서 수정하거나 삭제할 수 있습니다. 이용이 정지된 동안에는 삭제만 할 수 있습니다.',
+    ]) expect(collected, line).toContain(line);
+  });
+
+  it('인연 절이 참여 · 공개와 끄기를 운영자가 고른 글자로 든다', () => {
+    expect(discovery[0]).toBe(
+      '인연 기능이 열리면, 내 사주와 닉네임을 등록하고 성인 확인을 마친 이용자는 인연 찾기에 기본으로 참여합니다. 참여 중인 이용자의 프로필은 성인 확인을 마친 다른 참여자에게 소개될 수 있습니다.',
+    );
+    expect(discovery).toContain('인연 찾기 참여는 설정에서 언제든 끌 수 있습니다. 인연 찾기 참여를 끄면 새로운 상대에게 소개되지 않으며, 새로운 대화 요청을 보내거나 받을 수 없습니다. 이미 주고받은 대화 요청과 열린 대화방은 유지되며, 해당 상대에게는 내 닉네임·소개·사진이 계속 표시됩니다. 직접 다시 켜기 전까지 꺼진 상태로 유지됩니다.');
+  });
+
+  /* 수집 항목 절은 목적까지만 — 기본 참여 · 성인 확인 · 끄기는 인연 절 한 곳이다(운영자 2026-11-08) */
+  it('기본 참여 · 성인 확인 · 끄기는 수집 항목 절에 다시 서지 않는다', () => {
+    const text = collected.join(' ');
+    for (const word of ['기본으로 참여', '성인 확인', '끌 수 있습니다']) expect(text, word).not.toContain(word);
+  });
+
+  /* 「이 정보가 없으면 … 제공하지 못합니다」는 출생 정보의 줄이다 — 사진 · 소개가 그 앞에 서면 없으면 안 되는 것으로 읽힌다 */
+  it('선택 항목 줄은 출생 정보의 필수 줄 뒤에 선다', () => {
+    const required = collected.findIndex((line) => line.startsWith('이 정보가 없으면'));
+    const profile = collected.findIndex((line) => line.startsWith('프로필 사진과 소개는 선택 항목입니다'));
+    expect(required).toBeGreaterThanOrEqual(0);
+    expect(profile).toBeGreaterThan(required);
+  });
+
+  /* 포괄 표현을 쓰지 않는다(운영자 2026-11-08) */
+  it('「향후 서비스 확장」 같은 포괄 목적을 쓰지 않는다', () => {
+    expect(collected.join(' ')).not.toMatch(/향후|서비스 확장|서비스 개선 등/);
+  });
+
+  it('기준은 v18 그대로다 — v18 을 본 회원은 다시 안 보고, 새 판도 기준을 넘는다', () => {
+    expect(noticeAckHolds('notice-v18', FLOOR)).toBe(true);
+    expect(noticeAckHolds(NOTICE_VERSION, FLOOR)).toBe(true);
   });
 });

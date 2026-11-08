@@ -10,15 +10,15 @@ import { ConfirmDialog, DialogText } from '@/ui/confirm-dialog';
 import { SwitchRow, FAILURE_INSET } from './parts';
 import { setOptionalConsent } from './settings';
 
-type ConsentKey = 'improvement' | 'contact';
+type ConsentKey = 'improvement';
 
 /**
  * 선택 동의를 켜고 끄는 자리 — 웹 `app/me/consent-controls.tsx` 와 같다. 끄는 것이 곧 지움인 줄(개선 활용)만 끄기 전에 묻고(ADR 0022),
  * 판정은 함께 쓰는 `asksBeforeTurningOff` 다. 누르면 곧 넘어가고, 거절되면 앞 값으로 돌아오며 까닭이 선다.
  */
-export function ConsentControls({ improvement, contact }: { improvement: boolean; contact: boolean }) {
+export function ConsentControls({ improvement }: { improvement: boolean }) {
   const client = useClient();
-  const [shown, setShown] = useState<Record<ConsentKey, boolean>>({ improvement, contact });
+  const [shown, setShown] = useState<Record<ConsentKey, boolean>>({ improvement });
   const [saving, setSaving] = useState(false);
   const [failure, setFailure] = useState<string | null>(null);
   const [asking, setAsking] = useState(false);
@@ -30,7 +30,7 @@ export function ConsentControls({ improvement, contact }: { improvement: boolean
     setAskFailure(null);
     setSaving(true);
     if (!fromDialog) setShown((now) => ({ ...now, [key]: next }));
-    const result = await setOptionalConsent(client, key, next);
+    const result = await setOptionalConsent(client, next);
     setSaving(false);
     if (result.ok) {
       if (fromDialog) {

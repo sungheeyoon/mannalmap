@@ -15,10 +15,8 @@ describe('선택 동의를 끄기 전에 묻는가', () => {
     expect(asksBeforeTurningOff('improvement', false)).toBe(true);
   });
 
-  it('켜는 쪽과 테스트 소식은 묻지 않는다 — 지우는 것이 없다', () => {
+  it('켜는 쪽은 묻지 않는다 — 지우는 것이 없다', () => {
     expect(asksBeforeTurningOff('improvement', true)).toBe(false);
-    expect(asksBeforeTurningOff('contact', false)).toBe(false);
-    expect(asksBeforeTurningOff('contact', true)).toBe(false);
   });
 
   /** 창이 묻는 것은 줄의 이름 그대로다 — 줄과 창이 다른 이름을 쓰면 무엇을 끄는지 다시 짝지어야 한다 */

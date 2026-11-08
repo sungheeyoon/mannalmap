@@ -133,7 +133,7 @@ function SignupForm({ form, onDone }: { form: Extract<SignupState, { kind: 'form
   const [nickname, setNickname] = useState('');
   const [fourteen, setFourteen] = useState(false);
   const [acknowledged, setAcknowledged] = useState(false);
-  const [chosen, setChosen] = useState<Record<string, boolean>>({ improvement: false, contact: false });
+  const [chosen, setChosen] = useState<Record<string, boolean>>({ improvement: false });
   const [failure, setFailure] = useState<{ message: string; field: SignupField | null } | null>(null);
   const [working, setWorking] = useState(false);
   const [checked, setChecked] = useState<{ key: string; available: boolean } | null>(null);
@@ -179,7 +179,6 @@ function SignupForm({ form, onDone }: { form: Extract<SignupState, { kind: 'form
       nickname,
       scheduleId,
       improvement: chosen.improvement === true,
-      contact: chosen.contact === true,
     });
     setWorking(false);
     if (result.ok) {

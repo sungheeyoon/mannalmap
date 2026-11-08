@@ -73,7 +73,6 @@ export async function completeSignup(client: Client, answer: {
   nickname: string;
   scheduleId: number;
   improvement: boolean;
-  contact: boolean;
 }): Promise<{ ok: true } | { ok: false; message: string; field: SignupField | null }> {
   const { error } = await client.rpc(
     'complete_signup',

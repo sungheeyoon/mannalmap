@@ -23,7 +23,6 @@ const base: SettingsData = {
   account: {
     nickname: '지영',
     improvement_consent: false,
-    contact_consent: false,
     notice_version: null,
     notice_ack_at: null,
   },

@@ -57,20 +57,22 @@ export function signupGap(form: {
  * DB 가 그것을 「짓겠다」로 읽으면 2자 미만이라고 거절한다.
  *
  * **`p_code` 는 늘 `null` 이다**(ADR 0225). DB 는 옛 앱 빌드 때문에 그 인자를 받기만 하고 읽지 않는다.
+ *
+ * **`p_contact` 는 늘 `false` 다**(ADR 0245) — 「인터뷰 요청 받기」를 걷었다. DB 는 옛 앱 빌드 때문에 그 인자를 아직 받고 `null` 은 거절하므로
+ * 「묻지 않음 = 동의 안 함」으로 보낸다. 인자를 걷는 일은 G-159 다.
  */
 export const signupRequest = (answer: {
   nickname: string;
   version: string;
   scheduleId: number;
   improvement: boolean;
-  contact: boolean;
 }) => ({
   p_code: null,
   p_nickname: answer.nickname.trim() || null,
   p_version: answer.version,
   p_schedule_id: answer.scheduleId,
   p_improvement: answer.improvement,
-  p_contact: answer.contact,
+  p_contact: false,
 });
 
 /** 머리 — 처음 가입과, 처리방침이 바뀌어 다시 확인하는 사람 */

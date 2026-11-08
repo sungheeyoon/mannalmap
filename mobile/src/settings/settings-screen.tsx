@@ -133,7 +133,7 @@ export function SettingsScreen() {
 
         {active && account !== null && (
           <SettingsGroup title="선택 동의" description={OPTIONAL_CONSENT_NOTE}>
-            <ConsentControls key={`${account.improvement_consent}-${account.contact_consent}`} improvement={account.improvement_consent === true} contact={account.contact_consent === true} />
+            <ConsentControls key={`${account.improvement_consent}`} improvement={account.improvement_consent === true} />
             <PrivacyRow ackAt={account.notice_ack_at} />
           </SettingsGroup>
         )}

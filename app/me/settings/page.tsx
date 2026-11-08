@@ -26,7 +26,7 @@ export default async function SettingsPage() {
 
   /** 온보딩을 안 묻는 화면이라 `self_person_id` 를 안 읽고, 대신 동의 칸과 이름을 함께 읽는다 */
   const [{ state, row: account }, discoveryProfile, photoless, matchOpen, adultCheck] = await Promise.all([
-    readAccount(supabase, ['status', 'nickname', 'improvement_consent', 'contact_consent', 'notice_version', 'notice_ack_at']),
+    readAccount(supabase, ['status', 'nickname', 'improvement_consent', 'notice_version', 'notice_ack_at']),
     myDiscoveryProfile(),
     /*
       **사진이 한 장도 없다고 읽었을 때만 참이다.** 못 읽었으면 거짓 — 「사진 추가」는 덧붙이는 한 줄이라 안 서는 것이 원래

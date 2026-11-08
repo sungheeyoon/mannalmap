@@ -4,7 +4,7 @@ import type { Client } from './client';
 import { readSuspension } from './suspension';
 
 /** 화면들이 읽는 `app_user` 의 칸 전부 — 한 번 읽어 나눠 쓴다. 정책이 내 행만 내주므로 `where` 를 안 적는다 */
-const ACCOUNT_COLUMNS = 'status, self_person_id, nickname, intro, improvement_consent, contact_consent, notice_ack_at';
+const ACCOUNT_COLUMNS = 'status, self_person_id, nickname, intro, improvement_consent, notice_ack_at';
 
 export type AccountRow = {
   readonly status: string;
@@ -12,7 +12,6 @@ export type AccountRow = {
   readonly nickname: string | null;
   readonly intro: string | null;
   readonly improvement_consent: boolean | null;
-  readonly contact_consent: boolean | null;
   readonly notice_ack_at: string | null;
 };
 

@@ -79,10 +79,7 @@ export function SignupForm({
   const [nickname, setNickname] = useState('');
   const [fourteen, setFourteen] = useState(false);
   const [acknowledged, setAcknowledged] = useState(false);
-  const [chosen, setChosen] = useState<Record<string, boolean>>({
-    improvement: false,
-    contact: false,
-  });
+  const [chosen, setChosen] = useState<Record<string, boolean>>({ improvement: false });
   /** 서버의 거절 — 어느 칸의 것인지 알면 그 칸 곁에, 모르면 단추 곁에 선다(`refusedField`) */
   const [failure, setFailure] = useState<{ message: string; field: SignupField | null } | null>(null);
   const [working, startWorking] = useTransition();
@@ -157,7 +154,6 @@ export function SignupForm({
           /* 이 사람이 **본 안내의 줄**이다. 그 사이에 바뀌었으면 DB 가 거절한다 */
           scheduleId,
           improvement: chosen.improvement === true,
-          contact: chosen.contact === true,
         }),
       );
 

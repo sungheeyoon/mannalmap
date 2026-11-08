@@ -110,7 +110,7 @@ function ConsentSwitch({ onDone }: { onDone: () => void }) {
   const turnOn = async () => {
     setFailure(null);
     setSaving(true);
-    const result = await setOptionalConsent(client, 'improvement', true);
+    const result = await setOptionalConsent(client, true);
     setSaving(false);
     if (result.ok) onDone();
     else setFailure(result.message);
