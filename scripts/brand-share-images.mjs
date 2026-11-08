@@ -23,6 +23,11 @@
  *
  *   node scripts/brand-share-images.mjs                  # public/brand 에 굽는다
  *   node scripts/brand-share-images.mjs --out <폴더>     # 다른 곳에 굽는다(미리 보기)
+ *   node scripts/brand-share-images.mjs --play           # Google Play 그래픽 이미지만 굽는다(아래)
+ *
+ * **Google Play 그래픽 이미지(feature graphic, 1024×500)도 여기서 굽는다**(`docs/ops/play-listing.md` 「그림」) — 첫 화면 그림(`saju`)을
+ * 같은 판에 그리되 판의 높이를 1024 : 500 비율(1200×586)로 줄이고 그림판의 위아래를 같은 만큼 잘라 가운데를 맞춘다. 규격이
+ * 「JPEG 또는 24비트 PNG(알파 없음)」이라 알파를 걷은 PNG 로 `mobile/store/` 에 둔다 — 웹이 내주는 그림이 아니라 콘솔에 올리는 파일이다.
  *
  * Playwright 의 Chromium 으로 두 배 크기로 그리고 sharp 로 1200×628 로 줄여 mozjpeg 로 담는다. 고운돋움과 Noto Sans KR 은
  * Google Fonts 에서 받는다 — 굽는 기계에 망이 있어야 한다. v3 의 한 줄 소개는 Pretendard SemiBold 로 구웠다 — 앱이 웹 글꼴을
@@ -44,6 +49,10 @@ const JPEG_QUALITY = 88;
 
 const outAt = process.argv.indexOf('--out');
 const OUT = outAt > 0 ? process.argv[outAt + 1] : join(ROOT, 'public/brand');
+const PLAY_ONLY = process.argv.includes('--play');
+/** Play 그래픽 이미지 — 규격 1024×500. 판은 공유 그림과 같은 너비(1200)에 그 비율의 높이로 그린다 */
+const PLAY = { width: 1024, height: 500, target: join(ROOT, 'mobile/store/play-feature-graphic.png') };
+const PLAY_FRAME = { width: SIZE.width, height: Math.round((SIZE.width * PLAY.height) / PLAY.width) };
 
 /** `app/globals.css` 의 첫 `:root`(밝은 화면) 토큰 */
 function lightTokens() {
@@ -258,21 +267,23 @@ const SHOTS = [
   { kind: 'compat', target: 'compat-share-v5.jpg', art: compatArt },
 ];
 
-function page(shot) {
+/** `frame` 은 판의 크기 — 공유 그림과 높이가 다르면 그림판(1200×628 좌표)의 위아래를 같은 만큼 잘라 가운데를 맞춘다 */
+function page(shot, frame = SIZE) {
+  const top = (SIZE.height - frame.height) / 2;
   const corners = CORNERS[shot.kind].map(([x, y, r, fill]) => `<circle cx="${x}" cy="${y}" r="${r}" fill="${fill}"/>`).join('');
   return `<!doctype html>
 <html lang="ko"><head><meta charset="utf-8">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gowun+Dodum&family=Noto+Sans+KR:wght@600;700&display=block">
 <style>
   html, body { margin: 0; }
-  body { width: ${SIZE.width}px; height: ${SIZE.height}px; position: relative; overflow: hidden; background: ${T.background}; }
+  body { width: ${frame.width}px; height: ${frame.height}px; position: relative; overflow: hidden; background: ${T.background}; }
   svg.art { position: absolute; inset: 0; }
   .words { position: absolute; left: 92px; top: 0; bottom: 0; display: flex; flex-direction: column; justify-content: center; color: ${T.foreground}; }
   .name { margin-top: 20px; font-family: 'Gowun Dodum'; font-size: 132px; line-height: 1; letter-spacing: -0.02em; }
   .tagline { margin-top: 30px; font-family: 'Noto Sans KR'; font-weight: 600; font-size: 31px; letter-spacing: -0.02em; color: ${T['text-secondary']}; white-space: nowrap; }
 </style></head>
 <body>
-  <svg class="art" viewBox="0 0 ${SIZE.width} ${SIZE.height}" width="${SIZE.width}" height="${SIZE.height}">
+  <svg class="art" viewBox="0 ${top} ${frame.width} ${frame.height}" width="${frame.width}" height="${frame.height}">
     <defs>
       <filter id="lift" x="-20%" y="-20%" width="140%" height="150%">
         <feDropShadow dx="0" dy="18" stdDeviation="22" flood-color="rgb(60,48,30)" flood-opacity="0.16"/>
@@ -287,6 +298,27 @@ function page(shot) {
     <div class="tagline">${SERVICE_TAGLINE}</div>
   </div>
 </body></html>`;
+}
+
+if (PLAY_ONLY) {
+  mkdirSync(join(PLAY.target, '..'), { recursive: true });
+  const browser = await chromium.launch();
+  try {
+    const context = await browser.newContext({ viewport: PLAY_FRAME, deviceScaleFactor: 2 });
+    const tab = await context.newPage();
+    await tab.setContent(page(SHOTS[0], PLAY_FRAME), { waitUntil: 'networkidle' });
+    await tab.evaluate(() => document.fonts.ready);
+    const png = await sharp(await tab.screenshot({ type: 'png' }))
+      .resize(PLAY.width, PLAY.height, { kernel: 'lanczos3', fit: 'fill' })
+      .removeAlpha()
+      .png({ compressionLevel: 9 })
+      .toBuffer();
+    writeFileSync(PLAY.target, png);
+    console.log(`${PLAY.target} · ${Math.round(png.length / 1024)}KB`);
+  } finally {
+    await browser.close();
+  }
+  process.exit(0);
 }
 
 mkdirSync(OUT, { recursive: true });
