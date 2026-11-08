@@ -17,7 +17,7 @@ import { actionAnswer } from '../ui/action-answer';
 import { ConfirmDialog } from '../ui/confirm-dialog';
 import { FailureLine } from '../ui/failure-line';
 
-type ConsentKey = 'improvement' | 'contact';
+type ConsentKey = 'improvement';
 
 /**
  * 선택 동의를 켜고 끄는 자리 — **스위치 한 벌이고, 끄는 것이 곧 지움인 줄은 끄기 전에 묻는다.**
@@ -40,13 +40,13 @@ type ConsentKey = 'improvement' | 'contact';
  *
  * 누르면 스위치가 곧 넘어가고(`useOptimistic`), 저장이 거절되면 서버가 든 값으로 돌아오며 까닭이 선다.
  */
-export function ConsentControls({ improvement, contact }: { improvement: boolean; contact: boolean }) {
+export function ConsentControls({ improvement }: { improvement: boolean }) {
   const [failure, setFailure] = useState<string | null>(null);
   const [asking, setAsking] = useState(false);
   const [askFailure, setAskFailure] = useState<string | null>(null);
   const [saving, startSaving] = useTransition();
   const [shown, show] = useOptimistic<Record<ConsentKey, boolean>, { key: ConsentKey; next: boolean }>(
-    { improvement, contact },
+    { improvement },
     (now, { key, next }) => ({ ...now, [key]: next }),
   );
 
@@ -55,7 +55,7 @@ export function ConsentControls({ improvement, contact }: { improvement: boolean
     setAskFailure(null);
     startSaving(async () => {
       show({ key, next });
-      const result = await actionAnswer(setOptionalConsent(key, next));
+      const result = await actionAnswer(setOptionalConsent(next));
       if (result.ok) {
         if (fromDialog) setAsking(false);
       } else if (fromDialog) {

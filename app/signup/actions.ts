@@ -31,7 +31,6 @@ export async function completeSignup(answer: {
   version: string;
   scheduleId: number;
   improvement: boolean;
-  contact: boolean;
 }): Promise<{ ok: false; message: string; field: SignupField | null }> {
   const supabase = await supabaseOnServer();
 

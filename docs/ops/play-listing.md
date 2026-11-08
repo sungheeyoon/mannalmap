@@ -153,7 +153,7 @@ Play 스크린샷은 그림 안에 글을 얹는 것이 흔하다(위 넷 다). 
 
 ### 광고
 
-**광고 없음.** `mobile/package.json` 에 광고 SDK(AdMob · `react-native-google-mobile-ads` 등)가 없고, 앱 · 웹 코드에 광고 자리가 없다(2026-11-06 `grep -i "admob|google-mobile-ads|adsense"` 0건). 선택 동의 「인터뷰 요청 받기」는 「광고성 메시지는 보내지 않습니다」라고 약속한다(`OPTIONAL_CONSENTS`).
+**광고 없음.** `mobile/package.json` 에 광고 SDK(AdMob · `react-native-google-mobile-ads` 등)가 없고, 앱 · 웹 코드에 광고 자리가 없다(2026-11-06 `grep -i "admob|google-mobile-ads|adsense"` 0건). 이메일을 쓰던 선택 동의 「인터뷰 요청 받기」는 `notice-v19`(#1089, ADR 0245)에서 걷었다 — 데이터 보안의 이메일 줄은 「계정 관리 · 개발자 커뮤니케이션」 그대로다.
 
 ### 앱 액세스 (심사자 로그인)
 

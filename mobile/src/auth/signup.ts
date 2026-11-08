@@ -81,7 +81,6 @@ export async function completeSignup(answer: {
   nickname: string;
   scheduleId: number;
   improvement: boolean;
-  contact: boolean;
 }): Promise<{ ok: true } | { ok: false; message: string; field: SignupField | null }> {
   if (supabase === null) return { ok: false, message: NOT_READY, field: null };
   const { error } = await supabase.rpc(

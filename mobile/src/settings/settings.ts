@@ -36,7 +36,6 @@ export type SettingsAccount = {
   status: string;
   nickname: string | null;
   improvement_consent: boolean | null;
-  contact_consent: boolean | null;
   notice_ack_at: string | null;
 };
 
@@ -60,7 +59,7 @@ export function settingsUnreachable(): SettingsData {
 export async function readSettings(): Promise<SettingsData> {
   if (supabase === null) return settingsUnreachable();
   const [{ state, row }, profile, session] = await Promise.all([
-    readAccount<SettingsAccount>('status, nickname, improvement_consent, contact_consent, notice_ack_at'),
+    readAccount<SettingsAccount>('status, nickname, improvement_consent, notice_ack_at'),
     supabase.from('discovery_profile').select('prefer_gender, opted_out_at').maybeSingle(),
     supabase.auth.getSession(),
   ]);
@@ -81,10 +80,11 @@ export async function readSettings(): Promise<SettingsData> {
   };
 }
 
-/** 끄는 쪽의 지움은 DB 가 같은 트랜잭션에서 한다(ADR 0022). 문을 나눠 부른다 — 웹의 `setOptionalConsent` */
-export async function setOptionalConsent(key: 'improvement' | 'contact', consent: boolean): Promise<Answer> {
+/** 끄는 쪽의 지움은 DB 가 같은 트랜잭션에서 한다(ADR 0022). 웹의 `setOptionalConsent` 와 같다 */
+export async function setOptionalConsent(consent: boolean): Promise<Answer> {
   if (supabase === null) return { ok: false, message: NOT_READY };
-  const { error } = await supabase.rpc(key === 'improvement' ? 'set_improvement_consent' : 'set_contact_consent', { p_consent: consent });
+  /* 「인터뷰 요청 받기」(`set_contact_consent`)는 `notice-v19` 에서 걷었다(ADR 0245) — 문은 옛 앱 때문에 DB 에 남는다(G-159) */
+  const { error } = await supabase.rpc('set_improvement_consent', { p_consent: consent });
   return error !== null ? { ok: false, message: userFacingDbMessage(error, 'set_optional_consent') } : { ok: true };
 }
 

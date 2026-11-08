@@ -28,7 +28,7 @@ export function ConsentSwitch() {
         onClick={() => {
           setFailure(null);
           startSaving(async () => {
-            const result = await actionAnswer(setOptionalConsent('improvement', true));
+            const result = await actionAnswer(setOptionalConsent(true));
             if (!result.ok) setFailure(result.message);
           });
         }}

@@ -25,7 +25,6 @@ export type SettingsData = {
   account: {
     nickname: string | null;
     improvement_consent: boolean | null;
-    contact_consent: boolean | null;
     notice_version: string | null;
     notice_ack_at: string | null;
   } | null;
@@ -121,10 +120,7 @@ export function SettingsView({ data }: { data: SettingsData }): ReactNode {
 
         {active && account !== null && (
           <SettingsGroup title="선택 동의" description={OPTIONAL_CONSENT_NOTE}>
-            <ConsentControls
-              improvement={account.improvement_consent === true}
-              contact={account.contact_consent === true}
-            />
+            <ConsentControls improvement={account.improvement_consent === true} />
             {/* 처리 안내도 이 무리의 한 줄이다 — 무엇을 켰나 · 껐나 · 확인했나 셋이 한 무리다 */}
             <SettingsLinkRow
               href="/privacy"

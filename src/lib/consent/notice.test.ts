@@ -186,9 +186,9 @@ describe('처리방침이 갖춰야 하는 것', () => {
 });
 
 describe('선택 항목', () => {
-  /** 둘뿐이고 **거절해도 서비스는 그대로다** */
-  it('둘이고 각자 무엇에 쓰는지 적혀 있다', () => {
-    expect(OPTIONAL_CONSENTS.map((one) => one.key)).toEqual(['improvement', 'contact']);
+  /** 하나뿐이고 **거절해도 서비스는 그대로다** — 「인터뷰 요청 받기」는 `notice-v19` 에서 걷었다(운영자 지시 2026-11-08, ADR 0245) */
+  it('개선 활용 하나이고 무엇에 쓰는지 적혀 있다', () => {
+    expect(OPTIONAL_CONSENTS.map((one) => one.key)).toEqual(['improvement']);
 
     for (const one of OPTIONAL_CONSENTS) {
       expect(one.detail.length, one.key).toBeGreaterThan(20);
@@ -228,13 +228,10 @@ describe('선택 항목', () => {
     }
   });
 
-  /** 후속 연락은 **광고가 아니다** — 합치면 하나로 받아 둘 다 쓰게 된다 */
-  it('후속 연락에 홍보를 섞지 않고 보관 기한을 든다', () => {
-    const contact = OPTIONAL_CONSENTS.find((one) => one.key === 'contact');
-
-    expect(contact?.detail).toContain('광고성 메시지는 보내지 않습니다');
-    /* 이메일 보관 기한은 이 항목에만 적혀 있다 — 빠지면 안내 전체에서 사라진다 */
-    expect(contact?.erasure).toContain('1년');
+  /** 걷은 항목이 처리방침 · 가입 · 설정의 어느 글에도 남지 않는다 — 세 화면이 이 목록 하나를 그린다 */
+  it('「인터뷰 요청 받기」는 어느 글에도 없다', () => {
+    const text = JSON.stringify([OPTIONAL_CONSENTS, noticeFor({ name: '만세력 운영자', officer: '홍길동', contact: 'ops@example.com' })]);
+    expect(text).not.toContain('인터뷰');
   });
 });
 

@@ -547,7 +547,7 @@ export function noticeFor(operator: Operator): readonly NoticeSection[] {
  * 덩어리가 통째로 안 읽혔고, 정작 누르기 직전에 읽어야 하는 것은 뒤쪽이다(ADR 0022·0028).
  */
 type OptionalConsent = {
-  readonly key: 'improvement' | 'contact';
+  readonly key: 'improvement';
   readonly label: string;
   readonly detail: string;
   /** 끄거나 기간이 지나면 어떻게 되는가 — **지움과 보관 기한이 여기 산다** */
@@ -555,7 +555,10 @@ type OptionalConsent = {
 };
 
 /**
- * 선택 동의 둘.
+ * 선택 동의 — 지금은 하나다.
+ *
+ * 「인터뷰 요청 받기」(옛 「다음 테스트 소식 받기」, ADR 0024 · 0225 추기)는 `notice-v19` 에서 걷었다 — 운영자가 승인한 적이 없는 항목이었다
+ * (운영자 지시 2026-11-08, ADR 0245). DB 칸 `contact_consent` 와 문 `set_contact_consent` 는 옛 앱이 부를 수 있어 남기고, 좁히는 일은 G-159 다.
  *
  * 필수와 갈라 세우는 것이 요점이다. 서비스 제공에 필요한 처리는 계약 이행 근거로 하고
  * 처리방침이 알린다 — 그것까지 「동의합니다」로 받으면, 거절할 수 없는 것을 동의라고
@@ -569,13 +572,6 @@ export const OPTIONAL_CONSENTS: readonly OptionalConsent[] = [
     label: '풀이 개선에 답변 활용',
     detail: '설문 답변과 생성 기록을 서비스 개선에 활용합니다.',
     erasure: '동의를 끄면 지금까지 남긴 설문 답변을 삭제합니다.',
-  },
-  {
-    key: 'contact',
-    label: '인터뷰 요청 받기',
-    detail:
-      '서비스 개선 인터뷰 요청을 이메일로 보내드립니다. 광고성 메시지는 보내지 않습니다.',
-    erasure: '동의를 끄거나 수집 후 1년이 지나면 이메일을 더 쓰지 않습니다.',
   },
 ];
 

@@ -33,8 +33,9 @@ describe('가입 폼은 처음 걸린 칸 하나를 말한다', () => {
     expect(signupGap(filled)).toBeNull();
   });
 
-  it('코드 없이 나가고, 안 물은 칸은 null 로 나간다', () => {
-    const args = signupRequest({ nickname: '', version: 'v', scheduleId: 1, improvement: false, contact: true });
-    expect(args).toEqual({ p_code: null, p_nickname: null, p_version: 'v', p_schedule_id: 1, p_improvement: false, p_contact: true });
+  /* 「인터뷰 요청 받기」는 걷었다 — DB 가 인자를 아직 받으므로 늘 false 로 보낸다(ADR 0245, G-159) */
+  it('코드 없이 나가고, 안 물은 칸은 null 로, 걷은 연락 동의는 false 로 나간다', () => {
+    const args = signupRequest({ nickname: '', version: 'v', scheduleId: 1, improvement: false });
+    expect(args).toEqual({ p_code: null, p_nickname: null, p_version: 'v', p_schedule_id: 1, p_improvement: false, p_contact: false });
   });
 });

@@ -179,24 +179,15 @@ export async function editPersonInput(personId: string, query: Query): Promise<S
 }
 
 /**
- * 선택 동의 하나를 바꾼다.
- *
- * **어느 값인지를 인자로 받되 문을 나눠 부른다.** 하나의 RPC 로 합치면 한쪽만 바꾸려는
- * 화면이 다른 쪽 값을 다시 적어 넣어야 하고, 그때 그 값을 어디서 읽어 왔는지가 또 한
- * 자리가 된다 — 두 화면이 서로 다른 답을 적는 자리는 그렇게 생긴다.
+ * 선택 동의(풀이 개선에 답변 활용)를 바꾼다 — 선택 동의는 이것 하나다(「인터뷰 요청 받기」는 `notice-v19` 에서 걷었다, ADR 0245).
  *
  * 철회하면 개선 활용 쪽은 남긴 답까지 지운다. 그 규칙은 DB 에 있다(ADR 0022).
  */
-export async function setOptionalConsent(
-  key: 'improvement' | 'contact',
-  consent: boolean,
-): Promise<SaveResult> {
+export async function setOptionalConsent(consent: boolean): Promise<SaveResult> {
   const supabase = await supabaseOnServer();
 
-  const { error } = await supabase.rpc(
-    key === 'improvement' ? 'set_improvement_consent' : 'set_contact_consent',
-    { p_consent: consent },
-  );
+  /* 「인터뷰 요청 받기」(`set_contact_consent`)는 `notice-v19` 에서 걷었다(ADR 0245) — 문은 옛 앱 때문에 DB 에 남는다(G-159) */
+  const { error } = await supabase.rpc('set_improvement_consent', { p_consent: consent });
 
   if (error) return { ok: false, message: userFacingDbMessage(error, 'set_optional_consent') };
 

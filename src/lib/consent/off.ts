@@ -3,9 +3,9 @@
  *
  * 「풀이 개선에 답변 활용」은 끄면 `set_improvement_consent` 가 같은 트랜잭션에서 남긴 설문 답변(풀이 의견 · 서비스 설문)을 지운다.
  * 스위치는 누르면 곧 적용되는 손잡이라, 묻지 않으면 손이 스친 한 번에 되돌릴 수 없는 삭제가 났다(운영자 2026-10-24).
- * 「인터뷰 요청 받기」는 끄면 앞으로 안 보낼 뿐 지우는 것이 없어 묻지 않는다. 켜는 쪽은 잃을 것이 없어 묻지 않는다.
+ * 켜는 쪽은 잃을 것이 없어 묻지 않는다. 묻지 않던 「인터뷰 요청 받기」는 `notice-v19` 에서 걷었다(ADR 0245).
  */
-export function asksBeforeTurningOff(key: 'improvement' | 'contact', next: boolean): boolean {
+export function asksBeforeTurningOff(key: 'improvement', next: boolean): boolean {
   return key === 'improvement' && next === false;
 }
 
