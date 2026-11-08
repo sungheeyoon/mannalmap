@@ -10,8 +10,9 @@ import type { CompatSide } from '@saju';
 
 import { useClient } from '@/auth/connected';
 import { BirthFields, useBirthForm } from '@/people/birth-fields';
-import { FailureLine, styles as shared } from '@/people/parts';
+import { styles as shared } from '@/people/parts';
 import { SameChartAsk, type SameChartQuestion } from '@/people/same-chart-ask';
+import { FailureLine } from '@/ui/failure-line';
 import { StemSymbol } from '@/ui/stem-symbol';
 import { ElementSymbol } from '@/ui/element-symbol';
 import { Choices, Field, PrimaryButton } from '@/ui/parts';

@@ -217,6 +217,39 @@
   --radius-card: 20px;
   --radius-cell: 12px;
   /* /design-tokens:radius */
+
+  /*
+    **색 + 투명도의 이름**(2026-11-08, ADR 0241) — 덮개(`bg-scrim`) · 경고 테(`ring-danger-line`) · 사진 위 글자(`text-on-photo-soft`)처럼
+    앱과 웹이 같이 쓰는 반투명 색이다. 값은 Tailwind 의 `/40` 과 같은 `color-mix` 라 어두운 화면에서는 제 토큰을 따른다. 앱은 같은 이름을
+    `COLOR.scrim` 으로 부른다. 한 번만 쓰는 투명도는 이름 없이 `bg-surface/55` 그대로다(앱은 `alpha(COLOR.surface, 0.55)`).
+  */
+  /* design-tokens:mix — 지은 칸이다. 값은 `src/lib/design/tokens.json` 을 고치고 `node scripts/design-tokens.mjs` 를 돈다 */
+  --color-scrim: rgba(0, 0, 0, 0.4);
+  --color-danger-line: color-mix(in oklab, var(--danger) 40%, transparent);
+  --color-warning-line: color-mix(in oklab, var(--warning) 40%, transparent);
+  --color-warning-line-soft: color-mix(in oklab, var(--warning) 25%, transparent);
+  --color-on-photo: #ffffff;
+  --color-on-photo-strong: rgba(255, 255, 255, 0.95);
+  --color-on-photo-soft: rgba(255, 255, 255, 0.85);
+  --color-on-photo-faint: rgba(255, 255, 255, 0.75);
+  --color-photo-line: rgba(255, 255, 255, 0.4);
+  --color-photo-face: rgba(0, 0, 0, 0.5);
+  --color-photo-back: #000000;
+  /* /design-tokens:mix */
+}
+
+/*
+  **움직임의 시간 · 이징**(2026-11-08, ADR 0241) — 누름의 전환(`quick`) · 뼈대의 반짝임(`shimmer`) · 끝 모르는 띠(`flow`). 앱은 `MOTION` 으로
+  같은 값을 부르고, 줄인 움직임은 아래 `prefers-reduced-motion` 과 앱의 `useReducedMotion`(`mobile/src/ui/motion.ts`)이 듣는다.
+*/
+:root {
+  /* design-tokens:motion — 지은 칸이다. 값은 `src/lib/design/tokens.json` 을 고치고 `node scripts/design-tokens.mjs` 를 돈다 */
+  --motion-quick: 160ms;
+  --motion-shimmer: 1.6s;
+  --motion-flow: 1.8s;
+  --motion-ease-quick: ease;
+  --motion-ease-loop: ease-in-out;
+  /* /design-tokens:motion */
 }
 
 /*
@@ -282,8 +315,9 @@ body {
 
 button, a, input, select, textarea, summary { -webkit-tap-highlight-color: transparent; }
 button, a, summary {
-  transition: color 160ms ease, background-color 160ms ease, border-color 160ms ease,
-    opacity 160ms ease, transform 160ms ease, box-shadow 160ms ease;
+  --press-motion: var(--motion-quick) var(--motion-ease-quick);
+  transition: color var(--press-motion), background-color var(--press-motion), border-color var(--press-motion),
+    opacity var(--press-motion), transform var(--press-motion), box-shadow var(--press-motion);
 }
 /*
   초점 테두리 기본값 — **테두리 색과 같은 까닭으로 `@layer base` 안에 둔다.**
@@ -333,7 +367,7 @@ button, a, summary {
 .reading-skeleton {
   background: linear-gradient(90deg, var(--surface-sunken) 25%, var(--surface) 48%, var(--surface-sunken) 72%);
   background-size: 220% 100%;
-  animation: reading-shimmer 1.6s ease-in-out infinite;
+  animation: reading-shimmer var(--motion-shimmer) var(--motion-ease-loop) infinite;
 }
 @keyframes reading-shimmer { to { background-position: -220% 0; } }
 

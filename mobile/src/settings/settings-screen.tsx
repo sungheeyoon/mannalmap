@@ -17,6 +17,7 @@ import { readGate } from '@/home/gate';
 import { useMatchOpen } from '@/matching/opening';
 import { CONTACT_LABEL, POLICY_TITLE, SUPPORT_TITLE, SURVEY_LABEL } from '@/info/copy';
 import { legalPagesOpen, openLegalPage } from '@/info/legal-web';
+import { FailureLine } from '@/ui/failure-line';
 import { COLOR, FONT, RADIUS, TYPE } from '@/ui/tokens';
 import { settled } from '@/ui/settled';
 import { TopBar } from '@/ui/top-bar';
@@ -25,7 +26,7 @@ import { ConsentControls } from './consent-controls';
 import { ParticipationRow, PreferenceRow } from './discovery-rows';
 import { PushRow } from './push-row';
 import { RequestDeletion } from './leaving';
-import { AccountNotice, FailureLine, LinkRow, SettingsGroup, TextRow } from './parts';
+import { AccountNotice, LinkRow, SettingsGroup, TextRow, FAILURE_INSET } from './parts';
 import { myPhotos, photoSource } from './photos';
 import { readSettings, settingsUnreachable, type SettingsData } from './settings';
 
@@ -106,7 +107,7 @@ export function SettingsScreen() {
                 <PreferenceRow key={discovery.preferGender} current={discovery.preferGender} />
               </>
             ) : (
-              <FailureLine inset onRetry={load}>{`인연 찾기 설정을 불러오지 못했어요. ${discovery.reason}`}</FailureLine>
+              <FailureLine style={FAILURE_INSET} onRetry={load}>{`인연 찾기 설정을 불러오지 못했어요. ${discovery.reason}`}</FailureLine>
             )}
           </SettingsGroup>
         )}
@@ -172,7 +173,7 @@ function SignOutRow() {
   return (
     <>
       <TextRow label={leaving ? SIGN_OUT_PENDING : '로그아웃'} onPress={() => void leave()} disabled={leaving} />
-      {failed && <FailureLine inset>{SIGN_OUT_FAILED}</FailureLine>}
+      {failed && <FailureLine style={FAILURE_INSET}>{SIGN_OUT_FAILED}</FailureLine>}
     </>
   );
 }

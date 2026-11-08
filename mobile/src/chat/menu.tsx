@@ -1,8 +1,9 @@
 import { useRef, useState, type ComponentRef, type ReactNode } from 'react';
-import { Dimensions, Modal, Pressable, StyleSheet, Text } from 'react-native';
+import { Dimensions, Pressable, StyleSheet, Text } from 'react-native';
 
 import { MenuPanel } from '@/ui/surfaces';
 import { Icon, type IconName } from '@/ui/icons';
+import { Scrim } from '@/ui/scrim';
 import { COLOR, CONTROL, FONT, RADIUS, TYPE } from '@/ui/tokens';
 
 
@@ -26,8 +27,7 @@ export function AnchoredMenu({ label, items, above = false, children }: { label:
       <Pressable ref={anchor} accessibilityRole="button" accessibilityLabel={label} onPress={open} style={styles.anchor}>
         {children}
       </Pressable>
-      <Modal transparent visible={place !== null} animationType="none" onRequestClose={() => setPlace(null)}>
-        <Pressable accessibilityLabel="닫기" style={styles.outside} onPress={() => setPlace(null)} />
+      <Scrim open={place !== null} place="free" animation="none" tint={false} onRequestClose={() => setPlace(null)} onOutside={() => setPlace(null)} outsideLabel="닫기">
         {place !== null && (
           <MenuPanel style={[styles.panel, place]}>
             {items.map((item) => (
@@ -46,14 +46,13 @@ export function AnchoredMenu({ label, items, above = false, children }: { label:
             ))}
           </MenuPanel>
         )}
-      </Modal>
+      </Scrim>
     </>
   );
 }
 
 const styles = StyleSheet.create({
   anchor: { minHeight: CONTROL, minWidth: CONTROL, alignItems: 'center', justifyContent: 'center', borderRadius: RADIUS.pill },
-  outside: { ...StyleSheet.absoluteFill },
   panel: { position: 'absolute', width: 192, padding: 6 },
   item: { minHeight: CONTROL, flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 12 },
   itemText: { fontSize: TYPE.body, fontFamily: FONT.bold, color: COLOR.foreground },

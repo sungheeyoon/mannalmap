@@ -7,13 +7,14 @@ import { PHOTO_ADD, PHOTO_UPLOADS_PAUSED } from '@account/copy';
 import { FOCUS_CENTER, PHOTO_MAX_COUNT, PHOTO_NOTE, PHOTO_REMOVED, PHOTO_REMOVE_CONFIRM, PHOTO_REMOVE_NOTE, PHOTO_REMOVE_TITLE, movedPhotos, type PhotoFocus, type PhotoUploadMode } from '@profile';
 
 import { useClient } from '@/auth/connected';
+import { FailureLine } from '@/ui/failure-line';
 import { Paper } from '@/ui/surfaces';
 import { ConfirmDialog } from '@/ui/confirm-dialog';
-import { COLOR, FONT, RADIUS, TYPE } from '@/ui/tokens';
+import { alpha, COLOR, FONT, RADIUS, TYPE } from '@/ui/tokens';
 import { UNREACHABLE } from '@/auth/signup';
 import { settled } from '@/ui/settled';
 
-import { FailureLine, useDoneNote } from './parts';
+import { useDoneNote } from './parts';
 import { PHOTO_FRAME_TITLE, PhotoFramer, contentPositionOf } from './photo-framer';
 import { PhotoViewer, type PhotoChoice } from './photo-viewer';
 import { UNREADABLE_PHOTO, addPhoto, movePhoto, photoSource, pickPhotos, removePhoto, replacePhoto, setPhotoFocus, type MyPhoto } from './photos';
@@ -290,7 +291,7 @@ export function PhotoGrid({
           <Pressable accessibilityRole="button" accessibilityLabel="사진 지우기" disabled={busy} onPress={() => ask(photo)} style={[styles.remove, busy && styles.off]}>
             <View style={styles.removeFace}>
               <Svg width={12} height={12} viewBox="0 0 12 12">
-                <Path d="M2 2 L10 10 M10 2 L2 10" stroke="#fff" strokeWidth={1.6} strokeLinecap="round" />
+                <Path d="M2 2 L10 10 M10 2 L2 10" stroke={COLOR.onPhoto} strokeWidth={1.6} strokeLinecap="round" />
               </Svg>
             </View>
           </Pressable>
@@ -522,7 +523,7 @@ const styles = StyleSheet.create({
   addText: { fontSize: TYPE.body, fontFamily: FONT.bold, color: COLOR.secondary },
   lead: { position: 'absolute', left: 8, top: 8, overflow: 'hidden', paddingHorizontal: 8, paddingVertical: 2, borderRadius: RADIUS.pill, backgroundColor: COLOR.surface, fontSize: TYPE.fine, fontFamily: FONT.bold, color: COLOR.foreground },
   remove: { position: 'absolute', right: 0, top: 0, width: 44, height: 44, alignItems: 'center', justifyContent: 'center' },
-  removeFace: { width: 26, height: 26, borderRadius: RADIUS.pill, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(0, 0, 0, 0.5)', borderWidth: 1, borderColor: 'rgba(255, 255, 255, 0.4)' },
-  saving: { ...StyleSheet.absoluteFill, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(38, 36, 31, 0.45)' },
+  removeFace: { width: 26, height: 26, borderRadius: RADIUS.pill, alignItems: 'center', justifyContent: 'center', backgroundColor: COLOR.photoFace, borderWidth: 1, borderColor: COLOR.photoLine },
+  saving: { ...StyleSheet.absoluteFill, alignItems: 'center', justifyContent: 'center', backgroundColor: alpha(COLOR.foreground, 0.45) },
   savingText: { fontSize: TYPE.small, fontFamily: FONT.bold, color: COLOR.surface },
 });

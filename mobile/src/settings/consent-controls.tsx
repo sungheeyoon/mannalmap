@@ -4,9 +4,10 @@ import { IMPROVEMENT_OFF_CONFIRM, IMPROVEMENT_OFF_IRREVERSIBLE, IMPROVEMENT_OFF_
 import { OPTIONAL_CONSENTS } from '@consent/notice';
 
 import { useClient } from '@/auth/connected';
+import { FailureLine } from '@/ui/failure-line';
 import { ConfirmDialog, DialogText } from '@/ui/confirm-dialog';
 
-import { FailureLine, SwitchRow } from './parts';
+import { SwitchRow, FAILURE_INSET } from './parts';
 import { setOptionalConsent } from './settings';
 
 type ConsentKey = 'improvement' | 'contact';
@@ -71,7 +72,7 @@ export function ConsentControls({ improvement, contact }: { improvement: boolean
           busy={saving}
         />
       ))}
-      {failure !== null && <FailureLine inset>{failure}</FailureLine>}
+      {failure !== null && <FailureLine style={FAILURE_INSET}>{failure}</FailureLine>}
       <ConfirmDialog
         open={asking}
         onClose={() => {

@@ -12,11 +12,11 @@ import { useClient } from '@/auth/connected';
 import { UNREACHABLE } from '@/auth/signup';
 import { readPersonDetail } from '@/people/data';
 import { EditInputForm } from '@/people/edit-input';
+import { FailureLine } from '@/ui/failure-line';
 import { settled } from '@/ui/settled';
 import { COLOR, CONTROL, FONT, RADIUS, TYPE } from '@/ui/tokens';
 import { CardFrame } from '@/ui/surfaces';
 
-import { FailureLine } from './parts';
 
 type MyBirth = { kind: 'none' } | { kind: 'failed' } | { kind: 'unreadable'; message: string } | { kind: 'ready'; personId: string; query: Query };
 

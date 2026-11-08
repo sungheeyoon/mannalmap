@@ -1,5 +1,5 @@
 import { useState, type ReactNode } from 'react';
-import { KeyboardAvoidingView, Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 
 import { REPORT_DETAIL_MAX, REPORT_DONE, REPORT_NOTE, REPORT_REASONS, type ReportReason } from '@account/index';
 import { BLOCK_FINAL_NOTE, BLOCK_KEEPS_NOTE, BLOCK_NOTE } from '@consent/index';
@@ -7,6 +7,7 @@ import { BLOCK_FINAL_NOTE, BLOCK_KEEPS_NOTE, BLOCK_NOTE } from '@consent/index';
 import { useClient } from '@/auth/connected';
 import { FieldLabel, PrimaryButton, Select, TextButton } from '@/ui/parts';
 import { Icon } from '@/ui/icons';
+import { Scrim } from '@/ui/scrim';
 import { ConfirmDialog, DialogText } from '@/ui/confirm-dialog';
 import { DialogPanel } from '@/ui/surfaces';
 import { COLOR, CONTROL, FONT, RADIUS, TYPE } from '@/ui/tokens';
@@ -18,12 +19,9 @@ import { blockUser, reportMessage, reportUser } from './reads';
 
 function Dialog({ onOutside, children }: { onOutside: (() => void) | null; children: ReactNode }) {
   return (
-    <Modal transparent visible animationType="fade" onRequestClose={onOutside ?? undefined}>
-      <KeyboardAvoidingView behavior="padding" style={styles.back}>
-        <Pressable style={styles.outside} onPress={onOutside ?? undefined} />
-        <DialogPanel style={styles.dialog}>{children}</DialogPanel>
-      </KeyboardAvoidingView>
-    </Modal>
+    <Scrim place="center" animation="fade" keyboard onRequestClose={onOutside ?? undefined} onOutside={onOutside}>
+      <DialogPanel style={styles.dialog}>{children}</DialogPanel>
+    </Scrim>
   );
 }
 
@@ -184,9 +182,7 @@ function BlockLink({ onBlock, disabled = false }: { onBlock: () => void; disable
 }
 
 const styles = StyleSheet.create({
-  back: { flex: 1, justifyContent: 'center', padding: 16, backgroundColor: 'rgba(38, 36, 31, 0.45)' },
-  outside: { ...StyleSheet.absoluteFill },
-  dialog: { maxHeight: '85%', padding: 0, backgroundColor: COLOR.background },
+  dialog: { width: '100%', maxHeight: '85%', padding: 0, backgroundColor: COLOR.background },
   body: { gap: 12, padding: 24 },
   line: { fontSize: TYPE.note, lineHeight: 22, fontFamily: FONT.medium, color: COLOR.secondary },
   note: { fontSize: TYPE.small, lineHeight: 20, fontFamily: FONT.medium, color: COLOR.secondary },

@@ -6,9 +6,10 @@ import { READING_PUSH_COPY as COPY } from '@push/app';
 
 import { useClient } from '@/auth/connected';
 import { readPushState, turnOff, turnOn, type PushState } from '@/push/device';
+import { FailureLine } from '@/ui/failure-line';
 import { settled } from '@/ui/settled';
 
-import { FailureLine, SettingsGroup, SwitchRow, TextRow } from './parts';
+import { SettingsGroup, SwitchRow, TextRow, FAILURE_INSET } from './parts';
 
 /**
  * **설정의 알림 무리 — 풀이 완성 알림 하나**(ADR 0236, #936). 안드로이드에서만 선다 — iOS · 웹 · Firebase 설정 없이 지은 빌드에는
@@ -71,7 +72,7 @@ export function PushRow() {
           busy={busy}
         />
       )}
-      {failure !== null && <FailureLine inset>{failure}</FailureLine>}
+      {failure !== null && <FailureLine style={FAILURE_INSET}>{failure}</FailureLine>}
     </SettingsGroup>
   );
 }

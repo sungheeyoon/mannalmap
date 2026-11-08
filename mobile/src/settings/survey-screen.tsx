@@ -37,13 +37,14 @@ import {
 
 import { useClient } from '@/auth/connected';
 import { UNREACHABLE } from '@/auth/signup';
+import { FailureLine } from '@/ui/failure-line';
 import { CheckRow, PrimaryButton, SecondaryButton } from '@/ui/parts';
 import { COLOR, FONT, RADIUS, TYPE } from '@/ui/tokens';
 import { settled } from '@/ui/settled';
 import { TopBar } from '@/ui/top-bar';
 import { CardFrame, Paper } from '@/ui/surfaces';
 
-import { AccountNotice, FailureLine, settingsText } from './parts';
+import { AccountNotice, settingsText } from './parts';
 import { setOptionalConsent } from './settings';
 import { loadSurvey, saveSurvey, type Loaded } from './survey';
 

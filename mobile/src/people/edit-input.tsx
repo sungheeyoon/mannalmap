@@ -8,12 +8,13 @@ import { missingAnswer, type Query } from '@input/query';
 import { useClient } from '@/auth/connected';
 import { editPersonInput, saveFailureOf } from '@/reading/chart-writes';
 import { followRefusal } from '@/reading/panel';
+import { FailureLine } from '@/ui/failure-line';
 import { PrimaryButton, TextButton } from '@/ui/parts';
 import { COLOR, FONT, RADIUS, TYPE } from '@/ui/tokens';
 import { Card } from '@/ui/surfaces';
 
 import { BirthFields, useBirthForm } from './birth-fields';
-import { FailureLine, Sheet, styles as shared } from './parts';
+import { Sheet, styles as shared } from './parts';
 
 /**
  * 저장된 출생 정보를 고치는 폼 — 웹의 `app/me/edit-input.tsx` 와 같은 판정 · 글자다. 여덟 글자는 서버가 이 입력에서 센다(ADR 0211).

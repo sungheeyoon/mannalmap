@@ -69,7 +69,7 @@ const styles = StyleSheet.create({
   row: { borderTopWidth: 1, borderTopColor: COLOR.border, paddingVertical: 6, gap: 2 },
   rowHead: { flexDirection: 'row', justifyContent: 'space-between', gap: 12 },
   label: { flex: 1 },
-  warning: { borderColor: COLOR.warningBorder, backgroundColor: COLOR.warningWash },
+  warning: { borderColor: COLOR.warningLineSoft, backgroundColor: COLOR.warningWash },
   warnings: { marginTop: 8, gap: 6 },
   warningRow: { flexDirection: 'row', gap: 6 },
 });

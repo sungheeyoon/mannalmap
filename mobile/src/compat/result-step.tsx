@@ -6,7 +6,8 @@ import { UNREADABLE_INPUT_NOTE } from '@input/stored';
 
 import { useClient } from '@/auth/connected';
 import type { Read } from '@/people/data';
-import { AccountNotice, FailureLine, NotFound, ScreenFrame, styles as shared } from '@/people/parts';
+import { AccountNotice, NotFound, ScreenFrame, styles as shared } from '@/people/parts';
+import { FailureLine } from '@/ui/failure-line';
 import { PrimaryButton, SecondaryButton } from '@/ui/parts';
 import { TopBar } from '@/ui/top-bar';
 import { COLOR } from '@/ui/tokens';

@@ -22,7 +22,8 @@ import { storePurchaseNotice, type PurchaseReturn, type StorePurchaseNotice } fr
 
 import { useClient } from '@/auth/connected';
 import { legalPagesOpen, openLegalPage } from '@/info/legal-web';
-import { FailureLine, settingsText } from '@/settings/parts';
+import { settingsText } from '@/settings/parts';
+import { FailureLine } from '@/ui/failure-line';
 import { CheckRow, PrimaryButton, TextButton } from '@/ui/parts';
 import { Card } from '@/ui/surfaces';
 import { COLOR, FONT, RADIUS, TYPE } from '@/ui/tokens';

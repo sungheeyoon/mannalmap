@@ -8,12 +8,13 @@ import type { Client } from '@/auth/client';
 import { readAccount } from '@/auth/account';
 import { useClient } from '@/auth/connected';
 import { checkNickname } from '@/auth/signup';
+import { FailureLine } from '@/ui/failure-line';
 import { Field, PrimaryButton } from '@/ui/parts';
 import { COLOR, FONT, RADIUS, TYPE } from '@/ui/tokens';
 import { TopBar } from '@/ui/top-bar';
 import { CardFrame } from '@/ui/surfaces';
 
-import { AccountNotice, FailureLine, settingsText, useDoneNote } from './parts';
+import { AccountNotice, settingsText, useDoneNote } from './parts';
 import { PhotoGrid } from './photo-grid';
 import { BirthSection } from './birth-section';
 import { myPhotos, photoUploadMode, type MyPhoto } from './photos';
