@@ -13,6 +13,7 @@ import { readAccountState, readDeck, readMatchBooks, readMatches, type DeckPlace
 import { readEndedTalks } from '@/matching/talk-doors';
 import { CardSheet, DeckButtons, EmptyDeck, Feedback, PassedConnections, QuietPlace, TalkConfirm, TodayCard } from '@/matching/today';
 import { useDeck } from '@/matching/use-deck';
+import { FailureLine } from '@/ui/failure-line';
 import { Icon } from '@/ui/icons';
 import { LoadingMark } from '@/ui/loading';
 import { COLOR, FONT, RADIUS, TYPE } from '@/ui/tokens';
@@ -205,26 +206,15 @@ function Title() {
   );
 }
 
-function FailureLine({ children, onRetry }: { children: React.ReactNode; onRetry: () => void }) {
-  return (
-    <View style={styles.failureBox}>
-      <Text style={styles.failure} accessibilityRole="alert">
-        {children}
-      </Text>
-      <Pressable accessibilityRole="button" onPress={onRetry} style={styles.retry}>
-        <Text style={styles.retryText}>다시 시도하기</Text>
-      </Pressable>
-    </View>
-  );
-}
-
 function Blocked({ state, onRetry }: { state: AccountState; onRetry: () => void }) {
   const failure = accountFailureOf(state);
   const text = accountNoticeOf(state, SUPPORT_EMAIL);
   return (
     <Frame>
       {failure !== null ? (
-        <FailureLine onRetry={onRetry}>{failure.line}</FailureLine>
+        <FailureLine onRetry={failure.next === 'retry' ? onRetry : undefined} signIn={failure.next === 'signIn'}>
+          {failure.line}
+        </FailureLine>
       ) : text !== null ? (
         <CardFrame style={styles.notice}>
           <Text style={styles.noticeTitle}>{text.title}</Text>
@@ -265,10 +255,6 @@ const styles = StyleSheet.create({
   pillText: { fontFamily: FONT.bold, fontSize: TYPE.small, color: COLOR.foreground },
   pillCount: { fontFamily: FONT.bold, fontSize: TYPE.small, color: COLOR.secondary },
   deck: { flex: 1, minHeight: 480, gap: 12 },
-  failureBox: { gap: 2 },
-  failure: { fontFamily: FONT.medium, fontSize: TYPE.small, lineHeight: 19, color: COLOR.danger },
-  retry: { minHeight: 44, justifyContent: 'center', alignSelf: 'flex-start' },
-  retryText: { fontFamily: FONT.bold, fontSize: TYPE.note, color: COLOR.foreground },
   notice: { gap: 4, paddingHorizontal: 20, paddingVertical: 16 },
   noticeTitle: { fontFamily: FONT.bold, fontSize: TYPE.body, color: COLOR.foreground },
   noticeBody: { fontFamily: FONT.medium, fontSize: TYPE.note, lineHeight: 20, color: COLOR.secondary },

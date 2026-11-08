@@ -59,7 +59,7 @@ export function DetailSheet({
         폭은 40rem 에서 멈추고 가운데 선다 — ⓘ 는 `lg` 아래에서 열리므로 640~1023px 에서 시트가 화면 끝까지 늘어나 한 줄이
         너무 길었다(화면 감사 2026-10-09). 폰 폭에서는 그대로 꽉 찬다.
       */
-      className={`mx-auto mb-0 mt-auto max-h-[85dvh] w-full max-w-[40rem] ${wide ? 'lg:max-w-[46rem]' : ''} overflow-y-auto overscroll-contain rounded-t-card bg-background p-0 text-foreground backdrop:bg-black/40 lg:my-auto lg:max-h-[min(85dvh,48rem)] lg:rounded-card lg:shadow-float`}
+      className={`mx-auto mb-0 mt-auto max-h-[85dvh] w-full max-w-[40rem] ${wide ? 'lg:max-w-[46rem]' : ''} overflow-y-auto overscroll-contain rounded-t-card bg-background p-0 text-foreground backdrop:bg-scrim lg:my-auto lg:max-h-[min(85dvh,48rem)] lg:rounded-card lg:shadow-float`}
     >
       <div className="flex flex-col gap-4 px-5 pb-10 lg:px-6 lg:pb-6">
         <div

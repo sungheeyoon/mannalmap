@@ -177,26 +177,26 @@ function FaceText({ card, onScoreInfo }: { card: DeckCard; onScoreInfo: () => vo
       <div className="flex items-end justify-between gap-3">
         <div className="min-w-0">
           <h2 className="truncate text-[2.25rem] font-bold leading-tight">{card.nickname}</h2>
-          {card.activity != null && <p className="text-small font-semibold text-white/85">{activityText(card.activity)}</p>}
+          {card.activity != null && <p className="text-small font-semibold text-on-photo-soft">{activityText(card.activity)}</p>}
         </div>
         <div className="flex shrink-0 items-center gap-0.5">
           <p className="flex flex-col items-end gap-0.5">
-            <span className="text-small font-semibold leading-4 text-white/85">{TALK_SCORE_LABEL}</span>
+            <span className="text-small font-semibold leading-4 text-on-photo-soft">{TALK_SCORE_LABEL}</span>
             <strong className="text-figure font-bold leading-none tracking-[-0.03em] tabular-nums">{card.previewScore}점</strong>
           </p>
           <button
             type="button"
             aria-label={TALK_SCORE_INFO_NAME}
             onClick={onScoreInfo}
-            className="pointer-events-auto grid size-11 place-items-center rounded-full text-white/85 active:scale-95"
+            className="pointer-events-auto grid size-11 place-items-center rounded-full text-on-photo-soft active:scale-95"
           >
             <span aria-hidden="true" className="grid size-5 place-items-center rounded-full font-serif text-small font-bold italic ring-1 ring-white/70">i</span>
           </button>
         </div>
       </div>
-      <p className="font-rounded text-lead leading-snug text-white/95">{card.verdict}</p>
+      <p className="font-rounded text-lead leading-snug text-on-photo-strong">{card.verdict}</p>
       <SupplyOnPhoto card={card} />
-      {card.intro !== null && <p className="line-clamp-1 text-note leading-5 text-white/85">{card.intro}</p>}
+      {card.intro !== null && <p className="line-clamp-1 text-note leading-5 text-on-photo-soft">{card.intro}</p>}
     </div>
   );
 }
@@ -227,7 +227,7 @@ function SupplyOnPhoto({ card }: { card: DeckCard }) {
         })}
       </span>
       <p className="flex min-w-0 flex-col">
-        <span className="text-fine font-semibold leading-4 text-white/75">이 사람이 채워 주는 기운</span>
+        <span className="text-fine font-semibold leading-4 text-on-photo-faint">이 사람이 채워 주는 기운</span>
         <span className="truncate text-heading font-bold leading-7 text-white">{names.join(' · ')}</span>
         <span className="sr-only">
           {card.highlights.map((highlight) => (

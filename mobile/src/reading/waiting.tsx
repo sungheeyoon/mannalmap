@@ -1,8 +1,9 @@
 import { READING_LEAVE_SAFE_NOTE, READING_OUTLINE_STATE } from '@reading/notes';
 import type { OutlineRow } from '@reading/outline';
 import { useEffect, useState } from 'react';
-import { Animated, Easing, StyleSheet, Text, View } from 'react-native';
+import { Animated, StyleSheet, Text, View } from 'react-native';
 
+import { EASE, MOTION, useReducedMotion } from '@/ui/motion';
 import { Paper, Tile } from '@/ui/surfaces';
 import { COLOR, ELEMENT_TONE, FONT, RADIUS, TYPE } from '@/ui/tokens';
 
@@ -44,18 +45,23 @@ function Mark({ state }: { state: OutlineRow['state'] }) {
   }
 }
 
-/** 끝을 모른다는 띠 — 길이가 늘지 않고 흐르기만 한다(`app/me/reading/flow.module.css`) */
+/**
+ * 끝을 모른다는 띠 — 길이가 늘지 않고 흐르기만 한다(`app/me/reading/flow.module.css`, 시간 · 이징은 웹과 한 원본 `MOTION.flow`).
+ * 움직임을 줄인 기기에는 가운데 멈춘 토막 하나다 — 왼쪽에 붙지 않아 「얼마나 찼다」로 읽히지 않는다(웹과 같다).
+ */
 export function FlowBand() {
+  const reduced = useReducedMotion();
   const [at] = useState(() => new Animated.Value(0));
   useEffect(() => {
-    const loop = Animated.loop(Animated.timing(at, { toValue: 1, duration: 1600, easing: Easing.inOut(Easing.ease), useNativeDriver: false }));
+    if (reduced) return;
+    const loop = Animated.loop(Animated.timing(at, { toValue: 1, duration: MOTION.flow, easing: EASE.loop, useNativeDriver: false }));
     loop.start();
     return () => loop.stop();
-  }, [at]);
+  }, [at, reduced]);
 
   return (
     <View aria-hidden style={styles.band}>
-      <Animated.View style={[styles.bandFlow, { left: at.interpolate({ inputRange: [0, 1], outputRange: ['-40%', '100%'] }) }]} />
+      <Animated.View style={[styles.bandFlow, { left: reduced ? '30%' : at.interpolate({ inputRange: [0, 1], outputRange: ['-40%', '100%'] }) }]} />
     </View>
   );
 }

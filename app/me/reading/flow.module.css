@@ -10,7 +10,7 @@
 .flow {
   width: 40%;
   background-image: linear-gradient(90deg, var(--wood-mid), var(--water-mid), var(--fire-mid));
-  animation: flow 1.8s ease-in-out infinite;
+  animation: flow var(--motion-flow) var(--motion-ease-loop) infinite;
 }
 
 @keyframes flow {
