@@ -10,12 +10,11 @@ import { CompatPicker } from '@/compat/picker';
 import { RelationMap } from '@/compat/relation-map';
 import { CompatResultStep } from '@/compat/result-step';
 import type { Read } from '@/people/data';
-import { AccountNotice, ScreenFrame, go, styles as shared } from '@/people/parts';
+import { AccountNotice, LoadingFrame, ScreenFrame, go, styles as shared } from '@/people/parts';
 import { FailureLine } from '@/ui/failure-line';
 import { COLOR, FONT, TYPE } from '@/ui/tokens';
 import { RowLine } from '@/ui/surfaces';
 import { settled } from '@/ui/settled';
-import { LoadingDots } from '@/ui/loading';
 import { UNREACHABLE } from '@/auth/signup';
 
 /**
@@ -30,9 +29,7 @@ export default function CompatScreen() {
 
 function Loading() {
   return (
-    <ScreenFrame>
-      <LoadingDots />
-    </ScreenFrame>
+    <LoadingFrame />
   );
 }
 

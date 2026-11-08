@@ -8,7 +8,7 @@ import { findStatus, findsInList, pickable } from '@people/pick';
 import { useClient } from '@/auth/connected';
 import { readPeopleList, type MyReading, type PeopleList, type Read } from '@/people/data';
 import { AddPerson } from '@/people/manage';
-import { AccountNotice, ScreenFrame, styles as shared } from '@/people/parts';
+import { AccountNotice, LoadingFrame, ScreenFrame, styles as shared } from '@/people/parts';
 import { FailureLine } from '@/ui/failure-line';
 import { goTab } from '@/ui/go-tab';
 import { PersonCard } from '@/people/person-card';
@@ -17,7 +17,6 @@ import { Field, SecondaryButton } from '@/ui/parts';
 import { settled } from '@/ui/settled';
 import { UNREACHABLE } from '@/auth/signup';
 import { TopBar } from '@/ui/top-bar';
-import { LoadingDots } from '@/ui/loading';
 
 /** 저장한 사람 — 가족 · 친구를 관리하는 자리. 나는 여기 없다(`app/me/people/page.tsx`) */
 export default function PeopleScreen() {
@@ -38,9 +37,7 @@ export default function PeopleScreen() {
 
   if (read === null || read.kind === 'signed-out') {
     return (
-      <ScreenFrame bar={<TopBar title="저장한 사람" fallback="/me" />}>
-        <LoadingDots />
-      </ScreenFrame>
+      <LoadingFrame bar={<TopBar title="저장한 사람" fallback="/me" />} />
     );
   }
   if (read.kind === 'failed') {

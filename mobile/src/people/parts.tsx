@@ -9,6 +9,7 @@ import { HOUR_UNKNOWN_LABEL } from '@input/query';
 import { BRANCH_INFO, STEM_INFO, type Branch, type Stem } from '@saju';
 import { PILLAR_COLUMNS, STEM_PICTURE } from '@saju-view';
 
+import { LoadingDots } from '@/ui/loading';
 import { KeyboardDoneBar } from '@/ui/parts';
 import { alpha, COLOR, ELEMENT_TONE, FONT, RADIUS, TYPE } from '@/ui/tokens';
 
@@ -38,6 +39,16 @@ export function ScreenFrame({ children, keyboard = false, bar }: { children: Rea
       ) : (
         body
       )}
+    </SafeAreaView>
+  );
+}
+
+/** 처음 불러오는 동안의 틀 — 스크롤 없이 맨 위 줄 아래 남은 높이의 가운데에 오행 다섯 점이 선다(`ui/loading.tsx`) */
+export function LoadingFrame({ bar }: { bar?: ReactNode }) {
+  return (
+    <SafeAreaView style={styles.screen} edges={['left', 'right']}>
+      {bar}
+      <LoadingDots />
     </SafeAreaView>
   );
 }
