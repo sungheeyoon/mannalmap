@@ -1,6 +1,48 @@
 import { describe, expect, it } from 'vitest';
 
-import { adultCheckAfter, adultCheckDetours, adultCheckGuards, adultCheckNeeded } from './adult-check';
+import {
+  ADULT_CHECK_OPTED_OUT,
+  ADULT_CHECK_VISIBLE,
+  adultCheckAfter,
+  adultCheckCleared,
+  adultCheckDetours,
+  adultCheckGuards,
+  adultCheckNeeded,
+  adultCheckParticipationLine,
+} from './adult-check';
+
+describe('안내 화면의 참여 줄 (운영자 결정 2026-11-08)', () => {
+  it('끈 사람에게는 「참여해요」가 안 보이고, 확인해도 설정이 안 바뀐다는 줄이 선다', () => {
+    const line = adultCheckParticipationLine(true);
+    expect(line).toBe(ADULT_CHECK_OPTED_OUT);
+    expect(line).not.toContain('참여해요');
+    expect(line).toContain('참여 설정은 바뀌지 않아요');
+  });
+
+  it('켜 둔 사람에게는 확인 뒤 참여한다는 줄이 선다', () => {
+    expect(adultCheckParticipationLine(false)).toBe(ADULT_CHECK_VISIBLE);
+    expect(ADULT_CHECK_VISIBLE).toContain('참여해요');
+  });
+
+  it('참여 상태를 못 읽었으면 줄을 안 세운다', () => {
+    expect(adultCheckParticipationLine(null)).toBeNull();
+  });
+});
+
+describe('성인 확인을 지났는가 — 설정의 참여 줄이 쓴다', () => {
+  it('스위치가 꺼져 있으면 확인이 필요 없어 지난 것으로 본다', () => {
+    expect(adultCheckCleared({ required: false, confirmed: false })).toBe(true);
+  });
+
+  it('켜져 있으면 확인했을 때만 지났다', () => {
+    expect(adultCheckCleared({ required: true, confirmed: false })).toBe(false);
+    expect(adultCheckCleared({ required: true, confirmed: true })).toBe(true);
+  });
+
+  it('못 읽었으면 모른다', () => {
+    expect(adultCheckCleared(null)).toBeNull();
+  });
+});
 
 const OFF = { required: false, confirmed: false };
 const ON = { required: true, confirmed: false };
