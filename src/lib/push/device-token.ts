@@ -79,3 +79,19 @@ export async function sweepLeftTokenWith(store: DeviceStore, server: TokenServer
   await store.write(PUSH_TOKEN_KEY, null);
   return 'swept';
 }
+
+/**
+ * 설정 줄의 「기기 설정 열기」로 나갔다는 표시(운영자 결정 2026-11-08, 안 B). 기기에 적지 않는다 — 앱이 닫히면 함께 잊는다.
+ */
+export type SettingsTrip = { out: boolean };
+
+/**
+ * 앱이 다시 앞으로 왔다 — **표시는 한 번 쓰고 지운다.** 그 줄로 나갔다 왔고 그 사이 알림을 허용했으면 그 자리에서 켤 차례(`turn-on`,
+ * 기기의 「끔」을 「켬」으로 바꾸고 등록까지)다. 나가지 않았거나 허용하지 않았으면 다시 읽기만 한다(`read`). 지우지 않으면 나중에 앱을
+ * 다시 열 때 저절로 켜진다.
+ */
+export function returnFromSettings(trip: SettingsTrip, granted: boolean): 'turn-on' | 'read' {
+  const out = trip.out;
+  trip.out = false;
+  return out && granted ? 'turn-on' : 'read';
+}

@@ -1,6 +1,6 @@
 import { router } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { BackHandler, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { calculateChart } from '@input/chart';
 import { DEFAULT_QUERY, missingAnswer, type Query } from '@input/query';
@@ -224,6 +224,16 @@ function PersonChoice({ people, taken, chosenId, onChoose }: { people: readonly 
   const [typed, setTyped] = useState('');
   const chosen = people.find((one) => one.personId === chosenId) ?? null;
   const candidates = pickable(people, findsInList(people.length) ? typed : '', taken);
+  /* 안드로이드 뒤로 가기는 펼친 목록을 먼저 접는다 — 출생지 목록(`Select`, `@/ui/parts`)과 같은 차례 */
+  useEffect(() => {
+    if (!open) return;
+    const listening = BackHandler.addEventListener('hardwareBackPress', () => {
+      setOpen(false);
+      setTyped('');
+      return true;
+    });
+    return () => listening.remove();
+  }, [open]);
 
   return (
     <View style={styles.choice}>
