@@ -1,6 +1,6 @@
 import { BUSINESS_INFO } from '@/src/lib/brand/business';
 import { checkoutRefundLine } from '@/src/lib/brand/refund';
-import { CREDITS_AVAILABLE_LABEL, CREDITS_USAGE_NOTE } from '@/src/lib/reading/notes';
+import { CREDITS_AVAILABLE_LABEL, CREDITS_SCREEN_LEAD } from '@/src/lib/reading/notes';
 
 import { supabaseOnServer } from '../../auth/server-client';
 import { signedInUser } from '../../auth/signed-in';
@@ -46,7 +46,9 @@ export default async function CreditsPage({
       <TopBar back={back ? { href: back.href, label: back.name } : { href: '/me', label: '나' }}>
         <header className="flex flex-col gap-1">
           <h1 className={TYPE_TITLE}>풀이권 구매</h1>
-          <p className={TYPE_META}>{CREDITS_USAGE_NOTE}</p>
+          {CREDITS_SCREEN_LEAD.map((line) => (
+            <p key={line} className={TYPE_META}>{line}</p>
+          ))}
         </header>
       </TopBar>
 

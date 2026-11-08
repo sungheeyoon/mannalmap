@@ -115,15 +115,20 @@ test('로그인 화면은 테스트 코드를 말하지 않는다', async ({ pag
   await expect(page.getByRole('link', { name: '사주로 돌아가기' })).toBeVisible();
 });
 
-test('로그인이 끊기면 왜인지 모른다고 말한다', async ({ page }) => {
+test('구글 창에서 취소하면 로그인 화면에 남고, 막힌 것만 실패 화면이다', async ({ page }) => {
   /*
-    초대 훅이 거부하면 Supabase 가 `error` 를 달아 이 자리로 돌려보냈다. 훅을 걷은
-    뒤로 그 길은 없어졌지만, 구글 쪽에서 취소하거나 중간에 끊기면 여전히 이리로 온다.
+    Supabase Auth 는 구글이 준 `error` 를 그대로 옮긴다 — 취소는 `error=access_denied` 이고 `error_code` 가 없다.
+    가입 꺼짐 · 정지된 계정처럼 Supabase 가 막은 것은 같은 `access_denied` 에 `error_code` 를 단다(`getErrorQueryString`).
   */
   await page.goto('/auth/callback?error=access_denied&error_description=cancelled');
+  await expect(page).toHaveURL(/\/auth$/);
 
+  await page.goto('/auth/callback?error=access_denied&error_code=user_banned&error_description=User%20is%20banned');
   await expect(page).toHaveURL(/\/auth\/denied$/);
   await expect(page.getByRole('heading', { name: '로그인하지 못했어요' })).toBeVisible();
+
+  await page.goto('/auth/callback?error=server_error');
+  await expect(page).toHaveURL(/\/auth\/denied$/);
 });
 
 /**

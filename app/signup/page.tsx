@@ -6,6 +6,7 @@ import { currentSchedule } from '../beta-schedule';
 import { readAccount } from '../me/account';
 import { AccountNotice } from '../me/account-notice';
 import { RequestDeletion } from '../me/leaving';
+import { FailureLine } from '../ui/failure-line';
 import { Logo } from '../ui/logo';
 import { CARD, COLUMN, PAPER, TYPE_TITLE } from '../ui/surfaces';
 import { SignOutLink } from './sign-out-link';
@@ -152,7 +153,8 @@ export default async function SignupPage({ searchParams }: {
       </header>
 
       {!schedule.ok ? (
-        <p className={`${CARD} text-sm leading-6`}>{schedule.reason}</p>
+        /* 일정을 못 읽었다 — 다시 받아 그리면 풀릴 수 있어 실패 줄과 「다시 시도하기」다(앱 `mobile/src/app/signup.tsx` 와 같다) */
+        <FailureLine retry>{schedule.reason}</FailureLine>
       ) : notice === null ? (
         /*
           **날짜를 지어내지 않는다.** 「추후 종료 예정」으로 메우면 그 문장이 실제로
