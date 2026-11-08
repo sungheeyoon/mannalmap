@@ -263,8 +263,8 @@ export function CompatPicker({ people }: { people: Choosable[] }) {
       </div>
 
       {/*
-        **「궁합 보기」는 사이를 묻는 칩 줄의 오른쪽 끝이다**(운영자 2026-09-29). 칩 아래 따로 선 줄이면 사이를 고른 손이
-        다시 아래로 내려가야 했다. 같은 이름의 확인(`SameChartAsk`)이 서는 동안에는 단추가 비키고 확인이 칩 줄 아래, 이 띠
+        **「궁합 보기」는 사이를 묻는 칩 아래 한 줄 전체 너비다**(운영자 확정 2026-11-08, 대장 all-11 — 2026-09-29 의 「칩 줄 오른쪽
+        끝」을 바꿨다). 같은 이름의 확인(`SameChartAsk`)이 서는 동안에는 단추가 비키고 확인이 칩 줄 아래, 이 띠
         안에 선다 — 실패 알림도 같은 자리다. 판 바로 아래(띠 밖)에 두면 제 테두리가 판의 테에 붙어 두 줄로 겹쳤다(2026-10-08).
       */}
       <div className="border-t border-border bg-surface-soft/60 p-5 sm:p-6">
@@ -283,7 +283,7 @@ export function CompatPicker({ people }: { people: Choosable[] }) {
                 disabled={opening}
                 aria-disabled={!chosen || sameTwice || undefined}
                 aria-describedby={reason !== null ? 'compat-locked-reason' : undefined}
-                className={`${BUTTON_PRIMARY} min-w-40 sm:min-w-44`}
+                className={`${BUTTON_PRIMARY} w-full`}
               >
                 <Icon name="taiji" className="size-[18px]" />
                 {opening ? '여는 중…' : '궁합 보기'}
@@ -327,7 +327,7 @@ export function CompatPicker({ people }: { people: Choosable[] }) {
 }
 
 /**
- * 한 칸 — 저장한 이름을 먼저 보여 주고, 바로 아래에서 직접 입력으로 바꿀 수 있다.
+ * 한 칸 — 저장한 사람 · 직접 입력을 먼저 고르고, 그 아래에서 사람을 고르거나 적는다.
  *
  * 두 갈래가 한 카드 안에 서는 것이 요점이다. 화면을 갈라 두면 「이 사람은 저장돼 있고
  * 저 사람은 아니다」가 갈 곳이 없어진다.
@@ -364,6 +364,37 @@ function SlotCard({
         <span className={`block ${TYPE_META}`}>{SIDE_PERSON[side]}</span>
       </legend>
 
+      {/* 방식 단추가 먼저 서고 그 아래에 사람 목록이나 입력칸이 선다 — 두 방식의 차례가 같다(운영자 확정 2026-11-08, 대장 all-11) */}
+      <div className={`${SEGMENTS} grid-cols-2`}>
+        {(
+          [
+            ['saved', '저장한 사람'],
+            ['typed', '직접 입력'],
+          ] as const
+        ).map(([from, label]) => (
+          <button
+            key={from}
+            type="button"
+            aria-pressed={slot.from === from}
+            disabled={from === 'saved' && people.length === 0}
+            /*
+              **누르는 동안 이름 칸이 초점을 잃지 않게**(목록의 옵션과 같은 까닭). 이 단추가 펼친 목록 아래에 서던 때(#543)
+              누르는 순간 칸이 초점을 잃으면 목록이 닫히며 단추가 위로 올라가 누름이 사라졌다(2026-10-09 운영자 재현). 지금은
+              단추가 위라 그 일은 없지만 초점을 뺏지 않는 편이 펼친 목록을 덜 흔든다. 초점은 누른 뒤 이 단추에 준다 — 직접 입력으로
+              바뀌면 이름 칸이 사라져 초점이 갈 곳을 잃는다.
+            */
+            onMouseDown={(event) => event.preventDefault()}
+            onClick={(event) => {
+              event.currentTarget.focus();
+              onChange(from === 'saved' ? { from, personId: '' } : { from, query: DEFAULT_QUERY });
+            }}
+            className={slot.from === from ? SEGMENT_ON : SEGMENT}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+
       {slot.from === 'saved' && (
         <div className="min-w-0">
           {/* 찾아 고르는 칸 — 저장한 사람이 스물 · 백이어도 읽히게(ADR 0102) */}
@@ -379,36 +410,6 @@ function SlotCard({
           {people.length === 0 && <span className={TYPE_META}>아직 저장한 사람이 없어요.</span>}
         </div>
       )}
-
-      <div className={`${SEGMENTS} grid-cols-2`}>
-        {(
-          [
-            ['saved', '저장한 사람'],
-            ['typed', '직접 입력'],
-          ] as const
-        ).map(([from, label]) => (
-          <button
-            key={from}
-            type="button"
-            aria-pressed={slot.from === from}
-            disabled={from === 'saved' && people.length === 0}
-            /*
-              **누르는 동안 위 이름 칸이 초점을 잃지 않게**(목록의 옵션과 같은 까닭). 이 단추는 펼친 목록 **아래**에 선다 —
-              누르는 순간 칸이 초점을 잃으면 목록이 닫히며 단추가 위로 올라가고, 손을 뗀 자리에 단추가 없어 누름이 사라졌다
-              (2026-10-09 운영자 재현, #543 이 칸을 단추 위로 올리며 생겼다). 초점은 누른 뒤 이 단추에 준다 — 직접 입력으로
-              바뀌면 이름 칸이 사라져 초점이 갈 곳을 잃는다.
-            */
-            onMouseDown={(event) => event.preventDefault()}
-            onClick={(event) => {
-              event.currentTarget.focus();
-              onChange(from === 'saved' ? { from, personId: '' } : { from, query: DEFAULT_QUERY });
-            }}
-            className={slot.from === from ? SEGMENT_ON : SEGMENT}
-          >
-            {label}
-          </button>
-        ))}
-      </div>
 
       {slot.from === 'typed' && (
         <div className="min-w-0">

@@ -491,7 +491,7 @@ try {
      * 뒤에 묻는 것은 아무 뜻이 없다 — 이미 나온 글은 그 답을 못 쓴다.
      */
     const picker = plain(await body('/compat', cookie.a));
-    check('고르는 화면이 무슨 사이인지 묻는다', picker.includes('두 분은 무슨 사이인가요'));
+    check('고르는 화면이 무슨 사이인지 묻는다', picker.includes('두 사람은 어떤 사이인가요'));
     /* 사이가 점수의 눈금도 고른다(ADR 0113) — 옛 약속 「점수에는 쓰지 않습니다」는 거짓이 되어 걷었다 */
     check('사이가 점수의 기준도 고른다고 그 자리에서 말한다', picker.includes('점수의 기준도 이 답을 따라요'));
     check('옛 약속(점수에 안 쓴다)을 더는 말하지 않는다', !picker.includes('점수에는 쓰지 않습니다'));
@@ -503,7 +503,7 @@ try {
      * 읽는지**는 적는다 — 글의 방향을 바꾸는 값이 화면에 없으면 사용자는 자기가 무엇을
      * 골랐는지 모른 채 만드는 버튼을 누른다.
      */
-    check('결과 화면에서는 다시 묻지 않는다', !after.includes('두 분은 무슨 사이인가요'));
+    check('결과 화면에서는 다시 묻지 않는다', !after.includes('두 사람은 어떤 사이인가요'));
     check('무엇으로 읽는지는 적는다', after.includes('사이로 읽어 드려요'));
 
     const asked = await a.rpc('pair_relation_of', {

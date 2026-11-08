@@ -119,7 +119,17 @@ export function PersonCard({
                 onPress={() => go(pair !== null ? `/me/compat?a=${pair.personA}&b=${pair.personB}` : compatPickHref(selfPersonId, person.personId))}
                 style={[styles.button, styles.buttonPlain, { borderColor: `${tone?.ink ?? COLOR.none}2e` }]}
               >
-                <Text style={[styles.buttonText, { color: tone?.ink ?? COLOR.none }]}>{pair?.score != null ? `${pair.score}점` : '궁합'}</Text>
+                {/* 점수가 있으면 「궁합 82점」 — 무슨 점수인지 말하는 「궁합」은 작고 옅게 선다(운영자 확정 2026-11-08, 대장 all-11) */}
+                <Text style={[styles.buttonText, { color: tone?.ink ?? COLOR.none }]} numberOfLines={1}>
+                  {pair?.score != null ? (
+                    <>
+                      <Text style={styles.scoreName}>궁합 </Text>
+                      {`${pair.score}점`}
+                    </>
+                  ) : (
+                    '궁합'
+                  )}
+                </Text>
               </Pressable>
             </View>
           </>
@@ -171,6 +181,7 @@ const styles = StyleSheet.create({
   buttonPrimary: { backgroundColor: COLOR.accent },
   buttonText: { fontSize: TYPE.small, fontFamily: FONT.bold },
   buttonPrimaryText: { color: COLOR.onAccent },
+  scoreName: { fontSize: TYPE.fine, fontFamily: FONT.medium, opacity: 0.72 },
   unreadable: { gap: 4 },
   manage: { position: 'absolute', top: 12, right: 12, width: CONTROL, height: CONTROL, alignItems: 'center', justifyContent: 'center', borderRadius: RADIUS.pill },
   manageDots: { fontSize: 22, lineHeight: 26, color: COLOR.secondary },

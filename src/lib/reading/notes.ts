@@ -240,6 +240,8 @@ export const SALE_CLOSED_OK = '확인';
 /** 상단 펼침 메뉴 · 부족 창의 B안 문구(운영자 승인 2026-10-12, 대장 credits-06). */
 export const CREDITS_USAGE_NOTE = '사주풀이와 궁합풀이에 사용할 수 있어요.';
 export const CREDITS_USAGE_RATE = '풀이 한 편당 풀이권 1장';
+/** 앱 풀이권 화면 맨 위의 두 줄 — 보유 장수 카드의 사용 단위 줄을 대신한다(운영자 확정 2026-11-08, 대장 all-11). 웹은 아직 위 두 상수다 */
+export const CREDITS_SCREEN_LEAD = ['사주풀이와 궁합풀이를 받아보세요.', '풀이 한 편에 풀이권 1장을 사용해요.'] as const;
 export const CREDITS_SHORTAGE_TITLE = '풀이권이 부족해요';
 export const CREDITS_AVAILABLE_LABEL = '보유 풀이권';
 export const CREDITS_REQUIRED_LABEL = '필요 풀이권';

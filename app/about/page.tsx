@@ -1,7 +1,7 @@
 import Link from 'next/link';
 
 import { SERVICE_NAME, SERVICE_NAME_TOPIC, SERVICE_TAGLINE } from '@/src/lib/brand';
-import { ABOUT_LEAD, ABOUT_STEPS } from '@/src/lib/brand/guide';
+import { ABOUT_LEAD, ABOUT_LEAD_WHILE_SHUT, ABOUT_STEPS } from '@/src/lib/brand/guide';
 import { SERVICE_FEATURES, featureText } from '@/src/lib/brand/features';
 
 import { BUTTON_PRIMARY, BUTTON_SECONDARY } from '../ui/buttons';
@@ -36,11 +36,11 @@ export default async function AboutPage() {
         <Logo className="size-11" />
         <p className={TYPE_META}>{SERVICE_TAGLINE}</p>
         <h1 className={TYPE_TITLE}>{SERVICE_NAME_TOPIC} 이런 곳이에요</h1>
-        {/* 운영자가 고른 두 문장(2026-10-09) — 넓은 화면은 문장마다 줄을 나누고, 폰은 폭대로 흐른다 */}
+        {/* 운영자가 고른 두 문장(2026-10-09) — 넓은 화면은 문장마다 줄을 나누고, 폰은 폭대로 흐른다. 인연이 닫힌 동안 둘째 문장은 「준비 중」이다(대장 all-11) */}
         <p className="text-body leading-7 text-cream-ink">
           {ABOUT_LEAD[0]}{' '}
           <br className="max-sm:hidden" />
-          {ABOUT_LEAD[1]}
+          {matchOpen ? ABOUT_LEAD[1] : ABOUT_LEAD_WHILE_SHUT}
         </p>
       </header>
 
@@ -73,7 +73,7 @@ export default async function AboutPage() {
               </span>
               <span className="flex flex-col gap-0.5">
                 <span className="text-body font-semibold text-foreground">{step.title}</span>
-                <span className="text-sm leading-6 text-secondary">{step.body}</span>
+                <span className="text-sm leading-6 text-secondary">{matchOpen || step.whileShut === undefined ? step.body : step.whileShut}</span>
               </span>
             </li>
           ))}
