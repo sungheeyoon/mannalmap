@@ -5,7 +5,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { SUPPORT_EMAIL } from '@brand';
 import { businessInfoFrom } from '@brand/business';
 import { checkoutRefundLine } from '@brand/refund';
-import { bundleMark, bundleOrderName, discountAgainstSingles, won } from '@reading/bundle';
+import { bundleMark, bundleOrderName } from '@reading/bundle';
 import {
   CHECKOUT_AGREE_LABEL,
   CHECKOUT_AGREE_MISSING,
@@ -18,7 +18,6 @@ import {
   STORE_LOAD_FAILED_NOTE,
   checkoutPayLabel,
 } from '@reading/notes';
-import { STORE_PRODUCTS } from '@reading/store-products';
 import { storePurchaseNotice, type PurchaseReturn, type StorePurchaseNotice } from '@reading/store-purchase';
 
 import { useClient } from '@/auth/connected';
@@ -37,6 +36,7 @@ import {
   resendUnfinishedPurchases,
 } from './store';
 import { PurchaseDone } from './purchase-done';
+import { pickedOf, shelfOf, type ShelfItem } from './shelf';
 
 /**
  * 화면이 그리는 판 — 묻는 중 · 못 읽음(서버에 못 닿음 · Play 연결이나 상품 조회가 던짐) · 살 수 없음(제한 · 정지 · 베타 끝 · Play 상품이 아직 없음) · 살 수 있음.
@@ -46,7 +46,7 @@ type Shelf =
   | { kind: 'checking' }
   | { kind: 'failed'; signIn: boolean }
   | { kind: 'closed' }
-  | { kind: 'open'; productIds: readonly string[] };
+  | { kind: 'open'; items: readonly ShelfItem[] };
 
 /**
  * **풀이권 구매 — Google Play**(ADR 0230). 꼴은 결제 화면의 리디 꼴 그대로다(ADR 0175 · 대장 credits-03): 묶음 목록 → 동의 체크 → 「N원 결제하기」 →
@@ -59,7 +59,8 @@ type Shelf =
 export function StoreSection({ onBought, returnTo }: { onBought: () => Promise<number | null>; returnTo: PurchaseReturn | null }) {
   const client = useClient();
   const [shelf, setShelf] = useState<Shelf>({ kind: 'checking' });
-  const [chosen, setChosen] = useState<string>(STORE_PRODUCTS[0]?.productId ?? '');
+  /** 고른 상품 번호 — 진열에 없는 값이면 화면 · 단추 · 결제창 모두 진열의 첫 줄을 쓴다(`pickedOf`) */
+  const [chosen, setChosen] = useState('');
   const [agreed, setAgreed] = useState(false);
   const [agreeMissing, setAgreeMissing] = useState(false);
   const [running, setRunning] = useState(false);
@@ -87,8 +88,11 @@ export function StoreSection({ onBought, returnTo }: { onBought: () => Promise<n
         return setShelf({ kind: 'failed', signIn: open.refused.refused === 'sign-in' });
       if (!open.ok || open.value.open !== 'open') return setShelf({ kind: 'closed' });
       if (prices === null) return setShelf({ kind: 'failed', signIn: false });
-      const productIds = STORE_PRODUCTS.filter((product) => prices.has(product.productId)).map((product) => product.productId);
-      setShelf(productIds.length === 0 ? { kind: 'closed' } : { kind: 'open', productIds });
+      const items = shelfOf(prices);
+      if (items.length === 0) return setShelf({ kind: 'closed' });
+      /* 고른 값이 이번 진열에 없으면(조회 안 된 상품) 첫 줄로 — 늘 하나가 선택 표시된다 */
+      setChosen((now) => pickedOf(items, now)?.productId ?? now);
+      setShelf({ kind: 'open', items });
       await resend(true);
     })();
   }, [client, resend]);
@@ -109,13 +113,18 @@ export function StoreSection({ onBought, returnTo }: { onBought: () => Promise<n
     [client, show, resend],
   );
 
+  const picked = shelf.kind === 'open' ? pickedOf(shelf.items, chosen) : null;
+
   const buy = () => {
+    if (picked === null) return;
     if (!agreed) return setAgreeMissing(true);
+    /* 단추의 금액과 같은 줄의 번호다 — 둘은 `picked` 하나에서 나온다 */
+    const { productId } = picked;
     setNotice(null);
     setRunning(true);
     void (async () => {
       /* `openPurchase` 는 던지지 않는다 — 실패는 값이다 */
-      if ((await openPurchase(client, chosen)) === 'failed') show({ kind: 'failed', body: PURCHASE_FAILED_NOTE });
+      if ((await openPurchase(client, productId)) === 'failed') show({ kind: 'failed', body: PURCHASE_FAILED_NOTE });
     })();
   };
 
@@ -128,16 +137,12 @@ export function StoreSection({ onBought, returnTo }: { onBought: () => Promise<n
     );
   if (shelf.kind === 'closed') return <Text style={settingsText.meta}>{SALE_CLOSED_NOTE}</Text>;
 
-  const products = STORE_PRODUCTS.filter((product) => shelf.productIds.includes(product.productId));
-  const price = products.find((product) => product.productId === chosen)?.price ?? products[0]?.price ?? 0;
-
   return (
     <View style={styles.section}>
       <View accessibilityRole="radiogroup" style={styles.list}>
-        {products.map((product) => {
-          const on = product.productId === chosen;
+        {shelf.items.map((product) => {
+          const on = product.productId === picked?.productId;
           const mark = bundleMark(product.credits);
-          const discount = discountAgainstSingles(product.credits, product.price);
           return (
             <Pressable
               key={product.productId}
@@ -151,9 +156,9 @@ export function StoreSection({ onBought, returnTo }: { onBought: () => Promise<n
                     <Text style={styles.name}>{bundleOrderName(product.credits)}</Text>
                     {mark !== null && <Text style={styles.mark}>{mark}</Text>}
                   </View>
-                  {discount > 0 && <Text style={settingsText.meta}>1장 대비 {discount}% 할인</Text>}
+                  {product.discount > 0 && <Text style={settingsText.meta}>1장 대비 {product.discount}% 할인</Text>}
                 </View>
-                <Text style={styles.price}>{won(product.price)}</Text>
+                <Text style={styles.price}>{product.price}</Text>
               </Card>
             </Pressable>
           );
@@ -172,7 +177,7 @@ export function StoreSection({ onBought, returnTo }: { onBought: () => Promise<n
       </CheckRow>
       {agreeMissing && !agreed && <Text style={styles.wrong}>{CHECKOUT_AGREE_MISSING}</Text>}
 
-      <PrimaryButton label={running ? PURCHASE_RUNNING_LABEL : checkoutPayLabel(won(price))} onPress={buy} disabled={running} />
+      <PrimaryButton label={running ? PURCHASE_RUNNING_LABEL : checkoutPayLabel(picked?.price ?? '')} onPress={buy} disabled={running} />
 
       {notice !== null &&
         notice.kind !== 'done' &&

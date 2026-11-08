@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { FIND_FROM, findStatus, findsInList, matchesName, pickable, stepTo } from './pick';
+import { FIND_FROM, dropUnlisted, findStatus, findsInList, matchesName, pickable, stepTo, stillListed } from './pick';
 
 const people = [
   { personId: 'me', label: '서연' },
@@ -123,5 +123,41 @@ describe('사람 목록에서 찾기', () => {
     expect(pickable(many, 'ㅇㅇ진', null).map((one) => one.label)).toEqual(['이유진', '윤유진', '임유진']);
     expect(pickable(many, '임유진', null).map((one) => one.personId)).toEqual(['p99']);
     expect(pickable(many, '', null)).toHaveLength(100);
+  });
+});
+
+/**
+ * **궁합 칸의 고른 사람은 지금 목록에서 읽는다** — 고른 사람을 지우고 돌아오면 칸은 「골라 주세요」인데 누름은 지운 번호로
+ * 나가던 것(2026-11-08). 칸을 비우면 안내와 검사가 같은 값을 본다.
+ */
+describe('목록에서 빠진 사람의 칸', () => {
+  const left = people.filter((one) => one.personId !== 'mom');
+
+  it('지운 사람을 든 칸은 빈다 — 남은 칸은 그대로다', () => {
+    const slots = { a: { from: 'saved', personId: 'me' }, b: { from: 'saved', personId: 'mom' } } as const;
+    expect(dropUnlisted(slots, left)).toEqual({ a: { from: 'saved', personId: 'me' }, b: { from: 'saved', personId: '' } });
+    expect(stillListed(left, 'mom')).toBe(false);
+  });
+
+  it('모두 남았으면 받은 값 그대로다 — 같은 참조라 화면이 다시 그릴 까닭이 없다', () => {
+    const slots = { a: { from: 'saved', personId: 'me' }, b: { from: 'saved', personId: 'dad' } } as const;
+    expect(dropUnlisted(slots, left)).toBe(slots);
+    expect(stillListed(left, 'dad')).toBe(true);
+  });
+
+  it('빈 칸은 고른 것이 아니고 빈 채로 남는다', () => {
+    const slots = { a: { from: 'saved', personId: '' }, b: { from: 'saved', personId: 'me' } } as const;
+    expect(stillListed(people, '')).toBe(false);
+    expect(dropUnlisted(slots, left)).toBe(slots);
+  });
+
+  it('직접 적는 칸은 목록과 상관없다', () => {
+    const slots = { a: { from: 'typed', query: 'x' }, b: { from: 'saved', personId: 'mom' } } as const;
+    expect(dropUnlisted(slots, left)).toEqual({ a: { from: 'typed', query: 'x' }, b: { from: 'saved', personId: '' } });
+  });
+
+  it('목록이 비면 고른 칸은 모두 빈다', () => {
+    const slots = { a: { from: 'saved', personId: 'me' }, b: { from: 'saved', personId: 'dad' } } as const;
+    expect(dropUnlisted(slots, [])).toEqual({ a: { from: 'saved', personId: '' }, b: { from: 'saved', personId: '' } });
   });
 });
