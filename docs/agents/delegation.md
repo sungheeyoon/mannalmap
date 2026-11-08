@@ -16,7 +16,7 @@
 
 | 파일 | 절 | 무엇을 드나 |
 | --- | --- | --- |
-| `docs/agents/delegation/working.md` | 「시작하기 전에」 · 「일하는 법」 | 붉은 main 이 먼저 · 재는 법 · 사용자와 · 저장소와(워크트리 여는 순서 · 원격 DB 명령) |
+| `docs/agents/delegation/working.md` | 「시작하기 전에」 · 「일하는 법」 · 「화면은 시안 먼저」 | 붉은 main 이 먼저 · 재는 법 · 사용자와 · 저장소와(워크트리 여는 순서 · 원격 DB 명령) · 화면은 시안 → 승인 → 구현 |
 | `docs/agents/delegation/issues.md` | 「맡길 이슈」 | `ready-for-agent` 이슈의 칸 아홉 — 이슈 틀과 같은 표 |
 | `docs/agents/delegation/decisions.md` | 「결정 점검표」 | 무엇이 바뀌면 결정인가 · 안 정한 것은 간극 대장에만 · 반대쪽 상태까지 걷기 |
 | `docs/agents/delegation/parallel.md` | 「나란히 맡길 때」 | 공유 자원 표 · 「병렬 가능」의 조건 · 충돌 영역 |
