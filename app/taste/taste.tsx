@@ -257,7 +257,7 @@ function LockedOutline({
           로그인하고 전체 풀이 받기
         </SignInCarrying>
         <p className="text-center text-xs leading-5 text-secondary">
-          로그인하면 이 입력으로 돌아와요. 가입하면 풀이권으로 전체 사주풀이를 받을 수 있어요.
+          로그인하면 이 입력으로 돌아와요. 위 목차를 모두 풀어 드리고, 풀이권 1장을 써요.
         </p>
       </div>
     </section>
