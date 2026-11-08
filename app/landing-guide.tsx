@@ -5,7 +5,6 @@ import Link from 'next/link';
 import { SERVICE_FEATURES, featureText } from '@/src/lib/brand/features';
 
 import { useBrowserSession } from './auth/browser-session';
-import { useSignedOutMatchOpen } from './signed-out-match-open';
 import { Icon, type IconName } from './ui/icons';
 import { TYPE_NAME, TYPE_SECTION } from './ui/surfaces';
 
@@ -21,11 +20,11 @@ import { TYPE_NAME, TYPE_SECTION } from './ui/surfaces';
  * 줄로 접혔다.
  *
  * **로그인한 사람에게는 안 선다** — 그 사람은 `/` 에 머물지 않고(ADR 0144) 넷은 이미 탭에 있다. 세션을 모르는 동안에도
- * 안 세운다(머리글과 같은 까닭 — 회원에게 한 번 깜빡이는 거짓말을 안 보인다).
+ * 안 세운다(머리글과 같은 까닭 — 회원에게 한 번 깜빡이는 거짓말을 안 보인다). 인연의 열림(`matchOpen`)은 그리는 서버가
+ * 묻는다(`signed-out-match-open.ts`) — 닫혔으면 인연 카드는 「준비 중」 글이다(`featureText`).
  */
-export function LandingGuide() {
+export function LandingGuide({ matchOpen }: { matchOpen: boolean }) {
   const { session } = useBrowserSession();
-  const matchOpen = useSignedOutMatchOpen();
   if (session !== 'out') return null;
 
   return (
