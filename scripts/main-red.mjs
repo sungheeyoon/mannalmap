@@ -22,7 +22,7 @@ const LABEL = 'ci-main-red';
 export const FAILED = new Set(['failure', 'timed_out', 'startup_failure', 'action_required']);
 
 /**
- * 전부를 잰 실행인가 — 전부일 때도 켜지 않는 차선(`ci-plan.mjs` 의 `offWhenFull` — 지금 `policy` · `mobile-flow`) 말고 건너뛴
+ * 전부를 잰 실행인가 — 전부일 때도 켜지 않는 차선(`ci-plan.mjs` 의 `offWhenFull` — 지금 `policy`) 말고 건너뛴
  * job 이 없다. 정책만 바꾼 main 푸시(ADR 0154)는 `core` · e2e · 흐름 · `audit` 을 건너뛴다
  *
  * `offWhenFull` 은 부를 때 읽는다 — `ci-plan.mjs` 가 이 파일의 `FAILED` 를 들여 서로 들이는 사이라, 맨 위에서 부르면 먼저 열린

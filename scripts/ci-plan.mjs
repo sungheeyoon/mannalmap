@@ -14,8 +14,7 @@
  * | 변경이 이 안에만 있으면 | 도는 것 |
  * |---|---|
  * | 정책(`docs/**` · `*.md` · `.claude/**` · `scripts/*.test.ts`) | `policy` (scripts 시험 · 타입 · 린트, 1분 안) |
- * | 주석만 바뀐 코드 파일 — base 와 구문 나무가 같다(아래 「주석만 바뀐 코드 파일」, 어느 단계든) | 정책으로 센다 |
- * | 문구만 바뀐 파일 — 화면 문구 자리의 글자만 다르다(아래 「문구만 바뀐 파일」, 운영 베타의 PR 만) | `core` + 옛 글자를 말하는 시험의 차선 |
+ * | 주석만 바뀐 코드 파일 — base 와 구문 나무가 같다(아래 「주석만 바뀐 코드 파일」) | 정책으로 센다 |
  * | 엔진(`src/lib/saju/**`) · 엔진을 그리는 칸(`app/saju/**`) | `core`(단위·타입·린트·빌드) + `anon`(익명 e2e) |
  * | 그 밖 전부 · **모르는 파일** | 전부 |
  *
@@ -25,8 +24,7 @@
  * 짓는다** — 엔진이 달라져도 둘은 함께 달라져 빨개지지 않는다. 빨개지는 자리는 **DB 가
  * 모양을 검사하는 곳**뿐이다: 저장되는 여덟 글자의 모양(`chartSnapshotOf`,
  * `pillars/index.ts`)과 판본(`version.ts`)은 마이그레이션의 검사식이 본다
- * (`the_person_carries_its_eight_characters`). 그 둘을 고친 PR 은 **어느 단계든** 전부 돈다 — 운영 베타에서는 공용 위험
- * 「엔진의 DB 쪽」이다(아래 「CI 갈래 검수의 넷」).
+ * (`the_person_carries_its_eight_characters`). 그 둘(`ENGINE_DB_FACING`)은 엔진 단계에 안 들어 전부 돈다.
  *
  * 홈(`app/page.tsx`)과 출생 입력 폼(`app/birth-form.tsx`)은 **익명 화면이 아니다** — 홈은
  * 로그인 e2e 세 건이 회원으로 열고, 폼은 온보딩·수정·사람 관리가 같이 쓴다. 그래서 목록에 없다.
@@ -39,18 +37,17 @@
  * (#141)은 모르는 파일이라 전부(약 5분)를 돌았다. 그 둘을 한 단계로 묶었다 — `scripts/` 의 시험 · 타입 ·
  * 린트다. `scripts/*.test.ts` 만 바뀐 PR 도 여기다: 시험 파일은 저 자신의 결과만 바꾼다.
  *
- * ## 공개 출시 전에는 빠른 검사만 머지를 막는다 (2026-09-23, #161, ADR 0097)
+ * ## 공개 출시 전 단계는 전부다 (ADR 0243)
  *
- * 운영 베타에는 실제 사용자가 없다. PR 마다 전부(약 5분)를 돌리고 strict 가 뒤에 선 PR 을 다시 돌리는 값이
- * 다치는 사람을 막는 값보다 컸다. 그래서 단계가 공개 뒤의 규율을 켜지 않았으면(`release-stage.mjs`) PR 은
- * `core`(단위 · 타입 · 린트 · 빌드 — 그때 이름 `fast`)를 탄다 — 정책 파일만 바뀌었으면 전처럼 `policy`. 전체 검증은 main
- * 푸시가 최신 커밋 하나에서 비차단으로 돌고(정책만 바꾼 푸시는 `policy` 만 — 아래 「문서만 바뀐 main 푸시」), 붉으면 `ci-main-red` 이슈가 든다. 화면의 입구를 바꾸면 그 주소에 닿는
- * 차선이 더 선다(아래 「그 주소에 닿는 차선만」).
+ * 운영 베타에는 PR 이 `core` 와 「바뀐 화면의 주소에 닿는 차선」만 머지 전에 돌았다(ADR 0097 · 0119 · 0178 · 0195). 2026-11-05 에
+ * 공개 출시로 옮긴 뒤 그 갈래는 PR 계획에서 한 번도 돌지 않아 지웠다(ADR 0243). 단계 표(`release-stage.mjs`)에는 지난 두 단계가
+ * 남는다 — 등급 3 의 잠금이 그 표를 읽는다. 「(지금)」이 그 단계로 되돌아가면 계획은 **전부**다(`출시 전 단계`). 좁힌 계획이 다시
+ * 필요하면 git 역사(ADR 0243 이 가리키는 커밋)에서 되살리는 결정이 따로 선다.
  *
  * - **`supabase/**` 는 단계와 상관없이 전부다.** 마이그레이션 · pgTAP · `config.toml` 은 DB 차선에서만 재어지고,
  *   `db:start` 가 깨지면 main 의 DB 차선이 다 선다. 라벨에 기대지 않는다 — 에이전트는 라벨을 잊는다.
  * - **단계를 모르면 전부다.** 「(지금)」이 없거나 둘이거나 표에 없는 이름이면 안전 쪽으로 간다.
- * - **공개 출시면 아래 세 단계로 돌아간다.** 단계를 옮기는 PR 은 그 PR 에서부터 새 단계로 계획된다.
+ * - 단계를 옮기는 PR 은 그 PR 에서부터 새 단계로 계획된다.
  *
  * ## 빠른 검사에도 빌드가 든다 (2026-09-24, #219)
  *
@@ -73,141 +70,12 @@
  * `mobile` 차선은 `mobile/` 에서 `npm ci` · `tsc` · `expo lint` · 안드로이드 번들 · 네이티브 의존 검사(`mobile-native.mjs`)를 돈다. 뿌리 tsconfig 가 `mobile` 을 빼므로 그전까지 앱 파일의 타입 오류를 재는
  * CI 가 없었다. 앱은 `src/lib` 와 `app/` 의 몇 파일을 함께 쓰므로 웹 쪽 수정도 앱을 깬다 — `MOBILE_REACH` 가 그 자리이고,
  * `scripts/mobile-closure.test.ts` 가 앱에서 import 를 따라 닿는 파일이 전부 여기 걸리는지 잰다. `audit` 처럼 단계와 따로 켠다.
- * 공개 출시 전에 `mobile/**` 만 바꾼 PR 은 `core` + `mobile` 이고 웹 e2e · 흐름을 건너뛴다(운영자 2026-10-31). 앱 밖 코드가 섞이면 전부다.
- *
- * 그 PR 은 웹 빌드도 건너뛴다 — 웹은 `mobile/` 을 들이지 않으므로(뿌리 tsconfig 가 뺀다 · `scripts/mobile-closure.test.ts`) 빌드가 재는 것이
- * 그대로다. `core` 의 단위 · 타입 · 린트는 남는다 — `scripts` 잠금이 `mobile/` 글자를 읽는다.
- *
- * **다만 앱이 DB · 앱의 문을 부르는 글자가 바뀌면 `mobile-flow` 가 흐름 검사 하나(`scripts/check-mobile.mjs`)만 돈다**(ADR 0097 덧 2026-11-06).
- * 그 검사가 앱의 자격으로 함수 · 표 · `/api/mobile/**` 를 두드리는 유일한 자리인데, 앱만 바뀐 PR 은 `flow` 를 건너뛰어 앱이 새로 부른 함수가
- * `authenticated` 에 안 열려 있어도 머지 뒤 main 에서야 붉었다. 「부르는 글자」는 `mobile/src` 의 시험 아닌 코드에서 `.rpc(…` 의 첫 인자 ·
- * `.from('표')` · `/api/mobile/…` 글자와 그것이 든 줄이다(`appCallsOf`) — base 와 HEAD 의 그 목록이 다르면 켠다(줄의 차례는 안 본다). base 를 못 읽으면 새 파일로 보고 HEAD 에
- * 부르는 글자가 하나라도 있으면 켠다. 전부(`flow` 가 도는 계획)에서는 `flow` 가 이 검사를 이미 돌므로 켜지 않는다.
- *
- * ## 관문 · 화면 · 인증 · 그것을 재는 시험은 베타에서도 머지 전에 전부다 (2026-09-27, ADR 0119)
- *
- * 베타의 `fast` 는 「그 밖 전부」를 받았다. 그래서 #284(탭 넷의 `loading.tsx` · route group 이동)와 #286(`proxy.ts` 와
- * 화면 · 서버 액션 27개)이 PR 에서 `fast` 만 돌았다 — 목록이 틀린 게 아니라 규칙에 그 자리가 없었다. #284 는 머지 뒤
- * main 의 `flow` 가 붉었다(`check-discovery`, e370931). 단위 · 타입 · 린트 · 빌드는 **화면이 열리는가 · 관문이 누구를
- * 들이는가**를 모른다. 그래서 아래 `SURFACE` 가 하나라도 섞이면 단계와 상관없이 전부(익명 e2e · `authed` · `flow`)였다 —
- * 2026-10-01 부터는 공용 위험이 아닌 화면의 입구가 그 주소에 닿는 차선만 돈다(아래 「그 주소에 닿는 차선만」).
- *
- * - **관문** — `proxy.ts` · `src/lib/consent/`(test-map 「관문」 줄)
- * - **인증** — `app/auth/`
- * - **화면의 입구** — `app/` 아래의 `page` · `layout` · `loading` · `template` · `error` · `not-found` · `default`(`.tsx`) ·
- *   `route.ts`. route group 을 옮기면 `--no-renames` 로 옛 · 새 `page.tsx` 가 다 서므로 이것이 잡는다
- * - **서버 액션** — `app/` 의 `actions.ts`, 그리고 이름이 다른 `'use server'` 파일(`SERVER_ACTIONS_ELSEWHERE`). 시험이
- *   `app/` 의 `'use server'` 파일 전부가 여기 걸리는지 잰다 — 새 액션 파일이 조용히 빠지지 않게
- * - **그것을 재는 시험 자체** — `e2e/` · 흐름 검사(`scripts/check-*.mjs` · `run-checks.mjs` · `next-server.mjs`).
- *   시험이 도는지는 시험을 돌려야 안다(ADR 0097 의 로컬 예외 첫째를 CI 로 옮겼다)
- *
- * 그날 입구가 아닌 컴포넌트(`app/me/(shelf)/readings/shelf.tsx` 같은 것)와 `src/lib/**` 는 전처럼 `core` 로 두었다 — 전부로 넓히면 코드 PR 이 다
- * 전부가 되어 ADR 0097 이 없던 것과 같다. 컴포넌트는 2026-10-22 에 전부가 아니라 쓰는 입구의 차선으로 옮겼다(아래 「CI 갈래 검수의 넷」). 그날은 차선을 경로별로 고르지 않았다(ADR 0082 — 손으로 적은 「이 경로는 저
- * 차선」은 파일이 옮겨지는 날 거짓이 된다). 2026-10-01 에 손 목록이 아니라 소스에서 뽑는 대응으로 골랐다(아래).
- *
- * ## 서버에 닿는 `app/` 파일과 시험 도구가 혼자 쓰는 파일도 입구다 (2026-09-28, ADR 0119 추기)
- *
- * 이름으로만 입구를 골랐더니 판단이 사는 문이 빠졌다. `page.tsx` 는 얇고, DB 를 부르는 것은 그 옆의 `.ts` 다 —
- * `app/me/reading/pipeline.ts` · `app/me/candidates.ts` · `app/me/chat/rooms.ts` · `app/keyed-client.ts`(service-role) ·
- * `app/ops/reports/read.ts` · `app/share/public-client.ts` · `proxy.ts` 가 부르는 `app/beta-schedule.ts` 가 다 `core`(그때 `fast`)였다.
- * 흐름 · pgTAP 은 머지 뒤 main 에서만 돌아 #284 와 같은 모양이 남았다. 이름을 늘어놓지 않고 **내용으로 가른다**:
- *
- * - **서버에 닿는 `app/` 파일** — `app/**` 의 `.ts` · `.tsx`(시험 빼고) 중 Supabase 클라이언트(`@supabase/*` 나
- *   `server-client` · `browser-client` · `keyed-client` · `public-client`)나 서버 전용 모듈(`server-only` · `next/server` ·
- *   `next/headers` · `next/cache`)을 import 하는 것(`SERVER_REACHING`). 계획 job 이 HEAD 를 받아 두므로 파일을 읽는다.
- *   못 읽는 파일(지운 것)은 안 건다 — 그것을 부르던 쪽이 함께 바뀌어 그쪽이 걸린다. 순수 화면 로직(`book.ts` ·
- *   `deck-state.ts` · 받은 client 를 쓰기만 하는 `settle.ts`)은 단위 시험이 재므로 전처럼 `core` 다.
- * - **관문이 import 하는 `app/` 파일** — `proxy.ts` 에서 import 를 따라가 닿는 `app/**` 파일은 서버에 안 닿아도
- *   입구다(`app/beta-schedule.ts` 가 부르는 `app/db-error.ts` 처럼). 이것도 계획 job 이 HEAD 를 읽어 그때 잰다 —
- *   관문이 새 파일을 부르기 시작한 PR 에서부터 걸린다.
- * - **시험 도구가 혼자 쓰는 파일** — 앱 서버의 설정(`next.config.ts` 의 CSP · 보안 헤더는 익명 e2e 가 잰다) ·
- *   `src/lib/local-env.ts`(`HARNESS`), 그리고 `scripts/*.mjs` 중 CI · 개발 도구가 아닌 것 전부(`NOT_HARNESS` 가 빼는
- *   쪽이다 — 새 도우미는 이름을 안 적어도 걸리고, 모르는 스크립트는 전부로 간다). 시험이 e2e · 흐름 검사 ·
- *   Playwright 설정에서 import 를 따라가 앱이 안 닿는 파일이 전부 걸리는지 잰다. `scripts/fake-clock.mjs` 는
- *   `ui-shots` 만 쓰고 CI 가 안 돌리므로 뺀다. `pr-title`(계획 job 이 PR 마다 부른다) · `deploy-smoke`(`npm run smoke:deploy`) ·
- *   `brand-icons` · `push-vapid-keys`(사람이 손으로)도 시험이 import 도 실행도 안 해 뺀다(#767 검수 — 시험이 그 넷을 잰다).
- *
- * 잰 값(2026-09-28): 한 파일만 바꾼 PR 이 `core` 에서 전부로 옮는 파일이 42 개다 — `app/**` 의 `.ts` 35 개(시험 아닌 105 개 중
- * 입구가 26 → 61, 순수 로직 44 개는 그대로 `core`), 브라우저 client 를 부르는 `.tsx` 둘(`site-header.tsx` · `save-for-reading.tsx`),
- * 도구 다섯. 최근 머지된 PR 30 개를 옛 · 새 규칙에 넣으면 전부가 16 → 17 이다(#264 가 `s3.ts` · `ops/reports/read.ts` 로 옮는다).
- * 전부로 가는 PR 은 대개 이미 화면의 입구를 함께 바꾼다.
- *
- * ## 그 주소에 실제로 닿는 차선만 (2026-10-01, ADR 0097 · 0119 추기, 운영자 승인)
- *
- * 입구 하나만 바뀌어도 전부(로그인 일곱 · 흐름 · 익명)였다. `app/me/(shelf)/readings/compat/page.tsx` 한 줄을 고친 PR 도 그
- * 주소를 여는 시험이 `e2e/signed-in.spec.ts` 하나뿐인데 일곱 차선을 다 기다렸다. 그래서 차선을 독립 출력으로 내고
- * (`core` · `anon` · `authed` 와 `authed_lanes` · `flow`, 그대로 `policy` · `audit`), 운영 베타의 PR 에서만 좁힌다. job 이름도
- * 그 뜻으로 바꿨다 — `fast` → `core`, `verify` → `anon`. `tier` 는 요약의 낱말일 뿐이다.
- *
- * 판정 차례:
- *
- * 1. 위의 「전부」 조건 그대로 — 계획 밖 이벤트(main 푸시는 아래 「문서만 바뀐 main 푸시」가 따로 가른다) ·`full-ci` 라벨 · 빈 diff · `supabase/**` · 단계 모름. 공개 출시는 세 단계.
- *    그 뒤 주석만 바뀐 코드 파일은 정책으로 돌린다(아래 「주석만 바뀐 코드 파일」). 운영 베타면 문구만 바뀐 파일을 아래 판정에서
- *    빼 두었다가 끝에 `core` 와 옛 글자를 말하는 시험의 차선으로 얹는다(아래 「문구만 바뀐 파일」)
- * 2. **공용 위험**(`SHARED_RISK`) — 바뀐 파일 전체를 먼저 훑고 하나라도 들면 전부. 관문 · 인증 · `layout` · `route.ts` ·
- *    서버 액션 · spec 이 아닌 `e2e/**` · 시험 도구, 그리고 Next 의 공용 경계(`global-error` · `global-not-found` ·
- *    `forbidden` · `unauthorized` · 뿌리의 `instrumentation` · `instrumentation-client` · `middleware`). 주소 하나로는 그것을
- *    밟는 시험을 셀 수 없는 자리다. 엔진의 DB 쪽(`ENGINE_DB_FACING`) · CI 자체(워크플로 · `.nvmrc`)도 여기다. 의존성 목록이 시험 실행
- *    의존성을 바꿨으면 이 앞에서 전부다(아래 「CI 갈래 검수의 넷」)
- * 3. 정책만이면 `policy`
- * 4. 파일마다 — 시험 파일 · 입구도 화면 컴포넌트도 서버 파일도 아닌 파일은 `core` 만. `e2e/*.spec.ts` 는 그 spec 의 차선(차선 스크립트가 부르면 그
- *    차선, 아닌데 `AUTHED` · `NOTICE` 무늬면 전부, 그 밖은 `anon`). `scripts/check-*.mjs` 는 `flow`. 메타데이터 파일은
- *    `anon`. 화면의 입구(`page` · `loading` · `error` · `not-found` · `template` · `default`)는 **주소로** 닿는 시험을 찾고,
- *    그 시험의 차선을 켠다. 닿는 시험이 0 이면 정말 없을 때만 그 파일은 `core`(시험 공백), 탐색이 놓쳤을 수 있으면 전부다. 관문이
- *    부르는 파일은 전부. 주소가 없는 서버 파일과 화면 컴포넌트는 그것을 쓰는 입구의 주소로 간다(아래 「입구가 아닌 서버 파일은 그것을 쓰는
- *    입구의 주소로」 · 「CI 갈래 검수의 넷」)
- * 5. 좁힌 계획에도 `core` 는 늘 선다
- *
- * **주소 대응은 소스에서 뽑는다** — 손으로 적은 「이 경로는 저 차선」이 없다. 입구 파일의 주소는 경로에서(`(group)` ·
- * `@slot` 은 걷고 `[x]` 는 한 마디, `[...x]` 는 나머지, `page` 밖은 그 아래 전부), 시험이 요청하는 주소는
- * `e2e/*.spec.ts` · `scripts/check-*.mjs` 의 주석 줄을 뺀 따옴표 · 백틱 속 `/…` 에서(`addressesOf`), spec 과 차선은
- * `package.json` 의 `test:e2e:<차선>` 과 `playwright.config.ts` 의 무늬에서 읽는다. 파일이 옮겨지면 대응도 함께 옮는다.
- *
- * **모르는 파일은 베타에서도 전부다.** 알려진 `core` 자리(`KNOWN_CORE` · `ROOT_CONFIGS`)는 자리로 적는다 — `src/**` ·
- * 입구가 아닌 `app/**` · `scripts/**` · 워크플로 밖의 `.github/**` · 서비스 워커 밖의 `public/**` 와 뿌리 설정 몇. 잰 값(2026-10-01, 추적 파일 1,139 개를 한
- * 파일씩): 옛 규칙의 `fast` 489 개 중 486 개가 그대로 `core` 이고, 셋이 옮는다 — `app/global-error.tsx` ·
- * `instrumentation.ts` 는 공용 경계라 전부, `app/icon.svg` 는 메타데이터라 `core` + `anon`. 옛 전부 382 개 중 61 개가
- * 좁혀진다.
- *
- * 남는 구멍: 시험이 주소를 문자열로 적지 않고 링크를 눌러 닿는 화면은, 그 주소를 적은 다른 시험이 있으면 그 시험의 차선만 켠다 —
- * 링크로 닿는 시험의 차선은 안 켠다. 그 자리의 붉음은 전처럼 머지 뒤 main 의 전체가 잡는다. 주소를 적은 시험이 0 이면 링크로 닿는
- * 시험이 있을 때 전부다(아래 「CI 갈래 검수의 넷」).
- *
- * ## 입구가 아닌 서버 파일은 그것을 쓰는 입구의 주소로 (ADR 0178, 운영자 2026-10-12)
- *
- * 서버에 닿는 `app/` 파일이 입구가 아니면 주소를 못 뽑아 전부였다 — `app/` 의 시험 아닌 파일 388 개 중 113 개가 전부, 그중 「주소 없음」
- * 65 개. UI 만 바꾼 #649 · #650 · #651 · #657 · #673 이 머지 전에 e2e 전부(7~9.5분)를 탔다. 이제 **import 를 거꾸로 따라** 그 파일을
- * (간접으로라도) 쓰는 입구(`page` · `loading` · …)와 그것을 직접 부르는 시험(`e2e/*.spec.ts` · `scripts/check-*.mjs`)을 모아, 그 입구의
- * 주소에 닿는 차선만 켠다(`entriesReaching`). 훑는 자리는 디스크의 `app` · `src` · `e2e` · `scripts` 와 뿌리의 코드, 그리고 이 PR 이 바꾼
- * 파일이다 — 계획 job 이 HEAD 를 받아 두므로 같은 PR 의 새 page 도 든다. 단위 시험(`*.test.ts`)은 길로 안 센다.
- *
- * 안전 문턱(ADR 0119)은 그대로다 — 다음은 전부다:
- *
- * - 길 위에 공용 위험(`layout` · `route.ts` · 서버 액션 · 관문 · 인증 · e2e 기반 · 시험 도구 · Next 공용 경계)이나 메타데이터 파일이
- *   선다. 그 파일은 그 자리의 몫이라 주소 하나로 셀 수 없다(`app/me/requests/inbox.ts` 는 layout 과 요청 액션이 부른다)
- * - 관문이 부르는 파일(`gateReach`)
- * - 입구도 시험도 못 찾는 고아, 찾은 입구의 주소에 닿는 시험이 0 인데 탐색이 놓쳤을 수 있다(정말 없으면 그 입구는 `core` 와 시험 공백 —
- *   아래 「CI 갈래 검수의 넷」)
- *
- * 잰 값(2026-10-12): 전부 113 → 91, 「주소 없음」 65 → 42. 남은 42 개는 위 공용 위험 · 관문이 부르는 파일이다.
- *
- * **타입만 들이는 import 도 서버 도달로 센다.** `import type { SupabaseClient }` 만 든 파일 대부분은 주입받은 클라이언트로 실제
- * DB 를 부른다(`app/me/credits/sale.ts` 같은 것) — 그것을 빼면 e2e 없는 `core` 로 떨어진다(#682 독립 검토). 대신 그런 파일도 위처럼
- * 쓰는 입구의 차선으로 좁혀진다(#649 의 `room-compat.ts`). 거꾸로 가는 그래프도 타입 import 를 길로 센다 — 넓게 잡을수록 차선이 늘 뿐
- * 줄지 않는다. 입구에서도 멈추지 않고 위로 더 따라간다 — 다른 page 가 입구를 다시 내보내면(`export { default } from '../a/page'`)
- * 그 page 의 주소도 든다.
- *
- * ## 문구만 바뀐 PR 은 빌드를 건너뛴다 (ADR 0178, 운영자 2026-10-12)
- *
- * 운영 베타의 PR 에서 코드가 아래 「문구만 바뀐 파일」로 좁혀진 파일뿐이고 나머지가 정책이면 계획이 `build=false` 를 낸다 — `core` 는
- * 단위 · 타입 · 린트만 돌고, 바뀐 글자를 찾는 시험의 차선은 그대로다. 빌드를 `core` 에 넣은 까닭(#219 의 `icon.tsx`)은 이름 · 모양의
- * 실패라 문구 한 줄로 안 생긴다. 메타데이터 파일(`icon` · `opengraph-image` … — 빌드 때 그림을 그린다) · 그 밖의 코드 · 라벨 · 공개 출시 · main 푸시 · 일정은 빌드가 돈다. 워크플로는 `!= 'false'` 로 읽어
- * 값이 비면 돈다. job · `gate` 는 그대로다.
+ * `mobile/**` 는 정책도 엔진도 아니라 웹 쪽은 전부다 — 앱이 DB · 앱의 문을 부르는 자리(`scripts/check-mobile.mjs`)는 `flow` 가 잰다.
  *
  * ## 주석만 바뀐 코드 파일은 정책으로 센다 (ADR 0153)
  *
  * `.ts` · `.tsx` · `.mjs` · `.js`(와 `.cjs` · `.mts` · `.cts` · `.jsx`)의 바뀐 것이 주석 · 공백뿐이면 그 파일은 정책이다 —
- * `layout.tsx` 주석 한 줄이 공용 위험으로 전부를 부르지 않는다. 다른 파일이 없으면 PR 이 `policy` 다. 줄 무늬로 고르지 않고
+ * `layout.tsx` 주석 한 줄이 전부를 부르지 않는다. 다른 파일이 없으면 PR 이 `policy` 다. 줄 무늬로 고르지 않고
  * **파서로 가른다**: `typescript` 로 base 커밋(`--base`, 계획 job 이 merge-base 를 넘긴다)의 소스와 HEAD 소스를 읽어 주석 · 공백
  * 트리비아와 위치를 뺀 구문 나무(노드 종류 · 식별자 · 리터럴 · 연산자)가 같아야 한다(`syntaxOf`). 줄바꿈이 자동 세미콜론으로
  * 뜻을 바꾸면(`return` 뒤 줄바꿈) 나무가 다르다. JSX 주석 `{/* … *\/}` 안만 바뀐 것은 주석만이고, 문자열 · 템플릿 속의 `//` 나
@@ -220,45 +88,34 @@
  * - 일정 · 손으로 켠 실행은 전처럼 전부다. main 푸시는 아래 「문서만 바뀐 main 푸시」가 푸시 전 SHA 를 base 로 같은 판정을 쓴다.
  *   `supabase/**` 는 이것보다 먼저 전부다
  *
- * ## 문구만 바뀐 파일은 `core` 에 옛 글자를 찾는 시험의 차선만 더한다 (ADR 0159)
+ * ## 문구만 바뀐 파일 — 묶음 배포가 쓴다 (ADR 0159)
  *
- * #570 은 확인 창의 문구 한 줄이었는데 상수가 `src/lib/consent` 에 들어가 공용 위험(관문)으로 전부를 돌았다. 그래서 운영 베타의 PR 은
- * **화면 문구 자리의 글자만** 바뀐 파일을 공용 위험 · 주소 대응에서 빼고 `core` 로 센다. 위치나 PR 설명이 아니라 위와 같은 파서로
- * 가른다: 문구 자리의 잎을 글자 없이 `종류:<문구>` 로 적은 나무와 뜻이 있는 주석이 base 와 같고, 그 자리의 글자가 하나 이상 다르다
- * (`copyOnlyChanged`). 판정은 `app/**` · `src/**` 의 시험 아닌 코드 파일에서만 한다. 주석만 바뀐 파일은 먼저 정책으로 빠진다.
+ * PR 계획은 문구로 좁히지 않는다(공개 출시는 화면 하나도 전부다). 같은 파서 판정을 묶음 배포가 쓴다 — 마지막으로 전부를 잰 main 의
+ * 초록부터 올릴 SHA 까지의 **커밋마다** 정책 · 주석만 · 문구만뿐이고 PR 마다 `gate` 가 초록이면 배포가 main 의 전체 CI 를 기다리지
+ * 않는다(`deployRangeOf`, `scripts/deploy-range.mjs`). 「문구만」은 **화면 문구 자리의 글자만** 바뀐 파일이다 — 위치나 PR 설명이 아니라
+ * 파서로 가른다: 문구 자리의 잎을 글자 없이 `종류:<문구>` 로 적은 나무와 뜻이 있는 주석이 base 와 같고, 그 자리의 글자가 하나 이상
+ * 다르다(`copyOnlyChanged`). 판정은 `app/**` · `src/**` 의 시험 아닌 코드 파일에서만 한다. 주석만 바뀐 파일은 먼저 정책으로 빠진다.
  *
  * - **인정하는 자리는 넷이다** — ① JSX 글자(요소 사이의 글자) ② JSX 자식 식이 화면에 그대로 세우는 글자 — 문자열 · 템플릿의
  *   글자 조각, 괄호 · 조건식의 두 갈래 · `&&` `||` `??` 의 오른쪽으로만 내려간다(`renderedTextsOf`) ③ HTML 요소(소문자 태그)의
  *   `aria-label` 글자(`ACCESSIBLE_NAME_ATTRIBUTES`, 따옴표 값이나 ②처럼 서는 식) ④ `COPY_FILES` 의 파일이 모양(`export const 이름 =
  *   '글자'` 와 글자만 든 표, `copyConstantsOf`)을 지킬 때 그 글자 값. ① ~ ③ 은 `option` · `textarea` · `style` · `script` 안이면 몇 겹
- *   아래든 뺀다. ② ③ 은 G-90(#575 가 템플릿 조각 · 단추의 `aria-label` 때문에 `wait` 였다). 「상수의 문자열」이라는 까닭만으로는 안
- *   센다 — 경로 · 설정값 · 키 · 정규식 · 환경 변수 이름이 들 수 있다. 목록의 파일이 모양을 지키는지와 그 이름을 화면(`.tsx`)의 글자
- *   자리와 시험만 부르는지는 시험이 잰다
+ *   아래든 뺀다. 「상수의 문자열」이라는 까닭만으로는 안 센다 — 경로 · 설정값 · 키 · 정규식 · 환경 변수 이름이 들 수 있다. 목록의
+ *   파일이 모양을 지키는지와 그 이름을 화면(`.tsx`)의 글자 자리와 시험만 부르는지는 시험이 잰다
  * - **인정하지 않는 것** — 그 밖의 JSX 속성 값(`className` · `href` · `src` · `title` · `alt` · 컴포넌트의 `aria-label` · `role` ·
  *   `data-*` …) · 조건식 · `&&` `||` 의 왼쪽 · 이벤트 핸들러 · 식별자 · 구조(요소 · JSX 주석 `{/* *\/}` 을 새로 세움) · 템플릿의 식 ·
- *   함수 인자 · 데이터(배열 · 객체) 속 문자열 · 목록 밖 문자열 · 표의 키. 문구와 이것이 한 파일에 섞이면 그 파일은 지금 규칙 그대로다
- * - **판별이 불확실하면 지금 규칙** — 파서 없음 · base 를 못 읽음 · 파싱 실패 · 앱 밖 · 시험 파일
+ *   함수 인자 · 데이터(배열 · 객체) 속 문자열 · 목록 밖 문자열 · 표의 키. 문구와 이것이 한 파일에 섞이면 그 파일은 동작이다
+ * - **판별이 불확실하면 동작** — 파서 없음 · base 를 못 읽음 · 파싱 실패 · 앱 밖 · 시험 파일
  * - **시험이 글자로 찾으면 문구만이 아니다**(운영자 2026-10-10) — 바뀐 자리의 옛 글자나 새 글자를 `e2e/**` · `scripts/check-*.mjs` 가
- *   글자 그대로 찾으면(통째 · 따옴표 조각 · 그 글자를 실제로 찾거나 한글 세 자 이상 조각이 그 안에 있는 정규식, `testsNamingLiterally`) 그 파일은 지금 규칙이고 배포는
- *   기다린다. 문구 상수는 시험이 이름으로 읽는다 — 그러면 글자를 바꿔도 시험을 고칠 일이 없고 여기 안 걸린다
- * - **바뀐 글자를 찾는 시험의 차선을 더한다** — 바뀐 자리의 옛 글자나 새 글자가 `e2e/**` 나 `scripts/check-*.mjs` 에 나타나면
- *   (통째로, 또는 시험의 리터럴 글자 넉 자 이상이 그 조각이면) 그 spec 의 차선 · `flow` 를 켠다. 바뀐 문구 파일을 들이는 시험도
- *   켠다(`testsImportingCopy`) — 상수를 이름으로 읽는 시험은 글자 검색에 안 걸린다. 정규식은 파서로 모아 글자가 있으면
- *   바뀐 글자와 관련될 때 · 판단이 안 설 때, 글자가 없으면 문자열 정리 자리가 아닐 때 켠다(`regexUsesIn` · `regexTurnsOn`). spec 이
- *   아닌 `e2e/**` 면 전부다. **문구 판정은 좁히기만 한다** — `core` + 그렇게 켠 차선이 그 파일의 지금 규칙 차선의 부분집합일 때만
- *   그것으로 세고, 아니면 지금 규칙 그대로다. 여러 파일이면 파일마다 정한 계획의 합이다(`narrowedCopyOf`, 운영자 2026-10-09). **이 검색은 검사를
- *   더하는 근거일 뿐이다** — 시험이 글자를 동적으로 조합해 찾으면 안 걸리고, 그 구멍은 머지 뒤 main 의 전체와 `ci-main-red` 가 잡는다
- * - 공개 출시 · main 푸시 · 일정 · 손으로 켠 실행은 문구만이어도 지금 규칙 그대로다
- *
- * 같은 판정을 묶음 배포가 쓴다 — 마지막으로 전부를 잰 main 의 초록부터 올릴 SHA 까지의 **커밋마다** 정책 · 주석만 · 문구만뿐이고
- * PR 마다 `gate` 가 초록이면 배포가 main 의 전체 CI 를 기다리지 않는다(`deployRangeOf`, `scripts/deploy-range.mjs`).
+ *   글자 그대로 찾으면(통째 · 따옴표 조각 · 그 글자를 실제로 찾거나 한글 세 자 이상 조각이 그 안에 있는 정규식, `testsNamingLiterally`) 그 파일은
+ *   동작이고 배포는 기다린다. 문구 상수는 시험이 이름으로 읽는다 — 그러면 글자를 바꿔도 시험을 고칠 일이 없고 여기 안 걸린다
  *
  * ## 문서만 바뀐 main 푸시는 `policy` 만 (ADR 0154)
  *
  * 머지 뒤 main 의 전체(약 11분)는 문서 PR 에도 돌았다 — 재는 것이 없는데 러너와 `ci-main-red` 의 기다림만 들었다. 그래서
  * main 푸시도 계획을 본다. 판정하는 것은 **푸시 전 SHA(`github.event.before`)와 뒤 SHA 사이의 변경 전체**다 — 여러 PR 이 한 푸시에
  * 들어도 그 범위 전부. 그 안이 정책 파일과 주석만 바뀐 코드 파일(위, base 는 푸시 전 SHA)뿐이면 `policy` 만, 하나라도 그 밖이면
- * 전부다. 단계 · 주소 대응은 안 본다 — main 의 일은 전체 검증이다. `audit` 도 `policy` 만일 때는 건너뛴다(새 advisory 는 일정이 잡는다).
+ * 전부다. 단계는 안 본다 — main 의 일은 전체 검증이다. `audit` 도 `policy` 만일 때는 건너뛴다(새 advisory 는 일정이 잡는다).
  *
  * **앞 커밋이 초록으로 끝났을 때만 좁힌다.** main 의 concurrency 는 새 푸시가 앞 실행을 끊는다. 코드 커밋 A 의 전체가 문서 커밋 B 에
  * 끊기고 B 가 `policy` 만 돌면 A 는 아무도 안 잰다. 그래서 푸시 전 SHA 의 verify 실행(main 의 push · 일정 · 손으로 켠 것)이 하나라도
@@ -268,50 +125,6 @@
  * 닫히는 쪽: 범위를 못 받음 · 푸시 전 SHA 가 0(새 가지) · 강제 갱신 · diff 를 못 읽음(빈 목록) · 앞 실행을 못 읽음(API 실패)은 전부다.
  * `policy` 만 돈 초록은 전부를 잰 것이 아니라서 `ci-main-red` 가 그것으로 이슈를 닫지 않고 「마지막 초록」으로도 세지 않는다
  * (`main-red.mjs` 의 `measuredEverything`).
- *
- * ## CI 갈래 검수의 넷 (운영자 2026-10-22, ADR 0195)
- *
- * 검수(`docs/notes/2026-10-22-ci-lane-audit.md` 「CI 갈래 검수」)가 짚은 빈틈과 낭비를 고쳤다.
- *
- * - **입구가 아닌 화면 컴포넌트는 그것을 쓰는 입구의 차선을 탄다.** `app/**` 의 시험 아닌 `.tsx` 와 React 를 들이거나 `'use client'` 인
- *   `.ts`(hook 같은 것, 운영자 2026-10-22) 가운데 입구 · 서버 파일이 아닌 것(`isScreenComponent`)은 `core` 만 돌았다 — main 이 붉은 #581 · #614 · #595 가 다 여기서 샜다. 이제 서버 파일과 같은 길(`entriesReaching`)로
- *   그것을 쓰는 입구의 주소에 닿는 차선을 켜고, 안전 문턱(길 위의 공용 위험 · 고아는 전부)도 같다. 지운 컴포넌트는 안 건다. React 도
- *   `'use client'` 도 없는 `.ts`(`book.ts` · `buttons.ts` 같은 셈 · 상수)는 단위 시험이 재므로 그대로 `core` 다. 잰 값(2026-10-22): 화면
- *   컴포넌트 157 개(옛 규칙 `core`) 중 123 개가 좁힌 차선(그중 열은 차선 열하나를 다 켠다), 21 개가 전부(길 위에 layout · 인증 · Next 공용
- *   경계 — `app/ui/**` 의 여덟이 여기다), 13 개는 쓰는 입구 가운데 시험이 정말 없다던 입구가 있어 11 개는 `core` · 2 개는 나머지 입구의 차선이었다 —
- *   그 입구들이 링크로 닿을 수 있어(아래) 열셋 모두 전부다.
- * - **닿는 시험이 0 인 입구는 정말 없을 때만 `core` 다.** 글자 그대로의 주소(`addressesOf`)가 0 이어도 시험 · 그 도우미가 템플릿 ·
- *   이어 붙임 · 식 뒤의 경로 · 정규식의 `\/` 경로로 그 주소를 요청할 **수도 있거나**(`looseAddressesOf`), 그 코드나 바로 들이는 파일에 입구의
- *   경로가 글자로 들었거나(`mentionOf`), 그 입구를 들이는 파일이 있거나(다시 내보내는 page), **다른 화면이 그 입구를 가리키고 그 화면을 여는
- *   시험이 있으면**(아래) 탐색이 놓친 것이라 전부(「닿는 시험 모름」)다. 그것도 없으면 그 파일은 `core` 로 세고 까닭에 시험 공백과 간극 대장 줄(`UNTESTED_GAP`)을 싣는다 — 다른 파일이 켠
- *   차선은 그대로다. 대장의 기록이 `untestedEntries()` · `linkedOnlyEntries()` 와 같은 목록을 드는지 시험이 견준다. 해석 불가(고아) · 미분류 ·
- *   관문이 부르는 파일 · 차선 모름은 그대로 전부다.
- * - **다른 화면이 가리키는 입구는 정말 없음이 아니다**(ADR 0195 덧, 외부 리뷰). 시험이 주소를 한 글자도 적지 않고 링크를 눌러 닿을 수 있다.
- *   앱 코드에서 그 입구를 가리키는 파일(`linksIn` — 링크든 경로 상수 · `router.push` · `redirect` 든)과 그 파일을 그리는 화면(입구 · `layout`
- *   아래 전부, 그 화면을 가리키는 화면도 끝까지 — `linkReach`)을 모아, 그 화면을 여는 시험 · 도우미가 있으면 든다. 시험이 무엇을 누르는지는
- *   가르지 않는다 — 선택자 글자 · 좌표 누름 · 키 · 대소문자로 이름 좁힘이 새는 길이 끝이 없다(2026-10-22 독립 검토). 잰 값(2026-10-22): 시험
- *   공백이던 입구 아홉(`/help` · `/terms` · `/refund` · `/me/credits` 셋 · `/ops` 셋)이 모두 전부로 돌아갔다 — 공용 바닥글 · 회원 머리의 풀이권
- *   메뉴 · 운영 머리가 그 입구를 가리킨다. 그 아홉과 그것만 쓰는 서버 파일 여섯 · 화면 컴포넌트 열셋, 스물여덟이 `core` · 좁힌 차선 → 전부다.
- * - **엔진의 DB 쪽은 운영 베타에서도 전부다**(공용 위험 「엔진의 DB 쪽」). 머리말 위 「엔진 단계의 예외 둘」과 시험 지도가 이미 「전부」라
- *   적었는데 `ENGINE_DB_FACING` 은 공개 출시의 판정만 읽었다.
- * - **CI 자체와 시험 실행 의존성은 전부다.** 워크플로(`.github/workflows/**`)와 모든 job 이 읽는 Node 판(`.nvmrc`)은 공용 위험 「CI 자체」다 —
- *   PR 이 바꾼 워크플로가 그 PR 에서 job 을 다 돌려 보게. 의존성 목록은 base 와 견줘 시험 실행 의존성(`TEST_RUNNERS` — Playwright 와
- *   Supabase CLI, 시험 도우미만 들이는 `http_ece` 의 판 · `overrides` · 설치 항목, 그리고 차선 job 과 e2e 가 부르는 스크립트 `LANE_SCRIPTS`
- *   — `dev` 포함)이 바뀌었을 때만 전부다
- *   (`testRunnerChangeOf`). 앱이 쓰는 패키지만 바뀌었으면 전처럼 `core` 와 `audit` 이다. base 나 HEAD 를 못 읽으면 가를 수 없어 전부다.
- *
- * ## css module 과 서비스 워커 (2026-10-22, ADR 0195 덧)
- *
- * 같은 날 감사가 `planFor` 에 대표 변경을 넣어 본 구멍 둘이다 — 둘 다 넓히기만 한다.
- *
- * - **css module(`app/**\/*.module.css`)은 화면 컴포넌트다.** `.tsx` 만 보던 판정이라 css module 만 바꾼 PR 은 `core` 였고, 그것을 들이는
- *   `.tsx` 를 바꾸면 차선이 섰다. 이제 그것을 들이는 컴포넌트와 같은 길(`entriesReaching`)을 탄다 — layout 이 들이면 전부, 아무도 안 들이면
- *   전부, 지운 것은 안 건다. 뿌리 layout 이 들이는 `app/globals.css` 는 좁히면 사실상 전부라 `core`(알려진 자리) 그대로다.
- * - **서비스 워커(`SERVICE_WORKER` — `public/sw.js`)는 그것을 여는 시험의 차선을 탄다.** `public/**` 는 알려진 `core` 자리라 서비스 워커를
- *   등록해 재는 `e2e/push.spec.ts`(`push`)가 안 섰다. 시험은 `/sw.js` 를 적지 않고 브라우저의 서비스 워커를 열므로, 주석을 뺀 코드에
- *   `serviceWorker` 가 든 spec · 흐름 검사(`workerTests`)를 모은다. 하나도 없으면 「닿는 시험 모름」이라 전부다. 흐름 검사(`check-push`)는
- *   서비스 워커를 띄우지 않고 그 문을 직접 두드리므로 `flow` 는 안 켠다. 웹 푸시를 운영에 켰는지와 따로다. 시험이 앱의 등록 주소와
- *   `SERVICE_WORKER` 를 견준다.
  *
  * ## 원칙
  *
@@ -345,105 +158,17 @@ export const DEPENDENCY_LISTS = ['package.json', 'package-lock.json', 'mobile/pa
 const MOBILE_REACH = [/^mobile\//, /^src\/lib\//, /^app\/db-error\.ts$/, /^\.github\/workflows\//, /^\.nvmrc$/, /^scripts\/mobile-native\.mjs$/];
 /** 문서는 앱을 안 바꾼다. 웹 쪽 시험은 앱에 안 닿지만 `mobile/` 의 시험은 앱의 `tsc` 가 함께 읽는다 */
 export const reachesMobile = (file) => matches(MOBILE_REACH, file) && !/\.md$/.test(file) && (file.startsWith('mobile/') || !/\.test\.tsx?$/.test(file));
-/**
- * 앱이 DB · 앱의 문을 부르는 글자 — `.rpc(` 의 첫 인자(여러 줄 · 갈래 식 포함, `check-mobile.mjs` 가 이름을 뽑는 꼴과 같다) · `.from('표')` ·
- * `/api/mobile/…` 주소의 글자 자리. 차례 없이 견주도록 정렬해 돌려준다(위 「앱 검사」)
- *
- * @param {string} source
- * @returns {string[]}
- */
-export function appCallsOf(source) {
-  const calls = [
-    ...[...source.matchAll(/\.rpc\(\s*([^,)]*)/g)].map((found) => `rpc(${found[1].replace(/\s+/g, ' ').trim()})`),
-    ...[...source.matchAll(/\.from\(\s*([^,)]*)\)/g)].map((found) => `from(${found[1].replace(/\s+/g, ' ').trim()})`),
-    ...[...source.matchAll(/\/api\/mobile\/[^'"`\s$]*/g)].map((found) => found[0]),
-    // 그 글자가 든 줄 그대로 — 인자가 바뀐 줄도 바뀐 것이다(ADR 0097 덧 2026-11-06 「글자가 든 줄이 바뀌었으면」)
-    ...source.split('\n').filter((line) => /\.rpc\(|\.from\(|\/api\/mobile\//.test(line)).map((line) => `line ${line.trim()}`),
-  ];
-  return calls.sort();
-}
-
-/** 앱이 부르는 글자를 볼 파일 — `mobile/src` 의 시험 아닌 코드 */
-const isAppCode = (file) => /^mobile\/src\/.+\.(?:ts|tsx|js|jsx|mjs)$/.test(file) && !/\.test\.tsx?$/.test(file);
-
-/**
- * 바뀐 앱 코드 가운데 부르는 글자가 base 와 다른 첫 파일, 없으면 `null`. base 를 못 읽으면 빈 파일로 본다 — 새 파일 · base 없는 계획은
- * 부르는 글자가 있으면 바뀐 것이다
- *
- * @param {readonly string[]} changed
- * @param {{ sourceOf: (file: string) => string | null, baseSourceOf: (file: string) => string | null }} sources
- * @returns {string | null}
- */
-export function appCallChangeOf(changed, { sourceOf, baseSourceOf }) {
-  for (const file of changed.filter(isAppCode)) {
-    const before = appCallsOf(baseSourceOf(file) ?? '');
-    const after = appCallsOf(sourceOf(file) ?? '');
-    if (JSON.stringify(before) !== JSON.stringify(after)) return file;
-  }
-  return null;
-}
-
-/** 관문 · 인증 · 화면의 입구 · 서버 액션 · 그것을 재는 시험 — 베타에서도 주소를 재거나 전부를 돈다(위 「관문 · 화면 · 인증」) */
-const SURFACE = [
-  /^proxy\.ts$/,
-  /^src\/lib\/consent\//,
-  /^app\/auth\//,
-  /^app\/(.+\/)?(page|layout|loading|template|error|not-found|default)\.tsx$/,
-  /^app\/(.+\/)?route\.ts$/,
-  /^app\/(.+\/)?actions\.ts$/,
-  /^e2e\//,
-  /^scripts\/check-[^/]+\.mjs$/,
-];
-/** 이름이 `actions.ts` 가 아닌 `'use server'` 파일 — 이름으로 견주므로 시험이 실재를 잰다 */
-export const SERVER_ACTIONS_ELSEWHERE = ['app/nickname.ts', 'app/me/reading/share.ts'];
-/**
- * 앱 서버의 설정, 그리고 e2e · 흐름 검사가 import 하되 앱은 안 부르는 파일 — 위 「서버에 닿는 `app/` 파일과 시험 도구」.
- * 시험이 import 를 따라가 앱이 안 닿는 도구 파일이 전부 여기 있는지 잰다 — 새 도우미가 조용히 빠지지 않게
- */
-export const HARNESS = ['next.config.ts', 'playwright.config.ts', 'src/lib/local-env.ts', 'src/lab/reading/variants.ts'];
-/**
- * `scripts/*.mjs` 는 흐름 검사 · e2e 의 도우미로 보고 입구로 건다 — 여기 든 CI · 개발 도구만 뺀다. 빼는 쪽을 적으므로
- * 새 도우미(`scripts/beta-dates.mjs` 같은 것)는 이름을 안 적어도 걸리고, 여기 든 이름이 없어져도 넓어질 뿐이다
- */
-const NOT_HARNESS =
-  /^scripts\/(?:ci-plan|release-stage|main-red|audit-verify|audit-app|vercel-ignore|secret-env|remote-lock|db-remote|stack-slot|merge-sim|sweep-merged|read-budget|deploy-range|brand-share-images|brand-icons|checkout-hint|pr-title|deploy-smoke|push-vapid-keys|generate-[^/]+|fake-clock|ui-[^/]+)\.mjs$/;
-const isHarness = (file) => HARNESS.includes(file) || (/^scripts\/[^/]+\.mjs$/.test(file) && !NOT_HARNESS.test(file));
-/** 관문 — 여기서 import 를 따라가 닿는 `app/` 파일은 입구다(위 「관문이 import 하는 `app/` 파일」) */
-const GATE = 'proxy.ts';
-/**
- * 서버에 닿는 `app/` 파일을 가르는 import — Supabase 클라이언트와 서버 전용 모듈. 이것을 부르는 `app/**` 파일은 이름과
- * 상관없이 입구다(위 「서버에 닿는 `app/` 파일」)
- */
-const SERVER_REACHING =
-  /^(?:@supabase\/|server-only$|next\/(?:server|headers|cache)$)|\/(?:server-client|browser-client|keyed-client|public-client)(?:\.ts)?$/;
 /** DB 차선에서만 재어지는 자리 — 단계와 상관없이 전부를 돈다 */
 const DATABASE = [/^supabase\//];
-/** 엔진 안에서 DB 의 검사식이 보는 파일 — 여기가 바뀌면 로그인 뒤 자리도 재야 한다. 어느 단계든 전부다(공용 위험 「엔진의 DB 쪽」) */
+/** 엔진 안에서 DB 의 검사식이 보는 파일 — 여기가 바뀌면 로그인 뒤 자리도 재야 한다. 엔진 단계에 안 들어 전부다(위 「엔진 단계의 예외 둘」) */
 export const ENGINE_DB_FACING = ['src/lib/saju/version.ts', 'src/lib/saju/pillars/index.ts'];
-/** CI 자체 — 워크플로와 모든 job 이 도는 Node 판(`node-version-file`). 바뀌면 그 PR 에서 job 을 다 돌려 본다(위 「CI 자체」) */
-const CI_ITSELF = [/^\.github\/workflows\//, /^\.nvmrc$/];
-/**
- * 시험 실행 의존성 — e2e · 흐름 · DB 차선만 부르는 실행기(Playwright 와 Supabase CLI)와 시험 · 그 도우미만 들이는 패키지(`http_ece` —
- * 가짜 푸시 서비스가 직접 들이는 `web-push` 의 간접 의존성). `core` 는 이것을 안 부르므로 판이 바뀌면 전부다.
- * 앱도 쓰는 패키지(`@supabase/supabase-js` 같은 것)의 판은 일반 의존성이라 `core` 와 `audit` 이다(위 「시험 실행 의존성」)
- */
-export const TEST_RUNNERS = ['@playwright/test', 'playwright', 'playwright-core', 'supabase', 'http_ece'];
-/**
- * 차선 job 과 그 시험이 부르는 npm 스크립트 — `core` · `policy` 가 안 부르는 것. `dev` 는 e2e 가 앱을 띄우는 명령이다(`playwright.config.ts` 의
- * `webServer.command`). 이 줄이 바뀌면 차선이 무엇을 도는지가 바뀐다
- */
-export const LANE_SCRIPTS = /^(?:test:e2e(?::.+)?|test:flow|test:db|db:start|db:types|dev)$/;
-/** 닿는 시험이 정말 없는 입구를 적는 간극 대장의 줄 — 그 기록 파일이 `untestedEntries` 와 같은 목록을 든다(시험이 견준다) */
-export const UNTESTED_GAP = 'G-116';
-/** 앱이 등록하는 서비스 워커 — 시험은 그 주소를 적지 않고 브라우저의 서비스 워커를 연다(위 「css module 과 서비스 워커」). 시험이 앱의 등록 주소와 견준다 */
-export const SERVICE_WORKER = 'public/sw.js';
 
 /** `core` job 이 `npm ci` 뒤에 차례로 도는 명령 — `verify.yml` 이 이 목록과 같아야 한다(위 「빠른 검사에도 빌드가 든다」). 앞이 붉어도 뒤가 돈다(ADR 0097 덧) */
 export const CORE_STEPS = ['npm test', 'npm run typecheck', 'npm run lint', 'npm run build'];
 
 /**
  * 로그인 뒤 차선 — `verify.yml` 의 `authed` matrix 가 계획의 `authed_lanes` 로 받는다. 차선마다 `package.json` 에
- * `test:e2e:<차선>` 이 있고, 그 스크립트가 어느 spec 을 부르는지가 곧 그 차선이 재는 것이다(위 「그 주소에 닿는 차선만」)
+ * `test:e2e:<차선>` 이 있고, 그 스크립트가 어느 spec 을 부르는지가 곧 그 차선이 재는 것이다. 전부일 때 모두 선다
  */
 export const AUTHED_LANES = [
   'signed-in:desktop',
@@ -462,63 +187,8 @@ export const AUTHED_LANES = [
 const matches = (rules, file) => rules.some((rule) => rule.test(file));
 
 const isPolicy = (file) => matches(POLICY, file);
-const isMobile = (file) => file.startsWith('mobile/') && !isPolicy(file);
 const isTestFile = (file) => /\.test\.tsx?$/.test(file);
-const isSpec = (file) => /^e2e\/[^/]+\.spec\.ts$/.test(file);
 const isFlowCheck = (file) => /^scripts\/check-[^/]+\.mjs$/.test(file);
-
-/**
- * 공용 위험 — 주소 하나로 닿는 시험을 셀 수 없는 자리. 바뀐 파일 전부를 **주소 대응보다 먼저** 훑고, 하나라도 들면 전부다.
- * 이름이 까닭에 그대로 실린다(위 「공용 위험」)
- */
-export const SHARED_RISK = [
-  ['DB', (file) => matches(DATABASE, file)],
-  ['엔진의 DB 쪽', (file) => ENGINE_DB_FACING.includes(file)],
-  ['CI 자체', (file) => matches(CI_ITSELF, file)],
-  [
-    'Next 공용 경계',
-    (file) =>
-      /^app\/global-(?:error|not-found)\.tsx$/.test(file) ||
-      /^app\/(?:.+\/)?(?:forbidden|unauthorized)\.tsx$/.test(file) ||
-      /^(?:instrumentation|instrumentation-client|middleware)\.[jt]s$/.test(file),
-  ],
-  ['관문', (file) => file === GATE || /^src\/lib\/consent\//.test(file)],
-  ['인증', (file) => /^app\/auth\//.test(file)],
-  ['layout', (file) => /^app\/(?:.+\/)?layout\.tsx$/.test(file)],
-  ['route.ts', (file) => /^app\/(?:.+\/)?route\.ts$/.test(file)],
-  ['서버 액션', (file) => /^app\/(?:.+\/)?actions\.ts$/.test(file) || SERVER_ACTIONS_ELSEWHERE.includes(file)],
-  ['e2e 기반', (file) => /^e2e\//.test(file) && !isSpec(file)],
-  ['시험 도구', (file) => isHarness(file) && !isFlowCheck(file)],
-];
-
-/**
- * 알려진 core 자리 — 단위 · 타입 · 린트 · 빌드가 재는 곳. 위 판정이 안 걸린 파일이 여기 들면 `core` 만이고, **여기도
- * 정책도 아니면 베타에서도 전부다**(ADR 0097 추기). 파일을 늘어놓지 않고 자리로 적는다
- */
-const KNOWN_CORE = [/^src\//, /^app\//, /^scripts\//, /^\.github\//, /^public\//];
-/** 뿌리의 설정 — 이름으로 든다. 앱 서버 · Playwright 의 설정은 `HARNESS` 라 공용 위험이다 */
-export const ROOT_CONFIGS = [
-  'package.json',
-  'package-lock.json',
-  'tsconfig.json',
-  'eslint.config.mjs',
-  'postcss.config.mjs',
-  'vitest.config.mts',
-  'vercel.json',
-  '.nvmrc',
-  '.gitignore',
-  '.gitattributes',
-  '.vercelignore',
-];
-const isKnownCore = (file) => matches(KNOWN_CORE, file) || ROOT_CONFIGS.includes(file);
-
-/** Next 의 메타데이터 파일 — 빌드와 익명 e2e(문서 머리)가 잰다 */
-const METADATA =
-  /^app\/(?:.+\/)?(?:icon|apple-icon|favicon|opengraph-image|twitter-image|manifest|robots|sitemap)\d*\.(?:tsx?|png|jpe?g|gif|svg|ico|txt|xml|json|webmanifest)$/;
-
-/** 파일이 import 하는 이름들 — `import … from` · `export … from` · `import '…'` · `import('…')` */
-export const importsOf = (source) =>
-  [...source.matchAll(/(?:\bfrom\s*|\bimport\s*\(?\s*)['"]([^'"]+)['"]/g)].map((one) => one[1]);
 
 /** 저장소 뿌리에서 읽는다 — 계획 job 은 PR 의 HEAD 를 받아 둔다. 못 읽으면(지운 파일) `null` */
 function sourceFromDisk(file) {
@@ -529,622 +199,7 @@ function sourceFromDisk(file) {
   }
 }
 
-/** `app/**` 의 시험 아닌 `.ts` · `.tsx` 가 Supabase 클라이언트나 서버 전용 모듈을 부르는가 — 타입만 들여도 센다(주입받은 클라이언트로 DB 를 부른다) */
-function reachesServer(file, sourceOf = sourceFromDisk) {
-  if (!/^app\/.+\.tsx?$/.test(file)) return false;
-  const source = sourceOf(file);
-  return source !== null && importsOf(source).some((name) => SERVER_REACHING.test(name));
-}
-
-/** 저장소 안의 import(`./` · `../` · `@/`)를 파일로 푼다 — 패키지이거나 못 읽으면 `null` */
-function resolveImport(name, from, sourceOf) {
-  let base;
-  if (name.startsWith('@/')) base = name.slice(2);
-  else if (name.startsWith('.')) base = posix.normalize(posix.join(posix.dirname(from), name));
-  else return null;
-  // 저장소 밖으로 나가는 길은 저장소 파일이 아니다 — 무엇이든 읽어 주는 가짜 `sourceOf` 에서 `../` 가 끝없이 길어지지 않게
-  if (base === '..' || base.startsWith('../') || posix.isAbsolute(base)) return null;
-  for (const tail of ['', '.ts', '.tsx', '.mjs', '.js', '/index.ts', '/index.tsx']) {
-    if (sourceOf(base + tail) !== null) return base + tail;
-  }
-  return null;
-}
-
-/** 관문에서 import 를 따라가 닿는 저장소 파일 — `sourceOf` 하나마다 한 번만 잰다 */
-const gateReachOf = new WeakMap();
-function gateReach(sourceOf = sourceFromDisk) {
-  if (gateReachOf.has(sourceOf)) return gateReachOf.get(sourceOf);
-  const seen = new Set();
-  const queue = [GATE];
-  while (queue.length > 0) {
-    const file = queue.pop();
-    const source = seen.has(file) ? null : sourceOf(file);
-    if (source === null) continue;
-    seen.add(file);
-    for (const name of importsOf(source)) {
-      const next = resolveImport(name, file, sourceOf);
-      if (next !== null && !seen.has(next)) queue.push(next);
-    }
-  }
-  gateReachOf.set(sourceOf, seen);
-  return seen;
-}
-
-/** 거꾸로 따라갈 때 훑는 자리 — 앱 · 도메인 lib · 시험 · 도구 · 뿌리의 코드. 위층이 아래층을 부르는 길을 놓치지 않게 넓게 잡는다 */
-const IMPORTER_ROOTS = ['app', 'src', 'e2e', 'scripts'];
-const IMPORTER_FILE = /\.(?:tsx?|mjs|js)$/;
-let importerFilesCache = null;
-/** 디스크의 코드 파일 — 계획 job 은 PR 의 HEAD 를 받아 두므로 새 입구도 여기 든다. `node_modules` · 숨김 폴더는 안 든다 */
-function importerFiles() {
-  if (importerFilesCache) return importerFilesCache;
-  const found = [];
-  const walk = (dir) => {
-    let entries;
-    try {
-      entries = readdirSync(new URL(`../${dir}`, import.meta.url), { withFileTypes: true });
-    } catch {
-      return;
-    }
-    for (const entry of entries) {
-      if (entry.name.startsWith('.') || entry.name === 'node_modules') continue;
-      const path = `${dir}/${entry.name}`;
-      if (entry.isDirectory()) walk(path);
-      else if (IMPORTER_FILE.test(entry.name)) found.push(path);
-    }
-  };
-  for (const root of IMPORTER_ROOTS) walk(root);
-  try {
-    for (const name of readdirSync(new URL('../', import.meta.url))) if (/\.(?:tsx?|mjs)$/.test(name)) found.push(name);
-  } catch {
-    // 뿌리를 못 읽으면 위 자리만 훑는다
-  }
-  importerFilesCache = found;
-  return found;
-}
-
-/**
- * 파일마다 그것을 import 하는 파일들 — `sourceOf` 하나마다 한 번 짓는다. 디스크의 파일과 이 PR 이 바꾼 파일을 훑고,
- * 타입만 들이는 문도 길로 센다(넓게 잡을수록 차선이 늘 뿐 줄지 않는다)
- */
-const importersOf = new WeakMap();
-function importerGraph(sourceOf, changed) {
-  const cached = importersOf.get(sourceOf);
-  if (cached && changed.every((file) => cached.scanned.has(file))) return cached.importers;
-  const memo = new Map();
-  const read = (file) => {
-    if (!memo.has(file)) memo.set(file, sourceOf(file));
-    return memo.get(file);
-  };
-  const importers = new Map();
-  const scanned = new Set([...importerFiles(), ...changed]);
-  for (const file of scanned) {
-    const source = read(file);
-    if (source === null) continue;
-    for (const name of importsOf(source)) {
-      const target = resolveImport(name, file, read);
-      if (target === null || target === file) continue;
-      if (!importers.has(target)) importers.set(target, new Set());
-      importers.get(target).add(file);
-    }
-  }
-  importersOf.set(sourceOf, { importers, scanned });
-  return importers;
-}
-
-/**
- * 입구가 아닌 서버 파일이 닿는 화면 — import 를 거꾸로 따라가 그 파일을 (간접으로라도) 쓰는 입구(`page` · `loading` · …)와
- * 그것을 직접 부르는 시험(`e2e/*.spec.ts` · `scripts/check-*.mjs`)을 모은다(위 「입구가 아닌 서버 파일은 그것을 쓰는 입구의 주소로」).
- * 길 위에 공용 위험(`layout` · `route.ts` · 서버 액션 · 관문 · 인증 · 시험 도구 …)이나 메타데이터 파일이 서면 그 자리가 곧 이
- * 파일의 자리라 `risk` 로 돌려준다. 단위 시험(`*.test.ts`)은 길로 안 센다 — `core` 가 잰다
- *
- * @returns {{ entries: string[], tests: string[], risk: { name: string, via: string } | null }}
- */
-export function entriesReaching(file, sourceOf = sourceFromDisk, changed = [file]) {
-  const importers = importerGraph(sourceOf, changed);
-  const entries = new Set();
-  const tests = new Set();
-  const seen = new Set([file]);
-  const queue = [file];
-  while (queue.length > 0) {
-    const current = queue.shift();
-    for (const importer of importers.get(current) ?? []) {
-      if (seen.has(importer)) continue;
-      seen.add(importer);
-      if (isTestFile(importer)) continue;
-      if (isSpec(importer) || isFlowCheck(importer)) {
-        tests.add(importer);
-        continue;
-      }
-      const risk = SHARED_RISK.find(([, hits]) => hits(importer));
-      if (risk) return { entries: [...entries], tests: [...tests], risk: { name: risk[0], via: importer } };
-      if (METADATA.test(importer)) return { entries: [...entries], tests: [...tests], risk: { name: '메타데이터', via: importer } };
-      // 입구에서도 위로 더 간다 — 다른 page 가 이 입구를 다시 내보내면 그 주소도 이 파일을 그린다
-      if (routeOf(importer)) entries.add(importer);
-      queue.push(importer);
-    }
-  }
-  return { entries: [...entries].sort(), tests: [...tests].sort(), risk: null };
-}
-
-/** 시험 파일(`*.test.ts`)은 제 결과만 바꾼다 — `app/auth/signed-in.test.ts` 하나로 전부를 돌지 않는다 */
-export const isSurface = (file, sourceOf = sourceFromDisk) =>
-  !isTestFile(file) &&
-  (matches(SURFACE, file) ||
-    SERVER_ACTIONS_ELSEWHERE.includes(file) ||
-    isHarness(file) ||
-    reachesServer(file, sourceOf) ||
-    (file.startsWith('app/') && gateReach(sourceOf).has(file)));
 const isEngine = (file) => matches(ENGINE, file) && !ENGINE_DB_FACING.includes(file);
-/**
- * 입구가 아닌 화면 컴포넌트 — `app/**` 의 시험 아닌 `.tsx` · css module(`.module.css`), 그리고 React 를 들이거나 `'use client'` 인
- * `.ts`(hook 같은 것) 가운데 입구 · 서버 파일이 아닌 것(위 「CI 갈래 검수의 넷」 · 「css module 과 서비스 워커」). 지운 파일(못 읽음)은
- * 안 건다 — 그것을 부르던 쪽이 함께 바뀌어 그쪽이 걸린다. 뿌리 layout 이 들이는 `app/globals.css` 는 module 이 아니라 여기 없다(`core`)
- */
-const isScreenComponent = (file, sourceOf = sourceFromDisk) => {
-  if (!/^app\/.+\.(?:tsx?|module\.css)$/.test(file) || isTestFile(file) || routeOf(file) !== null) return false;
-  const source = sourceOf(file);
-  if (source === null) return false;
-  return /\.(?:tsx|module\.css)$/.test(file) || /^\s*['"]use client['"]/m.test(source) || importsOf(source).some((name) => /^react(?:-dom)?(?:\/|$)/.test(name));
-};
-
-// ---------------------------------------------------------------------------
-// 주소 대응 — 소스에서 뽑는다(위 「그 주소에 닿는 차선만」)
-// ---------------------------------------------------------------------------
-
-/** 주소를 가진 화면의 입구. `layout` 은 공용 위험이라 여기 없다 */
-const ENTRY = /^app\/(?:(.*)\/)?(page|loading|template|error|not-found|default)\.tsx$/;
-
-const escapeRegExp = (text) => text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-
-/**
- * 화면 입구 파일이 맡는 주소의 무늬. `page` 는 그 주소 하나, 나머지는 그 아래 전부(뿌리면 모든 주소).
- * `(group)` · `@slot` 은 걷고, `[x]` 는 한 마디, `[...x]` 는 하나 이상, `[[...x]]` 는 없어도 된다. 입구가 아니면 `null`
- *
- * @param {string} file
- * @returns {RegExp | null}
- */
-export function routeOf(file) {
-  const entry = ENTRY.exec(file);
-  if (!entry) return null;
-  const segments = (entry[1] ?? '').split('/').filter((one) => one !== '' && !/^\(.*\)$/.test(one) && !one.startsWith('@'));
-  const path = segments
-    .map((one) => {
-      if (/^\[\[\.\.\..+\]\]$/.test(one)) return '(?:/.*)?';
-      if (/^\[\.\.\..+\]$/.test(one)) return '/.+';
-      if (/^\[.+\]$/.test(one)) return '/[^/]+';
-      return `/${escapeRegExp(one)}`;
-    })
-    .join('');
-  return new RegExp(entry[2] === 'page' ? `^${path}/?$` : `^${path}(?:/.*)?$`);
-}
-
-/** 주석 줄 — `//` · `/*` · ` *` 로 여는 줄. 거기 적힌 주소는 시험이 요청하지 않는다 */
-const isCommentLine = (line) => /^\s*(?:\/\/|\/\*|\*)/.test(line);
-
-/**
- * 시험 소스가 요청하는 주소들 — 주석 줄을 뺀 따옴표 · 백틱 속 `/…`. `${…}` 는 한 마디로, `%2F…` 는 풀어서 하나 더,
- * `?` · `#` 뒤는 버린다
- *
- * @param {string} source
- * @returns {string[]}
- */
-export function addressesOf(source) {
-  const code = source
-    .split('\n')
-    .filter((line) => !isCommentLine(line))
-    .join('\n');
-  const found = new Set();
-  // 끝의 `$` 는 정규식 문자열(`new RegExp('/me/credits$')`)의 닻이다 — 떼고 읽는다
-  for (const one of code.matchAll(/['"`](\/[^'"`\s]*)/g)) found.add(one[1].replace(/\$\{[^}]*\}/g, 'x').split(/[?#]/)[0].replace(/\$$/, ''));
-  for (const one of code.matchAll(/%2F[\w%.-]+/g)) {
-    try {
-      found.add(decodeURIComponent(one[0]).split(/[?#]/)[0]);
-    } catch {
-      // 풀 수 없는 조각은 주소가 아니다
-    }
-  }
-  return [...found];
-}
-
-/** 주소 무늬 하나 — `${…}` 같은 구멍은 아무 글자나(`.*`), 나머지는 글자 그대로. `prefix` 는 첫 구멍 앞의 글자다 */
-const looseOf = (path, { exact = false } = {}) => {
-  const pieces = path.split(/\$\{[^}]*\}?/);
-  const tail = exact && pieces.length === 1 ? '$' : '.*';
-  return { prefix: pieces[0], pattern: new RegExp(`^${pieces.map(escapeRegExp).join('.*')}${pieces.length > 1 ? '.*' : tail}`) };
-};
-
-/**
- * 시험 소스가 요청할 **수도 있는** 주소 — `addressesOf` 가 확실히 풀지 못한 것을 넓게 무늬로 잡는다. 「닿는 시험이 0」을 「정말 없다」와
- * 「탐색이 놓쳤다」로 가르는 데만 쓴다(위 「닿는 시험이 0 인 입구」). 다섯이다:
- *
- * - 템플릿의 식이 든 주소(`` `/me/${tab}` ``) — 식 자리는 아무 글자나
- * - 이어 붙이는 주소(`'/me/' + tab`) — 그 뒤는 아무 글자나
- * - 앞에 식이 선 경로(`` `${BASE}/me/push` ``) — 식 뒤의 경로부터
- * - 정규식의 `\/` 경로(`toHaveURL(/\/me\/credits$/)`) — `$` 로 닫히면 그 주소 하나, 아니면 그 뒤는 아무 글자나
- * - 배열을 `/` 로 이은 주소(`['', 'me', 'credits'].join('/')`) — 글자 아닌 칸은 아무 글자나
- *
- * 주석 줄은 뺀다. 넓게 잡을수록 전부로 갈 뿐 좁아지지 않는다
- *
- * @param {string} source
- * @returns {{ prefix: string, pattern: RegExp }[]}
- */
-export function looseAddressesOf(source) {
-  const code = source
-    .split('\n')
-    .filter((line) => !isCommentLine(line))
-    .join('\n');
-  const found = [];
-  for (const one of code.matchAll(/`(\/[^`]*)`/g)) {
-    const path = one[1].split(/[?#]/)[0];
-    if (path.includes('${')) found.push(looseOf(path));
-  }
-  for (const one of code.matchAll(/['"`](\/[^'"`\s]*)['"`]\s*\+/g)) found.push(looseOf(`${one[1].split(/[?#]/)[0]}\${}`));
-  // 식 뒤의 경로는 글자 마디로 열어야 주소다 — `${passed}/${total}` 같은 분수는 아니다
-  for (const one of code.matchAll(/\$\{[^}]*\}(\/[A-Za-z][^`'"\s]*)/g)) found.push(looseOf(one[1].split(/[?#]/)[0]));
-  // 마디가 하나 이상인 `\/` 경로만 — `\d+ \/ 100` 같은 나눗셈 글자는 아니다
-  for (const one of code.matchAll(/((?:\\\/[\w.%-]+)+(?:\\\/)?)(\$)?/g)) {
-    found.push(looseOf(one[1].replace(/\\\//g, '/'), { exact: one[2] === '$' }));
-  }
-  // 배열을 `/` 로 이은 주소(`['', 'me', 'credits'].join('/')`) — 글자 아닌 칸은 아무 글자나. 글자 마디가 하나도 없으면 주소가 아니다
-  for (const one of code.matchAll(/\[([^[\]\n]*)\]\s*\.join\(\s*(['"`])\/\2\s*\)/g)) {
-    const parts = one[1].split(',').map((part) => part.trim());
-    if (parts.at(-1) === '') parts.pop();
-    const literal = parts.map((part) => /^(['"])([\w.%-]*)\1$/.exec(part)?.[2]);
-    if (!literal.some((part) => part !== undefined && /[A-Za-z]/.test(part))) continue;
-    const path = literal.map((part) => part ?? '${}').join('/');
-    found.push(looseOf(path.startsWith('/') || path.startsWith('${}') ? path : `\${}/${path}`, { exact: true }));
-  }
-  return found;
-}
-
-/**
- * 입구가 맡는 주소의 보기 — 동적 마디는 `x` 한 마디, `[[...x]]` 는 없앤다. `page` 밖은 그 아래 한 마디도 보기로 든다. 입구가 아니면 `null`
- *
- * @param {string} file
- * @returns {{ samples: string[], base: string, subtree: boolean } | null}
- */
-function samplesOf(file) {
-  const entry = ENTRY.exec(file);
-  if (!entry) return null;
-  const segments = (entry[1] ?? '')
-    .split('/')
-    .filter((one) => one !== '' && !/^\(.*\)$/.test(one) && !one.startsWith('@') && !/^\[\[\.\.\..+\]\]$/.test(one))
-    .map((one) => (/^\[.+\]$/.test(one) ? 'x' : one));
-  const base = `/${segments.join('/')}`;
-  const subtree = entry[2] !== 'page';
-  return { samples: subtree ? [base, `${base === '/' ? '' : base}/x`] : [base], base, subtree };
-}
-
-/** `playwright.config.ts` 의 `const NAME = ['**\/x.spec.ts', …]` — e2e 아래 spec 경로로 */
-function specGlobOf(config, name) {
-  const list = new RegExp(`const ${name} = \\[([^\\]]*)\\];`).exec(config)?.[1] ?? '';
-  return [...list.matchAll(/\*\*\/([\w.-]+)/g)].map((one) => `e2e/${one[1]}`);
-}
-
-/**
- * 시험과 차선의 대응 — 저장소에서 한 번 읽는다. 로그인 spec 은 Playwright 의 `AUTHED` · `NOTICE` 무늬, 차선이 부르는
- * spec 은 `package.json` 의 `test:e2e:<차선>`(spec 을 안 적었으면 `--project` 의 `testMatch` 무늬)
- */
-let testMapCache = null;
-function testMap() {
-  if (testMapCache) return testMapCache;
-  const scripts = JSON.parse(sourceFromDisk('package.json') ?? '{}').scripts ?? {};
-  const config = sourceFromDisk('playwright.config.ts') ?? '';
-  const loginSpecs = [...specGlobOf(config, 'AUTHED'), ...specGlobOf(config, 'NOTICE')];
-  const specsOfLane = Object.fromEntries(
-    AUTHED_LANES.map((lane) => {
-      const script = scripts[`test:e2e:${lane}`] ?? '';
-      const named = [...script.matchAll(/\be2e\/[\w.-]+\.spec\.ts\b/g)].map((one) => one[0]);
-      if (named.length > 0) return [lane, named];
-      const projects = [...script.matchAll(/--project=([\w-]+)/g)].map((one) => one[1]);
-      const globbed = projects.flatMap((project) => {
-        const glob = new RegExp(`name: '${escapeRegExp(project)}',\\s*testMatch: (\\w+)`).exec(config)?.[1];
-        return glob ? specGlobOf(config, glob) : [];
-      });
-      return [lane, globbed];
-    }),
-  );
-  const listed = (dir, pattern) => {
-    try {
-      return readdirSync(new URL(`../${dir}`, import.meta.url)).filter((name) => pattern.test(name)).map((name) => `${dir}/${name}`);
-    } catch {
-      return [];
-    }
-  };
-  const tests = [...listed('e2e', /\.spec\.ts$/), ...listed('scripts', /^check-[^/]+\.mjs$/)];
-  const addresses = Object.fromEntries(tests.map((test) => [test, addressesOf(sourceFromDisk(test) ?? '')]));
-  // 시험의 도우미(spec 이 아닌 `e2e/**` · 흐름 검사의 도우미)가 요청하는 주소는 어느 시험의 것인지 모른다 — 글자 그대로여도 넓게 센다
-  const helpers = [...listed('e2e', /\.ts$/).filter((file) => !isSpec(file)), ...listed('scripts', /\.mjs$/).filter((file) => isHarness(file) && !isFlowCheck(file))];
-  const loose = Object.fromEntries([
-    ...tests.map((test) => [test, looseAddressesOf(sourceFromDisk(test) ?? '')]),
-    ...helpers.map((helper) => {
-      const source = sourceFromDisk(helper) ?? '';
-      return [helper, [...addressesOf(source).map((address) => looseOf(address, { exact: true })), ...looseAddressesOf(source)]];
-    }),
-  ]);
-  // 시험 · 도우미와 그것이 바로 들이는 저장소 파일(경로 상수가 사는 `src/**` 같은 곳)의 코드 — 입구의 경로가 글자로 들어 있기만 해도
-  // 놓쳤을 수 있다고 본다(`mentionOf`)
-  const texts = Object.fromEntries(
-    [...tests, ...helpers].map((file) => {
-      const source = sourceFromDisk(file) ?? '';
-      const imported = importsOf(source)
-        .map((name) => resolveImport(name, file, sourceFromDisk))
-        .filter((one) => one !== null);
-      return [file, [file, ...imported].map(codeOf).join('\n')];
-    }),
-  );
-  testMapCache = { loginSpecs, specsOfLane, addresses, loose, texts, linkReach };
-  return testMapCache;
-}
-
-/** 주석 줄을 뺀 디스크의 코드 — 못 읽으면 빈 글자 */
-const codeOf = (file) =>
-  (sourceFromDisk(file) ?? '')
-    .split('\n')
-    .filter((line) => !isCommentLine(line))
-    .join('\n');
-
-/**
- * 입구의 경로가 글자로 든 자리 — 경로의 끝쪽 마디들(`/me/credits` · `/credits`)이 `/` 나 `\/` 로 이어 적혔는가. 동적 마디는 아무 글자나.
- * glob(`'**\/me/credits'`) · 정규식 문자열 · 경로 상수 · 이어 붙임(`base + '/credits'`)처럼 `looseAddressesOf` 가 못 푸는 이동을 잡는다.
- * 뿌리(`/`)는 `null` — 모든 글자에 든다
- *
- * @param {string} entry
- * @returns {RegExp | null}
- */
-export function mentionOf(entry) {
-  const found = ENTRY.exec(entry);
-  if (!found) return null;
-  const segments = (found[1] ?? '').split('/').filter((one) => one !== '' && !/^\(.*\)$/.test(one) && !one.startsWith('@') && !/^\[\[\.\.\..+\]\]$/.test(one));
-  const dynamic = (one) => /^\[.+\]$/.test(one);
-  const piece = (one) => (dynamic(one) ? '[^/\'"`\\s]+' : escapeRegExp(one));
-  const slash = '(?:/|\\\\/)';
-  // 경로 전체는 어디에 들어 있든, 끝쪽 마디만이면 앞이 다른 마디가 아닐 때만(`'/credits'` 는 들고 `/me/matching/history` 의 `/history` 는 안 든다)
-  const tails = segments.flatMap((one, at) => {
-    if (dynamic(one)) return [];
-    const tail = `${slash}${segments.slice(at).map(piece).join(slash)}`;
-    return [at === 0 ? tail : `(?<![\\w.%-]|\\\\)${tail}`];
-  });
-  return tails.length === 0 ? null : new RegExp(`(?:${tails.join('|')})(?![\\w-])`);
-}
-
-// ---------------------------------------------------------------------------
-// 링크로 닿을 수 있는 입구 — 다른 화면이 가리키면 정말 없음이 아니다(위 「CI 갈래 검수의 넷」 · ADR 0195 덧)
-// ---------------------------------------------------------------------------
-
-/**
- * 주소창의 `?…` · `#…` 조각을 잇는 식 — 확실한 꼴만 걷는다: `?` · `#` · `&` 바로 뒤의 `${…search}` · `${…hash}`, 그리고 템플릿 끝에
- * `${…search}${…hash}` 가 그 차례로 붙은 꼴(`` `/${search}${hash}` `` — 주소창의 차례 그대로). 경로 자리의 홀로 선 식(`` `/${hash}` `` ·
- * `` `/ops/orders/${order.hash}` ``)은 경로일 수 있어 그대로 둔다(넓은 쪽)
- */
-const URL_PARTS = [
-  /([?#&])\$\{\s*(?:[\w$]+\.)*(?:search|hash)\s*\}/g,
-  /\$\{\s*(?:[\w$]+\.)*search\s*\}\$\{\s*(?:[\w$]+\.)*hash\s*\}(?=`)/g,
-];
-
-/**
- * 앱 코드 한 파일이 그 입구를 가리키는가 — 링크든 이동(경로 상수 · `router.push` · `redirect` · `form action`)이든. 글자 그대로의 주소
- * (`addressesOf` 와 같은 읽기), 넓은 무늬(`looseAddressesOf` — 템플릿 · 이어 붙임 · `join('/')`), 경로 글자(`mentionOf`) 가운데 하나가
- * 닿으면 참이다. import 경로와 주소창 조각(`URL_PARTS`)은 가는 길이 아니라 걷는다
- *
- * @param {string} source 주석 줄을 뺀 코드
- * @param {string} entry
- * @returns {boolean}
- */
-export function linksIn(source, entry) {
-  const route = routeOf(entry);
-  if (route === null) return false;
-  const code = source
-    .replace(URL_PARTS[0], '$1')
-    .replace(URL_PARTS[1], '')
-    .replace(/(\bfrom\s*|\bimport\s*\(?\s*)(['"])[^'"\n]*\2/g, '');
-  if (addressesOf(code).some((address) => route.test(address))) return true;
-  const { samples } = samplesOf(entry);
-  const mention = mentionOf(entry);
-  return looseAddressesOf(code).some(({ pattern }) => samples.some((sample) => pattern.test(sample))) || (mention !== null && mention.test(code));
-}
-
-/** `layout` 이 그리는 주소 — 그 자리의 `loading` 과 같다(그 아래 전부) */
-const layoutRouteOf = (file) => (/^app\/(?:.+\/)?layout\.tsx$/.test(file) ? routeOf(file.replace(/layout\.tsx$/, 'loading.tsx')) : null);
-
-/** 모든 화면 — 그리는 자리를 못 찾은 코드는 어디서나 선다고 본다 */
-const EVERY_SCREEN = { route: /^\/.*$/, samples: ['/', '/x'] };
-
-let linkGraphCache = null;
-/**
- * 앱 코드의 이동 그래프 — 파일마다 주석 뺀 코드, 그리고 그 파일을 그리는 화면(`hostsOf`): import 를 거꾸로 따라 만난 입구의 주소와
- * `layout` 아래 전부. 아무 화면도 못 만나면 모든 화면이다
- */
-function linkGraph() {
-  if (linkGraphCache) return linkGraphCache;
-  const files = importerFiles().filter((file) => /^(?:app|src)\/.+\.tsx?$/.test(file) && !isTestFile(file));
-  const code = new Map(files.map((file) => [file, codeOf(file)]));
-  const entries = importerFiles().filter((file) => routeOf(file) !== null);
-  const importers = importerGraph(sourceFromDisk, []);
-  const hostsMemo = new Map();
-  const hostsOf = (file) => {
-    if (hostsMemo.has(file)) return hostsMemo.get(file);
-    const hosts = new Map();
-    const seen = new Set([file]);
-    const queue = [file];
-    while (queue.length > 0) {
-      const current = queue.shift();
-      const entry = routeOf(current);
-      if (entry) hosts.set(entry.source, { route: entry, samples: samplesOf(current).samples });
-      const layout = layoutRouteOf(current);
-      if (layout) hosts.set(layout.source, { route: layout, samples: samplesOf(current.replace(/layout\.tsx$/, 'loading.tsx')).samples });
-      for (const importer of importers.get(current) ?? []) {
-        if (seen.has(importer) || isTestFile(importer) || !/^(?:app|src)\//.test(importer)) continue;
-        seen.add(importer);
-        queue.push(importer);
-      }
-    }
-    const found = hosts.size === 0 ? [EVERY_SCREEN] : [...hosts.values()];
-    hostsMemo.set(file, found);
-    return found;
-  };
-  linkGraphCache = { code, entries, hostsOf, pointers: new Map() };
-  return linkGraphCache;
-}
-
-/**
- * 그 입구를 가리키는 화면 — 앱 코드에서 그 입구를 가리키는 파일(`linksIn`)을 찾고 그 파일을 그리는 화면(`hostsOf`)을 모은다. 그 화면을
- * 가리키는 화면에서도 올 수 있어 끝까지 따른다. 그 입구 하나만 그리는 파일(제 화면의 `form action` 같은 것)은 밖에서 오는 길이 아니라
- * 뺀다. 비면 앱 어디서도 그 입구로 가지 않는다
- *
- * @param {string} entry
- * @returns {{ routes: { route: RegExp, samples: string[] }[] }}
- */
-export function linkReach(entry) {
-  const graph = linkGraph();
-  const hostsPointingTo = (target) => {
-    if (graph.pointers.has(target)) return graph.pointers.get(target);
-    const own = routeOf(target).source;
-    const found = [];
-    for (const [file, text] of graph.code) {
-      if (file === target || !linksIn(text, target)) continue;
-      const hosts = graph.hostsOf(file);
-      if (hosts.every((host) => host.route.source === own)) continue;
-      found.push(...hosts);
-    }
-    graph.pointers.set(target, found);
-    return found;
-  };
-  const routes = new Map();
-  const seen = new Set([entry]);
-  const queue = [entry];
-  while (queue.length > 0 && !routes.has(EVERY_SCREEN.route.source)) {
-    for (const host of hostsPointingTo(queue.shift())) {
-      if (routes.has(host.route.source)) continue;
-      routes.set(host.route.source, host);
-      for (const other of graph.entries) {
-        if (seen.has(other) || !samplesOf(other).samples.some((sample) => host.route.test(sample))) continue;
-        seen.add(other);
-        queue.push(other);
-      }
-    }
-  }
-  const every = routes.get(EVERY_SCREEN.route.source);
-  return { routes: every ? [every] : [...routes.values()] };
-}
-
-/** 시험 · 도우미가 그 화면들 가운데 하나를 여는가 — 글자 그대로의 주소나 넓은 무늬로 */
-const opensAny = (addresses, loose, routes) =>
-  addresses.some((address) => routes.some(({ route }) => route.test(address))) ||
-  loose.some(({ pattern }) => routes.some(({ samples }) => samples.some((sample) => pattern.test(sample))));
-
-/** 시험 하나가 켜는 차선 — 흐름 검사는 `flow`, 차선 스크립트가 부르는 spec 은 그 차선, 로그인 무늬인데 부르는 차선이 없으면 `null`(전부), 그 밖 spec 은 `anon` */
-export function lanesOfTest(test) {
-  if (isFlowCheck(test)) return ['flow'];
-  const map = testMap();
-  const lanes = AUTHED_LANES.filter((lane) => map.specsOfLane[lane].includes(test));
-  if (lanes.length > 0) return lanes;
-  if (map.loginSpecs.includes(test)) return null;
-  return isSpec(test) ? ['anon'] : null;
-}
-
-/**
- * 입구 하나에 닿는 시험을 셋으로 — `tests` 는 주소가 글자 그대로 닿는 시험, 그것이 0 이면 `byAddress` 는 그 주소를 요청할 **수도 있는**
- * 시험 · 도우미(`looseAddressesOf` · `mentionOf`), `byLink` 는 그 입구를 가리키는 화면(`linkReach`)을 여는 시험 · 도우미다(`map` 에
- * `linkReach` 가 없으면 — 시험이 넣은 가짜 — 이 길은 안 본다)
- */
-function reachOfEntry(entry, map) {
-  const route = routeOf(entry);
-  const tests = Object.entries(map.addresses)
-    .filter(([, addresses]) => addresses.some((address) => route.test(address)))
-    .map(([test]) => test);
-  if (tests.length > 0) return { tests, byAddress: [], byLink: [] };
-  const { samples, base, subtree } = samplesOf(entry);
-  const below = base === '/' ? '/' : `${base}/`;
-  const reaches = ({ prefix, pattern }) => samples.some((sample) => pattern.test(sample)) || (subtree && prefix.startsWith(below));
-  const mention = mentionOf(entry);
-  const byAddress = [
-    ...Object.entries(map.loose)
-      .filter(([, list]) => list.some(reaches))
-      .map(([file]) => file),
-    ...Object.entries(map.texts ?? {})
-      .filter(([, text]) => mention !== null && mention.test(text))
-      .map(([file]) => file),
-  ];
-  const routes = map.linkReach ? map.linkReach(entry).routes : [];
-  const byLink = [...new Set([...Object.keys(map.addresses), ...Object.keys(map.loose)])].filter((file) =>
-    opensAny(map.addresses[file] ?? [], map.loose[file] ?? [], routes),
-  );
-  return { tests: [], byAddress, byLink };
-}
-
-/**
- * 입구 하나에 닿는 시험 — `tests` 는 주소가 글자 그대로 닿는 시험이다. 그것이 0 이면 `unsure` 에 그 주소를 요청할 **수도 있는**
- * 시험 · 도우미(`looseAddressesOf` · `mentionOf`)와, 그 입구를 가리키는 화면을 열어 링크 · 이동으로 닿을 수 있는 시험 · 도우미를 든다.
- * 둘 다 비어야 「닿는 시험이 정말 없다」(위 「닿는 시험이 0 인 입구」)
- *
- * @param {string} entry
- * @param {{ addresses: Record<string, string[]>, loose: Record<string, { prefix: string, pattern: RegExp }[]>, texts?: Record<string, string>, linkReach?: (entry: string) => ReturnType<typeof linkReach> }} [map] 시험마다
- *   글자 그대로의 주소(`addressesOf`) · 넓은 무늬(`looseAddressesOf`) · 경로를 찾을 코드(`mentionOf`), 그리고 입구를 가리키는 화면
- *   (`linkReach`) — 빠지면 저장소에서 읽는다(시험이 넣어 가른다)
- * @returns {{ tests: string[], unsure: string[] }}
- */
-export function testsOfEntry(entry, map = testMap()) {
-  if (routeOf(entry) === null) return { tests: [], unsure: [entry] };
-  const { tests, byAddress, byLink } = reachOfEntry(entry, map);
-  return { tests, unsure: [...new Set([...byAddress, ...byLink])].sort() };
-}
-
-/**
- * 입구를 들이는 파일 — 다른 page 가 이 입구를 다시 내보내면(`export { default } from …`) 그 page 의 시험이 이 입구를 그린다. 시험 없는
- * 입구라도 들이는 파일(시험 파일 빼고)이 있으면 놓쳤을 수 있다
- *
- * @returns {string[]}
- */
-const importersOfEntry = (entry, sourceOf = sourceFromDisk, changed = [entry]) =>
-  [...(importerGraph(sourceOf, changed).get(entry) ?? [])].filter((file) => !isTestFile(file)).sort();
-
-/** 저장소의 입구마다 닿는 길 — 간극 대장의 두 목록이 여기서 나온다 */
-const entryReaches = () =>
-  importerFiles()
-    .filter((file) => routeOf(file) !== null)
-    .map((file) => ({ file, ...reachOfEntry(file, testMap()), importers: importersOfEntry(file) }))
-    .filter(({ tests, byAddress, importers }) => tests.length === 0 && byAddress.length === 0 && importers.length === 0);
-
-/**
- * 저장소의 입구 가운데 닿는 시험이 정말 없는 것 — 간극 대장의 시험 공백 줄(`UNTESTED_GAP`)이 이 목록을 그대로 든다(시험이 견준다)
- *
- * @returns {string[]}
- */
-export const untestedEntries = () =>
-  entryReaches()
-    .filter(({ byLink }) => byLink.length === 0)
-    .map(({ file }) => file)
-    .sort();
-
-/**
- * 주소를 요청하는 시험도 들이는 파일도 없고 그 입구를 가리키는 화면을 여는 시험만 있는 입구 — 그 화면을 여는 시험은 여전히 없지만
- * 놓쳤을 수 있어 전부로 간다(ADR 0195 덧). 간극 대장의 같은 줄(`UNTESTED_GAP`)이 이 목록도 그대로 든다(시험이 견준다)
- *
- * @returns {string[]}
- */
-export const linkedOnlyEntries = () =>
-  entryReaches()
-    .filter(({ byLink }) => byLink.length > 0)
-    .map(({ file }) => file)
-    .sort();
-
-/**
- * 서비스 워커를 여는 시험 — 주석을 뺀 코드(그것이 바로 들이는 저장소 파일까지)에 `serviceWorker` 가 든 spec · 흐름 검사
- *
- * @returns {string[]}
- */
-export const workerTests = () => {
-  const { addresses, texts } = testMap();
-  return Object.keys(addresses)
-    .filter((test) => /serviceworker/i.test(texts[test] ?? ''))
-    .sort();
-};
-
-/** 로그인 spec 이 무엇인가 — 시험이 차선 스크립트와 견준다 */
-export const loginSpecs = () => [...testMap().loginSpecs];
-/** 차선이 부르는 spec — 시험이 무늬와 견준다 */
-export const specsOfLane = (lane) => [...testMap().specsOfLane[lane]];
 
 // ---------------------------------------------------------------------------
 // 주석만 바뀐 코드 파일 — 정책으로 센다(위 「주석만 바뀐 코드 파일」, ADR 0153)
@@ -1238,7 +293,7 @@ export function onlyCommentsChanged(ts, file, before, after) {
 }
 
 // ---------------------------------------------------------------------------
-// 문구만 바뀐 파일 — core 에 옛 글자를 찾는 시험의 차선만 더한다(위 「문구만 바뀐 파일」, ADR 0159)
+// 문구만 바뀐 파일 — 묶음 배포가 main 의 전체를 기다리지 않는 근거(위 「문구만 바뀐 파일」, ADR 0159)
 // ---------------------------------------------------------------------------
 
 /**
@@ -1606,8 +661,8 @@ const decoded = (text) =>
 
 /**
  * 옛 소스와 지금 소스가 **화면 문구 자리의 글자만** 다른가 — 그렇다면 바뀐 자리의 **앞뒤 글자**(옛 글자 다음에 새 글자, 엔티티를
- * 풀고 공백을 접은 것), 아니면 `null`. 새 글자도 드는 것은 그것을 찾는 시험(`getByRole({ name })` · 「없어야」 하는 글자)도 차선을
- * 켜야 해서다(2026-10-09 외부 검토).
+ * 풀고 공백을 접은 것), 아니면 `null`. 새 글자도 드는 것은 그것을 찾는 시험(`getByRole({ name })` · 「없어야」 하는 글자)도 글자 그대로
+ * 찾는 시험으로 걸려야 해서다(2026-10-09 외부 검토).
  * 문구 자리를 가린 나무 · 뜻이 있는 주석이 같고 글자가 하나 이상 달라야 한다. 판별이 불확실하면 `null` 이다 —
  * 파서 없음 · 한쪽이 없음(추가 · 삭제 · 이름 바꿈) · 파싱 실패 · 가르지 않는 자리 · 글자째 같음 · 주석만 바뀜
  *
@@ -1633,7 +688,7 @@ export function copyOnlyChanged(ts, file, before, after) {
 
 /**
  * 바뀐 파일 중 문구만 바뀐 것과 그 앞뒤 글자 — 파서가 없으면 없다. **바뀐 글자를 시험이 글자 그대로 찾으면 문구만이 아니다**
- * (`testsNamingLiterally`, 운영자 2026-10-10) — 그 파일은 `named` 에 그 시험과 함께 들고, 판정은 지금 규칙(PR) · 동작(배포)이다.
+ * (`testsNamingLiterally`, 운영자 2026-10-10) — 그 파일은 `named` 에 그 시험과 함께 들고, 배포는 동작으로 센다.
  * `mentions` 는 찾을 시험들을 돌려주는 함수다 — 문구 후보가 있을 때만 부른다
  *
  * @returns {{ copy: Map<string, string[]>, named: Map<string, string[]> }}
@@ -1658,11 +713,10 @@ const REGEX_SYNTAX = '\\^$|.*+?()[]{}';
 /**
  * 정규식 본문이 무엇을 찾는가 — **확실히 풀 수 있는 모양**이면 `{ literals }`: 글자 그대로이거나 기호를 이스케이프한 것(`\.`)뿐이고,
  * 갈래는 맨 위의 `|` 뿐이며, 맨 앞 `^` · 맨 뒤 `$` 만 걷는다(찾는 글자를 바꾸지 않는다). 그 밖(`.*` · 문자 갈래 `[…]` · 수량자 ·
- * 무리 `( )` · `\s` 같은 글자 갈래)은 **기호를 지워 견주지 않는다** — `{ fragments, nearClass }` 로 기호 사이의 글자 조각과, 그 가운데
- * `\d` · `\s` · `\w` 류에 붙은 조각(`/\d+개/` 의 「개」)을 돌려주고, 판단은 `testsMentioning` 이 넓히는 쪽으로 한다(운영자 2026-10-09)
+ * 무리 `( )` · `\s` 같은 글자 갈래)은 **기호를 지워 견주지 않는다** — `{ fragments }` 로 기호 사이의 글자 조각을 돌려준다(운영자 2026-10-09)
  *
  * @param {string} body
- * @returns {{ literals: string[] } | { fragments: string[], nearClass: string[] }}
+ * @returns {{ literals: string[] } | { fragments: string[] }}
  */
 export function regexShape(body) {
   const inner = body.replace(/^\^/, '').replace(/(?<!\\)\$$/, '');
@@ -1681,114 +735,63 @@ export function regexShape(body) {
   return { literals: literals.filter((one) => one !== '') };
 }
 
-/**
- * 분석하지 않는 정규식의 글자 조각 — 기호 · 글자 갈래(`\s` …) · 문자 갈래 `[…]` · 반복 `{…}` 에서 자른다. 이스케이프한 기호는 글자다.
- * `\d` · `\s` · `\w` 류 바로 앞뒤(사이의 수량자는 넘어)에 붙은 조각은 `nearClass` 에도 든다
- */
+/** 분석하지 않는 정규식의 글자 조각 — 기호 · 글자 갈래(`\s` …) · 문자 갈래 `[…]` · 반복 `{…}` 에서 자른다. 이스케이프한 기호는 글자다 */
 function fragmentsOf(body) {
-  const pieces = [{ text: '', near: false }];
-  let classBefore = false;
-  const current = () => pieces[pieces.length - 1];
-  const cut = (keepClass = false) => {
-    pieces.push({ text: '', near: false });
-    if (!keepClass) classBefore = false;
-  };
-  const add = (letter) => {
-    if (current().text === '' && classBefore) current().near = true;
-    classBefore = false;
-    current().text += letter;
-  };
+  const pieces = [''];
+  const cut = () => pieces.push('');
   for (let at = 0; at < body.length; at += 1) {
     const one = body[at];
     if (one === '\\') {
       const next = body[at + 1] ?? '';
       at += 1;
-      if (REGEX_SYNTAX.includes(next) || next === '/' || next === '-') add(next);
-      else if (/[dDsSwW]/.test(next)) {
-        if (current().text !== '') current().near = true;
-        cut();
-        classBefore = true;
-      } else cut();
+      if (REGEX_SYNTAX.includes(next) || next === '/' || next === '-') pieces[pieces.length - 1] += next;
+      else cut();
     } else if (one === '[') {
       while (at < body.length && body[at] !== ']') at += body[at] === '\\' ? 2 : 1;
       cut();
     } else if (one === '{') {
       while (at < body.length && body[at] !== '}') at += 1;
-      cut(true);
+      cut();
     } else if (one === '(' && body[at + 1] === '?') {
       at += (/^\(\?(?:[:=!]|<[=!]|<[^>]*>)?/.exec(body.slice(at))?.[0].length ?? 1) - 1;
       cut();
-    } else if ('*+?'.includes(one)) cut(true);
-    else if (REGEX_SYNTAX.includes(one)) cut();
-    else add(one);
+    } else if (REGEX_SYNTAX.includes(one)) cut();
+    else pieces[pieces.length - 1] += one;
   }
-  const kept = pieces.map((piece) => ({ text: squeezed(piece.text), near: piece.near })).filter((piece) => piece.text !== '');
-  return { fragments: kept.map((piece) => piece.text), nearClass: kept.filter((piece) => piece.near).map((piece) => piece.text) };
+  return { fragments: pieces.map(squeezed).filter((piece) => piece !== '') };
 }
 
 /** 시험 소스의 따옴표 · 백틱 리터럴 속 글자 */
 const quotedIn = (source) => [...source.matchAll(/(['"`])((?:\\.|(?!\1)[^\\\n])*)\1/g)].map((one) => one[2]);
 
-/** 첫 인자가 문자열을 다듬는 데만 쓰이는 부름 — 그 자리의 글자 없는 정규식만으로는 차선을 더하지 않는다 */
+/** 첫 인자가 문자열을 다듬는 데만 쓰이는 부름 — 그 자리의 정규식은 시험이 글자를 찾는 자리가 아니다 */
 const CLEANUP_CALLS = ['replace', 'replaceAll', 'split'];
 
 /**
- * 화면 요소를 찾거나 재는 부름 — 그 인자(객체 속성 값 · 배열 원소 포함)의 정규식은 화면 글자에 견준다. 판정에는 「켠다」로
- * 그 밖과 같지만, 왜 켰는지를 이름으로 남긴다
- */
-const SCREEN_CALLS = [
-  'getByText',
-  'getByRole',
-  'getByLabel',
-  'getByPlaceholder',
-  'getByTitle',
-  'getByAltText',
-  'filter',
-  'locator',
-  'toHaveText',
-  'toContainText',
-  'toHaveAccessibleName',
-  'toHaveAccessibleDescription',
-  'toHaveTitle',
-  'toHaveValue',
-  'toHaveAttribute',
-];
-
-/**
- * 정규식이 선 자리 — `cleanup`(`.replace` · `.replaceAll` · `.split` 의 첫 인자) · `screen`(`SCREEN_CALLS` 의 인자, 괄호 · 배열 ·
- * 객체 속성 값을 거슬러) · `other`(`.test` · `.match` · 변수에 담음 · 그 밖)
+ * 정규식이 선 자리 — `cleanup`(`.replace` · `.replaceAll` · `.split` 의 첫 인자 그 자체) · `other`(`.test` · `.match` · 변수에 담음 ·
+ * 화면 요소를 찾는 부름 · 그 밖)
  *
  * @param {typeof import('typescript')} ts
  * @param {import('typescript').Node} node
- * @returns {'cleanup' | 'screen' | 'other'}
+ * @returns {'cleanup' | 'other'}
  */
 function regexPlaceOf(ts, node) {
-  let child = node;
-  let up = node.parent;
-  while (
-    up !== undefined &&
-    (ts.isParenthesizedExpression(up) || ts.isArrayLiteralExpression(up) || ts.isObjectLiteralExpression(up) || (ts.isPropertyAssignment(up) && up.initializer === child))
-  ) {
-    child = up;
-    up = up.parent;
-  }
-  if (up === undefined || !(ts.isCallExpression(up) || ts.isNewExpression(up)) || !(up.arguments ?? []).includes(child)) return 'other';
+  const up = node.parent;
+  if (up === undefined || !ts.isCallExpression(up) || up.arguments[0] !== node) return 'other';
   const callee = up.expression;
-  const name = ts.isPropertyAccessExpression(callee) ? callee.name.text : ts.isIdentifier(callee) ? callee.text : null;
-  if (child === node && ts.isCallExpression(up) && ts.isPropertyAccessExpression(callee) && CLEANUP_CALLS.includes(name) && up.arguments[0] === node) return 'cleanup';
-  return name !== null && SCREEN_CALLS.includes(name) ? 'screen' : 'other';
+  return ts.isPropertyAccessExpression(callee) && CLEANUP_CALLS.includes(callee.name.text) ? 'cleanup' : 'other';
 }
 
 /**
  * 시험 파일의 정규식 — **파서로** 모은다(운영자 2026-10-09). 「식이 설 자리」를 글자로 짐작하던 것은 주석 속 `/…/` 를 읽고
  * `=>` 뒤를 놓쳤다. 정규식 리터럴과 `new RegExp('…', '깃발')` · `RegExp('…')` 이고, 본문이 글자 그대로가 아니면 `body` 가 `null`
  * (글자를 모른다), 깃발이 글자 그대로가 아니면 `i` 로 본다(넓히는 쪽). 가르지 않는 확장자(`.txt` · `.json`)는 정규식이 없다.
- * 파싱이 실패하면 `null` — 그 파일은 판별 불가라 차선을 켠다
+ * 파싱이 실패하면 `null` — 그 파일은 판별 불가라 글자를 찾는 시험으로 센다(`testsNamingLiterally`)
  *
  * @param {typeof import('typescript')} ts
  * @param {string} file
  * @param {string} source
- * @returns {{ body: string | null, flags: string, place: 'cleanup' | 'screen' | 'other' }[] | null}
+ * @returns {{ body: string | null, flags: string, place: 'cleanup' | 'other' }[] | null}
  */
 export function regexUsesIn(ts, file, source) {
   const kind = SCRIPT_KINDS[posix.extname(file)];
@@ -1822,52 +825,15 @@ export function regexUsesIn(ts, file, source) {
 const MENTION_PIECE = 4;
 
 /**
- * 정규식의 글자(확실히 푼 갈래든 분석하지 않은 조각이든)를 견줄 만큼 긴가 — 넓히는 쪽이라 따옴표 리터럴보다 짧게 본다. 한글이 든
- * 것은 두 자부터, 없는 것은 `MENTION_PIECE` 자부터. Playwright 의 정규식 `name` · `getByText` 는 부분 일치라 `/채팅/` 도 「채팅방이
- * 열려요」를 찾는다(2026-10-09 독립 검토)
- */
-const regexPieceLongEnough = (piece) => {
-  const letters = piece.replace(/ /g, '').length;
-  return /[가-힣]/.test(piece) ? letters >= 2 : letters >= MENTION_PIECE;
-};
-
-/**
- * 정규식 하나가 바뀐 글자 때문에 그 시험의 차선을 켜는가(운영자 2026-10-09).
- *
- * - **글자가 있는 정규식** — 확실히 푼 갈래는 그 글자가, 분석하지 않은 정규식은 글자 조각 하나라도 앞뒤 글자 안에 있으면 켠다
- *   (`regexPieceLongEnough` 를 넘는 것만, `\d` · `\s` 류에 붙은 한글은 한 자도, `i` 깃발이면 대소문자를 접어). 관련 판정이 안
- *   서면 — 글자 있는 조각 가운데 견줄 만큼 길지 않은 것이 있으면 — 켠다
- * - **글자가 없는 정규식 · 글자를 모르는 `RegExp(변수)`** — 쓰임 자리로 가른다. 문자열 정리(`.replace` · `.replaceAll` · `.split` 의
- *   첫 인자)면 그것만으로 켜지 않고, 화면 요소를 찾거나 재는 자리 · 그 밖 · 판별 불가(`.test` · `.match` · 변수에 담음)면 켠다
- *
- * @param {{ body: string | null, flags: string, place: 'cleanup' | 'screen' | 'other' }} use
- * @param {readonly string[]} texts
- */
-export function regexTurnsOn(use, texts) {
-  if (use.body === null) return use.place !== 'cleanup';
-  const shape = regexShape(use.body);
-  const pieces = 'literals' in shape ? shape.literals : shape.fragments;
-  const lettered = pieces.filter((piece) => /\p{L}/u.test(piece));
-  if (lettered.length === 0) return use.place !== 'cleanup';
-  const fold = (text) => (use.flags.includes('i') ? text.toLowerCase() : text);
-  const folded = texts.map(fold);
-  const inside = (piece) => folded.some((text) => text.includes(fold(piece)));
-  const near = 'nearClass' in shape ? shape.nearClass.filter((piece) => /[가-힣]/.test(piece)) : [];
-  if (lettered.some((piece) => regexPieceLongEnough(piece) && inside(piece)) || near.some(inside)) return true;
-  return lettered.some((piece) => !regexPieceLongEnough(piece) && !near.includes(piece));
-}
-
-/**
  * 바뀐 글자를 **글자 그대로** 찾는 시험 — 그 시험이 있으면 그 파일은 문구만이 아니다(운영자 2026-10-10, 「글자로 찾는 건 문구만
  * 아님」). 문구만으로 세면 e2e 없이 배포까지 가는데, 그 시험은 글자가 바뀌면 붉다(`aria-label="메시지"` ↔ `getByRole('log', { name:
  * '메시지' })`, 2026-10-10 독립 검토). 「글자 그대로」는 셋이다 — 소스(주석 포함, 공백을 접은 것)에 앞뒤 글자 하나가 통째로 있다 ·
  * 따옴표 리터럴(공백을 걷어 `MENTION_PIECE` 자 이상)이 그 글자의 조각이다 · 본문을 아는 정규식이 문자열 정리 자리 밖에서 그 글자를
  * **실제로 찾는다**(`new RegExp(본문, 깃발).test(글자)` — 조각을 견주면 `/^인연/` 같은 두 자가 거의 모든 문구를 붙잡았다) · 그 정규식의
  * 기호 사이 조각에서 한글 세 자 이상 이어진 것이 그 글자 안에 있다(바뀐 글자 밖까지 붙잡는 정규식, 재검토 2026-10-10). 글자 없는
- * 정규식(`/.+/` · `/^\S+$/`)은 아무 글자나 찾으므로 여기 안 들고 차선만 켠다. 정규식을
- * 못 지으면 · 시험 파일을 파싱하지 못하면 판별 불가라 찾는 것으로 센다. 본문을 모르는 `RegExp(변수)` · 동적으로 지은 글자는 여기 안
- * 든다 — 그것은 차선을 켜는 근거(`testsMentioning`)로만 쓰인다. **문구 상수를 이름으로 읽는 시험은 여기 안 걸린다** — 글자를 바꿔도 시험을
- * 고칠 일이 없어서다(G-90)
+ * 정규식(`/.+/` · `/^\S+$/`)은 아무 글자나 찾으므로 여기 안 든다. 정규식을 못 지으면 · 시험 파일을 파싱하지 못하면 판별 불가라
+ * 찾는 것으로 센다. 본문을 모르는 `RegExp(변수)` · 동적으로 지은 글자는 여기 안 든다 — 그 구멍은 머지 뒤 main 의 전체가 잡는다.
+ * **문구 상수를 이름으로 읽는 시험은 여기 안 걸린다** — 글자를 바꿔도 시험을 고칠 일이 없어서다(G-90)
  *
  * @param {readonly string[]} texts 바뀐 자리의 앞뒤 글자(`copyOnlyChanged`)
  * @param {readonly (readonly [string, string])[]} tests `[시험 파일, 소스]`
@@ -1888,7 +854,7 @@ export function testsNamingLiterally(texts, tests, ts) {
       if (uses === null) return true;
       return uses.some((use) => {
         if (use.body === null || use.place === 'cleanup') return false;
-        // 글자 없는 정규식(`/.*/` · `/\d+/` …)은 글자 그대로가 아니다 — 아무 글자나 찾아 붙잡는다. 차선만 켠다(`regexTurnsOn`)
+        // 글자 없는 정규식(`/.*/` · `/\d+/` …)은 글자 그대로가 아니다 — 아무 글자나 찾아 붙잡는다
         if (!/\p{L}/u.test(use.body.replace(/\\[a-zA-Z]/g, ''))) return false;
         let pattern;
         try {
@@ -1903,34 +869,6 @@ export function testsNamingLiterally(texts, tests, ts) {
         const runs = ('literals' in shape ? shape.literals : shape.fragments).flatMap((piece) => piece.match(/[가-힣]{3,}/g) ?? []);
         return runs.some((run) => texts.some((text) => text.includes(run)));
       });
-    })
-    .map(([test]) => test);
-}
-
-/**
- * 바뀐 글자를 말하는 시험 — 소스에 그 글자가 통째로 있거나, 따옴표 리터럴 속 글자(공백을 걷어 `MENTION_PIECE` 자 이상)가 그 글자의
- * 조각이거나, 정규식 하나라도 차선을 켜거나(`regexTurnsOn`), 파싱이 실패했다. 옛 글자도 새 글자도 찾는다 — 새 글자가 「없어야」
- * 하는 글자(`toHaveCount(0)`)와 겹칠 수 있다. 파서가 없으면 정규식을 못 가르므로 전부를 든다.
- * **검사를 더하는 근거일 뿐이다** — 시험이 글자를 동적으로 조합해 찾으면 여기 안 걸린다. 그 구멍은 머지 뒤 main 의 전체가 잡는다
- *
- * @param {readonly string[]} olds 바뀐 자리의 앞뒤 글자(`copyOnlyChanged`)
- * @param {readonly (readonly [string, string])[]} tests `[시험 파일, 소스]`
- * @param {typeof import('typescript') | null} ts
- * @returns {string[]}
- */
-export function testsMentioning(olds, tests, ts) {
-  return tests
-    .filter(([file, source]) => {
-      if (ts === null) return true;
-      const flat = squeezed(source);
-      if (olds.some((old) => flat.includes(old))) return true;
-      const named = quotedIn(source).some((literal) => {
-        const piece = squeezed(literal);
-        return piece.replace(/ /g, '').length >= MENTION_PIECE && olds.some((old) => old.includes(piece));
-      });
-      if (named) return true;
-      const uses = regexUsesIn(ts, file, source);
-      return uses === null || uses.some((use) => regexTurnsOn(use, olds));
     })
     .map(([test]) => test);
 }
@@ -1953,56 +891,19 @@ function mentionSources() {
   return mentionCache;
 }
 
-/**
- * 문구 파일(`COPY_FILES`)을 들이는 시험 — 그 상수를 이름으로 읽어 찾는 시험은 글자가 소스에 없어 `testsMentioning` 에 안 걸린다.
- * 값이 바뀌어도 시험은 따라오지만, 새 글자가 화면의 다른 글자와 겹치는지는 그 시험이 돌아야 안다(G-90)
- *
- * @param {readonly string[]} files 문구만 바뀐 파일
- * @param {readonly (readonly [string, string])[]} tests
- * @returns {string[]}
- */
-export function testsImportingCopy(files, tests) {
-  const modules = files.filter((file) => COPY_FILES.includes(file)).map((file) => escapeRegExp(file.replace(/^src\//, '').replace(/\.ts$/, '')));
-  if (modules.length === 0) return [];
-  const importing = new RegExp(`(?:\\bfrom|\\bimport\\s*\\(|\\brequire\\s*\\()\\s*['"][^'"\\n]*(?:${modules.join('|')})(?:\\.ts)?['"]`);
-  return tests.filter(([, source]) => importing.test(source)).map(([test]) => test);
-}
-
-/**
- * 문구만 바뀐 파일들이 더 켜는 차선 — 옛 글자를 말하는 시험과 바뀐 문구 파일을 들이는 시험(`testsImportingCopy`)의 차선. spec 은
- * 그 차선(`lanesOfTest`), 흐름 검사는 `flow`, spec 이 아닌 `e2e/**`(여러 spec 이 부르는 도우미 · 픽스처)나 차선을 못 찾는 spec 은 `null`(전부)
- *
- * @param {Map<string, string[]>} copyOnly
- * @param {readonly (readonly [string, string])[]} tests
- * @param {typeof import('typescript') | null} ts 정규식을 가를 파서 — 없으면 시험 전부를 든다
- * @returns {{ lanes: string[] | null, tests: string[] }}
- */
-export function copyLanesOf(copyOnly, tests, ts) {
-  const olds = [...copyOnly.values()].flat();
-  const hit = [...new Set([...testsMentioning(olds, tests, ts), ...testsImportingCopy([...copyOnly.keys()], tests)])];
-  const lanes = [];
-  for (const test of hit) {
-    const of = isSpec(test) || isFlowCheck(test) ? lanesOfTest(test) : null;
-    if (of === null) return { lanes: null, tests: hit };
-    lanes.push(...of);
-  }
-  return { lanes: [...new Set(lanes)], tests: hit };
-}
-
 // ---------------------------------------------------------------------------
 // 계획
 // ---------------------------------------------------------------------------
 
 /** 차선 묶음 — `verify.yml` 의 job 이름과 같다. `authed` 는 `authedLanes` 가 비었는가로 정한다 */
-const picked = ({ policy = false, core = false, anon = false, authedLanes = [], flow = false, mobileFlow = false }) => ({
-  lanes: { policy, core, anon, authed: authedLanes.length > 0, flow, 'mobile-flow': mobileFlow },
+const picked = ({ policy = false, core = false, anon = false, authedLanes = [], flow = false }) => ({
+  lanes: { policy, core, anon, authed: authedLanes.length > 0, flow },
   authedLanes: AUTHED_LANES.filter((lane) => authedLanes.includes(lane)),
 });
 const EVERYTHING = { core: true, anon: true, authedLanes: AUTHED_LANES, flow: true };
 
 /**
- * 전부(`tier: 'full'`)일 때도 켜지 않는 차선 — `verify.yml` 의 job 이름. `policy` 는 정책만일 때의 차선이고,
- * `mobile-flow` 는 좁은 PR 에서 앱만 바뀌었을 때의 차선이라 전부일 때는 `flow` 가 대신한다(ADR 0097 덧 2026-11-06).
+ * 전부(`tier: 'full'`)일 때도 켜지 않는 차선 — `verify.yml` 의 job 이름. `policy` 는 정책만일 때의 차선이다.
  * `main-red.mjs` 의 `measuredEverything` 이 이 job 들의 건너뜀을 빼고 센다 — 손 목록을 따로 두지 않는다
  */
 export const offWhenFull = () =>
@@ -2014,20 +915,18 @@ export const offWhenFull = () =>
  * `stage` 는 `release-stage.mjs` 의 `currentStageOf` 가 낸 값이다 — `null` 이나 빠진 값은 모르는 단계다.
  * `pushed` 는 main 푸시의 범위다(위 「문서만 바뀐 main 푸시」) — `before` 는 푸시 전 SHA, `forced` 는 강제 갱신,
  * `beforeGreen` 은 그 SHA 의 verify 가 초록으로 끝났는가(`settledGreen`). 빠지면 범위를 모르는 것이라 전부다.
- * `sourceOf` 는 바뀐 파일의 지금 내용이다(서버에 닿는 `app/` 파일을 가른다) — 빠지면 저장소에서 읽는다.
+ * `sourceOf` 는 바뀐 파일의 지금 내용이다 — 빠지면 저장소에서 읽는다.
  * `baseSourceOf` 는 그 파일의 base 쪽 내용, `ts` 는 `typescript` 모듈이다(주석만 바뀐 코드 파일을 가른다) — 둘 중 하나가
  * 빠지거나 `null` 이면 지금 규칙 그대로다.
  *
- * `mentions` 는 바뀐 글자를 찾을 시험들(`[파일, 소스]`)이다 — 빠지면 저장소의 `e2e/**` 와 흐름 검사를 읽는다(시험이 넣어 가른다).
- *
  * `tier` 는 사람이 읽는 요약이다 — job 은 `lanes` 와 `authedLanes` 만 읽는다. `cause` 는 전부로 간 갈래의 이름이다.
  *
- * @param {{ files: readonly string[], labels?: readonly string[], event?: string, stage?: string | null, sourceOf?: (file: string) => string | null, baseSourceOf?: (file: string) => string | null, ts?: typeof import('typescript') | null, pushed?: { before: string | null, forced: boolean, beforeGreen: boolean | null } | null, mentions?: readonly (readonly [string, string])[] | null }} input
- * @returns {{ tier: 'policy' | 'core' | 'narrow' | 'engine' | 'full', reason: string, cause: string | null, lanes: { policy: boolean, core: boolean, anon: boolean, authed: boolean, flow: boolean, 'mobile-flow': boolean, audit: boolean, mobile: boolean }, authedLanes: string[], build: boolean }}
+ * @param {{ files: readonly string[], labels?: readonly string[], event?: string, stage?: string | null, sourceOf?: (file: string) => string | null, baseSourceOf?: (file: string) => string | null, ts?: typeof import('typescript') | null, pushed?: { before: string | null, forced: boolean, beforeGreen: boolean | null } | null }} input
+ * @returns {{ tier: 'policy' | 'engine' | 'full', reason: string, cause: string | null, lanes: { policy: boolean, core: boolean, anon: boolean, authed: boolean, flow: boolean, audit: boolean, mobile: boolean }, authedLanes: string[] }}
  */
-export function planFor({ files, labels = [], event = 'pull_request', stage = null, sourceOf = sourceFromDisk, baseSourceOf = () => null, ts = null, pushed = null, mentions = null }) {
+export function planFor({ files, labels = [], event = 'pull_request', stage = null, sourceOf = sourceFromDisk, baseSourceOf = () => null, ts = null, pushed = null }) {
   const decided =
-    event === 'push' ? decidePush({ files, pushed, sourceOf, baseSourceOf, ts }) : decide({ files, labels, event, stage, sourceOf, baseSourceOf, ts, mentions });
+    event === 'push' ? decidePush({ files, pushed, sourceOf, baseSourceOf, ts }) : decide({ files, labels, event, stage, sourceOf, baseSourceOf, ts });
   const { lanes, authedLanes } = picked(decided.tier === 'full' ? EVERYTHING : decided.pick ?? {});
   return {
     tier: decided.tier,
@@ -2035,7 +934,6 @@ export function planFor({ files, labels = [], event = 'pull_request', stage = nu
     cause: decided.cause ?? null,
     lanes: { ...lanes, audit: audits({ files, labels, event, tier: decided.tier }), mobile: mobiles({ files, labels, event, tier: decided.tier }) },
     authedLanes,
-    build: lanes.core && decided.skipBuild !== true,
   };
 }
 
@@ -2057,53 +955,7 @@ function mobiles({ files, labels, event, tier }) {
 
 const full = (cause, reason) => ({ tier: 'full', cause, reason });
 
-/**
- * 의존성 목록이 시험 실행 의존성을 바꿨는가 — 바꿨거나 가를 수 없으면 그 까닭, 아니면 `null`(위 「시험 실행 의존성」).
- * `package.json` 은 `TEST_RUNNERS` 의 판 · `overrides` 와 차선 스크립트(`LANE_SCRIPTS`)를, `package-lock.json` 은 `TEST_RUNNERS` 의
- * 설치 항목(`node_modules/<이름>` 으로 끝나는 열쇠의 판 · 출처 · 지문)을 base 와 견준다. base 나 HEAD 를 못 읽거나 JSON 이 아니면
- * 가를 수 없는 것이라 까닭을 돌려준다 — 모르면 전부다
- *
- * @param {readonly string[]} changed
- * @param {{ sourceOf: (file: string) => string | null, baseSourceOf: (file: string) => string | null }} sources
- * @returns {string | null}
- */
-export function testRunnerChangeOf(changed, { sourceOf, baseSourceOf }) {
-  const runner = new RegExp(`(?:^|/)node_modules/(?:${TEST_RUNNERS.map(escapeRegExp).join('|')})$`);
-  const views = {
-    'package.json': (json) => ({
-      runners: Object.fromEntries(
-        ['dependencies', 'devDependencies', 'optionalDependencies', 'overrides'].flatMap((field) =>
-          TEST_RUNNERS.filter((name) => json[field]?.[name] !== undefined).map((name) => [`${field}.${name}`, json[field][name]]),
-        ),
-      ),
-      scripts: Object.fromEntries(Object.entries(json.scripts ?? {}).filter(([name]) => LANE_SCRIPTS.test(name))),
-    }),
-    'package-lock.json': (json) =>
-      Object.fromEntries(
-        Object.entries(json.packages ?? {})
-          .filter(([key]) => runner.test(key))
-          .map(([key, one]) => [key, [one?.version, one?.resolved, one?.integrity]]),
-      ),
-  };
-  for (const file of changed.filter((one) => one in views)) {
-    const read = (source) => {
-      if (source === null) return null;
-      try {
-        const json = JSON.parse(source);
-        return json !== null && typeof json === 'object' ? views[file](json) : null;
-      } catch {
-        return null;
-      }
-    };
-    const before = read(baseSourceOf(file));
-    const after = read(sourceOf(file));
-    if (before === null || after === null) return `\`${file}\` 의 base 나 HEAD 를 JSON 으로 못 읽어 시험 실행 의존성이 바뀌었는지 가를 수 없다`;
-    if (JSON.stringify(before) !== JSON.stringify(after)) return `\`${file}\` 이 시험 실행 의존성(${TEST_RUNNERS.map((one) => `\`${one}\``).join(' · ')} · 차선 스크립트)을 바꿨다`;
-  }
-  return null;
-}
-
-function decide({ files, labels, event, stage, sourceOf, baseSourceOf, ts, mentions }) {
+function decide({ files, labels, event, stage, sourceOf, baseSourceOf, ts }) {
   if (!PLANNED_EVENTS.has(event)) return full('계획 밖 이벤트', `\`${event}\` 은 계획을 안 본다`);
   if (labels.includes(FULL_LABEL)) return full('라벨', `\`${FULL_LABEL}\` 라벨`);
 
@@ -2113,93 +965,11 @@ function decide({ files, labels, event, stage, sourceOf, baseSourceOf, ts, menti
   const database = changed.find((one) => matches(DATABASE, one));
   if (database) return full('DB', `\`${database}\` 은 DB 차선에서만 재어진다`);
   if (stage === null || !(stage in LAUNCHED)) return full('단계 모름', '출시 단계를 모른다 — PRD §7.0 의 「(지금)」');
+  // 공개 출시 전 단계의 좁힌 계획은 지웠다 — 단계가 되돌아가면 안전 쪽(전부)으로 간다(ADR 0243)
+  if (!LAUNCHED[stage]) return full('출시 전 단계', `${stage} — 공개 출시 전의 좁힌 계획은 지웠다(ADR 0243), 전부 잰다`);
 
   const commentOnly = commentOnlyOf(changed, { sourceOf, baseSourceOf, ts });
-  const rest = changed.filter((file) => !commentOnly.includes(file));
-  if (LAUNCHED[stage]) return notingComments(decideLaunched(rest), commentOnly);
-  const runner = testRunnerChangeOf(rest, { sourceOf, baseSourceOf });
-  if (runner !== null) return notingComments(full('시험 실행 의존성', `${stage} — ${runner}`), commentOnly);
-  // 문구만 바뀐 파일은 좁힐 수 있을 때만 core + 바뀐 글자를 찾는 시험의 차선으로 센다(위 「문구만 바뀐 파일」)
-  const tests = () => mentions ?? mentionSources();
-  const { copy: copyOnly } = copyOnlyOf(rest, { sourceOf, baseSourceOf, ts, mentions: tests });
-  // 앱 파일이 섞이면 문구 판정으로 좁히지 않는다 — 웹 문구 파일이 빠지면 앱만 바뀐 PR 로 읽힌다(ADR 0097 덧 2026-10-31)
-  const narrowed = rest.some(isMobile) ? new Map() : narrowedCopyOf(copyOnly, { stage, sourceOf, ts, mentions: tests() });
-  const judged = rest.filter((file) => !narrowed.has(file));
-  const decided = notingComments(withCopy(decideBeta(judged, stage, sourceOf), narrowed, stage), commentOnly);
-  // 코드가 문구만 바뀐 PR 은 빌드를 건너뛴다(위 「문구만 바뀐 PR 은 빌드를 건너뛴다」, ADR 0178). 메타데이터 파일(`icon` ·
-  // `opengraph-image` …)은 빌드 때 그림을 그리므로 문구만이어도 빌드가 돈다
-  // 앱만 바뀐 PR — 웹 빌드는 건너뛰고, 앱이 부르는 글자가 바뀌었으면 `mobile-flow` 를 켠다(위 「앱 검사」, G-144)
-  if (decided.appOnly) {
-    const called = appCallChangeOf(judged, { sourceOf, baseSourceOf });
-    return called === null
-      ? { ...decided, skipBuild: true, reason: `${decided.reason} — 웹 빌드는 건너뛴다` }
-      : {
-          ...decided,
-          skipBuild: true,
-          pick: { ...decided.pick, mobileFlow: true },
-          reason: `${decided.reason} — \`${called}\` 이 앱이 부르는 글자를 바꿔 \`mobile-flow\`(check-mobile)도 막는다 · 웹 빌드는 건너뛴다`,
-        };
-  }
-  const copyOnlyPr =
-    narrowed.size > 0 && [...narrowed.keys()].every((file) => !METADATA.test(file)) && judged.every(isPolicy) && decided.tier !== 'full';
-  return copyOnlyPr ? { ...decided, skipBuild: true, reason: `${decided.reason} — 문구만이라 빌드는 건너뛴다` } : decided;
-}
-
-/** 계획이 돌리는 차선 — 전부면 `null`(가장 넓다) */
-const lanesRun = (decided) => {
-  if (decided.tier === 'full') return null;
-  const pick = decided.pick ?? {};
-  return new Set([
-    ...(pick.policy ? ['policy'] : []),
-    ...(pick.core ? ['core'] : []),
-    ...(pick.anon ? ['anon'] : []),
-    ...(pick.flow ? ['flow'] : []),
-    ...(pick.mobileFlow ? ['mobile-flow'] : []),
-    ...(pick.authedLanes ?? []),
-  ]);
-};
-
-/**
- * 문구만 바뀐 파일 가운데 **좁혀지는 것** — 문구 판정은 차선을 좁히기만 하고 넓히지 않는다(운영자 2026-10-09). 파일마다 두 계획을
- * 견준다. 하나는 그 파일을 문구로 안 셌을 때의 지금 규칙(`decideBeta`), 하나는 `core` + 바뀐 글자를 찾는 시험의 차선
- * (`copyLanesOf`)이다. 뒤의 것이 앞의 것에 들어갈 때만 뒤의 것으로 센다. 검색이 전부를 부르거나, 앞에 없는 차선을 켜거나(둘이 서로
- * 포함하지 않을 때도) 그 파일은 지금 규칙 그대로다 — 입구가 아닌 컴포넌트(지금 규칙으로 `core`)의 문구가 #572 전보다 넓어지지 않는다.
- * 정규식의 쓰임 자리 규칙은 그대로이고, 좁힐 때의 근거로만 쓰인다
- *
- * @param {Map<string, string[]>} copyOnly
- * @returns {Map<string, { lanes: string[], tests: string[] }>}
- */
-function narrowedCopyOf(copyOnly, { stage, sourceOf, ts, mentions }) {
-  const narrowed = new Map();
-  for (const [file, texts] of copyOnly) {
-    const searched = copyLanesOf(new Map([[file, texts]]), mentions, ts);
-    if (searched.lanes === null) continue;
-    const existing = lanesRun(decideBeta([file], stage, sourceOf));
-    if (existing !== null && !['core', ...searched.lanes].every((lane) => existing.has(lane))) continue;
-    narrowed.set(file, { lanes: searched.lanes, tests: searched.tests });
-  }
-  return narrowed;
-}
-
-/** 나머지 파일의 계획에 좁혀진 문구 파일을 얹는다 — core 는 늘 서고, 바뀐 글자를 말하는 시험의 차선이 더 선다 */
-function withCopy(decided, narrowed, stage) {
-  if (narrowed.size === 0) return decided;
-  const named = [...narrowed.keys()].map((one) => `\`${one}\``).join(' · ');
-  if (decided.tier === 'full') return { ...decided, reason: `${decided.reason} — 문구만 바뀐 파일: ${named}` };
-  const lanes = [...new Set([...narrowed.values()].flatMap((one) => one.lanes))];
-  const tests = [...new Set([...narrowed.values()].flatMap((one) => one.tests))];
-  const cited = tests.map((one) => `\`${one}\``).join(' · ');
-  const before = decided.pick ?? {};
-  const pick = {
-    core: true,
-    anon: Boolean(before.anon) || lanes.includes('anon'),
-    flow: Boolean(before.flow) || lanes.includes('flow'),
-    authedLanes: [...new Set([...(before.authedLanes ?? []), ...lanes.filter((one) => one !== 'anon' && one !== 'flow')])],
-  };
-  const extra = tests.length === 0 ? '바뀐 글자를 말하는 시험 없음' : `바뀐 글자를 말하는 시험: ${cited}`;
-  const isNarrow = decided.tier === 'narrow' || lanes.length > 0;
-  const head = decided.tier === 'policy' ? `${stage} — 문구만 바뀌었다` : decided.reason;
-  return { tier: isNarrow ? 'narrow' : 'core', reason: `${head} — 문구만 바뀐 파일은 core 로 셌다: ${named} (${extra})`, pick };
+  return notingComments(decideLaunched(changed.filter((file) => !commentOnly.includes(file))), commentOnly);
 }
 
 /** 바뀐 파일 중 주석만 바뀐 코드 파일 — 파서가 없으면 없다(위 「주석만 바뀐 코드 파일」) */
@@ -2396,102 +1166,6 @@ function decideLaunched(changed) {
   return { tier: 'engine', reason: '엔진과 그것을 그리는 칸만 바뀌었다', pick: { core: true, anon: true } };
 }
 
-const cite = (files) => files.map((one) => `\`${one}\``).join(' · ');
-
-/** 공개 출시 전 — 공용 위험 → 정책 → 파일마다 그 주소에 닿는 차선. 좁힌 계획에도 `core` 는 늘 선다 */
-function decideBeta(changed, stage, sourceOf) {
-  for (const file of changed) {
-    if (isTestFile(file)) continue;
-    const risk = SHARED_RISK.find(([, hits]) => hits(file));
-    if (risk) return full(risk[0], `${stage} — \`${file}\` 은 공용 위험(${risk[0]})이라 머지 전에 전부 잰다`);
-  }
-  if (changed.every(isPolicy)) return { tier: 'policy', reason: `${stage} — 정책만 바뀌었다`, pick: { policy: true } };
-  // 앱만 바뀌면 웹 e2e · 흐름이 재는 것이 그대로다(운영자 2026-10-31, ADR 0097 덧). `core` 는 남긴다 — `scripts` 잠금이 `mobile/` 글자를 읽는다
-  const app = changed.find(isMobile);
-  if (app) {
-    const web = changed.find((file) => !isMobile(file) && !isPolicy(file));
-    if (web) return full('미분류', `${stage} — \`${app}\` 에 앱 밖의 \`${web}\` 이 섞였다`);
-    return { tier: 'core', reason: `${stage} — 앱만 바뀌어 \`core\` 와 \`mobile\` 이 머지를 막는다`, pick: { core: true }, appOnly: true };
-  }
-
-  const pick = { core: true, anon: false, authedLanes: [], flow: false };
-  const why = [];
-  const take = (lanes) => {
-    for (const lane of lanes) {
-      if (lane === 'anon') pick.anon = true;
-      else if (lane === 'flow') pick.flow = true;
-      else if (!pick.authedLanes.includes(lane)) pick.authedLanes.push(lane);
-    }
-  };
-  /** 닿는 시험이 정말 없는 입구 — 그 파일은 `core` 로 세고 까닭에 시험 공백으로 적는다(위 「닿는 시험이 0 인 입구」) */
-  const untested = new Set();
-  /** 입구 하나의 시험 — 글자 그대로 닿는 시험이 0 이고 탐색이 놓쳤을 수 있으면 `null`(전부로 간다) */
-  /** 시험 없는 입구를 요청하거나 눌러 닿거나 들일 수 있는 파일 — 넓은 무늬 · 경로 글자 · 링크로 닿는 시험 · 도우미와 그 입구를 들이는 파일 */
-  const maybe = (entry) => [...testsOfEntry(entry).unsure, ...importersOfEntry(entry, sourceOf, changed)];
-  const testsOf = (entry) => {
-    const { tests, unsure } = testsOfEntry(entry);
-    if (tests.length > 0) return tests;
-    if (unsure.length > 0 || importersOfEntry(entry, sourceOf, changed).length > 0) return null;
-    untested.add(entry);
-    return [];
-  };
-  for (const file of changed) {
-    if (isTestFile(file) || isPolicy(file)) continue;
-    let tests;
-    if (isSpec(file) || isFlowCheck(file)) tests = [file];
-    else if (file === SERVICE_WORKER) {
-      tests = workerTests();
-      if (tests.length === 0) return full('닿는 시험 모름', `${stage} — \`${file}\`(서비스 워커)를 여는 시험을 못 찾는다`);
-    } else if (METADATA.test(file) && !reachesServer(file, sourceOf)) {
-      take(['anon']);
-      why.push(`\`${file}\` → 메타데이터`);
-      continue;
-    } else if (isSurface(file, sourceOf) || isScreenComponent(file, sourceOf)) {
-      if (routeOf(file)) {
-        tests = testsOf(file);
-        if (tests === null) {
-          return full('닿는 시험 모름', `${stage} — \`${file}\` 의 주소를 글자 그대로 요청하는 시험은 없지만 ${cite(maybe(file))} 이 요청하거나 눌러 닿거나 들일 수 있다`);
-        }
-      } else {
-        // 입구가 아닌 서버 파일 · 화면 컴포넌트 — 그것을 쓰는 입구의 주소로 간다(위 「입구가 아닌 서버 파일은 그것을 쓰는 입구의 주소로」 ·
-        // 「입구가 아닌 화면 컴포넌트」)
-        if (gateReach(sourceOf).has(file)) return full('주소 없음', `${stage} — \`${file}\` 은 관문이 부른다`);
-        const reach = entriesReaching(file, sourceOf, changed);
-        if (reach.risk) {
-          return full('주소 없음', `${stage} — \`${file}\` 을 \`${reach.risk.via}\`(${reach.risk.name})가 부른다`);
-        }
-        if (reach.entries.length === 0 && reach.tests.length === 0) {
-          return full('주소 없음', `${stage} — \`${file}\` 을 쓰는 입구를 못 찾는다`);
-        }
-        const reached = new Set(reach.tests);
-        for (const entry of reach.entries) {
-          const found = testsOf(entry);
-          if (found === null) {
-            return full('닿는 시험 모름', `${stage} — \`${file}\` 을 쓰는 \`${entry}\` 의 주소를 글자 그대로 요청하는 시험은 없지만 ${cite(maybe(entry))} 이 요청하거나 눌러 닿거나 들일 수 있다`);
-          }
-          for (const test of found) reached.add(test);
-        }
-        tests = [...reached].sort();
-      }
-      if (tests.length === 0) continue;
-    } else if (isKnownCore(file)) continue;
-    else return full('미분류', `${stage} — \`${file}\` 은 알려진 자리가 아니다`);
-
-    for (const test of tests) {
-      const lanes = lanesOfTest(test);
-      if (!lanes) return full('차선 모름', `${stage} — \`${test}\` 을 부르는 차선을 못 찾는다`);
-      take(lanes);
-    }
-    why.push(tests[0] === file ? `\`${file}\`` : `\`${file}\` ← ${tests.map((one) => `\`${one}\``).join(' · ')}`);
-  }
-  const gap = `닿는 시험이 없는 입구 ${cite([...untested].sort())} 는 core 로 셌다(시험 공백, 간극 대장 ${UNTESTED_GAP})`;
-  if (why.length === 0) {
-    const reason = untested.size === 0 ? '입구가 아니라 core 만 머지를 막고 전체는 main 에서 돈다' : gap;
-    return { tier: 'core', reason: `${stage} — ${reason}`, pick };
-  }
-  return { tier: 'narrow', reason: `${stage} — 그 주소에 닿는 차선만: ${why.join(', ')}${untested.size === 0 ? '' : ` — ${gap}`}`, pick };
-}
-
 /** 사람이 읽는 표 — step summary 에 찍는다 */
 export function summaryOf(plan, files) {
   const lanes = Object.entries(plan.lanes)
@@ -2505,7 +1179,6 @@ export function summaryOf(plan, files) {
     '| 차선 | |',
     '|---|---|',
     lanes,
-    ...(plan.lanes.core && plan.build === false ? ['| `core` 의 빌드 | 건너뛴다(문구만 · 앱만 — 까닭은 위 줄) |'] : []),
     '',
   ].join('\n');
 }
@@ -2590,7 +1263,6 @@ async function main() {
         `tier=${plan.tier}`,
         ...Object.entries(plan.lanes).map(([lane, on]) => `${lane}=${on}`),
         `authed_lanes=${JSON.stringify(plan.authedLanes)}`,
-        `build=${plan.build}`,
         '',
       ].join('\n'),
     );

@@ -16,7 +16,7 @@ on:
 
 # 같은 가지에 새 커밋이 오면 대체된 실행을 끊는다 — PR 도 main 도(2026-09-23, #161, ADR 0097).
 #
-# **main 은 최신 하나만 끝까지 잰다.** 공개 출시 전에는 전체 검증이 머지 뒤 main 에서 비차단으로 돈다. 최신
+# **main 은 최신 하나만 끝까지 잰다.** 머지 뒤 main 의 전체 검증은 비차단이다. 최신
 # main 은 앞선 커밋을 다 품으므로 중간 커밋을 따로 잴 까닭이 없고, 커밋마다 전부를 띄우면 검증을 뒤로 옮긴
 # 값이 오히려 커진다. #143 에서 커밋마다 제 그룹으로 둔 것을 되돌렸다 — 그때는 머지 전 검증이 전부였다.
 # 끊긴 실행은 실패가 아니다 — `ci-main-red`(main-red.yml)가 무시한다. 붉으면 어느 커밋이 깼는지는 그 이슈가
@@ -42,7 +42,7 @@ jobs:
     permissions:
       contents: read
       actions: read
-    # 차선마다 한 줄 — 계획이 「그 주소에 닿는 차선만」 고른다(2026-10-01, ADR 0097 · 0119 추기). `authed_lanes` 는 로그인
+    # 차선마다 한 줄 — 계획이 고른다(2026-10-01, ADR 0097 · 0119 추기 — 좁힌 갈래는 ADR 0243 이 지웠다). `authed_lanes` 는 로그인
     # 차선 이름의 JSON 배열이고 `authed` matrix 가 그대로 받는다. `authed` 는 그 배열이 비었는가다.
     outputs:
       policy: ${{ steps.plan.outputs.policy }}
@@ -51,10 +51,8 @@ jobs:
       authed: ${{ steps.plan.outputs.authed }}
       authed_lanes: ${{ steps.plan.outputs.authed_lanes }}
       flow: ${{ steps.plan.outputs.flow }}
-      mobile-flow: ${{ steps.plan.outputs.mobile-flow }}
       audit: ${{ steps.plan.outputs.audit }}
       mobile: ${{ steps.plan.outputs.mobile }}
-      build: ${{ steps.plan.outputs.build }}
     steps:
       - uses: actions/checkout@v7
         with:
@@ -130,8 +128,7 @@ jobs:
   # core — 단위 · 타입 · 린트 · 빌드. 정책만 바뀐 PR 밖에서는 늘 선다 (#161, ADR 0097)
   # ---------------------------------------------------------------------------
   #
-  # 공개 출시 전의 PR 은 이것과, 바뀐 화면의 주소에 닿는 차선만 머지 전에 돈다(`ci-plan.mjs` 「그 주소에 닿는 차선만」).
-  # 공용 위험(관문 · 인증 · layout · 서버 액션 · 시험 도구 …)이면 전부다(ADR 0119). 문법이나 타입 하나가 main 을 깨
+  # 엔진만 바꾼 PR 은 이것과 익명 e2e 만, 그 밖의 코드 PR 은 전부를 머지 전에 돈다(`ci-plan.mjs` 「세 단계뿐이다」). 문법이나 타입 하나가 main 을 깨
   # 나란히 선 세션을 다 세우는 일을 막는다. **명령 목록은 `ci-plan.mjs` 의 `CORE_STEPS` 와 같다** — 시험이 견준다.
   # 빌드는 처음에 뺐다가 되돌렸다(#219): `app/**/icon.tsx` 처럼 `next build` 만 잡는 실패가 초록으로 머지돼
   # Production 이 두 시간 섰다. 단위 · 타입 · 린트 · 빌드를 도는 job 은 이것 하나다 — 전부일 때도 `anon` 이 다시 돌지 않는다.
@@ -157,10 +154,8 @@ jobs:
         if: ${{ !cancelled() && steps.install.outcome == 'success' }}
       - run: npm run lint
         if: ${{ !cancelled() && steps.install.outcome == 'success' }}
-      # 코드가 화면 문구만 바뀐 PR 은 빌드를 건너뛴다 — #219 의 `icon.tsx` 같은 이름 · 모양 실패는 문구 한 줄로 안 생긴다(ADR 0178).
-      # 계획의 `build` 가 `false` 일 때만 건너뛴다 — 값이 비면(계획 실패) 돈다. job 은 그대로 서고 `gate` 도 그대로다.
       - run: npm run build
-        if: ${{ !cancelled() && steps.install.outcome == 'success' && needs.plan.outputs.build != 'false' }}
+        if: ${{ !cancelled() && steps.install.outcome == 'success' }}
 
   # ---------------------------------------------------------------------------
   # 익명 e2e — **살아 있는 Supabase 없이** 잰다
@@ -224,8 +219,8 @@ jobs:
   # 참여 표를 제 쌍으로 좁혀 두 워커면 7건이 죽는다. 안내 관문은 전역 일정 표를 두고
   # 다투므로 혼자 돈다.
   #
-  # **차선은 계획이 고른다**(2026-10-01). 목록은 `ci-plan.mjs` 의 `AUTHED_LANES` 이고, 운영 베타의 PR 은 바뀐 화면의 주소에
-  # 닿는 차선만 받는다. 원소는 문자열이다 — 아래 artifact 이름이 `matrix.lane` 을 읽는다. 배열이 비면 `authed` 가
+  # **차선은 계획이 고른다**(2026-10-01). 목록은 `ci-plan.mjs` 의 `AUTHED_LANES` 이고, 전부일 때 모두 받는다
+  # (좁힌 갈래는 ADR 0243 이 지웠다). 원소는 문자열이다 — 아래 artifact 이름이 `matrix.lane` 을 읽는다. 배열이 비면 `authed` 가
   # `false` 라 job 이 건너뛰어진다.
   authed:
     needs: plan
@@ -330,31 +325,6 @@ jobs:
       - run: npm run test:flow
 
   # ---------------------------------------------------------------------------
-  # 앱의 흐름 검사 한 벌 — 앱만 바뀐 PR 에서 앱이 부르는 글자가 바뀌었을 때(G-144)
-  # ---------------------------------------------------------------------------
-  #
-  # 앱만 바뀐 PR 은 `flow` 를 건너뛴다. 그런데 앱이 새로 부른 함수가 `authenticated` 에 안 열려 있거나 앱의 문이 없으면 그것을 재는 자리는
-  # `check-mobile.mjs` 하나다 — 그 PR 에서 그것만 돈다(`ci-plan.mjs` 「앱 검사」). 전부일 때는 `flow` 가 이것을 이미 돌아 켜지지 않는다.
-  # 검사가 제 서버를 `.next-check` 에 짓고 스택을 쓰므로 준비는 `flow` 와 같다.
-  mobile-flow:
-    needs: plan
-    if: needs.plan.outputs.mobile-flow == 'true'
-    runs-on: ubuntu-latest
-    timeout-minutes: 20
-
-    steps:
-      - uses: actions/checkout@v7
-      - uses: actions/setup-node@v7
-        with:
-          node-version-file: .nvmrc
-          cache: npm
-      - run: npm ci
-      # 임시 포트 범위와 한 번 더 — `authed` 의 주석이 까닭이다
-      - run: sudo sysctl -w net.ipv4.ip_local_port_range="60000 65535"
-      - run: npm run db:start || { npx supabase stop --no-backup; npm run db:start; }
-      - run: node scripts/check-mobile.mjs
-
-  # ---------------------------------------------------------------------------
   # 운영 의존성 감사 — high 이상이 하나라도 있으면 붉다 (G-23 ①, ADR 0104)
   # ---------------------------------------------------------------------------
   #
@@ -441,7 +411,7 @@ jobs:
   # PR 에서는 나란히 열린 PR 과 공유 번호(ADR · G · 문구 대장 절 · 마이그레이션 시각)가 겹치는지도 여기서 잰다(ADR 0238). 새 job 이 아니라
   # 여기인 것은 — 차선을 건너뛰지 않고(plan 이 붉으면 차선이 다 선다) 맨 끝에서 그때 열린 PR 을 읽기 때문이다. API 를 못 읽으면 경고하고 통과다.
   gate:
-    needs: [plan, policy, core, anon, authed, flow, mobile-flow, audit, mobile]
+    needs: [plan, policy, core, anon, authed, flow, audit, mobile]
     if: always()
     runs-on: ubuntu-latest
     timeout-minutes: 3
