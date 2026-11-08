@@ -14,7 +14,7 @@
 -- `set_person_listed` 는 막았다(`20261110090000`). 옛 사진 문 `set_my_photo` 는 `20261115090000` 이 걷었다. 열린 둘은 아래 목록에 `OK` 로 적는다 — 누가 닫으면 붉어진다.
 -- 2026-11-08 에 지우기만 하는 둘(`remove_my_photo` · `clear_my_intro`)을 열었다(ADR 0244) — 처리방침의 「프로필 화면에서 삭제」가 정지된 사람에게도 참이도록.
 begin;
-select plan(61);
+select plan(60);
 
 create or replace function pg_temp.summary(i integer)
 returns jsonb
@@ -187,7 +187,6 @@ from (values
                             '42501 저장한 사람 목록에 없는 사람입니다.', '정지되면 내 사람이 안 보인다'),
   ('restore_passed_connection', format($$select public.restore_passed_connection(%L)$$, (select choi from folks)),
                             '42501 지금은 이 인연을 다시 만나볼 수 없습니다. 목록을 새로 열어 주세요.', '되돌릴 자격(활성 계정)으로 막힌다'),
-  ('set_contact_consent',   $$select public.set_contact_consent(true)$$, '42501 이용이 정지된 계정입니다.', null),
   ('set_improvement_consent', $$select public.set_improvement_consent(true)$$, '42501 이용이 정지된 계정입니다.', null),
   ('set_person_listed',     format($$select public.set_person_listed(%L, false)$$, (select v from kept where k = 'mom')),
                             '42501 이용이 정지된 계정입니다.', null),

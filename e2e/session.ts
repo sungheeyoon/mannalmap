@@ -411,7 +411,6 @@ async function seed(
       p_version: NOTICE_VERSION,
       p_schedule_id: current.data?.[0]?.schedule_id,
       p_improvement: false,
-      p_contact: false,
     });
     if (passed.error) throw new Error(`가입을 끝내지 못했습니다 — ${passed.error.message}`);
 

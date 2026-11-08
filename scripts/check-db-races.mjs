@@ -306,7 +306,7 @@ const accessRow = (actor, outcome = 'allowed') => `
       update public.app_user set notice_version = 'race-check',
         notice_schedule_id = (select s.schedule_id from public.current_beta_schedule() s),
         notice_ends_on = (select s.ends_on from public.current_beta_schedule() s), notice_ack_at = now(),
-        improvement_consent = false, contact_consent = false,
+        improvement_consent = false,
         nickname = '${label}' || right('${stamp}', 4), signed_up_at = now()
       where id = '${uid}';
       perform set_config('request.jwt.claims', '{"sub":"${uid}","role":"authenticated"}', true);

@@ -186,7 +186,6 @@ export async function editPersonInput(personId: string, query: Query): Promise<S
 export async function setOptionalConsent(consent: boolean): Promise<SaveResult> {
   const supabase = await supabaseOnServer();
 
-  /* 「인터뷰 요청 받기」(`set_contact_consent`)는 `notice-v19` 에서 걷었다(ADR 0245) — 문은 옛 앱 때문에 DB 에 남는다(G-159) */
   const { error } = await supabase.rpc('set_improvement_consent', { p_consent: consent });
 
   if (error) return { ok: false, message: userFacingDbMessage(error, 'set_optional_consent') };

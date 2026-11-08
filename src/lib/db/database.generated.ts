@@ -189,7 +189,6 @@ export type Database = {
       }
       app_user: {
         Row: {
-          contact_consent: boolean | null
           created_at: string
           deletion_requested_at: string | null
           id: string
@@ -207,7 +206,6 @@ export type Database = {
           status: string
         }
         Insert: {
-          contact_consent?: boolean | null
           created_at?: string
           deletion_requested_at?: string | null
           id: string
@@ -225,7 +223,6 @@ export type Database = {
           status?: string
         }
         Update: {
-          contact_consent?: boolean | null
           created_at?: string
           deletion_requested_at?: string | null
           id?: string
@@ -3348,7 +3345,7 @@ export type Database = {
       complete_signup: {
         Args: {
           p_code: string
-          p_contact: boolean
+          p_contact?: boolean
           p_improvement: boolean
           p_nickname: string
           p_schedule_id: number
@@ -5037,7 +5034,6 @@ export type Database = {
           schedule_id: number
         }[]
       }
-      set_contact_consent: { Args: { p_consent: boolean }; Returns: undefined }
       set_discovery_need_summary: {
         Args: {
           p_chart_engine_version: string

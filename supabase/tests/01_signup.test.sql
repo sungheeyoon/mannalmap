@@ -70,10 +70,10 @@ select is(
   '코드 없이 이름 · 확인이 한 번에 지나간다');
 
 select results_eq(
-  $$select a.nickname, a.signup_code, a.notice_version, a.improvement_consent, a.contact_consent,
+  $$select a.nickname, a.signup_code, a.notice_version, a.improvement_consent,
            a.signed_up_at is not null, a.notice_ack_at is not null
     from public.app_user a where a.id = (select kim from folks)$$,
-  $$values ('민수'::text, null::text, 'notice-v109'::text, true, false, true, true)$$,
+  $$values ('민수'::text, null::text, 'notice-v109'::text, true, true, true)$$,
   '이름 · 확인 · 선택 답이 함께 남고 코드 칸은 비어 있다');
 
 select is(
@@ -132,9 +132,9 @@ select lives_ok(
   '이미 가진 사람은 이름 없이 다시 확인만 한다');
 
 select results_eq(
-  $$select a.nickname, a.notice_version, a.contact_consent
+  $$select a.nickname, a.notice_version
     from public.app_user a where a.id = (select kim from folks)$$,
-  $$values ('민수'::text, 'notice-v110'::text, true)$$,
+  $$values ('민수'::text, 'notice-v110'::text)$$,
   '이름은 그대로이고 확인만 새로 남는다');
 
 select pg_temp.acting((select tester from folks));

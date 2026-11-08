@@ -238,7 +238,7 @@ try {
     schedule.error === null && hasColumns(schedule.data[0], ['schedule_id', 'ends_on', 'purge_by', 'purge_within_days', 'operator_name', 'operator_officer', 'operator_contact', 'notice_ack_floor']).length === 0,
     shapeOf(schedule));
 
-  const signup = await a.client.rpc('complete_signup', { p_code: null, p_nickname: `벗${tag}`, p_version: NOTICE_VERSION, p_schedule_id: schedule.data[0].schedule_id, p_improvement: true, p_contact: false });
+  const signup = await a.client.rpc('complete_signup', { p_code: null, p_nickname: `벗${tag}`, p_version: NOTICE_VERSION, p_schedule_id: schedule.data[0].schedule_id, p_improvement: true });
   check('코드 없이 가입을 마친다(ADR 0225)', signup.error === null && signup.data === true, shapeOf(signup));
 
   const aToken = await tokenOf(a);

@@ -79,7 +79,7 @@ const client = anon();
   /** 선택 답을 비운 채 지나가는 길이 없다 — 물었는데 `null` 인 사람이 생기면 안 된다 */
   const { error: blank } = await client.rpc('complete_signup', {
     p_code: null, p_nickname: '민수', p_version: NOTICE_VERSION,
-    p_schedule_id: await scheduleId(client), p_improvement: null, p_contact: false,
+    p_schedule_id: await scheduleId(client), p_improvement: null,
   });
   check('선택 항목을 비운 채로는 가입할 수 없다', blank !== null, blank?.message ?? '지나가 버렸다');
 }

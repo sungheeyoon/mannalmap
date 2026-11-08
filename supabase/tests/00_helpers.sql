@@ -119,8 +119,7 @@ begin
       notice_schedule_id = (select s.schedule_id from public.current_beta_schedule() s),
       notice_ends_on = (select s.ends_on from public.current_beta_schedule() s),
       notice_ack_at = now(),
-      improvement_consent = false,
-      contact_consent = false
+      improvement_consent = false
   where id = new_id;
 
   /*
