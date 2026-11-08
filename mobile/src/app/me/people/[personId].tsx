@@ -9,7 +9,7 @@ import { STEM_INFO } from '@saju';
 import { useClient } from '@/auth/connected';
 import { Tabs } from '@/chart/parts';
 import { readPersonDetail, type MyReading, type PersonDetail, type Read } from '@/people/data';
-import { AccountNotice, DayMasterChip, NotFound, ScreenFrame, go, styles as shared } from '@/people/parts';
+import { AccountNotice, DayMasterChip, LoadingFrame, NotFound, ScreenFrame, go, styles as shared } from '@/people/parts';
 import { SajuSections } from '@/people/saju-sections';
 import { FailureLine } from '@/ui/failure-line';
 import { StemSymbol } from '@/ui/stem-symbol';
@@ -20,7 +20,6 @@ import { settled } from '@/ui/settled';
 import { UNREACHABLE } from '@/auth/signup';
 import { TopBar } from '@/ui/top-bar';
 import { CardFrame, Tile } from '@/ui/surfaces';
-import { LoadingDots } from '@/ui/loading';
 
 const NO_READING_YET = '아직 받은 사주풀이가 없어요.';
 const NO_COMPAT_YET = '아직 본 궁합이 없어요.';
@@ -44,9 +43,7 @@ export default function PersonScreen() {
 
   if (read === null || read.kind === 'signed-out') {
     return (
-      <ScreenFrame bar={before}>
-        <LoadingDots />
-      </ScreenFrame>
+      <LoadingFrame bar={before} />
     );
   }
   if (read.kind === 'failed') {

@@ -49,7 +49,7 @@ export default function ReadingsScreen() {
   return (
     <SafeAreaView style={styles.screen} edges={['left', 'right']}>
       <TopBar title={SHELF_TITLE} fallback="/me" />
-      <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
+      <ScrollView contentContainerStyle={[styles.content, answer === null && styles.waiting]} keyboardShouldPersistTaps="handled">
         {answer === null && <LoadingDots />}
         {answer !== null && 'refused' in answer && <ReadFailure refused={answer.refused} onRetry={load} />}
         {answer !== null && 'view' in answer && answer.view.view === 'blocked' && (
@@ -231,6 +231,8 @@ function Group({ title, note, children }: { title: string; note: string; childre
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: COLOR.background },
   content: { gap: 16, padding: 16, paddingBottom: 48 },
+  /* 처음 읽는 동안은 위아래 여백을 같게 — 오행 다섯 점이 맨 위 줄 아래 남은 높이의 가운데에 선다(`ui/loading.tsx`) */
+  waiting: { flexGrow: 1, paddingBottom: 16 },
   body: { gap: 24 },
   noticeTitle: { fontFamily: FONT.bold, fontSize: TYPE.lead, color: COLOR.foreground },
   line: { fontFamily: FONT.medium, fontSize: TYPE.body, lineHeight: 24, color: COLOR.secondary },

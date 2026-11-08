@@ -71,8 +71,10 @@ const spoken = (decorative: boolean) =>
   decorative ? ({ 'aria-hidden': true } as const) : ({ accessible: true, accessibilityRole: 'progressbar', accessibilityLabel: LOADING_LABEL } as const);
 
 /**
- * **오행 다섯 점** — 처음 불러오는 동안 본문이 비는 화면의 공용 로딩. 기본 자리는 본문 위쪽 가운데(위 48)다.
- * `inline` 은 화면 안 한 칸(풀이 칸)을 채우는 동안 — 위 여백 없이 그 칸의 가운데다.
+ * **오행 다섯 점** — 처음 불러오는 동안 본문이 비는 화면의 공용 로딩. 기본 자리는 남은 본문 높이를 채우고 그 세로 · 가로 가운데다
+ * (운영자 지시 2026-11-08) — 맨 위 줄 · 머리 · 아래 탭 막대를 뺀 높이의 가운데다. 부모는 높이를 가져야 한다: `flex: 1` 인 판이거나,
+ * ScrollView 면 `contentContainerStyle` 에 `flexGrow: 1` 이다.
+ * `inline` 은 화면 안 한 칸(풀이 칸)을 채우는 동안 — 높이를 채우지 않고 그 칸의 가운데다.
  */
 export function LoadingDots({ inline = false, style }: { inline?: boolean; style?: StyleProp<ViewStyle> }) {
   const shown = useShown();
@@ -152,8 +154,8 @@ function Planet({ size, tone, at, period, still }: { size: number; tone: string;
 }
 
 const styles = StyleSheet.create({
-  place: { alignSelf: 'center', marginTop: 48 },
-  inline: { marginTop: 0, paddingVertical: 24 },
+  place: { flexGrow: 1, alignSelf: 'stretch', alignItems: 'center', justifyContent: 'center' },
+  inline: { flexGrow: 0, alignSelf: 'center', paddingVertical: 24 },
   hidden: { opacity: 0 },
   dots: { flexDirection: 'row', gap: LOADING.dotGap, paddingTop: LOADING.hop },
   dot: { width: LOADING.dot, height: LOADING.dot, borderRadius: LOADING.dot / 2 },

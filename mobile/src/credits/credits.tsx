@@ -61,7 +61,7 @@ export function CreditsScreen() {
   return (
     <View style={styles.screen}>
       <TopBar title={CREDITS_AVAILABLE_LABEL} fallback="/me" />
-      <ScrollView contentContainerStyle={styles.content}>
+      <ScrollView contentContainerStyle={[styles.content, read === null && styles.waiting]}>
         {read === null && <LoadingDots />}
         {read !== null && (
           <>
@@ -109,7 +109,7 @@ export function CreditsHistoryScreen() {
   return (
     <View style={styles.screen}>
       <TopBar title="결제 내역" fallback="/me/credits" />
-      <ScrollView contentContainerStyle={styles.content}>
+      <ScrollView contentContainerStyle={[styles.content, read === null && styles.waiting]}>
         {read === null && <LoadingDots />}
         {read !== null &&
           (!read.ok ? (
@@ -162,6 +162,8 @@ function OrderCard({ order }: { order: PaidOrder }) {
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: COLOR.background },
   content: { flexGrow: 1, gap: 16, padding: 16, paddingBottom: 40 },
+  /* 처음 읽는 동안은 위아래 여백을 같게 — 오행 다섯 점이 맨 위 줄 아래 남은 높이의 가운데에 선다(`ui/loading.tsx`) */
+  waiting: { paddingBottom: 16 },
   count: { gap: 8, paddingHorizontal: 20, paddingVertical: 16 },
   number: { fontSize: TYPE.figure, lineHeight: 48, fontFamily: FONT.bold, color: COLOR.foreground },
   unit: { fontSize: TYPE.lead, fontFamily: FONT.bold },
