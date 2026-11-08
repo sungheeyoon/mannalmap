@@ -38,6 +38,7 @@ import {
 import { useClient } from '@/auth/connected';
 import { UNREACHABLE } from '@/auth/signup';
 import { FailureLine } from '@/ui/failure-line';
+import { LoadingDots } from '@/ui/loading';
 import { CheckRow, PrimaryButton, SecondaryButton } from '@/ui/parts';
 import { COLOR, FONT, RADIUS, TYPE } from '@/ui/tokens';
 import { settled } from '@/ui/settled';
@@ -62,6 +63,7 @@ export function SurveyScreen() {
     return (
       <View style={styles.screen}>
         <TopBar title={SURVEY_COPY.title} fallback="/me/settings" />
+        <LoadingDots />
       </View>
     );
   }

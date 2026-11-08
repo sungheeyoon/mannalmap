@@ -12,7 +12,7 @@ import { followRefusal, ReadFailure } from '@/reading/panel';
 import { BlankBook, BookRow, MakingRow, SHELF_CHIPS, SHELF_TITLE, type ShelfChip } from '@/reading/shelf';
 import { EmptyState } from '@/ui/empty-state';
 import { goTab } from '@/ui/go-tab';
-import { LoadingMark } from '@/ui/loading';
+import { LoadingDots } from '@/ui/loading';
 import { COLOR, FONT, RADIUS, TYPE } from '@/ui/tokens';
 import { settled } from '@/ui/settled';
 import { UNREACHABLE } from '@/auth/signup';
@@ -50,7 +50,7 @@ export default function ReadingsScreen() {
     <SafeAreaView style={styles.screen} edges={['left', 'right']}>
       <TopBar title={SHELF_TITLE} fallback="/me" />
       <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
-        {answer === null && <LoadingMark />}
+        {answer === null && <LoadingDots />}
         {answer !== null && 'refused' in answer && <ReadFailure refused={answer.refused} onRetry={load} />}
         {answer !== null && 'view' in answer && answer.view.view === 'blocked' && (
           <Card>

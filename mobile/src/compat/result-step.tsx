@@ -1,6 +1,6 @@
 import { router, useFocusEffect } from 'expo-router';
 import { useCallback, useState, type ReactNode } from 'react';
-import { ActivityIndicator, StyleSheet, Text } from 'react-native';
+import { StyleSheet, Text } from 'react-native';
 
 import { UNREADABLE_INPUT_NOTE } from '@input/stored';
 
@@ -10,9 +10,9 @@ import { AccountNotice, NotFound, ScreenFrame, styles as shared } from '@/people
 import { FailureLine } from '@/ui/failure-line';
 import { PrimaryButton, SecondaryButton } from '@/ui/parts';
 import { TopBar } from '@/ui/top-bar';
-import { COLOR } from '@/ui/tokens';
 import { Card } from '@/ui/surfaces';
 import { settled } from '@/ui/settled';
+import { LoadingDots } from '@/ui/loading';
 import { UNREACHABLE } from '@/auth/signup';
 
 import { readPair, type PairOutcome } from './data';
@@ -21,7 +21,7 @@ import { CompatResult } from './result';
 function Loading({ bar }: { bar: ReactNode }) {
   return (
     <ScreenFrame bar={bar}>
-      <ActivityIndicator color={COLOR.secondary} style={styles.loading} />
+      <LoadingDots />
     </ScreenFrame>
   );
 }
@@ -95,6 +95,5 @@ export function CompatResultStep({ a, b, back: to }: { a: string; b: string; bac
 }
 
 const styles = StyleSheet.create({
-  loading: { marginTop: 48 },
   refusal: { gap: 8 },
 });

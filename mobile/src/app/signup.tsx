@@ -28,6 +28,7 @@ import { checkNickname, completeSignup, NOT_READY, readSignup, UNREACHABLE, type
 import { RequestDeletion } from '@/settings/leaving';
 import { legalPagesOpen, openLegalPage } from '@/info/legal-web';
 import { AccountNotice } from '@/settings/parts';
+import { LoadingDots } from '@/ui/loading';
 import { Logo } from '@/ui/logo';
 import { CheckRow, Field, FieldLabel, PrimaryButton, SecondaryButton, TextButton } from '@/ui/parts';
 import { COLOR, FONT, TYPE } from '@/ui/tokens';
@@ -84,8 +85,10 @@ function Signup() {
     // eslint-disable-next-line react-hooks/exhaustive-deps -- 끝났다는 답에 한 번 간다
   }, [state?.kind]);
 
-  /* 첫 읽기 동안은 판만 — 안 된다는 말과 폼이 번갈아 비치지 않게 */
-  if (state === null || state.kind === 'done' || state.kind === 'closed') return <SafeAreaView style={styles.screen} />;
+  /* 첫 읽기 동안은 판과 오행 다섯 점만 — 안 된다는 말과 폼이 번갈아 비치지 않게. 끝나 떠나는 동안은 판만 */
+  if (state === null || state.kind === 'done' || state.kind === 'closed') {
+    return <SafeAreaView style={styles.screen}>{state === null && <LoadingDots />}</SafeAreaView>;
+  }
 
   const head = state.kind === 'form' && state.again ? SIGNUP_HEAD.again : SIGNUP_HEAD.first;
 

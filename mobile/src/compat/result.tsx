@@ -1,5 +1,5 @@
 import { useMemo, type ReactNode } from 'react';
-import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { buildMatchPreview, matchBasisOf } from '@matching';
 import { MATCH_INDEX_BADGE, MATCH_INDEX_NOTE, MATCH_INDEX_POLICY_BADGE, MATCH_INDEX_SCALE, MATCH_INDEX_UNSCALED } from '@matching/copy';
@@ -32,6 +32,7 @@ import { ReadFailure, ReadingPanel, useReadingView } from '@/reading/panel';
 import { StemSymbol } from '@/ui/stem-symbol';
 import { COLOR, ELEMENT_TONE, FONT, RADIUS, TYPE } from '@/ui/tokens';
 import { Card, CardFrame, Paper, Tile } from '@/ui/surfaces';
+import { LoadingDots } from '@/ui/loading';
 
 import type { PairOutcome } from './data';
 
@@ -139,7 +140,7 @@ function PairReadingPanel({
   const target = useMemo<ReadingTarget>(() => ({ kind: 'private', personA, personB }), [personA, personB]);
   const { answer, reload } = useReadingView(target);
 
-  if (answer === null) return <ActivityIndicator color={COLOR.secondary} />;
+  if (answer === null) return <LoadingDots inline />;
   if ('refused' in answer) return <ReadFailure refused={answer.refused} onRetry={reload} />;
   if (answer.view.view === 'blocked') {
     return (

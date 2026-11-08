@@ -17,7 +17,7 @@ import { BirthFields, useBirthForm } from '@/people/birth-fields';
 import { openParticipation, saveFailureOf, saveSelfPerson } from '@/reading/chart-writes';
 import { followRefusal } from '@/reading/panel';
 import { ElementSymbol } from '@/ui/element-symbol';
-import { LoadingMark } from '@/ui/loading';
+import { LoadingDots } from '@/ui/loading';
 import { PrimaryButton, SecondaryButton } from '@/ui/parts';
 import { COLOR, FONT, TYPE } from '@/ui/tokens';
 import { CardFrame, Paper } from '@/ui/surfaces';
@@ -58,7 +58,7 @@ export default function HomeScreen() {
     return () => clearInterval(timer);
   }, [client, watching, load]));
 
-  if (home === null) return <LoadingMark />;
+  if (home === null) return <LoadingDots />;
   return (
     <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled" automaticallyAdjustKeyboardInsets>
       <Body home={home} retry={load} />

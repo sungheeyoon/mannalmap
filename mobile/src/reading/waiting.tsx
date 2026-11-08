@@ -3,6 +3,7 @@ import type { OutlineRow } from '@reading/outline';
 import { useEffect, useState } from 'react';
 import { Animated, StyleSheet, Text, View } from 'react-native';
 
+import { LoadingOrbit } from '@/ui/loading';
 import { EASE, MOTION, useReducedMotion } from '@/ui/motion';
 import { Paper, Tile } from '@/ui/surfaces';
 import { COLOR, ELEMENT_TONE, FONT, RADIUS, TYPE } from '@/ui/tokens';
@@ -13,9 +14,13 @@ import { COLOR, ELEMENT_TONE, FONT, RADIUS, TYPE } from '@/ui/tokens';
 export function LoadingState({ rows, waitNote }: { rows: readonly OutlineRow[]; waitNote: string }) {
   return (
     <Paper style={styles.panel}>
-      <View accessibilityRole="progressbar" accessibilityLiveRegion="polite">
-        <Text style={styles.title}>사주의 흐름을 이어 읽고 있어요</Text>
-        <Text style={styles.note}>근거를 확인하고, 단정하지 않는 문장으로 옮기고 있어요.</Text>
+      <View style={styles.head}>
+        {/* 오래 걸리는 자리라 로고의 궤도가 돈다(운영자 결정 2026-11-08, 웹 `reading-waiting.tsx` 와 같다) — 상태는 곁의 글이 읽힌다 */}
+        <LoadingOrbit decorative />
+        <View accessibilityRole="progressbar" accessibilityLiveRegion="polite" style={styles.headText}>
+          <Text style={styles.title}>사주의 흐름을 이어 읽고 있어요</Text>
+          <Text style={styles.note}>근거를 확인하고, 단정하지 않는 문장으로 옮기고 있어요.</Text>
+        </View>
       </View>
       <Text style={styles.note}>
         {waitNote} {READING_LEAVE_SAFE_NOTE}
@@ -68,6 +73,8 @@ export function FlowBand() {
 
 const styles = StyleSheet.create({
   panel: { gap: 12, padding: 20 },
+  head: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  headText: { flex: 1, minWidth: 0 },
   title: { fontFamily: FONT.bold, fontSize: TYPE.lead, color: COLOR.foreground },
   note: { marginTop: 2, fontFamily: FONT.medium, fontSize: TYPE.small, lineHeight: 20, color: COLOR.creamInk },
   band: { height: 8, borderRadius: RADIUS.pill, backgroundColor: COLOR.track, overflow: 'hidden' },

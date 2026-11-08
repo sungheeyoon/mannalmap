@@ -12,7 +12,7 @@ import { FailureLine } from '@/ui/failure-line';
 import { Icon } from '@/ui/icons';
 import { EmptyState } from '@/ui/empty-state';
 import { goTab } from '@/ui/go-tab';
-import { LoadingMark } from '@/ui/loading';
+import { LoadingDots } from '@/ui/loading';
 import { COLOR, FONT, RADIUS, TYPE } from '@/ui/tokens';
 import { TopBar } from '@/ui/top-bar';
 import { CardFrame } from '@/ui/surfaces';
@@ -46,7 +46,7 @@ export default function MatchHistoryScreen() {
     return (
       <View style={styles.screen}>
         {bar}
-        <LoadingMark />
+        <LoadingDots />
       </View>
     );
   }

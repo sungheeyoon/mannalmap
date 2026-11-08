@@ -9,6 +9,7 @@ import { readAccount } from '@/auth/account';
 import { useClient } from '@/auth/connected';
 import { checkNickname } from '@/auth/signup';
 import { FailureLine } from '@/ui/failure-line';
+import { LoadingDots } from '@/ui/loading';
 import { Field, PrimaryButton } from '@/ui/parts';
 import { COLOR, FONT, RADIUS, TYPE } from '@/ui/tokens';
 import { TopBar } from '@/ui/top-bar';
@@ -62,6 +63,7 @@ export function ProfileScreen() {
     return (
       <View style={styles.screen}>
         <TopBar title="프로필" fallback="/me/settings" />
+        <LoadingDots />
       </View>
     );
   }

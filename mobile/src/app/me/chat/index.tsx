@@ -17,7 +17,7 @@ import { FailureLine } from '@/ui/failure-line';
 import { settled } from '@/ui/settled';
 import { noteActivity, readRoomListScreen, type ChatRoom, type RoomListScreen } from '@/chat/reads';
 import { Icon } from '@/ui/icons';
-import { LoadingMark } from '@/ui/loading';
+import { LoadingDots } from '@/ui/loading';
 import { COLOR, FONT, RADIUS, TYPE } from '@/ui/tokens';
 import { KEEP_VIEW } from '@/ui/keep-view';
 
@@ -86,7 +86,7 @@ export default function ChatRoomsScreen() {
           <Text style={styles.snackText}>{TALK_WITHDRAWN}</Text>
         </View>
       )}
-      {screen === null && <LoadingMark />}
+      {screen === null && <LoadingDots />}
       {screen !== null && screen.kind === 'failed' && (
         <View style={styles.pad}>
           <FailureLine onRetry={load}>{screen.message}</FailureLine>

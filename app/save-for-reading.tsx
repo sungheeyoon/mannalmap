@@ -29,6 +29,7 @@ import { BUTTON_PRIMARY, BUTTON_PRIMARY_FACE, BUTTON_SECONDARY_FACE } from './ui
 import { CARD } from './ui/surfaces';
 import { actionAnswer } from './ui/action-answer';
 import { FailureLine } from './ui/failure-line';
+import { LoadingDots } from './ui/loading';
 
 /**
  * 직접 입력한 사람을 **저장해서 풀이까지 가는 길.**
@@ -314,9 +315,9 @@ export function SavePersonForReading({ query }: { query: Query }) {
 
   /*
     **내 사주는 저장됐는데 붙이는 답이 안 났던 탭**(ADR 0143 「덧」) — 「이어오지 못했어요.」에서 새로고침하거나 뒤로 돌아왔다.
-    다시 붙이는 동안은 자리를 비우고, 그래도 답이 안 나면 같은 다시 시도 화면을 세운다.
+    다시 붙이는 동안은 오행 다섯 점(`LoadingDots`)이 서고, 그래도 답이 안 나면 같은 다시 시도 화면을 세운다.
   */
-  if (savedSelf && resumed === 'checking') return null;
+  if (savedSelf && resumed === 'checking') return <LoadingDots className="flex justify-center py-12" />;
   if (context.state === 'in' && context.self !== null && savedSelf && resumed === 'stuck') {
     return (
       <SelfConfirm
@@ -365,7 +366,7 @@ export function SavePersonForReading({ query }: { query: Query }) {
  * 뒤로가기 · 같은 탭에서 `/saju` 로 다시 오는 것이 모두 이 한 자리를 지난다. `#resume-reading` 의 복원 단계가 아닌 까닭은 그 낱말이
  * 첫 복원에서 입력으로 갈아 끼워져(`hash-query.ts`) 새로고침에는 남지 않기 때문이다.
  *
- * - `checking` — 묻는 중이거나 이동하는 중이다. 자리를 비운다
+ * - `checking` — 묻는 중이거나 이동하는 중이다. 오행 다섯 점(`LoadingDots`)이 선다 — 짧으면 안 보인다
  * - `none` — 들고 온 것이 없거나 답이 났다(버림 · 지남 · 남의 것). 보통 흐름
  * - `stuck` — 그래도 답이 안 났다. 같은 다시 시도 화면을 세운다
  *

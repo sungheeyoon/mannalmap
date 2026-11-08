@@ -1,6 +1,6 @@
 import { READING_LEAVE_SAFE_NOTE, READING_OUTLINE_STATE, readingWaitNote } from '@/src/lib/reading/notes';
 
-import { Icon } from '../../ui/icons';
+import { LoadingOrbit } from '../../ui/loading';
 import { GENERATION } from './generation';
 import { READING_COLUMN } from './markdown';
 import type { OutlineRow } from './outline';
@@ -25,9 +25,8 @@ export function LoadingState({ rows }: { rows: readonly OutlineRow[] }) {
       */}
       <div className={READING_COLUMN}>
         <div className="flex items-center gap-3">
-          <span className="grid size-11 shrink-0 place-items-center rounded-full bg-surface text-cream-ink" aria-hidden="true">
-            <Icon name="spark" className="size-5" />
-          </span>
+          {/* 오래 걸리는 자리라 로고의 궤도가 돈다(운영자 결정 2026-11-08) — 상태는 곁의 글이 읽히므로 낭독기에는 숨긴다 */}
+          <LoadingOrbit decorative />
           <div className="min-w-0">
             <p className="text-lead font-semibold text-foreground">사주의 흐름을 이어 읽고 있어요</p>
             <p className="text-small leading-5 text-cream-ink">근거를 확인하고, 단정하지 않는 문장으로 옮기고 있어요.</p>

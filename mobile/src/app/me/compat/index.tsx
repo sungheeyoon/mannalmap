@@ -1,6 +1,6 @@
 import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { useCallback, useState } from 'react';
-import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 
 import { isBlocked } from '@account/index';
 
@@ -15,6 +15,7 @@ import { FailureLine } from '@/ui/failure-line';
 import { COLOR, FONT, TYPE } from '@/ui/tokens';
 import { RowLine } from '@/ui/surfaces';
 import { settled } from '@/ui/settled';
+import { LoadingDots } from '@/ui/loading';
 import { UNREACHABLE } from '@/auth/signup';
 
 /**
@@ -30,7 +31,7 @@ export default function CompatScreen() {
 function Loading() {
   return (
     <ScreenFrame>
-      <ActivityIndicator color={COLOR.secondary} style={styles.loading} />
+      <LoadingDots />
     </ScreenFrame>
   );
 }
@@ -91,7 +92,6 @@ function PickStep({ pickA, pickB }: { pickA?: string; pickB?: string }) {
 }
 
 const styles = StyleSheet.create({
-  loading: { marginTop: 48 },
   summary: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   summaryBody: { flex: 1, minWidth: 0 },
   summaryTitle: { fontSize: TYPE.body, fontFamily: FONT.bold, color: COLOR.foreground },
