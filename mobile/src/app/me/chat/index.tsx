@@ -14,6 +14,7 @@ import { listenLive } from '@/chat/live';
 import { UNREACHABLE } from '@/auth/signup';
 import { AccountNotice } from '@/chat/notices';
 import { FailureLine } from '@/ui/failure-line';
+import { useLatestReads } from '@/ui/latest-reads';
 import { settled } from '@/ui/settled';
 import { noteActivity, readRoomListScreen, type ChatRoom, type RoomListScreen } from '@/chat/reads';
 import { Icon } from '@/ui/icons';
@@ -40,13 +41,21 @@ export default function ChatRoomsScreen() {
     return () => clearTimeout(clear);
   }, [withdrawn]);
 
+  /* 복귀와 실시간 신호가 겹쳐 부른다 — 늦게 온 옛 응답은 버린다 */
+  const reads = useLatestReads();
+
   const load = useCallback(async () => {
+    const asked = reads.ask();
     const next = await settled(readRoomListScreen(client), 'readRoomListScreen', () => ({ kind: 'failed', message: UNREACHABLE }) as const);
-    if (!live.current) return;
+    if (!live.current || !reads.fresh(asked)) return;
     if (next.kind === 'signed-out') router.replace('/');
-    /* 선 화면을 다시 읽다 실패하면 가진 것을 그대로 둔다 — 다음 다시 대조가 메운다 */
-    else setScreen((now) => (now?.kind === 'ready' && next.kind === 'failed' ? now : next));
-  }, [client]);
+    /* 선 화면을 다시 읽다 실패하면 가진 것을 그대로 둔다 — 다음 다시 대조가 메운다. 둔 응답은 그렸다고 적지 않는다 */
+    else if (next.kind === 'failed') setScreen((now) => (now?.kind === 'ready' ? now : next));
+    else {
+      reads.shown(asked);
+      setScreen(next);
+    }
+  }, [client, reads]);
 
   useEffect(() => {
     live.current = true;

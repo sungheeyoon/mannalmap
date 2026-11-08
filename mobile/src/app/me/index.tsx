@@ -21,21 +21,31 @@ import { LoadingDots } from '@/ui/loading';
 import { PrimaryButton, SecondaryButton } from '@/ui/parts';
 import { COLOR, FONT, TYPE } from '@/ui/tokens';
 import { CardFrame, Paper } from '@/ui/surfaces';
+import { useLatestReads } from '@/ui/latest-reads';
 import { settled } from '@/ui/settled';
 
 /** 홈 — 차례는 웹의 `app/me/(home)/page.tsx` 와 같다. 다른 화면에서 돌아올 때마다 다시 읽는다 */
 export default function HomeScreen() {
   const client = useClient();
   const [home, setHome] = useState<Home | null>(null);
+  /* 복귀 · 실시간 신호 · 5초 확인이 겹쳐 부른다 — 늦게 온 옛 응답은 버린다 */
+  const reads = useLatestReads();
 
   const load = useCallback(() => {
+    const asked = reads.ask();
     void settled(readHome(client), 'readHome', homeUnreachable).then((next) => {
-      /* 선 화면을 다시 읽다 못 읽으면 가진 것을 그대로 둔다 — 다음에 돌아올 때 메운다(채팅 목록과 같다) */
-      setHome((now) => (next.kind === 'failed' && (now?.kind === 'home' || now?.kind === 'no-self') ? now : next));
+      if (!reads.fresh(asked)) return;
+      /* 선 화면을 다시 읽다 못 읽으면 가진 것을 그대로 둔다 — 다음에 돌아올 때 메운다(채팅 목록과 같다). 둔 응답은 그렸다고 적지 않는다 */
+      if (next.kind === 'failed') {
+        setHome((now) => (now?.kind === 'home' || now?.kind === 'no-self' ? now : next));
+        return;
+      }
+      reads.shown(asked);
+      setHome(next);
       /* 참여를 여는 문은 아무것도 안 그린다 — 끈 사람은 안 열리고, 못 열어도 홈은 선다(웹의 `openDiscoveryParticipation`) */
       if (next.kind === 'home') void openParticipation(client);
     });
-  }, [client]);
+  }, [client, reads]);
   useFocusEffect(load);
 
   /* 다 된 풀이는 소식으로 온다(ADR 0155) — 계정 채널이 들으면 홈을 다시 읽는다. 다른 탭에 있어도 돌아오면 어차피 다시 읽는다 */
@@ -49,14 +59,16 @@ export default function HomeScreen() {
     if (!watching) return;
     const timer = setInterval(() => {
       if (AppState.currentState !== 'active') return;
+      /* 같은 번호를 받되 그렸다고 적지 않는다 — 줄만 덮는 답이 그 앞에 보낸 홈 전체 읽기를 버리지 않게 */
+      const asked = reads.ask();
       void settled(readRunning(client), 'readRunning', () => null).then((lines) => {
-        if (lines === null) return;
+        if (lines === null || !reads.fresh(asked)) return;
         if (lines.length === 0) load();
         else setHome((now) => (now?.kind === 'home' ? { ...now, running: lines } : now));
       });
     }, 5000);
     return () => clearInterval(timer);
-  }, [client, watching, load]));
+  }, [client, watching, load, reads]));
 
   if (home === null) return <LoadingDots />;
   return (

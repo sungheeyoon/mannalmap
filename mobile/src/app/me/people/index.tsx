@@ -14,6 +14,7 @@ import { goTab } from '@/ui/go-tab';
 import { PersonCard } from '@/people/person-card';
 import { EmptyState } from '@/ui/empty-state';
 import { Field, SecondaryButton } from '@/ui/parts';
+import { useLatestReads } from '@/ui/latest-reads';
 import { settled } from '@/ui/settled';
 import { UNREACHABLE } from '@/auth/signup';
 import { TopBar } from '@/ui/top-bar';
@@ -25,13 +26,22 @@ export default function PeopleScreen() {
   const [read, setRead] = useState<Read<PeopleList> | null>(null);
   const [typed, setTyped] = useState('');
 
+  /* 복귀와 사람 추가 뒤의 다시 읽기가 겹친다 — 늦게 온 옛 응답은 버린다 */
+  const reads = useLatestReads();
+
   const load = useCallback(() => {
+    const asked = reads.ask();
     void settled(readPeopleList(client), 'readPeopleList', () => ({ kind: 'failed', message: UNREACHABLE }) as const).then((next) => {
+      if (!reads.fresh(asked)) return;
       if (next.kind === 'signed-out') router.replace('/');
-      /* 선 화면을 다시 읽다 못 읽으면 가진 것을 그대로 둔다 — 다음에 돌아올 때 메운다(채팅 목록과 같다) */
-      else setRead((now) => (now?.kind === 'ok' && next.kind === 'failed' ? now : next));
+      /* 선 화면을 다시 읽다 못 읽으면 가진 것을 그대로 둔다 — 다음에 돌아올 때 메운다(채팅 목록과 같다). 둔 응답은 그렸다고 적지 않는다 */
+      else if (next.kind === 'failed') setRead((now) => (now?.kind === 'ok' ? now : next));
+      else {
+        reads.shown(asked);
+        setRead(next);
+      }
     });
-  }, [client]);
+  }, [client, reads]);
   /* 다른 화면을 다녀오면 다시 읽는다 — 거기서 사람이 빠졌거나 풀이가 났을 수 있다 */
   useFocusEffect(load);
 

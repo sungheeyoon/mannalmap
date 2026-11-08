@@ -4,7 +4,7 @@ import { PanResponder, Pressable, StyleSheet, Text, View } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 
 import { PHOTO_ADD, PHOTO_UPLOADS_PAUSED } from '@account/copy';
-import { FOCUS_CENTER, PHOTO_MAX_COUNT, PHOTO_NOTE, PHOTO_REMOVED, PHOTO_REMOVE_CONFIRM, PHOTO_REMOVE_NOTE, PHOTO_REMOVE_TITLE, movedPhotos, type PhotoFocus, type PhotoUploadMode } from '@profile';
+import { FOCUS_CENTER, PHOTO_MAX_COUNT, PHOTO_NOTE, PHOTO_REMOVED, PHOTO_REMOVE_CONFIRM, PHOTO_REMOVE_NOTE, PHOTO_REMOVE_TITLE, type PhotoFocus, type PhotoUploadMode } from '@profile';
 
 import { useClient } from '@/auth/connected';
 import { FailureLine } from '@/ui/failure-line';
@@ -16,6 +16,7 @@ import { settled } from '@/ui/settled';
 
 import { useDoneNote } from './parts';
 import { PHOTO_FRAME_TITLE, PhotoFramer, contentPositionOf } from './photo-framer';
+import { moveShownFirst } from './photo-move';
 import { PhotoViewer, type PhotoChoice } from './photo-viewer';
 import { UNREADABLE_PHOTO, addPhoto, movePhoto, photoSource, pickPhotos, removePhoto, replacePhoto, setPhotoFocus, type MyPhoto } from './photos';
 
@@ -219,11 +220,12 @@ export function PhotoGrid({
     const photo = order[from - 1];
     if (busy || photo === undefined || from === to) return;
     begin();
-    setOrder((now) => movedPhotos(now, from, to));
     setSending(true);
-    /* 서버의 자리로 보낸다 — 칸 번호가 아니다. 다시 받은 목록이 칸을 잇는다 */
+    /* 서버의 자리로 보낸다 — 칸 번호가 아니다. 다시 받은 목록이 칸을 잇는다. 실패하면 차례는 곧바로 돌아가고 다시 읽기는 그 뒤다 */
     const serverTo = photos[to - 1]?.position ?? to;
-    const result = await movePhoto(client, photo, serverTo);
+    const result = await moveShownFirst(order, from, to, setOrder, () =>
+      settled(movePhoto(client, photo, serverTo), 'movePhoto', () => ({ ok: false, message: UNREACHABLE }) as const),
+    );
     if (result.ok) await reload();
     else failed(result.message);
     setSending(false);
