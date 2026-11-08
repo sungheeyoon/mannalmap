@@ -3,7 +3,6 @@ import { describe, expect, it } from 'vitest';
 import { computeSaju } from '../saju';
 import {
   CONTROL,
-  LEGACY_PAIR_ASSEMBLY,
   NOTHING_KNOWN,
   isSolo,
   promptSlotsOf,
@@ -40,6 +39,9 @@ const VIEWED_AT = new Date('2026-08-25T13:00:00+09:00');
 const A = computeSaju({ year: 1990, month: 5, day: 12, hour: 14, minute: 30, second: 0, gender: 'male' });
 const B = computeSaju({ year: 1993, month: 11, day: 3, hour: 8, minute: 10, second: 0, gender: 'female' });
 
+/** 4판 이전의 궁합 지시(`plain-v1`) — 운영은 안 부르고 실험의 견줄 짝만 부른다. 옛 컷 원복 조립은 지웠다(ADR 0244) */
+const OLD_PAIR_READING: PromptAssembly = { ...CONTROL, pairReading: 'plain-v1' };
+
 const promptFor = (kind: ReadingKind, assembly: PromptAssembly): string =>
   readingPromptOf(
     readingEvidenceOf(kind, isSolo(kind) ? { a: A } : { a: A, b: B }, VIEWED_AT, assembly.matchInput),
@@ -58,9 +60,12 @@ type Case = {
 };
 
 /**
- * 도달하는 조합 전부 — 운영 넷 · 원복 둘 · 견줄 짝 셋, 그리고 **아직 아무 목록에도 없는 하나.**
+ * 도달하는 조합 전부 — 운영 넷 · 견줄 짝 셋, 그리고 **아직 아무 목록에도 없는 둘.**
  *
- * 마지막 것(`private/guided+sections`)은 변형 목록에 없지만 타입이 막지 않아 **지을 수는
+ * 옛 컷 원복 조립 둘(`private/legacy` · `match/legacy`)과 옛 컷에 4판을 건 조합은 지웠다(ADR 0244) — 조립이 옛 컷을 못 든다.
+ * 그 자리의 `private/plain`(옛 궁합 지시 + 다룰 것의 목록)은 변형 목록에 없지만 타입이 막지 않아 지을 수 있어 남긴다.
+ *
+ * 마지막 것(`private/guided+sections`)도 변형 목록에 없지만 타입이 막지 않아 **지을 수는
  * 있다.** 그 자리에서 「성격을 읽는 순서」가 서는 것이 지금의 판단이고, 세대 하나로
  * 뭉뚱그리면 조용히 사라질 자리라 값으로 든다.
  */
@@ -90,16 +95,10 @@ const CASES: readonly Case[] = [
     slots: ['role', 'rules', 'scope', 'guide', 'voice', 'body', 'detail', 'summary', 'output'],
   },
   {
-    id: 'private/legacy',
+    id: 'private/plain',
     kind: 'private',
-    assembly: LEGACY_PAIR_ASSEMBLY,
+    assembly: OLD_PAIR_READING,
     slots: ['role', 'rules', 'voice', 'claimStrength', 'body', 'summary', 'output'],
-  },
-  {
-    id: 'match/legacy',
-    kind: 'match',
-    assembly: LEGACY_PAIR_ASSEMBLY,
-    slots: ['role', 'rules', 'scope', 'voice', 'body', 'summary', 'output'],
   },
   {
     id: 'private/sections',
@@ -124,12 +123,6 @@ const CASES: readonly Case[] = [
     kind: 'private',
     assembly: { ...CONTROL, pairShape: 'sections-v1' },
     slots: ['role', 'rules', 'guide', 'voice', 'personality', 'body', 'summary', 'output'],
-  },
-  {
-    id: 'match/legacy-v0+guide-v4',
-    kind: 'match',
-    assembly: { ...CONTROL, matchInput: 'legacy-v0', pairReading: 'guide-v4' },
-    slots: ['role', 'rules', 'scope', 'voice', 'body', 'summary', 'output'],
   },
 ];
 
@@ -227,31 +220,12 @@ describe('「본문 뒤에 쓴다」는 지시와 스키마 차례가 같다', (
     expect(head.includes(BEFORE), `${one.id} · 본문 앞`).toBe(!last);
   });
 
-  it('개인 풀이와 운영 궁합은 본문 뒤, 원복 조립의 궁합만 본문 앞이다', () => {
+  it('개인 풀이와 운영 궁합은 본문 뒤, 옛 궁합 지시만 본문 앞이다', () => {
     for (const kind of ['self', 'person', 'private', 'match'] as const) {
       expect(writesSummaryLast(kind), kind).toBe(true);
     }
-    expect(writesSummaryLast('private', LEGACY_PAIR_ASSEMBLY)).toBe(false);
-    expect(writesSummaryLast('match', LEGACY_PAIR_ASSEMBLY)).toBe(false);
-  });
-});
-
-/**
- * **범위 절도 고른 세대를 따른다** — 옛 컷에 읽는 법 4판을 걸어도 세대는 옛 벌이다.
- *
- * `usesPairGuide` 는 인연 궁합의 옛 컷 입력에 4판을 안 건다(원복 조립은 옛 지시를 그대로
- * 내야 한다). 그런데 범위 절만은 한동안 `pairReading` 을 **따로 읽고** 있었다 — 지금은
- * `matchScope` 가 옛 컷에서 먼저 돌아서므로 두 식이 같은 글을 내지만, 같은 사실을 두 자리에서
- * 세는 동안은 **갈릴 수 있는 자리**다. 고른 값을 넘기게 고치고 그것을 여기서 잠근다.
- *
- * **오늘은 안 문다** — 고치기 전에도 이 시험은 초록이었다. 여기 서 있는 까닭은 옛 컷의
- * 범위 문장이 4판을 타기 시작하는 날 그것이 조용히 지나가지 않게 하는 것이다.
- */
-describe('옛 컷에 4판을 걸어도 세대는 옛 벌이다', () => {
-  it('통째로 원복 조립과 같은 글이다', () => {
-    const combo = promptFor('match', { ...CONTROL, matchInput: 'legacy-v0', pairReading: 'guide-v4' });
-
-    expect(combo).toBe(promptFor('match', LEGACY_PAIR_ASSEMBLY));
+    expect(writesSummaryLast('private', OLD_PAIR_READING)).toBe(false);
+    expect(writesSummaryLast('match', OLD_PAIR_READING)).toBe(false);
   });
 });
 

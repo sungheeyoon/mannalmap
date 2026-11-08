@@ -7,7 +7,6 @@ import { SEAT_NAMES } from '@/src/lib/reading/display';
 import { ABSORBABLE_KINDS, RELATION_KIND_KO } from '@/src/lib/saju/relations';
 import {
   CONTROL,
-  LEGACY_PAIR_ASSEMBLY,
   selfSectionTexts,
   READING_POLICY,
   READING_PROMPTS,
@@ -267,14 +266,12 @@ describe('고객이 읽는 글의 계약', () => {
    * 자리에서는 `READING_PROMPTS` 가 그대로 답이다.
    */
   const compatPrompt = (kind: 'private' | 'match') => READING_PROMPTS[kind];
-  /** 원복용 옛 궁합 판 — 인연 궁합은 옛 컷 자료와 짝이어야 조립이 선다 */
+  /** 4판 이전의 궁합 지시(`plain-v1`) — 견줄 짝이 쓰는 옛 궁합 세대다. 옛 컷 원복 조립은 지웠다(ADR 0244) */
+  const OLD_PAIR_READING = { ...CONTROL, pairReading: 'plain-v1' } as const;
   const legacyCompat = (kind: 'private' | 'match') =>
     kind === 'private'
-      ? readingPromptOf(pairEvidence(), LEGACY_PAIR_ASSEMBLY)
-      : readingPromptOf(
-          readingEvidenceOf('match', { a: chart(), b: other() }, VIEWED_AT, 'legacy-v0'),
-          LEGACY_PAIR_ASSEMBLY,
-        );
+      ? readingPromptOf(pairEvidence(), OLD_PAIR_READING)
+      : readingPromptOf(readingEvidenceOf('match', { a: chart(), b: other() }, VIEWED_AT), OLD_PAIR_READING);
 
   /** 「낼 것」이 세우는 절의 수 — `**1. …**` 꼴로 번호가 붙은 것만 센다 */
   const sectionCountOf = (prompt: string) => (prompt.match(/^\*\*\d+\. /gm) ?? []).length;
@@ -345,14 +342,14 @@ describe('고객이 읽는 글의 계약', () => {
    * 제목은 채울 빈칸이고 규칙은 추상이라, 모델은 빈칸을 고른다.
    */
   it('가족·친구 궁합에는 처음 끌리는 절을 세우지 않는다', () => {
-    const asFamily = readingPromptOf(pairEvidence(), LEGACY_PAIR_ASSEMBLY, {
+    const asFamily = readingPromptOf(pairEvidence(), OLD_PAIR_READING, {
       relation: 'family',
     });
 
     expect(asFamily).not.toContain('처음에 끌리는 지점');
     expect(asFamily).toContain('이 사이에는 처음이 없다');
 
-    const asFriend = readingPromptOf(pairEvidence(), LEGACY_PAIR_ASSEMBLY, {
+    const asFriend = readingPromptOf(pairEvidence(), OLD_PAIR_READING, {
       relation: 'friend',
     });
 

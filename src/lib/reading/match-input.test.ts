@@ -8,7 +8,6 @@ import { guideFor, MATCH_READING_GUIDE } from './match-reading-guide';
 import {
   COMPARED_MATCH_INPUTS,
   CONTROL,
-  LEGACY_PAIR_ASSEMBLY,
   NOTHING_KNOWN,
   READING_PROMPTS,
   readingEvidenceOf,
@@ -24,6 +23,8 @@ import { MATCH_INPUT_VARIANTS } from '@/src/lab/reading/variants';
  */
 
 const VIEWED_AT = new Date('2026-08-23T04:00:00Z');
+/** 4판 이전의 궁합 지시(`plain-v1`) — 운영은 안 부르고 실험의 견줄 짝만 부른다. 옛 컷 원복 조립은 지웠다(ADR 0244) */
+const OLD_PAIR_READING = { ...CONTROL, pairReading: 'plain-v1' } as const;
 const A = computeSaju({ year: 1988, month: 2, day: 4, hour: 23, minute: 30, second: 0, gender: 'male' });
 const B = computeSaju({ year: 1994, month: 8, day: 9, hour: 7, minute: 0, second: 0, gender: 'female' });
 
@@ -123,7 +124,8 @@ describe('두 판이 제각기 앞뒤가 맞는다', () => {
 });
 
 /**
- * **운영은 제한형 A 와 읽는 법 4판이다**(2026-09-15). 옛 컷은 원복용 조립으로 그대로 재현된다.
+ * **운영은 제한형 A 와 읽는 법 4판이다**(2026-09-15). 옛 컷 자료는 저장된 풀이를 되짚을 때만 지어지고, 그것으로 프롬프트를
+ * 짓는 조립은 없다(ADR 0244).
  */
 describe('운영 기본값은 제한형 A 와 읽는 법 4판이다', () => {
   const reading = readingEvidenceOf('match', { a: A, b: B }, VIEWED_AT);
@@ -140,21 +142,21 @@ describe('운영 기본값은 제한형 A 와 읽는 법 4판이다', () => {
     expect(legacy.evidence.compatibility).toEqual(full.compatibility);
   });
 
-  it('기본 지시는 4판이고, 원복 조립은 옛 범위 문장을 그대로 든다', () => {
+  it('기본 지시는 4판이고, 옛 궁합 지시에는 4판의 절이 없다', () => {
     expect(readingPromptOf(reading)).toBe(readingPromptOf(reading, CONTROL));
     expect(READING_PROMPTS.match).toContain('## 글을 나누는 법');
     expect(READING_PROMPTS.match).not.toContain('용신을 상대가 가졌다');
 
-    const old = readingPromptOf(legacy, LEGACY_PAIR_ASSEMBLY);
-    expect(old).toContain('두 원국\n사이의 사실은 있지만 각자의 원국 하나에 대한 판정은 없다');
-    // 점수표의 용신 줄은 원복 조립에서도 걷혔다 — 기준점이 이미 담는다(ADR 0113, v17)
+    const old = readingPromptOf(reading, OLD_PAIR_READING);
+    // 점수표의 용신 줄은 옛 궁합 지시에서도 걷혔다 — 기준점이 이미 담는다(ADR 0113, v17)
     expect(old).not.toContain('용신을 상대가 가졌다');
     expect(old).not.toContain('## 글을 나누는 법');
   });
 
-  it('판이 다른 자료와 지시를 붙이면 멈춘다', () => {
+  it('판이 다른 자료와 지시를 붙이면 멈춘다 — 옛 컷 자료는 어느 조립과도 안 붙는다', () => {
     expect(() => readingPromptOf(legacy, CONTROL)).toThrow('판이 다르다');
-    expect(() => readingPromptOf(reading, LEGACY_PAIR_ASSEMBLY)).toThrow('판이 다르다');
+    expect(() => readingPromptOf(legacy, OLD_PAIR_READING)).toThrow('판이 다르다');
+    expect(() => readingPromptOf(reading, { ...CONTROL, matchInput: 'extended-v1' })).toThrow('판이 다르다');
   });
 });
 
@@ -210,7 +212,7 @@ const pathsOf = (value: unknown): Set<string> => {
 
 /**
  * **인연 궁합 4판의 읽는 법** — 경로마다 뜻을 적었으면 그 경로가 제한형 자료에 실제로 있어야 하고, 없는 경로는
- * 설명하지 않는다. 새 안내와 반대로 밀던 공통 문장은 운영 두 궁합에서 걷혔고 원복 조립에는 그대로 있다.
+ * 설명하지 않는다. 새 안내와 반대로 밀던 공통 문장은 운영 두 궁합에서 빠졌고 옛 궁합 지시(`plain-v1`)에는 그대로 있다.
  */
 describe('인연 궁합 4판의 읽는 법', () => {
   const reading = readingEvidenceOf('match', { a: A, b: B }, VIEWED_AT);
@@ -234,12 +236,10 @@ describe('인연 궁합 4판의 읽는 법', () => {
     }
   });
 
-  it('입력만 견준 두 판과 원복 조립에는 읽는 법이 없고, 운영 두 궁합에는 있다', () => {
+  it('입력만 견준 두 판과 옛 궁합 지시에는 읽는 법이 없고, 운영 두 궁합에는 있다', () => {
     for (const { head: compared } of built) expect(compared).not.toContain('## 이 자료를 읽는 법');
-    const legacyMatch = readingEvidenceOf('match', { a: A, b: B }, VIEWED_AT, 'legacy-v0');
     const own = readingEvidenceOf('private', { a: A, b: B }, VIEWED_AT);
-    expect(readingPromptOf(legacyMatch, LEGACY_PAIR_ASSEMBLY)).not.toContain('## 이 자료를 읽는 법');
-    expect(readingPromptOf(own, LEGACY_PAIR_ASSEMBLY)).not.toContain('## 이 자료를 읽는 법');
+    expect(readingPromptOf(own, OLD_PAIR_READING)).not.toContain('## 이 자료를 읽는 법');
     expect(READING_PROMPTS.match).toContain('## 이 자료를 읽는 법');
     expect(READING_PROMPTS.private).toContain('## 이 자료를 읽는 법');
   });
@@ -265,16 +265,16 @@ describe('인연 궁합 4판의 읽는 법', () => {
     }
   });
 
-  it('원복 조립에는 그 문장들이 그대로 있다', () => {
-    const legacyMatch = readingPromptOf(readingEvidenceOf('match', { a: A, b: B }, VIEWED_AT, 'legacy-v0'), LEGACY_PAIR_ASSEMBLY);
-    const legacyPrivate = readingPromptOf(readingEvidenceOf('private', { a: A, b: B }, VIEWED_AT), LEGACY_PAIR_ASSEMBLY);
-    /* 한 줄 요약 절은 원복 조립도 새 규칙(한 줄 비유 · 18자, ADR 0207)을 따른다 — 원복해도 폰 한 줄은 그대로 좁다. 옛 요약 본보기는 거기서도 걷었다 */
+  it('옛 궁합 지시에는 그 문장들이 그대로 있다', () => {
+    const legacyMatch = readingPromptOf(readingEvidenceOf('match', { a: A, b: B }, VIEWED_AT), OLD_PAIR_READING);
+    const legacyPrivate = readingPromptOf(readingEvidenceOf('private', { a: A, b: B }, VIEWED_AT), OLD_PAIR_READING);
+    /* 한 줄 요약 절은 옛 궁합 지시도 새 규칙(한 줄 비유 · 18자, ADR 0207)을 따른다. 옛 요약 본보기는 거기서도 걷었다 */
     for (const phrase of ['「자료 밖」이라고 먼저 적어라', '즉각적인 반응을 원하고 두 번째 분은 속으로 따져 본 뒤']) {
       expect(legacyMatch, phrase).toContain(phrase);
       expect(legacyPrivate, phrase).toContain(phrase);
     }
     expect(legacyMatch).not.toContain('속도만 맞추면 시작과 완성을 함께 가져가는 사이');
-    /* 원복 조립의 궁합만 비유를 본문 앞에 짓는다(`writesSummaryLast`) — 「방금 쓴 본문」이 아니다 */
+    /* 옛 궁합 지시만 비유를 본문 앞에 짓는다(`writesSummaryLast`) — 「방금 쓴 본문」이 아니다 */
     expect(legacyMatch).toContain('이 풀이의 본문으로 볼 때');
     expect(legacyMatch).not.toContain('**본문을 다 쓴 뒤에** 쓴다');
   });

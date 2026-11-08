@@ -4,7 +4,6 @@ import { describe, expect, it } from 'vitest';
 
 import {
   CONTROL,
-  LEGACY_PAIR_ASSEMBLY,
   READING_POLICY,
   READING_PROMPTS,
   readingEvidenceOf,
@@ -21,10 +20,13 @@ const privateOf = (relation: 'partner' | 'family' | 'friend'): string =>
   readingPromptOf(readingEvidenceOf('private', { a: A, b: B }, AT, CONTROL.matchInput, relation), CONTROL, { relation });
 
 /**
- * **상세 궁합을 지어도 다른 kind 의 글자는 한 글자도 안 바뀐다**(#963) — 개인 풀이 · 비공개 궁합 · 옛 컷의 지문은 그 일을 시작하기 전
+ * **상세 궁합을 지어도 다른 kind 의 글자는 한 글자도 안 바뀐다**(#963) — 개인 풀이 · 비공개 궁합의 지문은 그 일을 시작하기 전
  * main(`c0116415`)에서 쟀다. 인연 궁합(`match`)은 상세 궁합 하나다 — 옛 흐름(수락과 함께 나는 글)의 지시는 걷었고(2026-11-04), 그 지문은
  * 걷기 전 main(`a2b7c80c`)의 상세 조립이 같은 표본으로 지은 글의 것이다. 걷기가 상세 지시를 한 글자도 안 바꿨다는 뜻이다.
  * 판본 이름이 열쇠다 — 지시를 정말로 고쳐 판을 올리면 이 표도 함께 고친다. 같은 판에서 글자만 바뀌면 붉다.
+ *
+ * **옛 컷(원복 조립)의 지문은 뺐다**(ADR 0244) — 운영이 부르지 않는 그 조립을 지웠다. 남은 여섯은 지우기 전 main(`dc074b06`)의
+ * 값 그대로다 — 지우기와 파일 나누기가 운영 글자를 한 바이트도 안 바꿨다는 뜻이다.
  */
 const UNCHANGED_AT: Readonly<Record<string, Readonly<Record<string, string>>>> = {
   'reading-prompt-v25|reading-prompt-v23|reading-prompt-detail-v1': {
@@ -34,7 +36,6 @@ const UNCHANGED_AT: Readonly<Record<string, Readonly<Record<string, string>>>> =
     partner: '75602aae354340a1b8663dddcc59235786c2589eed24085b5831ceab0159ff32',
     family: '357ed101b19b5694fc5e6bccf9b66dafff2f607018e829e869c1be6f051c7735',
     friend: 'feb2ae683c89559ec012b2cc15b2fc0300916baeee5b557a9edc9f58e7872031',
-    legacy: '4cc0d2b4b2a2c2b03ce191624d4dadede7b3960e9ed7029a268ea790ea303777',
   },
 };
 
@@ -49,9 +50,6 @@ describe('운영 프롬프트의 글자', () => {
       partner: sha(privateOf('partner')),
       family: sha(privateOf('family')),
       friend: sha(privateOf('friend')),
-      legacy: sha(
-        readingPromptOf(readingEvidenceOf('match', { a: A, b: B }, AT, LEGACY_PAIR_ASSEMBLY.matchInput), LEGACY_PAIR_ASSEMBLY),
-      ),
     }).toEqual(pinned);
   });
 });

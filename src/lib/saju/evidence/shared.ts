@@ -32,6 +32,8 @@ export type MatchInput = (typeof MATCH_INPUTS)[number];
 
 /** 견주는 두 판 — 옛 컷은 비교 대상이 아니다 */
 export const COMPARED_MATCH_INPUTS = ['limited-v1', 'extended-v1'] as const satisfies readonly MatchInput[];
+/** 프롬프트를 지을 수 있는 판 — 옛 컷은 저장된 풀이를 되짚을 자료로만 남고 지시가 없다(ADR 0244) */
+export type ComparedMatchInput = (typeof COMPARED_MATCH_INPUTS)[number];
 
 /**
  * 운영 기본값 — **제한형 A**(2026-09-15 부터, ADR 0067).
@@ -40,7 +42,7 @@ export const COMPARED_MATCH_INPUTS = ['limited-v1', 'extended-v1'] as const sati
  * (`legacy-v0`)은 이미 저장된 풀이를 되짚을 때와 비교용으로만 남는다. 확장형 B 는 동의 범위 밖이라
  * 실험에만 있다.
  */
-export const DEFAULT_MATCH_INPUT: MatchInput = 'limited-v1';
+export const DEFAULT_MATCH_INPUT: ComparedMatchInput = 'limited-v1';
 
 /**
  * 관계 하나가 드는 **잎 전부** — `relations[]` 와 `combinedFormations[]` 가 같은 모양이다.
