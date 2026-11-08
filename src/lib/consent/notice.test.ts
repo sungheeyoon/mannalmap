@@ -169,7 +169,7 @@ describe('처리방침이 갖춰야 하는 것', () => {
    * 빠지면 아무도 읽지 않은 채로 남에게 보이게 된다.
    */
   it('자동 참여와 끄는 길을 관문에서 말한다', () => {
-    expect(text).toContain('자동으로 참여합니다');
+    expect(text).toContain('기본으로 참여합니다');
     expect(text).toContain('끄실 수 있습니다');
   });
 
@@ -613,14 +613,27 @@ describe('풀이 완성 알림 (notice-v18)', () => {
 describe('프로필 사진 · 소개 (notice-v19)', () => {
   const sections = noticeFor({ name: '만세력 운영자', officer: '홍길동', contact: 'ops@example.com' });
   const collected = sections.find((section) => section.title === '무엇을 받고 무엇에 쓰나요')?.lines ?? [];
+  const discovery = sections.find((section) => section.title === '인연 찾기에서 상대에게 보이는 것')?.lines ?? [];
 
-  it('운영자가 정한 네 줄을 글자 그대로 싣는다', () => {
+  it('수집 항목 절에 운영자가 고른 세 줄을 글자 그대로 싣는다', () => {
     for (const line of [
-      '프로필 사진과 소개는 선택 항목입니다. 이용자가 직접 등록한 정보를 저장하고 프로필을 표시하는 데 사용합니다.',
+      '프로필 사진과 소개는 선택 항목입니다. 직접 등록하신 정보를 저장하고, 내 프로필 표시와 인연 찾기의 프로필 소개에 사용합니다.',
       '현재 인연 기능은 준비 중이며, 등록한 사진과 소개는 본인에게만 표시됩니다.',
-      '내 사주와 닉네임이 있으면 인연 찾기에 기본으로 참여하며, 설정에서 끄신 참여는 저절로 다시 켜지지 않습니다. 인연 기능이 열린 뒤 성인 확인을 마친 이용자에게만 프로필 사진과 소개가 다른 참여자에게 표시됩니다. 참여는 설정에서 언제든 끌 수 있습니다.',
       '사진과 소개를 등록하지 않아도 다른 서비스를 이용할 수 있습니다. 등록한 내용은 프로필 화면에서 수정하거나 삭제할 수 있습니다. 이용이 정지된 동안에는 삭제만 할 수 있습니다.',
     ]) expect(collected, line).toContain(line);
+  });
+
+  it('인연 절이 참여 · 공개와 끄기를 운영자가 고른 글자로 든다', () => {
+    expect(discovery[0]).toBe(
+      '인연 기능이 열리면, 내 사주와 닉네임을 등록하고 성인 확인을 마친 이용자는 인연 찾기에 기본으로 참여합니다. 참여 중인 이용자의 프로필은 성인 확인을 마친 다른 참여자에게 소개될 수 있습니다.',
+    );
+    expect(discovery).toContain('인연 찾기 참여는 설정에서 언제든 끌 수 있습니다. 참여를 끄면 프로필 소개가 중단되며, 직접 다시 켜기 전까지 꺼진 상태로 유지됩니다.');
+  });
+
+  /* 수집 항목 절은 목적까지만 — 기본 참여 · 성인 확인 · 끄기는 인연 절 한 곳이다(운영자 2026-11-08) */
+  it('기본 참여 · 성인 확인 · 끄기는 수집 항목 절에 다시 서지 않는다', () => {
+    const text = collected.join(' ');
+    for (const word of ['기본으로 참여', '성인 확인', '끌 수 있습니다']) expect(text, word).not.toContain(word);
   });
 
   /* 「이 정보가 없으면 … 제공하지 못합니다」는 출생 정보의 줄이다 — 사진 · 소개가 그 앞에 서면 없으면 안 되는 것으로 읽힌다 */
@@ -639,12 +652,5 @@ describe('프로필 사진 · 소개 (notice-v19)', () => {
   it('기준은 v18 그대로다 — v18 을 본 회원은 다시 안 보고, 새 판도 기준을 넘는다', () => {
     expect(noticeAckHolds('notice-v18', FLOOR)).toBe(true);
     expect(noticeAckHolds(NOTICE_VERSION, FLOOR)).toBe(true);
-  });
-
-  /* 기본 참여(opt-out)는 지금 동작이고 운영자가 유지했다(2026-11-08). 보이는 것은 열린 뒤 성인 확인을 마친 사람뿐이다(G-158) */
-  it('인연 절 첫 줄은 열리고 참여 중일 때의 일로 읽힌다', () => {
-    const discovery = sections.find((section) => section.title === '인연 찾기에서 상대에게 보이는 것')?.lines ?? [];
-    expect(discovery[0]).toContain('인연 기능이 열리고 참여 중이면 성인 확인을 마친 뒤');
-    expect(collected.join(' ')).toContain('인연 기능이 열린 뒤 성인 확인을 마친 이용자에게만');
   });
 });
