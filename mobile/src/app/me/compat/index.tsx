@@ -43,7 +43,8 @@ function PickStep({ pickA, pickB }: { pickA?: string; pickB?: string }) {
       else setRead((now) => (now?.kind === 'ok' && next.kind === 'failed' ? now : next));
     });
   }, [client]);
-  /* 탭을 옮겨도 이 화면이 남으니 돌아올 때마다 다시 읽는다 — 저장한 사람이 늘면 고를 수 있다. 고르는 칸의 값은 칸이 들고 있어 안 날아간다 */
+  /* 탭을 옮겨도 이 화면이 남으니 돌아올 때마다 다시 읽는다 — 저장한 사람이 늘면 고를 수 있다. 고르는 칸의 값은 칸이 들고 있어 안 날아가고,
+     그사이 지운 사람을 든 칸만 빈다(`dropUnlisted`) */
   useFocusEffect(load);
 
   if (read === null || read.kind === 'signed-out') return <Loading />;

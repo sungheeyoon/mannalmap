@@ -5,7 +5,7 @@ import { BackHandler, Pressable, StyleSheet, Text, View } from 'react-native';
 import { calculateChart } from '@input/chart';
 import { DEFAULT_QUERY, missingAnswer, type Query } from '@input/query';
 import { RELATIONS, RELATION_LABEL, RELATION_NONE_LABEL, RELATION_QUESTION, RELATION_WHY, type Relation } from '@people';
-import { findsInList, pickable } from '@people/pick';
+import { dropUnlisted, findsInList, pickable, stillListed } from '@people/pick';
 import type { CompatSide } from '@saju';
 
 import { useClient } from '@/auth/connected';
@@ -42,14 +42,15 @@ const secondSlot = (people: readonly Choosable[], asked: string | undefined, ask
   return askedFirst !== undefined || people.length >= 2 ? { from: 'saved', personId: '' } : { from: 'typed', query: DEFAULT_QUERY };
 };
 
-const complete = (slot: Slot): boolean =>
-  slot.from === 'saved' ? slot.personId !== '' : calculateChart(slot.query).ok && missingAnswer(slot.query) === null;
+/** 고른 칸은 그 사람이 **지금 목록에 있어야** 찬 것이다 — 칸이 그리는 「골라 주세요」(`PersonChoice`)와 같은 기준 */
+const complete = (slot: Slot, people: readonly Choosable[]): boolean =>
+  slot.from === 'saved' ? stillListed(people, slot.personId) : calculateChart(slot.query).ok && missingAnswer(slot.query) === null;
 
-const gapOf = (slots: Record<CompatSide, Slot>): string | null => {
+const gapOf = (slots: Record<CompatSide, Slot>, people: readonly Choosable[]): string | null => {
   for (const side of SIDES) {
     const slot = slots[side];
     if (slot.from === 'saved') {
-      if (slot.personId === '') return `${SIDE_PERSON[side]}을 골라 주세요.`;
+      if (!stillListed(people, slot.personId)) return `${SIDE_PERSON[side]}을 골라 주세요.`;
       continue;
     }
     const gap = missingAnswer(slot.query);
@@ -68,10 +69,12 @@ const sideOf = (slot: Slot): PairSide => (slot.from === 'saved' ? { from: 'saved
  */
 export function CompatPicker({ people, pickA, pickB }: { people: readonly Choosable[]; pickA?: string; pickB?: string }) {
   const client = useClient();
-  const [slots, setSlots] = useState<Record<CompatSide, Slot>>(() => ({
+  const [held, setSlots] = useState<Record<CompatSide, Slot>>(() => ({
     a: firstSlot(people, pickA),
     b: secondSlot(people, pickB, pickA),
   }));
+  /* 돌아올 때마다 목록을 다시 읽는다(`app/me/compat/index.tsx`) — 그사이 지운 사람을 든 칸은 빈 칸으로 읽는다 */
+  const slots = dropUnlisted(held, people);
   const [relation, setRelation] = useState<Relation | null>(null);
   /** 이 누름이 사이를 건드리는가 — 안 건드린 「모른다」를 답으로 보내면 적어 둔 답이 지워진다 */
   const answered = useRef<string | null>(null);
@@ -80,7 +83,7 @@ export function CompatPicker({ people, pickA, pickB }: { people: readonly Choosa
   const [opening, setOpening] = useState(false);
   const [tried, setTried] = useState(false);
 
-  const chosen = SIDES.every((side) => complete(slots[side]));
+  const chosen = SIDES.every((side) => complete(slots[side], people));
   const sameTwice = slots.a.from === 'saved' && slots.b.from === 'saved' && slots.a.personId !== '' && slots.a.personId === slots.b.personId;
   const pairKey = slots.a.from === 'saved' && slots.b.from === 'saved' && chosen && !sameTwice ? [slots.a.personId, slots.b.personId].sort().join('|') : '';
 
@@ -100,7 +103,7 @@ export function CompatPicker({ people, pickA, pickB }: { people: readonly Choosa
 
   const setSlot = (side: CompatSide, next: Slot) => {
     setFailure(null);
-    setSlots((now) => ({ ...now, [side]: next }));
+    setSlots((now) => ({ ...dropUnlisted(now, people), [side]: next }));
   };
 
   const open = async (answers: PairAnswers) => {
@@ -132,7 +135,7 @@ export function CompatPicker({ people, pickA, pickB }: { people: readonly Choosa
     void open({});
   };
 
-  const gap = gapOf(slots);
+  const gap = gapOf(slots, people);
   const reason = opening ? null : sameTwice ? '같은 사람은 한 번만 고를 수 있어요. 서로 다른 두 사람을 골라 주세요.' : gap;
   const reasonIsError = sameTwice || tried;
 

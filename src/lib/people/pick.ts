@@ -103,3 +103,30 @@ export const findStatus = (typed: string, shown: number): FindStatus => {
   if (typed.trim() === '') return { kind: 'idle' };
   return shown === 0 ? { kind: 'none' } : { kind: 'some', count: shown };
 };
+
+/** 고른 사람이 **지금 목록에 있나** — 빈 값(`''`)과 목록에서 빠진 사람(지웠거나 숨긴 사람)은 아니다 */
+export const stillListed = (people: readonly Pickable[], personId: string): boolean =>
+  personId !== '' && people.some((one) => one.personId === personId);
+
+/** 궁합의 한 칸 — 저장한 사람을 고른 칸이거나 그 밖의 칸(직접 입력)이다. 칸의 나머지 모양은 화면이 든다 */
+type Seat = { readonly from: 'saved'; readonly personId: string } | { readonly from: 'typed' };
+
+/**
+ * 목록에서 빠진 사람을 든 칸을 **비운다**(`personId: ''`) — 고른 뒤 그 사람을 지우고 돌아오면 칸은 「골라 주세요」인데 누름은
+ * 지운 번호로 나가던 것(2026-11-08). 화면의 안내와 실제 검사가 같은 값을 보게 칸은 늘 이 값을 거쳐 읽는다. 바뀐 칸이 없으면
+ * 받은 값을 그대로(같은 참조) 돌려준다.
+ */
+export function dropUnlisted<S extends Seat, K extends string>(
+  slots: Readonly<Record<K, S>>,
+  people: readonly Pickable[],
+): Readonly<Record<K, S>> {
+  let changed = false;
+  const next = { ...slots } as Record<K, S>;
+  for (const key of Object.keys(slots) as K[]) {
+    const slot = slots[key];
+    if (!('personId' in slot) || slot.personId === '' || stillListed(people, slot.personId)) continue;
+    next[key] = { ...slot, personId: '' } as S;
+    changed = true;
+  }
+  return changed ? next : slots;
+}

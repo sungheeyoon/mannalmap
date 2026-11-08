@@ -7,6 +7,8 @@ import { creditsGrantedNow, storeReceiptDecision } from '@reading/store-purchase
 import type { Client } from '@/auth/client';
 import { door, type DoorAnswer } from '@/reading/api';
 
+import type { PlayPrice } from './shelf';
+
 /**
  * **Google Play 결제 — 앱 쪽**(ADR 0230). 라이브러리는 `expo-iap`(Expo 의 인앱결제 안내가 드는 Expo 모듈, Play Billing Library 9.1).
  *
@@ -23,8 +25,8 @@ export const storeAvailable = Platform.OS === 'android';
 /** 네이티브 모듈은 Android 에서만, 쓸 때 연다 — 웹 · iOS 묶음이 그 모듈을 불러 서지 않게 */
 const iap = () => import('expo-iap');
 
-/** 상품 id → Play 가 낸 가격 글자(「₩4,900」). 못 읽은 상품은 빠진다 */
-export type StorePrices = ReadonlyMap<string, string>;
+/** 상품 id → Play 가 낸 가격(글자 「₩4,900」과 통화). 못 읽은 상품은 빠진다 — 화면에 그리는 금액은 `shelf.ts` 의 `shownPrice` */
+export type StorePrices = ReadonlyMap<string, PlayPrice>;
 
 let connected: Promise<boolean> | null = null;
 
@@ -49,9 +51,10 @@ export async function loadStorePrices(): Promise<StorePrices | null> {
   try {
     const { fetchProducts } = await iap();
     const products = await fetchProducts({ skus: STORE_PRODUCTS.map((product) => product.productId), type: 'in-app' });
-    const prices = new Map<string, string>();
+    const prices = new Map<string, PlayPrice>();
     for (const product of products ?? []) {
-      if ('displayPrice' in product && typeof product.displayPrice === 'string') prices.set(product.id, product.displayPrice);
+      if ('displayPrice' in product && typeof product.displayPrice === 'string')
+        prices.set(product.id, { display: product.displayPrice, currency: typeof product.currency === 'string' ? product.currency : '' });
     }
     return prices;
   } catch {

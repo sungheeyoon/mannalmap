@@ -5,6 +5,7 @@ import { Fragment, useEffect, useRef, useState, useTransition } from 'react';
 
 import { calculateChart } from '@/src/lib/input/chart';
 import type { Relation } from '@/src/lib/people';
+import { dropUnlisted, stillListed } from '@/src/lib/people/pick';
 import {
   DEFAULT_QUERY,
   mergeSearchParams,
@@ -92,10 +93,12 @@ export function CompatPicker({ people }: { people: Choosable[] }) {
   const router = useRouter();
   const params = useHashParams();
 
-  const [slots, setSlots] = useState<Record<CompatSide, Slot>>(() => ({
+  const [held, setSlots] = useState<Record<CompatSide, Slot>>(() => ({
     a: slotFrom(params, 'a', people) ?? firstSlot(people),
     b: slotFrom(params, 'b', people) ?? secondSlot(people),
   }));
+  /* 목록이 다시 읽혀 고른 사람이 빠졌으면 그 칸은 빈 칸으로 읽는다 — 칸은 「골라 주세요」인데 누름이 빠진 번호로 나가지 않게 */
+  const slots = dropUnlisted(held, people);
 
   /**
    * **주소가 바뀌면 칸도 따라간다.**
@@ -146,9 +149,9 @@ export function CompatPicker({ people }: { people: Choosable[] }) {
   const [tried, setTried] = useState(false);
   const [left, setLeft] = useState<Record<CompatSide, boolean>>({ a: false, b: false });
 
-  const chosen = SIDES.every((side) => complete(slots[side]));
+  const chosen = SIDES.every((side) => complete(slots[side], people));
   const sameTwice =
-    slots.a.from === 'saved' && slots.b.from === 'saved' && slots.a.personId === slots.b.personId;
+    slots.a.from === 'saved' && slots.b.from === 'saved' && slots.a.personId !== '' && slots.a.personId === slots.b.personId;
 
   /** 차례를 안 타는 쌍 이름 — 첫째·둘째를 바꿔 골라도 같은 쌍이다(DB 와 같은 규율) */
   const pairKey =
@@ -164,7 +167,7 @@ export function CompatPicker({ people }: { people: Choosable[] }) {
 
   const setSlot = (side: CompatSide, next: Slot) => {
     setFailure(null);
-    setSlots((now) => ({ ...now, [side]: next }));
+    setSlots((now) => ({ ...dropUnlisted(now, people), [side]: next }));
   };
 
   const open = async (answers: PairAnswers): Promise<SaveOutcome> => {
@@ -227,7 +230,7 @@ export function CompatPicker({ people }: { people: Choosable[] }) {
   const press = () => {
     if (!chosen || sameTwice) {
       setTried(true);
-      const gap = missing(slots);
+      const gap = missing(slots, people);
       bringTo(gap?.side ?? 'b');
       return;
     }
@@ -235,7 +238,7 @@ export function CompatPicker({ people }: { people: Choosable[] }) {
     startOpening(async () => settle(await open({})));
   };
 
-  const gap = missing(slots);
+  const gap = missing(slots, people);
   const reason = !opening && (gap !== null || sameTwice)
     ? sameTwice ? '같은 사람은 한 번만 고를 수 있어요. 서로 다른 두 사람을 골라 주세요.' : gap?.text ?? null
     : null;
@@ -453,15 +456,15 @@ function useStoredRelation(
  * 그 칸이 다 찼고 **계산도 되는가** — 없는 윤달처럼 다 적었어도 엔진이 거절하는 입력이 있다. 그 까닭은 칸 아래(`BirthFields`)가
  * 말하고, 여기서 막아야 단추가 서버까지 가서 판 맨 아래에 같은 말을 한 번 더 세우지 않는다.
  */
-const complete = (slot: Slot): boolean =>
-  slot.from === 'saved' ? slot.personId !== '' : calculateChart(slot.query).ok && missingAnswer(slot.query) === null;
+const complete = (slot: Slot, people: readonly Choosable[]): boolean =>
+  slot.from === 'saved' ? stillListed(people, slot.personId) : calculateChart(slot.query).ok && missingAnswer(slot.query) === null;
 
 /** 먼저 비어 있는 칸 하나 — 둘을 한꺼번에 늘어놓지 않는다. 어느 칸인지도 준다(그 칸으로 데려가려고) */
-const missing = (slots: Record<CompatSide, Slot>): { side: CompatSide; text: string } | null => {
+const missing = (slots: Record<CompatSide, Slot>, people: readonly Choosable[]): { side: CompatSide; text: string } | null => {
   for (const side of SIDES) {
     const slot = slots[side];
     if (slot.from === 'saved') {
-      if (slot.personId === '') return { side, text: `${SIDE_PERSON[side]}을 골라 주세요.` };
+      if (!stillListed(people, slot.personId)) return { side, text: `${SIDE_PERSON[side]}을 골라 주세요.` };
       continue;
     }
     const gap = missingAnswer(slot.query);
