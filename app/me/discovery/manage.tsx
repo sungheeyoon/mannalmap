@@ -10,7 +10,7 @@ import { savePreferGender, setDiscoveryParticipation } from './actions';
 import { saveLatest } from './save-latest';
 import { PREFER_GENDER_ORDER, type PreferGender } from '@/src/lib/discovery';
 import { PREFER_GENDER_KO } from '@/src/lib/discovery/copy';
-import { participationHelp } from '@/src/lib/matching/opening';
+import { PARTICIPATION_LABEL, participationHelp } from '@/src/lib/matching/opening';
 import { FEEDBACK_UNEXPECTED_NOTE } from '@/src/lib/reading/notes';
 
 import { FailureLine } from '../../ui/failure-line';
@@ -133,9 +133,17 @@ export function PreferenceForm({ current }: { current: PreferGender }) {
  *
  * 누르면 스위치가 곧 넘어가고(`useOptimistic`), 거절되면 서버가 든 값으로 돌아오며 까닭이 선다.
  *
- * **인연이 닫힌 동안에도 선다**(운영자 결정 2026-11-08) — 그때 아래 줄은 「준비 중이라 공개되지 않는다」다(`participationHelp`).
+ * **인연이 닫힌 동안에도 선다**(운영자 결정 2026-11-08) — 이름은 「인연 찾기 참여」, 아래 줄은 열림 · 성인 확인 · 켜짐에 따라 다섯 갈래다(`participationHelp`).
  */
-export function ParticipationToggle({ resting, open }: { resting: boolean; open: boolean | null }) {
+export function ParticipationToggle({
+  resting,
+  open,
+  adultCleared,
+}: {
+  resting: boolean;
+  open: boolean | null;
+  adultCleared: boolean | null;
+}) {
   const [failure, setFailure] = useState<string | null>(null);
   const [working, startWorking] = useTransition();
   const [on, show] = useOptimistic(!resting, (_now: boolean, next: boolean) => next);
@@ -152,8 +160,8 @@ export function ParticipationToggle({ resting, open }: { resting: boolean; open:
   return (
     <>
       <SettingsSwitchRow
-        label="인연 찾기"
-        help={participationHelp(open, on)}
+        label={PARTICIPATION_LABEL}
+        help={participationHelp(open, on, adultCleared)}
         checked={on}
         onChange={toggle}
         busy={working}

@@ -71,19 +71,37 @@ describe('홈의 「열리면 알려 주세요」 줄 (ADR 0223)', () => {
   });
 });
 
-describe('설정의 「인연 찾기」 스위치 아래 줄 (운영자 결정 2026-11-08, G-153 의 6)', () => {
-  it('닫힌 동안은 켜짐 · 꺼짐 모두 「준비 중이라 공개되지 않는다」를 말한다 — 「소개되고 있어요」는 거짓이다', () => {
-    expect(participationHelp(false, true)).toBe(PARTICIPATION_HELP.closed);
-    expect(participationHelp(false, false)).toBe(PARTICIPATION_HELP.closed);
+describe('설정의 「인연 찾기 참여」 스위치 아래 줄 — 상태 다섯 (운영자 결정 2026-11-08, G-153 의 6)', () => {
+  it('준비 중 · 켜짐 — 열리고 성인 확인을 마치면 소개될 수 있다(성인 확인 상태와 무관)', () => {
+    for (const adult of [true, false, null]) expect(participationHelp(false, true, adult)).toBe(PARTICIPATION_HELP.closedOn);
   });
 
-  it('열려 있으면 실제 상태대로 말한다', () => {
-    expect(participationHelp(true, true)).toBe(PARTICIPATION_HELP.on);
-    expect(participationHelp(true, false)).toBe(PARTICIPATION_HELP.off);
+  it('준비 중 · 꺼짐 — 열려도 참여하지 않는다', () => {
+    for (const adult of [true, false, null]) expect(participationHelp(false, false, adult)).toBe(PARTICIPATION_HELP.closedOff);
   });
 
-  it('못 읽었으면 열렸는지 몰라 줄을 안 세운다', () => {
-    expect(participationHelp(null, true)).toBeUndefined();
-    expect(participationHelp(null, false)).toBeUndefined();
+  it('열림 · 성인 확인 전(켜짐) — 확인을 마치면 소개될 수 있다', () => {
+    expect(participationHelp(true, true, false)).toBe(PARTICIPATION_HELP.openBeforeAdult);
+  });
+
+  it('열림 · 참여 중 — 소개될 수 있다(성인 확인을 지났거나 스위치가 꺼져 확인이 필요 없을 때)', () => {
+    expect(participationHelp(true, true, true)).toBe(PARTICIPATION_HELP.openOn);
+  });
+
+  it('열림 · 꺼짐 — 켜면 소개될 수 있다', () => {
+    for (const adult of [true, false, null]) expect(participationHelp(true, false, adult)).toBe(PARTICIPATION_HELP.openOff);
+  });
+
+  it('성인 확인 상태를 못 읽으면 단정하지 않는 확인 전 줄을 고른다', () => {
+    expect(participationHelp(true, true, null)).toBe(PARTICIPATION_HELP.openBeforeAdult);
+  });
+
+  it('열렸는지 못 읽으면 줄을 안 세운다', () => {
+    expect(participationHelp(null, true, true)).toBeUndefined();
+    expect(participationHelp(null, false, null)).toBeUndefined();
+  });
+
+  it('어느 줄도 「지금 소개되고 있다」고 단정하지 않는다', () => {
+    for (const line of Object.values(PARTICIPATION_HELP)) expect(line).not.toMatch(/소개되고 있어요|소개돼요/);
   });
 });

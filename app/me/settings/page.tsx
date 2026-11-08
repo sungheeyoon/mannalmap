@@ -1,10 +1,12 @@
 import { accountLineOf } from '@/src/lib/account/sign-in-line';
+import { adultCheckCleared } from '@/src/lib/matching/adult-check';
 
 import { supabaseOnServer } from '../../auth/server-client';
 import { signedInUser } from '../../auth/signed-in';
 import { redirectToSignIn } from '../../auth/sign-in-redirect';
 import { openOf, readMatchOpen } from '../../match-opening';
 import { readAccount } from '../account';
+import { myAdultCheck } from '../matching/adult-check/state';
 import { myDiscoveryProfile } from '../discovery/discovery-profile';
 import { myPhotos } from '../profile/photos';
 import { SettingsView } from './view';
@@ -23,7 +25,7 @@ export default async function SettingsPage() {
   if (!user) return redirectToSignIn();
 
   /** 온보딩을 안 묻는 화면이라 `self_person_id` 를 안 읽고, 대신 동의 칸과 이름을 함께 읽는다 */
-  const [{ state, row: account }, discoveryProfile, photoless, matchOpen] = await Promise.all([
+  const [{ state, row: account }, discoveryProfile, photoless, matchOpen, adultCheck] = await Promise.all([
     readAccount(supabase, ['status', 'nickname', 'improvement_consent', 'contact_consent', 'notice_version', 'notice_ack_at']),
     myDiscoveryProfile(),
     /*
@@ -35,6 +37,8 @@ export default async function SettingsPage() {
       () => false,
     ),
     readMatchOpen(supabase).then(openOf),
+    /* 참여 스위치 아래 줄이 성인 확인 전인지 가른다 — 못 읽으면 `null` 이고 줄은 단정하지 않는 쪽을 고른다(`participationHelp`) */
+    myAdultCheck(),
   ]);
 
   return (
@@ -45,6 +49,7 @@ export default async function SettingsPage() {
         discoveryProfile,
         photoless,
         matchOpen,
+        adultCleared: adultCheckCleared(adultCheck),
         accountLine: accountLineOf(user.email, user.providers),
         userId: user.id,
         pushAvailable: Boolean(process.env.NEXT_PUBLIC_WEB_PUSH_VAPID_PUBLIC_KEY),

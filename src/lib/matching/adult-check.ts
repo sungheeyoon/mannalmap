@@ -13,12 +13,12 @@ export const ADULT_CHECK_UNAVAILABLE = '지금은 성인 확인을 할 수 없�
  * 운영자 결정 2026-11-02(#947): 자동 참여를 유지하고 안내 화면에 이 뜻을 넣는다.
  */
 export const ADULT_CHECK_VISIBLE =
-  '성인 확인을 마치면 인연 찾기에 기본으로 참여하며, 프로필이 다른 참여자에게 소개될 수 있어요. 참여는 설정에서 끌 수 있어요.';
+  '성인 확인을 마치면 인연 찾기에 참여해요. 내 프로필이 다른 참여자에게 소개될 수 있으며, 참여는 설정에서 끌 수 있어요.';
 /** 이미 참여를 끈 사람에게 — 확인을 마쳐도 다시 켜지지 않는다(`ensure_discovery_participation` 은 `opted_out_at` 이 있으면 안 연다) */
-export const ADULT_CHECK_OPTED_OUT = '지금 인연 찾기 참여가 꺼져 있어요. 설정에서 켤 수 있어요.';
+export const ADULT_CHECK_OPTED_OUT = '인연 찾기 참여가 꺼져 있어요. 성인 확인을 마쳐도 참여 설정은 바뀌지 않아요.';
 
 /**
- * 안내 화면의 참여 줄 — **끈 사람에게 「기본으로 참여」를 말하지 않는다**(조율자 2026-11-08). 새 동의 단계가 아니라 확인 뒤 일어나는 일을 미리
+ * 안내 화면의 참여 줄 — **끈 사람에게 「참여해요」를 말하지 않는다**(운영자 결정 2026-11-08). 새 동의 단계가 아니라 확인 뒤 일어나는 일을 미리
  * 알리는 줄이다. 참여 상태를 못 읽었으면(`null`) 끈 사람인지 몰라 줄을 안 세운다 — 끈 사람에게 「다시 켜진다」고 읽히는 것보다 낫다.
  */
 export function adultCheckParticipationLine(optedOut: boolean | null): string | null {
@@ -31,6 +31,9 @@ export type AdultCheckState = { required: boolean; confirmed: boolean };
 
 /** 스위치가 꺼져 있으면(`required: false`) 언제나 거짓이라 안내가 안 선다 */
 export const adultCheckNeeded = (state: AdultCheckState): boolean => state.required && !state.confirmed;
+
+/** 성인 확인을 지났는가 — 스위치가 꺼져 있으면 확인이 필요 없으니 참(`adult_check_passed` 와 같은 판정). 못 읽었으면 `null` */
+export const adultCheckCleared = (state: AdultCheckState | null): boolean | null => (state === null ? null : !adultCheckNeeded(state));
 
 const within = (pathname: string, base: string) => pathname === base || pathname.startsWith(`${base}/`);
 

@@ -220,8 +220,8 @@ test.describe('대화로 열리는 흐름', () => {
         켜는 일이 없어졌다. 여기 남은 누름은 끄는 것 하나다 — 그 스위치가 켜져 있는 것으로 「지금 켜져 있다」를 잰다.
       */
       await expect(person.page.getByRole('heading', { name: '인연', exact: true })).toBeVisible();
-      await expect(person.page.getByText('내 프로필과 오행 요약이 다른 사람에게 소개되고 있어요.')).toBeVisible();
-      await expect(person.page.getByRole('switch', { name: '인연 찾기' })).toHaveAttribute('aria-checked', 'true');
+      await expect(person.page.getByText('다른 참여자에게 내 프로필이 소개될 수 있어요.', { exact: true })).toBeVisible();
+      await expect(person.page.getByRole('switch', { name: '인연 찾기 참여' })).toHaveAttribute('aria-checked', 'true');
 
       /*
         **참여가 실제로 열리는 자리는 홈이다.** 요약은 DB 가 못 만들어서 앱이 넣고, 그
