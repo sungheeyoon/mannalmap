@@ -6,6 +6,7 @@ import { safeReturnPath } from '@consent/return-path';
 import { DEFAULT_QUERY, missingAnswer } from '@input/query';
 import { ELEMENTS } from '@saju';
 
+import { useClient } from '@/auth/connected';
 import { signOut } from '@/auth/sign-in';
 import { listenLive } from '@/chat/live';
 import { OtherSaju, ReceivedReadings, RunningReadings, SavedPeople } from '@/home/lists';
@@ -24,16 +25,17 @@ import { settled } from '@/ui/settled';
 
 /** 홈 — 차례는 웹의 `app/me/(home)/page.tsx` 와 같다. 다른 화면에서 돌아올 때마다 다시 읽는다 */
 export default function HomeScreen() {
+  const client = useClient();
   const [home, setHome] = useState<Home | null>(null);
 
   const load = useCallback(() => {
-    void settled(readHome(), 'readHome', homeUnreachable).then((next) => {
+    void settled(readHome(client), 'readHome', homeUnreachable).then((next) => {
       /* 선 화면을 다시 읽다 못 읽으면 가진 것을 그대로 둔다 — 다음에 돌아올 때 메운다(채팅 목록과 같다) */
       setHome((now) => (next.kind === 'failed' && (now?.kind === 'home' || now?.kind === 'no-self') ? now : next));
       /* 참여를 여는 문은 아무것도 안 그린다 — 끈 사람은 안 열리고, 못 열어도 홈은 선다(웹의 `openDiscoveryParticipation`) */
-      if (next.kind === 'home') void openParticipation();
+      if (next.kind === 'home') void openParticipation(client);
     });
-  }, []);
+  }, [client]);
   useFocusEffect(load);
 
   /* 다 된 풀이는 소식으로 온다(ADR 0155) — 계정 채널이 들으면 홈을 다시 읽는다. 다른 탭에 있어도 돌아오면 어차피 다시 읽는다 */
@@ -47,14 +49,14 @@ export default function HomeScreen() {
     if (!watching) return;
     const timer = setInterval(() => {
       if (AppState.currentState !== 'active') return;
-      void settled(readRunning(), 'readRunning', () => null).then((lines) => {
+      void settled(readRunning(client), 'readRunning', () => null).then((lines) => {
         if (lines === null) return;
         if (lines.length === 0) load();
         else setHome((now) => (now?.kind === 'home' ? { ...now, running: lines } : now));
       });
     }, 5000);
     return () => clearInterval(timer);
-  }, [watching, load]));
+  }, [client, watching, load]));
 
   if (home === null) return <LoadingMark />;
   return (
@@ -65,6 +67,7 @@ export default function HomeScreen() {
 }
 
 function Body({ home, retry }: { home: Home; retry: () => void }) {
+  const client = useClient();
   const { next } = useLocalSearchParams<{ next?: string }>();
   switch (home.kind) {
     case 'failed':
@@ -78,7 +81,7 @@ function Body({ home, retry }: { home: Home; retry: () => void }) {
       return (
         <View style={styles.failure}>
           <Text style={styles.failureText}>{home.message}</Text>
-          <SecondaryButton label="다시 로그인" onPress={() => void signOut()} />
+          <SecondaryButton label="다시 로그인" onPress={() => void signOut(client)} />
         </View>
       );
     case 'notice':
@@ -136,6 +139,7 @@ function Body({ home, retry }: { home: Home; retry: () => void }) {
 
 /** 내 사주가 없을 때 — 웹의 등록 폼 그대로다(`app/me/onboarding.tsx`). 저장은 앱의 문을 지나고 여덟 글자는 서버가 센다(ADR 0211). 저장하면 홈을 다시 읽어 내 사주 카드가 선다 */
 function NoSelf({ nickname, onSaved }: { nickname: string; onSaved: () => void }) {
+  const client = useClient();
   const form = useBirthForm({ ...DEFAULT_QUERY, name: nickname });
   const [saving, setSaving] = useState(false);
   const [failure, setFailure] = useState<string | null>(null);
@@ -144,7 +148,7 @@ function NoSelf({ nickname, onSaved }: { nickname: string; onSaved: () => void }
   const save = async () => {
     setSaving(true);
     setFailure(null);
-    const answer = await saveSelfPerson(form.query);
+    const answer = await saveSelfPerson(client, form.query);
     setSaving(false);
     if (answer.ok && answer.value.ok) {
       onSaved();

@@ -4,6 +4,7 @@ import { Linking } from 'react-native';
 
 import { READING_PUSH_COPY as COPY } from '@push/app';
 
+import { useClient } from '@/auth/connected';
 import { readPushState, turnOff, turnOn, type PushState } from '@/push/device';
 import { settled } from '@/ui/settled';
 
@@ -17,6 +18,7 @@ import { FailureLine, SettingsGroup, SwitchRow, TextRow } from './parts';
  * 켜면 권한이 없을 때 지금 묻고, 끄면 서버의 이 기기 토큰을 지운다. 기기 설정에서 막혔으면 스위치 대신 차단 안내와 기기 설정 줄이 선다.
  */
 export function PushRow() {
+  const client = useClient();
   const [state, setState] = useState<PushState | null>(null);
   const [busy, setBusy] = useState(false);
   const [failure, setFailure] = useState<string | null>(null);
@@ -24,13 +26,13 @@ export function PushRow() {
   useFocusEffect(
     useCallback(() => {
       let live = true;
-      void settled(readPushState(), 'readPushState', (): PushState => 'unsupported').then((read) => {
+      void settled(readPushState(client), 'readPushState', (): PushState => 'unsupported').then((read) => {
         if (live) setState(read);
       });
       return () => {
         live = false;
       };
-    }, []),
+    }, [client]),
   );
 
   if (state === null || state === 'unsupported') return null;
@@ -39,13 +41,13 @@ export function PushRow() {
     setFailure(null);
     setBusy(true);
     if (next) {
-      const after = await turnOn();
+      const after = await turnOn(client);
       setState(after === 'unsupported' ? 'off' : after);
       if (after === 'off') setFailure(COPY.notAllowed);
       if (after === 'unsupported') setFailure(COPY.onFailed);
     } else {
       /* 서버에서 지운 뒤에만 꺼진다 — 못 지우면 켬 그대로 실패 줄이 선다 */
-      const done = await turnOff();
+      const done = await turnOff(client);
       setState(done ? 'off' : 'on');
       if (!done) setFailure(COPY.offFailed);
     }

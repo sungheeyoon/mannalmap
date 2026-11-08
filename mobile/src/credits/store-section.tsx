@@ -20,6 +20,7 @@ import {
 import { STORE_PRODUCTS } from '@reading/store-products';
 import { storePurchaseNotice, type PurchaseReturn, type StorePurchaseNotice } from '@reading/store-purchase';
 
+import { useClient } from '@/auth/connected';
 import { legalPagesOpen, openLegalPage } from '@/info/legal-web';
 import { FailureLine, settingsText } from '@/settings/parts';
 import { CheckRow, PrimaryButton, TextButton } from '@/ui/parts';
@@ -47,6 +48,7 @@ type Shelf = { kind: 'checking' } | { kind: 'closed' } | { kind: 'open'; product
  * 창은 보유 수를 다시 읽은 **뒤에** 뜬다 — 창의 보유 수와 화면의 보유 카드가 같은 값이다.
  */
 export function StoreSection({ onBought, returnTo }: { onBought: () => Promise<number | null>; returnTo: PurchaseReturn | null }) {
+  const client = useClient();
   const [shelf, setShelf] = useState<Shelf>({ kind: 'checking' });
   const [chosen, setChosen] = useState<string>(STORE_PRODUCTS[0]?.productId ?? '');
   const [agreed, setAgreed] = useState(false);
@@ -63,25 +65,25 @@ export function StoreSection({ onBought, returnTo }: { onBought: () => Promise<n
 
   /** 소비되지 않은 구매를 다시 보낸다 — 선 것이 있으면 결제 완료 줄을 세운다 */
   const resend = useCallback(async (quiet: boolean) => {
-    const credits = await resendUnfinishedPurchases();
+    const credits = await resendUnfinishedPurchases(client);
     if (credits > 0) show(storePurchaseNotice({ ok: true, value: { outcome: 'granted', credits, replayed: false } }));
     else if (!quiet) setNotice(null);
-  }, [show]);
+  }, [client, show]);
 
   const load = useCallback(() => {
     void (async () => {
-      const [open, prices] = await Promise.all([readStoreOpen(), loadStorePrices()]);
+      const [open, prices] = await Promise.all([readStoreOpen(client), loadStorePrices()]);
       if (!open.ok || open.value.open !== 'open' || prices === null) return setShelf({ kind: 'closed' });
       const productIds = STORE_PRODUCTS.filter((product) => prices.has(product.productId)).map((product) => product.productId);
       setShelf(productIds.length === 0 ? { kind: 'closed' } : { kind: 'open', productIds });
       await resend(true);
     })();
-  }, [resend]);
+  }, [client, resend]);
   useFocusEffect(load);
 
   useEffect(
     () =>
-      listenStorePurchases({
+      listenStorePurchases(client, {
         answered: (answer) => show(storePurchaseNotice(answer)),
         pending: () => show(storePurchaseNotice({ ok: true, value: { outcome: 'pending' } })),
         cancelled: () => setRunning(false),
@@ -91,7 +93,7 @@ export function StoreSection({ onBought, returnTo }: { onBought: () => Promise<n
           void resend(false);
         },
       }),
-    [show, resend],
+    [client, show, resend],
   );
 
   const buy = () => {
@@ -100,7 +102,7 @@ export function StoreSection({ onBought, returnTo }: { onBought: () => Promise<n
     setRunning(true);
     void (async () => {
       /* `openPurchase` 는 던지지 않는다 — 실패는 값이다 */
-      if ((await openPurchase(chosen)) === 'failed') show({ kind: 'failed', body: PURCHASE_FAILED_NOTE });
+      if ((await openPurchase(client, chosen)) === 'failed') show({ kind: 'failed', body: PURCHASE_FAILED_NOTE });
     })();
   };
 

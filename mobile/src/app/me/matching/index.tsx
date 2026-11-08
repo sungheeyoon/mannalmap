@@ -9,7 +9,9 @@ import { SELF_NEEDED } from '@matching/copy';
 import { historySummary, type HistorySummary } from '@matching/history';
 import type { InboxMatch } from '@matching/inbox';
 
-import { readAccountState, readDeck, readMatchBooks, readMatches, type DeckPlace, type Read } from '@/matching/doors';
+import { readAccount } from '@/auth/account';
+import { useClient } from '@/auth/connected';
+import { readDeck, readMatchBooks, readMatches, type DeckPlace, type Read } from '@/matching/doors';
 import { readEndedTalks } from '@/matching/talk-doors';
 import { CardSheet, DeckButtons, EmptyDeck, Feedback, PassedConnections, QuietPlace, TalkConfirm, TodayCard } from '@/matching/today';
 import { useDeck } from '@/matching/use-deck';
@@ -27,14 +29,15 @@ const todayLabel = () => new Date().toLocaleDateString('ko-KR', { month: 'long',
  * 후보를 뽑는 자리는 하나다(`my_discovery_board`, ADR 0037). 지나친 인연은 같은 화면의 두 번째 보기다.
  */
 export default function MatchingScreen() {
+  const client = useClient();
   const [loaded, setLoaded] = useState<Loaded | null>(null);
   const [round, setRound] = useState(0);
 
   const load = useCallback(async () => {
-    const account = await readAccountState();
-    const [deck, matches, books, ended] = await Promise.all([readDeck(selfPersonIdOf(account)), readMatches(), readMatchBooks(), readEndedTalks()]);
+    const { state: account } = await readAccount(client);
+    const [deck, matches, books, ended] = await Promise.all([readDeck(client, selfPersonIdOf(account)), readMatches(client), readMatchBooks(client), readEndedTalks(client)]);
     setLoaded({ account, deck, matches, finishedMatchIds: books.ok ? books.value.map((book) => book.matchId) : [], endedTalks: ended.length });
-  }, []);
+  }, [client]);
 
   useFocusEffect(
     useCallback(() => {

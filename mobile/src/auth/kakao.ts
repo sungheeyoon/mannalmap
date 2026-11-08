@@ -1,6 +1,6 @@
 import * as Crypto from 'expo-crypto';
 
-import { supabase } from './client';
+import { supabase, type Client } from './client';
 import { accountAnswer, notReady, type SignInAnswer } from './sign-in';
 import { FAILED } from './signup';
 
@@ -44,10 +44,11 @@ async function kakaoReady(key: string): Promise<KakaoModules | null> {
  */
 export async function signInWithKakao(): Promise<SignInAnswer> {
   const key = nativeAppKey();
-  if (supabase === null || key === null) return notReady();
+  const client = supabase;
+  if (client === null || key === null) return notReady();
 
   try {
-    const { data: current } = await supabase.auth.getSession();
+    const { data: current } = await client.auth.getSession();
     if (current.session === null) {
       const kakao = await kakaoReady(key);
       if (kakao === null) return notReady();
@@ -65,14 +66,14 @@ export async function signInWithKakao(): Promise<SignInAnswer> {
       /* 콘솔에서 OpenID Connect 가 꺼져 있으면 ID 토큰이 없다 */
       if (!idToken) return { kind: 'failed', message: FAILED };
 
-      const { error } = await supabase.auth.signInWithIdToken({ provider: 'kakao', token: idToken, nonce });
+      const { error } = await client.auth.signInWithIdToken({ provider: 'kakao', token: idToken, nonce });
       if (error !== null) {
         console.error('signInWithIdToken kakao', error.code, error.message);
         return { kind: 'failed', message: FAILED };
       }
     }
 
-    return await accountAnswer();
+    return await accountAnswer(client);
   } catch (thrown) {
     console.error('kakao sign-in', thrown);
     return { kind: 'failed', message: FAILED };
@@ -80,10 +81,9 @@ export async function signInWithKakao(): Promise<SignInAnswer> {
 }
 
 /** 이 계정에 카카오 신원이 붙어 있나 — 탈퇴 때 카카오 연결을 끊을지 가른다. 못 읽었으면 거짓이다(끊기 없이 탈퇴는 간다) */
-export async function signedInWithKakao(): Promise<boolean> {
-  if (supabase === null) return false;
+export async function signedInWithKakao(client: Client): Promise<boolean> {
   try {
-    const { data } = await supabase.auth.getSession();
+    const { data } = await client.auth.getSession();
     const providers: unknown = data.session?.user.app_metadata.providers;
     return Array.isArray(providers) && providers.includes('kakao');
   } catch (thrown) {

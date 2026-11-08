@@ -8,6 +8,7 @@ import { RELATIONS, RELATION_LABEL, type Relation } from '@people';
 import { findsInList, pickable } from '@people/pick';
 import type { CompatSide } from '@saju';
 
+import { useClient } from '@/auth/connected';
 import { BirthFields, useBirthForm } from '@/people/birth-fields';
 import { FailureLine, styles as shared } from '@/people/parts';
 import { SameChartAsk, type SameChartQuestion } from '@/people/same-chart-ask';
@@ -65,6 +66,7 @@ const sideOf = (slot: Slot): PairSide => (slot.from === 'saved' ? { from: 'saved
  * 칸마다 저장한 사람과 직접 입력을 고르고, 글은 여기서 안 만든다. 잠긴 모양이어도 누름을 받아 왜 안 되는지 곁에서 말한다.
  */
 export function CompatPicker({ people, pickA, pickB }: { people: readonly Choosable[]; pickA?: string; pickB?: string }) {
+  const client = useClient();
   const [slots, setSlots] = useState<Record<CompatSide, Slot>>(() => ({
     a: firstSlot(people, pickA),
     b: secondSlot(people, pickB, pickA),
@@ -86,14 +88,14 @@ export function CompatPicker({ people, pickA, pickB }: { people: readonly Choosa
     if (pairKey === '') return;
     let alive = true;
     const [first, second] = pairKey.split('|');
-    void settled(readPairRelation(first, second), 'pair_relation_of', () => ({ ok: false }) as const).then((stored) => {
+    void settled(readPairRelation(client, first, second), 'pair_relation_of', () => ({ ok: false }) as const).then((stored) => {
       if (!alive || !stored.ok || answered.current === pairKey) return;
       setRelation(stored.relation);
     });
     return () => {
       alive = false;
     };
-  }, [pairKey]);
+  }, [client, pairKey]);
 
   const setSlot = (side: CompatSide, next: Slot) => {
     setFailure(null);
@@ -103,7 +105,7 @@ export function CompatPicker({ people, pickA, pickB }: { people: readonly Choosa
   const open = async (answers: PairAnswers) => {
     setOpening(true);
     setFailure(null);
-    const opened = await openPair(sideOf(slots.a), sideOf(slots.b), answered.current === pairKey || pairKey === '' ? relation : undefined, answers);
+    const opened = await openPair(client, sideOf(slots.a), sideOf(slots.b), answered.current === pairKey || pairKey === '' ? relation : undefined, answers);
     setOpening(false);
     setQuestion(null);
 

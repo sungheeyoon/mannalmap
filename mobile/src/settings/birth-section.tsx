@@ -6,8 +6,11 @@ import { HOUR_UNKNOWN_LABEL, type Query } from '@input/query';
 import { UNREADABLE_INPUT_NOTE } from '@input/stored';
 import { CALENDAR_KO, GENDER_KO } from '@saju';
 
+import type { Client } from '@/auth/client';
+import { readAccount } from '@/auth/account';
+import { useClient } from '@/auth/connected';
 import { UNREACHABLE } from '@/auth/signup';
-import { readAccount, readPersonDetail } from '@/people/data';
+import { readPersonDetail } from '@/people/data';
 import { EditInputForm } from '@/people/edit-input';
 import { settled } from '@/ui/settled';
 import { COLOR, CONTROL, FONT, RADIUS, TYPE } from '@/ui/tokens';
@@ -17,10 +20,10 @@ import { FailureLine } from './parts';
 
 type MyBirth = { kind: 'none' } | { kind: 'failed' } | { kind: 'unreadable'; message: string } | { kind: 'ready'; personId: string; query: Query };
 
-async function readMyBirth(): Promise<MyBirth> {
-  const { selfPersonId } = await readAccount();
+async function readMyBirth(client: Client): Promise<MyBirth> {
+  const selfPersonId = (await readAccount(client)).row?.self_person_id ?? null;
   if (selfPersonId === null) return { kind: 'none' };
-  const read = await readPersonDetail(selfPersonId);
+  const read = await readPersonDetail(client, selfPersonId);
   const person = read.kind === 'ok' ? read.value.person : null;
   if (person === null) return { kind: 'none' };
   return person.chart.ok ? { kind: 'ready', personId: person.personId, query: person.chart.query } : { kind: 'unreadable', message: person.chart.message };
@@ -31,12 +34,13 @@ async function readMyBirth(): Promise<MyBirth> {
  * 여덟 글자가 바뀌는 저장은 묻는다 — 답을 기다리던 인연 요청이 무효가 된다. 내 사주가 아직 없으면 안 선다(등록은 홈이 이끈다).
  */
 export function BirthSection() {
+  const client = useClient();
   const [birth, setBirth] = useState<MyBirth>({ kind: 'none' });
   const [open, setOpen] = useState(false);
 
   const load = useCallback(async () => {
-    setBirth(await settled(readMyBirth(), 'readMyBirth', () => ({ kind: 'failed' }) as const));
-  }, []);
+    setBirth(await settled(readMyBirth(client), 'readMyBirth', () => ({ kind: 'failed' }) as const));
+  }, [client]);
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect -- 여는 때 읽는다 - setState 는 await 뒤라 렌더와 겹치지 않는다
     void load();

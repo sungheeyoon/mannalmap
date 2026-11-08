@@ -9,7 +9,8 @@ import { useCallback, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { chartPath, type ChartWant } from '@consent/app-destination';
-import { supabase } from '@/auth/client';
+import { ConnectedClient, useClient } from '@/auth/connected';
+import { supabase, type Client } from '@/auth/client';
 import { readGate } from '@/home/gate';
 import { useMatchOpen } from '@/matching/opening';
 import { goHome } from '@/info/go-home';
@@ -32,7 +33,7 @@ const saveWhat = '출생 정보';
  * `self` 는 내 사주를 등록했는가와 등록하면 설 이름 — 못 읽었으면 `null` 이고 그때는 묻지 않는다(`app/self-person-state.ts`).
  * `slots` 가 `null` 이면 못 읽은 것이고 막지 않는다.
  */
-type SaveContext = { state: 'out' } | { state: 'in'; self: { saved: boolean; nickname: string | null } | null; slots: PersonSlots | null };
+type SaveContext = { state: 'out' } | { state: 'in'; client: Client; self: { saved: boolean; nickname: string | null } | null; slots: PersonSlots | null };
 
 function useSaveContext(): SaveContext | null {
   const [context, setContext] = useState<SaveContext | null>(null);
@@ -41,17 +42,23 @@ function useSaveContext(): SaveContext | null {
   useFocusEffect(
     useCallback(() => {
       let live = true;
+      /* 결과 화면은 `/me` 밖이라 이 자리가 껍데기다 — 주소 · 공개 키가 없는 빌드는 로그인 전과 같다(ADR 0241) */
+      const client = supabase;
+      if (client === null) {
+        setContext({ state: 'out' });
+        return;
+      }
       /* 세션을 못 읽었으면 묻지 않고 막지 않는다 — 저장 카드가 서고 저장이 제 실패 줄을 말한다 */
       void settled(
         (async (): Promise<SaveContext> => {
           const gate = await readGate();
           /* 관문은 세션이 없으면 서버를 안 부른다 — 정책이 빈 답을 내 「내 사주가 없다」로 읽히지 않게 여기서 갈린다 */
-          if (gate.kind === 'out' || gate.kind === 'signup' || supabase === null) return { state: 'out' };
-          const [self, slots] = await Promise.all([readSelfPerson(supabase), readSlots()]);
-          return { state: 'in', self, slots };
+          if (gate.kind === 'out' || gate.kind === 'signup') return { state: 'out' };
+          const [self, slots] = await Promise.all([readSelfPerson(client), readSlots(client)]);
+          return { state: 'in', client, self, slots };
         })(),
         'useSaveContext',
-        (): SaveContext => ({ state: 'in', self: null, slots: null }),
+        (): SaveContext => ({ state: 'in', client, self: null, slots: null }),
       ).then((next) => {
         if (live) setContext(next);
       });
@@ -92,10 +99,15 @@ export function SavePersonForReading({ query, want }: { query: Query; want: Char
       </>
     );
   }
-  if (context.self !== null && !context.self.saved && !someoneElse) {
-    return <SelfConfirm query={query} want={want} name={context.self.nickname ?? query.name.trim()} onSomeoneElse={() => setSomeoneElse(true)} onSavedHere={() => setSavedHere(true)} />;
-  }
-  return <SaveCard query={query} slots={context.slots} />;
+  return (
+    <ConnectedClient client={context.client}>
+      {context.self !== null && !context.self.saved && !someoneElse ? (
+        <SelfConfirm query={query} want={want} name={context.self.nickname ?? query.name.trim()} onSomeoneElse={() => setSomeoneElse(true)} onSavedHere={() => setSavedHere(true)} />
+      ) : (
+        <SaveCard query={query} slots={context.slots} />
+      )}
+    </ConnectedClient>
+  );
 }
 
 /**
@@ -133,6 +145,7 @@ function SavedCard() {
 
 /** 저장한 사람으로 저장한다 — 같은 명식이면 먼저 묻고, 자리가 없으면 버튼 자리에 할 일이 선다 */
 function SaveCard({ query, slots }: { query: Query; slots: PersonSlots | null }) {
+  const client = useClient();
   const [saving, setSaving] = useState(false);
   const [failure, setFailure] = useState<string | null>(null);
   /** 물음이 서 있는 동안 저장 버튼은 자리를 비운다 — 답하지 않고 다시 누르면 같은 물음이 또 온다 */
@@ -150,7 +163,7 @@ function SaveCard({ query, slots }: { query: Query; slots: PersonSlots | null })
   const save = async (evenIfSameChart: boolean) => {
     setSaving(true);
     setFailure(null);
-    const saved = await addPerson(query, '', evenIfSameChart);
+    const saved = await addPerson(client, query, '', evenIfSameChart);
     setSaving(false);
     if (saved.ok) {
       setQuestion(null);
@@ -203,6 +216,7 @@ function SaveCard({ query, slots }: { query: Query; slots: PersonSlots | null })
  * 풀이를 대신 누르지 않는다 — 풀이권을 쓰는 누름은 도착한 화면에서 사용자가 한다(ADR 0028).
  */
 function SelfConfirm({ query, want, name, onSomeoneElse, onSavedHere }: { query: Query; want: ChartWant | null; name: string; onSomeoneElse: () => void; onSavedHere: () => void }) {
+  const client = useClient();
   const [saving, setSaving] = useState(false);
   const [failure, setFailure] = useState<string | null>(null);
 
@@ -210,7 +224,7 @@ function SelfConfirm({ query, want, name, onSomeoneElse, onSavedHere }: { query:
     setSaving(true);
     setFailure(null);
     /* 내 사주의 이름은 닉네임이다 — 적은 이름이 비어 있어도 막히지 않게 그 이름으로 보낸다 */
-    const answer = await saveSelfPerson({ ...query, name });
+    const answer = await saveSelfPerson(client, { ...query, name });
     setSaving(false);
     if (answer.ok && answer.value.ok) {
       if (want === 'save') onSavedHere();

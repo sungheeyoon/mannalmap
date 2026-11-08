@@ -4,6 +4,7 @@ import { Modal, PanResponder, Platform, Pressable, StyleSheet, Text, View } from
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Svg, { Circle, Path } from 'react-native-svg';
 
+import { useClient } from '@/auth/connected';
 import { MenuPanel, SheetPanel } from '@/ui/surfaces';
 import { COLOR, FONT, RADIUS, TYPE } from '@/ui/tokens';
 import { settled } from '@/ui/settled';
@@ -34,6 +35,7 @@ export function PhotoViewer({
   onClose: () => void;
   choicesFor: (photo: MyPhoto, position: number) => PhotoChoice[];
 }) {
+  const client = useClient();
   const [menu, setMenu] = useState(false);
   const [source, setSource] = useState<string | null>(null);
   const after = useRef<(() => void) | null>(null);
@@ -46,14 +48,14 @@ export function PhotoViewer({
     // eslint-disable-next-line react-hooks/set-state-in-effect -- 사진이 바뀌면 앞 사진을 먼저 걷는다. 새 주소가 올 때까지 앞 사진을 새 번호로 보이지 않는다
     setSource(null);
     if (photo !== undefined) {
-      void settled(photoSource(photo, userId ?? undefined), 'photoSource', () => null).then((next) => {
+      void settled(photoSource(client, photo, userId ?? undefined), 'photoSource', () => null).then((next) => {
         if (live) setSource(next);
       });
     }
     return () => {
       live = false;
     };
-  }, [photo, userId]);
+  }, [client, photo, userId]);
 
   const latest = useRef({ position, total, onAt });
   useLayoutEffect(() => {

@@ -64,6 +64,7 @@ const { useDeck: runDeck } = moduleOf<{ useDeck: (props: Record<string, unknown>
   '@matching/requests': { REQUEST_UNSURE: '모름' },
   './doors': { passCandidate, restorePassed },
   './talk-doors': { startTalk },
+  '@/auth/connected': { useClient: () => ({}) },
 });
 
 const REFUSED = '오늘은 더 대화를 시작할 수 없어요.';

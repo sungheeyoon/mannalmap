@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { useClient } from '@/auth/connected';
 import { listenLive } from '@/chat/live';
 import { UNREACHABLE } from '@/auth/signup';
 import { AccountNotice, FailureLine, NoRoom } from '@/chat/notices';
@@ -22,27 +23,28 @@ const REREAD_AFTER_MS = 400;
  * 메시지는 방이 합친다. 다시 읽는 것은 활동이 아니다(ADR 0155) — 활동은 사람이 이 화면을 연 한 번이다.
  */
 export default function ChatRoomScreen() {
+  const client = useClient();
   const { matchId } = useLocalSearchParams<{ matchId: string }>();
   const [screen, setScreen] = useState<RoomScreen | null>(null);
   const live = useRef(true);
 
   const load = useCallback(async () => {
-    const next = await settled(readRoomScreen(matchId), 'readRoomScreen', () => ({ kind: 'failed', message: UNREACHABLE }) as const);
+    const next = await settled(readRoomScreen(client, matchId), 'readRoomScreen', () => ({ kind: 'failed', message: UNREACHABLE }) as const);
     if (!live.current) return;
     if (next.kind === 'signed-out') router.replace('/');
     /* 선 화면을 다시 읽다 실패하면 가진 것을 그대로 둔다 — 다음 다시 대조가 메운다 */
     else setScreen((now) => (now?.kind === 'ready' && next.kind === 'failed' ? now : next));
-  }, [matchId]);
+  }, [client, matchId]);
 
   useEffect(() => {
     live.current = true;
-    noteActivity();
+    noteActivity(client);
     // eslint-disable-next-line react-hooks/set-state-in-effect -- load 는 읽기를 기다린 뒤에만 상태를 고친다. 규칙이 await 를 넘어 보지 못한다
     void load();
     return () => {
       live.current = false;
     };
-  }, [load]);
+  }, [client, load]);
 
   useEffect(() => {
     let timer: ReturnType<typeof setTimeout> | null = null;

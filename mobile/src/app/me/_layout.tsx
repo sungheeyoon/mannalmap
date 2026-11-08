@@ -8,6 +8,7 @@ import { gateFor } from '@consent/gate';
 import { withReturnPath } from '@consent/return-path';
 
 import { currentPath } from '@consent/app-destination';
+import { ConnectedClient } from '@/auth/connected';
 import { LiveChannel } from '@/chat/live';
 import { useCounts } from '@/home/counts';
 import { useGate } from '@/home/gate';
@@ -53,15 +54,16 @@ export default function MeLayout() {
   const pathname = usePathname();
   const search = useGlobalSearchParams<{ a?: string; b?: string }>();
   const insets = useSafeAreaInsets();
-  const counts = useCounts(pathname, gate.kind === 'in');
+  /* 들어온 동안의 클라이언트 — 껍데기의 손들은 이것이 있을 때만 묻는다(ADR 0241) */
+  const signedIn = gate.kind === 'in' ? gate.client : null;
+  const counts = useCounts(signedIn, pathname);
   const matchOpen = useMatchOpen();
   useMatchClosedGuard(pathname, matchOpen);
-  useAdultCheckGuard(pathname, currentPath(pathname, search), gate.kind === 'in' && matchOpen !== false);
+  useAdultCheckGuard(matchOpen !== false ? signedIn : null, pathname, currentPath(pathname, search));
   const tabs = tabsWhileShut(TABS, matchOpen);
   /* 결제 중 앱이 꺼진 Google Play 구매를 켤 때 한 번 다시 보낸다 — 서버가 확인 · 지급 · 소비한다(ADR 0230). Android 가 아니면 아무것도 안 한다 */
-  const signedIn = gate.kind === 'in';
   useEffect(() => {
-    if (signedIn) void resendUnfinishedPurchases();
+    if (signedIn !== null) void resendUnfinishedPurchases(signedIn);
   }, [signedIn]);
 
   if (gate.kind === 'checking') return <View style={styles.screen} />;
@@ -72,95 +74,100 @@ export default function MeLayout() {
     /* 끝난 뒤 지나가는 곳은 설정뿐이라 탭도 머리도 안 선다 — 눌러 봐야 안내로 되돌아온다 */
     if (gateFor(pathname, gate.account, gate.notice, new Date()) !== null) return <Redirect href={'/closed' as never} />;
     return (
-      <View style={styles.screen}>
-        <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: COLOR.background } }} />
-      </View>
+      <ConnectedClient client={gate.client}>
+        <View style={styles.screen}>
+          <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: COLOR.background } }} />
+        </View>
+      </ConnectedClient>
     );
   }
   const failure =
     gate.kind === 'failed' ? (
-      <SafeAreaView style={[styles.screen, styles.failed, held && styles.over]}>
+      <SafeAreaView style={[styles.screen, styles.failed, held !== null && styles.over]}>
         <Text style={styles.failure}>{gate.message}</Text>
         <SecondaryButton label="다시 시도하기" onPress={retry} />
       </SafeAreaView>
     ) : null;
   /* 한 번도 못 들어온 사람은 안내만 본다. 들어와 있던 사람은 안내가 화면을 가릴 뿐 아래 스택은 살아 있다 — 다시 시도하면 쓰던 글과 스크롤이 그대로다 */
-  if (gate.kind === 'failed' && !held) return failure;
+  const client = gate.kind === 'in' ? gate.client : held;
+  if (client === null) return failure;
 
   const badges: Record<string, number> = { '/me/chat': counts.chat };
 
   return (
-    <View style={styles.screen}>
-      <LiveChannel />
-      {appHeadStands(pathname, search) && (
-      <View style={[styles.header, { paddingTop: insets.top }]}>
-        <Pressable accessibilityRole="link" accessibilityLabel={`${SERVICE_NAME} 홈`} onPress={() => goTab('/me')} style={styles.logo}>
-          <Logo size={32} />
-        </Pressable>
-        <View style={styles.tools}>
-          {counts.credits !== null && (
-            <Pressable accessibilityRole="button" accessibilityLabel={counts.credits} onPress={() => router.push('/me/credits' as never)} style={styles.tool}>
-              <Icon name="ticket" size={20} />
-            </Pressable>
-          )}
-          <Pressable accessibilityRole="link" accessibilityLabel="소식" onPress={() => router.push('/me/requests' as never)} style={styles.tool}>
-            <Icon name="bell" size={20} />
-            {counts.news > 0 && (
-              <View style={[styles.badge, styles.toolBadge]}>
-                <Text style={styles.badgeText}>{counts.news}</Text>
-              </View>
-            )}
+    <ConnectedClient client={client}>
+      <View style={styles.screen}>
+        <LiveChannel client={client} />
+        {appHeadStands(pathname, search) && (
+        <View style={[styles.header, { paddingTop: insets.top }]}>
+          <Pressable accessibilityRole="link" accessibilityLabel={`${SERVICE_NAME} 홈`} onPress={() => goTab('/me')} style={styles.logo}>
+            <Logo size={32} />
           </Pressable>
-          <Pressable accessibilityRole="link" accessibilityLabel="설정" onPress={() => router.push('/me/settings' as never)} style={styles.tool}>
-            <Icon name="gear" size={20} />
-          </Pressable>
-        </View>
-      </View>
-      )}
-
-      {/* 머리가 선 탭 첫 화면 아래에만 선다 — 하위 화면은 맨 위 줄(`ui/top-bar.tsx`)이 안전 영역을 내서, 그 위에 얹으면 상태 표시줄 밑으로 들어간다 */}
-      {appHeadStands(pathname, search) && <WarningNotice />}
-
-      <View style={styles.body}>
-        <Stack
-          screenOptions={({ route }) => ({
-            headerShown: false,
-            contentStyle: { backgroundColor: COLOR.background },
-            animation: TAB_ROUTES.has(route.name) ? 'none' : 'default',
-          })}
-        />
-      </View>
-
-      {dockStands(pathname) && (
-        <View accessibilityRole="tablist" style={[styles.dock, { paddingBottom: insets.bottom + 6 }]}>
-          {tabs.map((tab) => {
-            const active = isActive(pathname, tab.href);
-            const count = badges[tab.href] ?? 0;
-            return (
-              <Pressable
-                key={tab.href}
-                accessibilityRole="tab"
-                accessibilityState={{ selected: active }}
-                onPress={() => goTab(tab.href)}
-                style={styles.tab}
-              >
-                <View {...KEEP_VIEW} style={[styles.tabMark, active && styles.tabMarkOn]}>
-                  <Icon name={tab.icon} color={active ? ELEMENT_TONE.木.ink : COLOR.secondary} />
-                </View>
-                <Text style={[styles.tabLabel, active && styles.tabLabelOn]}>{tab.label}</Text>
-                {count > 0 && (
-                  <View style={[styles.badge, styles.tabBadge]}>
-                    <Text style={styles.badgeText}>{count}</Text>
-                  </View>
-                )}
+          <View style={styles.tools}>
+            {counts.credits !== null && (
+              <Pressable accessibilityRole="button" accessibilityLabel={counts.credits} onPress={() => router.push('/me/credits' as never)} style={styles.tool}>
+                <Icon name="ticket" size={20} />
               </Pressable>
-            );
-          })}
+            )}
+            <Pressable accessibilityRole="link" accessibilityLabel="소식" onPress={() => router.push('/me/requests' as never)} style={styles.tool}>
+              <Icon name="bell" size={20} />
+              {counts.news > 0 && (
+                <View style={[styles.badge, styles.toolBadge]}>
+                  <Text style={styles.badgeText}>{counts.news}</Text>
+                </View>
+              )}
+            </Pressable>
+            <Pressable accessibilityRole="link" accessibilityLabel="설정" onPress={() => router.push('/me/settings' as never)} style={styles.tool}>
+              <Icon name="gear" size={20} />
+            </Pressable>
+          </View>
         </View>
-      )}
+        )}
 
-      {failure}
-    </View>
+        {/* 머리가 선 탭 첫 화면 아래에만 선다 — 하위 화면은 맨 위 줄(`ui/top-bar.tsx`)이 안전 영역을 내서, 그 위에 얹으면 상태 표시줄 밑으로 들어간다 */}
+        {appHeadStands(pathname, search) && <WarningNotice />}
+
+        <View style={styles.body}>
+          <Stack
+            screenOptions={({ route }) => ({
+              headerShown: false,
+              contentStyle: { backgroundColor: COLOR.background },
+              animation: TAB_ROUTES.has(route.name) ? 'none' : 'default',
+            })}
+          />
+        </View>
+
+        {dockStands(pathname) && (
+          <View accessibilityRole="tablist" style={[styles.dock, { paddingBottom: insets.bottom + 6 }]}>
+            {tabs.map((tab) => {
+              const active = isActive(pathname, tab.href);
+              const count = badges[tab.href] ?? 0;
+              return (
+                <Pressable
+                  key={tab.href}
+                  accessibilityRole="tab"
+                  accessibilityState={{ selected: active }}
+                  onPress={() => goTab(tab.href)}
+                  style={styles.tab}
+                >
+                  <View {...KEEP_VIEW} style={[styles.tabMark, active && styles.tabMarkOn]}>
+                    <Icon name={tab.icon} color={active ? ELEMENT_TONE.木.ink : COLOR.secondary} />
+                  </View>
+                  <Text style={[styles.tabLabel, active && styles.tabLabelOn]}>{tab.label}</Text>
+                  {count > 0 && (
+                    <View style={[styles.badge, styles.tabBadge]}>
+                      <Text style={styles.badgeText}>{count}</Text>
+                    </View>
+                  )}
+                </Pressable>
+              );
+            })}
+          </View>
+        )}
+
+        {failure}
+      </View>
+    </ConnectedClient>
   );
 }
 

@@ -19,10 +19,12 @@ import {
 } from '@consent/signup';
 import { NICKNAME_AVAILABLE_NOTE, NICKNAME_MAX, NICKNAME_MIN, NICKNAME_TAKEN_NOTE, missingNickname, nicknameKey } from '@profile';
 
+import { ConnectedClient, useClient } from '@/auth/connected';
+import { supabase } from '@/auth/client';
 import { arriveAt } from '@/auth/arrive';
 import { MatchingSteps } from '@/auth/matching-steps';
 import { signOut } from '@/auth/sign-in';
-import { checkNickname, completeSignup, readSignup, UNREACHABLE, type SignupState } from '@/auth/signup';
+import { checkNickname, completeSignup, NOT_READY, readSignup, UNREACHABLE, type SignupState } from '@/auth/signup';
 import { RequestDeletion } from '@/settings/leaving';
 import { legalPagesOpen, openLegalPage } from '@/info/legal-web';
 import { AccountNotice } from '@/settings/parts';
@@ -39,6 +41,27 @@ const SIGN_OUT_FAILED = '로그아웃하지 못했어요. 다시 시도해 주�
  * 가입 — 웹의 `/signup` 과 같은 한 폼이다(ADR 0042). 마치면 이 자리를 들고 온 목적지 `next` 로 갈아 끼운다(ADR 0128 · 0213).
  */
 export default function SignupScreen() {
+  /* 가입은 `/me` 밖이라 이 화면이 껍데기다 — 주소 · 공개 키가 없는 빌드는 그 까닭만 말하고, 아래는 연결된 클라이언트만 본다(ADR 0241) */
+  if (supabase === null) {
+    return (
+      <SafeAreaView style={styles.screen}>
+        <ScrollView contentContainerStyle={styles.content}>
+          <Card>
+            <Text style={styles.line}>{NOT_READY}</Text>
+          </Card>
+        </ScrollView>
+      </SafeAreaView>
+    );
+  }
+  return (
+    <ConnectedClient client={supabase}>
+      <Signup />
+    </ConnectedClient>
+  );
+}
+
+function Signup() {
+  const client = useClient();
   const { next } = useLocalSearchParams<{ next?: string }>();
   const [state, setState] = useState<SignupState | null>(null);
   const finish = () => arriveAt(safeReturnPath(next));
@@ -47,13 +70,13 @@ export default function SignupScreen() {
   const [reads, setReads] = useState(0);
   useEffect(() => {
     let live = true;
-    void settled(readSignup(), 'readSignup', () => ({ kind: 'failed', message: UNREACHABLE }) as const).then((next) => {
+    void settled(readSignup(client), 'readSignup', () => ({ kind: 'failed', message: UNREACHABLE }) as const).then((next) => {
       if (live) setState(next);
     });
     return () => {
       live = false;
     };
-  }, [reads]);
+  }, [client, reads]);
 
   useEffect(() => {
     if (state?.kind === 'done') finish();
@@ -105,6 +128,7 @@ export default function SignupScreen() {
 }
 
 function SignupForm({ form, onDone }: { form: Extract<SignupState, { kind: 'form' }>; onDone: () => void }) {
+  const client = useClient();
   const { needsName, again, scheduleId } = form;
   const [nickname, setNickname] = useState('');
   const [fourteen, setFourteen] = useState(false);
@@ -136,7 +160,7 @@ function SignupForm({ form, onDone }: { form: Extract<SignupState, { kind: 'form
     setCheckTried(false);
     setFailure(null);
     setChecking(true);
-    const result = await checkNickname(nickname);
+    const result = await checkNickname(client, nickname);
     setChecking(false);
     if (result.ok) setChecked({ key: nicknameKey(nickname), available: result.available });
     else setFailure({ message: result.message, field: 'nickname' });
@@ -151,7 +175,7 @@ function SignupForm({ form, onDone }: { form: Extract<SignupState, { kind: 'form
     }
     setTried(false);
     setWorking(true);
-    const result = await completeSignup({
+    const result = await completeSignup(client, {
       nickname,
       scheduleId,
       improvement: chosen.improvement === true,
@@ -260,12 +284,13 @@ function NoticeLine({ children }: { children: React.ReactNode }) {
 
 /** 나가는 길 — 다른 계정으로 들어와야 하는 사람, 가입하지 않고 떠나는 사람의 자리. 적어 둔 출생 정보는 앞 화면에 그대로 있다 */
 function LeaveLink() {
+  const client = useClient();
   const [leaving, setLeaving] = useState(false);
   const [failed, setFailed] = useState(false);
   const leave = async () => {
     setLeaving(true);
     setFailed(false);
-    const left = await signOut();
+    const left = await signOut(client);
     setLeaving(false);
     if (!left) {
       setFailed(true);

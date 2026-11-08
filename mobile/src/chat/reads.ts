@@ -1,16 +1,17 @@
-import { accountStateOf, type AccountState } from '@account/index';
+import type { AccountState } from '@account/index';
 import { closedReasonOf, partnerNameOf, roomHeadingOf, roomNoticeOf, TOO_LONG_TEXT, checkBody, sendOutcomeOf, type ClosedReason } from '@chat';
 import type { MatchDetail } from '@chat/room/detail';
 import { talkLineOf, type TalkLine } from '@chat/room/talk';
 import { MESSAGE_WINDOW, messagesOf, type ChatMessage } from '@chat/room/message';
 import type { SendResult } from '@chat/room/pending';
 import { rpcArgs } from '@db';
-import { userFacingDbMessage } from '@db-error';
+import { answerOfThrown, userFacingDbMessage } from '@db-error';
 import { activityBandOf, type ActivityBand } from '@presence';
 import { focusOf, focusesOf, leadFocusOf, type PhotoFocus } from '@profile';
 
-import { supabase } from '@/auth/client';
-import { NOT_READY } from '@/auth/signup';
+import type { Client } from '@/auth/client';
+import { readAccount } from '@/auth/account';
+import type { Done } from '@/answer';
 import { readDetail } from '@/matching/talk-doors';
 import { settled } from '@/ui/settled';
 
@@ -79,30 +80,13 @@ const roomOf = (row: RoomRow): ChatRoom | null => {
 /** 화면이 없는 까닭 — 로그인이 없다 · 못 읽었다 */
 export type Unread = { readonly kind: 'signed-out' } | { readonly kind: 'failed'; readonly message: string };
 
-export const currentUserId = async (): Promise<string | null> => {
-  if (supabase === null) return null;
-  const { data } = await supabase.auth.getSession();
+export const currentUserId = async (client: Client): Promise<string | null> => {
+  const { data } = await client.auth.getSession();
   return data.session?.user.id ?? null;
 };
 
-type AccountRow = { readonly state: AccountState; readonly nickname: string | null; readonly intro: string | null };
-
-/** 계정이 어디에 서 있나 — 판정은 `accountStateOf` 하나다(ADR 0048) */
-async function readAccount(): Promise<AccountRow> {
-  if (supabase === null) return { state: { kind: 'unreachable' }, nickname: null, intro: null };
-  const { data, error } = await supabase.from('app_user').select('status, self_person_id, nickname, intro').maybeSingle();
-  if (error !== null) return { state: accountStateOf({ ok: false, reason: 'unreachable' }), nickname: null, intro: null };
-  if (data === null) return { state: accountStateOf({ ok: false, reason: 'missing' }), nickname: null, intro: null };
-  return {
-    state: accountStateOf({ ok: true, account: { status: data.status, selfPersonId: data.self_person_id } }),
-    nickname: data.nickname,
-    intro: data.intro,
-  };
-}
-
-async function readRooms(): Promise<{ ok: true; rooms: readonly ChatRoom[] } | { ok: false; message: string }> {
-  if (supabase === null) return { ok: false, message: NOT_READY };
-  const { data, error } = await supabase.rpc('my_chat_rooms');
+async function readRooms(client: Client): Promise<{ ok: true; rooms: readonly ChatRoom[] } | { ok: false; message: string }> {
+  const { data, error } = await client.rpc('my_chat_rooms');
   /* 목록 화면의 본체다 — 못 읽으면 빈 목록이 아니라 실패다(ADR 0078) */
   if (error !== null) return { ok: false, message: userFacingDbMessage(error, 'my_chat_rooms') };
   return {
@@ -115,9 +99,8 @@ async function readRooms(): Promise<{ ok: true; rooms: readonly ChatRoom[] } | {
 }
 
 /** 상대의 소개 — 범위 문이 연 값에서만 받는다. 꾸밈이라 못 읽으면 없다(ADR 0078) */
-async function readIntro(matchId: string): Promise<string | null> {
-  if (supabase === null) return null;
-  const { data, error } = await supabase.rpc('my_match_scope', { p_match_id: matchId });
+async function readIntro(client: Client, matchId: string): Promise<string | null> {
+  const { data, error } = await client.rpc('my_match_scope', { p_match_id: matchId });
   if (error !== null) {
     console.error('my_match_scope', error.code);
     return null;
@@ -139,9 +122,8 @@ export type RoomListScreen =
 export type RequestRow = { readonly requestId: string; readonly kind: string; readonly direction: 'sent' | 'received'; readonly status: string; readonly counterpartUserId: string };
 
 /** 꾸밈 쪽이라 못 읽으면 빈 목록이다(ADR 0078) — 그 방은 대화로 안 갈리고 지금 모양으로 선다 */
-async function readRequestRows(): Promise<readonly RequestRow[]> {
-  if (supabase === null) return [];
-  const { data, error } = await supabase.rpc('my_match_requests');
+async function readRequestRows(client: Client): Promise<readonly RequestRow[]> {
+  const { data, error } = await client.rpc('my_match_requests');
   if (error !== null) {
     console.error('my_match_requests', error.code);
     return [];
@@ -153,9 +135,9 @@ async function readRequestRows(): Promise<readonly RequestRow[]> {
   );
 }
 
-export async function readRoomListScreen(): Promise<RoomListScreen> {
-  if ((await currentUserId()) === null) return { kind: 'signed-out' };
-  const [account, rooms, requests] = await Promise.all([readAccount(), readRooms(), readRequestRows()]);
+export async function readRoomListScreen(client: Client): Promise<RoomListScreen> {
+  if ((await currentUserId(client)) === null) return { kind: 'signed-out' };
+  const [account, rooms, requests] = await Promise.all([readAccount(client), readRooms(client), readRequestRows(client)]);
   if (isStopped(account.state)) return { kind: 'blocked', state: account.state };
   if (!rooms.ok) return { kind: 'failed', message: rooms.message };
   return { kind: 'ready', rooms: rooms.rooms, hasSelf: account.state.kind === 'active' && account.state.selfPersonId !== null, requests };
@@ -195,10 +177,10 @@ export type RoomScreen =
   | { readonly kind: 'not-found' }
   | { readonly kind: 'ready'; readonly view: RoomView };
 
-export async function readRoomScreen(matchId: string): Promise<RoomScreen> {
-  const userId = await currentUserId();
+export async function readRoomScreen(client: Client, matchId: string): Promise<RoomScreen> {
+  const userId = await currentUserId(client);
   if (userId === null) return { kind: 'signed-out' };
-  const [account, rooms] = await Promise.all([readAccount(), readRooms()]);
+  const [account, rooms] = await Promise.all([readAccount(client), readRooms(client)]);
   if (isStopped(account.state)) return { kind: 'blocked', state: account.state };
   if (!rooms.ok) return { kind: 'failed', message: rooms.message };
   const room = rooms.rooms.find((one) => one.matchId === matchId);
@@ -207,15 +189,15 @@ export async function readRoomScreen(matchId: string): Promise<RoomScreen> {
   const notice = roomNoticeOf(room);
   const open = notice === null && room.partnerUserId !== null;
   const [messages, intro, mine, detail, requests] = await Promise.all([
-    readMessages(matchId).then(
+    readMessages(client, matchId).then(
       (page) => ({ ok: true as const, page }),
       (failure: Error) => ({ ok: false as const, message: failure.message }),
     ),
-    open ? readIntro(matchId) : null,
+    open ? readIntro(client, matchId) : null,
     /* 내 시트의 사진 — 꾸밈이라 못 읽으면 사진 없는 나로 선다(ADR 0078) */
-    supabase === null ? null : supabase.rpc('my_photos'),
-    open ? readDetail(matchId) : null,
-    open ? readRequestRows() : [],
+    client.rpc('my_photos'),
+    open ? readDetail(client, matchId) : null,
+    open ? readRequestRows(client) : [],
   ]);
   if (!messages.ok) return { kind: 'failed', message: messages.message };
 
@@ -235,7 +217,7 @@ export async function readRoomScreen(matchId: string): Promise<RoomScreen> {
       unread: room.unread,
       messages: messages.page,
       fromBeginning: messages.page.length < MESSAGE_WINDOW,
-      me: account.nickname === null ? null : { userId, nickname: account.nickname, intro: account.intro, photoFocuses: (mine?.data ?? []).map((row) => focusOf(row.focus_x, row.focus_y)) },
+      me: account.row?.nickname == null ? null : { userId, nickname: account.row.nickname, intro: account.row.intro, photoFocuses: (mine?.data ?? []).map((row) => focusOf(row.focus_x, row.focus_y)) },
       detail,
       talk: talkLineOf(room.partnerUserId, requests),
     },
@@ -243,12 +225,11 @@ export async function readRoomScreen(matchId: string): Promise<RoomScreen> {
 }
 
 /** 한 쪽 — 못 읽으면 던진다. 부른 자리가 가진 것을 그대로 두고 다음 다시 대조가 메운다. 던지는 글은 사람에게 보여도 되는 문장이다 */
-export async function readMessages(
+export async function readMessages(client: Client, 
   matchId: string,
   page: { readonly before?: number; readonly limit?: number } = {},
 ): Promise<readonly ChatMessage[]> {
-  if (supabase === null) throw new Error(NOT_READY);
-  const { data, error } = await supabase.rpc('my_chat_messages', {
+  const { data, error } = await client.rpc('my_chat_messages', {
     p_match_id: matchId,
     p_limit: page.limit ?? MESSAGE_WINDOW,
     ...(page.before === undefined ? {} : { p_before_seq: page.before }),
@@ -258,11 +239,10 @@ export async function readMessages(
 }
 
 /** 웹의 `sendChatMessage` 와 같은 갈래다 — 코드가 있는 오류는 DB 가 답한 거절이라 아무것도 안 남았다(ADR 0155 덧) */
-export async function sendMessage(matchId: string, body: string, clientId: string): Promise<SendResult> {
-  if (supabase === null) return { ok: false, message: NOT_READY, refused: true };
+export async function sendMessage(client: Client, matchId: string, body: string, clientId: string): Promise<SendResult> {
   if (checkBody(body) === 'too_long') return { ok: false, message: TOO_LONG_TEXT, refused: true };
-  noteActivity();
-  const { data, error } = await supabase.rpc(
+  noteActivity(client);
+  const { data, error } = await client.rpc(
     'send_chat_message',
     rpcArgs<'send_chat_message'>({ p_match_id: matchId, p_body: body, p_client_id: clientId }),
   );
@@ -276,35 +256,41 @@ export async function sendMessage(matchId: string, body: string, clientId: strin
 }
 
 /** 읽음은 사람이 누른 것이 아니라 활동으로 적지 않는다(ADR 0155) */
-export async function markRead(matchId: string, upToSeq: number): Promise<boolean> {
-  if (supabase === null) return false;
-  const { error } = await supabase.rpc('mark_chat_read', { p_match_id: matchId, p_up_to_seq: upToSeq });
+export async function markRead(client: Client, matchId: string, upToSeq: number): Promise<boolean> {
+  const { error } = await client.rpc('mark_chat_read', { p_match_id: matchId, p_up_to_seq: upToSeq });
   return error === null;
 }
 
-export type SaveAnswer = { readonly ok: true } | { readonly ok: false; readonly message: string };
-
-export async function blockUser(userId: string): Promise<SaveAnswer> {
-  if (supabase === null) return { ok: false, message: NOT_READY };
-  noteActivity();
-  const { error } = await supabase.rpc('block_user', { p_user_id: userId });
-  return error === null ? { ok: true } : { ok: false, message: userFacingDbMessage(error, 'block_user') };
+/** 부름이 던진 것(망)의 원문은 화면에 안 세운다 — 웹의 액션과 같은 `answerOfThrown` 이다. 인연 카드와 대화가 같은 차단 · 신고 문을 쓴다 */
+async function pressed(client: Client, where: string, run: () => Promise<Done>): Promise<Done> {
+  noteActivity(client);
+  try {
+    return await run();
+  } catch (thrown) {
+    return { ok: false, message: answerOfThrown(thrown, where) };
+  }
 }
 
-export async function reportUser(userId: string, reason: string, detail: string): Promise<SaveAnswer> {
-  if (supabase === null) return { ok: false, message: NOT_READY };
-  noteActivity();
-  const { error } = await supabase.rpc(
-    'report_user',
-    rpcArgs<'report_user'>({ p_user_id: userId, p_reason: reason, p_detail: detail.trim() || null }),
-  );
-  return error === null ? { ok: true } : { ok: false, message: userFacingDbMessage(error, 'report_user') };
-}
+/** 차단 — **앱에서 `block_user` 를 부르는 유일한 자리.** 인연 카드(`matching/people.tsx`)와 대화방이 함께 쓴다(ADR 0241) */
+export const blockUser = (client: Client, userId: string): Promise<Done> =>
+  pressed(client, 'block_user', async () => {
+    const { error } = await client.rpc('block_user', { p_user_id: userId });
+    return error === null ? { ok: true } : { ok: false, message: userFacingDbMessage(error, 'block_user') };
+  });
 
-export async function reportMessage(messageId: string, reason: string, detail: string): Promise<SaveAnswer> {
-  if (supabase === null) return { ok: false, message: NOT_READY };
-  noteActivity();
-  const { error } = await supabase.rpc(
+/** 사람 신고 — **앱에서 `report_user` 를 부르는 유일한 자리.** 인연 카드와 대화방이 함께 쓴다 */
+export const reportUser = (client: Client, userId: string, reason: string, detail: string): Promise<Done> =>
+  pressed(client, 'report_user', async () => {
+    const { error } = await client.rpc(
+      'report_user',
+      rpcArgs<'report_user'>({ p_user_id: userId, p_reason: reason, p_detail: detail.trim() || null }),
+    );
+    return error === null ? { ok: true } : { ok: false, message: userFacingDbMessage(error, 'report_user') };
+  });
+
+export async function reportMessage(client: Client, messageId: string, reason: string, detail: string): Promise<Done> {
+  noteActivity(client);
+  const { error } = await client.rpc(
     'report_chat_message',
     rpcArgs<'report_chat_message'>({ p_message_id: messageId, p_reason: reason, p_detail: detail.trim() || null }),
   );
@@ -315,9 +301,8 @@ export async function reportMessage(messageId: string, reason: string, detail: s
  * **사람이 화면을 열거나 누른 것은 활동이다**(ADR 0118) — 웹은 관문과 화면 그리기가 적는데 앱은 그 길을 안 지나 여기서 적는다. 안 적으면 앱만 쓰는
  * 사람은 상대에게 늘 「24시간 이전 활동」이다. 1분에 한 번만 실제로 적히고(ADR 0092) 부속 정보라 실패는 기록에만 남긴다. 다시 읽기 · 읽음은 부르지 않는다.
  */
-export function noteActivity(): void {
-  if (supabase === null) return;
-  void settled(Promise.resolve(supabase.rpc('touch_activity')), 'touch_activity', () => null).then((answer) => {
+export function noteActivity(client: Client): void {
+  void settled(Promise.resolve(client.rpc('touch_activity')), 'touch_activity', () => null).then((answer) => {
     if (answer?.error) console.error('touch_activity', answer.error.code);
   });
 }

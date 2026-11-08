@@ -17,7 +17,7 @@ import {
   type TokenServer,
 } from '@push/device-token';
 
-import { supabase } from '@/auth/client';
+import type { Client } from '@/auth/client';
 
 /**
  * **풀이 완성 알림 — 이 기기의 권한 · 토큰 · 켜고 끔**(ADR 0236, #936). 안드로이드만이다 — iOS(APNs)는 iOS 출시 때다.
@@ -50,27 +50,24 @@ const store: DeviceStore = {
   },
 };
 
-const server: TokenServer = {
+const serverOf = (client: Client): TokenServer => ({
   save: async (token) => {
-    if (supabase === null) return false;
-    const { error } = await supabase.rpc('save_app_push_token', { p_token: token });
+    const { error } = await client.rpc('save_app_push_token', { p_token: token });
     if (error !== null) console.error('save_app_push_token', error.code);
     return error === null;
   },
   remove: async (token) => {
-    if (supabase === null) return false;
-    const { error } = await supabase.rpc('remove_app_push_token', { p_token: token });
+    const { error } = await client.rpc('remove_app_push_token', { p_token: token });
     if (error !== null) console.error('remove_app_push_token', error.code);
     return error === null;
   },
-};
+});
 
 /**
- * 이 빌드에서 쓸 수 있는가 — 안드로이드이고, Firebase 설정 파일을 넣고 지은 빌드이고(`app.config.js` 의 `extra.readingPush`), DB 에 닿는다.
- * 아니면 묻지도 줄을 세우지도 않는다.
+ * 이 빌드에서 쓸 수 있는가 — 안드로이드이고, Firebase 설정 파일을 넣고 지은 빌드다(`app.config.js` 의 `extra.readingPush`). DB 에 닿는가는
+ * 부르는 쪽이 클라이언트를 들고 온 것으로 이미 답했다(ADR 0241). 아니면 묻지도 줄을 세우지도 않는다.
  */
-export const pushSupported = (): boolean =>
-  Platform.OS === 'android' && Constants.expoConfig?.extra?.readingPush === true && supabase !== null;
+export const pushSupported = (): boolean => Platform.OS === 'android' && Constants.expoConfig?.extra?.readingPush === true;
 
 /**
  * 채널을 세운다 — 안드로이드 13 은 채널이 하나는 있어야 권한 창을 띄우고, 토큰을 받기 전에 세워야 한다
@@ -86,7 +83,7 @@ async function ensureChannel(): Promise<void> {
 }
 
 /** 이 기기의 토큰을 서버에 남긴다. 토큰을 못 받으면(Firebase 설정 없음 · 기기 문제) 거짓 */
-async function registerThisDevice(): Promise<boolean> {
+async function registerThisDevice(client: Client): Promise<boolean> {
   let token: string;
   try {
     await ensureChannel();
@@ -97,7 +94,7 @@ async function registerThisDevice(): Promise<boolean> {
     console.error('push: device token', thrown instanceof Error ? thrown.message : 'unknown');
     return false;
   }
-  if (!(await server.save(token))) return false;
+  if (!(await serverOf(client).save(token))) return false;
   await store.write(PUSH_TOKEN_KEY, token);
   return true;
 }
@@ -105,13 +102,13 @@ async function registerThisDevice(): Promise<boolean> {
 /**
  * **풀이를 처음 맡긴 때 한 번 묻는다.** 이미 고른 기기(켬 · 끔)는 묻지 않는다 — 켬이면 토큰만 다시 남긴다. 기다리지 않아도 된다(누름을 막지 않는다).
  */
-export async function askOnFirstReading(): Promise<void> {
+export async function askOnFirstReading(client: Client): Promise<void> {
   if (!pushSupported()) return;
   try {
     const choice = await readPushChoice(store);
     if (choice === 'off') return;
     if (choice === 'on') {
-      await refreshThisDevice();
+      await refreshThisDevice(client);
       return;
     }
     await ensureChannel();
@@ -122,7 +119,7 @@ export async function askOnFirstReading(): Promise<void> {
       return;
     }
     await store.write(PUSH_CHOICE_KEY, 'on');
-    await registerThisDevice();
+    await registerThisDevice(client);
   } catch (thrown) {
     console.error('push: ask', thrown instanceof Error ? thrown.message : 'unknown');
   }
@@ -132,16 +129,16 @@ export async function askOnFirstReading(): Promise<void> {
  * 앱을 열 때 · 로그인한 뒤 · FCM 이 토큰을 바꿨을 때. 켠 기기는 토큰을 다시 남긴다(권한을 기기 설정에서 거뒀으면 서버에서 지운다).
  * 켜지 않은 기기는 앞 계정이 남긴 토큰을 걷는다(`sweepLeftTokenWith`).
  */
-export async function refreshThisDevice(): Promise<void> {
+export async function refreshThisDevice(client: Client): Promise<void> {
   if (!pushSupported()) return;
   try {
     if ((await readPushChoice(store)) !== 'on') {
-      await sweepLeftTokenWith(store, server);
+      await sweepLeftTokenWith(store, serverOf(client));
       return;
     }
     const permission = await Notifications.getPermissionsAsync();
-    if (permission.granted) await registerThisDevice();
-    else await forgetServerToken(store, server);
+    if (permission.granted) await registerThisDevice(client);
+    else await forgetServerToken(store, serverOf(client));
   } catch (thrown) {
     console.error('push: refresh', thrown instanceof Error ? thrown.message : 'unknown');
   }
@@ -150,14 +147,14 @@ export async function refreshThisDevice(): Promise<void> {
 /** 설정 줄이 서는 자리 — 쓸 수 없음 · 켬 · 끔 · 기기 설정에서 막힘(다시 물을 수 없다) */
 export type PushState = 'unsupported' | 'on' | 'off' | 'blocked';
 
-export async function readPushState(): Promise<PushState> {
+export async function readPushState(client: Client): Promise<PushState> {
   if (!pushSupported()) return 'unsupported';
   try {
     const permission = await Notifications.getPermissionsAsync();
     if (!permission.granted && !permission.canAskAgain) return 'blocked';
     const token = await store.read(PUSH_TOKEN_KEY);
-    if ((await readPushChoice(store)) !== 'on' || !permission.granted || token === null || supabase === null) return 'off';
-    const { data, error } = await supabase.rpc('app_push_token_registered', { p_token: token });
+    if ((await readPushChoice(store)) !== 'on' || !permission.granted || token === null) return 'off';
+    const { data, error } = await client.rpc('app_push_token_registered', { p_token: token });
     if (error !== null) {
       console.error('app_push_token_registered', error.code);
       return 'on';
@@ -171,7 +168,7 @@ export async function readPushState(): Promise<PushState> {
 /**
  * 설정에서 켠다 — 권한이 없으면 지금 묻는다. 답은 켠 뒤의 자리다 — 토큰을 못 받으면(Firebase 설정 없음) `unsupported`.
  */
-export async function turnOn(): Promise<PushState> {
+export async function turnOn(client: Client): Promise<PushState> {
   if (!pushSupported()) return 'unsupported';
   try {
     await ensureChannel();
@@ -182,16 +179,16 @@ export async function turnOn(): Promise<PushState> {
       return answer.canAskAgain ? 'off' : 'blocked';
     }
     await store.write(PUSH_CHOICE_KEY, 'on');
-    return (await registerThisDevice()) ? 'on' : 'unsupported';
+    return (await registerThisDevice(client)) ? 'on' : 'unsupported';
   } catch {
     return 'unsupported';
   }
 }
 
 /** 설정에서 끈다 — 서버에서 지운 뒤에만 「끔」을 적는다. 못 지웠으면 거짓이고 「켬」 그대로다(줄이 실패를 말한다) */
-export async function turnOff(): Promise<boolean> {
+export async function turnOff(client: Client): Promise<boolean> {
   try {
-    return await turnOffWith(store, server);
+    return await turnOffWith(store, serverOf(client));
   } catch {
     return false;
   }
@@ -201,9 +198,9 @@ export async function turnOff(): Promise<boolean> {
  * 로그아웃 전에(세션이 있을 때) — 서버에서 이 기기 토큰을 지워 보고 기기의 선택을 비운다. 못 지운 토큰은 기기에 남아 다음 로그인이
  * 걷는다. 다음 계정은 제 풀이를 처음 맡길 때 다시 고른다. 로그아웃은 막지 않는다.
  */
-export async function forgetOnSignOut(): Promise<void> {
+export async function forgetOnSignOut(client: Client): Promise<void> {
   if (!pushSupported()) return;
-  await forgetOnSignOutWith(store, server);
+  await forgetOnSignOutWith(store, serverOf(client));
 }
 
 /** 세션이 끊겼다(리프레시 만료 등 `SIGNED_OUT`) — 부를 자격이 없어 선택만 비운다. 서버의 토큰은 다음 로그인이 걷는다 */

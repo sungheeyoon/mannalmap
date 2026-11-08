@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 
+import { useClient } from '@/auth/connected';
 import { MenuPanel } from '@/ui/surfaces';
 import { SecondaryButton } from '@/ui/parts';
 import { COLOR, CONTROL, FONT, RADIUS, TYPE } from '@/ui/tokens';
@@ -30,6 +31,7 @@ function LinkMark({ copied }: { copied: boolean }) {
  * `icon` 은 표지 끝의 둥근 아이콘, `label` 은 글 끝의 보조 단추다.
  */
 export function ShareReadingButton({ target, look = 'label' }: { target: ReadingTarget; look?: 'label' | 'icon' }) {
+  const client = useClient();
   const [phase, setPhase] = useState<Phase>('idle');
   const [link, setLink] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
@@ -43,7 +45,7 @@ export function ShareReadingButton({ target, look = 'label' }: { target: Reading
   const start = async () => {
     setPhase('working');
     setNotice(null);
-    const issued = await shareMyReading(target);
+    const issued = await shareMyReading(client, target);
     if (!issued.ok) {
       setPhase('failed');
       setNotice(issued.message);

@@ -5,6 +5,7 @@ import { useCallback, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { useClient } from '@/auth/connected';
 import { useMatchOpen } from '@/matching/opening';
 import { readShelf, type DoorRefusal, type ShelfView } from '@/reading/api';
 import { followRefusal, ReadFailure } from '@/reading/panel';
@@ -25,13 +26,14 @@ type Shelf = Extract<ShelfView, { view: 'shelf' }>;
  * 차례도 좁힘도 DB 가 정하고(`my_readings`) 여기서는 칸으로 가르기만 한다. 표지만 온다 — 본문은 글 화면이 따로 읽는다(ADR 0033).
  */
 export default function ReadingsScreen() {
+  const client = useClient();
   const params = useLocalSearchParams<{ kind?: string }>();
   const [chip, setChip] = useState<ShelfChip>(SHELF_CHIPS.find((one) => one.chip === params.kind)?.chip ?? 'all');
   const [answer, setAnswer] = useState<{ view: ShelfView } | { refused: DoorRefusal } | null>(null);
   const [typed, setTyped] = useState('');
 
   const load = useCallback(() => {
-    void settled(readShelf(), 'readShelf', () => ({ ok: false, refused: { refused: 'unavailable', message: UNREACHABLE } }) as const).then((read) => {
+    void settled(readShelf(client), 'readShelf', () => ({ ok: false, refused: { refused: 'unavailable', message: UNREACHABLE } }) as const).then((read) => {
       if (read.ok) setAnswer({ view: read.value });
       else {
         followRefusal(read.refused);
@@ -39,7 +41,7 @@ export default function ReadingsScreen() {
         setAnswer((now) => (now !== null && 'view' in now && read.refused.refused === 'unavailable' ? now : { refused: read.refused }));
       }
     });
-  }, []);
+  }, [client]);
 
   /* 글을 받고 돌아오면 표지가 새 글을 든다 */
   useFocusEffect(load);
