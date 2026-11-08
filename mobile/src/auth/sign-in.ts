@@ -1,6 +1,6 @@
 import { forgetOnSignOut } from '@/push/device';
 
-import { supabase } from './client';
+import { supabase, type Client } from './client';
 import { FAILED, NOT_READY, readSignup } from './signup';
 
 export type SignInAnswer =
@@ -19,11 +19,12 @@ export const notReady = (): SignInAnswer => (__DEV__ ? { kind: 'signed-in' } : {
  */
 export async function signInWithGoogle(): Promise<SignInAnswer> {
   const webClientId = process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID;
-  if (supabase === null || !webClientId) return notReady();
+  const client = supabase;
+  if (client === null || !webClientId) return notReady();
 
   /* 세션 저장소 · 가입 읽기가 던져도 답이다 — 부르는 화면들이 「이동하는 중」을 이 답을 받아 내린다 */
   try {
-    const { data: current } = await supabase.auth.getSession();
+    const { data: current } = await client.auth.getSession();
     if (current.session === null) {
       let google: typeof import('@react-native-google-signin/google-signin');
       try {
@@ -40,14 +41,14 @@ export async function signInWithGoogle(): Promise<SignInAnswer> {
       const token = response.data.idToken;
       if (token === null) return { kind: 'failed', message: FAILED };
 
-      const { error } = await supabase.auth.signInWithIdToken({ provider: 'google', token });
+      const { error } = await client.auth.signInWithIdToken({ provider: 'google', token });
       if (error !== null) {
         console.error('signInWithIdToken', error.code, error.message);
         return { kind: 'failed', message: FAILED };
       }
     }
 
-    return await accountAnswer();
+    return await accountAnswer(client);
   } catch (thrown) {
     console.error('google sign-in', thrown);
     return { kind: 'failed', message: FAILED };
@@ -55,8 +56,8 @@ export async function signInWithGoogle(): Promise<SignInAnswer> {
 }
 
 /** 가입 화면이 끝난 사람만 지나간다 — 일정이 없거나 테스트가 끝났을 때의 말도 가입 화면이 한다. 애플 로그인(`./apple.ts`)도 이 답을 낸다 */
-export async function accountAnswer(): Promise<SignInAnswer> {
-  const signup = await readSignup();
+export async function accountAnswer(client: Client): Promise<SignInAnswer> {
+  const signup = await readSignup(client);
   if (signup.kind === 'failed') return { kind: 'failed', message: signup.message };
   return signup.kind === 'done' ? { kind: 'signed-in' } : { kind: 'needs-signup' };
 }
@@ -65,11 +66,10 @@ export async function accountAnswer(): Promise<SignInAnswer> {
  * 다른 계정으로 들어오는 길 — 구글 · 카카오 쪽도 끊어야 다음 로그인에서 계정을 고른다.
  * 애플은 앱이 끊을 길이 없다 — 다음 애플 로그인은 시스템 창이 다시 묻는다(ADR 0219).
  */
-export async function signOut(): Promise<boolean> {
-  if (supabase === null) return true;
+export async function signOut(client: Client): Promise<boolean> {
   /* 세션이 있을 때 이 기기의 풀이 완성 알림 토큰부터 지운다 — 다음 사람이 앞 사람의 소식을 받지 않게(ADR 0236). 못 지워도 막지 않는다 */
-  await forgetOnSignOut();
-  const { error } = await supabase.auth.signOut({ scope: 'local' });
+  await forgetOnSignOut(client);
+  const { error } = await client.auth.signOut({ scope: 'local' });
   if (error !== null) {
     console.error('signOut', error.code, error.message);
     return false;

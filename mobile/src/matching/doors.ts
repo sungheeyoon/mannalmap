@@ -1,7 +1,5 @@
-import { accountStateOf, type AccountState } from '@account/index';
 import type { MatchDetail } from '@chat/room/detail';
 import { REQUEST_STATUSES, type RequestStatus } from '@consent/index';
-import { rpcArgs } from '@db';
 import { userFacingDbMessage } from '@db-error';
 import { boardNotes } from '@discovery';
 import { elementSummaryOf, type ElementSummary } from '@discovery/element-axes';
@@ -14,7 +12,8 @@ import { activityBandOf } from '@presence';
 import { ELEMENTS } from '@saju';
 import type { PhotoFocus } from '@profile';
 
-import { supabase } from '@/auth/client';
+import type { Client } from '@/auth/client';
+import type { Done, Read } from '@/answer';
 import { respondToMatchRequest } from '@/reading/api';
 import { openParticipation, saveFailureOf } from '@/reading/chart-writes';
 import { readMyReadings } from '@/reading/my-readings';
@@ -29,11 +28,9 @@ import { readDetail } from './talk-doors';
  * 참여를 여는 문 · 상세 동의 · 사진은 열쇠 전용이라 앱용 문(ADR 0211)이 든다 — `openParticipation` · `respondToRequest` · `@/ui/photo`.
  */
 
-const NOT_READY = '이 빌드에서는 로그인할 수 없어요.';
 const UNEXPECTED = '잠시 뒤 다시 시도해 주세요.';
 
-export type Read<T> = { ok: true; value: T } | { ok: false; reason: string };
-export type Done = { ok: true } | { ok: false; message: string };
+export type { Done, Read } from '@/answer';
 
 /** 부름이 던진 것(망)의 원문은 화면에 안 세운다 */
 const guarded = async <T>(run: () => Promise<Read<T>>): Promise<Read<T>> => {
@@ -45,17 +42,9 @@ const guarded = async <T>(run: () => Promise<Read<T>>): Promise<Read<T>> => {
   }
 };
 
-export async function readAccountState(): Promise<AccountState> {
-  if (supabase === null) return { kind: 'unreachable' };
-  const { data, error } = await supabase.from('app_user').select('status, self_person_id').maybeSingle();
-  if (error !== null) return accountStateOf({ ok: false, reason: 'unreachable' });
-  if (data === null) return accountStateOf({ ok: false, reason: 'missing' });
-  return accountStateOf({ ok: true, account: { status: data.status, selfPersonId: data.self_person_id } });
-}
-
 /** 내 오행 요약 — 카드의 문장을 지을 때만 쓴다. 풀에 올리지 않는다. 저장된 입력에서 웹과 같은 함수로 짓는다 */
-async function mySummary(selfPersonId: string): Promise<Read<ElementSummary | null>> {
-  const [edges, inputs] = await Promise.all([readEdges(), readInputs([selfPersonId])]);
+async function mySummary(client: Client, selfPersonId: string): Promise<Read<ElementSummary | null>> {
+  const [edges, inputs] = await Promise.all([readEdges(client), readInputs(client, [selfPersonId])]);
   if (!edges.ok) return { ok: false, reason: edges.message };
   if (!inputs.ok) return { ok: false, reason: inputs.message };
   const edge = edges.edges.find((one) => one.personId === selfPersonId);
@@ -87,24 +76,23 @@ const passedOf = (row: Parameters<typeof publicCardFromRow>[0], summary: Element
 /**
  * 인연 탭의 덱 — 웹의 `app/me/matching/page.tsx` 와 같은 차례다. 덱을 읽기 전에 참여를 열고, 못 열면 그 까닭을 말한다 — 지어낸 빈 덱을 세우지 않는다.
  */
-export function readDeck(selfPersonId: string | null): Promise<Read<DeckPlace>> {
+export function readDeck(client: Client, selfPersonId: string | null): Promise<Read<DeckPlace>> {
   return guarded<DeckPlace>(async () => {
-    if (supabase === null) return { ok: false, reason: NOT_READY };
     if (selfPersonId === null) return { ok: true, value: { kind: 'guide' } };
-    const mine = await mySummary(selfPersonId);
+    const mine = await mySummary(client, selfPersonId);
     if (!mine.ok) return mine;
     const summary = mine.value;
     if (summary === null) return { ok: true, value: { kind: 'guide' } };
 
-    const profile = await supabase.from('discovery_profile').select('prefer_gender, opted_out_at').maybeSingle();
+    const profile = await client.from('discovery_profile').select('prefer_gender, opted_out_at').maybeSingle();
     if (profile.error === null && profile.data !== null && profile.data.opted_out_at != null) {
       return { ok: true, value: { kind: 'resting' } };
     }
 
-    const opened = await openParticipation();
+    const opened = await openParticipation(client);
     if (!opened.ok || !opened.value.ok) return { ok: false, reason: saveFailureOf(opened) ?? UNEXPECTED };
 
-    const [board, passed] = await Promise.all([supabase.rpc('my_discovery_board'), supabase.rpc('my_passed_connections')]);
+    const [board, passed] = await Promise.all([client.rpc('my_discovery_board'), client.rpc('my_passed_connections')]);
     if (board.error !== null) return { ok: false, reason: userFacingDbMessage(board.error, 'my_discovery_board') };
     if (passed.error !== null) return { ok: false, reason: userFacingDbMessage(passed.error, 'my_passed_connections') };
 
@@ -130,10 +118,9 @@ export function readDeck(selfPersonId: string | null): Promise<Read<DeckPlace>> 
   });
 }
 
-export function readMatches(): Promise<Read<readonly InboxMatch[]>> {
+export function readMatches(client: Client): Promise<Read<readonly InboxMatch[]>> {
   return guarded(async () => {
-    if (supabase === null) return { ok: false, reason: NOT_READY };
-    const { data, error } = await supabase.rpc('my_matches');
+    const { data, error } = await client.rpc('my_matches');
     if (error !== null) return { ok: false, reason: userFacingDbMessage(error, 'my_matches') };
     return { ok: true, value: (data ?? []).map(matchOf) };
   });
@@ -143,10 +130,9 @@ export function readMatches(): Promise<Read<readonly InboxMatch[]>> {
 export type MatchBook = { key: string; matchId: string; href: string; label: string };
 
 /** 글이 선 인연 궁합 — 책장과 같은 문(`my_readings`)의 `match` 줄 */
-export function readMatchBooks(): Promise<Read<readonly MatchBook[]>> {
+export function readMatchBooks(client: Client): Promise<Read<readonly MatchBook[]>> {
   return guarded(async () => {
-    if (supabase === null) return { ok: false, reason: NOT_READY };
-    const readings = await readMyReadings(supabase);
+    const readings = await readMyReadings(client);
     if (!readings.ok) return readings;
     return {
       ok: true,
@@ -159,10 +145,9 @@ export function readMatchBooks(): Promise<Read<readonly MatchBook[]>> {
   });
 }
 
-export function readInbox(): Promise<Read<Inbox>> {
+export function readInbox(client: Client): Promise<Read<Inbox>> {
   return guarded(async () => {
-    if (supabase === null) return { ok: false, reason: NOT_READY };
-    const { data, error } = await supabase.rpc('my_notifications');
+    const { data, error } = await client.rpc('my_notifications');
     if (error !== null) return { ok: false, reason: userFacingDbMessage(error, 'inbox') };
     const rows = data ?? [];
     return { ok: true, value: { notifications: rows.flatMap(notificationOf), unread: rows.filter((row) => row.read_at === null).length } };
@@ -178,20 +163,18 @@ const doing = async (run: () => Promise<Done>): Promise<Done> => {
   }
 };
 
-export const markNotificationsRead = (): Promise<Done> =>
+export const markNotificationsRead = (client: Client): Promise<Done> =>
   doing(async () => {
-    if (supabase === null) return { ok: false, message: NOT_READY };
-    const { error } = await supabase.rpc('mark_notifications_read');
+    const { error } = await client.rpc('mark_notifications_read');
     return error === null ? { ok: true } : { ok: false, message: userFacingDbMessage(error, 'mark_notifications_read') };
   });
 
-export const passCandidate = (candidateUserId: string): Promise<Done> =>
+export const passCandidate = (client: Client, candidateUserId: string): Promise<Done> =>
   doing(async () => {
-    if (supabase === null) return { ok: false, message: NOT_READY };
-    const { data: session } = await supabase.auth.getSession();
+    const { data: session } = await client.auth.getSession();
     const userId = session.session?.user.id;
     if (userId === undefined) return { ok: false, message: '로그인이 풀렸어요. 다시 로그인해 주세요.' };
-    const { error } = await supabase
+    const { error } = await client
       .from('discovery_passed')
       .upsert({ user_id: userId, passed_user_id: candidateUserId, passed_at: new Date().toISOString() }, { onConflict: 'user_id,passed_user_id' });
     return error === null ? { ok: true } : { ok: false, message: userFacingDbMessage(error, 'discovery_passed.insert') };
@@ -200,13 +183,12 @@ export const passCandidate = (candidateUserId: string): Promise<Done> =>
 type BoardCardRow = Parameters<typeof publicCardFromRow>[0];
 
 /** 「다시 만나보기」와 되돌리기가 같이 쓴다 — 문이 든 덱 한 덩이를 카드로 옮긴다 */
-export async function restorePassed(
+export async function restorePassed(client: Client, 
   candidateUserId: string,
   summary: ElementSummary,
 ): Promise<{ ok: true; card: DeckCard; passed: readonly DeckCard[] } | { ok: false; message: string }> {
-  if (supabase === null) return { ok: false, message: NOT_READY };
   try {
-    const { data, error } = await supabase.rpc('restore_passed_connection', { p_candidate_user_id: candidateUserId });
+    const { data, error } = await client.rpc('restore_passed_connection', { p_candidate_user_id: candidateUserId });
     if (error !== null) return { ok: false, message: userFacingDbMessage(error, 'restore_passed_connection') };
     /* `jsonb` 를 내주는 문이라 생성 타입이 `Json` 까지만 말한다 — 모양을 주장하는 자리를 이 한 줄로 가둔다(웹과 같다) */
     const deck = data as { card?: BoardCardRow; passed?: BoardCardRow[] } | null;
@@ -226,8 +208,8 @@ export type Answered = { ok: true; status: RequestStatus; matchId?: string } | {
  * 상세 궁합에 동의한다 — **앱용 문으로 간다**(ADR 0211). 판정은 `respond_to_match_request` 안에 있고, 동의가 서면 서버가 응답 뒤에 상세 궁합을 떠나보낸다.
  * RPC 를 앱에서 바로 부르면 글이 안 선다. 거절은 없다 — 받은 사람의 답은 동의와 그냥 둠뿐이다.
  */
-export async function respondToRequest(requestId: string): Promise<Answered> {
-  const answer = await respondToMatchRequest(requestId);
+export async function respondToRequest(client: Client, requestId: string): Promise<Answered> {
+  const answer = await respondToMatchRequest(client, requestId);
   if (!answer.ok) {
     if (answer.refused.refused === 'unavailable') return { ok: false, message: answer.refused.message };
     if (answer.refused.refused === 'sign-in') return { ok: false, message: '로그인이 풀렸어요. 다시 로그인해 주세요.' };
@@ -239,10 +221,9 @@ export async function respondToRequest(requestId: string): Promise<Answered> {
   return answer.value.matchId === undefined ? { ok: true, status } : { ok: true, status, matchId: answer.value.matchId };
 }
 
-export async function cancelRequest(requestId: string): Promise<Answered> {
-  if (supabase === null) return { ok: false, message: NOT_READY };
+export async function cancelRequest(client: Client, requestId: string): Promise<Answered> {
   try {
-    const { data, error } = await supabase.rpc('cancel_match_request', { p_request_id: requestId });
+    const { data, error } = await client.rpc('cancel_match_request', { p_request_id: requestId });
     if (error !== null) return { ok: false, message: userFacingDbMessage(error, 'cancel_match_request') };
     const status = statusOf(data);
     if (status === null) return { ok: false, message: '요청을 취소하지 못했어요. 새로고침한 뒤 다시 시도해 주세요.' };
@@ -252,23 +233,6 @@ export async function cancelRequest(requestId: string): Promise<Answered> {
     return { ok: false, message: UNEXPECTED };
   }
 }
-
-export const blockUser = (userId: string): Promise<Done> =>
-  doing(async () => {
-    if (supabase === null) return { ok: false, message: NOT_READY };
-    const { error } = await supabase.rpc('block_user', { p_user_id: userId });
-    return error === null ? { ok: true } : { ok: false, message: userFacingDbMessage(error, 'block_user') };
-  });
-
-export const reportUser = (userId: string, reason: string, detail: string): Promise<Done> =>
-  doing(async () => {
-    if (supabase === null) return { ok: false, message: NOT_READY };
-    const { error } = await supabase.rpc(
-      'report_user',
-      rpcArgs<'report_user'>({ p_user_id: userId, p_reason: reason, p_detail: detail.trim() || null }),
-    );
-    return error === null ? { ok: true } : { ok: false, message: userFacingDbMessage(error, 'report_user') };
-  });
 
 export type MatchResult = {
   matchId: string;
@@ -284,10 +248,9 @@ export type MatchResult = {
 export type MatchOutcome = { kind: 'ok'; result: MatchResult } | { kind: 'none' };
 
 /** 인연 궁합 — 없는 Match 와 못 보는 Match 는 같은 답이다(`none`). 여덟 글자 카드는 없다 */
-export function readMatchResult(matchId: string): Promise<Read<MatchOutcome>> {
+export function readMatchResult(client: Client, matchId: string): Promise<Read<MatchOutcome>> {
   return guarded<MatchOutcome>(async () => {
-    if (supabase === null) return { ok: false, reason: NOT_READY };
-    const [scope, matches, detail] = await Promise.all([supabase.rpc('my_match_scope', { p_match_id: matchId }), supabase.rpc('my_matches'), readDetail(matchId)]);
+    const [scope, matches, detail] = await Promise.all([client.rpc('my_match_scope', { p_match_id: matchId }), client.rpc('my_matches'), readDetail(client, matchId)]);
     if (scope.error !== null) return { ok: false, reason: userFacingDbMessage(scope.error, 'my_match_scope') };
     const row = (scope.data ?? [])[0];
     if (row === undefined) return { ok: true, value: { kind: 'none' } };
@@ -314,8 +277,7 @@ export function readMatchResult(matchId: string): Promise<Read<MatchOutcome>> {
 }
 
 /** 내 닉네임 — 글의 자리 호칭을 바꿔 넣을 값이다. 못 읽으면 빈 값이고 글은 그대로 선다 */
-export async function readMyNickname(): Promise<string> {
-  if (supabase === null) return '';
-  const { data, error } = await supabase.from('app_user').select('nickname').maybeSingle();
+export async function readMyNickname(client: Client): Promise<string> {
+  const { data, error } = await client.from('app_user').select('nickname').maybeSingle();
   return error !== null ? '' : (data?.nickname ?? '');
 }

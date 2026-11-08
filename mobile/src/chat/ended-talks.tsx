@@ -3,6 +3,7 @@ import { when } from '@matching/requests';
 import { useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
+import { useClient } from '@/auth/connected';
 import { readEndedTalkMessages, type EndedTalk } from '@/matching/talk-doors';
 import { COLOR, CONTROL, FONT, RADIUS, TYPE } from '@/ui/tokens';
 
@@ -10,10 +11,11 @@ import { ReportDialog, type ReportableMessage } from './dialogs';
 
 /** 끝난 대화의 신고 길(ADR 0215) — 말은 누른 뒤에만 읽고 방은 다시 안 연다. 대화방과 같은 신고 창이고, 이미 끝나 차단으로 넘어가는 길은 없다 */
 export function EndedTalks({ talks }: { talks: readonly EndedTalk[] }) {
+  const client = useClient();
   const [opened, setOpened] = useState<{ talk: EndedTalk; messages: readonly ReportableMessage[] } | null>(null);
   if (talks.length === 0) return null;
   const open = (talk: EndedTalk) =>
-    void readEndedTalkMessages(talk.matchId).then(
+    void readEndedTalkMessages(client, talk.matchId).then(
       (messages) => setOpened({ talk, messages }),
       () => setOpened({ talk, messages: [] }),
     );

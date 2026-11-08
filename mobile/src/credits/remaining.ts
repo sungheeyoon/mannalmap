@@ -3,8 +3,7 @@ import { readingCreditsOf, type ReadingCredits } from '@reading/credits';
 import { paidOrderOf, type PaidOrder } from '@reading/paid-order';
 
 import type { Client } from '@/auth/client';
-
-type Read<T> = { ok: true; value: T } | { ok: false; reason: string };
+import type { Read } from '@/answer';
 
 /**
  * **남은 풀이권을 읽는 앱의 문 — 앱에서 `my_reading_credits` 를 부르는 유일한 자리.** 풀이권 화면과 탭의 딱지가 함께 쓴다.

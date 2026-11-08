@@ -27,7 +27,9 @@ export function ReadyPushOpener(): null {
 
 function useReadyPushOpener(): void {
   useEffect(() => {
-    if (Platform.OS !== 'android') return;
+    /* 앱의 맨 바깥 껍데기다 — 주소 · 공개 키가 없는 빌드는 여기서 한 번 가른다(ADR 0243) */
+    const client = supabase;
+    if (Platform.OS !== 'android' || client === null) return;
 
     const open = (response: Notifications.NotificationResponse | null) => {
       const path = (response?.notification.request.content.data as { path?: unknown } | undefined)?.path;
@@ -38,16 +40,16 @@ function useReadyPushOpener(): void {
 
     open(Notifications.getLastNotificationResponse());
     const tapped = Notifications.addNotificationResponseReceivedListener(open);
-    const rotated = Notifications.addPushTokenListener(() => void refreshThisDevice());
-    void refreshThisDevice();
-    const signedIn = supabase?.auth.onAuthStateChange((event) => {
-      if (event === 'SIGNED_IN') void refreshThisDevice();
+    const rotated = Notifications.addPushTokenListener(() => void refreshThisDevice(client));
+    void refreshThisDevice(client);
+    const signedIn = client.auth.onAuthStateChange((event) => {
+      if (event === 'SIGNED_IN') void refreshThisDevice(client);
     });
 
     return () => {
       tapped.remove();
       rotated.remove();
-      signedIn?.data.subscription.unsubscribe();
+      signedIn.data.subscription.unsubscribe();
     };
   }, []);
 }

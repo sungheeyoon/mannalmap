@@ -6,6 +6,8 @@ import type { DeckCard } from '@matching/deck-card';
 import { deckReducer, PASSED_LIMIT } from '@matching/deck-state';
 import { REQUEST_UNSURE } from '@matching/requests';
 
+import { useClient } from '@/auth/connected';
+
 import { passCandidate, restorePassed } from './doors';
 import { startTalk } from './talk-doors';
 
@@ -28,6 +30,7 @@ export function useDeck({
   /** 대화가 섰다 — 「인연 기록」을 다시 읽는다. 덱은 그대로다 */
   onRequested: () => void;
 }) {
+  const client = useClient();
   const [deck, dispatch] = useReducer(deckReducer, {
     remaining: cards,
     passed: passedFromServer.slice(0, PASSED_LIMIT),
@@ -64,7 +67,7 @@ export function useDeck({
     setFailure(null);
     lock(true);
     try {
-      const started = await startTalk(sending.candidateUserId);
+      const started = await startTalk(client, sending.candidateUserId);
       if (started.kind === 'refused') {
         setFailure(started.message);
         return;
@@ -88,7 +91,7 @@ export function useDeck({
     const before = { passed: deck.passed, history: deck.history };
     dispatch({ type: 'pass', card: passing });
     dispatch({ type: 'leave', id: passing.candidateUserId });
-    const result = await passCandidate(passing.candidateUserId);
+    const result = await passCandidate(client, passing.candidateUserId);
     if (!result.ok) {
       dispatch({ type: 'unpass', card: passing, before });
       setFailure(result.message);
@@ -101,7 +104,7 @@ export function useDeck({
     if (busy.current) return '앞의 작업을 처리하고 있어요. 잠시 뒤 다시 눌러 주세요.';
     lock(true);
     setFailure(null);
-    const result = await restorePassed(back.candidateUserId, summary);
+    const result = await restorePassed(client, back.candidateUserId, summary);
     lock(false);
     if (!result.ok) {
       setFailure(result.message);

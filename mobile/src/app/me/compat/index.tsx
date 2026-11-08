@@ -4,6 +4,7 @@ import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 
 import { isBlocked } from '@account/index';
 
+import { useClient } from '@/auth/connected';
 import { readPicker, type PickerData } from '@/compat/data';
 import { CompatPicker } from '@/compat/picker';
 import { RelationMap } from '@/compat/relation-map';
@@ -35,14 +36,15 @@ function Loading() {
 }
 
 function PickStep({ pickA, pickB }: { pickA?: string; pickB?: string }) {
+  const client = useClient();
   const [read, setRead] = useState<Read<PickerData> | null>(null);
 
   const load = useCallback(() => {
-    void settled(readPicker(), 'readPicker', () => ({ kind: 'failed', message: UNREACHABLE }) as const).then((next) => {
+    void settled(readPicker(client), 'readPicker', () => ({ kind: 'failed', message: UNREACHABLE }) as const).then((next) => {
       if (next.kind === 'signed-out') router.replace('/');
       else setRead((now) => (now?.kind === 'ok' && next.kind === 'failed' ? now : next));
     });
-  }, []);
+  }, [client]);
   /* 탭을 옮겨도 이 화면이 남으니 돌아올 때마다 다시 읽는다 — 저장한 사람이 늘면 고를 수 있다. 고르는 칸의 값은 칸이 들고 있어 안 날아간다 */
   useFocusEffect(load);
 

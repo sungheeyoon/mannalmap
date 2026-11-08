@@ -5,6 +5,7 @@ import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from
 import { CHAT_TAB_LABEL } from '@chat/index';
 import { DETAIL_MAKING, DETAIL_NOT_YET } from '@chat/room/detail-copy';
 
+import { useClient } from '@/auth/connected';
 import { readMatchResult, readMyNickname, type MatchOutcome, type Read } from '@/matching/doors';
 import { Face, PartnerSheet, ReportBlock } from '@/matching/people';
 import type { ReadingTarget } from '@/reading/api';
@@ -24,16 +25,17 @@ const MAKING_POLL_MS = 5000;
  * 없는 Match 와 못 보는 Match 는 같은 말로 거절한다(ADR 0007).
  */
 export default function MatchScreen() {
+  const client = useClient();
   const { matchId, from } = useLocalSearchParams<{ matchId: string; from?: string }>();
   const [outcome, setOutcome] = useState<Read<MatchOutcome> | null>(null);
   const [nickname, setNickname] = useState('');
   const [sheet, setSheet] = useState(false);
 
   const load = useCallback(async () => {
-    const [next, mine] = await Promise.all([readMatchResult(matchId), readMyNickname()]);
+    const [next, mine] = await Promise.all([readMatchResult(client, matchId), readMyNickname(client)]);
     setNickname(mine);
     setOutcome(next);
-  }, [matchId]);
+  }, [client, matchId]);
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect -- load 는 읽기를 기다린 뒤에만 상태를 고친다. 규칙이 await 를 넘어 보지 못한다

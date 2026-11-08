@@ -5,6 +5,7 @@ import { INPUT_EDIT_CHANGE_CONFIRM } from '@consent/index';
 import { INPUT_EDIT_REPLACED_NOTE, samePillarInput } from '@input/edit';
 import { missingAnswer, type Query } from '@input/query';
 
+import { useClient } from '@/auth/connected';
 import { editPersonInput, saveFailureOf } from '@/reading/chart-writes';
 import { followRefusal } from '@/reading/panel';
 import { FailureLine } from '@/ui/failure-line';
@@ -37,6 +38,7 @@ export function EditInputForm({
   onDone: () => void;
   onCancel: () => void;
 }) {
+  const client = useClient();
   const form = useBirthForm(current);
   const [failure, setFailure] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
@@ -55,7 +57,7 @@ export function EditInputForm({
     setConfirming(false);
     setFailure(null);
     setSaving(true);
-    const answer = await editPersonInput(personId, query);
+    const answer = await editPersonInput(client, personId, query);
     setSaving(false);
     if (answer.ok && answer.value.ok) {
       onDone();

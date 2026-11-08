@@ -40,6 +40,6 @@ describe('앱의 안내', () => {
 
   it('껍데기가 안내를 건다', () => {
     const shell = readFileSync(join(process.cwd(), 'mobile/src/app/me/_layout.tsx'), 'utf8');
-    expect(shell).toContain('useAdultCheckGuard(pathname');
+    expect(shell).toMatch(/useAdultCheckGuard\([^)]*\bpathname\b/);
   });
 });

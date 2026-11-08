@@ -4,6 +4,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { PREFER_GENDER_ORDER, type PreferGender } from '@discovery';
 import { PREFER_GENDER_KO } from '@discovery/copy';
 
+import { useClient } from '@/auth/connected';
 import { saveFailureOf, setParticipation } from '@/reading/chart-writes';
 import { followRefusal } from '@/reading/panel';
 import { FailureLine } from '@/ui/failure-line';
@@ -18,6 +19,7 @@ import { savePreferGender } from './settings';
  * 실패하면 서버가 든 마지막 값으로 돌아오고 까닭이 선다(웹 `ParticipationToggle`).
  */
 export function ParticipationRow({ resting }: { resting: boolean }) {
+  const client = useClient();
   const [on, setOn] = useState(!resting);
   const [working, setWorking] = useState(false);
   const [failure, setFailure] = useState<string | null>(null);
@@ -26,7 +28,7 @@ export function ParticipationRow({ resting }: { resting: boolean }) {
     setFailure(null);
     setOn(next);
     setWorking(true);
-    const answer = await setParticipation(next);
+    const answer = await setParticipation(client, next);
     setWorking(false);
     if (answer.ok && answer.value.ok) return;
     setOn(!next);
@@ -53,6 +55,7 @@ export function ParticipationRow({ resting }: { resting: boolean }) {
  * 마지막 하나만 남겼다가 보낸다. 실패하면 서버가 든 마지막 값으로 돌아오고 까닭이 선다.
  */
 export function PreferenceRow({ current }: { current: PreferGender }) {
+  const client = useClient();
   const [chosen, setChosen] = useState(current);
   const [saving, setSaving] = useState(false);
   const [failure, setFailure] = useState<string | null>(null);
@@ -69,7 +72,7 @@ export function PreferenceRow({ current }: { current: PreferGender }) {
     while (next !== null) {
       const value: PreferGender = next;
       next = null;
-      const result = await savePreferGender(value);
+      const result = await savePreferGender(client, value);
       if (!result.ok) {
         refused = result.message;
         break;

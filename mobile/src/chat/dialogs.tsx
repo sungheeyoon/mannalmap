@@ -4,6 +4,7 @@ import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-
 import { REPORT_DETAIL_MAX, REPORT_DONE, REPORT_NOTE, REPORT_REASONS, type ReportReason } from '@account/index';
 import { BLOCK_FINAL_NOTE, BLOCK_KEEPS_NOTE, BLOCK_NOTE } from '@consent/index';
 
+import { useClient } from '@/auth/connected';
 import { FieldLabel, PrimaryButton, Select, TextButton } from '@/ui/parts';
 import { Icon } from '@/ui/icons';
 import { Scrim } from '@/ui/scrim';
@@ -12,7 +13,9 @@ import { DialogPanel } from '@/ui/surfaces';
 import { COLOR, CONTROL, FONT, RADIUS, TYPE } from '@/ui/tokens';
 import { KEEP_VIEW } from '@/ui/keep-view';
 
-import { blockUser, reportMessage, reportUser, type SaveAnswer } from './reads';
+import type { Done } from '@/answer';
+
+import { blockUser, reportMessage, reportUser } from './reads';
 
 function Dialog({ onOutside, children }: { onOutside: (() => void) | null; children: ReactNode }) {
   return (
@@ -24,13 +27,14 @@ function Dialog({ onOutside, children }: { onOutside: (() => void) | null; child
 
 /** 차단을 한 번 더 묻는 창 — 웹의 `BlockDialog` 와 같은 글자다. 보내는 동안은 안 닫힌다 */
 export function BlockDialog({ userId, nickname, onClose, onBlocked }: { userId: string; nickname: string; onClose: () => void; onBlocked: () => void }) {
+  const client = useClient();
   const [working, setWorking] = useState(false);
   const [failure, setFailure] = useState<string | null>(null);
 
   const block = async () => {
     setFailure(null);
     setWorking(true);
-    const result = await blockUser(userId);
+    const result = await blockUser(client, userId);
     setWorking(false);
     if (!result.ok) {
       setFailure(result.message);
@@ -78,6 +82,7 @@ export function ReportDialog({
   /** 「차단으로 넘어가기」 — 닫힌 방에는 없다 */
   onBlock: (() => void) | null;
 }) {
+  const client = useClient();
   const [reason, setReason] = useState<ReportReason>(REPORT_REASONS[0].value);
   const [detail, setDetail] = useState('');
   const [picked, setPicked] = useState<string | null>(null);
@@ -89,7 +94,7 @@ export function ReportDialog({
   const submit = async () => {
     setFailure(null);
     setWorking(true);
-    const result: SaveAnswer = picked !== null ? await reportMessage(picked, reason, detail) : await reportUser(userId, reason, detail);
+    const result: Done = picked !== null ? await reportMessage(client, picked, reason, detail) : await reportUser(client, userId, reason, detail);
     setWorking(false);
     if (result.ok) setReported(true);
     else setFailure(result.message);

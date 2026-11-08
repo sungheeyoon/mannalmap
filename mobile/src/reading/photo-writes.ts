@@ -1,6 +1,8 @@
 import type { DoorSave } from '@reading/door';
 import type { PhotoFocus, PhotoUploadMode } from '@profile';
 
+import type { Client } from '@/auth/client';
+
 import { door, type DoorAnswer } from './api';
 
 /** 줄여 구운 두 벌 — 기기 안의 주소다(`PHOTO_VARIANTS` 의 `card` · `large`) */
@@ -24,19 +26,19 @@ const formOf = (baked: BakedVariants, focus: PhotoFocus, extra: Record<string, s
  */
 
 /** 화면이 보일 길 — 이 배포의 저장소가 켜졌는지는 서버만 안다 */
-export const readPhotoUploadMode = (): Promise<DoorAnswer<{ mode: PhotoUploadMode }>> => door('/api/mobile/me/photo');
+export const readPhotoUploadMode = (client: Client): Promise<DoorAnswer<{ mode: PhotoUploadMode }>> => door(client, '/api/mobile/me/photo');
 
 /** 맨 뒤에 더한다 */
-export const addStoredPhoto = (baked: BakedVariants, focus: PhotoFocus): Promise<DoorAnswer<DoorSave>> =>
-  door('/api/mobile/me/photo', { method: 'POST', body: formOf(baked, focus) });
+export const addStoredPhoto = (client: Client, baked: BakedVariants, focus: PhotoFocus): Promise<DoorAnswer<DoorSave>> =>
+  door(client, '/api/mobile/me/photo', { method: 'POST', body: formOf(baked, focus) });
 
 /** 그 자리에서 바꾼다 — 판본은 화면이 본 그 장이다. 그 사이 목록이 바뀌었으면 DB 가 거절한다 */
-export const replaceStoredPhoto = (
+export const replaceStoredPhoto = (client: Client, 
   target: { readonly position: number; readonly version: number },
   baked: BakedVariants,
   focus: PhotoFocus,
 ): Promise<DoorAnswer<{ ok: true; version: number } | { ok: false; message: string }>> =>
-  door('/api/mobile/me/photo', {
+  door(client, '/api/mobile/me/photo', {
     method: 'PUT',
     body: formOf(baked, focus, { position: String(target.position), version: String(target.version) }),
   });
