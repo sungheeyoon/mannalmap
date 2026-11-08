@@ -107,6 +107,7 @@ function usePlace() {
 }
 
 export function ReadingsFrame({
+  hideMatch = false,
   account,
   shelves,
   lists,
@@ -115,6 +116,8 @@ export function ReadingsFrame({
   names,
   children,
 }: {
+  /** 인연이 닫혔고 인연 궁합이 한 권도 없으면 그 칩을 안 세운다(`matchShelfStands`) — `?kind=match` 로 와도 전체를 세운다 */
+  hideMatch?: boolean;
   /** 로그인한 사용자의 id — 마지막으로 연 글의 기억을 계정마다 가른다(`lastOpenedKeyOf`) */
   account: string;
   /** 필터 칸마다의 책장 — 서버가 넷을 다 그려 두고, 여기서는 주소가 고른 하나만 세운다 */
@@ -133,7 +136,8 @@ export function ReadingsFrame({
   const router = useRouter();
   const pathname = usePathname();
   const search = useSearchParams().toString();
-  const kind = useShelfKind();
+  const asked = useShelfKind();
+  const kind = hideMatch && asked === 'match' ? 'all' : asked;
   const reading = segment !== null;
   /* 이 칸에 펼 글이 있나 — 어느 글인지는 이 브라우저의 기억을 읽어야 해서 아래 효과가 고른다. 있나 없나는 기억과 무관하다 */
   const hasOpening = lists[kind].length > 0;
@@ -199,7 +203,7 @@ export function ReadingsFrame({
   return (
     <div className="grid gap-10 lg:grid-cols-[minmax(0,24rem)_minmax(0,1fr)] lg:items-start lg:gap-12">
       <div className={`${reading ? 'hidden lg:flex' : 'flex'} min-w-0 flex-col gap-10`}>
-        <ShelfHead kind={kind} find={find} />
+        <ShelfHead kind={kind} find={find} hideMatch={hideMatch} />
         <ShelfFind.Provider value={shows}>{shelves[kind]}</ShelfFind.Provider>
       </div>
 
@@ -301,7 +305,10 @@ function NextCard({ book }: { book: NextBook }) {
 function ShelfHead({
   kind,
   find = null,
+  hideMatch = false,
 }: {
+  /** 「인연 궁합」 칩을 뺀다 — `ReadingsFrame` 의 같은 이름 */
+  hideMatch?: boolean;
   kind: ShelfKind | null;
   /** 이름으로 찾는 칸 — 여섯 권부터만 온다 */
   find?: { typed: string; setTyped: (typed: string) => void; found: ReturnType<typeof findStatus> } | null;
@@ -322,7 +329,7 @@ function ShelfHead({
             가로로 미는 줄은 넘친 것을 자른다 — 그 자리와 초점 테(바깥 6px)가 잘리지 않게 줄에 6px 를 두르고 같은 만큼 당겨 자리는 그대로다.
           */}
           <ul className="-m-1.5 flex gap-2 overflow-x-auto p-1.5">
-            {SHELF_KINDS.map((one) => {
+            {SHELF_KINDS.filter((one) => !(hideMatch && one === 'match')).map((one) => {
               const on = one === kind;
               return (
                 <li key={one} className="shrink-0">

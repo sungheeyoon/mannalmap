@@ -132,7 +132,7 @@ function AddForm({ remaining, onCancel, onSaved }: { remaining: number | null; o
     <Card style={styles.form}>
       <Text style={shared.section}>사람 추가</Text>
       <Text style={shared.body}>
-        부를 이름은 <Text style={shared.bodyStrong}>나만 봐요.</Text> 같은 사람도 부르는 사람마다 이름이 다를 수 있어서, 이 이름은 내 목록에만 붙어요.
+        이 이름은 내 목록에만 보여요.
         {remaining !== null && remaining <= 5 && ` 앞으로 ${remaining}명 더 저장할 수 있어요.`}
       </Text>
       <BirthFields form={form} namePlaceholder="엄마" />

@@ -178,8 +178,7 @@ export function AddPerson({ slots }: { slots: PersonSlots | null }) {
       <header className="flex flex-col gap-1.5">
         <h2 className={TYPE_SECTION}>사람 추가</h2>
         <p className="text-body leading-6 text-secondary">
-          부를 이름은 <strong className="font-medium">나만 봐요.</strong> 같은 사람도 부르는
-          사람마다 이름이 다를 수 있어서, 이 이름은 내 목록에만 붙어요.
+          이 이름은 내 목록에만 보여요.
           {remaining !== null && remaining <= 5 && ` 앞으로 ${remaining}명 더 저장할 수 있어요.`}
         </p>
       </header>

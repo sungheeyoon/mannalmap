@@ -18,6 +18,7 @@ import { TASTE_RUN_VERSIONS, tasteEvidenceOf, tasteFingerprintOf } from '@/src/l
 import type { Saju } from '@/src/lib/saju';
 import { CHART_ENGINE_VERSION, EVIDENCE_CONTRACT, chartSnapshotOf } from '@/src/lib/saju';
 import { DISCOVERY_POLICY, DISCOVERY_V1 } from '@/src/lib/discovery';
+import { MATCH_INDEX_NOTE } from '@/src/lib/matching/copy';
 import { PREFER_GENDER_KO } from '@/src/lib/discovery/copy';
 import { PROMPT_VARIANTS } from '@/src/lab/reading/variants';
 
@@ -1498,8 +1499,9 @@ test.describe('초대된 사람의 로그인 흐름', () => {
 
     const ask = page.getByRole('group', { name: '같은 사람인지 확인' });
     await expect(ask).toContainText('저장된 어머니 님과 같은 사람인가요?');
-    // 왜 묻는지 적는다 — 「이미 있습니다」로 끝내면 막는 줄로 읽는다.
-    await expect(ask).toContainText('풀이권을 한 번 더');
+    // 무엇이 같아서 묻는지 한 문장만 선다 — 풀이권 이야기는 걷었다(2026-11-08 운영자 결정)
+    await expect(ask).toContainText('여덟 글자와 태어난 시각이 같습니다.');
+    await expect(ask).not.toContainText('풀이권');
 
     /*
       **물음이 서면 저장 버튼은 내려간다.** 함께 세우면 답하지 않고 다시 누를 수 있고,
@@ -1693,17 +1695,14 @@ test.describe('초대된 사람의 로그인 흐름', () => {
     ).toBeVisible();
 
     /*
-      **만세력이 먼저 서고 만드는 버튼은 그 아래다.** 두 사람의 여덟 글자가 이 화면의
-      본론이고, 관계표는 우리가 검산하려고 세운 원자료라 **접힌 채로** 선다(ADR 0035).
-    */
-    await expect(page.getByText('일간').first()).toBeVisible();
-    await expect(page.getByRole('heading', { name: '두 사주 사이의 관계' })).toBeHidden();
-
-    /*
-      **차례가 정해져 있다** — 두 명식 → 베타 지표 → 만드는 버튼(ADR 0054). 사이는
-      앞 화면에서 이미 물었으므로 여기서는 **무엇으로 읽는지만** 적는다.
+      **판정이 먼저 서고 두 명식은 접힌 칸 안이다**(2026-11-08) — 베타 지표 → 만드는 버튼 → 「두 사람의 명식 보기」.
+      관계표는 우리가 검산하려고 세운 원자료라 그 안에서도 **접힌 채로** 선다(ADR 0035). 사이는
+      앞 화면에서 이미 물었으므로 여기서는 **무엇으로 읽는지만** 적는다(ADR 0054).
     */
     await expect(page.getByText('궁합 베타')).toBeVisible();
+    await page.getByText('두 사람의 명식 보기').click();
+    await expect(page.getByText('일간').first()).toBeVisible();
+    await expect(page.getByRole('heading', { name: '두 사주 사이의 관계' })).toBeHidden();
     await expect(page.getByText('두 사람은 어떤 사이인가요')).toHaveCount(0);
     await expect(page.locator('main')).toContainText('가족 사이로 읽어 드려요');
 
@@ -2492,8 +2491,9 @@ test.describe('로그인한 사람의 궁합 화면', () => {
 
     /*
       **적은 대로 계산됐는가.** 두 칸이 섞이면 여기서 드러난다 — 첫 사람의 일주가
-      두 번째 사람의 것으로 나오거나 그 반대가 된다.
+      두 번째 사람의 것으로 나오거나 그 반대가 된다. 두 명식은 「두 사람의 명식 보기」 안에 접혀 있어 먼저 편다(2026-11-08).
     */
+    await page.getByText('두 사람의 명식 보기').click();
     await expect(page.getByText('庚辰').first()).toBeVisible();
     await expect(page.getByText('戊辰').first()).toBeVisible();
 
@@ -2698,7 +2698,14 @@ test.describe('로그인한 사람의 궁합 화면', () => {
          where source_run_id = '${runId}'`);
 
     await page.reload();
-    await expect(page.getByText('연인·배우자 기준', { exact: true })).toBeVisible();
+    /*
+      **받은 궁합풀이가 있으면 베타 지표와 그 참고 문단은 안 선다**(운영자 2026-11-08) — 풀이가 제 점수를 든다. 그래서 그 풀이의
+      눈금 딱지(「연인·배우자 기준」)도 지표 카드와 함께 걷힌다. 사이 줄은 그대로 두 사이를 갈라 말한다.
+    */
+    await expect(page.getByText('연인으로 읽은 글').first()).toBeVisible();
+    await expect(page.getByText('궁합 베타', { exact: true })).toHaveCount(0);
+    await expect(page.getByText('연인·배우자 기준', { exact: true })).toHaveCount(0);
+    await expect(page.getByText(MATCH_INDEX_NOTE)).toHaveCount(0);
     const main = page.locator('main');
     await expect(main).toContainText('지금 글과 점수는 연인·배우자 사이로 읽었어요');
     await expect(main).toContainText('다음 풀이는 가족 사이로 읽어 드려요');
@@ -2739,9 +2746,9 @@ test.describe('로그인한 사람의 궁합 화면', () => {
   });
 
   /**
-   * 검증된 사실이 검증 중인 수치보다 먼저 읽혀야 한다 — `docs/product/matching-beta.md`
-   * 가 적어 둔 결정이고, 화면에서는 순서가 그 결정의 전부다. 지표 카드를 위로 올리는
-   * 변경은 여기서 걸린다.
+   * **판정이 먼저 서고, 두 명식과 관계표는 맨 아래 「두 사람의 명식 보기」에 접힌다**(운영자 2026-11-08). 전에는
+   * 검증된 사실(두 명식 · 표)을 검증 중인 수치보다 먼저 세웠는데(`docs/product/matching-beta.md`), 명식이 맨 위에 서면
+   * 점수와 풀이까지 두 화면을 내려가야 했다. 접는 것이지 자르는 것이 아니다 — 펴면 그대로 다 나온다.
    *
    * 지표 아래의 부름도 함께 본다. 여기 「관심 있어요」가 서 있었고, 그다음에는 「인연
    * 찾기에서 요청하기」가 섰다 — 둘 다 **AI 궁합으로 가는 길이 없던 시절**의 자리다.
@@ -2750,14 +2757,16 @@ test.describe('로그인한 사람의 궁합 화면', () => {
    * 셈이 된다. 인연 찾기는 **모르는 사람과 이어지는 길**이지 이 두 사람을 읽는 길이 아니다.
    */
 
-  test('베타 매칭 지표는 사실 아래에 서고, 그 아래는 궁합풀이로 이어진다', async ({ page, signedIn }) => {
+  test('베타 매칭 지표가 먼저 서고, 궁합풀이 다음에 두 명식이 접혀 선다', async ({ page, signedIn }) => {
     expect(signedIn.label).not.toBe('');
     await page.goto('/compat#a.name=민수&a.date=1990-05-15&a.hour=11:20&b.name=지영&b.date=1992-08-20&b.hour=09:00');
     await page.getByRole('button', { name: '궁합 보기' }).click();
     await expect(page).toHaveURL(/\/me\/compat\?a=/);
 
+    const pair = page.getByText('두 사람의 명식 보기');
     const analysis = page.getByText('두 사주를 맞대어 본 표');
-    await expect(analysis).toBeVisible();
+    await expect(pair).toBeVisible();
+    await expect(analysis).toBeHidden();
     await expect(page.getByText('궁합 베타', { exact: true })).toBeVisible();
     // 내부 판본 이름은 화면 어디에도 없다(ADR 0026). 옛 `match-v0` 대신 지금 판과 옛 판의 이름을 제품 상수에서 읽는다(ADR 0079)
     for (const version of [DISCOVERY_POLICY.version, DISCOVERY_V1.version]) {
@@ -2765,12 +2774,14 @@ test.describe('로그인한 사람의 궁합 화면', () => {
     }
 
     const shown = await page.locator('main').innerText();
-    expect(shown.indexOf('두 사주를 맞대어 본 표')).toBeLessThan(shown.indexOf('궁합 베타'));
+    expect(shown.indexOf('궁합 베타')).toBeLessThan(shown.indexOf('두 사람의 궁합풀이'));
+    expect(shown.indexOf('두 사람의 궁합풀이')).toBeLessThan(shown.indexOf('두 사람의 명식 보기'));
 
     /*
       **접힌 것이지 잘린 것이 아니다**(ADR 0035). 눌러서 안에 든 것을 본다 — 자료는
       응답에 그대로 실려 있고, 갈린 것은 **먼저 서는가**뿐이다.
     */
+    await pair.click();
     await analysis.click();
     await expect(page.getByRole('heading', { name: '두 사주 사이의 관계' })).toBeVisible();
 
@@ -2805,7 +2816,8 @@ test.describe('로그인한 사람의 궁합 화면', () => {
     await page.getByRole('button', { name: '궁합 보기' }).click();
     await expect(page).toHaveURL(/\/me\/compat\?a=/);
 
-    // 접이칸을 펴 놓고 본다 — 접힌 안쪽까지 훑어야 「어디에도 없다」가 된다.
+    // 접이칸을 펴 놓고 본다 — 접힌 안쪽까지 훑어야 「어디에도 없다」가 된다. 표는 명식 칸 안에 한 겹 더 접혀 있다.
+    await page.getByText('두 사람의 명식 보기').click();
     await page.getByText('두 사주를 맞대어 본 표').click();
     await expect(page.getByRole('heading', { name: '두 사주 사이의 관계' })).toBeVisible();
 

@@ -31,8 +31,7 @@ import {
  * 「내가 본 것이 사라졌다」로 읽는다. Match 의 공유 결과는 반대다 — 그쪽은 **동의
  * 당시**의 입력으로 나므로 움직이지 않는다(`MATCH_RESULT_PINNED_NOTE`).
  */
-export const INPUT_EDIT_REPLACED_NOTE =
-  '고치면 사주와 궁합을 새 정보로 다시 계산해요. 전에 본 결과와 달라질 수 있어요.';
+export const INPUT_EDIT_REPLACED_NOTE = '고치면 사주와 궁합을 새 정보로 다시 계산해요.';
 
 /** 저장된 입력을 이루는 값 — **여덟 글자를 가르는 것 전부이고, 그 밖은 없다.** */
 type ChartFields = {

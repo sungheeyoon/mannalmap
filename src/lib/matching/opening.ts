@@ -36,6 +36,12 @@ export function tabsWhileShut<T extends { href: string }>(tabs: readonly T[], op
 export const matchEntriesStand = (open: boolean | null): boolean => open === true;
 
 /**
+ * 보관함의 「인연 궁합」 칩을 세우는가 — 열렸다고 읽었거나, 닫혀도 그 칸에 든 것(받은 인연 궁합 · 만드는 중인 인연 궁합)이 있을 때.
+ * 닫힌 동안 빈 칸의 칩은 눌러도 빈 화면이라 안 세운다. 한 권이라도 있으면 제 글을 찾는 길이라 선다(웹 · 앱 보관함, 2026-11-08)
+ */
+export const matchShelfStands = (open: boolean | null, holdsAny: boolean): boolean => matchEntriesStand(open) || holdsAny;
+
+/**
  * 홈의 「열리면 알려 주세요」 줄(ADR 0223)의 단추 글자 — 앱의 단추가 프롭으로 받아 문구 파일(`copy.ts`)에 못 둔다(ADR 0159).
  * 신청 전 · 신청 뒤 · 저장하는 동안. 제목과 설명 줄은 `copy.ts` 의 `MATCH_OPEN_ALERT_*` 다(대장 home-11).
  */

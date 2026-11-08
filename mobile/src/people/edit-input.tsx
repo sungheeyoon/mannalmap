@@ -94,7 +94,7 @@ export function EditInputForm({
 
       <BirthFields form={form} showName={editableName} />
 
-      {pillarsSame && (
+      {pillarsSame && (nameChanged || warn) && (
         <Text style={warn && unchanged && missing === null ? styles.warn : shared.meta}>
           {nameChanged ? '이름만 바뀌었어요. 이름은 여덟 글자에 들어가지 않아서 출생 정보와 사주는 그대로예요.' : '바뀐 것이 없어요.'}
         </Text>
