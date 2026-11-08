@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { StyleSheet, Text, TextInput, View } from 'react-native';
 
 import { BUTTON_OFF_OPACITY } from '@design';
-import { NOTE_MAX } from '@input/edit';
+import { NOTE_MAX, noteEdited } from '@input/edit';
 import { missingAnswer } from '@input/query';
 import type { PersonSlots } from '@people';
 import { endsWithBatchim } from '@saju-text/batchim';
@@ -12,6 +12,7 @@ import { FailureLine } from '@/ui/failure-line';
 import { FieldLabel, PrimaryButton, SecondaryButton, TextButton } from '@/ui/parts';
 import { COLOR, FONT, RADIUS, TYPE } from '@/ui/tokens';
 import { ConfirmDialog, DialogText } from '@/ui/confirm-dialog';
+import { useLeaveGuard } from '@/ui/leave-guard';
 import { Card, EmptySlot } from '@/ui/surfaces';
 
 import { BirthFields, useBirthForm } from './birth-fields';
@@ -159,7 +160,9 @@ export function NoteEditor({ personId, note, onDone, onCancel }: { personId: str
   const [value, setValue] = useState(note);
   const [failure, setFailure] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
-  const changed = value.trim() !== note.trim();
+  const changed = noteEdited(note, value);
+  /* 바뀐 채 ← · 뒤로 · 밀어 닫기로 나가거나 「작성 그만두기」를 누르면 한 번 묻는다(대장 all-18) */
+  const { leave, dialog: leaveDialog } = useLeaveGuard({ edited: changed, saving });
 
   const save = async () => {
     setFailure(null);
@@ -174,8 +177,9 @@ export function NoteEditor({ personId, note, onDone, onCancel }: { personId: str
     <Card style={styles.noteForm}>
       <NoteField value={value} onChange={setValue} />
       <PrimaryButton label={saving ? '저장하는 중…' : '메모 저장'} onPress={save} disabled={!changed || saving} />
-      <TextButton label="작성 그만두기" onPress={onCancel} disabled={saving} />
+      <TextButton label="작성 그만두기" onPress={() => leave(onCancel)} disabled={saving} />
       {failure !== null && <FailureLine>{failure}</FailureLine>}
+      {leaveDialog}
     </Card>
   );
 }

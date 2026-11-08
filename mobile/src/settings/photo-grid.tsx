@@ -4,7 +4,7 @@ import { PanResponder, Pressable, StyleSheet, Text, View } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 
 import { PHOTO_ADD, PHOTO_UPLOADS_PAUSED } from '@account/copy';
-import { FOCUS_CENTER, PHOTO_MAX_COUNT, PHOTO_NOTE, PHOTO_REMOVED, PHOTO_REMOVE_CONFIRM, PHOTO_REMOVE_NOTE, PHOTO_REMOVE_TITLE, type PhotoFocus, type PhotoUploadMode } from '@profile';
+import { FOCUS_CENTER, PHOTO_LOAD_FAILED_NOTE, PHOTO_MAX_COUNT, PHOTO_NOTE, PHOTO_REMOVED, PHOTO_REMOVE_CONFIRM, PHOTO_REMOVE_NOTE, PHOTO_REMOVE_TITLE, type PhotoFocus, type PhotoUploadMode } from '@profile';
 
 import { useClient } from '@/auth/connected';
 import { FailureLine } from '@/ui/failure-line';
@@ -49,6 +49,18 @@ function slotAt(x: number, y: number, width: number, total: number): number | nu
 type Asset = { uri: string; width: number; height: number };
 type Framing = { source: string; focus: PhotoFocus; settle: (focus: PhotoFocus | null) => void };
 type Lift = { from: number; dx: number; dy: number; over: number | null };
+
+/** 사진 목록만 못 읽었을 때 — 판과 제목은 그대로 서고 칸 자리에 실패 줄이 선다. 닉네임 · 소개 · 출생 정보는 따로 선다(대장 all-18) */
+export function PhotoGridFailed({ onRetry }: { onRetry: () => void }) {
+  return (
+    <Paper style={styles.panel}>
+      <View style={styles.head}>
+        <Text style={styles.title}>{PHOTO_SECTION_TITLE}</Text>
+      </View>
+      <FailureLine onRetry={onRetry}>{PHOTO_LOAD_FAILED_NOTE}</FailureLine>
+    </Paper>
+  );
+}
 
 /**
  * 사진 여섯 칸 — 웹 `app/me/profile/photo-grid.tsx` 와 같은 꼴과 약속이다. 첫 칸이 대표고, 고르면 바로 올라가며(한 장이면 위치 조정을 지나서),

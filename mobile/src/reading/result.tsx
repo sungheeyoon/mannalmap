@@ -2,7 +2,7 @@ import type { CurrentReading } from '@reading/current-reading';
 import { seatNicknamesOf, withNicknames, type PairNicknames } from '@reading/display';
 import { READING_STALE_LABEL, READING_STALE_NOTE } from '@reading/notes';
 import { ELEMENTS, type Element } from '@saju';
-import type { ReactNode } from 'react';
+import { useMemo, type ReactNode } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import Svg, { Polygon } from 'react-native-svg';
 
@@ -11,6 +11,7 @@ import { ElementSymbol } from '@/ui/element-symbol';
 import { COLOR, ELEMENT_TONE, FONT, TYPE } from '@/ui/tokens';
 
 import { Markdown } from './markdown';
+import { ReadingContents, headingsOf } from './contents';
 import type { ReadingTarget } from './api';
 
 const softOf = (element: Element | null | undefined) => (element ? ELEMENT_TONE[element].soft : COLOR.noneSoft);
@@ -54,6 +55,8 @@ export function Result({
   const seats = nicknames === undefined ? null : seatNicknamesOf(nicknames, reading.viewerIsFirst);
   const named = (text: string) => (seats === null ? text : withNicknames(text, seats));
   const metaphor = reading.metaphor === null ? null : named(reading.metaphor);
+  const body = named(reading.output);
+  const titles = useMemo(() => headingsOf(body), [body]);
 
   const meta = (
     <Text style={styles.meta}>
@@ -111,7 +114,9 @@ export function Result({
         </View>
       )}
 
-      <Markdown source={named(reading.output)} />
+      <ReadingContents titles={titles} />
+
+      <Markdown source={body} />
 
       <View aria-hidden style={styles.end}>
         {ELEMENTS.map((element) => (

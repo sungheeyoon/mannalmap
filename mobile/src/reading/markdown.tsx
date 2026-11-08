@@ -1,8 +1,10 @@
 import { chipsOf, CHIP_LABELS, inlineParts, markdownBlocks, type MarkdownBlock } from '@reading/markdown-blocks';
-import type { ReactNode } from 'react';
+import type { ComponentRef, ReactNode } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
 import { COLOR, FONT, RADIUS, TYPE } from '@/ui/tokens';
+
+import { useContentsMarks } from './contents';
 
 /**
  * 풀이 원문을 그린다 — 덩이를 나누는 규칙은 웹과 같은 `markdownBlocks` 다. HTML 로 해석하지 않고 문법에 없는 것은 글자 그대로 선다.
@@ -19,7 +21,7 @@ function inline(text: string): ReactNode[] {
   );
 }
 
-function Block({ block, first }: { block: Exclude<MarkdownBlock, { kind: 'point' }>; first: boolean }) {
+function Block({ block, first, anchor }: { block: Exclude<MarkdownBlock, { kind: 'point' }>; first: boolean; anchor?: (node: ComponentRef<typeof View> | null) => void }) {
   switch (block.kind) {
     case 'rule':
       return <View style={styles.rule} />;
@@ -65,7 +67,7 @@ function Block({ block, first }: { block: Exclude<MarkdownBlock, { kind: 'point'
       return <Text style={block.lead ? styles.lead : styles.body}>{inline(block.text)}</Text>;
     case 'heading':
       return block.depth <= 2 ? (
-        <View style={[styles.heading, !first && styles.headingGap]}>
+        <View ref={anchor} collapsable={false} style={[styles.heading, !first && styles.headingGap]}>
           <View style={styles.headingBar} />
           <Text accessibilityRole="header" style={styles.headingText}>
             {inline(block.text)}
@@ -82,10 +84,13 @@ function Block({ block, first }: { block: Exclude<MarkdownBlock, { kind: 'point'
   }
 }
 
+/** 목차를 품은 스크롤 안이면 큰 머리(`##` 까지)의 자리를 차례로 적는다 — 목차가 그 자리로 내려간다(`contents.tsx`) */
 export function Markdown({ source }: { source: string }) {
+  const mark = useContentsMarks();
   const blocks = markdownBlocks(source);
   const nodes: ReactNode[] = [];
   let points: Extract<MarkdownBlock, { kind: 'point' }>[] = [];
+  let headings = 0;
 
   const flushPoints = () => {
     if (points.length === 0) return;
@@ -111,7 +116,9 @@ export function Markdown({ source }: { source: string }) {
       return;
     }
     flushPoints();
-    nodes.push(<Block key={`${block.kind}-${at}`} block={block} first={at === 0} />);
+    const index = block.kind === 'heading' && block.depth <= 2 ? headings++ : -1;
+    const anchor = index < 0 || mark === null ? undefined : (node: ComponentRef<typeof View> | null) => mark(index, node);
+    nodes.push(<Block key={`${block.kind}-${at}`} block={block} first={at === 0} anchor={anchor} />);
   });
   flushPoints();
 

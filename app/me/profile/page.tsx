@@ -71,8 +71,9 @@ export default async function ProfilePage() {
     바이트는 이 화면에 안 실린다 — 자리와 판본만 읽고 그림은 주소로 받아 간다(`/me/photo/[userId]/[n]`). 올리기의 길(`db` ·
     `paused` · `s3`)은 DB 의 스위치가 정한다(G-120, ADR 0203)
   */
+  /* 사진을 못 읽어도 화면째 오류 경계로 가지 않는다 — 그 칸만 실패 줄이다(대장 all-18). */
   const [photos, uploads, birth] = await Promise.all([
-    myPhotos(),
+    myPhotos().catch(() => null),
     photoUploadMode(),
     myBirth(supabase, state.kind === 'active' ? state.selfPersonId : null),
   ]);
