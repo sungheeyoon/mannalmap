@@ -132,7 +132,7 @@ export function CompatPicker({ people }: { people: Choosable[] }) {
   /**
    * **이 누름이 사이를 건드리는가.**
    *
-   * 칸은 늘 「아직 모르겠음」에서 시작한다. 안 건드린 것을 답으로 보내면, 지난번에
+   * 칸은 늘 「관계 선택 안 함」에서 시작한다. 안 건드린 것을 답으로 보내면, 지난번에
    * 「가족」이라 답해 둔 두 사람을 다시 고르기만 해도 그 답이 지워진다.
    */
   const answered = useRef<string | null>(null);

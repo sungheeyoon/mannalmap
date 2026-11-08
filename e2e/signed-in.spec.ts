@@ -1631,7 +1631,7 @@ test.describe('초대된 사람의 로그인 흐름', () => {
     */
     await expect(page.getByText('두 사람은 어떤 사이인가요')).toBeVisible();
     /* 사이가 점수의 눈금도 고른다(ADR 0113) — 안내가 옛 약속 「점수에는 쓰지 않습니다」를 말하지 않는다 */
-    await expect(page.getByText('점수의 기준도 이 답을 따라요')).toBeVisible();
+    await expect(page.getByText('선택한 관계에 따라 궁합 해석과 점수가 달라져요.')).toBeVisible();
     await expect(page.getByText('점수에는 쓰지 않습니다')).toHaveCount(0);
 
     /* 목록의 카드가 연 길이라 첫 칸에는 그 사람이 이미 앉아 있다 — 찾아 고르는 칸이 그 이름을 든다 */
