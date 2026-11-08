@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState, type KeyboardEvent, type PointerEvent as ReactPointerEvent } from 'react';
 
-import { draggedFocus, focusPosition, steppedFocus, type PhotoFocus } from '@/src/lib/profile';
+import { draggedFocus, focusPosition, PHOTO_FRAME_HINT, steppedFocus, type PhotoFocus } from '@/src/lib/profile';
 
 import { CONFIRM_FIRST_FOCUS, ConfirmDialog } from '../../ui/confirm-dialog';
 
@@ -43,6 +43,7 @@ export function PhotoFramer({
       firstFocus="confirm"
       onConfirm={onSave}
     >
+      <p>{PHOTO_FRAME_HINT}</p>
       {src !== null && (
         <div className="mt-2 flex flex-col items-center gap-3">
           <FocusFrame

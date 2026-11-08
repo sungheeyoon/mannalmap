@@ -96,6 +96,12 @@ export function nicknameKey(nickname: string): string {
 export const PHOTO_NOTE =
   '프로필 사진은 인연 찾기와 요청 화면에서 다른 사람에게 공개됩니다.';
 
+/** 위치 조정 창의 제목 아래 한 줄 — 틀만 있으면 저장만 누를 곳으로 보인다. 웹 · 앱이 같은 글자다(대장 all-15) */
+export const PHOTO_FRAME_HINT = '사진을 움직여 보일 위치를 맞춰 주세요.';
+
+/** 크게 보기에서 그 장을 못 받았거나 못 그린 때의 실패 줄 — 웹 · 앱이 같은 글자다(대장 all-15) */
+export const PHOTO_LOAD_FAILED_NOTE = '사진을 불러오지 못했어요.';
+
 /** 사진 없이 서는 자리 — 이름의 첫 글자 하나 */
 export function initialOf(nickname: string): string {
   return [...nickname.trim()][0] ?? '';
