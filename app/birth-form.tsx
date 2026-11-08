@@ -15,6 +15,7 @@ import {
 } from '@/src/lib/saju';
 
 import { dateRefusal } from '@/src/lib/input/chart';
+import { ADVANCED_SETTINGS } from '@/src/lib/input/copy';
 import { DEFAULT_QUERY, NAME_MAX, TIME_BASES, TIME_BASIS, type Query } from '@/src/lib/input/query';
 
 import { Icon } from './ui/icons';
@@ -208,13 +209,13 @@ export function BirthFields({
           className={styles.disclosure}
         >
           <span className={styles.disclosureLabel}>고급 설정</span>
-          <span className={styles.disclosureSummary}>기본 설정을 유지하는 걸 추천해요</span>
+          <span className={styles.disclosureSummary}>{ADVANCED_SETTINGS.summary}</span>
           <Icon name="chevron" className={`${styles.chevron} ${advancedShown ? '-rotate-90' : 'rotate-90'}`} />
         </button>
 
         {advancedShown && (
           <div className={cx(styles.advancedBody, panel)}>
-            <p className="text-xs leading-5 text-secondary">자시 · 시간 기준 · 세운 설정을 바꿀 수 있어요.</p>
+            <p className="text-xs leading-5 text-secondary">{ADVANCED_SETTINGS.intro}</p>
             {/* 시간을 모르면 자시 경계에 걸릴 일이 없어 선택이 무의미하다 */}
             <SelectField
               label="자시"
