@@ -5,7 +5,7 @@ import { sectionCounter, type SectionCount } from './progress';
 /**
  * 모델이 내는 그대로 — **JSON 글자**다. 본문은 `markdown` 문자열 안에 이스케이프된 채 온다.
  *
- * 옛 차례(`score · metaphor · markdown`)는 원복 조립의 궁합만, 개인 풀이와 두 궁합 4판은 본문이 먼저다(`writesSummaryLast`).
+ * 옛 차례(`score · metaphor · markdown`)는 옛 궁합 세대(`pair-legacy`)만, 개인 풀이와 두 궁합 4판은 본문이 먼저다(`writesSummaryLast`).
  */
 const BODY = [
   '## 먼저 볼 핵심 세 가지',
