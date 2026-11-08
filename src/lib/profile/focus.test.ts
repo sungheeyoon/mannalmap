@@ -55,3 +55,13 @@ describe('사진의 보일 자리 (G-98)', () => {
     expect(draggedFocus({ x: 10, y: 20 }, 40, 40, frame, { width: 0, height: 0 })).toEqual({ x: 10, y: 20 });
   });
 });
+
+describe('앱 낭독기의 위치 옮기기(대장 all-17)', () => {
+  it('동작 넷은 웹 화살표 키와 같은 한 칸씩 — 위 · 아래 · 왼쪽 · 오른쪽', async () => {
+    const { PHOTO_FOCUS_MOVES, photoFocusValue } = await import('./index');
+    const moved = Object.fromEntries(PHOTO_FOCUS_MOVES.map(({ name, key }) => [name, steppedFocus(FOCUS_CENTER, key)]));
+    expect(moved).toEqual({ up: { x: 50, y: 55 }, down: { x: 50, y: 45 }, left: { x: 55, y: 50 }, right: { x: 45, y: 50 } });
+    expect(steppedFocus({ x: 50, y: 100 }, 'ArrowUp')).toEqual({ x: 50, y: 100 });
+    expect(photoFocusValue({ x: 45, y: 50 })).toBe('가로 45%, 세로 50%');
+  });
+});

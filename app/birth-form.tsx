@@ -16,7 +16,7 @@ import {
 
 import { dateRefusal } from '@/src/lib/input/chart';
 import { ADVANCED_SETTINGS } from '@/src/lib/input/copy';
-import { DEFAULT_QUERY, NAME_MAX, TIME_BASES, TIME_BASIS, type Query } from '@/src/lib/input/query';
+import { BIRTH_DIGIT_LABEL, DEFAULT_QUERY, NAME_MAX, TIME_BASES, TIME_BASIS, type Query } from '@/src/lib/input/query';
 
 import { Icon } from './ui/icons';
 import styles from './birth-form.module.css';
@@ -242,7 +242,7 @@ export function BirthFields({
               <span className={styles.rail}>세운 연도</span>
               <input
                 type="number"
-                aria-label="세운 시작"
+                aria-label={BIRTH_DIGIT_LABEL.saeun}
                 value={value.saeunFrom}
                 min={SUPPORTED_YEAR_RANGE.min}
                 max={SUPPORTED_YEAR_RANGE.max}

@@ -2303,7 +2303,7 @@ test.describe('초대된 사람의 로그인 흐름', () => {
      * 일어났다. **시험은 초록이었다** — 채우기 전에 스크롤해 주기 때문이다. 사람은
      * 스크롤하지 않는다. 그래서 여기서 재는 것은 「폈는가」가 아니라 「어디에 폈는가」다.
      */
-    const to = (await page.getByLabel('출생연도').boundingBox())!;
+    const to = (await page.getByLabel('출생 연도').boundingBox())!;
     expect(to.y - from.y).toBeLessThan(page.viewportSize()!.height);
     await expect(page.getByLabel('이름')).toHaveCount(0);
     /* 바로 위에 닉네임 칸이 있는 화면이라 「내 이름은 프로필 닉네임으로 보여요」 상자는 안 선다 */

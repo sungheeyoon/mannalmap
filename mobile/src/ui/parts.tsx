@@ -32,6 +32,7 @@ export function Field({
   autoCapitalize,
   refused = false,
   inputRef,
+  disabled = false,
 }: {
   value: string;
   onChange: (next: string) => void;
@@ -42,11 +43,15 @@ export function Field({
   autoCapitalize?: 'none' | 'characters';
   refused?: boolean;
   inputRef?: Ref<ComponentRef<typeof TextInput>>;
+  /** 저장하는 동안 잠근다 — 그 사이 적은 것은 저장이 끝나 폼이 비면 사라진다 */
+  disabled?: boolean;
 }) {
   return (
     <TextInput
       ref={inputRef}
-      style={[styles.control, refused && styles.wrong]}
+      editable={!disabled}
+      accessibilityState={{ disabled }}
+      style={[styles.control, refused && styles.wrong, disabled && styles.off]}
       value={value}
       onChangeText={onChange}
       maxLength={maxLength}
@@ -105,6 +110,8 @@ export function DigitField({
   inputRef,
   onFull,
   advanceEarly = false,
+  label,
+  disabled = false,
 }: {
   value: string;
   onChange: (next: string) => void;
@@ -118,13 +125,18 @@ export function DigitField({
   onFull?: () => void;
   /** 뒤에 숫자가 더 올 수 없으면 한 자리로도 넘어간다(「5」월). 시각은 끈다 — 「33」이 3시 3분으로 조용히 갈라지면 시주가 틀린다 */
   advanceEarly?: boolean;
+  /** 읽어 주는 이름 — 칸 안의 「년」만 읽으면 출생 연도인지 세운 연도인지 안 들린다(웹 `birth-digits.tsx` 의 `aria-label`) */
+  label: string;
+  disabled?: boolean;
 }) {
   const wrong = refused || digitOutOfRange(value, digits, min, max);
   return (
     <View style={styles.digit}>
       <TextInput
         ref={inputRef}
-        style={[styles.control, styles.digitInput, wrong && styles.wrong]}
+        editable={!disabled}
+        accessibilityState={{ disabled }}
+        style={[styles.control, styles.digitInput, wrong && styles.wrong, disabled && styles.off]}
         value={value}
         onChangeText={(typed) => {
           const next = typed.replace(/\D/g, '').slice(0, digits);
@@ -137,7 +149,7 @@ export function DigitField({
         keyboardType="number-pad"
         returnKeyType="done"
         inputAccessoryViewID={Platform.OS === 'ios' ? KEYBOARD_DONE : undefined}
-        accessibilityLabel={unit}
+        accessibilityLabel={label}
       />
       <Text style={styles.unit}>{unit}</Text>
     </View>
@@ -165,10 +177,12 @@ export function Choices<T extends string>({
   value,
   options,
   onPick,
+  disabled = false,
 }: {
   value: T | null;
   options: readonly { value: T; label: string }[];
   onPick: (next: T) => void;
+  disabled?: boolean;
 }) {
   return (
     <View style={styles.row}>
@@ -178,9 +192,10 @@ export function Choices<T extends string>({
           <Pressable
             key={option.value}
             accessibilityRole="radio"
-            accessibilityState={{ checked: chosen }}
+            accessibilityState={{ checked: chosen, disabled }}
+            disabled={disabled}
             onPress={() => onPick(option.value)}
-            style={[styles.option, chosen && styles.optionChosen]}
+            style={[styles.option, chosen && styles.optionChosen, disabled && styles.off]}
           >
             <Text style={[styles.optionText, chosen && styles.optionTextChosen]} numberOfLines={1}>
               {option.label}{chosen ? ' •' : ''}

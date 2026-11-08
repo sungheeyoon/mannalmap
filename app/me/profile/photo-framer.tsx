@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState, type KeyboardEvent, type PointerEvent as ReactPointerEvent } from 'react';
 
-import { draggedFocus, focusPosition, PHOTO_FRAME_HINT, steppedFocus, type PhotoFocus } from '@/src/lib/profile';
+import { draggedFocus, focusPosition, PHOTO_FOCUS_LABEL, PHOTO_FRAME_HINT, steppedFocus, type PhotoFocus } from '@/src/lib/profile';
 
 import { CONFIRM_FIRST_FOCUS, ConfirmDialog } from '../../ui/confirm-dialog';
 
@@ -137,7 +137,7 @@ function FocusFrame({
             ...CONFIRM_FIRST_FOCUS,
             tabIndex: 0,
             role: 'group',
-            'aria-label': '사진 위치',
+            'aria-label': PHOTO_FOCUS_LABEL,
             'aria-keyshortcuts': 'ArrowLeft ArrowRight ArrowUp ArrowDown',
             onKeyDown,
           }

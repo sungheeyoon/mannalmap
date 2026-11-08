@@ -215,6 +215,19 @@ export const HOUR_UNKNOWN_LABEL = '출생 시각 모름';
  */
 export const HOUR_UNKNOWN_CHOICE = '모름';
 
+/**
+ * 출생 정보 폼의 숫자칸을 화면 낭독기가 읽는 이름 — 웹(`aria-label`)과 앱(`accessibilityLabel`)이 이 한 벌을 쓴다.
+ * 칸 안의 단위(「년」)만 읽으면 출생 연도인지 세운 연도인지 안 들린다(운영자 확정 2026-11-08, 대장 all-17)
+ */
+export const BIRTH_DIGIT_LABEL = {
+  year: '출생 연도',
+  month: '출생 월',
+  day: '출생 일',
+  hour: '출생 시',
+  minute: '출생 분',
+  saeun: '세운 연도',
+} as const;
+
 const SAEUN_MIN = 1900;
 const SAEUN_MAX = 2100;
 
