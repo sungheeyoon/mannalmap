@@ -120,5 +120,5 @@ export const SEGMENT_ON = `${SEGMENT_SHAPE} bg-surface font-semibold text-foregr
  * 맞추라고 했다(2026-10-14, G-109). 이름은 `aria-label` 이 든다
  */
 export const ICON_BUTTON_ON_PHOTO_FACE =
-  'size-11 place-items-center rounded-full bg-black/50 text-white shadow-[0_2px_8px_rgb(0_0_0/0.25)] ring-1 ring-white/30 backdrop-blur-sm';
+  'size-11 place-items-center rounded-full bg-photo-face text-on-photo shadow-[0_2px_8px_rgb(0_0_0/0.25)] ring-1 ring-white/30 backdrop-blur-sm';
 export const ICON_BUTTON_ON_PHOTO = `grid ${ICON_BUTTON_ON_PHOTO_FACE}`;

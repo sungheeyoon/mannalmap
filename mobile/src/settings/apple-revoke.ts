@@ -1,5 +1,6 @@
 import { Platform } from 'react-native';
 
+import type { Client } from '@/auth/client';
 import { appleRevokeCode, signedInWithApple } from '@/auth/apple';
 import { door } from '@/reading/api';
 
@@ -11,14 +12,14 @@ import { door } from '@/reading/api';
  * - `done` — 끊었거나, 끊을 것이 없거나(애플 계정이 아님 · iOS 가 아님), 끊기가 실패했다. **끊기가 실패해도 탈퇴는 간다** —
  *   지우는 것은 그 사람의 권리이고 끊기는 애플과 우리 사이의 일이다. 실패는 서버 기록에 남는다
  */
-export async function revokeAppleBeforeLeaving(): Promise<'done' | 'cancelled'> {
-  if (Platform.OS !== 'ios' || !(await signedInWithApple())) return 'done';
+export async function revokeAppleBeforeLeaving(client: Client): Promise<'done' | 'cancelled'> {
+  if (Platform.OS !== 'ios' || !(await signedInWithApple(client))) return 'done';
 
   const code = await appleRevokeCode();
   if (code.kind === 'cancelled') return 'cancelled';
   if (code.kind === 'failed') return 'done';
 
-  const answer = await door<{ revoked: true }>('/api/mobile/me/apple-revoke', {
+  const answer = await door<{ revoked: true }>(client, '/api/mobile/me/apple-revoke', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ authorizationCode: code.code }),

@@ -1,7 +1,8 @@
 import type { ReactNode } from 'react';
-import { Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { Icon } from './icons';
+import { Scrim } from './scrim';
 import { SheetPanel } from './surfaces';
 import { COLOR, FONT, RADIUS, TYPE } from './tokens';
 
@@ -22,32 +23,27 @@ export function DetailSheet({
   children: ReactNode;
 }) {
   return (
-    <Modal visible={open} transparent animationType="slide" onRequestClose={onClose}>
-      <View style={styles.backdrop}>
-        <Pressable accessibilityLabel={CLOSE_LABEL} style={styles.outside} onPress={onClose} />
-        <SheetPanel style={styles.sheet} accessibilityViewIsModal>
-          <View style={styles.grip} />
-          <View style={styles.head}>
-            <Text style={styles.title} numberOfLines={1} accessibilityRole="header">
-              {title}
-            </Text>
-            {menu}
-            <Pressable accessibilityRole="button" accessibilityLabel={CLOSE_LABEL} onPress={onClose} style={styles.icon}>
-              <Icon size={20} name="close" color={COLOR.secondary} />
-            </Pressable>
-          </View>
-          <ScrollView contentContainerStyle={styles.body} keyboardShouldPersistTaps="handled">
-            {children}
-          </ScrollView>
-        </SheetPanel>
-      </View>
-    </Modal>
+    <Scrim open={open} place="bottom" animation="slide" onRequestClose={onClose} onOutside={onClose} outsideLabel={CLOSE_LABEL}>
+      <SheetPanel style={styles.sheet} accessibilityViewIsModal>
+        <View style={styles.grip} />
+        <View style={styles.head}>
+          <Text style={styles.title} numberOfLines={1} accessibilityRole="header">
+            {title}
+          </Text>
+          {menu}
+          <Pressable accessibilityRole="button" accessibilityLabel={CLOSE_LABEL} onPress={onClose} style={styles.icon}>
+            <Icon size={20} name="close" color={COLOR.secondary} />
+          </Pressable>
+        </View>
+        <ScrollView contentContainerStyle={styles.body} keyboardShouldPersistTaps="handled">
+          {children}
+        </ScrollView>
+      </SheetPanel>
+    </Scrim>
   );
 }
 
 const styles = StyleSheet.create({
-  backdrop: { flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(0, 0, 0, 0.4)' },
-  outside: { flex: 1, minHeight: 40 },
   sheet: { maxHeight: '85%' },
   grip: { alignSelf: 'center', width: 40, height: 6, marginTop: 12, borderRadius: RADIUS.pill, backgroundColor: COLOR.borderStrong },
   head: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingLeft: 20, paddingRight: 8, paddingTop: 8, paddingBottom: 4 },

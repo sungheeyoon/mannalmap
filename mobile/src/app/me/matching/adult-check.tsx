@@ -15,6 +15,7 @@ import {
   adultCheckNeeded,
 } from '@matching/adult-check';
 
+import { useClient } from '@/auth/connected';
 import { adultCheckProvider, readAdultCheck } from '@/matching/adult-check';
 import { PrimaryButton } from '@/ui/parts';
 import { CardFrame } from '@/ui/surfaces';
@@ -26,23 +27,24 @@ import { TopBar } from '@/ui/top-bar';
  * 꺼져 있거나 이미 확인했으면 바로 돌아간다.
  */
 export default function AdultCheckScreen() {
+  const client = useClient();
   const { next } = useLocalSearchParams<{ next?: string }>();
   const destination = safeReturnPath(next);
   const [working, setWorking] = useState(false);
   const [failed, setFailed] = useState(false);
 
   useEffect(() => {
-    void readAdultCheck().then((state) => {
+    void readAdultCheck(client).then((state) => {
       if (state !== null && !adultCheckNeeded(state)) router.replace(destination as never);
     });
-  }, [destination]);
+  }, [client, destination]);
 
   const start = async () => {
     if (adultCheckProvider === null) return;
     setWorking(true);
     setFailed(false);
     const outcome = await adultCheckProvider.start().catch(() => 'failed' as const);
-    const step = adultCheckAfter(outcome, outcome === 'verified' ? await readAdultCheck() : null);
+    const step = adultCheckAfter(outcome, outcome === 'verified' ? await readAdultCheck(client) : null);
     setWorking(false);
     if (step === 'go') router.replace(destination as never);
     if (step === 'failed') setFailed(true);

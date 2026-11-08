@@ -185,7 +185,7 @@ export function PillarChart({ saju }: { saju: Saju }) {
       {(pillars.meta.sajuYear !== saju.meta.inputTime.year || pillars.meta.lateNightShiftApplied) && (
         <ul
           aria-label="사주를 바꾼 입력 안내"
-          className="mt-4 flex flex-col gap-1.5 rounded-cell border border-warning/25 bg-warning-wash px-4 py-3 text-small leading-5 text-secondary sm:mx-auto sm:max-w-3xl"
+          className="mt-4 flex flex-col gap-1.5 rounded-cell border border-warning-line-soft bg-warning-wash px-4 py-3 text-small leading-5 text-secondary sm:mx-auto sm:max-w-3xl"
         >
           {pillars.meta.sajuYear !== saju.meta.inputTime.year && (
             <li>

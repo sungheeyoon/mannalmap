@@ -6,6 +6,7 @@ import type { NotificationKind } from '@consent/index';
 import type { Inbox } from '@matching/inbox';
 import { when } from '@matching/requests';
 
+import { useClient } from '@/auth/connected';
 import { markNotificationsRead, readInbox, type Read } from '@/matching/doors';
 import { Icon, type IconName } from '@/ui/icons';
 import { EmptyState } from '@/ui/empty-state';
@@ -35,12 +36,13 @@ const NOTIFICATION_WARNS: readonly NotificationKind[] = ['request_invalidated', 
  * 갈 자리가 있는 줄은 줄 전체가 누를 자리다. 소식은 앱 밖으로 나가지 않는다(PRD §6.4).
  */
 export default function RequestsScreen() {
+  const client = useClient();
   const [inbox, setInbox] = useState<Read<Inbox> | null>(null);
   const [readFailed, setReadFailed] = useState(false);
   const marked = useRef(false);
 
   const load = useCallback(async () => {
-    const next = await readInbox();
+    const next = await readInbox(client);
     /* 선 화면을 다시 읽다 못 읽으면 가진 것을 그대로 둔다 — 다음에 돌아올 때 메운다(채팅 목록과 같다) */
     setInbox((now) => (now?.ok === true && !next.ok ? now : next));
     if (!next.ok) return;
@@ -50,9 +52,9 @@ export default function RequestsScreen() {
     }
     if (marked.current) return;
     marked.current = true;
-    const result = await markNotificationsRead();
+    const result = await markNotificationsRead(client);
     setReadFailed(!result.ok);
-  }, []);
+  }, [client]);
 
   useFocusEffect(
     useCallback(() => {

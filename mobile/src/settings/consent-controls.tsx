@@ -3,9 +3,11 @@ import { useState } from 'react';
 import { IMPROVEMENT_OFF_CONFIRM, IMPROVEMENT_OFF_IRREVERSIBLE, IMPROVEMENT_OFF_PENDING, IMPROVEMENT_OFF_TITLE, asksBeforeTurningOff } from '@consent/off';
 import { OPTIONAL_CONSENTS } from '@consent/notice';
 
+import { useClient } from '@/auth/connected';
+import { FailureLine } from '@/ui/failure-line';
 import { ConfirmDialog, DialogText } from '@/ui/confirm-dialog';
 
-import { FailureLine, SwitchRow } from './parts';
+import { SwitchRow, FAILURE_INSET } from './parts';
 import { setOptionalConsent } from './settings';
 
 type ConsentKey = 'improvement' | 'contact';
@@ -15,6 +17,7 @@ type ConsentKey = 'improvement' | 'contact';
  * 판정은 함께 쓰는 `asksBeforeTurningOff` 다. 누르면 곧 넘어가고, 거절되면 앞 값으로 돌아오며 까닭이 선다.
  */
 export function ConsentControls({ improvement, contact }: { improvement: boolean; contact: boolean }) {
+  const client = useClient();
   const [shown, setShown] = useState<Record<ConsentKey, boolean>>({ improvement, contact });
   const [saving, setSaving] = useState(false);
   const [failure, setFailure] = useState<string | null>(null);
@@ -27,7 +30,7 @@ export function ConsentControls({ improvement, contact }: { improvement: boolean
     setAskFailure(null);
     setSaving(true);
     if (!fromDialog) setShown((now) => ({ ...now, [key]: next }));
-    const result = await setOptionalConsent(key, next);
+    const result = await setOptionalConsent(client, key, next);
     setSaving(false);
     if (result.ok) {
       if (fromDialog) {
@@ -69,7 +72,7 @@ export function ConsentControls({ improvement, contact }: { improvement: boolean
           busy={saving}
         />
       ))}
-      {failure !== null && <FailureLine inset>{failure}</FailureLine>}
+      {failure !== null && <FailureLine style={FAILURE_INSET}>{failure}</FailureLine>}
       <ConfirmDialog
         open={asking}
         onClose={() => {

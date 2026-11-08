@@ -6,6 +6,7 @@ import {
   NOTICE_UNREAD,
   SERVICE_ENDED_ON,
   serviceIsOver,
+  gateAccountOf,
   gateFor,
   signupDone,
   type GateAccount,
@@ -271,5 +272,20 @@ describe('기준 칸이 없는 서버', () => {
   it('가입한 사람은 지나가고 가입 전인 사람만 가입 화면으로 간다', () => {
     expect(gateFor('/me', ready, before as typeof NOTICE_UNREAD, during)).toBeNull();
     expect(gateFor('/me', fresh, before as typeof NOTICE_UNREAD, during)).toBe('/signup');
+  });
+});
+
+describe('관문이 읽는 계정 줄을 옮긴다 — 웹 관문 · 앱 문 세션 · 앱 관문이 함께 쓴다(G-152)', () => {
+  it('가입을 끝냈는가는 `signed_up_at` 이 있는가다', () => {
+    expect(gateAccountOf({ signed_up_at: '2026-11-01T00:00:00Z', notice_version: 'v1', notice_schedule_id: 7 })).toEqual({
+      signedUp: true,
+      noticeVersion: 'v1',
+      noticeScheduleId: 7,
+    });
+    expect(gateAccountOf({ signed_up_at: null, notice_version: null, notice_schedule_id: null })).toEqual({
+      signedUp: false,
+      noticeVersion: null,
+      noticeScheduleId: null,
+    });
   });
 });
