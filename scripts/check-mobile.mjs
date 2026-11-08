@@ -90,7 +90,7 @@ const MOBILE_RPCS = [
   'match_is_open', 'my_reading', 'my_reading_credits', 'my_reading_orders', 'my_readings', 'my_running_readings', 'my_service_survey', 'my_suspension',
   'my_warning_notice', 'nickname_is_available', 'pair_relation_of', 'photo_at', 'remove_app_push_token', 'remove_my_photo', 'replace_my_photo',
   'report_chat_message', 'report_user', 'request_account_deletion', 'request_match', 'restore_passed_connection', 'save_app_push_token', 'save_my_profile',
-  'save_service_survey', 'send_chat_message', 'service_survey_context', 'set_contact_consent', 'set_improvement_consent', 'set_match_open_alert',
+  'save_service_survey', 'send_chat_message', 'service_survey_context', 'set_improvement_consent', 'set_match_open_alert',
   'set_my_photo_focus', 'set_pair_relation', 'share_my_reading', 'shared_reading', 'touch_activity', 'unread_chat_count',
 ];
 const MOBILE_TABLES = ['app_user', 'block', 'discovery_passed', 'discovery_profile', 'person', 'user_person_access'];
@@ -564,8 +564,7 @@ try {
   const surveySaved = await a.client.rpc('save_service_survey', { p_liked: [], p_unknown: [], p_improve: [], p_improve_text: null, p_wants: [], p_wants_new: [], p_price_solo: null, p_price_pair: null, p_price_factors: [], p_free_text: null, p_submit: false });
   check('설문 임시 저장 — 앱이 보내는 칸으로 함수가 잡힌다', surveySaved.error === null, shapeOf(surveySaved));
   const improvement = await a.client.rpc('set_improvement_consent', { p_consent: false });
-  const contact = await a.client.rpc('set_contact_consent', { p_consent: true });
-  check('선택 동의 둘', improvement.error === null && contact.error === null, `${shapeOf(improvement)} ${shapeOf(contact)}`);
+  check('선택 동의', improvement.error === null, shapeOf(improvement));
   const prefer = await a.client.from('discovery_profile').select('user_id').maybeSingle();
   const preferSaved = await a.client.from('discovery_profile').update({ prefer_gender: 'female' }).eq('user_id', prefer.data.user_id);
   check('보고 싶은 성별 — 있는 줄을 고친다', preferSaved.error === null, shapeOf(preferSaved));
