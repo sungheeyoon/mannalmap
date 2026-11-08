@@ -15,8 +15,7 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 
 ## 무엇을 맡기고 무엇을 묻는가는 `docs/agents/delegation.md` 가
 
-맡길 이슈의 칸 아홉, 권한 등급 다섯(등급 3 가운데 **프로덕션 배포만 사람이 답한 뒤**이고, `db push` · 운영 SQL · Vercel 변수 ·
-`gh pr merge` 는 묻지 않고 수행한 뒤 본 값을 적으며(2026-11-07 운영자 결정), 실호출은 운영자가 직접 돌린다 — 표는 `docs/agents/delegation/permissions.md` 「권한 등급」, ADR 0093),
+맡길 이슈의 칸 아홉, 권한 등급 다섯(무엇을 묻고 무엇을 묻지 않나는 `docs/agents/delegation/permissions.md` 「권한 등급」 하나),
 PR 이 드는 칸 여섯, 세션마다 다시 배우던 일하는 법과 로컬 환경의 함정은
 **`docs/agents/delegation.md`** 의 색인이 가리키는 `docs/agents/delegation/` 의 주제별 파일이 답한다(ADR 0090). 이 색인은 맡기는 규약의
 색인이다 — 일의 입구는 `docs/start.md` 다. 권한 표는 `.claude/settings.json` 과 같은 목록인데 **그 파일은 Claude Code 만 읽는다** — 다른
