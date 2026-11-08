@@ -2,9 +2,10 @@
 
 import Link from 'next/link';
 
-import { SERVICE_FEATURES } from '@/src/lib/brand/features';
+import { SERVICE_FEATURES, featureText } from '@/src/lib/brand/features';
 
 import { useBrowserSession } from './auth/browser-session';
+import { useSignedOutMatchOpen } from './signed-out-match-open';
 import { Icon, type IconName } from './ui/icons';
 import { TYPE_NAME, TYPE_SECTION } from './ui/surfaces';
 
@@ -24,6 +25,7 @@ import { TYPE_NAME, TYPE_SECTION } from './ui/surfaces';
  */
 export function LandingGuide() {
   const { session } = useBrowserSession();
+  const matchOpen = useSignedOutMatchOpen();
   if (session !== 'out') return null;
 
   return (
@@ -52,7 +54,7 @@ export function LandingGuide() {
             </span>
             <div className="min-w-0">
               <h3 className={TYPE_NAME}>{feature.title}</h3>
-              <p className="mt-1 text-pretty text-body leading-7 text-secondary">{feature.body}</p>
+              <p className="mt-1 text-pretty text-body leading-7 text-secondary">{featureText(feature, matchOpen).body}</p>
             </div>
           </li>
         ))}

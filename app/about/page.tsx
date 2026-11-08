@@ -9,6 +9,7 @@ import { Icon } from '../ui/icons';
 import { Logo } from '../ui/logo';
 import { CARD, COLUMN, PAPER, TYPE_META, TYPE_NAME, TYPE_SECTION, TYPE_TITLE } from '../ui/surfaces';
 import { HomeLink } from '../home-link';
+import { FeatureText } from './feature-text';
 
 export const metadata = {
   title: '서비스 소개',
@@ -50,8 +51,7 @@ export default function AboutPage() {
                 <Icon name={feature.icon} />
               </span>
               <h3 className={TYPE_NAME}>{feature.title}</h3>
-              <p className="text-body leading-6 text-secondary">{feature.body}</p>
-              <p className={TYPE_META}>{feature.note}</p>
+              <FeatureText feature={feature} />
             </li>
           ))}
         </ul>
