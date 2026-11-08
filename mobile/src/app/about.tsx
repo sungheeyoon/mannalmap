@@ -2,10 +2,11 @@ import { router } from 'expo-router';
 import { StyleSheet, Text, View } from 'react-native';
 
 import { SERVICE_NAME_TOPIC, SERVICE_TAGLINE } from '@brand';
-import { SERVICE_FEATURES } from '@brand/features';
-import { ABOUT_LEAD, ABOUT_STEPS } from '@brand/guide';
+import { SERVICE_FEATURES, featureText } from '@brand/features';
+import { ABOUT_LEAD, ABOUT_LEAD_WHILE_SHUT, ABOUT_STEPS } from '@brand/guide';
 
 import { InfoScreen } from '@/info/frame';
+import { useMatchOpen } from '@/matching/opening';
 import { goHome } from '@/info/go-home';
 import { Icon } from '@/ui/icons';
 import { Logo } from '@/ui/logo';
@@ -13,30 +14,37 @@ import { PrimaryButton, SecondaryButton } from '@/ui/parts';
 import { COLOR, FONT, RADIUS, TYPE } from '@/ui/tokens';
 import { Card, CardFrame, Paper } from '@/ui/surfaces';
 
-/** 서비스 소개 — 웹의 `/about`. 로그인 없이 열리고 세션도 DB 도 안 읽는다 */
+/**
+ * 서비스 소개 — 웹의 `/about`. 로그인 없이 열리고 세션은 안 읽는다. DB 는 인연의 열림 하나만 묻는다(`useMatchOpen`) —
+ * 닫힌 동안 · 모르는 동안은 인연 카드 · 맨 위 둘째 문장 · 「시작하는 차례」 4 가 「준비 중」 쪽 글이다(웹과 같다, 대장 all-10 · all-11)
+ */
 export default function AboutScreen() {
+  const matchOpen = useMatchOpen() === true;
   return (
     <InfoScreen gap={40} title="서비스 소개" fallback="/">
       <Paper style={styles.head}>
         <Logo size={44} />
         <Text style={styles.meta}>{SERVICE_TAGLINE}</Text>
         <Text style={styles.title}>{SERVICE_NAME_TOPIC} 이런 곳이에요</Text>
-        <Text style={styles.lead}>{ABOUT_LEAD.join(' ')}</Text>
+        <Text style={styles.lead}>{`${ABOUT_LEAD[0]} ${matchOpen ? ABOUT_LEAD[1] : ABOUT_LEAD_WHILE_SHUT}`}</Text>
       </Paper>
 
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>할 수 있는 것</Text>
-        {SERVICE_FEATURES.map((feature) => (
-          <Card key={feature.title} style={styles.feature}>
-            <View style={styles.iconBadge}>
-              <Icon name={feature.icon} />
-            </View>
-            <Text style={styles.name}>{feature.title}</Text>
-            <Text style={styles.body}>{feature.body}</Text>
-            {/* 궁합의 조건 줄은 첫 신호까지 약속하는데 앱에는 로그인 전 궁합 결과가 없다(ADR 0213) */}
-            {feature.title !== '궁합' && <Text style={styles.meta}>{feature.note}</Text>}
-          </Card>
-        ))}
+        {SERVICE_FEATURES.map((feature) => {
+          const { body, note } = featureText(feature, matchOpen);
+          return (
+            <Card key={feature.title} style={styles.feature}>
+              <View style={styles.iconBadge}>
+                <Icon name={feature.icon} />
+              </View>
+              <Text style={styles.name}>{feature.title}</Text>
+              <Text style={styles.body}>{body}</Text>
+              {/* 궁합의 조건 줄은 첫 신호까지 약속하는데 앱에는 로그인 전 궁합 결과가 없다(ADR 0213) */}
+              {feature.title !== '궁합' && note !== null && <Text style={styles.meta}>{note}</Text>}
+            </Card>
+          );
+        })}
       </View>
 
       <View style={styles.section}>
@@ -49,7 +57,7 @@ export default function AboutScreen() {
               </View>
               <View style={styles.stepBody}>
                 <Text style={styles.stepTitle}>{step.title}</Text>
-                <Text style={styles.stepText}>{step.body}</Text>
+                <Text style={styles.stepText}>{matchOpen || step.whileShut === undefined ? step.body : step.whileShut}</Text>
               </View>
             </CardFrame>
           ))}

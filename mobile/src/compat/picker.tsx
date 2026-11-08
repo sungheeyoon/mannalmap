@@ -4,7 +4,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { calculateChart } from '@input/chart';
 import { DEFAULT_QUERY, missingAnswer, type Query } from '@input/query';
-import { RELATIONS, RELATION_LABEL, type Relation } from '@people';
+import { RELATIONS, RELATION_LABEL, RELATION_NONE_LABEL, RELATION_QUESTION, RELATION_WHY, type Relation } from '@people';
 import { findsInList, pickable } from '@people/pick';
 import type { CompatSide } from '@saju';
 
@@ -143,6 +143,15 @@ export function CompatPicker({ people, pickA, pickB }: { people: readonly Choosa
         <View key={side} style={styles.side}>
           {side === 'b' && <Text style={styles.times}>×</Text>}
           <Text style={shared.meta}>{SIDE_PERSON[side]}</Text>
+          {/* 방식을 먼저 고르고 그 아래에 사람 목록이나 입력칸이 선다 — 두 방식의 차례가 같다(운영자 확정 2026-11-08, 대장 all-11) */}
+          <Choices
+            value={slots[side].from}
+            onPick={(from) => setSlot(side, from === 'saved' ? { from, personId: '' } : { from, query: DEFAULT_QUERY })}
+            options={[
+              { value: 'saved', label: '저장한 사람' },
+              { value: 'typed', label: '직접 입력' },
+            ]}
+          />
           {slots[side].from === 'saved' && (
             <PersonChoice
               people={people}
@@ -155,23 +164,13 @@ export function CompatPicker({ people, pickA, pickB }: { people: readonly Choosa
             />
           )}
           {people.length === 0 && slots[side].from === 'saved' && <Text style={shared.meta}>아직 저장한 사람이 없어요.</Text>}
-          <Choices
-            value={slots[side].from}
-            onPick={(from) => setSlot(side, from === 'saved' ? { from, personId: '' } : { from, query: DEFAULT_QUERY })}
-            options={[
-              { value: 'saved', label: '저장한 사람' },
-              { value: 'typed', label: '직접 입력' },
-            ]}
-          />
           {slots[side].from === 'typed' && <TypedSlot onChange={(query) => setSlot(side, { from: 'typed', query })} />}
         </View>
       ))}
 
       <View style={styles.relation}>
-        <Text style={shared.name}>두 분은 무슨 사이인가요?</Text>
-        <Text style={shared.meta}>
-          사이에 따라 읽어 드릴 방향이 달라져요. 가족에게 할 말과 연인에게 할 말이 다르기 때문이에요. <Text style={shared.bodyStrong}>점수의 기준도 이 답을 따라요.</Text>
-        </Text>
+        <Text style={shared.name}>{RELATION_QUESTION}</Text>
+        <Text style={shared.meta}>{RELATION_WHY}</Text>
         <View style={styles.chips}>
           {[...RELATIONS, null].map((choice) => {
             const picked = relation === choice;
@@ -186,7 +185,7 @@ export function CompatPicker({ people, pickA, pickB }: { people: readonly Choosa
                 }}
                 style={[styles.chip, picked && styles.chipOn]}
               >
-                <Text style={[styles.chipText, picked && styles.chipTextOn]}>{choice === null ? '아직 모르겠음' : RELATION_LABEL[choice]}</Text>
+                <Text style={[styles.chipText, picked && styles.chipTextOn]}>{choice === null ? RELATION_NONE_LABEL : RELATION_LABEL[choice]}</Text>
               </Pressable>
             );
           })}
@@ -270,9 +269,10 @@ const styles = StyleSheet.create({
   times: { alignSelf: 'center', fontSize: 24, fontFamily: FONT.medium, color: COLOR.secondary },
   relation: { gap: 10, padding: 20, borderTopWidth: 1, borderTopColor: COLOR.border, backgroundColor: `${COLOR.surfaceSoft}99` },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
-  chip: { minHeight: CONTROL, justifyContent: 'center', paddingHorizontal: 14, borderRadius: RADIUS.pill, borderWidth: 1, borderColor: COLOR.border, backgroundColor: COLOR.surface },
+  /* 같은 너비의 2열 — 넷이 두 줄로 고르게 선다(운영자 확정 2026-11-08, 대장 all-11) */
+  chip: { flexBasis: '40%', flexGrow: 1, minHeight: CONTROL, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 14, borderRadius: RADIUS.pill, borderWidth: 1, borderColor: COLOR.border, backgroundColor: COLOR.surface },
   chipOn: { borderColor: COLOR.borderStrong, backgroundColor: COLOR.accentWash },
-  chipText: { fontSize: TYPE.note, fontFamily: FONT.medium, color: COLOR.secondary },
+  chipText: { textAlign: 'center', fontSize: TYPE.note, fontFamily: FONT.medium, color: COLOR.secondary },
   chipTextOn: { fontFamily: FONT.bold, color: COLOR.foreground },
   reason: { fontSize: TYPE.small, lineHeight: 20, fontFamily: FONT.medium, color: COLOR.secondary, textAlign: 'right' },
   reasonError: { fontSize: TYPE.small, lineHeight: 20, fontFamily: FONT.bold, color: COLOR.danger, textAlign: 'right' },

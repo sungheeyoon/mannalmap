@@ -6,7 +6,7 @@ import { SUPPORT_EMAIL } from '@brand';
 import { businessInfoFrom } from '@brand/business';
 import { refundRequestLine } from '@brand/refund';
 import { won } from '@reading/bundle';
-import { CREDITS_AVAILABLE_LABEL, CREDITS_USAGE_NOTE, CREDITS_USAGE_RATE } from '@reading/notes';
+import { CREDITS_AVAILABLE_LABEL, CREDITS_SCREEN_LEAD } from '@reading/notes';
 import type { PaidOrder } from '@reading/paid-order';
 import { purchaseReturnOf } from '@reading/store-purchase';
 
@@ -65,7 +65,13 @@ export function CreditsScreen() {
         {read === null && <LoadingDots />}
         {read !== null && (
           <>
-            <Text style={settingsText.meta}>{CREDITS_USAGE_NOTE}</Text>
+            <View>
+              {CREDITS_SCREEN_LEAD.map((line) => (
+                <Text key={line} style={settingsText.meta}>
+                  {line}
+                </Text>
+              ))}
+            </View>
             {read.ok ? (
               read.value !== null && (
                 <Paper style={styles.count}>
@@ -73,7 +79,6 @@ export function CreditsScreen() {
                     {read.value}
                     <Text style={styles.unit}>장</Text>
                   </Text>
-                  <Text style={styles.rate}>{CREDITS_USAGE_RATE}</Text>
                 </Paper>
               )
             ) : (
@@ -160,7 +165,6 @@ const styles = StyleSheet.create({
   count: { gap: 8, paddingHorizontal: 20, paddingVertical: 16 },
   number: { fontSize: TYPE.figure, lineHeight: 48, fontFamily: FONT.bold, color: COLOR.foreground },
   unit: { fontSize: TYPE.lead, fontFamily: FONT.bold },
-  rate: { fontSize: TYPE.small, lineHeight: 20, fontFamily: FONT.medium, color: COLOR.creamInk },
   bleed: { marginHorizontal: -16 },
   refund: { gap: 8 },
   order: { gap: 12 },

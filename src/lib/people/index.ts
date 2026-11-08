@@ -50,16 +50,15 @@ export const RELATION_LABEL: Record<Relation, string> = {
   partner: '연인·배우자',
 };
 
-/*
-  **「왜 묻는지 밝히는 말」은 여기 두지 않는다.** 한동안 `RELATION_INTRO` 가 여기 서
-  있었는데 화면(`app/relation-choice.tsx`)이 제 문구를 따로 들고 있어서, 같은 사실을
-  두 벌로 적고 그중 한 벌만 사용자에게 나갔다(ADR 0027).
-
-  화면 쪽을 남긴 것은 그것이 실제로 나가는 말이고, 「점수의 기준도 이 답을 따릅니다」를
-  강조로 세우느라 문장이 마크업과 엮여 있기 때문이다 — 상수로 접으면 그 강조가
-  사라진다. 라벨(`RELATION_LABEL`)이 여기 남는 것은 프롬프트와 화면이 **같은 값을**
-  써야 하기 때문이고, 안내문은 화면만 쓴다.
-*/
+/**
+ * 사이를 묻는 칸의 제목 · 설명 한 줄 · 안 고르는 칩 — 웹(`app/relation-choice.tsx`)과 앱(`mobile/src/compat/picker.tsx`)이 같이 쓴다
+ * (운영자 확정 2026-11-08, 대장 all-11). 한동안 안내문은 강조를 엮느라 화면마다 따로 들었는데(ADR 0027), 설명이 한 줄로 줄어
+ * 강조가 없어져 여기로 모았다. 「관계 선택 안 함」의 값은 그대로 `null` 이다 — 연인 · 배우자만 점수의 기준점을 바꾸므로(ADR 0113)
+ * 「해석과 점수가 달라져요」는 사실이다.
+ */
+export const RELATION_QUESTION = '두 사람은 어떤 사이인가요?';
+export const RELATION_WHY = '선택한 관계에 따라 궁합 해석과 점수가 달라져요.';
+export const RELATION_NONE_LABEL = '관계 선택 안 함';
 
 /**
  * 모델에게 넘길 말 — **화면의 말과 갈라 둔다.**
