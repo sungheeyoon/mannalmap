@@ -34,7 +34,7 @@ const SOURCE_FILES = [
 const isTest = (rel: string) => /\.(test|spec)\.(ts|tsx|mts)$/.test(rel);
 /**
  * Expo 앱(`mobile/src`)의 제품 코드 — 파일 이름 · 층 같은 웹의 규칙은 제 것이 따로 있어(Expo Router 의 `[id].tsx` · `_layout.tsx`) 안 보고,
- * **탈출구의 지문만** 함께 센다(ADR 0241). 앞서는 이 목록에 없어 앱의 이중 캐스트가 예산 밖이었다(2026-11-08 감사).
+ * **탈출구의 지문만** 함께 센다(ADR 0244). 앞서는 이 목록에 없어 앱의 이중 캐스트가 예산 밖이었다(2026-11-08 감사).
  */
 const MOBILE_PRODUCT_FILES = filesUnder(join(ROOT, 'mobile/src')).filter(
   (file) => SOURCE_EXTENSIONS.includes(extname(file)) && !file.endsWith('.d.ts') && !isTest(relPath(file)),
@@ -381,7 +381,7 @@ const DOUBLE_CASTS_STILL_THERE = [
   'app/me/account.ts :: data as unknown as T',
   'app/me/reading/pipeline.ts :: (data ?? []) as unknown as FrozenJob[]',
   'app/me/reading/pipeline.ts :: (data ?? []) as unknown as FrozenJob[]',
-  // 앱 — 2026-11-08 에 목록에 들었다(ADR 0241). React Native 의 `FormData` 는 파일을 `{ uri, name, type }` 로 받는데 타입은 `Blob` 만 안다
+  // 앱 — 2026-11-08 에 목록에 들었다(ADR 0244). React Native 의 `FormData` 는 파일을 `{ uri, name, type }` 로 받는데 타입은 `Blob` 만 안다
   'mobile/src/reading/photo-writes.ts :: { uri: baked[name], name, type: baked.contentType } as unknown as Blob',
 ];
 
@@ -398,7 +398,7 @@ const NON_NULL_STILL_THERE = [
   "src/lib/saju/analysis/tenGods.ts :: forPillar('day')!",
   "src/lib/saju/analysis/tenGods.ts :: forPillar('month')!",
   "src/lib/saju/analysis/tenGods.ts :: forPillar('year')!",
-  // 앱 — 2026-11-08 에 목록에 들었다(ADR 0241)
+  // 앱 — 2026-11-08 에 목록에 들었다(ADR 0244)
   'mobile/src/app/help.tsx :: item.link!',
   'mobile/src/settings/settings-screen.tsx :: GUIDE_LINKS.find((link) => link.href === href)!',
 ];
@@ -409,7 +409,7 @@ const NON_NULL_STILL_THERE = [
  */
 const ERROR_SWALLOWS_STILL_THERE = [
   'app/person-slots.ts :: if (error) return null;',
-  // 앱 — 2026-11-08 에 목록에 들었다(ADR 0241). 받아 주는 가장 옛 빌드는 못 읽으면 막지 않는다(ADR 0237)
+  // 앱 — 2026-11-08 에 목록에 들었다(ADR 0244). 받아 주는 가장 옛 빌드는 못 읽으면 막지 않는다(ADR 0237)
   'mobile/src/release/floor.ts :: if (error !== null) return null;',
   "mobile/src/settings/survey.ts :: if (context.error !== null || given.error !== null) return { kind: 'failed' };",
 ];

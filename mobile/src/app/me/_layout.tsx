@@ -54,7 +54,7 @@ export default function MeLayout() {
   const pathname = usePathname();
   const search = useGlobalSearchParams<{ a?: string; b?: string }>();
   const insets = useSafeAreaInsets();
-  /* 들어온 동안의 클라이언트 — 껍데기의 손들은 이것이 있을 때만 묻는다(ADR 0241) */
+  /* 들어온 동안의 클라이언트 — 껍데기의 손들은 이것이 있을 때만 묻는다(ADR 0244) */
   const signedIn = gate.kind === 'in' ? gate.client : null;
   const counts = useCounts(signedIn, pathname);
   const matchOpen = useMatchOpen();

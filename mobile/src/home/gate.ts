@@ -17,7 +17,7 @@ export type Gate =
   | { kind: 'signup' }
   /** 테스트가 끝났다 — 주소마다 `gateFor` 를 다시 묻는다. 열린 것은 설정(철회 · 탈퇴 신청)뿐이다 */
   | { kind: 'closed'; account: GateAccount; notice: GateNotice | null | typeof NOTICE_UNREAD; client: Client }
-  /** 들어왔다 — 껍데기는 이 클라이언트를 아래 화면에 내준다(`ConnectedClient`, ADR 0241) */
+  /** 들어왔다 — 껍데기는 이 클라이언트를 아래 화면에 내준다(`ConnectedClient`, ADR 0244) */
   | { kind: 'in'; client: Client }
   | { kind: 'failed'; message: string };
 
@@ -44,7 +44,7 @@ export function readGate(): Promise<Settled> {
 }
 
 async function askGate(): Promise<Settled> {
-  /* 주소 · 공개 키가 없는 빌드는 여기서 한 번 가른다 — 로그인 자리가 까닭을 말하고, `/me` 아래 문은 `null` 을 다시 묻지 않는다(ADR 0241) */
+  /* 주소 · 공개 키가 없는 빌드는 여기서 한 번 가른다 — 로그인 자리가 까닭을 말하고, `/me` 아래 문은 `null` 을 다시 묻지 않는다(ADR 0244) */
   const client = supabase;
   if (client === null) return { kind: 'out' };
   const { data } = await client.auth.getSession();

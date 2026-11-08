@@ -8,7 +8,7 @@ const ROOT = dirname(fileURLToPath(import.meta.url));
 const MOBILE = resolve(ROOT, 'mobile');
 
 /**
- * **앱(`mobile/src`)의 문도 여기서 돈다**(ADR 0241) — 앱의 별칭은 제 `mobile/tsconfig.json` 이 든다(`@/` 가 `mobile/src` 다).
+ * **앱(`mobile/src`)의 문도 여기서 돈다**(ADR 0244) — 앱의 별칭은 제 `mobile/tsconfig.json` 이 든다(`@/` 가 `mobile/src` 다).
  *
  * vite 의 `tsconfigPaths` 는 가장 가까운 tsconfig 를 읽는데, 앱의 것은 `expo/tsconfig.base` 를 이어받아 `mobile/node_modules` 가 없는
  * `core` 차선에서는 변환부터 선다(2026-11-08 잼 — `TSCONFIG_ERROR`). 그래서 변환은 뿌리 tsconfig 하나로 하고(`tsconfig`), 앱 파일이
@@ -65,7 +65,7 @@ export default defineConfig({
      * `scripts/` 는 여태 밖이었다. 그동안 흐름 검사를 묶는 자리에는 아무 시험도 없었고,
      * `&&` 사슬이 뒤 검사를 통째로 건너뛰는 것을 **아무도 못 봤다**(`run-checks.test.ts`).
      *
-     * **앱의 문(`mobile/src`)도 같다**(ADR 0241) — 클라이언트를 인자로 받으므로 가짜 클라이언트로 돈다. react-native 를 들이는 화면 ·
+     * **앱의 문(`mobile/src`)도 같다**(ADR 0244) — 클라이언트를 인자로 받으므로 가짜 클라이언트로 돈다. react-native 를 들이는 화면 ·
      * 훅은 여기서 못 돌고, 그런 파일을 부르는 시험은 쓰지 않는다. 앱의 `tsc` 는 `vitest` 가 없어 시험 파일을 빼고 읽는다(`mobile/tsconfig.json`).
      */
     include: ['src/**/*.test.ts', 'app/**/*.test.ts', 'scripts/**/*.test.ts', 'mobile/src/**/*.test.ts'],

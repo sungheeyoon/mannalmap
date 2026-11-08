@@ -6,7 +6,7 @@ import { blockUser, reportUser } from '@/chat/reads';
 import { readEdges, readInputs, readPeopleList } from '@/people/data';
 
 /**
- * **앱의 문 — 가짜 클라이언트로 행동을 잰다**(ADR 0241). 문은 연결된 클라이언트를 인자로 받으므로 모듈을 바꿔 끼우지 않고 표 하나로 답을 정한다.
+ * **앱의 문 — 가짜 클라이언트로 행동을 잰다**(ADR 0244). 문은 연결된 클라이언트를 인자로 받으므로 모듈을 바꿔 끼우지 않고 표 하나로 답을 정한다.
  * 잰 것은 문이 낸 값이다 — 어떤 SQL 을 짓는지가 아니다. 표 이름과 RPC 이름은 답을 고르는 열쇠로만 쓴다.
  */
 

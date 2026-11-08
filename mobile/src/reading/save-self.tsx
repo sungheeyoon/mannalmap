@@ -42,7 +42,7 @@ function useSaveContext(): SaveContext | null {
   useFocusEffect(
     useCallback(() => {
       let live = true;
-      /* 결과 화면은 `/me` 밖이라 이 자리가 껍데기다 — 주소 · 공개 키가 없는 빌드는 로그인 전과 같다(ADR 0241) */
+      /* 결과 화면은 `/me` 밖이라 이 자리가 껍데기다 — 주소 · 공개 키가 없는 빌드는 로그인 전과 같다(ADR 0244) */
       const client = supabase;
       if (client === null) {
         setContext({ state: 'out' });
