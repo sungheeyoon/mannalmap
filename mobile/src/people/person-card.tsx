@@ -8,7 +8,7 @@ import { READING_CONTINUE_NOTE, SELF_READING_MAKING } from '@web-home/making';
 import { CALENDAR_KO, GENDER_KO, STEM_INFO } from '@saju';
 
 import { ElementSymbol } from '@/ui/element-symbol';
-import { COLOR, CONTROL, ELEMENT_TONE, FONT, RADIUS, TYPE } from '@/ui/tokens';
+import { alpha, COLOR, CONTROL, ELEMENT_TONE, FONT, RADIUS, TYPE } from '@/ui/tokens';
 
 import type { MyReading, PersonRow } from './data';
 import { EditInputForm } from './edit-input';
@@ -159,15 +159,15 @@ const styles = StyleSheet.create({
   tile: { gap: 12, overflow: 'hidden' },
   watermark: { position: 'absolute', right: -24, bottom: -24 },
   head: { minHeight: CONTROL, justifyContent: 'center', paddingRight: 52 },
-  unknown: { width: 32, height: 32, alignItems: 'center', justifyContent: 'center', borderRadius: RADIUS.pill, backgroundColor: 'rgba(255, 253, 249, 0.72)' },
-  note: { paddingHorizontal: 12, paddingVertical: 8, borderRadius: RADIUS.cell, backgroundColor: 'rgba(255, 253, 249, 0.6)', fontSize: TYPE.small, lineHeight: 20, fontFamily: FONT.medium, color: COLOR.foreground },
+  unknown: { width: 32, height: 32, alignItems: 'center', justifyContent: 'center', borderRadius: RADIUS.pill, backgroundColor: alpha(COLOR.surface, 0.72) },
+  note: { paddingHorizontal: 12, paddingVertical: 8, borderRadius: RADIUS.cell, backgroundColor: alpha(COLOR.surface, 0.6), fontSize: TYPE.small, lineHeight: 20, fontFamily: FONT.medium, color: COLOR.foreground },
   noteName: { fontSize: TYPE.fine, fontFamily: FONT.bold },
   oneLine: { minHeight: 40, fontSize: TYPE.small, lineHeight: 20, fontFamily: FONT.medium, color: COLOR.foreground },
   stale: { fontSize: TYPE.fine, fontFamily: FONT.bold, color: COLOR.secondary },
   buttons: { flexDirection: 'row', gap: 8, paddingTop: 4 },
   grow: { flex: 1 },
   button: { minHeight: CONTROL, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 12, borderRadius: RADIUS.pill },
-  buttonPlain: { borderWidth: 1, backgroundColor: 'rgba(255, 253, 249, 0.78)' },
+  buttonPlain: { borderWidth: 1, backgroundColor: alpha(COLOR.surface, 0.78) },
   buttonPrimary: { backgroundColor: COLOR.accent },
   buttonText: { fontSize: TYPE.small, fontFamily: FONT.bold },
   buttonPrimaryText: { color: COLOR.onAccent },

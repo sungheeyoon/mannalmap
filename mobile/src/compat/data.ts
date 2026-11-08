@@ -3,7 +3,7 @@ import { rpcArgs } from '@db';
 import { userFacingDbMessage } from '@db-error';
 import { pairSeatArgs, unsupportedForSaving } from '@input/edit';
 import { missingAnswer, type Query } from '@input/query';
-import { storedChartOf } from '@input/stored';
+import { chartOfStored, storedChartOf } from '@input/stored';
 import { relationOf, type Relation } from '@people';
 import { listedPairSummary, pairSeatsOf } from '@reading-display';
 import { STEM_INFO, type Element, type Saju, type Stem } from '@saju';
@@ -11,9 +11,9 @@ import { mapModelOf, type HomePerson, type MapModel } from '@reading/relation-ma
 
 import type { ReadingEntry } from '@reading/entry';
 
-import { supabase } from '@/auth/client';
-import { NOT_READY } from '@/auth/signup';
-import { findSameChart, readAccount, readEdges, readInputs, readReadings, readSlots, signedIn, type MyReading, type Read, type SameChart } from '@/people/data';
+import type { Client } from '@/auth/client';
+import { readAccount } from '@/auth/account';
+import { findSameChart, readEdges, readInputs, readReadings, readSlots, signedIn, type MyReading, type Read, type SameChart } from '@/people/data';
 
 /** 고를 수 있는 사람 — 그 사람의 얼굴에 쓸 일간까지만 */
 export type Choosable = {
@@ -37,17 +37,17 @@ const mapEntries = (readings: readonly MyReading[]): ReadingEntry[] =>
   readings.map((one) => ({ ...one, matchId: null, dayMasterA: null, dayMasterB: null }));
 
 /** 궁합의 첫 걸음이 읽는 것 — 목록에 선 사람만 고르고 맨 위는 「나」다(`app/compat/page.tsx`) */
-export async function readPicker(): Promise<Read<PickerData>> {
-  const session = await signedIn();
+export async function readPicker(client: Client): Promise<Read<PickerData>> {
+  const session = await signedIn(client);
   if (session.kind !== 'ok') return session;
 
-  const [account, edges, readings, slots] = await Promise.all([readAccount(), readEdges(), readReadings(), readSlots()]);
+  const [account, edges, readings, slots] = await Promise.all([readAccount(client), readEdges(client), readReadings(client), readSlots(client)]);
   if (!edges.ok) return { kind: 'failed', message: edges.message };
 
   const listed = edges.edges.filter((edge) => edge.listed);
   const listedIds = listed.map((edge) => edge.personId);
-  const selfId = account.selfPersonId;
-  const inputs = await readInputs(selfId === null || listedIds.includes(selfId) ? listedIds : [...listedIds, selfId]);
+  const selfId = account.row?.self_person_id ?? null;
+  const inputs = await readInputs(client, selfId === null || listedIds.includes(selfId) ? listedIds : [...listedIds, selfId]);
   if (!inputs.ok) return { kind: 'failed', message: inputs.message };
 
   const people = listed
@@ -58,7 +58,7 @@ export async function readPicker(): Promise<Read<PickerData>> {
       return {
         personId: edge.personId,
         label: edge.label,
-        isSelfPerson: edge.personId === account.selfPersonId,
+        isSelfPerson: edge.personId === selfId,
         stem,
         element: stem === null ? null : STEM_INFO[stem].element,
       };
@@ -70,8 +70,7 @@ export async function readPicker(): Promise<Read<PickerData>> {
   const selfInput = selfId === null ? undefined : inputs.inputs.get(selfId);
   const stood = selfInput === undefined || selfEdge === undefined ? null : storedChartOf(selfInput, selfEdge.label);
   const mapPeople = listed.filter((edge) => edge.personId !== selfId).map((edge): HomePerson => {
-    const stored = inputs.inputs.get(edge.personId);
-    const chart = stored === undefined ? ({ ok: false, message: '출생 정보를 불러오지 못했어요.' } as const) : storedChartOf(stored, edge.label);
+    const chart = chartOfStored(inputs.inputs.get(edge.personId), edge.label);
     return { personId: edge.personId, label: edge.label, note: edge.note, chart: chart.ok ? { ok: true, saju: chart.saju } : { ok: false, message: chart.message } };
   });
   const map =
@@ -95,9 +94,8 @@ export async function readPicker(): Promise<Read<PickerData>> {
 /** 못 읽은 것과 「모른다」를 한 값으로 내지 않는다 — 합치면 다음 누름이 멀쩡한 값을 지운다(`pairRelationFor`) */
 export type RelationRead = { ok: true; relation: Relation | null } | { ok: false };
 
-export async function readPairRelation(personA: string, personB: string): Promise<RelationRead> {
-  if (supabase === null) return { ok: false };
-  const { data, error } = await supabase.rpc('pair_relation_of', { p_person_a: personA, p_person_b: personB });
+export async function readPairRelation(client: Client, personA: string, personB: string): Promise<RelationRead> {
+  const { data, error } = await client.rpc('pair_relation_of', { p_person_a: personA, p_person_b: personB });
   return error !== null ? { ok: false } : { ok: true, relation: relationOf(data) };
 }
 
@@ -113,9 +111,7 @@ export type PairOpened =
  *
  * @param relation `undefined` 는 「안 건드렸다」다 — 「모른다」(`null`)와 가른다. 안 건드린 것을 답으로 읽으면 적어 둔 답이 지워진다.
  */
-export async function openPair(a: PairSide, b: PairSide, relation: Relation | null | undefined, answered: PairAnswers = {}): Promise<PairOpened> {
-  if (supabase === null) return { ok: false, kind: 'failed', message: NOT_READY };
-
+export async function openPair(client: Client, a: PairSide, b: PairSide, relation: Relation | null | undefined, answered: PairAnswers = {}): Promise<PairOpened> {
   const sides = [
     ['a', a],
     ['b', b],
@@ -135,14 +131,14 @@ export async function openPair(a: PairSide, b: PairSide, relation: Relation | nu
     if (use[key] !== undefined) continue;
 
     /* 못 물었으면 궁합을 열지 않는다. 목록에 선 사람일 때만 묻고, 궁합만 보려고 만든 사람은 그대로 쓴다 */
-    const found = await findSameChart(side.query);
+    const found = await findSameChart(client, side.query);
     if (!found.ok) return { ok: false, kind: 'failed', message: found.message };
     if (found.same === null) continue;
     if (found.same.listed) return { ok: false, kind: 'same-chart', side: key, same: found.same };
     use[key] = found.same.personId;
   }
 
-  const { data, error } = await supabase.rpc(
+  const { data, error } = await client.rpc(
     'create_pair_for_reading',
     rpcArgs<'create_pair_for_reading'>({
       ...pairSeatArgs(a.from === 'typed' ? a.query : null, 'a'),
@@ -161,7 +157,7 @@ export async function openPair(a: PairSide, b: PairSide, relation: Relation | nu
 
   /* 「모른다」로 되돌리는 것도 답이다 — 문은 사이를 적기만 하므로 여기서 지운다 */
   if (relation === null) {
-    const cleared = await supabase.rpc(
+    const cleared = await client.rpc(
       'set_pair_relation',
       rpcArgs<'set_pair_relation'>({ p_person_a: pair.person_a, p_person_b: pair.person_b, p_relation: null }),
     );
@@ -195,13 +191,12 @@ export type PairOutcome =
     };
 
 /** 궁합 결과가 읽는 것 — 없는 사람과 못 보는 사람이 같은 답이고, 못 읽는 입력은 메우지 않는다(`app/me/compat/screen.tsx`) */
-export async function readPair(a: string, b: string): Promise<Read<PairOutcome>> {
-  const session = await signedIn();
+export async function readPair(client: Client, a: string, b: string): Promise<Read<PairOutcome>> {
+  const session = await signedIn(client);
   if (session.kind !== 'ok') return session;
-  if (supabase === null) return { kind: 'failed', message: NOT_READY };
   if (a === b) return { kind: 'ok', value: { kind: 'same' } };
 
-  const [account, edges] = await Promise.all([readAccount(), readEdges()]);
+  const [account, edges] = await Promise.all([readAccount(client), readEdges(client)]);
   if (!edges.ok) return { kind: 'failed', message: edges.message };
   if (isBlocked(account.state)) return { kind: 'ok', value: { kind: 'blocked', state: account.state } };
 
@@ -210,7 +205,7 @@ export async function readPair(a: string, b: string): Promise<Read<PairOutcome>>
   const second = edgeOf(b);
   if (first === undefined || second === undefined) return { kind: 'ok', value: { kind: 'not-found' } };
 
-  const inputs = await readInputs([first.personId, second.personId]);
+  const inputs = await readInputs(client, [first.personId, second.personId]);
   if (!inputs.ok) return { kind: 'failed', message: inputs.message };
   const storedA = inputs.inputs.get(first.personId);
   const storedB = inputs.inputs.get(second.personId);
@@ -222,8 +217,8 @@ export async function readPair(a: string, b: string): Promise<Read<PairOutcome>>
   if (!chartB.ok) return { kind: 'ok', value: { kind: 'unreadable', message: chartB.message } };
 
   const [relation, written] = await Promise.all([
-    readPairRelation(first.personId, second.personId),
-    supabase.rpc('my_reading', rpcArgs<'my_reading'>({ p_kind: 'private', p_person_a: first.personId, p_person_b: second.personId, p_match_id: null })),
+    readPairRelation(client, first.personId, second.personId),
+    client.rpc('my_reading', rpcArgs<'my_reading'>({ p_kind: 'private', p_person_a: first.personId, p_person_b: second.personId, p_match_id: null })),
   ]);
   if (written.error !== null) return { kind: 'failed', message: userFacingDbMessage(written.error, 'my_reading') };
 

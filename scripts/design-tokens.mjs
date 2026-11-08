@@ -37,6 +37,29 @@ const elevationsOf = (values) =>
   Object.fromEntries(Object.entries(values).filter(([name]) => name.startsWith('elevation-')).map(([name, value]) => [name.slice('elevation-'.length), value]));
 
 const numbers = (values) => Object.fromEntries(Object.entries(values).map(([name, value]) => [name, px(value)]));
+const ms = (value) => (value.endsWith('ms') ? parseFloat(value) : parseFloat(value) * 1000);
+
+/** `#rrggbb` 에 투명도를 얹은 글자 — 1 이면 그 색 그대로 */
+export function rgbaOf(hex, alpha) {
+  if (alpha === 1) return hex;
+  const [r, g, b] = [1, 3, 5].map((at) => parseInt(hex.slice(at, at + 2), 16));
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+}
+
+/**
+ * **색 + 투명도의 이름**(`mix`) — 화면 색 모드를 따르는 토큰(`danger`)이나 안 따르는 색(`fixed` 의 흰 · 검정) 하나에 투명도를 얹는다.
+ * 앱은 그 화면의 값으로 푼 `rgba(…)` 를, 웹은 Tailwind 의 `/40` 과 같은 `color-mix` 를 받아 어두운 화면에서도 제 토큰을 따른다.
+ */
+const mixesOf = (values, tokens) =>
+  Object.fromEntries(Object.entries(tokens.mix ?? {}).map(([name, { of, alpha }]) => [camel(name), rgbaOf(tokens.fixed?.[of] ?? values[of], alpha)]));
+
+const mixCss = (tokens) =>
+  Object.fromEntries(
+    Object.entries(tokens.mix ?? {}).map(([name, { of, alpha }]) => {
+      if (tokens.fixed?.[of] !== undefined) return [name, rgbaOf(tokens.fixed[of], alpha)];
+      return [name, alpha === 1 ? `var(--${of})` : `color-mix(in oklab, var(--${of}) ${Math.round(alpha * 100)}%, transparent)`];
+    }),
+  );
 
 /** 표시된 칸의 속만 바꾼다 — 칸 밖은 사람이 쓰는 CSS 다 */
 export function regionsInto(css, tokens) {
@@ -45,6 +68,8 @@ export function regionsInto(css, tokens) {
     dark: lines(tokens.dark, '', '    '),
     text: lines(tokens.text, 'text-', '  '),
     radius: lines(tokens.radius, 'radius-', '  '),
+    mix: lines(mixCss(tokens), 'color-', '  '),
+    motion: [lines(tokens.motion ?? {}, 'motion-', '  '), lines(tokens.easing ?? {}, 'motion-ease-', '  ')].join('\n'),
   };
   return Object.entries(regions).reduce((text, [name, body]) => {
     const pattern = new RegExp(`(/\\* design-tokens:${name} [^\\n]*\\*/\\n)[\\s\\S]*?(\\n\\s*/\\* /design-tokens:${name} \\*/)`);
@@ -57,15 +82,17 @@ export function typescriptOf(tokens) {
   const constant = (name, value, note) => `/** ${note} */\nexport const ${name} = ${JSON.stringify(value, null, 2)} as const;\n`;
   return [
     '/* 지은 파일이다 — 손대지 말고 `src/lib/design/tokens.json` 을 고친 뒤 `node scripts/design-tokens.mjs` 를 돈다. */\n',
-    constant('COLOR', colorsOf(tokens.light), '밝은 화면의 색 — Tailwind 의 `--color-*` 이름'),
-    constant('COLOR_DARK', colorsOf(tokens.dark), '어두운 화면의 색 — 앱은 아직 안 쓴다'),
+    constant('COLOR', { ...colorsOf(tokens.light), ...mixesOf(tokens.light, tokens) }, '밝은 화면의 색 — Tailwind 의 `--color-*` 이름. 뒤쪽은 색 + 투명도(`mix`)'),
+    constant('COLOR_DARK', { ...colorsOf(tokens.dark), ...mixesOf(tokens.dark, tokens) }, '어두운 화면의 색 — 앱은 아직 안 쓴다'),
+    constant('FIXED', tokens.fixed, '화면 색 모드를 안 따르는 색 — 사진 위 · 사진 보기의 흰 · 검정'),
     constant('TONE', tonesOf(tokens.light), '오행 한 벌 — 글자 · 면 · 상징의 속. `none` 은 오행을 모를 때'),
     constant('TONE_DARK', tonesOf(tokens.dark), '어두운 화면의 오행 — 앱은 아직 안 쓴다'),
     constant('ELEVATION', elevationsOf(tokens.light), '그림자 다섯 단 — 웹 문법 글자 그대로. React Native 의 `boxShadow` 가 받는다'),
     constant('ELEVATION_DARK', elevationsOf(tokens.dark), '어두운 화면의 그림자 — 앱은 아직 안 쓴다'),
     constant('TEXT', numbers(tokens.text), '글자 크기의 단(px)'),
     constant('RADIUS', { ...numbers(tokens.radius), pill: tokens.pill }, '모서리 세 단(px) — 카드 · 칸 · 알약'),
-    constant('SPACE', tokens.space, '간격의 단(px)'),
+    constant('MOTION', Object.fromEntries(Object.entries(tokens.motion).map(([name, value]) => [name, ms(value)])), '움직임의 시간(ms) — 누름의 전환 · 뼈대의 반짝임 · 끝 모르는 띠'),
+    constant('EASING', tokens.easing, '움직임의 이징 — CSS 낱말. 앱은 `mobile/src/ui/motion.ts` 가 같은 이름의 `Easing` 으로 푼다'),
   ].join('\n');
 }
 

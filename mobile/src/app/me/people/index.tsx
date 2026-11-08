@@ -5,9 +5,11 @@ import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 import { isBlocked } from '@account/index';
 import { findStatus, findsInList, pickable } from '@people/pick';
 
+import { useClient } from '@/auth/connected';
 import { readPeopleList, type MyReading, type PeopleList, type Read } from '@/people/data';
 import { AddPerson } from '@/people/manage';
-import { AccountNotice, FailureLine, ScreenFrame, styles as shared } from '@/people/parts';
+import { AccountNotice, ScreenFrame, styles as shared } from '@/people/parts';
+import { FailureLine } from '@/ui/failure-line';
 import { goTab } from '@/ui/go-tab';
 import { PersonCard } from '@/people/person-card';
 import { EmptyState } from '@/ui/empty-state';
@@ -19,17 +21,18 @@ import { TopBar } from '@/ui/top-bar';
 
 /** 저장한 사람 — 가족 · 친구를 관리하는 자리. 나는 여기 없다(`app/me/people/page.tsx`) */
 export default function PeopleScreen() {
+  const client = useClient();
   const params = useLocalSearchParams<{ add?: string }>();
   const [read, setRead] = useState<Read<PeopleList> | null>(null);
   const [typed, setTyped] = useState('');
 
   const load = useCallback(() => {
-    void settled(readPeopleList(), 'readPeopleList', () => ({ kind: 'failed', message: UNREACHABLE }) as const).then((next) => {
+    void settled(readPeopleList(client), 'readPeopleList', () => ({ kind: 'failed', message: UNREACHABLE }) as const).then((next) => {
       if (next.kind === 'signed-out') router.replace('/');
       /* 선 화면을 다시 읽다 못 읽으면 가진 것을 그대로 둔다 — 다음에 돌아올 때 메운다(채팅 목록과 같다) */
       else setRead((now) => (now?.kind === 'ok' && next.kind === 'failed' ? now : next));
     });
-  }, []);
+  }, [client]);
   /* 다른 화면을 다녀오면 다시 읽는다 — 거기서 사람이 빠졌거나 풀이가 났을 수 있다 */
   useFocusEffect(load);
 

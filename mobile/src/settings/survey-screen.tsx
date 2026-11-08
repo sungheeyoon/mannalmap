@@ -35,21 +35,24 @@ import {
   type SurveyContext,
 } from '@survey';
 
+import { useClient } from '@/auth/connected';
 import { UNREACHABLE } from '@/auth/signup';
+import { FailureLine } from '@/ui/failure-line';
 import { CheckRow, PrimaryButton, SecondaryButton } from '@/ui/parts';
 import { COLOR, FONT, RADIUS, TYPE } from '@/ui/tokens';
 import { settled } from '@/ui/settled';
 import { TopBar } from '@/ui/top-bar';
 import { CardFrame, Paper } from '@/ui/surfaces';
 
-import { AccountNotice, FailureLine, settingsText } from './parts';
+import { AccountNotice, settingsText } from './parts';
 import { setOptionalConsent } from './settings';
 import { loadSurvey, saveSurvey, type Loaded } from './survey';
 
 /** 서비스 설문 — 웹 `app/me/survey/` 와 같다. 어느 문항이 서는지는 DB 가 답한다(`service_survey_context`) */
 export function SurveyScreen() {
+  const client = useClient();
   const [data, setData] = useState<Loaded | null>(null);
-  const reload = useCallback(async () => setData(await loadSurvey()), []);
+  const reload = useCallback(async () => setData(await loadSurvey(client)), [client]);
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect -- 여는 때 읽는다 - setState 는 await 뒤라 렌더와 겹치지 않는다
     void reload();
@@ -101,12 +104,13 @@ export function SurveyScreen() {
 
 /** 여기서 켜는 단추 하나 — 문은 설정과 같다. 끄는 단추는 안 세운다(지움의 경고가 선 설정 화면의 일이다) */
 function ConsentSwitch({ onDone }: { onDone: () => void }) {
+  const client = useClient();
   const [failure, setFailure] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const turnOn = async () => {
     setFailure(null);
     setSaving(true);
-    const result = await setOptionalConsent('improvement', true);
+    const result = await setOptionalConsent(client, 'improvement', true);
     setSaving(false);
     if (result.ok) onDone();
     else setFailure(result.message);
@@ -122,6 +126,7 @@ function ConsentSwitch({ onDone }: { onDone: () => void }) {
 
 /** 쓰는 동안 저절로 남고(손이 멈춘 뒤 1.2초), 제출은 손으로 한다. 숨은 문항은 보내기 전에 비운다 — 웹 `form.tsx` */
 function SurveyForm({ context, given }: { context: SurveyContext; given: MySurvey | null }) {
+  const client = useClient();
   const [answers, setAnswers] = useState<SurveyAnswers>(given?.answers ?? EMPTY_ANSWERS);
   const [submittedAt, setSubmittedAt] = useState<string | null>(given?.submittedAt ?? null);
   const [editing, setEditing] = useState(false);
@@ -139,7 +144,7 @@ function SurveyForm({ context, given }: { context: SurveyContext; given: MySurve
     if (next === saved.current) return;
     const timer = setTimeout(() => {
       setDraft('saving');
-      void settled(saveSurvey(withoutHidden(answers, shown), false), 'survey draft', () => ({ ok: false, message: UNREACHABLE }) as const).then((result) => {
+      void settled(saveSurvey(client, withoutHidden(answers, shown), false), 'survey draft', () => ({ ok: false, message: UNREACHABLE }) as const).then((result) => {
         if (result.ok) {
           saved.current = next;
           setDraft('saved');
@@ -149,12 +154,12 @@ function SurveyForm({ context, given }: { context: SurveyContext; given: MySurve
       });
     }, 1200);
     return () => clearTimeout(timer);
-  }, [answers, open, shown]);
+  }, [client, answers, open, shown]);
 
   const send = async () => {
     setFailure(null);
     setSending(true);
-    const result = await saveSurvey(withoutHidden(answers, shown), true);
+    const result = await saveSurvey(client, withoutHidden(answers, shown), true);
     setSending(false);
     if (!result.ok) {
       setFailure(result.message);

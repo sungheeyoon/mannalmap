@@ -6,13 +6,15 @@ import Svg, { Path } from 'react-native-svg';
 import { PHOTO_ADD, PHOTO_UPLOADS_PAUSED } from '@account/copy';
 import { FOCUS_CENTER, PHOTO_MAX_COUNT, PHOTO_NOTE, PHOTO_REMOVED, PHOTO_REMOVE_CONFIRM, PHOTO_REMOVE_NOTE, PHOTO_REMOVE_TITLE, movedPhotos, type PhotoFocus, type PhotoUploadMode } from '@profile';
 
+import { useClient } from '@/auth/connected';
+import { FailureLine } from '@/ui/failure-line';
 import { Paper } from '@/ui/surfaces';
 import { ConfirmDialog } from '@/ui/confirm-dialog';
-import { COLOR, FONT, RADIUS, TYPE } from '@/ui/tokens';
+import { alpha, COLOR, FONT, RADIUS, TYPE } from '@/ui/tokens';
 import { UNREACHABLE } from '@/auth/signup';
 import { settled } from '@/ui/settled';
 
-import { FailureLine, useDoneNote } from './parts';
+import { useDoneNote } from './parts';
 import { PHOTO_FRAME_TITLE, PhotoFramer, contentPositionOf } from './photo-framer';
 import { PhotoViewer, type PhotoChoice } from './photo-viewer';
 import { UNREADABLE_PHOTO, addPhoto, movePhoto, photoSource, pickPhotos, removePhoto, replacePhoto, setPhotoFocus, type MyPhoto } from './photos';
@@ -67,6 +69,7 @@ export function PhotoGrid({
   /** 끄는 동안 바깥 스크롤을 멈춘다 */
   onLifting: (lifting: boolean) => void;
 }) {
+  const client = useClient();
   const paused = uploads === 'paused';
   const [order, setOrder] = useState(photos);
   // eslint-disable-next-line react-hooks/set-state-in-effect -- 끄는 동안의 차례를 들다가 새 목록이 오면 그 목록으로 돌아간다
@@ -136,7 +139,7 @@ export function PhotoGrid({
     for (const { key, asset, focus } of batch) {
       let message: string | null = null;
       try {
-        const result = await addPhoto(asset, focus, uploads);
+        const result = await addPhoto(client, asset, focus, uploads);
         if (!result.ok) message = result.message;
       } catch {
         message = UNREADABLE_PHOTO;
@@ -171,7 +174,7 @@ export function PhotoGrid({
     setSending(true);
     let message: string | null = null;
     try {
-      const result = await replacePhoto(photo, asset, focus, uploads);
+      const result = await replacePhoto(client, photo, asset, focus, uploads);
       if (!result.ok) message = result.message;
     } catch {
       message = UNREADABLE_PHOTO;
@@ -188,7 +191,7 @@ export function PhotoGrid({
   const adjust = async (photo: MyPhoto) => {
     if (busy) return;
     begin();
-    const source = await settled(photoSource(photo, userId ?? undefined), 'photoSource', () => null);
+    const source = await settled(photoSource(client, photo, userId ?? undefined), 'photoSource', () => null);
     if (source === null) {
       setFailure(UNREACHABLE);
       return;
@@ -197,7 +200,7 @@ export function PhotoGrid({
     if (chosen === null) return;
     setPlaced((was) => new Map(was).set(photo.version, chosen));
     setSending(true);
-    const result = await setPhotoFocus(photo, chosen);
+    const result = await setPhotoFocus(client, photo, chosen);
     if (result.ok) {
       done.say(FOCUS_SAVED);
       await reload();
@@ -220,7 +223,7 @@ export function PhotoGrid({
     setSending(true);
     /* 서버의 자리로 보낸다 — 칸 번호가 아니다. 다시 받은 목록이 칸을 잇는다 */
     const serverTo = photos[to - 1]?.position ?? to;
-    const result = await movePhoto(photo, serverTo);
+    const result = await movePhoto(client, photo, serverTo);
     if (result.ok) await reload();
     else failed(result.message);
     setSending(false);
@@ -230,7 +233,7 @@ export function PhotoGrid({
     if (asking === null) return;
     setAskFailure(null);
     setRemoving(true);
-    const result = await removePhoto(asking);
+    const result = await removePhoto(client, asking);
     if (result.ok) {
       setAsking(null);
       done.say(PHOTO_REMOVED);
@@ -288,7 +291,7 @@ export function PhotoGrid({
           <Pressable accessibilityRole="button" accessibilityLabel="사진 지우기" disabled={busy} onPress={() => ask(photo)} style={[styles.remove, busy && styles.off]}>
             <View style={styles.removeFace}>
               <Svg width={12} height={12} viewBox="0 0 12 12">
-                <Path d="M2 2 L10 10 M10 2 L2 10" stroke="#fff" strokeWidth={1.6} strokeLinecap="round" />
+                <Path d="M2 2 L10 10 M10 2 L2 10" stroke={COLOR.onPhoto} strokeWidth={1.6} strokeLinecap="round" />
               </Svg>
             </View>
           </Pressable>
@@ -478,16 +481,17 @@ function Saving() {
 
 /** 사진 한 칸의 그림 — 바이트는 칸마다 따로 받는다. 저장소에 사는 장은 앱이 못 읽어 빈 면으로 선다 */
 function PhotoFace({ photo, focus, userId, cover }: { photo: MyPhoto; focus: PhotoFocus; userId: string | null; cover: { uri: string; focus: PhotoFocus } | null }) {
+  const client = useClient();
   const [source, setSource] = useState<string | null>(null);
   useEffect(() => {
     let live = true;
-    void settled(photoSource(photo, userId ?? undefined), 'photoSource', () => null).then((next) => {
+    void settled(photoSource(client, photo, userId ?? undefined), 'photoSource', () => null).then((next) => {
       if (live) setSource(next);
     });
     return () => {
       live = false;
     };
-  }, [photo, userId]);
+  }, [client, photo, userId]);
   if (cover !== null) {
     return (
       <>
@@ -519,7 +523,7 @@ const styles = StyleSheet.create({
   addText: { fontSize: TYPE.body, fontFamily: FONT.bold, color: COLOR.secondary },
   lead: { position: 'absolute', left: 8, top: 8, overflow: 'hidden', paddingHorizontal: 8, paddingVertical: 2, borderRadius: RADIUS.pill, backgroundColor: COLOR.surface, fontSize: TYPE.fine, fontFamily: FONT.bold, color: COLOR.foreground },
   remove: { position: 'absolute', right: 0, top: 0, width: 44, height: 44, alignItems: 'center', justifyContent: 'center' },
-  removeFace: { width: 26, height: 26, borderRadius: RADIUS.pill, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(0, 0, 0, 0.5)', borderWidth: 1, borderColor: 'rgba(255, 255, 255, 0.4)' },
-  saving: { ...StyleSheet.absoluteFill, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(38, 36, 31, 0.45)' },
+  removeFace: { width: 26, height: 26, borderRadius: RADIUS.pill, alignItems: 'center', justifyContent: 'center', backgroundColor: COLOR.photoFace, borderWidth: 1, borderColor: COLOR.photoLine },
+  saving: { ...StyleSheet.absoluteFill, alignItems: 'center', justifyContent: 'center', backgroundColor: alpha(COLOR.foreground, 0.45) },
   savingText: { fontSize: TYPE.small, fontFamily: FONT.bold, color: COLOR.surface },
 });

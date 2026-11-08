@@ -20,7 +20,7 @@ import {
 import { PALACE, PILLAR_COLUMNS } from '@saju-view';
 
 import { ElementSymbol } from '@/ui/element-symbol';
-import { COLOR, ELEMENT_TONE, RADIUS, TYPE } from '@/ui/tokens';
+import { alpha, COLOR, ELEMENT_TONE, RADIUS, TYPE } from '@/ui/tokens';
 
 import { Card, Disclosure, T, Tabs, type Tab } from './parts';
 
@@ -311,9 +311,9 @@ const styles = StyleSheet.create({
   column: { flex: 1, minWidth: 0 },
   columnLabel: { textAlign: 'center', marginBottom: 8 },
   stack: { gap: 6, padding: 3, borderRadius: RADIUS.cell, borderWidth: 2, borderColor: 'transparent' },
-  stackDay: { borderColor: COLOR.foreground, backgroundColor: 'rgba(38, 36, 31, 0.06)' },
+  stackDay: { borderColor: COLOR.foreground, backgroundColor: alpha(COLOR.foreground, 0.06) },
   glyphBox: { minHeight: 136, alignItems: 'center', justifyContent: 'center', gap: 4, borderRadius: RADIUS.cell, paddingHorizontal: 2, paddingVertical: 10 },
-  glyphUnknown: { borderWidth: 2, borderStyle: 'dashed', borderColor: 'rgba(95, 100, 93, 0.3)' },
+  glyphUnknown: { borderWidth: 2, borderStyle: 'dashed', borderColor: alpha(COLOR.none, 0.3) },
   me: { minHeight: 20, justifyContent: 'center', borderRadius: RADIUS.pill, paddingHorizontal: 8, backgroundColor: COLOR.foreground },
   /* 칸 폭이 소수라 안드로이드가 글자 폭을 화소에 맞춰 내리면 마지막 글자가 다음 줄로 밀려 잘린다(월지 「정관」→「정」). 글자에 꼭 맞는 폭을 안 주면 안 밀린다 */
   tenGod: { alignSelf: 'stretch', minHeight: 20, lineHeight: 20, textAlign: 'center' },
@@ -322,7 +322,7 @@ const styles = StyleSheet.create({
   /* 같은 까닭 — 「사·화」보다 조금 넓게 잡는다 */
   caption: { minWidth: TYPE.fine * 2.75, lineHeight: 16, textAlign: 'center' },
   seat: { borderRadius: RADIUS.pill, paddingHorizontal: 5, backgroundColor: COLOR.surface },
-  notice: { marginTop: 16, gap: 6, borderRadius: RADIUS.cell, borderWidth: 1, borderColor: COLOR.warningBorder, backgroundColor: COLOR.warningWash, paddingHorizontal: 16, paddingVertical: 12 },
+  notice: { marginTop: 16, gap: 6, borderRadius: RADIUS.cell, borderWidth: 1, borderColor: COLOR.warningLineSoft, backgroundColor: COLOR.warningWash, paddingHorizontal: 16, paddingVertical: 12 },
   details: { marginTop: 20, borderTopWidth: 1, borderTopColor: COLOR.border, paddingTop: 20 },
   firstDisclosure: { marginTop: 20, paddingTop: 12 },
   palaces: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },

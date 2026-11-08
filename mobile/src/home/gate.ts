@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useState } from 'react';
 import { AppState } from 'react-native';
 
-import { gateFor, NOTICE_UNREAD, type GateAccount, type GateNotice } from '@consent/gate';
+import { GATE_ACCOUNT_COLUMNS, gateAccountOf, gateFor, NOTICE_UNREAD, type GateAccount, type GateNotice } from '@consent/gate';
 
-import { supabase } from '@/auth/client';
+import { supabase, type Client } from '@/auth/client';
 import { forgetChoiceOnSessionEnd } from '@/push/device';
 import { readSchedule } from '@/auth/schedule';
 import { UNREACHABLE } from '@/auth/signup';
@@ -16,8 +16,9 @@ export type Gate =
   /** 가입이 안 끝났다 — 무슨 말을 할지는 가입 화면이 안다 */
   | { kind: 'signup' }
   /** 테스트가 끝났다 — 주소마다 `gateFor` 를 다시 묻는다. 열린 것은 설정(철회 · 탈퇴 신청)뿐이다 */
-  | { kind: 'closed'; account: GateAccount; notice: GateNotice | null | typeof NOTICE_UNREAD }
-  | { kind: 'in' }
+  | { kind: 'closed'; account: GateAccount; notice: GateNotice | null | typeof NOTICE_UNREAD; client: Client }
+  /** 들어왔다 — 껍데기는 이 클라이언트를 아래 화면에 내준다(`ConnectedClient`, ADR 0243) */
+  | { kind: 'in'; client: Client }
   | { kind: 'failed'; message: string };
 
 /**
@@ -43,39 +44,37 @@ export function readGate(): Promise<Settled> {
 }
 
 async function askGate(): Promise<Settled> {
-  if (supabase === null) return { kind: 'out' };
-  const { data } = await supabase.auth.getSession();
+  /* 주소 · 공개 키가 없는 빌드는 여기서 한 번 가른다 — 로그인 자리가 까닭을 말하고, `/me` 아래 문은 `null` 을 다시 묻지 않는다(ADR 0243) */
+  const client = supabase;
+  if (client === null) return { kind: 'out' };
+  const { data } = await client.auth.getSession();
   if (data.session === null) return { kind: 'out' };
 
   const [found, schedule] = await Promise.all([
-    supabase.from('app_user').select('signed_up_at, notice_version, notice_schedule_id').maybeSingle(),
-    readSchedule(),
+    client.from('app_user').select(GATE_ACCOUNT_COLUMNS).maybeSingle(),
+    readSchedule(client),
   ]);
   if (found.error !== null) console.error('account', found.error.code);
   if (found.error !== null || found.data === null) return closedGate();
 
-  const account: GateAccount = {
-    signedUp: found.data.signed_up_at !== null,
-    noticeVersion: found.data.notice_version,
-    noticeScheduleId: found.data.notice_schedule_id,
-  };
+  const account = gateAccountOf(found.data);
   const notice = schedule.ok ? schedule.value : NOTICE_UNREAD;
 
   const to = gateFor('/me', account, notice, new Date());
-  if (to === null) return { kind: 'in' };
-  return to === '/closed' ? { kind: 'closed', account, notice } : { kind: 'signup' };
+  if (to === null) return { kind: 'in', client };
+  return to === '/closed' ? { kind: 'closed', account, notice, client } : { kind: 'signup' };
 }
 
 /** 앱을 다시 앞으로 가져올 때도 다시 본다 — 웹은 요청마다 보고, 레이아웃은 화면을 옮겨도 다시 안 돈다 */
-export function useGate(): { gate: Gate; retry: () => void; held: boolean } {
+export function useGate(): { gate: Gate; retry: () => void; held: Client | null } {
   const [gate, setGate] = useState<Gate>({ kind: 'checking' });
-  /* 이 실행에서 들어온 적이 있나 — 다시 보다 못 읽어도 관문은 닫히지만, 껍데기가 그 아래 스택을 걷지 않게 알린다. 세션이 끊기면 지운다 */
-  const [held, setHeld] = useState(false);
+  /* 이 실행에서 들어온 적이 있나 — 다시 보다 못 읽어도 관문은 닫히지만, 껍데기가 그 아래 스택을 걷지 않게 그때의 클라이언트를 든다. 세션이 끊기면 지운다 */
+  const [held, setHeld] = useState<Client | null>(null);
 
   const check = useCallback(() => {
     void readGate().then((next) => {
       setGate(next);
-      if (next.kind !== 'failed') setHeld(next.kind === 'in');
+      if (next.kind !== 'failed') setHeld(next.kind === 'in' ? next.client : null);
     });
   }, []);
 
@@ -88,7 +87,7 @@ export function useGate(): { gate: Gate; retry: () => void; held: boolean } {
       if (event !== 'SIGNED_OUT') return;
       /* 풀이 완성 알림의 기기 선택도 비운다(ADR 0236) — 서버에 남은 토큰은 다음 로그인이 걷는다(`refreshThisDevice`) */
       void forgetChoiceOnSessionEnd();
-      setHeld(false);
+      setHeld(null);
       setGate({ kind: 'out', left: true });
     });
     return () => {

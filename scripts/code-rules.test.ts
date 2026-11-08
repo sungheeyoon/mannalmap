@@ -32,11 +32,21 @@ const SOURCE_FILES = [
   join(ROOT, 'proxy.ts'),
 ];
 const isTest = (rel: string) => /\.(test|spec)\.(ts|tsx|mts)$/.test(rel);
+/**
+ * Expo 앱(`mobile/src`)의 제품 코드 — 파일 이름 · 층 같은 웹의 규칙은 제 것이 따로 있어(Expo Router 의 `[id].tsx` · `_layout.tsx`) 안 보고,
+ * **탈출구의 지문만** 함께 센다(ADR 0243). 앞서는 이 목록에 없어 앱의 이중 캐스트가 예산 밖이었다(2026-11-08 감사).
+ */
+const MOBILE_PRODUCT_FILES = filesUnder(join(ROOT, 'mobile/src')).filter(
+  (file) => SOURCE_EXTENSIONS.includes(extname(file)) && !file.endsWith('.d.ts') && !isTest(relPath(file)),
+);
 /** 앱과 lib 의 **제품 코드** — 시험·검사 도구는 뺀다. 탈출구는 여기서만 센다 */
-const PRODUCT_FILES = SOURCE_FILES.filter((file) => {
-  const rel = relPath(file);
-  return (rel.startsWith('src/') || rel.startsWith('app/') || rel === 'proxy.ts') && !isTest(rel) && !rel.endsWith('.generated.ts');
-});
+const PRODUCT_FILES = [
+  ...SOURCE_FILES.filter((file) => {
+    const rel = relPath(file);
+    return (rel.startsWith('src/') || rel.startsWith('app/') || rel === 'proxy.ts') && !isTest(rel) && !rel.endsWith('.generated.ts');
+  }),
+  ...MOBILE_PRODUCT_FILES,
+];
 
 /**
  * 파일마다 한 번만 읽고 짓는다 — 시험 하나가 도는 동안 디스크는 안 바뀐다.
@@ -369,15 +379,14 @@ describe('현재 결정 색인 (docs/adr/README.md)', () => {
 /** `x as unknown as T` — 타입이 못 잇는 자리를 손으로 잇는 것. `as never as` · `as any as` 도 같은 예산이다 */
 const DOUBLE_CASTS_STILL_THERE = [
   'app/me/account.ts :: data as unknown as T',
-  'app/me/person-input.ts :: data as unknown as StoredInput',
-  'app/me/person-input.ts :: row as unknown as StoredInput',
   'app/me/reading/pipeline.ts :: (data ?? []) as unknown as FrozenJob[]',
   'app/me/reading/pipeline.ts :: (data ?? []) as unknown as FrozenJob[]',
+  // 앱 — 2026-11-08 에 목록에 들었다(ADR 0243). React Native 의 `FormData` 는 파일을 `{ uri, name, type }` 로 받는데 타입은 `Blob` 만 안다
+  'mobile/src/reading/photo-writes.ts :: { uri: baked[name], name, type: baked.contentType } as unknown as Blob',
 ];
 
 /** `x!` — 「있다」를 타입 대신 사람이 주장하는 것 */
 const NON_NULL_STILL_THERE = [
-  'app/me/person-input.ts :: data!',
   'app/saju-calculator.tsx :: model!',
   'src/lib/reading/summary.ts :: pillars[position]!',
   'src/lib/saju/analysis/effectiveElements.ts :: pillars[key]!',
@@ -389,6 +398,9 @@ const NON_NULL_STILL_THERE = [
   "src/lib/saju/analysis/tenGods.ts :: forPillar('day')!",
   "src/lib/saju/analysis/tenGods.ts :: forPillar('month')!",
   "src/lib/saju/analysis/tenGods.ts :: forPillar('year')!",
+  // 앱 — 2026-11-08 에 목록에 들었다(ADR 0243)
+  'mobile/src/app/help.tsx :: item.link!',
+  'mobile/src/settings/settings-screen.tsx :: GUIDE_LINKS.find((link) => link.href === href)!',
 ];
 
 /**
@@ -397,6 +409,9 @@ const NON_NULL_STILL_THERE = [
  */
 const ERROR_SWALLOWS_STILL_THERE = [
   'app/person-slots.ts :: if (error) return null;',
+  // 앱 — 2026-11-08 에 목록에 들었다(ADR 0243). 받아 주는 가장 옛 빌드는 못 읽으면 막지 않는다(ADR 0237)
+  'mobile/src/release/floor.ts :: if (error !== null) return null;',
+  "mobile/src/settings/survey.ts :: if (context.error !== null || given.error !== null) return { kind: 'failed' };",
 ];
 
 /**
@@ -468,19 +483,19 @@ describe('탈출구의 지문 (docs/agents/code-rules/escapes.md) — 줄어들�
     expect(PRODUCT_FILES.length).toBeGreaterThan(150);
   });
 
-  it('`as unknown as` 는 옛 자리 여섯에만 있다 — `as never as` · `as any as` 도 같은 예산이다', () => {
+  it('`as unknown as` 는 옛 자리에만 있다 — `as never as` · `as any as` 도 같은 예산이다', () => {
     const found = fingerprints(PRODUCT_FILES, (node, source) =>
       isAs(node) && isAs(node.expression) && isUnknown(node.expression.type) ? oneLine(node.getText(source)) : null,
     );
     expectExactly(found, DOUBLE_CASTS_STILL_THERE);
   });
 
-  it('`!` 단언은 옛 자리 열둘에만 있다', () => {
+  it('`!` 단언은 옛 자리에만 있다', () => {
     const found = fingerprints(PRODUCT_FILES, (node, source) => (ts.isNonNullExpression(node) ? oneLine(node.getText(source)) : null));
     expectExactly(found, NON_NULL_STILL_THERE);
   });
 
-  it('`if (error)` 뒤에서 실패를 값 없이 지우는 자리는 옛 자리 하나뿐이다 (ADR 0078)', () => {
+  it('`if (error)` 뒤에서 실패를 값 없이 지우는 자리는 옛 자리에만 있다 (ADR 0078)', () => {
     // `error` · `x.error` 를 조건으로, 또는 `error || …` 의 한 갈래로 드는 if 다
     const isError = (node: ts.Expression): boolean =>
       (ts.isIdentifier(node) && node.text === 'error') || (ts.isPropertyAccessExpression(node) && node.name.text === 'error');

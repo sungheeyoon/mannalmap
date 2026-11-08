@@ -14,6 +14,9 @@ import * as Crypto from 'expo-crypto';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { AppState } from 'react-native';
 
+import type { Client } from '@/auth/client';
+import { useClient } from '@/auth/connected';
+
 import { listenLive } from './live';
 import { markRead, readMessages, sendMessage } from './reads';
 
@@ -30,6 +33,7 @@ export function useThread(
   fromBeginning: boolean,
   beforeMerge: (kind: MergeKind, incoming: readonly ShownMessage[]) => void,
 ) {
+  const client = useClient();
   const [messages, setMessages] = useState<readonly ShownMessage[]>(() => initial.map(labelled));
   const [reachedStart, setReachedStart] = useState(fromBeginning);
   const [loadingOlder, setLoadingOlder] = useState(false);
@@ -79,7 +83,7 @@ export function useThread(
         do {
           again.current = false;
           try {
-            const fresh = await readNewer((page) => readMessages(matchId, page), newestSeq(held.current), NEWER_PAGE);
+            const fresh = await readNewer((page) => readMessages(client, matchId, page), newestSeq(held.current), NEWER_PAGE);
             merge('newer', fresh.map(labelled));
             failures.current = 0;
           } catch {
@@ -93,7 +97,7 @@ export function useThread(
         reading.current = false;
       })();
     },
-    [matchId, merge],
+    [client, matchId, merge],
   );
 
   const loadOlder = useCallback(() => {
@@ -102,7 +106,7 @@ export function useThread(
     setLoadingOlder(true);
     void (async () => {
       try {
-        const older = await readMessages(matchId, { before, limit: MESSAGE_WINDOW });
+        const older = await readMessages(client, matchId, { before, limit: MESSAGE_WINDOW });
         merge('older', older.map(labelled));
         if (older.length < MESSAGE_WINDOW) setReachedStart(true);
       } catch {
@@ -111,7 +115,7 @@ export function useThread(
         setLoadingOlder(false);
       }
     })();
-  }, [matchId, merge, loadingOlder]);
+  }, [client, matchId, merge, loadingOlder]);
 
   useEffect(
     () =>
@@ -131,10 +135,11 @@ export function useThread(
 }
 
 /** 부름이 던져도 그 말풍선 하나가 실패로 선다 — 서버에 갔을 수 있어 「다시 보내기」만 선다 */
-const transmitOf = (matchId: string) => (id: string, body: string) => sendMessage(matchId, body, id).catch(() => UNREACHED);
+const transmitOf = (client: Client, matchId: string) => (id: string, body: string) => sendMessage(client, matchId, body, id).catch(() => UNREACHED);
 
 /** 방의 보낼 말 — 웹의 `use-outbox.ts` 와 같은 줄 · 같은 갈래다(ADR 0155 덧) */
 export function useOutbox(matchId: string, messages: readonly ChatMessage[], onAccepted: () => void, onClosed: () => void) {
+  const client = useClient();
   const [held, setHeld] = useState<readonly Pending[]>([]);
   const [said, setSaid] = useState<string | null>(null);
   const pending = useMemo(() => settlePending(held, messages), [held, messages]);
@@ -159,10 +164,10 @@ export function useOutbox(matchId: string, messages: readonly ChatMessage[], onA
   const lineRef = useRef<SendLine | null>(null);
   const enqueue = useCallback(
     (id: string, body: string) => {
-      lineRef.current ??= sendLine(transmitOf(matchId), (each, outcome) => listener.current(each, outcome));
+      lineRef.current ??= sendLine(transmitOf(client, matchId), (each, outcome) => listener.current(each, outcome));
       lineRef.current.enqueue(id, body);
     },
-    [matchId],
+    [client, matchId],
   );
 
   const send = useCallback(
@@ -197,6 +202,7 @@ export function useOutbox(matchId: string, messages: readonly ChatMessage[], onA
  * 다시 대조)와 제한된 뒤물림에 다시 부른다(`@chat/room/read-retry`).
  */
 export function useReadMarker(matchId: string, already: number, enabled: boolean) {
+  const client = useClient();
   const seen = useRef<ReadonlySet<number>>(new Set());
   const marked = useRef(already);
   const busy = useRef(false);
@@ -209,7 +215,7 @@ export function useReadMarker(matchId: string, already: number, enabled: boolean
       const upTo = readUpTo(seen.current, AppState.currentState === 'active', marked.current);
       if (upTo === null) return;
       busy.current = true;
-      void markRead(matchId, upTo)
+      void markRead(client, matchId, upTo)
         .catch(() => false)
         .then((done) => {
           busy.current = false;
@@ -224,7 +230,7 @@ export function useReadMarker(matchId: string, already: number, enabled: boolean
     };
     /* 창 · 시트를 닫으면 그때 화면에 든 것으로 다시 잰다 */
     tryMark.current();
-  }, [enabled, matchId]);
+  }, [client, enabled, matchId]);
 
   useEffect(() => {
     const again = startReadRetry({ attempt: () => tryMark.current(), visible: () => AppState.currentState === 'active' });

@@ -4,12 +4,14 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { PREFER_GENDER_ORDER, type PreferGender } from '@discovery';
 import { PREFER_GENDER_KO } from '@discovery/copy';
 
+import { useClient } from '@/auth/connected';
 import { saveFailureOf, setParticipation } from '@/reading/chart-writes';
 import { followRefusal } from '@/reading/panel';
+import { FailureLine } from '@/ui/failure-line';
 import { COLOR, FONT, RADIUS, TYPE } from '@/ui/tokens';
 import { KEEP_VIEW } from '@/ui/keep-view';
 
-import { FailureLine, SwitchRow, useDoneNote } from './parts';
+import { SwitchRow, useDoneNote, FAILURE_INSET } from './parts';
 import { savePreferGender } from './settings';
 
 /**
@@ -17,6 +19,7 @@ import { savePreferGender } from './settings';
  * 실패하면 서버가 든 마지막 값으로 돌아오고 까닭이 선다(웹 `ParticipationToggle`).
  */
 export function ParticipationRow({ resting }: { resting: boolean }) {
+  const client = useClient();
   const [on, setOn] = useState(!resting);
   const [working, setWorking] = useState(false);
   const [failure, setFailure] = useState<string | null>(null);
@@ -25,7 +28,7 @@ export function ParticipationRow({ resting }: { resting: boolean }) {
     setFailure(null);
     setOn(next);
     setWorking(true);
-    const answer = await setParticipation(next);
+    const answer = await setParticipation(client, next);
     setWorking(false);
     if (answer.ok && answer.value.ok) return;
     setOn(!next);
@@ -42,7 +45,7 @@ export function ParticipationRow({ resting }: { resting: boolean }) {
         onChange={(next) => void toggle(next)}
         busy={working}
       />
-      {failure !== null && <FailureLine inset>{failure}</FailureLine>}
+      {failure !== null && <FailureLine style={FAILURE_INSET}>{failure}</FailureLine>}
     </>
   );
 }
@@ -52,6 +55,7 @@ export function ParticipationRow({ resting }: { resting: boolean }) {
  * 마지막 하나만 남겼다가 보낸다. 실패하면 서버가 든 마지막 값으로 돌아오고 까닭이 선다.
  */
 export function PreferenceRow({ current }: { current: PreferGender }) {
+  const client = useClient();
   const [chosen, setChosen] = useState(current);
   const [saving, setSaving] = useState(false);
   const [failure, setFailure] = useState<string | null>(null);
@@ -68,7 +72,7 @@ export function PreferenceRow({ current }: { current: PreferGender }) {
     while (next !== null) {
       const value: PreferGender = next;
       next = null;
-      const result = await savePreferGender(value);
+      const result = await savePreferGender(client, value);
       if (!result.ok) {
         refused = result.message;
         break;
@@ -118,7 +122,7 @@ export function PreferenceRow({ current }: { current: PreferGender }) {
         </View>
         <Text style={styles.help}>서로 고른 성별이 맞을 때 소개돼요.</Text>
       </View>
-      {failure !== null && <FailureLine inset>{`저장하지 못했어요. ${failure}`}</FailureLine>}
+      {failure !== null && <FailureLine style={FAILURE_INSET}>{`저장하지 못했어요. ${failure}`}</FailureLine>}
     </>
   );
 }

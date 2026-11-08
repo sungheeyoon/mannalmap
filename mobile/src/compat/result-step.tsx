@@ -4,8 +4,10 @@ import { ActivityIndicator, StyleSheet, Text } from 'react-native';
 
 import { UNREADABLE_INPUT_NOTE } from '@input/stored';
 
+import { useClient } from '@/auth/connected';
 import type { Read } from '@/people/data';
-import { AccountNotice, FailureLine, NotFound, ScreenFrame, styles as shared } from '@/people/parts';
+import { AccountNotice, NotFound, ScreenFrame, styles as shared } from '@/people/parts';
+import { FailureLine } from '@/ui/failure-line';
 import { PrimaryButton, SecondaryButton } from '@/ui/parts';
 import { TopBar } from '@/ui/top-bar';
 import { COLOR } from '@/ui/tokens';
@@ -26,14 +28,15 @@ function Loading({ bar }: { bar: ReactNode }) {
 
 /** 두 사람의 결과 한 화면 — 궁합 탭(`/me/compat`)과 보관함(`/me/readings/compat`)이 같은 부품을 부른다. `<` 만 온 곳을 따른다(`app/me/compat/screen.tsx`) */
 export function CompatResultStep({ a, b, back: to }: { a: string; b: string; back: string }) {
+  const client = useClient();
   const [read, setRead] = useState<Read<PairOutcome> | null>(null);
 
   const load = useCallback(() => {
-    void settled(readPair(a, b), 'readPair', () => ({ kind: 'failed', message: UNREACHABLE }) as const).then((next) => {
+    void settled(readPair(client, a, b), 'readPair', () => ({ kind: 'failed', message: UNREACHABLE }) as const).then((next) => {
       if (next.kind === 'signed-out') router.replace('/');
       else setRead((now) => (now?.kind === 'ok' && next.kind === 'failed' ? now : next));
     });
-  }, [a, b]);
+  }, [client, a, b]);
   useFocusEffect(load);
 
   const bar = <TopBar title="궁합" fallback={to} />;

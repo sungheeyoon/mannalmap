@@ -1,12 +1,14 @@
 import { router, useFocusEffect } from 'expo-router';
 import { useCallback, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import type { InboxMatch } from '@matching/inbox';
 
+import { useClient } from '@/auth/connected';
 import { readMatchBooks, readMatches, type MatchBook, type Read } from '@/matching/doors';
 import { EndedTalks } from '@/chat/ended-talks';
 import { readEndedTalks, type EndedTalk } from '@/matching/talk-doors';
+import { FailureLine } from '@/ui/failure-line';
 import { Icon } from '@/ui/icons';
 import { EmptyState } from '@/ui/empty-state';
 import { goTab } from '@/ui/go-tab';
@@ -19,18 +21,19 @@ type Loaded = { books: Read<readonly MatchBook[]>; matches: Read<readonly InboxM
 
 /** 인연 기록 — 글이 선 상세 궁합과 끝난 대화. 둘은 나란히 읽고 따로 비운다(ADR 0078) */
 export default function MatchHistoryScreen() {
+  const client = useClient();
   const [loaded, setLoaded] = useState<Loaded | null>(null);
   const [ended, setEnded] = useState<readonly EndedTalk[]>([]);
 
   const load = useCallback(async () => {
-    const [books, matches, endedTalks] = await Promise.all([readMatchBooks(), readMatches(), readEndedTalks()]);
+    const [books, matches, endedTalks] = await Promise.all([readMatchBooks(client), readMatches(client), readEndedTalks(client)]);
     setEnded(endedTalks);
     /* 칸마다 — 선 칸을 다시 읽다 못 읽으면 가진 것을 그대로 둔다 */
     setLoaded((now) => ({
       books: books.ok || !now?.books.ok ? books : now.books,
       matches: matches.ok || !now?.matches.ok ? matches : now.matches,
     }));
-  }, []);
+  }, [client]);
 
   useFocusEffect(
     useCallback(() => {
@@ -80,26 +83,13 @@ export default function MatchHistoryScreen() {
                 </CardFrame>
               ))
             ) : (
-              <Failure onRetry={load}>인연 궁합을 불러오지 못했어요. {books.reason}</Failure>
+              <FailureLine onRetry={load}>인연 궁합을 불러오지 못했어요. {books.reason}</FailureLine>
             )}
           </View>
         )}
 
         <EndedTalks talks={ended} />
       </ScrollView>
-    </View>
-  );
-}
-
-function Failure({ children, onRetry }: { children: React.ReactNode; onRetry: () => void }) {
-  return (
-    <View>
-      <Text style={styles.failure} accessibilityRole="alert">
-        {children}
-      </Text>
-      <Pressable accessibilityRole="button" onPress={onRetry} style={styles.retry}>
-        <Text style={styles.retryText}>다시 시도하기</Text>
-      </Pressable>
     </View>
   );
 }
@@ -114,7 +104,4 @@ const styles = StyleSheet.create({
   chip: { minWidth: 28, paddingHorizontal: 8, paddingVertical: 2, textAlign: 'center', borderRadius: RADIUS.pill, overflow: 'hidden', backgroundColor: COLOR.surfaceSunken, fontFamily: FONT.bold, fontSize: TYPE.fine, color: COLOR.secondary },
   book: { flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: 56, padding: 16 },
   bookName: { fontFamily: FONT.bold, fontSize: TYPE.body, color: COLOR.foreground },
-  failure: { fontFamily: FONT.medium, fontSize: TYPE.small, lineHeight: 19, color: COLOR.danger },
-  retry: { minHeight: 44, justifyContent: 'center', alignSelf: 'flex-start' },
-  retryText: { fontFamily: FONT.bold, fontSize: TYPE.note, color: COLOR.foreground },
 });

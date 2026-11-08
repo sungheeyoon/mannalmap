@@ -4,31 +4,33 @@ import { KeyboardAvoidingView, ScrollView, StyleSheet, Text, TextInput, View } f
 import { isBlocked, type AccountState } from '@account/index';
 import { INTRO_MAX, NICKNAME_AVAILABLE_NOTE, NICKNAME_MAX, NICKNAME_MIN, NICKNAME_TAKEN_NOTE, missingInProfile, missingNickname, nicknameKey, type PhotoUploadMode, type ProfileInput } from '@profile';
 
-import { supabase } from '@/auth/client';
+import type { Client } from '@/auth/client';
+import { readAccount } from '@/auth/account';
+import { useClient } from '@/auth/connected';
 import { checkNickname } from '@/auth/signup';
+import { FailureLine } from '@/ui/failure-line';
 import { Field, PrimaryButton } from '@/ui/parts';
 import { COLOR, FONT, RADIUS, TYPE } from '@/ui/tokens';
 import { TopBar } from '@/ui/top-bar';
 import { CardFrame } from '@/ui/surfaces';
 
-import { AccountNotice, FailureLine, settingsText, useDoneNote } from './parts';
+import { AccountNotice, settingsText, useDoneNote } from './parts';
 import { PhotoGrid } from './photo-grid';
 import { BirthSection } from './birth-section';
 import { myPhotos, photoUploadMode, type MyPhoto } from './photos';
 import { saveProfile } from './profile';
-import { readAccount } from './settings';
 
 const NICKNAME_CHECK_AFTER_MS = 500;
 const READ_FAILED = '계정을 확인하지 못했어요.';
 
 type Loaded = { state: AccountState; current: ProfileInput | null; photos: readonly MyPhoto[]; uploads: PhotoUploadMode; userId: string | null } | { failed: true };
 
-async function load(): Promise<Loaded> {
-  const { state, row } = await readAccount<{ status: string; nickname: string | null; intro: string | null }>('status, nickname, intro');
+async function load(client: Client): Promise<Loaded> {
+  const { state, row } = await readAccount(client);
   if (isBlocked(state) || row === null) return { state, current: null, photos: [], uploads: 'paused', userId: null };
   try {
-    const [photos, uploads, session] = await Promise.all([myPhotos(), photoUploadMode(), supabase?.auth.getSession()]);
-    return { state, current: { nickname: row.nickname ?? '', intro: row.intro ?? '' }, photos, uploads, userId: session?.data.session?.user.id ?? null };
+    const [photos, uploads, session] = await Promise.all([myPhotos(client), photoUploadMode(client), client.auth.getSession()]);
+    return { state, current: { nickname: row.nickname ?? '', intro: row.intro ?? '' }, photos, uploads, userId: session.data.session?.user.id ?? null };
   } catch {
     return { failed: true };
   }
@@ -38,9 +40,10 @@ async function load(): Promise<Loaded> {
  * 프로필 — 웹 `app/me/profile/page.tsx`. 사진은 고르는 순간 저장되고, 닉네임 · 소개는 단추로 저장한다. 사진이 맨 위이고 출생 정보가 맨 아래다.
  */
 export function ProfileScreen() {
+  const client = useClient();
   const [data, setData] = useState<Loaded | null>(null);
   const [lifting, setLifting] = useState(false);
-  const reloadAll = useCallback(async () => setData(await load()), []);
+  const reloadAll = useCallback(async () => setData(await load(client)), [client]);
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect -- 여는 때 읽는다 - setState 는 await 뒤라 렌더와 겹치지 않는다
     void reloadAll();
@@ -48,12 +51,12 @@ export function ProfileScreen() {
 
   const reloadPhotos = useCallback(async () => {
     try {
-      const [photos, uploads] = await Promise.all([myPhotos(), photoUploadMode()]);
+      const [photos, uploads] = await Promise.all([myPhotos(client), photoUploadMode(client)]);
       setData((was) => (was !== null && !('failed' in was) ? { ...was, photos, uploads } : was));
     } catch {
       /* 못 읽었으면 앞 목록이 그대로 선다 — 다음 쓰기는 DB 가 판본으로 다시 본다 */
     }
-  }, []);
+  }, [client]);
 
   if (data === null) {
     return (
@@ -89,6 +92,7 @@ export function ProfileScreen() {
 
 /** 닉네임 · 소개 — 웹 `form.tsx` 와 같다: 멈추면 스스로 확인하고, 저장도 그 답을 기다린다. 단추를 잠그지 않고 누르면 빠진 것을 말한다 */
 function ProfileForm({ current, onSaved }: { current: ProfileInput; onSaved: (saved: ProfileInput) => void }) {
+  const client = useClient();
   const [profile, setProfile] = useState(current);
   const [failure, setFailure] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
@@ -108,13 +112,13 @@ function ProfileForm({ current, onSaved }: { current: ProfileInput; onSaved: (sa
     const name = profile.nickname;
     const timer = setTimeout(async () => {
       setChecking(true);
-      const result = await checkNickname(name);
+      const result = await checkNickname(client, name);
       setChecking(false);
       if (result.ok) setChecked({ key: nicknameKey(name), available: result.available });
       else setFailure(result.message);
     }, NICKNAME_CHECK_AFTER_MS);
     return () => clearTimeout(timer);
-  }, [profile.nickname, nicknameChanged]);
+  }, [client, profile.nickname, nicknameChanged]);
 
   const save = async () => {
     if (saving) return;
@@ -132,7 +136,7 @@ function ProfileForm({ current, onSaved }: { current: ProfileInput; onSaved: (sa
     done.clear();
     setSaving(true);
     if (nicknameChanged && answer === null) {
-      const asked = await checkNickname(profile.nickname);
+      const asked = await checkNickname(client, profile.nickname);
       if (!asked.ok) {
         setSaving(false);
         setFailure(`저장하지 못했어요. ${asked.message}`);
@@ -145,7 +149,7 @@ function ProfileForm({ current, onSaved }: { current: ProfileInput; onSaved: (sa
         return;
       }
     }
-    const result = await saveProfile(profile);
+    const result = await saveProfile(client, profile);
     setSaving(false);
     if (!result.ok) {
       setFailure(`저장하지 못했어요. ${result.message}`);

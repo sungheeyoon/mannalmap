@@ -11,11 +11,13 @@ import { asKoreanDay } from '@consent/index';
 import { matchEntriesStand } from '@matching/opening';
 import { initialOf } from '@profile';
 
+import { useClient } from '@/auth/connected';
 import { signOut } from '@/auth/sign-in';
 import { readGate } from '@/home/gate';
 import { useMatchOpen } from '@/matching/opening';
 import { CONTACT_LABEL, POLICY_TITLE, SUPPORT_TITLE, SURVEY_LABEL } from '@/info/copy';
 import { legalPagesOpen, openLegalPage } from '@/info/legal-web';
+import { FailureLine } from '@/ui/failure-line';
 import { COLOR, FONT, RADIUS, TYPE } from '@/ui/tokens';
 import { settled } from '@/ui/settled';
 import { TopBar } from '@/ui/top-bar';
@@ -24,7 +26,7 @@ import { ConsentControls } from './consent-controls';
 import { ParticipationRow, PreferenceRow } from './discovery-rows';
 import { PushRow } from './push-row';
 import { RequestDeletion } from './leaving';
-import { AccountNotice, FailureLine, LinkRow, SettingsGroup, TextRow } from './parts';
+import { AccountNotice, LinkRow, SettingsGroup, TextRow, FAILURE_INSET } from './parts';
 import { myPhotos, photoSource } from './photos';
 import { readSettings, settingsUnreachable, type SettingsData } from './settings';
 
@@ -36,6 +38,7 @@ const SIGN_OUT_FAILED = '로그아웃하지 못했어요. 다시 시도해 주�
  * 알림 무리는 풀이 완성 알림 하나다(안드로이드, ADR 0236 — `./push-row.tsx`). 새 메시지 알림은 옮기지 않는다. 프로필에서 돌아오면 이름 · 사진이 바뀌었을 수 있어 화면에 설 때마다 다시 읽는다.
  */
 export function SettingsScreen() {
+  const client = useClient();
   const [data, setData] = useState<SettingsData | null>(null);
   const [face, setFace] = useState<string | null>(null);
   /* 테스트가 끝나면 관문이 설정만 연다 — 눌러도 종료 안내로 되돌아올 줄(프로필 · 설문)은 세우지 않는다 */
@@ -44,15 +47,15 @@ export function SettingsScreen() {
   const matchOpen = useMatchOpen();
 
   const load = useCallback(() => {
-    void settled(readSettings(), 'readSettings', settingsUnreachable).then(setData);
+    void settled(readSettings(client), 'readSettings', settingsUnreachable).then(setData);
     void readGate().then((gate) => setEnded(gate.kind === 'closed'));
     /* 사진이 없거나 못 읽었으면 첫 글자가 선다 — 첫 글자는 사진이 있는 사람에게 거짓말이 아니라 자리다(웹 `Avatar`) */
     void settled(
-      myPhotos().then((photos) => (photos[0] === undefined ? null : photoSource(photos[0]))),
+      myPhotos(client).then((photos) => (photos[0] === undefined ? null : photoSource(client, photos[0]))),
       'myPhotos',
       () => null,
     ).then(setFace);
-  }, []);
+  }, [client]);
   useFocusEffect(load);
 
   if (data === null) {
@@ -104,7 +107,7 @@ export function SettingsScreen() {
                 <PreferenceRow key={discovery.preferGender} current={discovery.preferGender} />
               </>
             ) : (
-              <FailureLine inset onRetry={load}>{`인연 찾기 설정을 불러오지 못했어요. ${discovery.reason}`}</FailureLine>
+              <FailureLine style={FAILURE_INSET} onRetry={load}>{`인연 찾기 설정을 불러오지 못했어요. ${discovery.reason}`}</FailureLine>
             )}
           </SettingsGroup>
         )}
@@ -156,12 +159,13 @@ function PrivacyRow({ ackAt }: { ackAt: string | null }) {
 }
 
 function SignOutRow() {
+  const client = useClient();
   const [leaving, setLeaving] = useState(false);
   const [failed, setFailed] = useState(false);
   const leave = async () => {
     setLeaving(true);
     setFailed(false);
-    const left = await signOut();
+    const left = await signOut(client);
     setLeaving(false);
     if (left) router.replace('/');
     else setFailed(true);
@@ -169,7 +173,7 @@ function SignOutRow() {
   return (
     <>
       <TextRow label={leaving ? SIGN_OUT_PENDING : '로그아웃'} onPress={() => void leave()} disabled={leaving} />
-      {failed && <FailureLine inset>{SIGN_OUT_FAILED}</FailureLine>}
+      {failed && <FailureLine style={FAILURE_INSET}>{SIGN_OUT_FAILED}</FailureLine>}
     </>
   );
 }

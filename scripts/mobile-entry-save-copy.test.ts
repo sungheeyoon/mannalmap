@@ -317,8 +317,8 @@ describe('인연 탭', () => {
   it('덱을 읽기 전에 참여를 열고 못 열면 까닭을 낸다', () => {
     const doors = read('mobile/src/matching/doors.ts');
     const deck = doors.slice(doors.indexOf('export function readDeck'));
-    expect(deck.indexOf('openParticipation()')).toBeGreaterThan(-1);
-    expect(deck.indexOf('openParticipation()')).toBeLessThan(deck.indexOf("rpc('my_discovery_board')"));
+    expect(deck.indexOf('openParticipation(client)')).toBeGreaterThan(-1);
+    expect(deck.indexOf('openParticipation(client)')).toBeLessThan(deck.indexOf("rpc('my_discovery_board')"));
     expect(deck).toContain('saveFailureOf(opened)');
   });
 });
