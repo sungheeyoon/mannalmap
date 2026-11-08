@@ -37,12 +37,12 @@
  * (#141)은 모르는 파일이라 전부(약 5분)를 돌았다. 그 둘을 한 단계로 묶었다 — `scripts/` 의 시험 · 타입 ·
  * 린트다. `scripts/*.test.ts` 만 바뀐 PR 도 여기다: 시험 파일은 저 자신의 결과만 바꾼다.
  *
- * ## 공개 출시 전 단계는 전부다 (ADR 0243)
+ * ## 공개 출시 전 단계는 전부다 (ADR 0242)
  *
  * 운영 베타에는 PR 이 `core` 와 「바뀐 화면의 주소에 닿는 차선」만 머지 전에 돌았다(ADR 0097 · 0119 · 0178 · 0195). 2026-11-05 에
- * 공개 출시로 옮긴 뒤 그 갈래는 PR 계획에서 한 번도 돌지 않아 지웠다(ADR 0243). 단계 표(`release-stage.mjs`)에는 지난 두 단계가
+ * 공개 출시로 옮긴 뒤 그 갈래는 PR 계획에서 한 번도 돌지 않아 지웠다(ADR 0242). 단계 표(`release-stage.mjs`)에는 지난 두 단계가
  * 남는다 — 등급 3 의 잠금이 그 표를 읽는다. 「(지금)」이 그 단계로 되돌아가면 계획은 **전부**다(`출시 전 단계`). 좁힌 계획이 다시
- * 필요하면 git 역사(ADR 0243 이 가리키는 커밋)에서 되살리는 결정이 따로 선다.
+ * 필요하면 git 역사(ADR 0242 이 가리키는 커밋)에서 되살리는 결정이 따로 선다.
  *
  * - **`supabase/**` 는 단계와 상관없이 전부다.** 마이그레이션 · pgTAP · `config.toml` 은 DB 차선에서만 재어지고,
  *   `db:start` 가 깨지면 main 의 DB 차선이 다 선다. 라벨에 기대지 않는다 — 에이전트는 라벨을 잊는다.
@@ -965,8 +965,8 @@ function decide({ files, labels, event, stage, sourceOf, baseSourceOf, ts }) {
   const database = changed.find((one) => matches(DATABASE, one));
   if (database) return full('DB', `\`${database}\` 은 DB 차선에서만 재어진다`);
   if (stage === null || !(stage in LAUNCHED)) return full('단계 모름', '출시 단계를 모른다 — PRD §7.0 의 「(지금)」');
-  // 공개 출시 전 단계의 좁힌 계획은 지웠다 — 단계가 되돌아가면 안전 쪽(전부)으로 간다(ADR 0243)
-  if (!LAUNCHED[stage]) return full('출시 전 단계', `${stage} — 공개 출시 전의 좁힌 계획은 지웠다(ADR 0243), 전부 잰다`);
+  // 공개 출시 전 단계의 좁힌 계획은 지웠다 — 단계가 되돌아가면 안전 쪽(전부)으로 간다(ADR 0242)
+  if (!LAUNCHED[stage]) return full('출시 전 단계', `${stage} — 공개 출시 전의 좁힌 계획은 지웠다(ADR 0242), 전부 잰다`);
 
   const commentOnly = commentOnlyOf(changed, { sourceOf, baseSourceOf, ts });
   return notingComments(decideLaunched(changed.filter((file) => !commentOnly.includes(file))), commentOnly);

@@ -42,7 +42,7 @@ jobs:
     permissions:
       contents: read
       actions: read
-    # 차선마다 한 줄 — 계획이 고른다(2026-10-01, ADR 0097 · 0119 추기 — 좁힌 갈래는 ADR 0243 이 지웠다). `authed_lanes` 는 로그인
+    # 차선마다 한 줄 — 계획이 고른다(2026-10-01, ADR 0097 · 0119 추기 — 좁힌 갈래는 ADR 0242 이 지웠다). `authed_lanes` 는 로그인
     # 차선 이름의 JSON 배열이고 `authed` matrix 가 그대로 받는다. `authed` 는 그 배열이 비었는가다.
     outputs:
       policy: ${{ steps.plan.outputs.policy }}
@@ -220,7 +220,7 @@ jobs:
   # 다투므로 혼자 돈다.
   #
   # **차선은 계획이 고른다**(2026-10-01). 목록은 `ci-plan.mjs` 의 `AUTHED_LANES` 이고, 전부일 때 모두 받는다
-  # (좁힌 갈래는 ADR 0243 이 지웠다). 원소는 문자열이다 — 아래 artifact 이름이 `matrix.lane` 을 읽는다. 배열이 비면 `authed` 가
+  # (좁힌 갈래는 ADR 0242 이 지웠다). 원소는 문자열이다 — 아래 artifact 이름이 `matrix.lane` 을 읽는다. 배열이 비면 `authed` 가
   # `false` 라 job 이 건너뛰어진다.
   authed:
     needs: plan

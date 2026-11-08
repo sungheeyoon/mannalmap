@@ -49,7 +49,7 @@ const ROOT = resolve(__dirname, '..');
 /** 시험이 훑는 코드 — `.ts` · `.tsx` · `.mjs` */
 const codeUnder = (dir: string): string[] => filesUnder(dir).filter((file) => /\.(tsx?|mjs)$/.test(file));
 
-describe('CI 계획 — 공개 출시 전 단계는 전부다 (ADR 0243)', () => {
+describe('CI 계획 — 공개 출시 전 단계는 전부다 (ADR 0242)', () => {
   it('운영 베타 · 채팅 안전 베타는 좁히지 않는다 — 정책만이어도 전부, 까닭은 「출시 전 단계」', () => {
     for (const stage of ['운영 베타', '채팅 안전 베타']) {
       for (const files of [['docs/prd.md'], ['src/lib/saju/strength/index.ts'], ['app/me/(shelf)/readings/compat/page.tsx'], ['mobile/src/app/index.tsx']]) {
@@ -102,7 +102,7 @@ describe('CI 계획 — 공개 출시 전 단계는 전부다 (ADR 0243)', () =>
     };
     expect(runsOf('core')).toEqual(['npm ci', ...CORE_STEPS]);
     expect(CORE_STEPS).toContain('npm run build');
-    // 빌드를 건너뛰는 갈래(문구만 · 앱만 바뀐 운영 베타의 PR)는 ADR 0243 이 지웠다 — 계획에 `build` 출력이 없다
+    // 빌드를 건너뛰는 갈래(문구만 · 앱만 바뀐 운영 베타의 PR)는 ADR 0242 이 지웠다 — 계획에 `build` 출력이 없다
     expect(yml).not.toContain('outputs.build');
     expect(runsOf('anon')).toEqual(['npm ci', 'npx playwright install --with-deps chromium', 'npm run test:e2e']);
   });

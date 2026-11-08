@@ -16,7 +16,7 @@
 
 | 바뀐 것 | 도는 차선 |
 | --- | --- |
-| 계획 밖 이벤트(일정 · 손으로 켠 실행) · `full-ci` 라벨 · 빈 diff · `supabase/**` · 단계 모름 · **공개 출시 전 단계**(ADR 0243) | 전부 — `core` · `anon` · `authed` 전부(`AUTHED_LANES`) · `flow` |
+| 계획 밖 이벤트(일정 · 손으로 켠 실행) · `full-ci` 라벨 · 빈 diff · `supabase/**` · 단계 모름 · **공개 출시 전 단계**(ADR 0242) | 전부 — `core` · `anon` · `authed` 전부(`AUTHED_LANES`) · `flow` |
 | main 푸시 — 푸시 전 SHA(`github.event.before`)부터의 변경 전체가 정책 · 주석만 바뀐 코드 파일뿐이고 푸시 전 SHA 의 verify 가 초록으로 끝났다(ADR 0154, 판정은 `ci-plan.mjs` 「문서만 바뀐 main 푸시」). 그 밖 · 0 SHA · 강제 갱신 · 앞 실행이 끊김 · 붉음 · 못 읽음은 전부 | `policy` 만(`audit` 도 건너뛴다). `ci-main-red` 는 이 초록으로 이슈를 닫지 않고 「마지막 초록」으로도 안 센다 |
 | 주석만 바뀐 코드 파일 — base(merge-base)와 구문 나무가 같고 뜻이 있는 주석이 그대로(ADR 0153, 판정은 `ci-plan.mjs` 「주석만 바뀐 코드 파일」) | 정책으로 센다 — 아래 줄은 나머지 파일로 잰다 |
 | 정책(문서 · `.claude/**` · `scripts/*.test.ts`)만 | `policy`(scripts 시험 · 타입 · 린트) |
@@ -25,10 +25,10 @@
 
 공개 출시에는 주소로 좁히지 않는다 — 화면 하나 · 문구 한 줄 · 앱 파일 하나도 전부다.
 
-**공개 출시 전 단계(운영 베타 · 채팅 안전 베타)도 전부다**(ADR 0243). 운영 베타에는 PR 이 `core` 와 「바뀐 화면의 주소에 닿는 차선」만
+**공개 출시 전 단계(운영 베타 · 채팅 안전 베타)도 전부다**(ADR 0242). 운영 베타에는 PR 이 `core` 와 「바뀐 화면의 주소에 닿는 차선」만
 머지 전에 돌았다(#161, ADR 0097 · 0119 · 0178 · 0195 — 공용 위험 · 주소 대응 · 거꾸로 따라가는 import · 문구만 바뀐 PR 의 빌드 건너뜀 ·
 앱만 바뀐 PR 의 `mobile-flow`). 공개 출시로 옮긴 뒤 그 갈래는 PR 계획에서 한 번도 돌지 않아 2026-11-08 에 지웠다. 「(지금)」이 그 단계로
-되돌아가면 계획은 까닭 「출시 전 단계」로 전부다. 좁힌 계획이 다시 필요하면 ADR 0243 이 가리키는 커밋에서 되살리는 결정이 따로 선다.
+되돌아가면 계획은 까닭 「출시 전 단계」로 전부다. 좁힌 계획이 다시 필요하면 ADR 0242 이 가리키는 커밋에서 되살리는 결정이 따로 선다.
 
 **문구 변경의 머지와 배포**(운영자 2026-10-09, ADR 0159) — 사용자가 확인한 문구 변경은 필요한 PR 검사가 통과하면 재승인 없이
 squash-merge 하고 배포한다. 동작 변경이 없다고 판별된 경우 main 전체 CI 완료는 배포의 대기 조건으로 두지 않는다. 문서만 변경한
@@ -57,7 +57,7 @@ PR 에서는 앱이 부르는 자리(`ci-plan.mjs` 의 `reachesMobile` — `mobi
 비밀 이름이나 그 빌드의 비밀 값이 있으면 빌드가 선다. CI 는 빌드가 드는 차선 `core` 에서(머지 전 · 머지 뒤 main 모두),
 **Vercel 은 배포 빌드마다 진짜 값을 들고** 돈다. 새 차선은 없다. `core` 에 빌드를 넣은 까닭은 `next build` 만 잡는 실패다 —
 `app/**/icon.tsx` 는 파비콘 라우트로 읽혀 빌드가 섰는데 단위 · 타입 · 린트는 초록이라 Production 이 두 시간 멈췄다(#219).
-`core` 가 서면 빌드는 늘 돈다 — 문구만 바뀐 PR 의 빌드 건너뜀(ADR 0178)은 공개 출시 전의 갈래라 ADR 0243 이 지웠다.
+`core` 가 서면 빌드는 늘 돈다 — 문구만 바뀐 PR 의 빌드 건너뜀(ADR 0178)은 공개 출시 전의 갈래라 ADR 0242 이 지웠다.
 
 **차선 수와 시간은 이 문서에 적지 않는다** — 로그인 차선은 `ci-plan.mjs` 의 `AUTHED_LANES` 가, 그 실행이 고른 차선은
 plan job 의 step summary(`summaryOf`)가, 차선마다 걸린 시간은 `gh run view <run id>` 의 job 시간이 답한다.
@@ -71,7 +71,7 @@ plan job 의 step summary(`summaryOf`)가, 차선마다 걸린 시간은 `gh run
 
 `authed` 는 `db:start` 를 하고 e2e 차선 하나를 돈다. pgTAP 과 **생성 타입 diff** 는 그중 **`notice` 차선만** 본다
 (`verify.yml` 의 `if: matrix.lane == 'notice'` — e2e 가 남긴 계정이 전역으로 세는 pgTAP 을 흐리므로 e2e 앞, 가장 짧은 차선에 둔다).
-계획은 `authed` 를 켜면 로그인 차선을 모두 켠다(ADR 0243). `authed` 의 matrix 는 `fromJSON(needs.plan.outputs.authed_lanes)` 이고,
+계획은 `authed` 를 켜면 로그인 차선을 모두 켠다(ADR 0242). `authed` 의 matrix 는 `fromJSON(needs.plan.outputs.authed_lanes)` 이고,
 배열이 비면 `authed` 가 `false` 라 job 이 건너뛰어진다.
 **e2e 가 붉으면 `test-results/` 가 artifact 로 올라온다**(7일) — 익명은 `anon-test-results`, 로그인은
 `authed-test-results-<차선>`(콜론을 `-` 로, 예: `authed-test-results-signed-in-mobile`). 안에는 시도마다의 `error-context.md` 와
