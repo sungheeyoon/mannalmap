@@ -1,6 +1,6 @@
 'use client';
 
-import { useId, useRef } from 'react';
+import { useId, useRef, type ReactNode } from 'react';
 
 import { Icon } from './ui/icons';
 import styles from './birth-form.module.css';
@@ -10,7 +10,8 @@ import styles from './birth-form.module.css';
   연도)은 폼 쪽에 남는다 — 입력 칸 글자 크기 시험(`app/ui/fields.test.ts`)이 CSS 모듈로 꾸민 칸을 같은 이름의 모듈에서 본다.
 */
 
-export type Option<T extends string> = { value: T; label: string; hint?: string };
+/** `hint` 는 글자 노드다 — 문구 상수는 JSX 자식 자리에서만 부른다(ADR 0159) */
+export type Option<T extends string> = { value: T; label: string; hint?: ReactNode };
 
 /** 여러 클래스를 잇는다 — 빈 것은 뺀다 */
 export const cx = (...names: (string | false | undefined)[]) => names.filter(Boolean).join(' ');

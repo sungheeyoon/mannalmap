@@ -99,14 +99,14 @@ export const PHOTO_NOTE =
 /** 위치 조정 창의 제목 아래 한 줄 — 틀만 있으면 저장만 누를 곳으로 보인다. 웹 · 앱이 같은 글자다(대장 all-15) */
 export const PHOTO_FRAME_HINT = '사진을 움직여 보일 위치를 맞춰 주세요.';
 
-/** 위치 조정의 큰 틀을 화면 낭독기가 읽는 이름 — 웹 · 앱이 같은 글자다(대장 all-16) */
+/** 위치 조정의 큰 틀을 화면 낭독기가 읽는 이름 — 웹 · 앱이 같은 글자다(대장 all-17) */
 export const PHOTO_FOCUS_LABEL = '사진 위치';
 
-/** 큰 틀의 값 — 앱 낭독기가 이름 뒤에 읽는다(대장 all-16) */
+/** 큰 틀의 값 — 앱 낭독기가 이름 뒤에 읽는다(대장 all-17) */
 export const photoFocusValue = ({ x, y }: { x: number; y: number }) => `가로 ${x}%, 세로 ${y}%`;
 
 /**
- * 끌 수 없는 사람의 길 — 앱 TalkBack · VoiceOver 의 동작 메뉴(대장 all-16). 한 번에 웹 화살표 키와 같은 `steppedFocus` 만큼(5%)이고
+ * 끌 수 없는 사람의 길 — 앱 TalkBack · VoiceOver 의 동작 메뉴(대장 all-17). 한 번에 웹 화살표 키와 같은 `steppedFocus` 만큼(5%)이고
  * 「위로」는 화살표 ↑ 처럼 **사진을 미는 쪽**이다. 확대는 없다 — 이 창은 위치만 맞춘다
  */
 export const PHOTO_FOCUS_MOVES = [

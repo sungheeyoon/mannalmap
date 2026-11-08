@@ -8,6 +8,7 @@ import { COMPAT_CREDIT_NOTE, COMPAT_ENTRY, COMPAT_SIGN_IN_ACTION, COMPAT_SIGN_IN
 import { ELEVATION } from '@design';
 import { calculateChart, dateRefusal } from '@input/chart';
 import { convertedLine, dateOfParts, limitsOf, timeOfParts } from '@input/entry';
+import { ADVANCED_SETTINGS, HOUR_UNKNOWN_HINT } from '@input/copy';
 import { BIRTH_DIGIT_LABEL, DEFAULT_QUERY, HOUR_UNKNOWN_CHOICE, NAME_MAX, TIME_BASES, TIME_BASIS, type Query } from '@input/query';
 import { CALENDARS, CALENDAR_KO, CITY_LONGITUDES, GENDERS, GENDER_KO, SUPPORTED_YEAR_RANGE, type CityName, type LateNightRule } from '@saju';
 
@@ -256,9 +257,12 @@ function BirthScreen({ signedOut }: { signedOut: boolean }) {
                 </View>
               </View>
 
-              <View style={styles.rail}>
-                <Text style={styles.railLabel}>출생 시각</Text>
-                <Choices value={hourChoice} onPick={chooseHour} options={HOUR_CHOICES} />
+              <View style={styles.group}>
+                <View style={styles.rail}>
+                  <Text style={styles.railLabel}>출생 시각</Text>
+                  <Choices value={hourChoice} onPick={chooseHour} options={HOUR_CHOICES} />
+                </View>
+                {hourChoice === 'unknown' && <Text style={styles.choiceHint}>{HOUR_UNKNOWN_HINT}</Text>}
               </View>
 
               {hourChoice === 'known' && (
@@ -287,11 +291,12 @@ function BirthScreen({ signedOut }: { signedOut: boolean }) {
               style={styles.disclosure}
             >
               <Text style={styles.disclosureLabel}>고급 설정</Text>
-              <Text style={styles.disclosureSummary}>자시 · 시간 기준 · 세운 {advanced ? '⌃' : '⌄'}</Text>
+              <Text style={styles.disclosureSummary} numberOfLines={1}>{ADVANCED_SETTINGS.summary} {advanced ? '⌃' : '⌄'}</Text>
             </Pressable>
 
             {advanced && (
               <CardFrame style={styles.form}>
+                <Text style={styles.advancedIntro}>{ADVANCED_SETTINGS.intro}</Text>
                 <View style={styles.rail}>
                   <Text style={styles.railLabel}>자시</Text>
                   <Select value={rule} onPick={setRule} options={RULES} disabled={hourChoice === 'unknown'} />
@@ -387,8 +392,10 @@ const styles = StyleSheet.create({
   railNote: { fontFamily: FONT.medium, fontSize: TYPE.fine, color: COLOR.muted, marginTop: -14 },
   railBody: { flex: 1, flexDirection: 'row', gap: 6 },
   disclosure: { minHeight: 44, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 14, borderRadius: RADIUS.cell, borderWidth: 1, borderColor: COLOR.borderStrong, backgroundColor: COLOR.surface },
-  disclosureLabel: { fontSize: TYPE.body, fontFamily: FONT.bold, color: COLOR.foreground },
-  disclosureSummary: { fontFamily: FONT.medium, fontSize: TYPE.small, color: COLOR.secondary },
+  choiceHint: { marginLeft: 72, fontFamily: FONT.medium, fontSize: TYPE.fine, lineHeight: 16, color: COLOR.secondary },
+  advancedIntro: { fontFamily: FONT.medium, fontSize: TYPE.fine, lineHeight: 20, color: COLOR.secondary },
+  disclosureLabel: { flexShrink: 0, fontSize: TYPE.body, fontFamily: FONT.bold, color: COLOR.foreground },
+  disclosureSummary: { flexShrink: 1, marginLeft: 8, fontFamily: FONT.medium, fontSize: TYPE.small, color: COLOR.secondary },
   action: { marginTop: 'auto', paddingTop: 12, gap: 10 },
   converted: { fontFamily: FONT.medium, fontSize: TYPE.small, color: COLOR.secondary, marginVertical: 2 },
   failure: { fontSize: TYPE.small, fontFamily: FONT.medium, color: COLOR.danger, marginHorizontal: 6 },

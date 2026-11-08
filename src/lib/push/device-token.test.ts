@@ -5,9 +5,11 @@ import {
   PUSH_TOKEN_KEY,
   forgetChoiceWith,
   forgetOnSignOutWith,
+  returnFromSettings,
   sweepLeftTokenWith,
   turnOffWith,
   type DeviceStore,
+  type SettingsTrip,
   type TokenServer,
 } from './device-token';
 
@@ -124,5 +126,29 @@ describe('끄기', () => {
     await expect(turnOffWith(w.store, w.server)).resolves.toBe(false);
     expect(w.device.get(PUSH_CHOICE_KEY)).toBe('on');
     expect(w.device.get(PUSH_TOKEN_KEY)).toBe('tok-1');
+  });
+});
+
+describe('기기 설정에서 돌아오기 — 「기기 설정 열기」로 나갔다가 허용하고 돌아온 때만 켠다(안 B, 2026-11-08)', () => {
+  it('그 줄로 나갔다가 허용하고 돌아오면 켤 차례다', () => {
+    expect(returnFromSettings({ out: true }, true)).toBe('turn-on');
+  });
+
+  it('표시는 한 번 쓰고 지운다 — 다음에 앱이 앞으로 와도 저절로 켜지지 않는다', () => {
+    const trip: SettingsTrip = { out: true };
+    returnFromSettings(trip, true);
+    expect(trip.out).toBe(false);
+    expect(returnFromSettings(trip, true)).toBe('read');
+  });
+
+  it('허용하지 않고 돌아오면 읽기만 하고, 표시도 지운다', () => {
+    const trip: SettingsTrip = { out: true };
+    expect(returnFromSettings(trip, false)).toBe('read');
+    expect(trip.out).toBe(false);
+    expect(returnFromSettings(trip, true)).toBe('read');
+  });
+
+  it('그 줄로 나가지 않았으면 허용돼 있어도 읽기만 한다 — 기기에 적은 「끔」을 지킨다', () => {
+    expect(returnFromSettings({ out: false }, true)).toBe('read');
   });
 });

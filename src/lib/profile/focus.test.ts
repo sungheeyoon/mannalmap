@@ -56,7 +56,7 @@ describe('사진의 보일 자리 (G-98)', () => {
   });
 });
 
-describe('앱 낭독기의 위치 옮기기(대장 all-16)', () => {
+describe('앱 낭독기의 위치 옮기기(대장 all-17)', () => {
   it('동작 넷은 웹 화살표 키와 같은 한 칸씩 — 위 · 아래 · 왼쪽 · 오른쪽', async () => {
     const { PHOTO_FOCUS_MOVES, photoFocusValue } = await import('./index');
     const moved = Object.fromEntries(PHOTO_FOCUS_MOVES.map(({ name, key }) => [name, steppedFocus(FOCUS_CENTER, key)]));

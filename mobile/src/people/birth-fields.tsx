@@ -4,6 +4,7 @@ import { Keyboard, Pressable, StyleSheet, Text, TextInput, View } from 'react-na
 import { BUTTON_OFF_OPACITY } from '@design';
 import { dateRefusal } from '@input/chart';
 import { convertedLine, dateOfParts, limitsOf, splitDate, splitTime, timeOfParts } from '@input/entry';
+import { ADVANCED_SETTINGS, HOUR_UNKNOWN_HINT } from '@input/copy';
 import { BIRTH_DIGIT_LABEL, DEFAULT_QUERY, HOUR_UNKNOWN_CHOICE, NAME_MAX, TIME_BASES, TIME_BASIS, type Query } from '@input/query';
 import { CALENDARS, CALENDAR_KO, CITY_LONGITUDES, GENDERS, GENDER_KO, SUPPORTED_YEAR_RANGE, type CityName, type LateNightRule } from '@saju';
 
@@ -123,9 +124,12 @@ export function BirthFields({
         </View>
       </View>
 
-      <View style={styles.rail}>
-        <Text style={styles.railLabel}>출생 시각</Text>
-        <Choices disabled={disabled} value={values.hourChoice} onPick={chooseHour} options={HOUR_CHOICES} />
+      <View style={styles.group}>
+        <View style={styles.rail}>
+          <Text style={styles.railLabel}>출생 시각</Text>
+          <Choices disabled={disabled} value={values.hourChoice} onPick={chooseHour} options={HOUR_CHOICES} />
+        </View>
+        {values.hourChoice === 'unknown' && <Text style={styles.choiceHint}>{HOUR_UNKNOWN_HINT}</Text>}
       </View>
 
       {values.hourChoice === 'known' && (
@@ -148,11 +152,12 @@ export function BirthFields({
 
       <Pressable accessibilityRole="button" accessibilityState={{ expanded: values.advanced, disabled }} disabled={disabled} onPress={() => set.setAdvanced(!values.advanced)} style={[styles.disclosure, disabled && styles.off]}>
         <Text style={styles.disclosureLabel}>고급 설정</Text>
-        <Text style={styles.disclosureSummary}>자시 · 시간 기준 · 세운 {values.advanced ? '⌃' : '⌄'}</Text>
+        <Text style={styles.disclosureSummary} numberOfLines={1}>{ADVANCED_SETTINGS.summary} {values.advanced ? '⌃' : '⌄'}</Text>
       </Pressable>
 
       {values.advanced && (
         <View style={styles.fields}>
+          <Text style={styles.advancedIntro}>{ADVANCED_SETTINGS.intro}</Text>
           <View style={styles.rail}>
             <Text style={styles.railLabel}>자시</Text>
             <Select value={values.rule} onPick={set.setRule} options={RULES} disabled={disabled || values.hourChoice === 'unknown'} />
@@ -186,6 +191,8 @@ const styles = StyleSheet.create({
   refused: { color: COLOR.danger },
   off: { opacity: BUTTON_OFF_OPACITY },
   disclosure: { minHeight: 44, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 14, borderRadius: RADIUS.cell, borderWidth: 1, borderColor: COLOR.borderStrong, backgroundColor: COLOR.surface },
-  disclosureLabel: { fontSize: TYPE.body, fontFamily: FONT.bold, color: COLOR.foreground },
-  disclosureSummary: { fontFamily: FONT.medium, fontSize: TYPE.small, color: COLOR.secondary },
+  choiceHint: { marginLeft: 72, fontFamily: FONT.medium, fontSize: TYPE.fine, lineHeight: 16, color: COLOR.secondary },
+  advancedIntro: { fontFamily: FONT.medium, fontSize: TYPE.fine, lineHeight: 20, color: COLOR.secondary },
+  disclosureLabel: { flexShrink: 0, fontSize: TYPE.body, fontFamily: FONT.bold, color: COLOR.foreground },
+  disclosureSummary: { flexShrink: 1, marginLeft: 8, fontFamily: FONT.medium, fontSize: TYPE.small, color: COLOR.secondary },
 });
