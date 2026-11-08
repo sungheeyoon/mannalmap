@@ -427,6 +427,17 @@ DB 에 남긴 「번」은 풀이권의 수가 아니다 — 가입 코드의 �
 `error=access_denied` 에 `error_code` 가 없고, Supabase 가 막은 것(가입 꺼짐 · 정지된 계정 · 이메일 확인 필요)은 같은 `access_denied` 에 `error_code` 를 단다 —
 그래서 `error_code` 가 있으면 실패 화면이다(supabase/auth `internal/api/external.go` 의 `getErrorQueryString`, 2026-11-08 소스 확인 · 실기 확인은 아직).
 
+## all-15 확정 문구 — 네 곳 다듬기: 풀이 의견의 눈금 단추 · 앱 풀이권 상품 조회 실패 · 사진 크게 보기 · 사진 위치 조정 (운영자 승인 2026-11-08, 시안 뒤 구현)
+
+운영자가 시안(그림)을 보고 확정했다. 「분량은 어땠나요?」의 「적당해요」가 앱 360 에서 두 줄로 접히던 것은 배치 버그라 시안 없이 같은 PR 이 고쳤다 — 글자는 그대로다.
+
+| 자리 | 이전 | 확정 |
+| --- | --- | --- |
+| 풀이 의견의 1~5점 단추 · 분량 세 단추 — 앱 `mobile/src/reading/feedback.tsx` | 단추가 360 에서 36px 까지 줄고(`minWidth: 0` 이 최소 너비 44 를 덮었다), 「적당해요」가 두 줄로 접혔다 | 눈금 칸이 카드 안쪽 여백을 비집고 나와 단추가 360 에서도 44px 이상이다. 분량 세 단추는 같은 너비 그대로, 안쪽 여백만 줄여 한 줄로 선다. 웹은 390 에서 줄 폭이 넉넉해 그대로 |
+| 앱 풀이권 구매 칸 — `mobile/src/credits/store-section.tsx` · `src/lib/reading/notes.ts` 의 `STORE_LOAD_FAILED_NOTE` | 조회 실패 · 서버에 못 닿음 · 구매 제한 · 상품 없음이 모두 「지금은 풀이권을 구매할 수 없어요.」 | 서버에 못 닿았거나 Play 연결 · 상품 조회가 실패하면 실패 줄 「풀이권 상품을 불러오지 못했어요.」 + 「다시 시도하기」(세션이 끝났으면 「다시 로그인」). 판매가 닫혔거나(구매 제한 · 정지 · 베타 끝) Play 에 상품이 없을 때만 「지금은 풀이권을 구매할 수 없어요.」 |
+| 사진 크게 보기 — 웹 `app/me/profile/photo-viewer.tsx` · 앱 `mobile/src/settings/photo-viewer.tsx` · `src/lib/profile` 의 `PHOTO_LOAD_FAILED_NOTE` | 불러오는 중에도 실패해도 검은 판뿐 | 불러오는 동안 가운데 오행 다섯 점(`LoadingDots`), 실패하면 검은 판 가운데 카드에 「사진을 불러오지 못했어요.」 + 「다시 시도하기」. 웹은 같은 주소를 먼저 받아 보고(`Image` 의 `load` · `error`) 받은 뒤에 바탕 그림으로 세운다 |
+| 사진 위치 조정 창 — 웹 `app/me/profile/photo-framer.tsx` · 앱 `mobile/src/settings/photo-framer.tsx` · `src/lib/profile` 의 `PHOTO_FRAME_HINT` | 제목 「위치 조정」 아래 바로 틀 둘 | 제목 아래 「사진을 움직여 보일 위치를 맞춰 주세요.」 — 「끌어서」는 마우스 · 화살표 키로 맞추는 사람에게 맞지 않아 「움직여」다 |
+
 ## all-16 확정 문구 — 출생 정보 폼의 「모름」 덧말 · 고급 설정 두 줄을 앱까지 (운영자 승인 2026-11-08, 시안 뒤 구현)
 
 all-10 이 웹 출생 정보 폼에 넣은 세 줄을 앱의 같은 폼에도 세운다. 글자는 all-10 그대로이고, 상수 하나(`src/lib/input/copy.ts` 의

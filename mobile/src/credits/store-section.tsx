@@ -15,6 +15,7 @@ import {
   PURCHASE_FAILED_NOTE,
   PURCHASE_RUNNING_LABEL,
   SALE_CLOSED_NOTE,
+  STORE_LOAD_FAILED_NOTE,
   checkoutPayLabel,
 } from '@reading/notes';
 import { STORE_PRODUCTS } from '@reading/store-products';
@@ -37,8 +38,15 @@ import {
 } from './store';
 import { PurchaseDone } from './purchase-done';
 
-/** 화면이 그리는 판 — 묻는 중 · 살 수 없음(제한 · 정지 · Play 상품이 아직 없음) · 살 수 있음 */
-type Shelf = { kind: 'checking' } | { kind: 'closed' } | { kind: 'open'; productIds: readonly string[] };
+/**
+ * 화면이 그리는 판 — 묻는 중 · 못 읽음(서버에 못 닿음 · Play 연결이나 상품 조회가 던짐) · 살 수 없음(제한 · 정지 · 베타 끝 · Play 상품이 아직 없음) · 살 수 있음.
+ * 못 읽음은 다시 시도하면 풀릴 수 있어 실패 줄과 「다시 시도하기」, 살 수 없음은 다시 물어도 같은 답이라 안내 한 줄이다.
+ */
+type Shelf =
+  | { kind: 'checking' }
+  | { kind: 'failed'; signIn: boolean }
+  | { kind: 'closed' }
+  | { kind: 'open'; productIds: readonly string[] };
 
 /**
  * **풀이권 구매 — Google Play**(ADR 0230). 꼴은 결제 화면의 리디 꼴 그대로다(ADR 0175 · 대장 credits-03): 묶음 목록 → 동의 체크 → 「N원 결제하기」 →
@@ -73,8 +81,12 @@ export function StoreSection({ onBought, returnTo }: { onBought: () => Promise<n
 
   const load = useCallback(() => {
     void (async () => {
+      setShelf({ kind: 'checking' });
       const [open, prices] = await Promise.all([readStoreOpen(client), loadStorePrices()]);
-      if (!open.ok || open.value.open !== 'open' || prices === null) return setShelf({ kind: 'closed' });
+      if (!open.ok && (open.refused.refused === 'unavailable' || open.refused.refused === 'sign-in'))
+        return setShelf({ kind: 'failed', signIn: open.refused.refused === 'sign-in' });
+      if (!open.ok || open.value.open !== 'open') return setShelf({ kind: 'closed' });
+      if (prices === null) return setShelf({ kind: 'failed', signIn: false });
       const productIds = STORE_PRODUCTS.filter((product) => prices.has(product.productId)).map((product) => product.productId);
       setShelf(productIds.length === 0 ? { kind: 'closed' } : { kind: 'open', productIds });
       await resend(true);
@@ -108,6 +120,12 @@ export function StoreSection({ onBought, returnTo }: { onBought: () => Promise<n
   };
 
   if (shelf.kind === 'checking') return null;
+  if (shelf.kind === 'failed')
+    return (
+      <FailureLine signIn={shelf.signIn} onRetry={load}>
+        {STORE_LOAD_FAILED_NOTE}
+      </FailureLine>
+    );
   if (shelf.kind === 'closed') return <Text style={settingsText.meta}>{SALE_CLOSED_NOTE}</Text>;
 
   const products = STORE_PRODUCTS.filter((product) => shelf.productIds.includes(product.productId));

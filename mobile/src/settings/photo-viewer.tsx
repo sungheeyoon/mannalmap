@@ -4,8 +4,12 @@ import { Modal, PanResponder, Platform, Pressable, StyleSheet, Text, View } from
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Svg, { Circle, Path } from 'react-native-svg';
 
+import { PHOTO_LOAD_FAILED_NOTE } from '@profile';
+
 import { useClient } from '@/auth/connected';
-import { MenuPanel, SheetPanel } from '@/ui/surfaces';
+import { FailureLine } from '@/ui/failure-line';
+import { LoadingDots } from '@/ui/loading';
+import { Card, MenuPanel, SheetPanel } from '@/ui/surfaces';
 import { COLOR, FONT, RADIUS, TYPE } from '@/ui/tokens';
 import { settled } from '@/ui/settled';
 
@@ -38,6 +42,9 @@ export function PhotoViewer({
   const client = useClient();
   const [menu, setMenu] = useState(false);
   const [source, setSource] = useState<string | null>(null);
+  /** 주소를 받는 중 · 그리는 중(점) · 그렸다 · 못 받았거나 못 그렸다(실패 줄) */
+  const [stage, setStage] = useState<'loading' | 'shown' | 'failed'>('loading');
+  const [attempt, setAttempt] = useState(0);
   const after = useRef<(() => void) | null>(null);
   const position = at ?? 1;
   const photo = at === null ? undefined : photos[position - 1];
@@ -47,15 +54,18 @@ export function PhotoViewer({
     let live = true;
     // eslint-disable-next-line react-hooks/set-state-in-effect -- 사진이 바뀌면 앞 사진을 먼저 걷는다. 새 주소가 올 때까지 앞 사진을 새 번호로 보이지 않는다
     setSource(null);
+    setStage('loading');
     if (photo !== undefined) {
       void settled(photoSource(client, photo, userId ?? undefined), 'photoSource', () => null).then((next) => {
-        if (live) setSource(next);
+        if (!live) return;
+        setSource(next);
+        if (next === null) setStage('failed');
       });
     }
     return () => {
       live = false;
     };
-  }, [client, photo, userId]);
+  }, [client, photo, userId, attempt]);
 
   const latest = useRef({ position, total, onAt });
   useLayoutEffect(() => {
@@ -128,7 +138,23 @@ export function PhotoViewer({
           </Pressable>
         </View>
         <View style={styles.stage} {...swipe.panHandlers}>
-          {source !== null && <Image source={{ uri: source }} style={StyleSheet.absoluteFill} contentFit="contain" />}
+          {source !== null && stage !== 'failed' && (
+            <Image
+              source={{ uri: source }}
+              style={StyleSheet.absoluteFill}
+              contentFit="contain"
+              onLoad={() => setStage('shown')}
+              onError={() => setStage('failed')}
+            />
+          )}
+          {stage === 'loading' && <LoadingDots inline style={styles.middle} />}
+          {stage === 'failed' && (
+            <View style={styles.middle}>
+              <Card style={styles.failure}>
+                <FailureLine onRetry={() => setAttempt((n) => n + 1)}>{PHOTO_LOAD_FAILED_NOTE}</FailureLine>
+              </Card>
+            </View>
+          )}
         </View>
         {menu && (
           <View style={styles.scrim}>
@@ -158,6 +184,8 @@ const styles = StyleSheet.create({
   lead: { overflow: 'hidden', paddingHorizontal: 8, paddingVertical: 2, borderRadius: RADIUS.pill, backgroundColor: COLOR.onPhoto, color: COLOR.photoBack, fontSize: TYPE.fine, fontFamily: FONT.bold },
   countText: { color: COLOR.onPhoto, fontSize: TYPE.body, fontFamily: FONT.bold },
   stage: { flex: 1 },
+  middle: { ...StyleSheet.absoluteFill, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 24 },
+  failure: { alignSelf: 'stretch', paddingHorizontal: 20, paddingVertical: 16 },
   scrim: { ...StyleSheet.absoluteFill, justifyContent: 'flex-end', backgroundColor: COLOR.scrim },
   sheet: { gap: 12, paddingHorizontal: 16, paddingTop: 16, paddingBottom: 24 },
   choice: { minHeight: 56, justifyContent: 'center', paddingHorizontal: 16 },

@@ -227,12 +227,15 @@ const styles = StyleSheet.create({
   chevron: { fontSize: TYPE.lead, color: COLOR.secondary },
   body: { gap: 20, paddingHorizontal: 20, paddingBottom: 20 },
   part: { gap: 10, paddingTop: 20, borderTopWidth: 1, borderTopColor: COLOR.border },
-  scale: { gap: 10 },
+  /* 눈금 칸은 카드 안쪽 여백을 비집고 나와(카드 가장자리에서 8) 제 여백도 8 — 다섯 단추(44 × 5 + 간격 8 × 4 = 252)가 360 폭에서도 줄지 않는다 */
+  scale: { gap: 10, marginHorizontal: -12, paddingHorizontal: 8 },
   legend: { fontFamily: FONT.bold, fontSize: TYPE.body, lineHeight: 22, color: COLOR.foreground },
   small: { fontFamily: FONT.medium, fontSize: TYPE.small, lineHeight: 20, color: COLOR.secondary },
   chips: { flexDirection: 'row', gap: 8 },
   chipsWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  grow: { flex: 1, minWidth: 0 },
+  /* 같은 너비로 나눈다. `minWidth: 0` 을 두면 칩의 최소 너비(44)를 덮어 눈금 단추가 360 에서 36 까지 줄었다.
+     안쪽 여백은 4 — 글자가 가운데라 여백은 글자의 최소 틈일 뿐이고, 12 면 「적당해요」가 360 에서 두 줄로 접혔다 */
+  grow: { flex: 1, paddingHorizontal: 4 },
   chip: { minHeight: CONTROL, minWidth: CONTROL, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 12, borderRadius: RADIUS.pill, borderWidth: 1, borderColor: COLOR.border, backgroundColor: COLOR.surface },
   chipOn: { borderColor: COLOR.accent, backgroundColor: COLOR.accent },
   chipText: { fontFamily: FONT.medium, fontSize: TYPE.note, color: COLOR.foreground },

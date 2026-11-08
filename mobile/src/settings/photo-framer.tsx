@@ -2,9 +2,9 @@ import { Image } from 'expo-image';
 import { useLayoutEffect, useRef, useState } from 'react';
 import { PanResponder, StyleSheet, View, type LayoutChangeEvent, type StyleProp, type ViewStyle } from 'react-native';
 
-import { draggedFocus, type PhotoFocus } from '@profile';
+import { draggedFocus, PHOTO_FRAME_HINT, type PhotoFocus } from '@profile';
 
-import { ConfirmDialog } from '@/ui/confirm-dialog';
+import { ConfirmDialog, DialogText } from '@/ui/confirm-dialog';
 import { COLOR, RADIUS } from '@/ui/tokens';
 
 export const PHOTO_FRAME_TITLE = '위치 조정';
@@ -33,6 +33,7 @@ export function PhotoFramer({
 }) {
   return (
     <ConfirmDialog open={source !== null} onClose={onCancel} onDismissed={onDismissed} title={PHOTO_FRAME_TITLE} confirmLabel="저장" onConfirm={onSave}>
+      <DialogText>{PHOTO_FRAME_HINT}</DialogText>
       {source !== null && (
         <View style={styles.frames}>
           <FocusFrame source={source} focus={focus} onFocus={onFocus} style={styles.big} />
