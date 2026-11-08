@@ -5,6 +5,7 @@ import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
 
 import { SERVICE_NAME } from '@brand';
 import { gateFor } from '@consent/gate';
+import { readingCreditsLabel } from '@reading/notes';
 import { withReturnPath } from '@consent/return-path';
 
 import { currentPath } from '@consent/app-destination';
@@ -105,8 +106,15 @@ export default function MeLayout() {
           </Pressable>
           <View style={styles.tools}>
             {counts.credits !== null && (
-              <Pressable accessibilityRole="button" accessibilityLabel={counts.credits} onPress={() => router.push('/me/credits' as never)} style={styles.tool}>
+              /* 표 아이콘 곁에 남은 장수만 붙인다 — 설명 글은 안 넣는다(운영자 확정 2026-11-08, 대장 all-11) */
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel={readingCreditsLabel({ available: counts.credits })}
+                onPress={() => router.push('/me/credits' as never)}
+                style={[styles.tool, styles.credits]}
+              >
                 <Icon name="ticket" size={20} />
+                <Text style={styles.creditsCount}>{counts.credits}</Text>
               </Pressable>
             )}
             <Pressable accessibilityRole="link" accessibilityLabel="소식" onPress={() => router.push('/me/requests' as never)} style={styles.tool}>
@@ -180,6 +188,8 @@ const styles = StyleSheet.create({
   logo: { minHeight: 44, justifyContent: 'center' },
   tools: { flexDirection: 'row', alignItems: 'center' },
   tool: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center' },
+  credits: { width: undefined, minWidth: 44, flexDirection: 'row', gap: 4, paddingHorizontal: 8 },
+  creditsCount: { fontFamily: FONT.bold, fontSize: TYPE.small, color: COLOR.foreground },
   body: { flex: 1 },
   dock: { flexDirection: 'row', paddingHorizontal: 6, paddingTop: 6, borderTopWidth: 1, borderTopColor: COLOR.border, backgroundColor: COLOR.surface },
   tab: { flex: 1, minHeight: 56, alignItems: 'center', justifyContent: 'center', gap: 2 },

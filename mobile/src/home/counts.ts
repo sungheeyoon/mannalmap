@@ -1,14 +1,14 @@
 import { useEffect, useRef, useState } from 'react';
 
 import { bellCount } from '@consent/counts';
-import { readingCreditsLabel } from '@reading/notes';
 
 import type { Client } from '@/auth/client';
 import { listenLive } from '@/chat/live';
 import { readReadingCredits } from '@/credits/remaining';
 import { settled } from '@/ui/settled';
 
-export type Counts = { chat: number; news: number; credits: string | null };
+/** `credits` 는 남은 풀이권 장수 — 머리의 표 아이콘 곁에 숫자로 서고, 접근성 이름은 `readingCreditsLabel` 이 짓는다 */
+export type Counts = { chat: number; news: number; credits: number | null };
 
 const NONE: Counts = { chat: 0, news: 0, credits: null };
 
@@ -38,7 +38,7 @@ export function useCounts(client: Client | null, pathname: string): Counts {
         setCounts({
           chat: chat.error === null ? Number(chat.data ?? 0) : 0,
           news: news.error === null ? bellCount((news.data ?? []).map((row) => ({ kind: row.kind, unread: row.read_at === null }))) : 0,
-          credits: left !== undefined ? readingCreditsLabel({ available: left }) : null,
+          credits: left ?? null,
         });
       });
     };

@@ -36,12 +36,18 @@ export const ABOUT_LEAD = [
   '새로운 인연에게 궁합을 요청하고, 서로 동의하면 대화를 시작할 수 있어요.',
 ] as const;
 
-/** 서비스 소개 「시작하는 차례」 */
-export const ABOUT_STEPS: readonly { title: string; body: string }[] = [
+/**
+ * 인연이 닫힌 동안(ADR 0222) 서비스 소개(웹 · 앱)가 `ABOUT_LEAD[1]` 대신 세우는 둘째 문장(운영자 확정 2026-11-08, 대장 all-11).
+ * 웹은 그리는 서버가(`app/signed-out-match-open.ts`), 앱은 화면이(`useMatchOpen`) 열림을 묻는다
+ */
+export const ABOUT_LEAD_WHILE_SHUT = '인연 기능은 준비 중이에요.';
+
+/** 서비스 소개 「시작하는 차례」 — `whileShut` 은 인연이 닫힌 동안 웹 · 앱이 `body` 대신 세우는 글(운영자 확정 2026-11-08, 대장 all-11) */
+export const ABOUT_STEPS: readonly { title: string; body: string; whileShut?: string }[] = [
   { title: '사주 보기', body: '첫 화면에서 생년월일시를 넣고 내 사주를 봐요.' },
   { title: '로그인 · 가입', body: '카카오 · 구글로 로그인하고, 닉네임으로 가입해요.' },
   { title: '내 사주 저장', body: '내 출생 정보를 저장하면 홈에 내 사주 카드가 서요.' },
-  { title: '풀이 받기', body: '사주풀이 · 궁합 · 인연 중 마음 가는 것부터 시작해요.' },
+  { title: '풀이 받기', body: '사주풀이 · 궁합 · 인연 중 마음 가는 것부터 시작해요.', whileShut: '사주풀이 · 궁합 중 마음 가는 것부터 시작해요.' },
 ];
 
 /** 자주 묻는 질문 — 물음마다 `id` 를 들어 다른 화면이 바로 가리킬 수 있다(`/help#credits` 처럼). 묶음의 차례가 화면의 차례다 */

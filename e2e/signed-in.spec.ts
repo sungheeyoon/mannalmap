@@ -1447,7 +1447,7 @@ test.describe('초대된 사람의 로그인 흐름', () => {
     await expect(page.getByRole('heading', { name: /AI 풀이/ })).toHaveCount(0);
     await expect(page.getByRole('button', { name: /AI 풀이/ })).toHaveCount(0);
     // 혼자 보는 풀이에는 물을 상대가 없다.
-    await expect(page.getByText('두 분은 무슨 사이인가요')).toHaveCount(0);
+    await expect(page.getByText('두 사람은 어떤 사이인가요')).toHaveCount(0);
 
     await page.getByLabel('이름', { exact: true }).fill('상우');
     await page.getByRole('button', { name: '수정하고 다시 보기' }).click();
@@ -1540,7 +1540,7 @@ test.describe('초대된 사람의 로그인 흐름', () => {
     await expect(page.getByRole('heading', { name: '쌍둥이의 사주풀이', exact: true }).first()).toBeVisible();
   });
 
-  test('사람을 추가하면 목록에 서고 그 사람과의 수동 궁합이 열린다', async ({ page, signedIn }, testInfo) => {
+  test('사람을 추가하면 목록에 서고 그 사람과의 수동 궁합이 열린다', async ({ page, signedIn }) => {
     await page.goto('/me/people');
 
     await expect(page.getByRole('heading', { name: '저장한 사람' })).toBeVisible();
@@ -1629,9 +1629,9 @@ test.describe('초대된 사람의 로그인 흐름', () => {
       **사이는 여기서 묻는다**(ADR 0019·0054). 읽기 전에 물어야 뜻이 있고, 다음 화면은
       이 답이 정해진 채로 선다.
     */
-    await expect(page.getByText('두 분은 무슨 사이인가요')).toBeVisible();
+    await expect(page.getByText('두 사람은 어떤 사이인가요')).toBeVisible();
     /* 사이가 점수의 눈금도 고른다(ADR 0113) — 안내가 옛 약속 「점수에는 쓰지 않습니다」를 말하지 않는다 */
-    await expect(page.getByText('점수의 기준도 이 답을 따라요')).toBeVisible();
+    await expect(page.getByText('선택한 관계에 따라 궁합 해석과 점수가 달라져요.')).toBeVisible();
     await expect(page.getByText('점수에는 쓰지 않습니다')).toHaveCount(0);
 
     /* 목록의 카드가 연 길이라 첫 칸에는 그 사람이 이미 앉아 있다 — 찾아 고르는 칸이 그 이름을 든다 */
@@ -1652,26 +1652,29 @@ test.describe('초대된 사람의 로그인 흐름', () => {
     await page.getByRole('radio', { name: '가족' }).check();
 
     /*
-      **사이 칩은 조용하고 「궁합 보기」는 칩 줄의 오른쪽 끝이다**(운영자 2026-09-29). 칩의 보이는 알약은 36px 이어도
-      누르는 자리는 44px 이고, 단추는 넓은 화면에서 칩과 한 줄 · 폰에서는 줄이 넘치면 다음 줄의 오른쪽 끝이다. 가로로 안 넘친다.
+      **사이 칩은 같은 너비의 2열이고 「궁합 보기」는 그 아래 한 줄 전체 너비다**(운영자 확정 2026-11-08, 대장 all-11). 칩의 보이는
+      알약은 36px 이어도 누르는 자리는 44px 이다. 가로로 안 넘친다.
     */
-    const relations = page.getByRole('group', { name: '두 분은 무슨 사이인가요?' });
+    const relations = page.getByRole('group', { name: '두 사람은 어떤 사이인가요?' });
     await expectTargets(
       Object.fromEntries(
-        ['가족', '친구·동료', '연인·배우자', '아직 모르겠음'].map((name) => [name, relations.getByRole('radio', { name })]),
+        ['가족', '친구·동료', '연인·배우자', '관계 선택 안 함'].map((name) => [name, relations.getByRole('radio', { name })]),
       ),
     );
     const openPair = relations.getByRole('button', { name: '궁합 보기' });
-    const [chipBox, openBox, rowBox] = await Promise.all([
-      relations.getByRole('radio', { name: '가족' }).boundingBox(),
+    const [chipBox, nextBox, noneBox, openBox] = await Promise.all([
+      relations.locator('label').filter({ hasText: '가족' }).boundingBox(),
+      relations.locator('label').filter({ hasText: '친구·동료' }).boundingBox(),
+      relations.locator('label').filter({ hasText: '관계 선택 안 함' }).boundingBox(),
       openPair.boundingBox(),
-      relations.boundingBox(),
     ]);
-    if (chipBox === null || openBox === null || rowBox === null) throw new Error('사이 칩 · 궁합 보기 자리를 못 쟀다');
-    expect(Math.abs(openBox.x + openBox.width - (rowBox.x + rowBox.width))).toBeLessThanOrEqual(2);
-    if (testInfo.project.name.includes('desktop')) {
-      expect(Math.abs(openBox.y + openBox.height / 2 - (chipBox.y + chipBox.height / 2))).toBeLessThanOrEqual(4);
-    }
+    if (chipBox === null || nextBox === null || noneBox === null || openBox === null) throw new Error('사이 칩 · 궁합 보기 자리를 못 쟀다');
+    expect(Math.abs(chipBox.width - nextBox.width)).toBeLessThanOrEqual(1);
+    expect(Math.abs(chipBox.y - nextBox.y)).toBeLessThanOrEqual(1);
+    expect(noneBox.y).toBeGreaterThan(chipBox.y + chipBox.height / 2);
+    expect(openBox.y).toBeGreaterThanOrEqual(noneBox.y + noneBox.height - 1);
+    expect(Math.abs(openBox.x - chipBox.x)).toBeLessThanOrEqual(2);
+    expect(Math.abs(openBox.x + openBox.width - (nextBox.x + nextBox.width))).toBeLessThanOrEqual(2);
     expect(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBeLessThanOrEqual(0);
 
     /* 고르는 자리에는 결과가 없다 — 지표도 명식도 다음 화면의 것이다 */
@@ -1701,7 +1704,7 @@ test.describe('초대된 사람의 로그인 흐름', () => {
       앞 화면에서 이미 물었으므로 여기서는 **무엇으로 읽는지만** 적는다.
     */
     await expect(page.getByText('궁합 베타')).toBeVisible();
-    await expect(page.getByText('두 분은 무슨 사이인가요')).toHaveCount(0);
+    await expect(page.getByText('두 사람은 어떤 사이인가요')).toHaveCount(0);
     await expect(page.locator('main')).toContainText('가족 사이로 읽어 드려요');
 
     /*
@@ -2479,7 +2482,7 @@ test.describe('로그인한 사람의 궁합 화면', () => {
      * **사이는 여기서 묻는다**(ADR 0019·0054). 읽기 전에 물어야 뜻이 있고, 다음 화면은
      * 이 답이 정해진 채로 선다 — 거기서 또 물으면 한 흐름이 같은 것을 두 번 묻는다.
      */
-    await expect(page.getByText('두 분은 무슨 사이인가요')).toBeVisible();
+    await expect(page.getByText('두 사람은 어떤 사이인가요')).toBeVisible();
     await page.getByRole('radio', { name: '가족' }).check();
 
     await page.getByRole('button', { name: '궁합 보기' }).click();
@@ -2639,7 +2642,7 @@ test.describe('로그인한 사람의 궁합 화면', () => {
       **여기서는 다시 안 묻는다**(ADR 0054). 라디오가 또 서면 한 흐름이 같은 것을
       두 번 묻는 셈이고, 사용자는 그것을 서로 다른 두 물음으로 읽는다.
     */
-    await expect(page.getByText('두 분은 무슨 사이인가요')).toHaveCount(0);
+    await expect(page.getByText('두 사람은 어떤 사이인가요')).toHaveCount(0);
 
     // 만드는 버튼은 **여기** 있다. 누르지 않는다 — 누르면 4분과 돈이 든다.
     await expect(page.getByRole('button', { name: '궁합풀이 받기' })).toBeVisible();
