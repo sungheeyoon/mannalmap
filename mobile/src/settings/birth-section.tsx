@@ -33,10 +33,11 @@ async function readMyBirth(client: Client): Promise<MyBirth> {
  * 프로필의 **출생 정보** — 웹 `app/me/profile/birth-section.tsx`. 접어 두고 「수정」을 누르면 그 자리에 폼이 펴진다. 이름은 여기서 안 고친다 — 바로 위 닉네임 칸이 든다.
  * 여덟 글자가 바뀌는 저장은 묻는다 — 답을 기다리던 인연 요청이 무효가 된다. 내 사주가 아직 없으면 안 선다(등록은 홈이 이끈다).
  */
-export function BirthSection() {
+export function BirthSection({ startOpen = false }: { startOpen?: boolean }) {
   const client = useClient();
   const [birth, setBirth] = useState<MyBirth>({ kind: 'none' });
-  const [open, setOpen] = useState(false);
+  /** 홈 사주 카드의 「수정」으로 왔으면 펴서 연다 */
+  const [open, setOpen] = useState(startOpen);
 
   const load = useCallback(async () => {
     setBirth(await settled(readMyBirth(client), 'readMyBirth', () => ({ kind: 'failed' }) as const));

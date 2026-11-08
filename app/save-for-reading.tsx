@@ -25,7 +25,7 @@ import {
   type SameChartQuestion,
 } from './same-chart-ask';
 import { selfPersonState, type SelfPersonState } from './self-person-state';
-import { BUTTON_PRIMARY, BUTTON_PRIMARY_FACE, BUTTON_SECONDARY_FACE } from './ui/buttons';
+import { BUTTON_PRIMARY, BUTTON_PRIMARY_FACE, BUTTON_SECONDARY, BUTTON_SECONDARY_FACE } from './ui/buttons';
 import { CARD } from './ui/surfaces';
 import { actionAnswer } from './ui/action-answer';
 import { FailureLine } from './ui/failure-line';
@@ -51,9 +51,10 @@ import { LoadingDots } from './ui/loading';
  *
  * 눌러도 글이 나오지 않는다. 저장하고 **그 사람의 화면으로 데려다줄 뿐**이고, 풀이권을
  * 쓰는 누름은 거기서 사용자가 한다. 되돌릴 수 없는 누름을 대신 눌러 주지 않는다
- * (ADR 0028). 그래서 버튼은 「사주풀이 받기」라고 말하지 않는다 — **「저장하고
- * 계속하기」**이고, 무엇이 이어지는지는 바로 아래 한 줄이 든다. 「사주풀이 받기」는
- * 도착한 화면의 버튼 이름이라, 여기서 그 이름을 쓰면 두 누름이 같은 약속을 한다.
+ * (ADR 0028). 단추는 둘이다 — 「사주풀이 받기」(저장하고 풀이 화면으로)와 「저장하기」(저장하고
+ * 제자리, 「저장했어요」가 선다). 앞 단추는 한동안 「저장하고 계속하기」였다 — 도착 화면의 단추
+ * 이름을 쓰면 두 누름이 같은 약속을 한다고 봤다. 운영자가 2026-11-09 에 바꿨다(ADR 0028 추기) —
+ * 로그인 전 카드와 앱이 이미 그 이름으로 부르고, 풀이권은 여전히 도착 화면의 확인 창에서 쓴다.
  *
  * ## 도착지가 부르는 이름을 그대로 쓴다
  *
@@ -123,9 +124,6 @@ function SaveCard({
   context,
   query,
   needed,
-  /** 도착지가 그 글을 부르는 말 — 「사주풀이」이거나 「궁합풀이」다 */
-  reading,
-  saveWhat,
   label,
   note,
   onSave,
@@ -134,14 +132,14 @@ function SaveCard({
   /** 이 입구가 저장하려는 사람 수 — 자리가 모자란지는 이 수가 정한다 */
   query: Query;
   needed: number;
-  reading: string;
-  /** 무엇을 저장하는가 — 목록에 남는 것의 이름 */
-  saveWhat: string;
   label: string;
   note: ReactNode;
-  onSave: () => Promise<SaveOutcome>;
+  /** `stay` 면 저장하고 제자리(「저장하기」), 아니면 저장하고 풀이 화면으로(「사주풀이 받기」) */
+  onSave: (stay: boolean) => Promise<SaveOutcome>;
 }) {
   const [failure, setFailure] = useState<string | null>(null);
+  /** 누른 단추 — 그 단추만 「저장하는 중…」을 말한다 */
+  const [pressed, setPressed] = useState<'reading' | 'stay'>('reading');
   /**
    * 물어야 할 것이 있으면 여기 선다 — **물음이 서 있는 동안 저장 버튼은 자리를 비운다.**
    * 둘을 함께 세우면 사용자가 답하지 않고 다시 누를 수 있고, 그러면 같은 물음이 또 온다.
@@ -151,9 +149,10 @@ function SaveCard({
 
   const settle = (outcome: SaveOutcome) => settleSaveOutcome(outcome, setFailure, setQuestion);
 
-  const save = () => {
+  const save = (stay: boolean) => {
     setFailure(null);
-    startSaving(async () => settle(await onSave()));
+    setPressed(stay ? 'stay' : 'reading');
+    startSaving(async () => settle(await onSave(stay)));
   };
 
   const answer = (sameperson: boolean) => {
@@ -197,11 +196,9 @@ function SaveCard({
   return (
     <section id="reading-next" className={`${CARD} scroll-mt-24 flex flex-col gap-4`}>
       <div>
-        <h2 className="text-base font-semibold">{reading}로 이어 보기</h2>
-        <p className="mt-1.5 text-sm leading-6 text-secondary">
-          {reading}는 저장한 출생 정보로만 받을 수 있어요.{' '}
-          {saveWhat}를 저장하면 {reading}를 받고, 다음에 다시 볼 수도 있어요.
-        </p>
+        {/* 로그인 전 카드(「이 사주가 내 삶에서는 어떤 뜻일까요?」)의 꼴을 이 사람에게 맞춘다 */}
+        <h2 className="text-base font-semibold">이 사람의 사주는 어떤 뜻일까요?</h2>
+        <p className="mt-1.5 text-sm leading-6 text-secondary">성향부터 일과 연애, 운의 흐름까지 글로 풀어드려요.</p>
       </div>
 
       {question !== null ? (
@@ -227,21 +224,21 @@ function SaveCard({
         </div>
       ) : (
         <div className="flex flex-col gap-2">
-          <button
-            type="button"
-            onClick={save}
-            disabled={saving}
-            className={`${BUTTON_PRIMARY} w-full sm:w-auto sm:self-start`}
-          >
-            {saving ? '저장하는 중…' : label}
-          </button>
+          <div className="flex flex-col gap-2 sm:flex-row">
+            <button type="button" onClick={() => save(false)} disabled={saving} className={`${BUTTON_PRIMARY} w-full sm:w-auto`}>
+              {saving && pressed === 'reading' ? '저장하는 중…' : label}
+            </button>
+            <button type="button" onClick={() => save(true)} disabled={saving} className={`${BUTTON_SECONDARY} w-full sm:w-auto`}>
+              {saving && pressed === 'stay' ? '저장하는 중…' : '저장하기'}
+            </button>
+          </div>
 
           {/*
             **무엇이 일어나는지 누르기 전에 적는다.** 지우는 길은 「저장한 사람」 화면에 있다. 누르고
             나서 알게 되면 그 목록은 사용자가 만든 것이 아니라 화면이 만든 것이 된다.
           */}
           <p className="text-xs leading-5 text-muted">
-            {note} 저장하면 {reading}를 받는 화면으로 넘어가요.
+            {note}
             {slots !== null && ` 앞으로 ${slots.remaining}명 더 저장할 수 있어요.`} 목록에서
             빼려면 ‘저장한 사람’으로 이동해 주세요.
           </p>
@@ -269,18 +266,21 @@ export function SavePersonForReading({ query }: { query: Query }) {
   /** 내 사주는 이미 저장됐다 — 탭이 붙이지 못한 세션을 들고 있으면 여기서 다시 붙인다 */
   const savedSelf = context.state === 'in' && context.self !== null && context.self.saved && !someoneElse;
   const resumed = useCarriedTasteResume(savedSelf);
+  /** 「저장하기」로 저장했다 — 그 사람의 id. 제자리에 「저장했어요」가 선다 */
+  const [savedOther, setSavedOther] = useState<string | null>(null);
 
   /**
    * 「맞다」면 **아무것도 저장하지 않고** 그 사람에게 간다. 자리도 안 쓰고 대상도 안 는다 —
    * 그것이 이 물음이 있는 이유다.
    */
-  const savePerson = async (evenIfSameChart: boolean): Promise<SaveOutcome> => {
+  const savePerson = async (evenIfSameChart: boolean, stay: boolean): Promise<SaveOutcome> => {
     const saved = await actionAnswer(
       savePersonForReading(query, evenIfSameChart),
       (message) => ({ ok: false, kind: 'failed', message }) as const,
     );
     if (saved.ok) {
-      router.push(`/me/readings/${saved.personId}`);
+      if (stay) setSavedOther(saved.personId);
+      else router.push(`/me/readings/${saved.personId}`);
       return { done: true };
     }
     if (saved.kind === 'failed') return { failed: saved.message };
@@ -290,7 +290,7 @@ export function SavePersonForReading({ query }: { query: Query }) {
       ask: {
         label: same.label,
         answer: async (sameperson) => {
-          if (!sameperson) return savePerson(true);
+          if (!sameperson) return savePerson(true, stay);
           router.push(same.isSelfPerson ? '/me/readings/self' : `/me/readings/${same.personId}`);
           return { done: true };
         },
@@ -329,14 +329,14 @@ export function SavePersonForReading({ query }: { query: Query }) {
     );
   }
 
+  if (savedOther !== null) return <SavedOtherCard personId={savedOther} />;
+
   return (
     <SaveCard
       context={context}
       query={query}
       needed={1}
-      reading="사주풀이"
-      saveWhat="출생 정보"
-      label="저장하고 계속하기"
+      label="사주풀이 받기"
       /*
         **이름 뒤에 조사를 안 붙인다.** 「이(가)」는 앞 글자의 받침을 따르는데 이름은
         사용자가 적는 값이다 — 「영희이(가)」가 화면에 그대로 찍혀 있었다. 받침을
@@ -349,11 +349,31 @@ export function SavePersonForReading({ query }: { query: Query }) {
       */
       note={
         query.name.trim()
-          ? `저장한 사람 목록에 「${query.name.trim()}」 이름으로 추가돼요.`
-          : '저장한 사람 목록에 이 사람이 추가돼요.'
+          ? `두 단추 모두 저장한 사람 목록에 「${query.name.trim()}」 이름으로 추가돼요.`
+          : '두 단추 모두 저장한 사람 목록에 이 사람이 추가돼요.'
       }
-      onSave={() => savePerson(false)}
+      onSave={(stay) => savePerson(false, stay)}
     />
+  );
+}
+
+/** 「저장하기」로 남의 사주를 저장한 뒤 — 앱의 내 사주 「저장했어요」와 같은 꼴. 풀이권을 쓰는 일은 풀이 화면에서 시작한다 */
+function SavedOtherCard({ personId }: { personId: string }) {
+  return (
+    <section id="reading-next" className={`${CARD} scroll-mt-24 flex flex-col gap-4`}>
+      {/* 알림 구역이 제목을 감싼다 — 제목에 `role` 을 달면 제목이 아니게 된다 */}
+      <div role="status">
+        <h2 className="text-base font-semibold">저장했어요</h2>
+      </div>
+      <div className="flex flex-col gap-2 sm:flex-row">
+        <Link href={`/me/readings/${personId}`} className={`${BUTTON_PRIMARY} w-full sm:w-auto`}>
+          사주풀이 받기
+        </Link>
+        <Link href="/me/people" className={`${BUTTON_SECONDARY} w-full sm:w-auto`}>
+          저장한 사람 보기
+        </Link>
+      </div>
+    </section>
   );
 }
 

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState, useSyncExternalStore } from 'react';
 
 import { isoOf, solarDateOf } from '@/src/lib/input/chart';
 import { HOUR_UNKNOWN_LABEL, type Query } from '@/src/lib/input/query';
@@ -15,6 +15,9 @@ const PANEL = 'flex flex-col gap-4 rounded-card border border-border bg-surface 
 /** 칸의 이름 — 닉네임 · 소개 칸의 이름과 같은 글자 크기 · 굵기(`form.tsx` 의 `LABEL`) */
 const LABEL = 'text-small font-semibold text-secondary';
 
+/** `#` 는 이 판이 선 뒤로 바뀌어도 다시 읽지 않는다 — 홈에서 올 때 한 번만 본다 */
+const noSubscribe = () => () => {};
+
 /**
  * **출생 정보** — 프로필 수정 화면의 셋째 판(2026-10-26 운영자 「생일 · 닉네임 등 고치기를 프로필 고치기 한 곳에」).
  *
@@ -24,9 +27,18 @@ const LABEL = 'text-small font-semibold text-secondary';
  * · 바뀐 것이 없으면 가라앉은 저장 · 「작성 그만두기」. 이름은 여기서 안 고친다 — 바로 위 닉네임 칸이 든다.
  *
  * 접어 둔다 — 지금 값을 줄로 보이고, 「수정」을 누르면 그 자리에 폼이 펴진다. 그 단추의 읽는 이름은 연필 때와 같은 「출생 정보 수정」이다.
+ * 홈 사주 카드의 「수정」은 `#birth` 를 달고 온다 — 그때는 편 채로 서고 그 자리로 내린다(운영자 결정 2026-11-09).
  */
 export function BirthSection({ personId, query }: { personId: string; query: Query }) {
-  const [open, setOpen] = useState(false);
+  /** 주소의 `#birth` — 브라우저에서만 읽힌다. 서버 그림은 접힌 판이고 붙은 뒤 펴진다 */
+  const fromHome = useSyncExternalStore(noSubscribe, () => window.location.hash === '#birth', () => false);
+  /** 사용자가 펴거나 접었다 — 그 뒤로는 주소가 아니라 누름이 정한다 */
+  const [pressed, setOpen] = useState<boolean | null>(null);
+  const open = pressed ?? fromHome;
+  useEffect(() => {
+    if (!fromHome) return;
+    requestAnimationFrame(() => document.getElementById('birth')?.scrollIntoView({ block: 'start' }));
+  }, [fromHome]);
 
   const rows = [
     [
@@ -43,15 +55,17 @@ export function BirthSection({ personId, query }: { personId: string; query: Que
   /* 펴면 판 자리에 폼이 선다 — 폼이 제 판(머리 「수정하기」 · 재계산 안내)을 든다. 판 안에 판을 겹치지 않는다 */
   if (open) {
     return (
-      <EditInputForm
-        personId={personId}
-        current={query}
-        editableName={false}
-        nameNote={false}
-        confirmsRequests
-        onDone={() => setOpen(false)}
-        onCancel={() => setOpen(false)}
-      />
+      <div id="birth" className="scroll-mt-24">
+        <EditInputForm
+          personId={personId}
+          current={query}
+          editableName={false}
+          nameNote={false}
+          confirmsRequests
+          onDone={() => setOpen(false)}
+          onCancel={() => setOpen(false)}
+        />
+      </div>
     );
   }
 

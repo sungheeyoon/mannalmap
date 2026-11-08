@@ -25,9 +25,6 @@ import { COLOR, FONT, RADIUS, TYPE } from '@/ui/tokens';
 
 import { saveSelfPerson } from './chart-writes';
 
-const reading = '사주풀이';
-const saveWhat = '출생 정보';
-
 /**
  * `out` 은 아직 저장할 수 없는 사람(로그인 전 · 가입 전)이다 — 세션이 없으면 서버를 안 부른다(ADR 0213). 가입 전인 사람에게 내 사주를 묻지 않는다.
  * `self` 는 내 사주를 등록했는가와 등록하면 설 이름 — 못 읽었으면 `null` 이고 그때는 묻지 않는다(`app/self-person-state.ts`).
@@ -81,9 +78,12 @@ export function SavePersonForReading({ query, want }: { query: Query; want: Char
   /** 「다른 사람의 사주예요」를 눌렀다 — 이 화면에서는 다시 묻지 않는다 */
   const [someoneElse, setSomeoneElse] = useState(false);
   const [savedHere, setSavedHere] = useState(false);
+  /** 남의 사주를 「저장하기」로 저장했다 — 그 사람의 id. 제자리에 「저장했어요」가 선다 */
+  const [savedOther, setSavedOther] = useState<string | null>(null);
   const matchOpen = useMatchOpen();
 
   if (savedHere) return <SavedCard />;
+  if (savedOther !== null) return <SavedOtherCard personId={savedOther} />;
   if (context === null) return null;
   if (context.state === 'out') {
     return (
@@ -104,7 +104,7 @@ export function SavePersonForReading({ query, want }: { query: Query; want: Char
       {context.self !== null && !context.self.saved && !someoneElse ? (
         <SelfConfirm query={query} want={want} name={context.self.nickname ?? query.name.trim()} onSomeoneElse={() => setSomeoneElse(true)} onSavedHere={() => setSavedHere(true)} />
       ) : (
-        <SaveCard query={query} slots={context.slots} />
+        <SaveCard query={query} slots={context.slots} onSavedHere={setSavedOther} />
       )}
     </ConnectedClient>
   );
@@ -143,10 +143,25 @@ function SavedCard() {
   );
 }
 
-/** 저장한 사람으로 저장한다 — 같은 명식이면 먼저 묻고, 자리가 없으면 버튼 자리에 할 일이 선다 */
-function SaveCard({ query, slots }: { query: Query; slots: PersonSlots | null }) {
+/** 남의 사주를 「저장하기」로 저장한 뒤 — 내 사주의 「저장했어요」와 같은 꼴. 풀이권을 쓰는 일은 풀이 칸에서 시작한다 */
+function SavedOtherCard({ personId }: { personId: string }) {
+  return (
+    <Card style={styles.card}>
+      <Text accessibilityRole="alert" style={styles.title}>저장했어요</Text>
+      <View style={styles.answers}>
+        <PrimaryButton label="사주풀이 받기" onPress={() => router.push(`/me/readings/${personId}` as never)} />
+        <SecondaryButton label="저장한 사람 보기" onPress={() => router.push('/me/people' as never)} />
+      </View>
+    </Card>
+  );
+}
+
+/** 저장한 사람으로 저장한다 — 같은 명식이면 먼저 묻고, 자리가 없으면 버튼 자리에 할 일이 선다. 「사주풀이 받기」는 저장하고 풀이 칸으로, 「저장하기」는 저장하고 제자리다 */
+function SaveCard({ query, slots, onSavedHere }: { query: Query; slots: PersonSlots | null; onSavedHere: (personId: string) => void }) {
   const client = useClient();
-  const [saving, setSaving] = useState(false);
+  /** 누른 단추 — 그 단추만 「저장하는 중…」을 말하고 둘 다 잠근다 */
+  const [pending, setPending] = useState<'reading' | 'stay' | null>(null);
+  const saving = pending !== null;
   const [failure, setFailure] = useState<string | null>(null);
   /** 물음이 서 있는 동안 저장 버튼은 자리를 비운다 — 답하지 않고 다시 누르면 같은 물음이 또 온다 */
   const [question, setQuestion] = useState<SameChartQuestion | null>(null);
@@ -160,33 +175,29 @@ function SaveCard({ query, slots }: { query: Query; slots: PersonSlots | null })
     router.push((same.isSelfPerson ? '/me/readings/self' : `/me/readings/${same.personId}`) as never);
   };
 
-  const save = async (evenIfSameChart: boolean) => {
-    setSaving(true);
+  const save = async (evenIfSameChart: boolean, then: 'reading' | 'stay') => {
+    setPending(then);
     setFailure(null);
     const saved = await addPerson(client, query, '', evenIfSameChart);
-    setSaving(false);
+    setPending(null);
     if (saved.ok) {
       setQuestion(null);
-      router.push(`/me/readings/${saved.personId}` as never);
+      if (then === 'stay') onSavedHere(saved.personId);
+      else router.push(`/me/readings/${saved.personId}` as never);
     } else if (saved.kind === 'failed') {
       setQuestion(null);
       setFailure(saved.message);
     } else {
       const { same } = saved;
-      setQuestion({ label: same.label, answer: (sameperson) => (sameperson ? goTo(same) : void save(true)) });
+      setQuestion({ label: same.label, answer: (sameperson) => (sameperson ? goTo(same) : void save(true, then)) });
     }
   };
 
   return (
     <Card style={styles.card}>
       <View style={styles.head}>
-        <Text accessibilityRole="header" style={styles.title}>
-          {reading}로 이어 보기
-        </Text>
-        <Text style={styles.line}>
-          {reading}는 저장한 출생 정보로만 받을 수 있어요.{' '}
-          {saveWhat}를 저장하면 {reading}를 받고, 다음에 다시 볼 수도 있어요.
-        </Text>
+        <Text accessibilityRole="header" style={styles.title}>이 사람의 사주는 어떤 뜻일까요?</Text>
+        <Text style={styles.line}>성향부터 일과 연애, 운의 흐름까지 글로 풀어드려요.</Text>
       </View>
 
       {question !== null ? (
@@ -198,9 +209,12 @@ function SaveCard({ query, slots }: { query: Query; slots: PersonSlots | null })
         </View>
       ) : (
         <>
-          <PrimaryButton label={saving ? '저장하는 중…' : '저장하고 계속하기'} onPress={() => void save(false)} disabled={saving} />
+          <View style={styles.answers}>
+            <PrimaryButton label={pending === 'reading' ? '저장하는 중…' : '사주풀이 받기'} onPress={() => void save(false, 'reading')} disabled={saving} />
+            <SecondaryButton label={pending === 'stay' ? '저장하는 중…' : '저장하기'} onPress={() => void save(false, 'stay')} disabled={saving} />
+          </View>
           <Text style={styles.fine}>
-            {name !== '' ? `저장한 사람 목록에 「${name}」 이름으로 추가돼요.` : '저장한 사람 목록에 이 사람이 추가돼요.'} 저장하면 {reading}를 받는 화면으로 넘어가요.
+            {name !== '' ? `두 단추 모두 저장한 사람 목록에 「${name}」 이름으로 추가돼요.` : '두 단추 모두 저장한 사람 목록에 이 사람이 추가돼요.'}
             {slots !== null && ` 앞으로 ${slots.remaining}명 더 저장할 수 있어요.`} 목록에서 빼려면 ‘저장한 사람’으로 이동해 주세요.
           </Text>
         </>
