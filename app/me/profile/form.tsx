@@ -9,6 +9,7 @@ import {
   NICKNAME_MIN,
   NICKNAME_TAKEN_NOTE,
   missingInProfile,
+  profileEdited,
   missingNickname,
   nicknameKey,
   type PhotoUploadMode,
@@ -22,7 +23,7 @@ import { BUTTON_PRIMARY } from '../../ui/buttons';
 import { DoneNote, useDoneNote } from '../../ui/done-note';
 import { useLeaveGuard } from '../../ui/leave-guard';
 import { saveProfile } from './actions';
-import { PhotoGrid } from './photo-grid';
+import { PhotoGrid, PhotoGridFailed } from './photo-grid';
 import type { MyPhoto } from './photos';
 import { FailureLine } from '../../ui/failure-line';
 import { FIELD } from '../../ui/fields';
@@ -78,7 +79,8 @@ export function ProfileForm({
   uploads,
 }: {
   current: ProfileInput;
-  photos: readonly MyPhoto[];
+  /** `null` 이면 사진 목록만 못 읽었다 — 그 칸만 실패 줄이다(대장 all-18) */
+  photos: readonly MyPhoto[] | null;
   userId: string;
   /** 사진 올리기의 길 — DB 의 스위치(G-120, ADR 0203) */
   uploads: PhotoUploadMode;
@@ -97,9 +99,7 @@ export function ProfileForm({
 
   const missing = missingInProfile(profile);
   const nicknameChanged = nicknameKey(profile.nickname) !== nicknameKey(current.nickname);
-  const changed =
-    profile.nickname.trim() !== current.nickname.trim() ||
-    profile.intro.trim() !== current.intro.trim();
+  const changed = profileEdited(current, profile);
 
   const answer = nicknameChanged && checked?.key === nicknameKey(profile.nickname) ? checked : null;
 
@@ -174,11 +174,15 @@ export function ProfileForm({
         다 먹어 820px 높이가 되고 저장이 첫 화면 밖으로 밀렸다(2026-10-09).
         칸은 서버가 새로 준 사진을 그대로 따른다(`useOptimistic`) — 새로 세우지 않아 초점을 잃지 않는다
       */}
-      <PhotoGrid
-        userId={userId}
-        photos={photos}
-        uploads={uploads}
-      />
+      {photos === null ? (
+        <PhotoGridFailed />
+      ) : (
+        <PhotoGrid
+          userId={userId}
+          photos={photos}
+          uploads={uploads}
+        />
+      )}
 
       <form
         className={PANEL}

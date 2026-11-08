@@ -105,6 +105,9 @@ export const NOTE_MAX = 200;
  */
 export const noteOrNull = (note: string): string | null => note.trim() || null;
 
+/** 메모를 고쳤는가 — 다듬은 값이 저장한 메모와 다를 때만이다. 저장 단추를 열고, 앱은 떠나기 전에 묻는다(대장 all-18) */
+export const noteEdited = (saved: string, draft: string): boolean => noteOrNull(draft) !== noteOrNull(saved);
+
 /**
  * `create_managed_person` 이 받는 인자 한 벌 — 메모가 하나 더 붙는다.
  *

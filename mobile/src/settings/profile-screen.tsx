@@ -3,7 +3,7 @@ import { useCallback, useEffect, useRef, useState, type ComponentRef } from 'rea
 import { KeyboardAvoidingView, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 
 import { isBlocked, type AccountState } from '@account/index';
-import { INTRO_MAX, NICKNAME_AVAILABLE_NOTE, NICKNAME_MAX, NICKNAME_MIN, NICKNAME_TAKEN_NOTE, missingInProfile, missingNickname, nicknameKey, type PhotoUploadMode, type ProfileInput } from '@profile';
+import { INTRO_MAX, NICKNAME_AVAILABLE_NOTE, NICKNAME_MAX, NICKNAME_MIN, NICKNAME_TAKEN_NOTE, missingInProfile, missingNickname, nicknameKey, profileEdited, type PhotoUploadMode, type ProfileInput } from '@profile';
 
 import type { Client } from '@/auth/client';
 import { readAccount } from '@/auth/account';
@@ -15,26 +15,43 @@ import { Field, PrimaryButton } from '@/ui/parts';
 import { COLOR, FONT, RADIUS, TYPE } from '@/ui/tokens';
 import { TopBar } from '@/ui/top-bar';
 import { CardFrame } from '@/ui/surfaces';
+import { useLeaveGuard } from '@/ui/leave-guard';
 
 import { AccountNotice, settingsText, useDoneNote } from './parts';
-import { PhotoGrid } from './photo-grid';
+import { PhotoGrid, PhotoGridFailed } from './photo-grid';
 import { BirthSection } from './birth-section';
 import { myPhotos, photoUploadMode, type MyPhoto } from './photos';
 import { saveProfile } from './profile';
 
 const NICKNAME_CHECK_AFTER_MS = 500;
-const READ_FAILED = '계정을 확인하지 못했어요.';
 
-type Loaded = { state: AccountState; current: ProfileInput | null; photos: readonly MyPhoto[]; uploads: PhotoUploadMode; userId: string | null } | { failed: true };
+type Loaded = {
+  state: AccountState;
+  current: ProfileInput | null;
+  /** `null` 이면 사진 목록만 못 읽었다 — 그 칸만 실패 줄이다(대장 all-18) */
+  photos: readonly MyPhoto[] | null;
+  uploads: PhotoUploadMode;
+  userId: string | null;
+};
 
 async function load(client: Client): Promise<Loaded> {
   const { state, row } = await readAccount(client);
   if (isBlocked(state) || row === null) return { state, current: null, photos: [], uploads: 'paused', userId: null };
+  /*
+    사진을 못 읽어도 닉네임 · 소개 · 출생 정보는 선다 — 실패는 사진 칸 하나에만 선다(대장 all-18). 화면째 실패는 계정을 못 읽었을
+    때뿐이고 그것은 `readAccount` 가 `AccountNotice` 의 갈래(`unreachable`)로 낸다. `photoUploadMode` 는 못 읽으면 스스로 `paused` 다
+  */
+  const [photos, uploads, userId] = await Promise.all([myPhotos(client).catch(() => null), photoUploadMode(client), sessionUserId(client)]);
+  return { state, current: { nickname: row.nickname ?? '', intro: row.intro ?? '' }, photos, uploads, userId };
+}
+
+/** 사진 주소를 지을 내 id — 못 읽으면 `null` 이고 사진 칸이 그림을 안 받는다. 닉네임 · 소개는 그대로 선다 */
+async function sessionUserId(client: Client): Promise<string | null> {
   try {
-    const [photos, uploads, session] = await Promise.all([myPhotos(client), photoUploadMode(client), client.auth.getSession()]);
-    return { state, current: { nickname: row.nickname ?? '', intro: row.intro ?? '' }, photos, uploads, userId: session.data.session?.user.id ?? null };
+    const { data } = await client.auth.getSession();
+    return data.session?.user.id ?? null;
   } catch {
-    return { failed: true };
+    return null;
   }
 }
 
@@ -57,7 +74,7 @@ export function ProfileScreen() {
   const reloadPhotos = useCallback(async () => {
     try {
       const [photos, uploads] = await Promise.all([myPhotos(client), photoUploadMode(client)]);
-      setData((was) => (was !== null && !('failed' in was) ? { ...was, photos, uploads } : was));
+      setData((was) => (was !== null ? { ...was, photos, uploads } : was));
     } catch {
       /* 못 읽었으면 앞 목록이 그대로 선다 — 다음 쓰기는 DB 가 판본으로 다시 본다 */
     }
@@ -79,14 +96,16 @@ export function ProfileScreen() {
         <ScrollView ref={scrollRef} contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled" keyboardDismissMode="on-drag" scrollEnabled={!lifting}>
           <Text style={settingsText.meta}>앱에서 쓸 닉네임과 프로필을 정해요.</Text>
 
-          {'failed' in data ? (
-            <FailureLine onRetry={() => void reloadAll()}>{READ_FAILED}</FailureLine>
-          ) : data.current === null ? (
+          {data.current === null ? (
             <AccountNotice state={data.state} onRetry={() => void reloadAll()} />
           ) : (
             <>
-              <PhotoGrid userId={data.userId} photos={data.photos} uploads={data.uploads} reload={reloadPhotos} onLifting={setLifting} />
-              <ProfileForm current={data.current} onSaved={(saved) => setData((was) => (was !== null && !('failed' in was) ? { ...was, current: saved } : was))} />
+              {data.photos === null ? (
+                <PhotoGridFailed onRetry={() => void reloadPhotos()} />
+              ) : (
+                <PhotoGrid userId={data.userId} photos={data.photos} uploads={data.uploads} reload={reloadPhotos} onLifting={setLifting} />
+              )}
+              <ProfileForm current={data.current} onSaved={(saved) => setData((was) => (was !== null ? { ...was, current: saved } : was))} />
               {/* 홈 사주 카드의 「수정」으로 왔으면(`?edit=birth`) 폼을 펴서 열고 그 자리까지 내린다 */}
               <View
                 onLayout={(event) => {
@@ -121,7 +140,9 @@ function ProfileForm({ current, onSaved }: { current: ProfileInput; onSaved: (sa
 
   const missing = missingInProfile(profile);
   const nicknameChanged = nicknameKey(profile.nickname) !== nicknameKey(current.nickname);
-  const changed = profile.nickname.trim() !== current.nickname.trim() || profile.intro.trim() !== current.intro.trim();
+  const changed = profileEdited(current, profile);
+  /* 바뀐 채 ← · 뒤로 · 밀어 닫기로 나가면 한 번 묻는다 — 저장하는 동안은 묻지 않는다(대장 all-18) */
+  const { dialog: leaveDialog } = useLeaveGuard({ edited: changed, saving });
   const answer = nicknameChanged && checked?.key === nicknameKey(profile.nickname) ? checked : null;
 
   useEffect(() => {
@@ -224,6 +245,7 @@ function ProfileForm({ current, onSaved }: { current: ProfileInput; onSaved: (sa
         </Text>
         {failure !== null && <FailureLine>{failure}</FailureLine>}
       </View>
+      {leaveDialog}
     </CardFrame>
   );
 }

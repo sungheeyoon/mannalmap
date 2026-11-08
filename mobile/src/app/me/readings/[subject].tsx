@@ -1,11 +1,12 @@
 import { router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useMemo } from 'react';
-import { ScrollView, StyleSheet, Text } from 'react-native';
+import { StyleSheet, Text } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import type { Element } from '@saju';
 
 import type { ReadingTarget } from '@/reading/api';
+import { ReadingScrollView } from '@/reading/contents';
 import { ReadFailure, ReadingPanel, useReadingView } from '@/reading/panel';
 import { LoadingDots } from '@/ui/loading';
 import { TopBar } from '@/ui/top-bar';
@@ -33,7 +34,7 @@ export default function ReadingScreen() {
   return (
     <SafeAreaView style={styles.screen} edges={['left', 'right']}>
       <TopBar title={view?.view === 'reading' ? view.subject?.name : undefined} fallback={from === 'shelf' ? '/me/readings' : '/me'} />
-      <ScrollView contentContainerStyle={[styles.content, answer === null && styles.waiting]}>
+      <ReadingScrollView contentContainerStyle={[styles.content, answer === null && styles.waiting]}>
         {answer === null && <LoadingDots />}
         {answer !== null && 'refused' in answer && <ReadFailure refused={answer.refused} onRetry={reload} />}
 
@@ -50,7 +51,7 @@ export default function ReadingScreen() {
             <ReadingPanel target={target} view={view} tones={[(view.subject?.dayMaster?.element ?? null) as Element | null]} />
           </>
         )}
-      </ScrollView>
+      </ReadingScrollView>
     </SafeAreaView>
   );
 }

@@ -68,6 +68,14 @@ export function missingNickname(nickname: string): string | null {
   return null;
 }
 
+/**
+ * 저장한 값과 칸의 값이 다른가 — 저장 단추를 여는 판정이자, 앱이 떠나기 전에 묻는 판정이다(대장 all-18).
+ * 앞뒤 빈칸만 다른 것은 고친 것이 아니다 — 저장도 다듬은 값을 보낸다.
+ */
+export function profileEdited(saved: ProfileInput, draft: ProfileInput): boolean {
+  return draft.nickname.trim() !== saved.nickname.trim() || draft.intro.trim() !== saved.intro.trim();
+}
+
 /** 아직 못 채운 칸 — 없으면 `null` */
 export function missingInProfile(profile: ProfileInput): string | null {
   const missing = missingNickname(profile.nickname);

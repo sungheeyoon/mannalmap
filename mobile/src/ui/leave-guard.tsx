@@ -1,0 +1,49 @@
+import { usePreventRemove } from 'expo-router';
+import { useState } from 'react';
+
+import { ConfirmDialog } from './confirm-dialog';
+import { asksBeforeLeaving } from './leave-ask';
+
+/** 대장 all-18 — 닫기는 「취소」가 아니라 「계속 고치기」다(이 창의 「취소」는 「고친 것을 취소」로 읽힌다) */
+export const LEAVE_TITLE = '변경 내용을 저장하지 않고 나갈까요?';
+export const LEAVE_CONFIRM = '나가기';
+export const LEAVE_STAY = '계속 고치기';
+
+/**
+ * **고치다 만 것이 있으면 떠나기 전에 한 번 묻는다**(대장 all-18, ADR 0166 추기 2026-11-09) — 머리 ← · 안드로이드 뒤로 · iOS 밀어
+ * 닫기가 모두 화면을 스택에서 빼는 일이라 `usePreventRemove` 한 곳에 걸린다. 탭 막대로 옮기는 것은 화면을 빼지 않아 묻지 않는다.
+ * 웹 번들에서는 같은 훅이 `beforeunload` 도 건다.
+ *
+ * `leave(then)` 은 화면 안의 그만두기 단추(「작성 그만두기」)가 부른다 — 고친 것이 있으면 같은 창을 거쳐 `then`, 없으면 곧바로 `then`.
+ * `dialog` 는 화면이 제 판 안에 세운다.
+ */
+export function useLeaveGuard({ edited, saving }: { edited: boolean; saving: boolean }) {
+  const asks = asksBeforeLeaving({ edited, saving });
+  const [pending, setPending] = useState<(() => void) | null>(null);
+  const [leaving, setLeaving] = useState(false);
+  usePreventRemove(asks && !leaving, ({ repeat }) => setPending(() => repeat));
+
+  const leave = (then: () => void) => {
+    if (asks) setPending(() => then);
+    else then();
+  };
+
+  const dialog = (
+    <ConfirmDialog
+      open={pending !== null}
+      title={LEAVE_TITLE}
+      confirmLabel={LEAVE_CONFIRM}
+      cancelLabel={LEAVE_STAY}
+      danger
+      onConfirm={() => {
+        const go = pending;
+        /* `repeat` 와 같은 손에서 막기를 푼다 — 안 그러면 훅이 다시 막는다 */
+        setLeaving(true);
+        setPending(null);
+        go?.();
+      }}
+      onClose={() => setPending(null)}
+    />
+  );
+  return { leave, dialog };
+}

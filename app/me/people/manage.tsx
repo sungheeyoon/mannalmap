@@ -8,7 +8,7 @@ import type { PersonSlots } from '@/src/lib/people';
 
 import { BirthFields, focusBirthGap } from '../../birth-form';
 import { DEFAULT_QUERY, missingAnswer, type Query } from '@/src/lib/input/query';
-import { NOTE_MAX } from '@/src/lib/input/edit';
+import { NOTE_MAX, noteEdited } from '@/src/lib/input/edit';
 import { useHashParams } from '../../hash-query';
 import { addManagedPerson, removeFromList, updateNote } from '../actions';
 import {
@@ -299,7 +299,7 @@ export function NoteEditor({
   const [failure, setFailure] = useState<string | null>(null);
   const [saving, startSaving] = useTransition();
 
-  const changed = value.trim() !== note.trim();
+  const changed = noteEdited(note, value);
   /* 고친 메모가 있으면 탭을 닫기 전에 묻는다 — 저장하거나 그만두면 판이 내려가며 걷힌다 */
   useLeaveGuard(changed);
 
