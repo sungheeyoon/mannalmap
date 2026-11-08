@@ -47,7 +47,7 @@ export const matchOpenAlertStands = (open: boolean | null): boolean => open === 
 /**
  * 설정의 참여 스위치 — **닫힌 동안에도 선다**(운영자 결정 2026-11-08, G-153 의 6). 가입 고지와 처리방침이 「참여는 설정에서 언제든 끌 수
  * 있다」고 약속했고, 켜고 끄는 문(`set_discovery_participation`)은 닫혀 있어도 그대로 된다. 스위치는 실제 참여 상태를 그대로 보인다.
- * 이름 · 설명은 웹 `ParticipationToggle` · 앱 `ParticipationRow` 가 프롭으로 넘기는 글자라 `copy.ts` 에 못 둔다(ADR 0159). 대장 settings-18.
+ * 이름 · 설명은 웹 `ParticipationToggle` · 앱 `ParticipationRow` 가 프롭으로 넘기는 글자라 `copy.ts` 에 못 둔다(ADR 0159). 대장 settings-20.
  */
 export const PARTICIPATION_LABEL = '인연 찾기 참여';
 
