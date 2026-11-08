@@ -5,7 +5,7 @@ import { erasesProfileOnly, isBlocked, mayRequestDeletion } from '@/src/lib/acco
 import { OPTIONAL_CONSENT_NOTE, asKoreanDay } from '@/src/lib/consent';
 import type { DiscoveryProfile } from '@/src/lib/discovery';
 import { matchEntriesStand } from '@/src/lib/matching/opening';
-import { initialOf } from '@/src/lib/profile';
+import { PROFILE_ERASE_TITLE, initialOf } from '@/src/lib/profile';
 
 import type { SkippableRead } from '../../db-error';
 import { FailureLine } from '../../ui/failure-line';
@@ -97,7 +97,7 @@ export function SettingsView({ data }: { data: SettingsData }): ReactNode {
         {/* 정지된 사람은 프로필을 고치지 못하고 지우기만 한다 — 그 화면으로 가는 줄 하나(ADR 0244) */}
         {erasesProfileOnly(state) && (
           <section className={SETTINGS_GROUP} aria-label="내 프로필">
-            <SettingsLinkRow href="/me/profile" label="프로필 사진 · 소개 지우기" />
+            <SettingsLinkRow href="/me/profile" label={PROFILE_ERASE_TITLE} />
           </section>
         )}
 

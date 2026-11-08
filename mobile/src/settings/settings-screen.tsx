@@ -3,19 +3,20 @@ import { router, useFocusEffect } from 'expo-router';
 import { useCallback, useState } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 
-import { isBlocked, mayRequestDeletion } from '@account/index';
+import { erasesProfileOnly, isBlocked, mayRequestDeletion } from '@account/index';
 import { SIGN_OUT_PENDING } from '@account/copy';
 import { GUIDE_LINKS } from '@brand/links';
 import { OPTIONAL_CONSENT_NOTE } from '@consent/notice';
 import { asKoreanDay } from '@consent/index';
 import { matchEntriesStand } from '@matching/opening';
-import { initialOf } from '@profile';
+import { PROFILE_ERASE_TITLE, initialOf } from '@profile';
 
 import { signOut } from '@/auth/sign-in';
 import { readGate } from '@/home/gate';
 import { useMatchOpen } from '@/matching/opening';
 import { CONTACT_LABEL, POLICY_TITLE, SUPPORT_TITLE, SURVEY_LABEL } from '@/info/copy';
 import { legalPagesOpen, openLegalPage } from '@/info/legal-web';
+import { openWebAccount, webAccountOpen } from '@/release/floor';
 import { COLOR, FONT, RADIUS, TYPE } from '@/ui/tokens';
 import { settled } from '@/ui/settled';
 import { TopBar } from '@/ui/top-bar';
@@ -74,6 +75,16 @@ export function SettingsScreen() {
           <View style={styles.notice}>
             <AccountNotice state={state} onRetry={load} />
           </View>
+        )}
+
+        {/*
+          정지된 사람은 사진 · 소개를 웹에서 지운다(ADR 0244) — 앱에 지우는 화면을 다시 짓지 않고, 업데이트 화면이 쓰는 웹 계정 관리의 길을
+          그대로 탄다. 웹 설정에 같은 이름의 줄이 있고 그 줄이 지우는 화면을 연다. 앱 안 브라우저는 앱의 로그인을 안 들고 가 웹이 로그인을 먼저 묻는다
+        */}
+        {erasesProfileOnly(state) && webAccountOpen && (
+          <SettingsGroup>
+            <LinkRow label={PROFILE_ERASE_TITLE} onPress={openWebAccount} />
+          </SettingsGroup>
         )}
 
         {active && account !== null && !ended && (

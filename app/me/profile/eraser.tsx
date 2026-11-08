@@ -2,7 +2,8 @@
 
 import { useState, useTransition } from 'react';
 
-import { PHOTO_REMOVE_CONFIRM, PHOTO_REMOVE_NOTE, PHOTO_REMOVED } from '@/src/lib/profile';
+import { SUPPORT_EMAIL } from '@/src/lib/brand';
+import { PHOTO_REMOVE_CONFIRM, PHOTO_REMOVE_NOTE, PHOTO_REMOVED, PROFILE_ERASE_TITLE } from '@/src/lib/profile';
 
 import { actionAnswer } from '../../ui/action-answer';
 import { BUTTON_SECONDARY } from '../../ui/buttons';
@@ -13,10 +14,10 @@ import { clearIntro, removeAllPhotos } from './actions';
 
 type Erasing = 'photos' | 'intro';
 
-/** 묻는 창의 글자 — 사진은 사진 칸의 삭제 확인(ADR 0205)과 같은 꼴이고, 장을 고르지 않으므로 「모두」가 든다 */
+/** 묻는 창의 글자 — 사진은 사진 칸의 삭제 확인(ADR 0205)과 같은 꼴이고, 장을 고르지 않으므로 「모두」가 든다(운영자 답 2026-11-08, 대장 settings-18) */
 const ASK: Readonly<Record<Erasing, { title: string; note: string; done: string }>> = {
   photos: {
-    title: '사진을 모두 삭제할까요?',
+    title: '등록한 프로필 사진을 모두 삭제할까요?',
     note: PHOTO_REMOVE_NOTE,
     done: PHOTO_REMOVED,
   },
@@ -61,7 +62,7 @@ export function ProfileEraser({ photoCount, hasIntro }: { photoCount: number; ha
   return (
     <div className="flex flex-col gap-2">
       <section
-        aria-label="프로필 사진 · 소개 지우기"
+        aria-label={PROFILE_ERASE_TITLE}
         className="flex flex-col divide-y divide-border rounded-card border border-border bg-surface"
       >
         <div className="flex items-center gap-4 p-5 sm:p-6">
@@ -70,7 +71,7 @@ export function ProfileEraser({ photoCount, hasIntro }: { photoCount: number; ha
           </p>
           {photoCount > 0 && (
             <button type="button" className={BUTTON_SECONDARY} onClick={() => setAsking('photos')}>
-              {PHOTO_REMOVE_CONFIRM}
+              프로필 사진 모두 삭제
             </button>
           )}
         </div>
@@ -78,7 +79,7 @@ export function ProfileEraser({ photoCount, hasIntro }: { photoCount: number; ha
           <div className="flex items-center gap-4 p-5 sm:p-6">
             <p className={`${TYPE_BODY} flex-1`}>소개</p>
             <button type="button" className={BUTTON_SECONDARY} onClick={() => setAsking('intro')}>
-              {PHOTO_REMOVE_CONFIRM}
+              소개 삭제
             </button>
           </div>
         )}
@@ -99,6 +100,8 @@ export function ProfileEraser({ photoCount, hasIntro }: { photoCount: number; ha
         irreversible={asking === null ? undefined : ASK[asking].note}
       />
       <DoneNote className="px-1 text-small leading-5 text-secondary">{note}</DoneNote>
+      {/* 장을 고르는 길은 이 화면에 없다 — 정지된 사람은 사진 그림을 못 본다(ADR 0244). 고르고 싶으면 고객 문의로 받는다 */}
+      <p className={`${TYPE_META} px-1`}>사진을 골라 지우고 싶으시면 {SUPPORT_EMAIL}로 알려 주세요.</p>
     </div>
   );
 }

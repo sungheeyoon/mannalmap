@@ -22,7 +22,8 @@ import { PREFER_GENDER_KO } from '@/src/lib/discovery/copy';
 import { PROMPT_VARIANTS } from '@/src/lab/reading/variants';
 
 import { PRICE_STEM, PRICE_SUBJECT_LABEL, QUESTION, SURVEY_COPY } from '@/src/lib/survey';
-import { SERVICE_NAME } from '@/src/lib/brand';
+import { SERVICE_NAME, SUPPORT_EMAIL } from '@/src/lib/brand';
+import { PROFILE_ERASE_TITLE } from '@/src/lib/profile';
 
 import { expectBirthDate, fillBirthDate, fillBirthTime } from './birth-form';
 import { hydrated } from './hydrated';
@@ -3472,26 +3473,29 @@ test.describe('가입 관문', () => {
     /* 설정에는 프로필을 고치는 줄 대신 지우는 화면으로 가는 줄 하나가 선다 */
     await page.goto('/me/settings');
     await expect(page.getByText('이용이 제한된 계정이에요')).toBeVisible();
-    await page.getByRole('link', { name: '프로필 사진 · 소개 지우기' }).click();
+    await page.getByRole('link', { name: PROFILE_ERASE_TITLE }).click();
     await expect(page).toHaveURL(/\/me\/profile$/);
 
-    const eraser = page.getByRole('region', { name: '프로필 사진 · 소개 지우기' });
+    const eraser = page.getByRole('region', { name: PROFILE_ERASE_TITLE });
     await expect(eraser.getByText('2장')).toBeVisible();
     await expect(page.getByLabel('닉네임')).toHaveCount(0);
     await expect(page.getByLabel('사진 추가')).toHaveCount(0);
 
-    const erase = async (row: string, title: string) => {
-      await (await hydrated(eraser.locator('div', { hasText: new RegExp(`^${row}`) }).getByRole('button', { name: /^삭제$/ }))).click();
+    /* 사진과 소개는 따로 지운다 — 한쪽을 지워도 다른 쪽 단추는 그대로 선다 */
+    const erase = async (button: string, title: string) => {
+      await (await hydrated(eraser.getByRole('button', { name: button, exact: true }))).click();
       const dialog = page.getByRole('dialog');
       await expect(dialog.getByText(title)).toBeVisible();
       await dialog.getByRole('button', { name: /^삭제$/ }).click();
       await expect(dialog).toBeHidden();
     };
 
-    await erase('프로필 사진', '사진을 모두 삭제할까요?');
+    await expect(page.getByText(`사진을 골라 지우고 싶으시면 ${SUPPORT_EMAIL}로 알려 주세요.`)).toBeVisible();
+    await erase('프로필 사진 모두 삭제', '등록한 프로필 사진을 모두 삭제할까요?');
     await expect(eraser.getByText('0장')).toBeVisible();
-    await erase('소개', '소개를 삭제할까요?');
-    await expect(eraser.getByText('소개', { exact: true })).toHaveCount(0);
+    await expect(eraser.getByRole('button', { name: '소개 삭제', exact: true })).toBeVisible();
+    await erase('소개 삭제', '소개를 삭제할까요?');
+    await expect(eraser.getByRole('button', { name: '소개 삭제', exact: true })).toHaveCount(0);
 
     expect(sql(`select count(*) from public.profile_photo where user_id = '${id}'`)).toBe('0');
     expect(sql(`select coalesce(intro, '비었음') from public.app_user where id = '${id}'`)).toBe('비었음');

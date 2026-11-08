@@ -1,5 +1,6 @@
 
 import { erasesProfileOnly, isBlocked } from '@/src/lib/account';
+import { PROFILE_ERASE_TITLE } from '@/src/lib/profile';
 
 import { supabaseOnServer } from '../../auth/server-client';
 import { signedInUser } from '../../auth/signed-in';
@@ -51,7 +52,7 @@ export default async function ProfilePage() {
       <main className={`app-shell flex w-full ${COLUMN} flex-1 flex-col gap-6 py-8 sm:py-12`}>
         <AccountNotice state={state} />
         <header className="flex flex-col gap-1">
-          <h1 className={TYPE_TITLE}>프로필 사진 · 소개 지우기</h1>
+          <h1 className={TYPE_TITLE}>{PROFILE_ERASE_TITLE}</h1>
         </header>
         <ProfileEraser photoCount={photos.length} hasIntro={(account.intro ?? '') !== ''} />
       </main>
