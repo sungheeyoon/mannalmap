@@ -520,3 +520,5 @@ export const surveyRequest = (answers: SurveyAnswers, submit: boolean) => ({
   p_free_text: answers.freeText.trim() === '' ? null : answers.freeText,
   p_submit: submit,
 });
+
+export * from './draft';

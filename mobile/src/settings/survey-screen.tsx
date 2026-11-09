@@ -1,5 +1,6 @@
-import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
-import { KeyboardAvoidingView, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { BUTTON_OFF_OPACITY } from '@design';
+import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
+import { AppState, KeyboardAvoidingView, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 
 import {
   EMPTY_ANSWERS,
@@ -26,8 +27,10 @@ import {
   WANT_NEW_OPTIONS,
   WANT_OPTIONS,
   afterPicking,
+  draftSaver,
   isAnswered,
   withoutHidden,
+  type DraftState,
   type MySurvey,
   type PriceOption,
   type PriceSubject,
@@ -38,6 +41,7 @@ import {
 import { useClient } from '@/auth/connected';
 import { UNREACHABLE } from '@/auth/signup';
 import { FailureLine } from '@/ui/failure-line';
+import { useLeaveGuard } from '@/ui/leave-guard';
 import { LoadingDots } from '@/ui/loading';
 import { CheckRow, PrimaryButton, SecondaryButton } from '@/ui/parts';
 import { COLOR, FONT, RADIUS, TYPE } from '@/ui/tokens';
@@ -126,50 +130,63 @@ function ConsentSwitch({ onDone }: { onDone: () => void }) {
   );
 }
 
-/** 쓰는 동안 저절로 남고(손이 멈춘 뒤 1.2초), 제출은 손으로 한다. 숨은 문항은 보내기 전에 비운다 — 웹 `form.tsx` */
+/**
+ * 쓰는 동안 저절로 남고, 제출은 손으로 한다. 숨은 문항은 보내기 전에 비운다 — 웹 `form.tsx`. 초안의 차례는 웹과 한 벌(`draftSaver`):
+ * 떠나거나 앱이 뒤로 가면 기다리던 고침을 곧바로 보내고, 제출은 떠난 초안이 닿은 뒤에 보낸다. 보내는 동안 칸이 잠긴다(2026-11-09).
+ */
 function SurveyForm({ context, given }: { context: SurveyContext; given: MySurvey | null }) {
   const client = useClient();
   const [answers, setAnswers] = useState<SurveyAnswers>(given?.answers ?? EMPTY_ANSWERS);
   const [submittedAt, setSubmittedAt] = useState<string | null>(given?.submittedAt ?? null);
   const [editing, setEditing] = useState(false);
-  const [draft, setDraft] = useState<'idle' | 'saving' | 'saved' | 'failed'>('idle');
+  const [draft, setDraft] = useState<DraftState>('idle');
+  const [unsaved, setUnsaved] = useState(false);
   const [failure, setFailure] = useState<string | null>(null);
   const [sending, setSending] = useState(false);
-  const saved = useRef(JSON.stringify(given?.answers ?? EMPTY_ANSWERS));
+  const [saver] = useState(() =>
+    draftSaver<SurveyAnswers>({
+      initial: given?.answers ?? EMPTY_ANSWERS,
+      save: async (value) => (await settled(saveSurvey(client, value, false), 'survey draft', () => ({ ok: false, message: UNREACHABLE }) as const)).ok,
+      onState: (state, left) => {
+        setDraft(state);
+        setUnsaved(left);
+      },
+    }),
+  );
   const { readSolo, readPair } = context;
   const shown = useMemo(() => ({ readSolo, readPair }), [readSolo, readPair]);
   const open = submittedAt === null || editing;
 
   useEffect(() => {
-    if (!open) return;
-    const next = JSON.stringify(answers);
-    if (next === saved.current) return;
-    const timer = setTimeout(() => {
-      setDraft('saving');
-      void settled(saveSurvey(client, withoutHidden(answers, shown), false), 'survey draft', () => ({ ok: false, message: UNREACHABLE }) as const).then((result) => {
-        if (result.ok) {
-          saved.current = next;
-          setDraft('saved');
-        } else {
-          setDraft('failed');
-        }
-      });
-    }, 1200);
-    return () => clearTimeout(timer);
-  }, [client, answers, open, shown]);
+    if (open) saver.edit(withoutHidden(answers, shown));
+  }, [saver, answers, open, shown]);
+
+  /* 화면이 닫히거나 앱이 뒤로 가면 기다리던 고침을 곧바로 — 전에는 타이머만 지워 1.2초 안에 떠난 고침이 안 갔다 */
+  useEffect(() => {
+    const away = AppState.addEventListener('change', (next) => {
+      if (next !== 'active') void saver.flush();
+    });
+    return () => {
+      away.remove();
+      void saver.flush();
+    };
+  }, [saver]);
+  /* 마지막 초안을 못 넣었으면 떠나기 전에 한 번 묻는다 — 떠나며 한 번 더 보내지만 그것도 실패하면 모른 채 잃는다 */
+  const { dialog } = useLeaveGuard({ edited: unsaved && draft === 'failed', saving: sending });
 
   const send = async () => {
     setFailure(null);
     setSending(true);
-    const result = await saveSurvey(client, withoutHidden(answers, shown), true);
+    await saver.beforeSubmit();
+    const value = withoutHidden(answers, shown);
+    const result = await saveSurvey(client, value, true);
     setSending(false);
     if (!result.ok) {
       setFailure(result.message);
       return;
     }
-    saved.current = JSON.stringify(answers);
+    saver.markSaved(value);
     setSubmittedAt(result.submittedAt);
-    setDraft('idle');
     setEditing(false);
   };
 
@@ -193,15 +210,16 @@ function SurveyForm({ context, given }: { context: SurveyContext; given: MySurve
 
   return (
     <View style={styles.form}>
+      {dialog}
       <Text style={styles.meta}>{SURVEY_COPY.autosave}</Text>
 
-      <Picks step={step(1)} question={QUESTION.liked} hint={SURVEY_COPY.multiple} options={LIKED_OPTIONS} label={LIKED_LABEL} sole={SOLE_CHOICES.liked} picked={answers.liked} onPick={(next) => pick('liked', next)} />
-      <Picks step={step(2)} question={QUESTION.unknown} hint={both} options={UNKNOWN_OPTIONS} label={UNKNOWN_LABEL} sole={SOLE_CHOICES.unknown} picked={answers.unknown} onPick={(next) => pick('unknown', next)} />
-      <Picks step={step(3)} question={QUESTION.improve} hint={SURVEY_COPY.multiple} options={IMPROVE_OPTIONS} label={IMPROVE_LABEL} sole={SOLE_CHOICES.improve} picked={answers.improve} onPick={(next) => pick('improve', next)}>
-        <Writing label={QUESTION.improveText} limit={TEXT_LIMIT.improve} value={answers.improveText} onChange={(next) => pick('improveText', next)} ruled />
+      <Picks disabled={sending} step={step(1)} question={QUESTION.liked} hint={SURVEY_COPY.multiple} options={LIKED_OPTIONS} label={LIKED_LABEL} sole={SOLE_CHOICES.liked} picked={answers.liked} onPick={(next) => pick('liked', next)} />
+      <Picks disabled={sending} step={step(2)} question={QUESTION.unknown} hint={both} options={UNKNOWN_OPTIONS} label={UNKNOWN_LABEL} sole={SOLE_CHOICES.unknown} picked={answers.unknown} onPick={(next) => pick('unknown', next)} />
+      <Picks disabled={sending} step={step(3)} question={QUESTION.improve} hint={SURVEY_COPY.multiple} options={IMPROVE_OPTIONS} label={IMPROVE_LABEL} sole={SOLE_CHOICES.improve} picked={answers.improve} onPick={(next) => pick('improve', next)}>
+        <Writing disabled={sending} label={QUESTION.improveText} limit={TEXT_LIMIT.improve} value={answers.improveText} onChange={(next) => pick('improveText', next)} ruled />
       </Picks>
-      <Picks step={step(4)} question={QUESTION.wants} hint={SURVEY_COPY.multiple} options={WANT_OPTIONS} label={WANT_LABEL} sole={SOLE_CHOICES.wants} picked={answers.wants} onPick={(next) => pick('wants', next)}>
-        <Picks question={QUESTION.wantsNew} hint={both} note={WANT_NEW_NOTE} options={WANT_NEW_OPTIONS} label={WANT_NEW_LABEL} sole={SOLE_CHOICES.wantsNew} picked={answers.wantsNew} onPick={(next) => pick('wantsNew', next)} nested />
+      <Picks disabled={sending} step={step(4)} question={QUESTION.wants} hint={SURVEY_COPY.multiple} options={WANT_OPTIONS} label={WANT_LABEL} sole={SOLE_CHOICES.wants} picked={answers.wants} onPick={(next) => pick('wants', next)}>
+        <Picks disabled={sending} question={QUESTION.wantsNew} hint={both} note={WANT_NEW_NOTE} options={WANT_NEW_OPTIONS} label={WANT_NEW_LABEL} sole={SOLE_CHOICES.wantsNew} picked={answers.wantsNew} onPick={(next) => pick('wantsNew', next)} nested />
       </Picks>
 
       {asked.length > 0 && (
@@ -221,10 +239,11 @@ function SurveyForm({ context, given }: { context: SurveyContext; given: MySurve
                       <Pressable
                         key={option}
                         accessibilityRole="radio"
-                        accessibilityState={{ checked: on }}
+                        accessibilityState={{ checked: on, disabled: sending }}
+                        disabled={sending}
                         /* 잘못 고른 값을 지울 길 — 같은 것을 다시 누르면 풀린다 */
                         onPress={() => pick(key, on ? null : (option as PriceOption))}
-                        style={[styles.radio, on && styles.radioOn]}
+                        style={[styles.radio, on && styles.radioOn, sending && !on && styles.off]}
                       >
                         <View style={[styles.dot, on && styles.dotOn]}>{on && <View style={styles.dotInner} />}</View>
                         <Text style={styles.choice}>{PRICE_LABEL[option]}</Text>
@@ -238,11 +257,11 @@ function SurveyForm({ context, given }: { context: SurveyContext; given: MySurve
         </CardFrame>
       )}
 
-      {asked.length > 0 && <Picks step={step(6)} question={QUESTION.priceFactors} hint={both} options={PRICE_FACTORS} label={PRICE_FACTOR_LABEL} sole={[]} picked={answers.priceFactors} onPick={(next) => pick('priceFactors', next)} />}
+      {asked.length > 0 && <Picks disabled={sending} step={step(6)} question={QUESTION.priceFactors} hint={both} options={PRICE_FACTORS} label={PRICE_FACTOR_LABEL} sole={[]} picked={answers.priceFactors} onPick={(next) => pick('priceFactors', next)} />}
 
       <CardFrame style={styles.panel}>
         <Text style={styles.step}>{step(total)}</Text>
-        <Writing label={QUESTION.freeText} limit={TEXT_LIMIT.free} value={answers.freeText} onChange={(next) => pick('freeText', next)} />
+        <Writing disabled={sending} label={QUESTION.freeText} limit={TEXT_LIMIT.free} value={answers.freeText} onChange={(next) => pick('freeText', next)} />
       </CardFrame>
 
       <View style={styles.send}>
@@ -255,7 +274,7 @@ function SurveyForm({ context, given }: { context: SurveyContext; given: MySurve
   );
 }
 
-function DraftMark({ state }: { state: 'idle' | 'saving' | 'saved' | 'failed' }) {
+function DraftMark({ state }: { state: DraftState }) {
   if (state === 'idle') return null;
   if (state === 'failed') return <Text style={styles.draftFailed}>{`${SURVEY_COPY.draftFailed} 답을 다시 고치면 한 번 더 저장해 볼게요.`}</Text>;
   return <Text style={styles.small}>{state === 'saving' ? '임시 저장하는 중…' : SURVEY_COPY.draftSaved}</Text>;
@@ -272,6 +291,7 @@ function Picks<T extends string>({
   picked,
   onPick,
   nested = false,
+  disabled,
   children,
 }: {
   step?: string;
@@ -284,6 +304,7 @@ function Picks<T extends string>({
   picked: readonly T[];
   onPick: (next: T[]) => void;
   nested?: boolean;
+  disabled: boolean;
   children?: ReactNode;
 }) {
   const body = (
@@ -294,7 +315,7 @@ function Picks<T extends string>({
       {note !== undefined && <Text style={styles.small}>{note}</Text>}
       <View style={styles.options}>
         {options.map((option) => (
-          <CheckRow key={option} checked={picked.includes(option)} onToggle={() => onPick(afterPicking(picked, option, sole))}>
+          <CheckRow key={option} disabled={disabled} checked={picked.includes(option)} onToggle={() => onPick(afterPicking(picked, option, sole))}>
             <Text style={styles.choice}>{label[option]}</Text>
           </CheckRow>
         ))}
@@ -305,12 +326,12 @@ function Picks<T extends string>({
   return nested ? <View style={styles.ruled}>{body}</View> : <CardFrame style={styles.panel}>{body}</CardFrame>;
 }
 
-function Writing({ label, limit, value, onChange, ruled = false }: { label: string; limit: number; value: string; onChange: (next: string) => void; ruled?: boolean }) {
+function Writing({ label, limit, value, onChange, disabled, ruled = false }: { label: string; limit: number; value: string; onChange: (next: string) => void; disabled: boolean; ruled?: boolean }) {
   return (
     <View style={ruled ? styles.ruled : styles.writing}>
       <Text style={styles.subject}>{label}</Text>
       <Text style={styles.small}>{`${SURVEY_COPY.optional} · 최대 ${limit}자`}</Text>
-      <TextInput accessibilityLabel={label} multiline value={value} maxLength={limit} onChangeText={onChange} style={styles.area} />
+      <TextInput accessibilityLabel={label} multiline value={value} maxLength={limit} onChangeText={onChange} editable={!disabled} accessibilityState={{ disabled }} style={[styles.area, disabled && styles.off]} />
     </View>
   );
 }
@@ -346,4 +367,5 @@ const styles = StyleSheet.create({
   send: { gap: 12, paddingHorizontal: 4 },
   draftFailed: { fontSize: TYPE.small, lineHeight: 20, fontFamily: FONT.bold, color: COLOR.danger },
   failed: { padding: 20 },
+  off: { opacity: BUTTON_OFF_OPACITY },
 });

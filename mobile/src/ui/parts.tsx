@@ -67,13 +67,15 @@ export function Field({
 }
 
 /** 확인 상자 한 줄 — 줄 전체가 누를 자리이고, 고르면 먹색 테와 크림 면이 선다. 기본값은 꺼짐이다(`app/signup/form.tsx`) */
-export function CheckRow({ checked, onToggle, refused = false, children }: { checked: boolean; onToggle: (next: boolean) => void; refused?: boolean; children: ReactNode }) {
+/** 잠겨도(`disabled`) 고른 줄은 흐리지 않는다 — 무엇을 골랐는지가 보내는 동안에도 읽힌다 */
+export function CheckRow({ checked, onToggle, refused = false, disabled = false, children }: { checked: boolean; onToggle: (next: boolean) => void; refused?: boolean; disabled?: boolean; children: ReactNode }) {
   return (
     <Pressable
       accessibilityRole="checkbox"
-      accessibilityState={{ checked }}
+      accessibilityState={{ checked, disabled }}
+      disabled={disabled}
       onPress={() => onToggle(!checked)}
-      style={[styles.check, checked && styles.checkOn, refused && styles.wrong]}
+      style={[styles.check, checked && styles.checkOn, refused && styles.wrong, disabled && !checked && styles.off]}
     >
       <View style={[styles.checkBox, checked && styles.checkBoxOn]}>
         {checked && (
