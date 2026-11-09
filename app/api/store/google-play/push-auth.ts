@@ -18,7 +18,7 @@ const KEYS_SECONDS = 60 * 60;
 
 export type PushExpectation = { readonly audience: string; readonly serviceAccount: string };
 
-/** 둘 중 하나라도 비면 `null` — 운영자가 Play 조직 계정 뒤 구독을 만들기 전에는 통지 문이 닫혀 있다 */
+/** 둘 중 하나라도 비면 `null` — 운영자가 Play 개발자 계정 뒤 구독을 만들기 전에는 통지 문이 닫혀 있다 */
 export function pushExpectationFromEnv(): PushExpectation | null {
   const audience = process.env.GOOGLE_PLAY_PUBSUB_AUDIENCE;
   const serviceAccount = process.env.GOOGLE_PLAY_PUBSUB_SERVICE_ACCOUNT;

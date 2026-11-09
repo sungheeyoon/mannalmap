@@ -28,7 +28,7 @@ const SCOPE = 'https://www.googleapis.com/auth/androidpublisher';
 
 export type PlayServiceAccount = { readonly clientEmail: string; readonly privateKey: string };
 
-/** 서비스 계정 키(JSON 한 덩이) — 비었거나 모양이 틀리면 `null`. 운영자가 Play 조직 계정 뒤에 넣는다 */
+/** 서비스 계정 키(JSON 한 덩이) — 비었거나 모양이 틀리면 `null`. 운영자가 Play 개발자 계정 뒤에 넣는다 */
 export function playServiceAccountFromEnv(raw = process.env.GOOGLE_PLAY_SERVICE_ACCOUNT_JSON): PlayServiceAccount | null {
   if (!raw) return null;
   try {
