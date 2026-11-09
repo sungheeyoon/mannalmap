@@ -163,7 +163,7 @@ npx eas-cli@latest submit --profile production --platform ios                   
 
 - **`submit` 은 스토어 제출이다 — 조율자 · 운영자 몫이다.** 빌드는 에이전트가 해도 된다.
 - **빌드는 끝나면 돌아오는 명령으로 기다린다** — `npx eas-cli@latest build:view <id>` (또는 `build:list --limit 1 --json`)의 `status` 가 `FINISHED` · `ERRORED` 일 때까지. 실패면 `logFiles` 의 Gradle 줄을 읽는다(위 「새 네이티브 의존을 추가할 때」)
-- **지금 나간 빌드** — 안드로이드 `preview` `63d07224`(커밋 `f112e2f6` · versionCode 1 · 1.0.0 · 만료 2026-11-21), 2026-11-07 의 첫 성공 빌드다. 앞선 둘은 실패했다 — `ebef4d0c` 는 카카오 SDK 를 jitpack 에서 찾다 401(→ #1071 카카오 Maven 저장소), `4b3d8c51` 은 카카오 모듈이 `compileSdk` 33 으로 컴파일돼 AAR metadata 검사에서 섰다(→ #1072 3.2.0). 링크 · 서명 대조는 #770 의 그날 댓글이다. 다음 빌드가 나가면 이 줄을 고친다
+- **지금 나간 빌드** — 안드로이드 `preview` `477348f4`(커밋 `23770375` · versionCode 1 · 1.0.0 · 만료 2026-11-23, 2026-11-09) — #1089 ~ #1111 의 앱 쪽이 들었고 FCM 값이 없어 알림은 꺼진 채다. 앞 판 `63d07224`(커밋 `f112e2f6`, 2026-11-07)가 첫 성공 빌드다. 앞선 둘은 실패했다 — `ebef4d0c` 는 카카오 SDK 를 jitpack 에서 찾다 401(→ #1071 카카오 Maven 저장소), `4b3d8c51` 은 카카오 모듈이 `compileSdk` 33 으로 컴파일돼 AAR metadata 검사에서 섰다(→ #1072 3.2.0). 링크 · 서명 대조는 #770 의 그날 댓글이다. 다음 빌드가 나가면 이 줄을 고친다
 - **CLI 는 Android 를 내부 트랙까지만 올린다**(`submit.production.android.track`). 비공개 테스트 · 프로덕션은 Play Console 에서 사람이 옮긴다.
 - Android 제출에는 Google 서비스 계정 키가 든다([Expo](https://docs.expo.dev/submit/android.md)). 키는 EAS 에 올리고 저장소에 두지 않는다.
 - iOS 를 `--non-interactive` 로 내려면 `submit.production.ios.ascAppId` 가 든다([Expo](https://docs.expo.dev/submit/ios.md)) — App Store Connect 에 앱을 만든 뒤 적는다. 앞서는 대화형으로 낸다.
