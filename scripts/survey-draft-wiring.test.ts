@@ -64,15 +64,12 @@ describe('두 화면이 같은 초안 차례를 쓴다', () => {
     });
   }
 
-  it('웹 — 숨을 때도 보내고, 떠나며 못 넣은 초안은 들고 있다가 다시 열 때 되살린다', () => {
+  it('웹 — 숨을 때도 한 번 보내 보고, 화면에 있는 동안 안 간 고침이 있으면 탭 닫기 전에 묻는다', () => {
     const form = bodyOf(WEB, 'SurveyForm');
     expect(form).toMatch(/visibilitychange/);
     expect(form).toMatch(/useLeaveGuard\(unsaved\)/);
-    expect(form).toMatch(/void saver\.flush\(\)\.then\(\(ok\) => \{[\s\S]*?keepUnsent\(owner, unsent\);[\s\S]*?addEventListener\('beforeunload', holdUnsent\)/);
-    expect(form).toMatch(/peekUnsent<SurveyAnswers>\(owner, server\)/);
-    expect(form).toMatch(/useState<SurveyAnswers>\(restored \?\? server\)/);
-    expect(form).toMatch(/dropUnsent\(owner\)/);
-    expect(read('app/me/survey/page.tsx')).toMatch(/<SurveyForm owner=\{user\.id\}/);
+    /* 떠난 뒤에 거는 것 · 되살리기는 없다(운영자 2026-11-09 — docs/product/gaps.md 의 실패 사례) */
+    expect(WEB).not.toMatch(/keepUnsent|peekUnsent|sessionStorage|localStorage/);
   });
 
   it('앱 — 안 간 고침이 있으면 떠나는 몸짓을 붙들고 먼저 넣어 보고, 못 넣었을 때만 묻는다', () => {
@@ -82,7 +79,8 @@ describe('두 화면이 같은 초안 차례를 쓴다', () => {
     expect(form).toMatch(/\{dialog\}/);
     const guard = read('mobile/src/ui/leave-guard.tsx');
     expect(guard).toMatch(/usePreventRemove\(asks && !leaving, \(\{ repeat \}\) => hold\(repeat\)\)/);
-    expect(guard).toMatch(/const ok = await settle\(\)\.catch\(\(\) => false\);\s*if \(!ok\) \{\s*setPending\(\(\) => go\);/);
+    /* 기다림에는 끝이 있다(`settleWithin` — 끝을 넘으면 거짓, 시험은 `leave-ask.test.ts`) */
+    expect(guard).toMatch(/const ok = await settleWithin\(settle\);\s*if \(!ok\) \{\s*setPending\(\(\) => go\);/);
   });
 });
 

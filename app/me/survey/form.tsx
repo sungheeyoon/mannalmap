@@ -28,10 +28,6 @@ import {
   WANT_OPTIONS,
   afterPicking,
   draftSaver,
-  dropUnsent,
-  holdsUnsent,
-  keepUnsent,
-  peekUnsent,
   isAnswered,
   withoutHidden,
   type DraftState,
@@ -77,24 +73,10 @@ const ASK = 'block text-lead font-bold leading-7 text-foreground';
 const CHOICE =
   'flex min-h-12 cursor-pointer items-center gap-3 rounded-cell border border-border bg-surface px-4 py-2.5 text-body leading-6 hover:border-border-strong has-checked:border-foreground has-checked:bg-cream has-focus-visible:outline has-focus-visible:outline-3 has-focus-visible:outline-offset-2 has-focus-visible:outline-[color-mix(in_srgb,var(--accent)_55%,transparent)] has-disabled:cursor-default has-disabled:hover:border-border [&:has(:disabled:not(:checked))]:opacity-55';
 
-/** 화면이 사라진 뒤에도 못 넣은 초안을 들고 있는 동안 — 탭을 닫거나 새로고침하기 전에 브라우저가 묻는다 */
-function holdUnsent(event: BeforeUnloadEvent) {
-  if (!holdsUnsent()) {
-    window.removeEventListener('beforeunload', holdUnsent);
-    return;
-  }
-  event.preventDefault();
-  event.returnValue = '';
-}
-
-export function SurveyForm({ owner, context, given }: { owner: string; context: SurveyContext; given: MySurvey | null }) {
-  const server = given?.answers ?? EMPTY_ANSWERS;
-  /* 지난번 떠나며 못 넣은 초안 — 서버 값이 그때 그대로면 되살려 다시 보낸다(`keepUnsent`) */
-  const [restored] = useState(() => peekUnsent<SurveyAnswers>(owner, server));
-  const [answers, setAnswers] = useState<SurveyAnswers>(restored ?? server);
+export function SurveyForm({ context, given }: { context: SurveyContext; given: MySurvey | null }) {
+  const [answers, setAnswers] = useState<SurveyAnswers>(given?.answers ?? EMPTY_ANSWERS);
   const [submittedAt, setSubmittedAt] = useState<string | null>(given?.submittedAt ?? null);
-  /* 제출한 답을 고치다 떠났으면 고치던 판으로 연다 */
-  const [editing, setEditing] = useState(restored !== null);
+  const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState<DraftState>('idle');
   /** 서버에 아직 안 간 고침 — 있으면 탭을 닫거나 새로고침하기 전에 브라우저가 묻는다 */
   const [unsaved, setUnsaved] = useState(false);
@@ -107,7 +89,7 @@ export function SurveyForm({ owner, context, given }: { owner: string; context: 
   */
   const [saver] = useState(() =>
     draftSaver<SurveyAnswers>({
-      initial: server,
+      initial: given?.answers ?? EMPTY_ANSWERS,
       save: async (value) => (await actionAnswer(saveServiceSurvey(value, false))).ok,
       onState: (state, left) => {
         setDraft(state);
@@ -128,30 +110,21 @@ export function SurveyForm({ owner, context, given }: { owner: string; context: 
   }, [saver, answers, open, shown]);
 
   /*
-    **떠날 때 안 간 고침을 곧바로 보낸다**(2026-11-09) — 전에는 타이머만 지워, 손을 멈추고 1.2초 안에 다른 화면으로 가면
-    마지막 고침이 안 갔다. 앱 안의 이동은 화면이 닫히는 때, 탭을 옮기거나 폰에서 앱을 바꾸는 것은 숨는 때다.
-
-    앱 안의 이동은 막을 공식 길이 없다(ADR 0166) — 그래서 떠나며 보낸 것이 실패하면 **값을 이 탭의 메모리에 들고 있다가**
-    (`keepUnsent`) 설문을 다시 열 때 되살려 다시 보낸다. 들고 있는 동안 탭을 닫거나 새로고침하면 브라우저가 묻는다(`holdUnsent`).
-    화면 안에서의 탭 닫기 · 새로고침은 `useLeaveGuard` 가 묻는다.
+    **떠날 때 안 간 고침을 한 번 곧바로 보내 본다**(2026-11-09) — 전에는 타이머만 지워, 손을 멈추고 1.2초 안에 다른 화면으로 가면
+    마지막 고침이 안 갔다. 앱 안의 이동은 화면이 닫히는 때, 탭을 옮기거나 폰에서 앱을 바꾸는 것은 숨는 때다. 앱 안의 이동은 막을
+    공식 길이 없어(ADR 0166) 그 저장이 실패하면 마지막 고침은 사라진다 — 알려 줄 거리로 `docs/product/gaps.md` 에 남겼다.
+    화면에 있는 동안 탭을 닫거나 새로고침하면 브라우저가 묻는다(`useLeaveGuard`).
   */
   useEffect(() => {
-    /* 되살린 값은 이제 이 화면의 saver 가 든다 */
-    dropUnsent(owner);
     const hide = () => {
       if (document.visibilityState === 'hidden') void saver.flush();
     };
     document.addEventListener('visibilitychange', hide);
     return () => {
       document.removeEventListener('visibilitychange', hide);
-      void saver.flush().then((ok) => {
-        const unsent = saver.unsent();
-        if (ok || unsent === null) return;
-        keepUnsent(owner, unsent);
-        window.addEventListener('beforeunload', holdUnsent);
-      });
+      void saver.flush();
     };
-  }, [saver, owner]);
+  }, [saver]);
   useLeaveGuard(unsaved);
 
   /*

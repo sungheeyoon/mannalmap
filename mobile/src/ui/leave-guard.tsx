@@ -2,7 +2,7 @@ import { usePreventRemove } from 'expo-router';
 import { useState } from 'react';
 
 import { ConfirmDialog } from './confirm-dialog';
-import { asksBeforeLeaving } from './leave-ask';
+import { asksBeforeLeaving, settleWithin } from './leave-ask';
 
 /** 대장 all-18 — 닫기는 「취소」가 아니라 「계속 고치기」다(이 창의 「취소」는 「고친 것을 취소」로 읽힌다) */
 export const LEAVE_TITLE = '변경 내용을 저장하지 않고 나갈까요?';
@@ -24,7 +24,7 @@ export function useLeaveGuard({ edited, saving, settle }: { edited: boolean; sav
 
   /*
     **자동 저장 화면은 묻기 전에 넣어 본다**(`settle`, 서비스 설문 2026-11-09) — 떠나려는 몸짓을 붙든 채 안 간 고침을 보내고, 서버가
-    받았으면 묻지 않고 떠난다. 못 넣었을 때만 창이 선다 — 그래야 이용자가 잃는 것을 알고 떠난다.
+    받았으면 묻지 않고 떠난다. 못 넣었거나 5초 안에 답이 없을 때만 창이 선다 — 그래야 이용자가 잃는 것을 알고 떠난다.
   */
   const hold = (go: () => void) => {
     if (settle === undefined) {
@@ -32,8 +32,8 @@ export function useLeaveGuard({ edited, saving, settle }: { edited: boolean; sav
       return;
     }
     void (async () => {
-      /* 넣어 보다 던지면 못 넣은 것으로 — 창이 선다 */
-      const ok = await settle().catch(() => false);
+      /* 넣어 보다 던지거나 끝(`LEAVE_SETTLE_MS`)을 넘으면 못 넣은 것으로 — 창이 선다 */
+      const ok = await settleWithin(settle);
       if (!ok) {
         setPending(() => go);
         return;

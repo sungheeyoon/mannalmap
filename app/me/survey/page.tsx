@@ -69,7 +69,7 @@ export default async function SurveyPage() {
           설문을 불러오지 못했어요.
         </FailureLine>
       ) : context.consented ? (
-        <SurveyForm owner={user.id} context={context} given={given} />
+        <SurveyForm context={context} given={given} />
       ) : (
         /*
           **탭은 감추지 않는다.** 감추려면 헤더가 「이 사람이 동의했나」를 알아야 하는데,

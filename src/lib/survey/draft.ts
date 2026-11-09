@@ -4,8 +4,8 @@
  * 손이 멈춘 뒤(`SURVEY_DRAFT_DELAY_MS`) 보낸다. 그것만으로는 구멍이 있었다(2026-11-09).
  *
  * - **멈춘 뒤 그 사이에 떠나면 마지막 고침이 안 갔다** — 화면을 닫을 때 타이머만 지웠다. 이제 화면이 닫히거나 숨을 때
- *   `flush()` 가 안 간 것을 곧바로 보내고, 서버가 마지막 값을 받았는지를 참거짓으로 돌려준다 — 거짓이면 화면이 떠나기를 멈추거나
- *   (앱) 값을 들고 있는다(웹, `keepUnsent` · `peekUnsent`).
+ *   `flush()` 가 안 간 것을 곧바로 보내고, 서버가 마지막 값을 받았는지를 참거짓으로 돌려준다 — 앱은 거짓이면 떠나기 전에
+ *   묻는다. 웹은 한 번 보내 보는 데까지다 — 앱 안 이동을 막지 못해 그래도 못 넣고 사라지는 경우가 남는다(`docs/product/gaps.md`).
  * - **제출과 초안이 엇갈려 닿을 수 있었다** — 초안 저장은 제출한 줄의 답도 덮는다(`save_service_survey`). 그래서 초안과 제출이
  *   **한 줄로 선다** — 앞의 쓰기가 끝나야 다음이 떠난다. 제출(`submit`)도 그 줄에 서고, 그 사이 떠나며 부른 `flush` 는 제출을 기다린다.
  * - **보낼지는 「서버가 끝내 가질 값」과 견준다** — 마지막으로 넣은 값이 아니라 떠나 있는 쓰기가 끝난 뒤의 값이다. A 가 서버에 있고
@@ -28,12 +28,10 @@ export type DraftSaver<T> = {
   submit: <R extends { ok: boolean }>(value: T, run: (value: T) => Promise<R>) => Promise<R>;
   /** 서버에 아직 안 간 고침이 있나 — 기다리는 중 · 보내는 중 · 못 넣은 것 */
   unsaved: () => boolean;
-  /** 못 넣은 마지막 값과 그때 서버에 있던 값의 열쇠 — 화면이 사라진 뒤 되살릴 때(`keepUnsent`) */
-  unsent: () => { base: string; value: T } | null;
 };
 
 /** 값의 열쇠 — 「같은 답인가」를 이것으로 가른다 */
-export const draftKey = (value: unknown) => JSON.stringify(value);
+const draftKey = (value: unknown) => JSON.stringify(value);
 
 export function draftSaver<T>({
   initial,
@@ -138,35 +136,5 @@ export function draftSaver<T>({
       return result;
     },
     unsaved,
-    unsent: () => (latest.key === saved ? null : { base: saved, value: latest.value }),
   };
 }
-
-/**
- * **화면이 사라진 뒤 못 넣은 초안을 들고 있는 자리** — 웹의 앱 안 이동(Next 의 클라이언트 이동)은 막을 공식 길이 없다(ADR 0166).
- * 떠나며 보낸 마지막 저장이 실패하면 그 값을 이 탭의 메모리에 두고, 다시 설문을 열 때 서버 값이 그때와 같으면 되살려 다시 보낸다.
- * 기기 저장소(`localStorage` 등)에는 안 쓴다 — 새로고침 · 탭 닫기에 사라지므로 그 둘은 웹이 브라우저 창으로 묻는다.
- * 주인(로그인 id)마다 하나 — 같은 탭에서 다른 계정으로 들어와도 남의 답이 서지 않는다.
- */
-const unsentByOwner = new Map<string, { base: string; value: unknown }>();
-
-export function keepUnsent(owner: string, unsent: { base: string; value: unknown }): void {
-  unsentByOwner.set(owner, unsent);
-}
-
-/**
- * 들고 있던 것을 본다 — 서버 값이 그때와 달라졌으면 없는 것으로 본다(다른 곳에서 새로 저장했다). 지우지는 않는다 — 리액트의
- * 첫 상태 짓기는 두 번 불릴 수 있다. 화면이 받아 든 뒤 `dropUnsent` 로 지운다.
- */
-export function peekUnsent<T>(owner: string, server: T): T | null {
-  const kept = unsentByOwner.get(owner);
-  if (kept === undefined || kept.base !== draftKey(server)) return null;
-  return kept.value as T;
-}
-
-export function dropUnsent(owner: string): void {
-  unsentByOwner.delete(owner);
-}
-
-/** 들고 있는 초안이 있나 — 웹은 있는 동안 탭 닫기 전에 묻는다 */
-export const holdsUnsent = () => unsentByOwner.size > 0;
