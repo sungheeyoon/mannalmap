@@ -53,30 +53,36 @@ describe('두 화면이 같은 초안 차례를 쓴다', () => {
 
     it(`${where} — 화면이 닫힐 때 기다리던 고침을 보낸다`, () => {
       /* effect 의 정리(return () => { ... }) 안에서 flush */
-      expect(bodyOf(source, 'SurveyForm')).toMatch(/return \(\) => \{[^}]*void saver\.flush\(\);\s*\};/);
+      expect(bodyOf(source, 'SurveyForm')).toMatch(/return \(\) => \{[^}]*void saver\.flush\(\)/);
     });
 
-    it(`${where} — 제출은 떠난 초안을 기다린 뒤에 보내고, 넣은 값을 알린다`, () => {
+    it(`${where} — 제출도 초안과 같은 줄에 선다(saver.submit)`, () => {
       const form = bodyOf(source, 'SurveyForm');
-      const gate = form.indexOf('await saver.beforeSubmit()');
-      const submit = form.search(/save(ServiceSurvey|Survey)\([^)]*,\s*true\)/);
-      expect(gate).toBeGreaterThan(0);
-      expect(submit).toBeGreaterThan(gate);
-      expect(form).toMatch(/saver\.markSaved\(value\)/);
+      expect(form).toMatch(/await saver\.submit\(value, \(answers\) =>[^;]*save(ServiceSurvey|Survey)\([^)]*answers, true\)/);
+      /* 줄 밖에서 제출을 부르지 않는다 */
+      expect(form.match(/save(ServiceSurvey|Survey)\([^)]*,\s*true\)/g)).toHaveLength(1);
     });
   }
 
-  it('웹 — 숨을 때도 보내고, 안 간 고침이 있으면 탭을 닫기 전에 묻는다', () => {
+  it('웹 — 숨을 때도 보내고, 떠나며 못 넣은 초안은 들고 있다가 다시 열 때 되살린다', () => {
     const form = bodyOf(WEB, 'SurveyForm');
     expect(form).toMatch(/visibilitychange/);
     expect(form).toMatch(/useLeaveGuard\(unsaved\)/);
+    expect(form).toMatch(/void saver\.flush\(\)\.then\(\(ok\) => \{[\s\S]*?keepUnsent\(owner, unsent\);[\s\S]*?addEventListener\('beforeunload', holdUnsent\)/);
+    expect(form).toMatch(/peekUnsent<SurveyAnswers>\(owner, server\)/);
+    expect(form).toMatch(/useState<SurveyAnswers>\(restored \?\? server\)/);
+    expect(form).toMatch(/dropUnsent\(owner\)/);
+    expect(read('app/me/survey/page.tsx')).toMatch(/<SurveyForm owner=\{user\.id\}/);
   });
 
-  it('앱 — 뒤로 갈 때도 보내고, 마지막 초안을 못 넣었으면 떠나기 전에 묻는다', () => {
+  it('앱 — 안 간 고침이 있으면 떠나는 몸짓을 붙들고 먼저 넣어 보고, 못 넣었을 때만 묻는다', () => {
     const form = bodyOf(APP, 'SurveyForm');
     expect(form).toMatch(/AppState\.addEventListener\('change'/);
-    expect(form).toMatch(/useLeaveGuard\(\{ edited: unsaved && draft === 'failed'/);
+    expect(form).toMatch(/useLeaveGuard\(\{ edited: unsaved, saving: false, settle: saver\.flush \}\)/);
     expect(form).toMatch(/\{dialog\}/);
+    const guard = read('mobile/src/ui/leave-guard.tsx');
+    expect(guard).toMatch(/usePreventRemove\(asks && !leaving, \(\{ repeat \}\) => hold\(repeat\)\)/);
+    expect(guard).toMatch(/const ok = await settle\(\)\.catch\(\(\) => false\);\s*if \(!ok\) \{\s*setPending\(\(\) => go\);/);
   });
 });
 

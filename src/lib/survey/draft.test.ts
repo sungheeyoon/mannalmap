@@ -1,10 +1,10 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { SURVEY_DRAFT_DELAY_MS, draftSaver, type DraftState } from './draft';
+import { SURVEY_DRAFT_DELAY_MS, draftKey, draftSaver, dropUnsent, holdsUnsent, keepUnsent, peekUnsent, type DraftState } from './draft';
 
 /**
  * 설문 초안 저장의 차례(2026-11-09) — 웹 · 앱 화면이 같은 `draftSaver` 를 부르므로 두 화면의 고침을 여기서 잰다.
- * 화면이 그것을 제대로 부르는지(떠날 때 `flush` · 제출 앞 `beforeSubmit` · 보내는 동안 잠금)는 `scripts/survey-draft-wiring.test.ts`.
+ * 화면이 그것을 제대로 부르는지(떠날 때 `flush` · 제출은 `submit` · 보내는 동안 잠금)는 `scripts/survey-draft-wiring.test.ts`.
  */
 type Answer = { text: string };
 
@@ -103,9 +103,11 @@ describe('제출과 초안의 차례', () => {
     const saver = draftSaver<Answer>({ initial: { text: '' }, save: db.save, onState: () => {} });
 
     saver.edit({ text: '제출할 답' });
-    await saver.beforeSubmit();
+    const sent = saver.submit({ text: '제출할 답' }, async () => ({ ok: true }));
     vi.advanceTimersByTime(SURVEY_DRAFT_DELAY_MS * 2);
+    await sent;
     expect(db.calls).toHaveLength(0);
+    expect(saver.unsaved()).toBe(false);
   });
 
   it('이미 떠난 초안이 닿은 뒤에야 제출이 떠난다 — 늦게 닿은 옛 초안이 제출한 답을 덮지 않는다', async () => {
@@ -117,18 +119,47 @@ describe('제출과 초안의 차례', () => {
     await flushMicrotasks();
     expect(db.calls).toHaveLength(1);
 
-    let ready = false;
-    const gate = saver.beforeSubmit().then(() => (ready = true));
+    let submitted = false;
+    const sent = saver.submit({ text: '새 답(제출)' }, async (value) => {
+      submitted = true;
+      db.rows.push(value);
+      return { ok: true };
+    });
     await flushMicrotasks();
-    expect(ready).toBe(false);
+    expect(submitted).toBe(false);
 
     db.calls[0].done(true);
-    await gate;
-    /* 여기서 화면이 제출을 보낸다 — 서버에 닿는 차례는 초안 → 제출 */
-    db.rows.push({ text: '새 답(제출)' });
-    saver.markSaved({ text: '새 답(제출)' });
-    expect(db.rows.at(-1)).toEqual({ text: '새 답(제출)' });
+    await sent;
+    expect(db.rows.map((row) => row.text)).toEqual(['옛 답', '새 답(제출)']);
     expect(saver.unsaved()).toBe(false);
+  });
+
+  it('제출 중에 떠나도(flush) 제출이 닿기를 기다리고, 넣었으면 참이다', async () => {
+    const db = server();
+    const saver = draftSaver<Answer>({ initial: { text: '' }, save: db.save, onState: () => {} });
+
+    let finish: (ok: boolean) => void = () => {};
+    saver.edit({ text: '제출할 답' });
+    const sent = saver.submit({ text: '제출할 답' }, () => new Promise<{ ok: boolean }>((resolve) => (finish = (ok) => resolve({ ok }))));
+    let left: boolean | null = null;
+    const leaving = saver.flush().then((ok) => (left = ok));
+    await flushMicrotasks();
+    expect(left).toBeNull();
+    /* 떠나며 같은 답을 초안으로 한 번 더 보내지 않는다 */
+    expect(db.calls).toHaveLength(0);
+
+    finish(true);
+    await sent;
+    await leaving;
+    expect(left).toBe(true);
+  });
+
+  it('제출 중에 떠났는데 제출이 실패하면 거짓이다 — 앱은 그때 확인창을 세운다', async () => {
+    const saver = draftSaver<Answer>({ initial: { text: '' }, save: async () => false, onState: () => {} });
+    saver.edit({ text: '제출할 답' });
+    const sent = saver.submit({ text: '제출할 답' }, async () => ({ ok: false }));
+    expect(await saver.flush()).toBe(false);
+    expect((await sent).ok).toBe(false);
   });
 
   it('보내기는 한 줄로 선다 — 앞의 저장이 끝나야 다음이 떠난다', async () => {
@@ -168,5 +199,85 @@ describe('제출과 초안의 차례', () => {
     expect(states.at(-1)).toBe('failed');
     await saver.flush();
     expect(states.at(-1)).toBe('saved');
+  });
+});
+
+describe('보낼지는 서버가 끝내 가질 값과 견준다', () => {
+  it('B 가 떠나 있는 사이 처음 답 A 로 되돌리면 A 가 B 뒤에 들어간다 — flush 도 그것을 기다린다', async () => {
+    const db = server();
+    const saver = draftSaver<Answer>({ initial: { text: 'A' }, save: db.save, onState: () => {} });
+
+    saver.edit({ text: 'B' });
+    vi.advanceTimersByTime(SURVEY_DRAFT_DELAY_MS);
+    await flushMicrotasks();
+    expect(db.calls.map((call) => call.value.text)).toEqual(['B']);
+
+    saver.edit({ text: 'A' });
+    expect(saver.unsaved()).toBe(true);
+    let left: boolean | null = null;
+    const leaving = saver.flush().then((ok) => (left = ok));
+
+    db.calls[0].done(true);
+    await flushMicrotasks();
+    expect(db.calls.map((call) => call.value.text)).toEqual(['B', 'A']);
+    db.calls[1].done(true);
+    await leaving;
+    expect(db.rows.map((row) => row.text)).toEqual(['B', 'A']);
+    expect(left).toBe(true);
+    expect(saver.unsaved()).toBe(false);
+  });
+
+  it('타이머로도 같다 — 되돌린 A 가 B 뒤에 저절로 간다', async () => {
+    const db = server();
+    const saver = draftSaver<Answer>({ initial: { text: 'A' }, save: db.save, onState: () => {} });
+    saver.edit({ text: 'B' });
+    vi.advanceTimersByTime(SURVEY_DRAFT_DELAY_MS);
+    await flushMicrotasks();
+    saver.edit({ text: 'A' });
+    vi.advanceTimersByTime(SURVEY_DRAFT_DELAY_MS);
+    db.calls[0].done(true);
+    await flushMicrotasks();
+    expect(db.calls.map((call) => call.value.text)).toEqual(['B', 'A']);
+  });
+});
+
+describe('떠나며 넣지 못한 초안', () => {
+  it('입력 직후 떠남 → 떠날 때 저장 실패 → flush 가 거짓이고 못 넣은 값을 내준다 → 다시 열면 되살린다', async () => {
+    const owner = 'user-1';
+    const first = draftSaver<Answer>({ initial: { text: '서버' }, save: async () => false, onState: () => {} });
+    first.edit({ text: '떠나기 직전 고침' });
+
+    expect(await first.flush()).toBe(false);
+    const unsent = first.unsent();
+    expect(unsent).toEqual({ base: draftKey({ text: '서버' }), value: { text: '떠나기 직전 고침' } });
+    keepUnsent(owner, unsent!);
+    expect(holdsUnsent()).toBe(true);
+
+    /* 다시 연 화면 — 서버는 그대로라 되살리고, 되살린 값은 새 saver 가 서버와 달라 다시 보낸다 */
+    const restored = peekUnsent<Answer>(owner, { text: '서버' });
+    expect(restored).toEqual({ text: '떠나기 직전 고침' });
+    dropUnsent(owner);
+    expect(holdsUnsent()).toBe(false);
+
+    const db = server();
+    const second = draftSaver<Answer>({ initial: { text: '서버' }, save: db.save, onState: () => {} });
+    second.edit(restored!);
+    void second.flush();
+    await flushMicrotasks();
+    expect(db.calls.map((call) => call.value.text)).toEqual(['떠나기 직전 고침']);
+  });
+
+  it('서버 값이 그사이 바뀌었거나 다른 계정이면 되살리지 않는다', () => {
+    keepUnsent('user-1', { base: draftKey({ text: '서버' }), value: { text: '고침' } });
+    expect(peekUnsent('user-2', { text: '서버' })).toBeNull();
+    expect(peekUnsent('user-1', { text: '다른 곳에서 저장' })).toBeNull();
+    dropUnsent('user-1');
+  });
+
+  it('넣었으면 unsent 는 없다', async () => {
+    const saver = draftSaver<Answer>({ initial: { text: '' }, save: async () => true, onState: () => {} });
+    saver.edit({ text: 'a' });
+    expect(await saver.flush()).toBe(true);
+    expect(saver.unsent()).toBeNull();
   });
 });

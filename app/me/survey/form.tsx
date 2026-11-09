@@ -28,6 +28,10 @@ import {
   WANT_OPTIONS,
   afterPicking,
   draftSaver,
+  dropUnsent,
+  holdsUnsent,
+  keepUnsent,
+  peekUnsent,
   isAnswered,
   withoutHidden,
   type DraftState,
@@ -73,10 +77,24 @@ const ASK = 'block text-lead font-bold leading-7 text-foreground';
 const CHOICE =
   'flex min-h-12 cursor-pointer items-center gap-3 rounded-cell border border-border bg-surface px-4 py-2.5 text-body leading-6 hover:border-border-strong has-checked:border-foreground has-checked:bg-cream has-focus-visible:outline has-focus-visible:outline-3 has-focus-visible:outline-offset-2 has-focus-visible:outline-[color-mix(in_srgb,var(--accent)_55%,transparent)] has-disabled:cursor-default has-disabled:hover:border-border [&:has(:disabled:not(:checked))]:opacity-55';
 
-export function SurveyForm({ context, given }: { context: SurveyContext; given: MySurvey | null }) {
-  const [answers, setAnswers] = useState<SurveyAnswers>(given?.answers ?? EMPTY_ANSWERS);
+/** 화면이 사라진 뒤에도 못 넣은 초안을 들고 있는 동안 — 탭을 닫거나 새로고침하기 전에 브라우저가 묻는다 */
+function holdUnsent(event: BeforeUnloadEvent) {
+  if (!holdsUnsent()) {
+    window.removeEventListener('beforeunload', holdUnsent);
+    return;
+  }
+  event.preventDefault();
+  event.returnValue = '';
+}
+
+export function SurveyForm({ owner, context, given }: { owner: string; context: SurveyContext; given: MySurvey | null }) {
+  const server = given?.answers ?? EMPTY_ANSWERS;
+  /* 지난번 떠나며 못 넣은 초안 — 서버 값이 그때 그대로면 되살려 다시 보낸다(`keepUnsent`) */
+  const [restored] = useState(() => peekUnsent<SurveyAnswers>(owner, server));
+  const [answers, setAnswers] = useState<SurveyAnswers>(restored ?? server);
   const [submittedAt, setSubmittedAt] = useState<string | null>(given?.submittedAt ?? null);
-  const [editing, setEditing] = useState(false);
+  /* 제출한 답을 고치다 떠났으면 고치던 판으로 연다 */
+  const [editing, setEditing] = useState(restored !== null);
   const [draft, setDraft] = useState<DraftState>('idle');
   /** 서버에 아직 안 간 고침 — 있으면 탭을 닫거나 새로고침하기 전에 브라우저가 묻는다 */
   const [unsaved, setUnsaved] = useState(false);
@@ -84,12 +102,12 @@ export function SurveyForm({ context, given }: { context: SurveyContext; given: 
   const [sending, startSending] = useTransition();
 
   /*
-    초안 저장의 차례는 앱과 한 벌이다(`draftSaver`) — 손이 멈춘 뒤에 보내고, 떠날 때 기다리던 것을 곧바로 보내고, 제출 앞에서
-    떠난 초안이 닿기를 기다린다. 부름이 던져도(망 · 배포 직후) 「저장 중」에 머물지 않고 실패로 선다.
+    초안 저장의 차례는 앱과 한 벌이다(`draftSaver`) — 손이 멈춘 뒤에 보내고, 떠날 때 안 간 것을 곧바로 보내고, 제출도 같은 줄에
+    선다. 부름이 던져도(망 · 배포 직후) 「저장 중」에 머물지 않고 실패로 선다.
   */
   const [saver] = useState(() =>
     draftSaver<SurveyAnswers>({
-      initial: given?.answers ?? EMPTY_ANSWERS,
+      initial: server,
       save: async (value) => (await actionAnswer(saveServiceSurvey(value, false))).ok,
       onState: (state, left) => {
         setDraft(state);
@@ -110,20 +128,30 @@ export function SurveyForm({ context, given }: { context: SurveyContext; given: 
   }, [saver, answers, open, shown]);
 
   /*
-    **떠날 때 기다리던 고침을 곧바로 보낸다**(2026-11-09) — 전에는 타이머만 지워, 손을 멈추고 1.2초 안에 다른 화면으로 가면
-    마지막 고침이 안 갔다. 앱 안의 이동은 화면이 닫히는 때, 탭을 옮기거나 폰에서 앱을 바꾸는 것은 숨는 때다. 탭을 닫거나
-    새로고침하는 것은 보내기를 기다려 주지 않으므로 그때는 브라우저가 묻는다(`useLeaveGuard`).
+    **떠날 때 안 간 고침을 곧바로 보낸다**(2026-11-09) — 전에는 타이머만 지워, 손을 멈추고 1.2초 안에 다른 화면으로 가면
+    마지막 고침이 안 갔다. 앱 안의 이동은 화면이 닫히는 때, 탭을 옮기거나 폰에서 앱을 바꾸는 것은 숨는 때다.
+
+    앱 안의 이동은 막을 공식 길이 없다(ADR 0166) — 그래서 떠나며 보낸 것이 실패하면 **값을 이 탭의 메모리에 들고 있다가**
+    (`keepUnsent`) 설문을 다시 열 때 되살려 다시 보낸다. 들고 있는 동안 탭을 닫거나 새로고침하면 브라우저가 묻는다(`holdUnsent`).
+    화면 안에서의 탭 닫기 · 새로고침은 `useLeaveGuard` 가 묻는다.
   */
   useEffect(() => {
+    /* 되살린 값은 이제 이 화면의 saver 가 든다 */
+    dropUnsent(owner);
     const hide = () => {
       if (document.visibilityState === 'hidden') void saver.flush();
     };
     document.addEventListener('visibilitychange', hide);
     return () => {
       document.removeEventListener('visibilitychange', hide);
-      void saver.flush();
+      void saver.flush().then((ok) => {
+        const unsent = saver.unsent();
+        if (ok || unsent === null) return;
+        keepUnsent(owner, unsent);
+        window.addEventListener('beforeunload', holdUnsent);
+      });
     };
-  }, [saver]);
+  }, [saver, owner]);
   useLeaveGuard(unsaved);
 
   /*
@@ -133,14 +161,13 @@ export function SurveyForm({ context, given }: { context: SurveyContext; given: 
   const send = () => {
     setFailure(null);
     startSending(async () => {
-      await saver.beforeSubmit();
       const value = withoutHidden(answers, shown);
-      const result = await actionAnswer(saveServiceSurvey(value, true));
+      /* 제출도 초안과 같은 줄에 선다 — 떠난 초안이 닿은 뒤에 떠나고, 그 사이 기다리던 초안은 걷힌다 */
+      const result = await saver.submit(value, (answers) => actionAnswer(saveServiceSurvey(answers, true)));
       if (!result.ok) {
         setFailure(result.message);
         return;
       }
-      saver.markSaved(value);
       setSubmittedAt(result.submittedAt);
       setEditing(false);
     });

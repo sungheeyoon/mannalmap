@@ -17,14 +17,35 @@ export const LEAVE_STAY = '계속 고치기';
  * `leave(then)` 은 화면 안의 그만두기 단추(「작성 그만두기」)가 부른다 — 고친 것이 있으면 같은 창을 거쳐 `then`, 없으면 곧바로 `then`.
  * `dialog` 는 화면이 제 판 안에 세운다.
  */
-export function useLeaveGuard({ edited, saving }: { edited: boolean; saving: boolean }) {
+export function useLeaveGuard({ edited, saving, settle }: { edited: boolean; saving: boolean; settle?: () => Promise<boolean> }) {
   const asks = asksBeforeLeaving({ edited, saving });
   const [pending, setPending] = useState<(() => void) | null>(null);
   const [leaving, setLeaving] = useState(false);
-  usePreventRemove(asks && !leaving, ({ repeat }) => setPending(() => repeat));
+
+  /*
+    **자동 저장 화면은 묻기 전에 넣어 본다**(`settle`, 서비스 설문 2026-11-09) — 떠나려는 몸짓을 붙든 채 안 간 고침을 보내고, 서버가
+    받았으면 묻지 않고 떠난다. 못 넣었을 때만 창이 선다 — 그래야 이용자가 잃는 것을 알고 떠난다.
+  */
+  const hold = (go: () => void) => {
+    if (settle === undefined) {
+      setPending(() => go);
+      return;
+    }
+    void (async () => {
+      /* 넣어 보다 던지면 못 넣은 것으로 — 창이 선다 */
+      const ok = await settle().catch(() => false);
+      if (!ok) {
+        setPending(() => go);
+        return;
+      }
+      setLeaving(true);
+      go();
+    })();
+  };
+  usePreventRemove(asks && !leaving, ({ repeat }) => hold(repeat));
 
   const leave = (then: () => void) => {
-    if (asks) setPending(() => then);
+    if (asks) hold(then);
     else then();
   };
 

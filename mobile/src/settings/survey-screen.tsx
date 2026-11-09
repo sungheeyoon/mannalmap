@@ -132,7 +132,7 @@ function ConsentSwitch({ onDone }: { onDone: () => void }) {
 
 /**
  * 쓰는 동안 저절로 남고, 제출은 손으로 한다. 숨은 문항은 보내기 전에 비운다 — 웹 `form.tsx`. 초안의 차례는 웹과 한 벌(`draftSaver`):
- * 떠나거나 앱이 뒤로 가면 기다리던 고침을 곧바로 보내고, 제출은 떠난 초안이 닿은 뒤에 보낸다. 보내는 동안 칸이 잠긴다(2026-11-09).
+ * 떠나려 하면 안 간 고침을 먼저 넣어 보고 못 넣었을 때만 묻는다. 제출은 초안과 한 줄에 선다. 보내는 동안 칸이 잠긴다(2026-11-09).
  */
 function SurveyForm({ context, given }: { context: SurveyContext; given: MySurvey | null }) {
   const client = useClient();
@@ -161,7 +161,7 @@ function SurveyForm({ context, given }: { context: SurveyContext; given: MySurve
     if (open) saver.edit(withoutHidden(answers, shown));
   }, [saver, answers, open, shown]);
 
-  /* 화면이 닫히거나 앱이 뒤로 가면 기다리던 고침을 곧바로 — 전에는 타이머만 지워 1.2초 안에 떠난 고침이 안 갔다 */
+  /* 앱이 뒤로 가면 안 간 고침을 곧바로 — 전에는 타이머만 지워 1.2초 안에 떠난 고침이 안 갔다. 닫힐 때도 한 번 더(막기를 지나 사라진 때) */
   useEffect(() => {
     const away = AppState.addEventListener('change', (next) => {
       if (next !== 'active') void saver.flush();
@@ -171,21 +171,23 @@ function SurveyForm({ context, given }: { context: SurveyContext; given: MySurve
       void saver.flush();
     };
   }, [saver]);
-  /* 마지막 초안을 못 넣었으면 떠나기 전에 한 번 묻는다 — 떠나며 한 번 더 보내지만 그것도 실패하면 모른 채 잃는다 */
-  const { dialog } = useLeaveGuard({ edited: unsaved && draft === 'failed', saving: sending });
+  /*
+    **안 간 고침이 있으면 떠나는 몸짓을 붙들고 먼저 넣어 본다**(`settle`) — 넣으면 묻지 않고 떠나고, 못 넣으면 확인창이 선다. 기다리는 중 ·
+    보내는 중 · 제출 중이 모두 「안 간 고침」이다(`saver.unsaved`) — 제출 중에 떠나도 제출이 닿기를 기다린다.
+  */
+  const { dialog } = useLeaveGuard({ edited: unsaved, saving: false, settle: saver.flush });
 
   const send = async () => {
     setFailure(null);
     setSending(true);
-    await saver.beforeSubmit();
     const value = withoutHidden(answers, shown);
-    const result = await saveSurvey(client, value, true);
+    /* 제출도 초안과 같은 줄에 선다 — 떠난 초안이 닿은 뒤에 떠나고, 그 사이 기다리던 초안은 걷힌다 */
+    const result = await saver.submit(value, (answers) => settled(saveSurvey(client, answers, true), 'survey submit', () => ({ ok: false, message: UNREACHABLE }) as const));
     setSending(false);
     if (!result.ok) {
       setFailure(result.message);
       return;
     }
-    saver.markSaved(value);
     setSubmittedAt(result.submittedAt);
     setEditing(false);
   };
