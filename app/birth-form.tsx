@@ -16,7 +16,7 @@ import {
 
 import { dateRefusal } from '@/src/lib/input/chart';
 import { ADVANCED_SETTINGS } from '@/src/lib/input/copy';
-import { BIRTH_DIGIT_LABEL, DEFAULT_QUERY, NAME_MAX, TIME_BASES, TIME_BASIS, type Query } from '@/src/lib/input/query';
+import { BIRTH_DIGIT_LABEL, BIRTH_SELECT_LABEL, DEFAULT_QUERY, NAME_MAX, TIME_BASES, TIME_BASIS, type Query } from '@/src/lib/input/query';
 
 import { Icon } from './ui/icons';
 import styles from './birth-form.module.css';
@@ -175,7 +175,7 @@ export function BirthFields({
             서울이 아닌 사람이 접힌 칸을 열어 볼 까닭이 없다.
           */}
           <SelectField
-            label="출생지"
+            {...BIRTH_SELECT_LABEL.city}
             value={value.city}
             open={open === 'city'}
             onToggle={toggle('city')}
@@ -218,8 +218,7 @@ export function BirthFields({
             <p className="text-xs leading-5 text-secondary">{ADVANCED_SETTINGS.intro}</p>
             {/* 시간을 모르면 자시 경계에 걸릴 일이 없어 선택이 무의미하다 */}
             <SelectField
-              label="자시"
-              name="자시 규칙"
+              {...BIRTH_SELECT_LABEL.rule}
               value={value.rule}
               open={open === 'rule'}
               onToggle={toggle('rule')}
@@ -231,7 +230,7 @@ export function BirthFields({
               ]}
             />
             <SelectField
-              label="시간 기준"
+              {...BIRTH_SELECT_LABEL.basis}
               value={value.basis}
               open={open === 'basis'}
               onToggle={toggle('basis')}

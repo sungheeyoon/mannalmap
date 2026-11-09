@@ -9,7 +9,7 @@ import { ELEVATION } from '@design';
 import { calculateChart, dateRefusal } from '@input/chart';
 import { convertedLine, dateOfParts, limitsOf, timeOfParts } from '@input/entry';
 import { ADVANCED_SETTINGS, HOUR_UNKNOWN_HINT } from '@input/copy';
-import { BIRTH_DIGIT_LABEL, DEFAULT_QUERY, HOUR_UNKNOWN_CHOICE, NAME_MAX, TIME_BASES, TIME_BASIS, type Query } from '@input/query';
+import { BIRTH_DIGIT_LABEL, BIRTH_SELECT_LABEL, DEFAULT_QUERY, HOUR_UNKNOWN_CHOICE, NAME_MAX, TIME_BASES, TIME_BASIS, type Query } from '@input/query';
 import { CALENDARS, CALENDAR_KO, CITY_LONGITUDES, GENDERS, GENDER_KO, SUPPORTED_YEAR_RANGE, type CityName, type LateNightRule } from '@saju';
 
 import { chartPath } from '@consent/app-destination';
@@ -279,8 +279,8 @@ function BirthScreen({ signedOut }: { signedOut: boolean }) {
               )}
 
               <View style={styles.rail}>
-                <Text style={styles.railLabel}>출생지</Text>
-                <Select value={city} onPick={setCity} options={CITIES.map((one) => ({ value: one, label: one }))} />
+                <Text aria-hidden style={styles.railLabel}>{BIRTH_SELECT_LABEL.city.label}</Text>
+                <Select {...BIRTH_SELECT_LABEL.city} value={city} onPick={setCity} options={CITIES.map((one) => ({ value: one, label: one }))} />
               </View>
             </CardFrame>
 
@@ -298,12 +298,13 @@ function BirthScreen({ signedOut }: { signedOut: boolean }) {
               <CardFrame style={styles.form}>
                 <Text style={styles.advancedIntro}>{ADVANCED_SETTINGS.intro}</Text>
                 <View style={styles.rail}>
-                  <Text style={styles.railLabel}>자시</Text>
-                  <Select value={rule} onPick={setRule} options={RULES} disabled={hourChoice === 'unknown'} />
+                  <Text aria-hidden style={styles.railLabel}>{BIRTH_SELECT_LABEL.rule.label}</Text>
+                  <Select {...BIRTH_SELECT_LABEL.rule} value={rule} onPick={setRule} options={RULES} disabled={hourChoice === 'unknown'} />
                 </View>
                 <View style={styles.rail}>
-                  <Text style={styles.railLabel}>시간 기준</Text>
+                  <Text aria-hidden style={styles.railLabel}>{BIRTH_SELECT_LABEL.basis.label}</Text>
                   <Select
+                    {...BIRTH_SELECT_LABEL.basis}
                     value={basis}
                     onPick={setBasis}
                     options={TIME_BASES.map((one) => ({ value: one, label: TIME_BASIS[one].label, hint: TIME_BASIS[one].hint }))}

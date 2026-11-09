@@ -18,8 +18,9 @@ import { digitOutOfRange } from '@input/entry';
 import { Button } from './buttons';
 import { COLOR, FONT, CONTROL, RADIUS, TYPE } from './tokens';
 
-export function FieldLabel({ children }: { children: ReactNode }) {
-  return <Text style={styles.label}>{children}</Text>;
+/** 칸 위의 이름 — 칸이 같은 이름을 제 낭독 이름으로 들면(`Select`) `aria-hidden` 으로 두 번 읽히지 않게 한다 */
+export function FieldLabel({ children, 'aria-hidden': hidden }: { children: ReactNode; 'aria-hidden'?: boolean }) {
+  return <Text aria-hidden={hidden} style={styles.label}>{children}</Text>;
 }
 
 /** 글을 적는 칸 */
@@ -207,13 +208,24 @@ export function Choices<T extends string>({
   );
 }
 
-/** 펼치는 칸 — 고르면 접힌다 */
+/**
+ * 펼치는 칸 — 고르면 접힌다.
+ *
+ * 낭독은 웹의 같은 칸(`app/birth-choices.tsx` 의 `SelectField`)을 따른다 — 머리는 칸 이름과 지금 값을, 펼친 목록은 이름 붙은
+ * 라디오 묶음이고 항목마다 골랐는지를 알린다. 고른 것을 배경색으로만 가르지 않는다.
+ */
 export function Select<T extends string>({
+  label,
+  name = label,
   value,
   options,
   onPick,
   disabled = false,
 }: {
+  /** 칸 이름 — 머리가 지금 값과 함께 읽힌다. 화면에 보이는 이름과 같은 상수를 넘긴다 */
+  label: string;
+  /** 펼친 목록의 묶음 이름 — 보이는 이름이 짧을 때(「자시」 → 「자시 규칙」) */
+  name?: string;
   value: T;
   options: readonly { value: T; label: string; hint?: string }[];
   onPick: (next: T) => void;
@@ -234,6 +246,8 @@ export function Select<T extends string>({
     <View style={styles.selectBox}>
       <Pressable
         accessibilityRole="button"
+        accessibilityLabel={label}
+        accessibilityValue={{ text: current?.label }}
         accessibilityState={{ expanded: open, disabled }}
         disabled={disabled}
         onPress={() => setOpen(!open)}
@@ -243,10 +257,12 @@ export function Select<T extends string>({
         <Text style={styles.chevron}>{open ? '⌃' : '⌄'}</Text>
       </Pressable>
       {open && (
-        <View style={styles.menu}>
+        <View accessibilityRole="radiogroup" accessibilityLabel={name} style={styles.menu}>
           {options.map((option) => (
             <Pressable
               key={option.value}
+              accessibilityRole="radio"
+              accessibilityState={{ checked: option.value === value }}
               onPress={() => {
                 onPick(option.value);
                 setOpen(false);

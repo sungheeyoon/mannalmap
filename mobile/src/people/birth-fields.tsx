@@ -5,7 +5,7 @@ import { BUTTON_OFF_OPACITY } from '@design';
 import { dateRefusal } from '@input/chart';
 import { convertedLine, dateOfParts, limitsOf, splitDate, splitTime, timeOfParts } from '@input/entry';
 import { ADVANCED_SETTINGS, HOUR_UNKNOWN_HINT } from '@input/copy';
-import { BIRTH_DIGIT_LABEL, DEFAULT_QUERY, HOUR_UNKNOWN_CHOICE, NAME_MAX, TIME_BASES, TIME_BASIS, type Query } from '@input/query';
+import { BIRTH_DIGIT_LABEL, BIRTH_SELECT_LABEL, DEFAULT_QUERY, HOUR_UNKNOWN_CHOICE, NAME_MAX, TIME_BASES, TIME_BASIS, type Query } from '@input/query';
 import { CALENDARS, CALENDAR_KO, CITY_LONGITUDES, GENDERS, GENDER_KO, SUPPORTED_YEAR_RANGE, type CityName, type LateNightRule } from '@saju';
 
 import { Choices, DigitField, Field, FieldLabel, Select } from '@/ui/parts';
@@ -146,8 +146,8 @@ export function BirthFields({
       )}
 
       <View style={styles.rail}>
-        <Text style={styles.railLabel}>출생지</Text>
-        <Select disabled={disabled} value={values.city} onPick={set.setCity} options={CITIES.map((one) => ({ value: one, label: one }))} />
+        <Text aria-hidden style={styles.railLabel}>{BIRTH_SELECT_LABEL.city.label}</Text>
+        <Select {...BIRTH_SELECT_LABEL.city} disabled={disabled} value={values.city} onPick={set.setCity} options={CITIES.map((one) => ({ value: one, label: one }))} />
       </View>
 
       <Pressable accessibilityRole="button" accessibilityState={{ expanded: values.advanced, disabled }} disabled={disabled} onPress={() => set.setAdvanced(!values.advanced)} style={[styles.disclosure, disabled && styles.off]}>
@@ -159,12 +159,12 @@ export function BirthFields({
         <View style={styles.fields}>
           <Text style={styles.advancedIntro}>{ADVANCED_SETTINGS.intro}</Text>
           <View style={styles.rail}>
-            <Text style={styles.railLabel}>자시</Text>
-            <Select value={values.rule} onPick={set.setRule} options={RULES} disabled={disabled || values.hourChoice === 'unknown'} />
+            <Text aria-hidden style={styles.railLabel}>{BIRTH_SELECT_LABEL.rule.label}</Text>
+            <Select {...BIRTH_SELECT_LABEL.rule} value={values.rule} onPick={set.setRule} options={RULES} disabled={disabled || values.hourChoice === 'unknown'} />
           </View>
           <View style={styles.rail}>
-            <Text style={styles.railLabel}>시간 기준</Text>
-            <Select disabled={disabled} value={values.basis} onPick={set.setBasis} options={TIME_BASES.map((one) => ({ value: one, label: TIME_BASIS[one].label, hint: TIME_BASIS[one].hint }))} />
+            <Text aria-hidden style={styles.railLabel}>{BIRTH_SELECT_LABEL.basis.label}</Text>
+            <Select {...BIRTH_SELECT_LABEL.basis} disabled={disabled} value={values.basis} onPick={set.setBasis} options={TIME_BASES.map((one) => ({ value: one, label: TIME_BASIS[one].label, hint: TIME_BASIS[one].hint }))} />
           </View>
           <View style={styles.rail}>
             <Text style={styles.railLabel}>세운 연도</Text>

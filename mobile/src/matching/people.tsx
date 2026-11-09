@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
-import { REPORT_DETAIL_MAX, REPORT_DONE, REPORT_NOTE, REPORT_REASONS, type ReportReason } from '@account/index';
+import { REPORT_DETAIL_MAX, REPORT_DONE, REPORT_NOTE, REPORT_REASON_LABEL, REPORT_REASONS, type ReportReason } from '@account/index';
 import { BLOCK_FINAL_NOTE, BLOCK_KEEPS_NOTE, BLOCK_NOTE } from '@consent/index';
 import { initialOf, type PhotoFocus } from '@profile';
 import type { Element } from '@saju';
@@ -207,9 +207,9 @@ export function ReportDialog({ userId, nickname, open, onClose, onBlock }: { use
       ) : (
         <>
           <Text style={styles.small}>{REPORT_NOTE}</Text>
-          <Text style={styles.label}>신고 사유</Text>
+          <Text aria-hidden style={styles.label}>{REPORT_REASON_LABEL}</Text>
           <View style={styles.reasonBox}>
-            <Select value={reason} options={REPORT_REASONS} onPick={setReason} />
+            <Select label={REPORT_REASON_LABEL} value={reason} options={REPORT_REASONS} onPick={setReason} />
           </View>
           <Text style={styles.label}>덧붙일 말 (선택)</Text>
           <Field value={detail} onChange={setDetail} maxLength={REPORT_DETAIL_MAX} label="덧붙일 말 (선택)" />

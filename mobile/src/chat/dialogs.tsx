@@ -1,7 +1,7 @@
 import { useState, type ReactNode } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 
-import { REPORT_DETAIL_MAX, REPORT_DONE, REPORT_NOTE, REPORT_REASONS, type ReportReason } from '@account/index';
+import { REPORT_DETAIL_MAX, REPORT_DONE, REPORT_NOTE, REPORT_REASON_LABEL, REPORT_REASONS, type ReportReason } from '@account/index';
 import { BLOCK_FINAL_NOTE, BLOCK_KEEPS_NOTE, BLOCK_NOTE } from '@consent/index';
 
 import { useClient } from '@/auth/connected';
@@ -149,8 +149,8 @@ export function ReportDialog({
               </View>
             )}
             <View style={styles.group}>
-              <FieldLabel>신고 사유</FieldLabel>
-              <Select value={reason} options={REPORT_REASONS} onPick={setReason} />
+              <FieldLabel aria-hidden>{REPORT_REASON_LABEL}</FieldLabel>
+              <Select label={REPORT_REASON_LABEL} value={reason} options={REPORT_REASONS} onPick={setReason} />
             </View>
             <View style={styles.group}>
               <FieldLabel>덧붙일 말 (선택)</FieldLabel>

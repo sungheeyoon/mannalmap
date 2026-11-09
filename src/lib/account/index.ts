@@ -328,6 +328,9 @@ export const REPORT_REASONS = [
 
 export type ReportReason = (typeof REPORT_REASONS)[number]['value'];
 
+/** 신고 사유 칸의 이름 — 보이는 이름이자 고르는 칸의 낭독 이름(웹 · 앱) */
+export const REPORT_REASON_LABEL = '신고 사유';
+
 
 /**
  * 신고는 차단이 아니다 — **누르기 전에 그 차이를 한 줄로 읽힌다.**
