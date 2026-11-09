@@ -10,7 +10,7 @@ import { cronAuthorized } from '../authorized';
  *
  * 통지(RTDN)가 첫 길이고 이것은 놓친 날의 그물이다 — Voided Purchases API 로 지난 사흘의 무효를 읽어 같은 DB 문(`void_store_purchase`)에
  * 넣는다. 이미 적힌 결제는 `replayed` 라 몇 번 돌아도 한 번만 걷힌다. API 는 30일 앞까지만 준다. 자격은 다른 크론과 같은 `CRON_SECRET`.
- * 서비스 계정 키가 없으면(Play 조직 계정 전) 「설정 안 됨」으로 200 이다 — 크론이 날마다 붉지 않게. 목록에는 `refundType` 이 없어
+ * 서비스 계정 키가 없으면(Play 개발자 계정 전) 「설정 안 됨」으로 200 이다 — 크론이 날마다 붉지 않게. 목록에는 `refundType` 이 없어
  * `voidedQuantity` 로 가른다(`refundTypeOf`) — 수량 일부 환불을 전액 무효로 걷지 않는다.
  */
 export const maxDuration = 60;

@@ -78,7 +78,7 @@ export const SECRET_ENV = [
   /**
    * Google Play 결제 검증용 서비스 계정 키(JSON 한 덩이, ADR 0230) — 구매 확인 · 소비 · 환불 · 무효 목록을 부른다
    * (`app/api/store/google-play/play-api.ts`). EAS 제출용 키와 따로다. 없으면 구매 문 · 통지 문이 503, 무효 대조 크론은 「설정 안 됨」.
-   * **운영자가 Play 조직 계정 뒤에 넣는다**
+   * **운영자가 Play 개발자 계정 뒤에 넣는다**
    */
   'GOOGLE_PLAY_SERVICE_ACCOUNT_JSON',
   /**
@@ -139,7 +139,7 @@ export const CONFIG_ENV = [
   /**
    * Google Play 통지(RTDN)의 Pub/Sub 푸시 구독이 싣는 OIDC 토큰의 audience 와 서비스 계정 이메일(ADR 0230) — 비밀이 아니다. 믿는 쪽은
    * Google 의 서명이고, 이 둘은 그 토큰이 우리 구독의 것인지만 가른다(`app/api/store/google-play/push-auth.ts`). 둘 중 하나라도 비면
-   * 통지 문이 503 이다. **운영자가 Play 조직 계정 뒤에 넣는다**
+   * 통지 문이 503 이다. **운영자가 Play 개발자 계정 뒤에 넣는다**
    */
   'GOOGLE_PLAY_PUBSUB_AUDIENCE',
   'GOOGLE_PLAY_PUBSUB_SERVICE_ACCOUNT',

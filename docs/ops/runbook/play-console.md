@@ -1,26 +1,28 @@
-# 운영 절차 — Google Play 조직 계정이 서는 날 (D-U-N-S 날)
+# 운영 절차 — Google Play 개인 개발자 계정을 만드는 날
 
 색인은 `docs/ops/runbook.md` 다. 빌드 · 제출 명령과 EAS 환경값은 `docs/ops/runbook/mobile-release.md`, 카카오 키 해시의 원본은
 `docs/ops/runbook/kakao-login.md` 「안드로이드 키 해시」다. **붙여 넣을 글과 양식의 답은 `docs/ops/play-listing.md`** 다 — 여기는 차례와 콘솔 경로만 든다.
 
-공식 문서를 본 날은 **2026-11-06** 이다. 콘솔 경로는 각 쪽이 적은 영어 그대로이고, **Google 의 쪽끼리 메뉴 이름이 다를 때는 둘 다 적었다** —
+공식 문서를 본 날은 **2026-11-06** 이고, 계정 유형 · 신원 확인 · 비공개 테스트 요건의 쪽은 **2026-11-09** 에 다시 봤다. 콘솔 경로는 각 쪽이 적은 영어 그대로이고, **Google 의 쪽끼리 메뉴 이름이 다를 때는 둘 다 적었다** —
 콘솔이 바뀌어 이름이 달라 보이면 같은 이름의 화면을 찾는다. 운영자 결정(2026-11-06): 첫 공개 안드로이드 출시에 **Play 결제를 넣는다** ·
 연동은 직접(Play Developer API + RTDN) · 가격은 PRD §7.0 · 인연 · 채팅은 닫힌 채(ADR 0222) · 로그인은 구글 + 카카오 · 패키지 `com.mannalmap.app`.
+운영자 결정(2026-11-09, ADR 0246): **개발자 계정은 조직이 아니라 개인 계정으로 만들고, 비공개 테스트(테스터 12명 · 연속 14일)를 거쳐 프로덕션을 신청한다.**
 
-## D-U-N-S 날의 차례
+## 계정을 만드는 날의 차례
 
 **「누가」가 운영자인 줄은 계정 · 돈 · 신원이 걸려 에이전트가 못 한다.** 에이전트 몫은 운영자가 값(지문 · 링크)을 넘긴 뒤 저장소 · 이슈에서 한다.
 콘솔 · 클라우드 화면은 에이전트가 만지지 않는다.
 
-**지금 막힌 것(2026-11-08 감사)** — D-U-N-S 뒤 「FCM 값 + 대표전화」만 넣어서는 Play 결제가 심사를 못 지난다. 아래 차례 전부가 한 길이고, 계정 없이
+**지금 막힌 것(2026-11-08 감사)** — 계정을 만든 뒤 「FCM 값 + 대표전화」만 넣어서는 Play 결제가 심사를 못 지난다. 아래 차례 전부가 한 길이고, 계정 없이
 할 수 있는 저장소 일(등록 글 · 양식 답 · 계정 삭제 쪽 · 그래픽 이미지 초안)은 2026-11-08 에 끝냈다. **남은 걸음은 이 표가 원본이다** — 다른 문서는 이 표의 차례 번호를 가리킨다.
+**프로덕션은 비공개 테스트가 연속 14일을 채운 뒤에야 신청한다**(차례 13 · 14) — 그 14일 동안 11 · 12 를 진행한다.
 
 | 차례 | 걸음 | 누가 | 끝의 값 |
 | --- | --- | --- | --- |
-| 1 | **대표전화 번호를 받는다** — D-U-N-S 가 나오는 날 발급한다(아래 「대표전화 — D-U-N-S 날 받은 번호」 1) | **운영자** | 번호를 조율자에게 넘긴다 — 이슈 · 문서에는 적지 않는다(원본은 3 의 상수) |
-| 2 | 조직 개발자 계정을 만든다 — 조직 전화 · 개발자 전화는 1 의 번호, About you 에 **한국 개발자 칸**(사업자등록번호 · 통신판매업 신고번호 · **신고기관** · 연락 주소 · 전화, 아래 「조직 계정 만들기」 7) | **운영자** | 계정이 선 날 · 유형 「조직」을 #770 댓글로. 신고기관 이름(통신판매업 신고증의 기관)도 조율자에게 |
-| 3 | 1 의 번호와 2 의 신고기관을 **사업자 정보 상수**에 넣는 PR — `src/lib/brand/business.ts` 의 `BUSINESS.phone`(지금 빈 문자열, 77줄) · `MAIL_ORDER_AUTHORITY`(지금 빈 문자열, 87줄) → 「배포」 답 뒤 웹 묶음 배포(아래 「대표전화 — D-U-N-S 날 받은 번호」 3 · 4) | 에이전트(PR) · 조율자(배포) | 웹 바닥글 · `/terms` · `/refund` 에 대표전화가 선다. 앱은 그 PR 뒤에 굽는 AAB 가 싣는다 |
-| 4 | 판매자(결제) 프로필 · 세금 · 정산 계좌 — 이름 · 주소는 D&B 와 글자까지 같게. **계좌 확인이 「up to 5 days」라 먼저 연다** | **운영자** | 아래 「결제의 전제」 1 |
+| 1 | **대표전화 번호를 받는다** — 개인 계정을 만드는 날 발급한다(아래 「대표전화 — 계정을 만드는 날 받은 번호」 1) | **운영자** | 번호를 조율자에게 넘긴다 — 이슈 · 문서에는 적지 않는다(원본은 3 의 상수) |
+| 2 | **개인** 개발자 계정을 만든다 — 신원 확인 · 연락 전화는 1 의 번호 · Android 기기 확인 · **한국 개발자 칸**(사업자등록번호 · 통신판매업 신고번호 · **신고기관** · 연락 주소 · 전화, 아래 「개인 계정 만들기」 7) | **운영자** | 계정이 선 날 · 유형 「개인」을 #770 댓글로. 신고기관 이름(통신판매업 신고증의 기관)도 조율자에게 |
+| 3 | 1 의 번호와 2 의 신고기관을 **사업자 정보 상수**에 넣는 PR — `src/lib/brand/business.ts` 의 `BUSINESS.phone`(지금 빈 문자열, 77줄) · `MAIL_ORDER_AUTHORITY`(지금 빈 문자열, 87줄) → 「배포」 답 뒤 웹 묶음 배포(아래 「대표전화 — 계정을 만드는 날 받은 번호」 3 · 4) | 에이전트(PR) · 조율자(배포) | 웹 바닥글 · `/terms` · `/refund` 에 대표전화가 선다. 앱은 그 PR 뒤에 굽는 AAB 가 싣는다 |
+| 4 | 판매자(결제) 프로필 · 세금 · 정산 계좌 — 개인 계정의 법적 이름 · 주소는 이 프로필에서 온다(아래 「개인 계정 만들기」 3 · 4). **계좌 확인이 「up to 5 days」라 먼저 연다** | **운영자** | 아래 「결제의 전제」 1 |
 | 5 | 앱을 만든다(무료 · 앱 · 한국어) | **운영자** | 앱이 대시보드에 선다 |
 | 6 | 서비스 계정 키 둘(제출 · 결제 검증)을 만들고 Play 에 초대 | **운영자** | 제출 키는 EAS, 결제 키는 Vercel `GOOGLE_PLAY_SERVICE_ACCOUNT_JSON` 에만 |
 | 7 | (가려 둘 수 있음) **앱 푸시의 Firebase 값** — 계정이 없어도 지금 할 수 있다. 8 의 AAB 전에 넣으면 첫 버전부터 알림이 보인다(`docs/ops/runbook/push.md` 「앱 푸시를 켠다」, G-150). 안 넣으면 알림 없이 나간다 | **운영자** | EAS `GOOGLE_SERVICES_JSON` · Vercel `FCM_SERVICE_ACCOUNT_JSON` |
@@ -29,32 +31,34 @@
 | 10 | 결제 상품 넷 · RTDN · Vercel 변수 셋(`GOOGLE_PLAY_SERVICE_ACCOUNT_JSON` · `GOOGLE_PLAY_PUBSUB_AUDIENCE` · `GOOGLE_PLAY_PUBSUB_SERVICE_ACCOUNT`) → 「배포」 답 뒤 배포 → Send test message | **운영자**(콘솔 · 값) · 조율자(배포) | `docs/ops/runbook/credits.md` 「Google Play 결제」 1 ~ 7. 상품 id · 가격은 그 절의 표 |
 | 11 | **샌드박스 확인 아홉 줄** — 라이선스 테스터로 | 운영자 · 조율자 | 같은 절의 「샌드박스 확인」 표 1 ~ 9, 값은 #937 에 |
 | 12 | 등록정보 · 앱 콘텐츠 양식 — **그래픽 이미지 · 스크린샷 · 심사 계정 · 데이터 보안**. 등록정보 연락처 전화도 1 의 번호 | **운영자**(콘솔 · 촬영 · 계정) — 글 · 답 · 그림은 `docs/ops/play-listing.md` | 대시보드의 필수 할 일이 다 끝남. 아래 「스토어 등록정보」 · 「앱 콘텐츠 양식」 |
-| 13 | 내부 테스트 실기기 확인 → 프로덕션 | 운영자 · 조율자 | 아래 「내부 테스트에서 프로덕션으로」 |
+| 13 | **비공개 테스트 — 테스터 12명 이상이 연속 14일** 옵트인해 있다. 테스터는 운영자가 모은다(G-162) | **운영자**(테스터 · 콘솔) · 조율자 | 아래 「내부 테스트에서 프로덕션으로」 3. 시작한 날 · 테스터 수를 #770 댓글로 |
+| 14 | 대시보드 「Apply for production」 → 승인 뒤 프로덕션 출시 | 운영자 · 조율자 | 아래 「내부 테스트에서 프로덕션으로」 4 · 5 |
 
 **사업자 정보(상호 · 대표자 · 사업자등록번호 · 사업장 주소 · 대표전화 · 통신판매업 신고번호)의 값은 사업자 정보 상수(`src/lib/brand/business.ts`)에서
 읽는다** — 웹과 앱이 같은 상수를 읽는다(운영자 결정 2026-11-06). 이 절차서에는 값을 적지 않는다. 2026-11-08 에 빈 칸은 대표전화와 신고기관 둘이다(3).
 
-## 조직 계정 만들기
+## 개인 계정 만들기
 
-[Get started with Play Console](https://support.google.com/googleplay/android-developer/answer/6112435) · [Required information](https://support.google.com/googleplay/android-developer/answer/13628312) · [Choose a developer account type](https://support.google.com/googleplay/android-developer/answer/13634885) (2026-11-06).
+[Get started with Play Console](https://support.google.com/googleplay/android-developer/answer/6112435) · [Required information](https://support.google.com/googleplay/android-developer/answer/13628312) · [Choose a developer account type](https://support.google.com/googleplay/android-developer/answer/13634885) · [Update developer identity details](https://support.google.com/googleplay/android-developer/answer/16260648) · [테스트 요건](https://support.google.com/googleplay/android-developer/answer/14151465) (2026-11-09). 왜 개인인가와 확인 전인 주장은 ADR 0246.
 
-1. **D-U-N-S 의 이름 · 주소와 Google 결제 프로필의 법적 이름 · 주소를 글자까지 맞춘다** — 「you must ensure that the legal name and address in your Google payments profile match those in your Dun & Bradstreet profile」. 다르면 D&B 쪽을 먼저 고친다. D&B 의 이름은 영문 `Gapjagi Lab`, 주소는 사업장 주소의 영문(juso.go.kr) 꼴이다(#770 B 「적어 둔 값」) — 사업자 정보 상수(`src/lib/brand/business.ts`)의 한글 상호 · 주소와 같은 사업장이고 글자는 다르다. **맞출 짝은 D&B ↔ 결제 프로필**이다. 사업장 주소는 집이다(ADR 0172) — 사서함은 안 받는다 — **운영자**
-2. 등록비 **US$25** 한 번. 「Google Play does not accept prepaid cards」
-3. 넣는 값: 조직 이름 · 주소 · **조직 전화**(조직 확인용, Play 에 안 보인다) · **조직 웹사이트**(`<운영 주소>`, `docs/ops/runbook/domain.md` 맨 위) · 담당자 이름 · 담당자 이메일 · 담당자 전화 · **개발자 이메일 · 개발자 전화**(「shown as part of your developer profile on Google Play」 — 등록정보에 공개된다)
-4. 담당자 이메일 · 전화와 개발자 이메일 · 전화는 **일회용 비밀번호로 확인**하고 계정이 사는 동안 살아 있어야 한다
-5. 개발자 이메일은 고객 문의 이메일 `mannalmap@gmail.com`(`SUPPORT_EMAIL`, #770 F 「끝난 것」)으로 둔다. **조직 전화 · 개발자 전화 · 담당자 전화는 D-U-N-S 날 받은 대표전화 하나다**(아래 「대표전화 — D-U-N-S 날 받은 번호」, 운영자 답 2026-11-06) — **운영자**
-6. 계정에 2단계 인증을 켜고 #770 B 의 「MFA 확인」 줄에 날짜를 적는다
-7. **한국 개발자 칸** — Manage account → Account details → **Go to About you** → 사업자등록번호(Business registration number) · 통신판매업 신고번호(E-commerce license number) · 신고기관(「The name of the agency which issued the e-commerce license」 — 통신판매업 신고증의 기관. 값의 자리는 `MAIL_ORDER_AUTHORITY`(`src/lib/brand/business.ts`, 2026-11-08 빈 문자열) — 운영자가 신고증에서 읽어 넘기면 차례 3 의 PR 이 넣는다). 「For Korean developers distributing paid apps, or apps with in-app purchases」 — 풀이권이 인앱 상품이라 우리에게 걸린다. 같은 쪽은 사업자에게 연락 주소 · 전화(「Businesses: Contact address and phone number」)도 요구한다 — 사업장 주소와 대표전화. Play 는 이 값을 **한국 이용자에게 앱 설명 아래에** 보인다(「exposed only to Korean users beneath the description of your applications」) — 점신 · 포스텔러의 등록정보(2026-11-06 `hl=ko&gl=KR`, 「등록정보 글」 표의 주소)는 설명 끝에 「개발자 연락처 :」 묶음(상호 · 주소 · 사업자등록번호 · 통신판매업 신고번호 · 신고기관)이 그 꼴로 선다. 그래서 등록정보의 자세한 설명에는 판매자 정보를 따로 적지 않는다(`docs/ops/play-listing.md` 「자세한 설명」의 「넣지 않은 것」). 출처: [Requirements for distributing apps in specific countries/regions](https://support.google.com/googleplay/android-developer/answer/6223646) · [Additional contact information required for Korean app developers](https://support.google.com/googleplay/android-developer/answer/3255733) (2026-11-06). 값은 사업자 정보 상수(`src/lib/brand/business.ts` 의 `BUSINESS` · `MAIL_ORDER_AUTHORITY`) — **운영자**
+1. 만 18세 이상(「You must be at least 18 years of age to sign up for a Play Console account」). 등록비 **US$25** 한 번. 「Google Play does not accept prepaid cards」 — **운영자**
+2. **신원 확인** — 「complete the identity verification process when setting up your Play Console developer account」. 법적 이름의 정부 신분증과 신용카드를 요구받을 수 있고, 정보가 맞지 않다고 판정되면 등록비는 돌려받지 못한다(Get started) — **운영자**
+3. **넣는 값(개인 계정)** — 개발자 이름(「can be different from your legal name」, 「will appear on Google Play and can be changed any time」) · 연락 이메일 · 연락 전화(「for Google to contact you」 — 이용자에게 안 보인다) · 개발자 이메일(「shown as part of your developer profile on Google Play」). **법적 이름 · 주소는 결제 프로필에서 온다** — 「Your legal name and address will be taken from the Google Payments profile」. Play 는 법적 이름과 나라를 보이고, **수익화하면 전체 주소를 보인다** — 「If you decide to monetize on Google Play then Google will display your full address.」(Required information). 사업장 주소가 집이다(ADR 0172) — 바닥글에 이미 공개된 값이지만 Play 에도 보인다. 개발자 이름의 값은 운영자가 정한다(확인 전 — 아직 안 정했다) — **운영자**
+4. **결제 프로필의 유형** — 결제 프로필에는 계정 유형(조직 · 개인)이 있고 만든 뒤 못 바꾼다(「you can't update some details, such as the country, account type (organization or individual)」, Update developer identity details). 개인 계정에는 **「개인」** 유형으로 만든다. **확인 전** — 개인 계정이 개인 유형 프로필만 받는지, 개인사업자가 개인 유형 프로필에 사업자등록번호 · 세금 정보를 넣어 정산을 받는지는 공식 문서에서 못 찾았다(ADR 0246 「확인 전」) — **운영자**
+5. 개발자 이메일은 고객 문의 이메일 `mannalmap@gmail.com`(`SUPPORT_EMAIL`, #770 F 「끝난 것」)으로 둔다. **연락 전화는 계정을 만드는 날 받은 대표전화다**(아래 「대표전화 — 계정을 만드는 날 받은 번호」). 개발자 전화는 조직 계정만 받는 칸이다(Required information). 계정에 2단계 인증을 켜고 #770 B 의 「MFA 확인」 줄에 날짜를 적는다 — **운영자**
+6. **Android 기기 확인** — 「personal account owners must verify access to an Android device using the Play Console mobile app before publishing apps」(Get started). 시작 안내의 걸음 이름은 「Meet testing requirements and device verification requirements (Personal accounts only)」 — **운영자**
+7. **한국 개발자 칸** — Play Console → [Account details](https://play.google.com/apps/publish/#ProfilePlace) → 「Business contact details」(2026-11-06 에는 Manage account → Account details → **Go to About you** 로 적었다 — 이름이 달라 보이면 같은 칸을 찾는다). 「Individuals must only provide a contact telephone number.」 · 「Businesses must provide a contact address and contact telephone number.」 · 「For Korean businesses distributing paid apps, or apps with in-app purchases, please include:」 사업자등록번호(Business registration number) · 통신판매업 신고번호(E-commerce license number) · 신고기관(「The name of the agency which issued the e-commerce license」 — 통신판매업 신고증의 기관. 값의 자리는 `MAIL_ORDER_AUTHORITY`(`src/lib/brand/business.ts`, 2026-11-08 빈 문자열) — 운영자가 신고증에서 읽어 넘기면 차례 3 의 PR 이 넣는다). **우리는 개인 계정이지만 통신판매업 신고를 한 개인사업자로 인앱 상품을 판다** — 사업자 쪽 값(주소 · 전화 · 셋)을 다 넣는다. 개인 계정의 화면에 사업자 칸이 다 보이는지는 **확인 전**이다. Play 는 이 값을 **한국 이용자에게 앱 설명 아래에** 보인다(「exposed only to Korean users beneath the description of your applications」) — 점신 · 포스텔러의 등록정보(2026-11-06 `hl=ko&gl=KR`, 「등록정보 글」 표의 주소)는 설명 끝에 「개발자 연락처 :」 묶음(상호 · 주소 · 사업자등록번호 · 통신판매업 신고번호 · 신고기관)이 그 꼴로 선다. 그래서 등록정보의 자세한 설명에는 판매자 정보를 따로 적지 않는다(`docs/ops/play-listing.md` 「자세한 설명」의 「넣지 않은 것」). 출처: [Requirements for distributing apps in specific countries/regions](https://support.google.com/googleplay/android-developer/answer/6223646) · [Additional contact information required for Korean app developers](https://support.google.com/googleplay/android-developer/answer/3255733) (2026-11-09). 값은 사업자 정보 상수(`src/lib/brand/business.ts` 의 `BUSINESS` · `MAIL_ORDER_AUTHORITY`) — **운영자**
+8. **유형은 한쪽으로만 바뀐다** — 개인 → 조직은 된다(「To convert your individual developer account to an organization account」 — 조직 결제 프로필과 D-U-N-S 번호가 필요하다), 조직 → 개인은 안 된다(「You can't change the account type from an organization to an individual account.」, 둘 다 Update developer identity details). 계정 유형 쪽(Choose a developer account type)에는 이 문장이 없었다(2026-11-09). 조직 계정이 반드시 필요한 앱(금융 · 건강 · VpnService · 정부)은 우리에게 없다(`docs/ops/play-listing.md` 「콘솔 양식의 답」)
 
-**비공개 테스트 12명 · 14일 요건은 조직 계정에 없다.** 공식 쪽의 문장은 개인 계정만 말한다 — 「Google Play requires **personal** developer accounts created after November 13, 2023, to test their apps before those apps are eligible for distribution」([요건](https://support.google.com/googleplay/android-developer/answer/14151465)), 시작 안내의 그 걸음 이름도 「Meet testing requirements and device verification requirements (**Personal accounts only**)」([시작](https://support.google.com/googleplay/android-developer/answer/6112435)). 조직 계정에 대한 명시 문장은 없다 — 「없다」는 이 두 문장에서 읽은 것이다. 콘솔 대시보드에 「Apply for production」이 서지 않고 프로덕션 트랙이 바로 열리면 맞게 읽은 것이다.
+**비공개 테스트 12명 · 14일 요건이 우리에게 걸린다.** 「Developers with personal accounts created after November 13, 2023, must run a closed test for their app with a minimum of 12 testers who have been opted in continuously for at least 14 days」([요건](https://support.google.com/googleplay/android-developer/answer/14151465)). 차례는 아래 「내부 테스트에서 프로덕션으로」 3 · 4.
 
-## 대표전화 — D-U-N-S 날 받은 번호
+## 대표전화 — 계정을 만드는 날 받은 번호
 
-**대표전화는 D-U-N-S 가 나오는 날 발급한다**(운영자 답 2026-11-06). 사업자 정보 가운데 운영에 아직 없는 것은 이것 하나다 — 운영 웹의 바닥글에
+**대표전화는 개인 개발자 계정을 만드는 날 발급한다**(운영자 답 2026-11-06 의 「D-U-N-S 날」을 ADR 0246 이 이 날로 옮겼다). 사업자 정보 가운데 운영에 아직 없는 것은 이것 하나다 — 운영 웹의 바닥글에
 대표전화 줄이 없다(2026-11-06, 줄의 이름만 쟀다). **번호 하나가 Play 와 사업자 정보 상수 두 곳에 든다.** 번호는 이 문서 · 이슈에 적지 않는다 — 원본은 3 의 상수다.
 
-1. **번호를 받는다** — D-U-N-S 날 — **운영자**
-2. **Play Console 에 넣는다** — 조직 계정을 만들 때(위 「조직 계정 만들기」 3 · 5)의 **조직 전화 · 개발자 전화**(개발자 전화는 「shown as part of your developer profile on Google Play」 — 공개된다), 한국 개발자 칸의 연락 전화(위 7), 등록정보의 연락처 전화(`docs/ops/play-listing.md` 「분류 · 연락처 · 처리방침」). 일회용 비밀번호로 확인한다 — **운영자**
+1. **번호를 받는다** — 계정을 만드는 날 — **운영자**
+2. **Play Console 에 넣는다** — 개인 계정을 만들 때(위 「개인 계정 만들기」 3 · 5)의 **연락 전화**(Google 만 쓴다 — 공개되지 않는다), 한국 개발자 칸의 연락 전화(위 7 — 한국 이용자에게 보인다), 등록정보의 연락처 전화(`docs/ops/play-listing.md` 「분류 · 연락처 · 처리방침」) — **운영자**
 3. **번호를 조율자에게 넘긴다 → 에이전트가 사업자 정보 상수(`src/lib/brand/business.ts` 의 `BUSINESS.phone`)에 넣는 PR 을 연다** — 신고기관(`MAIL_ORDER_AUTHORITY`)도 같은 PR — 환경변수가 아니다(운영자 결정 2026-11-06). 웹 · 앱이 같은 상수를 읽는다. 숫자와 `-` 꼴로 넣는다(`businessInfoFrom` 이 꼴이 틀린 전화를 빈 값으로 본다 — 지금 판의 `/^[0-9][0-9-]{7,}$/`) — 운영자(번호) · 에이전트(PR)
 4. **「배포」 답 뒤 웹을 다시 올린다** — `docs/ops/runbook/deploy.md` 「묶음 배포」. 운영 웹의 바닥글 · `/terms` 제3조 · `/refund` 「판매자 정보」에 대표전화가 서는지 본다. **앱은 3 의 PR 이 머지된 main 에서 굽는 다음 AAB 가 싣는다** — 첫 `production` AAB(위 차례 8) 전에 머지되면 첫 판부터 앱의 약관 · 환불정책 화면에 선다 — 조율자
 
@@ -152,19 +156,19 @@ done
 
 ## 내부 테스트에서 프로덕션으로
 
-[Set up an open, closed, or internal test](https://support.google.com/googleplay/android-developer/answer/9845334) · [요건](https://support.google.com/googleplay/android-developer/answer/14151465) (2026-11-06).
+[Set up an open, closed, or internal test](https://support.google.com/googleplay/android-developer/answer/9845334) · [요건](https://support.google.com/googleplay/android-developer/answer/14151465) (2026-11-09).
 
 1. **내부 테스트** — Test and release → Testing → **Internal testing** → Testers → Create email list(최대 100명). 「You can start an internal test before completing app setup」 — 등록정보가 덜 차도 테스터는 받는다
 2. 테스터 링크로 깐 앱에서 실기기 확인 — **구글 로그인 · 카카오 로그인이 먼저다**(앱 서명 키 지문이 맞았나). 볼 줄은 `docs/ops/runbook/kakao-login.md` 「카카오 로그인 — 실기기 · 웹에서 볼 것」 5 ~ 8 과 #770 의 앱 줄, 결제는 `docs/ops/runbook/credits.md` 「Google Play 결제」의 「샌드박스 확인」 표
-3. **비공개 테스트는 조직 계정에 필수가 아니다**(위 「조직 계정 만들기」). 거칠지는 운영자가 정한다 — 거치지 않으면 내부 테스트에서 바로 4
-4. **프로덕션** — Test and release → **Production** → Create new release → 내부 테스트의 판을 올린다(Promote release) → 출시 국가 「대한민국」 → 검토로 보낸다. 대시보드에 「Apply for production」이 서면 개인 계정 요건이 걸린 것이다 — 멈추고 #770 에 적는다(그 신청은 「Review usually takes seven days or less」)
+3. **비공개 테스트 — 거쳐야 한다**(개인 계정, 위 「개인 계정 만들기」 끝). Test and release → Testing → **Closed testing** → 트랙을 만들고 버전을 올린다 → Testers 에서 이메일 목록(목록마다 최대 2,000명) 또는 Google 그룹을 고른다 → 테스터에게 옵트인 링크를 보낸다(「Each tester needs to opt in using the link」 — 링크는 앱 상태가 「Published」일 때만 보인다). **테스터 12명 이상이 연속 14일 옵트인해 있어야 한다** — 「the 14 days must be consecutive」, 14일을 못 채우고 나간 사람은 세지 않고(「Testers who opt in, test for fewer than 14 days, and then opt out do not count toward the requirement」), 나갔다 돌아오면 그 사람의 14일은 다시 연속으로 센다. 12명은 문턱이라 나가는 사람을 세어 더 모은다(`docs/ops/runbook/mobile-release.md` 「내부 트랙과 비공개 테스트는 다르다」). 모으는 일은 G-162. 비공개 테스트 버전이 표준 심사를 거치는지, 등록정보가 다 차야 비공개 테스트를 낼 수 있는지는 테스트 설정 쪽에 없다(**확인 전**, 2026-11-09) — **운영자**
+4. **프로덕션 신청** — 14일이 차면 대시보드 → **Apply for production** → 세 묶음의 물음(비공개 테스트 · 앱 · 프로덕션 준비)에 답한다. 「Review usually takes seven days or less, but can occasionally take longer.」 답의 초안은 조율자가 비공개 테스트의 기록(#770)으로 쓰고, 넣는 것은 운영자다. 승인되면 Test and release → **Production** → Create new release → 버전을 올린다(Promote release) → 출시 국가 「대한민국」 → 검토로 보낸다 — **운영자** · 조율자
 5. **베타 일정과 견준다** — 앱이 공개되는 날 웹의 운영 기간이 살아 있어야 한다(`docs/ops/runbook/signup.md` 「테스트 시작하기」, 공개 전환은 #1011). 심사 중에도 살아 있어야 한다(`docs/ops/runbook/mobile-release.md` 「심사 계정」 2)
 
 ## 결제의 전제
 
 포인터만 둔다 — **상품 · 가격 · 서버 키 이름 · RTDN · 샌드박스 확인의 원본은 `docs/ops/runbook/credits.md` 「Google Play 결제」다**(결제 코드는 #937 의 PR 들로 main 에 있다 — 2026-11-08). [Payments profile](https://support.google.com/googleplay/android-developer/answer/7161426) · [Getting ready](https://developer.android.com/google/play/billing/getting-ready) · [One-time products](https://support.google.com/googleplay/android-developer/answer/16430488) · [Play Developer API](https://developers.google.com/android-publisher/getting_started) (2026-11-06).
 
-1. **판매자(결제) 프로필** — Settings → Monetization → **Payments profile**(쪽에 따라 Manage account → Play apps settings → Monetization settings → Payments profile). 「You can't change your business location country」 — 대한민국. 법적 이름 · 주소는 D&B 와 글자까지 같게(위 「조직 계정 만들기」 1), 이름은 「shown to your customers and on your receipts」다. 정산 계좌는 「How you get paid」 → Add payment method(확인에 「up to 5 days」), 세금 정보도 같은 쪽 — **운영자**(#770 B 「Google Play 판매자 계정 · 정산 · 세금」)
+1. **판매자(결제) 프로필** — Settings → Monetization → **Payments profile**(쪽에 따라 Manage account → Play apps settings → Monetization settings → Payments profile). 「You can't change your business location country」 — 대한민국. 유형은 **「개인」**(위 「개인 계정 만들기」 4 — 만든 뒤 못 바꾼다). 법적 이름 · 주소가 개발자 계정의 법적 이름 · 주소가 되고(같은 절 3), 이름은 「shown to your customers and on your receipts」다. 정산 계좌는 「How you get paid」 → Add payment method(확인에 「up to 5 days」), 세금 정보도 같은 쪽 — **운영자**(#770 B 「Google Play 판매자 계정 · 정산 · 세금」)
 2. **상품은 결제 라이브러리가 든 판이 한 트랙에 올라간 뒤에 만든다** — 「you must publish a version of your app that includes the Google Play Billing Library … to enable billing-related features in the Google Play Console, such as configuring the products」, 「publish to any track, including the internal test track」. 결제 라이브러리(`expo-iap`, Play Billing Library 9.1.0)는 이미 앱에 들어 있어 **첫 `production` AAB(차례 8)가 그 버전이다.** 새 앱은 **Billing Library 8 이상**이어야 한다(그 쪽의 2026-08-31 기한 · 11-01 연장). 상품은 Monetize with Play → Products → **One-time products** → Create one-time product — **상품 ID · 가격은 `credits.md` 「Google Play 결제」 2 의 표대로 만든다**(PRD §7.0). 「You can't change or reuse a product ID」 — 글자를 PR 에서 그대로 옮긴다 — **운영자**
 3. **결제 검증용 서비스 계정** — 제출 키(「EAS 제출 잇기」 1)와 **따로** 만든다(권한을 나눈다). Users and permissions 에서 「View financial data, orders, and cancellation survey responses」 · 「Manage orders and subscriptions」. 「You no longer need to link your developer account to a Google Cloud Project」. 키를 넣는 자리는 Vercel `GOOGLE_PLAY_SERVICE_ACCOUNT_JSON`(`credits.md` 「Google Play 결제」 3) — **운영자**(값)
 4. **RTDN** — Google Cloud Pub/Sub 에 주제(topic)를 만들고 `google-play-developer-notifications@system.gserviceaccount.com` 에 **Pub/Sub Publisher** 를 준다 → Play Console → Monetize(with Play) → **Monetization setup** → 「Enable real-time notifications」 → Topic name `projects/<프로젝트>/topics/<주제>` → 「Get all notifications for subscriptions and one-time products」 → Send Test Message. 구독(push 주소)은 우리 웹의 통지 문이다 — 그 문은 `/api/store/google-play`, 인증 구독 · audience 의 차례는 `credits.md` 「Google Play 결제」 4(`docs/ops/runbook/domain.md` 표 7 이 새 도메인을 쓴다) — **운영자**

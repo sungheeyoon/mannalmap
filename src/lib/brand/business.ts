@@ -73,7 +73,7 @@ export const BUSINESS: { readonly [K in Exclude<BusinessKey, 'email'>]: string }
   representative: '성희윤',
   registrationNumber: '482-14-02944',
   address: '인천광역시 부평구 부개로 11, 505동 1601호 (부개동, 부개5단지 주공아파트)',
-  /** D-U-N-S 날 발급 — 운영자가 알려주면 넣는다 */
+  /** Play 개인 개발자 계정을 만드는 날 발급 — 운영자가 알려주면 넣는다(ADR 0246) */
   phone: '',
   mailOrderNumber: '제2026-인천부평-1748호',
   hostingProvider: 'Vercel Inc.',

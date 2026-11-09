@@ -17,7 +17,7 @@ import { bodyOf } from '../../me/writes';
  *   앱은 결제가 끝날 때마다, 그리고 켤 때마다 소비되지 않은 구매를 다시 보낸다(결제 중 앱이 꺼진 뒤의 복구). 같은 토큰은 몇 번 와도
  *   `replayed` 다. 사람은 세션의 사람이고, 결제창에 실린 계정 표지가 다르면 지급하지 않는다
  *
- * 열쇠 · 서비스 계정 키가 없으면 503 이다 — 운영자가 Play 조직 계정 뒤에 넣는다(런북 credits.md 「Google Play 결제」).
+ * 열쇠 · 서비스 계정 키가 없으면 503 이다 — 운영자가 Play 개발자 계정 뒤에 넣는다(런북 credits.md 「Google Play 결제」).
  */
 export async function GET(request: Request): Promise<Response> {
   const session = await mobileSession(request, { touches: true });
