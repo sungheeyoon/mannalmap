@@ -228,6 +228,16 @@ export const BIRTH_DIGIT_LABEL = {
   saeun: '세운 연도',
 } as const;
 
+/**
+ * 출생 정보 폼의 펼치는 칸 이름 — 웹 `SelectField` 와 앱 `Select` 가 함께 쓴다. `label` 은 보이는 이름이자 머리의 낭독 이름,
+ * `name` 은 펼친 목록(라디오 묶음)의 이름이다 — 없으면 `label` 과 같다. 부품의 프롭 이름과 같아 그대로 펼쳐 넘긴다.
+ */
+export const BIRTH_SELECT_LABEL = {
+  city: { label: '출생지' },
+  rule: { label: '자시', name: '자시 규칙' },
+  basis: { label: '시간 기준' },
+} as const;
+
 const SAEUN_MIN = 1900;
 const SAEUN_MAX = 2100;
 

@@ -7,6 +7,7 @@ import {
   REPORT_DETAIL_MAX,
   REPORT_DONE,
   REPORT_NOTE,
+  REPORT_REASON_LABEL,
   REPORT_REASONS,
   type ReportReason,
 } from '@/src/lib/account';
@@ -197,7 +198,7 @@ export function ReportForm({
       className="flex flex-col gap-3"
     >
       <label className="flex flex-col gap-1.5">
-        <span className="text-small font-semibold text-secondary">신고 사유</span>
+        <span className="text-small font-semibold text-secondary">{REPORT_REASON_LABEL}</span>
         <select
           value={reason}
           onChange={(event) => setReason(event.target.value as ReportReason)}
