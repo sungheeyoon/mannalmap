@@ -234,6 +234,8 @@ AWS 마법사(`docs/ops/runbook/security.md` 「반출」의 마법사)가 사�
 }
 ```
 
+**`<프로젝트 이름>` 은 Vercel 프로젝트의 지금 이름(`mannalmap`)이다 — Vercel 에서 프로젝트 이름을 바꾸면 OIDC 토큰의 `sub` 가 따라 바뀌어, 이 신뢰 조건을 같이 고치기 전에는 역할 받기가 `AccessDenied` 로 선다.** 2026-11-07 에 `saju` → `mannalmap` 으로 바꾸고 조건을 안 고쳐 2026-11-11 까지 사진 읽기 · 올리기 · 청소가 막혔다(서버 기록 `get:accessdenied` · `put:accessdenied`, #1127). 그날 `saju-photo-store` 와 감사 반출 역할 `saju-audit-export`(`docs/ops/runbook/security.md`) 둘의 `sub` 를 `project:mannalmap` 으로 고쳤다 — `aws iam update-assume-role-policy`. 이름을 다시 바꾸는 날은 두 역할을 같은 날 고친다.
+
 **앱 역할의 권한 정책 — 최소:**
 
 ```json

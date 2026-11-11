@@ -333,7 +333,7 @@ describe('AWS 마법사 — 처음 도는 날', () => {
             StringEquals: {
               'oidc.vercel.com/sungheeyoons-projects:aud': 'https://vercel.com/sungheeyoons-projects',
               'oidc.vercel.com/sungheeyoons-projects:sub':
-                'owner:sungheeyoons-projects:project:saju:environment:production',
+                'owner:sungheeyoons-projects:project:mannalmap:environment:production',
             },
           },
         },

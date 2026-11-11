@@ -352,7 +352,7 @@ banner "AWS — 접속기록 반출(S3) 켜기"
 
 # 처음 도는 날의 기본값 — 물을 때 Enter 로 그대로 쓴다
 [[ -n "$(state VERCEL_TEAM)" ]] || remember VERCEL_TEAM "sungheeyoons-projects"
-[[ -n "$(state VERCEL_PROJECT)" ]] || remember VERCEL_PROJECT "saju"
+[[ -n "$(state VERCEL_PROJECT)" ]] || remember VERCEL_PROJECT "mannalmap"
 
 # ── 1 ────────────────────────────────────────────────────────────────────
 stage "준비물 — AWS CLI · Vercel CLI"
