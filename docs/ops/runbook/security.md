@@ -210,7 +210,7 @@ bash scripts/aws-wizard.sh
 
 | 마법사 Stage | 이 절의 걸음 | 무엇을 |
 | --- | --- | --- |
-| 1 준비물 | — | CLI 둘, Vercel 팀 · 프로젝트 이름(기본 `sungheeyoons-projects` · `saju`) |
+| 1 준비물 | — | CLI 둘, Vercel 팀 · 프로젝트 이름(기본 `sungheeyoons-projects` · `mannalmap` — 2026-11-07 에 `saju` 에서 바뀌었다. 이름을 바꾸면 역할의 신뢰 `sub` 도 고친다, `docs/ops/runbook/photo-store.md` 의 신뢰 정책 아래) |
 | 2 계정 · 루트 MFA | 1 | 콘솔 |
 | 3 관리자 · CLI 로그인 | 1 | 콘솔에서 IAM 사용자 `saju-admin`(AdministratorAccess · SignInLocalDevelopmentAccess · MFA) → `aws login --profile saju-admin`. **IAM 사용자가 아니면 멈춘다**(루트 · SSO 같은 역할 세션) — 루트는 역할을 맡을 수 없고, 9 의 검증 역할은 이 사용자 하나만 믿는다 |
 | 4 감사 버킷 | 2 | `saju-audit-<무작위 8자>` · 서울 · Object Lock(Versioning 함께) · Block Public Access 넷 · SSE-S3 기본 |
