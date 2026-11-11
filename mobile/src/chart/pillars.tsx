@@ -246,7 +246,7 @@ function Glyph({
       </View>
       {relationshipSeat && (
         <View style={styles.seat}>
-          <T size="xs" bold>관계 자리</T>
+          <T size="xs" bold style={styles.center}>관계 자리</T>
         </View>
       )}
     </View>
@@ -321,7 +321,8 @@ const styles = StyleSheet.create({
   captionRow: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'center', gap: 2 },
   /* 같은 까닭 — 「사·화」보다 조금 넓게 잡는다 */
   caption: { minWidth: TYPE.fine * 2.75, lineHeight: 16, textAlign: 'center' },
-  seat: { borderRadius: RADIUS.pill, paddingHorizontal: 5, backgroundColor: COLOR.surface },
+  /* 일주 칸은 테두리 · 안쪽 여백만큼 좁다 — 글자에 꼭 맞는 폭에 좌우 여백을 더하면 360 폭에서 「관계 자 / 리」로 꺾인다. 칸 폭을 다 쓴다 */
+  seat: { alignSelf: 'stretch', borderRadius: RADIUS.pill, backgroundColor: COLOR.surface },
   notice: { marginTop: 16, gap: 6, borderRadius: RADIUS.cell, borderWidth: 1, borderColor: COLOR.warningLineSoft, backgroundColor: COLOR.warningWash, paddingHorizontal: 16, paddingVertical: 12 },
   details: { marginTop: 20, borderTopWidth: 1, borderTopColor: COLOR.border, paddingTop: 20 },
   firstDisclosure: { marginTop: 20, paddingTop: 12 },
