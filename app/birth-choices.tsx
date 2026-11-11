@@ -95,6 +95,7 @@ export function SelectField<T extends string>({
   onToggle,
   onPick,
   disabled = false,
+  children: note,
 }: {
   label: string;
   /** 낭독기가 부르는 묶음 이름 — 보이는 이름이 짧을 때(「자시」 → 「자시 규칙」) */
@@ -105,8 +106,11 @@ export function SelectField<T extends string>({
   onToggle: () => void;
   onPick: (value: T) => void;
   disabled?: boolean;
+  /** 칸 바로 아래 늘 서는 한 줄(출생지의 「모르면 서울」) — 펼친 목록보다 위다. 문구 상수는 JSX 자식 자리에서만 부르므로 자식으로 받는다(ADR 0159) */
+  children?: ReactNode;
 }) {
   const id = useId();
+  const noteId = useId();
   const toggle = useRef<HTMLButtonElement>(null);
   const current = options.find((option) => option.value === value);
 
@@ -122,6 +126,7 @@ export function SelectField<T extends string>({
         type="button"
         aria-expanded={open}
         aria-controls={id}
+        aria-describedby={note ? noteId : undefined}
         disabled={disabled}
         onClick={onToggle}
         className={styles.selectButton}
@@ -132,6 +137,12 @@ export function SelectField<T extends string>({
           <Icon name="chevron" className={`${styles.chevron} ${open ? '-rotate-90' : 'rotate-90'}`} />
         </span>
       </button>
+
+      {note && (
+        <p id={noteId} className={styles.selectNote}>
+          {note}
+        </p>
+      )}
 
       {open && (
         <div id={id} role="radiogroup" aria-label={name} className={styles.menu}>

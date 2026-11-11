@@ -143,6 +143,34 @@ describe('경도 보정(longitude)', () => {
     expect(minutes).toBeCloseTo(-2.09, 1);
   });
 
+  it('먼저 있던 출생지 열 곳은 이름과 경도가 그대로다 — 저장된 사람의 명식이 움직이지 않는다', () => {
+    expect(CITY_LONGITUDES).toMatchObject({
+      서울: 126.9784,
+      부산: 129.0756,
+      대구: 128.6014,
+      인천: 126.7052,
+      광주: 126.8526,
+      대전: 127.3845,
+      울산: 129.3114,
+      제주: 126.5312,
+      춘천: 127.7298,
+      강릉: 128.8761,
+    });
+  });
+
+  it('출생지는 행정구역 차례로 서고, 춘천 · 강릉은 강원 바로 뒤다 — 이 차례가 화면 목록의 차례다', () => {
+    expect(Object.keys(CITY_LONGITUDES)).toEqual([
+      '서울', '부산', '대구', '인천', '광주', '대전', '울산', '세종', '경기', '강원', '춘천', '강릉', '충북', '충남', '전북', '전남', '경북', '경남', '제주',
+    ]);
+  });
+
+  it('출생지는 모두 남한의 경도 안이다 — 도의 대표 지점을 잘못 옮겨 적으면 걸린다', () => {
+    for (const longitude of Object.values(CITY_LONGITUDES)) {
+      expect(longitude).toBeGreaterThan(126);
+      expect(longitude).toBeLessThan(129.6);
+    }
+  });
+
   it('표준자오선보다 동쪽이면 양수다', () => {
     expect(longitudeCorrectionMinutes(CITY_LONGITUDES.부산, 540)).toBeGreaterThan(
       longitudeCorrectionMinutes(CITY_LONGITUDES.서울, 540),

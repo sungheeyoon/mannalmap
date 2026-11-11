@@ -183,6 +183,12 @@ export const DEFAULT_QUERY: Query = {
 };
 
 const CITY_NAMES = Object.keys(CITY_LONGITUDES) as CityName[];
+
+/**
+ * 출생지 칸의 선택지 — 웹 폼(`app/birth-form.tsx`)과 앱 폼 둘(`mobile/src/people/birth-fields.tsx` · `mobile/src/app/index.tsx`)이
+ * 이 한 벌을 읽는다. 값 · 보이는 이름 · 차례의 원본은 `CITY_LONGITUDES` 하나다 — 보이는 이름이 곧 저장되는 값이다.
+ */
+export const BIRTH_CITY_OPTIONS: readonly { value: CityName; label: string }[] = CITY_NAMES.map((city) => ({ value: city, label: city }));
 export const LATE_NIGHT_RULES: readonly LateNightRule[] = ['jo', 'ya'];
 
 /** 시각을 모른다는 표시. 시각과 같은 칸을 쓰므로 "모름인데 14:30" 이 만들어지지 않는다 */

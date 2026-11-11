@@ -8,9 +8,9 @@ import { COMPAT_CREDIT_NOTE, COMPAT_ENTRY, COMPAT_SIGN_IN_ACTION, COMPAT_SIGN_IN
 import { ELEVATION } from '@design';
 import { calculateChart, dateRefusal } from '@input/chart';
 import { convertedLine, dateOfParts, limitsOf, timeOfParts } from '@input/entry';
-import { ADVANCED_SETTINGS, HOUR_UNKNOWN_HINT } from '@input/copy';
-import { BIRTH_DIGIT_LABEL, BIRTH_SELECT_LABEL, DEFAULT_QUERY, HOUR_UNKNOWN_CHOICE, NAME_MAX, TIME_BASES, TIME_BASIS, type Query } from '@input/query';
-import { CALENDARS, CALENDAR_KO, CITY_LONGITUDES, GENDERS, GENDER_KO, SUPPORTED_YEAR_RANGE, type CityName, type LateNightRule } from '@saju';
+import { ADVANCED_SETTINGS, BIRTH_CITY_NOTE, HOUR_UNKNOWN_HINT } from '@input/copy';
+import { BIRTH_CITY_OPTIONS, BIRTH_DIGIT_LABEL, BIRTH_SELECT_LABEL, DEFAULT_QUERY, HOUR_UNKNOWN_CHOICE, NAME_MAX, TIME_BASES, TIME_BASIS, type Query } from '@input/query';
+import { CALENDARS, CALENDAR_KO, GENDERS, GENDER_KO, SUPPORTED_YEAR_RANGE, type CityName, type LateNightRule } from '@saju';
 
 import { chartPath } from '@consent/app-destination';
 import { entryFor, type Entry, type EntryOpened } from '@consent/entry';
@@ -25,7 +25,6 @@ import { COLOR, FONT, RADIUS, TYPE } from '@/ui/tokens';
 import { CardFrame, Paper } from '@/ui/surfaces';
 import { KEEP_VIEW } from '@/ui/keep-view';
 
-const CITIES = Object.keys(CITY_LONGITUDES) as CityName[];
 const HOUR_CHOICES = [
   { value: 'known', label: '직접 입력' },
   { value: 'unknown', label: HOUR_UNKNOWN_CHOICE },
@@ -280,7 +279,9 @@ function BirthScreen({ signedOut }: { signedOut: boolean }) {
 
               <View style={styles.rail}>
                 <Text aria-hidden style={styles.railLabel}>{BIRTH_SELECT_LABEL.city.label}</Text>
-                <Select {...BIRTH_SELECT_LABEL.city} value={city} onPick={setCity} options={CITIES.map((one) => ({ value: one, label: one }))} />
+                <Select {...BIRTH_SELECT_LABEL.city} value={city} onPick={setCity} options={BIRTH_CITY_OPTIONS}>
+                  {BIRTH_CITY_NOTE}
+                </Select>
               </View>
             </CardFrame>
 

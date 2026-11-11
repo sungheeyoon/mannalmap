@@ -4,14 +4,13 @@ import { Keyboard, Pressable, StyleSheet, Text, TextInput, View } from 'react-na
 import { BUTTON_OFF_OPACITY } from '@design';
 import { dateRefusal } from '@input/chart';
 import { convertedLine, dateOfParts, limitsOf, splitDate, splitTime, timeOfParts } from '@input/entry';
-import { ADVANCED_SETTINGS, HOUR_UNKNOWN_HINT } from '@input/copy';
-import { BIRTH_DIGIT_LABEL, BIRTH_SELECT_LABEL, DEFAULT_QUERY, HOUR_UNKNOWN_CHOICE, NAME_MAX, TIME_BASES, TIME_BASIS, type Query } from '@input/query';
-import { CALENDARS, CALENDAR_KO, CITY_LONGITUDES, GENDERS, GENDER_KO, SUPPORTED_YEAR_RANGE, type CityName, type LateNightRule } from '@saju';
+import { ADVANCED_SETTINGS, BIRTH_CITY_NOTE, HOUR_UNKNOWN_HINT } from '@input/copy';
+import { BIRTH_CITY_OPTIONS, BIRTH_DIGIT_LABEL, BIRTH_SELECT_LABEL, DEFAULT_QUERY, HOUR_UNKNOWN_CHOICE, NAME_MAX, TIME_BASES, TIME_BASIS, type Query } from '@input/query';
+import { CALENDARS, CALENDAR_KO, GENDERS, GENDER_KO, SUPPORTED_YEAR_RANGE, type CityName, type LateNightRule } from '@saju';
 
 import { Choices, DigitField, Field, FieldLabel, Select } from '@/ui/parts';
 import { COLOR, FONT, RADIUS, TYPE } from '@/ui/tokens';
 
-const CITIES = Object.keys(CITY_LONGITUDES) as CityName[];
 const HOUR_CHOICES = [
   { value: 'known', label: '직접 입력' },
   { value: 'unknown', label: HOUR_UNKNOWN_CHOICE },
@@ -147,7 +146,9 @@ export function BirthFields({
 
       <View style={styles.rail}>
         <Text aria-hidden style={styles.railLabel}>{BIRTH_SELECT_LABEL.city.label}</Text>
-        <Select {...BIRTH_SELECT_LABEL.city} disabled={disabled} value={values.city} onPick={set.setCity} options={CITIES.map((one) => ({ value: one, label: one }))} />
+        <Select {...BIRTH_SELECT_LABEL.city} disabled={disabled} value={values.city} onPick={set.setCity} options={BIRTH_CITY_OPTIONS}>
+          {BIRTH_CITY_NOTE}
+        </Select>
       </View>
 
       <Pressable accessibilityRole="button" accessibilityState={{ expanded: values.advanced, disabled }} disabled={disabled} onPress={() => set.setAdvanced(!values.advanced)} style={[styles.disclosure, disabled && styles.off]}>
