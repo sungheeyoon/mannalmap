@@ -3,7 +3,7 @@ import { join, relative } from 'node:path';
 
 import { describe, expect, it } from 'vitest';
 
-import { appHeadStands, dockStands, tabRouteId } from '../src/lib/app-shell';
+import { TAB_GROUP, TAB_ROUTE, appHeadStands, compatStepId, dockStands, tabMoves, type ShellState } from '../src/lib/app-shell';
 
 /**
  * **앱의 뒤로가기는 부품 하나다**(운영자 2026-10-31) — `<` 아이콘만, 맨 위 왼쪽 고정. 화면마다 제 뒤로가기를 다시 지으면
@@ -34,9 +34,9 @@ const NO_BAR: Record<string, string> = {
   'app/auth/index.tsx': '막다른 안내 판 — replace 로만 오고 나가는 길은 「처음으로」다',
   'app/auth/denied.tsx': '막다른 안내 판 — replace 로만 오고 나가는 길은 판 안의 두 단추다',
   'app/closed.tsx': '서비스 종료 고지 — 돌아갈 곳이 없게 관문이 보낸 자리다',
-  'app/me/index.tsx': '탭 첫 화면 — 앱 머리',
-  'app/me/matching/index.tsx': '탭 첫 화면 — 앱 머리',
-  'app/me/chat/index.tsx': '탭 첫 화면 — 앱 머리',
+  'app/me/(tabs)/index.tsx': '탭 첫 화면 — 앱 머리',
+  'app/me/(tabs)/matching/index.tsx': '탭 첫 화면 — 앱 머리',
+  'app/me/(tabs)/chat/index.tsx': '탭 첫 화면 — 앱 머리',
   'app/me/discovery.tsx': '화면 없이 설정으로 넘긴다',
   'app/+not-found.tsx': '없는 주소의 안내 판 — 나가는 길은 판 안의 「홈으로」다',
   'app/dev-parts.tsx': '개발에서만 서는 부품 견본 — 앱 안의 길이 없다',
@@ -87,15 +87,95 @@ describe('앱의 뒤로가기', () => {
     expect(appHeadStands('/me/compat', { pickA: '1' } as never)).toBe(true);
   });
 
-  it('탭 첫 화면으로 가는 길은 goTab 하나다 — 그냥 부르면 새 화면이 쌓여 입력 · 스크롤을 잃는다', () => {
+  it('탭 첫 화면으로 가는 길은 goTab 하나다 — 그냥 부르면 하위 화면 위에 탭 묶음이 새로 쌓여 입력 · 스크롤을 잃는다', () => {
     const direct = sources.filter(({ text }) => /router\.(push|navigate)\(\s*['"`]\/me(\/compat|\/matching|\/chat)?['"`]/.test(text));
     expect(direct.map(({ file }) => file)).toEqual([]);
   });
 
-  it('탭 자리는 궁합의 고르기와 결과를 가른다', () => {
-    expect(tabRouteId('compat/index')).toBe(tabRouteId('compat/index', { pickA: '1' } as never));
-    expect(tabRouteId('compat/index', { a: '1', b: '2' })).not.toBe(tabRouteId('compat/index'));
-    expect(tabRouteId('compat/index', { a: '1', b: '2' })).not.toBe(tabRouteId('compat/index', { a: '1', b: '3' }));
+  it('궁합 탭의 자리는 고르기와 결과를 가른다', () => {
+    expect(compatStepId()).toBe('');
+    expect(compatStepId({ pickA: '1' } as never)).toBe('');
+    expect(compatStepId({ a: '1' })).toBe('');
+    expect(compatStepId({ a: '1', b: '2' })).not.toBe('');
+    expect(compatStepId({ a: '1', b: '2' })).not.toBe(compatStepId({ a: '1', b: '3' }));
+  });
+
+  it('탭 묶음의 화면 넷은 탭 주소 넷과 같은 파일이다', () => {
+    const dir = join(MOBILE, 'app', 'me', TAB_GROUP);
+    const routes = filesIn(dir).map((path) => relative(dir, path).replace(/\.tsx$/, '')).filter((name) => !name.endsWith('_layout'));
+    /* 궁합은 제 스택이 있어 탭의 이름이 폴더다 */
+    expect(routes.map((name) => (name === 'compat/index' ? 'compat' : name)).sort()).toEqual(Object.values(TAB_ROUTE).sort());
+    expect(textOf(`app/me/${TAB_GROUP}/compat/_layout.tsx`)).toMatch(/<Stack\b/);
+  });
+
+  /**
+   * **탭 이동은 화면의 순서를 바꾸지 않는다**(#1126) — 스택 하나에서 아래에 있던 탭 화면을 맨 위로 올리면 안드로이드가 화면을 떼어 본문이 빈다.
+   * 걸음은 걷기(POP) · 탭 켜기(JUMP_TO) · 궁합의 고르기로 가기(NAVIGATE + pop)뿐이다.
+   */
+  describe('탭으로 가는 걸음', () => {
+    const tabs = (index: number, compat?: Partial<ShellState>) => ({
+      name: TAB_GROUP,
+      state: {
+        key: 'tabs-1',
+        index,
+        routes: [{ name: 'index' }, { name: 'compat', ...(compat === undefined ? {} : { state: compat }) }, { name: 'matching/index' }, { name: 'chat/index' }],
+      },
+    });
+    const me = (index: number, routes: ShellState['routes']): ShellState => ({ key: 'me-1', index, routes });
+    const picker = { name: 'index', params: {} };
+    const result = { name: 'index', params: { a: '1', b: '2' } };
+
+    it('탭 첫 화면에서는 탭만 켠다', () => {
+      expect(tabMoves(me(0, [tabs(0)]), 'compat')).toEqual([{ type: 'JUMP_TO', payload: { name: 'compat' }, target: 'tabs-1' }]);
+    });
+
+    it('선 탭을 다시 누르면 아무것도 안 한다', () => {
+      expect(tabMoves(me(0, [tabs(0)]), 'index')).toEqual([]);
+    });
+
+    it('하위 화면에서는 묶음까지 걷고 탭을 켠다', () => {
+      expect(tabMoves(me(2, [tabs(0), { name: 'people/index' }, { name: 'people/[personId]' }]), 'chat/index')).toEqual([
+        { type: 'POP', payload: { count: 2 }, target: 'me-1' },
+        { type: 'JUMP_TO', payload: { name: 'chat/index' }, target: 'tabs-1' },
+      ]);
+    });
+
+    it('하위 화면에서 연 궁합 결과(묶음이 하나 더 쌓인다) 위에서도 처음 묶음으로 돌아간다', () => {
+      const second = { name: TAB_GROUP, state: { key: 'tabs-2', index: 1, routes: [{ name: 'index' }, { name: 'compat' }] } };
+      expect(tabMoves(me(2, [tabs(1), { name: 'people/[personId]' }, second]), 'index')).toEqual([
+        { type: 'POP', payload: { count: 2 }, target: 'me-1' },
+        { type: 'JUMP_TO', payload: { name: 'index' }, target: 'tabs-1' },
+      ]);
+    });
+
+    it('궁합은 고르기 자리로 간다 — 결과가 위에 있을 때만 걸음을 더한다', () => {
+      const toPicker = { type: 'NAVIGATE', payload: { name: 'index', params: {}, merge: true, pop: true }, target: 'compat-1' };
+      expect(tabMoves(me(0, [tabs(1, { key: 'compat-1', index: 1, routes: [picker, result] })]), 'compat')).toEqual([toPicker]);
+      expect(tabMoves(me(0, [tabs(0, { key: 'compat-1', index: 1, routes: [picker, result] })]), 'compat')).toEqual([
+        { type: 'JUMP_TO', payload: { name: 'compat' }, target: 'tabs-1' },
+        toPicker,
+      ]);
+      expect(tabMoves(me(0, [tabs(1, { key: 'compat-1', index: 0, routes: [picker] })]), 'compat')).toEqual([]);
+    });
+
+    it('걸음에 화면을 다시 쌓거나 자리를 바꾸는 것이 없다', () => {
+      const all = [
+        tabMoves(me(1, [tabs(3, { key: 'compat-1', index: 1, routes: [picker, result] }), { name: 'settings' }]), 'compat'),
+        tabMoves(me(0, [tabs(2)]), 'index'),
+      ].flatMap((moves) => moves ?? []);
+      expect(all.length).toBeGreaterThan(0);
+      for (const move of all) expect(['POP', 'JUMP_TO'].includes(move.type) || (move.type === 'NAVIGATE' && move.payload.pop)).toBe(true);
+    });
+
+    it('스택에 묶음이 없으면 걸음을 내지 않는다 — 부르는 쪽이 주소로 간다', () => {
+      expect(tabMoves(me(0, [{ name: 'people/index' }]), 'index')).toBeNull();
+      expect(tabMoves(me(0, [{ name: TAB_GROUP }]), 'index')).toBeNull();
+    });
+
+    it('앱은 탭을 옮길 때 스택의 자리를 다시 쓰라고 하지 않는다', () => {
+      const reorders = sources.filter(({ text }) => /dangerouslySingular/.test(text.replace(/\/\*[\s\S]*?\*\/|\/\/.*$/gm, '')));
+      expect(reorders.map(({ file }) => file)).toEqual([]);
+    });
   });
 
   it('탭 막대는 대화방에서만 걷힌다', () => {

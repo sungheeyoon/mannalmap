@@ -109,7 +109,7 @@ describe('재기가 어김을 잡는다', () => {
   });
 
   it('화면은 주소 폴더 전부와 .tsx 다 — 주소 폴더의 .ts 도 화면이다', () => {
-    expect(isScreen('mobile/src/app/me/index.tsx')).toBe(true);
+    expect(isScreen('mobile/src/app/me/(tabs)/index.tsx')).toBe(true);
     expect(isScreen('mobile/src/app/me/helpers.ts')).toBe(true);
     expect(isScreen('mobile/src/home/counts.ts')).toBe(false);
     expect(isScreen('mobile/src/home/self-card.tsx')).toBe(true);

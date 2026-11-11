@@ -38,7 +38,7 @@ const WEB = [
   /* 웹은 이 읽는 이름을 두 상수로 잇는다(`${SHELF_TITLE} ${SEE_ALL}`) */
   .concat(' 풀이 보관함 모두 보기');
 
-const APP = ['mobile/src/app/me/_layout.tsx', 'mobile/src/app/me/index.tsx', ...readdirSync(join(ROOT, 'mobile/src/home')).map((name) => `mobile/src/home/${name}`)];
+const APP = ['mobile/src/app/me/_layout.tsx', 'mobile/src/app/me/(tabs)/index.tsx', ...readdirSync(join(ROOT, 'mobile/src/home')).map((name) => `mobile/src/home/${name}`)];
 
 describe('앱 껍데기 · 홈의 글자', () => {
   for (const file of APP) {
