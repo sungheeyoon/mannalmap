@@ -360,7 +360,7 @@ matching-01 의 「이름 곁에 궁합 단추」 배치를 바꾸므로 운영�
 
 | 자리 | 이전 | 넣은 글자 | 출처 |
 | --- | --- | --- | --- |
-| 안내 제목 `mobile/src/app/me/matching/index.tsx` | 먼저 내 사주와 이름이 필요해요 | 먼저 내 사주가 필요해요 | 실사례 없음 — 앱에서는 가입이 닉네임을 받아 이름은 이미 있다(`complete_signup`) |
+| 안내 제목 `mobile/src/app/me/(tabs)/matching/index.tsx` | 먼저 내 사주와 이름이 필요해요 | 먼저 내 사주가 필요해요 | 실사례 없음 — 앱에서는 가입이 닉네임을 받아 이름은 이미 있다(`complete_signup`) |
 | 안내 줄 | … 내 사주를 저장하고 닉네임을 지으면 오늘의 인연을 볼 수 있어요. | … 내 사주를 저장하면 인연 찾기에 참여합니다. 참여는 설정에서 언제든 끌 수 있습니다. | 실사례 없음 — `SIGNUP_NOTICE_DISCOVERY` 그대로, 가입 화면의 글자 |
 | 안내 단추 | 내 사주로 가기 | 내 사주 등록하기 | 실사례 없음 — 대장 matching-13 확정 |
 | 빈 덱 단추 `mobile/src/matching/today.tsx` | (없음) | 다시 확인하기 | [헬로우봇 문구표](https://hellobot.co/terms) 「다시 시도하기」 · 「상황 한 줄 + 행동 하나」는 [토스 원칙](https://toss.tech/article/how-to-write-error-message) 2026-11-02. 빈 줄의 「다시 확인해 주세요」(`DISCOVERY_EMPTY`)와 잇는다 |

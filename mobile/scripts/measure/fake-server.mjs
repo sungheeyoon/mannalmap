@@ -1,7 +1,7 @@
 // 가짜 Supabase + 앱용 문 — 운영을 밟지 않고 네이티브 화면을 데이터가 찬 채로 잰다.
 // 사람 · 값은 모두 지어낸 것이다. 띄우는 차례는 `docs/agents/delegation/local-env.md` 「앱을 네이티브로 재기」.
 // `node mobile/scripts/measure/fake-server.mjs` — 포트는 `FAKE_PORT`(기본 18999), 요청 기록은 `MEASURE_DIR/fake.log`.
-// 상태 바꾸기: `curl 'localhost:18999/__set?m=<reset|empty|unsigned|closed|suspended|warning|no-credits|no-self>'`
+// 상태 바꾸기: `curl 'localhost:18999/__set?m=<reset|empty|unsigned|closed|suspended|warning|no-credits|no-self|match-shut>'`(`match-shut` 은 인연이 닫힌 운영 상태 — 탭 둘)
 // 대화 · 상세 궁합(ADR 0215 · 0221 — 대화가 유일한 흐름이라 스위치가 없다): `m=detail-<state>` · `m=buyer` · `m=holds` · `m=talk-sent` · `m=talk-received` · `m=talk-sent-said`
 // 망 흉내: `m=down`(읽기 · 앱용 문의 소켓을 끊는다) · `m=broken`(503) · `m=slow`(3초 늦게) · `m=up`(되돌림). 세션과 `/__` 는 안 걸린다. `m=screens-down` · `m=screens-slow` 는 관문의 두 읽기를 빼고 건다
 import { Buffer } from 'node:buffer';
@@ -62,7 +62,7 @@ const person = (id, date, time, gender) => ({ id, calendar: 'solar', original_da
 
 const fresh = () => ({
   account: { user_id: ME, status: 'active', self_person_id: SELF, nickname: '달빛산책', intro: LONG, signed_up_at: ago(90000), notice_version: 'notice-v16', notice_schedule_id: 1, improvement_consent: true, marketing_consent: false, created_at: ago(90000), first_seen_at: ago(90000), notice_ack_at: ago(50000), last_active_at: ago(1), birth_year: 1990, gender: 'female' },
-  schedule: [{ schedule_id: 1, ends_on: '2027-06-30', purge_by: '2027-07-30', purge_within_days: 30, operator_name: '가짜 운영자', operator_officer: '가짜 책임자', operator_contact: 'fake@example.invalid' }],
+  schedule: [{ schedule_id: 1, ends_on: '2027-06-30', purge_by: '2027-07-30', purge_within_days: 30, operator_name: '가짜 운영자', operator_officer: '가짜 책임자', operator_contact: 'fake@example.invalid', notice_ack_floor: 'notice-v16' }],
   edges: [
     { person_id: SELF, local_label: '윤하늘', note: null, listed: false, created_at: ago(90000) },
     { person_id: P1, local_label: '엄마', note: '양력 생일로 적었어요. 음력 생일은 따로 챙기기.', listed: true, created_at: ago(80000) },
@@ -154,7 +154,7 @@ const rpc = {
   my_match_scope: (a) => scopeOf(a.p_match_id),
   my_matches: () => db.matches,
   /* 재는 화면은 인연까지 걷는다 — 열린 쪽이다(ADR 0222) */
-  match_is_open: () => true,
+  match_is_open: () => db.matchOpen !== false,
   my_ended_talks: () => db.ended,
   my_ended_talk_messages: () => [{ message_id: 'dddddddd-3333-4000-8000-000000000001', mine: false, body: '끝난 대화의 말이에요', created_at: ago(900) }],
   my_match_detail_state: () => [db.detail],
@@ -200,6 +200,7 @@ const rpc = {
   set_my_photo_focus: () => null,
   photo_at: () => [{ content_type: 'image/png', base64: png.toString('base64'), version: 1, object_key: null }],
   open_pair: () => [{ person_a: SELF, person_b: P1 }],
+  create_pair_for_reading: () => [{ person_a: SELF, person_b: P1 }],
 };
 
 const png = (() => {
@@ -288,6 +289,7 @@ const server = http.createServer((req, res) => {
       if (mode === 'warning') db.warning = [{ category: 'harassment', warned_on: '2026-10-30', note: '가짜 경고' }];
       if (mode === 'no-credits') db.credits[0].available = 0;
       if (mode === 'no-self') db.account.self_person_id = null;
+      if (mode === 'match-shut') db.matchOpen = false;
       if (mode === 'ended') db.ended = [{ match_id: M2, partner_user_id: U4, partner_nickname: '지나간사람', closed_at: ago(800) }];
       if (mode.startsWith('detail-')) { db.detail.state = mode.slice('detail-'.length); db.detail.request_id = R1; if (db.detail.state === 'awaiting_consent') db.detail.expires_at = ago(-4320); }
       if (mode === 'buyer') db.detail.i_am_buyer = true;

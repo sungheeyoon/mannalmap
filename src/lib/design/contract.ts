@@ -150,7 +150,7 @@ export const SURFACE_EXCEPTIONS: readonly { file: string; found: string; why: st
   { file: 'mobile/src/chat/room.tsx', found: 'RADIUS.card', why: '말풍선 — 면이 아니라 글자의 모양이고 위 한 귀만 다르다(웹 `bubble-row.tsx` 의 `rounded-card rounded-t*-md`)' },
   { file: 'mobile/src/chat/room.tsx', found: 'borderTopRightRadius: 6', why: '내 말 묶음의 첫 말 — 웹 `rounded-tr-md`' },
   { file: 'mobile/src/chat/room.tsx', found: 'borderTopLeftRadius: 6', why: '상대 말 묶음의 첫 말 — 웹 `rounded-tl-md`' },
-  { file: 'mobile/src/app/me/chat/index.tsx', found: 'RADIUS.card', why: '대화방 줄 — 면 없는 줄의 눌림 모양이다(웹 `room-list.tsx` 의 `rounded-card`)' },
+  { file: 'mobile/src/app/me/(tabs)/chat/index.tsx', found: 'RADIUS.card', why: '대화방 줄 — 면 없는 줄의 눌림 모양이다(웹 `room-list.tsx` 의 `rounded-card`)' },
   {
     file: 'mobile/src/settings/photo-viewer.tsx',
     found: '<Modal',

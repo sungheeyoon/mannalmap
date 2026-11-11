@@ -59,7 +59,7 @@ const WEB = flat(
 );
 
 const screens = [
-  ...['mobile/src/people', 'mobile/src/compat', 'mobile/src/app/me/people', 'mobile/src/app/me/compat'].flatMap((dir) =>
+  ...['mobile/src/people', 'mobile/src/compat', 'mobile/src/app/me/people', 'mobile/src/app/me/(tabs)/compat'].flatMap((dir) =>
     readdirSync(join(ROOT, dir))
       .filter((name) => /\.tsx?$/.test(name))
       .map((name) => `${dir}/${name}`),

@@ -28,7 +28,8 @@ def adb(*args, binary=False, timeout=40):
 
 def nodes():
     for _ in range(4):
-        raw = adb('exec-out', 'sh', '-c', 'uiautomator dump /sdcard/u.xml >/dev/null 2>&1; cat /sdcard/u.xml')
+        # 앞 덤프를 먼저 지운다 — 화면이 idle 이 안 되면 덤프가 실패하는데, 남은 파일을 읽으면 앞 화면의 글자가 나온다
+        raw = adb('exec-out', 'sh', '-c', 'rm -f /sdcard/u.xml; uiautomator dump /sdcard/u.xml >/dev/null 2>&1; cat /sdcard/u.xml 2>/dev/null')
         at = raw.find('<?xml')
         if at >= 0:
             try:
@@ -79,9 +80,9 @@ def main():
     cmd = sys.argv[1]
     if cmd == 'link':
         path = sys.argv[2]
-        # 패키지 인자를 붙이지 않는다 — 함정 표는 local-env.md
+        # 끝에 패키지 인자를 붙이지 않고 `-p` 로 Expo Go 에 묶는다 — 함정 표는 local-env.md
         url = f"exp://127.0.0.1:{os.environ.get('METRO_PORT', '8081')}/--" + path
-        print(adb('shell', 'am', 'start', '-a', 'android.intent.action.VIEW', '-d', "'" + url + "'").strip()[:120])
+        print(adb('shell', 'am', 'start', '-a', 'android.intent.action.VIEW', '-p', 'host.exp.exponent', '-d', "'" + url + "'").strip()[:120])
     elif cmd == 'shot':
         png = adb('exec-out', 'screencap', '-p', binary=True)
         target = os.path.join(OUT, sys.argv[2] + '.png')

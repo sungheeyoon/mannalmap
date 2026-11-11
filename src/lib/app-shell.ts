@@ -12,13 +12,61 @@ export function appHeadStands(pathname: string, params: { a?: unknown; b?: unkno
   return TAB_FIRST.has(path);
 }
 
-/** 대화방 하나에서는 독이 안 선다 — 폰의 방은 화면 전체다(웹의 `dockStandsOn`, PRD 「앱 내 채팅」) */
 /**
- * 탭으로 갈 때 스택의 어느 자리를 다시 쓰나 — 같은 값이면 새로 쌓지 않고 있던 화면을 맨 앞으로 옮겨 입력 · 스크롤이 남는다(`ui/go-tab.ts`).
- * `/me/compat` 은 고르기와 결과를 한 라우트가 들어 두 사람(`a` · `b`)까지 갈라야 결과가 탭 첫 화면으로 덮이지 않는다.
+ * 궁합 탭 안에서 어느 자리인가 — `/me/compat` 은 고르기와 결과를 한 라우트가 든다. 두 사람(`a` · `b`)이 다 실려야 결과고, 그 밖은 모두
+ * 고르기 한 자리다(`pickA` · `pickB` 는 칸을 채울 뿐이다). 탭으로 갈 때는 고르기 자리로 돌아간다(`mobile/src/ui/go-tab.ts`).
  */
-export const tabRouteId = (name: string, params: { a?: unknown; b?: unknown } = {}) => `${name}:${String(params.a ?? '')}:${String(params.b ?? '')}`;
+export const compatStepId = (params: { a?: unknown; b?: unknown } = {}) =>
+  params.a !== undefined && params.b !== undefined ? `${String(params.a)}:${String(params.b)}` : '';
 
+/** 탭 첫 화면 넷이 든 묶음의 라우트 이름 — `mobile/src/app/me/(tabs)/` */
+export const TAB_GROUP = '(tabs)';
+
+/** 탭 주소 → 묶음 안의 라우트 이름. 궁합만 제 스택(`compat/_layout.tsx`)이 있어 폴더 이름이다 */
+export const TAB_ROUTE = { '/me': 'index', '/me/compat': 'compat', '/me/matching': 'matching/index', '/me/chat': 'chat/index' } as const;
+
+/** 내비게이션 상태에서 탭 이동이 읽는 만큼 — 라이브러리의 상태가 이 모양에 든다 */
+export type ShellRoute = { readonly name: string; readonly params?: object; readonly state?: Partial<ShellState> };
+export type ShellState = { readonly key: string; readonly index: number; readonly routes: readonly ShellRoute[] };
+
+/** 탭으로 가는 걸음 — `target` 은 그 걸음을 받을 내비게이터다 */
+export type TabMove =
+  | { readonly type: 'POP'; readonly payload: { readonly count: number }; readonly target: string }
+  | { readonly type: 'JUMP_TO'; readonly payload: { readonly name: string }; readonly target: string }
+  | { readonly type: 'NAVIGATE'; readonly payload: { readonly name: 'index'; readonly params: object; readonly merge: true; readonly pop: true }; readonly target: string };
+
+const whole = (state: Partial<ShellState> | undefined): ShellState | null =>
+  state !== undefined && typeof state.key === 'string' && typeof state.index === 'number' && state.routes !== undefined ? (state as ShellState) : null;
+
+/**
+ * **탭으로 가는 걸음을 짠다**(#1126) — `me` 스택의 상태와 갈 탭을 받아, 화면의 순서를 바꾸지 않는 걸음만 낸다.
+ *
+ * 1. 탭 묶음 위에 쌓인 하위 화면을 걷는다 — 묶음은 스택의 **가장 아래 것**을 쓴다. 하위 화면에서 궁합 결과를 열면 묶음이 하나 더 쌓이는데, 그 위에서
+ *    탭을 눌러도 처음 묶음으로 돌아가야 쓰던 탭이 나온다.
+ * 2. 그 묶음에서 탭을 켠다 — 탭 화면은 그대로 남아 있어 입력 · 스크롤이 있다.
+ * 3. 궁합은 고르기 자리로 간다 — 결과가 위에 있으면 걷고, 고르기가 없으면(결과로 바로 들어왔다) 그 위에 세운다.
+ *
+ * 스택에 묶음이 없으면(하위 화면의 주소로 바로 열렸다) `null` 이다 — 부르는 쪽이 주소로 간다.
+ */
+export function tabMoves(me: ShellState, tab: (typeof TAB_ROUTE)[keyof typeof TAB_ROUTE]): readonly TabMove[] | null {
+  const at = me.routes.findIndex((route, index) => index <= me.index && route.name === TAB_GROUP);
+  const tabs = at < 0 ? null : whole(me.routes[at].state);
+  if (tabs === null) return null;
+
+  const moves: TabMove[] = [];
+  if (me.index > at) moves.push({ type: 'POP', payload: { count: me.index - at }, target: me.key });
+  if (tabs.routes[tabs.index]?.name !== tab) moves.push({ type: 'JUMP_TO', payload: { name: tab }, target: tabs.key });
+  if (tab === 'compat') {
+    const steps = whole(tabs.routes.find((route) => route.name === 'compat')?.state);
+    const top = steps?.routes[steps.index];
+    if (steps !== null && top !== undefined && compatStepId(top.params) !== '') {
+      moves.push({ type: 'NAVIGATE', payload: { name: 'index', params: {}, merge: true, pop: true }, target: steps.key });
+    }
+  }
+  return moves;
+}
+
+/** 대화방 하나에서는 독이 안 선다 — 폰의 방은 화면 전체다(웹의 `dockStandsOn`, PRD 「앱 내 채팅」) */
 export const dockStands = (pathname: string) => !/^\/me\/chat\/[^/]+\/?$/.test(pathname);
 
 /**

@@ -43,7 +43,7 @@ describe('앱 채팅 화면의 글자', () => {
       .join('\n'),
   );
 
-  for (const file of [...filesUnder('mobile/src/chat'), ...filesUnder('mobile/src/app/me/chat')]) {
+  for (const file of [...filesUnder('mobile/src/chat'), ...filesUnder('mobile/src/app/me/chat'), ...filesUnder('mobile/src/app/me/(tabs)/chat')]) {
     it(`${file} 의 글자는 웹 코드에 그대로 있다`, () => {
       const strays = koreanChunks(readFileSync(join(ROOT, file), 'utf8')).filter((chunk) => !web.includes(flat(chunk)));
       expect(strays).toEqual([]);

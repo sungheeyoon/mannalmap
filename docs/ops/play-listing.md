@@ -86,7 +86,7 @@ Play Console 에 붙여 넣을 글과 답의 원본이다. **차례(어느 화�
 
 ■ 사주 · 만세력
 생년월일시를 넣으면 여덟 글자와 오행을 바로 볼 수 있어요.
-로그인 없이도 내 사주와 궁합 첫 신호는 볼 수 있어요.
+로그인 없이도 내 사주는 볼 수 있어요.
 
 ■ 사주풀이
 내 사주와 저장한 사람의 사주를 글로 풀어 드려요.
@@ -241,10 +241,11 @@ Name: 만날지도 review account (Google)
 Username: <심사 전용 구글 계정 — 운영자가 콘솔에만>
 Password: <같은 곳에만>
 Any other information:
-1. On the sign-in screen tap "구글 로그인" (Sign in with Google) and choose the account above.
-2. On first sign-in, enter any nickname and tap the confirm button to finish sign-up.
-3. Without signing in you can already see a chart (사주) on the first screen. After sign-in, a reading (사주풀이) or compatibility reading (궁합풀이) uses one credit (풀이권). The account starts with a free credit.
-4. Credits are sold as in-app products via Google Play Billing.
+1. Tap "구글 로그인" and sign in with the Google account above.
+2. First sign-in only: enter any nickname, tick both required checkboxes (age 14+, privacy notice), tap "가입하고 시작하기".
+3. On Home, enter any birth date/time and tap "내 사주로 저장". Then use the button on the chart card to get a reading (uses the 1 free credit).
+4. A chart can be viewed without signing in.
+5. Credits are sold only via Google Play Billing. Products are not active in this test release; the purchase section shows a notice.
 The account works on any device; no one-time code or 2-step verification is required.
 ```
 
