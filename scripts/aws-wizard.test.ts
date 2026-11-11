@@ -373,7 +373,7 @@ describe('AWS 마법사 — 처음 도는 날', () => {
     expect(
       calls
         .filter((c) => c.startsWith('vercel env add'))
-        .every((c) => c.includes('--project saju --scope sungheeyoons-projects')),
+        .every((c) => c.includes('--project mannalmap --scope sungheeyoons-projects')),
     ).toBe(true);
 
     // 검증은 읽기 프로필로, 지우기는 막혔고, 같은 날이라 Compliance 는 아직
