@@ -267,7 +267,7 @@ export function PillarChart({ saju }: { saju: Saju }) {
  *
  * 글자마다 제 오행의 파스텔 판 위에 크게 선다(폰 40px · 넓은 화면 60px). 색은 혼자 말하지 않는다 — 판 아래에
  * 상징(`ElementSymbol`)과 「갑·목」 같은 이름이 함께 붙는다. 일주는 두꺼운 먹색 테로 짚고, 위 글자에 「나」
- * 딱지, 아래 글자에 「관계 자리」가 선다(일간과 일지의 뜻을 가르는 것이 이 표의 일이다).
+ * 딱지, 아래 글자에 「배우자」가 선다(일간과 일지의 뜻을 가르는 것이 이 표의 일이다).
  *
  * 표(`table`)로 남는다. 칸 이름(시주 · 일주 …)이 열 머리이고, 낭독기는 칸마다 「일주 천간과 지지」로 부른다.
  */
@@ -393,7 +393,7 @@ function PillarGlyph({
         {caption}
       </span>
       {relationshipSeat && (
-        <span className="rounded-full bg-surface px-1.5 text-xs font-semibold leading-5 text-foreground">관계 자리</span>
+        <span className="rounded-full bg-surface px-1.5 text-xs font-semibold leading-5 text-foreground">배우자</span>
       )}
     </div>
   );

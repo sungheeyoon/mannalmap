@@ -101,7 +101,7 @@ test('입력 전에는 예시 명식을 보여주지 않고 계산 뒤 핵심 �
   await expect(fortunePanel(page)).toContainText('세운');
 
   /* 일간과 일지의 의미를 가른 화면이 아래 설명에서 다시 합쳐지지 않는다. */
-  await expect(page.getByLabel('일주 천간과 지지').getByText('관계 자리')).toBeVisible();
+  await expect(page.getByLabel('일주 천간과 지지').getByText('배우자', { exact: true })).toBeVisible();
 
   /*
     같은 庚에서 나온 월덕귀인도 어느 자리의 庚인지 문구 자체가 밝힌다. 카드 열을
