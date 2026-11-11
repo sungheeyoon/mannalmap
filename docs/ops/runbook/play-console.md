@@ -34,6 +34,29 @@
 | 13 | **비공개 테스트 — 테스터 12명 이상이 연속 14일** 옵트인해 있다. 테스터는 운영자가 모은다(G-162) | **운영자**(테스터 · 콘솔) · 조율자 | 아래 「내부 테스트에서 프로덕션으로」 3. 시작한 날 · 테스터 수를 #770 댓글로 |
 | 14 | 대시보드 「Apply for production」 → 승인 뒤 프로덕션 출시 | 운영자 · 조율자 | 아래 「내부 테스트에서 프로덕션으로」 4 · 5 |
 
+### 지금 어디까지 왔나 (2026-11-11)
+
+운영자 지시로 조율자가 운영자의 브라우저(개발자 계정 「갑자기탐구생활」 · 개인)에서 콘솔을 직접 채웠다 — 위 「콘솔은 에이전트가 만지지 않는다」의 이번 한 번 예외다.
+
+| 차례 | 상태 | 값 |
+| --- | --- | --- |
+| 5 앱 만들기 | 끝 | 앱 id `4975172422160581388` · 패키지 `com.mannalmap.app` · 한국어 · 앱 · 무료 |
+| 8 첫 AAB | 끝 | EAS `production` 빌드 `7d203dc7`(커밋 `73791ff0` · versionCode 2 · 1.0.0) → 콘솔에 파일로 올려 **내부 테스트**에 출시(테스터 목록은 아직 없다). 대표전화 · 신고기관은 빈 채로 구웠다(차례 3 은 남았다) |
+| 9 앱 서명 키 지문 | **지문은 읽었고 등록은 남았다** | 아래 「읽은 지문」 — Google OAuth 안드로이드 클라이언트 셋 · 카카오 키 해시 셋을 운영자가 넣는다 |
+| 12 등록정보 · 양식 | 12 가운데 9 | 끝: 개인정보처리방침 · 광고(없음) · 광고 ID(안 씀) · 콘텐츠 등급(한국 3세 이상 · 앱에서 바로 구매) · 정부 · 금융 · 건강 · 판매자 상태(적용 · 약관 주소) · 카테고리(라이프스타일) · 연락처(이메일 · 웹사이트, 전화는 비움) · 등록정보(글 · 아이콘 · 그래픽 이미지 · 스크린샷 4장). **남은 셋은 한 줄로 묶여 있다** — 로그인 세부정보(심사 계정, 운영자가 넣는다) → 타겟층(로그인 세부정보가 있어야 열린다) → 데이터 보안(답은 다 넣어 임시 저장, 타겟층이 있어야 제출된다) |
+| 13 비공개 테스트 | 잠김 | 콘솔: 「비공개 테스트를 시작하려면 앱 설정을 완료하세요」 — 12 의 남은 셋이 끝나야 열린다. 출시 국가는 「대한민국」만(운영자 2026-11-11 「국내 서비스만」) |
+
+**읽은 지문** — Play Console → Google Play로 보호됨 → 앱 서명(주소 끝 `/keymanagement`). 새 앱이라 앱 서명 키가 셋이다(양자 대비 서명). 값은 「복사」 단추로만 나온다. 비밀이 아니다.
+
+| 키 | SHA-1 | 카카오 키 해시 |
+| --- | --- | --- |
+| 앱 서명 키(지금 쓰는 것) | `0A:63:82:77:3D:EC:78:72:D7:3E:2A:09:10:24:BE:A4:06:62:73:62` | `CmOCdz3seHLXPioJECS+pAZic2I=` |
+| 앱 서명 키(양자 대비 묶음 둘째) | `DC:06:D9:4F:A9:E3:C1:71:D7:18:7D:8E:EF:BD:ED:D9:40:CC:00:66` | `3AbZT6njwXHXGH2O773t2UDMAGY=` |
+| 앱 서명 키(양자 대비 묶음 셋째) | `21:54:E2:E3:08:7E:7A:FD:62:8C:8F:41:4C:F1:C0:C8:2D:57:31:88` | `IVTi4wh+ev1ijI9BTPHAyC1XMYg=` |
+| 업로드 키(EAS 의 키, 그대로 둔다) | `73:F0:D4:F4:E8:CC:A7:72:6E:AB:E4:A7:8C:83:46:A4:40:32:12:CD` | — |
+
+Google OAuth 클라이언트가 든 Cloud 프로젝트는 개발자 계정(`gapjagilab`)의 것이 아니다 — 그 계정으로 연 Cloud Console 에는 프로젝트가 없었다(2026-11-11). 프로젝트를 가진 계정으로 넣는다.
+
 **사업자 정보(상호 · 대표자 · 사업자등록번호 · 사업장 주소 · 대표전화 · 통신판매업 신고번호)의 값은 사업자 정보 상수(`src/lib/brand/business.ts`)에서
 읽는다** — 웹과 앱이 같은 상수를 읽는다(운영자 결정 2026-11-06). 이 절차서에는 값을 적지 않는다. 2026-11-08 에 빈 칸은 대표전화와 신고기관 둘이다(3).
 
@@ -160,7 +183,7 @@ done
 
 1. **내부 테스트** — Test and release → Testing → **Internal testing** → Testers → Create email list(최대 100명). 「You can start an internal test before completing app setup」 — 등록정보가 덜 차도 테스터는 받는다
 2. 테스터 링크로 깐 앱에서 실기기 확인 — **구글 로그인 · 카카오 로그인이 먼저다**(앱 서명 키 지문이 맞았나). 볼 줄은 `docs/ops/runbook/kakao-login.md` 「카카오 로그인 — 실기기 · 웹에서 볼 것」 5 ~ 8 과 #770 의 앱 줄, 결제는 `docs/ops/runbook/credits.md` 「Google Play 결제」의 「샌드박스 확인」 표
-3. **비공개 테스트 — 거쳐야 한다**(개인 계정, 위 「개인 계정 만들기」 끝). Test and release → Testing → **Closed testing** → 트랙을 만들고 버전을 올린다 → Testers 에서 이메일 목록(목록마다 최대 2,000명) 또는 Google 그룹을 고른다 → 테스터에게 옵트인 링크를 보낸다(「Each tester needs to opt in using the link」 — 링크는 앱 상태가 「Published」일 때만 보인다). **테스터 12명 이상이 연속 14일 옵트인해 있어야 한다** — 「the 14 days must be consecutive」, 14일을 못 채우고 나간 사람은 세지 않고(「Testers who opt in, test for fewer than 14 days, and then opt out do not count toward the requirement」), 나갔다 돌아오면 그 사람의 14일은 다시 연속으로 센다. 12명은 문턱이라 나가는 사람을 세어 더 모은다(`docs/ops/runbook/mobile-release.md` 「내부 트랙과 비공개 테스트는 다르다」). 모으는 일은 G-162. 비공개 테스트 버전이 표준 심사를 거치는지, 등록정보가 다 차야 비공개 테스트를 낼 수 있는지는 테스트 설정 쪽에 없다(**확인 전**, 2026-11-09) — **운영자**
+3. **비공개 테스트 — 거쳐야 한다**(개인 계정, 위 「개인 계정 만들기」 끝). Test and release → Testing → **Closed testing** → 트랙을 만들고 버전을 올린다 → Testers 에서 이메일 목록(목록마다 최대 2,000명) 또는 Google 그룹을 고른다 → 테스터에게 옵트인 링크를 보낸다(「Each tester needs to opt in using the link」 — 링크는 앱 상태가 「Published」일 때만 보인다). **테스터 12명 이상이 연속 14일 옵트인해 있어야 한다** — 「the 14 days must be consecutive」, 14일을 못 채우고 나간 사람은 세지 않고(「Testers who opt in, test for fewer than 14 days, and then opt out do not count toward the requirement」), 나갔다 돌아오면 그 사람의 14일은 다시 연속으로 센다. 12명은 문턱이라 나가는 사람을 세어 더 모은다(`docs/ops/runbook/mobile-release.md` 「내부 트랙과 비공개 테스트는 다르다」). 모으는 일은 G-162. **등록정보 · 앱 콘텐츠 양식이 다 차야 비공개 테스트가 열린다** — 콘솔의 대시보드가 「비공개 테스트를 시작하려면 앱 설정을 완료하세요」로 잠그고, 걸음의 끝이 「검토를 위해 Google에 버전 전송」이다(2026-11-11 콘솔에서 확인) — **운영자**
 4. **프로덕션 신청** — 14일이 차면 대시보드 → **Apply for production** → 세 묶음의 물음(비공개 테스트 · 앱 · 프로덕션 준비)에 답한다. 「Review usually takes seven days or less, but can occasionally take longer.」 답의 초안은 조율자가 비공개 테스트의 기록(#770)으로 쓰고, 넣는 것은 운영자다. 승인되면 Test and release → **Production** → Create new release → 버전을 올린다(Promote release) → 출시 국가 「대한민국」 → 검토로 보낸다 — **운영자** · 조율자
 5. **베타 일정과 견준다** — 앱이 공개되는 날 웹의 운영 기간이 살아 있어야 한다(`docs/ops/runbook/signup.md` 「테스트 시작하기」, 공개 전환은 #1011). 심사 중에도 살아 있어야 한다(`docs/ops/runbook/mobile-release.md` 「심사 계정」 2)
 

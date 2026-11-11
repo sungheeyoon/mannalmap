@@ -48,6 +48,7 @@
   공식 쪽은 「Individuals」 · 「Businesses」로 가를 뿐 계정 유형으로 가르지 않는다([3255733](https://support.google.com/googleplay/android-developer/answer/3255733)).
 - 비공개 테스트 버전이 표준 심사를 거치는지, 등록정보가 다 차야 비공개 테스트를 낼 수 있는지 — 테스트 설정 쪽에 없다
   ([9845334](https://support.google.com/googleplay/android-developer/answer/9845334)).
+  → **2026-11-11 콘솔에서 확인**: 앱 설정(등록정보 · 앱 콘텐츠 양식)이 끝나야 비공개 테스트가 열리고, 버전은 검토로 보낸다(`docs/ops/runbook/play-console.md` 「지금 어디까지 왔나」).
 
 ## 치르는 값
 
