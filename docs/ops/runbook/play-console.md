@@ -122,7 +122,7 @@ Google OAuth 클라이언트가 든 Cloud 프로젝트는 개발자 계정(`gapj
 | 2 | 내 사주풀이 화면(`mobile/src/app/me/readings/[subject].tsx`) | 2 | 내 사주를 저장하고 풀이 하나를 받은 뒤 |
 | 3 | 궁합풀이(`mobile/src/app/me/readings/compat.tsx`, 입구 `me/compat`) | 3 | 저장한 사람 하나와 궁합풀이 하나 |
 | 4 | 저장한 사람 목록(`mobile/src/app/me/people/index.tsx`) | 4 | 지어낸 이름 둘 이상(가족 · 친구 꼴) |
-| 5(선택) | 홈(`mobile/src/app/me/index.tsx`) · 풀이권 화면(`mobile/src/app/me/credits/index.tsx`) | — | 풀이권 화면은 상품 넷이 선 뒤(차례 10) |
+| 5(선택) | 홈(`mobile/src/app/me/(tabs)/index.tsx`) · 풀이권 화면(`mobile/src/app/me/credits/index.tsx`) | — | 풀이권 화면은 상품 넷이 선 뒤(차례 10) |
 
 **찍지 않는 것** — 인연 · 채팅(닫혀 있다, ADR 0222) · 설정(계정 이메일이 보인다) · 공유 주소 화면.
 **기기의 화면 비율을 먼저 본다** — 요즘 폰의 `adb exec-out screencap -p > 1.png` 는 1080 × 2400(2.22 : 1)처럼 2배를 넘어 콘솔이 안 받는다.

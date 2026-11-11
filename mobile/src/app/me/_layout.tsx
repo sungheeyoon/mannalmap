@@ -16,9 +16,9 @@ import { useGate } from '@/home/gate';
 import { useAdultCheckGuard } from '@/matching/adult-check';
 import { useMatchClosedGuard, useMatchOpen } from '@/matching/opening';
 import { tabsWhileShut } from '@matching/opening';
-import { appHeadStands, dockStands } from '@app-shell';
+import { TAB_GROUP, appHeadStands, dockStands } from '@app-shell';
 import { WarningNotice } from '@/home/warning-notice';
-import { goTab } from '@/ui/go-tab';
+import { goTab, useTabHost } from '@/ui/go-tab';
 import { Icon } from '@/ui/icons';
 import { LoadingOrbit } from '@/ui/loading';
 import { Logo } from '@/ui/logo';
@@ -35,9 +35,6 @@ const TABS = [
   { href: '/me/chat', label: '채팅', icon: 'chat' },
 ] as const;
 
-/** 탭의 첫 화면은 밀려 들어오지 않고 그 자리에서 바뀐다. 라우트 이름은 그 폴더에 `_layout` 이 있는가에 따라 둘 중 하나다 */
-const TAB_ROUTES = new Set(['index', 'compat', 'compat/index', 'matching', 'matching/index', 'chat', 'chat/index']);
-
 const within = (pathname: string, base: string) => pathname === base || pathname.startsWith(`${base}/`);
 
 /** 웹의 `isNavigationActive` — 저장한 사람과 보관함 목록은 홈 탭의 길이다 */
@@ -48,14 +45,15 @@ function isActive(pathname: string, href: string): boolean {
 }
 
 /**
- * 앱 안의 껍데기 — 머리 · 네 탭 · 관문. **탭 아래는 스택 하나다** — 다른 화면이 여기 이름을 올리지 않아도 뒤로 가기가 돌고,
- * 탭 막대는 웹의 하단 독처럼 주소를 보고 불을 켠다.
+ * 앱 안의 껍데기 — 머리 · 네 탭 · 관문. **스택 하나에 탭 묶음(`(tabs)/`)과 하위 화면이 선다** — 다른 화면이 여기 이름을 올리지 않아도
+ * 뒤로 가기가 돌고, 탭 막대는 웹의 하단 독처럼 주소를 보고 불을 켠다. 탭 첫 화면 넷은 묶음 안에서 켜고 끌 뿐 스택에서 자리를 바꾸지 않는다(#1126).
  */
 export default function MeLayout() {
   const { gate, retry, held } = useGate();
   const pathname = usePathname();
   const search = useGlobalSearchParams<{ a?: string; b?: string }>();
   const insets = useSafeAreaInsets();
+  useTabHost();
   /* 들어온 동안의 클라이언트 — 껍데기의 손들은 이것이 있을 때만 묻는다(ADR 0243) */
   const signedIn = gate.kind === 'in' ? gate.client : null;
   const counts = useCounts(signedIn, pathname);
@@ -148,7 +146,8 @@ export default function MeLayout() {
             screenOptions={({ route }) => ({
               headerShown: false,
               contentStyle: { backgroundColor: COLOR.background },
-              animation: TAB_ROUTES.has(route.name) ? 'none' : 'default',
+              /* 탭 묶음은 밀려 들어오지 않는다 — 하위 화면에서 연 궁합 결과도 묶음으로 쌓인다 */
+              animation: route.name === TAB_GROUP ? 'none' : 'default',
             })}
           />
         </View>

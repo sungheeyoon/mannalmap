@@ -73,7 +73,7 @@ export function CompatPicker({ people, pickA, pickB }: { people: readonly Choosa
     a: firstSlot(people, pickA),
     b: secondSlot(people, pickB, pickA),
   }));
-  /* 돌아올 때마다 목록을 다시 읽는다(`app/me/compat/index.tsx`) — 그사이 지운 사람을 든 칸은 빈 칸으로 읽는다 */
+  /* 돌아올 때마다 목록을 다시 읽는다(`app/me/(tabs)/compat/index.tsx`) — 그사이 지운 사람을 든 칸은 빈 칸으로 읽는다 */
   const slots = dropUnlisted(held, people);
   const [relation, setRelation] = useState<Relation | null>(null);
   /** 이 누름이 사이를 건드리는가 — 안 건드린 「모른다」를 답으로 보내면 적어 둔 답이 지워진다 */
