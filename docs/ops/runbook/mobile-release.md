@@ -176,7 +176,7 @@ npx eas-cli@latest submit --profile production --platform ios                   
 
 그래서 **`production` 빌드를 Play 에 올리기 전에** 아래를 에뮬레이터나 실기기에서 본다 — 차례는 `docs/agents/delegation/local-env.md` 「앱을 네이티브로 재기」(Expo Go + 가짜 서버), 출시 빌드와 같은 네이티브로 보려면 같은 커밋의 `preview` APK 를 깐다.
 
-1. **하단 탭을 50번 오간다** — 홈 ↔ 궁합(인연이 열려 있으면 네 탭 다). 5번마다 화면 글자 수(`uiautomator dump`)가 그대로인지 보고, 끝에 앱의 logcat 에 `removeViewAt` · `FATAL EXCEPTION` 이 0줄인지 센다. 2026-11-12 `preview` `6371795d` 는 50번 왕복에 글자 54 → 54 · 0줄이었다.
+1. **하단 탭을 25번 오간다**(운영자 2026-11-12 — 50번은 과하다. 결함은 다섯 번 안에 났다) — 홈 ↔ 궁합(인연이 열려 있으면 네 탭 다). 5번마다 화면 글자 수(`uiautomator dump`)가 그대로인지 보고, 끝에 앱의 logcat 에 `removeViewAt` · `FATAL EXCEPTION` 이 0줄인지 센다. 2026-11-12 `preview` `6371795d` 는 50번 왕복에 글자 54 → 54 · 0줄이었다.
 2. **이번 빌드가 고친 화면을 손으로 지난다** — 고친 단추를 누르고, 도착 화면이 서고, 뒤로 가기가 온 길로 돌아가는지.
 3. **탭 · 스택 · 뒤로 가기를 건드린 PR 은 머지 전에 1 을 돈다** — 내비게이션 구조는 네이티브에서만 깨진다.
 
