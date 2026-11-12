@@ -12,6 +12,7 @@ import { CompatResultStep } from '@/compat/result-step';
 import type { Read } from '@/people/data';
 import { AccountNotice, LoadingFrame, ScreenFrame, go, styles as shared } from '@/people/parts';
 import { FailureLine } from '@/ui/failure-line';
+import { Icon } from '@/ui/icons';
 import { COLOR, FONT, TYPE } from '@/ui/tokens';
 import { RowLine } from '@/ui/surfaces';
 import { settled } from '@/ui/settled';
@@ -79,7 +80,7 @@ function PickStep({ pickA, pickB }: { pickA?: string; pickB?: string }) {
                 </Text>
                 <Text style={shared.meta} numberOfLines={1}>최근 {`${latest.labelA ?? ''} × ${latest.labelB ?? ''}`}</Text>
               </View>
-              <Text style={styles.chevron}>›</Text>
+              <Icon name="chevron" size={16} color={COLOR.muted} />
             </RowLine>
           )}
           {map !== null && <RelationMap model={map.model} canAdd={map.canAdd} />}
@@ -93,5 +94,4 @@ const styles = StyleSheet.create({
   summary: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   summaryBody: { flex: 1, minWidth: 0 },
   summaryTitle: { fontSize: TYPE.body, fontFamily: FONT.bold, color: COLOR.foreground },
-  chevron: { fontSize: TYPE.lead, color: COLOR.muted },
 });

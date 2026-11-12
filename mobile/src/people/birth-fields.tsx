@@ -8,6 +8,7 @@ import { ADVANCED_SETTINGS, HOUR_UNKNOWN_HINT } from '@input/copy';
 import { BIRTH_CITY_OPTIONS, BIRTH_DIGIT_LABEL, BIRTH_SELECT_LABEL, DEFAULT_QUERY, HOUR_UNKNOWN_CHOICE, NAME_MAX, TIME_BASES, TIME_BASIS, type Query } from '@input/query';
 import { CALENDARS, CALENDAR_KO, GENDERS, GENDER_KO, SUPPORTED_YEAR_RANGE, type CityName, type LateNightRule } from '@saju';
 
+import { FoldIcon } from '@/ui/icons';
 import { Choices, DigitField, Field, FieldLabel, Select } from '@/ui/parts';
 import { COLOR, FONT, RADIUS, TYPE } from '@/ui/tokens';
 
@@ -151,7 +152,8 @@ export function BirthFields({
 
       <Pressable accessibilityRole="button" accessibilityState={{ expanded: values.advanced, disabled }} disabled={disabled} onPress={() => set.setAdvanced(!values.advanced)} style={[styles.disclosure, disabled && styles.off]}>
         <Text style={styles.disclosureLabel}>고급 설정</Text>
-        <Text style={styles.disclosureSummary} numberOfLines={1}>{ADVANCED_SETTINGS.summary} {values.advanced ? '⌃' : '⌄'}</Text>
+        <Text style={styles.disclosureSummary} numberOfLines={1}>{ADVANCED_SETTINGS.summary}</Text>
+        <FoldIcon open={values.advanced} />
       </Pressable>
 
       {values.advanced && (
@@ -193,5 +195,6 @@ const styles = StyleSheet.create({
   choiceHint: { marginLeft: 72, fontFamily: FONT.medium, fontSize: TYPE.fine, lineHeight: 16, color: COLOR.secondary },
   advancedIntro: { fontFamily: FONT.medium, fontSize: TYPE.fine, lineHeight: 20, color: COLOR.secondary },
   disclosureLabel: { flexShrink: 0, fontSize: TYPE.body, fontFamily: FONT.bold, color: COLOR.foreground },
-  disclosureSummary: { flexShrink: 1, marginLeft: 8, fontFamily: FONT.medium, fontSize: TYPE.small, color: COLOR.secondary },
+  /* 요약이 남은 폭을 차지하고 오른쪽에 붙는다 — 화살표와는 8(웹 `.disclosure` 의 gap) */
+  disclosureSummary: { flex: 1, minWidth: 0, marginHorizontal: 8, textAlign: 'right', fontFamily: FONT.medium, fontSize: TYPE.small, color: COLOR.secondary },
 });

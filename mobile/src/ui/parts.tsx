@@ -16,6 +16,7 @@ import { FIELD } from '@design';
 import { digitOutOfRange } from '@input/entry';
 
 import { Button } from './buttons';
+import { FoldIcon } from './icons';
 import { COLOR, FONT, CONTROL, RADIUS, TYPE } from './tokens';
 
 /** 칸 위의 이름 — 칸이 같은 이름을 제 낭독 이름으로 들면(`Select`) `aria-hidden` 으로 두 번 읽히지 않게 한다 */
@@ -256,7 +257,7 @@ export function Select<T extends string>({
         style={[styles.control, styles.selectHead, open && styles.selectOpen, disabled && styles.off]}
       >
         <Text style={styles.selectText}>{current?.label}</Text>
-        <Text style={styles.chevron}>{open ? '⌃' : '⌄'}</Text>
+        <FoldIcon open={open} />
       </Pressable>
       {open && (
         <View accessibilityRole="radiogroup" accessibilityLabel={name} style={styles.menu}>
@@ -315,7 +316,6 @@ const styles = StyleSheet.create({
   selectOpen: { borderColor: COLOR.creamInk },
   off: { opacity: 0.55 },
   selectText: { fontFamily: FONT.medium, fontSize: TYPE.body, color: COLOR.foreground },
-  chevron: { fontFamily: FONT.medium, fontSize: TYPE.body, color: COLOR.secondary },
   menu: { marginTop: 6, borderRadius: RADIUS.cell, borderWidth: 1, borderColor: COLOR.borderStrong, overflow: 'hidden', backgroundColor: COLOR.surface },
   menuItem: { minHeight: CONTROL, justifyContent: 'center', paddingHorizontal: 14, paddingVertical: 8 },
   menuChosen: { backgroundColor: COLOR.accentWash },

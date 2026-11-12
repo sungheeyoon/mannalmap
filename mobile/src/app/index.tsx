@@ -19,7 +19,7 @@ import { readGate } from '@/home/gate';
 import { POLICY_TITLE, SUPPORT_TITLE } from '@/info/copy';
 import { Choices, DigitField, Field, FieldLabel, KeyboardDoneBar, PrimaryButton, SecondaryButton, Select } from '@/ui/parts';
 import { SunMark } from '@/share/marks';
-import { Icon } from '@/ui/icons';
+import { FoldIcon, Icon } from '@/ui/icons';
 import { Logo } from '@/ui/logo';
 import { COLOR, FONT, RADIUS, TYPE } from '@/ui/tokens';
 import { CardFrame, Paper } from '@/ui/surfaces';
@@ -290,7 +290,8 @@ function BirthScreen({ signedOut }: { signedOut: boolean }) {
               style={styles.disclosure}
             >
               <Text style={styles.disclosureLabel}>고급 설정</Text>
-              <Text style={styles.disclosureSummary} numberOfLines={1}>{ADVANCED_SETTINGS.summary} {advanced ? '⌃' : '⌄'}</Text>
+              <Text style={styles.disclosureSummary} numberOfLines={1}>{ADVANCED_SETTINGS.summary}</Text>
+              <FoldIcon open={advanced} />
             </Pressable>
 
             {advanced && (
@@ -395,7 +396,8 @@ const styles = StyleSheet.create({
   choiceHint: { marginLeft: 72, fontFamily: FONT.medium, fontSize: TYPE.fine, lineHeight: 16, color: COLOR.secondary },
   advancedIntro: { fontFamily: FONT.medium, fontSize: TYPE.fine, lineHeight: 20, color: COLOR.secondary },
   disclosureLabel: { flexShrink: 0, fontSize: TYPE.body, fontFamily: FONT.bold, color: COLOR.foreground },
-  disclosureSummary: { flexShrink: 1, marginLeft: 8, fontFamily: FONT.medium, fontSize: TYPE.small, color: COLOR.secondary },
+  /* 요약이 남은 폭을 차지하고 오른쪽에 붙는다 — 화살표와는 8(웹 `.disclosure` 의 gap) */
+  disclosureSummary: { flex: 1, minWidth: 0, marginHorizontal: 8, textAlign: 'right', fontFamily: FONT.medium, fontSize: TYPE.small, color: COLOR.secondary },
   action: { marginTop: 'auto', paddingTop: 12, gap: 10 },
   converted: { fontFamily: FONT.medium, fontSize: TYPE.small, color: COLOR.secondary, marginVertical: 2 },
   failure: { fontSize: TYPE.small, fontFamily: FONT.medium, color: COLOR.danger, marginHorizontal: 6 },

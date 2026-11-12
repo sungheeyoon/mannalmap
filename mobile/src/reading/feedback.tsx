@@ -20,6 +20,7 @@ import { useState, type ReactNode } from 'react';
 import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 
 import { useClient } from '@/auth/connected';
+import { FoldIcon } from '@/ui/icons';
 import { Card, Paper, Tile } from '@/ui/surfaces';
 import { PrimaryButton, TextButton } from '@/ui/parts';
 import { COLOR, CONTROL, FONT, RADIUS, TYPE } from '@/ui/tokens';
@@ -96,7 +97,7 @@ export function ReadingFeedback({ target, runId, given }: { target: ReadingTarge
       {foldable ? (
         <Pressable accessibilityRole="button" accessibilityState={{ expanded: shown, disabled: saving }} disabled={saving} onPress={() => setUnfolded(!shown)} style={styles.head}>
           {head}
-          <Text style={styles.chevron}>{shown ? '⌃' : '⌄'}</Text>
+          <FoldIcon open={shown} size={20} color={COLOR.secondary} strokeWidth={1.8} />
         </Pressable>
       ) : (
         <View style={styles.head}>{head}</View>
@@ -233,7 +234,6 @@ const styles = StyleSheet.create({
   head: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 20, paddingVertical: 16 },
   headWords: { flex: 1, minWidth: 0, gap: 4 },
   headTitle: { fontFamily: FONT.bold, fontSize: TYPE.lead, color: COLOR.foreground },
-  chevron: { fontSize: TYPE.lead, color: COLOR.secondary },
   body: { gap: 20, paddingHorizontal: 20, paddingBottom: 20 },
   part: { gap: 10, paddingTop: 20, borderTopWidth: 1, borderTopColor: COLOR.border },
   /* 눈금 칸은 카드 안쪽 여백을 비집고 나와(카드 가장자리에서 8) 제 여백도 8 — 다섯 단추(44 × 5 + 간격 8 × 4 = 252)가 360 폭에서도 줄지 않는다 */
