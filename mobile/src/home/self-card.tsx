@@ -1,13 +1,15 @@
 import { router } from 'expo-router';
-import { useState, type ReactNode } from 'react';
+import type { ReactNode } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
+import { MY_PROFILE_EDIT_LABEL } from '@chat/copy';
 import { HOUR_UNKNOWN_LABEL } from '@input/query';
 import { ELEMENT_PICTURE_KO, ELEMENTS, STEM_INFO } from '@saju';
 import { withFromMe } from '@web-home/from-me';
 import { SELF_READING_MAKING } from '@web-home/making';
 
-import { DayMasterChip, ManageButton, Sheet, SheetItem, styles as shared } from '@/people/parts';
+import { AnchoredMenu } from '@/chat/menu';
+import { DayMasterChip, styles as shared } from '@/people/parts';
 import { Button } from '@/ui/buttons';
 import { ElementSymbol } from '@/ui/element-symbol';
 import { StemSymbol } from '@/ui/stem-symbol';
@@ -22,8 +24,10 @@ type Ok = Extract<SelfCardData, { kind: 'ok' }>;
 /**
  * 내 사주 카드(줄인 판) — 홈에서 오행 면을 입는 것은 이 판 하나다. 일간은 원 · 이름 옆 딱지 · 뒤의 그림이 든다.
  *
- * **고치는 길은 오른쪽 위 「⋯」 메뉴다**(운영자 결정 2026-11-12, 시안 「수정 A안」 — 출생 정보 곁의 작은 글자 「수정」을 바꿨다). 저장한 사람
- * 카드와 같은 단추 · 같은 판(`ManageButton` · `Sheet` · `SheetItem`)이고 줄은 「출생 정보 수정」 하나다 — 고치는 폼은 프로필의 「출생 정보」 판이다.
+ * **고치는 길은 오른쪽 위 「⋯」 메뉴다**(운영자 결정 2026-11-12, 시안 「수정 A안」 — 출생 정보 곁의 작은 글자 「수정」을 바꿨다). 「⋯」 바로
+ * 아래에 붙어 뜨는 작은 판이고(`AnchoredMenu` — 대화방 「⋯」와 같은 부품, 웹의 띄움 판과 같은 꼴) 줄은 둘이다 — 「출생 정보 수정」은 프로필의
+ * 「출생 정보」 판을 편 채, 「프로필 편집」은 프로필 수정 화면 맨 위로 간다(이름 왼쪽 원의 시트가 가는 곳과 같다). 저장한 사람 카드의 메뉴는
+ * 아래에서 뜨는 판 그대로다 — 두 카드의 메뉴 꼴이 다르다(운영자 검토 2026-11-12).
  * 홈의 내 사주에만 선다 — 결과 화면의 사주(`actions` 를 준 판)는 아직 저장 전이라 고칠 것이 없다
  */
 export function SelfCard({
@@ -45,7 +49,6 @@ export function SelfCard({
   const tone = ELEMENT_TONE[dayElement];
   const counts = saju.analysis.elements.counts;
   const manageable = actions === undefined;
-  const [menu, setMenu] = useState(false);
 
   return (
     <Tile tone={tone.soft} accessibilityLabel={label} style={styles.card}>
@@ -105,18 +108,18 @@ export function SelfCard({
         </View>
       )}
 
-      {manageable && <ManageButton label={`${label} 관리`} onPress={() => setMenu(true)} />}
-      {menu && (
-        <Sheet label="닫기" onClose={() => setMenu(false)}>
-          <Text style={shared.section}>{label}</Text>
-          <SheetItem
-            label="출생 정보 수정"
-            onPress={() => {
-              setMenu(false);
-              router.push('/me/profile?edit=birth' as never);
-            }}
-          />
-        </Sheet>
+      {manageable && (
+        <View style={styles.menu}>
+          <AnchoredMenu
+            label={`${label} 관리`}
+            items={[
+              { label: '출생 정보 수정', onPress: () => router.push('/me/profile?edit=birth' as never) },
+              { label: MY_PROFILE_EDIT_LABEL, onPress: () => router.push('/me/profile' as never) },
+            ]}
+          >
+            <Text style={shared.manageDots}>⋯</Text>
+          </AnchoredMenu>
+        </View>
       )}
     </Tile>
   );
@@ -128,6 +131,8 @@ const styles = StyleSheet.create({
   head: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   face: { width: 56, height: 56, borderRadius: RADIUS.pill, alignItems: 'center', justifyContent: 'center', backgroundColor: COLOR.surface },
   who: { flex: 1, minWidth: 0 },
+  /** 저장한 사람 카드의 「⋯」와 같은 자리 — 카드 끝에서 12 */
+  menu: { position: 'absolute', top: 12, right: 12 },
   nameRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 8 },
   /** 「⋯」(44px, 카드 끝에서 12)가 카드 안쪽 여백(16)을 넘어 들어온 40 과 틈 8 */
   menuRoom: { paddingRight: 48 },

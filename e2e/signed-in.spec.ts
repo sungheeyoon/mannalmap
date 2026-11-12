@@ -501,6 +501,7 @@ test.describe('초대된 사람의 로그인 흐름', () => {
     await mine.getByLabel('내 사주 관리', { exact: true }).click();
     await expect(edit).toHaveCount(1);
     await expect(edit).toHaveAttribute('href', '/me/profile#birth');
+    await expect(mine.locator('details').getByRole('link', { name: MY_PROFILE_EDIT_LABEL, exact: true })).toHaveAttribute('href', '/me/profile');
     await edit.click();
     await expect(page).toHaveURL(/\/me\/profile#birth$/);
     await expect(page.getByRole('heading', { name: '수정하기' })).toBeVisible();

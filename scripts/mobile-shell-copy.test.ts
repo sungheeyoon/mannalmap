@@ -28,7 +28,6 @@ const WEB = [
   'app/me/home/circle.ts',
   'app/me/onboarding.tsx',
   'app/ui/failure-line.tsx',
-  'app/ui/sheet.tsx',
   'app/auth/sign-out.ts',
   'src/lib/chat/index.ts',
   'src/lib/survey/index.ts',
