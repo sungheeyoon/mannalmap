@@ -11,7 +11,7 @@ import { PILLAR_COLUMNS, STEM_PICTURE } from '@saju-view';
 
 import { LoadingDots } from '@/ui/loading';
 import { KeyboardDoneBar } from '@/ui/parts';
-import { alpha, COLOR, ELEMENT_TONE, FONT, RADIUS, TYPE } from '@/ui/tokens';
+import { alpha, COLOR, CONTROL, ELEMENT_TONE, FONT, RADIUS, TYPE } from '@/ui/tokens';
 
 import { StemSymbol } from '@/ui/stem-symbol';
 import { FailureLine } from '@/ui/failure-line';
@@ -148,6 +148,18 @@ export function SheetItem({ label, danger = false, onPress }: { label: string; d
   );
 }
 
+/**
+ * 카드 오른쪽 위의 「⋯」 — 누르면 그 카드의 메뉴(`Sheet` · `SheetItem`)가 뜬다. 저장한 사람 카드와 홈 내 사주 카드가 같은 단추를 쓴다.
+ * 읽는 이름은 부르는 쪽이 준다(「{이름} 관리」)
+ */
+export function ManageButton({ label, onPress }: { label: string; onPress: () => void }) {
+  return (
+    <Pressable accessibilityRole="button" accessibilityLabel={label} onPress={onPress} style={styles.manage}>
+      <Text style={styles.manageDots}>⋯</Text>
+    </Pressable>
+  );
+}
+
 const GLYPH_FONT = Platform.select({ ios: 'System', android: 'sans-serif', default: 'serif' });
 
 export const styles = StyleSheet.create({
@@ -173,6 +185,8 @@ export const styles = StyleSheet.create({
   pillarRow: { flexDirection: 'row' },
   glyph: { fontSize: TYPE.lead, lineHeight: 22, fontWeight: '600', fontFamily: GLYPH_FONT, textAlign: 'center' },
   glyphLarge: { fontSize: TYPE.title, lineHeight: 32 },
+  manage: { position: 'absolute', top: 12, right: 12, width: CONTROL, height: CONTROL, alignItems: 'center', justifyContent: 'center', borderRadius: RADIUS.pill },
+  manageDots: { fontSize: 22, lineHeight: 26, color: COLOR.secondary },
   sheet: { gap: 10, padding: 20, paddingBottom: 32 },
   sheetItem: { minHeight: 48, justifyContent: 'center', paddingHorizontal: 4 },
   sheetItemText: { fontSize: TYPE.field, fontFamily: FONT.bold, color: COLOR.foreground },

@@ -16,6 +16,7 @@ import { withFromMe } from '@/src/lib/home/from-me';
 import { SELF_READING_MAKING } from '@/src/lib/home/making';
 import { LINK_PENDING_SPINNER, LinkPending } from '../../ui/link-pending';
 import type { HomeFace } from './self-face';
+import { SelfCardMenu } from './self-menu';
 import { SelfProfile } from './self-profile';
 
 /*
@@ -29,9 +30,10 @@ import { SelfProfile } from './self-profile';
   고르게 편다(`justify-between`) — 이름과 한 줄 평 → 저장된 출생 정보 →
   오행 분포 → 단추. 무엇으로 계산했나가 결과 앞에 선다. 단추 줄이 지도의 범례 띠와 같은 바닥선에 선다. 남는 높이가 한 틈에 몰리지 않고 덩어리 사이에 나뉜다.
 
-  **고치는 길은 출생 정보 곁의 작은 글자 「수정」 하나다**(운영자 결정 2026-11-09 — 2026-10-26 의 「손잡이 없음」을 바꿨다). 모서리 연필은
-  걷은 채이고(그 자리는 일간 딱지가 든다), 「수정」은 프로필 화면의 「출생 정보」 판을 편 채 연다(`/me/profile#birth`). 고치는 폼은
-  거기 하나다 — 이 카드가 폼을 따로 들지 않는다. 저장 전 카드(`personId === null`)에는 안 선다.
+  **고치는 길은 오른쪽 위 「⋯」 메뉴다**(운영자 결정 2026-11-12, 시안 「수정 A안」 — 2026-11-09 의 출생 정보 곁 작은 글자 「수정」을 바꿨다.
+  글의 일부처럼 읽히고 단추로 안 보였다). 저장한 사람 카드의 관리 메뉴와 같은 단추 · 같은 판이고(`self-menu.tsx`), 줄은 둘이다 — 「출생 정보 수정」은
+  프로필 화면의 「출생 정보」 판을 편 채 열고(`/me/profile#birth`) 「프로필 편집」은 그 화면 맨 위로 간다(`/me/profile`). 고치는 폼은 거기 하나다 — 이 카드가 폼을 따로 들지 않는다.
+  일간 딱지는 그 자리를 내주고 이름 옆에 선다. 저장 전 카드(`personId === null`)에는 메뉴가 안 선다.
 */
 
 /**
@@ -103,8 +105,8 @@ export function SelfCard({
           (`e2e/target.ts`)가 44px 칸을 43.5 로 쟀다(#836). 원(56px)과 이름(35px)이 한 줄이라 56px 다
         */}
         {/*
-          오른쪽 위 일간 딱지 자리(80px)는 이름에만 비운다 — 이름 아래 출생 정보 줄 · 한 줄 평은 카드 안쪽 폭을 끝까지 쓴다(2026-10-26 운영자).
-          딱지는 이름 높이 안에서 끝나 그 아래 줄과 안 겹친다
+          오른쪽 위 「⋯」 자리(48px)는 이름 줄에만 비운다 — 이름 아래 출생 정보 줄 · 한 줄 평은 카드 안쪽 폭을 끝까지 쓴다(2026-10-26 운영자).
+          「⋯」는 이름 높이 안에서 끝나 그 아래 줄과 안 겹친다. 저장 전 카드에는 「⋯」가 없어 비우지 않는다
         */}
         <div className="flex min-w-0 items-center gap-3">
           {face !== undefined && <SelfProfile {...face} stem={saju.pillars.dayMaster} />}
@@ -117,7 +119,14 @@ export function SelfCard({
               **이름은 구역 제목 단(20px), 넓은 화면은 26px**(운영자 결정 2026-10-28 「T1」) — 화면 제목 단(26 · 30)은 카드 안 한 사람의
               이름에 너무 커서 아래 출생 정보 줄과 균형이 맞지 않았다
             */}
-            <h2 className={`min-w-0 break-keep pr-20 [overflow-wrap:anywhere] ${NAME_FACE}`}>{label}</h2>
+            {/*
+              **일간 딱지는 이름 옆이다**(운영자 결정 2026-11-12 — 오른쪽 위는 「⋯」가 든다). 이름이 길어 여러 줄이 되면 딱지는 첫 줄 곁에
+              그대로 서고 이름만 제 폭 안에서 접힌다(딱지는 줄지 않는다)
+            */}
+            <div className={`flex min-w-0 items-start gap-2 ${personId !== null ? 'pr-12 sm:pr-11' : ''}`}>
+              <h2 className={`min-w-0 break-keep [overflow-wrap:anywhere] ${NAME_FACE}`}>{label}</h2>
+              <DayMasterChip stem={saju.pillars.dayMaster} className="shrink-0 sm:mt-[3.5px]" />
+            </div>
             {/*
               **폰은 출생 정보가 이름 바로 아래 한 줄이다**(운영자 결정 2026-10-26) — 「생년월일 시각 · 출생지」, 시각을 모르면 시각 자리를
               비우고 끝에 「· 출생 시각 모름」(`HOUR_UNKNOWN_LABEL`, 그 낱말은 끊지 않는다). 넓은 화면은 아래 출생 정보 상자(`BirthLine`)가 든다
@@ -131,7 +140,6 @@ export function SelfCard({
                   <span className="whitespace-nowrap">{HOUR_UNKNOWN_LABEL}</span>
                 </>
               )}
-              {personId !== null && <BirthEditLink className="ml-2 inline-flex" />}
             </p>
           </div>
         </div>
@@ -156,12 +164,10 @@ export function SelfCard({
       </header>
 
       {/*
-        **일간 딱지는 오른쪽 맨 위다**(2026-10-26 운영자 — 연필이 있던 자리). 출생 정보를 고치는 연필은 걷었다: 사진 · 닉네임 · 소개 ·
-        출생 정보를 프로필 수정 화면(`/me/profile`) 한 곳에서 고친다 — 원을 누르면 「내 프로필」 시트, 그 안의 「프로필 편집」.
+        **오른쪽 맨 위는 「⋯」 메뉴다**(운영자 결정 2026-11-12) — 2026-10-26 에 연필을 걷고 일간 딱지가 섰던 자리다. 딱지는 이름 옆으로 갔다.
+        사진 · 닉네임 · 소개는 원을 누르면 오는 「내 프로필」 시트의 「프로필 편집」이 든다
       */}
-      <div className="absolute right-4 top-4 sm:right-5 sm:top-5">
-        <DayMasterChip stem={saju.pillars.dayMaster} />
-      </div>
+      {personId !== null && <SelfCardMenu />}
 
       {/* 넓은 화면의 출생 정보 상자 — 폰은 이름 아래 한 줄이 든다(위) */}
       <div className="max-sm:hidden">
@@ -242,22 +248,6 @@ function ElementCounts({ saju, compact }: { saju: Saju; compact: boolean }) {
 }
 
 /**
- * 출생 정보 옆 작은 「수정」 — 프로필의 「출생 정보」 판을 펴서 연다(`#birth`, 운영자 결정 2026-11-09). 폰은 이름 아래 줄 끝, 넓은 화면은
- * 「저장된 출생 정보」 이름 옆이다. 두 벌이 늘 그려지므로 **안 보이는 폭의 것은 `display: none` 이라 낭독기에도 하나만 읽힌다**
- */
-function BirthEditLink({ className }: { className: string }) {
-  return (
-    <Link
-      href="/me/profile#birth"
-      aria-label="출생 정보 수정"
-      className={`${className} min-h-6 items-center text-small font-semibold text-secondary underline underline-offset-2 hover:text-foreground`}
-    >
-      수정
-    </Link>
-  );
-}
-
-/**
  * 출생 정보 — **이 사주가 무엇으로 계산됐나.** 저장된 카드는 「저장된」, 저장 전 카드는 「입력한」 출생 정보다. 폰에서는 상자를 벗고 한 줄(생년월일 · 출생지)로 선다
  * (2026-09-25) — 카드 한 장이 첫 화면에 들어야 해서다. 아예 빼면 고친 입력이 홈 어디에도 안 보인다. 성별과 자시
  * 규칙은 넓은 화면에만 서고, 폰에서는 「만세력 보기」에 있다. 두 폭이 **같은 글 한 벌**을 입는다.
@@ -283,10 +273,7 @@ function BirthLine({ query, saved }: { query: Query; saved: boolean }) {
       {/*
         저장 전 카드(로그인 전 결과 · 사주 이어 보기, `personId === null`)에는 저장된 것이 없다 — 방금 입력한 값이다(ADR 0157).
       */}
-      <div className="sr-only sm:not-sr-only sm:flex sm:items-baseline sm:gap-2">
-        <h3 className="text-small font-semibold text-secondary">{saved ? '저장된 출생 정보' : '입력한 출생 정보'}</h3>
-        {saved && <BirthEditLink className="hidden sm:inline-flex" />}
-      </div>
+      <h3 className="sr-only text-small font-semibold text-secondary sm:not-sr-only">{saved ? '저장된 출생 정보' : '입력한 출생 정보'}</h3>
       <dl className="flex flex-wrap gap-x-1.5 text-small leading-5 text-secondary sm:mt-1.5 sm:grid sm:grid-cols-[auto_1fr_auto_1fr] sm:gap-x-5 sm:gap-y-1 sm:text-note sm:leading-6">
         {rows.map(([term, value], at) => (
           <div key={term} className={at === 0 || at === 2 ? 'contents' : 'hidden sm:contents'}>

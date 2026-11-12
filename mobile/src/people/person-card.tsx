@@ -13,7 +13,7 @@ import { alpha, COLOR, CONTROL, ELEMENT_TONE, FONT, RADIUS, TYPE } from '@/ui/to
 import type { MyReading, PersonRow } from './data';
 import { EditInputForm } from './edit-input';
 import { NoteEditor, RemoveConfirm } from './manage';
-import { DayMasterChip, PillarStrip, Sheet, SheetItem, go, styles as shared } from './parts';
+import { DayMasterChip, ManageButton, PillarStrip, Sheet, SheetItem, go, styles as shared } from './parts';
 import { StemSymbol } from '@/ui/stem-symbol';
 import { Tile } from '@/ui/surfaces';
 
@@ -140,9 +140,7 @@ export function PersonCard({
           </View>
         )}
 
-        <Pressable accessibilityRole="button" accessibilityLabel={`${person.label} 관리`} onPress={() => setPanel('menu')} style={styles.manage}>
-          <Text style={styles.manageDots}>⋯</Text>
-        </Pressable>
+        <ManageButton label={`${person.label} 관리`} onPress={() => setPanel('menu')} />
       </Tile>
 
       {panel === 'edit-input' && person.chart.ok && <EditInputForm personId={person.personId} current={person.chart.query} onDone={done} onCancel={() => setPanel(null)} />}
@@ -183,6 +181,4 @@ const styles = StyleSheet.create({
   buttonPrimaryText: { color: COLOR.onAccent },
   scoreName: { fontSize: TYPE.fine, fontFamily: FONT.medium, opacity: 0.72 },
   unreadable: { gap: 4 },
-  manage: { position: 'absolute', top: 12, right: 12, width: CONTROL, height: CONTROL, alignItems: 'center', justifyContent: 'center', borderRadius: RADIUS.pill },
-  manageDots: { fontSize: 22, lineHeight: 26, color: COLOR.secondary },
 });

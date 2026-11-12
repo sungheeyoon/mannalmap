@@ -8,7 +8,7 @@ import type { Query } from '@/src/lib/input/query';
 import { ICON_BUTTON_QUIET } from '../../ui/buttons';
 import { useDetailsMenu } from '../../ui/details-menu';
 import { Icon, type IconName } from '../../ui/icons';
-import { MENU_PANEL } from '../../ui/surfaces';
+import { MENU_ITEM, MENU_PANEL } from '../../ui/surfaces';
 import { EditInputForm } from '../edit-input';
 import { usePanelSlot } from './finder';
 import { NoteEditor, RemoveConfirm } from './manage';
@@ -114,9 +114,7 @@ function MenuItem({
     <button
       type="button"
       onClick={onClick}
-      className={`flex min-h-11 w-full items-center gap-2.5 rounded-cell px-3 text-left text-body font-semibold hover:bg-surface-sunken ${
-        tone === 'danger' ? 'text-danger' : 'text-foreground'
-      }`}
+      className={`${MENU_ITEM} ${tone === 'danger' ? 'text-danger' : 'text-foreground'}`}
     >
       <Icon name={icon} className="size-4.5" />
       {children}

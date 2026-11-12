@@ -7,9 +7,10 @@ import { Scrim } from '@/ui/scrim';
 import { COLOR, CONTROL, FONT, RADIUS, TYPE } from '@/ui/tokens';
 
 
-export type MenuItem = { readonly label: string; readonly icon: IconName; readonly danger?: boolean; readonly onPress: () => void };
+/** `icon` 을 안 주면 글자만 선다 — 홈 내 사주 카드의 메뉴 */
+export type MenuItem = { readonly label: string; readonly icon?: IconName; readonly danger?: boolean; readonly onPress: () => void };
 
-/** 「⋯」 같은 작은 판 — 누른 자리 곁에 서고, 바깥을 누르면 닫힌다. 고르면 먼저 닫고 그 일을 한다 */
+/** 「⋯」 같은 작은 판 — 누른 자리 곁에 서고, 바깥을 누르거나 뒤로 가면 닫힌다. 고르면 먼저 닫고 그 일을 한다. 화면 읽기에는 메뉴와 그 항목으로 읽힌다 */
 export function AnchoredMenu({ label, items, above = false, children }: { label: string; items: readonly MenuItem[]; above?: boolean; children: ReactNode }) {
   const anchor = useRef<ComponentRef<typeof Pressable>>(null);
   const [place, setPlace] = useState<{ right: number; top?: number; bottom?: number } | null>(null);
@@ -29,18 +30,18 @@ export function AnchoredMenu({ label, items, above = false, children }: { label:
       </Pressable>
       <Scrim open={place !== null} place="free" animation="none" tint={false} onRequestClose={() => setPlace(null)} onOutside={() => setPlace(null)} outsideLabel="닫기">
         {place !== null && (
-          <MenuPanel style={[styles.panel, place]}>
+          <MenuPanel accessibilityRole="menu" style={[styles.panel, place]}>
             {items.map((item) => (
               <Pressable
                 key={item.label}
-                accessibilityRole="button"
+                accessibilityRole="menuitem"
                 style={styles.item}
                 onPress={() => {
                   setPlace(null);
                   item.onPress();
                 }}
               >
-                <Icon name={item.icon} color={item.danger === true ? COLOR.danger : COLOR.foreground} size={18} />
+                {item.icon !== undefined && <Icon name={item.icon} color={item.danger === true ? COLOR.danger : COLOR.foreground} size={18} />}
                 <Text style={[styles.itemText, item.danger === true && styles.danger]}>{item.label}</Text>
               </Pressable>
             ))}
