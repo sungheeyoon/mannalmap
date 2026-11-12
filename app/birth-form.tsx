@@ -5,18 +5,16 @@ import { useState } from 'react';
 import {
   CALENDARS,
   CALENDAR_KO,
-  CITY_LONGITUDES,
   GENDERS,
   GENDER_KO,
   SUPPORTED_YEAR_RANGE,
   type Calendar,
-  type CityName,
   type LateNightRule,
 } from '@/src/lib/saju';
 
 import { dateRefusal } from '@/src/lib/input/chart';
-import { ADVANCED_SETTINGS } from '@/src/lib/input/copy';
-import { BIRTH_DIGIT_LABEL, BIRTH_SELECT_LABEL, DEFAULT_QUERY, NAME_MAX, TIME_BASES, TIME_BASIS, type Query } from '@/src/lib/input/query';
+import { ADVANCED_SETTINGS, BIRTH_CITY_NOTE } from '@/src/lib/input/copy';
+import { BIRTH_CITY_OPTIONS, BIRTH_DIGIT_LABEL, BIRTH_SELECT_LABEL, DEFAULT_QUERY, NAME_MAX, TIME_BASES, TIME_BASIS, type Query } from '@/src/lib/input/query';
 
 import { Icon } from './ui/icons';
 import styles from './birth-form.module.css';
@@ -57,8 +55,6 @@ import { convertedLine } from '@/src/lib/input/entry';
  * - **펼치는 칸**(출생지, 고급 설정의 자시 · 시간 기준)은 선택지가 많거나 덧말이 붙어 그 자리에서 아래로 펼친다(`SelectField`).
  * - **숫자 칸**(생년월일 · 시각)은 단위(년 · 월 · 일 · 시 · 분)를 칸 안 오른쪽에 든다(`DigitsField` · `NumberField`).
  */
-
-const CITIES = Object.keys(CITY_LONGITUDES) as CityName[];
 
 /**
  * 고칠 칸으로 데려간다 — 붉어진 칸, 없으면 아직 빈 칸. 데려갔으면 `true`.
@@ -180,8 +176,10 @@ export function BirthFields({
             open={open === 'city'}
             onToggle={toggle('city')}
             onPick={pick('city')}
-            options={CITIES.map((city) => ({ value: city, label: city }))}
-          />
+            options={BIRTH_CITY_OPTIONS}
+          >
+            {BIRTH_CITY_NOTE}
+          </SelectField>
         </div>
 
         {/*

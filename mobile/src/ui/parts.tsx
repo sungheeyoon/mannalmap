@@ -223,6 +223,7 @@ export function Select<T extends string>({
   options,
   onPick,
   disabled = false,
+  children: note,
 }: {
   /** 칸 이름 — 머리가 지금 값과 함께 읽힌다. 화면에 보이는 이름과 같은 상수를 넘긴다 */
   label: string;
@@ -232,6 +233,8 @@ export function Select<T extends string>({
   options: readonly { value: T; label: string; hint?: string }[];
   onPick: (next: T) => void;
   disabled?: boolean;
+  /** 칸 바로 아래 늘 서는 한 줄(출생지의 「모르면 서울」) — 펼친 목록보다 위다. 문구 상수는 JSX 자식 자리에서만 부르므로 자식으로 받는다(ADR 0159) */
+  children?: ReactNode;
 }) {
   const [open, setOpen] = useState(false);
   const current = options.find((option) => option.value === value);
@@ -258,6 +261,7 @@ export function Select<T extends string>({
         <Text style={styles.selectText}>{current?.label}</Text>
         <Text style={styles.chevron}>{open ? '⌃' : '⌄'}</Text>
       </Pressable>
+      {note !== undefined && <Text style={styles.selectNote}>{note}</Text>}
       {open && (
         <View accessibilityRole="radiogroup" accessibilityLabel={name} style={styles.menu}>
           {options.map((option) => (
@@ -313,6 +317,7 @@ const styles = StyleSheet.create({
   selectBox: { flex: 1 },
   selectHead: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   selectOpen: { borderColor: COLOR.creamInk },
+  selectNote: { marginTop: 6, fontFamily: FONT.medium, fontSize: TYPE.fine, lineHeight: 16, color: COLOR.secondary },
   off: { opacity: 0.55 },
   selectText: { fontFamily: FONT.medium, fontSize: TYPE.body, color: COLOR.foreground },
   chevron: { fontFamily: FONT.medium, fontSize: TYPE.body, color: COLOR.secondary },
