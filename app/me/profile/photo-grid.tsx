@@ -5,7 +5,6 @@ import { useEffect, useOptimistic, useRef, useState, useTransition } from 'react
 
 import {
   PHOTO_MAX_COUNT,
-  PHOTO_NOTE,
   PHOTO_TYPES,
   FOCUS_CENTER,
   PHOTO_REMOVE_CONFIRM,
@@ -481,14 +480,16 @@ export function PhotoGrid({
       </div>
       {total >= 2 && <p className="-mt-1 text-small leading-5 text-cream-ink">{PHOTO_REORDER_HINT}</p>}
 
-      {/* 상태 한 줄 — 올리는 동안 · 끝난 뒤 잠깐. 상자는 늘 서 있어 바뀐 글자를 화면 읽기가 읽는다 */}
-      <DoneNote className="text-note font-medium leading-5 text-foreground">
+      {/*
+        상태 한 줄 — 올리는 동안 · 끝난 뒤 잠깐. 상자는 늘 서 있어 바뀐 글자를 화면 읽기가 읽는다.
+        판의 마지막 줄이다(아래 공개 안내를 걷었다, 대장 all-21) — 빈 한 줄이 판 바닥을 띄우지 않게 위아래로 8px 씩 당긴다
+      */}
+      <DoneNote className="-my-2 text-note font-medium leading-5 text-foreground">
         {status}
         {overflowed && status !== '' && ' · '}
         {overflowed && PHOTO_LIMIT_NOTE}
       </DoneNote>
 
-      <p className="text-small leading-5 text-cream-ink">{PHOTO_NOTE}</p>
       <PhotoViewer
         userId={userId}
         photos={shown}

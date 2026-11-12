@@ -6,10 +6,7 @@ import { INPUT_EDIT_CHANGE_CONFIRM } from '@/src/lib/consent';
 
 import { BirthFields, focusBirthGap } from '../birth-form';
 import { missingAnswer, type Query } from '@/src/lib/input/query';
-import {
-  INPUT_EDIT_REPLACED_NOTE,
-  samePillarInput,
-} from '@/src/lib/input/edit';
+import { samePillarInput } from '@/src/lib/input/edit';
 import { editPersonInput } from './actions';
 import { actionAnswer } from '../ui/action-answer';
 import { BUTTON_PRIMARY, BUTTON_TERTIARY } from '../ui/buttons';
@@ -95,10 +92,7 @@ export function EditInputForm({
     <section
       className="flex flex-col gap-4 rounded-card border border-border bg-surface p-4 text-foreground shadow-card sm:p-5"
     >
-      <header className="flex flex-col gap-1">
-        <h2 className={TYPE_NAME}>수정하기</h2>
-        <p className="text-body leading-6 text-secondary">{INPUT_EDIT_REPLACED_NOTE}</p>
-      </header>
+      <h2 className={TYPE_NAME}>수정하기</h2>
 
       {!editableName && nameNote && (
         <div className="rounded-cell bg-surface-sunken px-3.5 py-2.5 text-body">
