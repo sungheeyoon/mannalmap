@@ -5,7 +5,7 @@ import { describe, expect, it } from 'vitest';
 
 import { chartPath, chartWantOf, currentPath } from '../src/lib/consent/app-destination';
 import { safeReturnPath, withReturnPath } from '../src/lib/consent/return-path';
-import { CHART_SIGN_IN, MATCHING_INTRO_EXAMPLE, matchingStartSteps } from '../src/lib/brand/guide';
+import { CHART_READING_OFFER, CHART_SIGN_IN, MATCHING_INTRO_EXAMPLE, chartReadingOfferTitle, matchingStartSteps } from '../src/lib/brand/guide';
 import { DEFAULT_QUERY, queryFromJson, type Query } from '../src/lib/input/query';
 
 /**
@@ -153,13 +153,39 @@ describe('로그인 시점과 목적지 (ADR 0213)', () => {
     expect(read('mobile/src/people/self-person.ts')).toContain("from('app_user')");
   });
 
-  it.each(['이 사주가 내 삶에서는 어떤 뜻일까요?', '성향부터 일과 연애, 운의 흐름까지 글로 풀어드려요.'])('로그인 전 다음 행동의 글자는 웹의 것 — %s', (words) => {
-    expect(read('app/save-for-reading.tsx')).toContain(words);
-    expect(save).toContain(words);
+  it('로그인 전 다음 행동의 글자는 웹 · 앱이 한 상수에서 읽는다 — 옛 제목과 한 줄은 로그인 전 카드에 없다(대장 first-07)', () => {
+    const web = read('app/save-for-reading.tsx');
+    const webCard = web.slice(web.indexOf("if (context.state === 'out') {"), web.indexOf('const { slots } = context;'));
+    const appCard = save.slice(save.indexOf('function SignInCard'), save.indexOf('/** 저장을 누르고 온 사람이'));
+    for (const card of [webCard, appCard]) {
+      for (const name of ['CHART_READING_OFFER.badge', 'chartReadingOfferTitle(query.hourKnown !== false)', 'CHART_READING_OFFER.points.map(', 'CHART_READING_OFFER.action', 'CHART_READING_OFFER.providers']) {
+        expect(card).toContain(name);
+      }
+      expect(card).not.toMatch(/어떤 뜻일까요|글로 풀어드려요|풀이권/);
+    }
+    /* 「저장하기」는 앱에만 남는다 — 웹은 저장만 하러 로그인을 다녀오는 길이 없다 */
+    expect(appCard).toContain('<SecondaryButton label="저장하기"');
+    expect(webCard).not.toContain('<button');
   });
 
-  it('풀이의 로그인 까닭은 풀이권을 말하고 웹의 글자다, 저장의 까닭은 풀이권을 말하지 않는다', () => {
-    expect(read('app/save-for-reading.tsx')).toContain(CHART_SIGN_IN.reading.note);
+  it('무료는 말하되 장수는 적지 않고, 약속한 절은 풀이의 절 이름 그대로다', () => {
+    const offer = [CHART_READING_OFFER.badge, CHART_READING_OFFER.title.eight, CHART_READING_OFFER.title.six, ...CHART_READING_OFFER.points, CHART_READING_OFFER.action, CHART_READING_OFFER.providers];
+    expect(CHART_READING_OFFER.badge).toContain('무료');
+    expect(CHART_READING_OFFER.action).toContain('무료');
+    for (const words of offer) expect(words).not.toMatch(/\d|한 장|풀이권/);
+    const sections = read('src/lib/reading/prompt-self.ts');
+    for (const title of CHART_READING_OFFER.points.flatMap((point) => point.split(', '))) expect(sections).toContain(`'${title}'`);
+    /* 스토어 설명이 약속한 넷과 같다 */
+    expect(read('docs/ops/play-listing.md')).toContain(CHART_READING_OFFER.points.join(', '));
+    /* 시각을 모르면 시주가 없다 — 화면에 선 글자 수를 말한다 */
+    expect(chartReadingOfferTitle(true)).toContain('여덟 글자');
+    expect(chartReadingOfferTitle(false)).toContain('여섯 글자');
+    /* 무료 몫은 정책 함수가 낸다 — 0 이 되는 날 이 문구가 거짓이 된다(`src/lib/brand/guide.ts` 의 주석) */
+    expect(read('supabase/migrations/20270112090000_a_new_member_gets_one_free_credit.sql')).toMatch(/function public\.reading_credit_limit\(\)[\s\S]{0,120}select 1 \$\$/);
+  });
+
+  it('풀이의 로그인 까닭은 풀이권을 말하고, 저장의 까닭은 풀이권을 말하지 않는다', () => {
+    expect(CHART_SIGN_IN.reading.note).toContain('풀이권');
     expect(CHART_SIGN_IN.reading.title).not.toBe(CHART_SIGN_IN.save.title);
     expect(CHART_SIGN_IN.save.note).not.toContain('풀이권');
   });

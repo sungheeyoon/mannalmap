@@ -1,4 +1,4 @@
-import { MATCHING_INTRO_TITLE } from '@brand/guide';
+import { CHART_READING_OFFER, MATCHING_INTRO_TITLE, chartReadingOfferTitle } from '@brand/guide';
 import type { Query } from '@input/query';
 import type { SameChart } from '@input/same-chart';
 import { noRoomToSave, type PersonSlots } from '@people';
@@ -111,20 +111,33 @@ export function SavePersonForReading({ query, want }: { query: Query; want: Char
 }
 
 /**
- * 로그인 전의 다음 행동 — 누른 일이 주소에 실려 로그인 화면이 그 까닭을 말한다. 다녀오면 이 결과로 돌아오고, 저장도 풀이도 대신 누르지 않는다(ADR 0213 · 0028).
- * 풀이권을 쓰는 확인은 풀이 칸에서 요청 직전에 묻는다.
+ * 로그인 전의 다음 행동 — **무료를 앞에 세운다**(「결과 A안」, 운영자 채택 2026-11-12, 대장 first-07). 딱지 · 제목 · 풀이의 절 셋 · 주 단추 · 「저장하기」 ·
+ * 로그인 수단 한 줄이고, 글자는 웹과 한 벌(`CHART_READING_OFFER`)이다. 누른 일이 주소에 실려 로그인 화면이 그 까닭을 말한다. 다녀오면 이 결과로 돌아오고,
+ * 저장도 풀이도 대신 누르지 않는다(ADR 0213 · 0028). 풀이권을 쓰는 확인은 풀이 칸에서 요청 직전에 묻는다.
+ * 로그인 수단 줄은 두 단추 아래에 선다 — 두 단추가 모두 로그인으로 가고, 사이에 끼우면 단추 한 쌍이 갈린다.
  */
 function SignInCard({ query }: { query: Query }) {
   const signInFor = (want: ChartWant) => router.push(withReturnPath('/auth', chartPath(query, want)) as never);
   return (
     <Card style={styles.card}>
-      <View style={styles.head}>
-        <Text accessibilityRole="header" style={styles.title}>이 사주가 내 삶에서는 어떤 뜻일까요?</Text>
-        <Text style={styles.line}>성향부터 일과 연애, 운의 흐름까지 글로 풀어드려요.</Text>
+      <View style={styles.offerHead}>
+        <View style={styles.badge}>
+          <Text style={styles.badgeText}>{CHART_READING_OFFER.badge}</Text>
+        </View>
+        <Text accessibilityRole="header" style={styles.title}>{chartReadingOfferTitle(query.hourKnown !== false)}</Text>
+      </View>
+      <View style={styles.points}>
+        {CHART_READING_OFFER.points.map((point) => (
+          <View key={point} style={styles.point}>
+            <Icon name="check" size={16} color={COLOR.secondary} />
+            <Text style={styles.line}>{point}</Text>
+          </View>
+        ))}
       </View>
       <View style={styles.answers}>
-        <PrimaryButton label="사주풀이 받기" onPress={() => signInFor('reading')} />
+        <PrimaryButton label={CHART_READING_OFFER.action} onPress={() => signInFor('reading')} />
         <SecondaryButton label="저장하기" onPress={() => signInFor('save')} />
+        <Text style={styles.providers}>{CHART_READING_OFFER.providers}</Text>
       </View>
     </Card>
   );
@@ -271,6 +284,12 @@ const styles = StyleSheet.create({
   introText: { fontFamily: FONT.bold, fontSize: TYPE.body, color: COLOR.secondary },
   card: { gap: 12 },
   head: { gap: 4 },
+  offerHead: { gap: 8 },
+  badge: { alignSelf: 'flex-start', paddingHorizontal: 12, paddingVertical: 4, borderRadius: RADIUS.pill, backgroundColor: COLOR.cream },
+  badgeText: { fontFamily: FONT.bold, fontSize: TYPE.small, color: COLOR.creamInk },
+  points: { gap: 2 },
+  point: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  providers: { fontFamily: FONT.medium, fontSize: TYPE.fine, lineHeight: 18, color: COLOR.secondary, textAlign: 'center' },
   answers: { gap: 8 },
   noRoom: { gap: 4, padding: 12, borderRadius: RADIUS.cell, backgroundColor: COLOR.background },
   title: { fontFamily: FONT.bold, fontSize: TYPE.field, color: COLOR.foreground },
