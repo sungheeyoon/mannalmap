@@ -2,6 +2,7 @@ import { inlineParts, markdownBlocks } from '@reading/markdown-blocks';
 import { createContext, useContext, useMemo, useRef, useState, type ComponentRef, type ReactNode } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View, type NativeScrollEvent, type NativeSyntheticEvent, type ScrollViewProps } from 'react-native';
 
+import { FoldIcon } from '@/ui/icons';
 import { KEEP_VIEW } from '@/ui/keep-view';
 import { Card } from '@/ui/surfaces';
 import { COLOR, FONT, RADIUS, TYPE } from '@/ui/tokens';
@@ -93,7 +94,7 @@ export function ReadingContents({ titles }: { titles: readonly string[] }) {
       >
         <Text style={styles.title}>{CONTENTS_TITLE}</Text>
         <Text style={styles.count}>{contentsCount(titles.length)}</Text>
-        <Text style={styles.chevron}>{open ? '⌃' : '⌄'}</Text>
+        <FoldIcon open={open} size={20} color={COLOR.secondary} strokeWidth={1.8} />
       </Pressable>
       {open && (
         <View style={styles.rows}>
@@ -125,7 +126,6 @@ const styles = StyleSheet.create({
   head: { flexDirection: 'row', alignItems: 'center', gap: 8, minHeight: 48, paddingHorizontal: 20, paddingVertical: 12 },
   title: { fontFamily: FONT.bold, fontSize: TYPE.body, color: COLOR.foreground },
   count: { flex: 1, fontFamily: FONT.medium, fontSize: TYPE.small, color: COLOR.secondary },
-  chevron: { fontSize: TYPE.lead, color: COLOR.secondary },
   rows: { paddingHorizontal: 8, paddingBottom: 8, borderTopWidth: 1, borderTopColor: COLOR.border, paddingTop: 4 },
   row: { flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: 44, paddingHorizontal: 12, paddingVertical: 8, borderRadius: RADIUS.cell },
   pressed: { backgroundColor: COLOR.cream },

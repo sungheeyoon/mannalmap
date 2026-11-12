@@ -378,3 +378,15 @@ Navigation) · 토스 TDS(Toast · Result) · Material 3 Snackbar 다(확인 202
 - **대비** — 글자 `surface` 와 면 `wood`: 밝은 판 `#fffdf9` / `#2e5b3f` = 7.70:1, 어두운 판 `#1e1d1a` / `#b3dfbf` = 11.42:1(WCAG AA 4.5:1 통과). 흰색(`#ffffff`)으로는 7.82:1.
   딱지(글자 `wood` · 면 `wood-soft`)는 밝은 판 6.66:1 · 어두운 판 9.12:1.
 - **다른 화면의 주 단추는 `BUTTON_PRIMARY` 그대로다.** 이 한 벌을 다른 자리에 쓰려면 운영자에게 먼저 묻는다.
+
+## 추기 — 앱의 화살표는 글자가 아니라 아이콘이다 (2026-11-12, 운영자 「아래로 되는 셰브론이 굉장히 어색하다」)
+
+앱의 펼침 표시가 글자(「⌄」 · 「⌃」)였다 — 서체마다 모양 · 굵기 · 높낮이가 달라 칸 안에서 처지고 가늘게 보였다. 웹은 처음부터 `chevron` 아이콘을 돌려 쓴다.
+
+- **펼침 표시는 `FoldIcon`(`mobile/src/ui/icons.tsx`) 하나다.** `chevron` 한 그림을 돌린다 — 닫힘은 아래, 열림은 위. 아래 · 위 그림을 따로 더하지 않았다.
+  기본값은 웹 고르기 칸의 `.chevron`(`app/birth-form.module.css`)과 같은 16px · 굵기 2.6 · `muted` 이고, 사람 고르기 칸은 웹 `app/person-combobox.tsx` 의 12px · 3.2 · `secondary`,
+  풀이 평가 · 목차는 웹 `app/me/reading/feedback.tsx` 의 20px · 1.8 · `secondary` 다. `Icon` 은 굵기(`strokeWidth`)를 받는다.
+- **다른 화면으로 가는 줄의 「›」도 `Icon name="chevron"`(16px · `muted`)이다** — 다른 줄들이 이미 쓰던 값이다.
+- **화살표는 꾸밈이다.** 낭독기에 안 읽힌다 — 열렸는지는 누르는 칸의 `expanded` 가 말한다. 글자였을 때는 칸의 이름에 「⌄」가 섞여 읽혔다.
+- **화면에 글자 화살표(「⌄」 · 「⌃」 · 「›」)를 새로 쓰지 않는다.** 웹에 남은 글자는 만세력 결과의 접는 줄 둘(`app/saju/stars.tsx` · `app/saju/strength-meter.tsx`)이다 — 이번 범위 밖이라 남겼다.
+- 궁합 고르기의 두 칸을 잇는 표시(가는 줄 + 동그라미 28 + 태극 16)도 있는 토큰만 쓴다 — 줄 `border`, 동그라미 면 `surface-soft`, 그림 `secondary`, 사이는 칸 안 묶음 사이 12(`gap-3`).

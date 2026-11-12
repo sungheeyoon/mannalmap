@@ -12,6 +12,7 @@ import { readPersonDetail, type MyReading, type PersonDetail, type Read } from '
 import { AccountNotice, DayMasterChip, LoadingFrame, NotFound, ScreenFrame, go, styles as shared } from '@/people/parts';
 import { SajuSections } from '@/people/saju-sections';
 import { FailureLine } from '@/ui/failure-line';
+import { Icon } from '@/ui/icons';
 import { StemSymbol } from '@/ui/stem-symbol';
 import { PrimaryButton } from '@/ui/parts';
 import { Button } from '@/ui/buttons';
@@ -180,7 +181,7 @@ function Row({ title, sub, value, onPress }: { title: string; sub: string | null
         {sub !== null && <Text style={shared.meta} numberOfLines={1}>{sub}</Text>}
       </View>
       {value != null && <Text style={styles.rowValue}>{value}</Text>}
-      <Text style={styles.chevron}>›</Text>
+      <Icon name="chevron" size={16} color={COLOR.muted} />
     </Pressable>
   );
 }
@@ -198,5 +199,4 @@ const styles = StyleSheet.create({
   rowBody: { flex: 1, minWidth: 0 },
   rowTitle: { fontSize: TYPE.body, lineHeight: 22, fontFamily: FONT.bold, color: COLOR.foreground },
   rowValue: { fontSize: TYPE.body, fontFamily: FONT.bold, color: COLOR.foreground },
-  chevron: { fontSize: TYPE.lead, color: COLOR.muted },
 });

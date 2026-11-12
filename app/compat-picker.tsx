@@ -251,7 +251,21 @@ export function CompatPicker({ people }: { people: Choosable[] }) {
       <div className="grid items-start sm:grid-cols-[1fr_auto_1fr]">
         {SIDES.map((side) => (
           <Fragment key={side}>
-            {side === 'b' && <span aria-hidden="true" className="self-center text-center text-2xl text-secondary">×</span>}
+            {/*
+              두 칸을 잇는 표시 — 가는 줄 한가운데의 태극(궁합 탭의 그 그림)이다. 전에는 글자 「×」 하나가 빈 자리에 떠 있어 닫기 · 지우기
+              단추로 읽혔다(운영자 2026-11-12). 폰에서는 가로줄, 두 칸이 나란한 넓은 화면에서는 세로줄이다. 꾸밈이라 낭독기에 안 읽힌다.
+              이름 사이의 「×」(결과 · 목록)는 그대로다.
+            */}
+            {side === 'b' && (
+              <span
+                aria-hidden="true"
+                className="flex items-center gap-2 px-5 text-secondary before:h-px before:flex-1 before:bg-border after:h-px after:flex-1 after:bg-border sm:flex-col sm:self-stretch sm:px-0 sm:py-6 sm:before:h-auto sm:before:w-px sm:after:h-auto sm:after:w-px"
+              >
+                <span className="grid size-7 place-items-center rounded-full bg-surface-soft">
+                  <Icon name="taiji" className="size-4" />
+                </span>
+              </span>
+            )}
             <SlotCard
               side={side}
               slot={slots[side]}
@@ -357,7 +371,8 @@ function SlotCard({
       onBlur={(event) => {
         if (!event.currentTarget.contains(event.relatedTarget as Node | null)) onLeave();
       }}
-      className="flex min-w-0 flex-col gap-3 p-5 sm:p-6"
+      /* 폰에서 두 칸 사이는 칸 안의 묶음 사이(`gap-3`)와 같다 — 12 + 동그라미 28 + 12. 넓은 화면은 나란히 서니 그대로다 */
+      className={`flex min-w-0 flex-col gap-3 p-5 sm:p-6 ${side === 'a' ? 'pb-3' : 'pt-3'}`}
     >
       {/*
         **두 칸의 머리 표지**(B10) — 둘 다 직접 입력이면 같은 폼 두 벌이 위아래로 서서 어느 쪽을 적는지 칸만 보고는 몰랐다.

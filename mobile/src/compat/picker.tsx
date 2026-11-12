@@ -1,5 +1,5 @@
 import { router } from 'expo-router';
-import { useEffect, useRef, useState } from 'react';
+import { Fragment, useEffect, useRef, useState } from 'react';
 import { BackHandler, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { calculateChart } from '@input/chart';
@@ -13,6 +13,7 @@ import { BirthFields, useBirthForm } from '@/people/birth-fields';
 import { styles as shared } from '@/people/parts';
 import { SameChartAsk, type SameChartQuestion } from '@/people/same-chart-ask';
 import { FailureLine } from '@/ui/failure-line';
+import { FoldIcon, Icon } from '@/ui/icons';
 import { StemSymbol } from '@/ui/stem-symbol';
 import { ElementSymbol } from '@/ui/element-symbol';
 import { Choices, Field, PrimaryButton } from '@/ui/parts';
@@ -143,32 +144,46 @@ export function CompatPicker({ people, pickA, pickB }: { people: readonly Choosa
     <CardFrame >
       <Text style={[shared.name, styles.frameTitle]}>누구와 누구를 볼까요?</Text>
       {SIDES.map((side) => (
-        <View key={side} style={styles.side}>
-          {side === 'b' && <Text style={styles.times}>×</Text>}
-          <Text style={shared.meta}>{SIDE_PERSON[side]}</Text>
-          {/* 방식을 먼저 고르고 그 아래에 사람 목록이나 입력칸이 선다 — 두 방식의 차례가 같다(운영자 확정 2026-11-08, 대장 all-11) */}
-          <Choices
-            value={slots[side].from}
-            onPick={(from) => setSlot(side, from === 'saved' ? { from, personId: '' } : { from, query: DEFAULT_QUERY })}
-            options={[
-              { value: 'saved', label: '저장한 사람' },
-              { value: 'typed', label: '직접 입력' },
-            ]}
-          />
-          {slots[side].from === 'saved' && (
-            <PersonChoice
-              people={people}
-              taken={(() => {
-                const other = slots[side === 'a' ? 'b' : 'a'];
-                return other.from === 'saved' && other.personId !== '' ? other.personId : null;
-              })()}
-              chosenId={(slots[side] as { personId: string }).personId}
-              onChoose={(personId) => setSlot(side, { from: 'saved', personId })}
-            />
+        <Fragment key={side}>
+          {/*
+            두 칸을 잇는 표시 — 가는 줄 한가운데의 태극(궁합 탭의 그 그림)이다. 전에는 글자 「×」 하나가 빈 자리에 떠 있어 닫기 · 지우기
+            단추로 읽혔다(운영자 2026-11-12). 누르는 것이 아니고 꾸밈이라 낭독기에 안 읽힌다. 이름 사이의 「×」(결과 · 목록)는 그대로다.
+          */}
+          {side === 'b' && (
+            <View aria-hidden importantForAccessibility="no-hide-descendants" style={styles.join}>
+              <View style={styles.joinLine} />
+              <View style={styles.joinMark}>
+                <Icon name="taiji" size={16} color={COLOR.secondary} />
+              </View>
+              <View style={styles.joinLine} />
+            </View>
           )}
-          {people.length === 0 && slots[side].from === 'saved' && <Text style={shared.meta}>아직 저장한 사람이 없어요.</Text>}
-          {slots[side].from === 'typed' && <TypedSlot onChange={(query) => setSlot(side, { from: 'typed', query })} />}
-        </View>
+          <View style={[styles.side, side === 'a' ? styles.sideFirst : styles.sideSecond]}>
+            <Text style={shared.meta}>{SIDE_PERSON[side]}</Text>
+            {/* 방식을 먼저 고르고 그 아래에 사람 목록이나 입력칸이 선다 — 두 방식의 차례가 같다(운영자 확정 2026-11-08, 대장 all-11) */}
+            <Choices
+              value={slots[side].from}
+              onPick={(from) => setSlot(side, from === 'saved' ? { from, personId: '' } : { from, query: DEFAULT_QUERY })}
+              options={[
+                { value: 'saved', label: '저장한 사람' },
+                { value: 'typed', label: '직접 입력' },
+              ]}
+            />
+            {slots[side].from === 'saved' && (
+              <PersonChoice
+                people={people}
+                taken={(() => {
+                  const other = slots[side === 'a' ? 'b' : 'a'];
+                  return other.from === 'saved' && other.personId !== '' ? other.personId : null;
+                })()}
+                chosenId={(slots[side] as { personId: string }).personId}
+                onChoose={(personId) => setSlot(side, { from: 'saved', personId })}
+              />
+            )}
+            {people.length === 0 && slots[side].from === 'saved' && <Text style={shared.meta}>아직 저장한 사람이 없어요.</Text>}
+            {slots[side].from === 'typed' && <TypedSlot onChange={(query) => setSlot(side, { from: 'typed', query })} />}
+          </View>
+        </Fragment>
       ))}
 
       <View style={styles.relation}>
@@ -243,7 +258,8 @@ function PersonChoice({ people, taken, chosenId, onChoose }: { people: readonly 
       <Pressable accessibilityRole="button" accessibilityState={{ expanded: open }} onPress={() => setOpen(!open)} style={[styles.choiceHead, open && styles.choiceOpen]}>
         {chosen !== null && <Face person={chosen} />}
         <Text style={[styles.choiceText, chosen === null && styles.choiceEmpty]} numberOfLines={1}>{chosen?.label ?? '상대를 골라 주세요'}</Text>
-        <Text style={styles.chevron}>{open ? '⌃' : '⌄'}</Text>
+        {/* 웹의 같은 칸(`app/person-combobox.tsx`) — 12px · 굵기 3.2 · secondary */}
+        <FoldIcon open={open} size={12} color={COLOR.secondary} strokeWidth={3.2} />
       </Pressable>
       {open && (
         <View style={styles.menu}>
@@ -279,7 +295,12 @@ function Face({ person }: { person: Choosable }) {
 
 const styles = StyleSheet.create({
   side: { gap: 12, padding: 20 },
-  times: { alignSelf: 'center', fontSize: 24, fontFamily: FONT.medium, color: COLOR.secondary },
+  /* 두 칸 사이는 칸 안의 묶음 사이(12)와 같다 — 12 + 동그라미 28 + 12 = 52. 전에는 20 + 「×」 한 줄 + 12 + 20 으로 88~95 였다 */
+  sideFirst: { paddingBottom: 12 },
+  sideSecond: { paddingTop: 12 },
+  join: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 20 },
+  joinLine: { flex: 1, height: 1, backgroundColor: COLOR.border },
+  joinMark: { width: 28, height: 28, alignItems: 'center', justifyContent: 'center', borderRadius: RADIUS.pill, backgroundColor: COLOR.surfaceSoft },
   relation: { gap: 10, padding: 20, borderTopWidth: 1, borderTopColor: COLOR.border, backgroundColor: `${COLOR.surfaceSoft}99` },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
   /* 같은 너비의 2열 — 넷이 두 줄로 고르게 선다(운영자 확정 2026-11-08, 대장 all-11) */
@@ -294,7 +315,6 @@ const styles = StyleSheet.create({
   choiceOpen: { borderColor: COLOR.creamInk },
   choiceText: { flex: 1, fontSize: TYPE.field, fontFamily: FONT.medium, color: COLOR.foreground },
   choiceEmpty: { color: COLOR.muted },
-  chevron: { fontSize: TYPE.body, fontFamily: FONT.medium, color: COLOR.secondary },
   menu: { borderRadius: RADIUS.cell, borderWidth: 1, borderColor: COLOR.borderStrong, overflow: 'hidden', backgroundColor: COLOR.surface },
   menuFind: { padding: 8 },
   menuEmpty: { padding: 14 },
