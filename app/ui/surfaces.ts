@@ -76,6 +76,12 @@ export const TILE = 'rounded-card bg-[var(--tile)] p-4 text-foreground';
  */
 export const MENU_PANEL = 'rounded-card bg-surface shadow-float ring-1 ring-border';
 
+/**
+ * 카드 구석 「⋯」 메뉴의 한 줄 — 그림 + 글자, 높이 44px. 저장한 사람의 관리 메뉴(`app/me/people/person-menu.tsx`)와 홈 내 사주 카드의
+ * 메뉴(`app/me/home/self-menu.tsx`)가 같은 줄을 입는다. 글자 색은 쓰는 자리가 붙인다(보통 · 위험)
+ */
+export const MENU_ITEM = 'flex min-h-11 w-full items-center gap-2.5 rounded-cell px-3 text-left text-body font-semibold hover:bg-surface-sunken';
+
 /** 줄 카드 — 목록의 한 줄(소식 · 대화방 · 풀이 줄). 면(`ROW_CARD_FACE`)은 여백만 뺐다 */
 export const ROW_CARD_FACE = 'rounded-card border border-border bg-surface';
 export const ROW_CARD = `${ROW_CARD_FACE} px-4 py-3`;

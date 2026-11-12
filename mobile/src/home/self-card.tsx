@@ -1,13 +1,13 @@
 import { router } from 'expo-router';
-import type { ReactNode } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { useState, type ReactNode } from 'react';
+import { StyleSheet, Text, View } from 'react-native';
 
 import { HOUR_UNKNOWN_LABEL } from '@input/query';
 import { ELEMENT_PICTURE_KO, ELEMENTS, STEM_INFO } from '@saju';
 import { withFromMe } from '@web-home/from-me';
 import { SELF_READING_MAKING } from '@web-home/making';
 
-import { DayMasterChip } from '@/people/parts';
+import { DayMasterChip, ManageButton, Sheet, SheetItem, styles as shared } from '@/people/parts';
 import { Button } from '@/ui/buttons';
 import { ElementSymbol } from '@/ui/element-symbol';
 import { StemSymbol } from '@/ui/stem-symbol';
@@ -19,7 +19,13 @@ import { SelfProfile } from './self-profile';
 
 type Ok = Extract<SelfCardData, { kind: 'ok' }>;
 
-/** 내 사주 카드(줄인 판) — 홈에서 오행 면을 입는 것은 이 판 하나다. 일간은 원 · 딱지 · 뒤의 그림이 든다 */
+/**
+ * 내 사주 카드(줄인 판) — 홈에서 오행 면을 입는 것은 이 판 하나다. 일간은 원 · 이름 옆 딱지 · 뒤의 그림이 든다.
+ *
+ * **고치는 길은 오른쪽 위 「⋯」 메뉴다**(운영자 결정 2026-11-12, 시안 「수정 A안」 — 출생 정보 곁의 작은 글자 「수정」을 바꿨다). 저장한 사람
+ * 카드와 같은 단추 · 같은 판(`ManageButton` · `Sheet` · `SheetItem`)이고 줄은 「출생 정보 수정」 하나다 — 고치는 폼은 프로필의 「출생 정보」 판이다.
+ * 홈의 내 사주에만 선다 — 결과 화면의 사주(`actions` 를 준 판)는 아직 저장 전이라 고칠 것이 없다
+ */
 export function SelfCard({
   card,
   actions,
@@ -38,14 +44,13 @@ export function SelfCard({
   const dayElement = STEM_INFO[saju.pillars.dayMaster].element;
   const tone = ELEMENT_TONE[dayElement];
   const counts = saju.analysis.elements.counts;
+  const manageable = actions === undefined;
+  const [menu, setMenu] = useState(false);
 
   return (
     <Tile tone={tone.soft} accessibilityLabel={label} style={styles.card}>
       <View pointerEvents="none" style={styles.watermark}>
         <StemSymbol stem={saju.pillars.dayMaster} size={160} opacity={0.15} />
-      </View>
-      <View style={styles.chip}>
-        <DayMasterChip stem={saju.pillars.dayMaster} />
       </View>
       <View style={styles.head}>
         {card.face !== null ? (
@@ -56,20 +61,16 @@ export function SelfCard({
           </View>
         )}
         <View style={styles.who}>
-          {card.label !== '' && <Text style={[styles.name, styles.nameRoom]}>{card.label}</Text>}
-          <View style={styles.birthRow}>
-            <Text style={styles.birth}>
-              {query.date}
-              {query.hourKnown === false ? '' : ` ${query.time}`} · {query.city}
-              {query.hourKnown === false ? ` · ${HOUR_UNKNOWN_LABEL}` : ''}
-            </Text>
-            {/* 홈의 내 사주만 — 결과 화면의 사주(`actions` 를 준 판)는 아직 저장 전이라 고칠 것이 없다. 고치는 폼은 프로필의 「출생 정보」 판이다 */}
-            {actions === undefined && (
-              <Pressable accessibilityRole="link" accessibilityLabel="출생 정보 수정" hitSlop={{ top: 12, bottom: 12, left: 8, right: 8 }} onPress={() => router.push('/me/profile?edit=birth' as never)}>
-                <Text style={styles.edit}>수정</Text>
-              </Pressable>
-            )}
+          {/* 일간 딱지는 이름 옆이다 — 오른쪽 위는 「⋯」가 든다. 긴 이름은 제 폭 안에서 접히고 딱지는 첫 줄 곁에 그대로 선다 */}
+          <View style={[styles.nameRow, manageable && styles.menuRoom]}>
+            {card.label !== '' && <Text style={styles.name}>{card.label}</Text>}
+            <DayMasterChip stem={saju.pillars.dayMaster} />
           </View>
+          <Text style={styles.birth}>
+            {query.date}
+            {query.hourKnown === false ? '' : ` ${query.time}`} · {query.city}
+            {query.hourKnown === false ? ` · ${HOUR_UNKNOWN_LABEL}` : ''}
+          </Text>
         </View>
       </View>
 
@@ -103,6 +104,20 @@ export function SelfCard({
           <Button accessibilityRole="link" variant="secondary" label="만세력 보기" onPress={() => router.push(`/me/people/${card.personId}?tab=chart` as never)} style={styles.action} />
         </View>
       )}
+
+      {manageable && <ManageButton label={`${label} 관리`} onPress={() => setMenu(true)} />}
+      {menu && (
+        <Sheet label="닫기" onClose={() => setMenu(false)}>
+          <Text style={shared.section}>{label}</Text>
+          <SheetItem
+            label="출생 정보 수정"
+            onPress={() => {
+              setMenu(false);
+              router.push('/me/profile?edit=birth' as never);
+            }}
+          />
+        </Sheet>
+      )}
     </Tile>
   );
 }
@@ -110,15 +125,14 @@ export function SelfCard({
 const styles = StyleSheet.create({
   card: { gap: 12, overflow: 'hidden' },
   watermark: { position: 'absolute', right: -32, bottom: -40 },
-  chip: { position: 'absolute', top: 16, right: 16, zIndex: 1 },
-  nameRoom: { paddingRight: 80 },
   head: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   face: { width: 56, height: 56, borderRadius: RADIUS.pill, alignItems: 'center', justifyContent: 'center', backgroundColor: COLOR.surface },
   who: { flex: 1, minWidth: 0 },
-  name: { fontFamily: FONT.bold, fontSize: TYPE.heading, color: COLOR.foreground },
-  birthRow: { flexDirection: 'row', alignItems: 'baseline', flexWrap: 'wrap', columnGap: 8, marginTop: 2 },
-  birth: { fontFamily: FONT.medium, fontSize: TYPE.fine, color: COLOR.secondary },
-  edit: { fontFamily: FONT.bold, fontSize: TYPE.fine, color: COLOR.secondary, textDecorationLine: 'underline' },
+  nameRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 8 },
+  /** 「⋯」(44px, 카드 끝에서 12)가 카드 안쪽 여백(16)을 넘어 들어온 40 과 틈 8 */
+  menuRoom: { paddingRight: 48 },
+  name: { flexShrink: 1, fontFamily: FONT.bold, fontSize: TYPE.heading, lineHeight: 28, color: COLOR.foreground },
+  birth: { marginTop: 2, fontFamily: FONT.medium, fontSize: TYPE.fine, color: COLOR.secondary },
   metaphor: { fontFamily: FONT.medium, fontSize: TYPE.lead, lineHeight: 26, color: COLOR.foreground, paddingHorizontal: 14, paddingVertical: 10, borderRadius: RADIUS.cell, backgroundColor: alpha(COLOR.surface, 0.55) },
   elements: { flexDirection: 'row' },
   element: { flex: 1, alignItems: 'center', gap: 2 },

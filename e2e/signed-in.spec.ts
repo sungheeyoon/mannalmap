@@ -492,10 +492,13 @@ test.describe('초대된 사람의 로그인 흐름', () => {
     /* 폰은 이름 아래 줄, 넓은 화면은 출생 정보 상자 — 둘 다 그려 두고 폭마다 하나만 보인다 */
     await expect(mine.getByText('1990-05-15 14:30').filter({ visible: true })).toBeVisible();
     /*
-      출생 정보 곁의 「수정」 하나가 프로필의 「출생 정보」 판을 편 채 연다(운영자 결정 2026-11-09 — 2026-10-26 의 「손잡이 없음」을 바꿨다).
-      폰 · 넓은 화면의 두 벌 가운데 보이는 하나만 읽힌다
+      카드 오른쪽 위 「⋯」 메뉴의 「출생 정보 수정」 하나가 프로필의 「출생 정보」 판을 편 채 연다(운영자 결정 2026-11-12 — 2026-11-09 의
+      출생 정보 곁 글자 「수정」을 바꿨다). 저장한 사람 카드의 관리 메뉴와 같은 단추다 — 닫힌 동안 줄은 안 보인다
     */
     const edit = mine.getByRole('link', { name: '출생 정보 수정' });
+    await expect(mine.getByText('수정', { exact: true })).toHaveCount(0);
+    await expect(edit).toBeHidden();
+    await mine.getByLabel('내 사주 관리', { exact: true }).click();
     await expect(edit).toHaveCount(1);
     await expect(edit).toHaveAttribute('href', '/me/profile#birth');
     await edit.click();
