@@ -170,6 +170,18 @@ npx eas-cli@latest submit --profile production --platform ios                   
 - **Play 에서 받은 앱은 Google 키로 다시 서명된다** — 구글 로그인이 `DEVELOPER_ERROR` 면 설정이 어긋난 것이다([google-signin](https://react-native-google-signin.github.io/docs/troubleshooting)). 내부 트랙의 첫 빌드에서 구글 로그인을 먼저 본다.
 - 2026-11-02 의 빌드 `expirationDate` 는 만든 날 + 14일이다 — 링크를 오래 쓰지 않는다. **이 칸의 뜻은 공식 문서에서 못 찾았다(확인 전).** 찾은 공식 문장은 산출물 보관뿐이고 — 「EAS Build logs and artifacts are stored for up to 90 days before being deleted」([Expo](https://expo.dev/security)) — 14일과 어떻게 이어지는지는 안 적혀 있다. 설치된 앱의 사용기한이라는 문장도, 아니라는 문장도 못 찾았다([내부 배포](https://docs.expo.dev/build/internal-distribution/)에도 없다).
 
+### 스토어에 올리기 전에 네이티브에서 본다
+
+**웹 번들로 찍은 화면은 네이티브의 결함을 못 본다.** 2026-11-11 첫 비공개 테스트 빌드 `2 (1.0.0)` 에서 하단 탭 「홈」↔「궁합」을 다섯 번쯤 오가면 본문이 비고 머리와 탭만 남았다(#1126). 탭 이동이 스택 안의 화면 순서를 바꿨고(`router.navigate` + `dangerouslySingular`), 안드로이드의 Fabric 이 그 갱신에서 화면을 떼어 냈다 — logcat `SurfaceMountingManager … removeViewAt tried to remove a React View that was actually reused`. 웹 번들 · 단위 시험 · e2e 어디에도 안 보였고, 누르는 간격과도 상관없었다. 테스터 손에서 나온 뒤에야 알았다. #1130 이 탭 넷을 탭 묶음(`mobile/src/app/me/(tabs)/`)으로 옮겨 고쳤고 `scripts/mobile-back.test.ts` 가 걸음을 잠근다.
+
+그래서 **`production` 빌드를 Play 에 올리기 전에** 아래를 에뮬레이터나 실기기에서 본다 — 차례는 `docs/agents/delegation/local-env.md` 「앱을 네이티브로 재기」(Expo Go + 가짜 서버), 출시 빌드와 같은 네이티브로 보려면 같은 커밋의 `preview` APK 를 깐다.
+
+1. **하단 탭을 50번 오간다** — 홈 ↔ 궁합(인연이 열려 있으면 네 탭 다). 5번마다 화면 글자 수(`uiautomator dump`)가 그대로인지 보고, 끝에 앱의 logcat 에 `removeViewAt` · `FATAL EXCEPTION` 이 0줄인지 센다. 2026-11-12 `preview` `6371795d` 는 50번 왕복에 글자 54 → 54 · 0줄이었다.
+2. **이번 빌드가 고친 화면을 손으로 지난다** — 고친 단추를 누르고, 도착 화면이 서고, 뒤로 가기가 온 길로 돌아가는지.
+3. **탭 · 스택 · 뒤로 가기를 건드린 PR 은 머지 전에 1 을 돈다** — 내비게이션 구조는 네이티브에서만 깨진다.
+
+에뮬레이터의 함정 둘: `-no-snapshot-save` 로 띄우면 껐다 켤 때 깔아 둔 빌드 · 로그인이 사라져 옛 빌드가 뜬다 — 재기 전에 `dumpsys package com.mannalmap.app` 의 `versionCode` · `lastUpdateTime` 을 본다. 에뮬레이터의 `com.mannalmap.app` 이 운영자 계정으로 운영에 로그인돼 있을 수 있다 — 그 앱 위에서는 탭만 누르고, 자료를 바꾸는 누름은 가짜 서버에 문 Expo Go 에서 한다.
+
 ## 내부 트랙과 비공개 테스트는 다르다
 
 | | 내부 테스트 | 비공개 테스트(closed) |
