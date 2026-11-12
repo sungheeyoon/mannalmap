@@ -27,9 +27,9 @@ export default function CompatLoading() {
           <div className="grid items-start sm:grid-cols-[1fr_auto_1fr]">
             {[0, 1].map((side) => (
               <div key={side} className="contents">
-                {/* 두 칸 사이의 「×」 자리 — 실제 판처럼 넓은 화면에서는 가운데 좁은 열이다 */}
-                {side === 1 && <span aria-hidden="true" className="h-8 sm:w-4" />}
-                <div className="flex min-w-0 flex-col gap-3 p-5 sm:p-6">
+                {/* 두 칸을 잇는 줄과 동그라미의 자리 — 실제 판처럼 넓은 화면에서는 가운데 좁은 열이다 */}
+                {side === 1 && <span aria-hidden="true" className="h-7 sm:w-7" />}
+                <div className={`flex min-w-0 flex-col gap-3 p-5 sm:p-6 ${side === 0 ? 'pb-3' : 'pt-3'}`}>
                   <Bone className="h-11 w-full rounded-cell" />
                   <Bone className="h-[3.25rem] w-full rounded-cell" />
                 </div>

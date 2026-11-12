@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import { View } from 'react-native';
 import Svg, { Circle, Path, Rect } from 'react-native-svg';
 
 import { COLOR } from './tokens';
@@ -90,10 +91,24 @@ const shapes = (color: string): Record<IconName, ReactNode> => ({
   ),
 });
 
-export function Icon({ name, size = 24, color = COLOR.foreground }: { name: IconName; size?: number; color?: string }) {
+export function Icon({ name, size = 24, color = COLOR.foreground, strokeWidth = 1.8 }: { name: IconName; size?: number; color?: string; strokeWidth?: number }) {
   return (
-    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round">
       {shapes(color)[name]}
     </Svg>
+  );
+}
+
+/**
+ * 펼침 표시 — 닫힘은 아래, 열림은 위를 본다. 웹처럼 `chevron` 한 그림을 돌려 쓴다(`app/birth-choices.tsx` 의 `rotate-90` · `-rotate-90`).
+ * 글자(「⌄」 · 「⌃」)로 두면 서체마다 굵기 · 높낮이가 달라 칸 안에서 처져 보였다(운영자 2026-11-12). 기본값은 웹 고르기 칸의
+ * `.chevron`(`app/birth-form.module.css` — 16px · 굵기 2.6 · muted)이다.
+ * 꾸밈이라 낭독기에 안 읽힌다 — 열렸는지는 누르는 칸의 `expanded` 가 말한다.
+ */
+export function FoldIcon({ open, size = 16, color = COLOR.muted, strokeWidth = 2.6 }: { open: boolean; size?: number; color?: string; strokeWidth?: number }) {
+  return (
+    <View aria-hidden importantForAccessibility="no-hide-descendants" style={{ transform: [{ rotate: open ? '-90deg' : '90deg' }] }}>
+      <Icon name="chevron" size={size} color={color} strokeWidth={strokeWidth} />
+    </View>
   );
 }
