@@ -5,8 +5,8 @@ import { BUTTON, BUTTON_OFF_OPACITY, BUTTON_PRESSED_SCALE, BUTTON_PRIMARY_OFF } 
 
 import { FONT } from './tokens';
 
-/** 웹 `app/ui/buttons.ts` 의 단추 일곱 벌 — 변형 낱말과 상수의 짝은 `src/lib/design/contract.ts` */
-export type ButtonVariant = 'primary' | 'secondary' | 'tertiary' | 'tertiary-danger' | 'danger' | 'primary-small' | 'secondary-small';
+/** 웹 `app/ui/buttons.ts` 의 단추 여덟 벌 — 변형 낱말과 상수의 짝은 `src/lib/design/contract.ts` */
+export type ButtonVariant = 'primary' | 'secondary' | 'tertiary' | 'tertiary-danger' | 'danger' | 'primary-wood' | 'primary-small' | 'secondary-small';
 
 const BUTTON_OF: Record<ButtonVariant, keyof typeof BUTTON> = {
   primary: 'BUTTON_PRIMARY',
@@ -14,6 +14,7 @@ const BUTTON_OF: Record<ButtonVariant, keyof typeof BUTTON> = {
   tertiary: 'BUTTON_TERTIARY',
   'tertiary-danger': 'BUTTON_TERTIARY_DANGER',
   danger: 'BUTTON_DANGER',
+  'primary-wood': 'BUTTON_PRIMARY_WOOD',
   'primary-small': 'BUTTON_PRIMARY_SMALL',
   'secondary-small': 'BUTTON_SECONDARY_SMALL',
 };

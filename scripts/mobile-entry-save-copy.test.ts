@@ -5,7 +5,7 @@ import { describe, expect, it } from 'vitest';
 
 import { chartPath, chartWantOf, currentPath } from '../src/lib/consent/app-destination';
 import { safeReturnPath, withReturnPath } from '../src/lib/consent/return-path';
-import { CHART_SIGN_IN, MATCHING_INTRO_EXAMPLE, matchingStartSteps } from '../src/lib/brand/guide';
+import { CHART_READING_OFFER, CHART_SIGN_IN, MATCHING_INTRO_EXAMPLE, chartReadingOfferTitle, matchingStartSteps } from '../src/lib/brand/guide';
 import { DEFAULT_QUERY, queryFromJson, type Query } from '../src/lib/input/query';
 
 /**
@@ -153,22 +153,67 @@ describe('로그인 시점과 목적지 (ADR 0213)', () => {
     expect(read('mobile/src/people/self-person.ts')).toContain("from('app_user')");
   });
 
-  it.each(['이 사주가 내 삶에서는 어떤 뜻일까요?', '성향부터 일과 연애, 운의 흐름까지 글로 풀어드려요.'])('로그인 전 다음 행동의 글자는 웹의 것 — %s', (words) => {
-    expect(read('app/save-for-reading.tsx')).toContain(words);
-    expect(save).toContain(words);
+  it('로그인 전 다음 행동의 글자는 웹 · 앱이 한 상수에서 읽는다 — 옛 제목과 한 줄은 로그인 전 카드에 없다(대장 first-07)', () => {
+    const web = read('app/save-for-reading.tsx');
+    const webCard = web.slice(web.indexOf("if (context.state === 'out') {"), web.indexOf('const { slots } = context;'));
+    const appCard = save.slice(save.indexOf('function SignInCard'), save.indexOf('/** 남의 사주를 「저장하기」로 저장한 뒤'));
+    for (const card of [webCard, appCard]) {
+      for (const name of ['CHART_READING_OFFER.badge', 'chartReadingOfferTitle(query.hourKnown !== false)', 'CHART_READING_OFFER.points.map(', 'CHART_READING_OFFER.action', 'CHART_READING_OFFER.providers']) {
+        expect(card).toContain(name);
+      }
+      expect(card).not.toMatch(/어떤 뜻일까요|글로 풀어드려요|풀이권/);
+    }
+    /* 로그인 전 카드의 단추는 하나다 — 「저장하기」가 없다(운영자 정정 2026-11-12). 로그인한 사람의 카드에는 그대로 있다 */
+    expect(appCard).not.toMatch(/SecondaryButton|저장하기"/);
+    expect(webCard).not.toContain('<button');
+    expect(save).toContain("pending === 'stay' ? '저장하는 중…' : '저장하기'");
   });
 
-  it('풀이의 로그인 까닭은 풀이권을 말하고 웹의 글자다, 저장의 까닭은 풀이권을 말하지 않는다', () => {
-    expect(read('app/save-for-reading.tsx')).toContain(CHART_SIGN_IN.reading.note);
-    expect(CHART_SIGN_IN.reading.title).not.toBe(CHART_SIGN_IN.save.title);
-    expect(CHART_SIGN_IN.save.note).not.toContain('풀이권');
+  it('웹 잠긴 목차도 같은 딱지 · 같은 주 단추를 읽고, 강조는 나무 색 한 벌이다(운영자 결정 2026-11-12)', () => {
+    const taste = read('app/taste/taste.tsx');
+    for (const name of ['CHART_READING_OFFER.badge', 'CHART_READING_OFFER.action', 'CHART_READING_OFFER.outlineNote', 'BUTTON_PRIMARY_WOOD', 'bg-wood-soft', 'text-wood']) expect(taste).toContain(name);
+    expect(taste).not.toMatch(/로그인하고 전체 풀이 받기|풀이권 1장/);
+    expect(read('app/save-for-reading.tsx')).toMatch(/BUTTON_PRIMARY_WOOD\} w-full/);
+    expect(save).toContain('variant="primary-wood"');
+    /* 나무 색 주 단추는 이 세 자리만 쓴다 — 다른 화면의 주 단추는 검정 그대로다(ADR 0109 추기 2026-11-12) */
+    const users = (dir: string): string[] =>
+      readdirSync(join(import.meta.dirname, '..', dir), { withFileTypes: true }).flatMap((entry) =>
+        entry.isDirectory() ? users(`${dir}/${entry.name}`) : /\.tsx?$/.test(entry.name) && /BUTTON_PRIMARY_WOOD|primary-wood/.test(read(`${dir}/${entry.name}`)) ? [`${dir}/${entry.name}`] : [],
+      );
+    expect(users('app').sort()).toEqual(['app/save-for-reading.tsx', 'app/taste/taste.tsx', 'app/ui/buttons.ts']);
+    expect(users('mobile/src').sort()).toEqual(['mobile/src/reading/save-self.tsx', 'mobile/src/ui/buttons.tsx']);
+    /* 「무료로」를 누르고 온 사람의 다음 줄은 「1장을 써요」가 아니다 */
+    expect(CHART_SIGN_IN.reading.note).not.toMatch(/\d|써요/);
+    expect(CHART_READING_OFFER.outlineNote).not.toMatch(/\d|써요/);
+    /* 운영자가 준 글자 그대로이고(2026-11-12), 두 자리가 한 상수를 읽는다 */
+    expect(CHART_SIGN_IN.reading.note).toBe('입력한 정보는 로그인 후에도 유지돼요. 가입하면 받는 풀이권으로 전체 사주풀이를 볼 수 있어요.');
+    expect(CHART_READING_OFFER.outlineNote).toBe(CHART_SIGN_IN.reading.note);
+  });
+
+  it('무료는 말하되 장수는 적지 않고, 약속한 절은 풀이의 절 이름 그대로다', () => {
+    const offer = [CHART_READING_OFFER.badge, CHART_READING_OFFER.title.eight, CHART_READING_OFFER.title.six, ...CHART_READING_OFFER.points, CHART_READING_OFFER.action, CHART_READING_OFFER.providers];
+    expect(CHART_READING_OFFER.badge).toContain('무료');
+    expect(CHART_READING_OFFER.action).toContain('무료');
+    for (const words of offer) expect(words).not.toMatch(/\d|한 장|풀이권/);
+    const sections = read('src/lib/reading/prompt-self.ts');
+    for (const title of CHART_READING_OFFER.points.flatMap((point) => point.split(', '))) expect(sections).toContain(`'${title}'`);
+    /* 스토어 설명이 약속한 넷과 같다 */
+    expect(read('docs/ops/play-listing.md')).toContain(CHART_READING_OFFER.points.join(', '));
+    /* 시각을 모르면 시주가 없다 — 화면에 선 글자 수를 말한다 */
+    expect(chartReadingOfferTitle(true)).toContain('여덟 글자');
+    expect(chartReadingOfferTitle(false)).toContain('여섯 글자');
+    /* 무료 몫은 정책 함수가 낸다 — 0 이 되는 날 이 문구가 거짓이 된다(`src/lib/brand/guide.ts` 의 주석) */
+    expect(read('supabase/migrations/20270112090000_a_new_member_gets_one_free_credit.sql')).toMatch(/function public\.reading_credit_limit\(\)[\s\S]{0,120}select 1 \$\$/);
+  });
+
+  it('풀이의 로그인 까닭은 풀이권을 말한다 — 저장의 까닭은 「저장하기」와 함께 걷었다', () => {
+    expect(CHART_SIGN_IN.reading.note).toContain('풀이권');
+    expect(Object.keys(CHART_SIGN_IN)).toEqual(['reading']);
   });
 
   it('로그인 전 단추는 누른 일을 주소에 실어 로그인 화면으로 갈 뿐, 저장 · 풀이를 대신 누르지 않는다', () => {
-    const card = save.slice(save.indexOf('function SignInCard'), save.indexOf('/** 저장을 누르고 온 사람이'));
-    expect(card).toContain("withReturnPath('/auth', chartPath(query, want))");
-    expect(card).toContain("signInFor('reading')");
-    expect(card).toContain("signInFor('save')");
+    const card = save.slice(save.indexOf('function SignInCard'), save.indexOf('/** 남의 사주를 「저장하기」로 저장한 뒤'));
+    expect(card).toContain("withReturnPath('/auth', chartPath(query, 'reading'))");
     expect(card).not.toMatch(/addPerson|saveSelfPerson|start_reading|\/me\/readings/);
   });
 
@@ -181,14 +226,15 @@ describe('로그인 시점과 목적지 (ADR 0213)', () => {
     expect(context).not.toMatch(/addPerson|saveSelfPerson/);
   });
 
-  it('누르던 일이 주소를 지난다 — 저장을 누른 사람만 저장 뒤 결과에 남는다', () => {
+  it('누르던 일이 주소를 지난다 — 옛 주소의 `want=save` 는 누른 일이 없는 것으로 읽고, 내 사주를 저장하면 풀이 칸으로 간다', () => {
     expect(chartWantOf(chartPath(DEFAULT_QUERY, 'reading'))).toBe('reading');
-    expect(chartWantOf(chartPath(DEFAULT_QUERY, 'save'))).toBe('save');
+    expect(chartWantOf(`${chartPath(DEFAULT_QUERY)}&want=save`)).toBeNull();
     expect(chartWantOf(chartPath(DEFAULT_QUERY))).toBeNull();
     expect(chartWantOf('/me/compat?want=save')).toBeNull();
     const auth = new URL(withReturnPath('/auth', chartPath(DEFAULT_QUERY, 'reading')), 'https://local.invalid');
     expect(chartWantOf(safeReturnPath(auth.searchParams.get('next')))).toBe('reading');
-    expect(save).toContain("if (want === 'save') onSavedHere();\n      else router.replace('/me/readings/self' as never);");
+    expect(save).not.toMatch(/want === 'save'|SavedCard\b|goHome/);
+    expect(save).toContain("router.replace('/me/readings/self' as never);");
   });
 
   it('결과로 돌아갈 때는 스택 아래의 그 화면으로 돌아간다 — 겹치지 않는다', () => {

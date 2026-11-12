@@ -84,7 +84,7 @@ test('무료로 내 사주 보기 → 결과 머리로 내려가고 · 잠긴 �
   await page.locator('#saju-detail > summary').click();
   await expect(page.getByRole('heading', { name: '사주팔자' })).toBeVisible();
 
-  await outline.getByRole('link', { name: '로그인하고 전체 풀이 받기' }).click();
+  await outline.getByRole('link', { name: '로그인하고 무료로 풀이 받기' }).click();
   await expect(page).toHaveURL(/\/auth\?next=%2Fsaju%23resume-reading$/);
   expect(page.url()).not.toContain('1990');
   expect(await page.evaluate(() => sessionStorage.getItem('saju:reading-draft'))).toContain('date=1990-05-15');

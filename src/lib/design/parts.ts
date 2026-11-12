@@ -1,4 +1,4 @@
-import { COLOR, ELEVATION, RADIUS, TEXT } from './tokens.generated';
+import { COLOR, ELEVATION, RADIUS, TEXT, TONE } from './tokens.generated';
 
 /**
  * **면 · 칸 · 단추의 값** — 웹 `app/ui/surfaces.ts` · `buttons.ts` · `fields.ts` 의 같은 이름 상수를 앱 스타일로 옮긴 것이다(ADR 0109 추기 2026-10-31).
@@ -45,6 +45,7 @@ export const BUTTON = {
   BUTTON_PRIMARY_SMALL: { minHeight: CONTROL, borderRadius: RADIUS.pill, backgroundColor: COLOR.accent, paddingHorizontal: 16, fontSize: TEXT.note, color: COLOR.onAccent },
   BUTTON_SECONDARY_SMALL: { minHeight: CONTROL, borderRadius: RADIUS.pill, borderWidth: 1, borderColor: COLOR.border, backgroundColor: COLOR.surface, paddingHorizontal: 16, fontSize: TEXT.note, color: COLOR.foreground },
   BUTTON_DANGER: { minHeight: 48, borderRadius: RADIUS.pill, backgroundColor: COLOR.danger, paddingHorizontal: 20, fontSize: TEXT.body, color: COLOR.surface },
+  BUTTON_PRIMARY_WOOD: { minHeight: 48, borderRadius: RADIUS.pill, backgroundColor: TONE.wood.ink, paddingHorizontal: 20, fontSize: TEXT.body, color: COLOR.surface },
   ICON_BUTTON: { width: CONTROL, height: CONTROL, borderRadius: RADIUS.pill, borderWidth: 1, borderColor: COLOR.border, backgroundColor: COLOR.surface, color: COLOR.foreground },
   ICON_BUTTON_QUIET: { width: CONTROL, height: CONTROL, borderRadius: RADIUS.pill, borderWidth: 1, borderColor: COLOR.border, backgroundColor: COLOR.surface, color: COLOR.secondary },
   ICON_BUTTON_ACTIVE: { width: CONTROL, height: CONTROL, borderRadius: RADIUS.pill, borderWidth: 1, borderColor: COLOR.accent, backgroundColor: COLOR.accent, color: COLOR.onAccent },

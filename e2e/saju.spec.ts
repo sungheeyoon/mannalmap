@@ -954,7 +954,7 @@ test('로그인하지 않은 사주 결과에는 저장 버튼 대신 로그인 
   await expect(
     page.getByRole('button', { name: /^(사주풀이 받기|저장하기)$/ }),
   ).toHaveCount(0);
-  await expect(page.getByRole('link', { name: '로그인하고 전체 풀이 받기' })).toBeVisible();
+  await expect(page.getByRole('link', { name: '로그인하고 무료로 풀이 받기' })).toBeVisible();
 });
 
 

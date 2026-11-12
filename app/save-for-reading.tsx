@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect, useMemo, useState, useTransition, type ReactNode } from 'react';
 
+import { CHART_READING_OFFER, chartReadingOfferTitle } from '@/src/lib/brand/guide';
 import { RESUME_READING_PATH } from '@/src/lib/consent';
 import { calculateChart } from '@/src/lib/input/chart';
 import { noRoomToSave, type PersonSlots } from '@/src/lib/people';
@@ -25,10 +26,11 @@ import {
   type SameChartQuestion,
 } from './same-chart-ask';
 import { selfPersonState, type SelfPersonState } from './self-person-state';
-import { BUTTON_PRIMARY, BUTTON_PRIMARY_FACE, BUTTON_SECONDARY, BUTTON_SECONDARY_FACE } from './ui/buttons';
+import { BUTTON_PRIMARY, BUTTON_PRIMARY_FACE, BUTTON_PRIMARY_WOOD, BUTTON_SECONDARY, BUTTON_SECONDARY_FACE } from './ui/buttons';
 import { CARD } from './ui/surfaces';
 import { actionAnswer } from './ui/action-answer';
 import { FailureLine } from './ui/failure-line';
+import { Icon } from './ui/icons';
 import { LoadingDots } from './ui/loading';
 
 /**
@@ -165,26 +167,34 @@ function SaveCard({
   if (context.state === 'unknown') return null;
 
   if (context.state === 'out') {
+    /*
+      **무료를 앞에 세운다**(「결과 A안」, 운영자 채택 2026-11-12, 대장 first-07) — 딱지 · 제목 · 풀이의 절 셋 · 로그인 단추 · 로그인 수단 한 줄. 글자는
+      앱 결과 화면과 한 벌(`CHART_READING_OFFER`)이다. 강조는 나무 색(딱지 · 체크 · `BUTTON_PRIMARY_WOOD`)이고 이 카드만 쓴다. 단추는 하나다 — 로그인 전에는 「저장하기」가 없다(웹 · 앱).
+    */
     return (
-      <section id="reading-next" className="scroll-mt-24 rounded-cell border border-border bg-accent-wash/50 p-5">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <h2 className="text-base font-semibold">이 사주가 내 삶에서는 어떤 뜻일까요?</h2>
-            <p className="mt-1 text-sm leading-6 text-secondary">성향부터 일과 연애, 운의 흐름까지 글로 풀어드려요.</p>
-          </div>
-          <div className="shrink-0">
-            <SignInCarrying
-              draftKey={READING_DRAFT_KEY}
-              draft={toSearchParams(query).toString()}
-              next={RESUME_READING_PATH}
-              className={`${BUTTON_PRIMARY} w-full sm:w-auto`}
-            >
-              로그인하고 계속하기
-            </SignInCarrying>
-            <p className="mt-2 text-xs leading-5 text-secondary sm:text-right">
-              로그인하면 이 입력으로 돌아와요. 사주풀이는 저장한 뒤에 받을 수 있고, 풀이권 1장을 써요.
-            </p>
-          </div>
+      <section id="reading-next" className={`${CARD} scroll-mt-24 flex flex-col gap-4`}>
+        <div className="flex flex-col items-start gap-2">
+          <span className="rounded-full bg-wood-soft px-3 py-1 text-small font-semibold text-wood">{CHART_READING_OFFER.badge}</span>
+          <h2 className="text-base font-semibold">{chartReadingOfferTitle(query.hourKnown !== false)}</h2>
+        </div>
+        <ul className="flex flex-col gap-0.5">
+          {CHART_READING_OFFER.points.map((point) => (
+            <li key={point} className="flex items-center gap-2 text-sm leading-6 text-secondary">
+              <Icon name="check" className="size-4 shrink-0 text-wood" />
+              {point}
+            </li>
+          ))}
+        </ul>
+        <div className="flex flex-col gap-2">
+          <SignInCarrying
+            draftKey={READING_DRAFT_KEY}
+            draft={toSearchParams(query).toString()}
+            next={RESUME_READING_PATH}
+            className={`${BUTTON_PRIMARY_WOOD} w-full sm:w-auto sm:self-start`}
+          >
+            {CHART_READING_OFFER.action}
+          </SignInCarrying>
+          <p className="text-center text-xs leading-5 text-secondary sm:text-left">{CHART_READING_OFFER.providers}</p>
         </div>
       </section>
     );
@@ -196,7 +206,7 @@ function SaveCard({
   return (
     <section id="reading-next" className={`${CARD} scroll-mt-24 flex flex-col gap-4`}>
       <div>
-        {/* 로그인 전 카드(「이 사주가 내 삶에서는 어떤 뜻일까요?」)의 꼴을 이 사람에게 맞춘다 */}
+        {/* 로그인 전 카드가 2026-11-12 까지 쓰던 제목(「이 사주가 내 삶에서는 어떤 뜻일까요?」)의 꼴을 이 사람에게 맞춘 것이다 */}
         <h2 className="text-base font-semibold">이 사람의 사주는 어떤 뜻일까요?</h2>
         <p className="mt-1.5 text-sm leading-6 text-secondary">성향부터 일과 연애, 운의 흐름까지 글로 풀어드려요.</p>
       </div>

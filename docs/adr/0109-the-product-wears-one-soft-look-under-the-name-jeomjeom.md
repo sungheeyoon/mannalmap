@@ -367,3 +367,14 @@ Navigation) · 토스 TDS(Toast · Result) · Material 3 Snackbar 다(확인 202
 - **안 보이는 0.3초 · 동작 줄이기 · 낭독기** — 웹은 CSS 의 `animation-delay` 로, 앱은 타이머로 `delay` 뒤에 보인다. 동작 줄이기(웹 `prefers-reduced-motion` · 앱 `useReducedMotion`)에는 멈춘다. 글자는 없고 낭독기에만 「불러오는 중」(`src/lib/design/loading.ts`, 대장 all-12)이며, 곁에 상태 글이 있는 자리(`decorative`)는 숨긴다.
 - **자리는 남은 본문의 가운데다(운영자 지시 2026-11-08, `ui/loading-center`)** — 처음에는 앱의 `LoadingDots` 가 제목 아래 48px 에 붙어 섰다. 본문 전체를 대신하는 자리에서는 남은 높이를 채우고(`flexGrow: 1`) 세로 · 가로 가운데에 선다 — 맨 위 줄 · 머리 · 아래 탭 막대를 뺀 높이다. 부모가 높이를 내야 한다 — `flex: 1` 인 판이거나, ScrollView 면 기다리는 동안 `contentContainerStyle` 에 `flexGrow: 1` 과 같은 위아래 여백이다(아래 여백이 더 크면 그만큼 위로 뜬다). 저장한 사람 · 궁합의 틀은 스크롤 없는 `LoadingFrame`(`mobile/src/people/parts.tsx`)이다. 결제 내역은 환불 신청 카드가 아래에 그대로 서고, 점은 그 위 남은 자리의 가운데다. 화면 안 한 칸(`inline`)은 그대로 그 칸의 가운데다. 웹은 고치지 않았다 — 본문이 비는 자리는 뼈대(`loading.tsx`)이고, `LoadingDots` 는 사주 이어 보기 칸 하나뿐이다.
 - **그대로 둔 것** — 단추 안의 작은 고리(`LINK_PENDING_SPINNER`)와 테(`LINK_PENDING_RING`), 앱 채팅 상세 궁합 칸 제목 곁의 작은 고리(`mobile/src/chat/detail-panel.tsx`)는 화면이 아니라 한 줄 안의 표시라 바꾸지 않았다.
+
+## 추기 — 나무 색 주 단추 한 벌 (2026-11-12, 운영자 검토 「시안의 초록 강조가 약하다」)
+
+로그인 전 사주 결과의 「로그인하고 무료로 풀이 받기」(앱 결과 카드 · 웹의 같은 갈래 · 웹 잠긴 목차)만 쓰는 주 단추 한 벌을 더했다 — 웹 `BUTTON_PRIMARY_WOOD`(`app/ui/buttons.ts`),
+앱 `Button` 의 `primary-wood`(값 `src/lib/design/parts.ts`, 짝 `src/lib/design/contract.ts`).
+
+- **새 색은 없다.** 면은 나무 오행의 짙은 색(`wood` — 웹 하단 탭의 켜진 표시 `text-wood` 와 같은 값), 글자는 `surface` 다. 꼴은 위험 단추(`BUTTON_DANGER`)와 같고 색만 다르다.
+  검정 주 단추(`BUTTON_PRIMARY`)에 색만 덮어쓰면 웹은 클래스 순서에 따라 덮은 값이 안 먹고(`*_FACE` 를 둔 까닭과 같다), 앱 `Button` 은 글자 색을 변형에서만 받는다 — 그래서 한 벌이다.
+- **대비** — 글자 `surface` 와 면 `wood`: 밝은 판 `#fffdf9` / `#2e5b3f` = 7.70:1, 어두운 판 `#1e1d1a` / `#b3dfbf` = 11.42:1(WCAG AA 4.5:1 통과). 흰색(`#ffffff`)으로는 7.82:1.
+  딱지(글자 `wood` · 면 `wood-soft`)는 밝은 판 6.66:1 · 어두운 판 9.12:1.
+- **다른 화면의 주 단추는 `BUTTON_PRIMARY` 그대로다.** 이 한 벌을 다른 자리에 쓰려면 운영자에게 먼저 묻는다.

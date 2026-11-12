@@ -64,6 +64,12 @@ export const BUTTON_SECONDARY_SMALL = `${BUTTON_SECONDARY_SMALL_FACE} min-h-11 p
 /** 되돌릴 수 없는 누름(탈퇴 · 차단 · 삭제) — 주 단추의 모양에 위험 색 */
 export const BUTTON_DANGER = `inline-flex min-h-12 items-center justify-center gap-2 rounded-full bg-danger px-5 text-body font-semibold text-surface hover:opacity-90 ${PRESS}`;
 
+/**
+ * 나무 색 주 단추 — **로그인 전 사주 결과의 「로그인하고 무료로 풀이 받기」 한 자리만 쓴다**(운영자 2026-11-12 — 시안의 초록 강조, 대장 first-07).
+ * 위험 단추와 같은 꼴에 색만 나무(`wood`)다. 글자는 `surface` — 밝은 판 7.70:1 · 어두운 판 11.42:1(WCAG AA 4.5:1). 다른 화면의 주 단추는 `BUTTON_PRIMARY` 그대로다.
+ */
+export const BUTTON_PRIMARY_WOOD = `inline-flex min-h-12 items-center justify-center gap-2 rounded-full bg-wood px-5 text-body font-semibold text-surface hover:opacity-90 ${PRESS}`;
+
 /** 판 위에 테 없이 서는 아이콘 단추 44px — 화면 머리의 ← · 「⋯」. 이름은 `aria-label` 이 든다 */
 export const ICON_BUTTON_GHOST =
   'grid size-11 shrink-0 place-items-center rounded-full text-foreground hover:bg-surface-soft active:scale-95';

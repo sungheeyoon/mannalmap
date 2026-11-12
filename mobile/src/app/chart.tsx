@@ -32,7 +32,7 @@ export default function ChartScreen() {
   const query = useMemo(() => queryFromJson(params.query), [params.query]);
   /* 주소로도 오는 값이다 — 없거나 깨졌으면 볼 명식이 없으니 적는 자리로 돌려보낸다 */
   if (query === null) return <Redirect href={{ pathname: '/', params: { another: '1' } }} />;
-  const want = params.want === 'save' || params.want === 'reading' ? params.want : null;
+  const want = params.want === 'reading' ? params.want : null;
   return <ChartBody query={query} want={want} />;
 }
 
