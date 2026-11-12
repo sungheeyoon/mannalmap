@@ -169,7 +169,7 @@ function SaveCard({
   if (context.state === 'out') {
     /*
       **무료를 앞에 세운다**(「결과 A안」, 운영자 채택 2026-11-12, 대장 first-07) — 딱지 · 제목 · 풀이의 절 셋 · 로그인 단추 · 로그인 수단 한 줄. 글자는
-      앱 결과 화면과 한 벌(`CHART_READING_OFFER`)이다. 강조는 나무 색(딱지 · 체크 · `BUTTON_PRIMARY_WOOD`)이고 이 카드만 쓴다. 앱의 「저장하기」는 여기 없다 — 웹은 저장만 하러 로그인을 다녀오는 길이 없다.
+      앱 결과 화면과 한 벌(`CHART_READING_OFFER`)이다. 강조는 나무 색(딱지 · 체크 · `BUTTON_PRIMARY_WOOD`)이고 이 카드만 쓴다. 단추는 하나다 — 로그인 전에는 「저장하기」가 없다(웹 · 앱).
     */
     return (
       <section id="reading-next" className={`${CARD} scroll-mt-24 flex flex-col gap-4`}>

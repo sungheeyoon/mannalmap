@@ -156,16 +156,17 @@ describe('로그인 시점과 목적지 (ADR 0213)', () => {
   it('로그인 전 다음 행동의 글자는 웹 · 앱이 한 상수에서 읽는다 — 옛 제목과 한 줄은 로그인 전 카드에 없다(대장 first-07)', () => {
     const web = read('app/save-for-reading.tsx');
     const webCard = web.slice(web.indexOf("if (context.state === 'out') {"), web.indexOf('const { slots } = context;'));
-    const appCard = save.slice(save.indexOf('function SignInCard'), save.indexOf('/** 저장을 누르고 온 사람이'));
+    const appCard = save.slice(save.indexOf('function SignInCard'), save.indexOf('/** 남의 사주를 「저장하기」로 저장한 뒤'));
     for (const card of [webCard, appCard]) {
       for (const name of ['CHART_READING_OFFER.badge', 'chartReadingOfferTitle(query.hourKnown !== false)', 'CHART_READING_OFFER.points.map(', 'CHART_READING_OFFER.action', 'CHART_READING_OFFER.providers']) {
         expect(card).toContain(name);
       }
       expect(card).not.toMatch(/어떤 뜻일까요|글로 풀어드려요|풀이권/);
     }
-    /* 「저장하기」는 앱에만 남는다 — 웹은 저장만 하러 로그인을 다녀오는 길이 없다 */
-    expect(appCard).toContain('<SecondaryButton label="저장하기"');
+    /* 로그인 전 카드의 단추는 하나다 — 「저장하기」가 없다(운영자 정정 2026-11-12). 로그인한 사람의 카드에는 그대로 있다 */
+    expect(appCard).not.toMatch(/SecondaryButton|저장하기"/);
     expect(webCard).not.toContain('<button');
+    expect(save).toContain("pending === 'stay' ? '저장하는 중…' : '저장하기'");
   });
 
   it('웹 잠긴 목차도 같은 딱지 · 같은 주 단추를 읽고, 강조는 나무 색 한 벌이다(운영자 결정 2026-11-12)', () => {
@@ -202,17 +203,14 @@ describe('로그인 시점과 목적지 (ADR 0213)', () => {
     expect(read('supabase/migrations/20270112090000_a_new_member_gets_one_free_credit.sql')).toMatch(/function public\.reading_credit_limit\(\)[\s\S]{0,120}select 1 \$\$/);
   });
 
-  it('풀이의 로그인 까닭은 풀이권을 말하고, 저장의 까닭은 풀이권을 말하지 않는다', () => {
+  it('풀이의 로그인 까닭은 풀이권을 말한다 — 저장의 까닭은 「저장하기」와 함께 걷었다', () => {
     expect(CHART_SIGN_IN.reading.note).toContain('풀이권');
-    expect(CHART_SIGN_IN.reading.title).not.toBe(CHART_SIGN_IN.save.title);
-    expect(CHART_SIGN_IN.save.note).not.toContain('풀이권');
+    expect(Object.keys(CHART_SIGN_IN)).toEqual(['reading']);
   });
 
   it('로그인 전 단추는 누른 일을 주소에 실어 로그인 화면으로 갈 뿐, 저장 · 풀이를 대신 누르지 않는다', () => {
-    const card = save.slice(save.indexOf('function SignInCard'), save.indexOf('/** 저장을 누르고 온 사람이'));
-    expect(card).toContain("withReturnPath('/auth', chartPath(query, want))");
-    expect(card).toContain("signInFor('reading')");
-    expect(card).toContain("signInFor('save')");
+    const card = save.slice(save.indexOf('function SignInCard'), save.indexOf('/** 남의 사주를 「저장하기」로 저장한 뒤'));
+    expect(card).toContain("withReturnPath('/auth', chartPath(query, 'reading'))");
     expect(card).not.toMatch(/addPerson|saveSelfPerson|start_reading|\/me\/readings/);
   });
 
@@ -225,14 +223,15 @@ describe('로그인 시점과 목적지 (ADR 0213)', () => {
     expect(context).not.toMatch(/addPerson|saveSelfPerson/);
   });
 
-  it('누르던 일이 주소를 지난다 — 저장을 누른 사람만 저장 뒤 결과에 남는다', () => {
+  it('누르던 일이 주소를 지난다 — 옛 주소의 `want=save` 는 누른 일이 없는 것으로 읽고, 내 사주를 저장하면 풀이 칸으로 간다', () => {
     expect(chartWantOf(chartPath(DEFAULT_QUERY, 'reading'))).toBe('reading');
-    expect(chartWantOf(chartPath(DEFAULT_QUERY, 'save'))).toBe('save');
+    expect(chartWantOf(`${chartPath(DEFAULT_QUERY)}&want=save`)).toBeNull();
     expect(chartWantOf(chartPath(DEFAULT_QUERY))).toBeNull();
     expect(chartWantOf('/me/compat?want=save')).toBeNull();
     const auth = new URL(withReturnPath('/auth', chartPath(DEFAULT_QUERY, 'reading')), 'https://local.invalid');
     expect(chartWantOf(safeReturnPath(auth.searchParams.get('next')))).toBe('reading');
-    expect(save).toContain("if (want === 'save') onSavedHere();\n      else router.replace('/me/readings/self' as never);");
+    expect(save).not.toMatch(/want === 'save'|SavedCard\b|goHome/);
+    expect(save).toContain("router.replace('/me/readings/self' as never);");
   });
 
   it('결과로 돌아갈 때는 스택 아래의 그 화면으로 돌아간다 — 겹치지 않는다', () => {

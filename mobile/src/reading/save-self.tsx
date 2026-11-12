@@ -13,7 +13,6 @@ import { ConnectedClient, useClient } from '@/auth/connected';
 import { supabase, type Client } from '@/auth/client';
 import { readGate } from '@/home/gate';
 import { useMatchOpen } from '@/matching/opening';
-import { goHome } from '@/info/go-home';
 import { addPerson, readSlots } from '@/people/data';
 import { readSelfPerson } from '@/people/self-person';
 import { SameChartAsk, type SameChartQuestion } from '@/people/same-chart-ask';
@@ -70,20 +69,18 @@ function useSaveContext(): SaveContext | null {
 }
 
 /**
- * **결과 화면의 다음 행동** — 갈래와 글자는 웹의 `app/save-for-reading.tsx` 다. 로그인 전이면 풀이와 저장 두 단추가 서고(ADR 0213 추기), 내 사주가
+ * **결과 화면의 다음 행동** — 갈래와 글자는 웹의 `app/save-for-reading.tsx` 다. 로그인 전이면 무료 풀이 단추 하나가 서고(ADR 0213 추기 2026-11-12), 내 사주가
  * 없으면 내 사주인지 먼저 묻고(ADR 0128), 아니면 「저장한 사람」으로 저장한다. 웹이 함께 잇는 로그인 전 맛보기는 앱에 없어 그 갈래도 없다.
- * `want` 는 로그인 전에 누른 일이다 — 저장을 누르고 온 사람은 내 사주를 저장한 뒤 결과에 남고, 나머지는 풀이 칸으로 간다.
+ * `want` 는 로그인 전에 누른 일(풀이)이다 — 로그인 화면이 그 까닭을 말하고, 세션이 끊겨 다시 물을 때 주소에 그대로 싣는다. 내 사주를 저장하면 풀이 칸으로 간다.
  */
 export function SavePersonForReading({ query, want }: { query: Query; want: ChartWant | null }) {
   const context = useSaveContext();
   /** 「다른 사람의 사주예요」를 눌렀다 — 이 화면에서는 다시 묻지 않는다 */
   const [someoneElse, setSomeoneElse] = useState(false);
-  const [savedHere, setSavedHere] = useState(false);
   /** 남의 사주를 「저장하기」로 저장했다 — 그 사람의 id. 제자리에 「저장했어요」가 선다 */
   const [savedOther, setSavedOther] = useState<string | null>(null);
   const matchOpen = useMatchOpen();
 
-  if (savedHere) return <SavedCard />;
   if (savedOther !== null) return <SavedOtherCard personId={savedOther} />;
   if (context === null) return null;
   if (context.state === 'out') {
@@ -103,7 +100,7 @@ export function SavePersonForReading({ query, want }: { query: Query; want: Char
   return (
     <ConnectedClient client={context.client}>
       {context.self !== null && !context.self.saved && !someoneElse ? (
-        <SelfConfirm query={query} want={want} name={context.self.nickname ?? query.name.trim()} onSomeoneElse={() => setSomeoneElse(true)} onSavedHere={() => setSavedHere(true)} />
+        <SelfConfirm query={query} want={want} name={context.self.nickname ?? query.name.trim()} onSomeoneElse={() => setSomeoneElse(true)} />
       ) : (
         <SaveCard query={query} slots={context.slots} onSavedHere={setSavedOther} />
       )}
@@ -112,14 +109,14 @@ export function SavePersonForReading({ query, want }: { query: Query; want: Char
 }
 
 /**
- * 로그인 전의 다음 행동 — **무료를 앞에 세운다**(「결과 A안」, 운영자 채택 2026-11-12, 대장 first-07). 딱지 · 제목 · 풀이의 절 셋 · 주 단추 · 「저장하기」 ·
+ * 로그인 전의 다음 행동 — **무료를 앞에 세운다**(「결과 A안」, 운영자 채택 2026-11-12, 대장 first-07). 딱지 · 제목 · 풀이의 절 셋 · 주 단추 하나 ·
  * 로그인 수단 한 줄이고, 글자는 웹과 한 벌(`CHART_READING_OFFER`)이다. 누른 일이 주소에 실려 로그인 화면이 그 까닭을 말한다. 다녀오면 이 결과로 돌아오고,
  * 저장도 풀이도 대신 누르지 않는다(ADR 0213 · 0028). 풀이권을 쓰는 확인은 풀이 칸에서 요청 직전에 묻는다.
  * 강조는 나무 색이다(운영자 2026-11-12 — 시안의 초록) — 딱지 · 체크 · 주 단추(`primary-wood`, 이 카드만 쓴다).
- * 로그인 수단 줄은 두 단추 아래에 선다 — 두 단추가 모두 로그인으로 가고, 사이에 끼우면 단추 한 쌍이 갈린다.
+ * 「저장하기」는 없다(운영자 정정 2026-11-12 — 채택한 시안 그대로). 저장만 하러 로그인을 다녀오는 길(`want=save`)도 함께 걷었다 — 로그인하면 저장 물음이 선다.
  */
 function SignInCard({ query }: { query: Query }) {
-  const signInFor = (want: ChartWant) => router.push(withReturnPath('/auth', chartPath(query, want)) as never);
+  const signIn = () => router.push(withReturnPath('/auth', chartPath(query, 'reading')) as never);
   return (
     <Card style={styles.card}>
       <View style={styles.offerHead}>
@@ -137,22 +134,8 @@ function SignInCard({ query }: { query: Query }) {
         ))}
       </View>
       <View style={styles.answers}>
-        <Button variant="primary-wood" label={CHART_READING_OFFER.action} onPress={() => signInFor('reading')} />
-        <SecondaryButton label="저장하기" onPress={() => signInFor('save')} />
+        <Button variant="primary-wood" label={CHART_READING_OFFER.action} onPress={signIn} />
         <Text style={styles.providers}>{CHART_READING_OFFER.providers}</Text>
-      </View>
-    </Card>
-  );
-}
-
-/** 저장을 누르고 온 사람이 내 사주를 저장한 뒤 — 풀이권을 쓰는 일은 여기서 시작하지 않고 풀이 칸으로 간다 */
-function SavedCard() {
-  return (
-    <Card style={styles.card}>
-      <Text accessibilityRole="alert" style={styles.title}>저장했어요</Text>
-      <View style={styles.answers}>
-        <PrimaryButton label="사주풀이 받기" onPress={() => router.push('/me/readings/self' as never)} />
-        <SecondaryButton label="홈으로" onPress={() => void goHome()} />
       </View>
     </Card>
   );
@@ -244,7 +227,7 @@ function SaveCard({ query, slots, onSavedHere }: { query: Query; slots: PersonSl
  * **「이 사주가 내 사주 맞나요?」** — 사주 카드는 이 칸 위에 이미 서 있다. 묻지 않고 저장하면 남의 사주가 내 것이 된다.
  * 풀이를 대신 누르지 않는다 — 풀이권을 쓰는 누름은 도착한 화면에서 사용자가 한다(ADR 0028).
  */
-function SelfConfirm({ query, want, name, onSomeoneElse, onSavedHere }: { query: Query; want: ChartWant | null; name: string; onSomeoneElse: () => void; onSavedHere: () => void }) {
+function SelfConfirm({ query, want, name, onSomeoneElse }: { query: Query; want: ChartWant | null; name: string; onSomeoneElse: () => void }) {
   const client = useClient();
   const [saving, setSaving] = useState(false);
   const [failure, setFailure] = useState<string | null>(null);
@@ -256,8 +239,7 @@ function SelfConfirm({ query, want, name, onSomeoneElse, onSavedHere }: { query:
     const answer = await saveSelfPerson(client, { ...query, name });
     setSaving(false);
     if (answer.ok && answer.value.ok) {
-      if (want === 'save') onSavedHere();
-      else router.replace('/me/readings/self' as never);
+      router.replace('/me/readings/self' as never);
       return;
     }
     setFailure(answer.ok ? (answer.value.ok ? null : answer.value.message) : answer.refused.refused === 'unavailable' ? answer.refused.message : null);
