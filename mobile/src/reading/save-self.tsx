@@ -18,10 +18,11 @@ import { addPerson, readSlots } from '@/people/data';
 import { readSelfPerson } from '@/people/self-person';
 import { SameChartAsk, type SameChartQuestion } from '@/people/same-chart-ask';
 import { settled } from '@/ui/settled';
+import { Button } from '@/ui/buttons';
 import { Icon } from '@/ui/icons';
 import { Card } from '@/ui/surfaces';
 import { PrimaryButton, SecondaryButton, TextButton } from '@/ui/parts';
-import { COLOR, FONT, RADIUS, TYPE } from '@/ui/tokens';
+import { COLOR, ELEMENT_TONE, FONT, RADIUS, TYPE } from '@/ui/tokens';
 
 import { saveSelfPerson } from './chart-writes';
 
@@ -114,6 +115,7 @@ export function SavePersonForReading({ query, want }: { query: Query; want: Char
  * 로그인 전의 다음 행동 — **무료를 앞에 세운다**(「결과 A안」, 운영자 채택 2026-11-12, 대장 first-07). 딱지 · 제목 · 풀이의 절 셋 · 주 단추 · 「저장하기」 ·
  * 로그인 수단 한 줄이고, 글자는 웹과 한 벌(`CHART_READING_OFFER`)이다. 누른 일이 주소에 실려 로그인 화면이 그 까닭을 말한다. 다녀오면 이 결과로 돌아오고,
  * 저장도 풀이도 대신 누르지 않는다(ADR 0213 · 0028). 풀이권을 쓰는 확인은 풀이 칸에서 요청 직전에 묻는다.
+ * 강조는 나무 색이다(운영자 2026-11-12 — 시안의 초록) — 딱지 · 체크 · 주 단추(`primary-wood`, 이 카드만 쓴다).
  * 로그인 수단 줄은 두 단추 아래에 선다 — 두 단추가 모두 로그인으로 가고, 사이에 끼우면 단추 한 쌍이 갈린다.
  */
 function SignInCard({ query }: { query: Query }) {
@@ -129,13 +131,13 @@ function SignInCard({ query }: { query: Query }) {
       <View style={styles.points}>
         {CHART_READING_OFFER.points.map((point) => (
           <View key={point} style={styles.point}>
-            <Icon name="check" size={16} color={COLOR.secondary} />
+            <Icon name="check" size={16} color={OFFER_TONE.ink} />
             <Text style={styles.line}>{point}</Text>
           </View>
         ))}
       </View>
       <View style={styles.answers}>
-        <PrimaryButton label={CHART_READING_OFFER.action} onPress={() => signInFor('reading')} />
+        <Button variant="primary-wood" label={CHART_READING_OFFER.action} onPress={() => signInFor('reading')} />
         <SecondaryButton label="저장하기" onPress={() => signInFor('save')} />
         <Text style={styles.providers}>{CHART_READING_OFFER.providers}</Text>
       </View>
@@ -279,14 +281,17 @@ function SelfConfirm({ query, want, name, onSomeoneElse, onSavedHere }: { query:
   );
 }
 
+/** 로그인 전 카드의 강조 색 — 나무 오행의 짙은 색 · 연한 색(웹 하단 탭의 켜진 표시 `bg-wood-soft text-wood` 와 같은 값). 이 카드만 쓴다 */
+const OFFER_TONE = ELEMENT_TONE['木'];
+
 const styles = StyleSheet.create({
   intro: { minHeight: 44, flexDirection: 'row', alignItems: 'center', gap: 4, marginHorizontal: 4 },
   introText: { fontFamily: FONT.bold, fontSize: TYPE.body, color: COLOR.secondary },
   card: { gap: 12 },
   head: { gap: 4 },
   offerHead: { gap: 8 },
-  badge: { alignSelf: 'flex-start', paddingHorizontal: 12, paddingVertical: 4, borderRadius: RADIUS.pill, backgroundColor: COLOR.cream },
-  badgeText: { fontFamily: FONT.bold, fontSize: TYPE.small, color: COLOR.creamInk },
+  badge: { alignSelf: 'flex-start', paddingHorizontal: 12, paddingVertical: 4, borderRadius: RADIUS.pill, backgroundColor: OFFER_TONE.soft },
+  badgeText: { fontFamily: FONT.bold, fontSize: TYPE.small, color: OFFER_TONE.ink },
   points: { gap: 2 },
   point: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   providers: { fontFamily: FONT.medium, fontSize: TYPE.fine, lineHeight: 18, color: COLOR.secondary, textAlign: 'center' },

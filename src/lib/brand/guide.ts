@@ -24,15 +24,19 @@ export const SIGNED_OUT_EXIT = '사주로 돌아가기';
  */
 export const MEMBER_SIGN_IN_ASK = '이미 계정이 있으신가요?';
 
-/** 앱의 결과 화면에서 누른 일마다 다른 로그인 까닭 — 저장은 풀이권을 안 쓰니 풀이권을 말하지 않는다(ADR 0213 추기) */
+/**
+ * 앱의 결과 화면에서 누른 일마다 다른 로그인 까닭 — 저장은 풀이권을 안 쓰니 풀이권을 말하지 않는다(ADR 0213 추기).
+ * 풀이의 한 줄은 「무료로」를 누르고 온 사람이 읽는다 — 「풀이권 1장을 써요」가 아니라 가입하면 받는 풀이권으로 풀어 준다고 말한다(운영자 결정 2026-11-12, 대장 first-07)
+ */
 export const CHART_SIGN_IN = {
   save: { title: '저장은 로그인하면 할 수 있어요', note: '로그인하면 이 입력으로 돌아와요.' },
-  reading: { title: '사주풀이는 로그인하면 볼 수 있어요', note: '로그인하면 이 입력으로 돌아와요. 사주풀이는 저장한 뒤에 받을 수 있고, 풀이권 1장을 써요.' },
+  reading: { title: '사주풀이는 로그인하면 볼 수 있어요', note: '로그인하면 이 입력으로 돌아와요. 저장한 뒤에, 가입하면 받는 풀이권으로 풀어 드려요.' },
 } as const;
 
 /**
  * **로그인 전 사주 결과의 풀이 카드** — 「결과 A안 — 무료를 앞에」(운영자 채택 2026-11-12, 대장 first-07 「확인 전」). 앱 결과 화면
- * (`mobile/src/reading/save-self.tsx`)과 웹의 같은 자리(`app/save-for-reading.tsx`)가 같은 글자를 읽는다.
+ * (`mobile/src/reading/save-self.tsx`) · 웹의 같은 자리(`app/save-for-reading.tsx`) · 웹에서 로그인 안 한 사람이 실제로 보는 잠긴 목차
+ * (`app/taste/taste.tsx` — 딱지 · 주 단추 · 아래 한 줄)가 같은 글자를 읽는다.
  *
  * - **「첫 풀이 무료」는 적어도 된다**(운영자 결정 2026-11-12) — 새 회원에게 풀이권 한 장을 주는 것이 사실이다(ADR 0227). 장수(「1장」)는 여전히 안 적는다.
  *   **무료 몫(`reading_credit_limit()`)을 바꾸는 날 이 문구도 같이 본다** — 몫이 0 이 되면 이 딱지와 단추의 「무료로」는 거짓이다.
@@ -47,6 +51,8 @@ export const CHART_READING_OFFER = {
   points: ['성격과 속마음', '일과 돈, 연애와 인간관계', '앞으로의 흐름'],
   action: '로그인하고 무료로 풀이 받기',
   providers: '카카오 · 구글로 바로 시작해요',
+  /** 웹 잠긴 목차(`app/taste/taste.tsx`)의 단추 아래 한 줄 — 「풀이권 1장을 써요」 대신 받는 풀이권을 말한다(운영자 결정 2026-11-12). 장수는 안 적는다 */
+  outlineNote: '로그인하면 이 입력으로 돌아와요. 위 목차를 모두, 가입하면 받는 풀이권으로 풀어 드려요.',
 } as const;
 export const chartReadingOfferTitle = (hourKnown: boolean) => (hourKnown ? CHART_READING_OFFER.title.eight : CHART_READING_OFFER.title.six);
 

@@ -33,7 +33,7 @@ export const PARTS: readonly PartContract[] = [
   { name: 'EmptySlot', web: { file: WEB_SURFACES, symbols: ['EMPTY_SLOT'] }, app: { file: APP_SURFACES, symbol: 'EmptySlot' } },
   {
     name: 'Button',
-    web: { file: WEB_BUTTONS, symbols: ['BUTTON_PRIMARY', 'BUTTON_SECONDARY', 'BUTTON_TERTIARY', 'BUTTON_DANGER'] },
+    web: { file: WEB_BUTTONS, symbols: ['BUTTON_PRIMARY', 'BUTTON_SECONDARY', 'BUTTON_TERTIARY', 'BUTTON_DANGER', 'BUTTON_PRIMARY_WOOD'] },
     app: { file: APP_BUTTONS, symbol: 'Button' },
     variants: {
       primary: 'BUTTON_PRIMARY',
@@ -41,6 +41,7 @@ export const PARTS: readonly PartContract[] = [
       tertiary: 'BUTTON_TERTIARY',
       'tertiary-danger': 'BUTTON_TERTIARY_DANGER',
       danger: 'BUTTON_DANGER',
+      'primary-wood': 'BUTTON_PRIMARY_WOOD',
       'primary-small': 'BUTTON_PRIMARY_SMALL',
       'secondary-small': 'BUTTON_SECONDARY_SMALL',
     },
@@ -135,6 +136,7 @@ export const GALLERY: readonly { web: string; app: string; text: string }[] = [
   { web: 'BUTTON_TERTIARY', app: 'tertiary', text: '셋째 단추' },
   { web: 'BUTTON_TERTIARY_DANGER', app: 'tertiary-danger', text: '셋째 위험' },
   { web: 'BUTTON_DANGER', app: 'danger', text: '위험 단추' },
+  { web: 'BUTTON_PRIMARY_WOOD', app: 'primary-wood', text: '나무 색 주 단추' },
   { web: 'BUTTON_PRIMARY_SMALL', app: 'primary-small', text: '작은 주' },
   { web: 'BUTTON_SECONDARY_SMALL', app: 'secondary-small', text: '작은 보조' },
   { web: 'FIELD', app: 'Field', text: '글 칸' },

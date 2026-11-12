@@ -168,6 +168,24 @@ describe('로그인 시점과 목적지 (ADR 0213)', () => {
     expect(webCard).not.toContain('<button');
   });
 
+  it('웹 잠긴 목차도 같은 딱지 · 같은 주 단추를 읽고, 강조는 나무 색 한 벌이다(운영자 결정 2026-11-12)', () => {
+    const taste = read('app/taste/taste.tsx');
+    for (const name of ['CHART_READING_OFFER.badge', 'CHART_READING_OFFER.action', 'CHART_READING_OFFER.outlineNote', 'BUTTON_PRIMARY_WOOD', 'bg-wood-soft', 'text-wood']) expect(taste).toContain(name);
+    expect(taste).not.toMatch(/로그인하고 전체 풀이 받기|풀이권 1장/);
+    expect(read('app/save-for-reading.tsx')).toMatch(/BUTTON_PRIMARY_WOOD\} w-full/);
+    expect(save).toContain('variant="primary-wood"');
+    /* 나무 색 주 단추는 이 세 자리만 쓴다 — 다른 화면의 주 단추는 검정 그대로다(ADR 0109 추기 2026-11-12) */
+    const users = (dir: string): string[] =>
+      readdirSync(join(import.meta.dirname, '..', dir), { withFileTypes: true }).flatMap((entry) =>
+        entry.isDirectory() ? users(`${dir}/${entry.name}`) : /\.tsx?$/.test(entry.name) && /BUTTON_PRIMARY_WOOD|primary-wood/.test(read(`${dir}/${entry.name}`)) ? [`${dir}/${entry.name}`] : [],
+      );
+    expect(users('app').sort()).toEqual(['app/save-for-reading.tsx', 'app/taste/taste.tsx', 'app/ui/buttons.ts']);
+    expect(users('mobile/src').sort()).toEqual(['mobile/src/reading/save-self.tsx', 'mobile/src/ui/buttons.tsx']);
+    /* 「무료로」를 누르고 온 사람의 다음 줄은 「1장을 써요」가 아니다 */
+    expect(CHART_SIGN_IN.reading.note).not.toMatch(/\d|써요/);
+    expect(CHART_READING_OFFER.outlineNote).not.toMatch(/\d|써요/);
+  });
+
   it('무료는 말하되 장수는 적지 않고, 약속한 절은 풀이의 절 이름 그대로다', () => {
     const offer = [CHART_READING_OFFER.badge, CHART_READING_OFFER.title.eight, CHART_READING_OFFER.title.six, ...CHART_READING_OFFER.points, CHART_READING_OFFER.action, CHART_READING_OFFER.providers];
     expect(CHART_READING_OFFER.badge).toContain('무료');

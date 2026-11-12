@@ -3,7 +3,7 @@ import { join } from 'node:path';
 
 import { describe, expect, it } from 'vitest';
 
-import { BUTTON, BUTTON_PRIMARY_OFF, CELL, COLOR, FIELD, RADIUS, SURFACE, TEXT } from '../src/lib/design';
+import { BUTTON, BUTTON_PRIMARY_OFF, CELL, COLOR, FIELD, RADIUS, SURFACE, TEXT, TONE } from '../src/lib/design';
 
 /**
  * **앱의 면 · 칸 · 단추 값이 웹 상수와 같다**(ADR 0109 추기 2026-10-31). 토큰은 한 원본에서 나지만(`design-tokens.test.ts`) 면은 웹이 클래스 글자로 든다 —
@@ -22,7 +22,8 @@ function classesOf(path: string, name: string): string {
 }
 
 const step = (value: string) => Number(value) * 4;
-const COLORS: Record<string, string | undefined> = COLOR;
+/** 오행 색은 `TONE` 에 산다 — 나무 색 주 단추(`bg-wood`)가 읽는 글자색 하나만 얹는다 */
+const COLORS: Record<string, string | undefined> = { ...COLOR, wood: TONE.wood.ink };
 const RADII: Record<string, number> = { card: RADIUS.card, cell: RADIUS.cell, full: RADIUS.pill };
 const SIZES: Record<string, number | undefined> = { ...TEXT, sm: 14 };
 

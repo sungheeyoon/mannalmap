@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
 
+import { CHART_READING_OFFER } from '@/src/lib/brand/guide';
 import { RESUME_READING_PATH } from '@/src/lib/consent';
 import { toSearchParams, type Query } from '@/src/lib/input/query';
 import { TASTE_CLOSED_NOTE, TASTE_FAILED_NOTE, TASTE_RETRY_LABEL, TASTE_WRITING_SUBJECT } from '@/src/lib/reading/copy';
@@ -15,7 +16,7 @@ import { READING_DRAFT_KEY, TASTE_SESSION_KEY } from '../reading-draft';
 import { tasteDraftOf } from './taste-draft';
 import { SignInCarrying } from '../sign-in-carrying';
 import motion from './taste.module.css';
-import { BUTTON_PRIMARY, BUTTON_TERTIARY_FACE } from '../ui/buttons';
+import { BUTTON_PRIMARY_WOOD, BUTTON_TERTIARY_FACE } from '../ui/buttons';
 import { Icon } from '../ui/icons';
 import { reducedMotion } from '../ui/motion';
 import { CARD, TYPE_META, TYPE_NAME } from '../ui/surfaces';
@@ -222,9 +223,13 @@ function LockedOutline({
 
   return (
     <section aria-labelledby="outline-heading" aria-busy={first === 'writing'} className={CARD}>
-      <h2 id="outline-heading" className={TYPE_META}>
-        전체 사주풀이 목차
-      </h2>
+      {/* 「첫 풀이 무료」 — 앱 결과 카드와 같은 딱지 · 같은 주 단추(`CHART_READING_OFFER`, 운영자 결정 2026-11-12, 대장 first-07). 목차와 자물쇠는 그대로다 */}
+      <div className="flex items-center justify-between gap-2">
+        <h2 id="outline-heading" className={TYPE_META}>
+          전체 사주풀이 목차
+        </h2>
+        <span className="rounded-full bg-wood-soft px-3 py-1 text-small font-semibold text-wood">{CHART_READING_OFFER.badge}</span>
+      </div>
       <ol className="mt-3 flex flex-col gap-3">
         {outline.map((title, index) => {
           /** 첫 절은 기다리는 동안 · 글이 섰을 때 자물쇠가 없다 */
@@ -252,12 +257,12 @@ function LockedOutline({
           next={RESUME_READING_PATH}
           carry={{ key: TASTE_SESSION_KEY, value: sessionId }}
           onFollow={() => note('signup_started', sessionId)}
-          className={`${BUTTON_PRIMARY} w-full`}
+          className={`${BUTTON_PRIMARY_WOOD} w-full`}
         >
-          로그인하고 전체 풀이 받기
+          {CHART_READING_OFFER.action}
         </SignInCarrying>
         <p className="text-center text-xs leading-5 text-secondary">
-          로그인하면 이 입력으로 돌아와요. 위 목차를 모두 풀어 드리고, 풀이권 1장을 써요.
+          {CHART_READING_OFFER.outlineNote}
         </p>
       </div>
     </section>

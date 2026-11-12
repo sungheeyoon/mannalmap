@@ -13,7 +13,7 @@ test('풀이 입구는 로그인 전 사주 문단 아래 잠긴 목차에 서�
   const card = (await page.getByRole('region', { name: '내 사주' }).boundingBox())!;
   const entry = (await outline.boundingBox())!;
   expect(entry.y).toBeGreaterThanOrEqual(card.y + card.height);
-  await outline.getByRole('link', { name: '로그인하고 전체 풀이 받기' }).click();
+  await outline.getByRole('link', { name: '로그인하고 무료로 풀이 받기' }).click();
   await expect(page).toHaveURL(/\/auth\?next=%2Fsaju%23resume-reading/);
   expect(page.url()).not.toContain('1990');
   await expect(page.getByRole('heading', { name: '내 사주풀이로 이어갈까요?' })).toBeVisible();

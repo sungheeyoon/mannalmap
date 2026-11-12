@@ -127,7 +127,7 @@ export const TASTE_WAIT = { everyMs: 2_000, forMs: 30_000 } as const;
  * `20261119090000`). 세션 id 와 서버가 지은 브라우저 HMAC 이 함께 맞아야 센다. 「더보기」(`more_clicked`)는 걷었다 — 퍼널은
  * 다섯 단계다(G-85, `20261128090000`).
  *
- * - `signup_started` — 가입으로 가는 누름(잠긴 목차 끝의 「로그인하고 전체 풀이 받기」 하나)
+ * - `signup_started` — 가입으로 가는 누름(잠긴 목차 끝의 「로그인하고 무료로 풀이 받기」 하나)
  * - `signup_completed` — 가입을 마치고 그 세션을 들고 돌아왔다 — 귀속 결과가 `claimed` · `discarded` · `expired` ·
  *   `not_ready` 어느 것이든(`TASTE_RETURNED_CLAIMS`). 귀속 성공만이 아니다(조율자 결정 2026-10-03)
  */

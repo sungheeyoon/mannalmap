@@ -3883,7 +3883,7 @@ test.describe('로그인 · 가입이 목적지를 든다', () => {
   });
 
   /**
-   * **로그인 전 사주 문단(잠긴 목차의 첫 절) → 로그인하고 전체 풀이 받기 → 가입 왕복 → 「아까 보던 내용」 → 생성 중 → 완성**(ADR 0143). 모델은 안 부른다 — 이 입력의
+   * **로그인 전 사주 문단(잠긴 목차의 첫 절) → 로그인하고 무료로 풀이 받기 → 가입 왕복 → 「아까 보던 내용」 → 생성 중 → 완성**(ADR 0143). 모델은 안 부른다 — 이 입력의
    * 글을 DB 에 성공으로 심어 두면 서버가 재사용으로 내준다(지문은 앱이 쓰는 그 함수로 잰다). 풀이도 시도를 그 사람으로 열고
    * 서버가 열쇠로 부르는 문(잇기 · 저장)을 `postgres` 로 부른다.
    */
@@ -3914,13 +3914,13 @@ test.describe('로그인 · 가입이 목적지를 든다', () => {
     await page.goto(`/#${input}`);
     const taste = page.getByRole('region', { name: '전체 사주풀이 목차' });
     await expect(taste).toContainText('새벽빛이 들기 전에', { timeout: 30_000 });
-    await taste.getByRole('link', { name: '로그인하고 전체 풀이 받기' }).click();
+    await taste.getByRole('link', { name: '로그인하고 무료로 풀이 받기' }).click();
     await expect(page).toHaveURL(/\/auth\?next=%2Fsaju%23resume-reading$/);
 
     /* 뒤로가기 — 같은 글이 다시 선다(같은 세션을 다시 쓴다) */
     await page.goBack();
     await expect(taste).toContainText('새벽빛이 들기 전에', { timeout: 30_000 });
-    await taste.getByRole('link', { name: '로그인하고 전체 풀이 받기' }).click();
+    await taste.getByRole('link', { name: '로그인하고 무료로 풀이 받기' }).click();
     const sessionId = await page.evaluate(() => sessionStorage.getItem('saju:taste-session'));
     expect(sessionId).toMatch(/^[0-9a-f-]{36}$/);
 
@@ -4025,7 +4025,7 @@ test.describe('로그인 · 가입이 목적지를 든다', () => {
     await page.goto(`/#${input}`);
     const taste = page.getByRole('region', { name: '전체 사주풀이 목차' });
     await expect(taste).toContainText('한낮 가까이에', { timeout: 30_000 });
-    await taste.getByRole('link', { name: '로그인하고 전체 풀이 받기' }).click();
+    await taste.getByRole('link', { name: '로그인하고 무료로 풀이 받기' }).click();
     const sessionId = await page.evaluate(() => sessionStorage.getItem('saju:taste-session'));
     expect(sessionId).toMatch(/^[0-9a-f-]{36}$/);
 

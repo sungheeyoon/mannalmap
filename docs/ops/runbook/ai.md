@@ -257,7 +257,7 @@ npm run db:remote -- --purpose "로그인 전 사주 문단 날짜별 수" \
 - **퍼널 다섯 단계** — `preview_shown` → `signup_started` → `signup_completed` · `session_claimed` →
   `reading_started` → `reading_succeeded`. 가입 완료와 귀속은 칸이 따로다(앞은 앱이, 뒤는 DB 가 센다).
   앱이 세는 둘(`signup_started` · `signup_completed`)은 **세션 하나에 단계마다 한 번**이다 —
-  `count_taste_step_once` 가 세션 id 와 브라우저 HMAC 이 함께 맞을 때만 센다(`20261119090000`). 「로그인하고 전체 풀이 받기」도
+  `count_taste_step_once` 가 세션 id 와 브라우저 HMAC 이 함께 맞을 때만 센다(`20261119090000`). 「로그인하고 무료로 풀이 받기」도
   `signup_started` 다. `signup_completed` 는 **가입을 마치고 그 세션을 들고 돌아온 것**이다 — 귀속 결과가 `claimed` · `discarded` ·
   `expired` · `not_ready` 어느 것이든 센다(`session_claimed` 는 그중 붙은 것만). `reading_succeeded` 는 회수 경로가 옛
   `count_taste_step` 으로 센다 — 옛 문은 그 하나만 받는다(G-91, `20261129090000`). **#443 을 배포한 날 전의 줄은 누름 수였다** — 그 앞뒤를 견주지 않는다.
