@@ -4,7 +4,7 @@ import { PanResponder, Pressable, StyleSheet, Text, View } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 
 import { PHOTO_ADD, PHOTO_UPLOADS_PAUSED } from '@account/copy';
-import { FOCUS_CENTER, PHOTO_LOAD_FAILED_NOTE, PHOTO_MAX_COUNT, PHOTO_NOTE, PHOTO_REMOVED, PHOTO_REMOVE_CONFIRM, PHOTO_REMOVE_NOTE, PHOTO_REMOVE_TITLE, type PhotoFocus, type PhotoUploadMode } from '@profile';
+import { FOCUS_CENTER, PHOTO_LOAD_FAILED_NOTE, PHOTO_MAX_COUNT, PHOTO_REMOVED, PHOTO_REMOVE_CONFIRM, PHOTO_REMOVE_NOTE, PHOTO_REMOVE_TITLE, type PhotoFocus, type PhotoUploadMode } from '@profile';
 
 import { useClient } from '@/auth/connected';
 import { FailureLine } from '@/ui/failure-line';
@@ -366,7 +366,6 @@ export function PhotoGrid({
       <Text accessibilityLiveRegion="polite" style={styles.status}>
         {status}
       </Text>
-      <Text style={styles.line}>{PHOTO_NOTE}</Text>
       {failure !== null && <FailureLine>{failure}</FailureLine>}
 
       <PhotoViewer userId={userId} photos={order} at={viewing} onAt={setViewing} onClose={() => setViewing(null)} choicesFor={choicesFor} />
@@ -524,7 +523,8 @@ const styles = StyleSheet.create({
   title: { fontSize: TYPE.body, fontFamily: FONT.bold, color: COLOR.foreground },
   count: { fontSize: TYPE.small, fontFamily: FONT.medium, color: COLOR.creamInk },
   line: { fontSize: TYPE.small, lineHeight: 20, fontFamily: FONT.medium, color: COLOR.creamInk },
-  status: { minHeight: 20, fontSize: TYPE.small, lineHeight: 20, fontFamily: FONT.medium, color: COLOR.foreground },
+  /* 판의 마지막 줄이다(아래 공개 안내를 걷었다, 대장 all-21) — 빈 한 줄이 판 바닥을 띄우지 않게 위아래로 8 씩 당긴다. 웹의 `-my-2` 와 같다 */
+  status: { minHeight: 20, marginVertical: -8, fontSize: TYPE.small, lineHeight: 20, fontFamily: FONT.medium, color: COLOR.foreground },
   slot: { position: 'absolute', overflow: 'hidden', borderRadius: RADIUS.cell, backgroundColor: COLOR.surface },
   target: { borderWidth: 4, borderColor: COLOR.accent },
   empty: { alignItems: 'center', justifyContent: 'center', gap: 8, borderWidth: 2, borderStyle: 'dashed', borderColor: COLOR.borderStrong },

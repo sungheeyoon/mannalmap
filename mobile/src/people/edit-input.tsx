@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
 import { INPUT_EDIT_CHANGE_CONFIRM } from '@consent/index';
-import { INPUT_EDIT_REPLACED_NOTE, samePillarInput } from '@input/edit';
+import { samePillarInput } from '@input/edit';
 import { missingAnswer, type Query } from '@input/query';
 
 import { useClient } from '@/auth/connected';
@@ -78,10 +78,7 @@ export function EditInputForm({
 
   return (
     <Card style={styles.form}>
-      <View style={styles.head}>
-        <Text style={shared.section}>수정하기</Text>
-        <Text style={shared.body}>{INPUT_EDIT_REPLACED_NOTE}</Text>
-      </View>
+      <Text style={shared.section}>수정하기</Text>
 
       {!editableName && nameNote && (
         <View style={styles.nameNote}>
@@ -124,7 +121,6 @@ export function EditInputForm({
 
 const styles = StyleSheet.create({
   form: { gap: 16, padding: 16 },
-  head: { gap: 4 },
   actions: { gap: 8 },
   nameNote: { gap: 2, paddingHorizontal: 14, paddingVertical: 10, borderRadius: RADIUS.cell, backgroundColor: COLOR.surfaceSunken },
   warn: { fontSize: TYPE.note, fontFamily: FONT.medium, color: COLOR.danger },

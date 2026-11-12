@@ -306,13 +306,6 @@
   font-size: 15px;
   transition: border-color 150ms, box-shadow 150ms;
 }
-.selectNote {
-  white-space: pre-line;
-  margin: 6px 0 0 calc(var(--rail) + var(--rail-gap));
-  font-size: 12px;
-  line-height: 16px;
-  color: var(--text-secondary);
-}
 .selectValue {
   min-width: 0;
   flex: 1;

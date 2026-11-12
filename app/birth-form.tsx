@@ -13,7 +13,7 @@ import {
 } from '@/src/lib/saju';
 
 import { dateRefusal } from '@/src/lib/input/chart';
-import { ADVANCED_SETTINGS, BIRTH_CITY_NOTE } from '@/src/lib/input/copy';
+import { ADVANCED_SETTINGS } from '@/src/lib/input/copy';
 import { BIRTH_CITY_OPTIONS, BIRTH_DIGIT_LABEL, BIRTH_SELECT_LABEL, DEFAULT_QUERY, NAME_MAX, TIME_BASES, TIME_BASIS, type Query } from '@/src/lib/input/query';
 
 import { Icon } from './ui/icons';
@@ -177,9 +177,7 @@ export function BirthFields({
             onToggle={toggle('city')}
             onPick={pick('city')}
             options={BIRTH_CITY_OPTIONS}
-          >
-            {BIRTH_CITY_NOTE}
-          </SelectField>
+          />
         </div>
 
         {/*
