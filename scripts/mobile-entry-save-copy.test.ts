@@ -185,6 +185,9 @@ describe('로그인 시점과 목적지 (ADR 0213)', () => {
     /* 「무료로」를 누르고 온 사람의 다음 줄은 「1장을 써요」가 아니다 */
     expect(CHART_SIGN_IN.reading.note).not.toMatch(/\d|써요/);
     expect(CHART_READING_OFFER.outlineNote).not.toMatch(/\d|써요/);
+    /* 운영자가 준 글자 그대로이고(2026-11-12), 두 자리가 한 상수를 읽는다 */
+    expect(CHART_SIGN_IN.reading.note).toBe('입력한 정보는 로그인 후에도 유지돼요. 가입하면 받는 풀이권으로 전체 사주풀이를 볼 수 있어요.');
+    expect(CHART_READING_OFFER.outlineNote).toBe(CHART_SIGN_IN.reading.note);
   });
 
   it('무료는 말하되 장수는 적지 않고, 약속한 절은 풀이의 절 이름 그대로다', () => {
