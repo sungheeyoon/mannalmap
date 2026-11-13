@@ -124,7 +124,7 @@ export function useReadingAsk({ name, target, readingHref, credits }: { name: st
 
   const sheets = (
     <>
-      <DetailSheet open={asking} title={readingAskTitle(name)} onClose={() => setAsking(false)}>
+      <DetailSheet wrapTitle open={asking} title={readingAskTitle(name)} onClose={() => setAsking(false)}>
         <AskBody credits={credits} failure={failure} busy={busy} confirmLabel={READING_ASK_CONFIRM} onConfirm={() => void confirm()} onCancel={() => setAsking(false)} />
       </DetailSheet>
       {shortage !== null && (
@@ -243,7 +243,7 @@ export function useCompatAdd({
 
   const sheets = (
     <>
-      <DetailSheet open={step !== null} title={step === 'ask' ? relationAskTitle(person.name, partnerName) : partnerAskTitle(person.name)} onClose={close}>
+      <DetailSheet wrapTitle open={step !== null} title={step === 'ask' ? relationAskTitle(person.name, partnerName) : partnerAskTitle(person.name)} onClose={close}>
         {step === 'ask' ? (
           <AskBody credits={credits} failure={failure} busy={busy} confirmLabel={COMPAT_ASK_CONFIRM} onConfirm={() => void confirm()} onCancel={close}>
             <View accessibilityRole="radiogroup" style={styles.chips}>

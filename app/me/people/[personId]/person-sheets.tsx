@@ -140,7 +140,7 @@ export function ReadingInvite({
           </button>
         </div>
       </div>
-      <DetailSheet sheet={sheet} nickname={readingAskTitle(name)} label={readingAskTitle(name)}>
+      <DetailSheet wrapTitle sheet={sheet} nickname={readingAskTitle(name)} label={readingAskTitle(name)}>
         <AskBody
           credits={credits}
           failure={failure}
@@ -262,7 +262,7 @@ export function CompatAdd({
         {label}
       </button>
 
-      <DetailSheet sheet={pickSheet} nickname={partnerAskTitle(person.name)} label={partnerAskTitle(person.name)}>
+      <DetailSheet wrapTitle sheet={pickSheet} nickname={partnerAskTitle(person.name)} label={partnerAskTitle(person.name)}>
         <ul className="-mx-2 flex flex-col">
           {partners.map((one) => (
             <li key={one.personId}>
@@ -286,6 +286,7 @@ export function CompatAdd({
       </DetailSheet>
 
       <DetailSheet
+        wrapTitle
         sheet={askSheet}
         nickname={relationAskTitle(person.name, partner === null ? '' : partner.isSelfPerson ? PARTNER_SELF_LABEL : partner.label)}
         label={relationAskTitle(person.name, partner === null ? '' : partner.isSelfPerson ? PARTNER_SELF_LABEL : partner.label)}

@@ -26,6 +26,7 @@ export function DetailSheet({
   menu,
   onClose,
   wide = false,
+  wrapTitle = false,
   children,
 }: {
   sheet: RefObject<HTMLDialogElement | null>;
@@ -39,6 +40,8 @@ export function DetailSheet({
   onClose?: () => void;
   /** 넓은 화면(lg)에서 46rem — 프로필 시트의 두 열(사진 20rem · 글)이 쓴다. 없으면 40rem */
   wide?: boolean;
+  /** 제목을 자르지 않고 두 줄까지 감싼다 — 제목이 물음인 시트(사람 화면의 받기 · 궁합, ADR 0249). 닫기는 첫 줄 오른쪽 그대로 */
+  wrapTitle?: boolean;
   children: ReactNode;
 }) {
   const press = useRef<number | null>(null);
@@ -78,8 +81,8 @@ export function DetailSheet({
           onPointerCancel={() => { press.current = null; setDrag(0); }}
         >
           <span aria-hidden="true" className="mx-auto h-1.5 w-10 rounded-full bg-border-strong lg:hidden" />
-          <div className="flex items-center justify-between gap-3">
-            <h2 className={`min-w-0 truncate ${TYPE_SECTION}`}>{nickname}</h2>
+          <div className={`flex justify-between gap-3 ${wrapTitle ? 'items-start' : 'items-center'}`}>
+            <h2 className={`min-w-0 ${wrapTitle ? 'line-clamp-2 break-keep pt-1.5' : 'truncate'} ${TYPE_SECTION}`}>{nickname}</h2>
             <span className="ml-auto flex shrink-0 items-center gap-1" onPointerDown={(event) => event.stopPropagation()}>
               {menu}
               {/* 보는 판을 닫는 것은 오른쪽 위 X 한 벌이다 — 관계 지도 카드 · 신고 창과 같은 모양, 이름은 「닫기」(ADR 0166) */}

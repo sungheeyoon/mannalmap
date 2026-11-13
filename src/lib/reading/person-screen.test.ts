@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { compatWithLabel, monthDayOf, partnerAskTitle, readingCostLine, readingInviteTitle, readingReceivedLine, relationAskTitle } from './person-screen';
+import { compatWithLabel, monthDayOf, partnerAskTitle, readingAskTitle, readingCostLine, readingInviteTitle, readingReceivedLine, relationAskTitle } from './person-screen';
 
 describe('저장한 사람 화면의 말', () => {
   it('이름 뒤 조사는 받침으로 고른다', () => {
@@ -23,5 +23,16 @@ describe('저장한 사람 화면의 말', () => {
   it('풀이권 줄은 가진 수를 그대로 든다', () => {
     expect(readingCostLine(3)).toBe('풀이권 1장을 사용해요. (남은 풀이권 3장)');
     expect(readingCostLine(null)).toBe('풀이권 1장을 사용해요.');
+  });
+});
+
+describe('시트 제목의 긴 이름', () => {
+  it('열 글자를 넘는 이름만 줄이고 물음은 늘 끝까지 선다', () => {
+    const long = '아주아주긴이름의오랜친구입니다';
+    expect(readingAskTitle(long)).toBe('아주아주긴이름의오…\u2060의 사주풀이를 받을까요?');
+    expect(partnerAskTitle(long)).toBe('아주아주긴이름의오…\u2060와 누구를 볼까요?');
+    expect(relationAskTitle(long, '지영')).toBe('아주아주긴…\u2060 · 지영은 어떤 사이예요?');
+    expect(relationAskTitle(long, '또다른아주아주긴이름의친구')).toBe('아주아주긴…\u2060 · 또다른아주…\u2060는 어떤 사이예요?');
+    expect(readingAskTitle('민수')).toBe('민수의 사주풀이를 받을까요?');
   });
 });

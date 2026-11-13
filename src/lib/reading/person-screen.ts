@@ -10,6 +10,23 @@ import { endsWithBatchim } from '../saju/text/batchim';
 const topic = (name: string) => `${name}${endsWithBatchim(name) ? '은' : '는'}`;
 const withName = (name: string) => `${name}${endsWithBatchim(name) ? '과' : '와'}`;
 
+/** 시트 제목에 서는 이름의 길이 — 넘으면 이름만 줄인다(운영자 2026-11-13) */
+const SHEET_NAME_MAX = 10;
+
+/**
+ * **시트 제목의 이름만 줄인다** — 제목은 두 줄까지 감싸고 말줄임으로 자르지 않는다. 긴 이름이 두 줄을 다 차지하면 뒤의 물음(「…를 받을까요?」)이
+ * 사라져 무엇을 묻는지 모른다. 조사는 원래 이름의 받침으로 고른다
+ */
+const clip = (name: string, max = SHEET_NAME_MAX): string => {
+  const letters = [...name];
+  /* 말줄임 뒤에 낱말 잇개(U+2060)를 둔다 — 줄이 「…」 뒤에서 끊겨 조사만 다음 줄로 넘어가지 않게 */
+  return letters.length > max ? `${letters.slice(0, max - 1).join('')}…\u2060` : name;
+};
+/** 이름 둘이 서는 제목(사이 고르기)은 한 이름을 더 짧게 — 폰 폭(390) 두 줄에 물음까지 든다 */
+const PAIR_NAME_MAX = 6;
+const clipTopic = (name: string, max?: number) => `${clip(name, max)}${endsWithBatchim(name) ? '은' : '는'}`;
+const clipWith = (name: string) => `${clip(name)}${endsWithBatchim(name) ? '과' : '와'}`;
+
 /** 머리 오른쪽 아래 — 만세력 화면으로 */
 export const CHART_DETAIL_LABEL = '만세력 자세히';
 
@@ -32,7 +49,7 @@ export const READING_INVITE_TOPICS = '성격 · 일과 재물 · 인연 · 올�
 export const READING_COST_LABEL = '풀이권 1장';
 
 /** 받기 시트 */
-export const readingAskTitle = (name: string): string => `${name}의 사주풀이를 받을까요?`;
+export const readingAskTitle = (name: string): string => `${clip(name)}의 사주풀이를 받을까요?`;
 /**
  * 시트의 한 줄 — 「풀이권 1장을 사용해요. (남은 풀이권 3장)」(운영자 2026-11-13). 남은 수는 예약 몫을 뺀 쓸 수 있는 수(`available`)다.
  * 못 읽었으면 남은 수 없이 앞 문장만 — 수를 지어내지 않는다
@@ -46,12 +63,12 @@ export const COMPAT_OTHER_LABEL = '다른 사람과 궁합 보기';
 export const compatWithLabel = (name: string): string => `${withName(name)} 궁합 보기`;
 
 /** 상대 고르기 시트 */
-export const partnerAskTitle = (name: string): string => `${withName(name)} 누구를 볼까요?`;
+export const partnerAskTitle = (name: string): string => `${clipWith(name)} 누구를 볼까요?`;
 export const PARTNER_SELF_LABEL = '나';
 export const PARTNER_TYPED_LABEL = '직접 입력';
 
 /** 사이 고르기 시트 — 고르는 낱말은 궁합 화면의 것(`RELATION_LABEL` · `RELATION_NONE_LABEL`)을 그대로 쓴다 */
-export const relationAskTitle = (a: string, b: string): string => `${a} · ${topic(b)} 어떤 사이예요?`;
+export const relationAskTitle = (a: string, b: string): string => `${clip(a, PAIR_NAME_MAX)} · ${clipTopic(b, PAIR_NAME_MAX)} 어떤 사이예요?`;
 export const COMPAT_ASK_CONFIRM = '궁합 보기';
 
 const SEOUL_OFFSET_MS = 9 * 60 * 60 * 1000;
