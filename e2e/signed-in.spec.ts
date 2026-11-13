@@ -11,6 +11,7 @@ import {
 } from './session';
 
 import { MY_PROFILE_EDIT_LABEL } from '@/src/lib/chat/copy';
+import { COMPAT_SCORE_LABEL } from '@/src/lib/reading/copy';
 import { calculateChart, chartOf } from '@/src/lib/input/chart';
 import { DEFAULT_QUERY, queryFromSearchParams } from '@/src/lib/input/query';
 import { READING_AGAIN_LABEL, READING_NOUN, READING_REPLACES_NOTE, READING_USES_TICKET_NOTE, readingEvidenceOf, readingNoneNote } from '@/src/lib/reading';
@@ -887,7 +888,7 @@ test.describe('초대된 사람의 로그인 흐름', () => {
     await expect(page.getByRole('navigation', { name: '어머니의 사주풀이와 만세력' })).toHaveCount(0);
 
     /* 한 사람짜리라 궁합 점수가 안 선다 */
-    await expect(page.getByText('궁합풀이 점수')).toBeHidden();
+    await expect(page.getByText(COMPAT_SCORE_LABEL)).toBeHidden();
 
     /*
       **점수가 없어도 비유는 선다.** 그 칸은 둘 중 하나만 있어도 열린다 — 자기 풀이와

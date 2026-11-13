@@ -1,4 +1,5 @@
 import { SERVICE_NAME, SERVICE_NAME_TOPIC } from '@brand';
+import { COMPAT_SCORE_LABEL } from '@reading/copy';
 import { SHARE_COPY, sharedTitle, type ShareKind, type SharedReading } from '@reading/shared';
 import { router } from 'expo-router';
 import { useCallback, useEffect, useState, type ReactNode } from 'react';
@@ -8,6 +9,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Markdown } from '@/reading/markdown';
 import { Icon } from '@/ui/icons';
 import { Logo } from '@/ui/logo';
+import { ScoreGauge } from '@/ui/score-gauge';
 import { PrimaryButton, SecondaryButton } from '@/ui/parts';
 import { COLOR, ELEMENT_TONE, FONT, RADIUS, TYPE } from '@/ui/tokens';
 import { settled } from '@/ui/settled';
@@ -61,7 +63,18 @@ function OpenScreen({ shared, expect }: { shared: SharedReading; expect: ShareKi
           <WordText style={styles.eyebrow}>{eyebrow}</WordText>
         </View>
 
-        {(metaphor !== null || score !== null) && (
+        {expect === 'private' && (metaphor !== null || score !== null) ? (
+          /* 궁합풀이는 보낸 사람이 보던 표지와 같은 꼴이다(시안 A, 운영자 승인 2026-11-13) — 공유본에는 일간이 없어 두 사람의 동그라미는 안 선다. 이름은 머리 제목이 든다 */
+          <Paper style={styles.pairCover}>
+            {score !== null && (
+              <View style={styles.pairScore}>
+                <ScoreGauge score={score} />
+                <WordText style={styles.pairLabel}>{COMPAT_SCORE_LABEL}</WordText>
+              </View>
+            )}
+            {metaphor !== null && <WordText style={styles.pairMetaphor}>{metaphor}</WordText>}
+          </Paper>
+        ) : (metaphor !== null || score !== null) && (
           <Paper style={styles.cover}>
             {metaphor !== null && (
               <View style={styles.metaphor}>
@@ -74,7 +87,7 @@ function OpenScreen({ shared, expect }: { shared: SharedReading; expect: ShareKi
               <Tile tone={ELEMENT_TONE.火.soft} style={styles.score}>
                 <View style={styles.scoreLabel}>
                   <Icon name="taiji" size={16} color={ELEMENT_TONE.火.ink} />
-                  <WordText style={styles.scoreName}>궁합풀이 점수</WordText>
+                  <WordText style={styles.scoreName}>{COMPAT_SCORE_LABEL}</WordText>
                 </View>
                 <View style={styles.scoreLine}>
                   <WordText style={styles.scoreValue}>{score}</WordText>
@@ -171,6 +184,10 @@ const styles = StyleSheet.create({
   eyebrow: { fontSize: TYPE.small, fontFamily: FONT.bold, color: COLOR.creamInk },
   title: { fontSize: TYPE.title, lineHeight: 35, fontFamily: FONT.bold, color: COLOR.foreground },
   cover: { padding: 0, overflow: 'hidden' },
+  pairCover: { alignItems: 'center', gap: 16, paddingHorizontal: 20, paddingVertical: 28 },
+  pairScore: { alignItems: 'center', gap: 6 },
+  pairLabel: { fontSize: TYPE.small, fontFamily: FONT.bold, color: COLOR.secondary },
+  pairMetaphor: { fontSize: TYPE.heading, lineHeight: 29, fontFamily: FONT.bold, color: COLOR.foreground, textAlign: 'center' },
   metaphor: { flexDirection: 'row', gap: 12, paddingHorizontal: 20, paddingVertical: 28 },
   metaphorText: { flex: 1, fontSize: TYPE.heading, lineHeight: 29, fontFamily: FONT.medium, color: COLOR.foreground },
   score: { alignItems: 'center', margin: 12, paddingHorizontal: 20, paddingVertical: 16 },

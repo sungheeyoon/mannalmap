@@ -20,7 +20,7 @@ import { storeAvailable } from '@/credits/store';
 
 import { ConfirmMake, useBuyCredits } from './dialogs';
 import { ReadingFeedback } from './feedback';
-import { Result } from './result';
+import { Result, type CoverPerson } from './result';
 import { ShareReadingButton, ShareReadingIcon, useReadingShare } from './share-button';
 import { useReadingPanel, type ShownView } from './use-reading-panel';
 import { LoadingState } from './waiting';
@@ -98,6 +98,7 @@ export function ReadingPanel({
   view,
   tones,
   nicknames,
+  pair,
   automatic = false,
   ask,
   betweenSummaryAndBody,
@@ -108,6 +109,8 @@ export function ReadingPanel({
   /** 표지의 색 — 글이 있으면 그 글을 만들 때의 일간이 이긴다(`section.tsx`) */
   tones?: readonly (Element | null)[];
   nicknames?: PairNicknames;
+  /** 궁합풀이 표지의 두 사람 — 비공개 궁합만 넘긴다(`Result`) */
+  pair?: readonly [CoverPerson, CoverPerson];
   /** 이 글을 동의가 만드는가(ADR 0038) — 인연 궁합. 글이 있으면 누를 것이 없다 */
   automatic?: boolean;
   /** 다음 풀이를 위해 먼저 정할 것 — 궁합의 「무슨 사이인가」 */
@@ -208,6 +211,7 @@ export function ReadingPanel({
           betweenSummaryAndBody={betweenSummaryAndBody}
           coverAction={chrome.canShare ? <ShareReadingIcon share={coverShare} /> : undefined}
           belowCover={chrome.canShare ? coverShare.trouble : undefined}
+          pair={pair}
         />
       )}
 

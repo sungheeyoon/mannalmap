@@ -21,6 +21,7 @@ import { AccountNotice } from '../account-notice';
 import { readAccount } from '../account';
 import { payloadForViewer, type PersonPayload } from '../payload';
 import { currentReading } from '../reading/current';
+import type { CurrentReading } from '@/src/lib/reading';
 import { ReadingSection } from '../reading/section';
 import { elementScope } from '../../ui/element-tone';
 import { StemSymbol } from '../../ui/stem-symbol';
@@ -167,6 +168,12 @@ async function ResultPage({
   /** ← 가 보관함으로 가고 그 책장이 옆에 서 있다 — 넓은 화면에서는 ← 를 안 세운다(사주풀이의 `ReadingBack` 과 같다) */
   besideShelf: boolean;
 }) {
+  /*
+    **받은 궁합풀이가 있으면 두 사람 줄은 그 표지 안에 선다**(시안 A, 운영자 승인 2026-11-13) — 머리에는 ← 와 「궁합」만 남고, 제목(두 사람)은
+    보조기기에만 읽힌다. 글이 없는 동안은 머리에 그대로 선다. 같은 글을 아래 칸이 다시 묻지 않게 여기서 한 번 읽어 넘긴다.
+  */
+  const reading = await currentReading({ kind: 'private', ...outcome.pair });
+  const inCover = reading !== null;
   return (
     <Frame frame={frame}>
       <header className="flex flex-col gap-3">
@@ -176,10 +183,10 @@ async function ResultPage({
         */}
         <TopBar back={back} backHiddenOnWide={frame === 'shelf' && besideShelf}>
           <div className="flex items-center gap-3 sm:gap-4">
-            <PairMark stems={[outcome.first.saju.pillars.dayMaster, outcome.second.saju.pillars.dayMaster]} />
+            {!inCover && <PairMark stems={[outcome.first.saju.pillars.dayMaster, outcome.second.saju.pillars.dayMaster]} />}
             <div className="min-w-0">
               <p className="text-small font-semibold text-secondary">궁합</p>
-              <Title frame={frame}>
+              <Title frame={frame} hidden={inCover}>
                 {outcome.first.name} <span className="text-secondary">×</span> {outcome.second.name}
               </Title>
             </div>
@@ -187,7 +194,7 @@ async function ResultPage({
         </TopBar>
       </header>
 
-      <Result outcome={outcome} />
+      <Result outcome={outcome} reading={reading} />
     </Frame>
   );
 }
@@ -207,8 +214,8 @@ function Frame({ frame, children }: { frame: CompatFrame; children: ReactNode })
 }
 
 /** 제목 — 보관함 옆 칸에서는 「풀이 보관함」이 이 화면의 h1 이라 글의 이름은 그 아래 단이다(사주풀이와 같다) */
-function Title({ frame, children }: { frame: CompatFrame; children: ReactNode }) {
-  const className = `${TYPE_TITLE} break-words`;
+function Title({ frame, hidden = false, children }: { frame: CompatFrame; hidden?: boolean; children: ReactNode }) {
+  const className = hidden ? 'sr-only' : `${TYPE_TITLE} break-words`;
   return frame === 'page' ? <h1 className={className}>{children}</h1> : <h2 className={className}>{children}</h2>;
 }
 
@@ -299,7 +306,7 @@ async function pairOutcome(a: string | null, b: string | null): Promise<Outcome>
   };
 }
 
-async function Result({ outcome }: { outcome: Outcome }) {
+async function Result({ outcome, reading: preloaded }: { outcome: Outcome; reading?: CurrentReading | null }) {
   /**
    * **아직 안 골랐으면 아무것도 안 그린다.**
    *
@@ -336,7 +343,7 @@ async function Result({ outcome }: { outcome: Outcome }) {
   const target = { kind: 'private', ...outcome.pair } as const;
   const [stored, reading] = await Promise.all([
     pairRelationFor(outcome.pair.personA, outcome.pair.personB),
-    currentReading(target),
+    preloaded === undefined ? currentReading(target) : preloaded,
   ]);
 
   /**
@@ -391,6 +398,11 @@ async function Result({ outcome }: { outcome: Outcome }) {
             reading={reading}
             /* 글은 자리 호칭으로 온다 — 두 사람에게 붙인 지금의 이름으로 바꿔 세운다(`withNicknames`) */
             nicknames={pairSeatsOf(first, second)}
+            /* 표지의 두 사람 — 화면 머리와 같은 차례(고른 차례)다 */
+            pair={[
+              { name: first.name, stem: first.saju.pillars.dayMaster },
+              { name: second.name, stem: second.saju.pillars.dayMaster },
+            ]}
             /**
              * **여기서는 사이를 다시 묻지 않는다**(ADR 0054).
              *

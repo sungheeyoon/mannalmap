@@ -8,6 +8,7 @@ import { supabaseOnServer } from '../../auth/server-client';
 import { readReadingCredits } from '../credits/remaining';
 import { currentReading, improvementConsented, lastReadingRun } from './current';
 import { ReadingPanel } from './panel';
+import type { CoverPerson } from './reading-result';
 import type { ReadingTarget } from './target';
 import type { TasteCarryView } from '../../taste/taste-carry';
 import { CARD } from '../../ui/surfaces';
@@ -33,6 +34,7 @@ export async function ReadingSection({
   bare = false,
   nicknames,
   tones,
+  pair,
   reading: preloaded,
   carry = null,
 }: {
@@ -69,6 +71,8 @@ export async function ReadingSection({
    * **글이 있으면 그 글을 만들 때의 일간이 이긴다** — 「수정 전」 글이 고친 뒤의 색을 입지 않는다(2026-09-25).
    */
   tones?: readonly (Element | null)[];
+  /** 궁합풀이 표지의 두 사람 — 비공개 궁합만 넘긴다(`Result`, 시안 A 2026-11-13) */
+  pair?: readonly [CoverPerson, CoverPerson];
   /**
    * 부르는 화면이 이미 읽은 글 — 머리에 그 글의 일간을 세우려고 먼저 읽은 화면이 넘긴다. 같은 글을 두 번 묻지 않는다.
    * `null` 은 「읽었고 글이 없다」이고, 안 넘기면 여기서 읽는다.
@@ -126,6 +130,7 @@ export async function ReadingSection({
         discoveryInCover={discoveryInCover}
         nicknames={nicknames}
         tones={cover}
+        pair={pair}
         carry={carry}
       />
     </section>

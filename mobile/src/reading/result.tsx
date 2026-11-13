@@ -1,14 +1,17 @@
 import type { CurrentReading } from '@reading/current-reading';
 import { seatNicknamesOf, withNicknames, type PairNicknames } from '@reading/display';
 import { READING_STALE_LABEL, READING_STALE_NOTE } from '@reading/notes';
-import { ELEMENTS, type Element } from '@saju';
+import { COMPAT_SCORE_LABEL } from '@reading/copy';
+import { ELEMENTS, STEM_INFO, type Element, type Stem } from '@saju';
 import { useMemo, type ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Svg, { Polygon } from 'react-native-svg';
 
 import { Paper, Tile } from '@/ui/surfaces';
 import { ElementSymbol } from '@/ui/element-symbol';
-import { COLOR, ELEMENT_TONE, FONT, TYPE } from '@/ui/tokens';
+import { ScoreGauge } from '@/ui/score-gauge';
+import { StemSymbol } from '@/ui/stem-symbol';
+import { COLOR, ELEMENT_TONE, FONT, RADIUS, TYPE } from '@/ui/tokens';
 
 import { Markdown } from './markdown';
 import { ReadingContents, headingsOf } from './contents';
@@ -30,6 +33,9 @@ export function CoverFace({ tones }: { tones: readonly (Element | null)[] | unde
   );
 }
 
+/** 궁합풀이 표지의 한 사람 — 이름과 일간. 화면이 보이는 차례 그대로 준다(웹의 `CoverPerson`) */
+export type CoverPerson = { readonly name: string; readonly stem: Stem | null };
+
 /** 다 된 글 — 표지(비유 · 점수) · 수정 전 경고 · 본문. 글자와 차례는 웹의 `reading-result.tsx` 와 같다 */
 export function Result({
   reading,
@@ -41,7 +47,10 @@ export function Result({
   betweenSummaryAndBody,
   coverAction,
   belowCover,
+  pair,
 }: {
+  /** 궁합풀이 표지(시안 A, 운영자 승인 2026-11-13) — 두 사람 · 반원 게이지 · 비유 · 날짜를 가운데로. 비공개 궁합만 넘긴다 */
+  pair?: readonly [CoverPerson, CoverPerson];
   reading: CurrentReading;
   target: ReadingTarget;
   createdLabel: string | null;
@@ -70,7 +79,9 @@ export function Result({
 
   return (
     <View style={styles.result}>
-      {reading.score !== null || metaphor !== null ? (
+      {pair !== undefined ? (
+        <PairCover pair={pair} score={reading.score} metaphor={metaphor} meta={meta} action={coverAction} />
+      ) : reading.score !== null || metaphor !== null ? (
         <Paper style={styles.cover}>
           <CoverFace tones={tones} />
           {metaphor !== null ? (
@@ -88,7 +99,7 @@ export function Result({
             <View style={styles.grow}>{meta}</View>
             {reading.score !== null && (
               <View style={styles.score}>
-                <WordText style={styles.scoreLabel}>궁합풀이 점수</WordText>
+                <WordText style={styles.scoreLabel}>{COMPAT_SCORE_LABEL}</WordText>
                 <WordText style={styles.scoreValue}>
                   {reading.score} <WordText style={styles.scoreLabel}>/ 100</WordText>
                 </WordText>
@@ -133,8 +144,69 @@ export function Result({
   );
 }
 
+/**
+ * 궁합풀이 표지 — 시안 A 「점수를 가운데 크게」(웹 `reading-result.tsx` 의 `PairCover`). 두 사람 → 게이지 · 「궁합 점수」 → 비유 → 날짜, 모두 가운데.
+ * 큰 따옴표와 구분선은 걷었다. 점수가 없는 옛 궁합은 게이지와 그 이름이 빠진다. 공유 아이콘은 오른쪽 위 그대로다.
+ */
+function PairCover({
+  pair,
+  score,
+  metaphor,
+  meta,
+  action,
+}: {
+  pair: readonly [CoverPerson, CoverPerson];
+  score: number | null;
+  metaphor: string | null;
+  meta: ReactNode;
+  action?: ReactNode;
+}) {
+  return (
+    <Paper style={styles.pairCover}>
+      {action !== undefined && <View style={styles.pairAction}>{action}</View>}
+      <View style={styles.pairNames}>
+        <CoverName person={pair[0]} />
+        <WordText style={styles.pairTimes}>×</WordText>
+        <CoverName person={pair[1]} />
+      </View>
+      {score !== null && (
+        <View style={styles.pairScore}>
+          <ScoreGauge score={score} />
+          <WordText style={styles.coverTitle}>{COMPAT_SCORE_LABEL}</WordText>
+        </View>
+      )}
+      {metaphor !== null && <WordText style={styles.pairMetaphor}>{metaphor}</WordText>}
+      <View style={styles.pairMeta}>{meta}</View>
+    </Paper>
+  );
+}
+
+/** 동그라미(일간 그림 · 오행 soft 색) + 이름 — 일간을 모르면 회색 동그라미만 */
+function CoverName({ person }: { person: CoverPerson }) {
+  const element = person.stem === null ? null : STEM_INFO[person.stem].element;
+  return (
+    <View style={styles.pairPerson}>
+      <View aria-hidden style={[styles.pairCircle, { backgroundColor: softOf(element) }]}>
+        {person.stem !== null && <StemSymbol stem={person.stem} size={20} />}
+      </View>
+      <WordText style={styles.pairName}>{person.name}</WordText>
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
   result: { gap: 24 },
+  pairCover: { alignItems: 'center', gap: 16, paddingHorizontal: 20, paddingTop: 24, paddingBottom: 24 },
+  pairAction: { position: 'absolute', top: 8, right: 8, zIndex: 1 },
+  /* 아이콘 자리(44)만큼 양옆을 비워 긴 이름이 단추 밑에 깔리지 않는다 */
+  pairNames: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'center', columnGap: 10, rowGap: 4, paddingHorizontal: 40, maxWidth: '100%' },
+  pairPerson: { flexDirection: 'row', alignItems: 'center', gap: 6, flexShrink: 1 },
+  pairCircle: { width: 32, height: 32, alignItems: 'center', justifyContent: 'center', borderRadius: RADIUS.pill },
+  pairName: { flexShrink: 1, fontFamily: FONT.bold, fontSize: TYPE.lead, lineHeight: 24, color: COLOR.foreground },
+  pairTimes: { fontFamily: FONT.bold, fontSize: TYPE.small, color: COLOR.secondary },
+  pairScore: { alignItems: 'center', gap: 6, marginTop: 4 },
+  pairMetaphor: { fontFamily: FONT.bold, fontSize: TYPE.heading, lineHeight: 29, color: COLOR.foreground, textAlign: 'center' },
+  pairMeta: { alignItems: 'center' },
   grow: { flex: 1, minWidth: 0 },
   cover: { overflow: 'hidden', paddingHorizontal: 24, paddingTop: 28, paddingBottom: 24 },
   coverAction: { position: 'absolute', top: 12, right: 12, zIndex: 1 },

@@ -73,6 +73,12 @@ export const PARTS: readonly PartContract[] = [
   },
   { name: 'NoticeScreen', web: { file: 'app/ui/notice-screen.tsx', symbols: ['NoticeScreen'] }, app: { file: 'mobile/src/ui/notice-screen.tsx', symbol: 'NoticeScreen' } },
   { name: 'Icon', web: { file: 'app/ui/icons.tsx', symbols: ['Icon'] }, app: { file: 'mobile/src/ui/icons.tsx', symbol: 'Icon' } },
+  {
+    name: 'ScoreGauge',
+    web: { file: 'app/ui/score-gauge.tsx', symbols: ['ScoreGauge'] },
+    app: { file: 'mobile/src/ui/score-gauge.tsx', symbol: 'ScoreGauge' },
+    props: ['score'],
+  },
   { name: 'ElementSymbol', web: { file: 'app/ui/element-symbol.tsx', symbols: ['ElementSymbol'] }, app: { file: 'mobile/src/ui/element-symbol.tsx', symbol: 'ElementSymbol' } },
   {
     name: 'StemSymbol',

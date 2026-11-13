@@ -29,6 +29,7 @@ import { UtteranceList } from '@/chart/relations';
 import { DayMasterChip, PillarStrip, styles as shared } from '@/people/parts';
 import type { ReadingTarget } from '@/reading/api';
 import { ReadFailure, ReadingPanel, useReadingView } from '@/reading/panel';
+import type { CoverPerson } from '@/reading/result';
 import { StemSymbol } from '@/ui/stem-symbol';
 import { COLOR, ELEMENT_TONE, FONT, RADIUS, TYPE } from '@/ui/tokens';
 import { Card, CardFrame, Paper, Tile } from '@/ui/surfaces';
@@ -53,22 +54,25 @@ export function CompatResult({ outcome, onReadingChanged }: { outcome: Ok; onRea
 
   return (
     <View style={styles.stack}>
-      <View style={styles.titleRow}>
-        <View style={styles.pairMark}>
-          {SIDES.map((side, index) => (
-            <PairCircle key={side} stem={charts[side].pillars.dayMaster} shifted={index === 1} />
-          ))}
-        </View>
-        <View style={styles.titleText}>
-          <WordText style={shared.title}>
-            {names.a} <WordText style={{ color: COLOR.secondary }}>×</WordText> {names.b}
-          </WordText>
-        </View>
-      </View>
-
-      {/* 완성된 궁합풀이가 있으면 베타 지표와 그 참고 문단을 걷는다 — 풀이가 제 점수를 든다. 만드는 중 · 실패 동안은 선다(2026-11-08) */}
+      {/*
+        완성된 궁합풀이가 있으면 두 사람 줄 · 베타 지표 · 그 참고 문단을 걷는다 — 두 사람 줄은 그 표지 안에 서고(시안 A, 운영자 승인 2026-11-13,
+        웹의 `app/me/compat/screen.tsx` 와 같다) 풀이가 제 점수를 든다. 만드는 중 · 실패 동안은 선다(2026-11-08)
+      */}
       {reading === null && (
         <>
+          <View style={styles.titleRow}>
+            <View style={styles.pairMark}>
+              {SIDES.map((side, index) => (
+                <PairCircle key={side} stem={charts[side].pillars.dayMaster} shifted={index === 1} />
+              ))}
+            </View>
+            <View style={styles.titleText}>
+              <WordText style={shared.title}>
+                {names.a} <WordText style={{ color: COLOR.secondary }}>×</WordText> {names.b}
+              </WordText>
+            </View>
+          </View>
+
           <Card style={styles.index}>
             <View style={styles.indexHead}>
               <WordText style={styles.betaTag}>{MATCH_INDEX_BADGE}</WordText>
@@ -110,6 +114,10 @@ export function CompatResult({ outcome, onReadingChanged }: { outcome: Ok; onRea
         personA={personA}
         personB={personB}
         names={names}
+        pair={[
+          { name: names.a, stem: charts.a.pillars.dayMaster },
+          { name: names.b, stem: charts.b.pillars.dayMaster },
+        ]}
         ask={relation.ok && relation.relation !== null ? <RelationNote readWith={readWith} next={relation.relation} /> : undefined}
         onReadingChanged={onReadingChanged}
       />
@@ -138,12 +146,14 @@ function PairReadingPanel({
   personA,
   personB,
   names,
+  pair,
   ask,
   onReadingChanged,
 }: {
   personA: string;
   personB: string;
   names: { a: string; b: string };
+  pair: readonly [CoverPerson, CoverPerson];
   ask: ReactNode;
   onReadingChanged: () => void;
 }) {
@@ -166,6 +176,7 @@ function PairReadingPanel({
       target={target}
       view={answer.view}
       nicknames={pairSeatsOf({ personId: personA, name: names.a }, { personId: personB, name: names.b })}
+      pair={pair}
       ask={ask}
       onReadingChanged={onReadingChanged}
     />
