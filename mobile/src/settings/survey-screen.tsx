@@ -1,6 +1,6 @@
 import { BUTTON_OFF_OPACITY } from '@design';
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
-import { AppState, KeyboardAvoidingView, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { AppState, KeyboardAvoidingView, Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
 
 import {
   EMPTY_ANSWERS,
@@ -52,6 +52,7 @@ import { CardFrame, Paper } from '@/ui/surfaces';
 import { AccountNotice, settingsText } from './parts';
 import { setOptionalConsent } from './settings';
 import { loadSurvey, saveSurvey, type Loaded } from './survey';
+import { WordText } from '@/ui/word-text';
 
 /** 서비스 설문 — 웹 `app/me/survey/` 와 같다. 어느 문항이 서는지는 DB 가 답한다(`service_survey_context`) */
 export function SurveyScreen() {
@@ -82,8 +83,8 @@ export function SurveyScreen() {
           ) : (
             <>
               <Paper style={styles.header}>
-                <Text style={styles.intro}>{SURVEY_COPY.intro}</Text>
-                <Text style={styles.editable}>{SURVEY_COPY.editable}</Text>
+                <WordText style={styles.intro}>{SURVEY_COPY.intro}</WordText>
+                <WordText style={styles.editable}>{SURVEY_COPY.editable}</WordText>
               </Paper>
               {data.kind === 'failed' ? (
                 <CardFrame style={styles.failed}>
@@ -94,8 +95,8 @@ export function SurveyScreen() {
               ) : (
                 <CardFrame style={styles.section}>
                   <View style={styles.tight}>
-                    <Text style={settingsText.section}>먼저 동의가 필요합니다</Text>
-                    <Text style={styles.sm}>{SURVEY_COPY.consentNeeded}</Text>
+                    <WordText style={settingsText.section}>먼저 동의가 필요합니다</WordText>
+                    <WordText style={styles.sm}>{SURVEY_COPY.consentNeeded}</WordText>
                   </View>
                   <ConsentSwitch onDone={() => void reload()} />
                 </CardFrame>
@@ -124,7 +125,7 @@ function ConsentSwitch({ onDone }: { onDone: () => void }) {
   return (
     <View style={styles.consent}>
       <PrimaryButton label={saving ? '켜는 중…' : '동의하고 설문 열기'} onPress={() => void turnOn()} disabled={saving} />
-      <Text style={styles.small}>설정 화면에서 언제든 다시 끄실 수 있습니다. 끄시면 지금까지 남기신 설문 답도 함께 지웁니다.</Text>
+      <WordText style={styles.small}>설정 화면에서 언제든 다시 끄실 수 있습니다. 끄시면 지금까지 남기신 설문 답도 함께 지웁니다.</WordText>
       {failure !== null && <FailureLine>{failure}</FailureLine>}
     </View>
   );
@@ -196,8 +197,8 @@ function SurveyForm({ context, given }: { context: SurveyContext; given: MySurve
     return (
       <CardFrame style={styles.section}>
         <View style={styles.tight}>
-          <Text style={settingsText.section}>{SURVEY_COPY.thanks}</Text>
-          <Text style={styles.sm}>{SURVEY_COPY.editable}</Text>
+          <WordText style={settingsText.section}>{SURVEY_COPY.thanks}</WordText>
+          <WordText style={styles.sm}>{SURVEY_COPY.editable}</WordText>
         </View>
         <SecondaryButton label="답 고치기" onPress={() => setEditing(true)} />
       </CardFrame>
@@ -213,7 +214,7 @@ function SurveyForm({ context, given }: { context: SurveyContext; given: MySurve
   return (
     <View style={styles.form}>
       {dialog}
-      <Text style={styles.meta}>{SURVEY_COPY.autosave}</Text>
+      <WordText style={styles.meta}>{SURVEY_COPY.autosave}</WordText>
 
       <Picks disabled={sending} step={step(1)} question={QUESTION.liked} hint={SURVEY_COPY.multiple} options={LIKED_OPTIONS} label={LIKED_LABEL} sole={SOLE_CHOICES.liked} picked={answers.liked} onPick={(next) => pick('liked', next)} />
       <Picks disabled={sending} step={step(2)} question={QUESTION.unknown} hint={both} options={UNKNOWN_OPTIONS} label={UNKNOWN_LABEL} sole={SOLE_CHOICES.unknown} picked={answers.unknown} onPick={(next) => pick('unknown', next)} />
@@ -226,14 +227,14 @@ function SurveyForm({ context, given }: { context: SurveyContext; given: MySurve
 
       {asked.length > 0 && (
         <CardFrame style={styles.panel}>
-          <Text style={styles.step}>{step(5)}</Text>
-          <Text style={styles.ask}>{PRICE_STEM}</Text>
-          <Text style={styles.small}>{PRICE_NOTE}</Text>
+          <WordText style={styles.step}>{step(5)}</WordText>
+          <WordText style={styles.ask}>{PRICE_STEM}</WordText>
+          <WordText style={styles.small}>{PRICE_NOTE}</WordText>
           {asked.map((subject) => {
             const key = subject === 'solo' ? 'priceSolo' : 'pricePair';
             return (
               <View key={subject} style={styles.ruled}>
-                <Text style={styles.subject}>{PRICE_SUBJECT_LABEL[subject]}</Text>
+                <WordText style={styles.subject}>{PRICE_SUBJECT_LABEL[subject]}</WordText>
                 <View accessibilityRole="radiogroup" style={styles.options}>
                   {PRICE_OPTIONS.map((option) => {
                     const on = answers[key] === option;
@@ -248,7 +249,7 @@ function SurveyForm({ context, given }: { context: SurveyContext; given: MySurve
                         style={[styles.radio, on && styles.radioOn, sending && !on && styles.off]}
                       >
                         <View style={[styles.dot, on && styles.dotOn]}>{on && <View style={styles.dotInner} />}</View>
-                        <Text style={styles.choice}>{PRICE_LABEL[option]}</Text>
+                        <WordText style={styles.choice}>{PRICE_LABEL[option]}</WordText>
                       </Pressable>
                     );
                   })}
@@ -262,12 +263,12 @@ function SurveyForm({ context, given }: { context: SurveyContext; given: MySurve
       {asked.length > 0 && <Picks disabled={sending} step={step(6)} question={QUESTION.priceFactors} hint={both} options={PRICE_FACTORS} label={PRICE_FACTOR_LABEL} sole={[]} picked={answers.priceFactors} onPick={(next) => pick('priceFactors', next)} />}
 
       <CardFrame style={styles.panel}>
-        <Text style={styles.step}>{step(total)}</Text>
+        <WordText style={styles.step}>{step(total)}</WordText>
         <Writing disabled={sending} label={QUESTION.freeText} limit={TEXT_LIMIT.free} value={answers.freeText} onChange={(next) => pick('freeText', next)} />
       </CardFrame>
 
       <View style={styles.send}>
-        <Text style={styles.small}>{SURVEY_COPY.drafting}</Text>
+        <WordText style={styles.small}>{SURVEY_COPY.drafting}</WordText>
         <PrimaryButton label={submittedAt === null ? SURVEY_COPY.submit : SURVEY_COPY.resubmit} onPress={() => void send()} disabled={sending || !isAnswered(answers)} />
         <DraftMark state={draft} />
         {failure !== null && <FailureLine>{failure}</FailureLine>}
@@ -278,8 +279,8 @@ function SurveyForm({ context, given }: { context: SurveyContext; given: MySurve
 
 function DraftMark({ state }: { state: DraftState }) {
   if (state === 'idle') return null;
-  if (state === 'failed') return <Text style={styles.draftFailed}>{`${SURVEY_COPY.draftFailed} 답을 다시 고치면 한 번 더 저장해 볼게요.`}</Text>;
-  return <Text style={styles.small}>{state === 'saving' ? '임시 저장하는 중…' : SURVEY_COPY.draftSaved}</Text>;
+  if (state === 'failed') return <WordText style={styles.draftFailed}>{`${SURVEY_COPY.draftFailed} 답을 다시 고치면 한 번 더 저장해 볼게요.`}</WordText>;
+  return <WordText style={styles.small}>{state === 'saving' ? '임시 저장하는 중…' : SURVEY_COPY.draftSaved}</WordText>;
 }
 
 function Picks<T extends string>({
@@ -311,14 +312,14 @@ function Picks<T extends string>({
 }) {
   const body = (
     <>
-      {step !== undefined && <Text style={styles.step}>{step}</Text>}
-      <Text style={nested ? styles.nestedAsk : styles.ask}>{question}</Text>
-      <Text style={styles.small}>{hint}</Text>
-      {note !== undefined && <Text style={styles.small}>{note}</Text>}
+      {step !== undefined && <WordText style={styles.step}>{step}</WordText>}
+      <WordText style={nested ? styles.nestedAsk : styles.ask}>{question}</WordText>
+      <WordText style={styles.small}>{hint}</WordText>
+      {note !== undefined && <WordText style={styles.small}>{note}</WordText>}
       <View style={styles.options}>
         {options.map((option) => (
           <CheckRow key={option} disabled={disabled} checked={picked.includes(option)} onToggle={() => onPick(afterPicking(picked, option, sole))}>
-            <Text style={styles.choice}>{label[option]}</Text>
+            <WordText style={styles.choice}>{label[option]}</WordText>
           </CheckRow>
         ))}
       </View>
@@ -331,8 +332,8 @@ function Picks<T extends string>({
 function Writing({ label, limit, value, onChange, disabled, ruled = false }: { label: string; limit: number; value: string; onChange: (next: string) => void; disabled: boolean; ruled?: boolean }) {
   return (
     <View style={ruled ? styles.ruled : styles.writing}>
-      <Text style={styles.subject}>{label}</Text>
-      <Text style={styles.small}>{`${SURVEY_COPY.optional} · 최대 ${limit}자`}</Text>
+      <WordText style={styles.subject}>{label}</WordText>
+      <WordText style={styles.small}>{`${SURVEY_COPY.optional} · 최대 ${limit}자`}</WordText>
       <TextInput accessibilityLabel={label} multiline value={value} maxLength={limit} onChangeText={onChange} editable={!disabled} accessibilityState={{ disabled }} style={[styles.area, disabled && styles.off]} />
     </View>
   );

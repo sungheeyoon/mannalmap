@@ -1,6 +1,6 @@
 import { router, useFocusEffect } from 'expo-router';
 import { useCallback, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 
 import { accountFailureOf, accountNoticeOf, isBlocked, selfPersonIdOf, type AccountState } from '@account/index';
 import { SUPPORT_EMAIL } from '@brand';
@@ -20,6 +20,7 @@ import { Icon } from '@/ui/icons';
 import { LoadingDots } from '@/ui/loading';
 import { COLOR, FONT, RADIUS, TYPE } from '@/ui/tokens';
 import { CardFrame, RowCard } from '@/ui/surfaces';
+import { WordText } from '@/ui/word-text';
 
 type Loaded = { finishedMatchIds: readonly string[]; endedTalks: number; account: AccountState; deck: Read<DeckPlace>; matches: Read<readonly InboxMatch[]> };
 
@@ -122,15 +123,15 @@ function Deck({ place, tail, onRecheck, onRequested }: { place: Extract<DeckPlac
     <Frame>
       <View style={styles.head}>
         <View style={styles.flex}>
-          <Text style={styles.date}>{todayLabel()}</Text>
-          <Text style={styles.title} accessibilityRole="header">
+          <WordText style={styles.date}>{todayLabel()}</WordText>
+          <WordText style={styles.title} accessibilityRole="header">
             오늘의 인연
-          </Text>
+          </WordText>
         </View>
         <Pressable accessibilityRole="button" onPress={() => setView(view === 'today' ? 'passed' : 'today')} style={styles.pill}>
           <Icon name={view === 'today' ? 'undo' : 'people'} size={16} />
-          <Text style={styles.pillText}>{view === 'today' ? '지나친 인연' : '오늘의 인연'}</Text>
-          <Text style={styles.pillCount}>{view === 'today' ? deck.passed.length : deck.remaining.length}</Text>
+          <WordText style={styles.pillText}>{view === 'today' ? '지나친 인연' : '오늘의 인연'}</WordText>
+          <WordText style={styles.pillCount}>{view === 'today' ? deck.passed.length : deck.remaining.length}</WordText>
         </Pressable>
       </View>
 
@@ -149,7 +150,7 @@ function Deck({ place, tail, onRecheck, onRequested }: { place: Extract<DeckPlac
         />
       ) : profile === undefined ? (
         <>
-          {place.notice !== null && <Text style={styles.date}>{place.notice}</Text>}
+          {place.notice !== null && <WordText style={styles.date}>{place.notice}</WordText>}
           <EmptyDeck onRecheck={onRecheck} />
           {feedback}
         </>
@@ -203,9 +204,9 @@ function Frame({ children }: { children: React.ReactNode }) {
 
 function Title() {
   return (
-    <Text style={styles.title} accessibilityRole="header">
+    <WordText style={styles.title} accessibilityRole="header">
       오늘의 인연
-    </Text>
+    </WordText>
   );
 }
 
@@ -220,8 +221,8 @@ function Blocked({ state, onRetry }: { state: AccountState; onRetry: () => void 
         </FailureLine>
       ) : text !== null ? (
         <CardFrame style={styles.notice}>
-          <Text style={styles.noticeTitle}>{text.title}</Text>
-          <Text style={styles.noticeBody}>{text.detail}</Text>
+          <WordText style={styles.noticeTitle}>{text.title}</WordText>
+          <WordText style={styles.noticeBody}>{text.detail}</WordText>
         </CardFrame>
       ) : null}
     </Frame>
@@ -235,12 +236,12 @@ function HistoryRow({ summary }: { summary: HistorySummary | null }) {
     <RowCard accessibilityRole="link" onPress={() => router.push('/me/matching/history')} style={styles.history}>
       <View style={styles.flex}>
         <View style={styles.historyHead}>
-          <Text style={styles.historyTitle}>인연 기록</Text>
-          <Text style={styles.chip}>{summary.count}</Text>
+          <WordText style={styles.historyTitle}>인연 기록</WordText>
+          <WordText style={styles.chip}>{summary.count}</WordText>
         </View>
-        <Text style={styles.historyHint} numberOfLines={1}>
+        <WordText style={styles.historyHint} numberOfLines={1}>
           {summary.hint}
-        </Text>
+        </WordText>
       </View>
       <Icon name="chevron" size={16} color={COLOR.muted} />
     </RowCard>

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Pressable, StyleSheet, Text, type StyleProp, type ViewStyle } from 'react-native';
+import { Pressable, StyleSheet, type StyleProp, type ViewStyle } from 'react-native';
 
 import { DELETION_IRREVERSIBLE_NOTE, DELETION_NOTE, DELETION_SHARED_NOTE } from '@account/index';
 
@@ -10,6 +10,7 @@ import { COLOR, CONTROL, FONT, TYPE } from '@/ui/tokens';
 import { revokeAppleBeforeLeaving } from './apple-revoke';
 import { unlinkKakaoBeforeLeaving } from './kakao-unlink';
 import { requestAccountDeletion } from './settings';
+import { WordText } from '@/ui/word-text';
 
 /**
  * 떠나는 자리 — 웹 `app/me/leaving.tsx` 와 같은 차례다: **여는 누름은 아무것도 안 지운다.** 창이 무엇이 지워지고 무엇이 남는지 먼저
@@ -47,7 +48,7 @@ export function RequestDeletion({ onDone, style }: {
   return (
     <>
       <Pressable accessibilityRole="button" onPress={() => setAsking(true)} style={({ pressed }) => [styles.open, style, pressed && styles.pressed]}>
-        <Text style={styles.openText}>탈퇴하기</Text>
+        <WordText style={styles.openText}>탈퇴하기</WordText>
       </Pressable>
       <ConfirmDialog
         open={asking}

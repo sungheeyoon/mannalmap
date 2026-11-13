@@ -1,6 +1,6 @@
 import { useFocusEffect } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 
 import { SUPPORT_EMAIL } from '@brand';
 import { businessInfoFrom } from '@brand/business';
@@ -37,6 +37,7 @@ import {
 } from './store';
 import { PurchaseDone } from './purchase-done';
 import { pickedOf, shelfOf, type ShelfItem } from './shelf';
+import { WordText } from '@/ui/word-text';
 
 /**
  * 화면이 그리는 판 — 묻는 중 · 못 읽음(서버에 못 닿음 · Play 연결이나 상품 조회가 던짐) · 살 수 없음(제한 · 정지 · 베타 끝 · Play 상품이 아직 없음) · 살 수 있음.
@@ -135,7 +136,7 @@ export function StoreSection({ onBought, returnTo }: { onBought: () => Promise<n
         {STORE_LOAD_FAILED_NOTE}
       </FailureLine>
     );
-  if (shelf.kind === 'closed') return <Text style={settingsText.meta}>{SALE_CLOSED_NOTE}</Text>;
+  if (shelf.kind === 'closed') return <WordText style={settingsText.meta}>{SALE_CLOSED_NOTE}</WordText>;
 
   return (
     <View style={styles.section}>
@@ -153,12 +154,12 @@ export function StoreSection({ onBought, returnTo }: { onBought: () => Promise<n
               <Card style={[styles.row, on && styles.rowOn]}>
                 <View style={styles.rowBody}>
                   <View style={styles.nameLine}>
-                    <Text style={styles.name}>{bundleOrderName(product.credits)}</Text>
-                    {mark !== null && <Text style={styles.mark}>{mark}</Text>}
+                    <WordText style={styles.name}>{bundleOrderName(product.credits)}</WordText>
+                    {mark !== null && <WordText style={styles.mark}>{mark}</WordText>}
                   </View>
-                  {product.discount > 0 && <Text style={settingsText.meta}>1장 대비 {product.discount}% 할인</Text>}
+                  {product.discount > 0 && <WordText style={settingsText.meta}>1장 대비 {product.discount}% 할인</WordText>}
                 </View>
-                <Text style={styles.price}>{product.price}</Text>
+                <WordText style={styles.price}>{product.price}</WordText>
               </Card>
             </Pressable>
           );
@@ -173,9 +174,9 @@ export function StoreSection({ onBought, returnTo }: { onBought: () => Promise<n
           if (next) setAgreeMissing(false);
         }}
       >
-        <Text style={settingsText.body}>{CHECKOUT_AGREE_LABEL}</Text>
+        <WordText style={settingsText.body}>{CHECKOUT_AGREE_LABEL}</WordText>
       </CheckRow>
-      {agreeMissing && !agreed && <Text style={styles.wrong}>{CHECKOUT_AGREE_MISSING}</Text>}
+      {agreeMissing && !agreed && <WordText style={styles.wrong}>{CHECKOUT_AGREE_MISSING}</WordText>}
 
       <PrimaryButton label={running ? PURCHASE_RUNNING_LABEL : checkoutPayLabel(picked?.price ?? '')} onPress={buy} disabled={running} />
 
@@ -184,18 +185,18 @@ export function StoreSection({ onBought, returnTo }: { onBought: () => Promise<n
         (notice.kind === 'undelivered' ? (
           <FailureLine onRetry={() => void resend(false)}>{notice.body}</FailureLine>
         ) : (
-          <Text accessibilityRole="alert" style={settingsText.meta}>
+          <WordText accessibilityRole="alert" style={settingsText.meta}>
             {notice.body}
-          </Text>
+          </WordText>
         ))}
 
       <View accessibilityLabel="유의사항" style={styles.notes}>
         {[CHECKOUT_REFUND_NOTE, checkoutRefundLine(businessInfoFrom({ email: SUPPORT_EMAIL })), CHECKOUT_PROVIDED_NOTE, CHECKOUT_FREE_FIRST_NOTE].map(
           (line) => (
-            <Text key={line} style={styles.note}>
+            <WordText key={line} style={styles.note}>
               {'• '}
               {line}
-            </Text>
+            </WordText>
           ),
         )}
         {legalPagesOpen && <TextButton label="자세히 알아보기" onPress={() => openLegalPage('/refund')} />}

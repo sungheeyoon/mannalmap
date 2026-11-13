@@ -3,7 +3,7 @@ import { READING_STALE_LABEL } from '@reading/notes';
 import type { Element } from '@saju';
 import { router } from 'expo-router';
 import type { ReactNode } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 
 import { EmptySlot } from '@/ui/surfaces';
 import { ElementSymbol } from '@/ui/element-symbol';
@@ -11,6 +11,7 @@ import { COLOR, ELEMENT_TONE, FONT, RADIUS, TYPE } from '@/ui/tokens';
 
 import { CoverFace } from './result';
 import { FlowBand } from './waiting';
+import { WordText } from '@/ui/word-text';
 
 /** 칩 넷 — 값과 글자는 웹의 `app/me/(shelf)/readings/kind.ts` 와 같다 */
 export type ShelfChip = 'all' | ShelfSlot;
@@ -44,7 +45,7 @@ function MiniCover({ subjects, score }: { subjects: readonly (DoorDayMaster | nu
           <ElementSymbol key={at} element={element} size={elements.length === 1 ? 32 : 22} />
         ))}
       </View>
-      {elements.length > 1 && score !== null && <Text style={styles.miniScore}>{score}</Text>}
+      {elements.length > 1 && score !== null && <WordText style={styles.miniScore}>{score}</WordText>}
     </View>
   );
 }
@@ -68,17 +69,17 @@ export function BookRow({ book }: { book: ShelfBook }) {
       <MiniCover subjects={book.subjects} score={book.score} />
       <View style={styles.rowText}>
         <View style={styles.rowHead}>
-          <Text numberOfLines={1} style={styles.rowTitle}>
+          <WordText numberOfLines={1} style={styles.rowTitle}>
             {book.title}
-          </Text>
-          {book.stale && <Text style={styles.stale}>{READING_STALE_LABEL}</Text>}
+          </WordText>
+          {book.stale && <WordText style={styles.stale}>{READING_STALE_LABEL}</WordText>}
         </View>
         {book.metaphor !== null && (
-          <Text numberOfLines={2} style={styles.rowNote}>
+          <WordText numberOfLines={2} style={styles.rowNote}>
             {book.metaphor}
-          </Text>
+          </WordText>
         )}
-        <Text style={styles.rowDate}>{book.date}</Text>
+        <WordText style={styles.rowDate}>{book.date}</WordText>
       </View>
     </Row>
   );
@@ -94,11 +95,11 @@ export function MakingRow({ making, kind }: { making: ShelfMaking; kind?: string
         </View>
       </View>
       <View style={styles.rowText}>
-        {kind !== undefined && <Text style={styles.kindTag}>{kind}</Text>}
-        <Text numberOfLines={1} style={styles.rowTitle}>
+        {kind !== undefined && <WordText style={styles.kindTag}>{kind}</WordText>}
+        <WordText numberOfLines={1} style={styles.rowTitle}>
           {making.name}
-        </Text>
-        <Text style={styles.makingLine}>만드는 중…</Text>
+        </WordText>
+        <WordText style={styles.makingLine}>만드는 중…</WordText>
       </View>
     </Row>
   );
@@ -109,7 +110,7 @@ export function BlankBook({ element, label, onPress }: { element: Element; label
   return (
     <EmptySlot accessibilityRole="link" onPress={onPress} style={styles.blank}>
       <ElementSymbol element={element} size={28} />
-      <Text style={styles.blankLabel}>{label}</Text>
+      <WordText style={styles.blankLabel}>{label}</WordText>
     </EmptySlot>
   );
 }

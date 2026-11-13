@@ -1,4 +1,4 @@
-import { Pressable, StyleSheet, Text } from 'react-native';
+import { Pressable, StyleSheet } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 
 import { BUTTON_OFF_OPACITY, BUTTON_PRESSED_SCALE } from '@design';
@@ -6,6 +6,7 @@ import { KAKAO_BUTTON_COLOR, KAKAO_SYMBOL, SIGN_IN_BUTTON } from '@account/sign-
 import { KAKAO_SIGN_IN } from '@account/sign-in-line';
 
 import { kakaoSignInAvailable } from './kakao';
+import { WordText } from '@/ui/word-text';
 
 /**
  * 카카오 로그인 단추 — 웹 `app/auth/kakao-sign-in-button.tsx` 와 같은 값(`src/lib/account/sign-in-buttons.ts`, ADR 0228)으로 그린다: 가이드의 색 ·
@@ -33,9 +34,9 @@ export function KakaoSignInButton({ onPress, busy, label = KAKAO_SIGN_IN }: { on
       >
         <Path fill={KAKAO_BUTTON_COLOR.symbol} d={KAKAO_SYMBOL.path} />
       </Svg>
-      <Text style={styles.label} numberOfLines={1}>
+      <WordText style={styles.label} numberOfLines={1}>
         {label}
-      </Text>
+      </WordText>
     </Pressable>
   );
 }

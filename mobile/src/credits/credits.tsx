@@ -1,6 +1,6 @@
 import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { useCallback, useState } from 'react';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ScrollView, StyleSheet, View } from 'react-native';
 
 import { SUPPORT_EMAIL } from '@brand';
 import { businessInfoFrom } from '@brand/business';
@@ -26,6 +26,7 @@ import { Card, Paper } from '@/ui/surfaces';
 import { readReadingCredits, readReadingOrders } from './remaining';
 import { storeAvailable } from './store';
 import { StoreSection } from './store-section';
+import { WordText } from '@/ui/word-text';
 
 type Read<T> = { ok: true; value: T } | { ok: false; message: string };
 
@@ -67,18 +68,18 @@ export function CreditsScreen() {
           <>
             <View>
               {CREDITS_SCREEN_LEAD.map((line) => (
-                <Text key={line} style={settingsText.meta}>
+                <WordText key={line} style={settingsText.meta}>
                   {line}
-                </Text>
+                </WordText>
               ))}
             </View>
             {read.ok ? (
               read.value !== null && (
                 <Paper style={styles.count}>
-                  <Text style={styles.number}>
+                  <WordText style={styles.number}>
                     {read.value}
-                    <Text style={styles.unit}>장</Text>
-                  </Text>
+                    <WordText style={styles.unit}>장</WordText>
+                  </WordText>
                 </Paper>
               )
             ) : (
@@ -115,17 +116,17 @@ export function CreditsHistoryScreen() {
           (!read.ok ? (
             <FailureLine onRetry={load}>{read.message}</FailureLine>
           ) : read.value.length === 0 ? (
-            <Text style={settingsText.meta}>결제 내역이 없어요.</Text>
+            <WordText style={settingsText.meta}>결제 내역이 없어요.</WordText>
           ) : (
             read.value.map((order) => <OrderCard key={order.orderNumber} order={order} />)
           ))}
         <Card style={styles.refund}>
-          <Text style={styles.name} accessibilityRole="header">
+          <WordText style={styles.name} accessibilityRole="header">
             환불 신청
-          </Text>
+          </WordText>
           {/* 사업자 정보 가운데 이메일만 공개 상수다 — 이 줄이 쓰는 값은 그것뿐이다 */}
-          <Text style={settingsText.body}>{refundRequestLine(businessInfoFrom({ email: SUPPORT_EMAIL }))}</Text>
-          <Text style={settingsText.body}>주문 번호를 함께 알려 주세요.</Text>
+          <WordText style={settingsText.body}>{refundRequestLine(businessInfoFrom({ email: SUPPORT_EMAIL }))}</WordText>
+          <WordText style={settingsText.body}>주문 번호를 함께 알려 주세요.</WordText>
           {legalPagesOpen && <TextButton label="환불정책 보기" onPress={() => openLegalPage('/refund')} />}
         </Card>
       </ScrollView>
@@ -144,15 +145,15 @@ function OrderCard({ order }: { order: PaidOrder }) {
   return (
     <Card style={styles.order}>
       <View style={styles.orderHead}>
-        <Text style={styles.name}>{order.product}</Text>
-        <Text style={styles.tag}>{order.status}</Text>
+        <WordText style={styles.name}>{order.product}</WordText>
+        <WordText style={styles.tag}>{order.status}</WordText>
       </View>
       {rows.map(([label, value]) => (
         <View key={label} style={styles.orderRow}>
-          <Text style={styles.orderLabel}>{label}</Text>
-          <Text selectable style={styles.orderValue}>
+          <WordText style={styles.orderLabel}>{label}</WordText>
+          <WordText selectable style={styles.orderValue}>
             {value}
-          </Text>
+          </WordText>
         </View>
       ))}
     </Card>

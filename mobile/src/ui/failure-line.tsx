@@ -1,11 +1,12 @@
 import { router } from 'expo-router';
 import type { ReactNode } from 'react';
-import { StyleSheet, Text, View, type StyleProp, type ViewStyle } from 'react-native';
+import { StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 
 import { SIGN_IN_AGAIN_NOTE } from '@account/sign-in-again';
 
 import { Button } from './buttons';
 import { COLOR, FONT, TYPE } from './tokens';
+import { WordText } from './word-text';
 
 /**
  * **화면 안에서 한 자리만 못 읽었거나 못 했을 때 서는 줄** — 웹 `app/ui/failure-line.tsx` 와 같은 꼴(ADR 0241): 붉은 글씨 14px · 줄 높이 24 ·
@@ -28,7 +29,7 @@ export function FailureLine({
   const signedOut = signIn || textOf(children).includes(SIGN_IN_AGAIN_NOTE);
   return (
     <View accessibilityRole="alert" style={[styles.row, style]}>
-      <Text style={styles.text}>{children}</Text>
+      <WordText style={styles.text}>{children}</WordText>
       {signedOut ? (
         <Button label="다시 로그인" onPress={() => router.replace('/')} variant="tertiary" />
       ) : (

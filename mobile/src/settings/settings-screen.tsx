@@ -1,7 +1,7 @@
 import { Image } from 'expo-image';
 import { router, useFocusEffect } from 'expo-router';
 import { useCallback, useState } from 'react';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ScrollView, StyleSheet, View } from 'react-native';
 
 import { erasesProfileOnly, isBlocked, mayRequestDeletion } from '@account/index';
 import { SIGN_OUT_PENDING } from '@account/copy';
@@ -33,6 +33,7 @@ import { RequestDeletion } from './leaving';
 import { AccountNotice, LinkRow, SettingsGroup, TextRow, FAILURE_INSET } from './parts';
 import { myPhotos, photoSource } from './photos';
 import { readSettings, settingsUnreachable, type SettingsData } from './settings';
+import { WordText } from '@/ui/word-text';
 
 const SIGN_OUT_FAILED = '로그아웃하지 못했어요. 다시 시도해 주세요.';
 
@@ -109,7 +110,7 @@ export function SettingsScreen() {
                   <Image source={{ uri: face }} style={styles.face} contentFit="cover" />
                 ) : (
                   <View style={styles.face}>
-                    <Text style={styles.initial}>{initialOf(account.nickname ?? '')}</Text>
+                    <WordText style={styles.initial}>{initialOf(account.nickname ?? '')}</WordText>
                   </View>
                 )
               }
@@ -152,7 +153,7 @@ export function SettingsScreen() {
         </SettingsGroup>
 
         <SettingsGroup title="계정">
-          {!active && accountLine !== undefined && <Text style={styles.email}>{accountLine}</Text>}
+          {!active && accountLine !== undefined && <WordText style={styles.email}>{accountLine}</WordText>}
           <SignOutRow />
         </SettingsGroup>
 

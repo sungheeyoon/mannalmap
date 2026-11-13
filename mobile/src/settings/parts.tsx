@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState, type ReactNode } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 
 import { accountFailureOf, accountNoticeOf, type AccountState } from '@account/index';
@@ -9,6 +9,7 @@ import { FailureLine } from '@/ui/failure-line';
 import { Switch } from '@/ui/switch';
 import { COLOR, FONT, TYPE } from '@/ui/tokens';
 import { CardFrame } from '@/ui/surfaces';
+import { WordText } from '@/ui/word-text';
 
 /** 줄 이름 · 아래 한 줄 · 그 아래 작은 줄 — 웹 `app/me/settings/card.tsx` 의 `ROW_LABEL` · `ROW_HELP` · `ROW_NOTE` */
 const PAD = 24;
@@ -45,8 +46,8 @@ export function AccountNotice({ state, onRetry }: { state: AccountState; onRetry
   if (text === null) return null;
   return (
     <CardFrame style={styles.notice}>
-      <Text style={styles.noticeTitle}>{text.title}</Text>
-      <Text style={styles.help}>{text.detail}</Text>
+      <WordText style={styles.noticeTitle}>{text.title}</WordText>
+      <WordText style={styles.help}>{text.detail}</WordText>
     </CardFrame>
   );
 }
@@ -57,10 +58,10 @@ export function SettingsGroup({ title, description, children }: { title?: string
     <View style={styles.group}>
       {title !== undefined && (
         <View style={styles.groupHead}>
-          <Text style={styles.groupTitle} accessibilityRole="header">
+          <WordText style={styles.groupTitle} accessibilityRole="header">
             {title}
-          </Text>
-          {description !== undefined && <Text style={styles.note}>{description}</Text>}
+          </WordText>
+          {description !== undefined && <WordText style={styles.note}>{description}</WordText>}
         </View>
       )}
       {children}
@@ -73,11 +74,11 @@ export function SwitchRow({ label, help, note, checked, onChange, busy }: { labe
   return (
     <View style={styles.switchRow}>
       <View style={styles.switchHead}>
-        <Text style={[styles.label, styles.fill]}>{label}</Text>
+        <WordText style={[styles.label, styles.fill]}>{label}</WordText>
         <Switch checked={checked} onChange={onChange} busy={busy} label={label} />
       </View>
-      {help !== undefined && <Text style={styles.help}>{help}</Text>}
-      {note !== undefined && <Text style={styles.note}>{note}</Text>}
+      {help !== undefined && <WordText style={styles.help}>{help}</WordText>}
+      {note !== undefined && <WordText style={styles.note}>{note}</WordText>}
     </View>
   );
 }
@@ -88,15 +89,15 @@ export function LinkRow({ label, help, note, leading, big = false, onPress }: { 
     <Pressable accessibilityRole="link" onPress={onPress} style={({ pressed }) => [styles.row, big && styles.bigRow, pressed && styles.pressed]}>
       {leading}
       <View style={styles.fill}>
-        <Text numberOfLines={1} style={big ? styles.bigLabel : styles.label}>
+        <WordText numberOfLines={1} style={big ? styles.bigLabel : styles.label}>
           {label}
-        </Text>
+        </WordText>
         {help !== undefined && (
-          <Text numberOfLines={big ? 1 : undefined} style={styles.help}>
+          <WordText numberOfLines={big ? 1 : undefined} style={styles.help}>
             {help}
-          </Text>
+          </WordText>
         )}
-        {note !== undefined && <Text style={styles.note}>{note}</Text>}
+        {note !== undefined && <WordText style={styles.note}>{note}</WordText>}
       </View>
       <Svg width={16} height={16} viewBox="0 0 16 16">
         <Path d="M6 3 L11 8 L6 13" fill="none" stroke={COLOR.muted} strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" />
@@ -109,7 +110,7 @@ export function LinkRow({ label, help, note, leading, big = false, onPress }: { 
 export function TextRow({ label, onPress, disabled = false }: { label: string; onPress: () => void; disabled?: boolean }) {
   return (
     <Pressable accessibilityRole="button" accessibilityState={{ disabled }} disabled={disabled} onPress={onPress} style={({ pressed }) => [styles.textRow, pressed && styles.pressed, disabled && styles.off]}>
-      <Text style={styles.label}>{label}</Text>
+      <WordText style={styles.label}>{label}</WordText>
     </Pressable>
   );
 }

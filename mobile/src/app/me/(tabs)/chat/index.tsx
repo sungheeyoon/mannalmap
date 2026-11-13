@@ -1,6 +1,6 @@
 import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
+import { FlatList, Pressable, StyleSheet, View } from 'react-native';
 
 import { CHAT_TAB_LABEL, messageTimeLabel, partnerNameOf, roomNoticeOf } from '@chat';
 import { ROOM_NO_MESSAGES_YET } from '@chat/copy';
@@ -21,6 +21,7 @@ import { Icon } from '@/ui/icons';
 import { LoadingDots } from '@/ui/loading';
 import { COLOR, FONT, RADIUS, TYPE } from '@/ui/tokens';
 import { KEEP_VIEW } from '@/ui/keep-view';
+import { WordText } from '@/ui/word-text';
 
 /** 한 물결의 변경을 묶어 다시 읽는 간격 — 웹의 `REDRAW_AFTER_MS` 와 같다 */
 const REREAD_AFTER_MS = 400;
@@ -87,12 +88,12 @@ export default function ChatRoomsScreen() {
 
   return (
     <View style={styles.screen}>
-      <Text accessibilityRole="header" style={styles.title}>
+      <WordText accessibilityRole="header" style={styles.title}>
         {CHAT_TAB_LABEL}
-      </Text>
+      </WordText>
       {withdrawn !== undefined && !noteGone && (
         <View style={styles.snack} accessibilityLiveRegion="polite">
-          <Text style={styles.snackText}>{TALK_WITHDRAWN}</Text>
+          <WordText style={styles.snackText}>{TALK_WITHDRAWN}</WordText>
         </View>
       )}
       {screen === null && <LoadingDots />}
@@ -133,9 +134,9 @@ function RoomList({ screen }: { screen: Extract<RoomListScreen, { kind: 'ready' 
         unanswered.length === 0 ? undefined : (
           <View>
             <Pressable accessibilityRole="button" accessibilityState={{ expanded: open }} onPress={() => setOpen(!open)} style={styles.fold}>
-              <Text style={styles.foldText}>
+              <WordText style={styles.foldText}>
                 {TALK_UNANSWERED_LABEL} {unanswered.length}
-              </Text>
+              </WordText>
               <View style={open && styles.turned}>
                 <Icon name="chevron" color={COLOR.secondary} size={16} />
               </View>
@@ -164,19 +165,19 @@ function RoomRow({ room }: { room: ChatRoom }) {
       <Avatar nickname={name} size={56} tone={null} dim={closed} userId={room.partnerUserId} hasPhoto={room.partnerHasPhoto} focus={room.partnerPhotoFocus} />
       <View style={styles.rowBody}>
         <View style={styles.rowTop}>
-          <Text numberOfLines={1} style={[styles.name, closed && styles.quiet]}>
+          <WordText numberOfLines={1} style={[styles.name, closed && styles.quiet]}>
             {name}
-          </Text>
-          <Text style={[styles.time, unread > 0 && styles.timeUnread]}>{messageTimeLabel(room.lastMessageAt ?? room.openedAt)}</Text>
+          </WordText>
+          <WordText style={[styles.time, unread > 0 && styles.timeUnread]}>{messageTimeLabel(room.lastMessageAt ?? room.openedAt)}</WordText>
         </View>
         <View style={styles.rowBottom}>
           {closed && <Icon name="lock" color={COLOR.secondary} size={14} />}
-          <Text numberOfLines={1} style={[styles.preview, unread > 0 && !closed && styles.previewUnread]}>
+          <WordText numberOfLines={1} style={[styles.preview, unread > 0 && !closed && styles.previewUnread]}>
             {notice ?? room.lastMessageBody ?? ROOM_NO_MESSAGES_YET}
-          </Text>
+          </WordText>
           {unread > 0 && (
             <View style={styles.badge}>
-              <Text style={styles.badgeText}>{unread}</Text>
+              <WordText style={styles.badgeText}>{unread}</WordText>
             </View>
           )}
         </View>

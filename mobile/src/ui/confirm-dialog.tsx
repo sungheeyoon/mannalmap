@@ -1,10 +1,11 @@
 import type { ReactNode } from 'react';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ScrollView, StyleSheet, View } from 'react-native';
 
 import { Button } from './buttons';
 import { Scrim } from './scrim';
 import { DialogPanel } from './surfaces';
 import { COLOR, FONT, TYPE } from './tokens';
+import { WordText } from './word-text';
 
 /** 어느 단추든 글자가 이만큼을 넘으면 위아래로 선다 — 웹 `app/ui/confirm-dialog.tsx` 의 `autoActions` */
 const ROW_LETTERS = 6;
@@ -58,10 +59,10 @@ export function ConfirmDialog({
       <DialogPanel style={styles.panel} accessibilityViewIsModal accessibilityRole="alert">
         <ScrollView style={styles.scroll} contentContainerStyle={styles.body} bounces={false}>
           {lead}
-          <Text accessibilityRole="header" style={styles.title}>{title}</Text>
+          <WordText accessibilityRole="header" style={styles.title}>{title}</WordText>
           {children}
-          {irreversible !== undefined && <Text style={styles.irreversible}>{irreversible}</Text>}
-          {failure !== null && <Text accessibilityRole="alert" style={styles.failure}>{failure}</Text>}
+          {irreversible !== undefined && <WordText style={styles.irreversible}>{irreversible}</WordText>}
+          {failure !== null && <WordText accessibilityRole="alert" style={styles.failure}>{failure}</WordText>}
         </ScrollView>
         <View style={row ? styles.actionsRow : styles.actions}>
           {row ? cancel : confirm}
@@ -74,12 +75,12 @@ export function ConfirmDialog({
 
 /** 창 본문 한 문단 */
 export function DialogText({ children, small = false }: { children: ReactNode; small?: boolean }) {
-  return <Text style={small ? styles.small : styles.text}>{children}</Text>;
+  return <WordText style={small ? styles.small : styles.text}>{children}</WordText>;
 }
 
 /** 본문의 핵심 낱말 — 웹의 `<strong>` */
 export function DialogStrong({ children }: { children: ReactNode }) {
-  return <Text style={styles.strong}>{children}</Text>;
+  return <WordText style={styles.strong}>{children}</WordText>;
 }
 
 const styles = StyleSheet.create({

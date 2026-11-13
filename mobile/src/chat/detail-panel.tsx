@@ -1,7 +1,7 @@
 import * as Crypto from 'expo-crypto';
 import { router } from 'expo-router';
 import { useRef, useState } from 'react';
-import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
 
 import { detailPanelOf, type MatchDetail } from '@chat/room/detail';
 import { DETAIL_CANCEL_NOTE, DETAIL_CANCEL_TITLE, DETAIL_CANCELLED } from '@chat/room/detail-copy';
@@ -12,6 +12,7 @@ import { cancelRequest, respondToRequest } from '@/matching/doors';
 import { ConfirmDialog, DialogText } from '@/ui/confirm-dialog';
 import { requestDetail } from '@/matching/talk-doors';
 import { COLOR, CONTROL, FONT, RADIUS, TYPE } from '@/ui/tokens';
+import { WordText } from '@/ui/word-text';
 
 /**
  * 방 상단의 상세 궁합 칸 — 글자와 누를 일은 공용 `detailPanelOf` 가 정한다(웹과 같다). 받은 사람의 답은 만들기와 그냥 둠뿐이라 거절 단추가 없다.
@@ -81,27 +82,27 @@ export function DetailPanelView({ detail, matchId, onChanged, onNote }: { detail
     <View style={styles.panel}>
       <View style={styles.titleRow}>
         {detail.state === 'making' && <ActivityIndicator size="small" color={COLOR.secondary} />}
-        <Text style={styles.title}>{panel.title}</Text>
+        <WordText style={styles.title}>{panel.title}</WordText>
       </View>
       {panel.lines.map((line) => (
-        <Text key={line} style={styles.line}>
+        <WordText key={line} style={styles.line}>
           {line}
-        </Text>
+        </WordText>
       ))}
       {failure !== null && (
-        <Text style={styles.failure} accessibilityRole="alert">
+        <WordText style={styles.failure} accessibilityRole="alert">
           {failure}
-        </Text>
+        </WordText>
       )}
       {panel.action !== null && (
         <Pressable accessibilityRole="button" disabled={working} onPress={() => void press()} style={[styles.action, working && styles.off]}>
-          <Text style={styles.actionText}>{panel.action.label}</Text>
+          <WordText style={styles.actionText}>{panel.action.label}</WordText>
         </Pressable>
       )}
       {panel.cancelLabel !== undefined && (
         <>
           <Pressable accessibilityRole="button" disabled={working} onPress={() => setAsking(true)} style={[styles.quiet, working && styles.off]}>
-            <Text style={styles.quietText}>{panel.cancelLabel}</Text>
+            <WordText style={styles.quietText}>{panel.cancelLabel}</WordText>
           </Pressable>
           <ConfirmDialog open={asking} onClose={() => setAsking(false)} title={DETAIL_CANCEL_TITLE} confirmLabel={panel.cancelLabel} cancelLabel="닫기" onConfirm={() => void cancel()} busy={working}>
             <DialogText>{DETAIL_CANCEL_NOTE}</DialogText>

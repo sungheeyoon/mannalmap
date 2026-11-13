@@ -1,6 +1,6 @@
 import { router, useFocusEffect } from 'expo-router';
 import { useCallback, useState } from 'react';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ScrollView, StyleSheet, View } from 'react-native';
 
 import type { InboxMatch } from '@matching/inbox';
 
@@ -16,6 +16,7 @@ import { LoadingDots } from '@/ui/loading';
 import { COLOR, FONT, RADIUS, TYPE } from '@/ui/tokens';
 import { TopBar } from '@/ui/top-bar';
 import { CardFrame } from '@/ui/surfaces';
+import { WordText } from '@/ui/word-text';
 
 type Loaded = { books: Read<readonly MatchBook[]>; matches: Read<readonly InboxMatch[]> };
 
@@ -70,15 +71,15 @@ export default function MatchHistoryScreen() {
         {(!books.ok || shelf.length > 0) && (
           <View style={styles.section}>
             <View style={styles.sectionHead}>
-              <Text style={styles.sectionTitle}>인연 궁합</Text>
-              {books.ok && <Text style={styles.chip}>{shelf.length}</Text>}
+              <WordText style={styles.sectionTitle}>인연 궁합</WordText>
+              {books.ok && <WordText style={styles.chip}>{shelf.length}</WordText>}
             </View>
             {books.ok ? (
               shelf.map((book) => (
                 <CardFrame key={book.key} accessibilityRole="link" onPress={() => router.push(book.href as never)} style={styles.book}>
-                  <Text style={[styles.bookName, styles.flex]} numberOfLines={1}>
+                  <WordText style={[styles.bookName, styles.flex]} numberOfLines={1}>
                     {nameOf(book)}
-                  </Text>
+                  </WordText>
                   <Icon name="chevron" size={16} color={COLOR.muted} />
                 </CardFrame>
               ))

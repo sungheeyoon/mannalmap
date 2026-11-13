@@ -1,9 +1,10 @@
 import type { ReactNode } from 'react';
-import { Pressable, StyleSheet, Text, type AccessibilityRole, type StyleProp, type TextStyle, type ViewStyle } from 'react-native';
+import { Pressable, StyleSheet, type AccessibilityRole, type StyleProp, type TextStyle, type ViewStyle } from 'react-native';
 
 import { BUTTON, BUTTON_OFF_OPACITY, BUTTON_PRESSED_SCALE, BUTTON_PRIMARY_OFF } from '@design';
 
 import { FONT } from './tokens';
+import { WordText } from './word-text';
 
 /** 웹 `app/ui/buttons.ts` 의 단추 여덟 벌 — 변형 낱말과 상수의 짝은 `src/lib/design/contract.ts` */
 export type ButtonVariant = 'primary' | 'secondary' | 'tertiary' | 'tertiary-danger' | 'danger' | 'primary-wood' | 'primary-small' | 'secondary-small';
@@ -54,7 +55,7 @@ export function Button({
       onPress={onPress}
       style={({ pressed }) => [face, primaryOff ? styles.primaryOff : off && styles.off, pressed && styles.pressed, style]}
     >
-      <Text numberOfLines={1} style={[styles.label, text, primaryOff && styles.primaryOffText]}>{label}</Text>
+      <WordText numberOfLines={1} style={[styles.label, text, primaryOff && styles.primaryOffText]}>{label}</WordText>
     </Pressable>
   );
 }

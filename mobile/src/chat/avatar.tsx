@@ -1,10 +1,11 @@
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 import { initialOf, type PhotoFocus } from '@profile';
 import type { Element } from '@saju';
 
 import { Photo } from '@/ui/photo';
 import { COLOR, ELEMENT_TONE, FONT } from '@/ui/tokens';
+import { WordText } from '@/ui/word-text';
 
 /** 그 사람의 색 고리 두께 — 사진 위에서도 누구의 색인지 남는다(`app/me/avatar.tsx`) */
 const RING = 3;
@@ -32,7 +33,7 @@ export function Avatar({
   focus?: PhotoFocus;
 }) {
   const scale = tone === null ? { ink: COLOR.none, soft: COLOR.noneSoft } : ELEMENT_TONE[tone];
-  const initial = <Text style={{ fontSize: Math.round(size * 0.36), fontFamily: FONT.bold, color: scale.ink }}>{initialOf(nickname)}</Text>;
+  const initial = <WordText style={{ fontSize: Math.round(size * 0.36), fontFamily: FONT.bold, color: scale.ink }}>{initialOf(nickname)}</WordText>;
   return (
     <View
       accessibilityElementsHidden

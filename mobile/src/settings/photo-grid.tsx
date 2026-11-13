@@ -1,6 +1,6 @@
 import { Image } from 'expo-image';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
-import { PanResponder, Pressable, StyleSheet, Text, View } from 'react-native';
+import { PanResponder, Pressable, StyleSheet, View } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 
 import { PHOTO_ADD, PHOTO_UPLOADS_PAUSED } from '@account/copy';
@@ -19,6 +19,7 @@ import { PHOTO_FRAME_TITLE, PhotoFramer, contentPositionOf } from './photo-frame
 import { moveShownFirst } from './photo-move';
 import { PhotoViewer, type PhotoChoice } from './photo-viewer';
 import { UNREADABLE_PHOTO, addPhoto, movePhoto, photoSource, pickPhotos, removePhoto, replacePhoto, setPhotoFocus, type MyPhoto } from './photos';
+import { WordText } from '@/ui/word-text';
 
 const PHOTO_SECTION_TITLE = '프로필 사진';
 const PHOTO_SAVES_ITSELF = '사진은 바로 저장돼요';
@@ -55,7 +56,7 @@ export function PhotoGridFailed({ onRetry }: { onRetry: () => void }) {
   return (
     <Paper style={styles.panel}>
       <View style={styles.head}>
-        <Text style={styles.title}>{PHOTO_SECTION_TITLE}</Text>
+        <WordText style={styles.title}>{PHOTO_SECTION_TITLE}</WordText>
       </View>
       <FailureLine onRetry={onRetry}>{PHOTO_LOAD_FAILED_NOTE}</FailureLine>
     </Paper>
@@ -300,7 +301,7 @@ export function PhotoGrid({
             onDrop={(to) => void move(position, to)}
           >
             <PhotoFace photo={photo} focus={focusOfPhoto(photo)} userId={userId} cover={covering?.version === photo.version ? covering : null} />
-            {position === 1 && <Text style={styles.lead}>대표</Text>}
+            {position === 1 && <WordText style={styles.lead}>대표</WordText>}
           </Liftable>
           <Pressable accessibilityRole="button" accessibilityLabel="사진 지우기" disabled={busy} onPress={() => ask(photo)} style={[styles.remove, busy && styles.off]}>
             <View style={styles.removeFace}>
@@ -340,7 +341,7 @@ export function PhotoGrid({
             <Path d="M12 5 V19 M5 12 H19" stroke={first ? COLOR.surface : COLOR.secondary} strokeWidth={2} strokeLinecap="round" />
           </Svg>
         </View>
-        {bare && <Text style={styles.addText}>{PHOTO_ADD}</Text>}
+        {bare && <WordText style={styles.addText}>{PHOTO_ADD}</WordText>}
       </Pressable>
     );
   };
@@ -352,20 +353,20 @@ export function PhotoGrid({
     <Paper style={styles.panel}>
       <View style={styles.head}>
         <View style={styles.headRow}>
-          <Text style={styles.title}>{PHOTO_SECTION_TITLE}</Text>
-          <Text style={styles.count}>
+          <WordText style={styles.title}>{PHOTO_SECTION_TITLE}</WordText>
+          <WordText style={styles.count}>
             {total}/{PHOTO_MAX_COUNT}
-          </Text>
+          </WordText>
         </View>
-        <Text style={styles.line}>{paused ? PHOTO_UPLOADS_PAUSED : PHOTO_SAVES_ITSELF}</Text>
+        <WordText style={styles.line}>{paused ? PHOTO_UPLOADS_PAUSED : PHOTO_SAVES_ITSELF}</WordText>
       </View>
       <View style={{ height: gridHeight }} onLayout={(event) => setWidth(event.nativeEvent.layout.width)}>
         {width > 0 && Array.from({ length: PHOTO_MAX_COUNT }, (_, index) => slot(index + 1))}
       </View>
-      {total >= 2 && <Text style={styles.line}>{PHOTO_REORDER_HINT}</Text>}
-      <Text accessibilityLiveRegion="polite" style={styles.status}>
+      {total >= 2 && <WordText style={styles.line}>{PHOTO_REORDER_HINT}</WordText>}
+      <WordText accessibilityLiveRegion="polite" style={styles.status}>
         {status}
-      </Text>
+      </WordText>
       {failure !== null && <FailureLine>{failure}</FailureLine>}
 
       <PhotoViewer userId={userId} photos={order} at={viewing} onAt={setViewing} onClose={() => setViewing(null)} choicesFor={choicesFor} />
@@ -487,7 +488,7 @@ function Liftable({
 function Saving() {
   return (
     <View style={styles.saving}>
-      <Text style={styles.savingText}>저장 중…</Text>
+      <WordText style={styles.savingText}>저장 중…</WordText>
     </View>
   );
 }

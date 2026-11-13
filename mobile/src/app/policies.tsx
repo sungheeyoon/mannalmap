@@ -1,4 +1,4 @@
-import { Linking, StyleSheet, Text, View } from 'react-native';
+import { Linking, StyleSheet, View } from 'react-native';
 
 import { BUSINESS_DISCLOSURE_LINK, BUSINESS_INFO, businessInfoLines } from '@brand/business';
 import { POLICY_LINKS } from '@brand/links';
@@ -10,6 +10,7 @@ import { LinkRow } from '@/settings/parts';
 import { TextButton } from '@/ui/parts';
 import { Card, CardFrame } from '@/ui/surfaces';
 import { COLOR, FONT, TYPE } from '@/ui/tokens';
+import { WordText } from '@/ui/word-text';
 
 /**
  * 약관 및 정책 — 웹 바닥글의 약관 셋과 사업자 정보 줄이 앱에서 서는 한 장이다(같은 `POLICY_LINKS` · `businessInfoLines`, 전자상거래법 제10조 · ADR 0172).
@@ -28,15 +29,15 @@ export default function PoliciesScreen() {
         </CardFrame>
       )}
       <Card style={styles.card}>
-        <Text accessibilityRole="header" style={styles.head}>
+        <WordText accessibilityRole="header" style={styles.head}>
           {BUSINESS_LABEL}
-        </Text>
+        </WordText>
         {businessInfoLines(info).map((line) => (
           <View key={line.key}>
-            <Text style={styles.label}>{line.label}</Text>
-            <Text selectable style={styles.value}>
+            <WordText style={styles.label}>{line.label}</WordText>
+            <WordText selectable style={styles.value}>
               {line.value}
-            </Text>
+            </WordText>
           </View>
         ))}
         {info.disclosureUrl !== null && (

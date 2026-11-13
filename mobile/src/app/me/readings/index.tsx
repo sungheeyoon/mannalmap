@@ -2,7 +2,7 @@ import { matchEntriesStand, matchShelfStands } from '@matching/opening';
 import { findStatus, findsInList, matchesName } from '@people/pick';
 import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { useCallback, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { useClient } from '@/auth/connected';
@@ -18,6 +18,7 @@ import { settled } from '@/ui/settled';
 import { UNREACHABLE } from '@/auth/signup';
 import { TopBar } from '@/ui/top-bar';
 import { Card } from '@/ui/surfaces';
+import { WordText } from '@/ui/word-text';
 
 type Shelf = Extract<ShelfView, { view: 'shelf' }>;
 
@@ -54,8 +55,8 @@ export default function ReadingsScreen() {
         {answer !== null && 'refused' in answer && <ReadFailure refused={answer.refused} onRetry={load} />}
         {answer !== null && 'view' in answer && answer.view.view === 'blocked' && (
           <Card>
-            <Text style={styles.noticeTitle}>{answer.view.title}</Text>
-            <Text style={styles.line}>{answer.view.detail}</Text>
+            <WordText style={styles.noticeTitle}>{answer.view.title}</WordText>
+            <WordText style={styles.line}>{answer.view.detail}</WordText>
           </Card>
         )}
         {answer !== null && 'view' in answer && answer.view.view === 'shelf' && (
@@ -142,7 +143,7 @@ function ShelfBody({
               onPress={() => setChip(one.chip)}
               style={[styles.chip, on && styles.chipOn]}
             >
-              <Text style={[styles.chipLabel, on && styles.chipLabelOn]}>{one.label}</Text>
+              <WordText style={[styles.chipLabel, on && styles.chipLabelOn]}>{one.label}</WordText>
             </Pressable>
           );
         })}
@@ -160,8 +161,8 @@ function ShelfBody({
             autoCapitalize="none"
             style={styles.find}
           />
-          {found.kind === 'none' && <Text style={styles.found}>찾는 사람이 없어요</Text>}
-          {found.kind === 'some' && <Text style={styles.found}>검색 결과 {found.count}권</Text>}
+          {found.kind === 'none' && <WordText style={styles.found}>찾는 사람이 없어요</WordText>}
+          {found.kind === 'some' && <WordText style={styles.found}>검색 결과 {found.count}권</WordText>}
         </View>
       )}
 
@@ -169,7 +170,7 @@ function ShelfBody({
         <>
           {shownMaking.length > 0 && (
             <View>
-              <Text style={styles.makingHead}>만드는 중</Text>
+              <WordText style={styles.makingHead}>만드는 중</WordText>
               {shownMaking.map((one) => (
                 <MakingRow key={one.href} making={one} kind={label(one.shelf)} />
               ))}
@@ -219,10 +220,10 @@ function ShelfBody({
 function Group({ title, note, children }: { title: string; note: string; children: React.ReactNode }) {
   return (
     <View style={styles.group}>
-      <Text accessibilityRole="header" style={styles.groupTitle}>
+      <WordText accessibilityRole="header" style={styles.groupTitle}>
         {title}
-      </Text>
-      <Text style={styles.groupNote}>{note}</Text>
+      </WordText>
+      <WordText style={styles.groupNote}>{note}</WordText>
       {children}
     </View>
   );

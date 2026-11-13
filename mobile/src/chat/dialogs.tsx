@@ -1,5 +1,5 @@
 import { useState, type ReactNode } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
 
 import { REPORT_DETAIL_MAX, REPORT_DONE, REPORT_NOTE, REPORT_REASON_LABEL, REPORT_REASONS, type ReportReason } from '@account/index';
 import { BLOCK_FINAL_NOTE, BLOCK_KEEPS_NOTE, BLOCK_NOTE } from '@consent/index';
@@ -16,6 +16,7 @@ import { KEEP_VIEW } from '@/ui/keep-view';
 import type { Done } from '@/answer';
 
 import { blockUser, reportMessage, reportUser } from './reads';
+import { WordText } from '@/ui/word-text';
 
 function Dialog({ onOutside, children }: { onOutside: (() => void) | null; children: ReactNode }) {
   return (
@@ -105,22 +106,22 @@ export function ReportDialog({
       <ScrollView contentContainerStyle={styles.body} keyboardShouldPersistTaps="handled">
         <View style={styles.head}>
           <Icon name="flag" color={COLOR.danger} size={18} />
-          <Text accessibilityRole="header" style={styles.headTitle}>
+          <WordText accessibilityRole="header" style={styles.headTitle}>
             {nickname} 님 신고
-          </Text>
+          </WordText>
           <Pressable accessibilityRole="button" accessibilityLabel={reported ? '닫기' : '작성 그만두기'} onPress={onClose} style={styles.close}>
             <Icon name="close" color={COLOR.foreground} size={18} />
           </Pressable>
         </View>
         {reported ? (
           <>
-            <Text style={styles.line}>{REPORT_DONE}</Text>
+            <WordText style={styles.line}>{REPORT_DONE}</WordText>
             <PrimaryButton label="닫기" onPress={onClose} />
             {onBlock !== null && <BlockLink onBlock={onBlock} />}
           </>
         ) : (
           <>
-            <Text style={styles.note}>{REPORT_NOTE}</Text>
+            <WordText style={styles.note}>{REPORT_NOTE}</WordText>
             {messages.length > 0 && (
               <View style={styles.group}>
                 <FieldLabel>신고할 메시지를 골라 주세요</FieldLabel>
@@ -136,10 +137,10 @@ export function ReportDialog({
                         {...KEEP_VIEW} style={[styles.pick, chosen && styles.picked]}
                       >
                         <View style={styles.pickText}>
-                          <Text numberOfLines={2} style={styles.pickBody}>
+                          <WordText numberOfLines={2} style={styles.pickBody}>
                             {message.body}
-                          </Text>
-                          <Text style={styles.pickTime}>{message.time}</Text>
+                          </WordText>
+                          <WordText style={styles.pickTime}>{message.time}</WordText>
                         </View>
                         <Icon name="flag" color={COLOR.danger} size={16} />
                       </Pressable>
@@ -163,7 +164,7 @@ export function ReportDialog({
                 style={styles.detail}
               />
             </View>
-            {failure !== null && <Text style={styles.failure}>{failure}</Text>}
+            {failure !== null && <WordText style={styles.failure}>{failure}</WordText>}
             <PrimaryButton label={working ? '보내는 중…' : '신고하기'} onPress={submit} disabled={working} />
             {onBlock !== null && <BlockLink onBlock={onBlock} disabled={working} />}
           </>

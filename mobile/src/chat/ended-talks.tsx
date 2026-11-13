@@ -1,13 +1,14 @@
 import { ENDED_TALK_REPORT, ENDED_TALKS_NOTE, ENDED_TALKS_TITLE } from '@chat/room/detail-copy';
 import { when } from '@matching/requests';
 import { useState } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 
 import { useClient } from '@/auth/connected';
 import { readEndedTalkMessages, type EndedTalk } from '@/matching/talk-doors';
 import { COLOR, CONTROL, FONT, RADIUS, TYPE } from '@/ui/tokens';
 
 import { ReportDialog, type ReportableMessage } from './dialogs';
+import { WordText } from '@/ui/word-text';
 
 /** 끝난 대화의 신고 길(ADR 0215) — 말은 누른 뒤에만 읽고 방은 다시 안 연다. 대화방과 같은 신고 창이고, 이미 끝나 차단으로 넘어가는 길은 없다 */
 export function EndedTalks({ talks }: { talks: readonly EndedTalk[] }) {
@@ -22,19 +23,19 @@ export function EndedTalks({ talks }: { talks: readonly EndedTalk[] }) {
   return (
     <View style={styles.section}>
       <View style={styles.head}>
-        <Text style={styles.title}>{ENDED_TALKS_TITLE}</Text>
-        <Text style={styles.meta}>{ENDED_TALKS_NOTE}</Text>
+        <WordText style={styles.title}>{ENDED_TALKS_TITLE}</WordText>
+        <WordText style={styles.meta}>{ENDED_TALKS_NOTE}</WordText>
       </View>
       {talks.map((talk) => (
         <View key={talk.matchId} style={styles.row}>
           <View style={styles.flex}>
-            <Text numberOfLines={1} style={styles.name}>
+            <WordText numberOfLines={1} style={styles.name}>
               {talk.nickname}
-            </Text>
-            <Text style={styles.meta}>{when(talk.closedAt)}</Text>
+            </WordText>
+            <WordText style={styles.meta}>{when(talk.closedAt)}</WordText>
           </View>
           <Pressable accessibilityRole="button" onPress={() => open(talk)} style={styles.report}>
-            <Text style={styles.reportText}>{ENDED_TALK_REPORT}</Text>
+            <WordText style={styles.reportText}>{ENDED_TALK_REPORT}</WordText>
           </Pressable>
         </View>
       ))}

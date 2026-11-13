@@ -1,6 +1,6 @@
 import { router } from 'expo-router';
 import { useState, type ReactNode } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 
 import { READING_STALE_LABEL } from '@reading/notes';
 import { STEM_INFO, type Stem } from '@saju';
@@ -14,6 +14,7 @@ import { COLOR, ELEMENT_TONE, FONT, RADIUS, TYPE } from '@/ui/tokens';
 import { CardFrame } from '@/ui/surfaces';
 
 import { readingDate, type HomePerson, type ReadingRow, type RunningLine } from './read';
+import { WordText } from '@/ui/word-text';
 
 const go = (href: string) => router.push(href as never);
 
@@ -41,12 +42,12 @@ function SectionHead({ title, count, link }: { title: string; count: string | nu
   return (
     <View style={styles.head}>
       <View style={styles.headTitle}>
-        <Text style={styles.title}>{title}</Text>
-        {count !== null && <Text style={styles.count}>{count}</Text>}
+        <WordText style={styles.title}>{title}</WordText>
+        {count !== null && <WordText style={styles.count}>{count}</WordText>}
       </View>
       {link !== undefined && (
         <Pressable accessibilityRole="link" accessibilityLabel={link.name} onPress={() => go(link.href)} style={styles.headLink}>
-          <Text style={styles.headLinkText}>{link.label}</Text>
+          <WordText style={styles.headLinkText}>{link.label}</WordText>
           <Icon name="chevron" size={16} color={COLOR.secondary} />
         </Pressable>
       )}
@@ -64,7 +65,7 @@ function MoreList({ shown, rows, tail }: { shown: number; rows: readonly ReactNo
       {tail}
       {more && (
         <Pressable accessibilityRole="button" accessibilityState={{ expanded: open }} onPress={() => setOpen(!open)} style={styles.more}>
-          <Text style={styles.moreText}>{open ? '접기' : '더보기'}</Text>
+          <WordText style={styles.moreText}>{open ? '접기' : '더보기'}</WordText>
         </Pressable>
       )}
     </CardFrame>
@@ -79,8 +80,8 @@ export function RunningReadings({ running }: { running: readonly RunningLine[] }
       {running.map((line) => (
         <Row key={line.key} onPress={line.href === null ? undefined : () => go(line.href as string)}>
           <View style={styles.body}>
-            <Text style={styles.name} numberOfLines={1}>{line.name}</Text>
-            <Text style={styles.second}>{line.stage}</Text>
+            <WordText style={styles.name} numberOfLines={1}>{line.name}</WordText>
+            <WordText style={styles.second}>{line.stage}</WordText>
           </View>
         </Row>
       ))}
@@ -94,7 +95,7 @@ export function OtherSaju() {
     <CardFrame >
       <Row onPress={() => go('/?another=1')}>
         <IconMark><Icon name="search" size={20} /></IconMark>
-        <Text style={[styles.name, styles.body]}>다른 사람 사주 보기</Text>
+        <WordText style={[styles.name, styles.body]}>다른 사람 사주 보기</WordText>
         <Icon name="chevron" size={16} color={COLOR.muted} />
       </Row>
     </CardFrame>
@@ -120,11 +121,11 @@ export function ReceivedReadings({ readings }: { readings: readonly ReadingRow[]
             <HomeMark stem={reading.stem} />
             <View style={styles.body}>
               <View style={styles.line}>
-                <Text style={[styles.name, styles.grow]} numberOfLines={1}>{reading.label ?? '이름 없음'}</Text>
-                {reading.stale && <Text style={styles.stale}>{READING_STALE_LABEL}</Text>}
-                <Text style={styles.date}>{readingDate(reading.createdAt)}</Text>
+                <WordText style={[styles.name, styles.grow]} numberOfLines={1}>{reading.label ?? '이름 없음'}</WordText>
+                {reading.stale && <WordText style={styles.stale}>{READING_STALE_LABEL}</WordText>}
+                <WordText style={styles.date}>{readingDate(reading.createdAt)}</WordText>
               </View>
-              <Text style={styles.second} numberOfLines={1}>{reading.metaphor ?? READING_CONTINUE_NOTE}</Text>
+              <WordText style={styles.second} numberOfLines={1}>{reading.metaphor ?? READING_CONTINUE_NOTE}</WordText>
             </View>
           </Row>
         ))}
@@ -142,8 +143,8 @@ function PersonRow({ person }: { person: HomePerson }) {
       <Row onPress={() => go(href)}>
         <HomeMark />
         <View style={styles.body}>
-          <Text style={styles.name} numberOfLines={1}>{person.label}</Text>
-          <Text style={styles.second} numberOfLines={1}>{person.chart.message}</Text>
+          <WordText style={styles.name} numberOfLines={1}>{person.label}</WordText>
+          <WordText style={styles.second} numberOfLines={1}>{person.chart.message}</WordText>
         </View>
       </Row>
     );
@@ -154,12 +155,12 @@ function PersonRow({ person }: { person: HomePerson }) {
     <Row onPress={() => go(href)}>
       <HomeMark stem={person.chart.saju.pillars.dayMaster} />
       <View style={styles.body}>
-        <Text style={styles.name} numberOfLines={1}>{person.label}</Text>
-        {second !== null && <Text style={styles.second} numberOfLines={1}>{second}</Text>}
+        <WordText style={styles.name} numberOfLines={1}>{person.label}</WordText>
+        {second !== null && <WordText style={styles.second} numberOfLines={1}>{second}</WordText>}
       </View>
       {person.score !== null && (
         <View style={styles.value} accessibilityLabel={`나와 궁합 ${person.score}점`}>
-          <Text style={styles.valueText}>{person.score}점</Text>
+          <WordText style={styles.valueText}>{person.score}점</WordText>
           <Icon name="taiji" size={16} color={COLOR.secondary} />
         </View>
       )}
@@ -172,7 +173,7 @@ export function SavedPeople({ people, slots }: { people: readonly HomePerson[]; 
   const add = (
     <Row onPress={() => go('/me/people')}>
       <IconMark><Icon name="plus" size={20} /></IconMark>
-      <Text style={[styles.name, styles.body]}>사람 추가</Text>
+      <WordText style={[styles.name, styles.body]}>사람 추가</WordText>
     </Row>
   );
   return (
@@ -185,14 +186,14 @@ export function SavedPeople({ people, slots }: { people: readonly HomePerson[]; 
       {people.length === 0 ? (
         <CardFrame >
           <View style={styles.row}>
-            <Text style={styles.empty}>가족이나 친구의 출생 정보를 저장하고 관리하세요.</Text>
+            <WordText style={styles.empty}>가족이나 친구의 출생 정보를 저장하고 관리하세요.</WordText>
           </View>
           {add}
         </CardFrame>
       ) : (
         <MoreList shown={PEOPLE_SHOWN} rows={people.map((person) => <PersonRow key={person.personId} person={person} />)} tail={full ? undefined : add} />
       )}
-      {slots !== null && full && <Text style={styles.full}>저장할 수 있는 {slots.limit}명을 다 채웠어요.</Text>}
+      {slots !== null && full && <WordText style={styles.full}>저장할 수 있는 {slots.limit}명을 다 채웠어요.</WordText>}
     </View>
   );
 }

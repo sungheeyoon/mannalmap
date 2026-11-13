@@ -1,12 +1,13 @@
 import { READING_LEAVE_SAFE_NOTE, READING_OUTLINE_STATE } from '@reading/notes';
 import type { OutlineRow } from '@reading/outline';
 import { useEffect, useState } from 'react';
-import { Animated, StyleSheet, Text, View } from 'react-native';
+import { Animated, StyleSheet, View } from 'react-native';
 
 import { LoadingOrbit } from '@/ui/loading';
 import { EASE, MOTION, useReducedMotion } from '@/ui/motion';
 import { Paper, Tile } from '@/ui/surfaces';
 import { COLOR, ELEMENT_TONE, FONT, RADIUS, TYPE } from '@/ui/tokens';
+import { WordText } from '@/ui/word-text';
 
 /**
  * 기다리는 칸 — 줄마다 서버가 적은 진행 그대로다(ADR 0127). 시간으로 단계를 짓지 않고, 흐르는 띠는 차오르지 않는다.
@@ -18,18 +19,18 @@ export function LoadingState({ rows, waitNote }: { rows: readonly OutlineRow[]; 
         {/* 오래 걸리는 자리라 로고의 궤도가 돈다(운영자 결정 2026-11-08, 웹 `reading-waiting.tsx` 와 같다) — 상태는 곁의 글이 읽힌다 */}
         <LoadingOrbit decorative />
         <View accessibilityRole="progressbar" accessibilityLiveRegion="polite" style={styles.headText}>
-          <Text style={styles.title}>사주의 흐름을 이어 읽고 있어요</Text>
-          <Text style={styles.note}>근거를 확인하고, 단정하지 않는 문장으로 옮기고 있어요.</Text>
+          <WordText style={styles.title}>사주의 흐름을 이어 읽고 있어요</WordText>
+          <WordText style={styles.note}>근거를 확인하고, 단정하지 않는 문장으로 옮기고 있어요.</WordText>
         </View>
       </View>
-      <Text style={styles.note}>
+      <WordText style={styles.note}>
         {waitNote} {READING_LEAVE_SAFE_NOTE}
-      </Text>
+      </WordText>
       <FlowBand />
       <View accessibilityLabel="풀이 목차" style={styles.rows}>
         {rows.map((row, at) => (
           <Tile tone={COLOR.surface} key={`${at}-${row.label}`} style={styles.row}>
-            <Text style={[styles.rowLabel, row.state === 'waiting' && styles.rowWaiting]}>{row.label}</Text>
+            <WordText style={[styles.rowLabel, row.state === 'waiting' && styles.rowWaiting]}>{row.label}</WordText>
             <Mark state={row.state} />
           </Tile>
         ))}
@@ -41,12 +42,12 @@ export function LoadingState({ rows, waitNote }: { rows: readonly OutlineRow[]; 
 function Mark({ state }: { state: OutlineRow['state'] }) {
   switch (state) {
     case 'done':
-      return <Text style={styles.done}>{READING_OUTLINE_STATE.done}</Text>;
+      return <WordText style={styles.done}>{READING_OUTLINE_STATE.done}</WordText>;
     case 'writing':
     case 'reviewing':
-      return <Text style={styles.writing}>{READING_OUTLINE_STATE[state]}</Text>;
+      return <WordText style={styles.writing}>{READING_OUTLINE_STATE[state]}</WordText>;
     case 'waiting':
-      return <Text style={styles.waiting}>{READING_OUTLINE_STATE.waiting}</Text>;
+      return <WordText style={styles.waiting}>{READING_OUTLINE_STATE.waiting}</WordText>;
   }
 }
 

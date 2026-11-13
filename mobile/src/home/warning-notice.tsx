@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 import { WARNING_ACKNOWLEDGE_LABEL, WARNING_NOTICE_TITLE, warningNoticeLines, type WarningNotice as Notice } from '@account/warning';
 import { SUPPORT_EMAIL } from '@brand';
@@ -10,6 +10,7 @@ import { COLOR, FONT, TYPE } from '@/ui/tokens';
 import { CardFrame } from '@/ui/surfaces';
 
 import { acknowledgeWarning, readWarningNotice } from './warning';
+import { WordText } from '@/ui/word-text';
 
 /**
  * 경고를 받은 사람에게 서는 안내 — 웹의 `app/me/warning/warning-notice.tsx` 와 같은 문 · 같은 글자다(ADR 0108).
@@ -42,14 +43,14 @@ export function WarningNotice() {
   return (
     <View style={styles.wrap}>
       <CardFrame accessibilityLabel={WARNING_NOTICE_TITLE} style={styles.card}>
-        <Text accessibilityRole="header" style={styles.title}>{WARNING_NOTICE_TITLE}</Text>
+        <WordText accessibilityRole="header" style={styles.title}>{WARNING_NOTICE_TITLE}</WordText>
         <View style={styles.lines}>
           {warningNoticeLines(notice, SUPPORT_EMAIL).map((line) => (
-            <Text key={line} style={styles.line}>{line}</Text>
+            <WordText key={line} style={styles.line}>{line}</WordText>
           ))}
         </View>
         <PrimaryButton label={WARNING_ACKNOWLEDGE_LABEL} onPress={() => void acknowledge()} disabled={saving} />
-        {failure !== null && <Text accessibilityRole="alert" style={styles.failure}>{failure}</Text>}
+        {failure !== null && <WordText accessibilityRole="alert" style={styles.failure}>{failure}</WordText>}
       </CardFrame>
     </View>
   );
