@@ -96,7 +96,7 @@ async function openRun(
    */
   if (error) {
     const message = userFacingDbMessage(error, 'start_reading_run', READING_UNEXPECTED_NOTE);
-    /* 잔액을 본 뒤 다른 탭에서 마지막 풀이권을 썼다 — 화면은 오류 줄 대신 풀이권 창을 연다(ADR 0171 「덧」) */
+    /* 잔액을 본 뒤 다른 탭에서 마지막 풀이권을 썼다 — 화면은 오류 줄 대신 확인 창의 0장 꼴을 연다(ADR 0171 「덧」) */
     return refusedForCredits(error) ? { ok: false, message, outOfCredits: true } : { ok: false, message };
   }
 
@@ -177,7 +177,7 @@ export type ReadingStart =
   /** 이미 도는 시도가 있다. 아무것도 새로 열지 않았다 */
   | { ok: true; started: false }
   | { ok: false; message: string }
-  /** 풀이권이 없어 막혔다 — 화면은 풀이권 창을 연다 */
+  /** 풀이권이 없어 막혔다 — 화면은 확인 창의 0장 꼴을 연다 */
   | OutOfCreditsRefusal;
 
 /**

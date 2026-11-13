@@ -59,7 +59,8 @@ export function useReadingPanel({
   );
   const [progress, setProgress] = useState<RunProgress | null>(initial.run?.progress ?? null);
   const [asking, setAsking] = useState(false);
-  const [shortage, setShortage] = useState<{ available: number } | null>(null);
+  /** 눌렀는데 문이 「풀이권이 없다」고 답했다 — 확인 창이 0장 꼴로 다시 선다(`creditAskShape`, ADR 0251) */
+  const [spent, setSpent] = useState(false);
 
   /* 못 읽었으면 동의를 주장하지 않는다(ADR 0078) — 설문이 안 설 뿐이다 */
   const [consented, setConsented] = useState(false);
@@ -140,10 +141,6 @@ export function useReadingPanel({
     // eslint-disable-next-line react-hooks/exhaustive-deps -- 고리는 기다림의 시작과 끝에만 다시 선다
   }, [phase, target]);
 
-  const offerCredits = (available: number) => {
-    setShortage({ available });
-  };
-
   const generate = async () => {
     dispatch({ type: 'press' });
     setProgress(null);
@@ -175,7 +172,10 @@ export function useReadingPanel({
     const decision = afterPress(outcome, null);
     if (decision.event !== null) dispatch(decision.event);
     if (decision.announcesCredits) void rereadRef.current();
-    if (decision.opensCredits) offerCredits(0);
+    if (decision.opensCredits) {
+      setSpent(true);
+      setAsking(true);
+    }
   };
 
   const noun = READING_NOUN[target.kind];
@@ -206,11 +206,11 @@ export function useReadingPanel({
       void generate();
     },
     generate: () => void generate(),
+    /** 만드는 단추 — 0장이어도 같은 확인 창을 연다. 창이 곧 구매 입구다(ADR 0251) */
     press: () => {
-      if (chrome.buysCredits) offerCredits(view.credits?.available ?? 0);
-      else setAsking(true);
+      setSpent(false);
+      setAsking(true);
     },
-    shortage,
-    closeShortage: () => setShortage(null),
+    spent,
   };
 }

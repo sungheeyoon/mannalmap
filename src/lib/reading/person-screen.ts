@@ -57,7 +57,6 @@ export const readingAskTitle = (name: string): string => `${clip(name)}의${brea
 /** 시트의 한 줄 — 원본은 `notes.ts` 의 `readingCostLine`(앱 풀이 화면의 빈 카드와 같은 글자) */
 export { readingCostLine } from './notes';
 export const READING_ASK_CONFIRM = '받기';
-
 /** 궁합 칸의 끝 줄 — 궁합이 있으면 「다른 사람과」, 없으면 이 사람의 이름으로 */
 export const COMPAT_OTHER_LABEL = '다른 사람과 궁합 보기';
 /** 줄 하나에 서는 글자 — 이름을 더 짧게 줄여 한 줄에 든다(폰 폭 390 의 궁합 칸 줄) */

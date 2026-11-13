@@ -263,7 +263,7 @@ describe('로그인 시점과 목적지 (ADR 0213)', () => {
   it('풀이는 보유 수 → 확인창 차례이고, 앱에 로그인 전 풀이 · 기기 저장이 없다', () => {
     const panel = read('mobile/src/reading/panel.tsx');
     expect(panel).toContain('readingCostLine(panel.view.credits.available)');
-    expect(read('mobile/src/reading/dialogs.tsx')).toContain('풀이권 1장을 사용하시겠어요?');
+    expect(read('mobile/src/reading/dialogs.tsx')).toContain('title={readingConfirmTitle(noun, hasReading)}');
     expect(entry).not.toContain('AsyncStorage');
     expect(save).not.toContain('AsyncStorage');
   });
@@ -327,8 +327,9 @@ describe('약관 셋은 웹의 현행 판을 연다', () => {
 });
 
 /**
- * **앱은 Android 에서만 Google Play 로 판다**(ADR 0230). 풀이권 부족 창은 Android 에서 판매가 열린 꼴 「풀이권 구매」 · 「닫기」(대장 credits-04)이고,
- * 「풀이권 구매」는 지금 화면과 그 이름을 싣고 `/me/credits` 로 간다 — 결제 완료 창이 그 화면으로 돌려보낸다. iOS 는 아직 팔지 않아 닫힌 꼴(한 줄과 「확인」)이다.
+ * **앱은 Android 에서만 Google Play 로 판다**(ADR 0230). 풀이권을 쓰는 확인은 모든 자리가 한 꼴이고(`creditAskShape`, ADR 0251), 0장이면
+ * Android 에서 판매가 열린 꼴 「풀이권 구매」 · 「취소」 — 「풀이권 구매」는 지금 화면 · 이름 · 다시 열 표시(`?ask=…`)를 싣고 `/me/credits` 로 간다.
+ * iOS 는 아직 팔지 않아 닫힌 꼴(한 줄과 「확인」)이다. 따로 뜨던 부족 창은 걷었다(운영자 2026-11-13).
  * 판매가 열렸는지를 묻는 웹의 문(`my_reading_sale_is_open`)은 앱이 부르지 않는다 — 앱의 판매는 그 스위치가 아니라 Play 와 서버의 판정(`store_purchase_refusal`)이다.
  */
 describe('앱은 Android 에서만 Google Play 로 판다 (ADR 0230)', () => {
@@ -336,16 +337,17 @@ describe('앱은 Android 에서만 Google Play 로 판다 (ADR 0230)', () => {
     expect(read('mobile/src/credits/store.ts')).toMatch(/export const storeAvailable = Platform\.OS === 'android';/);
   });
 
-  it('풀이권 부족 창 — Android 는 「풀이권 구매」 · 「닫기」로 돌아갈 곳을 싣고 상품 화면에, iOS 는 판매가 닫힌 글자', () => {
+  it('풀이권 확인의 0장 꼴 — 살 수 있는가는 `storeAvailable` 하나이고, 구매는 돌아갈 곳을 싣고 상품 화면에 간다', () => {
+    for (const file of ['mobile/src/reading/panel.tsx', 'mobile/src/people/person-sheets.tsx']) {
+      const text = read(file);
+      expect(text).toContain("import { storeAvailable } from '@/credits/store';");
+      expect(text).toMatch(/creditAskShape\([^)]*canBuy: storeAvailable \}\)/);
+    }
     const dialogs = read('mobile/src/reading/dialogs.tsx');
-    expect(dialogs).toContain("import { storeAvailable } from '@/credits/store';");
-    expect(dialogs).toContain('confirmLabel={storeAvailable ? BUY_CREDITS_LABEL : SALE_CLOSED_OK}');
-    expect(dialogs).toContain('onConfirm={storeAvailable ? buy : onClose}');
-    expect(dialogs).toContain('cancelLabel={storeAvailable ? CREDITS_DIALOG_CLOSE : null}');
-    expect(dialogs).toContain('{!storeAvailable && <WordText style={styles.line}>{SALE_CLOSED_NOTE}</WordText>}');
     expect(dialogs).toMatch(/router\.push\(`\/me\/credits\?back=\$\{back\}&noun=\$\{encodeURIComponent\(noun\)\}`/);
-    /* 판매 여부를 다른 값으로 가르지 않는다 — iOS 에 구매 단추가 생기는 길을 막는다 */
-    expect(dialogs.match(/BUY_CREDITS_LABEL/g)?.length).toBe(2);
+    /* 부족 창이 다시 생기지 않는다 */
+    expect(dialogs).not.toContain('CreditsShortage');
+    expect(dialogs).not.toContain('BUY_CREDITS_LABEL');
   });
 
   it('상품 화면의 구매 판은 Android 에서만 선다', () => {

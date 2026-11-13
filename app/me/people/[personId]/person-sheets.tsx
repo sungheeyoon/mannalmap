@@ -6,7 +6,6 @@ import { useRef, useState, useTransition, type ReactNode } from 'react';
 
 import { RELATIONS, RELATION_LABEL, RELATION_NONE_LABEL, type Relation } from '@/src/lib/people';
 import type { ReadingCredits } from '@/src/lib/reading/credits';
-import { outOfCredits } from '@/src/lib/reading/panel-chrome';
 import {
   COMPAT_ASK_CONFIRM,
   PARTNER_SELF_LABEL,
@@ -15,10 +14,10 @@ import {
   READING_INVITE_TOPICS,
   partnerAskTitle,
   readingAskTitle,
-  readingCostLine,
   readingInviteTitle,
   relationAskTitle,
 } from '@/src/lib/reading/person-screen';
+import { creditAskShape, type CreditAskShape } from '@/src/lib/reading/credit-ask';
 import type { Element } from '@/src/lib/saju';
 
 import { actionAnswer } from '../../../ui/action-answer';
@@ -30,22 +29,25 @@ import { Icon } from '../../../ui/icons';
 import { closeSheet, DetailSheet, openSheet } from '../../../ui/sheet';
 import { StemSymbol } from '../../../ui/stem-symbol';
 import { openPairScreen, pairRelationFor } from '../../compat/actions';
-import { useBuyCredits } from '../../credits/buy-credits';
 import { generateReading } from '../../reading/actions';
 import type { ReadingTarget } from '../../reading/target';
 
 /*
   **저장한 사람 화면의 누름 둘 — 그 자리의 시트에서 끝난다**(운영자 승인 2026-11-13, ADR 0249). 「사주풀이 받기」는 같은 단추가 있는
-  풀이 화면을 거치지 않고, 「궁합 보기」는 궁합 탭으로 넘어가 빈 폼을 채우게 하지 않는다. 판정은 지금 것 그대로다 — 풀이권 0개면
-  확인 대신 풀이권 창(`outOfCredits` · `useBuyCredits`), 만들기는 같은 액션(`generateReading`), 두 사람 열기도 같은 액션(`openPairScreen`).
+  풀이 화면을 거치지 않고, 「궁합 보기」는 궁합 탭으로 넘어가 빈 폼을 채우게 하지 않는다. 만들기는 같은 액션(`generateReading`), 두 사람
+  열기도 같은 액션(`openPairScreen`). 풀이권이 0장이면 시트 안의 줄이 「남은 풀이권이 없어요.」 · 「지금은 풀이권을 구매할 수 없어요.」와 [확인]
+  하나가 된다 — 웹은 팔지 않는다(ADR 0212). 앱(안드로이드)은 같은 판정(`creditAskShape`)의 구매 꼴이다(ADR 0251).
 */
+
+/** 웹은 시트에서 살 수 없다 — 0장이면 늘 닫힌 꼴이다 */
+const shapeOf = (credits: ReadingCredits | null, spent: boolean) => creditAskShape(credits, { spent, canBuy: false });
 
 type Answer = Awaited<ReturnType<typeof generateReading>>;
 const unreachedStart = (message: string): Answer => ({ ok: false, message });
 
-/** 확인 시트의 몸 — 「풀이권 1장을 사용해요. (남은 풀이권 N장)」 한 줄 · 실패 한 줄 · 단추 둘. 예약 줄 · 돌려준다는 줄은 두지 않는다(운영자 2026-11-13) */
+/** 확인 시트의 몸 — 풀이권 줄 · 실패 한 줄 · 단추(꼴은 `creditAskShape`). 예약 줄 · 돌려준다는 줄은 두지 않는다(운영자 2026-11-13) */
 function AskBody({
-  credits,
+  shape,
   failure,
   busy,
   confirmLabel,
@@ -53,7 +55,7 @@ function AskBody({
   onCancel,
   children,
 }: {
-  credits: ReadingCredits | null;
+  shape: CreditAskShape;
   failure: string | null;
   busy: boolean;
   confirmLabel: string;
@@ -64,17 +66,30 @@ function AskBody({
   return (
     <div className="flex flex-col gap-4">
       {children}
-      <div className="flex flex-col gap-1">
-        <p className="text-body font-semibold">{readingCostLine(credits?.available ?? null)}</p>
+      <div className="flex flex-col gap-0.5">
+        {shape.lines.map((line, nth) => (
+          <p key={line} className={nth === 0 ? 'text-body font-semibold' : 'text-body text-secondary'}>
+            {line}
+          </p>
+        ))}
       </div>
       {failure !== null && <FailureLine>{failure}</FailureLine>}
       <div className="flex flex-col gap-2">
-        <button type="button" className={BUTTON_PRIMARY} onClick={onConfirm} disabled={busy} aria-busy={busy}>
-          {confirmLabel}
-        </button>
-        <button type="button" className={BUTTON_SECONDARY} onClick={onCancel}>
-          취소
-        </button>
+        {shape.kind === 'use' ? (
+          <button type="button" className={BUTTON_PRIMARY} onClick={onConfirm} disabled={busy} aria-busy={busy}>
+            {confirmLabel}
+          </button>
+        ) : (
+          /* 웹은 닫힌 꼴뿐이다 — [확인]은 시트를 닫는다 */
+          <button type="button" className={BUTTON_PRIMARY} onClick={onCancel}>
+            {shape.confirmLabel}
+          </button>
+        )}
+        {shape.cancelLabel !== null && (
+          <button type="button" className={BUTTON_SECONDARY} onClick={onCancel}>
+            {shape.cancelLabel}
+          </button>
+        )}
       </div>
     </div>
   );
@@ -99,14 +114,11 @@ export function ReadingInvite({
   const sheet = useRef<HTMLDialogElement>(null);
   const [failure, setFailure] = useState<string | null>(null);
   const [busy, start] = useTransition();
-  const buy = useBuyCredits();
+  /** 눌렀는데 액션이 「풀이권이 없다」고 답했다 — 시트가 0장 꼴로 바뀐다 */
+  const [spent, setSpent] = useState(false);
 
   const press = () => {
-    /* 풀이권이 0개면 확인 대신 풀이권 창이다 — 풀이 화면의 누름과 같은 판정(`panelChrome.buysCredits`) */
-    if (outOfCredits(credits)) {
-      buy.offer(credits?.available ?? 0);
-      return;
-    }
+    setSpent(false);
     setFailure(null);
     openSheet(sheet.current);
   };
@@ -119,8 +131,7 @@ export function ReadingInvite({
         return;
       }
       if ('outOfCredits' in answer) {
-        closeSheet(sheet.current);
-        buy.offer(0);
+        setSpent(true);
         return;
       }
       setFailure(answer.message);
@@ -133,14 +144,14 @@ export function ReadingInvite({
         <p className="relative whitespace-pre-line break-keep text-lead font-bold leading-snug">{readingInviteTitle(name)}</p>
         <p className="relative text-small text-on-accent/75">{READING_INVITE_TOPICS}</p>
         <div className="relative mt-3 flex items-center justify-end">
-          <button type="button" onClick={press} disabled={buy.checking} className={BUTTON_SECONDARY_SMALL}>
+          <button type="button" onClick={press} className={BUTTON_SECONDARY_SMALL}>
             사주풀이 받기
           </button>
         </div>
       </div>
       <DetailSheet wrapTitle sheet={sheet} nickname={readingAskTitle(name)} label={readingAskTitle(name)}>
         <AskBody
-          credits={credits}
+          shape={shapeOf(credits, spent)}
           failure={failure}
           busy={busy}
           confirmLabel={READING_ASK_CONFIRM}
@@ -148,7 +159,6 @@ export function ReadingInvite({
           onCancel={() => closeSheet(sheet.current)}
         />
       </DetailSheet>
-      {buy.notice}
     </>
   );
 }
@@ -200,7 +210,8 @@ export function CompatAdd({
   const touched = useRef(false);
   const [failure, setFailure] = useState<string | null>(null);
   const [busy, start] = useTransition();
-  const buy = useBuyCredits();
+  /** 눌렀는데 액션이 「풀이권이 없다」고 답했다 — 시트가 0장 꼴로 바뀐다 */
+  const [spent, setSpent] = useState(false);
 
   const choose = (next: Partner) => {
     if (next.seenHref !== null) {
@@ -212,6 +223,7 @@ export function CompatAdd({
     setRelation(null);
     touched.current = false;
     setFailure(null);
+    setSpent(false);
     closeSheet(pickSheet.current);
     openSheet(askSheet.current);
     /* 적어 둔 사이를 칸에 세운다 — 못 읽었으면 칸을 안 건드린다(`pairRelationFor`) */
@@ -222,11 +234,6 @@ export function CompatAdd({
 
   const confirm = () => {
     if (partner === null) return;
-    if (outOfCredits(credits)) {
-      closeSheet(askSheet.current);
-      buy.offer(credits?.available ?? 0);
-      return;
-    }
     start(async () => {
       const opened = await actionAnswer(
         openPairScreen({ from: 'saved', personId: person.personId }, { from: 'saved', personId: partner.personId }, touched.current ? relation : undefined),
@@ -243,8 +250,7 @@ export function CompatAdd({
         return;
       }
       if ('outOfCredits' in answer) {
-        closeSheet(askSheet.current);
-        buy.offer(0);
+        setSpent(true);
         return;
       }
       setFailure(answer.message);
@@ -290,7 +296,7 @@ export function CompatAdd({
         label={relationAskTitle(person.name, partner === null ? '' : partner.isSelfPerson ? PARTNER_SELF_LABEL : partner.label)}
       >
         <AskBody
-          credits={credits}
+          shape={shapeOf(credits, spent)}
           failure={failure}
           busy={busy}
           confirmLabel={COMPAT_ASK_CONFIRM}
@@ -321,7 +327,6 @@ export function CompatAdd({
           </div>
         </AskBody>
       </DetailSheet>
-      {buy.notice}
     </>
   );
 }

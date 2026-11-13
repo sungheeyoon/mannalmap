@@ -6,7 +6,9 @@ import {
   PURCHASE_UNDELIVERED_NOTE,
   SALE_CLOSED_NOTE,
   purchaseAddedNote,
+  purchaseResumeLabel,
 } from './notes';
+import { resumesAsk } from './resume-ask';
 import { STORE_PRODUCTS, type StorePurchaseAnswer } from './store-products';
 
 /**
@@ -23,6 +25,9 @@ import { STORE_PRODUCTS, type StorePurchaseAnswer } from './store-products';
 /**
  * **결제 뒤 이어 갈 곳**(대장 credits-10 확정 — 「사주풀이로 돌아가기」 꼴) — 풀이권이 모자라 상품 화면으로 온 사람은 결제 완료 창의 주 단추가 그 화면으로
  * 돌려보낸다. 주소는 앱 안(`/me/…`)만, 이름은 표의 셋만 받는다 — 아니면 `null` 이고 주 단추는 「확인」(닫기)이다.
+ *
+ * 주소가 물음을 다시 여는 표시(`?ask=…`, `resume-ask.ts`)를 실었으면 단추는 「{이름} 받으러 가기」다 — 돌아가면 받기 시트 · 확인 창이 다시 열린다
+ * (운영자 승인 2026-11-13, ADR 0251). 「인연 궁합」은 받는 자리가 아니라 그 표시를 싣지 않는다.
  */
 const RETURN_LABELS: Readonly<Record<string, string>> = {
   사주풀이: '사주풀이로 돌아가기',
@@ -36,7 +41,8 @@ export function purchaseReturnOf(back: unknown, noun: unknown): PurchaseReturn |
   if (typeof back !== 'string' || typeof noun !== 'string') return null;
   if (!back.startsWith('/me/') || back.startsWith('/me/credits') || back.includes('//') || back.includes('\\')) return null;
   const label = RETURN_LABELS[noun];
-  return label === undefined ? null : { href: back, label };
+  if (label === undefined) return null;
+  return { href: back, label: noun !== '인연 궁합' && resumesAsk(back) ? purchaseResumeLabel(noun) : label };
 }
 
 export type StorePurchaseNotice =

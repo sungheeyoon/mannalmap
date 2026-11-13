@@ -6,7 +6,7 @@ import type { ReadingKind } from './policy';
 type CreditsSeen = { readonly available: number; readonly reserved: number };
 
 /**
- * **풀이권이 0개인가** — 남은 것도 만드는 중인 것도 없다. 만드는 중이면(`reserved > 0`) 끝나기를 기다리는 자리라 풀이권 창이 아니다.
+ * **풀이권이 0개인가** — 남은 것도 만드는 중인 것도 없다. 만드는 중이면(`reserved > 0`) 끝나기를 기다리는 자리라 확인 창의 0장 꼴이 아니다.
  * 보낸 요청이 잡은 몫(`requested`)은 `available` 에서 이미 빠져 있다. 못 물었으면(`null`) 0개라고 하지 않는다 — DB 가 판정한다.
  */
 export function outOfCredits(credits: CreditsSeen | null): boolean {
@@ -28,7 +28,7 @@ export type PanelChrome = {
   /** 만드는 버튼이 닫혀 있는가 */
   readonly makeDisabled: boolean;
   /**
-   * 풀이권이 0개라 **만드는 버튼이 풀이권 창을 여는가**(`outOfCredits`) — 누르면 확인 창 · 만들기 대신 `useBuyCredits` 의 창이다.
+   * 풀이권이 0개라 **만드는 버튼이 확인 창의 0장 꼴을 여는가**(`outOfCredits`) — 누르면 같은 확인 창이 0장 꼴로 선다(`creditAskShape`, ADR 0251).
    * 만들기 요청은 나가지 않는다.
    */
   readonly buysCredits: boolean;
@@ -65,7 +65,7 @@ export function panelChrome({
   /*
     **다 쓴 것과 기다리는 것을 가른다.** 도는 시도가 자리를 잡고 있는 동안에는 버튼이 만들기 그대로다 — 그 사람이 누르면 DB 가
     「끝나면 다시 눌러 주세요」로 답하고, 그것이 이 화면이 대신 말해 줄 수 없는 사실이다(다른 대상을 만들고 있을 수도 있다).
-    다 썼으면 버튼은 닫히지 않고 누르면 풀이권 창(「남은 풀이권이 없어요.」)이 열린다 — 닫힌 단추는 누른 사람에게 아무 말도 안 했다.
+    다 썼으면 버튼은 닫히지 않고 누르면 확인 창의 0장 꼴(「남은 풀이권이 없어요.」)이 열린다 — 닫힌 단추는 누른 사람에게 아무 말도 안 했다.
   */
   const spent = outOfCredits(credits);
 

@@ -1,4 +1,3 @@
-import { CREDITS_PATH } from './buy-path';
 
 /**
  * **상품 화면의 ← 가 돌아갈 곳 — 풀이권 창을 연 화면**(운영자 결정 2026-10-29, ADR 0171 「덧」).
@@ -40,5 +39,3 @@ export function withReturnTo(path: string, back: ReturnTo | null): string {
   return back ? `${path}${path.includes('?') ? '&' : '?'}back=${encodeURIComponent(back.href)}` : path;
 }
 
-/** 풀이권 창이 보내는 상품 화면 주소 — 지금 서 있는 화면을 싣는다 */
-export const creditsPathFrom = (current: string): string => withReturnTo(CREDITS_PATH, returnToOf(current));

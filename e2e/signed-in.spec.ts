@@ -14,6 +14,7 @@ import { MY_PROFILE_EDIT_LABEL } from '@/src/lib/chat/copy';
 import { calculateChart, chartOf } from '@/src/lib/input/chart';
 import { DEFAULT_QUERY, queryFromSearchParams } from '@/src/lib/input/query';
 import { READING_AGAIN_LABEL, READING_NOUN, READING_REPLACES_NOTE, READING_USES_TICKET_NOTE, readingEvidenceOf, readingNoneNote } from '@/src/lib/reading';
+import { readingConfirmTitle } from '@/src/lib/reading/credit-ask';
 import { CHART_DETAIL_LABEL, COMPAT_OTHER_LABEL, PARTNER_TYPED_LABEL, chartTitleOf, compatWithLabel, partnerAskTitle, readingAskTitle, readingCostLine, readingInviteTitle } from '@/src/lib/reading/person-screen';
 import { TASTE_RUN_VERSIONS, tasteEvidenceOf, tasteFingerprintOf } from '@/src/lib/reading/taste-run';
 import type { Saju } from '@/src/lib/saju';
@@ -557,7 +558,9 @@ test.describe('초대된 사람의 로그인 흐름', () => {
     await page.getByRole('button', { name: '사주풀이 받기' }).click();
     const asking = page.getByRole('dialog');
     await expect(asking).toBeVisible();
-    await expect(asking.getByText(READING_USES_TICKET_NOTE, { exact: true })).toBeVisible();
+    /* 풀이권을 쓰는 확인의 한 꼴 — 풀이권 줄이 서고 환불 줄은 걷었다(ADR 0251) */
+    await expect(asking.getByText(readingCostLine(null))).toBeVisible();
+    await expect(asking.getByText(READING_USES_TICKET_NOTE)).toHaveCount(0);
     await expect(asking.getByText(READING_REPLACES_NOTE, { exact: true })).toHaveCount(0);
     await asking.getByRole('button', { name: '취소' }).click();
     await expect(asking).toBeHidden();
@@ -1132,7 +1135,9 @@ test.describe('초대된 사람의 로그인 흐름', () => {
     /* 닫힌 `<dialog>` 는 접근성 트리에 없다 — 그래서 이 자리가 「열렸는가」를 잰다 */
     const asking = page.getByRole('dialog');
     await expect(asking).toBeVisible();
-    await expect(asking.getByText(READING_USES_TICKET_NOTE, { exact: true })).toBeVisible();
+    /* 풀이권을 쓰는 확인의 한 꼴 — 풀이권 줄이 서고 환불 줄은 걷었다(ADR 0251) */
+    await expect(asking.getByText(readingCostLine(null))).toBeVisible();
+    await expect(asking.getByText(READING_USES_TICKET_NOTE)).toHaveCount(0);
     await expect(asking.getByText(READING_REPLACES_NOTE, { exact: true })).toBeVisible();
 
     await asking.getByRole('button', { name: '취소' }).click();
@@ -3983,7 +3988,7 @@ test.describe('로그인 · 가입이 목적지를 든다', () => {
     await page.unroute('**/*');
     await page.getByRole('button', { name: '다시 시도하기' }).click();
     await expect(page).toHaveURL(/\/me\/readings\/self$/);
-    const confirm = page.getByRole('dialog', { name: '풀이권 1장을 사용하시겠어요?' });
+    const confirm = page.getByRole('dialog', { name: readingConfirmTitle(READING_NOUN.self, false) });
     await expect(confirm).toBeVisible();
     await expect(page.locator('section[aria-labelledby="carry-heading"]')).toContainText('새벽빛이 들기 전에');
     expect(await page.evaluate(() => sessionStorage.getItem('saju:taste-session'))).toBeNull();
@@ -4090,7 +4095,7 @@ test.describe('로그인 · 가입이 목적지를 든다', () => {
     await page.unroute('**/*');
     await page.reload();
     await expect(page).toHaveURL(/\/me\/readings\/self$/);
-    const confirm = page.getByRole('dialog', { name: '풀이권 1장을 사용하시겠어요?' });
+    const confirm = page.getByRole('dialog', { name: readingConfirmTitle(READING_NOUN.self, false) });
     await expect(confirm).toBeVisible();
     const carry = page.getByRole('region', { name: '아까 보던 내용' });
     await expect(carry).toContainText('한낮 가까이에');

@@ -70,7 +70,7 @@ export type ReadingEvent =
   | { type: 'opened'; started: boolean }
   /** DB 가 이유를 붙여 거절했다 */
   | { type: 'refused'; message: string }
-  /** 풀이권이 없어 막혔다 — 오류 줄을 세우지 않는다. 풀이권 창이 말한다(`FlowDecision.opensCredits`) */
+  /** 풀이권이 없어 막혔다 — 오류 줄을 세우지 않는다. 확인 창의 0장 꼴이 말한다(`FlowDecision.opensCredits`) */
   | { type: 'out-of-credits' }
   /** 액션이 예외로 끝났다 — 이유를 모른다 */
   | { type: 'threw' }
@@ -215,7 +215,7 @@ export type FlowDecision = {
   readonly event: ReadingEvent | null;
   /** 풀이권이 움직였을 수 있다고 외치는가 */
   readonly announcesCredits: boolean;
-  /** 풀이권 창(보유 0개 + 필요 수량)을 여는가 — 풀이권이 없어 막힌 누름뿐이다 */
+  /** 확인 창의 0장 꼴(보유 0개 + 필요 수량)을 여는가 — 풀이권이 없어 막힌 누름뿐이다 */
   readonly opensCredits?: boolean;
 };
 
@@ -256,7 +256,7 @@ export function afterPress(outcome: PressOutcome, preview: CurrentReading | null
       );
 
     /**
-     * **풀이권이 없어 막혔으면 예시 글로도 덮지 않는다** — DB 가 실제로 막은 것이고 할 일(사기)이 있다. 오류 줄 대신 풀이권 창을 열고,
+     * **풀이권이 없어 막혔으면 예시 글로도 덮지 않는다** — DB 가 실제로 막은 것이고 할 일(사기)이 있다. 오류 줄 대신 확인 창의 0장 꼴을 열고,
      * 머리글의 수가 낡았으니 다시 묻게 외친다.
      */
     case 'out-of-credits':

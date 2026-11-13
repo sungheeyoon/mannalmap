@@ -103,6 +103,8 @@
 | 딥 링크가 기기에 깔린 `preview` · 출시 빌드를 연다 | 그 빌드도 `exp://` 를 받는다 — Expo Go 가 꺼져 있으면 안드로이드가 그쪽으로 보낸다(2026-11-11, 운영에 로그인된 앱이 앞에 섰다) | 링크를 `-p host.exp.exponent` 로 묶는다. 누르기 전에 `dumpsys activity activities` 의 `topResumedActivity` 가 Expo Go 인지 본다 |
 | Expo Go 에서 붉은 화면 「expo-notifications … removed from Expo Go」 | 푸시(ADR 0236)가 든 뒤 안드로이드 Expo Go 가 푸시 토큰 호출에서 던진다 | 재는 동안만 **제 워크트리의** `mobile/node_modules/expo-notifications/build/warnOfExpoGoPushUsage.js` 의 `throw` 를 `console.warn` 으로 바꾸고 Expo Go 를 강제 종료한 뒤 다시 연다. 저장소 파일은 안 바꾼다. 푸시는 못 잰다 |
 | Expo Go 가 첫 화면(로고)에서 멈추고 넘어가지 않는다(2026-11-13) | 루트 레이아웃의 `<ReadyPushOpener />`(`mobile/src/app/_layout.tsx`)가 Expo Go 에 없는 푸시를 기다린다 | 재는 동안만 그 줄을 주석으로 빼고 띄운다. **끝나면 되돌린다 — 커밋하지 않는다.** 푸시를 여는 길은 못 잰다 |
+| Expo Go 가 붉은 화면 「Cannot find native module 'ExpoApplication'」(2026-11-13) | 판본 바닥(`mobile/src/release/floor.ts`)이 부르는 `expo-application` 이 Expo Go 에 없다 | 재는 동안만 그 파일 첫 줄의 import 를 `const Application = { nativeBuildVersion: null as string \| null };` 로 바꾼다. **끝나면 되돌린다** |
+| 풀이권 구매 · 결제 완료 창을 재야 한다 | Expo Go 에는 Play 결제 모듈이 없다 | 가짜 서버가 `/api/mobile/credits/purchase` 를 답한다(살 수 있음 · 보낸 상품의 장수 지급). 재는 동안만 `mobile/src/credits/store.ts` 의 가격 · 결제창을 `__DEV__` 가짜로 바꿔 그 문에 보낸다 — 실제 Play 결제는 못 잰다. 받은 풀이만 비우는 상태는 `m=no-readings` |
 | 탭을 눌렀는데 `texts` · `tap` 이 앞 화면 글자를 낸다 | 궁합 고르기처럼 idle 이 안 되는 화면은 `uiautomator dump` 가 실패한다(`could not get idle state`) | 그 화면은 그림(`shot`)으로 본다 — 빈 본문은 PNG 가 눈에 띄게 작다. `device.py` 는 앞 덤프를 지우고 읽어 실패가 빈 목록으로 보인다 |
 | 붉은 화면의 스택 줄을 누르자 PC 에 VS Code 가 뜬다 | Metro 가 편집기를 연다 | `REACT_EDITOR=none` 으로 띄운다 |
 | 누른 자리가 엉뚱하다 | 좌표는 Expo 도구 단추 · 판 크기로 어긋난다 | 좌표를 쓰지 않는다 — `uiautomator` 덤프의 글자로 찾아 누른다(`device.py tap`) |

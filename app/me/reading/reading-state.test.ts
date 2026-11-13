@@ -255,10 +255,10 @@ describe('누름이 무엇으로 끝났는가', () => {
    * 지나갈 수 있으므로, 잊지 않게 값으로 적어 둔다. 프로덕션에는 이 갈래가 아예 없다.
    */
   /**
-   * **누른 사이 풀이권이 바닥났으면**(다른 탭에서 마지막 하나를 썼다) 오류 줄 대신 풀이권 창이다 — 예시 글로도 덮지 않는다. 할 일(사기)이
+   * **누른 사이 풀이권이 바닥났으면**(다른 탭에서 마지막 하나를 썼다) 오류 줄 대신 확인 창의 0장 꼴이다 — 예시 글로도 덮지 않는다. 할 일(사기)이
    * 있고 DB 가 실제로 막은 것이다(ADR 0171 「덧」). 머리글의 수가 낡았으니 다시 묻게 외친다.
    */
-  it('풀이권이 없어 막힌 누름은 오류 줄 없이 풀이권 창을 연다', () => {
+  it('풀이권이 없어 막힌 누름은 오류 줄 없이 확인 창의 0장 꼴을 연다', () => {
     for (const shown of [null, preview]) {
       const decision = afterPress({ kind: 'out-of-credits' }, shown);
       expect(decision.event).toEqual({ type: 'out-of-credits' });
@@ -269,7 +269,7 @@ describe('누름이 무엇으로 끝났는가', () => {
     expect(readingFlow(pressed, { type: 'out-of-credits' })).toEqual({ phase: 'idle', failure: null, mock: null, arriving: null });
   });
 
-  it('다른 거절은 풀이권 창을 열지 않는다', () => {
+  it('다른 거절은 확인 창의 0장 꼴을 열지 않는다', () => {
     expect(afterPress({ kind: 'refused', message: '이미 만들고 있어요.' }, null).opensCredits ?? false).toBe(false);
     expect(afterPress({ kind: 'threw' }, null).opensCredits ?? false).toBe(false);
   });

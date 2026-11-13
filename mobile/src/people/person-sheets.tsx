@@ -1,7 +1,6 @@
 import { RELATIONS, RELATION_LABEL, RELATION_NONE_LABEL, type Relation } from '@people';
 import type { ReadingCredits } from '@reading/credits';
 import { READING_NOUN } from '@reading/notes';
-import { outOfCredits } from '@reading/panel-chrome';
 import {
   COMPAT_ASK_CONFIRM,
   PARTNER_SELF_LABEL,
@@ -9,9 +8,9 @@ import {
   READING_ASK_CONFIRM,
   partnerAskTitle,
   readingAskTitle,
-  readingCostLine,
   relationAskTitle,
 } from '@reading/person-screen';
+import { creditAskShape, type CreditAskShape } from '@reading/credit-ask';
 import type { Element, Stem } from '@saju';
 import { useRef, useState, type ReactNode } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
@@ -20,7 +19,8 @@ import { useClient } from '@/auth/connected';
 import { readPicker, openPair, readPairRelation, type Choosable } from '@/compat/data';
 import { askOnFirstReading } from '@/push/device';
 import { newRequestKey, startReading, type ReadingTarget } from '@/reading/api';
-import { CreditsShortage } from '@/reading/dialogs';
+import { storeAvailable } from '@/credits/store';
+import { useBuyCredits } from '@/reading/dialogs';
 import { followRefusal } from '@/reading/panel';
 import { Button } from '@/ui/buttons';
 import { ElementSymbol } from '@/ui/element-symbol';
@@ -29,16 +29,17 @@ import { Icon } from '@/ui/icons';
 import { DetailSheet } from '@/ui/sheet';
 import { StemSymbol } from '@/ui/stem-symbol';
 import { settled } from '@/ui/settled';
+import { WordText } from '@/ui/word-text';
 import { COLOR, CONTROL, ELEMENT_TONE, FONT, RADIUS, TYPE } from '@/ui/tokens';
 import { UNREACHABLE } from '@/auth/signup';
 
 import { go } from './parts';
-import { WordText } from '@/ui/word-text';
 
 /*
   **저장한 사람 화면의 누름 둘 — 그 자리의 시트에서 끝난다**(운영자 승인 2026-11-13, ADR 0249 · 웹 `app/me/people/[personId]/person-sheets.tsx`).
-  판정은 지금 것 그대로다 — 풀이권 0개면 확인 대신 풀이권 창(`outOfCredits` · `CreditsShortage`), 만들기는 같은 문(`startReading`), 두 사람 열기도
-  같은 문(`openPair`).
+  만들기는 같은 문(`startReading`), 두 사람 열기도 같은 문(`openPair`). **풀이권이 0장이면 시트가 곧 구매 입구다**(운영자 승인 2026-11-13, ADR 0251 —
+  꼴은 `creditAskShape`): [풀이권 구매]는 다시 열 물음(`?ask=…`)을 싣고 풀이권 화면으로 가고, 결제 완료 창이 돌려보내면 사람 화면이 같은 시트를
+  다시 연다(`resume`). 받기를 저절로 시작하지는 않는다.
 */
 
 type Started = { kind: 'opened' } | { kind: 'out-of-credits' } | { kind: 'failed'; message: string };
@@ -59,55 +60,74 @@ async function start(client: ReturnType<typeof useClient>, target: ReadingTarget
   return result.outOfCredits ? { kind: 'out-of-credits' } : { kind: 'failed', message: result.message };
 }
 
-/** 확인 시트의 몸 — 「풀이권 1장을 사용해요. (남은 풀이권 N장)」 한 줄 · 실패 한 줄 · 단추 둘(웹의 `AskBody`). 예약 줄 · 돌려준다는 줄은 두지 않는다(운영자 2026-11-13) */
+/**
+ * 확인 시트의 몸 — 풀이권 줄 · 실패 한 줄 · 단추(웹의 `AskBody`). 예약 줄 · 돌려준다는 줄은 두지 않는다(운영자 2026-11-13). 줄과 단추는
+ * `creditAskShape` 의 꼴이다 — 쓰는 꼴은 [받기] · [궁합 보기] / [취소], 0장은 [풀이권 구매] / [취소], 살 수 없으면 [확인] 하나
+ */
 function AskBody({
-  credits,
+  shape,
   failure,
   busy,
   confirmLabel,
   onConfirm,
+  onBuy,
   onCancel,
   children,
 }: {
-  credits: ReadingCredits | null;
+  shape: CreditAskShape;
   failure: string | null;
   busy: boolean;
   confirmLabel: string;
   onConfirm: () => void;
+  onBuy: () => void;
   onCancel: () => void;
   children?: ReactNode;
 }) {
   return (
     <View style={styles.body}>
       {children}
-      <View style={styles.lines}>
-        <WordText style={styles.cost}>{readingCostLine(credits?.available ?? null)}</WordText>
+      <View style={styles.costLines}>
+        {shape.lines.map((line, nth) => (
+          <WordText key={line} style={nth === 0 ? styles.cost : styles.costNote}>
+            {line}
+          </WordText>
+        ))}
       </View>
       {failure !== null && <FailureLine>{failure}</FailureLine>}
       <View style={styles.lines}>
-        <Button label={confirmLabel} onPress={onConfirm} busy={busy} />
-        <Button label="취소" variant="secondary" onPress={onCancel} />
+        {shape.kind === 'use' ? (
+          <Button label={confirmLabel} onPress={onConfirm} busy={busy} />
+        ) : (
+          <Button label={shape.confirmLabel} onPress={shape.kind === 'buy' ? onBuy : onCancel} accessibilityRole={shape.kind === 'buy' ? 'link' : 'button'} />
+        )}
+        {shape.cancelLabel !== null && <Button label={shape.cancelLabel} variant="secondary" onPress={onCancel} />}
       </View>
     </View>
   );
 }
 
-/** 「사주풀이 받기」의 확인 시트와 풀이권 창 — 여는 것은 진한 카드의 단추다(`open`). [받기]는 곧장 기다리는 화면(그 사람의 풀이 화면)으로 */
+/**
+ * 「사주풀이 받기」의 확인 시트 — 여는 것은 진한 카드의 단추(`open`)와, 사고 돌아온 사람 화면(`open` 을 다시 부른다). [받기]는 곧장 기다리는
+ * 화면(그 사람의 풀이 화면)으로
+ */
 export function useReadingAsk({ name, target, readingHref, credits }: { name: string; target: ReadingTarget; readingHref: string; credits: ReadingCredits | null }) {
   const client = useClient();
+  const goBuy = useBuyCredits();
   const [asking, setAsking] = useState(false);
-  const [shortage, setShortage] = useState<number | null>(null);
+  /** 눌렀는데 문이 「풀이권이 없다」고 답했다 — 시트가 구매 꼴로 바뀐다 */
+  const [spent, setSpent] = useState(false);
   const [failure, setFailure] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const shape = creditAskShape(credits, { spent, canBuy: storeAvailable });
 
   const open = () => {
-    /* 풀이권이 0개면 확인 대신 풀이권 창이다 — 풀이 화면의 누름과 같은 판정(`panelChrome.buysCredits`) */
-    if (outOfCredits(credits)) {
-      setShortage(credits?.available ?? 0);
-      return;
-    }
+    setSpent(false);
     setFailure(null);
     setAsking(true);
+  };
+  const buy = () => {
+    setAsking(false);
+    goBuy(READING_NOUN.person, { kind: 'reading' });
   };
 
   const confirm = async () => {
@@ -117,28 +137,22 @@ export function useReadingAsk({ name, target, readingHref, credits }: { name: st
     if (started.kind === 'opened') {
       setAsking(false);
       go(readingHref);
-    } else if (started.kind === 'out-of-credits') {
-      /* 풀이권 창은 시트 위에 뜬다 — 닫으면 둘 다 닫힌다. 뜨는 판 둘을 한꺼번에 바꾸면 iOS 가 뒤의 것을 못 띄운다 */
-      setShortage(0);
-    } else setFailure(started.message);
+    } else if (started.kind === 'out-of-credits') setSpent(true);
+    else setFailure(started.message);
   };
 
   const sheets = (
-    <>
-      <DetailSheet wrapTitle open={asking} title={readingAskTitle(name)} onClose={() => setAsking(false)}>
-        <AskBody credits={credits} failure={failure} busy={busy} confirmLabel={READING_ASK_CONFIRM} onConfirm={() => void confirm()} onCancel={() => setAsking(false)} />
-      </DetailSheet>
-      {shortage !== null && (
-        <CreditsShortage
-          available={shortage}
-          noun={READING_NOUN.person}
-          onClose={() => {
-            setShortage(null);
-            setAsking(false);
-          }}
-        />
-      )}
-    </>
+    <DetailSheet wrapTitle open={asking} title={readingAskTitle(name)} onClose={() => setAsking(false)}>
+      <AskBody
+        shape={shape}
+        failure={failure}
+        busy={busy}
+        confirmLabel={READING_ASK_CONFIRM}
+        onConfirm={() => void confirm()}
+        onBuy={buy}
+        onCancel={() => setAsking(false)}
+      />
+    </DetailSheet>
   );
   return { open, sheets };
 }
@@ -169,6 +183,7 @@ export function useCompatAdd({
   credits: ReadingCredits | null;
 }) {
   const client = useClient();
+  const goBuy = useBuyCredits();
   /** 시트 하나가 두 걸음을 든다 — 「누구를」 다음 「어떤 사이」. 뜨는 판을 바꿔 띄우면 iOS 가 뒤의 것을 못 띄운다 */
   const [step, setStep] = useState<'pick' | 'ask' | null>(null);
   const [partners, setPartners] = useState<readonly Partner[] | null>(null);
@@ -179,21 +194,27 @@ export function useCompatAdd({
   const touched = useRef(false);
   const [failure, setFailure] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
-  const [shortage, setShortage] = useState<number | null>(null);
+  /** 눌렀는데 문이 「풀이권이 없다」고 답했다 — 시트가 구매 꼴로 바뀐다 */
+  const [spent, setSpent] = useState(false);
+  const shape = creditAskShape(credits, { spent, canBuy: storeAvailable });
 
-  const load = () => {
+  /** 고를 사람을 읽는다 — 다시 열 때(`resume`)는 그 목록에서 상대를 찾는다. 못 읽었으면 `null` */
+  const load = async (): Promise<readonly Partner[] | null> => {
     setLoadFailure(null);
-    void settled(readPicker(client), 'readPicker', () => ({ kind: 'failed', message: UNREACHABLE }) as const).then((read) => {
-      if (read.kind === 'ok') {
-        setPartners(read.value.people.filter((one) => one.personId !== person.personId).map((one) => ({ ...one, seenHref: seen.get(one.personId) ?? null })));
-      } else if (read.kind === 'failed') setLoadFailure(read.message);
-    });
+    const read = await settled(readPicker(client), 'readPicker', () => ({ kind: 'failed', message: UNREACHABLE }) as const);
+    if (read.kind === 'ok') {
+      const next = read.value.people.filter((one) => one.personId !== person.personId).map((one) => ({ ...one, seenHref: seen.get(one.personId) ?? null }));
+      setPartners(next);
+      return next;
+    }
+    if (read.kind === 'failed') setLoadFailure(read.message);
+    return null;
   };
 
   const open = () => {
     setPartner(null);
     setStep('pick');
-    load();
+    void load();
   };
   const close = () => setStep(null);
 
@@ -207,6 +228,7 @@ export function useCompatAdd({
     setRelation(null);
     touched.current = false;
     setFailure(null);
+    setSpent(false);
     setStep('ask');
     /* 적어 둔 사이를 칸에 세운다 — 못 읽었으면 칸을 안 건드린다 */
     void settled(readPairRelation(client, person.personId, next.personId), 'pair_relation_of', () => ({ ok: false }) as const).then((stored) => {
@@ -214,12 +236,32 @@ export function useCompatAdd({
     });
   };
 
-  const confirm = async () => {
-    if (partner === null) return;
-    if (outOfCredits(credits)) {
-      setShortage(credits?.available ?? 0);
+  /**
+   * 사고 돌아왔다 — 같은 상대 · 사이를 고른 채 「어떤 사이예요?」를 다시 연다. 사이를 건드렸으면 그 답이 선다(`picked`), 아니면 적어 둔 사이를 읽는다.
+   * 상대가 목록에 없으면(그새 지웠다) 「누구를 볼까요?」부터다
+   */
+  const resume = async (partnerId: string, picked: Relation | null | undefined) => {
+    const list = await load();
+    const found = list?.find((one) => one.personId === partnerId) ?? null;
+    if (found === null) {
+      open();
       return;
     }
+    choose(found);
+    if (picked !== undefined) {
+      touched.current = true;
+      setRelation(picked);
+    }
+  };
+
+  const buy = () => {
+    if (partner === null) return;
+    close();
+    goBuy(READING_NOUN.private, { kind: 'compat', partnerId: partner.personId, relation: touched.current ? relation : undefined });
+  };
+
+  const confirm = async () => {
+    if (partner === null) return;
     setBusy(true);
     const opened = await settled(
       openPair(client, { from: 'saved', personId: person.personId }, { from: 'saved', personId: partner.personId }, touched.current ? relation : undefined),
@@ -236,7 +278,7 @@ export function useCompatAdd({
     if (started.kind === 'opened') {
       close();
       go(`/me/readings/compat?a=${opened.personA}&b=${opened.personB}`);
-    } else if (started.kind === 'out-of-credits') setShortage(0);
+    } else if (started.kind === 'out-of-credits') setSpent(true);
     else setFailure(started.message);
   };
 
@@ -246,7 +288,7 @@ export function useCompatAdd({
     <>
       <DetailSheet wrapTitle open={step !== null} title={step === 'ask' ? relationAskTitle(person.name, partnerName) : partnerAskTitle(person.name)} onClose={close}>
         {step === 'ask' ? (
-          <AskBody credits={credits} failure={failure} busy={busy} confirmLabel={COMPAT_ASK_CONFIRM} onConfirm={() => void confirm()} onCancel={close}>
+          <AskBody shape={shape} failure={failure} busy={busy} confirmLabel={COMPAT_ASK_CONFIRM} onConfirm={() => void confirm()} onBuy={buy} onCancel={close}>
             <View accessibilityRole="radiogroup" style={styles.chips}>
               {[...RELATIONS, null].map((choice) => {
                 const picked = relation === choice;
@@ -269,7 +311,7 @@ export function useCompatAdd({
           </AskBody>
         ) : (
           <View>
-            {loadFailure !== null && <FailureLine onRetry={load}>{loadFailure}</FailureLine>}
+            {loadFailure !== null && <FailureLine onRetry={() => void load()}>{loadFailure}</FailureLine>}
             {(partners ?? []).map((one) => (
               <Pressable key={one.personId} accessibilityRole="button" onPress={() => choose(one)} style={styles.row}>
                 <Face stem={one.stem} element={one.element} />
@@ -294,25 +336,17 @@ export function useCompatAdd({
           </View>
         )}
       </DetailSheet>
-      {shortage !== null && (
-        <CreditsShortage
-          available={shortage}
-          noun={READING_NOUN.private}
-          onClose={() => {
-            setShortage(null);
-            close();
-          }}
-        />
-      )}
     </>
   );
-  return { open, sheets };
+  return { open, resume: (partnerId: string, picked: Relation | null | undefined) => void resume(partnerId, picked), sheets };
 }
 
 const styles = StyleSheet.create({
   body: { gap: 16 },
   lines: { gap: 8 },
+  costLines: { gap: 2 },
   cost: { fontFamily: FONT.bold, fontSize: TYPE.body, lineHeight: 22, color: COLOR.foreground },
+  costNote: { fontFamily: FONT.medium, fontSize: TYPE.body, lineHeight: 22, color: COLOR.secondary },
   row: { minHeight: 56, flexDirection: 'row', alignItems: 'center', gap: 12 },
   rowText: { flex: 1, fontFamily: FONT.bold, fontSize: TYPE.body, color: COLOR.foreground },
   face: { width: 36, height: 36, alignItems: 'center', justifyContent: 'center', borderRadius: RADIUS.pill },

@@ -2,7 +2,8 @@
 
 import type { ReactNode } from 'react';
 
-import { READING_AGAIN_LABEL, READING_REPLACES_NOTE, readingNoneNote, READING_USES_TICKET_NOTE } from '@/src/lib/reading/notes';
+import { creditAskShape, readingConfirmTitle } from '@/src/lib/reading/credit-ask';
+import { READING_AGAIN_LABEL, READING_REPLACES_NOTE, readingNoneNote } from '@/src/lib/reading/notes';
 import type { CurrentReading, RunProgress } from '@/src/lib/reading';
 import type { PairNicknames } from '@/src/lib/reading/display';
 import type { Element } from '@/src/lib/saju';
@@ -159,7 +160,7 @@ export function ReadingPanel({
     confirmGenerate,
     generate,
     press,
-    buy,
+    spent,
     offersPlain,
     skipping,
     skipCarry,
@@ -176,6 +177,8 @@ export function ReadingPanel({
     automatic,
     carry,
   });
+  /* 웹은 팔지 않는다(ADR 0212) — 0장이면 늘 닫힌 꼴이다 */
+  const askShape = creditAskShape(credits, { spent, canBuy: false });
 
   /**
    * 만드는 버튼 — **두 자리에 같은 버튼이 선다.**
@@ -189,7 +192,6 @@ export function ReadingPanel({
       type="button"
       onClick={press}
       disabled={chrome.makeDisabled}
-      aria-busy={chrome.buysCredits ? buy.checking : undefined}
       className={`${emphasis === 'primary' ? BUTTON_PRIMARY_FACE : BUTTON_SECONDARY_FACE} ${
         shape === 'pill'
           ? 'w-full whitespace-nowrap px-3 sm:w-auto sm:px-5'
@@ -365,20 +367,26 @@ export function ReadingPanel({
         */
         className={showsCarry ? 'max-sm:mb-6' : undefined}
         titleIcon="ticket"
-        title="풀이권 1장을 사용하시겠어요?"
+        /* 풀이권을 쓰는 확인의 한 꼴(`creditAskShape`, ADR 0251) — 사람 화면의 시트와 같은 물음 · 같은 풀이권 줄. 웹은 팔지 않아 0장이면 닫힌 꼴이다 */
+        title={readingConfirmTitle(noun, reading !== null)}
         /* 지금 글을 잃는 누름은 위험 색이다 — 「목록에서 빼기」 창과 같은 무게(B5). 잃을 글이 없으면 첫 초점도 받기 쪽이다 */
-        /* 창 안의 실행은 짧게 — 제목이 무엇을 쓰는지 말하므로 「다시 받기」로 두 단추가 나란히 든다(운영자 2026-10-26) */
-        confirmLabel={reading === null ? `${noun} 받기` : READING_AGAIN_LABEL}
-        onConfirm={confirmGenerate}
-        danger={reading !== null}
-        firstFocus={reading === null ? 'confirm' : 'cancel'}
+        confirmLabel={askShape.kind === 'use' ? (reading === null ? `${noun} 받기` : READING_AGAIN_LABEL) : askShape.confirmLabel}
+        onConfirm={askShape.kind === 'use' ? confirmGenerate : closeAsking}
+        danger={askShape.kind === 'use' && reading !== null}
+        firstFocus={askShape.kind === 'use' && reading !== null ? 'cancel' : 'confirm'}
+        cancelLabel={askShape.cancelLabel}
       >
-        {/* 무엇이 사라지나가 먼저, 돌려받는 길은 따로 한 줄(운영자 2026-10-26 — 세 문장이 한 덩어리였다) */}
-        {reading !== null && <p className="font-medium text-danger">{READING_REPLACES_NOTE}</p>}
-        <p>{READING_USES_TICKET_NOTE}</p>
+        {/* 무엇이 사라지나가 먼저, 쓰는 수는 따로 한 줄(운영자 2026-10-26 — 세 문장이 한 덩어리였다) */}
+        {askShape.kind === 'use' && reading !== null && <p className="font-medium text-danger">{READING_REPLACES_NOTE}</p>}
+        <div>
+          {askShape.lines.map((line, nth) => (
+            <p key={line} className={nth === 0 ? 'font-semibold text-foreground' : undefined}>
+              {line}
+            </p>
+          ))}
+        </div>
       </ConfirmDialog>
       )}
-      {buy.notice}
     </>
   );
 }
