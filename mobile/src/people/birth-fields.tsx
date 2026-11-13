@@ -211,7 +211,7 @@ export function BirthFields({
 
 const styles = StyleSheet.create({
   fields: { gap: 18 },
-  pair: { flexDirection: 'row', gap: 12 },
+  pair: { flexDirection: 'row', alignItems: 'flex-start', gap: 12 },
   half: { flex: 1 },
   group: { gap: 6 },
   row: { flexDirection: 'row', gap: 6 },
