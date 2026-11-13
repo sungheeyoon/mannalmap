@@ -3,12 +3,14 @@ import { StyleSheet, View } from 'react-native';
 
 import { INPUT_EDIT_CHANGE_CONFIRM } from '@consent/index';
 import { samePillarInput } from '@input/edit';
-import { missingAnswer, type Query } from '@input/query';
+import { birthFieldErrors } from '@input/field-errors';
+import type { Query } from '@input/query';
 
 import { useClient } from '@/auth/connected';
 import { editPersonInput, saveFailureOf } from '@/reading/chart-writes';
 import { followRefusal } from '@/reading/panel';
 import { FailureLine } from '@/ui/failure-line';
+import { useFieldErrors } from '@/ui/field-error';
 import { PrimaryButton, TextButton } from '@/ui/parts';
 import { COLOR, FONT, RADIUS, TYPE } from '@/ui/tokens';
 import { Card } from '@/ui/surfaces';
@@ -19,7 +21,8 @@ import { WordText } from '@/ui/word-text';
 
 /**
  * 저장된 출생 정보를 고치는 폼 — 웹의 `app/me/edit-input.tsx` 와 같은 판정 · 글자다. 여덟 글자는 서버가 이 입력에서 센다(ADR 0211).
- * 단추를 잠그지 않는다 — 저장할 것이 없으면 누른 그때 곁의 말이 경고 색으로 선다(ADR 0160).
+ * 단추를 잠그지 않는다 — 고칠 칸이 있으면 누른 그때 그 칸이 붉고 칸 아래에서 말하며(ADR 0252), 저장할 것이 없으면 곁의 말이
+ * 경고 색으로 선다(ADR 0160).
  */
 export function EditInputForm({
   personId,
@@ -47,12 +50,11 @@ export function EditInputForm({
   const [tried, setTried] = useState(false);
 
   const { query } = form;
-  const missing = missingAnswer(query);
+  const checks = useFieldErrors(birthFieldErrors(query, { name: editableName }));
   const nameChanged = editableName && query.name.trim() !== current.name.trim();
   const pillarsSame = samePillarInput(current, query);
   const unchanged = pillarsSame && !nameChanged;
-  const blocked = missing !== null || unchanged;
-  const warn = tried && blocked;
+  const warn = tried && unchanged;
 
   const save = async () => {
     setConfirming(false);
@@ -69,7 +71,8 @@ export function EditInputForm({
   };
 
   const press = () => {
-    if (blocked) {
+    if (!checks.press()) return;
+    if (unchanged) {
       setTried(true);
       return;
     }
@@ -90,10 +93,10 @@ export function EditInputForm({
         </View>
       )}
 
-      <BirthFields form={form} showName={editableName} />
+      <BirthFields form={form} showName={editableName} errors={checks.shown} anchor={checks.anchor} />
 
       {pillarsSame && (nameChanged || warn) && (
-        <WordText style={warn && unchanged && missing === null ? styles.warn : shared.meta}>
+        <WordText style={warn ? styles.warn : shared.meta}>
           {nameChanged ? '이름만 바뀌었어요. 이름은 여덟 글자에 들어가지 않아서 출생 정보와 사주는 그대로예요.' : '바뀐 것이 없어요.'}
         </WordText>
       )}
@@ -101,7 +104,6 @@ export function EditInputForm({
       <View style={styles.actions}>
         <PrimaryButton label={saving ? '저장하는 중…' : pillarsSame && nameChanged ? '이름 저장' : '변경 사항 저장'} onPress={press} disabled={saving} />
         <TextButton label="작성 그만두기" onPress={onCancel} disabled={saving} />
-        {missing !== null && <WordText style={warn ? styles.warn : shared.meta}>{missing}</WordText>}
       </View>
 
       {failure !== null && <FailureLine>저장하지 못했어요. {failure}</FailureLine>}

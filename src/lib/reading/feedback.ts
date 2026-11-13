@@ -145,3 +145,23 @@ export type ReadingAnswer = {
   readonly issueTags: readonly IssueTag[];
   readonly comment: string | null;
 };
+
+/**
+ * 「의견 보내기」를 누른 때 아직 안 고른 필수 질문 — 그 질문 아래에 붉게 선다(ADR 0252). 눈금 둘 · 분량 하나의 차례다.
+ * 문장은 구글 설문지가 비운 필수 질문 아래 세우는 말 그대로다(대장 home 「확인 전」).
+ */
+export const FEEDBACK_REQUIRED = '필수 질문입니다.';
+
+export type FeedbackField = 'usefulness' | 'fit' | 'length';
+
+export function feedbackErrors(answer: {
+  usefulness: unknown;
+  fit: unknown;
+  feltLength: unknown;
+}): { field: FeedbackField; message: string }[] {
+  return [
+    ...(answer.usefulness === null ? [{ field: 'usefulness', message: FEEDBACK_REQUIRED } as const] : []),
+    ...(answer.fit === null ? [{ field: 'fit', message: FEEDBACK_REQUIRED } as const] : []),
+    ...(answer.feltLength === null ? [{ field: 'length', message: FEEDBACK_REQUIRED } as const] : []),
+  ];
+}

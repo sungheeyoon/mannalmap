@@ -8,6 +8,7 @@ import {
   FEEDBACK_SCALE,
   FEEDBACK_SCOPE_NOTE,
   FEEDBACK_THANKS,
+  feedbackErrors,
   FELT_LENGTHS,
   FELT_LENGTH_LABEL,
   ISSUE_TAGS,
@@ -28,6 +29,7 @@ import { TYPE_NAME } from '../../ui/surfaces';
 import { submitReadingFeedback } from './actions';
 import type { ReadingTarget } from './target';
 import { FailureLine } from '../../ui/failure-line';
+import { FieldErrorLine, invalidProps, useFieldErrors } from '../../ui/field-error';
 
 /**
  * 읽고 나서 답하는 자리 — **글 바로 아래**다.
@@ -69,9 +71,9 @@ export function ReadingFeedback({
   const [comment, setComment] = useState(given?.comment ?? '');
   const [failure, setFailure] = useState<string | null>(null);
   const [saving, startSaving] = useTransition();
-  /** 다 고르기 전에 「의견 보내기」를 눌러 봤나 — 곁의 말이 도움말에서 경고로 바뀌는 때(ADR 0160 의 3) */
-  const [tried, setTried] = useState(false);
   const form = useRef<HTMLFormElement>(null);
+  /* 다 고르기 전에 누르면 안 고른 질문마다 그 아래에 붉게 서고 첫 질문으로 데려간다(ADR 0252) */
+  const checks = useFieldErrors(feedbackErrors({ usefulness, fit, feltLength }), form);
   /* 첫 질문의 대상(나를 · 이 사람을 · 두 사람을)은 풀이의 kind 가 고른다 — 열과 보낼 수 있는 조건은 그대로다 */
   const questions = feedbackQuestions(target.kind);
 
@@ -94,20 +96,11 @@ export function ReadingFeedback({
   const ready = usefulness !== null && fit !== null && feltLength !== null;
 
   /**
-   * **단추를 잠그지 않는다**(운영자 결정 2026-10-18 G-97 ④, ADR 0160 의 3) — 다 고르기 전에 누르면 곁의 말을 경고 색으로 세우고
-   * 아직 안 고른 첫 질문으로 데려간다.
+   * **단추를 잠그지 않는다**(운영자 결정 2026-10-18 G-97 ④, ADR 0160 의 3 · 0252) — 다 고르기 전에 누르면 안 고른 질문을 붉히고
+   * 첫 질문으로 데려간다.
    */
-  const refuse = () => {
-    setTried(true);
-    const gap = usefulness === null ? `useful-${runId}` : fit === null ? `fit-${runId}` : `length-${runId}`;
-    form.current?.querySelector<HTMLInputElement>(`input[name="${gap}"]`)?.focus();
-  };
-
   const send = () => {
-    if (!ready) {
-      refuse();
-      return;
-    }
+    if (!checks.press() || usefulness === null || fit === null || feltLength === null) return;
     setFailure(null);
 
     startSaving(async () => {
@@ -190,12 +183,14 @@ export function ReadingFeedback({
             question={questions.usefulness}
             value={usefulness}
             onChange={setUsefulness}
+            error={checks.messageOf('usefulness')}
           />
           <Scale
             name={`fit-${runId}`}
             question={questions.perceivedFit}
             value={fit}
             onChange={setFit}
+            error={checks.messageOf('fit')}
           />
         </div>
 
@@ -211,11 +206,13 @@ export function ReadingFeedback({
                   type="radio"
                   picked={feltLength === choice}
                   onPick={() => setFeltLength(choice)}
+                  invalid={invalidProps(`length-${runId}-error`, checks.messageOf('length'))}
                 >
                   {FELT_LENGTH_LABEL[choice]}
                 </Chip>
               ))}
             </div>
+            <FieldErrorLine id={`length-${runId}-error`} message={checks.messageOf('length')} className="mt-2" />
           </fieldset>
 
           <fieldset className="border-t border-border pt-6">
@@ -273,22 +270,17 @@ export function ReadingFeedback({
         <div className="-mx-5 -mb-5 flex flex-col gap-3 border-t border-border bg-surface-soft px-5 py-4 sm:-mx-7 sm:-mb-6 sm:flex-row sm:items-center sm:justify-end sm:px-7">
           {/*
             **다 고르기 전에만 까닭이 단추 옆에 선다**(2026-10-10 화면 점검 B20) — 셋을 다 골라야 보내지는데 어느 것이 필수인지 말이
-            없어 왜 안 눌리는지 몰랐다. 다 고르면 말은 걷힌다. 확정(대장 26, 운영자 2026-10-10). 단추는 가라앉되 누름을 받고(`aria-disabled`),
-            누른 뒤에는 같은 말이 경고 색 알림이 된다(운영자 2026-10-18)
+            없어 왜 안 눌리는지 몰랐다. 다 고르면 말은 걷힌다. 확정(대장 26, 운영자 2026-10-10). 단추는 잠그지 않고, 누른 뒤에는 이 말이
+            아니라 안 고른 질문마다 그 아래 붉은 줄이 선다(ADR 0252 — 운영자 2026-11-14)
           */}
           {!ready && (
-            <p
-              id={`feedback-locked-${runId}`}
-              role={tried ? 'alert' : undefined}
-              className={`text-small leading-5 ${tried ? 'font-medium text-danger' : 'text-secondary'}`}
-            >
+            <p id={`feedback-locked-${runId}`} className="text-small leading-5 text-secondary">
               필수 질문 3개에 답하면 보낼 수 있어요.
             </p>
           )}
           <button
             type="submit"
             disabled={saving}
-            aria-disabled={!ready || undefined}
             aria-describedby={ready ? undefined : `feedback-locked-${runId}`}
             className={`${BUTTON_PRIMARY} w-full sm:w-auto`}
           >
@@ -308,11 +300,14 @@ function Scale({
   question,
   value,
   onChange,
+  error,
 }: {
   name: string;
   question: FeedbackQuestion;
   value: FeedbackScore | null;
   onChange: (next: FeedbackScore) => void;
+  /** 누른 뒤 안 골랐으면 그 아래 설 붉은 말(ADR 0252) */
+  error: string | null;
 }) {
   return (
     /*
@@ -334,6 +329,7 @@ function Scale({
             type="radio"
             picked={value === score}
             onPick={() => onChange(score)}
+            invalid={invalidProps(`${name}-error`, error)}
             /* 숫자만 읽어 주면 무엇을 매기는지 안 들린다 — 양 끝은 이름으로 읽힌다 */
             label={
               score === 1
@@ -351,6 +347,7 @@ function Scale({
         <span>{question.low}</span>
         <span>{question.high}</span>
       </div>
+      <FieldErrorLine id={`${name}-error`} message={error} className="mt-2" />
     </fieldset>
   );
 }
@@ -368,6 +365,7 @@ function Chip({
   picked,
   onPick,
   label,
+  invalid = {},
   children,
 }: {
   id: string;
@@ -376,6 +374,8 @@ function Chip({
   picked: boolean;
   onPick: () => void;
   label?: string;
+  /** 고칠 질문이면 그 오류 줄을 가리키는 속성(`invalidProps`) — 칩의 테가 붉다 */
+  invalid?: ReturnType<typeof invalidProps>;
   children: React.ReactNode;
 }) {
   return (
@@ -384,7 +384,7 @@ function Chip({
       className={`relative flex min-h-11 min-w-11 cursor-pointer items-center justify-center rounded-full border px-3.5 py-2 text-center text-note active:scale-[0.97] has-[:focus-visible]:outline has-[:focus-visible]:outline-3 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-[color-mix(in_srgb,var(--accent)_55%,transparent)] ${
         picked
           ? 'border-accent bg-accent font-semibold text-on-accent'
-          : 'border-border bg-surface text-foreground hover:border-border-strong'
+          : 'border-border bg-surface text-foreground hover:border-border-strong has-[[aria-invalid=true]]:border-danger'
       }`}
     >
       <input
@@ -394,6 +394,7 @@ function Chip({
         checked={picked}
         onChange={onPick}
         aria-label={label}
+        {...invalid}
         className="absolute inset-0 cursor-pointer appearance-none opacity-0"
       />
       {children}

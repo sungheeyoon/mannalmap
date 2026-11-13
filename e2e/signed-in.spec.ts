@@ -16,6 +16,8 @@ import { calculateChart, chartOf } from '@/src/lib/input/chart';
 import { DEFAULT_QUERY, queryFromSearchParams } from '@/src/lib/input/query';
 import { READING_AGAIN_LABEL, READING_NOUN, READING_REPLACES_NOTE, READING_USES_TICKET_NOTE, readingEvidenceOf, readingNoneNote } from '@/src/lib/reading';
 import { readingConfirmTitle } from '@/src/lib/reading/credit-ask';
+import { FEEDBACK_REQUIRED } from '@/src/lib/reading/feedback';
+import { SIDE_PERSON } from '@/src/lib/people/pick';
 import { CHART_DETAIL_LABEL, COMPAT_OTHER_LABEL, PARTNER_TYPED_LABEL, chartTitleOf, compatWithLabel, partnerAskTitle, readingAskTitle, readingCostLine, readingInviteTitle } from '@/src/lib/reading/person-screen';
 import { TASTE_RUN_VERSIONS, tasteEvidenceOf, tasteFingerprintOf } from '@/src/lib/reading/taste-run';
 import type { Saju } from '@/src/lib/saju';
@@ -946,23 +948,25 @@ test.describe('초대된 사람의 로그인 흐름', () => {
     /* **세 가지를 다 고르기 전에는 못 보낸다** — 안 고른 것이 어느 값으로든 저장되면 안 된다 */
     const send = page.getByRole('button', { name: '의견 보내기' });
     const locked = page.getByText('필수 질문 3개에 답하면 보낼 수 있어요.');
-    await expect(send).toHaveAttribute('aria-disabled', 'true');
+    const required = page.locator('[data-field-error]').filter({ hasText: FEEDBACK_REQUIRED });
+    await expect(send).not.toHaveAttribute('aria-disabled', /.*/);
 
     /*
-      **단추는 가라앉되 누름을 받는다**(운영자 2026-10-18 G-97 ④, ADR 0160 의 3) — 덜 고른 채 누르면 곁의 말이 경고 알림이 되고
-      아직 안 고른 첫 질문으로 데려간다. 잠긴 모양의 단추는 Playwright 가 기다리므로 `force` 로 누른다
+      **단추는 잠기지 않는다**(운영자 2026-10-18 G-97 ④, ADR 0160 의 3 · 0252) — 덜 고른 채 누르면 안 고른 질문마다 그 아래 붉은 줄이 서고
+      아직 안 고른 첫 질문으로 데려간다. 곁의 말은 회색 덧말 그대로다
     */
     await page.getByRole('radio', { name: '5 — 많이 됐어요' }).check();
-    await expect(locked).not.toHaveAttribute('role', 'alert');
-    await send.click({ force: true });
-    await expect(page.getByRole('alert').filter({ hasText: '필수 질문 3개에 답하면 보낼 수 있어요.' })).toBeVisible();
+    await expect(required).toHaveCount(0);
+    await send.click();
+    await expect(required).toHaveCount(2);
     await expect(page.getByRole('radio', { name: '1 — 많이 달라요' })).toBeFocused();
     await expect(page.getByText('답해 주셔서 고마워요')).toHaveCount(0);
 
+    /* 고른 질문의 줄은 그 자리에서 사라진다 */
     await page.getByRole('radio', { name: '1 — 많이 달라요' }).check();
-    await expect(send).toHaveAttribute('aria-disabled', 'true');
+    await expect(required).toHaveCount(1);
     await page.getByRole('radio', { name: '길어요' }).check();
-    await expect(send).not.toHaveAttribute('aria-disabled', /.*/);
+    await expect(required).toHaveCount(0);
     await expect(locked).toHaveCount(0);
 
     await page.getByRole('checkbox', { name: '너무 추상적이에요' }).check();
@@ -2805,15 +2809,19 @@ test.describe('로그인한 사람의 궁합 화면', () => {
 
   /**
    * **반쪽 링크로는 못 넘어간다.** 한 칸만 적힌 주소로 열면 그 칸만 채워지고, 나머지
-   * 한 칸을 정하기 전에는 버튼이 안 눌린다 — 남의 사주가 섞여 보일 자리가 없다.
+   * 한 칸을 정하기 전에는 눌러도 안 넘어간다 — 그 칸이 붉고 칸 아래에서 말한다(ADR 0252). 남의 사주가 섞여 보일 자리가 없다.
    */
   test('한 사람만 적힌 궁합 주소는 그 칸만 채운다', async ({ page, signedIn }) => {
     expect(signedIn.label).not.toBe('');
     await page.goto('/compat#a.name=민수&a.date=1990-05-15&a.hour=11:20');
 
     await expectBirthDate(slotCard(page, '첫 번째'), '1990-05-15');
-    await expect(page.getByRole('button', { name: '궁합 보기' })).toBeDisabled();
-    await expect(page.getByText('두 번째 사람을 골라 주세요')).toBeVisible();
+    /* 누르기 전에는 아무 칸도 붉지 않다 */
+    await expect(page.locator('[data-field-error]')).toHaveCount(0);
+    await page.getByRole('button', { name: '궁합 보기' }).click();
+    await expect(slotCard(page, '두 번째').locator('[data-field-error]').first()).toBeVisible();
+    await expect(slotCard(page, '첫 번째').locator('[data-field-error]')).toHaveCount(0);
+    await expect(page).toHaveURL(/\/compat/);
   });
 
   /**
@@ -3076,7 +3084,11 @@ test.describe('로그인한 사람의 궁합 화면', () => {
     await expect(page.getByRole('listbox')).toHaveCount(0);
     await expect(second).toHaveAttribute('aria-controls', /.+/);
     await expect(page.getByText('찾는 사람이 없어요')).toHaveCount(0);
-    await expect(page.getByText('두 번째 사람을 골라 주세요.')).toBeVisible();
+    /* 고르지 않은 칸은 누른 뒤 그 칸 아래에서 말한다(ADR 0252) */
+    await expect(page.getByText(`${SIDE_PERSON.b}을 골라 주세요.`)).toHaveCount(0);
+    await page.getByRole('button', { name: '궁합 보기' }).click();
+    await expect(slotCard(page, '두 번째').locator('[data-field-error]')).toHaveText(`${SIDE_PERSON.b}을 골라 주세요.`);
+    await expect(second).toHaveAttribute('aria-invalid', 'true');
   });
 
 

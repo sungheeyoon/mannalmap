@@ -40,6 +40,7 @@ const ALLOWED_LIB_EDGES = new Set([
   'matching → profile',
   'matching → reading',
   'matching → saju',
+  'people → input',
   'reading → discovery',
   'reading → people',
   'reading → saju',

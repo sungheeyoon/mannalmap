@@ -475,12 +475,18 @@
   outline: 3px solid color-mix(in srgb, var(--accent) 55%, transparent);
   outline-offset: -3px;
 }
+/* 고칠 칸(ADR 0252) — 누른 뒤에만 `aria-invalid` 가 선다. 고르는 칸은 선택지 테가 붉다 */
+.options[aria-invalid='true'] .option {
+  border-color: var(--danger);
+}
+.name input[aria-invalid='true'],
 .digit input[aria-invalid='true'] {
   background: var(--danger-wash);
   color: var(--danger);
   border-color: var(--danger);
   box-shadow: 0 0 0 1px var(--danger);
 }
+.name input[aria-invalid='true']:focus,
 .digit input[aria-invalid='true']:focus {
   box-shadow: 0 0 0 1px var(--danger), 0 0 0 4px var(--danger-wash);
 }
@@ -531,4 +537,15 @@
   .yearInput {
     transition: none;
   }
+}
+
+/* 칸 바로 아래의 붉은 한 줄(`FieldErrorLine`) — 이름표 단에 선 칸(출생 시각)은 칸의 왼쪽 끝에 맞춘다 */
+.fieldError {
+  margin-top: 6px;
+}
+.fields > .fieldError {
+  margin-top: -2px;
+}
+.fieldError.onRail {
+  margin-left: calc(var(--rail) + var(--rail-gap));
 }

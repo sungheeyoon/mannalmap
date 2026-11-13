@@ -1,12 +1,13 @@
 import { Redirect, router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { useCallback, useRef, useState, type ComponentRef } from 'react';
-import { Keyboard, KeyboardAvoidingView, Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
+import { Keyboard, KeyboardAvoidingView, Pressable, StyleSheet, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { SERVICE_NAME } from '@brand';
 import { COMPAT_CREDIT_NOTE, COMPAT_ENTRY, COMPAT_SIGN_IN_ACTION, COMPAT_SIGN_IN_TITLE, MEMBER_SIGN_IN_ASK } from '@brand/guide';
 import { ELEVATION } from '@design';
 import { calculateChart, dateRefusal } from '@input/chart';
+import { birthFieldErrors, dateDigitWrong, timeDigitWrong } from '@input/field-errors';
 import { convertedLine, dateOfParts, limitsOf, timeOfParts } from '@input/entry';
 import { ADVANCED_SETTINGS, HOUR_UNKNOWN_HINT } from '@input/copy';
 import { BIRTH_CITY_OPTIONS, BIRTH_DIGIT_LABEL, BIRTH_SELECT_LABEL, DEFAULT_QUERY, HOUR_UNKNOWN_CHOICE, NAME_MAX, TIME_BASES, TIME_BASIS, type Query } from '@input/query';
@@ -19,6 +20,7 @@ import { readGate } from '@/home/gate';
 import { POLICY_TITLE, SUPPORT_TITLE } from '@/info/copy';
 import { Choices, DigitField, Field, FieldLabel, KeyboardDoneBar, PrimaryButton, SecondaryButton, Select } from '@/ui/parts';
 import { SunMark } from '@/share/marks';
+import { FieldErrorLine, FieldScrollView, useFieldErrors } from '@/ui/field-error';
 import { FoldIcon, Icon } from '@/ui/icons';
 import { Logo } from '@/ui/logo';
 import { COLOR, FONT, RADIUS, TYPE } from '@/ui/tokens';
@@ -144,8 +146,8 @@ function BirthScreen({ signedOut }: { signedOut: boolean }) {
   const [rule, setRule] = useState<LateNightRule>(DEFAULT_QUERY.rule);
   const [basis, setBasis] = useState<Query['basis']>(DEFAULT_QUERY.basis);
   const [saeunFrom, setSaeunFrom] = useState(String(DEFAULT_QUERY.saeunFrom));
-  const [refusal, setRefusal] = useState<{ message: string; of: string } | null>(null);
 
+  const yearRef = useRef<ComponentRef<typeof TextInput>>(null);
   const monthRef = useRef<ComponentRef<typeof TextInput>>(null);
   const dayRef = useRef<ComponentRef<typeof TextInput>>(null);
   const hourRef = useRef<ComponentRef<typeof TextInput>>(null);
@@ -169,9 +171,15 @@ function BirthScreen({ signedOut }: { signedOut: boolean }) {
   const { years, maxDay } = limitsOf(calendar, year, month);
   const refused = dateRefusal(query)?.part ?? null;
   const converted = convertedLine(query);
-  /* 거절 문구는 그때 낸 값의 것이다 — 값을 고치면 걷힌다. 연도만 적은 날짜는 `query` 에 아직 안 서서 칸의 글자도 함께 본다 */
-  const typed = JSON.stringify([query, year, month, day, hour, minute]);
-  const failure = refusal?.of === typed ? refusal.message : null;
+  /*
+    칸마다의 오류 — 「사주 보기」를 누른 뒤에만 그 칸이 붉고 칸 아래에서 말한다(ADR 0252). 이 화면은 이름 없이 계산하므로 이름은 안 본다.
+    엔진의 거절(없는 날짜 등)도 생년월일 칸의 것이다. 단추 위에 모아 쓰던 한 줄은 걷었다.
+  */
+  const checks = useFieldErrors(birthFieldErrors(query, { name: false }));
+  const dateError = checks.messageOf('date');
+  const hourError = checks.messageOf('hour');
+  const dateWrong = (part: 'year' | 'month' | 'day', value: string) => dateError !== null && dateDigitWrong(part, value, refused);
+  const timeWrong = (value: string, max: number) => hourError !== null && timeDigitWrong(value, max);
 
   const chooseHour = (next: 'known' | 'unknown') => {
     /* 「모름」이면 적어 둔 시각도 지운다 — 다시 「직접 입력」을 골랐을 때 지운 줄 안 값으로 계산되지 않게 */
@@ -184,19 +192,16 @@ function BirthScreen({ signedOut }: { signedOut: boolean }) {
 
   /* 계산은 기기 안에서 끝난다 — 서버를 안 부른다. 적은 값은 이 화면이 들고 있어 결과에서 돌아와도 그대로다 */
   const submit = () => {
+    if (!checks.press()) return;
     const result = calculateChart(query);
-    if (!result.ok) {
-      setRefusal({ message: result.message, of: typed });
-      return;
-    }
-    setRefusal(null);
+    if (!result.ok) return;
     router.push(chartPath(query) as never);
   };
 
   return (
     <SafeAreaView style={styles.screen}>
       <KeyboardAvoidingView style={styles.screen} behavior="padding">
-        <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled" keyboardDismissMode="on-drag">
+        <FieldScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled" keyboardDismissMode="on-drag">
           <View style={styles.brandRow}>
             {/* 로고는 웹의 그 파일이다 — 앱에 사본을 두지 않는다 */}
             <Logo size={32} />
@@ -242,16 +247,16 @@ function BirthScreen({ signedOut }: { signedOut: boolean }) {
                 </View>
               </View>
 
-              <View style={styles.group}>
+              <View ref={checks.anchor('date', () => (dateWrong('month', month) ? monthRef : dateWrong('day', day) ? dayRef : yearRef).current?.focus())} style={styles.group}>
                 <FieldLabel>생년월일</FieldLabel>
                 <View style={styles.row}>
-                  <DigitField value={year} onChange={setYear} label={BIRTH_DIGIT_LABEL.year} unit="년" placeholder={String(years.max - 30)} digits={4} min={years.min} max={years.max} refused={refused === 'year'} onFull={() => monthRef.current?.focus()} />
-                  <DigitField inputRef={monthRef} value={month} onChange={setMonth} label={BIRTH_DIGIT_LABEL.month} unit="월" placeholder="1~12" digits={2} min={1} max={12} advanceEarly refused={refused === 'month'} onFull={() => dayRef.current?.focus()} />
-                  <DigitField inputRef={dayRef} value={day} onChange={setDay} label={BIRTH_DIGIT_LABEL.day} unit="일" placeholder={`1~${maxDay}`} digits={2} min={1} max={maxDay} advanceEarly refused={refused === 'day'} onFull={() => (hourKnown ? hourRef.current?.focus() : Keyboard.dismiss())} />
+                  <DigitField inputRef={yearRef} value={year} onChange={setYear} label={BIRTH_DIGIT_LABEL.year} error={dateWrong('year', year) ? dateError : null} unit="년" placeholder={String(years.max - 30)} digits={4} min={years.min} max={years.max} onFull={() => monthRef.current?.focus()} />
+                  <DigitField inputRef={monthRef} value={month} onChange={setMonth} label={BIRTH_DIGIT_LABEL.month} error={dateWrong('month', month) ? dateError : null} unit="월" placeholder="1~12" digits={2} min={1} max={12} advanceEarly onFull={() => dayRef.current?.focus()} />
+                  <DigitField inputRef={dayRef} value={day} onChange={setDay} label={BIRTH_DIGIT_LABEL.day} error={dateWrong('day', day) ? dateError : null} unit="일" placeholder={`1~${maxDay}`} digits={2} min={1} max={maxDay} advanceEarly onFull={() => (hourKnown ? hourRef.current?.focus() : Keyboard.dismiss())} />
                 </View>
-                {converted !== null && (
-                  <WordText style={[styles.converted, !converted.ok && styles.failure]}>{converted.text}</WordText>
-                )}
+                <FieldErrorLine message={dateError} />
+                {/* 못 바꾼 까닭은 누르기 전에는 회색 덧말, 누른 뒤에는 칸 아래 붉은 줄이 같은 말을 하므로 비킨다(ADR 0252) */}
+                {converted !== null && (converted.ok || dateError === null) && <WordText style={styles.converted}>{converted.text}</WordText>}
                 <View style={styles.row}>
                   <Choices value={calendar} onPick={setCalendar} options={CALENDARS.map((one) => ({ value: one, label: CALENDAR_KO[one] }))} />
                 </View>
@@ -266,15 +271,21 @@ function BirthScreen({ signedOut }: { signedOut: boolean }) {
               </View>
 
               {hourChoice === 'known' && (
+                <View ref={checks.anchor('hour', () => (timeWrong(hour, 23) ? hourRef : minuteRef).current?.focus())}>
                 <View style={styles.rail}>
                   <View style={styles.railHead}>
                     <WordText style={styles.railLabel}>시각</WordText>
                     <WordText style={styles.railNote}>24시간</WordText>
                   </View>
                   <View style={styles.railBody}>
-                    <DigitField inputRef={hourRef} value={hour} onChange={setHour} label={BIRTH_DIGIT_LABEL.hour} unit="시" placeholder="0~23" digits={2} min={0} max={23} onFull={() => minuteRef.current?.focus()} />
-                    <DigitField inputRef={minuteRef} value={minute} onChange={setMinute} label={BIRTH_DIGIT_LABEL.minute} unit="분" placeholder="0~59" digits={2} min={0} max={59} onFull={Keyboard.dismiss} />
+                    <DigitField inputRef={hourRef} value={hour} onChange={setHour} label={BIRTH_DIGIT_LABEL.hour} error={timeWrong(hour, 23) ? hourError : null} unit="시" placeholder="0~23" digits={2} min={0} max={23} onFull={() => minuteRef.current?.focus()} />
+                    <DigitField inputRef={minuteRef} value={minute} onChange={setMinute} label={BIRTH_DIGIT_LABEL.minute} error={timeWrong(minute, 59) ? hourError : null} unit="분" placeholder="0~59" digits={2} min={0} max={59} onFull={Keyboard.dismiss} />
                   </View>
+                </View>
+                {/* 시각 칸의 왼쪽 끝(이름표 단 64 + 8)에 맞춘다 */}
+                <View style={styles.railError}>
+                  <FieldErrorLine message={hourError} />
+                </View>
                 </View>
               )}
 
@@ -320,7 +331,6 @@ function BirthScreen({ signedOut }: { signedOut: boolean }) {
 
             {/* 폼이 짧은 화면에서도 단추는 엄지가 닿는 맨 아래에 선다 */}
             <View style={styles.action}>
-              {failure !== null && <WordText style={styles.failure}>{failure}</WordText>}
               {/* 로그인 전에는 웹 첫 화면의 주 단추와 같은 글자다 — 무엇이 무료인지 단추가 말한다(ADR 0131 · 0226) */}
               <PrimaryButton label={signedOut ? '무료로 내 사주 보기' : '사주 보기'} onPress={submit} />
               {/* 이미 쓰는 사람의 길 — 주 단추 바로 아래 한 줄, 웹 첫 화면과 같은 글자다(ADR 0226). 생년월일 없이 홈으로 간다 */}
@@ -345,7 +355,7 @@ function BirthScreen({ signedOut }: { signedOut: boolean }) {
               ))}
             </View>
           )}
-        </ScrollView>
+        </FieldScrollView>
         <KeyboardDoneBar />
       </KeyboardAvoidingView>
     </SafeAreaView>
@@ -393,6 +403,7 @@ const styles = StyleSheet.create({
   railLabel: { width: 64, minHeight: 44, lineHeight: 44, fontSize: TYPE.small, fontFamily: FONT.bold, color: COLOR.secondary },
   railNote: { fontFamily: FONT.medium, fontSize: TYPE.fine, color: COLOR.muted, marginTop: -14 },
   railBody: { flex: 1, flexDirection: 'row', gap: 6 },
+  railError: { marginLeft: 72 },
   disclosure: { minHeight: 44, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 14, borderRadius: RADIUS.cell, borderWidth: 1, borderColor: COLOR.borderStrong, backgroundColor: COLOR.surface },
   choiceHint: { marginLeft: 72, fontFamily: FONT.medium, fontSize: TYPE.fine, lineHeight: 16, color: COLOR.secondary },
   advancedIntro: { fontFamily: FONT.medium, fontSize: TYPE.fine, lineHeight: 20, color: COLOR.secondary },
@@ -401,5 +412,4 @@ const styles = StyleSheet.create({
   disclosureSummary: { flex: 1, minWidth: 0, marginHorizontal: 8, textAlign: 'right', fontFamily: FONT.medium, fontSize: TYPE.small, color: COLOR.secondary },
   action: { marginTop: 'auto', paddingTop: 12, gap: 10 },
   converted: { fontFamily: FONT.medium, fontSize: TYPE.small, color: COLOR.secondary, marginVertical: 2 },
-  failure: { fontSize: TYPE.small, fontFamily: FONT.medium, color: COLOR.danger, marginHorizontal: 6 },
 });

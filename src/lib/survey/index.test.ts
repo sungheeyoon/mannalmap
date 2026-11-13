@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  SURVEY_COPY,
+  surveyErrors,
   EMPTY_ANSWERS,
   IMPROVE_OPTIONS,
   LIKED_OPTIONS,
@@ -131,5 +133,12 @@ describe('운영 화면은 열쇠를 말로 옮긴다', () => {
 
   it('모르는 문항도 열쇠 그대로 선다', () => {
     expect(choiceLabel('gone', 'self_reading')).toBe('self_reading');
+  });
+});
+
+describe('설문의 칸 오류(ADR 0252)', () => {
+  it('아무것도 안 답하면 첫 문항에 선다', () => {
+    expect(surveyErrors(EMPTY_ANSWERS)).toEqual([{ field: 'liked', message: SURVEY_COPY.nothing }]);
+    expect(surveyErrors({ ...EMPTY_ANSWERS, freeText: '좋아요' })).toEqual([]);
   });
 });

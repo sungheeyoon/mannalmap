@@ -16,6 +16,7 @@ import { FIELD } from '@design';
 import { digitOutOfRange } from '@input/entry';
 
 import { Button } from './buttons';
+import { invalidLabel } from './field-error';
 import { FoldIcon } from './icons';
 import { COLOR, FONT, CONTROL, RADIUS, TYPE } from './tokens';
 
@@ -33,6 +34,7 @@ export function Field({
   label,
   autoCapitalize,
   refused = false,
+  error = null,
   inputRef,
   disabled = false,
 }: {
@@ -44,6 +46,8 @@ export function Field({
   label: string;
   autoCapitalize?: 'none' | 'characters';
   refused?: boolean;
+  /** 누른 뒤 이 칸이 고칠 칸이면 그 이유 — 테가 붉고 읽어 주는 이름 뒤에 실린다. 줄은 칸 아래 `FieldErrorLine`(ADR 0252) */
+  error?: string | null;
   inputRef?: Ref<ComponentRef<typeof TextInput>>;
   /** 저장하는 동안 잠근다 — 그 사이 적은 것은 저장이 끝나 폼이 비면 사라진다 */
   disabled?: boolean;
@@ -53,13 +57,13 @@ export function Field({
       ref={inputRef}
       editable={!disabled}
       accessibilityState={{ disabled }}
-      style={[styles.control, refused && styles.wrong, disabled && styles.off]}
+      style={[styles.control, (refused || error != null) && styles.wrong, disabled && styles.off]}
       value={value}
       onChangeText={onChange}
       maxLength={maxLength}
       placeholder={placeholder}
       placeholderTextColor={COLOR.muted}
-      accessibilityLabel={label}
+      accessibilityLabel={invalidLabel(label, error)}
       autoCapitalize={autoCapitalize}
       autoCorrect={false}
       spellCheck={false}
@@ -101,7 +105,10 @@ export function TextButton({ label, onPress, disabled = false }: { label: string
   return <Button label={label} onPress={onPress} disabled={disabled} variant="tertiary" style={styles.textButton} />;
 }
 
-/** 숫자 칸 — 숫자만 받고, 범위 밖이면 붉어지고, 다 적으면 다음 칸으로 간다. 판정은 웹과 같은 `digitOutOfRange` 다 */
+/**
+ * 숫자 칸 — 숫자만 받고, 다 적으면 다음 칸으로 간다(범위 안일 때만, 웹과 같은 `digitOutOfRange`). 붉어지는 것은 제출을 누른 뒤
+ * 폼이 고칠 칸으로 짚었을 때뿐이다(`error`, ADR 0252) — 적는 도중 「13월」에 붉히지 않는다.
+ */
 export function DigitField({
   value,
   onChange,
@@ -110,7 +117,7 @@ export function DigitField({
   digits,
   min,
   max,
-  refused = false,
+  error = null,
   inputRef,
   onFull,
   advanceEarly = false,
@@ -124,7 +131,8 @@ export function DigitField({
   digits: number;
   min: number;
   max: number;
-  refused?: boolean;
+  /** 누른 뒤 이 칸이 고칠 칸이면 그 이유 — 테가 붉고 읽어 주는 이름 뒤에 실린다(ADR 0252) */
+  error?: string | null;
   inputRef?: Ref<ComponentRef<typeof TextInput>>;
   onFull?: () => void;
   /** 뒤에 숫자가 더 올 수 없으면 한 자리로도 넘어간다(「5」월). 시각은 끈다 — 「33」이 3시 3분으로 조용히 갈라지면 시주가 틀린다 */
@@ -133,7 +141,7 @@ export function DigitField({
   label: string;
   disabled?: boolean;
 }) {
-  const wrong = refused || digitOutOfRange(value, digits, min, max);
+  const wrong = error != null;
   return (
     <View style={styles.digit}>
       <TextInput
@@ -153,7 +161,7 @@ export function DigitField({
         keyboardType="number-pad"
         returnKeyType="done"
         inputAccessoryViewID={Platform.OS === 'ios' ? KEYBOARD_DONE : undefined}
-        accessibilityLabel={label}
+        accessibilityLabel={invalidLabel(label, error)}
       />
       <Text style={styles.unit}>{unit}</Text>
     </View>
@@ -289,7 +297,7 @@ export function PrimaryButton({ label, onPress, disabled = false }: { label: str
 const styles = StyleSheet.create({
   label: { fontSize: TYPE.small, fontFamily: FONT.bold, color: COLOR.secondary, marginBottom: 2 },
   control: { ...FIELD, fontFamily: FONT.medium, color: COLOR.foreground },
-  wrong: { borderColor: COLOR.danger, borderWidth: 2 },
+  wrong: { borderColor: COLOR.danger, borderWidth: 2, backgroundColor: COLOR.dangerWash },
   doneBar: { alignItems: 'flex-end', backgroundColor: COLOR.surfaceSunken, borderTopWidth: 1, borderTopColor: COLOR.border },
   doneButton: { minHeight: 44, justifyContent: 'center', paddingHorizontal: 16 },
   doneText: { fontFamily: FONT.bold, fontSize: TYPE.field, color: COLOR.foreground },

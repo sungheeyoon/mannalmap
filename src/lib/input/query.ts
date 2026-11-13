@@ -345,16 +345,28 @@ export function dateEntryRefusal(query: Query): { part: DatePart; message: strin
  * (`민수의 생년월일을 입력해 주세요`).
  */
 export function missingForCalculation(query: Query): string | null {
-  if (query.date === '') return '생년월일을 입력해 주세요.';
+  return missingDate(query)?.message ?? missingHour(query);
+}
+
+/**
+ * 생년월일 칸 하나의 답 — 비었거나(`part` 없음) 다 적었는데 해 · 달 · 날 한 칸이 어긋났다(`part`). 칸마다 오류를 세우는
+ * 판정(`birthFieldErrors`, `field-errors.ts`)과 위 `missingForCalculation` 이 같은 함수를 본다.
+ */
+export function missingDate(query: Query): { part?: DatePart; message: string } | null {
+  if (query.date === '') return { message: '생년월일을 입력해 주세요.' };
   // 범위 밖의 해 · 달 · 날은 **여기서** 걸린다 — 버튼을 잠그는 자리와 계산을 막는 자리가 하나다.
-  const refused = dateEntryRefusal(query);
-  if (refused !== null) return refused.message;
-  // 고르지 않은 것과 "모른다"고 답한 것은 다르다 — 위 `hourKnown` 참조.
+  return dateEntryRefusal(query);
+}
+
+/** 출생 시각 칸 하나의 답 — 고르지 않은 것과 "모른다"고 답한 것은 다르다(위 `hourKnown` 참조) */
+export function missingHour(query: Query): string | null {
   if (query.hourKnown === null) return `출생 시각을 입력하거나 「${HOUR_UNKNOWN_CHOICE}」을 골라 주세요.`;
   if (query.hourKnown && query.time === '') return '출생 시각을 입력해 주세요.';
-
   return null;
 }
+
+/** 이름 칸이 비었을 때의 말 — 폼의 제출(`missingAnswer`)과 칸 아래 줄(`birthFieldErrors`)이 같은 글자다 */
+export const NAME_MISSING = '이름을 입력해 주세요.';
 
 /**
  * 폼이 아직 답을 못 받은 칸 — **계산 조건에 이름이 하나 더 붙는다.**
@@ -369,7 +381,7 @@ export function missingForCalculation(query: Query): string | null {
  * 잠겼는데 계산은 되는 상태가 여기서는 만들어지지 않는다.
  */
 export function missingAnswer(query: Query): string | null {
-  if (query.name.trim() === '') return '이름을 입력해 주세요.';
+  if (query.name.trim() === '') return NAME_MISSING;
 
   return missingForCalculation(query);
 }

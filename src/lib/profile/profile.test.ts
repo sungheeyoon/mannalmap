@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  profileErrors,
   INTRO_MAX,
   NICKNAME_MAX,
   NICKNAME_MIN,
@@ -111,5 +112,12 @@ describe('사진 여러 장의 순서 (G-60)', () => {
 
   it('상한은 DB 검사식과 같은 여섯이다', () => {
     expect(PHOTO_MAX_COUNT).toBe(6);
+  });
+});
+
+describe('프로필의 칸 오류(ADR 0252)', () => {
+  it('닉네임이 짧으면 닉네임 칸이 걸린다', () => {
+    expect(profileErrors({ nickname: '가', intro: '' }).map((one) => one.field)).toEqual(['nickname']);
+    expect(profileErrors({ nickname: '가나', intro: '' })).toEqual([]);
   });
 });

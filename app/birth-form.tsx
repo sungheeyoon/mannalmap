@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useId, useState } from 'react';
 
 import {
   CALENDARS,
@@ -16,6 +16,9 @@ import { dateRefusal } from '@/src/lib/input/chart';
 import { ADVANCED_SETTINGS } from '@/src/lib/input/copy';
 import { BIRTH_CITY_OPTIONS, BIRTH_DIGIT_LABEL, BIRTH_SELECT_LABEL, DEFAULT_QUERY, NAME_MAX, TIME_BASES, TIME_BASIS, type Query } from '@/src/lib/input/query';
 
+import type { BirthField } from '@/src/lib/input/field-errors';
+
+import { FieldErrorLine, invalidProps } from './ui/field-error';
 import { Icon } from './ui/icons';
 import styles from './birth-form.module.css';
 import { ChoiceField, SelectField, cx } from './birth-choices';
@@ -41,8 +44,9 @@ import { convertedLine } from '@/src/lib/input/entry';
  *
  * 그래서 년·월·일과 시·분을 각각 숫자로 적게 한다.
  *
- * **적은 숫자는 폼이 지우지 않는다.** 달력을 바꾸든 없는 날을 적든 칸의 숫자는 그대로 서고, 어긋난 칸만 붉어진다
- * (`dateRefusal`) — 무엇이 틀렸는지는 버튼 곁의 문장이 말하고(`missingAnswer`), 누르면 그 칸으로 초점이 간다(`focusBirthGap`).
+ * **적은 숫자는 폼이 지우지 않는다.** 달력을 바꾸든 없는 날을 적든 칸의 숫자는 그대로 선다. 제출 단추를 누르면 고칠 칸이
+ * 붉어지고 그 칸 바로 아래에 이유가 선다(`errors` — 판정은 `birthFieldErrors`, ADR 0252). 단추를 쓰는 화면이 첫 붉은 칸으로
+ * 데려간다(`useFieldErrors`).
  */
 
 /**
@@ -56,28 +60,13 @@ import { convertedLine } from '@/src/lib/input/entry';
  * - **숫자 칸**(생년월일 · 시각)은 단위(년 · 월 · 일 · 시 · 분)를 칸 안 오른쪽에 든다(`DigitsField` · `NumberField`).
  */
 
-/**
- * 고칠 칸으로 데려간다 — 붉어진 칸, 없으면 아직 빈 칸. 데려갔으면 `true`.
- *
- * 폼을 쓰는 화면이 누름을 받았는데 넘어가지 못할 때 부른다. 라디오 · 잠긴 칸은 빼고 적는 칸만 본다.
- */
-export function focusBirthGap(scope: ParentNode | null | undefined): boolean {
-  const fields = [
-    ...(scope?.querySelectorAll<HTMLInputElement>(
-      'input:not([type=hidden]):not([type=radio]):not([type=checkbox]):not(:disabled)',
-    ) ?? []),
-  ];
-  const target = fields.find((one) => one.getAttribute('aria-invalid') === 'true') ?? fields.find((one) => one.value === '');
-  target?.focus();
-  return target !== undefined;
-}
-
 export function BirthFields({
   value,
   onChange,
   surface,
   namePlaceholder,
   showName = true,
+  errors = {},
 }: {
   value: Query;
   onChange: (next: Query) => void;
@@ -92,7 +81,11 @@ export function BirthFields({
   namePlaceholder?: string;
   /** 본인은 계정 닉네임으로 부르므로 출생 정보에서 이름을 다시 묻지 않는다 */
   showName?: boolean;
+  /** 누른 뒤 칸 아래에 설 말 — 쓰는 화면이 `useFieldErrors(birthFieldErrors(…))` 로 넘긴다. 없으면 아무 칸도 안 붉다 */
+  errors?: Partial<Record<BirthField, string | null>>;
 }) {
+  const id = useId();
+  const lineId = (field: BirthField) => `${id}-${field}-error`;
   const panel = surface === 'panel' && styles.panel;
   const set = <K extends keyof Query>(key: K, next: Query[K]) => onChange({ ...value, [key]: next });
 
@@ -118,6 +111,8 @@ export function BirthFields({
   // 양력과 계산에 들어간 양력이 갈릴 수 있다.
   const converted = convertedLine(value);
   const refused = dateRefusal(value)?.part ?? null;
+  const dateInvalid = errors.date == null ? null : { describedBy: lineId('date'), part: refused };
+  const hourInvalid = errors.hour == null ? null : { describedBy: lineId('hour') };
 
   return (
     /*
@@ -128,18 +123,22 @@ export function BirthFields({
       <div className={styles.main}>
         <div className={cx(styles.fields, panel)}>
           {showName && (
-            <label className={styles.name}>
-              <span className={styles.label}>이름</span>
-              <input
+            <div className={styles.name}>
+              <label>
+                <span className={styles.label}>이름</span>
+                <input
                 type="text"
+                {...invalidProps(lineId('name'), errors.name)}
                 value={value.name}
                 onChange={(event) => set('name', event.target.value.slice(0, NAME_MAX))}
                 placeholder={namePlaceholder}
                 maxLength={NAME_MAX}
                 /* 이 칸은 대개 남의 이름이다(「엄마」 · 궁합 상대) — 브라우저가 내 이름을 채우지 않게 한다 */
                 autoComplete="off"
-              />
-            </label>
+                />
+              </label>
+              <FieldErrorLine id={lineId('name')} message={errors.name} className={styles.fieldError} />
+            </div>
           )}
 
           <ChoiceField
@@ -149,7 +148,8 @@ export function BirthFields({
             options={GENDERS.map((gender) => ({ value: gender, label: GENDER_KO[gender] }))}
           />
 
-          <DateFields value={value} onDate={(date) => set('date', date)} refused={refused} />
+          <DateFields value={value} onDate={(date) => set('date', date)} invalid={dateInvalid} />
+          <FieldErrorLine id={lineId('date')} message={errors.date} className={styles.fieldError} />
 
           {/*
             **달력은 날짜 바로 아래다.** 「1984-10-05」는 양력인지 음력인지가 정해져야 비로소 하루를 가리키고,
@@ -164,7 +164,8 @@ export function BirthFields({
             options={CALENDARS.map((calendar) => ({ value: calendar, label: CALENDAR_KO[calendar] }))}
           />
 
-          <TimeFields value={value} onChange={onChange} />
+          <TimeFields value={value} onChange={onChange} invalid={hourInvalid} />
+          <FieldErrorLine id={lineId('hour')} message={errors.hour} className={cx(styles.fieldError, styles.onRail)} />
 
           {/*
             **출생지는 폼 안에 선다** — 진태양시의 경도라 계산에 들고(운영자 2026-09-29 「출생지도 폼에 넣어야」),
@@ -185,14 +186,12 @@ export function BirthFields({
           계산 전에.** 사용자가 아는 것은 음력 날짜뿐인데, 우리가 무엇을 양력으로 잡았는지 못 보면 잘못 골랐다는
           것을 결과 화면에 가서야 알게 된다.
         */}
-        {converted !== null && (
-          <p
-            role={converted.ok ? undefined : 'alert'}
-            // 색으로만 가르지 않는다 — 못 바꾼 줄은 문장 자체가 이유를 말한다.
-            className={`${styles.converted} ${converted.ok ? 'text-secondary' : 'font-medium text-danger'}`}
-          >
-            {converted.text}
-          </p>
+        {/*
+          못 바꾼 까닭은 누르기 전에는 회색 덧말이고, 누른 뒤에는 생년월일 칸 아래 붉은 줄이 같은 말을 하므로 비킨다(ADR 0252 — 입력하는
+          도중에는 붉히지 않는다). 색으로만 가르지 않는다 — 못 바꾼 줄은 문장 자체가 이유를 말한다.
+        */}
+        {converted !== null && (converted.ok || errors.date == null) && (
+          <p className={`${styles.converted} text-secondary`}>{converted.text}</p>
         )}
       </div>
 

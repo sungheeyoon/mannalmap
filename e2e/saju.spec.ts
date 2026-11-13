@@ -258,14 +258,18 @@ test('있지도 않은 윤달은 계산하지 않고 어느 윤달이 있는지 
   await page.getByLabel('이름', { exact: true }).fill('민수');
   await chooseCalendar(page, 'lunar_leap');
   await fillBirthDate(page, '2019-04-01');
+  await fillBirthTime(page, '09:00');
 
-  // Next 의 라우트 안내판도 `role="alert"` 이라 폼 안으로 좁힌다.
-  const refusal = page.locator('main').getByRole('alert');
-  await expect(refusal).toContainText('2019년에는 윤달이 없어요.');
+  /* 누르면 생년월일 칸 아래에 까닭이 선다(ADR 0252) — 칸 아래 줄은 `data-field-error` 다 */
+  const refusal = page.locator('form [data-field-error]');
+  await page.getByRole('button', { name: '사주 보기' }).click();
+  await expect(refusal).toHaveText('2019년에는 윤달이 없어요.');
+  await expect(page.getByLabel('출생 월')).toHaveAttribute('aria-invalid', 'true');
 
-  // 2017년에는 윤5월이 있다 — 어느 것이 있는지까지 말한다.
+  // 2017년에는 윤5월이 있다 — 어느 것이 있는지까지 말한다. 붉은 칸은 지금 값으로 다시 잰다
   await fillBirthDate(page, '2017-04-01');
-  await expect(refusal).toContainText('2017년 윤달은 윤5월이에요.');
+  await page.getByRole('button', { name: '사주 보기' }).click();
+  await expect(refusal).toHaveText('2017년 윤달은 윤5월이에요.');
 
   /*
     표 밖은 다른 말을 한다. 폼에서는 양력 1905년을 적고 음력으로 옮겨도 닿지만(해 칸이 붉어진다),
@@ -300,8 +304,8 @@ test('생년월일시는 숫자로 적고 범위 밖이면 눌러도 안 넘어�
 
   const year = page.getByLabel('출생 연도');
   const show = page.getByRole('button', { name: '사주 보기' });
-  /* 폼 안에 서는 거절 하나 — 결과 자리의 알림과 섞이지 않게 폼으로 좁힌다 */
-  const refusal = page.locator('form').getByRole('alert');
+  /* 칸 아래에 서는 거절(ADR 0252) — 칸 아래 줄은 `data-field-error` 다 */
+  const refusal = page.locator('form [data-field-error]');
   await page.getByLabel('이름', { exact: true }).fill('민수');
 
   // 숫자만 들어간다 — 「19o0」 같은 값이 애초에 만들어지지 않는다.
@@ -333,8 +337,8 @@ test('생년월일시는 숫자로 적고 범위 밖이면 눌러도 안 넘어�
 
   /*
     **고르는 칸이던 동안에는 「2월 30일」이 만들어질 수가 없었다.** 적는 칸은 그 보호막을
-    내주므로 자리마다의 범위를 칸이 안다 — 벗어나면 칸이 붉어지고, 누르면 무엇이 틀렸는지
-    말하며 그 칸으로 데려간다. 적은 숫자는 지우지 않는다.
+    내주므로 자리마다의 범위를 칸이 안다 — 적는 도중에는 붉히지 않고, 누르면 그 칸이 붉고 무엇이 틀렸는지
+    그 칸 아래에서 말하며 그 칸으로 데려간다(ADR 0252). 적은 숫자는 지우지 않는다.
   */
   await year.fill('1990');
   for (const [label, bad, good, said] of [
@@ -342,8 +346,9 @@ test('생년월일시는 숫자로 적고 범위 밖이면 눌러도 안 넘어�
     ['출생 일', '30', '15', '2월은 28일까지예요.'],
   ] as const) {
     await page.getByLabel(label).fill(bad);
-    await expect(page.getByLabel(label)).toHaveAttribute('aria-invalid', 'true');
+    await expect(page.getByLabel(label)).not.toHaveAttribute('aria-invalid', 'true');
     await show.click();
+    await expect(page.getByLabel(label)).toHaveAttribute('aria-invalid', 'true');
     await expect(refusal).toHaveText(said);
     await expect(page.getByLabel(label)).toBeFocused();
     await expect(page.getByLabel(label)).toHaveValue(bad);
@@ -352,7 +357,7 @@ test('생년월일시는 숫자로 적고 범위 밖이면 눌러도 안 넘어�
   }
 
   /*
-    **달력을 바꿔도 적은 숫자는 남는다.** 양력 31일을 음력(30일까지)으로 옮기면 날 칸만 붉어진다 — 세 칸을 비우지 않는다.
+    **달력을 바꿔도 적은 숫자는 남는다.** 양력 31일을 음력(30일까지)으로 옮기고 누르면 날 칸만 붉어진다 — 세 칸을 비우지 않는다.
   */
   await page.getByLabel('출생 월').fill('01');
   await page.getByLabel('출생 일').fill('31');
@@ -360,6 +365,7 @@ test('생년월일시는 숫자로 적고 범위 밖이면 눌러도 안 넘어�
   await expect(year).toHaveValue('1990');
   await expect(page.getByLabel('출생 월')).toHaveValue('01');
   await expect(page.getByLabel('출생 일')).toHaveValue('31');
+  await show.click();
   await expect(page.getByLabel('출생 일')).toHaveAttribute('aria-invalid', 'true');
   await chooseCalendar(page, 'solar');
   await expect(page.getByLabel('출생 일')).not.toHaveAttribute('aria-invalid', 'true');
@@ -371,8 +377,8 @@ test('생년월일시는 숫자로 적고 범위 밖이면 눌러도 안 넘어�
 
   // 시각도 같다. 25시는 계산으로 흘러가지 않는다.
   await page.getByLabel('출생 시', { exact: true }).fill('25');
-  await expect(page.getByLabel('출생 시', { exact: true })).toHaveAttribute('aria-invalid', 'true');
   await show.click();
+  await expect(page.getByLabel('출생 시', { exact: true })).toHaveAttribute('aria-invalid', 'true');
   await expect(refusal).toHaveText('출생 시각을 입력해 주세요.');
   await page.getByLabel('출생 시', { exact: true }).fill('14');
 

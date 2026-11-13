@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { SIGNUP_AGE_LABEL, refusedField, signupGap, signupRequest } from './signup';
+import { SIGNUP_AGE_LABEL, refusedField, signupErrors, signupRequest } from './signup';
 
 /** `complete_signup` 의 거절 문장(`20270111090000`) 그대로 — 칸을 고르는 말이 문장 안에 있는지 잰다 */
 describe('가입 거절은 그 칸 곁에 선다', () => {
@@ -22,15 +22,15 @@ describe('가입 거절은 그 칸 곁에 선다', () => {
   });
 });
 
-describe('가입 폼은 처음 걸린 칸 하나를 말한다', () => {
+describe('가입 폼은 걸린 칸을 모두 차례로 말한다', () => {
   const filled = { nicknameGap: null, fourteen: true, acknowledged: true };
 
   it('닉네임 → 만 14세 → 안내 확인 차례다', () => {
-    expect(signupGap({ nicknameGap: '닉네임', fourteen: false, acknowledged: false })?.field).toBe('nickname');
-    expect(signupGap({ ...filled, fourteen: false, acknowledged: false })?.field).toBe('age');
-    expect(signupGap({ ...filled, fourteen: false })?.message).toBe(`‘${SIGNUP_AGE_LABEL}’에 표시해 주세요.`);
-    expect(signupGap({ ...filled, acknowledged: false })?.field).toBe('ack');
-    expect(signupGap(filled)).toBeNull();
+    expect(signupErrors({ nicknameGap: '닉네임', fourteen: false, acknowledged: false }).map((one) => one.field)).toEqual(['nickname', 'age', 'ack']);
+    expect(signupErrors({ ...filled, fourteen: false, acknowledged: false }).map((one) => one.field)).toEqual(['age', 'ack']);
+    expect(signupErrors({ ...filled, fourteen: false })[0]?.message).toBe(`‘${SIGNUP_AGE_LABEL}’에 표시해 주세요.`);
+    expect(signupErrors({ ...filled, acknowledged: false }).map((one) => one.field)).toEqual(['ack']);
+    expect(signupErrors(filled)).toEqual([]);
   });
 
   /* 「인터뷰 요청 받기」는 걷었다 — DB 는 그 인자를 받기만 하므로 안 보낸다(ADR 0245 추기, G-160) */

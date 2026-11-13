@@ -329,6 +329,8 @@ export const SURVEY_COPY = {
   thanks: '답변을 보내 주셔서 고마워요. 서비스를 다듬는 데 참고할게요.',
   multiple: '여러 개 선택할 수 있어요.',
   optional: '선택 응답',
+  /** 아무 문항에도 답하지 않고 제출을 누르면 첫 문항 아래에 선다(ADR 0252) */
+  nothing: '한 문항 이상 답해 주세요.',
   /** 동의가 없으면 여기서 켤 수 있다 — 탭만 감추면 헤더가 동의를 물어야 한다 */
   consentNeeded:
     '설문 답변을 풀이 개선에 활용하는 데 동의한 분만 참여할 수 있어요. 아래에서 동의하면 바로 답할 수 있어요.',
@@ -397,6 +399,14 @@ export function isAnswered(answers: SurveyAnswers): boolean {
     answers.priceFactors.length > 0 ||
     answers.freeText.trim() !== ''
   );
+}
+
+/**
+ * 제출을 누른 때의 칸별 오류 — 아무것도 답하지 않았으면 첫 문항(`liked`)의 것으로 세운다(ADR 0252). 어느 한 문항이 필수가 아니라
+ * 「한 칸이라도」라서 칸이 따로 없는데, 단추 곁에 모아 쓰지 않고 답이 시작될 자리로 데려간다.
+ */
+export function surveyErrors(answers: SurveyAnswers): { field: 'liked'; message: string }[] {
+  return isAnswered(answers) ? [] : [{ field: 'liked', message: SURVEY_COPY.nothing }];
 }
 
 /**

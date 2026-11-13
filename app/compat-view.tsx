@@ -37,18 +37,11 @@ import { TILE, TYPE_META, TYPE_NAME, TYPE_SECTION } from './ui/surfaces';
  * 궁합은 두 사람이 각자 자기 기준으로 읽는 것이라, 관계 한 줄에서 어느 글자가
  * 누구 것인지가 이름으로 붙어야 그 읽기가 가능해진다.
  */
-export const SIDE_LABEL: Record<CompatSide, string> = { a: '첫 번째', b: '두 번째' };
+/* 「첫 번째 · 두 번째」와 그 사람 이름표는 고르는 칸의 오류 말(`pairSeatErrors`)도 부르므로 `src/lib/people/pick.ts` 에 산다 — 앱도 같은 것을 든다.
+   결과 판과 고르는 칸이 같은 글자를 쓴다 — 한쪽에서만 고치면 고른 칸과 결과 판이 같은 사람을 다른 이름으로 부른다. */
+import { SIDE_LABEL, SIDE_PERSON, SIDES } from '@/src/lib/people/pick';
 
-/**
- * 칸 · 판의 머리 표지 — 「첫 번째 사람」 · 「두 번째 사람」. 결과 판과 고르는 칸(`compat-picker.tsx`)이 같은 글자를 쓴다 —
- * 한쪽에서만 고치면 고른 칸과 결과 판이 같은 사람을 다른 이름으로 부른다.
- */
-export const SIDE_PERSON: Record<CompatSide, string> = {
-  a: `${SIDE_LABEL.a} 사람`,
-  b: `${SIDE_LABEL.b} 사람`,
-};
-
-export const SIDES: readonly CompatSide[] = ['a', 'b'];
+export { SIDE_LABEL, SIDE_PERSON, SIDES };
 
 export function CompatView({
   charts,

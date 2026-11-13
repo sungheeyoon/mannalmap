@@ -1,6 +1,6 @@
 import { BUTTON_OFF_OPACITY } from '@design';
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
-import { AppState, KeyboardAvoidingView, Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
+import { AppState, KeyboardAvoidingView, Pressable, StyleSheet, TextInput, View } from 'react-native';
 
 import {
   EMPTY_ANSWERS,
@@ -28,7 +28,7 @@ import {
   WANT_OPTIONS,
   afterPicking,
   draftSaver,
-  isAnswered,
+  surveyErrors,
   withoutHidden,
   type DraftState,
   type MySurvey,
@@ -41,6 +41,7 @@ import {
 import { useClient } from '@/auth/connected';
 import { UNREACHABLE } from '@/auth/signup';
 import { FailureLine } from '@/ui/failure-line';
+import { FieldErrorLine, FieldScrollView, invalidLabel, useFieldErrors } from '@/ui/field-error';
 import { useLeaveGuard } from '@/ui/leave-guard';
 import { LoadingDots } from '@/ui/loading';
 import { CheckRow, PrimaryButton, SecondaryButton } from '@/ui/parts';
@@ -77,7 +78,7 @@ export function SurveyScreen() {
     <View style={styles.screen}>
       <TopBar title={SURVEY_COPY.title} fallback="/me/settings" />
       <KeyboardAvoidingView style={styles.screen} behavior="padding">
-        <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled" keyboardDismissMode="on-drag">
+        <FieldScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled" keyboardDismissMode="on-drag">
           {data.kind === 'blocked' ? (
             <AccountNotice state={data.state} onRetry={() => void reload()} />
           ) : (
@@ -103,7 +104,7 @@ export function SurveyScreen() {
               )}
             </>
           )}
-        </ScrollView>
+        </FieldScrollView>
       </KeyboardAvoidingView>
     </View>
   );
@@ -144,6 +145,8 @@ function SurveyForm({ context, given }: { context: SurveyContext; given: MySurve
   const [unsaved, setUnsaved] = useState(false);
   const [failure, setFailure] = useState<string | null>(null);
   const [sending, setSending] = useState(false);
+  /* 단추를 잠그지 않는다 — 아무것도 안 답하고 누르면 첫 문항이 붉고 거기로 데려간다(ADR 0252, 웹과 같다) */
+  const checks = useFieldErrors(surveyErrors(answers));
   const [saver] = useState(() =>
     draftSaver<SurveyAnswers>({
       initial: given?.answers ?? EMPTY_ANSWERS,
@@ -180,6 +183,7 @@ function SurveyForm({ context, given }: { context: SurveyContext; given: MySurve
 
   const send = async () => {
     setFailure(null);
+    if (!checks.press()) return;
     setSending(true);
     const value = withoutHidden(answers, shown);
     /* 제출도 초안과 같은 줄에 선다 — 떠난 초안이 닿은 뒤에 떠나고, 그 사이 기다리던 초안은 걷힌다 */
@@ -216,7 +220,7 @@ function SurveyForm({ context, given }: { context: SurveyContext; given: MySurve
       {dialog}
       <WordText style={styles.meta}>{SURVEY_COPY.autosave}</WordText>
 
-      <Picks disabled={sending} step={step(1)} question={QUESTION.liked} hint={SURVEY_COPY.multiple} options={LIKED_OPTIONS} label={LIKED_LABEL} sole={SOLE_CHOICES.liked} picked={answers.liked} onPick={(next) => pick('liked', next)} />
+      <Picks disabled={sending} step={step(1)} question={QUESTION.liked} hint={SURVEY_COPY.multiple} options={LIKED_OPTIONS} label={LIKED_LABEL} sole={SOLE_CHOICES.liked} picked={answers.liked} onPick={(next) => pick('liked', next)} error={checks.messageOf('liked')} anchor={checks.anchor('liked')} />
       <Picks disabled={sending} step={step(2)} question={QUESTION.unknown} hint={both} options={UNKNOWN_OPTIONS} label={UNKNOWN_LABEL} sole={SOLE_CHOICES.unknown} picked={answers.unknown} onPick={(next) => pick('unknown', next)} />
       <Picks disabled={sending} step={step(3)} question={QUESTION.improve} hint={SURVEY_COPY.multiple} options={IMPROVE_OPTIONS} label={IMPROVE_LABEL} sole={SOLE_CHOICES.improve} picked={answers.improve} onPick={(next) => pick('improve', next)}>
         <Writing disabled={sending} label={QUESTION.improveText} limit={TEXT_LIMIT.improve} value={answers.improveText} onChange={(next) => pick('improveText', next)} ruled />
@@ -269,7 +273,7 @@ function SurveyForm({ context, given }: { context: SurveyContext; given: MySurve
 
       <View style={styles.send}>
         <WordText style={styles.small}>{SURVEY_COPY.drafting}</WordText>
-        <PrimaryButton label={submittedAt === null ? SURVEY_COPY.submit : SURVEY_COPY.resubmit} onPress={() => void send()} disabled={sending || !isAnswered(answers)} />
+        <PrimaryButton label={submittedAt === null ? SURVEY_COPY.submit : SURVEY_COPY.resubmit} onPress={() => void send()} disabled={sending} />
         <DraftMark state={draft} />
         {failure !== null && <FailureLine>{failure}</FailureLine>}
       </View>
@@ -295,6 +299,8 @@ function Picks<T extends string>({
   onPick,
   nested = false,
   disabled,
+  error = null,
+  anchor,
   children,
 }: {
   step?: string;
@@ -308,6 +314,10 @@ function Picks<T extends string>({
   onPick: (next: T[]) => void;
   nested?: boolean;
   disabled: boolean;
+  /** 누른 뒤 이 문항 아래에 설 붉은 말(ADR 0252) — 고르는 줄의 테가 붉고 읽어 주는 이름에 실린다 */
+  error?: string | null;
+  /** 누른 뒤 데려갈 자리 — `useFieldErrors` 의 `anchor` */
+  anchor?: ReturnType<ReturnType<typeof useFieldErrors>['anchor']>;
   children?: ReactNode;
 }) {
   const body = (
@@ -318,15 +328,16 @@ function Picks<T extends string>({
       {note !== undefined && <WordText style={styles.small}>{note}</WordText>}
       <View style={styles.options}>
         {options.map((option) => (
-          <CheckRow key={option} disabled={disabled} checked={picked.includes(option)} onToggle={() => onPick(afterPicking(picked, option, sole))}>
-            <WordText style={styles.choice}>{label[option]}</WordText>
+          <CheckRow key={option} disabled={disabled} refused={error !== null} checked={picked.includes(option)} onToggle={() => onPick(afterPicking(picked, option, sole))}>
+            <WordText accessibilityLabel={invalidLabel(label[option], error)} style={styles.choice}>{label[option]}</WordText>
           </CheckRow>
         ))}
       </View>
+      <FieldErrorLine message={error} />
       {children}
     </>
   );
-  return nested ? <View style={styles.ruled}>{body}</View> : <CardFrame style={styles.panel}>{body}</CardFrame>;
+  return nested ? <View style={styles.ruled}>{body}</View> : <View ref={anchor}><CardFrame style={styles.panel}>{body}</CardFrame></View>;
 }
 
 function Writing({ label, limit, value, onChange, disabled, ruled = false }: { label: string; limit: number; value: string; onChange: (next: string) => void; disabled: boolean; ruled?: boolean }) {

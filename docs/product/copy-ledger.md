@@ -515,6 +515,17 @@ all-10 이 웹 출생 정보 폼에 넣은 세 줄을 앱의 같은 폼에도 �
 | 프로필 화면 사진 판 맨 아래 — 웹 `app/me/profile/photo-grid.tsx` · 앱 `mobile/src/settings/photo-grid.tsx` | 프로필 사진은 인연 찾기와 요청 화면에서 다른 사람에게 공개됩니다. | (없음) — 운영자 결정 2026-11-12 — 걷음(「너무 많은 칸을 차지해」). 인연이 닫혀 있어 사진은 본인만 본다(ADR 0222 · 0245). **인연을 여는 날 다시 세운다** — `docs/ops/runbook/match-opening.md` 「여는 차례」 3 |
 | 출생 정보 수정창 머리 「수정하기」 아래 — 웹 `app/me/edit-input.tsx` · 앱 `mobile/src/people/edit-input.tsx` | 고치면 사주와 궁합을 새 정보로 다시 계산해요. (all-13) | (없음) — 운영자 결정 2026-11-12 — 걷음(「헷갈리니까 지워」). 내 출생 정보의 여덟 글자가 바뀌는 저장 앞의 확인 창(`INPUT_EDIT_CHANGE_CONFIRM` 「사주와 궁합을 새 정보로 다시 계산해요. …」)은 그대로다. 가족 · 친구의 수정에는 확인 창이 없다 |
 
+## all-22 확인 전 — 고칠 칸은 누른 뒤 그 칸 아래에서 말한다 (운영자 승인 2026-11-14, ADR 0252)
+
+거절의 **글자는 그대로이고 자리만 옮겼다** — 단추 곁에 모아 쓰던 한 줄(출생 정보 폼 · 궁합 고르기 · 가입 · 설문 · 풀이 의견)이 걸린 칸마다 그 칸 바로 아래로 간다
+(웹 `app/ui/field-error.tsx` · 앱 `mobile/src/ui/field-error.tsx`). 궁합 칸은 칸 안에 서므로 「두 번째 사람의 이름을 입력해 주세요.」의 앞머리를 떼고
+「이름을 입력해 주세요.」로 선다 — 고르는 칸의 「두 번째 사람을 골라 주세요.」 · 같은 사람 둘(compat 의 확정 문구)은 그대로다. 새로 넣은 글자는 아래 둘이다.
+
+| 자리 | 이전 | 넣은 글자 | 출처 |
+| --- | --- | --- | --- |
+| 풀이 의견에서 안 고른 필수 질문 아래 — `src/lib/reading/feedback.ts` 의 `FEEDBACK_REQUIRED`(웹 `app/me/reading/feedback.tsx` · 앱 `mobile/src/reading/feedback.tsx`) | (없음 — 단추 곁 「필수 질문 3개에 답하면 보낼 수 있어요.」가 붉어졌다) | 필수 질문입니다. | 실사례 확인 못 함 — 구글 설문지가 비운 필수 질문 아래 세우는 말로 알고 넣었다(운영자 지시 2026-11-14). 가장 가까운 사례: 「필수 질문에 답변하지 않은 경우 제출되지 않습니다」(<https://www.ajd.co.kr/contents/basic-tip/detail/%EA%B5%AC%EA%B8%80_%EC%84%A4%EB%AC%B8%EC%A7%80_%EB%A7%8C%EB%93%A4%EA%B8%B0_%EB%B0%8F_%EC%9D%91%EB%8B%B5_%ED%99%95%EC%9D%B8_%EC%8A%A4%ED%94%84%EB%A0%88%EB%93%9C%EC%8B%9C%ED%8A%B8_%EC%97%B0%EA%B2%B0_%EB%B0%A9%EB%B2%95_%EB%88%84%EA%B5%AC%EB%82%98_%EA%B0%80%EB%8A%A5-28759>, 확인 2026-11-14) |
+| 서비스 설문을 아무것도 안 답하고 제출할 때 첫 문항 아래 — `src/lib/survey/index.ts` 의 `SURVEY_COPY.nothing`(웹 `app/me/survey/form.tsx` · 앱 `mobile/src/settings/survey-screen.tsx`) | (없음 — 단추가 잠겼다) | 한 문항 이상 답해 주세요. | 실사례 없음 — 운영자 지시 2026-11-14(단추를 막지 않고 누르면 무엇이 빠졌는지 말한다). 가장 가까운 사례: 같은 글의 필수 문항 안내(<https://www.ajd.co.kr/contents/basic-tip/detail/%EA%B5%AC%EA%B8%80_%EC%84%A4%EB%AC%B8%EC%A7%80_%EB%A7%8C%EB%93%A4%EA%B8%B0_%EB%B0%8F_%EC%9D%91%EB%8B%B5_%ED%99%95%EC%9D%B8_%EC%8A%A4%ED%94%84%EB%A0%88%EB%93%9C%EC%8B%9C%ED%8A%B8_%EC%97%B0%EA%B2%B0_%EB%B0%A9%EB%B2%95_%EB%88%84%EA%B5%AC%EB%82%98_%EA%B0%80%EB%8A%A5-28759>, 확인 2026-11-14) |
+
 ## 검토 대기
 
 새 말투 규칙(`docs/context/copy.md` §8 — 설명 · 도움말 · 빈 화면은 해요체 기본)과 어긋나는 옛 합쇼체 줄은 **지우지 않고**

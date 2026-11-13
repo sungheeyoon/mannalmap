@@ -6,8 +6,10 @@ import { useEffect, useRef, useState, useTransition } from 'react';
 
 import type { PersonSlots } from '@/src/lib/people';
 
-import { BirthFields, focusBirthGap } from '../../birth-form';
-import { DEFAULT_QUERY, missingAnswer, type Query } from '@/src/lib/input/query';
+import { BirthFields } from '../../birth-form';
+import { birthFieldErrors } from '@/src/lib/input/field-errors';
+import { DEFAULT_QUERY, type Query } from '@/src/lib/input/query';
+import { useFieldErrors } from '../../ui/field-error';
 import { NOTE_MAX, noteEdited } from '@/src/lib/input/edit';
 import { useHashParams } from '../../hash-query';
 import { addManagedPerson, removeFromList, updateNote } from '../actions';
@@ -73,10 +75,8 @@ export function AddPerson({ slots }: { slots: PersonSlots | null }) {
   const [question, setQuestion] = useState<SameChartQuestion | null>(null);
   const [saving, startSaving] = useTransition();
   const form = useRef<HTMLFormElement>(null);
-  /** 「등록」을 눌러 봤나 — 빠진 칸의 말이 도움말에서 경고로 바뀌는 때(ADR 0160 의 3) */
-  const [tried, setTried] = useState(false);
-
-  const missing = missingAnswer(query);
+  /** 고칠 칸 — 「등록」을 누른 뒤에만 그 칸이 붉고 칸 아래에서 말한다(ADR 0252) */
+  const checks = useFieldErrors(birthFieldErrors(query), form);
   /* 적어 둔 메모가 있으면 탭을 닫기 전에 묻는다 — 출생 정보 칸은 다시 고르면 되지만 메모는 다시 적어야 한다 */
   useLeaveGuard(open && note.trim() !== '');
 
@@ -96,6 +96,7 @@ export function AddPerson({ slots }: { slots: PersonSlots | null }) {
     );
 
     if (result.ok) {
+      checks.clear();
       setQuery({ ...DEFAULT_QUERY, name: '' });
       setNote('');
       setOpen(false);
@@ -119,16 +120,11 @@ export function AddPerson({ slots }: { slots: PersonSlots | null }) {
   const settle = (outcome: SaveOutcome) => settleSaveOutcome(outcome, setFailure, setQuestion);
 
   /**
-   * **단추를 잠그지 않는다** — 빠진 칸이 있으면 누른 그때 말하고 그 칸으로 데려간다(`docs/context/copy.md` §8 「거절은 누른 뒤에
-   * 말한다」, ADR 0160). 초점은 이름이 비었으면 이름 칸, 아니면 아직 빈 입력 칸이다 — 궁합 고르는 판(`compat-picker.tsx`)과 같은 몸짓.
+   * **단추를 잠그지 않는다** — 고칠 칸이 있으면 누른 그때 그 칸을 붉히고 첫 칸으로 데려간다(`docs/context/copy.md` §8 「거절은 누른 뒤에
+   * 말한다」, ADR 0160 · 0252) — 궁합 고르는 판(`compat-picker.tsx`)과 같은 몸짓.
    */
   const save = () => {
-    if (missing !== null) {
-      setTried(true);
-      focusBirthGap(form.current);
-      return;
-    }
-    setTried(false);
+    if (!checks.press()) return;
     setFailure(null);
     startSaving(async () => settle(await attempt(false)));
   };
@@ -183,7 +179,7 @@ export function AddPerson({ slots }: { slots: PersonSlots | null }) {
         </p>
       </header>
 
-      <BirthFields value={query} onChange={setQuery} namePlaceholder="엄마" surface="flat" />
+      <BirthFields value={query} onChange={setQuery} namePlaceholder="엄마" surface="flat" errors={checks.shown} />
 
       {/* 메모 칸도 출생 정보 칸들과 같은 폭에서 끝난다 — 넓은 화면에서 폼은 43rem 까지만 넓어진다(`birth-form.module.css`) */}
       <div className="max-w-[43rem]">
@@ -206,29 +202,13 @@ export function AddPerson({ slots }: { slots: PersonSlots | null }) {
       ) : (
         <div className="flex flex-col gap-2">
           <div className="flex flex-wrap items-center gap-3">
-            <button
-              type="submit"
-              disabled={saving}
-              aria-disabled={missing !== null || undefined}
-              aria-describedby={missing !== null ? 'add-person-missing' : undefined}
-              className={BUTTON_PRIMARY}
-            >
+            <button type="submit" disabled={saving} className={BUTTON_PRIMARY}>
               {saving ? '저장하는 중…' : '등록'}
             </button>
             <button type="button" onClick={() => setOpen(false)} disabled={saving} className={BUTTON_TERTIARY}>
               취소
             </button>
           </div>
-          {/* 빠진 칸을 단추 곁에서 말한다 — 누르기 전에는 도움말, 누른 뒤에는 경고 색(ADR 0160 의 3) */}
-          {missing !== null && (
-            <p
-              id="add-person-missing"
-              role={tried ? 'alert' : undefined}
-              className={tried ? 'text-sm font-medium text-danger' : TYPE_META}
-            >
-              {missing}
-            </p>
-          )}
         </div>
       )}
 

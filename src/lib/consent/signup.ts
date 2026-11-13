@@ -38,18 +38,22 @@ const AGE_MISSING = `‘${SIGNUP_AGE_LABEL}’에 표시해 주세요.`;
 
 export type SignupGap = { field: SignupField | 'age' | 'ack'; message: string };
 
-/** 눌렀을 때 **위에서부터 처음 걸린 칸 하나** — 칸을 고치면 말도 다음 칸으로 넘어간다 */
-export function signupGap(form: {
+/**
+ * 눌렀을 때 **걸린 칸 전부** — 위에서부터 차례로(ADR 0252). 칸마다 그 아래에 말이 서고, 초점은 첫 칸으로 간다. 고친 칸의 말은
+ * 그 자리에서 사라진다. 전에는 처음 걸린 칸 하나만 단추 곁에 말했다.
+ */
+export function signupErrors(form: {
   /** `missingNickname` 의 답 — 이름을 안 묻는 사람은 `null` */
   nicknameGap: string | null;
   /** 만 14세 이상이라고 표시했나(`SIGNUP_AGE_LABEL`) */
   fourteen: boolean;
   acknowledged: boolean;
-}): SignupGap | null {
-  if (form.nicknameGap !== null) return { field: 'nickname', message: form.nicknameGap };
-  if (!form.fourteen) return { field: 'age', message: AGE_MISSING };
-  if (!form.acknowledged) return { field: 'ack', message: ACK_MISSING };
-  return null;
+}): SignupGap[] {
+  return [
+    ...(form.nicknameGap !== null ? [{ field: 'nickname', message: form.nicknameGap } as const] : []),
+    ...(!form.fourteen ? [{ field: 'age', message: AGE_MISSING } as const] : []),
+    ...(!form.acknowledged ? [{ field: 'ack', message: ACK_MISSING } as const] : []),
+  ];
 }
 
 /**

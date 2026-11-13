@@ -1,19 +1,20 @@
 'use client';
 
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 
 import { COMPAT_CREDIT_NOTE, COMPAT_SIGN_IN_ACTION } from '@/src/lib/brand/guide';
 import { RESUME_PAIR_PATH } from '@/src/lib/consent';
 import { calculateChart } from '@/src/lib/input/chart';
-import { DEFAULT_QUERY, mergeSearchParams, missingAnswer, toSearchParams, type Query } from '@/src/lib/input/query';
+import { DEFAULT_QUERY, mergeSearchParams, toSearchParams, type Query } from '@/src/lib/input/query';
+import { pairSeatErrors, seatShown } from '@/src/lib/people/pick';
 import { pairTasteOf, type PairTaste as Taste } from '@/src/lib/matching/pair-taste';
 
-import { BirthFields, focusBirthGap } from './birth-form';
+import { BirthFields } from './birth-form';
 import { PAIR_DRAFT_KEY } from './reading-draft';
 import { SignInCarrying } from './sign-in-carrying';
 import { BUTTON_PRIMARY } from './ui/buttons';
 import { elementScope } from './ui/element-tone';
-import { FAILURE_TEXT } from './ui/failure-line';
+import { useFieldErrors } from './ui/field-error';
 import { Icon } from './ui/icons';
 import { STEM_PICTURE, StemSymbol } from './ui/stem-symbol';
 import { CARD, PAPER, PAPER_BOTTOM, TYPE_META } from './ui/surfaces';
@@ -31,25 +32,20 @@ import { STEM_INFO } from '@/src/lib/saju';
  */
 export function PairTaste() {
   const [forms, setForms] = useState<{ a: Query; b: Query }>({ a: DEFAULT_QUERY, b: DEFAULT_QUERY });
-  const [tried, setTried] = useState(false);
   const [shown, setShown] = useState<{ taste: Taste; names: { a: string; b: string }; draft: string } | null>(null);
 
-  const missing = missingAnswer(forms.a) ?? missingAnswer(forms.b);
+  /* 두 판의 칸마다 — 누른 뒤에만 붉고 첫 붉은 칸으로 데려간다(ADR 0252). 엔진의 거절(없는 날짜 등)도 그 사람의 생년월일 칸이다 */
+  const formRef = useRef<HTMLFormElement>(null);
+  const checks = useFieldErrors(
+    pairSeatErrors({ a: { from: 'typed', query: forms.a }, b: { from: 'typed', query: forms.b } }, []),
+    formRef,
+  );
 
-  const submit = (form: HTMLFormElement) => {
-    if (missing !== null) {
-      setTried(true);
-      focusBirthGap(form);
-      return;
-    }
+  const submit = () => {
+    if (!checks.press()) return;
     const a = calculateChart(forms.a);
     const b = calculateChart(forms.b);
-    if (!a.ok || !b.ok) {
-      setTried(true);
-      focusBirthGap(form);
-      return;
-    }
-    setTried(false);
+    if (!a.ok || !b.ok) return;
     const names = { a: forms.a.name.trim(), b: forms.b.name.trim() };
     setShown({
       taste: pairTasteOf({ a: a.saju, b: b.saju }, names),
@@ -58,21 +54,14 @@ export function PairTaste() {
     });
   };
 
-  /* 계산이 거절한 까닭(없는 날짜 등)은 빠진 칸 다음에 말한다 */
-  const refused = (() => {
-    if (missing !== null) return missing;
-    const a = calculateChart(forms.a);
-    if (!a.ok) return a.message;
-    const b = calculateChart(forms.b);
-    return b.ok ? null : b.message;
-  })();
-
   return (
     <div className="flex flex-col gap-4">
       <form
+        ref={formRef}
+        noValidate
         onSubmit={(event) => {
           event.preventDefault();
-          submit(event.currentTarget);
+          submit();
         }}
         // 첫 화면 종이의 아래 토막 — 입구 「궁합 보기」 곧장 아래에 「나」 · 「상대」 판 두 장이 선다(ADR 0132)
         className={`${PAPER_BOTTOM} flex flex-col gap-4`}
@@ -85,22 +74,14 @@ export function PairTaste() {
               value={forms[side]}
               onChange={(next) => setForms((current) => ({ ...current, [side]: next }))}
               surface="panel"
+              errors={seatShown(checks.shown, side)}
             />
           </fieldset>
         ))}
         <div className="flex flex-col gap-2">
-          <button
-            type="submit"
-            aria-describedby={tried && refused !== null ? 'pair-missing' : undefined}
-            className={`${BUTTON_PRIMARY} mt-1 w-full`}
-          >
+          <button type="submit" className={`${BUTTON_PRIMARY} mt-1 w-full`}>
             무료로 두 사람 궁합 보기
           </button>
-          {tried && refused !== null && (
-            <p id="pair-missing" role="alert" className={`${FAILURE_TEXT} font-medium`}>
-              {refused}
-            </p>
-          )}
         </div>
       </form>
 

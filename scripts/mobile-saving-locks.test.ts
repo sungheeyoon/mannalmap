@@ -81,7 +81,8 @@ describe('저장 중에는 칸이 잠긴다', () => {
 describe('숫자칸이 읽히는 이름', () => {
   it('앱 DigitField 는 칸 안의 단위가 아니라 받은 이름을 읽는다', () => {
     const digit = bodyOf(read('ui/parts.tsx'), 'DigitField');
-    expect(digit).toMatch(/accessibilityLabel=\{label\}/);
+    /* 고칠 칸이면 이유가 이름 뒤에 실린다(ADR 0252) — 이름 자체는 받은 그것이다 */
+    expect(digit).toMatch(/accessibilityLabel=\{invalidLabel\(label, error\)\}/);
     expect(digit).toMatch(/\n\s*label: string;/);
   });
 
