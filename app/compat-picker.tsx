@@ -316,7 +316,7 @@ export function CompatPicker({ people }: { people: Choosable[] }) {
           <p
             id="compat-locked-reason"
             className={`mt-2 flex items-center justify-end gap-1.5 text-right text-small leading-5 ${
-              reasonIsError ? 'font-medium text-danger' : 'text-danger'
+              reasonIsError ? 'font-medium text-danger' : 'text-secondary'
             }`}
           >
             {reasonIsError && <Icon name="alert" className="size-4 shrink-0" />}

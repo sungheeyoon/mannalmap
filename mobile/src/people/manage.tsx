@@ -148,7 +148,7 @@ function AddForm({ remaining, onCancel, onSaved }: { remaining: number | null; o
         <View style={styles.actions}>
           <PrimaryButton label={saving ? '저장하는 중…' : '등록'} onPress={save} disabled={saving} />
           <SecondaryButton label="취소" onPress={onCancel} disabled={saving} />
-          {missing !== null && <WordText style={tried ? styles.warn : [shared.meta, styles.danger]}>{missing}</WordText>}
+          {missing !== null && <WordText style={tried ? styles.warn : shared.meta}>{missing}</WordText>}
         </View>
       )}
       {failure !== null && <FailureLine>저장하지 못했어요. {failure}</FailureLine>}
@@ -225,7 +225,6 @@ const styles = StyleSheet.create({
   form: { gap: 20 },
   actions: { gap: 8 },
   warn: { fontSize: TYPE.note, fontFamily: FONT.medium, color: COLOR.danger },
-  danger: { color: COLOR.danger },
   note: {
     minHeight: 72,
     paddingHorizontal: 14,

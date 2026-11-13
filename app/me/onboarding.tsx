@@ -65,7 +65,7 @@ export function Onboarding({ nickname }: { nickname: string }) {
           {saving ? '저장하는 중…' : '내 사주로 저장'}
         </button>
         {/* 버튼을 잠근 이유를 그대로 말한다 — 잠긴 버튼만 있으면 왜인지 알 수 없다 */}
-        {missing !== null && <span className="text-small text-danger">{missing}</span>}
+        {missing !== null && <span className="text-small text-secondary">{missing}</span>}
       </div>
 
       {failure !== null && <FailureLine className="max-sm:px-3">저장하지 못했어요. {failure}</FailureLine>}

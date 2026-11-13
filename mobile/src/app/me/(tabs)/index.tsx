@@ -186,7 +186,7 @@ function NoSelf({ nickname, onSaved }: { nickname: string; onSaved: () => void }
       </View>
       <BirthFields form={form} showName={false} />
       <PrimaryButton label={saving ? '저장하는 중…' : '내 사주로 저장'} onPress={() => void save()} disabled={missing !== null || saving} />
-      {missing !== null && <WordText style={[styles.meta, styles.danger]}>{missing}</WordText>}
+      {missing !== null && <WordText style={styles.meta}>{missing}</WordText>}
       {failure !== null && <WordText accessibilityRole="alert" style={styles.failureText}>저장하지 못했어요. {failure}</WordText>}
     </Paper>
   );
@@ -200,7 +200,6 @@ const styles = StyleSheet.create({
   noticeTitle: { fontFamily: FONT.bold, fontSize: TYPE.body, color: COLOR.foreground },
   noticeDetail: { fontFamily: FONT.medium, fontSize: TYPE.note, lineHeight: 20, color: COLOR.secondary },
   meta: { fontFamily: FONT.medium, fontSize: TYPE.small, lineHeight: 20, color: COLOR.secondary },
-  danger: { color: COLOR.danger },
   paper: { gap: 24 },
   symbols: { flexDirection: 'row', gap: 8 },
   paperHead: { gap: 8 },

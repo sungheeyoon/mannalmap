@@ -143,7 +143,7 @@ export function EditInputForm({
           </button>
         </div>
         {missing !== null && (
-          <p id={noteId} role={warn ? 'alert' : undefined} className={warn ? WARN_NOTE : 'text-small font-medium leading-5 text-danger'}>
+          <p id={noteId} role={warn ? 'alert' : undefined} className={warn ? WARN_NOTE : TYPE_META}>
             {missing}
           </p>
         )}

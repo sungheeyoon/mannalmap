@@ -101,7 +101,7 @@ export function EditInputForm({
       <View style={styles.actions}>
         <PrimaryButton label={saving ? '저장하는 중…' : pillarsSame && nameChanged ? '이름 저장' : '변경 사항 저장'} onPress={press} disabled={saving} />
         <TextButton label="작성 그만두기" onPress={onCancel} disabled={saving} />
-        {missing !== null && <WordText style={warn ? styles.warn : [shared.meta, styles.danger]}>{missing}</WordText>}
+        {missing !== null && <WordText style={warn ? styles.warn : shared.meta}>{missing}</WordText>}
       </View>
 
       {failure !== null && <FailureLine>저장하지 못했어요. {failure}</FailureLine>}
@@ -125,5 +125,4 @@ const styles = StyleSheet.create({
   actions: { gap: 8 },
   nameNote: { gap: 2, paddingHorizontal: 14, paddingVertical: 10, borderRadius: RADIUS.cell, backgroundColor: COLOR.surfaceSunken },
   warn: { fontSize: TYPE.note, fontFamily: FONT.medium, color: COLOR.danger },
-  danger: { color: COLOR.danger },
 });
