@@ -6,7 +6,7 @@ import { useRef, useState, useTransition, type ReactNode } from 'react';
 
 import { RELATIONS, RELATION_LABEL, RELATION_NONE_LABEL, type Relation } from '@/src/lib/people';
 import type { ReadingCredits } from '@/src/lib/reading/credits';
-import { readingCreditsNote, READING_USES_TICKET_NOTE } from '@/src/lib/reading/notes';
+import { READING_USES_TICKET_NOTE } from '@/src/lib/reading/notes';
 import { outOfCredits } from '@/src/lib/reading/panel-chrome';
 import {
   COMPAT_ASK_CONFIRM,
@@ -46,7 +46,7 @@ import type { ReadingTarget } from '../../reading/target';
 type Answer = Awaited<ReturnType<typeof generateReading>>;
 const unreachedStart = (message: string): Answer => ({ ok: false, message });
 
-/** 확인 시트의 몸 — 풀이권 줄 · 예약 줄(`readingCreditsNote`) · 돌려준다는 약속 · 실패 한 줄 · 단추 둘 */
+/** 확인 시트의 몸 — 풀이권 줄 · 돌려준다는 약속 · 실패 한 줄 · 단추 둘. 예약 줄은 두지 않는다 — 「보유 N장」이 이미 예약 몫을 뺀 수다(운영자 2026-11-13) */
 function AskBody({
   credits,
   failure,
@@ -64,13 +64,11 @@ function AskBody({
   onCancel: () => void;
   children?: ReactNode;
 }) {
-  const reserved = credits === null ? null : readingCreditsNote(credits);
   return (
     <div className="flex flex-col gap-4">
       {children}
       <div className="flex flex-col gap-1">
         <p className="text-body font-semibold">{credits === null ? READING_COST_LABEL : readingCostLine(credits.available)}</p>
-        {reserved !== null && <p className={TYPE_META}>{reserved}</p>}
         <p className={TYPE_META}>{READING_USES_TICKET_NOTE}</p>
       </div>
       {failure !== null && <FailureLine>{failure}</FailureLine>}

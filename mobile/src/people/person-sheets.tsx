@@ -1,6 +1,6 @@
 import { RELATIONS, RELATION_LABEL, RELATION_NONE_LABEL, type Relation } from '@people';
 import type { ReadingCredits } from '@reading/credits';
-import { READING_NOUN, READING_USES_TICKET_NOTE, readingCreditsNote } from '@reading/notes';
+import { READING_NOUN, READING_USES_TICKET_NOTE } from '@reading/notes';
 import { outOfCredits } from '@reading/panel-chrome';
 import {
   COMPAT_ASK_CONFIRM,
@@ -59,7 +59,7 @@ async function start(client: ReturnType<typeof useClient>, target: ReadingTarget
   return result.outOfCredits ? { kind: 'out-of-credits' } : { kind: 'failed', message: result.message };
 }
 
-/** 확인 시트의 몸 — 풀이권 줄 · 예약 줄 · 돌려준다는 약속 · 실패 한 줄 · 단추 둘(웹의 `AskBody`) */
+/** 확인 시트의 몸 — 풀이권 줄 · 돌려준다는 약속 · 실패 한 줄 · 단추 둘(웹의 `AskBody`). 예약 줄은 두지 않는다(운영자 2026-11-13) */
 function AskBody({
   credits,
   failure,
@@ -77,13 +77,11 @@ function AskBody({
   onCancel: () => void;
   children?: ReactNode;
 }) {
-  const reserved = credits === null ? null : readingCreditsNote(credits);
   return (
     <View style={styles.body}>
       {children}
       <View style={styles.lines}>
         <Text style={styles.cost}>{credits === null ? READING_COST_LABEL : readingCostLine(credits.available)}</Text>
-        {reserved !== null && <Text style={styles.meta}>{reserved}</Text>}
         <Text style={styles.meta}>{READING_USES_TICKET_NOTE}</Text>
       </View>
       {failure !== null && <FailureLine>{failure}</FailureLine>}
