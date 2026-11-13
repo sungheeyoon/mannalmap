@@ -38,7 +38,7 @@ import { generateReading } from '../../reading/actions';
 import type { ReadingTarget } from '../../reading/target';
 
 /*
-  **저장한 사람 화면의 누름 둘 — 그 자리의 시트에서 끝난다**(운영자 승인 2026-11-13, ADR 0248). 「사주풀이 받기」는 같은 단추가 있는
+  **저장한 사람 화면의 누름 둘 — 그 자리의 시트에서 끝난다**(운영자 승인 2026-11-13, ADR 0249). 「사주풀이 받기」는 같은 단추가 있는
   풀이 화면을 거치지 않고, 「궁합 보기」는 궁합 탭으로 넘어가 빈 폼을 채우게 하지 않는다. 판정은 지금 것 그대로다 — 풀이권 0개면
   확인 대신 풀이권 창(`outOfCredits` · `useBuyCredits`), 만들기는 같은 액션(`generateReading`), 두 사람 열기도 같은 액션(`openPairScreen`).
 */

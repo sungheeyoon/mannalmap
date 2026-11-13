@@ -36,7 +36,7 @@ import { UNREACHABLE } from '@/auth/signup';
 import { go } from './parts';
 
 /*
-  **저장한 사람 화면의 누름 둘 — 그 자리의 시트에서 끝난다**(운영자 승인 2026-11-13, ADR 0248 · 웹 `app/me/people/[personId]/person-sheets.tsx`).
+  **저장한 사람 화면의 누름 둘 — 그 자리의 시트에서 끝난다**(운영자 승인 2026-11-13, ADR 0249 · 웹 `app/me/people/[personId]/person-sheets.tsx`).
   판정은 지금 것 그대로다 — 풀이권 0개면 확인 대신 풀이권 창(`outOfCredits` · `CreditsShortage`), 만들기는 같은 문(`startReading`), 두 사람 열기도
   같은 문(`openPair`).
 */

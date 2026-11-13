@@ -37,7 +37,7 @@ export type PersonPair = {
 
 /**
  * **저장한 사람 화면을 그린다** — 읽기는 `page.tsx` 가 다 하고 여기는 받은 값만 그린다(화면은 그리기만 한다, `docs/architecture.md`).
- * 위에서부터 머리 → 사주풀이 칸 → 궁합 칸(ADR 0248).
+ * 위에서부터 머리 → 사주풀이 칸 → 궁합 칸(ADR 0249).
  */
 export function PersonView({
   person,

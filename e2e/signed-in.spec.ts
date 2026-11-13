@@ -810,7 +810,7 @@ test.describe('초대된 사람의 로그인 흐름', () => {
     ).toBeVisible();
 
     /*
-      **한 장이다 — 탭도 머리의 단추도 없다**(운영자 승인 2026-11-13, ADR 0248). 내 명식이면 궁합 칸이 빠지고 사주풀이 칸은 내 사주풀이다.
+      **한 장이다 — 탭도 머리의 단추도 없다**(운영자 승인 2026-11-13, ADR 0249). 내 명식이면 궁합 칸이 빠지고 사주풀이 칸은 내 사주풀이다.
       아직 없으면 진한 카드의 「사주풀이 받기」가 그 자리의 확인 시트를 연다 — 취소하면 아무것도 시작하지 않는다
     */
     await expect(page.getByRole('navigation', { name: '내 사주의 사주풀이와 만세력' })).toHaveCount(0);
@@ -1207,7 +1207,7 @@ test.describe('초대된 사람의 로그인 흐름', () => {
 
     /*
       명식은 목록의 이름에서 연다. 그 사람 화면은 한 장이다 — 탭이 없고, 사주풀이 칸의 「사주풀이 받기」는 풀이 화면을 거치지 않고
-      그 자리의 확인 시트를 연다(운영자 승인 2026-11-13, ADR 0248). 시트를 닫으면 아무것도 시작하지 않는다
+      그 자리의 확인 시트를 연다(운영자 승인 2026-11-13, ADR 0249). 시트를 닫으면 아무것도 시작하지 않는다
     */
     await page.goto('/me/people');
     await page.getByRole('link', { name: kin, exact: true }).first().click();
@@ -1281,7 +1281,7 @@ test.describe('초대된 사람의 로그인 흐름', () => {
     await page.goto('/me');
 
     await page.getByRole('link', { name: '만세력 보기' }).click();
-    /* 사람 화면의 만세력 자리로 연다 — ← 가 홈이다(`from=me`, ADR 0248) */
+    /* 사람 화면의 만세력 자리로 연다 — ← 가 홈이다(`from=me`, ADR 0249) */
     await expect(page).toHaveURL(new RegExp(`/me/people/${signedIn.selfPersonId}\\?tab=chart&from=me$`));
     await expect(page.getByRole('heading', { level: 1, name: `${signedIn.label}의 만세력`, exact: true })).toBeVisible();
     await expect(page.getByRole('heading', { name: '사주팔자' })).toBeVisible();

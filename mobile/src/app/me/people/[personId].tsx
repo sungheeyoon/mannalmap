@@ -43,7 +43,7 @@ import { alpha, COLOR, ELEMENT_TONE, FONT, RADIUS, TYPE } from '@/ui/tokens';
 type ReadingSide = { credits: ReadingCredits | null; minutes: number | null; running: boolean };
 
 /**
- * **저장한 사람 화면 — 한 장**(운영자 승인 2026-11-13, ADR 0248 · 웹 `app/me/people/[personId]/page.tsx`). 머리(일간 칩 · 이름 · 출생 한 줄 ·
+ * **저장한 사람 화면 — 한 장**(운영자 승인 2026-11-13, ADR 0249 · 웹 `app/me/people/[personId]/page.tsx`). 머리(일간 칩 · 이름 · 출생 한 줄 ·
  * 네 기둥 띠 · 「만세력 자세히」) → 사주풀이 칸 → 궁합 칸. 탭이 없고 머리에 단추도 없다. 만세력은 같은 주소의 `?tab=chart` 다.
  */
 export default function PersonScreen() {

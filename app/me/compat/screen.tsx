@@ -35,7 +35,7 @@ export type CompatQuery = {
   b?: string | string[];
   from?: string | string[];
   kind?: string | string[];
-  /** `from=person` 일 때 돌아갈 사람 — 결과의 두 사람 가운데 하나여야 쓰인다(ADR 0248) */
+  /** `from=person` 일 때 돌아갈 사람 — 결과의 두 사람 가운데 하나여야 쓰인다(ADR 0249) */
   p?: string | string[];
 };
 

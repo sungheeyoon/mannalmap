@@ -39,7 +39,7 @@ const firstSlot = (people: readonly Choosable[], asked: string | undefined): Slo
 
 const secondSlot = (people: readonly Choosable[], asked: string | undefined, askedFirst: string | undefined, typed: boolean): Slot => {
   if (asked !== undefined && people.some((one) => one.personId === asked)) return { from: 'saved', personId: asked };
-  /* 사람 화면의 「직접 입력」 — 그 사람이 첫 칸에 앉고 둘째 칸은 빈 적는 칸이다(ADR 0248) */
+  /* 사람 화면의 「직접 입력」 — 그 사람이 첫 칸에 앉고 둘째 칸은 빈 적는 칸이다(ADR 0249) */
   if (typed) return { from: 'typed', query: DEFAULT_QUERY };
   /* 사람 화면에서 이 사람만 앉혔으면 그 칸만 찬다 — 내 칸은 비워 두고 사용자가 고른다(운영자 2026-10-26) */
   return askedFirst !== undefined || people.length >= 2 ? { from: 'saved', personId: '' } : { from: 'typed', query: DEFAULT_QUERY };

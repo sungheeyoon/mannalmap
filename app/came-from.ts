@@ -16,7 +16,7 @@ import { SHELF_TITLE, shelfKindOf, withShelfKind, type ShelfKind } from './me/(s
  *
  * **← 는 이 표 밖으로 못 간다.** 값은 이름표일 뿐 주소가 아니다 — `from=https://…` 도 `from=//evil` 도 모르는 값이라
  * 기본으로 떨어진다. 가는 곳은 아래 표의 같은 사이트 경로 여섯과, 채팅방이면 **결과가 이미 든 Match id**, 사람 화면이면 **결과가 이미 든
- * 두 사람 가운데 하나**(`person`, ADR 0248) 뿐이다.
+ * 두 사람 가운데 하나**(`person`, ADR 0249) 뿐이다.
  */
 export const CAME_FROM = ['me', 'shelf', 'compat', 'matching', 'history', 'chat', 'news', 'person'] as const;
 export type CameFrom = (typeof CAME_FROM)[number];
@@ -136,7 +136,7 @@ export function backOf(
       return { href: '/me/requests', label: '소식' };
     case 'person':
       /*
-        저장한 사람 화면의 궁합 칸에서 연 궁합(ADR 0248) — **그 결과가 이미 든 두 사람 가운데 하나**로만 간다. 누구인지는 결과 화면이
+        저장한 사람 화면의 궁합 칸에서 연 궁합(ADR 0249) — **그 결과가 이미 든 두 사람 가운데 하나**로만 간다. 누구인지는 결과 화면이
         제 두 사람과 견준 뒤 넘긴다(`app/me/compat/screen.tsx`). 못 견줬으면 결과 종류의 기본이다. 이름은 그 화면의 이름(그 사람)이다
       */
       return place.person === undefined

@@ -85,7 +85,7 @@ describe('← 가 가는 곳 (ADR 0134)', () => {
     expect(backOf('compat', { from: 'chat', matchId: MATCH_ID })).toEqual({ href: '/me/chat', label: '채팅' });
   });
 
-  it('사람 화면에서 연 궁합은 결과가 넘긴 그 사람 화면으로, 못 넘겼으면 궁합 탭으로 간다 (ADR 0248)', () => {
+  it('사람 화면에서 연 궁합은 결과가 넘긴 그 사람 화면으로, 못 넘겼으면 궁합 탭으로 간다 (ADR 0249)', () => {
     expect(backOf('compat', { from: 'person', person: { personId: 'p1', name: '민수' } })).toEqual({ href: '/me/people/p1', label: '민수' });
     expect(backOf('compat', { from: 'person' })).toEqual({ href: '/compat', label: '궁합' });
   });
