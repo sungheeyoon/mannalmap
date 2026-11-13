@@ -93,7 +93,7 @@ export function PersonView({
           <p className="text-small tabular-nums text-secondary">{birthLineOf(person.saju)}</p>
         </div>
         <div className="relative mt-1">
-          <PillarStrip pillars={person.saju.pillars} name={person.name} />
+          <PillarStrip pillars={person.saju.pillars} name={person.name} solid />
         </div>
         <Link
           href={`/me/people/${person.personId}?tab=chart${fromHome && !mine ? '&from=me' : ''}`}

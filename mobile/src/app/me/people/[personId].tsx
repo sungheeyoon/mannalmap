@@ -207,7 +207,7 @@ function PersonPage({
           <Text style={shared.title} accessibilityRole="header">{person.name}</Text>
           <Text style={shared.meta}>{birthLineOf(saju)}</Text>
         </View>
-        <PillarStrip pillars={saju.pillars} name={person.name} />
+        <PillarStrip pillars={saju.pillars} name={person.name} over={tone.soft} />
         <Pressable accessibilityRole="link" onPress={() => go(`/me/people/${person.personId}?tab=chart`)} style={styles.detail}>
           <Text style={[styles.detailText, { color: tone.ink }]}>{CHART_DETAIL_LABEL}</Text>
           <Icon name="chevron" size={14} color={tone.ink} />

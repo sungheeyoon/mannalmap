@@ -23,6 +23,13 @@ export function alpha(hex: string, amount: number): string {
   return `rgba(${r}, ${g}, ${b}, ${amount})`;
 }
 
+/** 두 토큰 색을 불투명으로 섞는다 — 웹의 `color-mix(in srgb, a N%, b)` 와 같은 값. 반투명 칸이 뒤의 그림을 비치면 안 될 때 쓴다 */
+export function mix(hex: string, under: string, amount: number): string {
+  const channel = (value: string, at: number) => parseInt(value.slice(at, at + 2), 16);
+  const [r, g, b] = [1, 3, 5].map((at) => Math.round(channel(hex, at) * amount + channel(under, at) * (1 - amount)));
+  return `#${[r, g, b].map((one) => one.toString(16).padStart(2, '0')).join('')}`;
+}
+
 export const ELEMENT_TONE: Record<Element, { ink: string; soft: string; mid: string }> = {
   木: TONE.wood,
   火: TONE.fire,

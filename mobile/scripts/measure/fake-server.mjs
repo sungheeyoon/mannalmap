@@ -64,7 +64,7 @@ const fresh = () => ({
   account: { user_id: ME, status: 'active', self_person_id: SELF, nickname: '달빛산책', intro: LONG, signed_up_at: ago(90000), notice_version: 'notice-v16', notice_schedule_id: 1, improvement_consent: true, marketing_consent: false, created_at: ago(90000), first_seen_at: ago(90000), notice_ack_at: ago(50000), last_active_at: ago(1), birth_year: 1990, gender: 'female' },
   schedule: [{ schedule_id: 1, ends_on: '2027-06-30', purge_by: '2027-07-30', purge_within_days: 30, operator_name: '가짜 운영자', operator_officer: '가짜 책임자', operator_contact: 'fake@example.invalid', notice_ack_floor: 'notice-v16' }],
   edges: [
-    { person_id: SELF, local_label: '윤하늘', note: null, listed: false, created_at: ago(90000) },
+    { person_id: SELF, local_label: '윤하늘', note: null, listed: true, created_at: ago(90000) },
     { person_id: P1, local_label: '엄마', note: '양력 생일로 적었어요. 음력 생일은 따로 챙기기.', listed: true, created_at: ago(80000) },
     { person_id: P2, local_label: '아주아주긴이름의오랜친구입니다', note: null, listed: true, created_at: ago(70000) },
   ],
