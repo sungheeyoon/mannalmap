@@ -1,13 +1,12 @@
 import { RELATIONS, RELATION_LABEL, RELATION_NONE_LABEL, type Relation } from '@people';
 import type { ReadingCredits } from '@reading/credits';
-import { READING_NOUN, READING_USES_TICKET_NOTE } from '@reading/notes';
+import { READING_NOUN } from '@reading/notes';
 import { outOfCredits } from '@reading/panel-chrome';
 import {
   COMPAT_ASK_CONFIRM,
   PARTNER_SELF_LABEL,
   PARTNER_TYPED_LABEL,
   READING_ASK_CONFIRM,
-  READING_COST_LABEL,
   partnerAskTitle,
   readingAskTitle,
   readingCostLine,
@@ -59,7 +58,7 @@ async function start(client: ReturnType<typeof useClient>, target: ReadingTarget
   return result.outOfCredits ? { kind: 'out-of-credits' } : { kind: 'failed', message: result.message };
 }
 
-/** 확인 시트의 몸 — 풀이권 줄 · 돌려준다는 약속 · 실패 한 줄 · 단추 둘(웹의 `AskBody`). 예약 줄은 두지 않는다(운영자 2026-11-13) */
+/** 확인 시트의 몸 — 「풀이권 1장을 사용해요. (남은 풀이권 N장)」 한 줄 · 실패 한 줄 · 단추 둘(웹의 `AskBody`). 예약 줄 · 돌려준다는 줄은 두지 않는다(운영자 2026-11-13) */
 function AskBody({
   credits,
   failure,
@@ -81,8 +80,7 @@ function AskBody({
     <View style={styles.body}>
       {children}
       <View style={styles.lines}>
-        <Text style={styles.cost}>{credits === null ? READING_COST_LABEL : readingCostLine(credits.available)}</Text>
-        <Text style={styles.meta}>{READING_USES_TICKET_NOTE}</Text>
+        <Text style={styles.cost}>{readingCostLine(credits?.available ?? null)}</Text>
       </View>
       {failure !== null && <FailureLine>{failure}</FailureLine>}
       <View style={styles.lines}>
@@ -314,7 +312,6 @@ const styles = StyleSheet.create({
   body: { gap: 16 },
   lines: { gap: 8 },
   cost: { fontFamily: FONT.bold, fontSize: TYPE.body, lineHeight: 22, color: COLOR.foreground },
-  meta: { fontFamily: FONT.medium, fontSize: TYPE.small, lineHeight: 20, color: COLOR.secondary },
   row: { minHeight: 56, flexDirection: 'row', alignItems: 'center', gap: 12 },
   rowText: { flex: 1, fontFamily: FONT.bold, fontSize: TYPE.body, color: COLOR.foreground },
   face: { width: 36, height: 36, alignItems: 'center', justifyContent: 'center', borderRadius: RADIUS.pill },

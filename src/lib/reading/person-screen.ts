@@ -33,7 +33,12 @@ export const READING_COST_LABEL = '풀이권 1장';
 
 /** 받기 시트 */
 export const readingAskTitle = (name: string): string => `${name}의 사주풀이를 받을까요?`;
-export const readingCostLine = (available: number): string => `${READING_COST_LABEL} · 보유 ${available}장`;
+/**
+ * 시트의 한 줄 — 「풀이권 1장을 사용해요. (남은 풀이권 3장)」(운영자 2026-11-13). 남은 수는 예약 몫을 뺀 쓸 수 있는 수(`available`)다.
+ * 못 읽었으면 남은 수 없이 앞 문장만 — 수를 지어내지 않는다
+ */
+export const readingCostLine = (available: number | null): string =>
+  available === null ? '풀이권 1장을 사용해요.' : `풀이권 1장을 사용해요. (남은 풀이권 ${available}장)`;
 export const READING_ASK_CONFIRM = '받기';
 
 /** 궁합 칸의 끝 줄 — 궁합이 있으면 「다른 사람과」, 없으면 이 사람의 이름으로 */

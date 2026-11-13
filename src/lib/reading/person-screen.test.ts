@@ -21,6 +21,7 @@ describe('저장한 사람 화면의 말', () => {
   });
 
   it('풀이권 줄은 가진 수를 그대로 든다', () => {
-    expect(readingCostLine(3)).toBe('풀이권 1장 · 보유 3장');
+    expect(readingCostLine(3)).toBe('풀이권 1장을 사용해요. (남은 풀이권 3장)');
+    expect(readingCostLine(null)).toBe('풀이권 1장을 사용해요.');
   });
 });

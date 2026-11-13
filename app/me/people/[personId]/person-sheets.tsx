@@ -6,7 +6,6 @@ import { useRef, useState, useTransition, type ReactNode } from 'react';
 
 import { RELATIONS, RELATION_LABEL, RELATION_NONE_LABEL, type Relation } from '@/src/lib/people';
 import type { ReadingCredits } from '@/src/lib/reading/credits';
-import { READING_USES_TICKET_NOTE } from '@/src/lib/reading/notes';
 import { outOfCredits } from '@/src/lib/reading/panel-chrome';
 import {
   COMPAT_ASK_CONFIRM,
@@ -31,7 +30,6 @@ import { FailureLine } from '../../../ui/failure-line';
 import { Icon } from '../../../ui/icons';
 import { closeSheet, DetailSheet, openSheet } from '../../../ui/sheet';
 import { StemSymbol } from '../../../ui/stem-symbol';
-import { TYPE_META } from '../../../ui/surfaces';
 import { openPairScreen, pairRelationFor } from '../../compat/actions';
 import { useBuyCredits } from '../../credits/buy-credits';
 import { generateReading } from '../../reading/actions';
@@ -46,7 +44,7 @@ import type { ReadingTarget } from '../../reading/target';
 type Answer = Awaited<ReturnType<typeof generateReading>>;
 const unreachedStart = (message: string): Answer => ({ ok: false, message });
 
-/** 확인 시트의 몸 — 풀이권 줄 · 돌려준다는 약속 · 실패 한 줄 · 단추 둘. 예약 줄은 두지 않는다 — 「보유 N장」이 이미 예약 몫을 뺀 수다(운영자 2026-11-13) */
+/** 확인 시트의 몸 — 「풀이권 1장을 사용해요. (남은 풀이권 N장)」 한 줄 · 실패 한 줄 · 단추 둘. 예약 줄 · 돌려준다는 줄은 두지 않는다(운영자 2026-11-13) */
 function AskBody({
   credits,
   failure,
@@ -68,8 +66,7 @@ function AskBody({
     <div className="flex flex-col gap-4">
       {children}
       <div className="flex flex-col gap-1">
-        <p className="text-body font-semibold">{credits === null ? READING_COST_LABEL : readingCostLine(credits.available)}</p>
-        <p className={TYPE_META}>{READING_USES_TICKET_NOTE}</p>
+        <p className="text-body font-semibold">{readingCostLine(credits?.available ?? null)}</p>
       </div>
       {failure !== null && <FailureLine>{failure}</FailureLine>}
       <div className="flex flex-col gap-2">
