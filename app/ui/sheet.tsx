@@ -82,7 +82,7 @@ export function DetailSheet({
         >
           <span aria-hidden="true" className="mx-auto h-1.5 w-10 rounded-full bg-border-strong lg:hidden" />
           <div className={`flex justify-between gap-3 ${wrapTitle ? 'items-start' : 'items-center'}`}>
-            <h2 className={`min-w-0 ${wrapTitle ? 'line-clamp-2 break-keep pt-1.5' : 'truncate'} ${TYPE_SECTION}`}>{nickname}</h2>
+            <h2 className={`min-w-0 ${wrapTitle ? 'line-clamp-2 whitespace-pre-line break-keep pt-1.5' : 'truncate'} ${TYPE_SECTION}`}>{nickname}</h2>
             <span className="ml-auto flex shrink-0 items-center gap-1" onPointerDown={(event) => event.stopPropagation()}>
               {menu}
               {/* 보는 판을 닫는 것은 오른쪽 위 X 한 벌이다 — 관계 지도 카드 · 신고 창과 같은 모양, 이름은 「닫기」(ADR 0166) */}

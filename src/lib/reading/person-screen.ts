@@ -25,6 +25,12 @@ const clip = (name: string, max = SHEET_NAME_MAX): string => {
 /** 이름 둘이 서는 제목(사이 고르기)은 한 이름을 더 짧게 — 폰 폭(390) 두 줄에 물음까지 든다 */
 const PAIR_NAME_MAX = 6;
 const clipTopic = (name: string, max?: number) => `${clip(name, max)}${endsWithBatchim(name) ? '은' : '는'}`;
+/**
+ * 이름이 줄여질 만큼 길면 **물음 앞에서 줄을 나눈다** — 「{이름}의」 / 「사주풀이를 받을까요?」(운영자 2026-11-13). 감싸기에 맡기면 앱이
+ * 「볼까 / 요?」처럼 낱말 가운데서 끊었다. 짧으면 한 칸 띄어 한 줄이다. 웹은 제목이 줄바꿈 글자를 지킨다(`whitespace-pre-line`)
+ */
+const breakAfter = (name: string, max = SHEET_NAME_MAX, other?: string): string =>
+  [...name].length > max || (other !== undefined && [...other].length > max) ? '\n' : ' ';
 const clipWith = (name: string) => `${clip(name)}${endsWithBatchim(name) ? '과' : '와'}`;
 
 /** 머리 오른쪽 아래 — 만세력 화면으로 */
@@ -49,7 +55,7 @@ export const READING_INVITE_TOPICS = '성격 · 일과 재물 · 인연 · 올�
 export const READING_COST_LABEL = '풀이권 1장';
 
 /** 받기 시트 */
-export const readingAskTitle = (name: string): string => `${clip(name)}의 사주풀이를 받을까요?`;
+export const readingAskTitle = (name: string): string => `${clip(name)}의${breakAfter(name)}사주풀이를 받을까요?`;
 /**
  * 시트의 한 줄 — 「풀이권 1장을 사용해요. (남은 풀이권 3장)」(운영자 2026-11-13). 남은 수는 예약 몫을 뺀 쓸 수 있는 수(`available`)다.
  * 못 읽었으면 남은 수 없이 앞 문장만 — 수를 지어내지 않는다
@@ -63,12 +69,12 @@ export const COMPAT_OTHER_LABEL = '다른 사람과 궁합 보기';
 export const compatWithLabel = (name: string): string => `${withName(name)} 궁합 보기`;
 
 /** 상대 고르기 시트 */
-export const partnerAskTitle = (name: string): string => `${clipWith(name)} 누구를 볼까요?`;
+export const partnerAskTitle = (name: string): string => `${clipWith(name)}${breakAfter(name)}누구를 볼까요?`;
 export const PARTNER_SELF_LABEL = '나';
 export const PARTNER_TYPED_LABEL = '직접 입력';
 
 /** 사이 고르기 시트 — 고르는 낱말은 궁합 화면의 것(`RELATION_LABEL` · `RELATION_NONE_LABEL`)을 그대로 쓴다 */
-export const relationAskTitle = (a: string, b: string): string => `${clip(a, PAIR_NAME_MAX)} · ${clipTopic(b, PAIR_NAME_MAX)} 어떤 사이예요?`;
+export const relationAskTitle = (a: string, b: string): string => `${clip(a, PAIR_NAME_MAX)} · ${clipTopic(b, PAIR_NAME_MAX)}${breakAfter(a, PAIR_NAME_MAX, b)}어떤 사이예요?`;
 export const COMPAT_ASK_CONFIRM = '궁합 보기';
 
 const SEOUL_OFFSET_MS = 9 * 60 * 60 * 1000;

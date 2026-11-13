@@ -29,10 +29,10 @@ describe('저장한 사람 화면의 말', () => {
 describe('시트 제목의 긴 이름', () => {
   it('열 글자를 넘는 이름만 줄이고 물음은 늘 끝까지 선다', () => {
     const long = '아주아주긴이름의오랜친구입니다';
-    expect(readingAskTitle(long)).toBe('아주아주긴이름의오…\u2060의 사주풀이를 받을까요?');
-    expect(partnerAskTitle(long)).toBe('아주아주긴이름의오…\u2060와 누구를 볼까요?');
-    expect(relationAskTitle(long, '지영')).toBe('아주아주긴…\u2060 · 지영은 어떤 사이예요?');
-    expect(relationAskTitle(long, '또다른아주아주긴이름의친구')).toBe('아주아주긴…\u2060 · 또다른아주…\u2060는 어떤 사이예요?');
+    expect(readingAskTitle(long)).toBe('아주아주긴이름의오…\u2060의\n사주풀이를 받을까요?');
+    expect(partnerAskTitle(long)).toBe('아주아주긴이름의오…\u2060와\n누구를 볼까요?');
+    expect(relationAskTitle(long, '지영')).toBe('아주아주긴…\u2060 · 지영은\n어떤 사이예요?');
+    expect(relationAskTitle(long, '또다른아주아주긴이름의친구')).toBe('아주아주긴…\u2060 · 또다른아주…\u2060는\n어떤 사이예요?');
     expect(readingAskTitle('민수')).toBe('민수의 사주풀이를 받을까요?');
   });
 });
