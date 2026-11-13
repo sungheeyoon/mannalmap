@@ -101,7 +101,7 @@ export function EditInputForm({
       <View style={styles.actions}>
         <PrimaryButton label={saving ? '저장하는 중…' : pillarsSame && nameChanged ? '이름 저장' : '변경 사항 저장'} onPress={press} disabled={saving} />
         <TextButton label="작성 그만두기" onPress={onCancel} disabled={saving} />
-        {missing !== null && <WordText style={warn ? styles.warn : shared.meta}>{missing}</WordText>}
+        {warn && missing !== null && <WordText style={styles.warn}>{missing}</WordText>}
       </View>
 
       {failure !== null && <FailureLine>저장하지 못했어요. {failure}</FailureLine>}

@@ -5,6 +5,7 @@ import { useRef, useState, useTransition } from 'react';
 import {
   FEEDBACK_COMMENT,
   FEEDBACK_FOLDED_NOTE,
+  FEEDBACK_LOCKED_NOTE,
   FEEDBACK_SCALE,
   FEEDBACK_SCOPE_NOTE,
   FEEDBACK_THANKS,
@@ -276,20 +277,20 @@ export function ReadingFeedback({
             없어 왜 안 눌리는지 몰랐다. 다 고르면 말은 걷힌다. 확정(대장 26, 운영자 2026-10-10). 단추는 가라앉되 누름을 받고(`aria-disabled`),
             누른 뒤에는 같은 말이 경고 색 알림이 된다(운영자 2026-10-18)
           */}
-          {!ready && (
+          {!ready && tried && (
             <p
               id={`feedback-locked-${runId}`}
               role={tried ? 'alert' : undefined}
               className={`text-small leading-5 ${tried ? 'font-medium text-danger' : 'text-secondary'}`}
             >
-              필수 질문 3개에 답하면 보낼 수 있어요.
+              {FEEDBACK_LOCKED_NOTE}
             </p>
           )}
           <button
             type="submit"
             disabled={saving}
             aria-disabled={!ready || undefined}
-            aria-describedby={ready ? undefined : `feedback-locked-${runId}`}
+            aria-describedby={!ready && tried ? `feedback-locked-${runId}` : undefined}
             className={`${BUTTON_PRIMARY} w-full sm:w-auto`}
           >
             {saving ? '보내는 중…' : '의견 보내기'}

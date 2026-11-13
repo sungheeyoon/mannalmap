@@ -133,7 +133,7 @@ export function EditInputForm({
             onClick={press}
             disabled={saving}
             aria-disabled={blocked || undefined}
-            aria-describedby={blocked ? noteId : undefined}
+            aria-describedby={warn ? noteId : undefined}
             className={BUTTON_PRIMARY}
           >
             {saving ? '저장하는 중…' : pillarsSame && nameChanged ? '이름 저장' : '변경 사항 저장'}
@@ -142,7 +142,7 @@ export function EditInputForm({
             작성 그만두기
           </button>
         </div>
-        {missing !== null && (
+        {warn && missing !== null && (
           <p id={noteId} role={warn ? 'alert' : undefined} className={warn ? WARN_NOTE : TYPE_META}>
             {missing}
           </p>

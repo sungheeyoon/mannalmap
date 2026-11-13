@@ -130,6 +130,9 @@ export const FEEDBACK_THANKS = '답해 주셔서 고마워요. 다음 풀이를 
  */
 export const FEEDBACK_FOLDED_NOTE = '필수 질문 3개 · 1분이면 돼요';
 
+/** 다 고르기 전에 「의견 보내기」를 누른 뒤에만 단추 곁에 서는 붉은 줄(대장 26, 운영자 2026-11-14 — 누르기 전에는 안 선다) */
+export const FEEDBACK_LOCKED_NOTE = '필수 질문 3개에 답하면 보낼 수 있어요.';
+
 export const FEEDBACK_SCOPE_NOTE = '지금 읽은 이 풀이에 대한 답이에요. 풀이를 새로 만들면 다시 여쭤볼게요.';
 
 /**

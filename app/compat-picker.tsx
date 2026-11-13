@@ -145,11 +145,10 @@ export function CompatPicker({ people }: { people: Choosable[] }) {
   const [failure, setFailure] = useState<string | null>(null);
   const [opening, startOpening] = useTransition();
   /**
-   * **비어 있다는 말은 처음엔 도움말이고, 누르려 했거나 그 칸을 떠난 뒤에야 오류다**(2026-10-10 화면 점검 B19). 막 연
-   * 화면이 ⚠ 를 단 「두 번째 사람을 골라 주세요」로 서면 아직 아무것도 안 한 사람을 나무란다.
+   * **비어 있다는 말은 누른 뒤에만 선다**(운영자 2026-11-14 — 전에는 처음부터 회색 도움말로 섰다, 2026-10-10 화면 점검 B19). 막 연
+   * 화면이 「두 번째 사람을 골라 주세요」로 서면 아직 아무것도 안 한 사람을 나무란다.
    */
   const [tried, setTried] = useState(false);
-  const [left, setLeft] = useState<Record<CompatSide, boolean>>({ a: false, b: false });
 
   const chosen = SIDES.every((side) => complete(slots[side], people));
   const sameTwice =
@@ -244,8 +243,9 @@ export function CompatPicker({ people }: { people: Choosable[] }) {
   const reason = !opening && (gap !== null || sameTwice)
     ? sameTwice ? '같은 사람은 한 번만 고를 수 있어요. 서로 다른 두 사람을 골라 주세요.' : gap?.text ?? null
     : null;
-  /** 오류 모양은 누르려 했거나 빈 칸을 떠난 뒤 — 같은 사람 둘은 처음부터 고친 값이 아니라 틀린 값이라 오류다 */
-  const reasonIsError = sameTwice || tried || (gap !== null && left[gap.side]);
+  /** 줄은 누른 뒤에만 선다 — 같은 사람 둘은 방금 한 선택의 결과라 누르기 전에도 선다 */
+  const reasonIsError = sameTwice || tried;
+  const shownReason = reasonIsError ? reason : null;
 
   return (
     <div ref={root} className={CARD_FRAME}>
@@ -275,7 +275,6 @@ export function CompatPicker({ people }: { people: Choosable[] }) {
               /* 다른 칸에서 고른 사람은 여기서 뺀다 — 같은 사람 둘은 애초에 못 고른다 */
               taken={otherSaved(slots, side)}
               onChange={(next) => setSlot(side, next)}
-              onLeave={() => setLeft((now) => (now[side] ? now : { ...now, [side]: true }))}
             />
           </Fragment>
         ))}
@@ -301,7 +300,7 @@ export function CompatPicker({ people }: { people: Choosable[] }) {
                 onClick={press}
                 disabled={opening}
                 aria-disabled={!chosen || sameTwice || undefined}
-                aria-describedby={reason !== null ? 'compat-locked-reason' : undefined}
+                aria-describedby={shownReason !== null ? 'compat-locked-reason' : undefined}
                 className={`${BUTTON_PRIMARY} w-full`}
               >
                 <Icon name="taiji" className="size-[18px]" />
@@ -312,7 +311,7 @@ export function CompatPicker({ people }: { people: Choosable[] }) {
         />
 
         {/* 왜 눌리지 않는지 단추 곁에서 말한다 — 잠긴 단추만 두면 이유를 찾아야 한다 */}
-        {question === null && reason !== null && (
+        {question === null && shownReason !== null && (
           <p
             id="compat-locked-reason"
             className={`mt-2 flex items-center justify-end gap-1.5 text-right text-small leading-5 ${
@@ -320,7 +319,7 @@ export function CompatPicker({ people }: { people: Choosable[] }) {
             }`}
           >
             {reasonIsError && <Icon name="alert" className="size-4 shrink-0" />}
-            {reason}
+            {shownReason}
           </p>
         )}
 
@@ -357,22 +356,16 @@ function SlotCard({
   people,
   taken,
   onChange,
-  onLeave,
 }: {
   side: CompatSide;
   slot: Slot;
   people: Choosable[];
   taken: string | null;
   onChange: (next: Slot) => void;
-  /** 초점이 이 칸 밖으로 나갔다 — 비어 있는 말을 오류 모양으로 바꾸는 신호 */
-  onLeave: () => void;
 }) {
   return (
     <fieldset
       data-side={side}
-      onBlur={(event) => {
-        if (!event.currentTarget.contains(event.relatedTarget as Node | null)) onLeave();
-      }}
       /* 폰에서 두 칸 사이는 칸 안의 묶음 사이(`gap-3`)와 같다 — 12 + 동그라미 28 + 12. 넓은 화면은 나란히 서니 그대로다 */
       className={`flex min-w-0 flex-col gap-3 p-5 sm:p-6 ${side === 'a' ? 'pb-3' : 'pt-3'}`}
     >

@@ -217,7 +217,7 @@ export function CompatPicker({ people, pickA, pickB, typeB = false }: { people: 
         ) : (
           <>
             <PrimaryButton label={opening ? '여는 중…' : '궁합 보기'} onPress={press} disabled={opening} />
-            {reason !== null && <WordText style={reasonIsError ? styles.reasonError : styles.reason}>{reason}</WordText>}
+            {reason !== null && reasonIsError && <WordText style={styles.reasonError}>{reason}</WordText>}
           </>
         )}
         {failure !== null && <FailureLine>{failure}</FailureLine>}
@@ -311,7 +311,6 @@ const styles = StyleSheet.create({
   chipOn: { borderColor: COLOR.borderStrong, backgroundColor: COLOR.accentWash },
   chipText: { textAlign: 'center', fontSize: TYPE.note, fontFamily: FONT.medium, color: COLOR.secondary },
   chipTextOn: { fontFamily: FONT.bold, color: COLOR.foreground },
-  reason: { fontSize: TYPE.small, lineHeight: 20, fontFamily: FONT.medium, color: COLOR.secondary, textAlign: 'right' },
   reasonError: { fontSize: TYPE.small, lineHeight: 20, fontFamily: FONT.bold, color: COLOR.danger, textAlign: 'right' },
   choice: { gap: 6 },
   choiceHead: { minHeight: CONTROL + 4, flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 14, borderRadius: RADIUS.cell, borderWidth: 1, borderColor: COLOR.borderStrong, backgroundColor: COLOR.surface },

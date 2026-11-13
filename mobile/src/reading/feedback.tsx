@@ -2,6 +2,7 @@ import { BUTTON_OFF_OPACITY } from '@design';
 import {
   FEEDBACK_COMMENT,
   FEEDBACK_FOLDED_NOTE,
+  FEEDBACK_LOCKED_NOTE,
   FEEDBACK_SCALE,
   FEEDBACK_SCOPE_NOTE,
   FEEDBACK_THANKS,
@@ -161,7 +162,7 @@ export function ReadingFeedback({ target, runId, given }: { target: ReadingTarge
 
           {failure !== null && <WordText accessibilityRole="alert" style={styles.warn}>답을 남기지 못했어요. {failure}</WordText>}
 
-          {!ready && <WordText accessibilityRole={tried ? 'alert' : undefined} style={tried ? styles.warn : styles.small}>필수 질문 3개에 답하면 보낼 수 있어요.</WordText>}
+          {!ready && tried && <WordText accessibilityRole="alert" style={styles.warn}>{FEEDBACK_LOCKED_NOTE}</WordText>}
           <PrimaryButton label={saving ? '보내는 중…' : '의견 보내기'} onPress={() => void send()} disabled={saving} />
         </View>
       )}

@@ -16,6 +16,7 @@ import { calculateChart, chartOf } from '@/src/lib/input/chart';
 import { DEFAULT_QUERY, queryFromSearchParams } from '@/src/lib/input/query';
 import { READING_AGAIN_LABEL, READING_NOUN, READING_REPLACES_NOTE, READING_USES_TICKET_NOTE, readingEvidenceOf, readingNoneNote } from '@/src/lib/reading';
 import { readingConfirmTitle } from '@/src/lib/reading/credit-ask';
+import { FEEDBACK_LOCKED_NOTE } from '@/src/lib/reading/feedback';
 import { CHART_DETAIL_LABEL, COMPAT_OTHER_LABEL, PARTNER_TYPED_LABEL, chartTitleOf, compatWithLabel, partnerAskTitle, readingAskTitle, readingCostLine, readingInviteTitle } from '@/src/lib/reading/person-screen';
 import { TASTE_RUN_VERSIONS, tasteEvidenceOf, tasteFingerprintOf } from '@/src/lib/reading/taste-run';
 import type { Saju } from '@/src/lib/saju';
@@ -945,17 +946,17 @@ test.describe('초대된 사람의 로그인 흐름', () => {
 
     /* **세 가지를 다 고르기 전에는 못 보낸다** — 안 고른 것이 어느 값으로든 저장되면 안 된다 */
     const send = page.getByRole('button', { name: '의견 보내기' });
-    const locked = page.getByText('필수 질문 3개에 답하면 보낼 수 있어요.');
+    const locked = page.getByText(FEEDBACK_LOCKED_NOTE);
     await expect(send).toHaveAttribute('aria-disabled', 'true');
 
     /*
-      **단추는 가라앉되 누름을 받는다**(운영자 2026-10-18 G-97 ④, ADR 0160 의 3) — 덜 고른 채 누르면 곁의 말이 경고 알림이 되고
-      아직 안 고른 첫 질문으로 데려간다. 잠긴 모양의 단추는 Playwright 가 기다리므로 `force` 로 누른다
+      **단추는 가라앉되 누름을 받는다**(운영자 2026-10-18 G-97 ④, ADR 0160 의 3) — 곁의 말은 누르기 전에는 안 서고(운영자 2026-11-14), 덜 고른 채
+      누르면 경고 알림으로 서며 아직 안 고른 첫 질문으로 데려간다. 잠긴 모양의 단추는 Playwright 가 기다리므로 `force` 로 누른다
     */
     await page.getByRole('radio', { name: '5 — 많이 됐어요' }).check();
-    await expect(locked).not.toHaveAttribute('role', 'alert');
+    await expect(locked).toHaveCount(0);
     await send.click({ force: true });
-    await expect(page.getByRole('alert').filter({ hasText: '필수 질문 3개에 답하면 보낼 수 있어요.' })).toBeVisible();
+    await expect(page.getByRole('alert').filter({ hasText: FEEDBACK_LOCKED_NOTE })).toBeVisible();
     await expect(page.getByRole('radio', { name: '1 — 많이 달라요' })).toBeFocused();
     await expect(page.getByText('답해 주셔서 고마워요')).toHaveCount(0);
 
@@ -2813,7 +2814,10 @@ test.describe('로그인한 사람의 궁합 화면', () => {
 
     await expectBirthDate(slotCard(page, '첫 번째'), '1990-05-15');
     await expect(page.getByRole('button', { name: '궁합 보기' })).toBeDisabled();
-    await expect(page.getByText('두 번째 사람을 골라 주세요')).toBeVisible();
+    /* 빈 칸의 말은 누른 뒤에만 선다(운영자 2026-11-14) — 잠긴 모양이라 `force` 로 누른다 */
+    await expect(page.getByText('두 번째 사람을 골라 주세요.')).toHaveCount(0);
+    await page.getByRole('button', { name: '궁합 보기' }).click({ force: true });
+    await expect(page.getByText('두 번째 사람을 골라 주세요.')).toBeVisible();
   });
 
   /**
@@ -3076,6 +3080,8 @@ test.describe('로그인한 사람의 궁합 화면', () => {
     await expect(page.getByRole('listbox')).toHaveCount(0);
     await expect(second).toHaveAttribute('aria-controls', /.+/);
     await expect(page.getByText('찾는 사람이 없어요')).toHaveCount(0);
+    await expect(page.getByText('두 번째 사람을 골라 주세요.')).toHaveCount(0);
+    await page.getByRole('button', { name: '궁합 보기' }).click({ force: true });
     await expect(page.getByText('두 번째 사람을 골라 주세요.')).toBeVisible();
   });
 

@@ -210,7 +210,7 @@ export function AddPerson({ slots }: { slots: PersonSlots | null }) {
               type="submit"
               disabled={saving}
               aria-disabled={missing !== null || undefined}
-              aria-describedby={missing !== null ? 'add-person-missing' : undefined}
+              aria-describedby={tried && missing !== null ? 'add-person-missing' : undefined}
               className={BUTTON_PRIMARY}
             >
               {saving ? '저장하는 중…' : '등록'}
@@ -220,7 +220,7 @@ export function AddPerson({ slots }: { slots: PersonSlots | null }) {
             </button>
           </div>
           {/* 빠진 칸을 단추 곁에서 말한다 — 누르기 전에는 도움말, 누른 뒤에는 경고 색(ADR 0160 의 3) */}
-          {missing !== null && (
+          {tried && missing !== null && (
             <p
               id="add-person-missing"
               role={tried ? 'alert' : undefined}

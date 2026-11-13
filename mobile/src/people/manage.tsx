@@ -148,7 +148,7 @@ function AddForm({ remaining, onCancel, onSaved }: { remaining: number | null; o
         <View style={styles.actions}>
           <PrimaryButton label={saving ? '저장하는 중…' : '등록'} onPress={save} disabled={saving} />
           <SecondaryButton label="취소" onPress={onCancel} disabled={saving} />
-          {missing !== null && <WordText style={tried ? styles.warn : shared.meta}>{missing}</WordText>}
+          {tried && missing !== null && <WordText style={styles.warn}>{missing}</WordText>}
         </View>
       )}
       {failure !== null && <FailureLine>저장하지 못했어요. {failure}</FailureLine>}
