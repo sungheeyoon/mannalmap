@@ -15,6 +15,7 @@ import type { CurrentReading } from '@/src/lib/reading';
 import { coverFace, readingMinutes } from './essay';
 import { discoveryLeadOf } from './discovery-lead';
 import { Markdown, READING_COLUMN } from './markdown';
+import { PairNames } from './pair-names';
 import { ShareReadingButton } from './share-button';
 import type { ReadingTarget } from './target';
 import { when } from '@/src/lib/reading/when';
@@ -234,12 +235,8 @@ function PairCover({
   return (
     <figure className="relative flex flex-col items-center gap-4 rounded-card bg-cream px-5 pb-6 pt-6 text-center sm:px-10 sm:pb-8 sm:pt-8">
       {share !== null && <span className="absolute right-2 top-2 sm:right-3 sm:top-3">{share}</span>}
-      {/* 아이콘 자리(44px)만큼 양옆을 비워 긴 이름이 단추 밑에 깔리지 않는다 */}
-      <p className="flex max-w-full flex-wrap items-center justify-center gap-x-2.5 gap-y-1 px-10 text-lead font-bold text-foreground">
-        <CoverName person={pair[0]} />
-        <span className="text-small font-semibold text-secondary">×</span>
-        <CoverName person={pair[1]} />
-      </p>
+      {/* 한 줄에 안 들면 세 줄(첫 사람 / × / 둘째 사람), 양옆은 공유 단추 폭만큼 비운다(`PairNames`) */}
+      <PairNames first={<CoverName person={pair[0]} />} second={<CoverName person={pair[1]} />} />
       {score !== null && (
         <div className="mt-1 flex flex-col items-center gap-1.5">
           <ScoreGauge score={score} />

@@ -3,7 +3,7 @@ import { seatNicknamesOf, withNicknames, type PairNicknames } from '@reading/dis
 import { READING_STALE_LABEL, READING_STALE_NOTE } from '@reading/notes';
 import { COMPAT_SCORE_LABEL } from '@reading/copy';
 import { ELEMENTS, STEM_INFO, type Element, type Stem } from '@saju';
-import { useMemo, type ReactNode } from 'react';
+import { useMemo, useState, type ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Svg, { Polygon } from 'react-native-svg';
 
@@ -11,7 +11,7 @@ import { Paper, Tile } from '@/ui/surfaces';
 import { ElementSymbol } from '@/ui/element-symbol';
 import { ScoreGauge } from '@/ui/score-gauge';
 import { StemSymbol } from '@/ui/stem-symbol';
-import { COLOR, ELEMENT_TONE, FONT, RADIUS, TYPE } from '@/ui/tokens';
+import { COLOR, CONTROL, ELEMENT_TONE, FONT, RADIUS, TYPE } from '@/ui/tokens';
 
 import { Markdown } from './markdown';
 import { ReadingContents, headingsOf } from './contents';
@@ -164,11 +164,7 @@ function PairCover({
   return (
     <Paper style={styles.pairCover}>
       {action !== undefined && <View style={styles.pairAction}>{action}</View>}
-      <View style={styles.pairNames}>
-        <CoverName person={pair[0]} />
-        <WordText style={styles.pairTimes}>×</WordText>
-        <CoverName person={pair[1]} />
-      </View>
+      <PairNames pair={pair} />
       {score !== null && (
         <View style={styles.pairScore}>
           <ScoreGauge score={score} />
@@ -178,6 +174,35 @@ function PairCover({
       {metaphor !== null && <WordText style={styles.pairMetaphor}>{metaphor}</WordText>}
       <View style={styles.pairMeta}>{meta}</View>
     </Paper>
+  );
+}
+
+/**
+ * 두 사람 줄 — 한 줄에 다 들면 「첫 사람 × 둘째 사람」, 안 들면 세 줄(첫 사람 / × / 둘째 사람)로 모두 가운데. 줄바꿈에 맡기면 「×」가
+ * 한쪽 이름 끝에 홀로 남는다. 한 줄 너비를 숨은 사본으로 재어 고른다 — 웹 `app/me/reading/pair-names.tsx` 와 같은 규칙이다.
+ * 양옆은 공유 단추 폭(`CONTROL`)만큼 같은 여백이다 — 가운데를 지키고 글자가 단추 밑으로 안 들어간다.
+ */
+function PairNames({ pair }: { pair: readonly [CoverPerson, CoverPerson] }) {
+  const [room, setRoom] = useState<number | null>(null);
+  const [line, setLine] = useState<number | null>(null);
+  const stacked = room !== null && line !== null && line > room;
+  const row = (
+    <>
+      <CoverName person={pair[0]} />
+      <WordText style={styles.pairTimes}>×</WordText>
+      <CoverName person={pair[1]} />
+    </>
+  );
+  return (
+    <View style={styles.pairNames} onLayout={(event) => setRoom(event.nativeEvent.layout.width - CONTROL * 2)}>
+      {/* 한 줄 너비를 재는 숨은 사본 — 넓은 칸에 줄바꿈 없이 세워 제 너비를 잰다. 보이지 않고 읽히지 않는다 */}
+      <View aria-hidden importantForAccessibility="no-hide-descendants" pointerEvents="none" style={styles.pairMeasure}>
+        <View style={styles.pairLine} onLayout={(event) => setLine(event.nativeEvent.layout.width)}>
+          {row}
+        </View>
+      </View>
+      <View style={stacked ? styles.pairStack : styles.pairLine}>{row}</View>
+    </View>
   );
 }
 
@@ -199,7 +224,10 @@ const styles = StyleSheet.create({
   pairCover: { alignItems: 'center', gap: 16, paddingHorizontal: 20, paddingTop: 24, paddingBottom: 24 },
   pairAction: { position: 'absolute', top: 8, right: 8, zIndex: 1 },
   /* 아이콘 자리(44)만큼 양옆을 비워 긴 이름이 단추 밑에 깔리지 않는다 */
-  pairNames: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'center', columnGap: 10, rowGap: 4, paddingHorizontal: 40, maxWidth: '100%' },
+  pairNames: { alignSelf: 'stretch', alignItems: 'center', paddingHorizontal: CONTROL, overflow: 'hidden' },
+  pairMeasure: { position: 'absolute', top: 0, left: 0, width: 4000, opacity: 0, flexDirection: 'row' },
+  pairLine: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', columnGap: 10 },
+  pairStack: { alignItems: 'center', rowGap: 4 },
   pairPerson: { flexDirection: 'row', alignItems: 'center', gap: 6, flexShrink: 1 },
   pairCircle: { width: 32, height: 32, alignItems: 'center', justifyContent: 'center', borderRadius: RADIUS.pill },
   pairName: { flexShrink: 1, fontFamily: FONT.bold, fontSize: TYPE.lead, lineHeight: 24, color: COLOR.foreground },
