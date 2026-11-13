@@ -189,6 +189,7 @@ done
 3. **비공개 테스트 — 거쳐야 한다**(개인 계정, 위 「개인 계정 만들기」 끝). Test and release → Testing → **Closed testing** → 트랙을 만들고 버전을 올린다 → Testers 에서 이메일 목록(목록마다 최대 2,000명) 또는 Google 그룹을 고른다 → 테스터에게 옵트인 링크를 보낸다(「Each tester needs to opt in using the link」 — 링크는 앱 상태가 「Published」일 때만 보인다). **테스터 12명 이상이 연속 14일 옵트인해 있어야 한다** — 「the 14 days must be consecutive」, 14일을 못 채우고 나간 사람은 세지 않고(「Testers who opt in, test for fewer than 14 days, and then opt out do not count toward the requirement」), 나갔다 돌아오면 그 사람의 14일은 다시 연속으로 센다. 12명은 문턱이라 나가는 사람을 세어 더 모은다(`docs/ops/runbook/mobile-release.md` 「내부 트랙과 비공개 테스트는 다르다」). 모으는 일은 G-162. **등록정보 · 앱 콘텐츠 양식이 다 차야 비공개 테스트가 열린다** — 콘솔의 대시보드가 「비공개 테스트를 시작하려면 앱 설정을 완료하세요」로 잠그고, 걸음의 끝이 「검토를 위해 Google에 버전 전송」이다(2026-11-11 콘솔에서 확인) — **운영자**
 4. **프로덕션 신청** — 14일이 차면 대시보드 → **Apply for production** → 세 묶음의 물음(비공개 테스트 · 앱 · 프로덕션 준비)에 답한다. 「Review usually takes seven days or less, but can occasionally take longer.」 답의 초안은 조율자가 비공개 테스트의 기록(#770)으로 쓰고, 넣는 것은 운영자다. 승인되면 Test and release → **Production** → Create new release → 버전을 올린다(Promote release) → 출시 국가 「대한민국」 → 검토로 보낸다 — **운영자** · 조율자
 5. **베타 일정과 견준다** — 앱이 공개되는 날 웹의 운영 기간이 살아 있어야 한다(`docs/ops/runbook/signup.md` 「테스트 시작하기」, 공개 전환은 #1011). 심사 중에도 살아 있어야 한다(`docs/ops/runbook/mobile-release.md` 「심사 계정」 2)
+6. **공유본의 「앱에서 볼까요?」를 켠다** — 프로덕션 출시가 승인되어 스토어의 앱 쪽이 누구에게나 열린 뒤, `app/share/app-link.ts` 의 `SHARE_APP_SHEET_ON` 을 `true` 로 바꾸는 PR 을 머지하고 웹을 배포한다(`docs/ops/runbook/deploy.md` 「배포」). 볼 값: 안드로이드 크롬으로 공유 링크를 열면 시트가 서고 [앱에서 보기]가 앱 또는 Play 의 앱 쪽을 연다(ADR 0247 · G-163) — 조율자
 
 ## 결제의 전제
 
