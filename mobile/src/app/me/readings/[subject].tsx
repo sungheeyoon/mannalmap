@@ -1,6 +1,6 @@
 import { router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useMemo } from 'react';
-import { StyleSheet, Text } from 'react-native';
+import { StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import type { Element } from '@saju';
@@ -12,6 +12,7 @@ import { LoadingDots } from '@/ui/loading';
 import { TopBar } from '@/ui/top-bar';
 import { COLOR, FONT, TYPE } from '@/ui/tokens';
 import { Card } from '@/ui/surfaces';
+import { WordText } from '@/ui/word-text';
 
 /**
  * **한 사람의 사주풀이** — 웹의 `/me/readings/[subject]`. 주소의 `self` 가 내 사주이고, 저장한 사람은 Person id 다.
@@ -40,14 +41,14 @@ export default function ReadingScreen() {
 
         {view?.view === 'blocked' && (
           <Card>
-            <Text style={styles.noticeTitle}>{view.title}</Text>
-            <Text style={styles.line}>{view.detail}</Text>
+            <WordText style={styles.noticeTitle}>{view.title}</WordText>
+            <WordText style={styles.line}>{view.detail}</WordText>
           </Card>
         )}
 
         {view?.view === 'reading' && (
           <>
-            <Text style={styles.eyebrow}>{view.subject?.title}</Text>
+            <WordText style={styles.eyebrow}>{view.subject?.title}</WordText>
             <ReadingPanel target={target} view={view} tones={[(view.subject?.dayMaster?.element ?? null) as Element | null]} />
           </>
         )}

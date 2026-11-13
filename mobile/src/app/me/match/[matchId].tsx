@@ -1,6 +1,6 @@
 import { router, useLocalSearchParams } from 'expo-router';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 
 import { CHAT_TAB_LABEL } from '@chat/index';
 import { DETAIL_MAKING, DETAIL_NOT_YET } from '@chat/room/detail-copy';
@@ -16,6 +16,7 @@ import { PrimaryButton } from '@/ui/parts';
 import { TopBar, goBack } from '@/ui/top-bar';
 import { COLOR, FONT, RADIUS, TYPE } from '@/ui/tokens';
 import { CardFrame, EmptySlot } from '@/ui/surfaces';
+import { WordText } from '@/ui/word-text';
 
 /** 만드는 동안 상태 문을 다시 묻는 간격 — 글이 서면 풀이 칸으로 바뀐다 */
 const MAKING_POLL_MS = 5000;
@@ -66,11 +67,11 @@ export default function MatchScreen() {
       <View style={styles.screen}>
         <TopBar title="궁합 결과" fallback={fallback} />
         <View style={styles.content}>
-          <Text style={styles.failure} accessibilityRole="alert">
+          <WordText style={styles.failure} accessibilityRole="alert">
             {outcome.reason}
-          </Text>
+          </WordText>
           <Pressable accessibilityRole="button" onPress={load} style={styles.retry}>
-            <Text style={styles.retryText}>다시 시도하기</Text>
+            <WordText style={styles.retryText}>다시 시도하기</WordText>
           </Pressable>
         </View>
       </View>
@@ -82,12 +83,12 @@ export default function MatchScreen() {
       <View style={styles.screen}>
         <TopBar fallback={fallback} />
         <View style={styles.notFound}>
-          <Text style={styles.title} accessibilityRole="header">
+          <WordText style={styles.title} accessibilityRole="header">
             찾을 수 없어요
-          </Text>
+          </WordText>
           <View>
-            <Text style={styles.line}>주소에 적힌 인연 궁합을 찾지 못했어요.</Text>
-            <Text style={styles.line}>인연 탭에서 다시 열어 주세요.</Text>
+            <WordText style={styles.line}>주소에 적힌 인연 궁합을 찾지 못했어요.</WordText>
+            <WordText style={styles.line}>인연 탭에서 다시 열어 주세요.</WordText>
           </View>
           <PrimaryButton label="인연 탭으로" onPress={() => router.replace('/me/matching')} />
         </View>
@@ -107,7 +108,7 @@ export default function MatchScreen() {
             {from !== 'chat' && (
               <Pressable accessibilityRole="link" onPress={() => router.push(`/me/chat/${result.matchId}` as never)} style={styles.chat}>
                 <Icon name="chat" size={18} />
-                <Text style={styles.chatText}>{CHAT_TAB_LABEL}</Text>
+                <WordText style={styles.chatText}>{CHAT_TAB_LABEL}</WordText>
               </Pressable>
             )}
             <ReportBlock userId={result.partnerUserId} nickname={result.partnerNickname} onBlocked={back} />
@@ -118,10 +119,10 @@ export default function MatchScreen() {
           <Face userId={result.partnerUserId} nickname={result.partnerNickname} hasPhoto={result.partnerPhotoCount > 0} focus={result.partnerPhotoFocus[0]} size={40} tone={null} />
         </Pressable>
         <View style={styles.flex}>
-          <Text style={styles.name} numberOfLines={1} accessibilityRole="header">
+          <WordText style={styles.name} numberOfLines={1} accessibilityRole="header">
             {result.partnerNickname} 님
-          </Text>
-          <Text style={styles.meta}>궁합 결과</Text>
+          </WordText>
+          <WordText style={styles.meta}>궁합 결과</WordText>
         </View>
       </TopBar>
       <ScrollView contentContainerStyle={styles.content}>
@@ -143,7 +144,7 @@ export default function MatchScreen() {
           <MatchReadingPanel matchId={result.matchId} nicknames={{ viewer: nickname, partner: result.partnerNickname }} />
         ) : (
           <EmptySlot>
-            <Text style={styles.line}>{result.detail?.state === 'making' ? DETAIL_MAKING : DETAIL_NOT_YET}</Text>
+            <WordText style={styles.line}>{result.detail?.state === 'making' ? DETAIL_MAKING : DETAIL_NOT_YET}</WordText>
           </EmptySlot>
         )}
       </ScrollView>
@@ -161,8 +162,8 @@ function MatchReadingPanel({ matchId, nicknames }: { matchId: string; nicknames:
   if (answer.view.view === 'blocked') {
     return (
       <CardFrame style={styles.blocked}>
-        <Text style={styles.name}>{answer.view.title}</Text>
-        <Text style={styles.line}>{answer.view.detail}</Text>
+        <WordText style={styles.name}>{answer.view.title}</WordText>
+        <WordText style={styles.line}>{answer.view.detail}</WordText>
       </CardFrame>
     );
   }

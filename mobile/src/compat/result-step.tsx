@@ -1,6 +1,6 @@
 import { router, useFocusEffect } from 'expo-router';
 import { useCallback, useState, type ReactNode } from 'react';
-import { StyleSheet, Text } from 'react-native';
+import { StyleSheet } from 'react-native';
 
 import { UNREADABLE_INPUT_NOTE } from '@input/stored';
 
@@ -16,6 +16,7 @@ import { UNREACHABLE } from '@/auth/signup';
 
 import { readPair, type PairOutcome } from './data';
 import { CompatResult } from './result';
+import { WordText } from '@/ui/word-text';
 
 function Loading({ bar }: { bar: ReactNode }) {
   return (
@@ -76,14 +77,14 @@ export function CompatResultStep({ a, b, back: to }: { a: string; b: string; bac
   /* 거절은 그 자리에서 말한다 — 고르는 자리로 되돌려 보내면 왜 되돌아왔는지 모른다 */
   return (
     <ScreenFrame bar={<TopBar title="궁합" fallback="/me/compat" />}>
-      <Text style={shared.title}>궁합을 볼 수 없습니다</Text>
+      <WordText style={shared.title}>궁합을 볼 수 없습니다</WordText>
       <Card style={styles.refusal}>
         {outcome.kind === 'same' ? (
-          <Text style={shared.body}>같은 사람은 한 번만 고를 수 있어요. 서로 다른 두 사람을 골라 주세요.</Text>
+          <WordText style={shared.body}>같은 사람은 한 번만 고를 수 있어요. 서로 다른 두 사람을 골라 주세요.</WordText>
         ) : (
           <>
-            <Text style={shared.body}>{outcome.message}</Text>
-            <Text style={shared.meta}>{UNREADABLE_INPUT_NOTE}</Text>
+            <WordText style={shared.body}>{outcome.message}</WordText>
+            <WordText style={shared.meta}>{UNREADABLE_INPUT_NOTE}</WordText>
           </>
         )}
       </Card>

@@ -1,6 +1,6 @@
 import { router } from 'expo-router';
 import { useState } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 
 import { PHOTO_ADD } from '@account/copy';
 import { MY_PROFILE_EDIT_LABEL } from '@chat/copy';
@@ -14,6 +14,7 @@ import { StemSymbol } from '@/ui/stem-symbol';
 import { COLOR, FONT, RADIUS, TYPE } from '@/ui/tokens';
 
 import type { SelfFace } from './read';
+import { WordText } from '@/ui/word-text';
 
 /** 웹의 `app/me/home/self-profile.tsx` 와 같은 글자다 */
 const MY_PROFILE_LABEL = '내 프로필';
@@ -54,7 +55,7 @@ export function SelfProfile({ face, stem }: { face: SelfFace; stem: Stem }) {
             <>
               {empty && (
                 <Pressable accessibilityRole="link" onPress={toProfile(close)} style={styles.emptyIntro}>
-                  <Text style={styles.emptyIntroText}>{INTRO_PLACEHOLDER}</Text>
+                  <WordText style={styles.emptyIntroText}>{INTRO_PLACEHOLDER}</WordText>
                   <Icon name="chevron" size={16} color={COLOR.muted} />
                 </Pressable>
               )}

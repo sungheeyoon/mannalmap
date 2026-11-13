@@ -19,7 +19,7 @@ describe('앱 입구', () => {
 
   it('로그인 글자는 웹 머리글의 그것이다', () => {
     expect(read('app/site-header.tsx')).toMatch(/^\s*로그인\s*$/m);
-    expect(entry).toMatch(/<Text[^>]*>로그인<\/Text>/);
+    expect(entry).toMatch(/<WordText[^>]*>로그인<\/WordText>/);
   });
 
   it('입력 없이 들어가는 길 · 서비스 소개 · 고객센터 · 약관 및 정책이 로그인 없이 닿는다 — 첫 화면에 인연 입구는 없다(ADR 0226)', () => {
@@ -342,7 +342,7 @@ describe('앱은 Android 에서만 Google Play 로 판다 (ADR 0230)', () => {
     expect(dialogs).toContain('confirmLabel={storeAvailable ? BUY_CREDITS_LABEL : SALE_CLOSED_OK}');
     expect(dialogs).toContain('onConfirm={storeAvailable ? buy : onClose}');
     expect(dialogs).toContain('cancelLabel={storeAvailable ? CREDITS_DIALOG_CLOSE : null}');
-    expect(dialogs).toContain('{!storeAvailable && <Text style={styles.line}>{SALE_CLOSED_NOTE}</Text>}');
+    expect(dialogs).toContain('{!storeAvailable && <WordText style={styles.line}>{SALE_CLOSED_NOTE}</WordText>}');
     expect(dialogs).toMatch(/router\.push\(`\/me\/credits\?back=\$\{back\}&noun=\$\{encodeURIComponent\(noun\)\}`/);
     /* 판매 여부를 다른 값으로 가르지 않는다 — iOS 에 구매 단추가 생기는 길을 막는다 */
     expect(dialogs.match(/BUY_CREDITS_LABEL/g)?.length).toBe(2);

@@ -1,5 +1,5 @@
 import { router } from 'expo-router';
-import { StyleSheet, Text } from 'react-native';
+import { StyleSheet } from 'react-native';
 
 import { accountFailureOf, accountNoticeOf, type AccountState } from '@account/index';
 import { SUPPORT_EMAIL } from '@brand';
@@ -8,6 +8,7 @@ import { FailureLine } from '@/ui/failure-line';
 import { PrimaryButton } from '@/ui/parts';
 import { COLOR, FONT, TYPE } from '@/ui/tokens';
 import { CardFrame } from '@/ui/surfaces';
+import { WordText } from '@/ui/word-text';
 
 /** 계정이 막혀 있을 때 화면 대신 보는 것 — 글자도 판정도 `src/lib/account` 가 든다(ADR 0048) */
 export function AccountNotice({ state, onRetry }: { state: AccountState; onRetry: () => void }) {
@@ -23,8 +24,8 @@ export function AccountNotice({ state, onRetry }: { state: AccountState; onRetry
   if (text === null) return null;
   return (
     <CardFrame style={styles.notice}>
-      <Text style={styles.title}>{text.title}</Text>
-      <Text style={styles.detail}>{text.detail}</Text>
+      <WordText style={styles.title}>{text.title}</WordText>
+      <WordText style={styles.detail}>{text.detail}</WordText>
     </CardFrame>
   );
 }
@@ -33,8 +34,8 @@ export function AccountNotice({ state, onRetry }: { state: AccountState; onRetry
 export function NoRoom() {
   return (
     <CardFrame style={styles.notice}>
-      <Text style={styles.title}>페이지를 찾을 수 없어요</Text>
-      <Text style={styles.detail}>주소가 잘못되었거나 페이지가 이동되었을 수 있어요.</Text>
+      <WordText style={styles.title}>페이지를 찾을 수 없어요</WordText>
+      <WordText style={styles.detail}>주소가 잘못되었거나 페이지가 이동되었을 수 있어요.</WordText>
       <PrimaryButton label="홈으로" onPress={() => router.replace('/me' as never)} />
     </CardFrame>
   );

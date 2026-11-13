@@ -1,7 +1,8 @@
-import { Image, Pressable, StyleSheet, Text } from 'react-native';
+import { Image, Pressable, StyleSheet } from 'react-native';
 
 import { BUTTON_OFF_OPACITY, BUTTON_PRESSED_SCALE } from '@design';
 import { GOOGLE_BUTTON_BORDER, GOOGLE_BUTTON_COLOR, GOOGLE_SIGN_IN, GOOGLE_SIGN_IN_GOING, SIGN_IN_BUTTON } from '@account/sign-in-buttons';
+import { WordText } from '@/ui/word-text';
 
 /** 구글 브랜딩 안내의 내려받기 묶음에서 잘라 온 G — 웹과 같은 파일이다(`src/lib/account/google-g.png`) */
 const GOOGLE_G = require('../../../src/lib/account/google-g.png') as number;
@@ -22,9 +23,9 @@ export function GoogleSignInButton({ onPress, going, disabled }: { onPress: () =
       style={({ pressed }) => [styles.button, disabled && styles.off, pressed && !disabled && styles.pressed]}
     >
       <Image source={GOOGLE_G} style={styles.icon} accessibilityElementsHidden importantForAccessibility="no" />
-      <Text style={styles.label} numberOfLines={1}>
+      <WordText style={styles.label} numberOfLines={1}>
         {going ? GOOGLE_SIGN_IN_GOING : GOOGLE_SIGN_IN}
-      </Text>
+      </WordText>
     </Pressable>
   );
 }

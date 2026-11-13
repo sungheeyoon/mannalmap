@@ -1,6 +1,6 @@
 import { router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 import { KAKAO_SIGN_IN_GOING } from '@account/sign-in-line';
 import { SERVICE_NAME } from '@brand';
@@ -25,6 +25,7 @@ import { NoticeLine, NoticeScreen } from '@/ui/notice-screen';
 import { SecondaryButton, TextButton } from '@/ui/parts';
 import { COLOR, FONT, RADIUS, TYPE } from '@/ui/tokens';
 import { goBack } from '@/ui/top-bar';
+import { WordText } from '@/ui/word-text';
 
 /**
  * 로그인 — 웹의 `/auth` 와 같은 글자이고 로그인은 네이티브 구글, 키가 든 빌드에서는 그 밑에 카카오(ADR 0224), iOS 에서는 애플이 나란히 선다(ADR 0219). 돌아갈 곳은 앱에 있는 `/me` 아래와 결과 화면이다 —
@@ -104,7 +105,7 @@ export default function SignInScreen() {
               <View style={styles.unlockIcon}>
                 <Icon name={icon} size={18} color={COLOR.creamInk} />
               </View>
-              <Text style={styles.unlockText}>{text}</Text>
+              <WordText style={styles.unlockText}>{text}</WordText>
             </View>
           ))}
         </View>

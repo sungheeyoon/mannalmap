@@ -1,6 +1,6 @@
 import { Redirect, router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { useCallback, useRef, useState, type ComponentRef } from 'react';
-import { Keyboard, KeyboardAvoidingView, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Keyboard, KeyboardAvoidingView, Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { SERVICE_NAME } from '@brand';
@@ -24,6 +24,7 @@ import { Logo } from '@/ui/logo';
 import { COLOR, FONT, RADIUS, TYPE } from '@/ui/tokens';
 import { CardFrame, Paper } from '@/ui/surfaces';
 import { KEEP_VIEW } from '@/ui/keep-view';
+import { WordText } from '@/ui/word-text';
 
 const HOUR_CHOICES = [
   { value: 'known', label: '직접 입력' },
@@ -59,7 +60,7 @@ function EntryTabs({ value, onPick }: { value: Doorway; onPick: (next: Doorway) 
             {...KEEP_VIEW} style={[styles.tab, on && styles.tabOn]}
           >
             {door.key === 'self' ? <SunMark size={20} color={color} /> : <Icon name="taiji" size={20} color={color} />}
-            <Text style={[styles.tabText, on && styles.tabTextOn]}>{door.label}</Text>
+            <WordText style={[styles.tabText, on && styles.tabTextOn]}>{door.label}</WordText>
           </Pressable>
         );
       })}
@@ -103,7 +104,7 @@ export default function EntryScreen() {
   if (entry === 'retry') {
     return (
       <SafeAreaView style={[styles.screen, styles.retry]}>
-        <Text style={styles.retryLine}>{failure}</Text>
+        <WordText style={styles.retryLine}>{failure}</WordText>
         <SecondaryButton
           label="다시 시도하기"
           onPress={() => {
@@ -199,29 +200,29 @@ function BirthScreen({ signedOut }: { signedOut: boolean }) {
           <View style={styles.brandRow}>
             {/* 로고는 웹의 그 파일이다 — 앱에 사본을 두지 않는다 */}
             <Logo size={32} />
-            <Text style={styles.brand}>{SERVICE_NAME}</Text>
+            <WordText style={styles.brand}>{SERVICE_NAME}</WordText>
             {/* 이미 계정이 있는 사람의 길 — 웹 머리글의 그 자리다. 생년월일을 안 적어도 들어간다. 이미 로그인한 사람에게는 안 선다 */}
             {signedOut && (
               <Pressable accessibilityRole="link" onPress={() => router.push('/auth' as never)} style={styles.signIn}>
-                <Text style={styles.signInText}>로그인</Text>
+                <WordText style={styles.signInText}>로그인</WordText>
               </Pressable>
             )}
           </View>
           <Paper style={styles.paper}>
             {signedOut ? (
               <View style={styles.head}>
-                <Text accessibilityRole="header" style={styles.title}>나는 어떤 사람일까?</Text>
+                <WordText accessibilityRole="header" style={styles.title}>나는 어떤 사람일까?</WordText>
                 <EntryTabs value={doorway} onPick={setDoorway} />
               </View>
             ) : (
-              <Text style={[styles.title, styles.titleAlone]}>출생 정보를 입력해 주세요</Text>
+              <WordText style={[styles.title, styles.titleAlone]}>출생 정보를 입력해 주세요</WordText>
             )}
 
             {/* 궁합 쪽 — 앱에는 로그인 전 궁합 결과가 없어 로그인으로 잇는다(ADR 0213 의 11 · ADR 0226). 입력 판은 내려 두지 않고 숨긴다 — 적던 값이 남는다 */}
             {pair && (
               <View style={styles.compat}>
-                <Text style={styles.compatTitle}>{COMPAT_SIGN_IN_TITLE}</Text>
-                <Text style={styles.compatNote}>{COMPAT_CREDIT_NOTE}</Text>
+                <WordText style={styles.compatTitle}>{COMPAT_SIGN_IN_TITLE}</WordText>
+                <WordText style={styles.compatNote}>{COMPAT_CREDIT_NOTE}</WordText>
                 <View style={styles.compatAction}>
                   <PrimaryButton label={COMPAT_SIGN_IN_ACTION} onPress={() => router.push(withReturnPath('/auth', '/me/compat') as never)} />
                 </View>
@@ -249,7 +250,7 @@ function BirthScreen({ signedOut }: { signedOut: boolean }) {
                   <DigitField inputRef={dayRef} value={day} onChange={setDay} label={BIRTH_DIGIT_LABEL.day} unit="일" placeholder={`1~${maxDay}`} digits={2} min={1} max={maxDay} advanceEarly refused={refused === 'day'} onFull={() => (hourKnown ? hourRef.current?.focus() : Keyboard.dismiss())} />
                 </View>
                 {converted !== null && (
-                  <Text style={[styles.converted, !converted.ok && styles.failure]}>{converted.text}</Text>
+                  <WordText style={[styles.converted, !converted.ok && styles.failure]}>{converted.text}</WordText>
                 )}
                 <View style={styles.row}>
                   <Choices value={calendar} onPick={setCalendar} options={CALENDARS.map((one) => ({ value: one, label: CALENDAR_KO[one] }))} />
@@ -258,17 +259,17 @@ function BirthScreen({ signedOut }: { signedOut: boolean }) {
 
               <View style={styles.group}>
                 <View style={styles.rail}>
-                  <Text style={styles.railLabel}>출생 시각</Text>
+                  <WordText style={styles.railLabel}>출생 시각</WordText>
                   <Choices value={hourChoice} onPick={chooseHour} options={HOUR_CHOICES} />
                 </View>
-                {hourChoice === 'unknown' && <Text style={styles.choiceHint}>{HOUR_UNKNOWN_HINT}</Text>}
+                {hourChoice === 'unknown' && <WordText style={styles.choiceHint}>{HOUR_UNKNOWN_HINT}</WordText>}
               </View>
 
               {hourChoice === 'known' && (
                 <View style={styles.rail}>
                   <View style={styles.railHead}>
-                    <Text style={styles.railLabel}>시각</Text>
-                    <Text style={styles.railNote}>24시간</Text>
+                    <WordText style={styles.railLabel}>시각</WordText>
+                    <WordText style={styles.railNote}>24시간</WordText>
                   </View>
                   <View style={styles.railBody}>
                     <DigitField inputRef={hourRef} value={hour} onChange={setHour} label={BIRTH_DIGIT_LABEL.hour} unit="시" placeholder="0~23" digits={2} min={0} max={23} onFull={() => minuteRef.current?.focus()} />
@@ -278,7 +279,7 @@ function BirthScreen({ signedOut }: { signedOut: boolean }) {
               )}
 
               <View style={styles.rail}>
-                <Text aria-hidden style={styles.railLabel}>{BIRTH_SELECT_LABEL.city.label}</Text>
+                <WordText aria-hidden style={styles.railLabel}>{BIRTH_SELECT_LABEL.city.label}</WordText>
                 <Select {...BIRTH_SELECT_LABEL.city} value={city} onPick={setCity} options={BIRTH_CITY_OPTIONS} />
               </View>
             </CardFrame>
@@ -289,20 +290,20 @@ function BirthScreen({ signedOut }: { signedOut: boolean }) {
               onPress={() => setAdvanced(!advanced)}
               style={styles.disclosure}
             >
-              <Text style={styles.disclosureLabel}>고급 설정</Text>
-              <Text style={styles.disclosureSummary} numberOfLines={1}>{ADVANCED_SETTINGS.summary}</Text>
+              <WordText style={styles.disclosureLabel}>고급 설정</WordText>
+              <WordText style={styles.disclosureSummary} numberOfLines={1}>{ADVANCED_SETTINGS.summary}</WordText>
               <FoldIcon open={advanced} />
             </Pressable>
 
             {advanced && (
               <CardFrame style={styles.form}>
-                <Text style={styles.advancedIntro}>{ADVANCED_SETTINGS.intro}</Text>
+                <WordText style={styles.advancedIntro}>{ADVANCED_SETTINGS.intro}</WordText>
                 <View style={styles.rail}>
-                  <Text aria-hidden style={styles.railLabel}>{BIRTH_SELECT_LABEL.rule.label}</Text>
+                  <WordText aria-hidden style={styles.railLabel}>{BIRTH_SELECT_LABEL.rule.label}</WordText>
                   <Select {...BIRTH_SELECT_LABEL.rule} value={rule} onPick={setRule} options={RULES} disabled={hourChoice === 'unknown'} />
                 </View>
                 <View style={styles.rail}>
-                  <Text aria-hidden style={styles.railLabel}>{BIRTH_SELECT_LABEL.basis.label}</Text>
+                  <WordText aria-hidden style={styles.railLabel}>{BIRTH_SELECT_LABEL.basis.label}</WordText>
                   <Select
                     {...BIRTH_SELECT_LABEL.basis}
                     value={basis}
@@ -311,7 +312,7 @@ function BirthScreen({ signedOut }: { signedOut: boolean }) {
                   />
                 </View>
                 <View style={styles.rail}>
-                  <Text style={styles.railLabel}>세운 연도</Text>
+                  <WordText style={styles.railLabel}>세운 연도</WordText>
                   <DigitField value={saeunFrom} onChange={setSaeunFrom} label={BIRTH_DIGIT_LABEL.saeun} unit="년" placeholder="2026" digits={4} min={SUPPORTED_YEAR_RANGE.min} max={SUPPORTED_YEAR_RANGE.max} />
                 </View>
               </CardFrame>
@@ -319,15 +320,15 @@ function BirthScreen({ signedOut }: { signedOut: boolean }) {
 
             {/* 폼이 짧은 화면에서도 단추는 엄지가 닿는 맨 아래에 선다 */}
             <View style={styles.action}>
-              {failure !== null && <Text style={styles.failure}>{failure}</Text>}
+              {failure !== null && <WordText style={styles.failure}>{failure}</WordText>}
               {/* 로그인 전에는 웹 첫 화면의 주 단추와 같은 글자다 — 무엇이 무료인지 단추가 말한다(ADR 0131 · 0226) */}
               <PrimaryButton label={signedOut ? '무료로 내 사주 보기' : '사주 보기'} onPress={submit} />
               {/* 이미 쓰는 사람의 길 — 주 단추 바로 아래 한 줄, 웹 첫 화면과 같은 글자다(ADR 0226). 생년월일 없이 홈으로 간다 */}
               {signedOut && (
                 <View style={styles.member}>
-                  <Text style={styles.memberAsk}>{MEMBER_SIGN_IN_ASK}</Text>
+                  <WordText style={styles.memberAsk}>{MEMBER_SIGN_IN_ASK}</WordText>
                   <Pressable accessibilityRole="link" onPress={() => router.push('/auth' as never)} style={styles.memberSignIn}>
-                    <Text style={styles.memberSignInText}>로그인</Text>
+                    <WordText style={styles.memberSignInText}>로그인</WordText>
                   </Pressable>
                 </View>
               )}
@@ -339,7 +340,7 @@ function BirthScreen({ signedOut }: { signedOut: boolean }) {
             <View accessibilityLabel="안내" style={styles.links}>
               {ENTRY_LINKS.map((link) => (
                 <Pressable key={link.label} accessibilityRole="link" onPress={link.open} style={styles.link}>
-                  <Text style={styles.linkText}>{link.label}</Text>
+                  <WordText style={styles.linkText}>{link.label}</WordText>
                 </Pressable>
               ))}
             </View>

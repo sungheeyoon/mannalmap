@@ -17,7 +17,7 @@ import {
   type ReadingAnswer,
 } from '@reading/feedback';
 import { useState, type ReactNode } from 'react';
-import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Pressable, StyleSheet, TextInput, View } from 'react-native';
 
 import { useClient } from '@/auth/connected';
 import { FoldIcon } from '@/ui/icons';
@@ -27,6 +27,7 @@ import { COLOR, CONTROL, FONT, RADIUS, TYPE } from '@/ui/tokens';
 
 import type { ReadingTarget } from './api';
 import { leaveFeedback } from './feedback-writes';
+import { WordText } from '@/ui/word-text';
 
 /**
  * 읽고 나서 답하는 자리 — **글 바로 아래**다. 물음 · 글자는 웹과 같은 `@reading/feedback` 이고 차례도 `app/me/reading/feedback.tsx` 와 같다.
@@ -51,7 +52,7 @@ export function ReadingFeedback({ target, runId, given }: { target: ReadingTarge
   if (answer !== null && !open) {
     return (
       <Paper style={styles.thanks}>
-        <Text style={styles.thanksText}>{FEEDBACK_THANKS}</Text>
+        <WordText style={styles.thanksText}>{FEEDBACK_THANKS}</WordText>
         <TextButton label="답 고치기" onPress={() => setOpen(true)} />
       </Paper>
     );
@@ -87,8 +88,8 @@ export function ReadingFeedback({ target, runId, given }: { target: ReadingTarge
   const shown = foldable ? unfolded : true;
   const head = (
     <View style={styles.headWords}>
-      <Text style={styles.headTitle}>이 풀이는 어떠셨어요?</Text>
-      <Text style={styles.small}>{foldable ? FEEDBACK_FOLDED_NOTE : FEEDBACK_SCOPE_NOTE}</Text>
+      <WordText style={styles.headTitle}>이 풀이는 어떠셨어요?</WordText>
+      <WordText style={styles.small}>{foldable ? FEEDBACK_FOLDED_NOTE : FEEDBACK_SCOPE_NOTE}</WordText>
     </View>
   );
 
@@ -105,12 +106,12 @@ export function ReadingFeedback({ target, runId, given }: { target: ReadingTarge
 
       {shown && (
         <View style={styles.body}>
-          {foldable && <Text style={styles.small}>{FEEDBACK_SCOPE_NOTE}</Text>}
+          {foldable && <WordText style={styles.small}>{FEEDBACK_SCOPE_NOTE}</WordText>}
           <Scale question={questions.usefulness} value={usefulness} onChange={setUsefulness} disabled={saving} />
           <Scale question={questions.perceivedFit} value={fit} onChange={setFit} disabled={saving} />
 
           <View style={styles.part}>
-            <Text style={styles.legend}>분량은 어땠나요?</Text>
+            <WordText style={styles.legend}>분량은 어땠나요?</WordText>
             <View style={styles.chips}>
               {FELT_LENGTHS.map((choice) => (
                 <Chip key={choice} role="radio" grow disabled={saving} picked={feltLength === choice} onPick={() => setFeltLength(choice)}>
@@ -121,9 +122,9 @@ export function ReadingFeedback({ target, runId, given }: { target: ReadingTarge
           </View>
 
           <View style={styles.part}>
-            <Text style={styles.legend}>
-              아쉬운 점이 있다면요? <Text style={styles.small}>중복 선택 가능</Text>
-            </Text>
+            <WordText style={styles.legend}>
+              아쉬운 점이 있다면요? <WordText style={styles.small}>중복 선택 가능</WordText>
+            </WordText>
             <View style={styles.chipsWrap}>
               {ISSUE_TAGS.map((tag) => (
                 <Chip
@@ -140,8 +141,8 @@ export function ReadingFeedback({ target, runId, given }: { target: ReadingTarge
           </View>
 
           <View style={styles.part}>
-            <Text style={styles.legend}>{FEEDBACK_COMMENT.label}</Text>
-            <Text style={styles.small}>{FEEDBACK_COMMENT.hint}</Text>
+            <WordText style={styles.legend}>{FEEDBACK_COMMENT.label}</WordText>
+            <WordText style={styles.small}>{FEEDBACK_COMMENT.hint}</WordText>
             <TextInput
               multiline
               numberOfLines={3}
@@ -153,14 +154,14 @@ export function ReadingFeedback({ target, runId, given }: { target: ReadingTarge
               accessibilityState={{ disabled: saving }}
               style={[styles.comment, saving && styles.off]}
             />
-            <Text style={styles.count}>
+            <WordText style={styles.count}>
               {comment.length} / {FEEDBACK_COMMENT.limit}자
-            </Text>
+            </WordText>
           </View>
 
-          {failure !== null && <Text accessibilityRole="alert" style={styles.warn}>답을 남기지 못했어요. {failure}</Text>}
+          {failure !== null && <WordText accessibilityRole="alert" style={styles.warn}>답을 남기지 못했어요. {failure}</WordText>}
 
-          {!ready && <Text accessibilityRole={tried ? 'alert' : undefined} style={tried ? styles.warn : styles.small}>필수 질문 3개에 답하면 보낼 수 있어요.</Text>}
+          {!ready && <WordText accessibilityRole={tried ? 'alert' : undefined} style={tried ? styles.warn : styles.small}>필수 질문 3개에 답하면 보낼 수 있어요.</WordText>}
           <PrimaryButton label={saving ? '보내는 중…' : '의견 보내기'} onPress={() => void send()} disabled={saving} />
         </View>
       )}
@@ -172,7 +173,7 @@ export function ReadingFeedback({ target, runId, given }: { target: ReadingTarge
 function Scale({ question, value, onChange, disabled }: { question: FeedbackQuestion; value: FeedbackScore | null; onChange: (next: FeedbackScore) => void; disabled: boolean }) {
   return (
     <Tile tone={COLOR.surfaceSoft} style={styles.scale}>
-      <Text style={styles.legend}>{question.label}</Text>
+      <WordText style={styles.legend}>{question.label}</WordText>
       <View accessibilityRole="radiogroup" style={styles.chips}>
         {FEEDBACK_SCALE.map((score) => (
           <Chip
@@ -189,8 +190,8 @@ function Scale({ question, value, onChange, disabled }: { question: FeedbackQues
         ))}
       </View>
       <View style={styles.ends}>
-        <Text style={styles.end}>{question.low}</Text>
-        <Text style={styles.end}>{question.high}</Text>
+        <WordText style={styles.end}>{question.low}</WordText>
+        <WordText style={styles.end}>{question.high}</WordText>
       </View>
     </Tile>
   );
@@ -223,7 +224,7 @@ function Chip({
       onPress={onPick}
       style={[styles.chip, grow && styles.grow, picked && styles.chipOn, disabled && !picked && styles.off]}
     >
-      <Text style={[styles.chipText, picked && styles.chipTextOn]}>{children}</Text>
+      <WordText style={[styles.chipText, picked && styles.chipTextOn]}>{children}</WordText>
     </Pressable>
   );
 }

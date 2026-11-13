@@ -4,7 +4,7 @@ import { readingOutline } from '@reading/outline';
 import type { Element } from '@saju';
 import { router } from 'expo-router';
 import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 import { useClient } from '@/auth/connected';
 import { Card, CardFrame, Tile } from '@/ui/surfaces';
@@ -20,6 +20,7 @@ import { Result } from './result';
 import { ShareReadingButton, ShareReadingIcon, useReadingShare } from './share-button';
 import { useReadingPanel, type ShownView } from './use-reading-panel';
 import { LoadingState } from './waiting';
+import { WordText } from '@/ui/word-text';
 
 /** 문이 자격으로 거절한 때의 길 — 웹의 관문이 보내는 곳과 같다. 다시 시도할 수 있는 거절만 칸에 남는다 */
 export function followRefusal(refused: DoorRefusal): void {
@@ -32,14 +33,14 @@ export function ReadFailure({ refused, onRetry }: { refused: DoorRefusal; onRetr
   if (refused.refused === 'not-found') {
     return (
       <Card>
-        <Text style={styles.line}>페이지를 찾을 수 없어요</Text>
+        <WordText style={styles.line}>페이지를 찾을 수 없어요</WordText>
       </Card>
     );
   }
   if (refused.refused !== 'unavailable') return null;
   return (
     <Tile tone={COLOR.dangerWash} accessibilityRole="alert" style={styles.alert}>
-      <Text style={styles.alertText}>{refused.message}</Text>
+      <WordText style={styles.alertText}>{refused.message}</WordText>
       <TextButton label="다시 시도하기" onPress={onRetry} />
     </Tile>
   );
@@ -133,9 +134,9 @@ export function ReadingPanel({
     ) : (
       <SecondaryButton label={chrome.makeLabel} onPress={panel.press} disabled={chrome.makeDisabled} />
     );
-  const note = creditsNote !== null && <Text style={styles.small}>{creditsNote}</Text>;
+  const note = creditsNote !== null && <WordText style={styles.small}>{creditsNote}</WordText>;
   /* 처음 받는 사람이 확인창 앞에 가진 수를 먼저 본다(ADR 0213) — 수는 서버의 답이고 지어내지 않는다 */
-  const available = reading === null && panel.view.credits !== null && <Text style={styles.small}>{readingCostLine(panel.view.credits.available)}</Text>;
+  const available = reading === null && panel.view.credits !== null && <WordText style={styles.small}>{readingCostLine(panel.view.credits.available)}</WordText>;
 
   return (
     <View style={styles.panel}>
@@ -152,8 +153,8 @@ export function ReadingPanel({
           {ask}
           {reading === null && (
             <View>
-              <Text style={styles.lead}>사주를 바탕으로 {noun}를 받아 보세요</Text>
-              <Text style={styles.small}>{readingNoneNote(noun)}</Text>
+              <WordText style={styles.lead}>사주를 바탕으로 {noun}를 받아 보세요</WordText>
+              <WordText style={styles.small}>{readingNoneNote(noun)}</WordText>
               {available}
             </View>
           )}
@@ -164,7 +165,7 @@ export function ReadingPanel({
 
       {failure !== null && (
         <Tile tone={phase === 'error' ? COLOR.dangerWash : COLOR.warningWash} accessibilityRole={phase === 'error' ? 'alert' : undefined} style={phase === 'error' ? styles.alert : styles.notice}>
-          <Text style={phase === 'error' ? styles.alertText : styles.noticeText}>{failure}</Text>
+          <WordText style={phase === 'error' ? styles.alertText : styles.noticeText}>{failure}</WordText>
           {phase === 'error' && <TextButton label="다시 시도하기" onPress={panel.generate} />}
         </Tile>
       )}

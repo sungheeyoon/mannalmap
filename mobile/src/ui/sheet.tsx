@@ -1,10 +1,11 @@
 import type { ReactNode } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 
 import { Icon } from './icons';
 import { Scrim } from './scrim';
 import { SheetPanel } from './surfaces';
 import { COLOR, FONT, RADIUS, TYPE } from './tokens';
+import { WordText } from './word-text';
 
 const CLOSE_LABEL = '닫기';
 
@@ -30,9 +31,9 @@ export function DetailSheet({
       <SheetPanel style={styles.sheet} accessibilityViewIsModal>
         <View style={styles.grip} />
         <View style={[styles.head, wrapTitle && styles.headTop]}>
-          <Text style={[styles.title, wrapTitle && styles.titleWrap]} numberOfLines={wrapTitle ? 2 : 1} accessibilityRole="header">
+          <WordText style={[styles.title, wrapTitle && styles.titleWrap]} numberOfLines={wrapTitle ? 2 : 1} accessibilityRole="header">
             {title}
-          </Text>
+          </WordText>
           {menu}
           <Pressable accessibilityRole="button" accessibilityLabel={CLOSE_LABEL} onPress={onClose} style={styles.icon}>
             <Icon size={20} name="close" color={COLOR.secondary} />

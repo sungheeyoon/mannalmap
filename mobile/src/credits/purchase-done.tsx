@@ -1,5 +1,5 @@
 import { router } from 'expo-router';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 import { CREDITS_AVAILABLE_LABEL, PURCHASE_DONE_OK, PURCHASE_DONE_TITLE, purchaseAddedNote } from '@reading/notes';
 import type { PurchaseReturn } from '@reading/store-purchase';
@@ -7,6 +7,7 @@ import type { PurchaseReturn } from '@reading/store-purchase';
 import { ConfirmDialog } from '@/ui/confirm-dialog';
 import { Icon } from '@/ui/icons';
 import { COLOR, FONT, RADIUS, TYPE } from '@/ui/tokens';
+import { WordText } from '@/ui/word-text';
 
 /**
  * **결제 완료 창**(ADR 0230, 대장 credits-11) — 지급이 서면 화면 가운데 뜬다. 한국 서비스의 결제 완료는 작은 줄이 아니라 따로 선 완료 판이다
@@ -45,11 +46,11 @@ export function PurchaseDone({
       cancelLabel={null}
       onClose={onClose}
     >
-      <Text style={styles.line}>{purchaseAddedNote(credits)}</Text>
+      <WordText style={styles.line}>{purchaseAddedNote(credits)}</WordText>
       {balance !== null && (
         <View style={styles.row}>
-          <Text style={styles.line}>{CREDITS_AVAILABLE_LABEL}</Text>
-          <Text style={styles.count}>{balance}장</Text>
+          <WordText style={styles.line}>{CREDITS_AVAILABLE_LABEL}</WordText>
+          <WordText style={styles.count}>{balance}장</WordText>
         </View>
       )}
     </ConfirmDialog>

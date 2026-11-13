@@ -1,9 +1,10 @@
 import type { ReactNode } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 import { Button } from './buttons';
 import { Icon, type IconName } from './icons';
 import { COLOR, FONT, RADIUS, TYPE } from './tokens';
+import { WordText } from './word-text';
 
 /** 빈 상태 한 벌 — 웹 `app/ui/empty-state.tsx`. 그림 · 제목 · 한 줄 · 단추 하나가 가운데에 선다 */
 export function EmptyState({
@@ -29,8 +30,8 @@ export function EmptyState({
           </View>
         )}
       </View>
-      <Text accessibilityRole="header" style={styles.title}>{title}</Text>
-      {children !== undefined && <Text style={styles.body}>{children}</Text>}
+      <WordText accessibilityRole="header" style={styles.title}>{title}</WordText>
+      {children !== undefined && <WordText style={styles.body}>{children}</WordText>}
       {action !== undefined && <Button variant="primary-small" label={action.label} onPress={action.onPress} style={styles.action} />}
     </View>
   );

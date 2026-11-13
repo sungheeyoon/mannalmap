@@ -1,21 +1,22 @@
 import { MATCHING_START_HEAD, MATCHING_START_LEAVE, matchingStartSteps, type MatchingStartStep } from '@brand/guide';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 import { Tile } from '@/ui/surfaces';
 import { COLOR, FONT, TYPE } from '@/ui/tokens';
+import { WordText } from '@/ui/word-text';
 
 /** 인연으로 가는 길에 서는 남은 단계 — 끝낸 단계는 안 보인다. 그만둬도 사주는 그대로라는 것까지 시작 전에 말한다(ADR 0213) */
 export function MatchingSteps({ done }: { done: readonly MatchingStartStep[] }) {
   return (
     <Tile tone={COLOR.surfaceSunken} style={styles.box}>
-      <Text accessibilityRole="header" style={styles.head}>{MATCHING_START_HEAD}</Text>
+      <WordText accessibilityRole="header" style={styles.head}>{MATCHING_START_HEAD}</WordText>
       {matchingStartSteps(done).map((step, index) => (
         <View key={step.key} style={styles.row}>
-          <Text style={styles.number}>{index + 1}</Text>
-          <Text style={styles.text}>{step.text}</Text>
+          <WordText style={styles.number}>{index + 1}</WordText>
+          <WordText style={styles.text}>{step.text}</WordText>
         </View>
       ))}
-      <Text style={styles.leave}>{MATCHING_START_LEAVE}</Text>
+      <WordText style={styles.leave}>{MATCHING_START_LEAVE}</WordText>
     </Tile>
   );
 }

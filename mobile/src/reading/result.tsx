@@ -3,7 +3,7 @@ import { seatNicknamesOf, withNicknames, type PairNicknames } from '@reading/dis
 import { READING_STALE_LABEL, READING_STALE_NOTE } from '@reading/notes';
 import { ELEMENTS, type Element } from '@saju';
 import { useMemo, type ReactNode } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import Svg, { Polygon } from 'react-native-svg';
 
 import { Paper, Tile } from '@/ui/surfaces';
@@ -13,6 +13,7 @@ import { COLOR, ELEMENT_TONE, FONT, TYPE } from '@/ui/tokens';
 import { Markdown } from './markdown';
 import { ReadingContents, headingsOf } from './contents';
 import type { ReadingTarget } from './api';
+import { WordText } from '@/ui/word-text';
 
 const softOf = (element: Element | null | undefined) => (element ? ELEMENT_TONE[element].soft : COLOR.noneSoft);
 
@@ -62,9 +63,9 @@ export function Result({
   const titles = useMemo(() => headingsOf(body), [body]);
 
   const meta = (
-    <Text style={styles.meta}>
+    <WordText style={styles.meta}>
       {createdLabel} 생성{' · '}읽는 데 약 {minutes}분
-    </Text>
+    </WordText>
   );
 
   return (
@@ -75,22 +76,22 @@ export function Result({
           {metaphor !== null ? (
             <>
               {coverAction !== undefined && <View style={styles.coverAction}>{coverAction}</View>}
-              <Text aria-hidden style={styles.quote}>
+              <WordText aria-hidden style={styles.quote}>
                 “
-              </Text>
-              <Text style={styles.metaphor}>{metaphor}</Text>
+              </WordText>
+              <WordText style={styles.metaphor}>{metaphor}</WordText>
             </>
           ) : (
-            <Text style={styles.coverTitle}>풀이 결과</Text>
+            <WordText style={styles.coverTitle}>풀이 결과</WordText>
           )}
           <View style={styles.caption}>
             <View style={styles.grow}>{meta}</View>
             {reading.score !== null && (
               <View style={styles.score}>
-                <Text style={styles.scoreLabel}>궁합풀이 점수</Text>
-                <Text style={styles.scoreValue}>
-                  {reading.score} <Text style={styles.scoreLabel}>/ 100</Text>
-                </Text>
+                <WordText style={styles.scoreLabel}>궁합풀이 점수</WordText>
+                <WordText style={styles.scoreValue}>
+                  {reading.score} <WordText style={styles.scoreLabel}>/ 100</WordText>
+                </WordText>
               </View>
             )}
           </View>
@@ -103,10 +104,10 @@ export function Result({
 
       {target.kind !== 'match' && !reading.fromCurrentChart && (
         <Tile tone={COLOR.warningWash} style={styles.stale}>
-          <Text style={styles.staleText}>
-            <Text style={styles.staleLabel}>{READING_STALE_LABEL} </Text>
+          <WordText style={styles.staleText}>
+            <WordText style={styles.staleLabel}>{READING_STALE_LABEL} </WordText>
             {READING_STALE_NOTE}
-          </Text>
+          </WordText>
         </Tile>
       )}
 
@@ -114,8 +115,8 @@ export function Result({
 
       {target.kind === 'match' && (
         <View>
-          <Text style={styles.coverTitle}>두 사람의 풀이</Text>
-          <Text style={styles.bodyHead}>궁합풀이 결과</Text>
+          <WordText style={styles.coverTitle}>두 사람의 풀이</WordText>
+          <WordText style={styles.bodyHead}>궁합풀이 결과</WordText>
         </View>
       )}
 

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 
 import { REPORT_DETAIL_MAX, REPORT_DONE, REPORT_NOTE, REPORT_REASON_LABEL, REPORT_REASONS, type ReportReason } from '@account/index';
 import { BLOCK_FINAL_NOTE, BLOCK_KEEPS_NOTE, BLOCK_NOTE } from '@consent/index';
@@ -17,6 +17,7 @@ import { KEEP_VIEW } from '@/ui/keep-view';
 import { Tile } from '@/ui/surfaces';
 
 import { blockUser, reportUser } from '@/chat/reads';
+import { WordText } from '@/ui/word-text';
 
 /**
  * 사진 한 장 — 있으면 사진, 없거나 앱이 못 받는 장이면 **그 사람 색 판에 첫 글자**다(웹의 `CandidatePhoto` 와 같은 자리).
@@ -56,9 +57,9 @@ export function PersonPhoto({
       variant={variant}
       fallback={
         <View aria-hidden style={[StyleSheet.absoluteFill, styles.initialBox, initialAbove && styles.initialAbove, { backgroundColor: tone === null ? COLOR.noneSoft : ELEMENT_TONE[tone].soft }]}>
-          <Text style={[styles.initial, { fontSize: initialSize, lineHeight: initialSize * 1.3, color: tone === null ? COLOR.none : ELEMENT_TONE[tone].ink }]}>
+          <WordText style={[styles.initial, { fontSize: initialSize, lineHeight: initialSize * 1.3, color: tone === null ? COLOR.none : ELEMENT_TONE[tone].ink }]}>
             {initialOf(nickname)}
-          </Text>
+          </WordText>
         </View>
       }
     />
@@ -103,8 +104,8 @@ export function PartnerSheet({ partner, open, onClose, menu }: { partner: Partne
       </Tile>
       {intro !== null && (
         <View style={styles.intro}>
-          <Text style={styles.introHead}>소개</Text>
-          <Text style={styles.introBody}>{intro}</Text>
+          <WordText style={styles.introHead}>소개</WordText>
+          <WordText style={styles.introBody}>{intro}</WordText>
         </View>
       )}
     </DetailSheet>
@@ -201,33 +202,33 @@ export function ReportDialog({ userId, nickname, open, onClose, onBlock }: { use
   return (
     <DetailSheet open={open} title={`${nickname} 님 신고`} onClose={close}>
       {reported ? (
-        <Text style={styles.body} accessibilityRole="alert">
+        <WordText style={styles.body} accessibilityRole="alert">
           {REPORT_DONE}
-        </Text>
+        </WordText>
       ) : (
         <>
-          <Text style={styles.small}>{REPORT_NOTE}</Text>
-          <Text aria-hidden style={styles.label}>{REPORT_REASON_LABEL}</Text>
+          <WordText style={styles.small}>{REPORT_NOTE}</WordText>
+          <WordText aria-hidden style={styles.label}>{REPORT_REASON_LABEL}</WordText>
           <View style={styles.reasonBox}>
             <Select label={REPORT_REASON_LABEL} value={reason} options={REPORT_REASONS} onPick={setReason} />
           </View>
-          <Text style={styles.label}>덧붙일 말 (선택)</Text>
+          <WordText style={styles.label}>덧붙일 말 (선택)</WordText>
           <Field value={detail} onChange={setDetail} maxLength={REPORT_DETAIL_MAX} label="덧붙일 말 (선택)" />
           {failure !== null && (
-            <Text style={styles.failure} accessibilityRole="alert">
+            <WordText style={styles.failure} accessibilityRole="alert">
               {failure}
-            </Text>
+            </WordText>
           )}
         </>
       )}
       <View style={styles.reportActions}>
         {reported ? (
           <Pressable accessibilityRole="button" onPress={close} style={styles.reportMain}>
-            <Text style={styles.reportMainText}>닫기</Text>
+            <WordText style={styles.reportMainText}>닫기</WordText>
           </Pressable>
         ) : (
           <Pressable accessibilityRole="button" disabled={working} onPress={send} style={[styles.reportMain, working && styles.off]}>
-            <Text style={styles.reportMainText}>{working ? '보내는 중…' : '신고하기'}</Text>
+            <WordText style={styles.reportMainText}>{working ? '보내는 중…' : '신고하기'}</WordText>
           </Pressable>
         )}
         {onBlock !== undefined && (
@@ -240,7 +241,7 @@ export function ReportDialog({ userId, nickname, open, onClose, onBlock }: { use
             }}
             style={styles.reportQuiet}
           >
-            <Text style={styles.reportQuietText}>차단으로 넘어가기</Text>
+            <WordText style={styles.reportQuietText}>차단으로 넘어가기</WordText>
           </Pressable>
         )}
       </View>
@@ -272,7 +273,7 @@ export function ReportBlock({ userId, nickname, onPhoto = false, onBlocked }: { 
           }}
         >
           <Icon name="flag" size={18} />
-          <Text style={styles.menuText}>신고</Text>
+          <WordText style={styles.menuText}>신고</WordText>
         </Pressable>
         <Pressable
           accessibilityRole="button"
@@ -283,7 +284,7 @@ export function ReportBlock({ userId, nickname, onPhoto = false, onBlocked }: { 
           }}
         >
           <Icon name="block" size={18} color={COLOR.danger} />
-          <Text style={[styles.menuText, styles.dangerText]}>차단</Text>
+          <WordText style={[styles.menuText, styles.dangerText]}>차단</WordText>
         </Pressable>
       </DetailSheet>
       <ReportDialog

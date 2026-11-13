@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 
 import { UNREADABLE_INPUT_NOTE } from '@input/stored';
 import { HOUR_UNKNOWN_LABEL } from '@input/query';
@@ -16,6 +16,7 @@ import { NoteEditor, RemoveConfirm } from './manage';
 import { DayMasterChip, ManageButton, PillarStrip, Sheet, SheetItem, go, styles as shared } from './parts';
 import { StemSymbol } from '@/ui/stem-symbol';
 import { Tile } from '@/ui/surfaces';
+import { WordText } from '@/ui/word-text';
 
 type Panel = 'menu' | 'edit-input' | 'note' | 'remove';
 
@@ -73,35 +74,35 @@ export function PersonCard({
         </View>
 
         <View>
-          <Text style={shared.name} numberOfLines={1}>{person.label}</Text>
+          <WordText style={shared.name} numberOfLines={1}>{person.label}</WordText>
           {person.chart.ok && (
             <>
-              <Text style={shared.meta}>
+              <WordText style={shared.meta}>
                 {person.chart.query.calendar === 'solar' ? person.chart.query.date : `${CALENDAR_KO[person.chart.query.calendar]} ${person.chart.query.date}`}
                 {person.chart.query.hourKnown === false ? ` · ${HOUR_UNKNOWN_LABEL}` : ` · ${person.chart.query.time}`}
-              </Text>
-              <Text style={shared.meta}>
+              </WordText>
+              <WordText style={shared.meta}>
                 {GENDER_KO[person.chart.query.gender]} · {person.chart.query.city}
-              </Text>
+              </WordText>
             </>
           )}
         </View>
 
         {note !== '' && (
-          <Text style={styles.note}>
-            <Text style={[styles.noteName, tone !== null && { color: tone.ink }]}>메모 </Text>
+          <WordText style={styles.note}>
+            <WordText style={[styles.noteName, tone !== null && { color: tone.ink }]}>메모 </WordText>
             {note}
-          </Text>
+          </WordText>
         )}
 
         {person.chart.ok ? (
           <>
             <PillarStrip pillars={person.chart.saju.pillars} name={person.label} />
             {reading !== null && (
-              <Text style={styles.oneLine} numberOfLines={2}>
-                {!reading.fromCurrentChart && <Text style={styles.stale}>{READING_STALE_LABEL} </Text>}
+              <WordText style={styles.oneLine} numberOfLines={2}>
+                {!reading.fromCurrentChart && <WordText style={styles.stale}>{READING_STALE_LABEL} </WordText>}
                 {reading.metaphor ?? READING_CONTINUE_NOTE}
-              </Text>
+              </WordText>
             )}
             <View style={styles.buttons}>
               <Pressable
@@ -109,9 +110,9 @@ export function PersonCard({
                 onPress={() => go(`/me/readings/${person.personId}`)}
                 style={[styles.button, styles.grow, reading === null ? styles.buttonPrimary : [styles.buttonPlain, { borderColor: `${tone?.ink ?? COLOR.none}2e` }]]}
               >
-                <Text style={[styles.buttonText, { color: tone?.ink ?? COLOR.none }, reading === null && styles.buttonPrimaryText]} numberOfLines={1}>
+                <WordText style={[styles.buttonText, { color: tone?.ink ?? COLOR.none }, reading === null && styles.buttonPrimaryText]} numberOfLines={1}>
                   {reading !== null ? '사주풀이 보기' : making ? SELF_READING_MAKING : '사주풀이 받기'}
-                </Text>
+                </WordText>
               </Pressable>
               <Pressable
                 accessibilityRole="link"
@@ -120,23 +121,23 @@ export function PersonCard({
                 style={[styles.button, styles.buttonPlain, { borderColor: `${tone?.ink ?? COLOR.none}2e` }]}
               >
                 {/* 점수가 있으면 「궁합 82점」 — 무슨 점수인지 말하는 「궁합」은 작고 옅게 선다(운영자 확정 2026-11-08, 대장 all-11) */}
-                <Text style={[styles.buttonText, { color: tone?.ink ?? COLOR.none }]} numberOfLines={1}>
+                <WordText style={[styles.buttonText, { color: tone?.ink ?? COLOR.none }]} numberOfLines={1}>
                   {pair?.score != null ? (
                     <>
-                      <Text style={styles.scoreName}>궁합 </Text>
+                      <WordText style={styles.scoreName}>궁합 </WordText>
                       {`${pair.score}점`}
                     </>
                   ) : (
                     '궁합'
                   )}
-                </Text>
+                </WordText>
               </Pressable>
             </View>
           </>
         ) : (
           <View style={styles.unreadable}>
-            <Text style={shared.noticeBody}>{person.chart.message}</Text>
-            <Text style={shared.meta}>{UNREADABLE_INPUT_NOTE}</Text>
+            <WordText style={shared.noticeBody}>{person.chart.message}</WordText>
+            <WordText style={shared.meta}>{UNREADABLE_INPUT_NOTE}</WordText>
           </View>
         )}
 
@@ -148,7 +149,7 @@ export function PersonCard({
       {panel === 'remove' && <RemoveConfirm personId={person.personId} label={person.label} onDone={done} onCancel={() => setPanel(null)} />}
       {panel === 'menu' && (
         <Sheet label="닫기" onClose={() => setPanel(null)}>
-          <Text style={shared.section}>{person.label}</Text>
+          <WordText style={shared.section}>{person.label}</WordText>
           {person.chart.ok && <SheetItem label="출생 정보 수정" onPress={() => setPanel('edit-input')} />}
           <SheetItem label={note === '' ? '메모 넣기' : '메모 고치기'} onPress={() => setPanel('note')} />
           <SheetItem label="삭제" danger onPress={() => setPanel('remove')} />

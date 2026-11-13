@@ -1,6 +1,6 @@
 import { router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ScrollView, StyleSheet, View } from 'react-native';
 
 import { MATCHING_START_LEAVE } from '@brand/guide';
 import { safeReturnPath } from '@consent/return-path';
@@ -22,6 +22,7 @@ import { settled } from '@/ui/settled';
 import { CardFrame } from '@/ui/surfaces';
 import { COLOR, FONT, TYPE } from '@/ui/tokens';
 import { TopBar } from '@/ui/top-bar';
+import { WordText } from '@/ui/word-text';
 
 /**
  * 성인 확인 안내(ADR 0214) — 스위치가 켜졌고 미확인인 사람만 이 자리에 온다. 끝나면 온 주소로 갈아 끼운다.
@@ -64,23 +65,23 @@ export default function AdultCheckScreen() {
       <TopBar fallback="/me" />
       <ScrollView contentContainerStyle={styles.content}>
         <CardFrame style={styles.card}>
-          <Text style={styles.title} accessibilityRole="header">
+          <WordText style={styles.title} accessibilityRole="header">
             {ADULT_CHECK_TITLE}
-          </Text>
-          <Text style={styles.body}>{ADULT_CHECK_LINE}</Text>
+          </WordText>
+          <WordText style={styles.body}>{ADULT_CHECK_LINE}</WordText>
           {/* 확인이 곧 공개 시점이다 — 참여가 자동으로 켜진다(운영자 결정 2026-11-02, #947). 끈 사람에게는 꺼져 있다는 줄(조율자 2026-11-08) */}
-          {participation !== null && <Text style={styles.body}>{participation}</Text>}
+          {participation !== null && <WordText style={styles.body}>{participation}</WordText>}
           {failed && (
-            <Text style={styles.failure} accessibilityRole="alert">
+            <WordText style={styles.failure} accessibilityRole="alert">
               {ADULT_CHECK_FAILED}
-            </Text>
+            </WordText>
           )}
           {adultCheckProvider === null ? (
-            <Text style={styles.body}>{ADULT_CHECK_UNAVAILABLE}</Text>
+            <WordText style={styles.body}>{ADULT_CHECK_UNAVAILABLE}</WordText>
           ) : (
             <PrimaryButton label={ADULT_CHECK_ACTION} onPress={() => void start()} disabled={working} />
           )}
-          <Text style={styles.note}>{MATCHING_START_LEAVE}</Text>
+          <WordText style={styles.note}>{MATCHING_START_LEAVE}</WordText>
         </CardFrame>
       </ScrollView>
     </View>

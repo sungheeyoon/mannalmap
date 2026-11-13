@@ -1,6 +1,6 @@
 import { router } from 'expo-router';
 import { useState } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 
 import { CHAT_USES_NO_CREDIT } from '@consent/disclosure';
 import { TALK_SCORE_INFO, TALK_SCORE_LABEL, TALK_START_LABEL, TALK_START_NOTE, TALK_START_TITLE } from '@chat/room/detail-copy';
@@ -22,6 +22,7 @@ import { alpha, COLOR, ELEMENT_TONE, FIXED, FONT, RADIUS, TYPE } from '@/ui/toke
 import { Card, CardFrame, Paper, RowCard, Tile } from '@/ui/surfaces';
 
 import { PersonPhoto, PhotoBars, ReportBlock } from './people';
+import { WordText } from '@/ui/word-text';
 
 const tileOf = (element: Element | null) => (element === null ? COLOR.noneSoft : ELEMENT_TONE[element].soft);
 
@@ -52,12 +53,12 @@ export function TodayCard({ card, onInfo, onBlocked }: { card: DeckCard; onInfo:
       {card.exploration && (
         <View style={[styles.exploration, { top }]}>
           <Icon name="spark" size={16} />
-          <Text style={styles.explorationText}>색다른 인연</Text>
+          <WordText style={styles.explorationText}>색다른 인연</WordText>
         </View>
       )}
       <View style={[styles.onPhoto, { top }]}>
         <Pressable accessibilityRole="button" accessibilityLabel="자세히 보기" onPress={onInfo} style={styles.info}>
-          <Text style={styles.infoText}>i</Text>
+          <WordText style={styles.infoText}>i</WordText>
         </Pressable>
         <ReportBlock userId={card.candidateUserId} nickname={card.nickname} onPhoto onBlocked={onBlocked} />
       </View>
@@ -66,14 +67,14 @@ export function TodayCard({ card, onInfo, onBlocked }: { card: DeckCard; onInfo:
         <FaceScrim />
         <View style={styles.faceHead}>
           <View style={styles.flex}>
-            <Text style={styles.nickname} numberOfLines={1}>
+            <WordText style={styles.nickname} numberOfLines={1}>
               {card.nickname}
-            </Text>
-            {card.activity != null && <Text style={styles.activity}>{activityText(card.activity)}</Text>}
+            </WordText>
+            {card.activity != null && <WordText style={styles.activity}>{activityText(card.activity)}</WordText>}
           </View>
-          <Text style={styles.scoreTalk}>{`${TALK_SCORE_LABEL} ${card.previewScore}점`}</Text>
+          <WordText style={styles.scoreTalk}>{`${TALK_SCORE_LABEL} ${card.previewScore}점`}</WordText>
         </View>
-        <Text style={styles.verdict}>{card.verdict}</Text>
+        <WordText style={styles.verdict}>{card.verdict}</WordText>
         {card.highlights.length > 0 && (
           <View style={styles.supply} accessible accessibilityLabel={card.highlights.map((highlight) => highlight.text).join(' ')}>
             <View style={styles.dots}>
@@ -87,17 +88,17 @@ export function TodayCard({ card, onInfo, onBlocked }: { card: DeckCard; onInfo:
               })}
             </View>
             <View style={styles.flex}>
-              <Text style={styles.supplyHead}>이 사람이 채워 주는 기운</Text>
-              <Text style={styles.supplyNames} numberOfLines={1}>
+              <WordText style={styles.supplyHead}>이 사람이 채워 주는 기운</WordText>
+              <WordText style={styles.supplyNames} numberOfLines={1}>
                 {names.join(' · ')}
-              </Text>
+              </WordText>
             </View>
           </View>
         )}
         {card.intro !== null && (
-          <Text style={styles.introLine} numberOfLines={1}>
+          <WordText style={styles.introLine} numberOfLines={1}>
             {card.intro}
-          </Text>
+          </WordText>
         )}
       </View>
     </Tile>
@@ -137,10 +138,10 @@ export function DeckButtons({ canUndo, busy, onUndo, onPass, onRequest }: { canU
         style={[styles.pass, busy && styles.off]}
       >
         <Icon size={20} name="close" />
-        <Text style={styles.passText}>다음 인연</Text>
+        <WordText style={styles.passText}>다음 인연</WordText>
       </Pressable>
       <Pressable accessibilityRole="button" accessibilityLabel={label} disabled={busy} onPress={onRequest} style={[styles.request, busy && styles.off]}>
-        <Text style={styles.requestText}>{label}</Text>
+        <WordText style={styles.requestText}>{label}</WordText>
       </Pressable>
     </View>
   );
@@ -151,11 +152,11 @@ export function CardDetails({ card, explorationNote }: { card: DeckCard; explora
   return (
     <>
       <View style={styles.reasonBox}>
-        <Text style={styles.detailVerdict}>{card.verdict}</Text>
-        <Text style={styles.body}>{card.reason}</Text>
+        <WordText style={styles.detailVerdict}>{card.verdict}</WordText>
+        <WordText style={styles.body}>{card.reason}</WordText>
       </View>
       <CardFrame style={styles.supplyBox}>
-        <Text style={styles.supplyTitle}>이 사람이 채워 주는 기운</Text>
+        <WordText style={styles.supplyTitle}>이 사람이 채워 주는 기운</WordText>
         {card.highlights.length > 0 ? (
           card.highlights.map((highlight) => {
             const known = elementOf(highlight.element);
@@ -165,26 +166,26 @@ export function CardDetails({ card, explorationNote }: { card: DeckCard; explora
                   <ElementSymbol element={known} size={24} />
                 </View>
                 <View style={styles.flex}>
-                  {known !== null && <Text style={[styles.supplyName, { color: ELEMENT_TONE[known].ink }]}>{ELEMENT_PICTURE_KO[known]}</Text>}
-                  <Text style={styles.small}>{highlight.text}</Text>
+                  {known !== null && <WordText style={[styles.supplyName, { color: ELEMENT_TONE[known].ink }]}>{ELEMENT_PICTURE_KO[known]}</WordText>}
+                  <WordText style={styles.small}>{highlight.text}</WordText>
                 </View>
               </View>
             );
           })
         ) : (
-          <Text style={styles.body}>{card.reason}</Text>
+          <WordText style={styles.body}>{card.reason}</WordText>
         )}
-        <Text style={styles.small}>{card.balanceLabel}</Text>
-        {card.exploration && explorationNote !== null && <Text style={styles.note}>{explorationNote}</Text>}
+        <WordText style={styles.small}>{card.balanceLabel}</WordText>
+        {card.exploration && explorationNote !== null && <WordText style={styles.note}>{explorationNote}</WordText>}
       </CardFrame>
       <CardFrame style={styles.letter}>
         {card.intro !== null ? (
           <>
-            <Text style={styles.letterText}>{card.intro}</Text>
-            <Text style={styles.signature}>— {card.nickname}</Text>
+            <WordText style={styles.letterText}>{card.intro}</WordText>
+            <WordText style={styles.signature}>— {card.nickname}</WordText>
           </>
         ) : (
-          <Text style={styles.small}>자기소개 없음</Text>
+          <WordText style={styles.small}>자기소개 없음</WordText>
         )}
       </CardFrame>
     </>
@@ -210,8 +211,8 @@ export function CardSheet({
   return (
     <DetailSheet open={open} title={card.nickname} onClose={onClose} menu={<ReportBlock userId={card.candidateUserId} nickname={card.nickname} onBlocked={onBlocked} />}>
       <CardDetails card={card} explorationNote={explorationNote} />
-      <Text style={styles.fine}>{TALK_SCORE_INFO}</Text>
-      {notice !== null && <Text style={styles.meta}>{notice}</Text>}
+      <WordText style={styles.fine}>{TALK_SCORE_INFO}</WordText>
+      {notice !== null && <WordText style={styles.meta}>{notice}</WordText>}
     </DetailSheet>
   );
 }
@@ -232,19 +233,19 @@ export function Feedback({ failure, flash }: { failure: string | null; flash: st
     <>
       {failure !== null && (
         <RowCard style={styles.failureBox}>
-          <Text style={styles.failure} accessibilityRole="alert">
+          <WordText style={styles.failure} accessibilityRole="alert">
             {failure}
-          </Text>
+          </WordText>
           {failure === REQUEST_UNSURE && (
             <Pressable accessibilityRole="link" onPress={() => router.push('/me/matching/history')} style={styles.textLink}>
-              <Text style={styles.textLinkText}>인연 기록 보기</Text>
+              <WordText style={styles.textLinkText}>인연 기록 보기</WordText>
             </Pressable>
           )}
         </RowCard>
       )}
       {flash !== '' && (
         <View style={styles.flashBox} accessibilityLiveRegion="polite">
-          <Text style={styles.flash}>{flash}</Text>
+          <WordText style={styles.flash}>{flash}</WordText>
         </View>
       )}
     </>
@@ -262,12 +263,12 @@ export function EmptyDeck({ onRecheck }: { onRecheck: () => void }) {
   ];
   return (
     <Paper style={styles.quiet}>
-      <Text style={styles.quietTitle}>{DISCOVERY_EMPTY.title}</Text>
-      <Text style={styles.body}>{DISCOVERY_EMPTY.line}</Text>
+      <WordText style={styles.quietTitle}>{DISCOVERY_EMPTY.title}</WordText>
+      <WordText style={styles.body}>{DISCOVERY_EMPTY.line}</WordText>
       <PrimaryButton label={DISCOVERY_EMPTY.recheck} onPress={onRecheck} />
       {links.map((link) => (
         <CardFrame key={link.label} accessibilityRole="link" onPress={link.open} style={styles.quietLink}>
-          <Text style={[styles.quietLinkText, styles.flex]}>{link.label}</Text>
+          <WordText style={[styles.quietLinkText, styles.flex]}>{link.label}</WordText>
           <Icon name="arrow" size={16} color={COLOR.secondary} />
         </CardFrame>
       ))}
@@ -279,8 +280,8 @@ export function EmptyDeck({ onRecheck }: { onRecheck: () => void }) {
 export function QuietPlace({ title, line, href, action }: { title: string; line: string; href: string; action: string }) {
   return (
     <Paper style={styles.quiet}>
-      <Text style={styles.quietTitle}>{title}</Text>
-      <Text style={styles.body}>{line}</Text>
+      <WordText style={styles.quietTitle}>{title}</WordText>
+      <WordText style={styles.body}>{line}</WordText>
       <PrimaryButton label={action} onPress={() => router.push(href as never)} />
     </Paper>
   );
@@ -308,16 +309,16 @@ export function PassedConnections({
   return (
     <View style={styles.passed}>
       <View style={styles.passedHead}>
-        <Text style={styles.quietTitle} accessibilityRole="header">
+        <WordText style={styles.quietTitle} accessibilityRole="header">
           지나친 인연
           {cards.length > 0 && (
-            <Text style={styles.count}>
+            <WordText style={styles.count}>
               {'  '}
               {cards.length} / {PASSED_LIMIT}
-            </Text>
+            </WordText>
           )}
-        </Text>
-        {cards.length > 0 && <Text style={styles.body}>잠깐 지나쳤어도, 다시 궁금해질 수 있으니까요.</Text>}
+        </WordText>
+        {cards.length > 0 && <WordText style={styles.body}>잠깐 지나쳤어도, 다시 궁금해질 수 있으니까요.</WordText>}
       </View>
       {cards.length === 0 ? (
         <View style={styles.passedEmpty}>
@@ -325,9 +326,9 @@ export function PassedConnections({
             <Icon size={20} name="undo" color={COLOR.creamInk} />
           </View>
           <View style={styles.flex}>
-            <Text style={styles.name}>지나친 인연이 여기에 모여요</Text>
-            <Text style={styles.body}>다시 궁금해진 사람을 살펴보고,</Text>
-            <Text style={styles.body}>한 번 더 알아갈 수 있는 자리예요.</Text>
+            <WordText style={styles.name}>지나친 인연이 여기에 모여요</WordText>
+            <WordText style={styles.body}>다시 궁금해진 사람을 살펴보고,</WordText>
+            <WordText style={styles.body}>한 번 더 알아갈 수 있는 자리예요.</WordText>
           </View>
         </View>
       ) : (
@@ -349,13 +350,13 @@ export function PassedConnections({
                 </View>
               </View>
               <View style={styles.tileBody}>
-                <Text style={styles.name} numberOfLines={1}>
+                <WordText style={styles.name} numberOfLines={1}>
                   {card.nickname}
-                </Text>
-                <Text style={styles.tileScore}>{`${TALK_SCORE_LABEL} ${card.previewScore}점`}</Text>
-                <Text style={styles.small} numberOfLines={2}>
+                </WordText>
+                <WordText style={styles.tileScore}>{`${TALK_SCORE_LABEL} ${card.previewScore}점`}</WordText>
+                <WordText style={styles.small} numberOfLines={2}>
                   {card.highlights[0]?.text ?? card.reason}
-                </Text>
+                </WordText>
               </View>
             </Card>
           ))}
@@ -363,17 +364,17 @@ export function PassedConnections({
       )}
       {feedback}
       <Pressable accessibilityRole="button" onPress={onBack} style={styles.textLink}>
-        <Text style={styles.textLinkText}>오늘의 인연 계속 보기</Text>
+        <WordText style={styles.textLinkText}>오늘의 인연 계속 보기</WordText>
       </Pressable>
-      <Text style={styles.fine}>최근 {PASSED_LIMIT}명을 보관해요. 목록에서 빠진 인연은 마지막으로 넘긴 뒤 하루가 지나면 다시 추천될 수 있어요.</Text>
+      <WordText style={styles.fine}>최근 {PASSED_LIMIT}명을 보관해요. 목록에서 빠진 인연은 마지막으로 넘긴 뒤 하루가 지나면 다시 추천될 수 있어요.</WordText>
 
       {looking !== null && (
         <DetailSheet open title={looking.nickname} onClose={() => setLooking(null)}>
           <CardDetails card={looking} explorationNote={explorationNote} />
           {failure !== null && (
-            <Text style={styles.failure} accessibilityRole="alert">
+            <WordText style={styles.failure} accessibilityRole="alert">
               {failure}
-            </Text>
+            </WordText>
           )}
           <PrimaryButton
             label={restoring ? '복원하는 중…' : '다시 만나보기'}

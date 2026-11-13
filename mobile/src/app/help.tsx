@@ -1,6 +1,6 @@
 import { router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useRef, useState, type ComponentRef } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 
 import { HELP_GROUPS } from '@brand/guide';
 
@@ -10,6 +10,7 @@ import { Icon } from '@/ui/icons';
 import { SecondaryButton } from '@/ui/parts';
 import { COLOR, FONT, RADIUS, TYPE } from '@/ui/tokens';
 import { Card } from '@/ui/surfaces';
+import { WordText } from '@/ui/word-text';
 
 /** 답이 궁합 첫 신호까지 약속하는데 앱에는 로그인 전 궁합 결과가 없다 — 물음째 뺀다(ADR 0213) */
 const SIGNED_OUT_QUESTION = 'without-sign-in';
@@ -60,7 +61,7 @@ export default function HelpScreen() {
   return (
     <InfoScreen ref={scroller} gap={32} title="자주 묻는 질문" fallback="/">
       <View style={styles.head}>
-        <Text style={styles.answer}>궁금한 물음을 누르면 답이 펼쳐져요.</Text>
+        <WordText style={styles.answer}>궁금한 물음을 누르면 답이 펼쳐져요.</WordText>
       </View>
 
       <View style={styles.chips}>
@@ -74,14 +75,14 @@ export default function HelpScreen() {
             }}
             style={styles.chip}
           >
-            <Text style={styles.chipText}>{group.title}</Text>
+            <WordText style={styles.chipText}>{group.title}</WordText>
           </Pressable>
         ))}
       </View>
 
       {GROUPS.map((group) => (
         <View key={group.title} style={styles.group} onLayout={(event) => place(`group:${group.title}`, event.nativeEvent.layout.y)}>
-          <Text style={styles.groupTitle}>{group.title}</Text>
+          <WordText style={styles.groupTitle}>{group.title}</WordText>
           <View onLayout={(event) => place(`panel:${group.title}`, event.nativeEvent.layout.y)}>
             <Card style={styles.panel}>
               {group.items.map((item, index) => {
@@ -105,7 +106,7 @@ export default function HelpScreen() {
                       }
                       style={styles.question}
                     >
-                      <Text style={styles.questionText}>{item.q}</Text>
+                      <WordText style={styles.questionText}>{item.q}</WordText>
                       <View style={isOpen && styles.chevronOpen}>
                         <Icon name="chevron" size={16} color={COLOR.secondary} />
                       </View>
@@ -113,13 +114,13 @@ export default function HelpScreen() {
                     {isOpen && (
                       <View style={styles.answers}>
                         {item.a.map((line) => (
-                          <Text key={line} style={styles.answer}>
+                          <WordText key={line} style={styles.answer}>
                             {line}
-                          </Text>
+                          </WordText>
                         ))}
                         {item.link && (
                           <Pressable accessibilityRole="link" onPress={() => router.push(item.link!.href as never)} style={styles.link}>
-                            <Text style={styles.linkText}>{item.link.label} →</Text>
+                            <WordText style={styles.linkText}>{item.link.label} →</WordText>
                           </Pressable>
                         )}
                       </View>

@@ -1,5 +1,5 @@
 import { useState, type ReactNode } from 'react';
-import { Platform, Pressable, StyleSheet, Text, View, type StyleProp, type TextStyle, type ViewStyle } from 'react-native';
+import { Platform, Pressable, StyleSheet, View, type StyleProp, type TextStyle, type ViewStyle } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 
 import type { Rich as RichParts, RichPart } from '@saju-view/notes';
@@ -7,6 +7,7 @@ import type { Rich as RichParts, RichPart } from '@saju-view/notes';
 import { Card as CardFace } from '@/ui/surfaces';
 import { COLOR, CONTROL, FONT, RADIUS, TYPE } from '@/ui/tokens';
 import { KEEP_VIEW } from '@/ui/keep-view';
+import { WordText } from '@/ui/word-text';
 
 /** 한자 — 부산단디명조에 없어 기기 서체다(웹의 `.glyph`) */
 const GLYPH_FONT = Platform.select({ ios: 'System', android: 'sans-serif', default: 'system-ui' });
@@ -45,7 +46,7 @@ export function T({
   children: ReactNode;
 }) {
   return (
-    <Text
+    <WordText
       style={[
         SIZE[size],
         { color: color ?? TONE[tone], fontFamily: bold ? FONT.bold : FONT.medium },
@@ -55,18 +56,18 @@ export function T({
       ]}
     >
       {children}
-    </Text>
+    </WordText>
   );
 }
 
 function Part({ part }: { part: RichPart }) {
   if (typeof part === 'string') return part;
-  if ('b' in part) return <Text style={styles.strong}>{part.b}</Text>;
-  if ('m' in part) return <Text style={styles.strong}>{part.m}</Text>;
-  if ('g' in part) return <Text style={{ fontFamily: GLYPH_FONT }}>{part.g}</Text>;
-  if ('n' in part) return <Text style={styles.num}>{part.n}</Text>;
-  if ('s' in part) return <Text style={{ color: COLOR.secondary }}>{part.s}</Text>;
-  return <Text style={{ color: COLOR.muted }}>{part.u}</Text>;
+  if ('b' in part) return <WordText style={styles.strong}>{part.b}</WordText>;
+  if ('m' in part) return <WordText style={styles.strong}>{part.m}</WordText>;
+  if ('g' in part) return <WordText style={{ fontFamily: GLYPH_FONT }}>{part.g}</WordText>;
+  if ('n' in part) return <WordText style={styles.num}>{part.n}</WordText>;
+  if ('s' in part) return <WordText style={{ color: COLOR.secondary }}>{part.s}</WordText>;
+  return <WordText style={{ color: COLOR.muted }}>{part.u}</WordText>;
 }
 
 /** 웹과 함께 쓰는 문단을 그린다 — 글자는 `src/lib/saju/view/notes.ts` 가 든다 */

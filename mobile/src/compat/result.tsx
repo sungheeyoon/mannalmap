@@ -1,5 +1,5 @@
 import { useMemo, type ReactNode } from 'react';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ScrollView, StyleSheet, View } from 'react-native';
 
 import { buildMatchPreview, matchBasisOf } from '@matching';
 import { MATCH_INDEX_BADGE, MATCH_INDEX_NOTE, MATCH_INDEX_POLICY_BADGE, MATCH_INDEX_SCALE, MATCH_INDEX_UNSCALED } from '@matching/copy';
@@ -35,6 +35,7 @@ import { Card, CardFrame, Paper, Tile } from '@/ui/surfaces';
 import { LoadingDots } from '@/ui/loading';
 
 import type { PairOutcome } from './data';
+import { WordText } from '@/ui/word-text';
 
 type Ok = Extract<PairOutcome, { kind: 'ok' }>;
 
@@ -59,9 +60,9 @@ export function CompatResult({ outcome, onReadingChanged }: { outcome: Ok; onRea
           ))}
         </View>
         <View style={styles.titleText}>
-          <Text style={shared.title}>
-            {names.a} <Text style={{ color: COLOR.secondary }}>×</Text> {names.b}
-          </Text>
+          <WordText style={shared.title}>
+            {names.a} <WordText style={{ color: COLOR.secondary }}>×</WordText> {names.b}
+          </WordText>
         </View>
       </View>
 
@@ -70,38 +71,38 @@ export function CompatResult({ outcome, onReadingChanged }: { outcome: Ok; onRea
         <>
           <Card style={styles.index}>
             <View style={styles.indexHead}>
-              <Text style={styles.betaTag}>{MATCH_INDEX_BADGE}</Text>
+              <WordText style={styles.betaTag}>{MATCH_INDEX_BADGE}</WordText>
               {preview.policy === null ? (
-                <Text style={shared.meta}>{MATCH_INDEX_UNSCALED}</Text>
+                <WordText style={shared.meta}>{MATCH_INDEX_UNSCALED}</WordText>
               ) : (
-                <Text style={styles.policyTag}>{MATCH_INDEX_POLICY_BADGE[preview.policy]}</Text>
+                <WordText style={styles.policyTag}>{MATCH_INDEX_POLICY_BADGE[preview.policy]}</WordText>
               )}
             </View>
             <Paper style={styles.score}>
-              <Text style={styles.scoreNames}>
+              <WordText style={styles.scoreNames}>
                 {names.a} × {names.b}
-              </Text>
-              <Text style={styles.scoreValue}>{preview.index}</Text>
-              <Text style={styles.scoreNames}>{MATCH_INDEX_SCALE}</Text>
+              </WordText>
+              <WordText style={styles.scoreValue}>{preview.index}</WordText>
+              <WordText style={styles.scoreNames}>{MATCH_INDEX_SCALE}</WordText>
             </Paper>
             {preview.dimensions.map((dimension) => (
               <View key={dimension.key}>
                 <View style={styles.dimensionHead}>
-                  <Text style={styles.dimensionLabel}>
+                  <WordText style={styles.dimensionLabel}>
                     {dimension.label}
-                    <Text style={shared.meta}>{`  점수 반영 ${Math.round(dimension.weight * 100)}%`}</Text>
-                  </Text>
-                  <Text style={styles.dimensionValue}>{dimension.score}</Text>
+                    <WordText style={shared.meta}>{`  점수 반영 ${Math.round(dimension.weight * 100)}%`}</WordText>
+                  </WordText>
+                  <WordText style={styles.dimensionValue}>{dimension.score}</WordText>
                 </View>
                 <View style={styles.track}>
                   <View style={[styles.bar, { width: `${dimension.score}%` }]} />
                 </View>
-                <Text style={[shared.meta, styles.dimensionNote]}>{dimension.description}</Text>
+                <WordText style={[shared.meta, styles.dimensionNote]}>{dimension.description}</WordText>
               </View>
             ))}
           </Card>
 
-          <Text style={shared.meta}>{MATCH_INDEX_NOTE}</Text>
+          <WordText style={shared.meta}>{MATCH_INDEX_NOTE}</WordText>
         </>
       )}
 
@@ -116,8 +117,8 @@ export function CompatResult({ outcome, onReadingChanged }: { outcome: Ok; onRea
       <Fold title="두 사람의 명식 보기">
         <View style={styles.stack}>
           <Paper style={styles.board}>
-            <Text style={styles.boardEyebrow}>각자의 사주</Text>
-            <Text style={shared.section}>궁합의 출발점</Text>
+            <WordText style={styles.boardEyebrow}>각자의 사주</WordText>
+            <WordText style={shared.section}>궁합의 출발점</WordText>
             {SIDES.map((side) => (
               <PairSide key={side} side={side} name={names[side]} saju={charts[side]} />
             ))}
@@ -154,8 +155,8 @@ function PairReadingPanel({
   if (answer.view.view === 'blocked') {
     return (
       <CardFrame style={styles.reading}>
-        <Text style={shared.noticeTitle}>{answer.view.title}</Text>
-        <Text style={shared.body}>{answer.view.detail}</Text>
+        <WordText style={shared.noticeTitle}>{answer.view.title}</WordText>
+        <WordText style={shared.body}>{answer.view.detail}</WordText>
       </CardFrame>
     );
   }
@@ -189,12 +190,12 @@ function PairSide({ side, name, saju }: { side: CompatSide; name: string; saju: 
       </View>
       <DayMasterChip stem={stem} />
       <View>
-        <Text style={shared.meta}>{SIDE_PERSON[side]}</Text>
-        <Text style={shared.name} numberOfLines={1}>{name}</Text>
-        <Text style={shared.meta}>
+        <WordText style={shared.meta}>{SIDE_PERSON[side]}</WordText>
+        <WordText style={shared.name} numberOfLines={1}>{name}</WordText>
+        <WordText style={shared.meta}>
           {GENDER_KO[saju.meta.gender]} · {dayMaster.ko}
           {ELEMENT_KO[dayMaster.element]} 일간
-        </Text>
+        </WordText>
       </View>
       <PillarStrip pillars={saju.pillars} name={name} large />
     </Tile>
@@ -204,14 +205,14 @@ function PairSide({ side, name, saju }: { side: CompatSide; name: string; saju: 
 /** 무엇으로 읽는지 적는 한 줄 — 바꾸는 길은 두 사람을 고르는 자리다(`app/me/compat/relation-note.tsx`, ADR 0054) */
 function RelationNote({ readWith, next }: { readWith: Relation | null; next: Relation }) {
   return (
-    <Text style={shared.meta}>
+    <WordText style={shared.meta}>
       {readWith !== null && readWith !== next && (
         <>
-          지금 글과 점수는 <Text style={shared.bodyStrong}>{RELATION_LABEL[readWith]}</Text> 사이로 읽었어요. 다음 풀이는{' '}
+          지금 글과 점수는 <WordText style={shared.bodyStrong}>{RELATION_LABEL[readWith]}</WordText> 사이로 읽었어요. 다음 풀이는{' '}
         </>
       )}
-      <Text style={shared.bodyStrong}>{RELATION_LABEL[next]}</Text> 사이로 읽어 드려요. 바꾸려면 두 사람을 고르는 자리에서 다시 골라 주세요.
-    </Text>
+      <WordText style={shared.bodyStrong}>{RELATION_LABEL[next]}</WordText> 사이로 읽어 드려요. 바꾸려면 두 사람을 고르는 자리에서 다시 골라 주세요.
+    </WordText>
   );
 }
 

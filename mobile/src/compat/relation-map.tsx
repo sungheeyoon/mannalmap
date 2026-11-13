@@ -1,6 +1,6 @@
 import { router } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
-import { Animated, Easing, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Animated, Easing, Pressable, StyleSheet, View } from 'react-native';
 import Svg, { Circle, Defs, Line, Path, RadialGradient, Rect, Stop } from 'react-native-svg';
 
 import { READING_STALE_LABEL } from '@reading/notes';
@@ -15,6 +15,7 @@ import { StemSymbol } from '@/ui/stem-symbol';
 import { Icon } from '@/ui/icons';
 import { alpha, COLOR, ELEMENT_TONE, FONT, RADIUS as CORNER, TYPE } from '@/ui/tokens';
 import { CardFrame, Paper } from '@/ui/surfaces';
+import { WordText } from '@/ui/word-text';
 
 /** 누른 뒤의 박자(ms) — 웹의 `BEAT` 와 같다 */
 const BEAT = { depart: 900, travel: 900 } as const;
@@ -108,11 +109,11 @@ export function RelationMap({ model, canAdd }: { model: MapModel; canAdd: boolea
   return (
     <Paper accessibilityLabel="관계 지도" style={styles.panel}>
       <View style={styles.head}>
-        <Text accessibilityRole="header" style={styles.title}>관계 지도</Text>
+        <WordText accessibilityRole="header" style={styles.title}>관계 지도</WordText>
         {!empty && (
-          <Text style={styles.count}>
-            저장한 사람 <Text style={styles.countStrong}>{model.people.length}</Text>명
-          </Text>
+          <WordText style={styles.count}>
+            저장한 사람 <WordText style={styles.countStrong}>{model.people.length}</WordText>명
+          </WordText>
         )}
       </View>
 
@@ -197,7 +198,7 @@ export function RelationMap({ model, canAdd }: { model: MapModel; canAdd: boolea
               >
                 <Breathing key={selectedId ?? 'alone'} stem={model.self.stem as Stem} size={px(11)} phase={-3.7} hushed={false} />
                 <View style={[styles.meTag, { backgroundColor: toneOf(model.self.element).ink }]}>
-                  <Text style={[styles.meTagText, { color: toneOf(model.self.element).soft }]}>나</Text>
+                  <WordText style={[styles.meTagText, { color: toneOf(model.self.element).soft }]}>나</WordText>
                 </View>
               </View>
 
@@ -252,8 +253,8 @@ function Seat({ person, at, angle, phase, width, state, onPress }: { person: Map
   const label = (
     <View pointerEvents="none" style={[styles.seatLabelRoom, { width: room, left: (size - room) / 2 }, above ? { bottom: size + 2 } : { top: size + 2 }]}>
       <View style={[styles.seatLabel, near && styles.seatLabelNear]}>
-        <Text numberOfLines={1} style={[styles.seatName, near && styles.seatNameNear]}>{person.label}</Text>
-        {score !== null && <Text style={[styles.seatScore, { color: tone.ink }]}>{score}</Text>}
+        <WordText numberOfLines={1} style={[styles.seatName, near && styles.seatNameNear]}>{person.label}</WordText>
+        {score !== null && <WordText style={[styles.seatScore, { color: tone.ink }]}>{score}</WordText>}
       </View>
     </View>
   );
@@ -274,7 +275,7 @@ function Seat({ person, at, angle, phase, width, state, onPress }: { person: Map
           (near || state === 'linked') && { borderWidth: 2, borderColor: tone.mid },
         ]}
       >
-        {person.day !== null ? <Breathing key={near ? 'near' : 'rest'} stem={person.day.stem as Stem} size={size * 0.65} phase={phase} hushed={state === 'receded'} /> : <Text style={styles.seatUnknown}>?</Text>}
+        {person.day !== null ? <Breathing key={near ? 'near' : 'rest'} stem={person.day.stem as Stem} size={size * 0.65} phase={phase} hushed={state === 'receded'} /> : <WordText style={styles.seatUnknown}>?</WordText>}
       </View>
       {label}
     </Pressable>
@@ -287,7 +288,7 @@ function AddSeat({ width }: { width: number }) {
   const cy = (at.y / 100) * width;
   return (
     <Pressable accessibilityRole="link" onPress={() => go('/me/people')} style={[styles.add, { left: cx - 22, top: cy - 22 }]}>
-      <Text style={styles.addLabel}>사람 추가</Text>
+      <WordText style={styles.addLabel}>사람 추가</WordText>
       <View style={styles.addFace}>
         <Icon name="plus" size={20} />
       </View>
@@ -296,7 +297,7 @@ function AddSeat({ width }: { width: number }) {
 }
 
 function Legend({ empty }: { empty: boolean }) {
-  if (empty) return <Text style={[styles.note, styles.legendRoom]}>사람을 저장하면 그 사람의 기운 쪽 궤도에 앉아요</Text>;
+  if (empty) return <WordText style={[styles.note, styles.legendRoom]}>사람을 저장하면 그 사람의 기운 쪽 궤도에 앉아요</WordText>;
   return (
     <View style={[styles.legend, styles.legendRoom]}>
       <View style={styles.legendRow}>
@@ -304,16 +305,16 @@ function Legend({ empty }: { empty: boolean }) {
           <Svg width={24} height={8}>
             <Rect x={0} y={3} width={24} height={2} rx={1} fill={ELEMENT_TONE.木.mid} />
           </Svg>
-          <Text style={styles.legendText}>나와 본 궁합</Text>
+          <WordText style={styles.legendText}>나와 본 궁합</WordText>
         </View>
         <View style={styles.legendItem}>
           <Svg width={24} height={8}>
             <Line x1={1} y1={4} x2={23} y2={4} stroke={COLOR.secondary} strokeWidth={2} strokeDasharray="0.01 5" strokeLinecap="round" />
           </Svg>
-          <Text style={styles.legendText}>사람끼리 본 궁합</Text>
+          <WordText style={styles.legendText}>사람끼리 본 궁합</WordText>
         </View>
       </View>
-      <Text style={styles.note}>누르면 나와의 궁합을 볼 수 있어요. 궁합을 본 사람이면 두 그림이 서로 만나요</Text>
+      <WordText style={styles.note}>누르면 나와의 궁합을 볼 수 있어요. 궁합을 본 사람이면 두 그림이 서로 만나요</WordText>
     </View>
   );
 }
@@ -326,19 +327,19 @@ function PersonCard({ person, links, onClose }: { person: MapPerson; links: Retu
     <CardFrame accessibilityLiveRegion="polite" style={styles.card}>
       <View style={styles.cardHead}>
         <View style={[styles.cardFace, person.day === null ? styles.seatUnread : { backgroundColor: tone.soft }]}>
-          {person.day !== null ? <StemSymbol stem={person.day.stem as Stem} size={24} /> : <Text style={styles.seatUnknown}>?</Text>}
+          {person.day !== null ? <StemSymbol stem={person.day.stem as Stem} size={24} /> : <WordText style={styles.seatUnknown}>?</WordText>}
         </View>
         <View style={styles.cardWho}>
-          <Text accessibilityRole="header" numberOfLines={1} style={styles.cardName}>{person.label}</Text>
-          {person.day !== null && <Text numberOfLines={1} style={styles.cardPicture}>{person.day.picture}</Text>}
+          <WordText accessibilityRole="header" numberOfLines={1} style={styles.cardName}>{person.label}</WordText>
+          {person.day !== null && <WordText numberOfLines={1} style={styles.cardPicture}>{person.day.picture}</WordText>}
         </View>
         {person.unreadable === null && compat.seen && compat.score !== null && (
           <View style={styles.cardScore}>
-            <Text style={styles.cardScoreHead}>나와의 궁합</Text>
-            <Text style={[styles.cardScoreValue, { color: tone.ink }]}>
+            <WordText style={styles.cardScoreHead}>나와의 궁합</WordText>
+            <WordText style={[styles.cardScoreValue, { color: tone.ink }]}>
               {compat.score}
-              <Text style={styles.cardScoreUnit}>점</Text>
-            </Text>
+              <WordText style={styles.cardScoreUnit}>점</WordText>
+            </WordText>
           </View>
         )}
         <Pressable accessibilityRole="button" accessibilityLabel="닫기" onPress={onClose} style={styles.cardClose}>
@@ -347,22 +348,22 @@ function PersonCard({ person, links, onClose }: { person: MapPerson; links: Retu
       </View>
 
       {person.unreadable !== null ? (
-        <Text style={styles.cardLine}>{person.unreadable}</Text>
+        <WordText style={styles.cardLine}>{person.unreadable}</WordText>
       ) : (
         <>
-          <Text numberOfLines={2} style={styles.cardLine}>
-            {compat.seen && !compat.current && <Text style={styles.stale}>{READING_STALE_LABEL} </Text>}
-            {compat.seen ? compat.metaphor : <Text style={{ color: tone.ink }}>아직 둘의 궁합을 보지 않았어요</Text>}
-          </Text>
+          <WordText numberOfLines={2} style={styles.cardLine}>
+            {compat.seen && !compat.current && <WordText style={styles.stale}>{READING_STALE_LABEL} </WordText>}
+            {compat.seen ? compat.metaphor : <WordText style={{ color: tone.ink }}>아직 둘의 궁합을 보지 않았어요</WordText>}
+          </WordText>
           <PrimaryButton label={compat.seen ? '궁합풀이 보기' : '궁합 보러 가기'} onPress={() => go(compat.href)} />
           <Pressable accessibilityRole="link" onPress={() => go(person.detailHref)} style={styles.tertiary}>
-            <Text style={styles.tertiaryText}>{person.label} 사주 보기</Text>
+            <WordText style={styles.tertiaryText}>{person.label} 사주 보기</WordText>
             <Icon name="chevron" size={16} color={COLOR.secondary} />
           </Pressable>
 
           {links.length > 0 && (
             <View style={styles.links}>
-              <Text style={styles.note}>다른 사람과 본 궁합</Text>
+              <WordText style={styles.note}>다른 사람과 본 궁합</WordText>
               {links.map((link) => (
                 <Pressable
                   key={link.href}
@@ -371,8 +372,8 @@ function PersonCard({ person, links, onClose }: { person: MapPerson; links: Retu
                   onPress={() => go(link.href)}
                   style={styles.chip}
                 >
-                  <Text numberOfLines={1} style={styles.chipText}>{link.otherLabel}</Text>
-                  {link.score !== null && <Text style={styles.chipScore}>{link.score}점</Text>}
+                  <WordText numberOfLines={1} style={styles.chipText}>{link.otherLabel}</WordText>
+                  {link.score !== null && <WordText style={styles.chipScore}>{link.score}점</WordText>}
                 </Pressable>
               ))}
             </View>

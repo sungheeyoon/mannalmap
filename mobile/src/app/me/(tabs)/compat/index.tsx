@@ -1,6 +1,6 @@
 import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { useCallback, useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 import { isBlocked } from '@account/index';
 
@@ -17,6 +17,7 @@ import { COLOR, FONT, TYPE } from '@/ui/tokens';
 import { RowLine } from '@/ui/surfaces';
 import { settled } from '@/ui/settled';
 import { UNREACHABLE } from '@/auth/signup';
+import { WordText } from '@/ui/word-text';
 
 /**
  * 궁합 — 앱에는 `/compat` 이 없어(입구 결정) 이 주소가 두 걸음을 다 든다. `a` · `b` 가 있으면 두 명식을 보고, 없으면 두 사람을 정한다.
@@ -52,7 +53,7 @@ function PickStep({ pickA, pickB, typeB }: { pickA?: string; pickB?: string; typ
   if (read.kind === 'failed') {
     return (
       <ScreenFrame>
-        <Text style={shared.section}>궁합 새로 보기</Text>
+        <WordText style={shared.section}>궁합 새로 보기</WordText>
         <FailureLine onRetry={load}>{read.message}</FailureLine>
       </ScreenFrame>
     );
@@ -63,22 +64,22 @@ function PickStep({ pickA, pickB, typeB }: { pickA?: string; pickB?: string; typ
 
   return (
     <ScreenFrame keyboard>
-      <Text style={shared.section}>궁합 새로 보기</Text>
+      <WordText style={shared.section}>궁합 새로 보기</WordText>
       {isBlocked(state) ? (
         <AccountNotice state={state} onRetry={load} />
       ) : (
         <>
           <CompatPicker people={people} pickA={pickA} pickB={pickB} typeB={typeB} />
-          <Text style={shared.meta}>
-            직접 입력한 사람은 <Text style={shared.bodyStrong}>저장한 사람에 추가되지 않아요.</Text>
-          </Text>
+          <WordText style={shared.meta}>
+            직접 입력한 사람은 <WordText style={shared.bodyStrong}>저장한 사람에 추가되지 않아요.</WordText>
+          </WordText>
           {latest !== undefined && (
             <RowLine accessibilityRole="link" onPress={() => go('/me/readings?kind=compat&from=compat')} style={styles.summary}>
               <View style={styles.summaryBody}>
-                <Text style={styles.summaryTitle}>
-                  궁합풀이 <Text style={shared.meta}>{compats.length}</Text>
-                </Text>
-                <Text style={shared.meta} numberOfLines={1}>최근 {`${latest.labelA ?? ''} × ${latest.labelB ?? ''}`}</Text>
+                <WordText style={styles.summaryTitle}>
+                  궁합풀이 <WordText style={shared.meta}>{compats.length}</WordText>
+                </WordText>
+                <WordText style={shared.meta} numberOfLines={1}>최근 {`${latest.labelA ?? ''} × ${latest.labelB ?? ''}`}</WordText>
               </View>
               <Icon name="chevron" size={16} color={COLOR.muted} />
             </RowLine>

@@ -1,6 +1,6 @@
 import { Redirect, Stack, router, useGlobalSearchParams, usePathname } from 'expo-router';
 import { useEffect } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { SERVICE_NAME } from '@brand';
@@ -26,6 +26,7 @@ import { SecondaryButton } from '@/ui/parts';
 import { COLOR, ELEMENT_TONE, FONT, RADIUS, TYPE } from '@/ui/tokens';
 import { KEEP_VIEW } from '@/ui/keep-view';
 import { resendUnfinishedPurchases } from '@/credits/store';
+import { WordText } from '@/ui/word-text';
 
 /** 웹 머리글의 `MEMBER_TABS` 와 같은 넷 · 같은 글자다. 궁합의 첫 화면은 앱에서 `/me/compat` 다. 인연이 닫힌 동안은 홈 · 궁합 둘이다(ADR 0222) */
 const TABS = [
@@ -91,7 +92,7 @@ export default function MeLayout() {
   const failure =
     gate.kind === 'failed' ? (
       <SafeAreaView style={[styles.screen, styles.failed, held !== null && styles.over]}>
-        <Text style={styles.failure}>{gate.message}</Text>
+        <WordText style={styles.failure}>{gate.message}</WordText>
         <SecondaryButton label="다시 시도하기" onPress={retry} />
       </SafeAreaView>
     ) : null;
@@ -120,14 +121,14 @@ export default function MeLayout() {
                 style={[styles.tool, styles.credits]}
               >
                 <Icon name="ticket" size={20} />
-                <Text style={styles.creditsCount}>{counts.credits}</Text>
+                <WordText style={styles.creditsCount}>{counts.credits}</WordText>
               </Pressable>
             )}
             <Pressable accessibilityRole="link" accessibilityLabel="소식" onPress={() => router.push('/me/requests' as never)} style={styles.tool}>
               <Icon name="bell" size={20} />
               {counts.news > 0 && (
                 <View style={[styles.badge, styles.toolBadge]}>
-                  <Text style={styles.badgeText}>{counts.news}</Text>
+                  <WordText style={styles.badgeText}>{counts.news}</WordText>
                 </View>
               )}
             </Pressable>
@@ -168,10 +169,10 @@ export default function MeLayout() {
                   <View {...KEEP_VIEW} style={[styles.tabMark, active && styles.tabMarkOn]}>
                     <Icon name={tab.icon} color={active ? ELEMENT_TONE.木.ink : COLOR.secondary} />
                   </View>
-                  <Text style={[styles.tabLabel, active && styles.tabLabelOn]}>{tab.label}</Text>
+                  <WordText style={[styles.tabLabel, active && styles.tabLabelOn]}>{tab.label}</WordText>
                   {count > 0 && (
                     <View style={[styles.badge, styles.tabBadge]}>
-                      <Text style={styles.badgeText}>{count}</Text>
+                      <WordText style={styles.badgeText}>{count}</WordText>
                     </View>
                   )}
                 </Pressable>

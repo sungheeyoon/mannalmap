@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 import { MATCH_OPEN_ALERT_ASK, MATCH_OPEN_ALERT_ASKED, MATCH_OPEN_ALERT_TITLE } from '@matching/copy';
 import { MATCH_OPEN_ALERT_BUTTON, matchOpenAlertStands } from '@matching/opening';
@@ -12,6 +12,7 @@ import { Icon } from '@/ui/icons';
 import { settled } from '@/ui/settled';
 import { CardFrame } from '@/ui/surfaces';
 import { COLOR, FONT, RADIUS, TYPE } from '@/ui/tokens';
+import { WordText } from '@/ui/word-text';
 
 /**
  * **인연이 닫힌 동안 홈의 한 줄 — 「열리면 알려 주세요」**(ADR 0223) — 웹의 `app/me/home/match-open-alert.tsx` 와 같은 글자 · 같은 갈래다.
@@ -54,12 +55,12 @@ export function MatchOpenAlert() {
           <Icon name="bell" size={20} />
         </View>
         <View style={styles.body}>
-          <Text style={styles.name}>{MATCH_OPEN_ALERT_TITLE}</Text>
-          <Text style={styles.second}>{asked ? MATCH_OPEN_ALERT_ASKED : MATCH_OPEN_ALERT_ASK}</Text>
+          <WordText style={styles.name}>{MATCH_OPEN_ALERT_TITLE}</WordText>
+          <WordText style={styles.second}>{asked ? MATCH_OPEN_ALERT_ASKED : MATCH_OPEN_ALERT_ASK}</WordText>
         </View>
         <Button label={label} onPress={() => void flip()} disabled={saving} variant="secondary-small" />
       </View>
-      {failure !== null && <Text accessibilityRole="alert" style={styles.failure}>{failure}</Text>}
+      {failure !== null && <WordText accessibilityRole="alert" style={styles.failure}>{failure}</WordText>}
     </CardFrame>
   );
 }

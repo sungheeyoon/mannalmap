@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { StyleSheet, Text, TextInput, View } from 'react-native';
+import { StyleSheet, TextInput, View } from 'react-native';
 
 import { BUTTON_OFF_OPACITY } from '@design';
 import { NOTE_MAX, noteEdited } from '@input/edit';
@@ -19,6 +19,7 @@ import { BirthFields, useBirthForm } from './birth-fields';
 import { addPerson, removeFromList, updateNote } from './data';
 import { go, styles as shared } from './parts';
 import { SameChartAsk, type SameChartQuestion } from './same-chart-ask';
+import { WordText } from '@/ui/word-text';
 
 /** 메모 칸 — 사주 계산에 쓰지 않는다 */
 function NoteField({ value, onChange, disabled = false }: { value: string; onChange: (next: string) => void; disabled?: boolean }) {
@@ -55,7 +56,7 @@ export function AddPerson({ slots, startOpen, onSaved }: { slots: PersonSlots | 
   if (remaining !== null && remaining <= 0) {
     return (
       <EmptySlot style={styles.full}>
-        <Text style={shared.body}>저장할 수 있는 {slots?.limit}명을 다 채웠어요. 목록에서 한 명을 빼면 다시 추가할 수 있습니다.</Text>
+        <WordText style={shared.body}>저장할 수 있는 {slots?.limit}명을 다 채웠어요. 목록에서 한 명을 빼면 다시 추가할 수 있습니다.</WordText>
       </EmptySlot>
     );
   }
@@ -65,7 +66,7 @@ export function AddPerson({ slots, startOpen, onSaved }: { slots: PersonSlots | 
       {!open && (
         <View style={styles.addRow}>
           <PrimaryButton label="사람 추가" onPress={() => setOpen(true)} />
-          {remaining !== null && remaining <= 5 && <Text style={shared.meta}>앞으로 {remaining}명 더 저장할 수 있어요.</Text>}
+          {remaining !== null && remaining <= 5 && <WordText style={shared.meta}>앞으로 {remaining}명 더 저장할 수 있어요.</WordText>}
         </View>
       )}
       <View style={open ? undefined : styles.hidden}>
@@ -134,11 +135,11 @@ function AddForm({ remaining, onCancel, onSaved }: { remaining: number | null; o
 
   return (
     <Card style={styles.form}>
-      <Text style={shared.section}>사람 추가</Text>
-      <Text style={shared.body}>
+      <WordText style={shared.section}>사람 추가</WordText>
+      <WordText style={shared.body}>
         이 이름은 내 목록에만 보여요.
         {remaining !== null && remaining <= 5 && ` 앞으로 ${remaining}명 더 저장할 수 있어요.`}
-      </Text>
+      </WordText>
       <BirthFields form={form} namePlaceholder="엄마" disabled={saving} />
       <NoteField value={note} onChange={setNote} disabled={saving} />
       {question !== null ? (
@@ -147,7 +148,7 @@ function AddForm({ remaining, onCancel, onSaved }: { remaining: number | null; o
         <View style={styles.actions}>
           <PrimaryButton label={saving ? '저장하는 중…' : '등록'} onPress={save} disabled={saving} />
           <SecondaryButton label="취소" onPress={onCancel} disabled={saving} />
-          {missing !== null && <Text style={tried ? styles.warn : shared.meta}>{missing}</Text>}
+          {missing !== null && <WordText style={tried ? styles.warn : shared.meta}>{missing}</WordText>}
         </View>
       )}
       {failure !== null && <FailureLine>저장하지 못했어요. {failure}</FailureLine>}

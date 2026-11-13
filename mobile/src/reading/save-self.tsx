@@ -6,7 +6,7 @@ import { withReturnPath } from '@consent/return-path';
 import { matchEntriesStand } from '@matching/opening';
 import { router, useFocusEffect } from 'expo-router';
 import { useCallback, useState } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 
 import { chartPath, type ChartWant } from '@consent/app-destination';
 import { ConnectedClient, useClient } from '@/auth/connected';
@@ -24,6 +24,7 @@ import { PrimaryButton, SecondaryButton, TextButton } from '@/ui/parts';
 import { COLOR, ELEMENT_TONE, FONT, RADIUS, TYPE } from '@/ui/tokens';
 
 import { saveSelfPerson } from './chart-writes';
+import { WordText } from '@/ui/word-text';
 
 /**
  * `out` 은 아직 저장할 수 없는 사람(로그인 전 · 가입 전)이다 — 세션이 없으면 서버를 안 부른다(ADR 0213). 가입 전인 사람에게 내 사주를 묻지 않는다.
@@ -90,7 +91,7 @@ export function SavePersonForReading({ query, want }: { query: Query; want: Char
         {/* 로그인한 사람에게는 인연 탭이 있어 안 선다. 인연이 닫힌 동안은 소개도 안 선다(ADR 0222) */}
         {matchEntriesStand(matchOpen) && (
           <Pressable accessibilityRole="link" onPress={() => router.push('/matching-intro')} style={styles.intro}>
-            <Text style={styles.introText}>{MATCHING_INTRO_TITLE}</Text>
+            <WordText style={styles.introText}>{MATCHING_INTRO_TITLE}</WordText>
             <Icon name="arrow" size={16} color={COLOR.secondary} />
           </Pressable>
         )}
@@ -121,21 +122,21 @@ function SignInCard({ query }: { query: Query }) {
     <Card style={styles.card}>
       <View style={styles.offerHead}>
         <View style={styles.badge}>
-          <Text style={styles.badgeText}>{CHART_READING_OFFER.badge}</Text>
+          <WordText style={styles.badgeText}>{CHART_READING_OFFER.badge}</WordText>
         </View>
-        <Text accessibilityRole="header" style={styles.title}>{chartReadingOfferTitle(query.hourKnown !== false)}</Text>
+        <WordText accessibilityRole="header" style={styles.title}>{chartReadingOfferTitle(query.hourKnown !== false)}</WordText>
       </View>
       <View style={styles.points}>
         {CHART_READING_OFFER.points.map((point) => (
           <View key={point} style={styles.point}>
             <Icon name="check" size={16} color={OFFER_TONE.ink} />
-            <Text style={styles.line}>{point}</Text>
+            <WordText style={styles.line}>{point}</WordText>
           </View>
         ))}
       </View>
       <View style={styles.answers}>
         <Button variant="primary-wood" label={CHART_READING_OFFER.action} onPress={signIn} />
-        <Text style={styles.providers}>{CHART_READING_OFFER.providers}</Text>
+        <WordText style={styles.providers}>{CHART_READING_OFFER.providers}</WordText>
       </View>
     </Card>
   );
@@ -145,7 +146,7 @@ function SignInCard({ query }: { query: Query }) {
 function SavedOtherCard({ personId }: { personId: string }) {
   return (
     <Card style={styles.card}>
-      <Text accessibilityRole="alert" style={styles.title}>저장했어요</Text>
+      <WordText accessibilityRole="alert" style={styles.title}>저장했어요</WordText>
       <View style={styles.answers}>
         <PrimaryButton label="사주풀이 받기" onPress={() => router.push(`/me/readings/${personId}` as never)} />
         <SecondaryButton label="저장한 사람 보기" onPress={() => router.push('/me/people' as never)} />
@@ -194,15 +195,15 @@ function SaveCard({ query, slots, onSavedHere }: { query: Query; slots: PersonSl
   return (
     <Card style={styles.card}>
       <View style={styles.head}>
-        <Text accessibilityRole="header" style={styles.title}>이 사람의 사주는 어떤 뜻일까요?</Text>
-        <Text style={styles.line}>성향부터 일과 연애, 운의 흐름까지 글로 풀어드려요.</Text>
+        <WordText accessibilityRole="header" style={styles.title}>이 사람의 사주는 어떤 뜻일까요?</WordText>
+        <WordText style={styles.line}>성향부터 일과 연애, 운의 흐름까지 글로 풀어드려요.</WordText>
       </View>
 
       {question !== null ? (
         <SameChartAsk question={question} busy={saving} />
       ) : noRoom !== null ? (
         <View style={styles.noRoom}>
-          <Text style={styles.line}>{noRoom}</Text>
+          <WordText style={styles.line}>{noRoom}</WordText>
           <TextButton label="저장한 사람 관리 →" onPress={() => router.push('/me/people' as never)} />
         </View>
       ) : (
@@ -211,14 +212,14 @@ function SaveCard({ query, slots, onSavedHere }: { query: Query; slots: PersonSl
             <PrimaryButton label={pending === 'reading' ? '저장하는 중…' : '사주풀이 받기'} onPress={() => void save(false, 'reading')} disabled={saving} />
             <SecondaryButton label={pending === 'stay' ? '저장하는 중…' : '저장하기'} onPress={() => void save(false, 'stay')} disabled={saving} />
           </View>
-          <Text style={styles.fine}>
+          <WordText style={styles.fine}>
             {name !== '' ? `두 단추 모두 저장한 사람 목록에 「${name}」 이름으로 추가돼요.` : '두 단추 모두 저장한 사람 목록에 이 사람이 추가돼요.'}
             {slots !== null && ` 앞으로 ${slots.remaining}명 더 저장할 수 있어요.`} 목록에서 빼려면 ‘저장한 사람’으로 이동해 주세요.
-          </Text>
+          </WordText>
         </>
       )}
 
-      {failure !== null && <Text accessibilityRole="alert" style={styles.failure}>저장하지 못했어요. {failure}</Text>}
+      {failure !== null && <WordText accessibilityRole="alert" style={styles.failure}>저장하지 못했어요. {failure}</WordText>}
     </Card>
   );
 }
@@ -251,14 +252,14 @@ function SelfConfirm({ query, want, name, onSomeoneElse }: { query: Query; want:
   return (
     <Card style={styles.card}>
       <View style={styles.head}>
-        <Text accessibilityRole="header" style={styles.title}>이 사주가 내 사주 맞나요?</Text>
-        <Text style={styles.line}>첫 화면에 입력한 정보예요.</Text>
+        <WordText accessibilityRole="header" style={styles.title}>이 사주가 내 사주 맞나요?</WordText>
+        <WordText style={styles.line}>첫 화면에 입력한 정보예요.</WordText>
       </View>
       <View style={styles.answers}>
         <PrimaryButton label={saving ? '저장하는 중…' : '내 사주로 저장'} onPress={() => void save()} disabled={saving} />
         <SecondaryButton label="다른 사람의 사주예요" onPress={onSomeoneElse} disabled={saving} />
       </View>
-      {failure !== null && <Text accessibilityRole="alert" style={styles.failure}>저장하지 못했어요. {failure}</Text>}
+      {failure !== null && <WordText accessibilityRole="alert" style={styles.failure}>저장하지 못했어요. {failure}</WordText>}
     </Card>
   );
 }

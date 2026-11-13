@@ -1,6 +1,6 @@
 import { Image } from 'expo-image';
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
-import { Modal, PanResponder, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Modal, PanResponder, Platform, Pressable, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Svg, { Circle, Path } from 'react-native-svg';
 
@@ -14,6 +14,7 @@ import { COLOR, FONT, RADIUS, TYPE } from '@/ui/tokens';
 import { settled } from '@/ui/settled';
 
 import { photoSource, type MyPhoto } from './photos';
+import { WordText } from '@/ui/word-text';
 
 export const PHOTO_MENU_LABEL = '사진 메뉴';
 const SWIPE_PX = 48;
@@ -102,7 +103,7 @@ export function PhotoViewer({
   const danger = choices.filter((one) => one.tone === 'danger');
   const row = (choice: PhotoChoice) => (
     <Pressable key={choice.label} accessibilityRole="button" onPress={() => choose(choice)} style={styles.choice}>
-      <Text style={[styles.choiceText, choice.tone === 'danger' && styles.dangerText]}>{choice.label}</Text>
+      <WordText style={[styles.choiceText, choice.tone === 'danger' && styles.dangerText]}>{choice.label}</WordText>
     </Pressable>
   );
 
@@ -124,10 +125,10 @@ export function PhotoViewer({
             </Svg>
           </Pressable>
           <View style={styles.count}>
-            {position === 1 && <Text style={styles.lead}>대표</Text>}
-            <Text style={styles.countText}>
+            {position === 1 && <WordText style={styles.lead}>대표</WordText>}
+            <WordText style={styles.countText}>
               {position} / {total}
-            </Text>
+            </WordText>
           </View>
           <Pressable accessibilityRole="button" accessibilityLabel={PHOTO_MENU_LABEL} onPress={() => setMenu(true)} style={styles.icon}>
             <Svg width={24} height={24} viewBox="0 0 24 24">
@@ -166,7 +167,7 @@ export function PhotoViewer({
                 {danger.map(row)}
               </MenuPanel>
               <Pressable accessibilityRole="button" onPress={() => setMenu(false)} style={styles.cancel}>
-                <Text style={styles.cancelText}>취소</Text>
+                <WordText style={styles.cancelText}>취소</WordText>
               </Pressable>
             </SheetPanel>
           </View>

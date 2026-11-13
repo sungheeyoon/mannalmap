@@ -1,10 +1,11 @@
 import { useRef, useState, type ComponentRef, type ReactNode } from 'react';
-import { Dimensions, Pressable, StyleSheet, Text } from 'react-native';
+import { Dimensions, Pressable, StyleSheet } from 'react-native';
 
 import { MenuPanel } from '@/ui/surfaces';
 import { Icon, type IconName } from '@/ui/icons';
 import { Scrim } from '@/ui/scrim';
 import { COLOR, CONTROL, FONT, RADIUS, TYPE } from '@/ui/tokens';
+import { WordText } from '@/ui/word-text';
 
 
 /** `icon` 을 안 주면 글자만 선다 — 홈 내 사주 카드의 메뉴 */
@@ -42,7 +43,7 @@ export function AnchoredMenu({ label, items, above = false, children }: { label:
                 }}
               >
                 {item.icon !== undefined && <Icon name={item.icon} color={item.danger === true ? COLOR.danger : COLOR.foreground} size={18} />}
-                <Text style={[styles.itemText, item.danger === true && styles.danger]}>{item.label}</Text>
+                <WordText style={[styles.itemText, item.danger === true && styles.danger]}>{item.label}</WordText>
               </Pressable>
             ))}
           </MenuPanel>
