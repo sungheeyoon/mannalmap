@@ -35,6 +35,8 @@ export type CompatQuery = {
   b?: string | string[];
   from?: string | string[];
   kind?: string | string[];
+  /** `from=person` 일 때 돌아갈 사람 — 결과의 두 사람 가운데 하나여야 쓰인다(ADR 0248) */
+  p?: string | string[];
 };
 
 /**
@@ -102,7 +104,11 @@ export async function CompatScreen({ params, frame }: { params: CompatQuery; fra
    */
   if (outcome !== null && outcome.kind === 'ok') {
     const place = placeOf(params, frame === 'shelf' ? '/me/readings/compat' : '/me/compat');
-    return <ResultPage outcome={outcome} back={backOf('compat', place)} frame={frame} besideShelf={place.from === 'shelf'} />;
+    /* 사람 화면에서 왔으면 그 사람에게로 — 주소의 id 를 그대로 쓰지 않고 이 결과가 읽은 두 사람과 견준다 */
+    const from = firstOf(params.p);
+    const person = [outcome.first, outcome.second].find((one) => one.personId === from);
+    const back = backOf('compat', { ...place, person: person === undefined ? undefined : { personId: person.personId, name: person.name } });
+    return <ResultPage outcome={outcome} back={back} frame={frame} besideShelf={place.from === 'shelf'} />;
   }
 
   /**

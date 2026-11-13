@@ -20,12 +20,12 @@ import { UNREACHABLE } from '@/auth/signup';
 
 /**
  * 궁합 — 앱에는 `/compat` 이 없어(입구 결정) 이 주소가 두 걸음을 다 든다. `a` · `b` 가 있으면 두 명식을 보고, 없으면 두 사람을 정한다.
- * `pickA` · `pickB` 는 고르는 칸을 채워 연다 — 주소에는 person id 만 실린다.
+ * `pickA` · `pickB` 는 고르는 칸을 채워 연다 — 주소에는 person id 만 실린다. `typeB=1` 은 둘째 칸을 적는 칸으로 연다(사람 화면의 「직접 입력」).
  */
 export default function CompatScreen() {
-  const params = useLocalSearchParams<{ a?: string; b?: string; pickA?: string; pickB?: string }>();
+  const params = useLocalSearchParams<{ a?: string; b?: string; pickA?: string; pickB?: string; typeB?: string }>();
   if (params.a !== undefined && params.b !== undefined) return <CompatResultStep a={params.a} b={params.b} back="/me/compat" />;
-  return <PickStep pickA={params.pickA} pickB={params.pickB} />;
+  return <PickStep pickA={params.pickA} pickB={params.pickB} typeB={params.typeB === '1'} />;
 }
 
 function Loading() {
@@ -34,7 +34,7 @@ function Loading() {
   );
 }
 
-function PickStep({ pickA, pickB }: { pickA?: string; pickB?: string }) {
+function PickStep({ pickA, pickB, typeB }: { pickA?: string; pickB?: string; typeB: boolean }) {
   const client = useClient();
   const [read, setRead] = useState<Read<PickerData> | null>(null);
 
@@ -68,7 +68,7 @@ function PickStep({ pickA, pickB }: { pickA?: string; pickB?: string }) {
         <AccountNotice state={state} onRetry={load} />
       ) : (
         <>
-          <CompatPicker people={people} pickA={pickA} pickB={pickB} />
+          <CompatPicker people={people} pickA={pickA} pickB={pickB} typeB={typeB} />
           <Text style={shared.meta}>
             직접 입력한 사람은 <Text style={shared.bodyStrong}>저장한 사람에 추가되지 않아요.</Text>
           </Text>

@@ -34,7 +34,7 @@ export type PickerData = {
 
 /** 앱의 궁합 글 줄을 지도가 먹는 모양으로 — 지도는 `private` 줄만 본다 */
 const mapEntries = (readings: readonly MyReading[]): ReadingEntry[] =>
-  readings.map((one) => ({ ...one, matchId: null, dayMasterA: null, dayMasterB: null }));
+  readings.map((one) => ({ ...one, matchId: null }));
 
 /** 궁합의 첫 걸음이 읽는 것 — 목록에 선 사람만 고르고 맨 위는 「나」다(`app/compat/page.tsx`) */
 export async function readPicker(client: Client): Promise<Read<PickerData>> {

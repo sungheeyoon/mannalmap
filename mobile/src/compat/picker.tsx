@@ -37,8 +37,10 @@ const firstSlot = (people: readonly Choosable[], asked: string | undefined): Slo
   return self === undefined ? { from: 'typed', query: DEFAULT_QUERY } : { from: 'saved', personId: self.personId };
 };
 
-const secondSlot = (people: readonly Choosable[], asked: string | undefined, askedFirst: string | undefined): Slot => {
+const secondSlot = (people: readonly Choosable[], asked: string | undefined, askedFirst: string | undefined, typed: boolean): Slot => {
   if (asked !== undefined && people.some((one) => one.personId === asked)) return { from: 'saved', personId: asked };
+  /* 사람 화면의 「직접 입력」 — 그 사람이 첫 칸에 앉고 둘째 칸은 빈 적는 칸이다(ADR 0248) */
+  if (typed) return { from: 'typed', query: DEFAULT_QUERY };
   /* 사람 화면에서 이 사람만 앉혔으면 그 칸만 찬다 — 내 칸은 비워 두고 사용자가 고른다(운영자 2026-10-26) */
   return askedFirst !== undefined || people.length >= 2 ? { from: 'saved', personId: '' } : { from: 'typed', query: DEFAULT_QUERY };
 };
@@ -68,11 +70,11 @@ const sideOf = (slot: Slot): PairSide => (slot.from === 'saved' ? { from: 'saved
  * 궁합의 **첫 걸음** — 두 사람을 정하고 사이를 답한다(`app/compat-picker.tsx`, ADR 0053 · 0054).
  * 칸마다 저장한 사람과 직접 입력을 고르고, 글은 여기서 안 만든다. 잠긴 모양이어도 누름을 받아 왜 안 되는지 곁에서 말한다.
  */
-export function CompatPicker({ people, pickA, pickB }: { people: readonly Choosable[]; pickA?: string; pickB?: string }) {
+export function CompatPicker({ people, pickA, pickB, typeB = false }: { people: readonly Choosable[]; pickA?: string; pickB?: string; typeB?: boolean }) {
   const client = useClient();
   const [held, setSlots] = useState<Record<CompatSide, Slot>>(() => ({
     a: firstSlot(people, pickA),
-    b: secondSlot(people, pickB, pickA),
+    b: secondSlot(people, pickB, pickA, typeB),
   }));
   /* 돌아올 때마다 목록을 다시 읽는다(`app/me/(tabs)/compat/index.tsx`) — 그사이 지운 사람을 든 칸은 빈 칸으로 읽는다 */
   const slots = dropUnlisted(held, people);

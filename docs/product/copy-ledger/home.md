@@ -238,6 +238,8 @@
 | 같은 탭 구역 이름 · 궁합 줄 제목 | (없음) | 사주풀이 · 궁합 N개 / 「{이 사람} · {상대}」(이 사람이 늘 앞, 내 자리는 닉네임) | 운영자 결정 2026-10-26 |
 | 사람 화면 탭 | 사주 · 사주풀이 | 사주풀이 · 만세력(읽는 이름 「{이름}의 사주풀이와 만세력」) | 운영자 결정 2026-10-26 |
 
+**2026-11-13 걷음(home-13)** — 운영자가 사람 화면을 한 장으로 다시 짰다(ADR 0248). 머리의 단추 둘 · 탭 「사주풀이 | 만세력」 · 빈 문구 둘(「아직 받은 사주풀이가 없어요.」 · 「아직 본 궁합이 없어요.」)이 화면에서 빠졌다. 구역 이름 「사주풀이」 · 「궁합」은 그대로 쓴다.
+
 ## home-08 확정 문구 — 풀이 보관함 맨 위 「만드는 중」 · 내 풀이 글 끝의 접힌 의견 (PR #854, 운영자 승인 2026-10-26)
 
 운영자가 보관함 안 D · 내 풀이 안 A 를 골랐고(2026-10-26, 캡처 시안), 그 두 안이 든 새 글자 둘을 캡처로 보고 승인했다(2026-10-26).
@@ -283,3 +285,21 @@
 | 메뉴의 첫 줄 — 웹 · 앱 | 수정 (읽는 이름 「출생 정보 수정」, all-19) | 출생 정보 수정 | 실사례 없음(찾지 않았다 — 있는 확정 글자 그대로다): 저장한 사람 카드 관리 메뉴의 첫 줄(`app/me/people/person-menu.tsx` · `mobile/src/people/person-card.tsx`)이자 이 카드에서 걷은 「수정」의 읽는 이름(all-19) |
 | 메뉴의 둘째 줄 — 웹 · 앱 | (없음 — 이름 왼쪽 원의 시트에만) | 프로필 편집 | 실사례 없음(찾지 않았다 — 있는 확정 글자 그대로다): 「내 프로필」 시트의 단추 `MY_PROFILE_EDIT_LABEL`(matching 무리 — 카카오톡 「프로필 편집」을 따른 글자)과 같은 상수 · 같은 곳(`/me/profile`). 시안의 글자는 「프로필 수정」이었다 |
 | 「⋯」 단추의 읽는 이름 — 웹 · 앱 | (없음) | 내 사주 관리 | 실사례 없음(찾지 않았다 — 있는 규칙 그대로다): 저장한 사람 카드 「⋯」의 읽는 이름 「{이름} 관리」와 같은 꼴에 이 카드의 읽는 이름 「내 사주」를 넣었다. 「관리」는 06 의 확정 글자 |
+
+## home-13 확인 전 — 저장한 사람 화면 한 장 · 받기 시트 · 궁합 시트 둘 (운영자 승인 2026-11-13 시안 「0 · 0-1 A」, ADR 0248)
+
+운영자가 흐름 · 모양 시안을 승인했다(보드 「0 · 저장한 사람 화면 다시 짜기」 · 「0-1 · 저장한 사람 화면 모양」 A). 글자는 그 시안의 것이고, 웹 · 앱이
+`src/lib/reading/person-screen.ts` 한 벌을 부른다(출생 한 줄은 `src/lib/input/birth-line.ts`). 시안과 다른 셋은 이 앱의 확정 글자를 따랐다 — 성별은
+「남자」 대신 `GENDER_KO`(「남성」), 「태어난 시각 모름」 대신 `HOUR_UNKNOWN_LABEL`(「출생 시각 모름」), 「읽는 데 4분」 대신 풀이 화면의 「읽는 데 약 4분」(한 사실 한 표기).
+
+| 자리 | 이전 | 넣은 글자 | 출처 |
+| --- | --- | --- | --- |
+| 머리 오른쪽 아래 링크 `CHART_DETAIL_LABEL` | (탭 「만세력」) | 만세력 자세히 › | 운영자 승인 시안 0-1 A(<https://claude.ai/artifact/QH2P9sZgiuwpXgHYzE3Yvj>, 확인 2026-11-13) |
+| 머리의 출생 한 줄 `birthLineOf` | (없음) | 1991년 7월 21일 · 남성 · 출생 시각 모름(알면 시:분) | 운영자 승인 시안 0-1 A(<https://claude.ai/artifact/QH2P9sZgiuwpXgHYzE3Yvj>, 확인 2026-11-13) — 성별 · 시각 모름은 사람 목록의 글자 |
+| 만세력 화면 제목 `chartTitleOf` | (없음 — 탭 안) | {이름}의 만세력 | 운영자 승인 시안 0 의 C(<https://claude.ai/artifact/QH2P9sZgiuwpXgHYzE3Yvj>, 확인 2026-11-13) |
+| 받은 풀이 카드의 아래 줄 `readingReceivedLine` · `READING_OPEN_LABEL` | {이름}의 사주풀이 › | 11월 13일 받음 · 읽는 데 약 4분 / 읽기 › | 운영자 승인 시안 0-1 A(<https://claude.ai/artifact/QH2P9sZgiuwpXgHYzE3Yvj>, 확인 2026-11-13) — 「읽는 데 약 N분」은 풀이 화면의 글자 |
+| 안 받았을 때의 진한 카드 `readingInviteTitle` · `READING_INVITE_TOPICS` · `READING_COST_LABEL` | 아직 받은 사주풀이가 없어요. | {이름}은/는 어떤 사람일까요? / 성격 · 일과 재물 · 인연 · 올해 흐름 / 풀이권 1장 · 「사주풀이 받기」 | 운영자 승인 시안 0-1 A 「사주풀이가 없을 때」(<https://claude.ai/artifact/QH2P9sZgiuwpXgHYzE3Yvj>, 확인 2026-11-13) |
+| 받기 시트 제목 · 줄 · 단추 `readingAskTitle` · `readingCostLine` · `READING_ASK_CONFIRM` | (풀이 화면의 확인 창 「풀이권 1장을 사용하시겠어요?」) | {이름}의 사주풀이를 받을까요? / 풀이권 1장 · 보유 N장 / 받기 · 취소 | 운영자 승인 시안 0 의 A(<https://claude.ai/artifact/QH2P9sZgiuwpXgHYzE3Yvj>, 확인 2026-11-13) — 아래 「만들지 못하면 풀이권은 돌려드려요.」 · 예약 줄은 확인 창의 글자 그대로 |
+| 궁합 칸의 끝 줄 `COMPAT_OTHER_LABEL` · `compatWithLabel` | 궁합 보러 가기 · 아직 본 궁합이 없어요. | + 다른 사람과 궁합 보기 / (궁합이 없으면) + {이름}과/와 궁합 보기 | 운영자 승인 시안 0-1 A(<https://claude.ai/artifact/QH2P9sZgiuwpXgHYzE3Yvj>, 확인 2026-11-13) |
+| 상대 고르기 시트 `partnerAskTitle` · `PARTNER_SELF_LABEL` · `PARTNER_TYPED_LABEL` | (궁합 탭의 「누구와 누구를 볼까요?」) | {이름}과/와 누구를 볼까요? / 나 · 직접 입력 | 운영자 승인 시안 0 의 B(<https://claude.ai/artifact/QH2P9sZgiuwpXgHYzE3Yvj>, 확인 2026-11-13) |
+| 사이 고르기 시트 `relationAskTitle` · `COMPAT_ASK_CONFIRM` | (궁합 탭의 「두 사람은 어떤 사이인가요?」) | {이름} · {상대}은/는 어떤 사이예요? / 궁합 보기 · 취소 | 운영자 승인 시안 0 의 B(<https://claude.ai/artifact/QH2P9sZgiuwpXgHYzE3Yvj>, 확인 2026-11-13) — 고르는 낱말 넷은 궁합 탭의 `RELATION_LABEL` · `RELATION_NONE_LABEL` 그대로 |

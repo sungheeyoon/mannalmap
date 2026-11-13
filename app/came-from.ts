@@ -15,9 +15,10 @@ import { SHELF_TITLE, shelfKindOf, withShelfKind, type ShelfKind } from './me/(s
  * 헛길에 떨어지지 않는다.
  *
  * **← 는 이 표 밖으로 못 간다.** 값은 이름표일 뿐 주소가 아니다 — `from=https://…` 도 `from=//evil` 도 모르는 값이라
- * 기본으로 떨어진다. 가는 곳은 아래 표의 같은 사이트 경로 여섯과, 채팅방이면 **결과가 이미 든 Match id** 뿐이다.
+ * 기본으로 떨어진다. 가는 곳은 아래 표의 같은 사이트 경로 여섯과, 채팅방이면 **결과가 이미 든 Match id**, 사람 화면이면 **결과가 이미 든
+ * 두 사람 가운데 하나**(`person`, ADR 0248) 뿐이다.
  */
-export const CAME_FROM = ['me', 'shelf', 'compat', 'matching', 'history', 'chat', 'news'] as const;
+export const CAME_FROM = ['me', 'shelf', 'compat', 'matching', 'history', 'chat', 'news', 'person'] as const;
 export type CameFrom = (typeof CAME_FROM)[number];
 
 /** 결과 화면의 종류 — 사주풀이 · 직접 궁합 · 인연 궁합 */
@@ -58,6 +59,8 @@ const LIGHT_OF: Record<CameFrom, Light> = {
   history: '/me/matching',
   chat: '/me/chat',
   news: '/me/requests',
+  /* 저장한 사람 화면은 홈 탭의 길이다 — 머리글의 `isNavigationActive` 와 같다 */
+  person: '/me',
 };
 
 /**
@@ -111,7 +114,7 @@ export type Back = { readonly href: string; readonly label: string };
  */
 export function backOf(
   kind: ResultKind,
-  place: { from: CameFrom | null; shelfKind?: ShelfKind; matchId?: string },
+  place: { from: CameFrom | null; shelfKind?: ShelfKind; matchId?: string; person?: { personId: string; name: string } },
 ): Back {
   switch (place.from) {
     case 'me':
@@ -131,6 +134,14 @@ export function backOf(
         : { href: '/me/chat', label: CHAT_TAB_LABEL };
     case 'news':
       return { href: '/me/requests', label: '소식' };
+    case 'person':
+      /*
+        저장한 사람 화면의 궁합 칸에서 연 궁합(ADR 0248) — **그 결과가 이미 든 두 사람 가운데 하나**로만 간다. 누구인지는 결과 화면이
+        제 두 사람과 견준 뒤 넘긴다(`app/me/compat/screen.tsx`). 못 견줬으면 결과 종류의 기본이다. 이름은 그 화면의 이름(그 사람)이다
+      */
+      return place.person === undefined
+        ? DEFAULT_BACK[kind]
+        : { href: `/me/people/${encodeURIComponent(place.person.personId)}`, label: place.person.name };
     case null:
       return DEFAULT_BACK[kind];
   }

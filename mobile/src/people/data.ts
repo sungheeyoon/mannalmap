@@ -7,6 +7,7 @@ import { missingAnswer, type Query } from '@input/query';
 import { sameChartAmong, type SameChart } from '@input/same-chart';
 import { PERSON_INPUT_COLUMNS, chartOfStored, storedInputOfRow, type ListedChart, type StoredInput } from '@input/stored';
 import { personSlotsFrom, type PersonSlots } from '@people';
+import type { Stem } from '@saju';
 
 import type { Client } from '@/auth/client';
 import { readAccount } from '@/auth/account';
@@ -32,6 +33,9 @@ export type MyReading = {
   readonly metaphor: string | null;
   readonly fromCurrentChart: boolean;
   readonly createdAt: string;
+  /** 표지 앞 · 뒷자리의 일간(`ReadingEntry` 와 같은 칸) — 사람 화면의 궁합 줄이 두 동그라미에 쓴다. 모르면 `null` */
+  readonly dayMasterA: Stem | null;
+  readonly dayMasterB: Stem | null;
 };
 
 export type Read<T> = { kind: 'ok'; value: T } | { kind: 'signed-out' } | { kind: 'failed'; message: string };
@@ -87,6 +91,8 @@ export async function readReadings(client: Client): Promise<readonly MyReading[]
             metaphor: entry.metaphor,
             fromCurrentChart: entry.fromCurrentChart,
             createdAt: entry.createdAt,
+            dayMasterA: entry.dayMasterA,
+            dayMasterB: entry.dayMasterB,
           },
         ],
   );

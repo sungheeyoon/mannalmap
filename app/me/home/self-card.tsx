@@ -201,8 +201,8 @@ export function SelfCard({
             넓은 화면의 화살표는 누른 동안 숨겨 고리와 겹치지 않는다
           */}
           <Link
-            /* 만세력 탭으로 연다 — 사람 화면은 사주풀이 탭이 기본이다(2026-10-26) */
-            href={`/me/people/${personId}?tab=chart`}
+            /* 만세력 화면으로 연다 — ← 가 홈이다(`from=me`, ADR 0248) */
+            href={`/me/people/${personId}?tab=chart&from=me`}
             className={`${BUTTON_SECONDARY_FACE} group relative whitespace-nowrap px-3 sm:px-5`}
           >
             만세력 보기

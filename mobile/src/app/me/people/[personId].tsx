@@ -3,33 +3,55 @@ import { useCallback, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { isBlocked } from '@account/index';
+import { birthLineOf } from '@input/birth-line';
 import { UNREADABLE_INPUT_NOTE } from '@input/stored';
-import { STEM_INFO } from '@saju';
+import { READING_CONTINUE_NOTE, SELF_READING_MAKING } from '@web-home/making';
+import type { ReadingCredits } from '@reading/credits';
+import {
+  CHART_DETAIL_LABEL,
+  COMPAT_OTHER_LABEL,
+  PERSON_COMPAT_SECTION,
+  PERSON_READING_SECTION,
+  READING_COST_LABEL,
+  READING_INVITE_TOPICS,
+  READING_OPEN_LABEL,
+  chartTitleOf,
+  compatWithLabel,
+  readingInviteTitle,
+  readingReceivedLine,
+} from '@reading/person-screen';
+import { STEM_INFO, type Stem } from '@saju';
 
 import { useClient } from '@/auth/connected';
-import { Tabs } from '@/chart/parts';
-import { readPersonDetail, type MyReading, type PersonDetail, type Read } from '@/people/data';
-import { AccountNotice, DayMasterChip, LoadingFrame, NotFound, ScreenFrame, go, styles as shared } from '@/people/parts';
+import { UNREACHABLE } from '@/auth/signup';
+import { readPersonDetail, type PersonDetail, type Read } from '@/people/data';
+import { AccountNotice, DayMasterChip, LoadingFrame, NotFound, PillarStrip, ScreenFrame, go, styles as shared } from '@/people/parts';
+import { useCompatAdd, useReadingAsk } from '@/people/person-sheets';
 import { SajuSections } from '@/people/saju-sections';
+import { readReadingView, type ReadingTarget } from '@/reading/api';
+import { Button } from '@/ui/buttons';
 import { FailureLine } from '@/ui/failure-line';
 import { Icon } from '@/ui/icons';
-import { StemSymbol } from '@/ui/stem-symbol';
 import { PrimaryButton } from '@/ui/parts';
-import { Button } from '@/ui/buttons';
-import { COLOR, ELEMENT_TONE, FONT, TYPE } from '@/ui/tokens';
 import { settled } from '@/ui/settled';
-import { UNREACHABLE } from '@/auth/signup';
-import { TopBar } from '@/ui/top-bar';
+import { StemSymbol } from '@/ui/stem-symbol';
 import { CardFrame, Tile } from '@/ui/surfaces';
+import { TopBar } from '@/ui/top-bar';
+import { alpha, COLOR, ELEMENT_TONE, FONT, RADIUS, TYPE } from '@/ui/tokens';
 
-const NO_READING_YET = '아직 받은 사주풀이가 없어요.';
-const NO_COMPAT_YET = '아직 본 궁합이 없어요.';
+/** 받기 시트 · 받은 카드가 쓰는 이 사람의 풀이 칸 — 풀이권 · 읽는 시간 · 도는 시도. 못 읽으면 `null` 이고 카드는 받기로 선다(부속 정보) */
+type ReadingSide = { credits: ReadingCredits | null; minutes: number | null; running: boolean };
 
-/** 사람 하나 — 머리는 큰 이름 · 일간 딱지 · 단추 둘, 사주풀이 탭이 기본이다(`app/me/people/[personId]/page.tsx`) */
+/**
+ * **저장한 사람 화면 — 한 장**(운영자 승인 2026-11-13, ADR 0248 · 웹 `app/me/people/[personId]/page.tsx`). 머리(일간 칩 · 이름 · 출생 한 줄 ·
+ * 네 기둥 띠 · 「만세력 자세히」) → 사주풀이 칸 → 궁합 칸. 탭이 없고 머리에 단추도 없다. 만세력은 같은 주소의 `?tab=chart` 다.
+ */
 export default function PersonScreen() {
   const client = useClient();
   const params = useLocalSearchParams<{ personId: string; from?: string; tab?: string }>();
   const [read, setRead] = useState<Read<PersonDetail> | null>(null);
+  const [side, setSide] = useState<ReadingSide | null>(null);
+  const chart = params.tab === 'chart';
 
   const load = useCallback(() => {
     void settled(readPersonDetail(client, params.personId), 'readPersonDetail', () => ({ kind: 'failed', message: UNREACHABLE }) as const).then((next) => {
@@ -40,13 +62,24 @@ export default function PersonScreen() {
   }, [client, params.personId]);
   useFocusEffect(load);
 
-  const before = <TopBar fallback={params.from === 'me' ? '/me' : '/me/people'} />;
+  const value = read?.kind === 'ok' ? read.value : null;
+  const mine = value !== null && value.person !== null && value.selfPersonId === value.person.personId;
+  const target: ReadingTarget | null = value?.person == null || chart ? null : mine ? { kind: 'self' } : { kind: 'person', personId: value.person.personId };
+  const query = target === null ? null : JSON.stringify(target);
 
-  if (read === null || read.kind === 'signed-out') {
-    return (
-      <LoadingFrame bar={before} />
-    );
-  }
+  /* 돌아올 때마다 다시 읽는다 — 풀이 화면에서 받고 오면 카드가 받은 글로 선다 */
+  const loadSide = useCallback(() => {
+    if (query === null) return;
+    void settled(readReadingView(client, JSON.parse(query) as ReadingTarget), 'readReadingView', () => null).then((answer) => {
+      if (answer === null || !answer.ok || answer.value.view !== 'reading') return;
+      const { credits, minutes, run } = answer.value;
+      setSide({ credits, minutes, running: run?.status === 'running' });
+    });
+  }, [client, query]);
+  useFocusEffect(loadSide);
+
+  const before = <TopBar fallback={params.from === 'me' ? '/me' : '/me/people'} />;
+  if (read === null || read.kind === 'signed-out') return <LoadingFrame bar={before} />;
   if (read.kind === 'failed') {
     return (
       <ScreenFrame bar={before}>
@@ -73,14 +106,10 @@ export default function PersonScreen() {
     );
   }
 
-  /* 내 명식이면 풀이 칸은 내 것이다 — 견주는 값은 주소의 글자가 아니라 DB 가 낸 id 다 */
-  const mine = selfPersonId === person.personId;
   const fromHome = mine || params.from === 'me';
-  const bar = <TopBar title={person.label} fallback={fromHome ? '/me' : '/me/people'} />;
-
   if (!person.chart.ok) {
     return (
-      <ScreenFrame bar={bar}>
+      <ScreenFrame bar={<TopBar title={person.label} fallback={fromHome ? '/me' : '/me/people'} />}>
         <CardFrame style={styles.unreadable}>
           <Text style={shared.noticeBody}>{person.chart.message}</Text>
           <Text style={shared.meta}>{UNREADABLE_INPUT_NOTE}</Text>
@@ -90,113 +119,205 @@ export default function PersonScreen() {
   }
 
   const { saju } = person.chart;
-  const stem = saju.pillars.dayMaster;
+
+  /* 만세력 화면 — 지금까지 「만세력」 탭에 있던 것 그대로다. 뒤로 가면 이 사람 화면(홈 카드에서 왔으면 홈) */
+  if (chart) {
+    return (
+      <ScreenFrame bar={<TopBar title={chartTitleOf(person.label)} fallback={`/me/people/${person.personId}`} />}>
+        <SajuSections saju={saju} />
+      </ScreenFrame>
+    );
+  }
+
+  return (
+    <PersonPage
+      person={{ personId: person.personId, name: person.label, stem: saju.pillars.dayMaster }}
+      saju={saju}
+      mine={mine}
+      fromHome={fromHome}
+      selfPersonId={selfPersonId}
+      nickname={nickname?.trim() || '나'}
+      readings={readings}
+      side={side}
+      target={target ?? { kind: 'self' }}
+    />
+  );
+}
+
+function PersonPage({
+  person,
+  saju,
+  mine,
+  fromHome,
+  selfPersonId,
+  nickname,
+  readings,
+  side,
+  target,
+}: {
+  person: { personId: string; name: string; stem: Stem };
+  saju: Parameters<typeof SajuSections>[0]['saju'];
+  mine: boolean;
+  fromHome: boolean;
+  selfPersonId: string | null;
+  nickname: string;
+  readings: PersonDetail['readings'];
+  side: ReadingSide | null;
+  target: ReadingTarget;
+}) {
   const own = readings.find((one) => (mine ? one.kind === 'self' : one.kind === 'person' && one.personA === person.personId)) ?? null;
   const readingHref = mine ? '/me/readings/self' : `/me/readings/${person.personId}`;
-  /* 이 사람이 들어간 궁합풀이 전부 — 최근 순. 이 사람 이름이 앞이고 내 자리는 닉네임이다 */
-  const called = nickname?.trim() || '나';
+  const making = own === null && side?.running === true;
+  const credits = side?.credits ?? null;
+
+  /* 이 사람이 들어간 궁합풀이 전부 — 최근 순. 줄은 상대 이름(내 자리는 닉네임) · 비유 · 점수. 누르면 이 화면 위에 그 궁합이 쌓인다 */
   const pairs = mine
     ? []
     : readings
         .filter((one) => one.kind === 'private' && (one.personA === person.personId || one.personB === person.personId))
-        .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
-  const namesOf = (one: MyReading) =>
-    [
-      person.label,
-      one.personA === person.personId ? (one.personB === selfPersonId ? called : (one.labelB ?? '')) : one.personA === selfPersonId ? called : (one.labelA ?? ''),
-    ].join(' · ');
+        .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
+        .map((one) => {
+          const first = one.personA === person.personId;
+          const other = first ? one.personB : one.personA;
+          return {
+            key: `${one.personA}:${one.personB}`,
+            other,
+            name: other === selfPersonId ? nickname : ((first ? one.labelB : one.labelA) ?? ''),
+            stem: first ? one.dayMasterB : one.dayMasterA,
+            score: one.score,
+            metaphor: one.metaphor,
+            href: `/me/readings/compat?a=${one.personA}&b=${one.personB}`,
+          };
+        });
+  const seen = new Map(pairs.flatMap((pair) => (pair.other === null ? [] : [[pair.other, pair.href] as const])));
+
+  const ask = useReadingAsk({ name: person.name, target, readingHref, credits });
+  const add = useCompatAdd({ person, seen, credits });
+  const tone = ELEMENT_TONE[STEM_INFO[person.stem].element];
 
   return (
-    <ScreenFrame bar={bar}>
-      <Tile tone={ELEMENT_TONE[STEM_INFO[stem].element].soft} style={styles.header}>
+    <ScreenFrame bar={<TopBar fallback={fromHome ? '/me' : '/me/people'} />}>
+      {/* 머리 — 이 사람이 누구인지(시안 0-1 A). 단추는 두지 않는다 — 받기 · 궁합은 아래 칸이 든다 */}
+      <Tile tone={tone.soft} style={styles.header}>
         <View style={styles.watermark}>
-          <StemSymbol stem={stem} size={160} opacity={0.15} />
+          <StemSymbol stem={person.stem} size={160} opacity={0.15} />
         </View>
-        <View style={styles.chip}>
-          <DayMasterChip stem={stem} />
+        <DayMasterChip stem={person.stem} />
+        <View style={styles.names}>
+          <Text style={shared.title} accessibilityRole="header">{person.name}</Text>
+          <Text style={shared.meta}>{birthLineOf(saju)}</Text>
         </View>
-        <View style={styles.headButtons}>
-          <Button accessibilityRole="link" variant={own === null ? 'primary' : 'secondary'} label={own === null ? '사주풀이 받기' : '사주풀이 보기'} onPress={() => go(readingHref)} style={styles.headButton} />
-          {/* 이 사람만 앉힌다 — 다른 칸은 비워 두고 사용자가 고른다(운영자 2026-10-26) */}
-          <Button accessibilityRole="link" variant="secondary" label="궁합 보러 가기" onPress={() => go(`/me/compat?pickA=${person.personId}`)} style={styles.headButton} />
-        </View>
+        <PillarStrip pillars={saju.pillars} name={person.name} />
+        <Pressable accessibilityRole="link" onPress={() => go(`/me/people/${person.personId}?tab=chart`)} style={styles.detail}>
+          <Text style={[styles.detailText, { color: tone.ink }]}>{CHART_DETAIL_LABEL}</Text>
+          <Icon name="chevron" size={14} color={tone.ink} />
+        </Pressable>
       </Tile>
 
-      <Tabs
-        label={`${mine ? '내 사주' : person.label}의 사주풀이와 만세력`}
-        initial={params.tab === 'chart' ? 'chart' : 'reading'}
-        tabs={[
-          {
-            key: 'reading',
-            label: '사주풀이',
-            panel: (
-              <View style={styles.gathered}>
-                <View style={styles.part}>
-                  <Text style={shared.section}>사주풀이</Text>
-                  {own === null ? (
-                    <Text style={shared.body}>{NO_READING_YET}</Text>
-                  ) : (
-                    <CardFrame>
-                      <Row title={`${person.label}의 사주풀이`} sub={own.metaphor} onPress={() => go(readingHref)} />
-                    </CardFrame>
-                  )}
+      <View style={styles.part}>
+        <Text style={shared.section}>{PERSON_READING_SECTION}</Text>
+        {own !== null ? (
+          <Pressable accessibilityRole="link" onPress={() => go(readingHref)}>
+            <CardFrame style={styles.reading}>
+              <Text style={[styles.quote, { color: tone.ink }]}>“</Text>
+              <Text style={styles.metaphor}>{own.metaphor ?? READING_CONTINUE_NOTE}</Text>
+              <View style={styles.readingFoot}>
+                <Text style={shared.meta}>{readingReceivedLine(own.createdAt, side?.minutes ?? null)}</Text>
+                <View style={styles.open}>
+                  <Text style={styles.openText}>{READING_OPEN_LABEL}</Text>
+                  <Icon name="chevron" size={14} color={COLOR.foreground} />
                 </View>
-                {!mine && (
-                  <View style={styles.part}>
-                    <Text style={shared.section}>
-                      궁합
-                      {pairs.length > 0 && <Text style={shared.meta}>{`  ${pairs.length}개`}</Text>}
-                    </Text>
-                    {pairs.length === 0 && <Text style={shared.body}>{NO_COMPAT_YET}</Text>}
-                    {pairs.length > 0 && (
-                      <CardFrame>
-                        {pairs.map((one) => (
-                          <Row
-                            key={`${one.personA}:${one.personB}`}
-                            title={namesOf(one)}
-                            sub={one.metaphor}
-                            value={one.score === null ? null : `${one.score}점`}
-                            onPress={() => go(`/me/compat?a=${one.personA}&b=${one.personB}`)}
-                          />
-                        ))}
-                      </CardFrame>
-                    )}
-                  </View>
-                )}
               </View>
-            ),
-          },
-          { key: 'chart', label: '만세력', panel: <View style={styles.gathered}><SajuSections saju={saju} /></View> },
-        ]}
-      />
+            </CardFrame>
+          </Pressable>
+        ) : making ? (
+          <Pressable accessibilityRole="link" onPress={() => go(readingHref)}>
+            <CardFrame style={styles.making}>
+              <Text style={styles.rowTitle}>{SELF_READING_MAKING}</Text>
+              <Icon name="chevron" size={16} color={COLOR.muted} />
+            </CardFrame>
+          </Pressable>
+        ) : (
+          <Tile tone={COLOR.accent} style={styles.invite}>
+            <Text style={styles.inviteTitle}>{readingInviteTitle(person.name)}</Text>
+            <Text style={styles.inviteTopics}>{READING_INVITE_TOPICS}</Text>
+            <View style={styles.inviteFoot}>
+              <Text style={styles.inviteCost}>{READING_COST_LABEL}</Text>
+              <Button label="사주풀이 받기" variant="secondary-small" onPress={ask.open} />
+            </View>
+          </Tile>
+        )}
+      </View>
+
+      {!mine && (
+        <View style={styles.part}>
+          <Text style={shared.section}>{PERSON_COMPAT_SECTION}</Text>
+          <CardFrame>
+            {pairs.map((pair) => (
+              <Pressable key={pair.key} accessibilityRole="link" onPress={() => go(pair.href)} style={styles.row}>
+                <View style={styles.faces}>
+                  <Circle stem={person.stem} />
+                  <Circle stem={pair.stem} shifted />
+                </View>
+                <View style={styles.rowBody}>
+                  <Text style={styles.rowTitle} numberOfLines={1}>{pair.name}</Text>
+                  {pair.metaphor !== null && <Text style={shared.meta} numberOfLines={1}>{pair.metaphor}</Text>}
+                </View>
+                {pair.score !== null && <Text style={styles.score}>{`${pair.score}점`}</Text>}
+              </Pressable>
+            ))}
+            <Pressable accessibilityRole="button" onPress={add.open} style={styles.row}>
+              <View style={styles.plus}>
+                <Icon name="plus" size={16} color={COLOR.secondary} />
+              </View>
+              <Text style={styles.addText}>{pairs.length > 0 ? COMPAT_OTHER_LABEL : compatWithLabel(person.name)}</Text>
+            </Pressable>
+          </CardFrame>
+        </View>
+      )}
+
+      {ask.sheets}
+      {add.sheets}
     </ScreenFrame>
   );
 }
 
-function Row({ title, sub, value, onPress }: { title: string; sub: string | null; value?: string | null; onPress: () => void }) {
+/** 궁합 줄의 동그라미 하나 — 모르는 일간은 회색 원이다 */
+function Circle({ stem, shifted = false }: { stem: Stem | null; shifted?: boolean }) {
   return (
-    <Pressable accessibilityRole="link" onPress={onPress} style={styles.row}>
-      <View style={styles.rowBody}>
-        <Text style={styles.rowTitle} numberOfLines={1}>{title}</Text>
-        {sub !== null && <Text style={shared.meta} numberOfLines={1}>{sub}</Text>}
-      </View>
-      {value != null && <Text style={styles.rowValue}>{value}</Text>}
-      <Icon name="chevron" size={16} color={COLOR.muted} />
-    </Pressable>
+    <View style={[styles.circle, { backgroundColor: stem === null ? COLOR.noneSoft : ELEMENT_TONE[STEM_INFO[stem].element].soft }, shifted && styles.circleShifted]}>
+      {stem !== null && <StemSymbol stem={stem} size={20} />}
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   unreadable: { gap: 8, padding: 20 },
-  header: { padding: 20, overflow: 'hidden' },
-  watermark: { position: 'absolute', right: -32, bottom: -40 },
-  chip: { position: 'absolute', top: 16, right: 16 },
-  headButtons: { flexDirection: 'row', gap: 8, marginTop: 32 },
-  headButton: { flex: 1, paddingHorizontal: 12 },
-  gathered: { gap: 14, marginTop: 14 },
-  part: { gap: 8 },
+  header: { gap: 12, padding: 20, overflow: 'hidden' },
+  watermark: { position: 'absolute', right: -32, top: 24 },
+  names: { gap: 4 },
+  detail: { alignSelf: 'flex-end', minHeight: 44, flexDirection: 'row', alignItems: 'center', gap: 2 },
+  detailText: { fontFamily: FONT.bold, fontSize: TYPE.small },
+  part: { gap: 10 },
+  reading: { gap: 8, paddingHorizontal: 20, paddingTop: 18, paddingBottom: 16 },
+  quote: { fontFamily: FONT.bold, fontSize: TYPE.title, lineHeight: 24 },
+  metaphor: { fontFamily: FONT.bold, fontSize: TYPE.lead, lineHeight: 27, color: COLOR.foreground },
+  readingFoot: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12, marginTop: 2, paddingTop: 10, borderTopWidth: 1, borderTopColor: COLOR.border },
+  open: { flexDirection: 'row', alignItems: 'center', gap: 2 },
+  openText: { fontFamily: FONT.bold, fontSize: TYPE.small, color: COLOR.foreground },
+  making: { minHeight: 64, flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 20 },
+  invite: { gap: 6, padding: 20 },
+  inviteTitle: { fontFamily: FONT.bold, fontSize: TYPE.lead, lineHeight: 27, color: COLOR.onAccent },
+  inviteTopics: { fontFamily: FONT.medium, fontSize: TYPE.small, lineHeight: 20, color: alpha(COLOR.onAccent, 0.75) },
+  inviteFoot: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12, marginTop: 10 },
+  inviteCost: { fontFamily: FONT.medium, fontSize: TYPE.fine, color: alpha(COLOR.onAccent, 0.7) },
   row: { minHeight: 64, flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 16, paddingVertical: 12, borderTopWidth: 1, borderTopColor: COLOR.border, marginTop: -1 },
   rowBody: { flex: 1, minWidth: 0 },
-  rowTitle: { fontSize: TYPE.body, lineHeight: 22, fontFamily: FONT.bold, color: COLOR.foreground },
-  rowValue: { fontSize: TYPE.body, fontFamily: FONT.bold, color: COLOR.foreground },
+  rowTitle: { flex: 1, fontSize: TYPE.body, lineHeight: 22, fontFamily: FONT.bold, color: COLOR.foreground },
+  faces: { flexDirection: 'row' },
+  circle: { width: 32, height: 32, alignItems: 'center', justifyContent: 'center', borderRadius: RADIUS.pill, borderWidth: 2, borderColor: COLOR.surface },
+  circleShifted: { marginLeft: -10 },
+  score: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: RADIUS.pill, overflow: 'hidden', backgroundColor: COLOR.cream, fontSize: TYPE.small, fontFamily: FONT.bold, color: COLOR.creamInk },
+  plus: { width: 32, height: 32, alignItems: 'center', justifyContent: 'center', borderRadius: RADIUS.pill, borderWidth: 1.5, borderStyle: 'dashed', borderColor: COLOR.borderStrong },
+  addText: { flex: 1, fontSize: TYPE.body, fontFamily: FONT.medium, color: COLOR.secondary },
 });

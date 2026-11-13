@@ -21,7 +21,7 @@ function sameSitePath(href: string): boolean {
 }
 
 describe('온 곳 (ADR 0134)', () => {
-  it('알려진 값 일곱만 읽고, 배열이면 첫 값이다', () => {
+  it('알려진 값 여덟만 읽고, 배열이면 첫 값이다', () => {
     for (const from of CAME_FROM) expect(cameFromOf(from)).toBe(from);
     expect(cameFromOf(['chat', 'me'])).toBe('chat');
     expect(cameFromOf([])).toBeNull();
@@ -55,6 +55,7 @@ describe('온 곳 (ADR 0134)', () => {
       expect(lightOf(kind, 'history')).toBe('/me/matching');
       expect(lightOf(kind, 'chat')).toBe('/me/chat');
       expect(lightOf(kind, 'news')).toBe('/me/requests');
+      expect(lightOf(kind, 'person')).toBe('/me');
     }
   });
 
@@ -82,6 +83,11 @@ describe('← 가 가는 곳 (ADR 0134)', () => {
     expect(backOf('match', { from: 'chat', matchId: MATCH_ID })).toEqual({ href: `/me/chat/${MATCH_ID}`, label: '채팅' });
     expect(backOf('match', { from: 'chat' })).toEqual({ href: '/me/chat', label: '채팅' });
     expect(backOf('compat', { from: 'chat', matchId: MATCH_ID })).toEqual({ href: '/me/chat', label: '채팅' });
+  });
+
+  it('사람 화면에서 연 궁합은 결과가 넘긴 그 사람 화면으로, 못 넘겼으면 궁합 탭으로 간다 (ADR 0248)', () => {
+    expect(backOf('compat', { from: 'person', person: { personId: 'p1', name: '민수' } })).toEqual({ href: '/me/people/p1', label: '민수' });
+    expect(backOf('compat', { from: 'person' })).toEqual({ href: '/compat', label: '궁합' });
   });
 
   it('없으면 결과 종류의 탭 첫 화면이다', () => {
