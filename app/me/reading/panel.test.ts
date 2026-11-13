@@ -118,7 +118,7 @@ describe('만드는 버튼이 서는 자리와 닫히는 자리', () => {
   /** 「보기」가 아니라 「받기」다 — 누르면 풀이권 한 번이 나간다(`docs/product/prd/screens.md` 「버튼은 동사로 갈린다」) */
   it('버튼 글자는 대상의 낱말을 따르고 두 자리를 가른다', () => {
     expect(panelChrome(view()).makeLabel).toBe('사주풀이 받기');
-    expect(panelChrome(view({ reading: reading() })).makeLabel).toBe('사주풀이 다시 받기');
+    expect(panelChrome(view({ reading: reading() })).makeLabel).toBe('다시 받기');
     expect(panelChrome(view({ noun: '궁합풀이', kind: 'private' })).makeLabel).toBe('궁합풀이 받기');
   });
 });

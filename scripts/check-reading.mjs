@@ -208,11 +208,11 @@ const headerChipOf = (html) => {
 };
 
 /**
- * 글 화면 머리의 첫 「사주풀이 다시 받기」가 주 단추(`bg-accent`)인가 — 못 찾으면 `null`.
+ * 글 화면 머리의 첫 「다시 받기」가 주 단추(`bg-accent`)인가 — 못 찾으면 `null`.
  * 아래 만드는 칸의 같은 이름 단추는 늘 주 단추라, 머리의 것 하나만 본다.
  */
 const headerMakeIsPrimary = (html) => {
-  const found = /<button[^>]*class="([^"]*)"[^>]*>(?:(?!<\/button>).)*?사주풀이 다시 받기/s.exec(html);
+  const found = /<button[^>]*class="([^"]*)"[^>]*>(?:(?!<\/button>).)*?다시 받기/s.exec(html);
   return found === null ? null : found[1].split(/\s+/).includes('bg-accent');
 };
 
@@ -267,7 +267,7 @@ try {
      * **경고는 이제 확인 창에 있다.**
      *
      * 「새로 만들면 지금 것을 대신합니다」가 만드는 버튼 옆에 늘 서 있었다. 늘 서 있는
-     * 경고는 누르지 않을 사람에게 하는 말이라, 「사주풀이 다시 받기」를 누른 뒤 뜨는 창으로
+     * 경고는 누르지 않을 사람에게 하는 말이라, 「다시 받기」를 누른 뒤 뜨는 창으로
      * 옮겼다. 이 층은 JS 를 안 돌리므로 **그 창이 화면에 실려 왔는가**까지 잰다 —
      * 실제로 열리고 취소되는 것은 e2e 가 손으로 눌러 본다.
      */
@@ -311,7 +311,7 @@ try {
 
     /** **그래도 사주는 그대로다** — 닫히는 것은 설문 하나뿐이다 */
     check('동의 전에도 풀이는 그대로 선다', mine.includes('스스로 정한 규칙 안에서'));
-    check('동의 전에도 만드는 버튼은 그대로다', mine.includes('사주풀이 다시 받기'));
+    check('동의 전에도 만드는 버튼은 그대로다', mine.includes('다시 받기'));
 
     const userA = await userIdOf(mail.a);
     sql(`update public.app_user set improvement_consent = true where id = '${userA}'`);
@@ -585,13 +585,13 @@ try {
     /**
      * **글이 선 뒤에도 누를 것이 없다** — 「버튼이 없다」는 성공 경로의 약속이다.
      *
-     * 재는 글자는 **버튼 이름 그대로**다(「궁합풀이 다시 받기」). 한동안 이 자리의
+     * 재는 글자는 **버튼 이름 그대로**다(「다시 받기」). 한동안 이 자리의
      * 버튼만 「다시 만들기」라는 다른 이름을 써서 그것으로 쟀는데, 그 까닭은 같은
      * 글자가 확인 창 안에도 실려 오기 때문이었다 — 이제 버튼이 없는 화면에는 창도
      * 안 실린다(`panel.tsx`).
      */
     check('글이 선 뒤에도 만드는 버튼이 없다',
-      !mine.includes('궁합풀이 다시 받기') && !theirs.includes('궁합풀이 다시 받기'));
+      !mine.includes('다시 받기') && !theirs.includes('다시 받기'));
     check('양쪽이 같은 점수를 본다', mine.includes('64') && theirs.includes('64'));
     /** 점수가 못 하던 일을 한 문장이 진다(ADR 0052) — 열로 든 값이 화면까지 오는가 */
     check('점수 곁에 비유 한 줄이 선다',

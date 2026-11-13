@@ -6,11 +6,10 @@ import { useRef, useState, type ReactNode } from 'react';
 import {
   BUY_CREDITS_LABEL,
   CREDITS_SHORTAGE_TITLE,
-  CREDITS_AVAILABLE_LABEL,
-  CREDITS_REQUIRED_LABEL,
   CREDITS_DIALOG_CLOSE,
   SALE_CLOSED_NOTE,
   SALE_CLOSED_OK,
+  creditsShortageNote,
 } from '@/src/lib/reading/notes';
 
 import { ConfirmDialog } from '../../ui/confirm-dialog';
@@ -20,7 +19,7 @@ import { saleShapeOf } from './buy-path';
 import { creditsPathFrom } from './return-to';
 
 /**
- * 풀이 · 궁합풀이 · 인연 요청에 풀이권이 부족하면 보유 수와 필요 수를 함께 보여준다(B안, 운영자 2026-10-12). 머리글은 이 창을 열지 않는다 —
+ * 풀이 · 궁합풀이 · 인연 요청에 풀이권이 부족하면 한 줄로 말한다(운영자 2026-11-13 — 전에는 보유 수와 필요 수의 표, B안 2026-10-12). 머리글은 이 창을 열지 않는다 —
  * 머리글은 펼침 메뉴다(`credits-menu.tsx`).
  */
 export function useBuyCredits(): {
@@ -73,10 +72,7 @@ export function useBuyCredits(): {
       firstFocus="confirm"
       cancelLabel={open ? CREDITS_DIALOG_CLOSE : null}
     >
-      <dl className="space-y-2">
-        <div className="flex justify-between gap-4"><dt>{CREDITS_AVAILABLE_LABEL}</dt><dd className="font-semibold tabular-nums">{shown?.available ?? 0}장</dd></div>
-        <div className="flex justify-between gap-4"><dt>{CREDITS_REQUIRED_LABEL}</dt><dd className="font-semibold tabular-nums">1장</dd></div>
-      </dl>
+      <p>{creditsShortageNote(shown?.available ?? 0)}</p>
       {!open && <p>{SALE_CLOSED_NOTE}</p>}
     </ConfirmDialog>
   );

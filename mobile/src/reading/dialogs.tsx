@@ -1,17 +1,16 @@
 import {
   BUY_CREDITS_LABEL,
   CREDITS_DIALOG_CLOSE,
-  CREDITS_AVAILABLE_LABEL,
-  CREDITS_REQUIRED_LABEL,
   CREDITS_SHORTAGE_TITLE,
   READING_REPLACES_NOTE,
   READING_USES_TICKET_NOTE,
   SALE_CLOSED_NOTE,
   SALE_CLOSED_OK,
+  creditsShortageNote,
 } from '@reading/notes';
 import { currentPath } from '@consent/app-destination';
 import { router, useGlobalSearchParams, usePathname } from 'expo-router';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text } from 'react-native';
 
 import { storeAvailable } from '@/credits/store';
 import { ConfirmDialog } from '@/ui/confirm-dialog';
@@ -65,14 +64,7 @@ export function CreditsShortage({ available, noun, onClose }: { available: numbe
       cancelLabel={storeAvailable ? CREDITS_DIALOG_CLOSE : null}
       onClose={onClose}
     >
-      <View style={styles.row}>
-        <Text style={styles.line}>{CREDITS_AVAILABLE_LABEL}</Text>
-        <Text style={styles.count}>{available}장</Text>
-      </View>
-      <View style={styles.row}>
-        <Text style={styles.line}>{CREDITS_REQUIRED_LABEL}</Text>
-        <Text style={styles.count}>1장</Text>
-      </View>
+      <Text style={styles.line}>{creditsShortageNote(available)}</Text>
       {!storeAvailable && <Text style={styles.line}>{SALE_CLOSED_NOTE}</Text>}
     </ConfirmDialog>
   );
@@ -81,6 +73,4 @@ export function CreditsShortage({ available, noun, onClose }: { available: numbe
 const styles = StyleSheet.create({
   line: { fontFamily: FONT.medium, fontSize: TYPE.body, lineHeight: 24, color: COLOR.secondary },
   danger: { fontFamily: FONT.bold, fontSize: TYPE.body, lineHeight: 24, color: COLOR.danger },
-  row: { flexDirection: 'row', justifyContent: 'space-between', gap: 16 },
-  count: { fontFamily: FONT.bold, fontSize: TYPE.body, color: COLOR.foreground },
 });

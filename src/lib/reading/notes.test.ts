@@ -1,7 +1,10 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  creditsShortageNote,
   READING_ALREADY_RUNNING_NOTE,
+  READING_FAILED_NOTE,
+  READING_FIRST_FAILED_NOTE,
   READING_LEAVE_SAFE_NOTE,
   readingCreditsLabel,
   readingCreditsNote,
@@ -124,23 +127,29 @@ describe('풀이권 문구', () => {
   });
 
   /**
-   * **보낸 상세 궁합 요청도 자리를 잡는다** (ADR 0038 · 0215). 이유를 말하지 않으면 「청하기만 했는데
-   * 하나가 사라졌다」로 읽힌다 — 도는 시도와 같은 자리에서 같은 이유로 말한다.
+   * **보낸 상세 궁합 요청은 말하지 않는다**(운영자 2026-11-13, 대장 home-15). 남은 수가 이미 예약 몫을 빼고, 인연은 닫혀 있다.
    */
-  it('보낸 요청이 잡고 있으면 몇 건이 잡고 있는지와 언제 돌아오는지를 말한다', () => {
-    const note = readingCreditsNote({ reserved: 0, requested: 2 });
-
-    expect(note).toContain('상세 궁합 요청 2건');
-    expect(note).toContain('72시간');
-    expect(note).toContain('돌려드려요');
+  it('보낸 요청이 잡고 있어도 그 줄은 서지 않는다', () => {
+    const credits = { reserved: 0, requested: 2 };
+    expect(readingCreditsNote(credits)).toBeNull();
   });
+});
 
-  /**
-   * **지금 움직이고 있는 쪽을 먼저 말한다.** 그것은 곧 끝나고, 요청은 상대의 답을
-   * 기다리는 일이라 시간의 결이 다르다. 두 줄을 함께 세우면 어느 쪽을 기다리는지가
-   * 흐려진다.
-   */
-  it('둘 다 잡고 있으면 만들고 있는 쪽을 먼저 말한다', () => {
-    expect(readingCreditsNote({ reserved: 1, requested: 3 })).toContain('만드는 중인');
+/**
+ * **실패한 시도는 풀이권을 돌려준다** — 실패로 끝나면 트리거가 예약을 풀고(`settle_reading_credit_for_run`), 잔액은 성공 · 도는
+ * 시도만 센다. 실패 줄이 그 사실을 끝에 말한다(운영자 2026-11-13, 대장 home-16).
+ */
+describe('실패 줄', () => {
+  it('처음 받기 · 다시 받기의 실패 줄이 둘 다 풀이권을 돌려줬다고 말한다', () => {
+    expect(READING_FIRST_FAILED_NOTE).toBe('풀이를 끝까지 만들지 못했어요. 풀이권은 돌려드렸어요.');
+    expect(READING_FAILED_NOTE.endsWith('풀이권은 돌려드렸어요.')).toBe(true);
+  });
+});
+
+/** 부족 창은 표가 아니라 한 줄이다(운영자 2026-11-13, 대장 credits-13) */
+describe('creditsShortageNote', () => {
+  it('0장이면 남은 것이 없다고, 남았는데 모자라면 더 필요한 수를 말한다', () => {
+    expect(creditsShortageNote(0)).toBe('남은 풀이권이 없어요.');
+    expect(creditsShortageNote(1, 3)).toBe('풀이권 2장이 더 필요해요.');
   });
 });
