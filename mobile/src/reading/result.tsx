@@ -39,6 +39,7 @@ export function Result({
   nicknames,
   betweenSummaryAndBody,
   coverAction,
+  belowCover,
 }: {
   reading: CurrentReading;
   target: ReadingTarget;
@@ -51,6 +52,8 @@ export function Result({
   betweenSummaryAndBody?: ReactNode;
   /** 표지 첫 줄 끝의 아이콘 — 공유. 세울지는 `panelChrome().canShare` 한 벌이 정한다 */
   coverAction?: ReactNode;
+  /** 표지 바로 아래에 세울 줄 — 표지 아이콘의 실패 줄. 표지 위에 띄우면 비유 글을 덮는다 */
+  belowCover?: ReactNode;
 }) {
   const seats = nicknames === undefined ? null : seatNicknamesOf(nicknames, reading.viewerIsFirst);
   const named = (text: string) => (seats === null ? text : withNicknames(text, seats));
@@ -95,6 +98,8 @@ export function Result({
       ) : (
         meta
       )}
+
+      {belowCover}
 
       {target.kind !== 'match' && !reading.fromCurrentChart && (
         <Tile tone={COLOR.warningWash} style={styles.stale}>

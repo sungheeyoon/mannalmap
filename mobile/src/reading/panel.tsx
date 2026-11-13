@@ -17,7 +17,7 @@ import { readReadingView, type DoorRefusal, type ReadingTarget, type ReadingView
 import { ConfirmMake, CreditsShortage } from './dialogs';
 import { ReadingFeedback } from './feedback';
 import { Result } from './result';
-import { ShareReadingButton } from './share-button';
+import { ShareReadingButton, ShareReadingIcon, useReadingShare } from './share-button';
 import { useReadingPanel, type ShownView } from './use-reading-panel';
 import { LoadingState } from './waiting';
 
@@ -113,6 +113,8 @@ export function ReadingPanel({
 }) {
   const panel = useReadingPanel({ target, initial: view, automatic, onRefused: followRefusal });
   const { phase, failure, reading, chrome, noun, creditsNote, progress } = panel;
+  /* 표지 아이콘의 공유 — 실패 줄은 표지 아래에 선다(`Result` 의 `belowCover`) */
+  const coverShare = useReadingShare(target);
 
   const shownId = useRef(reading?.id ?? null);
   useEffect(() => {
@@ -183,7 +185,8 @@ export function ReadingPanel({
           tones={tones}
           nicknames={nicknames}
           betweenSummaryAndBody={betweenSummaryAndBody}
-          coverAction={chrome.canShare ? <ShareReadingButton target={target} look="icon" /> : undefined}
+          coverAction={chrome.canShare ? <ShareReadingIcon share={coverShare} /> : undefined}
+          belowCover={chrome.canShare ? coverShare.trouble : undefined}
         />
       )}
 
