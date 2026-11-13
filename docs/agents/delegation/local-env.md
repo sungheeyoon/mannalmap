@@ -97,16 +97,18 @@
 | 증상 | 원인 | 하는 일 |
 | --- | --- | --- |
 | 에뮬레이터의 Expo Go 에서 앱이 `ExpoCrypto` 를 못 찾아 선다 | 깔린 Expo Go 판에 그 네이티브 모듈이 없다 | 개발 빌드나 맞는 판이 없으면 웹 번들 + 가짜 서버로 잰다 — 브라우저는 `--disable-web-security`(가짜 서버에 CORS 답이 없다). 네이티브에서만 도는 것은 PR 의 「안 돌린 것」에 적는다 |
+| WSL 의 `expo start` 가 adb 를 못 찾는다 | expo 는 `ANDROID_HOME/platform-tools/adb` 를 찾는데 Windows SDK 에는 `adb.exe` 뿐이다 | 저장소 밖 폴더에 `platform-tools/adb` → Windows 의 `adb.exe` symlink 를 두고 그 폴더를 `ANDROID_HOME` 으로 준다 |
 | API 37 에서 Expo Go 가 Metro 에 못 붙는다 | 로컬 네트워크 권한(`ACCESS_LOCAL_NETWORK`)이 없다 | 1 의 `pm grant` |
 | 딥 링크가 앱으로 안 간다 | `am start` 끝에 패키지 인자를 붙였다 | `am start -a android.intent.action.VIEW -p host.exp.exponent -d 'exp://127.0.0.1:8081/--/<경로>'`(`device.py link`) |
 | 딥 링크가 기기에 깔린 `preview` · 출시 빌드를 연다 | 그 빌드도 `exp://` 를 받는다 — Expo Go 가 꺼져 있으면 안드로이드가 그쪽으로 보낸다(2026-11-11, 운영에 로그인된 앱이 앞에 섰다) | 링크를 `-p host.exp.exponent` 로 묶는다. 누르기 전에 `dumpsys activity activities` 의 `topResumedActivity` 가 Expo Go 인지 본다 |
 | Expo Go 에서 붉은 화면 「expo-notifications … removed from Expo Go」 | 푸시(ADR 0236)가 든 뒤 안드로이드 Expo Go 가 푸시 토큰 호출에서 던진다 | 재는 동안만 **제 워크트리의** `mobile/node_modules/expo-notifications/build/warnOfExpoGoPushUsage.js` 의 `throw` 를 `console.warn` 으로 바꾸고 Expo Go 를 강제 종료한 뒤 다시 연다. 저장소 파일은 안 바꾼다. 푸시는 못 잰다 |
+| Expo Go 가 첫 화면(로고)에서 멈추고 넘어가지 않는다(2026-11-13) | 루트 레이아웃의 `<ReadyPushOpener />`(`mobile/src/app/_layout.tsx`)가 Expo Go 에 없는 푸시를 기다린다 | 재는 동안만 그 줄을 주석으로 빼고 띄운다. **끝나면 되돌린다 — 커밋하지 않는다.** 푸시를 여는 길은 못 잰다 |
 | 탭을 눌렀는데 `texts` · `tap` 이 앞 화면 글자를 낸다 | 궁합 고르기처럼 idle 이 안 되는 화면은 `uiautomator dump` 가 실패한다(`could not get idle state`) | 그 화면은 그림(`shot`)으로 본다 — 빈 본문은 PNG 가 눈에 띄게 작다. `device.py` 는 앞 덤프를 지우고 읽어 실패가 빈 목록으로 보인다 |
 | 붉은 화면의 스택 줄을 누르자 PC 에 VS Code 가 뜬다 | Metro 가 편집기를 연다 | `REACT_EDITOR=none` 으로 띄운다 |
 | 누른 자리가 엉뚱하다 | 좌표는 Expo 도구 단추 · 판 크기로 어긋난다 | 좌표를 쓰지 않는다 — `uiautomator` 덤프의 글자로 찾아 누른다(`device.py tap`) |
 | `input text` 를 보냈는데 메뉴가 뜨거나 앱이 다시 읽힌다 | 입력칸에 초점이 없으면 글자가 RN 단축키(`r` · `d` …)로 먹는다 | `device.py input` 으로 초점을 준 뒤 `type`. 한글은 못 넣는다 |
 | 눌렀는데 앞 화면 글자가 읽힌다 | 글자가 화면 전환보다 늦게 바뀐다 | 전환 뒤 몇 초 기다리고 읽는다 — 안 나왔다고 바로 판정하지 않는다 |
-| `adb` 가 결과 없이 멈춘다 | Windows 쪽 `adb.exe` 프로세스가 쌓여 데몬이 멈춘다 | `adb.exe kill-server` 로 내리고 다시 부른다. 부를 때 `timeout` 을 두고 나란히 부르지 않는다 |
+| `adb` 가 결과 없이 멈춘다 | Windows 쪽 `adb.exe` 프로세스가 쌓여 데몬이 멈춘다 | `adb.exe kill-server` 로 내리고 다시 부른다. 부를 때 `timeout` 을 두고 나란히 부르지 않는다. kill-server 도 멈추면(2026-11-13, 아흔 개가 쌓였다) `taskkill.exe /IM adb.exe /F` |
 | 뿌리 `node_modules` 가 없다 | `mobile/` 의 `npm ci` 만으로 Metro · `tsc` 가 도는 것은 `.claude/worktrees/` 가 메인의 `node_modules` 밑에 있어서다. `scripts/` 시험은 그래도 못 돌고, 저장소 밖 복사본은 `src/lib` 의 `astronomy-engine` 을 못 찾는다 | 뿌리에 `npm ci`, 또는 CI 처럼 `node_modules` 를 잇는다 |
 | `git` · `github` · `timeout` 글자가 든 복합 명령이 거절된다 | 워크트리 격리가 복합 명령을 못 잰다(위 표의 격리 줄) | 스크립트 파일에 적고 파일을 부른다 |
 

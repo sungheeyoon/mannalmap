@@ -185,6 +185,7 @@ const rpc = {
   request_match: () => null,
   cancel_match_request: () => { if (db.detail.state === 'awaiting_consent') db.detail = { ...db.detail, state: 'before_purchase', request_id: null, i_am_buyer: false, expires_at: null }; return 'cancelled'; },
   restore_passed_connection: () => db.passed,
+  share_my_reading: (a) => `${a.p_kind === 'self' ? 'self' : 'person'}-fake-token`,
   shared_reading: (a) => {
     const kind = a.p_token.startsWith('compat') ? 'private' : 'person';
     if (a.p_token.startsWith('self')) return [{ kind: 'self', body: output('윤하늘'), metaphor: '바람을 등에 지고 천천히 뿌리내리는 나무', name_a: '윤하늘', name_b: null, score: null, created_at: ago(3000) }];
