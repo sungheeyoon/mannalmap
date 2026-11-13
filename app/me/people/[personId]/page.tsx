@@ -3,7 +3,7 @@ import { notFound } from 'next/navigation';
 
 import { isBlocked, selfPersonIdOf } from '@/src/lib/account';
 import { UNREADABLE_INPUT_NOTE } from '@/src/lib/input/stored';
-import { chartTitleOf } from '@/src/lib/reading/person-screen';
+import { chartTitleOf, shortNameOf } from '@/src/lib/reading/person-screen';
 
 import { supabaseOnServer } from '../../../auth/server-client';
 import { signedInUser } from '../../../auth/signed-in';
@@ -114,7 +114,7 @@ export default async function PersonSajuPage({
       <main className={`app-shell flex ${COLUMN} flex-1 flex-col gap-5 py-8 sm:gap-6 sm:py-12`}>
         <Link href={backHome ? '/me' : here} className={`${BUTTON_TERTIARY} self-start`}>
           <Icon name="back" className="size-4" />
-          {backHome ? '홈' : person.name}
+          {backHome ? '홈' : shortNameOf(person.name)}
         </Link>
         <h1 className={`break-keep [overflow-wrap:anywhere] ${TYPE_TITLE}`}>{chartTitleOf(person.name)}</h1>
         <SajuResult saju={person.saju} />

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { compatWithLabel, monthDayOf, partnerAskTitle, readingAskTitle, readingCostLine, readingInviteTitle, readingReceivedLine, relationAskTitle } from './person-screen';
+import { chartTitleOf, compatWithLabel, monthDayOf, partnerAskTitle, readingAskTitle, readingCostLine, readingInviteTitle, readingReceivedLine, relationAskTitle } from './person-screen';
 
 describe('저장한 사람 화면의 말', () => {
   it('이름 뒤 조사는 받침으로 고른다', () => {
@@ -34,5 +34,8 @@ describe('시트 제목의 긴 이름', () => {
     expect(relationAskTitle(long, '지영')).toBe('아주아주긴…\u2060 · 지영은\n어떤 사이예요?');
     expect(relationAskTitle(long, '또다른아주아주긴이름의친구')).toBe('아주아주긴…\u2060 · 또다른아주…\u2060는\n어떤 사이예요?');
     expect(readingAskTitle('민수')).toBe('민수의 사주풀이를 받을까요?');
+    expect(readingInviteTitle(long)).toBe('아주아주긴이름의오…\u2060는\n어떤 사람일까요?');
+    expect(compatWithLabel(long)).toBe('아주아주긴이름…\u2060와 궁합 보기');
+    expect(chartTitleOf(long)).toBe('아주아주긴이름의오…\u2060의 만세력');
   });
 });

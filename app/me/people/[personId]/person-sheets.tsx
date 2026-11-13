@@ -131,7 +131,7 @@ export function ReadingInvite({
     <>
       <div className="relative flex flex-col gap-1.5 overflow-hidden rounded-card bg-accent p-5 text-on-accent">
         <Icon name="spark" className="pointer-events-none absolute -bottom-6 -right-4 size-28 opacity-15" />
-        <p className="relative text-lead font-bold leading-snug">{readingInviteTitle(name)}</p>
+        <p className="relative whitespace-pre-line break-keep text-lead font-bold leading-snug">{readingInviteTitle(name)}</p>
         <p className="relative text-small text-on-accent/75">{READING_INVITE_TOPICS}</p>
         <div className="relative mt-3 flex items-center justify-between gap-3">
           <span className="text-fine text-on-accent/70">{READING_COST_LABEL}</span>

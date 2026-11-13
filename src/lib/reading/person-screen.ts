@@ -7,9 +7,6 @@ import { endsWithBatchim } from '../saju/text/batchim';
  * 이름 뒤 조사(은/는 · 와/과)는 이름의 받침으로 고른다 — 화면이 글자로 붙이면 「지영는」이 선다.
  */
 
-const topic = (name: string) => `${name}${endsWithBatchim(name) ? '은' : '는'}`;
-const withName = (name: string) => `${name}${endsWithBatchim(name) ? '과' : '와'}`;
-
 /** 시트 제목에 서는 이름의 길이 — 넘으면 이름만 줄인다(운영자 2026-11-13) */
 const SHEET_NAME_MAX = 10;
 
@@ -24,6 +21,8 @@ const clip = (name: string, max = SHEET_NAME_MAX): string => {
 };
 /** 이름 둘이 서는 제목(사이 고르기)은 한 이름을 더 짧게 — 폰 폭(390) 두 줄에 물음까지 든다 */
 const PAIR_NAME_MAX = 6;
+/** 줄 하나(「{이름}와 궁합 보기」)에 서는 이름 */
+const ROW_NAME_MAX = 8;
 const clipTopic = (name: string, max?: number) => `${clip(name, max)}${endsWithBatchim(name) ? '은' : '는'}`;
 /**
  * 이름이 줄여질 만큼 길면 **물음 앞에서 줄을 나눈다** — 「{이름}의」 / 「사주풀이를 받을까요?」(운영자 2026-11-13). 감싸기에 맡기면 앱이
@@ -31,13 +30,13 @@ const clipTopic = (name: string, max?: number) => `${clip(name, max)}${endsWithB
  */
 const breakAfter = (name: string, max = SHEET_NAME_MAX, other?: string): string =>
   [...name].length > max || (other !== undefined && [...other].length > max) ? '\n' : ' ';
-const clipWith = (name: string) => `${clip(name)}${endsWithBatchim(name) ? '과' : '와'}`;
+const clipWith = (name: string, max?: number) => `${clip(name, max)}${endsWithBatchim(name) ? '과' : '와'}`;
 
 /** 머리 오른쪽 아래 — 만세력 화면으로 */
 export const CHART_DETAIL_LABEL = '만세력 자세히';
 
-/** 만세력 화면의 제목 */
-export const chartTitleOf = (name: string): string => `${name}의 만세력`;
+/** 만세력 화면의 제목 — 이름이 길면 이름만 줄인다 — 앱의 맨 위 줄은 한 줄이라 줄을 나누지 않는다(웹 제목은 띄어쓰기 자리에서만 끊긴다) */
+export const chartTitleOf = (name: string): string => `${clip(name)}의 만세력`;
 
 /** 사주풀이 칸의 이름 · 궁합 칸의 이름 */
 export const PERSON_READING_SECTION = '사주풀이';
@@ -50,7 +49,7 @@ export const readingReceivedLine = (createdAt: string, minutes: number | null): 
 export const READING_OPEN_LABEL = '읽기';
 
 /** 아직 안 받았을 때의 진한 카드 — 「없어요」 대신 받으면 무엇을 알게 되는지 */
-export const readingInviteTitle = (name: string): string => `${topic(name)} 어떤 사람일까요?`;
+export const readingInviteTitle = (name: string): string => `${clipTopic(name)}${breakAfter(name)}어떤 사람일까요?`;
 export const READING_INVITE_TOPICS = '성격 · 일과 재물 · 인연 · 올해 흐름';
 export const READING_COST_LABEL = '풀이권 1장';
 
@@ -66,7 +65,11 @@ export const READING_ASK_CONFIRM = '받기';
 
 /** 궁합 칸의 끝 줄 — 궁합이 있으면 「다른 사람과」, 없으면 이 사람의 이름으로 */
 export const COMPAT_OTHER_LABEL = '다른 사람과 궁합 보기';
-export const compatWithLabel = (name: string): string => `${withName(name)} 궁합 보기`;
+/** 줄 하나에 서는 글자 — 이름을 더 짧게 줄여 한 줄에 든다(폰 폭 390 의 궁합 칸 줄) */
+export const compatWithLabel = (name: string): string => `${clipWith(name, ROW_NAME_MAX)} 궁합 보기`;
+
+/** 줄여 부르는 이름 — 사람 화면의 작은 글자(만세력 화면의 ← 등)가 쓴다 */
+export const shortNameOf = (name: string): string => clip(name);
 
 /** 상대 고르기 시트 */
 export const partnerAskTitle = (name: string): string => `${clipWith(name)}${breakAfter(name)}누구를 볼까요?`;
