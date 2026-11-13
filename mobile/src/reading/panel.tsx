@@ -1,4 +1,5 @@
 import type { PairNicknames } from '@reading/display';
+import { creditAskShape } from '@reading/credit-ask';
 import { readingCostLine, readingNoneNote } from '@reading/notes';
 import { readingOutline } from '@reading/outline';
 import { resumeAskCleared, resumeAskOf } from '@reading/resume-ask';
@@ -15,7 +16,9 @@ import { settled } from '@/ui/settled';
 import { UNREACHABLE } from '@/auth/signup';
 
 import { readReadingView, type DoorRefusal, type ReadingTarget, type ReadingView } from './api';
-import { ConfirmMake, CreditsShortage } from './dialogs';
+import { storeAvailable } from '@/credits/store';
+
+import { ConfirmMake, useBuyCredits } from './dialogs';
 import { ReadingFeedback } from './feedback';
 import { Result } from './result';
 import { ShareReadingButton, ShareReadingIcon, useReadingShare } from './share-button';
@@ -116,6 +119,7 @@ export function ReadingPanel({
   const { phase, failure, reading, chrome, noun, creditsNote, progress } = panel;
   /* 표지 아이콘의 공유 — 실패 줄은 표지 아래에 선다(`Result` 의 `belowCover`) */
   const coverShare = useReadingShare(target);
+  const goBuy = useBuyCredits();
 
   /*
     풀이권을 사고 돌아왔다(`?ask=reading`) — 만드는 확인 창을 **다시 연다.** 만들기를 저절로 시작하지는 않는다(운영자 승인 2026-11-13, ADR 0251).
@@ -228,10 +232,17 @@ export function ReadingPanel({
       )}
 
       {panel.asking && (
-        <ConfirmMake noun={noun} hasReading={reading !== null} onConfirm={panel.confirmGenerate} onClose={panel.closeAsking} />
-      )}
-      {panel.shortage !== null && (
-        <CreditsShortage available={panel.shortage.available} noun={noun} resume={{ kind: 'reading' }} onClose={panel.closeShortage} />
+        <ConfirmMake
+          noun={noun}
+          hasReading={reading !== null}
+          shape={creditAskShape(panel.view.credits, { spent: panel.spent, canBuy: storeAvailable })}
+          onConfirm={panel.confirmGenerate}
+          onBuy={() => {
+            panel.closeAsking();
+            goBuy(noun, { kind: 'reading' });
+          }}
+          onClose={panel.closeAsking}
+        />
       )}
     </View>
   );

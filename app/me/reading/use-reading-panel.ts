@@ -28,7 +28,6 @@ import {
 } from './reading-state';
 import type { ReadingTarget } from './target';
 import type { TasteCarryView } from '../../taste/taste-carry';
-import { useBuyCredits } from '../credits/buy-credits';
 import { announceCreditsMoved } from '../credits/credits-signal';
 import type { ReadingCredits } from '@/src/lib/reading/credits';
 
@@ -172,8 +171,8 @@ export function useReadingPanel({
     };
   }, [phase, target]);
 
-  /* 풀이권 창 — 0개일 때의 누름과, 누른 뒤 서버가 풀이권이 없어 막은 때(ADR 0171 「덧」) */
-  const buy = useBuyCredits();
+  /** 눌렀는데 서버가 풀이권이 없어 막았다 — 확인 창이 0장 꼴로 다시 선다(`creditAskShape`, ADR 0251) */
+  const [spent, setSpent] = useState(false);
 
   const generate = async () => {
     dispatch({ type: 'press' });
@@ -223,7 +222,10 @@ export function useReadingPanel({
 
     const decision = afterPress(outcome, preview);
     apply(decision, dispatch);
-    if (decision.opensCredits) buy.offer(0);
+    if (decision.opensCredits) {
+      setSpent(true);
+      setAsking(true);
+    }
   };
 
   /**
@@ -263,12 +265,12 @@ export function useReadingPanel({
     consented,
   });
   /*
-    글이 있으면 첫 초점은 「취소」다 — 아래 창이 정한다(`ConfirmDialog` 의 `firstFocus`, B5). 풀이권이 0개면 확인 창 대신 풀이권 창이다 —
-    만들기 요청이 나가지 않는다
+    글이 있으면 첫 초점은 「취소」다 — 아래 창이 정한다(`ConfirmDialog` 의 `firstFocus`, B5). 풀이권이 0개여도 같은 확인 창이다 — 창이 0장 꼴
+    (「남은 풀이권이 없어요.」 · 「지금은 풀이권을 구매할 수 없어요.」 · [확인])로 서고 만들기 요청은 나가지 않는다(ADR 0251)
   */
   const press = () => {
-    if (chrome.buysCredits) buy.offer(0);
-    else setAsking(true);
+    setSpent(false);
+    setAsking(true);
   };
 
   /**
@@ -322,7 +324,7 @@ export function useReadingPanel({
     confirmGenerate,
     generate,
     press,
-    buy,
+    spent,
     offersPlain,
     skipping,
     skipCarry,

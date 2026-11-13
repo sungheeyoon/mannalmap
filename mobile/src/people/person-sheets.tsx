@@ -6,12 +6,11 @@ import {
   PARTNER_SELF_LABEL,
   PARTNER_TYPED_LABEL,
   READING_ASK_CONFIRM,
-  askSheetShape,
   partnerAskTitle,
   readingAskTitle,
   relationAskTitle,
-  type AskSheetShape,
 } from '@reading/person-screen';
+import { creditAskShape, type CreditAskShape } from '@reading/credit-ask';
 import type { Element, Stem } from '@saju';
 import { useRef, useState, type ReactNode } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
@@ -39,7 +38,7 @@ import { go } from './parts';
 /*
   **저장한 사람 화면의 누름 둘 — 그 자리의 시트에서 끝난다**(운영자 승인 2026-11-13, ADR 0249 · 웹 `app/me/people/[personId]/person-sheets.tsx`).
   만들기는 같은 문(`startReading`), 두 사람 열기도 같은 문(`openPair`). **풀이권이 0장이면 시트가 곧 구매 입구다**(운영자 승인 2026-11-13, ADR 0251 —
-  꼴은 `askSheetShape`): [풀이권 구매]는 다시 열 물음(`?ask=…`)을 싣고 풀이권 화면으로 가고, 결제 완료 창이 돌려보내면 사람 화면이 같은 시트를
+  꼴은 `creditAskShape`): [풀이권 구매]는 다시 열 물음(`?ask=…`)을 싣고 풀이권 화면으로 가고, 결제 완료 창이 돌려보내면 사람 화면이 같은 시트를
   다시 연다(`resume`). 받기를 저절로 시작하지는 않는다.
 */
 
@@ -63,7 +62,7 @@ async function start(client: ReturnType<typeof useClient>, target: ReadingTarget
 
 /**
  * 확인 시트의 몸 — 풀이권 줄 · 실패 한 줄 · 단추(웹의 `AskBody`). 예약 줄 · 돌려준다는 줄은 두지 않는다(운영자 2026-11-13). 줄과 단추는
- * `askSheetShape` 의 꼴이다 — 쓰는 꼴은 [받기] · [궁합 보기] / [취소], 0장은 [풀이권 구매] / [취소], 살 수 없으면 [확인] 하나
+ * `creditAskShape` 의 꼴이다 — 쓰는 꼴은 [받기] · [궁합 보기] / [취소], 0장은 [풀이권 구매] / [취소], 살 수 없으면 [확인] 하나
  */
 function AskBody({
   shape,
@@ -75,7 +74,7 @@ function AskBody({
   onCancel,
   children,
 }: {
-  shape: AskSheetShape;
+  shape: CreditAskShape;
   failure: string | null;
   busy: boolean;
   confirmLabel: string;
@@ -119,7 +118,7 @@ export function useReadingAsk({ name, target, readingHref, credits }: { name: st
   const [spent, setSpent] = useState(false);
   const [failure, setFailure] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
-  const shape = askSheetShape(credits, { spent, canBuy: storeAvailable });
+  const shape = creditAskShape(credits, { spent, canBuy: storeAvailable });
 
   const open = () => {
     setSpent(false);
@@ -197,7 +196,7 @@ export function useCompatAdd({
   const [busy, setBusy] = useState(false);
   /** 눌렀는데 문이 「풀이권이 없다」고 답했다 — 시트가 구매 꼴로 바뀐다 */
   const [spent, setSpent] = useState(false);
-  const shape = askSheetShape(credits, { spent, canBuy: storeAvailable });
+  const shape = creditAskShape(credits, { spent, canBuy: storeAvailable });
 
   /** 고를 사람을 읽는다 — 다시 열 때(`resume`)는 그 목록에서 상대를 찾는다. 못 읽었으면 `null` */
   const load = async (): Promise<readonly Partner[] | null> => {

@@ -12,13 +12,12 @@ import {
   PARTNER_TYPED_LABEL,
   READING_ASK_CONFIRM,
   READING_INVITE_TOPICS,
-  askSheetShape,
   partnerAskTitle,
   readingAskTitle,
   readingInviteTitle,
   relationAskTitle,
-  type AskSheetShape,
 } from '@/src/lib/reading/person-screen';
+import { creditAskShape, type CreditAskShape } from '@/src/lib/reading/credit-ask';
 import type { Element } from '@/src/lib/saju';
 
 import { actionAnswer } from '../../../ui/action-answer';
@@ -37,16 +36,16 @@ import type { ReadingTarget } from '../../reading/target';
   **저장한 사람 화면의 누름 둘 — 그 자리의 시트에서 끝난다**(운영자 승인 2026-11-13, ADR 0249). 「사주풀이 받기」는 같은 단추가 있는
   풀이 화면을 거치지 않고, 「궁합 보기」는 궁합 탭으로 넘어가 빈 폼을 채우게 하지 않는다. 만들기는 같은 액션(`generateReading`), 두 사람
   열기도 같은 액션(`openPairScreen`). 풀이권이 0장이면 시트 안의 줄이 「남은 풀이권이 없어요.」 · 「지금은 풀이권을 구매할 수 없어요.」와 [확인]
-  하나가 된다 — 웹은 팔지 않는다(ADR 0212). 앱(안드로이드)은 같은 판정(`askSheetShape`)의 구매 꼴이다(ADR 0251).
+  하나가 된다 — 웹은 팔지 않는다(ADR 0212). 앱(안드로이드)은 같은 판정(`creditAskShape`)의 구매 꼴이다(ADR 0251).
 */
 
 /** 웹은 시트에서 살 수 없다 — 0장이면 늘 닫힌 꼴이다 */
-const shapeOf = (credits: ReadingCredits | null, spent: boolean) => askSheetShape(credits, { spent, canBuy: false });
+const shapeOf = (credits: ReadingCredits | null, spent: boolean) => creditAskShape(credits, { spent, canBuy: false });
 
 type Answer = Awaited<ReturnType<typeof generateReading>>;
 const unreachedStart = (message: string): Answer => ({ ok: false, message });
 
-/** 확인 시트의 몸 — 풀이권 줄 · 실패 한 줄 · 단추(꼴은 `askSheetShape`). 예약 줄 · 돌려준다는 줄은 두지 않는다(운영자 2026-11-13) */
+/** 확인 시트의 몸 — 풀이권 줄 · 실패 한 줄 · 단추(꼴은 `creditAskShape`). 예약 줄 · 돌려준다는 줄은 두지 않는다(운영자 2026-11-13) */
 function AskBody({
   shape,
   failure,
@@ -56,7 +55,7 @@ function AskBody({
   onCancel,
   children,
 }: {
-  shape: AskSheetShape;
+  shape: CreditAskShape;
   failure: string | null;
   busy: boolean;
   confirmLabel: string;

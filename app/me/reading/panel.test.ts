@@ -59,8 +59,8 @@ describe('만드는 버튼이 서는 자리와 닫히는 자리', () => {
     expect(waiting.makeLabel).toBe('사주풀이 받기');
   });
 
-  /** 닫힌 단추는 누른 사람에게 아무 말도 안 했다 — 다 썼으면 누를 수 있고 누르면 풀이권 창이다(만들기 요청은 안 나간다) */
-  it('풀이권을 다 썼으면 버튼은 열린 채 풀이권 창을 연다', () => {
+  /** 닫힌 단추는 누른 사람에게 아무 말도 안 했다 — 다 썼으면 누를 수 있고 누르면 확인 창의 0장 꼴이다(만들기 요청은 안 나간다) */
+  it('풀이권을 다 썼으면 버튼은 열린 채 확인 창의 0장 꼴을 연다', () => {
     const spent = panelChrome(view({ credits: credits({ available: 0 }) }));
     expect(spent.makeDisabled).toBe(false);
     expect(spent.buysCredits).toBe(true);

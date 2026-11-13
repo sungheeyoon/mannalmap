@@ -202,7 +202,7 @@ export const READING_ALREADY_RUNNING_NOTE =
  *
  * **남은 수만 세운다**(「풀이권 3장」 — 운영자 결정 2026-10-12, 대장 credits-04 · 단위는 all-02). 폰 폭의 머리글은 표 그림만 보이고 이 글자는 칸의 이름이다. 한도는 무료 몫 · 예외 ·
  * 산 묶음을 더한 값이라(ADR 0106) 사면 늘어나고, 「몇 번 중」은 그때 뜻을 잃는다. 0장도 「풀이권 0장」으로 선다 — 그 칸은 누르면
- * 구매 길이다(`useBuyCredits`).
+ * 펼침 메뉴다(`credits-menu.tsx`).
  */
 export const readingCreditsLabel = ({ available }: { available: number }): string => `풀이권 ${available}장`;
 
@@ -221,7 +221,7 @@ export const readingCreditsLabel = ({ available }: { available: number }): strin
  *
  * 「새로 만들 수는 없지만 이미 만든 풀이는 언제든 다시 볼 수 있어요」가 서 있었다. 다시
  * 보기가 닫힌 적이 한 번도 없으므로 **그 자리에서 새로 알려 주는 것이 없다** — 잔액은
- * 머리글이 이미 들고 있고, 다 쓴 사람이 만드는 단추를 누르면 풀이권 창(「남은 풀이권이 없어요.」)이 열린다.
+ * 머리글이 이미 들고 있고, 다 쓴 사람이 만드는 단추를 누르면 확인 창의 0장 꼴(「남은 풀이권이 없어요.」)이 열린다.
  *
  * 그래서 이 함수는 **잔액을 묻지 않는다.** 남은 갈래는 도는 시도 하나뿐이다.
  *
@@ -238,12 +238,11 @@ export const readingCreditsNote = ({ reserved }: { reserved: number }): string |
 };
 
 /**
- * 풀이권 구매 안내 — 머리글은 펼침 메뉴, 풀이권 0개일 때의 누름(풀이 · 궁합풀이 · 인연 요청)은 부족 창이다(운영자 결정 2026-10-12, 대장 credits-06).
- * 판매가 열린 계정은 「풀이권 구매」 · 「닫기」, 닫힌 계정은 한 줄과 「확인」 하나다. 알림을 보낼 수단이 없어 「판매가
- * 열리면 알려 드릴게요」는 약속하지 않는다.
+ * 풀이권 구매 안내 — 머리글은 펼침 메뉴(대장 credits-06), 풀이권을 쓰는 누름은 모든 자리가 한 확인 꼴이다(`creditAskShape`, ADR 0251):
+ * 0장이면 살 수 있는 꼴은 「풀이권 구매」 · 「취소」, 살 수 없는 꼴은 한 줄과 「확인」 하나다. 따로 뜨던 「풀이권이 부족해요」 창은 걷었다
+ * (운영자 2026-11-13). 알림을 보낼 수단이 없어 「판매가 열리면 알려 드릴게요」는 약속하지 않는다.
  */
 export const BUY_CREDITS_LABEL = '풀이권 구매';
-export const CREDITS_DIALOG_CLOSE = '닫기';
 export const SALE_CLOSED_NOTE = '지금은 풀이권을 구매할 수 없어요.';
 export const SALE_CLOSED_OK = '확인';
 /**
@@ -252,18 +251,10 @@ export const SALE_CLOSED_OK = '확인';
  */
 export const CREDITS_SCREEN_LEAD = ['사주풀이와 궁합풀이를 받아보세요.', '풀이 한 편에 풀이권 1장을 사용해요.'] as const;
 /**
- * 받기 시트가 곧 구매 입구일 때(앱 · 안드로이드, 판매가 열린 꼴)의 둘째 줄 — 첫 줄은 0장의 `readingCostLine`(운영자 승인 2026-11-13, ADR 0251 · 대장 credits-14).
+ * 확인이 곧 구매 입구일 때(앱 · 안드로이드, 판매가 열린 꼴)의 둘째 줄 — 첫 줄은 0장의 `readingCostLine`(운영자 승인 2026-11-13, ADR 0251 · 대장 credits-14).
  */
 export const CREDITS_BUY_THEN_USE_NOTE = '구매하면 바로 받을 수 있어요.';
-export const CREDITS_SHORTAGE_TITLE = '풀이권이 부족해요';
 export const CREDITS_AVAILABLE_LABEL = '보유 풀이권';
-
-/**
- * 부족 창의 한 줄 — 「보유 풀이권 0장 / 필요 풀이권 1장」 표를 걷었다(운영자 2026-11-13, 대장 home-15). 한 편에 1장이라 모자란 때는
- * 0장뿐이지만, 남은 수가 있는데 모자라면 더 필요한 수를 말한다.
- */
-export const creditsShortageNote = (available: number, required = 1): string =>
-  available <= 0 ? '남은 풀이권이 없어요.' : `풀이권 ${required - available}장이 더 필요해요.`;
 
 /**
  * 결제 화면의 동의 체크 · 결제 단추 · 유의사항 — 리디 꼴(운영자 승인 2026-10-12, ADR 0175 · 대장 credits-03 · credits-09). 웹은 결제 단추를

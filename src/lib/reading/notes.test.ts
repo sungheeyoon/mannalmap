@@ -1,7 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
 import {
-  creditsShortageNote,
   readingCostLine,
   readingNoneNote,
   READING_ALREADY_RUNNING_NOTE,
@@ -110,7 +109,7 @@ describe('풀이권 문구', () => {
    *
    * **다 썼을 때도 마찬가지다.** 한동안 「새로 만들 수는 없지만 이미 만든 풀이는 언제든
    * 다시 볼 수 있어요」가 섰다. 다시 보기가 닫힌 적이 한 번도 없어서 그 줄이 새로 알려
-   * 주는 것이 없었다 — 잔액은 머리글이 들고, 다 쓴 사람이 누르면 풀이권 창이 열린다.
+   * 주는 것이 없었다 — 잔액은 머리글이 들고, 다 쓴 사람이 누르면 확인 창의 0장 꼴이 열린다.
    * 그래서 이 함수는 이제 잔액을 묻지 않고, 갈래가 도는 시도 하나뿐이다.
    */
   it('평소에는 아무 말도 하지 않는다', () => {
@@ -145,14 +144,6 @@ describe('실패 줄', () => {
   it('처음 받기 · 다시 받기의 실패 줄이 둘 다 풀이권을 돌려줬다고 말한다', () => {
     expect(READING_FIRST_FAILED_NOTE).toBe('풀이를 끝까지 만들지 못했어요. 풀이권은 돌려드렸어요.');
     expect(READING_FAILED_NOTE.endsWith('풀이권은 돌려드렸어요.')).toBe(true);
-  });
-});
-
-/** 부족 창은 표가 아니라 한 줄이다(운영자 2026-11-13, 대장 credits-13) */
-describe('creditsShortageNote', () => {
-  it('0장이면 남은 것이 없다고, 남았는데 모자라면 더 필요한 수를 말한다', () => {
-    expect(creditsShortageNote(0)).toBe('남은 풀이권이 없어요.');
-    expect(creditsShortageNote(1, 3)).toBe('풀이권 2장이 더 필요해요.');
   });
 });
 
