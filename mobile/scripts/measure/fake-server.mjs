@@ -1,7 +1,7 @@
 // 가짜 Supabase + 앱용 문 — 운영을 밟지 않고 네이티브 화면을 데이터가 찬 채로 잰다.
 // 사람 · 값은 모두 지어낸 것이다. 띄우는 차례는 `docs/agents/delegation/local-env.md` 「앱을 네이티브로 재기」.
 // `node mobile/scripts/measure/fake-server.mjs` — 포트는 `FAKE_PORT`(기본 18999), 요청 기록은 `MEASURE_DIR/fake.log`.
-// 상태 바꾸기: `curl 'localhost:18999/__set?m=<reset|empty|unsigned|closed|suspended|warning|no-credits|no-self|match-shut>'`(`match-shut` 은 인연이 닫힌 운영 상태 — 탭 둘)
+// 상태 바꾸기: `curl 'localhost:18999/__set?m=<reset|empty|unsigned|closed|suspended|warning|no-credits|no-readings|no-self|match-shut>'`(`match-shut` 은 인연이 닫힌 운영 상태 — 탭 둘)
 // 대화 · 상세 궁합(ADR 0215 · 0221 — 대화가 유일한 흐름이라 스위치가 없다): `m=detail-<state>` · `m=buyer` · `m=holds` · `m=talk-sent` · `m=talk-received` · `m=talk-sent-said`
 // 망 흉내: `m=down`(읽기 · 앱용 문의 소켓을 끊는다) · `m=broken`(503) · `m=slow`(3초 늦게) · `m=up`(되돌림). 세션과 `/__` 는 안 걸린다. `m=screens-down` · `m=screens-slow` 는 관문의 두 읽기를 빼고 건다
 import { Buffer } from 'node:buffer';
@@ -289,6 +289,8 @@ const server = http.createServer((req, res) => {
       if (mode === 'suspended') db.account.status = 'suspended';
       if (mode === 'warning') db.warning = [{ category: 'harassment', warned_on: '2026-10-30', note: '가짜 경고' }];
       if (mode === 'no-credits') db.credits[0].available = 0;
+      /* 사람은 그대로 두고 받은 풀이 · 도는 시도만 비운다 — 사람 화면의 받기 카드 · 궁합 시트를 잰다 */
+      if (mode === 'no-readings') Object.assign(db, { readings: [], running: [] });
       if (mode === 'no-self') db.account.self_person_id = null;
       if (mode === 'match-shut') db.matchOpen = false;
       if (mode === 'ended') db.ended = [{ match_id: M2, partner_user_id: U4, partner_nickname: '지나간사람', closed_at: ago(800) }];
@@ -329,6 +331,13 @@ const server = http.createServer((req, res) => {
     if (path === '/api/mobile/reading/run') return send(res, 200, { run: null });
     if (path === '/api/mobile/reading' && req.method === 'GET') return send(res, 200, view(url.searchParams));
     if (path === '/api/mobile/reading') return send(res, 200, { ok: true, started: true });
+    /* Google Play 구매(ADR 0230) — 결제창은 에뮬레이터의 Expo Go 에서 못 연다. 서버의 답만 흉내 낸다: 살 수 있고, 보낸 상품의 장수를 지급한다 */
+    if (path === '/api/mobile/credits/purchase' && req.method === 'GET') return send(res, 200, { open: 'open' });
+    if (path === '/api/mobile/credits/purchase') {
+      const credits = Number(String(body.productId ?? '').split('_').pop()) || 1;
+      db.credits[0].available += credits;
+      return send(res, 200, { outcome: 'granted', credits, replayed: false });
+    }
     if (path === '/api/mobile/matching/detail') {
       db.detail = { ...db.detail, state: db.detail.consent_holds ? 'making' : 'awaiting_consent', request_id: R2, i_am_buyer: true, expires_at: ago(-4320) };
       return send(res, 200, { ok: true, iAmBuyer: true });

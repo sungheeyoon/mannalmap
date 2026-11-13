@@ -1,8 +1,9 @@
 import type { PairNicknames } from '@reading/display';
 import { readingCostLine, readingNoneNote } from '@reading/notes';
 import { readingOutline } from '@reading/outline';
+import { resumeAskCleared, resumeAskOf } from '@reading/resume-ask';
 import type { Element } from '@saju';
-import { router } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
@@ -116,6 +117,21 @@ export function ReadingPanel({
   /* 표지 아이콘의 공유 — 실패 줄은 표지 아래에 선다(`Result` 의 `belowCover`) */
   const coverShare = useReadingShare(target);
 
+  /*
+    풀이권을 사고 돌아왔다(`?ask=reading`) — 만드는 확인 창을 **다시 연다.** 만들기를 저절로 시작하지는 않는다(운영자 승인 2026-11-13, ADR 0251).
+    누를 단추가 서 있을 때만이고, 표시는 한 번 쓰면 주소에서 지운다
+  */
+  const params = useLocalSearchParams<{ ask?: string }>();
+  const resume = resumeAskOf({ ask: params.ask });
+  const resumed = useRef(false);
+  const canPress = phase !== 'loading' && !chrome.hideMake && !chrome.makeDisabled;
+  useEffect(() => {
+    if (resume?.kind !== 'reading' || resumed.current) return;
+    resumed.current = true;
+    router.setParams(resumeAskCleared(resume));
+    if (canPress) panel.press();
+  }, [resume, canPress, panel]);
+
   const shownId = useRef(reading?.id ?? null);
   useEffect(() => {
     const id = reading?.id ?? null;
@@ -215,7 +231,7 @@ export function ReadingPanel({
         <ConfirmMake noun={noun} hasReading={reading !== null} onConfirm={panel.confirmGenerate} onClose={panel.closeAsking} />
       )}
       {panel.shortage !== null && (
-        <CreditsShortage available={panel.shortage.available} noun={noun} onClose={panel.closeShortage} />
+        <CreditsShortage available={panel.shortage.available} noun={noun} resume={{ kind: 'reading' }} onClose={panel.closeShortage} />
       )}
     </View>
   );

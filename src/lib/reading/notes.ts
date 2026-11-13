@@ -251,6 +251,10 @@ export const SALE_CLOSED_OK = '확인';
  * 옛 사용 단위 줄(「풀이 한 편당 풀이권 1장」, credits-06)은 둘째 줄과 같은 말이라 걷었다.
  */
 export const CREDITS_SCREEN_LEAD = ['사주풀이와 궁합풀이를 받아보세요.', '풀이 한 편에 풀이권 1장을 사용해요.'] as const;
+/**
+ * 받기 시트가 곧 구매 입구일 때(앱 · 안드로이드, 판매가 열린 꼴)의 둘째 줄 — 첫 줄은 0장의 `readingCostLine`(운영자 승인 2026-11-13, ADR 0251 · 대장 credits-14).
+ */
+export const CREDITS_BUY_THEN_USE_NOTE = '구매하면 바로 받을 수 있어요.';
 export const CREDITS_SHORTAGE_TITLE = '풀이권이 부족해요';
 export const CREDITS_AVAILABLE_LABEL = '보유 풀이권';
 
@@ -283,6 +287,8 @@ export const PURCHASE_DONE_TITLE = '결제가 완료됐어요';
 export const purchaseAddedNote = (credits: number): string => `풀이권 ${credits}장이 추가됐어요.`;
 /** 결제 완료 창의 단추 — 돌아갈 화면이 없을 때(대장 credits-04 의 「확인」 · 포스텔러 결제 완료 「확인」) */
 export const PURCHASE_DONE_OK = '확인';
+/** 결제 완료 창의 단추 — 받기 시트 · 확인 창을 다시 열 자리로 돌아갈 때(ADR 0251, 대장 credits-14). 「…로 돌아가기」(credits-10)는 그 표시가 없는 주소의 것이다 */
+export const purchaseResumeLabel = (noun: string): string => `${noun} 받으러 가기`;
 export const PURCHASE_RUNNING_LABEL = '결제 진행 중…';
 export const PURCHASE_FAILED_NOTE = '결제가 완료되지 않았어요.';
 export const PURCHASE_UNDELIVERED_NOTE = '풀이권 충전이 완료되지 않았어요.';

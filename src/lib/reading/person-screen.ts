@@ -1,4 +1,6 @@
 import { endsWithBatchim } from '../saju/text/batchim';
+import { BUY_CREDITS_LABEL, CREDITS_BUY_THEN_USE_NOTE, SALE_CLOSED_NOTE, SALE_CLOSED_OK, readingCostLine } from './notes';
+import { outOfCredits } from './panel-chrome';
 
 /**
  * **저장한 사람 화면의 말** — 머리 · 사주풀이 칸 · 궁합 칸 · 시트 둘(운영자 승인 시안 2026-11-13 「0 · 0-1 A」, ADR 0249).
@@ -57,6 +59,34 @@ export const readingAskTitle = (name: string): string => `${clip(name)}의${brea
 /** 시트의 한 줄 — 원본은 `notes.ts` 의 `readingCostLine`(앱 풀이 화면의 빈 카드와 같은 글자) */
 export { readingCostLine } from './notes';
 export const READING_ASK_CONFIRM = '받기';
+export const ASK_CANCEL_LABEL = '취소';
+
+/**
+ * **받기 시트 · 궁합 사이 시트의 꼴 — 0장이면 시트가 곧 구매 입구다**(운영자 승인 2026-11-13, ADR 0251). 따로 「풀이권이 부족해요」 창을 띄우지 않는다.
+ *
+ * - `use` — 「풀이권 1장을 사용해요. (남은 풀이권 N장)」과 [받기] · [궁합 보기] / [취소]. 단추 글자는 부르는 시트가 든다
+ * - `buy` — 살 수 있을 때(앱 · 안드로이드): 「남은 풀이권이 없어요.」 / 「구매하면 바로 받을 수 있어요.」와 [풀이권 구매] / [취소]
+ * - `closed` — 살 수 없을 때(웹 · iOS): 「남은 풀이권이 없어요.」 / 「지금은 풀이권을 구매할 수 없어요.」와 [확인] 하나
+ *
+ * 0장의 판정은 풀이 화면의 만드는 단추와 같은 `outOfCredits` 이고, 눌렀는데 문이 「풀이권이 없다」고 답했으면(`spent`) 같은 꼴로 바뀐다.
+ */
+export type AskSheetShape =
+  | { readonly kind: 'use'; readonly lines: readonly string[]; readonly cancelLabel: string }
+  | { readonly kind: 'buy'; readonly lines: readonly string[]; readonly confirmLabel: string; readonly cancelLabel: string }
+  | { readonly kind: 'closed'; readonly lines: readonly string[]; readonly confirmLabel: string; readonly cancelLabel: null };
+
+export function askSheetShape(
+  credits: { readonly available: number; readonly reserved: number } | null,
+  { spent, canBuy }: { readonly spent: boolean; readonly canBuy: boolean },
+): AskSheetShape {
+  if (!spent && !outOfCredits(credits)) {
+    return { kind: 'use', lines: [readingCostLine(credits?.available ?? null)], cancelLabel: ASK_CANCEL_LABEL };
+  }
+  const none = readingCostLine(0);
+  return canBuy
+    ? { kind: 'buy', lines: [none, CREDITS_BUY_THEN_USE_NOTE], confirmLabel: BUY_CREDITS_LABEL, cancelLabel: ASK_CANCEL_LABEL }
+    : { kind: 'closed', lines: [none, SALE_CLOSED_NOTE], confirmLabel: SALE_CLOSED_OK, cancelLabel: null };
+}
 
 /** 궁합 칸의 끝 줄 — 궁합이 있으면 「다른 사람과」, 없으면 이 사람의 이름으로 */
 export const COMPAT_OTHER_LABEL = '다른 사람과 궁합 보기';

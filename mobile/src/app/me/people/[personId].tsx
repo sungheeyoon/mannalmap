@@ -1,5 +1,5 @@
 import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { isBlocked } from '@account/index';
@@ -19,6 +19,7 @@ import {
   readingInviteTitle,
   readingReceivedLine,
 } from '@reading/person-screen';
+import { resumeAskCleared, resumeAskOf, type ResumeAsk } from '@reading/resume-ask';
 import { STEM_INFO, type Stem } from '@saju';
 
 import { useClient } from '@/auth/connected';
@@ -47,7 +48,7 @@ type ReadingSide = { credits: ReadingCredits | null; minutes: number | null; run
  */
 export default function PersonScreen() {
   const client = useClient();
-  const params = useLocalSearchParams<{ personId: string; from?: string; tab?: string }>();
+  const params = useLocalSearchParams<{ personId: string; from?: string; tab?: string; ask?: string; b?: string; rel?: string }>();
   const [read, setRead] = useState<Read<PersonDetail> | null>(null);
   const [side, setSide] = useState<ReadingSide | null>(null);
   const chart = params.tab === 'chart';
@@ -139,6 +140,7 @@ export default function PersonScreen() {
       readings={readings}
       side={side}
       target={target ?? { kind: 'self' }}
+      resume={resumeAskOf(params)}
     />
   );
 }
@@ -153,6 +155,7 @@ function PersonPage({
   readings,
   side,
   target,
+  resume,
 }: {
   person: { personId: string; name: string; stem: Stem };
   saju: Parameters<typeof SajuSections>[0]['saju'];
@@ -163,6 +166,8 @@ function PersonPage({
   readings: PersonDetail['readings'];
   side: ReadingSide | null;
   target: ReadingTarget;
+  /** 풀이권을 사고 돌아왔다 — 다시 열 시트(`?ask=…`, ADR 0251) */
+  resume: ResumeAsk | null;
 }) {
   const own = readings.find((one) => (mine ? one.kind === 'self' : one.kind === 'person' && one.personA === person.personId)) ?? null;
   const readingHref = mine ? '/me/readings/self' : `/me/readings/${person.personId}`;
@@ -192,6 +197,19 @@ function PersonPage({
 
   const ask = useReadingAsk({ name: person.name, target, readingHref, credits });
   const add = useCompatAdd({ person, seen, credits });
+
+  /*
+    사고 돌아왔으면 같은 시트를 **다시 연다** — 받기를 저절로 시작하지는 않는다(운영자 승인 2026-11-13, ADR 0251). 풀이권 줄이 새 수를 말하게
+    풀이 칸을 다 읽은 뒤(`side`)에 연다. 표시는 한 번 쓰면 주소에서 지운다 — 뒤로 가기 · 다시 그리기로 또 열리지 않게
+  */
+  const resumed = useRef(false);
+  useEffect(() => {
+    if (resume === null || side === null || resumed.current) return;
+    resumed.current = true;
+    router.setParams(resumeAskCleared(resume));
+    if (resume.kind === 'compat') add.resume(resume.partnerId, resume.relation);
+    else if (own === null && !making) ask.open();
+  }, [resume, side, own, making, ask, add]);
   const tone = ELEMENT_TONE[STEM_INFO[person.stem].element];
 
   return (

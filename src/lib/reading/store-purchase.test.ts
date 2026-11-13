@@ -46,6 +46,15 @@ describe('결제 뒤 이어 갈 곳', () => {
     expect(purchaseReturnOf('/me/match/x', '인연 궁합')?.label).toBe('인연 궁합으로 돌아가기');
   });
 
+  it('돌아갈 주소가 물음을 다시 열면 「{이름} 받으러 가기」(ADR 0251)', () => {
+    expect(purchaseReturnOf('/me/people/p1?ask=reading', '사주풀이')).toEqual({ href: '/me/people/p1?ask=reading', label: '사주풀이 받으러 가기' });
+    expect(purchaseReturnOf('/me/people/p1?ask=compat&b=p2&rel=friend', '궁합풀이')?.label).toBe('궁합풀이 받으러 가기');
+    expect(purchaseReturnOf('/me/readings/compat?a=1&b=2&ask=reading', '궁합풀이')?.label).toBe('궁합풀이 받으러 가기');
+    /* 표시가 어긋나면 옛 단추 — 시트가 안 열리는데 「받으러 가기」라 하지 않는다 */
+    expect(purchaseReturnOf('/me/people/p1?ask=compat', '궁합풀이')?.label).toBe('궁합풀이로 돌아가기');
+    expect(purchaseReturnOf('/me/people/p1?ask=other', '사주풀이')?.label).toBe('사주풀이로 돌아가기');
+  });
+
   it('앱 밖 · 상품 화면 자신 · 모르는 이름이면 없다', () => {
     expect(purchaseReturnOf('https://evil.example/me/x', '사주풀이')).toBeNull();
     expect(purchaseReturnOf('//evil.example', '사주풀이')).toBeNull();
