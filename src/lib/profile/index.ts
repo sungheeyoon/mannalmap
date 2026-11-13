@@ -76,15 +76,6 @@ export function profileEdited(saved: ProfileInput, draft: ProfileInput): boolean
   return draft.nickname.trim() !== saved.nickname.trim() || draft.intro.trim() !== saved.intro.trim();
 }
 
-/**
- * 프로필 폼의 칸별 오류 — 닉네임 칸 하나다(ADR 0252). 소개는 칸이 상한에서 글자를 더 안 받아 화면에서는 걸릴 일이 없고,
- * 서버 문(`missingInProfile`)만 마저 본다.
- */
-export function profileErrors(profile: ProfileInput): { field: 'nickname'; message: string }[] {
-  const missing = missingNickname(profile.nickname);
-  return missing === null ? [] : [{ field: 'nickname', message: missing }];
-}
-
 /** 아직 못 채운 칸 — 없으면 `null` */
 export function missingInProfile(profile: ProfileInput): string | null {
   const missing = missingNickname(profile.nickname);

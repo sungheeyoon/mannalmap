@@ -1,10 +1,9 @@
 import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
-import { AppState, StyleSheet, View } from 'react-native';
+import { AppState, ScrollView, StyleSheet, View } from 'react-native';
 
 import { safeReturnPath } from '@consent/return-path';
-import { birthFieldErrors } from '@input/field-errors';
-import { DEFAULT_QUERY } from '@input/query';
+import { DEFAULT_QUERY, missingAnswer } from '@input/query';
 import { ELEMENTS } from '@saju';
 
 import { useClient } from '@/auth/connected';
@@ -18,7 +17,6 @@ import { BirthFields, useBirthForm } from '@/people/birth-fields';
 import { openParticipation, saveFailureOf, saveSelfPerson } from '@/reading/chart-writes';
 import { followRefusal } from '@/reading/panel';
 import { ElementSymbol } from '@/ui/element-symbol';
-import { FieldScrollView, useFieldErrors } from '@/ui/field-error';
 import { LoadingDots } from '@/ui/loading';
 import { PrimaryButton, SecondaryButton } from '@/ui/parts';
 import { COLOR, FONT, TYPE } from '@/ui/tokens';
@@ -75,9 +73,9 @@ export default function HomeScreen() {
 
   if (home === null) return <LoadingDots />;
   return (
-    <FieldScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled" automaticallyAdjustKeyboardInsets>
+    <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled" automaticallyAdjustKeyboardInsets>
       <Body home={home} retry={load} />
-    </FieldScrollView>
+    </ScrollView>
   );
 }
 
@@ -158,11 +156,9 @@ function NoSelf({ nickname, onSaved }: { nickname: string; onSaved: () => void }
   const form = useBirthForm({ ...DEFAULT_QUERY, name: nickname });
   const [saving, setSaving] = useState(false);
   const [failure, setFailure] = useState<string | null>(null);
-  /* 단추를 잠그지 않는다 — 누르면 고칠 칸이 붉고 그 칸 아래에서 말한다(ADR 0252). 이름은 닉네임이라 안 묻는다 */
-  const checks = useFieldErrors(birthFieldErrors(form.query, { name: false }));
+  const missing = missingAnswer(form.query);
 
   const save = async () => {
-    if (!checks.press()) return;
     setSaving(true);
     setFailure(null);
     const answer = await saveSelfPerson(client, form.query);
@@ -188,8 +184,9 @@ function NoSelf({ nickname, onSaved }: { nickname: string; onSaved: () => void }
           <WordText style={styles.strong}>{nickname}</WordText> 님의 출생 정보를 입력해 주세요.
         </WordText>
       </View>
-      <BirthFields form={form} showName={false} errors={checks.shown} anchor={checks.anchor} />
-      <PrimaryButton label={saving ? '저장하는 중…' : '내 사주로 저장'} onPress={() => void save()} disabled={saving} />
+      <BirthFields form={form} showName={false} />
+      <PrimaryButton label={saving ? '저장하는 중…' : '내 사주로 저장'} onPress={() => void save()} disabled={missing !== null || saving} />
+      {missing !== null && <WordText style={styles.meta}>{missing}</WordText>}
       {failure !== null && <WordText accessibilityRole="alert" style={styles.failureText}>저장하지 못했어요. {failure}</WordText>}
     </Paper>
   );

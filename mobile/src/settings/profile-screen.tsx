@@ -3,14 +3,13 @@ import { useCallback, useEffect, useRef, useState, type ComponentRef } from 'rea
 import { KeyboardAvoidingView, ScrollView, StyleSheet, TextInput, View } from 'react-native';
 
 import { isBlocked, type AccountState } from '@account/index';
-import { INTRO_MAX, NICKNAME_AVAILABLE_NOTE, NICKNAME_MAX, NICKNAME_MIN, NICKNAME_TAKEN_NOTE, missingNickname, profileErrors, nicknameKey, profileEdited, type PhotoUploadMode, type ProfileInput } from '@profile';
+import { INTRO_MAX, NICKNAME_AVAILABLE_NOTE, NICKNAME_MAX, NICKNAME_MIN, NICKNAME_TAKEN_NOTE, missingInProfile, missingNickname, nicknameKey, profileEdited, type PhotoUploadMode, type ProfileInput } from '@profile';
 
 import type { Client } from '@/auth/client';
 import { readAccount } from '@/auth/account';
 import { useClient } from '@/auth/connected';
 import { checkNickname } from '@/auth/signup';
 import { FailureLine } from '@/ui/failure-line';
-import { FieldErrorLine, FieldScrollView, useFieldErrors } from '@/ui/field-error';
 import { LoadingDots } from '@/ui/loading';
 import { Field, PrimaryButton } from '@/ui/parts';
 import { COLOR, FONT, RADIUS, TYPE } from '@/ui/tokens';
@@ -95,7 +94,7 @@ export function ProfileScreen() {
     <View style={styles.screen}>
       <TopBar title="프로필" fallback="/me/settings" />
       <KeyboardAvoidingView style={styles.screen} behavior="padding">
-        <FieldScrollView ref={scrollRef} contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled" keyboardDismissMode="on-drag" scrollEnabled={!lifting}>
+        <ScrollView ref={scrollRef} contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled" keyboardDismissMode="on-drag" scrollEnabled={!lifting}>
           <WordText style={settingsText.meta}>앱에서 쓸 닉네임과 프로필을 정해요.</WordText>
 
           {data.current === null ? (
@@ -122,7 +121,7 @@ export function ProfileScreen() {
               </View>
             </>
           )}
-        </FieldScrollView>
+        </ScrollView>
       </KeyboardAvoidingView>
     </View>
   );
@@ -134,14 +133,13 @@ function ProfileForm({ current, onSaved }: { current: ProfileInput; onSaved: (sa
   const [profile, setProfile] = useState(current);
   const [failure, setFailure] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [tried, setTried] = useState(false);
   const [checking, setChecking] = useState(false);
   const [checked, setChecked] = useState<{ key: string; available: boolean } | null>(null);
   const done = useDoneNote();
   const nicknameRef = useRef<ComponentRef<typeof TextInput>>(null);
 
-  /* 고칠 칸 — 단추를 누른 뒤에만 닉네임 칸이 붉고 그 아래에서 말한다(ADR 0252) */
-  const checks = useFieldErrors(profileErrors(profile));
-  const nicknameError = checks.messageOf('nickname');
+  const missing = missingInProfile(profile);
   const nicknameChanged = nicknameKey(profile.nickname) !== nicknameKey(current.nickname);
   const changed = profileEdited(current, profile);
   /* 바뀐 채 ← · 뒤로 · 밀어 닫기로 나가면 한 번 묻는다 — 저장하는 동안은 묻지 않는다(대장 all-18) */
@@ -162,7 +160,13 @@ function ProfileForm({ current, onSaved }: { current: ProfileInput; onSaved: (sa
   }, [client, profile.nickname, nicknameChanged]);
 
   const save = async () => {
-    if (saving || !checks.press() || !changed) return;
+    if (saving) return;
+    if (missing !== null) {
+      setTried(true);
+      nicknameRef.current?.focus();
+      return;
+    }
+    if (!changed) return;
     if (answer?.available === false) {
       nicknameRef.current?.focus();
       return;
@@ -190,21 +194,22 @@ function ProfileForm({ current, onSaved }: { current: ProfileInput; onSaved: (sa
       setFailure(`저장하지 못했어요. ${result.message}`);
       return;
     }
+    setTried(false);
     onSaved({ nickname: profile.nickname.trim(), intro: profile.intro.trim() });
     done.say('저장했어요');
   };
 
-  const nicknameWrong = nicknameError !== null || answer?.available === false;
-  const nicknameNote = answer !== null ? (answer.available ? NICKNAME_AVAILABLE_NOTE : NICKNAME_TAKEN_NOTE) : checking && nicknameChanged ? '확인하는 중…' : '';
+  const nicknameWrong = (tried && missing !== null) || answer?.available === false;
+  const nicknameNote =
+    tried && missing !== null ? missing : answer !== null ? (answer.available ? NICKNAME_AVAILABLE_NOTE : NICKNAME_TAKEN_NOTE) : checking && nicknameChanged ? '확인하는 중…' : '';
 
   return (
     <CardFrame style={styles.form}>
-      <View ref={checks.anchor('nickname', () => nicknameRef.current?.focus())} style={styles.group}>
+      <View style={styles.group}>
         <WordText style={settingsText.fieldLabel}>닉네임</WordText>
         <Field
           inputRef={nicknameRef}
           label="닉네임"
-          error={nicknameError}
           value={profile.nickname}
           maxLength={NICKNAME_MAX}
           autoCapitalize="none"
@@ -212,14 +217,9 @@ function ProfileForm({ current, onSaved }: { current: ProfileInput; onSaved: (sa
           refused={nicknameWrong}
           onChange={(nickname) => setProfile({ ...profile, nickname })}
         />
-        {/* 빠진 것을 말하는 붉은 줄이 서 있는 동안 확인 결과 줄은 비킨다(웹과 같다) */}
-        {nicknameError !== null ? (
-          <FieldErrorLine message={nicknameError} />
-        ) : (
-          <WordText accessibilityLiveRegion="polite" style={[styles.note, answer?.available === false && styles.wrong]}>
-            {nicknameNote}
-          </WordText>
-        )}
+        <WordText accessibilityLiveRegion="polite" style={[styles.note, nicknameWrong && styles.wrong]}>
+          {nicknameNote}
+        </WordText>
       </View>
       <View style={styles.group}>
         <WordText style={settingsText.fieldLabel}>소개 (선택)</WordText>
@@ -238,7 +238,7 @@ function ProfileForm({ current, onSaved }: { current: ProfileInput; onSaved: (sa
         </WordText>
       </View>
       <View style={styles.action}>
-        <View style={!changed ? styles.quiet : undefined}>
+        <View style={missing !== null || !changed ? styles.quiet : undefined}>
           <PrimaryButton label={saving ? '저장하는 중…' : '닉네임 · 소개 저장'} onPress={() => void save()} />
         </View>
         <WordText accessibilityLiveRegion="polite" style={styles.note}>

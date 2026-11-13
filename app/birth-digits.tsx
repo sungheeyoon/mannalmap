@@ -7,11 +7,7 @@ import { BIRTH_DIGIT_LABEL, HOUR_UNKNOWN_CHOICE, type DatePart, type Query } fro
 
 import styles from './birth-form.module.css';
 import { ChoiceField, DigitsField } from './birth-choices';
-import { dateDigitWrong, timeDigitWrong } from '@/src/lib/input/field-errors';
-import { dateOfParts, limitsOf, splitDate, splitTime, timeOfParts } from '@/src/lib/input/entry';
-
-/** 칸이 고칠 칸으로 붉어질 때 함께 가리킬 오류 줄 — 붉히는 것은 폼이 정한다(누른 뒤에만, ADR 0252) */
-type Invalid = { describedBy: string };
+import { dateOfParts, digitOutOfRange, limitsOf, splitDate, splitTime, timeOfParts } from '@/src/lib/input/entry';
 
 /*
  * 출생 정보 폼(`birth-form.tsx`)의 **숫자 칸** — 생년월일 세 칸과 시각 두 칸. 왜 날짜 · 시각을 기기의 컨트롤이 아니라 숫자로 적게
@@ -22,11 +18,9 @@ type Invalid = { describedBy: string };
 /**
  * 숫자 한 칸 — **적는 칸이면서 범위를 아는 칸.**
  *
- * 여섯 칸(년·월·일·시·분)이 같은 일을 한다: 숫자만 받고, 자릿수를 넘기지 않는다. 한 벌로 두지 않으면 어느 칸 하나가
+ * 여섯 칸(년·월·일·시·분)이 같은 일을 한다: 숫자만 받고, 자릿수를 넘기지 않고,
+ * 제 범위를 벗어나면 스스로 붉어진다. 한 벌로 두지 않으면 어느 칸 하나가
  * 「25시」를 조용히 받아들이는 날이 온다.
- *
- * **붉어지는 것은 제출을 누른 뒤다**(ADR 0252) — 적는 도중 「13월」에 붉히던 것을 걷었다. 누르면 폼이 어느 칸이 틀렸는지
- * (`birthFieldErrors`) 받아 그 칸만 붉히고(`invalid`) 칸 아래 줄을 가리킨다.
  *
  * **판정은 여기서 끝나지 않는다.** 이 칸이 아는 것은 자기 범위뿐이라 「2월 30일」이
  * 나 「없는 윤달」은 못 본다 — 그것은 날짜 한 벌이 다 모여야 알 수 있고, 모인 뒤에도
@@ -38,9 +32,11 @@ function NumberField({
   value,
   onChange,
   digits,
+  min,
+  max,
   placeholder,
   autoComplete,
-  invalid = null,
+  refused = false,
 }: {
   label: string;
   /** 칸 안 오른쪽에 서는 우리말 — 「년」·「월」·「시」. 이것이 있어 자리 이름을 안 물어도 된다 */
@@ -48,11 +44,16 @@ function NumberField({
   value: string;
   onChange: (next: string) => void;
   digits: number;
+  min: number;
+  max: number;
   placeholder: string;
   autoComplete?: string;
-  /** 누른 뒤 이 칸이 고칠 칸인가 — 그 오류 줄을 가리킨다 */
-  invalid?: Invalid | null;
+  /** 날짜 한 벌이 이 칸에서 거절됐는가 — 칸 범위 안이어도 없는 날(음력 29일까지인 달의 30일)이 있다 */
+  refused?: boolean;
 }) {
+  /** 다 적힌 값만 판정한다 — 덜 적은 것은 아직 틀린 것이 아니다(`digitOutOfRange`) */
+  const outOfRange = digitOutOfRange(value, digits, min, max);
+
   return (
     <label className={styles.digit}>
       <input
@@ -61,8 +62,7 @@ function NumberField({
         autoComplete={autoComplete}
         aria-label={label}
         // 붉어지는 것은 `aria-invalid` 를 셀렉터로 쓴다(`birth-form.module.css`) — 낭독기가 읽는 값과 눈에 보이는 색이 한 자리다
-        aria-invalid={invalid !== null || undefined}
-        aria-describedby={invalid?.describedBy}
+        aria-invalid={outOfRange || refused || undefined}
         placeholder={placeholder}
         value={value}
         onChange={(event) => onChange(event.target.value.replace(/\D/g, '').slice(0, digits))}
@@ -87,10 +87,11 @@ function NumberField({
  * 고르는 칸이던 동안에는 「2월 30일」이 **만들어질 수가 없었다.** 적는 칸은 그
  * 보호막을 내주므로, 막는 자리를 대신 세워야 한다. 두 층으로 나눈다.
  *
- * 1. **자리마다의 범위**(월 1~12, 일 1~그 달의 마지막 날) — 다 적힌 날짜는 범위 밖이어도 **그대로 낸다**(`dateOfParts`).
- *    거절은 누른 뒤 `birthFieldErrors` 가 무엇이 틀렸는지 말하며 그 칸을 붉힌다(「2월은 28일까지예요.」) — 판정하는 자리는 그 하나다.
+ * 1. **자리마다의 범위**(월 1~12, 일 1~그 달의 마지막 날)는 칸이 붉어져 보이고, 다 적힌
+ *    날짜는 범위 밖이어도 **그대로 낸다**(`dateOfParts`). 거절은 `missingAnswer` 가 무엇이
+ *    틀렸는지 말하며 한다(「2월은 28일까지예요.」) — 판정하는 자리는 그 하나다.
  * 2. **날짜의 존재**(없는 윤달, 29일까지인 음력 달의 30일)는 음력 표가 이유를 붙여
- *    거절하고, 화면은 누른 뒤 그 문장을 칸 아래에 세우고 그 칸을 붉힌다(`invalid`).
+ *    거절하고, 화면은 그 문장을 그대로 세우고 그 칸을 붉힌다(`refused`).
  *
  * 폼이 자기 조각을 따로 들고 있으므로 **밖에서 값이 바뀐 것과 자기가 방금 낸
  * 것을 구별해야 한다**(뒤로가기·링크로 들어옴). 마지막으로 올려 보낸 값을
@@ -99,14 +100,12 @@ function NumberField({
 export function DateFields({
   value,
   onDate,
-  invalid,
+  refused,
 }: {
   value: Query;
   onDate: (date: string) => void;
-  /**
-   * 누른 뒤 붉힐 칸 — 어긋난 한 칸(`part`)이거나, 없으면 덜 적은 칸 전부다. 누르기 전 · 바른 날짜면 `null`
-   */
-  invalid: (Invalid & { part: DatePart | null }) | null;
+  /** 날짜 한 벌이 거절된 칸 — 없으면 `null` */
+  refused: DatePart | null;
 }) {
   const [parts, setParts] = useState(() => splitDate(value.date));
   const lastEmitted = useRef(value.date);
@@ -118,11 +117,6 @@ export function DateFields({
   }, [value.date]);
 
   const { years, maxDay } = limitsOf(value.calendar, parts.year, parts.month);
-  /** 이 칸을 붉히는가 — 어긋난 칸을 짚었으면 그 칸, 아니면 덜 적은 칸(빈 칸 · 네 자리가 안 된 해, `dateOfParts`) */
-  const mark = (part: DatePart): Invalid | null => {
-    if (invalid === null) return null;
-    return dateDigitWrong(part, parts[part], invalid.part) ? invalid : null;
-  };
 
   const update = (key: keyof typeof parts, next: string) => {
     const changed = { ...parts, [key]: next };
@@ -140,9 +134,11 @@ export function DateFields({
         value={parts.year}
         onChange={(next) => update('year', next)}
         digits={4}
+        min={years.min}
+        max={years.max}
         placeholder={String(years.max - 30)}
         autoComplete="bday-year"
-        invalid={mark('year')}
+        refused={refused === 'year'}
       />
       <NumberField
         label={BIRTH_DIGIT_LABEL.month}
@@ -150,9 +146,11 @@ export function DateFields({
         value={parts.month}
         onChange={(next) => update('month', next)}
         digits={2}
+        min={1}
+        max={12}
         placeholder="1~12"
         autoComplete="bday-month"
-        invalid={mark('month')}
+        refused={refused === 'month'}
       />
       <NumberField
         label={BIRTH_DIGIT_LABEL.day}
@@ -160,9 +158,11 @@ export function DateFields({
         value={parts.day}
         onChange={(next) => update('day', next)}
         digits={2}
+        min={1}
+        max={maxDay}
         placeholder={`1~${maxDay}`}
         autoComplete="bday-day"
-        invalid={mark('day')}
+        refused={refused === 'day'}
       />
     </DigitsField>
   );
@@ -183,16 +183,7 @@ export function DateFields({
  * 「모름」을 고르면 적어 둔 시각도 지운다. 남겨 두면 "모름인데 14:30" 이 상태로
  * 남고, 다시 「직접 입력」을 고르는 순간 사용자가 지웠다고 생각한 값으로 계산된다.
  */
-export function TimeFields({
-  value,
-  onChange,
-  invalid,
-}: {
-  value: Query;
-  onChange: (next: Query) => void;
-  /** 누른 뒤 출생 시각이 고칠 칸인가 — 고르지 않았으면 고르는 칸이, 시각이 덜 됐으면 덜 적었거나 범위 밖인 칸이 붉다 */
-  invalid: Invalid | null;
-}) {
+export function TimeFields({ value, onChange }: { value: Query; onChange: (next: Query) => void }) {
   const [parts, setParts] = useState(() => splitTime(value.time));
   const lastEmitted = useRef(value.time);
 
@@ -223,8 +214,6 @@ export function TimeFields({
   };
 
   const known = value.hourKnown === true;
-  /** 그 칸이 시각의 한 자리로 아직 못 쓰이는가 — 비었거나 범위 밖이다 */
-  const mark = (one: string, max: number): Invalid | null => (invalid !== null && timeDigitWrong(one, max) ? invalid : null);
 
   return (
     <>
@@ -232,7 +221,6 @@ export function TimeFields({
         label="출생 시각"
         labelAt="rail"
         groupStart
-        invalid={value.hourKnown === null ? invalid : null}
         value={value.hourKnown === null ? '' : value.hourKnown ? 'known' : 'unknown'}
         onPick={(next) => choose(next === 'known')}
         options={[
@@ -253,8 +241,9 @@ export function TimeFields({
             value={parts.hour}
             onChange={(next) => update('hour', next)}
             digits={2}
+            min={0}
+            max={23}
             placeholder="0~23"
-            invalid={mark(parts.hour, 23)}
           />
           <NumberField
             label={BIRTH_DIGIT_LABEL.minute}
@@ -262,8 +251,9 @@ export function TimeFields({
             value={parts.minute}
             onChange={(next) => update('minute', next)}
             digits={2}
+            min={0}
+            max={59}
             placeholder="0~59"
-            invalid={mark(parts.minute, 59)}
           />
         </DigitsField>
       )}

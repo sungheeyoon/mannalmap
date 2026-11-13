@@ -69,7 +69,6 @@ export function PersonCombobox({
   taken,
   chosenId,
   onChoose,
-  invalid = null,
 }: {
   label: string;
   hideLabel?: boolean;
@@ -79,8 +78,6 @@ export function PersonCombobox({
   taken: string | null;
   chosenId: string;
   onChoose: (personId: string) => void;
-  /** 누른 뒤 이 칸이 고칠 칸인가 — 테가 붉고 칸 아래 오류 줄을 가리킨다(ADR 0252) */
-  invalid?: { describedBy: string } | null;
 }) {
   const base = useId();
   const inputId = `${base}-input`;
@@ -213,9 +210,7 @@ export function PersonCombobox({
           }}
           onKeyDown={onKeyDown}
           onBlur={close}
-          aria-invalid={invalid !== null || undefined}
-          aria-describedby={invalid?.describedBy}
-          className={`h-11 w-full rounded-cell border border-border-strong bg-surface pr-10 text-field font-semibold placeholder:font-normal placeholder:text-secondary focus:border-border-strong focus:ring-2 focus:ring-accent-wash aria-invalid:border-danger aria-invalid:ring-1 aria-invalid:ring-danger aria-invalid:focus:ring-danger-wash ${
+          className={`h-11 w-full rounded-cell border border-border-strong bg-surface pr-10 text-field font-semibold placeholder:font-normal placeholder:text-secondary focus:border-border-strong focus:ring-2 focus:ring-accent-wash ${
             chosen !== undefined && typed === null ? 'pl-11' : 'pl-4'
           }`}
         />

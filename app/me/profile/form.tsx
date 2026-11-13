@@ -8,7 +8,7 @@ import {
   NICKNAME_MAX,
   NICKNAME_MIN,
   NICKNAME_TAKEN_NOTE,
-  profileErrors,
+  missingInProfile,
   profileEdited,
   missingNickname,
   nicknameKey,
@@ -27,7 +27,6 @@ import { PhotoGrid, PhotoGridFailed } from './photo-grid';
 import type { MyPhoto } from './photos';
 import { FailureLine } from '../../ui/failure-line';
 import { FIELD } from '../../ui/fields';
-import { FieldErrorLine, useFieldErrors } from '../../ui/field-error';
 
 /** 판 한 장 — 무리 지은 목록과 같은 흰 판 */
 const PANEL = 'flex flex-col gap-5 rounded-card border border-border bg-surface p-5 sm:p-6';
@@ -90,16 +89,15 @@ export function ProfileForm({
   const [failure, setFailure] = useState<string | null>(null);
   const [saving, startSaving] = useTransition();
   const done = useDoneNote();
+  /** 이름이 빠진 채로 단추를 눌렀나 — 그 뒤에만 무엇이 빠졌는지 말한다 */
+  const [tried, setTried] = useState(false);
   const nicknameRef = useRef<HTMLInputElement>(null);
-  const formRef = useRef<HTMLFormElement>(null);
 
   /** 마지막으로 확인한 이름과 그 답 — 칸이 바뀌면 답이 이 이름을 안 가리키므로 지운다 */
   const [checked, setChecked] = useState<{ key: string; available: boolean } | null>(null);
   const [checking, startChecking] = useTransition();
 
-  /** 고칠 칸 — 단추를 누른 뒤에만 무엇이 빠졌는지 그 칸이 붉고 칸 아래에서 말한다(ADR 0252) */
-  const checks = useFieldErrors(profileErrors(profile), formRef);
-  const nicknameError = checks.messageOf('nickname');
+  const missing = missingInProfile(profile);
   const nicknameChanged = nicknameKey(profile.nickname) !== nicknameKey(current.nickname);
   const changed = profileEdited(current, profile);
 
@@ -121,9 +119,16 @@ export function ProfileForm({
     return () => window.clearTimeout(timer);
   }, [profile.nickname, nicknameChanged]);
 
+  /** 빠진 것이 있으면 말하고 그 칸으로 데려간다 — 누름을 받은 뒤에 거절한다 */
+  const refused = () => {
+    if (missing === null) return false;
+    setTried(true);
+    nicknameRef.current?.focus();
+    return true;
+  };
+
   const save = () => {
-    /* 빠진 것이 있으면 그 칸을 붉히고 데려간다 — 누름을 받은 뒤에 거절한다 */
-    if (saving || !checks.press() || !changed) return;
+    if (saving || refused() || !changed) return;
     /* 쓰는 이름이라고 이미 답했다 — 칸 아래 그 말이 서 있다 */
     if (answer?.available === false) {
       nicknameRef.current?.focus();
@@ -156,6 +161,7 @@ export function ProfileForm({
         return;
       }
       /* 고친 사람은 이 화면에 그대로 둔다 — 다른 데로 끌고 가면 방금 고친 것을 못 본다 */
+      setTried(false);
       done.say('저장했어요');
     });
   };
@@ -179,7 +185,6 @@ export function ProfileForm({
       )}
 
       <form
-        ref={formRef}
         className={PANEL}
         onSubmit={(event) => {
           event.preventDefault();
@@ -203,29 +208,29 @@ export function ProfileForm({
             autoCapitalize="none"
             autoCorrect="off"
             spellCheck={false}
-            aria-invalid={nicknameError !== null || answer?.available === false ? true : undefined}
-            aria-describedby={nicknameError !== null ? 'nickname-error' : 'nickname-note'}
+            aria-invalid={(tried && missing !== null) || answer?.available === false ? true : undefined}
+            aria-describedby="nickname-note"
             className={`${FIELD} min-w-0 sm:max-w-64`}
           />
-          <FieldErrorLine id="nickname-error" message={nicknameError} />
           {/*
             **확인 결과는 그 이름에 붙는다.** 칸을 고치면 사라진다 — 「쓸 수 있습니다」가
-            이미 바뀐 이름 옆에 남아 있으면 그 말이 무엇을 가리키는지 알 수 없다. 빠진 것을 말하는 붉은 줄(위)이 서 있는 동안은
-            비킨다. 고치지 않은 이름에는 아무 말도 안 선다. 상자는 늘 서 있어 바뀐 글자를 화면 읽기가 읽는다.
+            이미 바뀐 이름 옆에 남아 있으면 그 말이 무엇을 가리키는지 알 수 없다. 빠진 것을 말하는 줄도 여기다 — 단추를
+            누른 뒤에만, 경고 색으로. 고치지 않은 이름에는 아무 말도 안 선다. 상자는 늘 서 있어 바뀐 글자를 화면 읽기가 읽는다.
           */}
           <p
             id="nickname-note"
             role="status"
-            hidden={nicknameError !== null}
-            className={`min-h-5 text-sm ${answer?.available === false ? 'text-danger' : 'text-secondary'}`}
+            className={`min-h-5 text-sm ${tried && missing !== null ? 'text-danger' : answer?.available === false ? 'text-danger' : 'text-secondary'}`}
           >
-            {answer !== null
-              ? answer.available
-                ? NICKNAME_AVAILABLE_NOTE
-                : NICKNAME_TAKEN_NOTE
-              : checking && nicknameChanged
-                ? '확인하는 중…'
-                : ''}
+            {tried && missing !== null
+              ? missing
+              : answer !== null
+                ? answer.available
+                  ? NICKNAME_AVAILABLE_NOTE
+                  : NICKNAME_TAKEN_NOTE
+                : checking && nicknameChanged
+                  ? '확인하는 중…'
+                  : ''}
           </p>
         </div>
 
@@ -254,7 +259,7 @@ export function ProfileForm({
         <div className="flex flex-col gap-2 border-t border-border pt-5 sm:flex-row sm:items-center sm:gap-3">
           <button
             type="submit"
-            aria-disabled={saving || !changed ? true : undefined}
+            aria-disabled={missing !== null || saving || !changed ? true : undefined}
             className={BUTTON_PRIMARY}
           >
             {/* 사진은 따로 바로 저장된다 — 이 단추가 드는 둘만 이름에 적는다(대장 40) */}

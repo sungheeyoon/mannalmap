@@ -33,7 +33,6 @@ export function ChoiceField<T extends string>({
   onPick,
   labelAt = 'above',
   groupStart = false,
-  invalid = null,
 }: {
   label: string;
   /** 낭독기가 부르는 묶음 이름 — 보이는 이름이 짧을 때(「달력」 → 「달력 기준」) */
@@ -45,8 +44,6 @@ export function ChoiceField<T extends string>({
   labelAt?: 'above' | 'hidden' | 'rail';
   /** 묶음이 새로 시작하는 자리인가 — 위를 20px 띄운다 */
   groupStart?: boolean;
-  /** 누른 뒤 아직 안 고른 고칠 칸인가 — 선택지의 테가 붉고 그 오류 줄을 가리킨다(ADR 0252) */
-  invalid?: { describedBy: string } | null;
 }) {
   const id = useId();
   const current = options.find((option) => option.value === value);
@@ -61,13 +58,7 @@ export function ChoiceField<T extends string>({
       )}
     >
       <legend className={styles.label}>{label}</legend>
-      <div
-        role="radiogroup"
-        aria-label={name}
-        aria-invalid={invalid !== null || undefined}
-        aria-describedby={invalid?.describedBy}
-        className={styles.options}
-      >
+      <div role="radiogroup" aria-label={name} className={styles.options}>
         {options.map((option) => (
           <label key={option.value} className={styles.option}>
             <input

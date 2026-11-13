@@ -1,10 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { DEFAULT_QUERY, type Query } from '../input/query';
-
-import { FIND_FROM, SAME_PERSON_TWICE, dropUnlisted, findStatus, findsInList, matchesName, pairSeatErrors, pickable, stepTo, stillListed } from './pick';
-
-const filled: Query = { ...DEFAULT_QUERY, name: '민수', date: '1990-05-15', time: '14:30', hourKnown: true };
+import { FIND_FROM, dropUnlisted, findStatus, findsInList, matchesName, pickable, stepTo, stillListed } from './pick';
 
 const people = [
   { personId: 'me', label: '서연' },
@@ -163,37 +159,5 @@ describe('목록에서 빠진 사람의 칸', () => {
   it('목록이 비면 고른 칸은 모두 빈다', () => {
     const slots = { a: { from: 'saved', personId: 'me' }, b: { from: 'saved', personId: 'dad' } } as const;
     expect(dropUnlisted(slots, [])).toEqual({ a: { from: 'saved', personId: '' }, b: { from: 'saved', personId: '' } });
-  });
-});
-
-describe('궁합 두 칸의 오류', () => {
-  const people = [
-    { personId: 'p1', label: '나' },
-    { personId: 'p2', label: '엄마' },
-  ];
-
-  it('둘째 칸을 안 골랐으면 그 칸이 걸린다', () => {
-    expect(pairSeatErrors({ a: { from: 'saved', personId: 'p1' }, b: { from: 'saved', personId: '' } }, people)).toEqual([
-      { side: 'b', field: 'b.person', message: '두 번째 사람을 골라 주세요.' },
-    ]);
-  });
-
-  it('같은 사람을 두 칸에 고르면 둘째 칸이 걸린다', () => {
-    expect(pairSeatErrors({ a: { from: 'saved', personId: 'p1' }, b: { from: 'saved', personId: 'p1' } }, people)).toEqual([
-      { side: 'b', field: 'b.person', message: SAME_PERSON_TWICE },
-    ]);
-  });
-
-  it('목록에서 빠진 사람은 고르지 않은 것이다', () => {
-    expect(pairSeatErrors({ a: { from: 'saved', personId: 'gone' }, b: { from: 'saved', personId: 'p2' } }, people)[0]?.field).toBe('a.person');
-  });
-
-  it('적는 칸은 출생 정보 칸마다 걸린다', () => {
-    expect(pairSeatErrors({ a: { from: 'saved', personId: 'p1' }, b: { from: 'typed', query: DEFAULT_QUERY } }, people).map((one) => one.field)).toEqual([
-      'b.name',
-      'b.date',
-      'b.hour',
-    ]);
-    expect(pairSeatErrors({ a: { from: 'typed', query: filled }, b: { from: 'saved', personId: 'p2' } }, people)).toEqual([]);
   });
 });

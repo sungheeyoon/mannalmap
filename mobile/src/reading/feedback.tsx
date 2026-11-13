@@ -9,7 +9,6 @@ import {
   FELT_LENGTH_LABEL,
   ISSUE_TAGS,
   ISSUE_TAG_LABEL,
-  feedbackErrors,
   feedbackQuestions,
   type FeedbackQuestion,
   type FeedbackScore,
@@ -21,7 +20,6 @@ import { useState, type ReactNode } from 'react';
 import { Pressable, StyleSheet, TextInput, View } from 'react-native';
 
 import { useClient } from '@/auth/connected';
-import { FieldErrorLine, invalidLabel, useFieldErrors } from '@/ui/field-error';
 import { FoldIcon } from '@/ui/icons';
 import { Card, Paper, Tile } from '@/ui/surfaces';
 import { PrimaryButton, TextButton } from '@/ui/parts';
@@ -34,7 +32,7 @@ import { WordText } from '@/ui/word-text';
 /**
  * 읽고 나서 답하는 자리 — **글 바로 아래**다. 물음 · 글자는 웹과 같은 `@reading/feedback` 이고 차례도 `app/me/reading/feedback.tsx` 와 같다.
  * 처음에는 한 줄로 접혀 서고, 이미 답한 사람의 「답 고치기」는 펼친 채 지금 답으로 열린다 — 빈 칸으로 다시 보내면 적어 둔 글이 지워진다.
- * 셋을 다 골라야 보내지고, 단추를 잠그지 않아 덜 고르고 누르면 안 고른 질문마다 그 아래 붉은 줄이 선다(ADR 0160 · 0252).
+ * 셋을 다 골라야 보내지고, 단추를 잠그지 않아 덜 고르고 누르면 곁의 말이 경고가 된다(ADR 0160).
  */
 export function ReadingFeedback({ target, runId, given }: { target: ReadingTarget; runId: string; given: ReadingAnswer | null }) {
   const client = useClient();
@@ -48,7 +46,7 @@ export function ReadingFeedback({ target, runId, given }: { target: ReadingTarge
   const [comment, setComment] = useState(given?.comment ?? '');
   const [failure, setFailure] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
-  const checks = useFieldErrors(feedbackErrors({ usefulness, fit, feltLength }));
+  const [tried, setTried] = useState(false);
   const questions = feedbackQuestions(target.kind);
 
   if (answer !== null && !open) {
@@ -63,7 +61,10 @@ export function ReadingFeedback({ target, runId, given }: { target: ReadingTarge
   const ready = usefulness !== null && fit !== null && feltLength !== null;
 
   const send = async () => {
-    if (!checks.press() || usefulness === null || fit === null || feltLength === null) return;
+    if (!ready) {
+      setTried(true);
+      return;
+    }
     setFailure(null);
     setSaving(true);
     const sent: ReadingAnswer = {
@@ -106,32 +107,18 @@ export function ReadingFeedback({ target, runId, given }: { target: ReadingTarge
       {shown && (
         <View style={styles.body}>
           {foldable && <WordText style={styles.small}>{FEEDBACK_SCOPE_NOTE}</WordText>}
-          <View ref={checks.anchor('usefulness')}>
-            <Scale question={questions.usefulness} value={usefulness} onChange={setUsefulness} disabled={saving} error={checks.messageOf('usefulness')} />
-          </View>
-          <View ref={checks.anchor('fit')}>
-            <Scale question={questions.perceivedFit} value={fit} onChange={setFit} disabled={saving} error={checks.messageOf('fit')} />
-          </View>
+          <Scale question={questions.usefulness} value={usefulness} onChange={setUsefulness} disabled={saving} />
+          <Scale question={questions.perceivedFit} value={fit} onChange={setFit} disabled={saving} />
 
-          <View ref={checks.anchor('length')} style={styles.part}>
+          <View style={styles.part}>
             <WordText style={styles.legend}>분량은 어땠나요?</WordText>
             <View style={styles.chips}>
               {FELT_LENGTHS.map((choice) => (
-                <Chip
-                  key={choice}
-                  role="radio"
-                  grow
-                  disabled={saving}
-                  picked={feltLength === choice}
-                  onPick={() => setFeltLength(choice)}
-                  label={invalidLabel(FELT_LENGTH_LABEL[choice], checks.messageOf('length'))}
-                  wrong={checks.messageOf('length') !== null}
-                >
+                <Chip key={choice} role="radio" grow disabled={saving} picked={feltLength === choice} onPick={() => setFeltLength(choice)}>
                   {FELT_LENGTH_LABEL[choice]}
                 </Chip>
               ))}
             </View>
-            <FieldErrorLine message={checks.messageOf('length')} />
           </View>
 
           <View style={styles.part}>
@@ -174,8 +161,7 @@ export function ReadingFeedback({ target, runId, given }: { target: ReadingTarge
 
           {failure !== null && <WordText accessibilityRole="alert" style={styles.warn}>답을 남기지 못했어요. {failure}</WordText>}
 
-          {/* 누르기 전의 회색 덧말 — 누른 뒤에는 안 고른 질문 아래 붉은 줄이 말한다(ADR 0252) */}
-          {!ready && <WordText style={styles.small}>필수 질문 3개에 답하면 보낼 수 있어요.</WordText>}
+          {!ready && <WordText accessibilityRole={tried ? 'alert' : undefined} style={tried ? styles.warn : styles.small}>필수 질문 3개에 답하면 보낼 수 있어요.</WordText>}
           <PrimaryButton label={saving ? '보내는 중…' : '의견 보내기'} onPress={() => void send()} disabled={saving} />
         </View>
       )}
@@ -184,20 +170,7 @@ export function ReadingFeedback({ target, runId, given }: { target: ReadingTarge
 }
 
 /** 1~5 눈금 — 양 끝의 말이 함께 선다. 숫자만 읽어 주면 무엇을 매기는지 안 들려 양 끝은 이름으로 읽힌다 */
-function Scale({
-  question,
-  value,
-  onChange,
-  disabled,
-  error,
-}: {
-  question: FeedbackQuestion;
-  value: FeedbackScore | null;
-  onChange: (next: FeedbackScore) => void;
-  disabled: boolean;
-  /** 누른 뒤 안 골랐으면 그 아래 설 붉은 말 */
-  error: string | null;
-}) {
+function Scale({ question, value, onChange, disabled }: { question: FeedbackQuestion; value: FeedbackScore | null; onChange: (next: FeedbackScore) => void; disabled: boolean }) {
   return (
     <Tile tone={COLOR.surfaceSoft} style={styles.scale}>
       <WordText style={styles.legend}>{question.label}</WordText>
@@ -210,8 +183,7 @@ function Scale({
             disabled={disabled}
             picked={value === score}
             onPick={() => onChange(score)}
-            label={invalidLabel(score === 1 ? `1 — ${question.low}` : score === 5 ? `5 — ${question.high}` : String(score), error)}
-            wrong={error !== null}
+            label={score === 1 ? `1 — ${question.low}` : score === 5 ? `5 — ${question.high}` : String(score)}
           >
             {score}
           </Chip>
@@ -221,7 +193,6 @@ function Scale({
         <WordText style={styles.end}>{question.low}</WordText>
         <WordText style={styles.end}>{question.high}</WordText>
       </View>
-      <FieldErrorLine message={error} />
     </Tile>
   );
 }
@@ -233,7 +204,6 @@ function Chip({
   label,
   grow = false,
   disabled = false,
-  wrong = false,
   children,
 }: {
   role: 'radio' | 'checkbox';
@@ -243,8 +213,6 @@ function Chip({
   grow?: boolean;
   /** 보내는 동안 잠근다 — 그 사이 바꾼 답은 이미 떠난 답에 안 실린다. 고른 것은 흐리지 않는다 — 무엇을 보냈는지 보이게(운영자 확정 2026-11-08) */
   disabled?: boolean;
-  /** 고칠 질문의 칩 — 안 고른 칩의 테가 붉다(ADR 0252) */
-  wrong?: boolean;
   children: ReactNode;
 }) {
   return (
@@ -254,7 +222,7 @@ function Chip({
       accessibilityLabel={label}
       disabled={disabled}
       onPress={onPick}
-      style={[styles.chip, grow && styles.grow, picked && styles.chipOn, wrong && !picked && styles.chipWrong, disabled && !picked && styles.off]}
+      style={[styles.chip, grow && styles.grow, picked && styles.chipOn, disabled && !picked && styles.off]}
     >
       <WordText style={[styles.chipText, picked && styles.chipTextOn]}>{children}</WordText>
     </Pressable>
@@ -280,7 +248,6 @@ const styles = StyleSheet.create({
   grow: { flex: 1, paddingHorizontal: 4 },
   chip: { minHeight: CONTROL, minWidth: CONTROL, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 12, borderRadius: RADIUS.pill, borderWidth: 1, borderColor: COLOR.border, backgroundColor: COLOR.surface },
   chipOn: { borderColor: COLOR.accent, backgroundColor: COLOR.accent },
-  chipWrong: { borderColor: COLOR.danger },
   chipText: { fontFamily: FONT.medium, fontSize: TYPE.note, color: COLOR.foreground },
   chipTextOn: { fontFamily: FONT.bold, color: COLOR.onAccent },
   ends: { flexDirection: 'row', justifyContent: 'space-between' },

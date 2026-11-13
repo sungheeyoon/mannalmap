@@ -3,14 +3,17 @@
 import { useRouter } from 'next/navigation';
 import { Fragment, useEffect, useRef, useState, useTransition } from 'react';
 
+import { calculateChart } from '@/src/lib/input/chart';
 import type { Relation } from '@/src/lib/people';
-import { dropUnlisted, pairSeatErrors, seatShown, type PairSeat } from '@/src/lib/people/pick';
+import { dropUnlisted, stillListed } from '@/src/lib/people/pick';
 import {
   DEFAULT_QUERY,
   mergeSearchParams,
+  missingAnswer,
   PREFIX,
   queryFromSearchParams,
   toSearchParams,
+  type Query,
 } from '@/src/lib/input/query';
 import type { CompatSide } from '@/src/lib/saju';
 
@@ -32,7 +35,6 @@ import { Icon } from './ui/icons';
 import { reducedMotion } from './ui/motion';
 import { CARD_FRAME, TYPE_META, TYPE_NAME } from './ui/surfaces';
 import { FailureLine } from './ui/failure-line';
-import { FieldErrorLine, useFieldErrors } from './ui/field-error';
 
 /**
  * 궁합의 **첫 걸음** — 두 사람을 정하고 사이를 답하는 자리.
@@ -59,7 +61,7 @@ import { FieldErrorLine, useFieldErrors } from './ui/field-error';
  * 쓰는 누름은 거기 있다(ADR 0028).
  */
 /** 한 칸이 들고 있는 것 — 고른 사람이거나 적어 넣은 입력이다 */
-type Slot = PairSeat;
+type Slot = { from: 'saved'; personId: string } | { from: 'typed'; query: Query };
 
 /** 주소에 담긴 한 칸을 읽는다 — `a.person` 이 있으면 고른 사람이다 */
 function slotFrom(params: URLSearchParams, side: CompatSide, people: Choosable[]): Slot | null {
@@ -143,17 +145,19 @@ export function CompatPicker({ people }: { people: Choosable[] }) {
   const [failure, setFailure] = useState<string | null>(null);
   const [opening, startOpening] = useTransition();
   /**
-   * **칸마다의 오류**(ADR 0252) — 「궁합 보기」를 누른 뒤에야 고칠 칸이 붉고 그 칸 바로 아래에서 말한다. 막 연 화면이 붉은 칸으로
-   * 서면 아직 아무것도 안 한 사람을 나무란다(2026-10-10 화면 점검 B19). 단추 아래 오른쪽에 모아 쓰던 한 줄은 걷었다 — 어느 칸이
-   * 비었는지 칸에는 표시가 없었다(운영자 2026-11-14).
+   * **비어 있다는 말은 처음엔 도움말이고, 누르려 했거나 그 칸을 떠난 뒤에야 오류다**(2026-10-10 화면 점검 B19). 막 연
+   * 화면이 ⚠ 를 단 「두 번째 사람을 골라 주세요」로 서면 아직 아무것도 안 한 사람을 나무란다.
    */
-  const errors = pairSeatErrors(slots, people);
-  const checks = useFieldErrors(errors, root);
-  const chosen = errors.length === 0;
+  const [tried, setTried] = useState(false);
+  const [left, setLeft] = useState<Record<CompatSide, boolean>>({ a: false, b: false });
+
+  const chosen = SIDES.every((side) => complete(slots[side], people));
+  const sameTwice =
+    slots.a.from === 'saved' && slots.b.from === 'saved' && slots.a.personId !== '' && slots.a.personId === slots.b.personId;
 
   /** 차례를 안 타는 쌍 이름 — 첫째·둘째를 바꿔 골라도 같은 쌍이다(DB 와 같은 규율) */
   const pairKey =
-    slots.a.from === 'saved' && slots.b.from === 'saved' && chosen
+    slots.a.from === 'saved' && slots.b.from === 'saved' && chosen && !sameTwice
       ? [slots.a.personId, slots.b.personId].sort().join('|')
       : '';
 
@@ -208,21 +212,40 @@ export function CompatPicker({ people }: { people: Choosable[] }) {
   const settle = (outcome: SaveOutcome) => settleSaveOutcome(outcome, setFailure, setQuestion);
 
   /**
-   * **서버가 거절한 사람의 칸으로 데려간다** — 화면이 누르기 전에 거의 다 잡지만 서버만 아는 거절(주소로 들어온 모르는 출생지 등)이
-   * 남는다. 그 말은 칸이 없어 실패 줄로 단추 아래 서고, 폰에서 그 칸은 한 화면 위다.
+   * **비어 있는 칸으로 데려간다**(B10). 단추는 잠긴 모양이어도 누름을 받는다(`aria-disabled`) — 받지 않으면 왜 안 되는지를
+   * 단추 곁의 한 줄에서 찾아야 하고, 그 칸은 폰에서 한 화면 위에 있다. 초점은 붉어진 입력 → 아직 빈 입력 → 다 찼는데
+   * 엔진이 거절했으면(없는 윤달 등) 생년월일의 첫 숫자 칸이다 — 화면에서 고를 수 있는 값 가운데 계산이 거절하는 것은 날짜뿐이다.
    */
   const bringTo = (side: CompatSide) => {
     const card = root.current?.querySelector<HTMLElement>(`[data-side="${side}"]`);
     if (card == null) return;
     card.scrollIntoView({ block: 'center', behavior: reducedMotion() ? 'instant' : 'smooth' });
-    card.querySelector<HTMLElement>('input:not(:disabled), button:not(:disabled)')?.focus({ preventScroll: true });
+    const fields = [...card.querySelectorAll<HTMLInputElement>('input:not([type=hidden]):not([type=radio]):not([type=checkbox]):not(:disabled)')];
+    const target =
+      fields.find((one) => one.getAttribute('aria-invalid') === 'true') ??
+      fields.find((one) => one.value === '') ??
+      fields.find((one) => one.inputMode === 'numeric') ??
+      card.querySelector<HTMLElement>('input:not(:disabled), button:not(:disabled)');
+    target?.focus({ preventScroll: true });
   };
 
   const press = () => {
-    if (!checks.press()) return;
+    if (!chosen || sameTwice) {
+      setTried(true);
+      const gap = missing(slots, people);
+      bringTo(gap?.side ?? 'b');
+      return;
+    }
     setFailure(null);
     startOpening(async () => settle(await open({})));
   };
+
+  const gap = missing(slots, people);
+  const reason = !opening && (gap !== null || sameTwice)
+    ? sameTwice ? '같은 사람은 한 번만 고를 수 있어요. 서로 다른 두 사람을 골라 주세요.' : gap?.text ?? null
+    : null;
+  /** 오류 모양은 누르려 했거나 빈 칸을 떠난 뒤 — 같은 사람 둘은 처음부터 고친 값이 아니라 틀린 값이라 오류다 */
+  const reasonIsError = sameTwice || tried || (gap !== null && left[gap.side]);
 
   return (
     <div ref={root} className={CARD_FRAME}>
@@ -252,7 +275,7 @@ export function CompatPicker({ people }: { people: Choosable[] }) {
               /* 다른 칸에서 고른 사람은 여기서 뺀다 — 같은 사람 둘은 애초에 못 고른다 */
               taken={otherSaved(slots, side)}
               onChange={(next) => setSlot(side, next)}
-              errors={seatShown(checks.shown, side)}
+              onLeave={() => setLeft((now) => (now[side] ? now : { ...now, [side]: true }))}
             />
           </Fragment>
         ))}
@@ -277,6 +300,8 @@ export function CompatPicker({ people }: { people: Choosable[] }) {
                 type="button"
                 onClick={press}
                 disabled={opening}
+                aria-disabled={!chosen || sameTwice || undefined}
+                aria-describedby={reason !== null ? 'compat-locked-reason' : undefined}
                 className={`${BUTTON_PRIMARY} w-full`}
               >
                 <Icon name="taiji" className="size-[18px]" />
@@ -285,6 +310,19 @@ export function CompatPicker({ people }: { people: Choosable[] }) {
             ) : undefined
           }
         />
+
+        {/* 왜 눌리지 않는지 단추 곁에서 말한다 — 잠긴 단추만 두면 이유를 찾아야 한다 */}
+        {question === null && reason !== null && (
+          <p
+            id="compat-locked-reason"
+            className={`mt-2 flex items-center justify-end gap-1.5 text-right text-small leading-5 ${
+              reasonIsError ? 'font-medium text-danger' : 'text-secondary'
+            }`}
+          >
+            {reasonIsError && <Icon name="alert" className="size-4 shrink-0" />}
+            {reason}
+          </p>
+        )}
 
         {question !== null && (
           <div className="mt-4">
@@ -319,20 +357,22 @@ function SlotCard({
   people,
   taken,
   onChange,
-  errors,
+  onLeave,
 }: {
   side: CompatSide;
   slot: Slot;
   people: Choosable[];
   taken: string | null;
   onChange: (next: Slot) => void;
-  /** 누른 뒤 이 칸에 설 말 — 고르는 칸(`person`)이거나 적는 칸의 셋 */
-  errors: ReturnType<typeof seatShown>;
+  /** 초점이 이 칸 밖으로 나갔다 — 비어 있는 말을 오류 모양으로 바꾸는 신호 */
+  onLeave: () => void;
 }) {
-  const personError = `compat-${side}-person-error`;
   return (
     <fieldset
       data-side={side}
+      onBlur={(event) => {
+        if (!event.currentTarget.contains(event.relatedTarget as Node | null)) onLeave();
+      }}
       /* 폰에서 두 칸 사이는 칸 안의 묶음 사이(`gap-3`)와 같다 — 12 + 동그라미 28 + 12. 넓은 화면은 나란히 서니 그대로다 */
       className={`flex min-w-0 flex-col gap-3 p-5 sm:p-6 ${side === 'a' ? 'pb-3' : 'pt-3'}`}
     >
@@ -386,9 +426,7 @@ function SlotCard({
             taken={taken}
             chosenId={slot.personId}
             onChoose={(personId) => onChange({ from: 'saved', personId })}
-            invalid={errors.person == null ? null : { describedBy: personError }}
           />
-          <FieldErrorLine id={personError} message={errors.person} className="mt-1.5" />
           {people.length === 0 && <span className={TYPE_META}>아직 저장한 사람이 없어요.</span>}
         </div>
       )}
@@ -400,7 +438,6 @@ function SlotCard({
             onChange={(next) => onChange({ from: 'typed', query: next })}
             namePlaceholder="이름"
             surface="flat"
-            errors={errors}
           />
         </div>
       )}
@@ -431,6 +468,30 @@ function useStoredRelation(
     };
   }, [pairKey, answered, setRelation]);
 }
+
+/**
+ * 그 칸이 다 찼고 **계산도 되는가** — 없는 윤달처럼 다 적었어도 엔진이 거절하는 입력이 있다. 그 까닭은 칸 아래(`BirthFields`)가
+ * 말하고, 여기서 막아야 단추가 서버까지 가서 판 맨 아래에 같은 말을 한 번 더 세우지 않는다.
+ */
+const complete = (slot: Slot, people: readonly Choosable[]): boolean =>
+  slot.from === 'saved' ? stillListed(people, slot.personId) : calculateChart(slot.query).ok && missingAnswer(slot.query) === null;
+
+/** 먼저 비어 있는 칸 하나 — 둘을 한꺼번에 늘어놓지 않는다. 어느 칸인지도 준다(그 칸으로 데려가려고) */
+const missing = (slots: Record<CompatSide, Slot>, people: readonly Choosable[]): { side: CompatSide; text: string } | null => {
+  for (const side of SIDES) {
+    const slot = slots[side];
+    if (slot.from === 'saved') {
+      if (!stillListed(people, slot.personId)) return { side, text: `${SIDE_PERSON[side]}을 골라 주세요.` };
+      continue;
+    }
+    const gap = missingAnswer(slot.query);
+    if (gap !== null) return { side, text: `${SIDE_PERSON[side]}의 ${gap}` };
+    /* 계산이 거절한 까닭은 엔진의 문장 그대로다 — 「첫 번째 사람의」를 앞에 붙이면 문장이 깨진다. 칸이 어느 사람인지는 데려간 칸이 말한다 */
+    const refused = calculateChart(slot.query);
+    if (!refused.ok) return { side, text: refused.message };
+  }
+  return null;
+};
 
 const otherSaved = (slots: Record<CompatSide, Slot>, side: CompatSide): string | null => {
   const other = slots[side === 'a' ? 'b' : 'a'];

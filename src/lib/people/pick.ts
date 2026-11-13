@@ -16,13 +16,7 @@
  * 그대로다 — 맞는 정도로 다시 세우면 칠 때마다 줄이 뛴다.
  */
 
-import { birthFieldErrors, type BirthField, type BirthFieldError, type FieldError } from '../input/field-errors';
-import type { Query } from '../input/query';
-
 type Pickable = { readonly personId: string; readonly label: string };
-
-/** 궁합의 두 칸 — 엔진의 `CompatSide` 와 같은 두 글자다(이 모듈이 엔진을 들이지 않게 여기 적는다) */
-type CompatSide = 'a' | 'b';
 
 /** 한글 음절의 첫소리 열아홉 — 유니코드 음절 표의 차례 그대로 */
 const CHOSEONG = 'ㄱㄲㄴㄷㄸㄹㅁㅂㅃㅅㅆㅇㅈㅉㅊㅋㅌㅍㅎ';
@@ -136,66 +130,3 @@ export function dropUnlisted<S extends Seat, K extends string>(
   }
   return changed ? next : slots;
 }
-
-export const SIDES: readonly CompatSide[] = ['a', 'b'];
-
-/**
- * 「누구 것인지」를 차례로 부르는 이름 — 결과 판의 관계 줄(「첫 번째 사람의 일지」)과 고르는 칸이 함께 쓴다(`app/compat-view.tsx`).
- * 웹과 앱이 따로 적던 것을 여기 하나로 모았다 — 칸 아래 오류(`pairSeatErrors`)도 같은 글자를 부른다.
- */
-export const SIDE_LABEL: Record<CompatSide, string> = { a: '첫 번째', b: '두 번째' };
-
-/** 칸 · 판의 머리 표지 — 「첫 번째 사람」 · 「두 번째 사람」 */
-export const SIDE_PERSON: Record<CompatSide, string> = {
-  a: `${SIDE_LABEL.a} 사람`,
-  b: `${SIDE_LABEL.b} 사람`,
-};
-
-/** 같은 사람을 두 칸에 고른 때 — 둘째 칸 아래에 선다(대장 compat 「같은 사람 선택 오류」) */
-export const SAME_PERSON_TWICE = '같은 사람은 한 번만 고를 수 있어요. 서로 다른 두 사람을 골라 주세요.';
-
-/** 궁합의 한 칸이 든 것 — 저장한 사람을 고른 칸이거나 적어 넣은 입력이다 */
-export type PairSeat = { readonly from: 'saved'; readonly personId: string } | { readonly from: 'typed'; readonly query: Query };
-
-/** 궁합 칸의 오류가 서는 자리 — 고르는 칸(`person`)이거나, 적는 칸이면 출생 정보의 칸 셋 */
-export type PairField = `${CompatSide}.${'person' | BirthField}`;
-
-export type PairSeatError = FieldError<PairField> & { readonly side: CompatSide; readonly part?: BirthFieldError['part'] };
-
-/**
- * 궁합 두 칸의 **칸별 오류** — 첫 칸부터 위에서 아래로(ADR 0252).
- *
- * 고르는 칸은 고른 사람이 지금 목록에 없으면(`stillListed`) 비었고, 둘째 칸이 첫 칸과 같은 사람이면 그 칸이 틀렸다 — 고르는 칸이
- * 다른 칸의 사람을 빼 주므로 이 경우는 주소로만 들어온다. 적는 칸은 출생 정보 폼의 판정(`birthFieldErrors`)을 그대로 쓴다.
- * 칸이 「첫 번째 사람」 카드 안에 서므로 문장에 사람의 차례를 다시 붙이지 않는다 — 고르는 칸의 말만 어느 칸인지 부른다.
- */
-export function pairSeatErrors(seats: Readonly<Record<CompatSide, PairSeat>>, people: readonly Pickable[]): PairSeatError[] {
-  const errors: PairSeatError[] = [];
-  for (const side of SIDES) {
-    const seat = seats[side];
-    if (seat.from === 'typed') {
-      for (const one of birthFieldErrors(seat.query)) errors.push({ ...one, side, field: `${side}.${one.field}` });
-      continue;
-    }
-    if (!stillListed(people, seat.personId)) {
-      errors.push({ side, field: `${side}.person`, message: `${SIDE_PERSON[side]}을 골라 주세요.` });
-      continue;
-    }
-    const other = seats.a;
-    if (side === 'b' && other.from === 'saved' && other.personId === seat.personId) {
-      errors.push({ side, field: 'b.person', message: SAME_PERSON_TWICE });
-    }
-  }
-  return errors;
-}
-
-/** 보여 줄 궁합 칸 오류(`shownErrors`)에서 한 칸의 것만 — 적는 칸(출생 정보 폼)에 넘기는 모양 */
-export const seatShown = (
-  shown: Partial<Record<PairField, string>>,
-  side: CompatSide,
-): Partial<Record<BirthField | 'person', string>> => ({
-  person: shown[`${side}.person`],
-  name: shown[`${side}.name`],
-  date: shown[`${side}.date`],
-  hour: shown[`${side}.hour`],
-});

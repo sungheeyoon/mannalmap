@@ -14,7 +14,7 @@ import {
   SIGNUP_NOTICE_DISCOVERY,
   SIGNUP_NOTICE_KEEP,
   SIGNUP_NOTICE_USE,
-  signupErrors,
+  signupGap,
   type SignupField,
 } from '@consent/signup';
 import { NICKNAME_AVAILABLE_NOTE, NICKNAME_MAX, NICKNAME_MIN, NICKNAME_TAKEN_NOTE, missingNickname, nicknameKey } from '@profile';
@@ -31,7 +31,6 @@ import { AccountNotice } from '@/settings/parts';
 import { LoadingDots } from '@/ui/loading';
 import { Logo } from '@/ui/logo';
 import { FailureLine } from '@/ui/failure-line';
-import { FieldErrorLine, FieldScrollView, useFieldErrors } from '@/ui/field-error';
 import { CheckRow, Field, FieldLabel, PrimaryButton, SecondaryButton, TextButton } from '@/ui/parts';
 import { COLOR, FONT, TYPE } from '@/ui/tokens';
 import { settled } from '@/ui/settled';
@@ -98,7 +97,7 @@ function Signup() {
   return (
     <SafeAreaView style={styles.screen}>
       <KeyboardAvoidingView style={styles.screen} behavior="padding">
-        <FieldScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled" keyboardDismissMode="on-drag">
+        <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled" keyboardDismissMode="on-drag">
           <Paper style={styles.head}>
             <Logo size={44} />
             <WordText style={styles.eyebrow}>{head.eyebrow}</WordText>
@@ -130,7 +129,7 @@ function Signup() {
           {(state.kind === 'form' || state.kind === 'blocked' || (state.kind === 'halted' && mayRequestDeletion(state.account))) && (
             <RequestDeletion onDone={() => setReads((n) => n + 1)} style={styles.deletion} />
           )}
-        </FieldScrollView>
+        </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
   );
@@ -148,17 +147,17 @@ function SignupForm({ form, onDone }: { form: Extract<SignupState, { kind: 'form
   const [checked, setChecked] = useState<{ key: string; available: boolean } | null>(null);
   const [checking, setChecking] = useState(false);
   const [checkTried, setCheckTried] = useState(false);
+  const [tried, setTried] = useState(false);
   const nicknameField = useRef<ComponentRef<typeof TextInput>>(null);
 
   const missing = needsName ? missingNickname(nickname) : null;
   const answer = checked?.key === nicknameKey(nickname) ? checked : null;
-  /* 단추를 잠그지 않고, 누르면 걸린 칸마다 그 아래에서 말하고 첫 칸으로 데려간다 — 웹과 같다(ADR 0252) */
-  const checks = useFieldErrors(signupErrors({ nicknameGap: missing, fourteen, acknowledged }));
+  /* 단추를 잠그지 않고, 누르면 처음 걸린 칸 하나를 말한다 — 웹과 같다 */
+  const gap = signupGap({ nicknameGap: missing, fourteen, acknowledged });
+  const shownGap = tried ? gap : null;
+  const refusedHere = (field: SignupField) => failure?.field === field;
   /* 칸은 닉네임 하나다 — 테스트 코드 칸은 걷었다(ADR 0225) */
   const focusName = () => nicknameField.current?.focus();
-  /** 닉네임 칸 아래 붉은 말 하나 — 누른 뒤의 칸 오류 → 서버의 닉네임 거절 → 「중복 확인」을 눌렀는데 규칙에 안 맞은 말(웹과 같다) */
-  const nicknameError =
-    checks.messageOf('nickname') ?? (failure?.field === 'nickname' ? failure.message : null) ?? (checkTried ? missing : null);
 
   const check = async () => {
     if (missing !== null) {
@@ -177,8 +176,12 @@ function SignupForm({ form, onDone }: { form: Extract<SignupState, { kind: 'form
 
   const send = async () => {
     setFailure(null);
-    setCheckTried(false);
-    if (!checks.press()) return;
+    if (gap !== null) {
+      setTried(true);
+      if (gap.field === 'nickname') focusName();
+      return;
+    }
+    setTried(false);
     setWorking(true);
     const result = await completeSignup(client, {
       nickname,
@@ -197,7 +200,7 @@ function SignupForm({ form, onDone }: { form: Extract<SignupState, { kind: 'form
   return (
     <CardFrame style={styles.form}>
       {needsName && (
-        <View ref={checks.anchor('nickname', focusName)} style={styles.group}>
+        <View style={styles.group}>
           <FieldLabel>{SIGNUP_LABEL.nickname}</FieldLabel>
           <View style={styles.nameRow}>
             <View style={styles.nameField}>
@@ -208,7 +211,7 @@ function SignupForm({ form, onDone }: { form: Extract<SignupState, { kind: 'form
                 maxLength={NICKNAME_MAX}
                 autoCapitalize="none"
                 placeholder={`${NICKNAME_MIN}~${NICKNAME_MAX}자`}
-                error={nicknameError}
+                refused={shownGap?.field === 'nickname' || refusedHere('nickname') || (checkTried && missing !== null)}
                 onChange={(typed) => {
                   setNickname(typed);
                   if (failure?.field === 'nickname') setFailure(null);
@@ -222,7 +225,8 @@ function SignupForm({ form, onDone }: { form: Extract<SignupState, { kind: 'form
               {answer.available ? NICKNAME_AVAILABLE_NOTE : NICKNAME_TAKEN_NOTE}
             </WordText>
           )}
-          <FieldErrorLine message={nicknameError} />
+          {checkTried && missing !== null && <WordText style={styles.failure}>{missing}</WordText>}
+          {refusedHere('nickname') && <WordText style={styles.failure}>{failure?.message}</WordText>}
           <WordText style={styles.fine}>{SIGNUP_LABEL.nicknameNote}</WordText>
         </View>
       )}
@@ -238,20 +242,14 @@ function SignupForm({ form, onDone }: { form: Extract<SignupState, { kind: 'form
       </Tile>
 
       {/* 만 14세 이상 — 필수 확인(ADR 0231), 웹과 같은 자리 */}
-      <View ref={checks.anchor('age')}>
-        <CheckRow checked={fourteen} onToggle={setFourteen} refused={checks.messageOf('age') !== null}>
-          <WordText style={styles.checkLabel}>{SIGNUP_AGE_LABEL}</WordText>
-        </CheckRow>
-        <FieldErrorLine message={checks.messageOf('age')} />
-      </View>
+      <CheckRow checked={fourteen} onToggle={setFourteen} refused={shownGap?.field === 'age'}>
+        <WordText style={styles.checkLabel}>{SIGNUP_AGE_LABEL}</WordText>
+      </CheckRow>
 
-      <View ref={checks.anchor('ack')}>
-        <CheckRow checked={acknowledged} onToggle={setAcknowledged} refused={checks.messageOf('ack') !== null}>
-          <WordText style={styles.checkLabel}>{NOTICE_ACK_LABEL}</WordText>
-          <WordText style={styles.note}>{NOTICE_ACK_NOTE}</WordText>
-        </CheckRow>
-        <FieldErrorLine message={checks.messageOf('ack')} />
-      </View>
+      <CheckRow checked={acknowledged} onToggle={setAcknowledged} refused={shownGap?.field === 'ack'}>
+        <WordText style={styles.checkLabel}>{NOTICE_ACK_LABEL}</WordText>
+        <WordText style={styles.note}>{NOTICE_ACK_NOTE}</WordText>
+      </CheckRow>
 
       <View style={styles.group}>
         <FieldLabel>{SIGNUP_LABEL.optional}</FieldLabel>
@@ -271,6 +269,7 @@ function SignupForm({ form, onDone }: { form: Extract<SignupState, { kind: 'form
 
       <View style={styles.action}>
         {failure !== null && failure.field === null && <WordText style={styles.failure}>{failure.message}</WordText>}
+        {shownGap !== null && <WordText style={styles.failure}>{shownGap.message}</WordText>}
         <PrimaryButton
           label={working ? SIGNUP_LABEL.signingUp : again ? SIGNUP_LABEL.confirm : SIGNUP_LABEL.signUp}
           onPress={send}

@@ -12,12 +12,13 @@ import { asPosix, filesUnder } from './ui/source-files';
 
 const KEPT: Readonly<Record<string, { count: number; why: string }>> = {
   'app/error-screen.tsx': { count: 1, why: '화면 전체의 오류 경계 — 화면 안의 줄이 아니다' },
-  /* 단추 곁의 빈 칸 안내(첫 화면 궁합 · 사주 · 가입)는 칸 아래 줄(`app/ui/field-error.tsx`)로 갔다(ADR 0252) */
+  'app/pair-taste.tsx': { count: 1, why: '누른 단추 곁의 빈 칸 안내 — 단추가 aria-describedby 로 가리킨다' },
   'app/saju-calculator.tsx': {
-    count: 1,
-    why: '계산이 거절한 입력을 결과 자리에 세우는 카드(주소로 들어온 입력 — 고칠 입력을 말한다)',
+    count: 2,
+    why: '단추 곁의 빈 칸 안내 · 계산이 거절한 입력을 결과 자리에 세우는 카드(고칠 입력을 말한다)',
   },
   'app/me/compat/screen.tsx': { count: 1, why: '같은 사람을 둘 고른 것을 결과 자리에 세우는 카드 — 고를 것을 말한다' },
+  'app/signup/form.tsx': { count: 4, why: '칸 곁의 거절 · 검증 문장 — 칸이 aria-describedby 로 가리킨다' },
   /* 옮길 자리인데 다른 작업이 맡았다 — 줄어들기만 한다 */
   'app/me/chat/composer.tsx': { count: 1, why: '채팅 작업이 맡은 파일 — 옮길 자리(ADR 0164 「덧」)' },
 };

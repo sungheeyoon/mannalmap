@@ -1,18 +1,16 @@
 'use client';
 
-import { useRef, useState, useTransition } from 'react';
+import { useState, useTransition } from 'react';
 
 import { BirthFields } from '../birth-form';
 import { BUTTON_PRIMARY } from '../ui/buttons';
 import { ElementSymbol } from '../ui/element-symbol';
 import { PAPER, TYPE_TITLE } from '../ui/surfaces';
 import { ELEMENTS } from '@/src/lib/saju';
-import { birthFieldErrors } from '@/src/lib/input/field-errors';
-import { DEFAULT_QUERY, type Query } from '@/src/lib/input/query';
+import { DEFAULT_QUERY, missingAnswer, type Query } from '@/src/lib/input/query';
 import { saveSelfPerson } from './actions';
 import { actionAnswer } from '../ui/action-answer';
 import { FailureLine } from '../ui/failure-line';
-import { useFieldErrors } from '../ui/field-error';
 
 /**
  * 자기 사주를 한 번 등록하는 화면.
@@ -31,12 +29,9 @@ export function Onboarding({ nickname }: { nickname: string }) {
   const [failure, setFailure] = useState<string | null>(null);
   const [saving, startSaving] = useTransition();
 
-  /* 단추를 잠그지 않는다 — 누르면 고칠 칸이 붉고 그 칸 아래에서 말한다(ADR 0252). 이름은 닉네임이라 안 묻는다 */
-  const root = useRef<HTMLElement>(null);
-  const checks = useFieldErrors(birthFieldErrors(query, { name: false }), root);
+  const missing = missingAnswer(query);
 
   const save = () => {
-    if (!checks.press()) return;
     setFailure(null);
     startSaving(async () => {
       const result = await actionAnswer(saveSelfPerson(query));
@@ -50,7 +45,7 @@ export function Onboarding({ nickname }: { nickname: string }) {
       종이 여백 24px 에 판 안쪽 16px 이 겹치면 320px 폭에서 숫자 칸의 자리표시(「1~12」)가 칸을 넘는다.
       넓은 화면에서 종이의 폭은 놓이는 기둥이 정한다(`COLUMN`, `(home)/page.tsx`).
     */
-    <section ref={root} className={`${PAPER} flex w-full flex-col gap-6 max-sm:px-3`}>
+    <section className={`${PAPER} flex w-full flex-col gap-6 max-sm:px-3`}>
       <span aria-hidden="true" className="flex gap-2 max-sm:px-3">
         {ELEMENTS.map((element) => (
           <ElementSymbol key={element} element={element} className="size-10 rounded-full bg-[var(--tile)] p-2 sm:size-12" />
@@ -63,12 +58,14 @@ export function Onboarding({ nickname }: { nickname: string }) {
         </p>
       </header>
 
-      <BirthFields value={query} onChange={setQuery} showName={false} surface="panel" errors={checks.shown} />
+      <BirthFields value={query} onChange={setQuery} showName={false} surface="panel" />
 
       <div className="flex flex-wrap items-center gap-3 max-sm:px-3">
-        <button type="button" onClick={save} disabled={saving} className={BUTTON_PRIMARY}>
+        <button type="button" onClick={save} disabled={missing !== null || saving} className={BUTTON_PRIMARY}>
           {saving ? '저장하는 중…' : '내 사주로 저장'}
         </button>
+        {/* 버튼을 잠근 이유를 그대로 말한다 — 잠긴 버튼만 있으면 왜인지 알 수 없다 */}
+        {missing !== null && <span className="text-small text-secondary">{missing}</span>}
       </div>
 
       {failure !== null && <FailureLine className="max-sm:px-3">저장하지 못했어요. {failure}</FailureLine>}

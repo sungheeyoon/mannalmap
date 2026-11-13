@@ -13,7 +13,7 @@ import {
   SIGNUP_NOTICE_DISCOVERY,
   SIGNUP_NOTICE_KEEP,
   SIGNUP_NOTICE_USE,
-  signupErrors,
+  signupGap,
   type SignupField,
 } from '@/src/lib/consent';
 import {
@@ -29,11 +29,11 @@ import { checkNickname } from '../nickname';
 import { BUTTON_PRIMARY, BUTTON_SECONDARY_SMALL_FACE } from '../ui/buttons';
 import { completeSignup } from './actions';
 import { actionAnswer } from '../ui/action-answer';
-import { FIELD } from '../ui/fields';
-import { FailureLine } from '../ui/failure-line';
-import { FieldErrorLine, invalidProps, useFieldErrors } from '../ui/field-error';
+import { FIELD as FIELD_BASE } from '../ui/fields';
+import { FAILURE_TEXT, FailureLine } from '../ui/failure-line';
 
 /** 입력 칸 — 프로필 화면과 같은 칸(`app/ui/fields.ts`)에, 거절된 칸은 테가 붉다 */
+const FIELD = `${FIELD_BASE} aria-invalid:border-danger`;
 
 /**
  * 확인 상자 한 줄 — 줄 전체가 누를 자리이고, 고르면 먹색 테와 크림 면이 선다(상자도 그대로 남는다). 초점 테는 전역 초점 테두리와
@@ -94,21 +94,25 @@ export function SignupForm({
   /*
     **단추를 잠그지 않고, 누르면 거절한다** — 내 사주 등록(`app/saju-calculator.tsx`)과 같은 방식이다. 잠근 단추 옆에
     닉네임 규칙만 서 있어, 코드가 비었거나 확인을 안 한 사람은 왜 안 눌리는지 몰랐다(2026-10-09 화면 점검).
-    눌렀을 때 **걸린 칸마다** 테가 붉고 그 칸 아래에 말이 서며, 초점은 첫 칸으로 간다(ADR 0252). 고친 칸의 말은 그 자리에서 사라진다.
+    눌렀을 때 **위에서부터 처음 걸린 칸 하나**를 말하고 그 칸으로 초점을 옮긴다. 칸을 고치면 말도 다음 칸으로 넘어간다.
   */
-  const formRef = useRef<HTMLFormElement>(null);
+  const [tried, setTried] = useState(false);
   const nicknameField = useRef<HTMLInputElement>(null);
-  const checks = useFieldErrors(signupErrors({ nicknameGap: missing, fourteen, acknowledged }), formRef);
+  const ageField = useRef<HTMLInputElement>(null);
+  const ackField = useRef<HTMLInputElement>(null);
+  const gap = signupGap({ nicknameGap: missing, fourteen, acknowledged });
+  const shownGap = tried ? gap : null;
   /** 「중복 확인」을 눌렀는데 닉네임이 규칙에 안 맞았나 — 그 말이 닉네임 칸 아래에 선다 */
   const [checkTried, setCheckTried] = useState(false);
-  /**
-   * 닉네임 칸 아래의 붉은 말 하나 — 누른 뒤의 칸 오류, 서버가 닉네임을 거절한 말(중복 · 길이), 「중복 확인」을 눌렀는데 규칙에 안 맞은
-   * 말의 차례다. 한 칸 아래에 붉은 줄이 둘 서지 않는다.
-   */
-  const nicknameError =
-    checks.messageOf('nickname') ??
-    (failure?.field === 'nickname' ? failure.message : null) ??
-    (checkTried ? missing : null);
+  const refusedHere = (field: SignupField) => failure !== null && failure.field === field;
+  const invalid = (field: 'nickname' | 'age' | 'ack') =>
+    shownGap?.field === field
+      ? { 'aria-invalid': true, 'aria-describedby': 'signup-gap' }
+      : field === 'nickname' && refusedHere(field)
+        ? { 'aria-invalid': true, 'aria-describedby': `signup-${field}-refused` }
+        : field === 'nickname' && checkTried && missing !== null
+          ? { 'aria-invalid': true, 'aria-describedby': 'signup-nickname-check' }
+          : {};
 
   /**
    * **「중복 확인」도 잠그지 않는다** — 닉네임이 규칙에 안 맞으면 누른 그때 그 칸 아래에 말하고 칸으로 초점을 옮긴다
@@ -131,8 +135,12 @@ export function SignupForm({
 
   const send = () => {
     setFailure(null);
-    setCheckTried(false);
-    if (!checks.press()) return;
+    if (gap !== null) {
+      setTried(true);
+      ({ nickname: nicknameField, age: ageField, ack: ackField })[gap.field].current?.focus();
+      return;
+    }
+    setTried(false);
     startWorking(async () => {
       /*
         **성공하면 이 줄 아래로 안 온다.** 서버 액션이 스스로 목적지로 보낸다 — 여기서
@@ -158,7 +166,6 @@ export function SignupForm({
   return (
     /* 폼이다 — 칸에서 Enter · 자판의 「이동」이 곧 가입이다. 「중복 확인」은 제출이 아니다(`type="button"`) */
     <form
-      ref={formRef}
       onSubmit={(event) => {
         event.preventDefault();
         if (!working) send();
@@ -179,7 +186,7 @@ export function SignupForm({
             <input
               id="signup-nickname"
               ref={nicknameField}
-              {...invalidProps('signup-nickname-error', nicknameError)}
+              {...invalid('nickname')}
               type="text"
               value={nickname}
               onChange={(event) => {
@@ -215,7 +222,16 @@ export function SignupForm({
           >
             {answer === null ? '' : answer.available ? NICKNAME_AVAILABLE_NOTE : NICKNAME_TAKEN_NOTE}
           </p>
-          <FieldErrorLine id="signup-nickname-error" message={nicknameError} />
+          {checkTried && missing !== null && (
+            <p id="signup-nickname-check" role="alert" className={`${FAILURE_TEXT} font-medium`}>
+              {missing}
+            </p>
+          )}
+          {refusedHere('nickname') && (
+            <p id="signup-nickname-refused" role="alert" className={`${FAILURE_TEXT} font-medium`}>
+              {failure?.message}
+            </p>
+          )}
 
           <p className="text-small leading-5 text-muted">{SIGNUP_LABEL.nicknameNote}</p>
         </div>
@@ -245,20 +261,21 @@ export function SignupForm({
         <input
           type="checkbox"
           id="signup-age"
-          {...invalidProps('signup-age-error', checks.messageOf('age'))}
+          ref={ageField}
+          {...invalid('age')}
           checked={fourteen}
           onChange={(event) => setFourteen(event.target.checked)}
           className="mt-0.5 size-5 shrink-0 accent-[var(--accent)]"
         />
         <span className="block text-sm font-semibold">{SIGNUP_AGE_LABEL}</span>
       </label>
-      <FieldErrorLine id="signup-age-error" message={checks.messageOf('age')} className="-mt-4" />
 
       <label htmlFor="notice-ack" className={BOX}>
         <input
           type="checkbox"
           id="notice-ack"
-          {...invalidProps('signup-ack-error', checks.messageOf('ack'))}
+          ref={ackField}
+          {...invalid('ack')}
           checked={acknowledged}
           onChange={(event) => setAcknowledged(event.target.checked)}
           className="mt-0.5 size-5 shrink-0 accent-[var(--accent)]"
@@ -268,7 +285,6 @@ export function SignupForm({
           <span className="mt-1 block text-sm leading-6 text-secondary">{NOTICE_ACK_NOTE}</span>
         </span>
       </label>
-      <FieldErrorLine id="signup-ack-error" message={checks.messageOf('ack')} className="-mt-4" />
 
       {/*
         **기본값은 꺼짐이다.** 미리 켜 두면 고른 것이 아니라 안 끈 것이 되고, 그것을
@@ -305,9 +321,20 @@ export function SignupForm({
       )}
 
       <div className="flex flex-col gap-2 border-t border-border pt-5 sm:flex-row sm:items-center sm:gap-3">
-        <button type="submit" disabled={working} className={BUTTON_PRIMARY}>
+        <button
+          type="submit"
+          disabled={working}
+          aria-describedby={shownGap !== null ? 'signup-gap' : undefined}
+          className={BUTTON_PRIMARY}
+        >
           {working ? SIGNUP_LABEL.signingUp : firstSignup ? SIGNUP_LABEL.signUp : SIGNUP_LABEL.confirm}
         </button>
+        {/* 눌렀는데 못 간 이유를 단추 옆에서 말한다 — 누르기 전에는 이 자리가 비어 있다 */}
+        {shownGap !== null && (
+          <p id="signup-gap" role="alert" className={`${FAILURE_TEXT} font-medium`}>
+            {shownGap.message}
+          </p>
+        )}
       </div>
     </form>
   );

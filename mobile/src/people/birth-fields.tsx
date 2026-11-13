@@ -1,4 +1,4 @@
-import { useRef, useState, type ComponentRef, type Ref } from 'react';
+import { useRef, useState, type ComponentRef } from 'react';
 import { Keyboard, Pressable, StyleSheet, TextInput, View } from 'react-native';
 
 import { BUTTON_OFF_OPACITY } from '@design';
@@ -8,9 +8,6 @@ import { ADVANCED_SETTINGS, HOUR_UNKNOWN_HINT } from '@input/copy';
 import { BIRTH_CITY_OPTIONS, BIRTH_DIGIT_LABEL, BIRTH_SELECT_LABEL, DEFAULT_QUERY, HOUR_UNKNOWN_CHOICE, NAME_MAX, TIME_BASES, TIME_BASIS, type Query } from '@input/query';
 import { CALENDARS, CALENDAR_KO, GENDERS, GENDER_KO, SUPPORTED_YEAR_RANGE, type CityName, type LateNightRule } from '@saju';
 
-import { dateDigitWrong, timeDigitWrong, type BirthField } from '@input/field-errors';
-
-import { FieldErrorLine } from '@/ui/field-error';
 import { FoldIcon } from '@/ui/icons';
 import { Choices, DigitField, Field, FieldLabel, Select } from '@/ui/parts';
 import { COLOR, FONT, RADIUS, TYPE } from '@/ui/tokens';
@@ -83,18 +80,12 @@ export function BirthFields({
   namePlaceholder,
   showName = true,
   disabled = false,
-  errors = {},
-  anchor,
 }: {
   form: ReturnType<typeof useBirthForm>;
   namePlaceholder?: string;
   showName?: boolean;
   /** 저장하는 동안 칸 · 고르기를 다 잠근다 — 저장이 끝나 폼이 비면 그 사이 고친 값이 사라진다 */
   disabled?: boolean;
-  /** 누른 뒤 칸 아래에 설 말 — 쓰는 화면이 `useFieldErrors(birthFieldErrors(…))` 로 넘긴다(ADR 0252). 없으면 아무 칸도 안 붉다 */
-  errors?: Partial<Record<BirthField, string | null>>;
-  /** 누른 뒤 데려갈 칸의 자리 — `useFieldErrors` 의 `anchor` */
-  anchor?: (field: BirthField, focus?: () => void) => Ref<ComponentRef<typeof View>>;
 }) {
   const { query, values, set, chooseHour } = form;
   const monthRef = useRef<ComponentRef<typeof TextInput>>(null);
@@ -105,24 +96,14 @@ export function BirthFields({
   const { years, maxDay } = limitsOf(values.calendar, values.year, values.month);
   const refused = dateRefusal(query)?.part ?? null;
   const converted = convertedLine(query);
-  const nameRef = useRef<ComponentRef<typeof TextInput>>(null);
-  const yearRef = useRef<ComponentRef<typeof TextInput>>(null);
-
-  /* 누른 뒤 붉힐 칸 — 웹 `birth-digits.tsx` 와 같은 셈: 어긋난 칸을 짚었으면 그 칸, 아니면 덜 적은 칸 · 범위 밖인 시각 칸 */
-  const dateWrong = (part: 'year' | 'month' | 'day') => errors.date != null && dateDigitWrong(part, values[part], refused);
-  const timeWrong = (one: string, max: number) => errors.hour != null && timeDigitWrong(one, max);
-  const dateFocus = () => (dateWrong('month') ? monthRef : dateWrong('day') ? dayRef : yearRef).current?.focus();
 
   return (
     <View style={styles.fields}>
       <View style={styles.pair}>
         {showName && (
-          <View
-            // eslint-disable-next-line react-hooks/refs -- 초점 함수는 누른 뒤 효과에서만 부른다(`useFieldErrors`) - 렌더 중에 ref 를 안 읽는다
-            ref={anchor?.('name', () => nameRef.current?.focus())} style={styles.half}>
+          <View style={styles.half}>
             <FieldLabel>이름</FieldLabel>
-            <Field inputRef={nameRef} value={values.name} onChange={set.setName} maxLength={NAME_MAX} placeholder={namePlaceholder} label="이름" disabled={disabled} error={errors.name} />
-            <FieldErrorLine message={errors.name} />
+            <Field value={values.name} onChange={set.setName} maxLength={NAME_MAX} placeholder={namePlaceholder} label="이름" disabled={disabled} />
           </View>
         )}
         <View style={styles.half}>
@@ -131,18 +112,14 @@ export function BirthFields({
         </View>
       </View>
 
-      <View
-        // eslint-disable-next-line react-hooks/refs -- 초점 함수는 누른 뒤 효과에서만 부른다(`useFieldErrors`) - 렌더 중에 ref 를 안 읽는다
-        ref={anchor?.('date', dateFocus)} style={styles.group}>
+      <View style={styles.group}>
         <FieldLabel>생년월일</FieldLabel>
         <View style={styles.row}>
-          <DigitField inputRef={yearRef} value={values.year} onChange={set.setYear} label={BIRTH_DIGIT_LABEL.year} error={dateWrong('year') ? errors.date : null} disabled={disabled} unit="년" placeholder={String(years.max - 30)} digits={4} min={years.min} max={years.max} onFull={() => monthRef.current?.focus()} />
-          <DigitField inputRef={monthRef} value={values.month} onChange={set.setMonth} label={BIRTH_DIGIT_LABEL.month} error={dateWrong('month') ? errors.date : null} disabled={disabled} unit="월" placeholder="1~12" digits={2} min={1} max={12} advanceEarly onFull={() => dayRef.current?.focus()} />
-          <DigitField inputRef={dayRef} value={values.day} onChange={set.setDay} label={BIRTH_DIGIT_LABEL.day} error={dateWrong('day') ? errors.date : null} disabled={disabled} unit="일" placeholder={`1~${maxDay}`} digits={2} min={1} max={maxDay} advanceEarly onFull={() => (values.hourChoice === 'known' ? hourRef.current?.focus() : Keyboard.dismiss())} />
+          <DigitField value={values.year} onChange={set.setYear} label={BIRTH_DIGIT_LABEL.year} disabled={disabled} unit="년" placeholder={String(years.max - 30)} digits={4} min={years.min} max={years.max} refused={refused === 'year'} onFull={() => monthRef.current?.focus()} />
+          <DigitField inputRef={monthRef} value={values.month} onChange={set.setMonth} label={BIRTH_DIGIT_LABEL.month} disabled={disabled} unit="월" placeholder="1~12" digits={2} min={1} max={12} advanceEarly refused={refused === 'month'} onFull={() => dayRef.current?.focus()} />
+          <DigitField inputRef={dayRef} value={values.day} onChange={set.setDay} label={BIRTH_DIGIT_LABEL.day} disabled={disabled} unit="일" placeholder={`1~${maxDay}`} digits={2} min={1} max={maxDay} advanceEarly refused={refused === 'day'} onFull={() => (values.hourChoice === 'known' ? hourRef.current?.focus() : Keyboard.dismiss())} />
         </View>
-        <FieldErrorLine message={errors.date} />
-        {/* 못 바꾼 까닭은 누르기 전에는 회색 덧말, 누른 뒤에는 칸 아래 붉은 줄이 같은 말을 하므로 비킨다(ADR 0252) */}
-        {converted !== null && (converted.ok || errors.date == null) && <WordText style={styles.converted}>{converted.text}</WordText>}
+        {converted !== null && <WordText style={[styles.converted, !converted.ok && styles.refused]}>{converted.text}</WordText>}
         <View style={styles.row}>
           <Choices disabled={disabled} value={values.calendar} onPick={set.setCalendar} options={CALENDARS.map((one) => ({ value: one, label: CALENDAR_KO[one] }))} />
         </View>
@@ -157,23 +134,15 @@ export function BirthFields({
       </View>
 
       {values.hourChoice === 'known' && (
-        <View
-          // eslint-disable-next-line react-hooks/refs -- 초점 함수는 누른 뒤 효과에서만 부른다(`useFieldErrors`) - 렌더 중에 ref 를 안 읽는다
-          ref={anchor?.('hour', () => (timeWrong(values.hour, 23) ? hourRef : minuteRef).current?.focus())} style={styles.hourBlock}>
         <View style={styles.rail}>
           <View style={styles.railHead}>
             <WordText style={styles.railLabel}>시각</WordText>
             <WordText style={styles.railNote}>24시간</WordText>
           </View>
           <View style={styles.railBody}>
-            <DigitField inputRef={hourRef} value={values.hour} onChange={set.setHour} label={BIRTH_DIGIT_LABEL.hour} error={timeWrong(values.hour, 23) ? errors.hour : null} disabled={disabled} unit="시" placeholder="0~23" digits={2} min={0} max={23} onFull={() => minuteRef.current?.focus()} />
-            <DigitField inputRef={minuteRef} value={values.minute} onChange={set.setMinute} label={BIRTH_DIGIT_LABEL.minute} error={timeWrong(values.minute, 59) ? errors.hour : null} disabled={disabled} unit="분" placeholder="0~59" digits={2} min={0} max={59} onFull={Keyboard.dismiss} />
+            <DigitField inputRef={hourRef} value={values.hour} onChange={set.setHour} label={BIRTH_DIGIT_LABEL.hour} disabled={disabled} unit="시" placeholder="0~23" digits={2} min={0} max={23} onFull={() => minuteRef.current?.focus()} />
+            <DigitField inputRef={minuteRef} value={values.minute} onChange={set.setMinute} label={BIRTH_DIGIT_LABEL.minute} disabled={disabled} unit="분" placeholder="0~59" digits={2} min={0} max={59} onFull={Keyboard.dismiss} />
           </View>
-        </View>
-        {/* 시각 칸의 왼쪽 끝(이름표 단 64 + 8)에 맞춘다 */}
-        <View style={styles.railError}>
-          <FieldErrorLine message={errors.hour} />
-        </View>
         </View>
       )}
 
@@ -220,9 +189,8 @@ const styles = StyleSheet.create({
   railLabel: { width: 64, minHeight: 44, lineHeight: 44, fontSize: TYPE.small, fontFamily: FONT.bold, color: COLOR.secondary },
   railNote: { fontFamily: FONT.medium, fontSize: TYPE.fine, color: COLOR.muted, marginTop: -14 },
   railBody: { flex: 1, flexDirection: 'row', gap: 6 },
-  hourBlock: { gap: 0 },
-  railError: { marginLeft: 72 },
   converted: { fontFamily: FONT.medium, fontSize: TYPE.small, color: COLOR.secondary, marginVertical: 2 },
+  refused: { color: COLOR.danger },
   off: { opacity: BUTTON_OFF_OPACITY },
   disclosure: { minHeight: 44, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 14, borderRadius: RADIUS.cell, borderWidth: 1, borderColor: COLOR.borderStrong, backgroundColor: COLOR.surface },
   choiceHint: { marginLeft: 72, fontFamily: FONT.medium, fontSize: TYPE.fine, lineHeight: 16, color: COLOR.secondary },

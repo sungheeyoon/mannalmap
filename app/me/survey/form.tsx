@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useId, useMemo, useRef, useState, useTransition } from 'react';
+import { useEffect, useMemo, useState, useTransition } from 'react';
 
 import {
   EMPTY_ANSWERS,
@@ -28,7 +28,7 @@ import {
   WANT_OPTIONS,
   afterPicking,
   draftSaver,
-  surveyErrors,
+  isAnswered,
   withoutHidden,
   type DraftState,
   type PriceOption,
@@ -42,7 +42,6 @@ import type { MySurvey, SurveyContext } from './read';
 import { TYPE_SECTION } from '../../ui/surfaces';
 import { actionAnswer } from '../../ui/action-answer';
 import { FailureLine } from '../../ui/failure-line';
-import { FieldErrorLine, invalidProps, useFieldErrors } from '../../ui/field-error';
 import { useLeaveGuard } from '../../ui/leave-guard';
 
 /**
@@ -61,8 +60,8 @@ import { useLeaveGuard } from '../../ui/leave-guard';
  * 보내면 안 물어본 문항의 답이 저장된다. 서버도 같은 것을 하지만(그쪽이 진짜 문이다)
  * 여기서도 하는 것은, 화면에 안 보이는 값이 요청에 실려 나가지 않게 하기 위해서다.
  */
-/** 문항 한 장 — 무리 지은 목록과 같은 흰 판. 고칠 문항이면(누른 뒤) 테가 붉다(ADR 0252) */
-const PANEL = 'flex flex-col gap-3 rounded-card border border-border bg-surface p-5 sm:p-6 has-[[aria-invalid=true]]:border-danger';
+/** 문항 한 장 — 무리 지은 목록과 같은 흰 판 */
+const PANEL = 'flex flex-col gap-3 rounded-card border border-border bg-surface p-5 sm:p-6';
 
 /** 문항의 물음 — 본문보다 확실히 크고 굵게. 긴 문장이라 둥근 서체 대신 시스템 서체다 */
 const ASK = 'block text-lead font-bold leading-7 text-foreground';
@@ -83,9 +82,6 @@ export function SurveyForm({ context, given }: { context: SurveyContext; given: 
   const [unsaved, setUnsaved] = useState(false);
   const [failure, setFailure] = useState<string | null>(null);
   const [sending, startSending] = useTransition();
-  /* 단추를 잠그지 않는다 — 아무것도 안 답하고 누르면 첫 문항이 붉고 거기로 데려간다(ADR 0252) */
-  const root = useRef<HTMLDivElement>(null);
-  const checks = useFieldErrors(surveyErrors(answers), root);
 
   /*
     초안 저장의 차례는 앱과 한 벌이다(`draftSaver`) — 손이 멈춘 뒤에 보내고, 떠날 때 안 간 것을 곧바로 보내고, 제출도 같은 줄에
@@ -137,7 +133,6 @@ export function SurveyForm({ context, given }: { context: SurveyContext; given: 
   */
   const send = () => {
     setFailure(null);
-    if (!checks.press()) return;
     startSending(async () => {
       const value = withoutHidden(answers, shown);
       /* 제출도 초안과 같은 줄에 선다 — 떠난 초안이 닿은 뒤에 떠나고, 그 사이 기다리던 초안은 걷힌다 */
@@ -186,7 +181,7 @@ export function SurveyForm({ context, given }: { context: SurveyContext; given: 
   const step = (n: number) => `${n}/${total}`;
 
   return (
-    <div ref={root} className="flex flex-col gap-5">
+    <div className="flex flex-col gap-5">
       <p className="px-1 text-small leading-5 text-secondary">{SURVEY_COPY.autosave}</p>
 
       {/* 보내는 동안 문항 · 자유 의견이 모두 잠긴다 — `contents` 라 카드 사이 간격은 바깥 줄이 그대로 든다 */}
@@ -200,7 +195,6 @@ export function SurveyForm({ context, given }: { context: SurveyContext; given: 
           sole={SOLE_CHOICES.liked}
           picked={answers.liked}
           onPick={(next) => pick('liked', next)}
-          error={checks.messageOf('liked')}
         />
 
         <Picks
@@ -330,7 +324,7 @@ export function SurveyForm({ context, given }: { context: SurveyContext; given: 
           <button
             type="button"
             onClick={send}
-            disabled={sending}
+            disabled={sending || !isAnswered(answers)}
             className={BUTTON_PRIMARY}
           >
             {submittedAt === null ? SURVEY_COPY.submit : SURVEY_COPY.resubmit}
@@ -390,7 +384,6 @@ function Picks<T extends string>({
   picked,
   onPick,
   nested = false,
-  error = null,
   children,
 }: {
   /** 카드 차례(「1/7」) — 안에 든 문항(`nested`)은 안 단다 */
@@ -404,11 +397,8 @@ function Picks<T extends string>({
   picked: readonly T[];
   onPick: (next: T[]) => void;
   nested?: boolean;
-  /** 누른 뒤 이 문항 아래에 설 붉은 말(ADR 0252) */
-  error?: string | null;
   children?: React.ReactNode;
 }) {
-  const errorId = useId();
   return (
     <fieldset className={nested ? 'flex flex-col gap-3 border-t border-border pt-4' : PANEL}>
       <legend className="contents">
@@ -424,14 +414,12 @@ function Picks<T extends string>({
               type="checkbox"
               checked={picked.includes(option)}
               onChange={() => onPick(afterPicking(picked, option, sole))}
-              {...invalidProps(errorId, error)}
               className="size-5 shrink-0 accent-[var(--accent)]"
             />
             <span>{label[option]}</span>
           </label>
         ))}
       </div>
-      <FieldErrorLine id={errorId} message={error} />
       {children}
     </fieldset>
   );

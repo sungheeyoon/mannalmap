@@ -20,7 +20,7 @@
 `src/lib`·`scripts`·`e2e`·`app/**/*.ts` 에서 금지다. 읽는 확장자는 `.ts .mts .cts .tsx .js .mjs .cjs`
 로, 린트와 시험이 같은 목록을 든다.
 
-**도메인 lib 끼리 지금 열려 있는 방향은 열아홉이다.** `scripts/layers.test.ts` 의 허용 목록과
+**도메인 lib 끼리 지금 열려 있는 방향은 열여덟이다.** `scripts/layers.test.ts` 의 허용 목록과
 같은 표이고, 새 방향을 열면 둘을 함께 고친다. 순환은 없다 — `discovery ↔ matching` 이 서로를
 부르던 것을 2026-09-22 에 축 파일(`element-axes`)을 `discovery` 로 옮겨 끊었다.
 
@@ -31,7 +31,6 @@
 | `discovery` | `saju` |
 | `input` | `saju` · `local-env` |
 | `matching` | `consent` · `db` · `discovery` · `presence` · `profile` · `reading` · `saju`(인연 탭의 행 옮김과 덱을 웹 · 앱이 함께 쓴다, G-123) |
-| `people` | `input`(궁합 두 칸의 칸별 오류가 적는 칸에 출생 정보 폼의 판정을 쓴다, ADR 0252) |
 | `reading` | `discovery` · `people` · `saju` |
 
 **`src/lib/db` 는 타입만 낸다.** 생성된 `Database` 와 `rpcArgs` 다(ADR 0078). 호출은 없다.

@@ -1,6 +1,6 @@
 import { router, type Href } from 'expo-router';
 import type { ReactNode } from 'react';
-import { KeyboardAvoidingView, Platform, Pressable, StyleSheet, View } from 'react-native';
+import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { accountFailureOf, accountNoticeOf, type AccountState } from '@account/index';
@@ -17,7 +17,6 @@ import { StemSymbol } from '@/ui/stem-symbol';
 import { FailureLine } from '@/ui/failure-line';
 import { Scrim } from '@/ui/scrim';
 import { CardFrame, SheetPanel } from '@/ui/surfaces';
-import { FieldScrollView } from '@/ui/field-error';
 import { WordText } from '@/ui/word-text';
 
 /** 아직 없는 경로도 그대로 잇는다 — 나란히 짓는 화면이 그 자리에 선다 */
@@ -26,10 +25,9 @@ export const go = (path: string) => router.push(path as Href);
 /** 한 화면의 틀 — `bar` 는 스크롤 밖 맨 위 줄이다. `/me` 아래 틀이라 위는 머리나 맨 위 줄이, 아래는 탭이 안전 영역을 낸다 */
 export function ScreenFrame({ children, keyboard = false, bar }: { children: ReactNode; keyboard?: boolean; bar?: ReactNode }) {
   const body = (
-    /* 폼이 든 화면이면 누른 뒤 첫 붉은 칸으로 데려간다(`FieldScrollView`, ADR 0252) */
-    <FieldScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled" keyboardDismissMode="on-drag">
+    <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled" keyboardDismissMode="on-drag">
       {children}
-    </FieldScrollView>
+    </ScrollView>
   );
   return (
     <SafeAreaView style={styles.screen} edges={['left', 'right']}>
