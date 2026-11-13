@@ -1,6 +1,6 @@
 import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { useCallback, useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 import { isBlocked } from '@account/index';
 import { findStatus, findsInList, pickable } from '@people/pick';
@@ -18,6 +18,7 @@ import { useLatestReads } from '@/ui/latest-reads';
 import { settled } from '@/ui/settled';
 import { UNREACHABLE } from '@/auth/signup';
 import { TopBar } from '@/ui/top-bar';
+import { WordText } from '@/ui/word-text';
 
 /** 저장한 사람 — 가족 · 친구를 관리하는 자리. 나는 여기 없다(`app/me/people/page.tsx`) */
 export default function PeopleScreen() {
@@ -80,8 +81,8 @@ export default function PeopleScreen() {
         수는 제 칸에서 줄어들지 않고, 설명만 접힌다. 웹은 수에 `whitespace-nowrap` 을 둔다(`app/me/people/page.tsx`)
       */}
       <View style={styles.lead}>
-        <Text style={[shared.body, styles.leadText]}>가족이나 친구의 출생 정보를 저장하고 관리하세요.</Text>
-        {slots !== null && <Text style={[shared.body, shared.bodyStrong, styles.count]}>{`${slots.used}/${slots.limit}명`}</Text>}
+        <WordText style={[shared.body, styles.leadText]}>가족이나 친구의 출생 정보를 저장하고 관리하세요.</WordText>
+        {slots !== null && <WordText style={[shared.body, shared.bodyStrong, styles.count]}>{`${slots.used}/${slots.limit}명`}</WordText>}
       </View>
 
       {isBlocked(state) ? (
@@ -98,7 +99,7 @@ export default function PeopleScreen() {
               {finds && (
                 <View style={styles.find}>
                   <Field value={typed} onChange={setTyped} placeholder="이름으로 찾기" label="이름으로 찾기" />
-                  {status.kind !== 'idle' && <Text style={shared.meta}>{status.kind === 'none' ? '찾는 사람이 없어요' : `검색 결과 ${status.count}명`}</Text>}
+                  {status.kind !== 'idle' && <WordText style={shared.meta}>{status.kind === 'none' ? '찾는 사람이 없어요' : `검색 결과 ${status.count}명`}</WordText>}
                 </View>
               )}
               {shown.map((person) => (

@@ -1,6 +1,6 @@
 import { router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useRef, useState, type ComponentRef } from 'react';
-import { KeyboardAvoidingView, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { KeyboardAvoidingView, ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { SIGN_OUT_PENDING } from '@account/copy';
@@ -36,6 +36,7 @@ import { COLOR, FONT, TYPE } from '@/ui/tokens';
 import { settled } from '@/ui/settled';
 import { goBack } from '@/ui/top-bar';
 import { Card, CardFrame, Paper, Tile } from '@/ui/surfaces';
+import { WordText } from '@/ui/word-text';
 
 const SIGN_OUT_FAILED = '로그아웃하지 못했어요. 다시 시도해 주세요.';
 
@@ -49,7 +50,7 @@ export default function SignupScreen() {
       <SafeAreaView style={styles.screen}>
         <ScrollView contentContainerStyle={styles.content}>
           <Card>
-            <Text style={styles.line}>{NOT_READY}</Text>
+            <WordText style={styles.line}>{NOT_READY}</WordText>
           </Card>
         </ScrollView>
       </SafeAreaView>
@@ -99,9 +100,9 @@ function Signup() {
         <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled" keyboardDismissMode="on-drag">
           <Paper style={styles.head}>
             <Logo size={44} />
-            <Text style={styles.eyebrow}>{head.eyebrow}</Text>
-            <Text style={styles.title}>{head.title}</Text>
-            <Text style={styles.headNote}>{head.note}</Text>
+            <WordText style={styles.eyebrow}>{head.eyebrow}</WordText>
+            <WordText style={styles.title}>{head.title}</WordText>
+            <WordText style={styles.headNote}>{head.note}</WordText>
           </Paper>
 
           {/* 다시 동의하는 사람은 가입을 이미 마쳤다 — 첫 가입에만 남은 단계를 말한다 */}
@@ -116,7 +117,7 @@ function Signup() {
             <FailureLine onRetry={() => setReads((n) => n + 1)}>{state.message}</FailureLine>
           ) : (
             <Card>
-              <Text style={styles.line}>{state.message}</Text>
+              <WordText style={styles.line}>{state.message}</WordText>
             </Card>
           )}
 
@@ -220,19 +221,19 @@ function SignupForm({ form, onDone }: { form: Extract<SignupState, { kind: 'form
             <SecondaryButton label={checking ? SIGNUP_LABEL.checking : SIGNUP_LABEL.check} onPress={check} disabled={checking} />
           </View>
           {answer !== null && (
-            <Text style={answer.available ? styles.note : styles.failure}>
+            <WordText style={answer.available ? styles.note : styles.failure}>
               {answer.available ? NICKNAME_AVAILABLE_NOTE : NICKNAME_TAKEN_NOTE}
-            </Text>
+            </WordText>
           )}
-          {checkTried && missing !== null && <Text style={styles.failure}>{missing}</Text>}
-          {refusedHere('nickname') && <Text style={styles.failure}>{failure?.message}</Text>}
-          <Text style={styles.fine}>{SIGNUP_LABEL.nicknameNote}</Text>
+          {checkTried && missing !== null && <WordText style={styles.failure}>{missing}</WordText>}
+          {refusedHere('nickname') && <WordText style={styles.failure}>{failure?.message}</WordText>}
+          <WordText style={styles.fine}>{SIGNUP_LABEL.nicknameNote}</WordText>
         </View>
       )}
 
       <Tile tone={COLOR.surfaceSunken} style={styles.notice}>
         <View style={styles.noticeHead}>
-          <Text style={styles.noticeTitle}>{SIGNUP_LABEL.noticeHead}</Text>
+          <WordText style={styles.noticeTitle}>{SIGNUP_LABEL.noticeHead}</WordText>
           {legalPagesOpen && <TextButton label={SIGNUP_LABEL.privacy} onPress={() => openLegalPage('/privacy')} />}
         </View>
         <NoticeLine>{SIGNUP_NOTICE_USE}</NoticeLine>
@@ -242,17 +243,17 @@ function SignupForm({ form, onDone }: { form: Extract<SignupState, { kind: 'form
 
       {/* 만 14세 이상 — 필수 확인(ADR 0231), 웹과 같은 자리 */}
       <CheckRow checked={fourteen} onToggle={setFourteen} refused={shownGap?.field === 'age'}>
-        <Text style={styles.checkLabel}>{SIGNUP_AGE_LABEL}</Text>
+        <WordText style={styles.checkLabel}>{SIGNUP_AGE_LABEL}</WordText>
       </CheckRow>
 
       <CheckRow checked={acknowledged} onToggle={setAcknowledged} refused={shownGap?.field === 'ack'}>
-        <Text style={styles.checkLabel}>{NOTICE_ACK_LABEL}</Text>
-        <Text style={styles.note}>{NOTICE_ACK_NOTE}</Text>
+        <WordText style={styles.checkLabel}>{NOTICE_ACK_LABEL}</WordText>
+        <WordText style={styles.note}>{NOTICE_ACK_NOTE}</WordText>
       </CheckRow>
 
       <View style={styles.group}>
         <FieldLabel>{SIGNUP_LABEL.optional}</FieldLabel>
-        <Text style={styles.note}>{OPTIONAL_CONSENT_NOTE}</Text>
+        <WordText style={styles.note}>{OPTIONAL_CONSENT_NOTE}</WordText>
       </View>
       {OPTIONAL_CONSENTS.map((one) => (
         <CheckRow
@@ -260,15 +261,15 @@ function SignupForm({ form, onDone }: { form: Extract<SignupState, { kind: 'form
           checked={chosen[one.key] === true}
           onToggle={(next) => setChosen((current) => ({ ...current, [one.key]: next }))}
         >
-          <Text style={styles.checkLabel}>{one.label}</Text>
-          <Text style={styles.note}>{one.detail}</Text>
-          <Text style={styles.fine}>{one.erasure}</Text>
+          <WordText style={styles.checkLabel}>{one.label}</WordText>
+          <WordText style={styles.note}>{one.detail}</WordText>
+          <WordText style={styles.fine}>{one.erasure}</WordText>
         </CheckRow>
       ))}
 
       <View style={styles.action}>
-        {failure !== null && failure.field === null && <Text style={styles.failure}>{failure.message}</Text>}
-        {shownGap !== null && <Text style={styles.failure}>{shownGap.message}</Text>}
+        {failure !== null && failure.field === null && <WordText style={styles.failure}>{failure.message}</WordText>}
+        {shownGap !== null && <WordText style={styles.failure}>{shownGap.message}</WordText>}
         <PrimaryButton
           label={working ? SIGNUP_LABEL.signingUp : again ? SIGNUP_LABEL.confirm : SIGNUP_LABEL.signUp}
           onPress={send}
@@ -282,8 +283,8 @@ function SignupForm({ form, onDone }: { form: Extract<SignupState, { kind: 'form
 function NoticeLine({ children }: { children: React.ReactNode }) {
   return (
     <View style={styles.noticeRow}>
-      <Text style={styles.bullet}>•</Text>
-      <Text style={styles.noticeText}>{children}</Text>
+      <WordText style={styles.bullet}>•</WordText>
+      <WordText style={styles.noticeText}>{children}</WordText>
     </View>
   );
 }
@@ -307,7 +308,7 @@ function LeaveLink() {
   return (
     <View style={styles.leave}>
       <TextButton label={leaving ? SIGN_OUT_PENDING : SIGNUP_LABEL.otherAccount} onPress={leave} disabled={leaving} />
-      {failed && <Text style={styles.failure}>{SIGN_OUT_FAILED}</Text>}
+      {failed && <WordText style={styles.failure}>{SIGN_OUT_FAILED}</WordText>}
     </View>
   );
 }

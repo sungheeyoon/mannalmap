@@ -19,7 +19,7 @@ describe('앱 입구', () => {
 
   it('로그인 글자는 웹 머리글의 그것이다', () => {
     expect(read('app/site-header.tsx')).toMatch(/^\s*로그인\s*$/m);
-    expect(entry).toMatch(/<Text[^>]*>로그인<\/Text>/);
+    expect(entry).toMatch(/<WordText[^>]*>로그인<\/WordText>/);
   });
 
   it('입력 없이 들어가는 길 · 서비스 소개 · 고객센터 · 약관 및 정책이 로그인 없이 닿는다 — 첫 화면에 인연 입구는 없다(ADR 0226)', () => {

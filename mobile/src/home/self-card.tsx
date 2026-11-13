@@ -1,6 +1,6 @@
 import { router } from 'expo-router';
 import type { ReactNode } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 import { MY_PROFILE_EDIT_LABEL } from '@chat/copy';
 import { HOUR_UNKNOWN_LABEL } from '@input/query';
@@ -18,6 +18,7 @@ import { Tile } from '@/ui/surfaces';
 
 import type { SelfCardData } from './read';
 import { SelfProfile } from './self-profile';
+import { WordText } from '@/ui/word-text';
 
 type Ok = Extract<SelfCardData, { kind: 'ok' }>;
 
@@ -66,23 +67,23 @@ export function SelfCard({
         <View style={styles.who}>
           {/* 일간 딱지는 이름 옆이다 — 오른쪽 위는 「⋯」가 든다. 긴 이름은 제 폭 안에서 접히고 딱지는 첫 줄 곁에 그대로 선다 */}
           <View style={[styles.nameRow, manageable && styles.menuRoom]}>
-            {card.label !== '' && <Text style={styles.name}>{card.label}</Text>}
+            {card.label !== '' && <WordText style={styles.name}>{card.label}</WordText>}
             <DayMasterChip stem={saju.pillars.dayMaster} />
           </View>
-          <Text style={styles.birth}>
+          <WordText style={styles.birth}>
             {query.date}
             {query.hourKnown === false ? '' : ` ${query.time}`} · {query.city}
             {query.hourKnown === false ? ` · ${HOUR_UNKNOWN_LABEL}` : ''}
-          </Text>
+          </WordText>
         </View>
       </View>
 
       {card.metaphor !== null && (
-        <Text style={styles.metaphor} numberOfLines={2}>
-          <Text style={{ color: tone.ink }}>“</Text>
+        <WordText style={styles.metaphor} numberOfLines={2}>
+          <WordText style={{ color: tone.ink }}>“</WordText>
           {card.metaphor}
-          <Text style={{ color: tone.ink }}>”</Text>
-        </Text>
+          <WordText style={{ color: tone.ink }}>”</WordText>
+        </WordText>
       )}
 
       {pillars}
@@ -94,8 +95,8 @@ export function SelfCard({
           return (
             <View key={element} style={styles.element}>
               <ElementSymbol element={element} size={24} />
-              <Text style={[styles.elementName, { color }]}>{ELEMENT_PICTURE_KO[element]}</Text>
-              <Text style={[styles.elementCount, { color }]}>{count}</Text>
+              <WordText style={[styles.elementName, { color }]}>{ELEMENT_PICTURE_KO[element]}</WordText>
+              <WordText style={[styles.elementCount, { color }]}>{count}</WordText>
             </View>
           );
         })}
@@ -117,7 +118,7 @@ export function SelfCard({
               { label: MY_PROFILE_EDIT_LABEL, onPress: () => router.push('/me/profile' as never) },
             ]}
           >
-            <Text style={shared.manageDots}>⋯</Text>
+            <WordText style={shared.manageDots}>⋯</WordText>
           </AnchoredMenu>
         </View>
       )}

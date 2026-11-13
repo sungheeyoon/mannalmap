@@ -1,10 +1,11 @@
 import { chipsOf, CHIP_LABELS, inlineParts, markdownBlocks, type MarkdownBlock } from '@reading/markdown-blocks';
 import type { ComponentRef, ReactNode } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 import { COLOR, FONT, RADIUS, TYPE } from '@/ui/tokens';
 
 import { useContentsMarks } from './contents';
+import { WordText } from '@/ui/word-text';
 
 /**
  * 풀이 원문을 그린다 — 덩이를 나누는 규칙은 웹과 같은 `markdownBlocks` 다. HTML 로 해석하지 않고 문법에 없는 것은 글자 그대로 선다.
@@ -14,9 +15,9 @@ function inline(text: string): ReactNode[] {
     part.kind === 'text' ? (
       part.text
     ) : (
-      <Text key={at} style={part.kind === 'strong' ? styles.strong : styles.code}>
+      <WordText key={at} style={part.kind === 'strong' ? styles.strong : styles.code}>
         {part.text}
-      </Text>
+      </WordText>
     ),
   );
 }
@@ -26,17 +27,17 @@ function Block({ block, first, anchor }: { block: Exclude<MarkdownBlock, { kind:
     case 'rule':
       return <View style={styles.rule} />;
     case 'summary':
-      return <Text style={styles.summary}>{inline(block.text)}</Text>;
+      return <WordText style={styles.summary}>{inline(block.text)}</WordText>;
     case 'labels':
       if (block.rows.length === 1 && CHIP_LABELS.includes(block.rows[0].label)) {
         return (
           <View style={styles.chipGroup}>
-            <Text style={styles.chipLabel}>{block.rows[0].label}</Text>
+            <WordText style={styles.chipLabel}>{block.rows[0].label}</WordText>
             <View style={styles.chips}>
               {chipsOf(block.rows[0].text).map((chip) => (
-                <Text key={chip} style={styles.chip}>
+                <WordText key={chip} style={styles.chip}>
                   {chip}
-                </Text>
+                </WordText>
               ))}
             </View>
           </View>
@@ -46,8 +47,8 @@ function Block({ block, first, anchor }: { block: Exclude<MarkdownBlock, { kind:
         <View style={styles.labels}>
           {block.rows.map((row, at) => (
             <View key={at} style={styles.labelRow}>
-              <Text style={styles.labelName}>{row.label}</Text>
-              <Text style={styles.labelText}>{inline(row.text)}</Text>
+              <WordText style={styles.labelName}>{row.label}</WordText>
+              <WordText style={styles.labelText}>{inline(row.text)}</WordText>
             </View>
           ))}
         </View>
@@ -57,28 +58,28 @@ function Block({ block, first, anchor }: { block: Exclude<MarkdownBlock, { kind:
         <View style={styles.bullets}>
           {block.items.map((item, at) => (
             <View key={at} style={styles.bullet}>
-              <Text style={styles.body}>•</Text>
-              <Text style={[styles.body, styles.grow]}>{inline(item)}</Text>
+              <WordText style={styles.body}>•</WordText>
+              <WordText style={[styles.body, styles.grow]}>{inline(item)}</WordText>
             </View>
           ))}
         </View>
       );
     case 'paragraph':
-      return <Text style={block.lead ? styles.lead : styles.body}>{inline(block.text)}</Text>;
+      return <WordText style={block.lead ? styles.lead : styles.body}>{inline(block.text)}</WordText>;
     case 'heading':
       return block.depth <= 2 ? (
         <View ref={anchor} collapsable={false} style={[styles.heading, !first && styles.headingGap]}>
           <View style={styles.headingBar} />
-          <Text accessibilityRole="header" style={styles.headingText}>
+          <WordText accessibilityRole="header" style={styles.headingText}>
             {inline(block.text)}
-          </Text>
+          </WordText>
         </View>
       ) : (
         <View style={styles.smallHeading}>
           <View style={styles.smallHeadingDot} />
-          <Text accessibilityRole="header" style={styles.smallHeadingText}>
+          <WordText accessibilityRole="header" style={styles.smallHeadingText}>
             {inline(block.text)}
-          </Text>
+          </WordText>
         </View>
       );
   }
@@ -98,10 +99,10 @@ export function Markdown({ source }: { source: string }) {
       <View key={`points-${nodes.length}`} style={styles.points}>
         {points.map((point) => (
           <View key={point.number} style={styles.point}>
-            <Text style={styles.pointNumber}>{point.number}</Text>
+            <WordText style={styles.pointNumber}>{point.number}</WordText>
             <View style={styles.grow}>
-              {point.title !== '' && <Text style={styles.pointTitle}>{inline(point.title)}</Text>}
-              <Text style={point.title !== '' ? styles.pointText : styles.body}>{inline(point.text)}</Text>
+              {point.title !== '' && <WordText style={styles.pointTitle}>{inline(point.title)}</WordText>}
+              <WordText style={point.title !== '' ? styles.pointText : styles.body}>{inline(point.text)}</WordText>
             </View>
           </View>
         ))}

@@ -354,7 +354,7 @@ Navigation) · 토스 TDS(Toast · Result) · Material 3 Snackbar 다(확인 202
 ## 추기 — 앱의 어절 줄바꿈과 상태바 (2026-11-02, 출시 APK 검증)
 
 - **어절 단위 줄바꿈은 `mobile/src/ui/word-text.tsx` 의 `WordText` 다** — 웹 `word-break: keep-all` 의 앱 쪽. iOS 는 `lineBreakStrategyIOS="hangul-word"`, 안드로이드는 어절 안에 U+2060 을 끼운다(`src/lib/brand/keep-words.ts`). RN 0.88 의 안드로이드 `StaticLayout` 에는 어절 설정을 넘기는 속성이 없어 `textBreakStrategy` · `android_hyphenationFrequency` 로는 안 된다. 읽어 주는 글자(`accessibilityLabel`)는 원문이다.
-- **지금 쓰는 자리** — 안내 틀(`NoticeScreen` · `NoticeLine` · `NoticeNote`), 안내 글(`Dot` · `InfoLine` · `FinePrint`), 인연 소개의 단계 글. 나머지 화면은 아직 RN `Text` 다 — 고르는 입력의 값이나 복사되는 글(채팅)에는 넣지 않는다.
+- **지금 쓰는 자리** — 안내 틀(`NoticeScreen` · `NoticeLine` · `NoticeNote`), 안내 글(`Dot` · `InfoLine` · `FinePrint`), 인연 소개의 단계 글. 나머지 화면은 아직 RN `Text` 다 — 고르는 입력의 값이나 복사되는 글(채팅)에는 넣지 않는다. → 앱 화면 전체로 넓혔다 — [ADR 0250](0250-app-text-breaks-only-at-spaces-through-one-word-text-part.md).
 - **상태바는 어두운 글자 하나다** — 앱이 라이트만이라 `_layout.tsx` 의 `StatusBar` 와 `app.json` 플러그인이 `dark` 로 고정한다.
 
 ## 추기 — 로딩 두 모양 (2026-11-08, 운영자 결정)

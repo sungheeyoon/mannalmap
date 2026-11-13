@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 
 import { isoOf, solarDateOf } from '@input/chart';
 import { HOUR_UNKNOWN_LABEL, type Query } from '@input/query';
@@ -16,6 +16,7 @@ import { FailureLine } from '@/ui/failure-line';
 import { settled } from '@/ui/settled';
 import { COLOR, CONTROL, FONT, RADIUS, TYPE } from '@/ui/tokens';
 import { CardFrame } from '@/ui/surfaces';
+import { WordText } from '@/ui/word-text';
 
 
 type MyBirth = { kind: 'none' } | { kind: 'failed' } | { kind: 'unreadable'; message: string } | { kind: 'ready'; personId: string; query: Query };
@@ -52,8 +53,8 @@ export function BirthSection({ startOpen = false }: { startOpen?: boolean }) {
   if (birth.kind === 'unreadable') {
     return (
       <CardFrame style={styles.panel}>
-        <Text style={styles.value}>{birth.message}</Text>
-        <Text style={styles.term}>{UNREADABLE_INPUT_NOTE}</Text>
+        <WordText style={styles.value}>{birth.message}</WordText>
+        <WordText style={styles.term}>{UNREADABLE_INPUT_NOTE}</WordText>
       </CardFrame>
     );
   }
@@ -89,15 +90,15 @@ export function BirthSection({ startOpen = false }: { startOpen?: boolean }) {
   return (
     <CardFrame style={styles.panel}>
       <View style={styles.head}>
-        <Text accessibilityRole="header" style={styles.title}>출생 정보</Text>
+        <WordText accessibilityRole="header" style={styles.title}>출생 정보</WordText>
         <Pressable accessibilityRole="button" accessibilityLabel="출생 정보 수정" onPress={() => setOpen(true)} style={styles.edit}>
-          <Text style={styles.editText}>수정</Text>
+          <WordText style={styles.editText}>수정</WordText>
         </Pressable>
       </View>
       {rows.map(([term, value]) => (
         <View key={term} style={styles.row}>
-          <Text style={styles.term}>{term}</Text>
-          <Text style={styles.value}>{value}</Text>
+          <WordText style={styles.term}>{term}</WordText>
+          <WordText style={styles.value}>{value}</WordText>
         </View>
       ))}
     </CardFrame>

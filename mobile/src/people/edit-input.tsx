@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 import { INPUT_EDIT_CHANGE_CONFIRM } from '@consent/index';
 import { samePillarInput } from '@input/edit';
@@ -15,6 +15,7 @@ import { Card } from '@/ui/surfaces';
 
 import { BirthFields, useBirthForm } from './birth-fields';
 import { Sheet, styles as shared } from './parts';
+import { WordText } from '@/ui/word-text';
 
 /**
  * 저장된 출생 정보를 고치는 폼 — 웹의 `app/me/edit-input.tsx` 와 같은 판정 · 글자다. 여덟 글자는 서버가 이 입력에서 센다(ADR 0211).
@@ -78,38 +79,38 @@ export function EditInputForm({
 
   return (
     <Card style={styles.form}>
-      <Text style={shared.section}>수정하기</Text>
+      <WordText style={shared.section}>수정하기</WordText>
 
       {!editableName && nameNote && (
         <View style={styles.nameNote}>
-          <Text style={shared.body}>
-            닉네임 <Text style={shared.bodyStrong}>{current.name}</Text>
-          </Text>
-          <Text style={shared.meta}>내 이름은 프로필 닉네임으로 보여요.</Text>
+          <WordText style={shared.body}>
+            닉네임 <WordText style={shared.bodyStrong}>{current.name}</WordText>
+          </WordText>
+          <WordText style={shared.meta}>내 이름은 프로필 닉네임으로 보여요.</WordText>
         </View>
       )}
 
       <BirthFields form={form} showName={editableName} />
 
       {pillarsSame && (nameChanged || warn) && (
-        <Text style={warn && unchanged && missing === null ? styles.warn : shared.meta}>
+        <WordText style={warn && unchanged && missing === null ? styles.warn : shared.meta}>
           {nameChanged ? '이름만 바뀌었어요. 이름은 여덟 글자에 들어가지 않아서 출생 정보와 사주는 그대로예요.' : '바뀐 것이 없어요.'}
-        </Text>
+        </WordText>
       )}
 
       <View style={styles.actions}>
         <PrimaryButton label={saving ? '저장하는 중…' : pillarsSame && nameChanged ? '이름 저장' : '변경 사항 저장'} onPress={press} disabled={saving} />
         <TextButton label="작성 그만두기" onPress={onCancel} disabled={saving} />
-        {missing !== null && <Text style={warn ? styles.warn : shared.meta}>{missing}</Text>}
+        {missing !== null && <WordText style={warn ? styles.warn : shared.meta}>{missing}</WordText>}
       </View>
 
       {failure !== null && <FailureLine>저장하지 못했어요. {failure}</FailureLine>}
 
       {confirming && (
         <Sheet label={INPUT_EDIT_CHANGE_CONFIRM.cancel} onClose={() => setConfirming(false)}>
-          <Text style={shared.section}>{INPUT_EDIT_CHANGE_CONFIRM.title}</Text>
+          <WordText style={shared.section}>{INPUT_EDIT_CHANGE_CONFIRM.title}</WordText>
           {INPUT_EDIT_CHANGE_CONFIRM.body.map((line) => (
-            <Text key={line} style={shared.noticeBody}>{line}</Text>
+            <WordText key={line} style={shared.noticeBody}>{line}</WordText>
           ))}
           <PrimaryButton label={INPUT_EDIT_CHANGE_CONFIRM.confirm} onPress={() => void save()} />
           <TextButton label={INPUT_EDIT_CHANGE_CONFIRM.cancel} onPress={() => setConfirming(false)} />

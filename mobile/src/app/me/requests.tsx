@@ -1,6 +1,6 @@
 import { router, useFocusEffect } from 'expo-router';
 import { useCallback, useRef, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 
 import type { NotificationKind } from '@consent/index';
 import type { Inbox } from '@matching/inbox';
@@ -14,6 +14,7 @@ import { LoadingDots } from '@/ui/loading';
 import { COLOR, FONT, RADIUS, TYPE } from '@/ui/tokens';
 import { TopBar } from '@/ui/top-bar';
 import { CardFrame } from '@/ui/surfaces';
+import { WordText } from '@/ui/word-text';
 
 /** 사건마다 줄 머리의 그림 — 색이 아니라 모양이 갈래를 말한다. 웹의 표와 같고, 웹의 태극(`taiji`)은 앱에서 사람 둘이다 */
 const NOTIFICATION_ICON: Record<NotificationKind, IconName> = {
@@ -68,19 +69,19 @@ export default function RequestsScreen() {
       <ScrollView contentContainerStyle={styles.content}>
         {inbox === null ? <LoadingDots /> : !inbox.ok ? (
           <View>
-            <Text style={styles.failure} accessibilityRole="alert">
+            <WordText style={styles.failure} accessibilityRole="alert">
               소식을 불러오지 못했어요. {inbox.reason}
-            </Text>
+            </WordText>
             <Pressable accessibilityRole="button" onPress={load} style={styles.retry}>
-              <Text style={styles.retryText}>다시 시도하기</Text>
+              <WordText style={styles.retryText}>다시 시도하기</WordText>
             </Pressable>
           </View>
         ) : (
           <>
             {readFailed && (
-              <Text style={styles.failure} accessibilityRole="alert">
+              <WordText style={styles.failure} accessibilityRole="alert">
                 소식을 읽은 것으로 표시하지 못했어요.
-              </Text>
+              </WordText>
             )}
             {inbox.value.notifications.length === 0 ? (
               <EmptyState icon="bell" title="새로운 소식이 없어요">
@@ -96,8 +97,8 @@ export default function RequestsScreen() {
                         <Icon name={NOTIFICATION_ICON[item.kind]} size={18} color={warns ? COLOR.danger : item.unread ? COLOR.creamInk : COLOR.secondary} />
                       </View>
                       <View style={styles.flex}>
-                        <Text style={[styles.text, item.unread && styles.textNew]}>{item.text}</Text>
-                        <Text style={styles.meta}>{when(item.createdAt)}</Text>
+                        <WordText style={[styles.text, item.unread && styles.textNew]}>{item.text}</WordText>
+                        <WordText style={styles.meta}>{when(item.createdAt)}</WordText>
                       </View>
                       {item.unread && <View style={styles.dot} accessibilityLabel="읽지 않음" accessible />}
                       {item.href !== null && <Icon name="chevron" size={16} color={COLOR.muted} />}

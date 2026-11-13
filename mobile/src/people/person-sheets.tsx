@@ -13,7 +13,7 @@ import {
 import { creditAskShape, type CreditAskShape } from '@reading/credit-ask';
 import type { Element, Stem } from '@saju';
 import { useRef, useState, type ReactNode } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 
 import { useClient } from '@/auth/connected';
 import { readPicker, openPair, readPairRelation, type Choosable } from '@/compat/data';
@@ -303,7 +303,7 @@ export function useCompatAdd({
                     }}
                     style={[styles.chip, picked && styles.chipOn]}
                   >
-                    <Text style={[styles.chipText, picked && styles.chipTextOn]}>{choice === null ? RELATION_NONE_LABEL : RELATION_LABEL[choice]}</Text>
+                    <WordText style={[styles.chipText, picked && styles.chipTextOn]}>{choice === null ? RELATION_NONE_LABEL : RELATION_LABEL[choice]}</WordText>
                   </Pressable>
                 );
               })}
@@ -315,7 +315,7 @@ export function useCompatAdd({
             {(partners ?? []).map((one) => (
               <Pressable key={one.personId} accessibilityRole="button" onPress={() => choose(one)} style={styles.row}>
                 <Face stem={one.stem} element={one.element} />
-                <Text style={styles.rowText} numberOfLines={1}>{one.isSelfPerson ? PARTNER_SELF_LABEL : one.label}</Text>
+                <WordText style={styles.rowText} numberOfLines={1}>{one.isSelfPerson ? PARTNER_SELF_LABEL : one.label}</WordText>
                 <Icon name="chevron" size={16} color={COLOR.muted} />
               </Pressable>
             ))}
@@ -330,7 +330,7 @@ export function useCompatAdd({
               <View style={[styles.face, { backgroundColor: COLOR.surfaceSunken }]}>
                 <Icon name="plus" size={16} color={COLOR.secondary} />
               </View>
-              <Text style={styles.rowText} numberOfLines={1}>{PARTNER_TYPED_LABEL}</Text>
+              <WordText style={styles.rowText} numberOfLines={1}>{PARTNER_TYPED_LABEL}</WordText>
               <Icon name="chevron" size={16} color={COLOR.muted} />
             </Pressable>
           </View>

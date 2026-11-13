@@ -1,5 +1,5 @@
 import { useState, type ReactNode } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { initialOf, type PhotoFocus } from '@profile';
@@ -10,6 +10,7 @@ import { Icon } from '@/ui/icons';
 import { Scrim } from '@/ui/scrim';
 import { alpha, COLOR, CONTROL, ELEMENT_TONE, FONT, RADIUS, TYPE } from '@/ui/tokens';
 import { SheetPanel, Tile } from '@/ui/surfaces';
+import { WordText } from '@/ui/word-text';
 
 
 /** 시트 · 머리 단추의 보조기기 이름 — 웹의 `partnerSheetName` 과 같다 */
@@ -49,9 +50,9 @@ export function ProfileSheet({
       <SheetPanel style={styles.sheet} accessibilityLabel={partnerSheetName(nickname)}>
       <SafeAreaView edges={['bottom']} style={styles.sheetSafe}>
         <View style={styles.head}>
-          <Text accessibilityRole="header" numberOfLines={1} style={styles.name}>
+          <WordText accessibilityRole="header" numberOfLines={1} style={styles.name}>
             {nickname}
-          </Text>
+          </WordText>
           {menu}
           <Pressable accessibilityRole="button" accessibilityLabel="닫기" onPress={onClose} style={styles.close}>
             <Icon name="close" color={COLOR.foreground} size={20} />
@@ -62,8 +63,8 @@ export function ProfileSheet({
           {toMatch}
           {shown !== null && (
             <View style={styles.intro}>
-              <Text style={styles.introHead}>소개</Text>
-              <Text style={styles.introBody}>{shown}</Text>
+              <WordText style={styles.introHead}>소개</WordText>
+              <WordText style={styles.introBody}>{shown}</WordText>
             </View>
           )}
           {footer}
@@ -91,7 +92,7 @@ function PhotoFrame({
   const [width, setWidth] = useState(0);
   const [page, setPage] = useState(0);
   const focuses = photos?.focuses ?? [];
-  const face = <Text style={[styles.initial, { color: ink }]}>{initialOf(nickname)}</Text>;
+  const face = <WordText style={[styles.initial, { color: ink }]}>{initialOf(nickname)}</WordText>;
 
   return (
     <Tile tone={soft} onLayout={(event) => setWidth(event.nativeEvent.layout.width)} style={styles.photo}>

@@ -1,6 +1,6 @@
 import { useLocalSearchParams } from 'expo-router';
 import { useCallback, useEffect, useRef, useState, type ComponentRef } from 'react';
-import { KeyboardAvoidingView, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { KeyboardAvoidingView, ScrollView, StyleSheet, TextInput, View } from 'react-native';
 
 import { isBlocked, type AccountState } from '@account/index';
 import { INTRO_MAX, NICKNAME_AVAILABLE_NOTE, NICKNAME_MAX, NICKNAME_MIN, NICKNAME_TAKEN_NOTE, missingInProfile, missingNickname, nicknameKey, profileEdited, type PhotoUploadMode, type ProfileInput } from '@profile';
@@ -22,6 +22,7 @@ import { PhotoGrid, PhotoGridFailed } from './photo-grid';
 import { BirthSection } from './birth-section';
 import { myPhotos, photoUploadMode, type MyPhoto } from './photos';
 import { saveProfile } from './profile';
+import { WordText } from '@/ui/word-text';
 
 const NICKNAME_CHECK_AFTER_MS = 500;
 
@@ -94,7 +95,7 @@ export function ProfileScreen() {
       <TopBar title="프로필" fallback="/me/settings" />
       <KeyboardAvoidingView style={styles.screen} behavior="padding">
         <ScrollView ref={scrollRef} contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled" keyboardDismissMode="on-drag" scrollEnabled={!lifting}>
-          <Text style={settingsText.meta}>앱에서 쓸 닉네임과 프로필을 정해요.</Text>
+          <WordText style={settingsText.meta}>앱에서 쓸 닉네임과 프로필을 정해요.</WordText>
 
           {data.current === null ? (
             <AccountNotice state={data.state} onRetry={() => void reloadAll()} />
@@ -205,7 +206,7 @@ function ProfileForm({ current, onSaved }: { current: ProfileInput; onSaved: (sa
   return (
     <CardFrame style={styles.form}>
       <View style={styles.group}>
-        <Text style={settingsText.fieldLabel}>닉네임</Text>
+        <WordText style={settingsText.fieldLabel}>닉네임</WordText>
         <Field
           inputRef={nicknameRef}
           label="닉네임"
@@ -216,12 +217,12 @@ function ProfileForm({ current, onSaved }: { current: ProfileInput; onSaved: (sa
           refused={nicknameWrong}
           onChange={(nickname) => setProfile({ ...profile, nickname })}
         />
-        <Text accessibilityLiveRegion="polite" style={[styles.note, nicknameWrong && styles.wrong]}>
+        <WordText accessibilityLiveRegion="polite" style={[styles.note, nicknameWrong && styles.wrong]}>
           {nicknameNote}
-        </Text>
+        </WordText>
       </View>
       <View style={styles.group}>
-        <Text style={settingsText.fieldLabel}>소개 (선택)</Text>
+        <WordText style={settingsText.fieldLabel}>소개 (선택)</WordText>
         <TextInput
           accessibilityLabel="소개 (선택)"
           multiline
@@ -232,17 +233,17 @@ function ProfileForm({ current, onSaved }: { current: ProfileInput; onSaved: (sa
           onChangeText={(intro) => setProfile({ ...profile, intro })}
           style={styles.area}
         />
-        <Text style={styles.count}>
+        <WordText style={styles.count}>
           {profile.intro.length}/{INTRO_MAX}
-        </Text>
+        </WordText>
       </View>
       <View style={styles.action}>
         <View style={missing !== null || !changed ? styles.quiet : undefined}>
           <PrimaryButton label={saving ? '저장하는 중…' : '닉네임 · 소개 저장'} onPress={() => void save()} />
         </View>
-        <Text accessibilityLiveRegion="polite" style={styles.note}>
+        <WordText accessibilityLiveRegion="polite" style={styles.note}>
           {changed ? '' : done.note}
-        </Text>
+        </WordText>
         {failure !== null && <FailureLine>{failure}</FailureLine>}
       </View>
       {leaveDialog}

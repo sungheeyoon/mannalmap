@@ -1,4 +1,4 @@
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import Svg, { Circle, G, Path } from 'react-native-svg';
 
 import { CHAT_EMPTY_DETAIL, CHAT_EMPTY_TITLE } from '@chat/copy';
@@ -7,6 +7,7 @@ import { goTab } from '@/ui/go-tab';
 import { Paper } from '@/ui/surfaces';
 import { PrimaryButton } from '@/ui/parts';
 import { COLOR, ELEMENT_TONE, FONT, TYPE } from '@/ui/tokens';
+import { WordText } from '@/ui/word-text';
 
 /** 아직 방이 없을 때 — 갈 길은 하나다. 내 사주가 아직 없으면 그 자리에 등록이 선다(대장 matching-13) */
 export function EmptyChat({ hasSelf }: { hasSelf: boolean }) {
@@ -14,8 +15,8 @@ export function EmptyChat({ hasSelf }: { hasSelf: boolean }) {
     <Paper style={styles.panel}>
       <ChatIllustration />
       <View style={styles.words}>
-        <Text style={styles.title}>{CHAT_EMPTY_TITLE}</Text>
-        <Text style={styles.detail}>{CHAT_EMPTY_DETAIL}</Text>
+        <WordText style={styles.title}>{CHAT_EMPTY_TITLE}</WordText>
+        <WordText style={styles.detail}>{CHAT_EMPTY_DETAIL}</WordText>
       </View>
       {hasSelf ? (
         <PrimaryButton label="오늘의 인연 보기" onPress={() => goTab('/me/matching')} />

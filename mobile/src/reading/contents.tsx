@@ -1,11 +1,12 @@
 import { inlineParts, markdownBlocks } from '@reading/markdown-blocks';
 import { createContext, useContext, useMemo, useRef, useState, type ComponentRef, type ReactNode } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View, type NativeScrollEvent, type NativeSyntheticEvent, type ScrollViewProps } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, View, type NativeScrollEvent, type NativeSyntheticEvent, type ScrollViewProps } from 'react-native';
 
 import { FoldIcon } from '@/ui/icons';
 import { KEEP_VIEW } from '@/ui/keep-view';
 import { Card } from '@/ui/surfaces';
 import { COLOR, FONT, RADIUS, TYPE } from '@/ui/tokens';
+import { WordText } from '@/ui/word-text';
 
 /** 대장 all-18 — 접힌 줄은 「목차 N개」, 낭독 이름은 기다리는 동안의 목차(`waiting.tsx`)와 같은 「풀이 목차」 */
 export const CONTENTS_TITLE = '목차';
@@ -92,8 +93,8 @@ export function ReadingContents({ titles }: { titles: readonly string[] }) {
         onPress={() => setOpen(!open)}
         style={styles.head}
       >
-        <Text style={styles.title}>{CONTENTS_TITLE}</Text>
-        <Text style={styles.count}>{contentsCount(titles.length)}</Text>
+        <WordText style={styles.title}>{CONTENTS_TITLE}</WordText>
+        <WordText style={styles.count}>{contentsCount(titles.length)}</WordText>
         <FoldIcon open={open} size={20} color={COLOR.secondary} strokeWidth={1.8} />
       </Pressable>
       {open && (
@@ -109,10 +110,10 @@ export function ReadingContents({ titles }: { titles: readonly string[] }) {
               }}
               style={({ pressed }) => [styles.row, pressed && styles.pressed]}
             >
-              <Text style={styles.number}>{at + 1}</Text>
-              <Text style={styles.rowText} numberOfLines={2}>
+              <WordText style={styles.number}>{at + 1}</WordText>
+              <WordText style={styles.rowText} numberOfLines={2}>
                 {title}
-              </Text>
+              </WordText>
             </Pressable>
           ))}
         </View>

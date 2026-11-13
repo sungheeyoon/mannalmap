@@ -1,6 +1,6 @@
 import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 
 import { isBlocked } from '@account/index';
 import { birthLineOf } from '@input/birth-line';
@@ -38,6 +38,7 @@ import { StemSymbol } from '@/ui/stem-symbol';
 import { CardFrame, Tile } from '@/ui/surfaces';
 import { TopBar } from '@/ui/top-bar';
 import { alpha, COLOR, ELEMENT_TONE, FONT, RADIUS, TYPE } from '@/ui/tokens';
+import { WordText } from '@/ui/word-text';
 
 /** 받기 시트 · 받은 카드가 쓰는 이 사람의 풀이 칸 — 풀이권 · 읽는 시간 · 도는 시도. 못 읽으면 `null` 이고 카드는 받기로 선다(부속 정보) */
 type ReadingSide = { credits: ReadingCredits | null; minutes: number | null; running: boolean };
@@ -111,8 +112,8 @@ export default function PersonScreen() {
     return (
       <ScreenFrame bar={<TopBar title={person.label} fallback={fromHome ? '/me' : '/me/people'} />}>
         <CardFrame style={styles.unreadable}>
-          <Text style={shared.noticeBody}>{person.chart.message}</Text>
-          <Text style={shared.meta}>{UNREADABLE_INPUT_NOTE}</Text>
+          <WordText style={shared.noticeBody}>{person.chart.message}</WordText>
+          <WordText style={shared.meta}>{UNREADABLE_INPUT_NOTE}</WordText>
         </CardFrame>
       </ScreenFrame>
     );
@@ -221,27 +222,27 @@ function PersonPage({
         </View>
         <DayMasterChip stem={person.stem} />
         <View style={styles.names}>
-          <Text style={shared.title} accessibilityRole="header">{person.name}</Text>
-          <Text style={shared.meta}>{birthLineOf(saju)}</Text>
+          <WordText style={shared.title} accessibilityRole="header">{person.name}</WordText>
+          <WordText style={shared.meta}>{birthLineOf(saju)}</WordText>
         </View>
         <PillarStrip pillars={saju.pillars} name={person.name} over={tone.soft} />
         <Pressable accessibilityRole="link" onPress={() => go(`/me/people/${person.personId}?tab=chart`)} style={styles.detail}>
-          <Text style={[styles.detailText, { color: tone.ink }]}>{CHART_DETAIL_LABEL}</Text>
+          <WordText style={[styles.detailText, { color: tone.ink }]}>{CHART_DETAIL_LABEL}</WordText>
           <Icon name="chevron" size={14} color={tone.ink} />
         </Pressable>
       </Tile>
 
       <View style={styles.part}>
-        <Text style={shared.section}>{PERSON_READING_SECTION}</Text>
+        <WordText style={shared.section}>{PERSON_READING_SECTION}</WordText>
         {own !== null ? (
           <Pressable accessibilityRole="link" onPress={() => go(readingHref)}>
             <CardFrame style={styles.reading}>
-              <Text style={[styles.quote, { color: tone.ink }]}>“</Text>
-              <Text style={styles.metaphor}>{own.metaphor ?? READING_CONTINUE_NOTE}</Text>
+              <WordText style={[styles.quote, { color: tone.ink }]}>“</WordText>
+              <WordText style={styles.metaphor}>{own.metaphor ?? READING_CONTINUE_NOTE}</WordText>
               <View style={styles.readingFoot}>
-                <Text style={shared.meta}>{readingReceivedLine(own.createdAt, side?.minutes ?? null)}</Text>
+                <WordText style={shared.meta}>{readingReceivedLine(own.createdAt, side?.minutes ?? null)}</WordText>
                 <View style={styles.open}>
-                  <Text style={styles.openText}>{READING_OPEN_LABEL}</Text>
+                  <WordText style={styles.openText}>{READING_OPEN_LABEL}</WordText>
                   <Icon name="chevron" size={14} color={COLOR.foreground} />
                 </View>
               </View>
@@ -250,14 +251,14 @@ function PersonPage({
         ) : making ? (
           <Pressable accessibilityRole="link" onPress={() => go(readingHref)}>
             <CardFrame style={styles.making}>
-              <Text style={styles.rowTitle}>{SELF_READING_MAKING}</Text>
+              <WordText style={styles.rowTitle}>{SELF_READING_MAKING}</WordText>
               <Icon name="chevron" size={16} color={COLOR.muted} />
             </CardFrame>
           </Pressable>
         ) : (
           <Tile tone={COLOR.accent} style={styles.invite}>
-            <Text style={styles.inviteTitle}>{readingInviteTitle(person.name)}</Text>
-            <Text style={styles.inviteTopics}>{READING_INVITE_TOPICS}</Text>
+            <WordText style={styles.inviteTitle}>{readingInviteTitle(person.name)}</WordText>
+            <WordText style={styles.inviteTopics}>{READING_INVITE_TOPICS}</WordText>
             <View style={styles.inviteFoot}>
               <Button label="사주풀이 받기" variant="secondary-small" onPress={ask.open} />
             </View>
@@ -267,7 +268,7 @@ function PersonPage({
 
       {!mine && (
         <View style={styles.part}>
-          <Text style={shared.section}>{PERSON_COMPAT_SECTION}</Text>
+          <WordText style={shared.section}>{PERSON_COMPAT_SECTION}</WordText>
           <CardFrame>
             {pairs.map((pair) => (
               <Pressable key={pair.key} accessibilityRole="link" onPress={() => go(pair.href)} style={styles.row}>
@@ -276,17 +277,17 @@ function PersonPage({
                   <Circle stem={pair.stem} shifted />
                 </View>
                 <View style={styles.rowBody}>
-                  <Text style={styles.rowTitle} numberOfLines={1}>{pair.name}</Text>
-                  {pair.metaphor !== null && <Text style={shared.meta} numberOfLines={1}>{pair.metaphor}</Text>}
+                  <WordText style={styles.rowTitle} numberOfLines={1}>{pair.name}</WordText>
+                  {pair.metaphor !== null && <WordText style={shared.meta} numberOfLines={1}>{pair.metaphor}</WordText>}
                 </View>
-                {pair.score !== null && <Text style={styles.score}>{`${pair.score}점`}</Text>}
+                {pair.score !== null && <WordText style={styles.score}>{`${pair.score}점`}</WordText>}
               </Pressable>
             ))}
             <Pressable accessibilityRole="button" onPress={add.open} style={styles.row}>
               <View style={styles.plus}>
                 <Icon name="plus" size={16} color={COLOR.secondary} />
               </View>
-              <Text style={styles.addText}>{pairs.length > 0 ? COMPAT_OTHER_LABEL : compatWithLabel(person.name)}</Text>
+              <WordText style={styles.addText}>{pairs.length > 0 ? COMPAT_OTHER_LABEL : compatWithLabel(person.name)}</WordText>
             </Pressable>
           </CardFrame>
         </View>

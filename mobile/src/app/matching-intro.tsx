@@ -5,7 +5,7 @@ import { withReturnPath } from '@consent/return-path';
 import { SIGNUP_NOTICE_DISCOVERY } from '@consent/signup';
 import { ELEMENT_PICTURE_KO, type Element } from '@saju';
 import { Redirect, router } from 'expo-router';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 import { InfoScreen } from '@/info/frame';
 import { useMatchOpen } from '@/matching/opening';
@@ -37,11 +37,11 @@ export default function MatchingIntroScreen() {
       <Tile tone={ELEMENT_TONE[SUPPLIES[0]].soft} style={styles.example} accessibilityLabel={`예시 카드. ${MATCHING_INTRO_EXAMPLE.note}`}>
         <View style={styles.exampleHead}>
           <View style={styles.stamp}>
-            <Text style={styles.stampText}>{MATCHING_INTRO_EXAMPLE.stamp}</Text>
+            <WordText style={styles.stampText}>{MATCHING_INTRO_EXAMPLE.stamp}</WordText>
           </View>
-          <Text style={styles.score}>{`${TALK_SCORE_LABEL} ${MATCHING_INTRO_EXAMPLE.score}점`}</Text>
+          <WordText style={styles.score}>{`${TALK_SCORE_LABEL} ${MATCHING_INTRO_EXAMPLE.score}점`}</WordText>
         </View>
-        <Text style={styles.verdict}>{MATCHING_INTRO_EXAMPLE.verdict}</Text>
+        <WordText style={styles.verdict}>{MATCHING_INTRO_EXAMPLE.verdict}</WordText>
         <View style={styles.supply}>
           <View style={styles.dots}>
             {SUPPLIES.map((element, index) => (
@@ -51,21 +51,21 @@ export default function MatchingIntroScreen() {
             ))}
           </View>
           <View style={styles.flex}>
-            <Text style={styles.supplyHead}>{MATCHING_INTRO_EXAMPLE.supply}</Text>
-            <Text style={styles.supplyNames}>{SUPPLIES.map((element) => ELEMENT_PICTURE_KO[element]).join(' · ')}</Text>
+            <WordText style={styles.supplyHead}>{MATCHING_INTRO_EXAMPLE.supply}</WordText>
+            <WordText style={styles.supplyNames}>{SUPPLIES.map((element) => ELEMENT_PICTURE_KO[element]).join(' · ')}</WordText>
           </View>
         </View>
-        <Text style={styles.note}>{MATCHING_INTRO_EXAMPLE.note}</Text>
+        <WordText style={styles.note}>{MATCHING_INTRO_EXAMPLE.note}</WordText>
       </Tile>
 
       <CardFrame>
         {STEPS.map((step, index) => (
           <View key={step.title} style={[styles.step, index > 0 && styles.stepLine]}>
             <View style={styles.number}>
-              <Text style={styles.numberText}>{index + 1}</Text>
+              <WordText style={styles.numberText}>{index + 1}</WordText>
             </View>
             <View style={styles.flex}>
-              <Text style={styles.stepTitle}>{step.title}</Text>
+              <WordText style={styles.stepTitle}>{step.title}</WordText>
               <WordText style={styles.stepBody}>{step.body}</WordText>
             </View>
           </View>
@@ -74,7 +74,7 @@ export default function MatchingIntroScreen() {
 
       <View style={styles.notes}>
         <WordText style={styles.line}>{SIGNUP_NOTICE_DISCOVERY}</WordText>
-        <Text style={styles.line}>{MATCHING_INTRO_AGE}</Text>
+        <WordText style={styles.line}>{MATCHING_INTRO_AGE}</WordText>
       </View>
 
       <PrimaryButton label={MATCHING_INTRO_START} onPress={() => router.push(withReturnPath('/auth', '/me/matching') as never)} />

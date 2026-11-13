@@ -1,6 +1,6 @@
 import { router, type Href } from 'expo-router';
 import type { ReactNode } from 'react';
-import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { accountFailureOf, accountNoticeOf, type AccountState } from '@account/index';
@@ -17,6 +17,7 @@ import { StemSymbol } from '@/ui/stem-symbol';
 import { FailureLine } from '@/ui/failure-line';
 import { Scrim } from '@/ui/scrim';
 import { CardFrame, SheetPanel } from '@/ui/surfaces';
+import { WordText } from '@/ui/word-text';
 
 /** 아직 없는 경로도 그대로 잇는다 — 나란히 짓는 화면이 그 자리에 선다 */
 export const go = (path: string) => router.push(path as Href);
@@ -67,8 +68,8 @@ export function AccountNotice({ state, onRetry }: { state: AccountState; onRetry
   if (text === null) return null;
   return (
     <CardFrame style={styles.notice}>
-      <Text style={styles.noticeTitle}>{text.title}</Text>
-      <Text style={styles.noticeBody}>{text.detail}</Text>
+      <WordText style={styles.noticeTitle}>{text.title}</WordText>
+      <WordText style={styles.noticeBody}>{text.detail}</WordText>
     </CardFrame>
   );
 }
@@ -77,9 +78,9 @@ export function AccountNotice({ state, onRetry }: { state: AccountState; onRetry
 export function NotFound({ children }: { children: ReactNode }) {
   return (
     <View style={styles.notFound}>
-      <Text style={styles.title}>찾을 수 없어요</Text>
-      <Text style={styles.noticeBody}>주소에 적힌 사람을 찾지 못했어요.</Text>
-      <Text style={styles.noticeBody}>목록에서 다시 골라 주세요.</Text>
+      <WordText style={styles.title}>찾을 수 없어요</WordText>
+      <WordText style={styles.noticeBody}>주소에 적힌 사람을 찾지 못했어요.</WordText>
+      <WordText style={styles.noticeBody}>목록에서 다시 골라 주세요.</WordText>
       <View style={styles.notFoundActions}>{children}</View>
     </View>
   );
@@ -90,7 +91,7 @@ export function DayMasterChip({ stem }: { stem: Stem }) {
   return (
     <View accessible accessibilityLabel={`일간 ${STEM_PICTURE[stem]}`} style={styles.chip}>
       <StemSymbol stem={stem} size={20} />
-      <Text style={[styles.chipText, { color: ELEMENT_TONE[STEM_INFO[stem].element].ink }]}>{STEM_PICTURE[stem]}</Text>
+      <WordText style={[styles.chipText, { color: ELEMENT_TONE[STEM_INFO[stem].element].ink }]}>{STEM_PICTURE[stem]}</WordText>
     </View>
   );
 }
@@ -116,15 +117,15 @@ export function PillarStrip({
         const pillar = pillars[key];
         return (
           <View key={key} style={[styles.pillar, over !== undefined && { backgroundColor: mix(COLOR.surface, over, 0.78) }, key === 'day' && styles.pillarDay]}>
-            <Text style={styles.pillarLabel}>{label}</Text>
+            <WordText style={styles.pillarLabel}>{label}</WordText>
             {pillar === null ? (
-              <Text accessibilityLabel={HOUR_UNKNOWN_LABEL} style={[styles.glyph, large && styles.glyphLarge, { color: COLOR.secondary }]}>
+              <WordText accessibilityLabel={HOUR_UNKNOWN_LABEL} style={[styles.glyph, large && styles.glyphLarge, { color: COLOR.secondary }]}>
                 ··
-              </Text>
+              </WordText>
             ) : (
               <View style={large ? undefined : styles.pillarRow}>
-                <Text style={[styles.glyph, large && styles.glyphLarge, { color: ELEMENT_TONE[STEM_INFO[pillar.stem].element].ink }]}>{pillar.stem}</Text>
-                <Text style={[styles.glyph, large && styles.glyphLarge, { color: ELEMENT_TONE[BRANCH_INFO[pillar.branch].element].ink }]}>{pillar.branch}</Text>
+                <WordText style={[styles.glyph, large && styles.glyphLarge, { color: ELEMENT_TONE[STEM_INFO[pillar.stem].element].ink }]}>{pillar.stem}</WordText>
+                <WordText style={[styles.glyph, large && styles.glyphLarge, { color: ELEMENT_TONE[BRANCH_INFO[pillar.branch].element].ink }]}>{pillar.branch}</WordText>
               </View>
             )}
           </View>
@@ -146,7 +147,7 @@ export function Sheet({ onClose, label, children }: { onClose: () => void; label
 export function SheetItem({ label, danger = false, onPress }: { label: string; danger?: boolean; onPress: () => void }) {
   return (
     <Pressable accessibilityRole="button" onPress={onPress} style={styles.sheetItem}>
-      <Text style={[styles.sheetItemText, danger && { color: COLOR.danger }]}>{label}</Text>
+      <WordText style={[styles.sheetItemText, danger && { color: COLOR.danger }]}>{label}</WordText>
     </Pressable>
   );
 }
@@ -158,7 +159,7 @@ export function SheetItem({ label, danger = false, onPress }: { label: string; d
 export function ManageButton({ label, onPress }: { label: string; onPress: () => void }) {
   return (
     <Pressable accessibilityRole="button" accessibilityLabel={label} onPress={onPress} style={styles.manage}>
-      <Text style={styles.manageDots}>⋯</Text>
+      <WordText style={styles.manageDots}>⋯</WordText>
     </Pressable>
   );
 }

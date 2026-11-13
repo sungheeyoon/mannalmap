@@ -1,5 +1,5 @@
 import { useRef, useState, type ComponentRef } from 'react';
-import { Keyboard, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Keyboard, Pressable, StyleSheet, TextInput, View } from 'react-native';
 
 import { BUTTON_OFF_OPACITY } from '@design';
 import { dateRefusal } from '@input/chart';
@@ -11,6 +11,7 @@ import { CALENDARS, CALENDAR_KO, GENDERS, GENDER_KO, SUPPORTED_YEAR_RANGE, type 
 import { FoldIcon } from '@/ui/icons';
 import { Choices, DigitField, Field, FieldLabel, Select } from '@/ui/parts';
 import { COLOR, FONT, RADIUS, TYPE } from '@/ui/tokens';
+import { WordText } from '@/ui/word-text';
 
 const HOUR_CHOICES = [
   { value: 'known', label: '직접 입력' },
@@ -118,7 +119,7 @@ export function BirthFields({
           <DigitField inputRef={monthRef} value={values.month} onChange={set.setMonth} label={BIRTH_DIGIT_LABEL.month} disabled={disabled} unit="월" placeholder="1~12" digits={2} min={1} max={12} advanceEarly refused={refused === 'month'} onFull={() => dayRef.current?.focus()} />
           <DigitField inputRef={dayRef} value={values.day} onChange={set.setDay} label={BIRTH_DIGIT_LABEL.day} disabled={disabled} unit="일" placeholder={`1~${maxDay}`} digits={2} min={1} max={maxDay} advanceEarly refused={refused === 'day'} onFull={() => (values.hourChoice === 'known' ? hourRef.current?.focus() : Keyboard.dismiss())} />
         </View>
-        {converted !== null && <Text style={[styles.converted, !converted.ok && styles.refused]}>{converted.text}</Text>}
+        {converted !== null && <WordText style={[styles.converted, !converted.ok && styles.refused]}>{converted.text}</WordText>}
         <View style={styles.row}>
           <Choices disabled={disabled} value={values.calendar} onPick={set.setCalendar} options={CALENDARS.map((one) => ({ value: one, label: CALENDAR_KO[one] }))} />
         </View>
@@ -126,17 +127,17 @@ export function BirthFields({
 
       <View style={styles.group}>
         <View style={styles.rail}>
-          <Text style={styles.railLabel}>출생 시각</Text>
+          <WordText style={styles.railLabel}>출생 시각</WordText>
           <Choices disabled={disabled} value={values.hourChoice} onPick={chooseHour} options={HOUR_CHOICES} />
         </View>
-        {values.hourChoice === 'unknown' && <Text style={styles.choiceHint}>{HOUR_UNKNOWN_HINT}</Text>}
+        {values.hourChoice === 'unknown' && <WordText style={styles.choiceHint}>{HOUR_UNKNOWN_HINT}</WordText>}
       </View>
 
       {values.hourChoice === 'known' && (
         <View style={styles.rail}>
           <View style={styles.railHead}>
-            <Text style={styles.railLabel}>시각</Text>
-            <Text style={styles.railNote}>24시간</Text>
+            <WordText style={styles.railLabel}>시각</WordText>
+            <WordText style={styles.railNote}>24시간</WordText>
           </View>
           <View style={styles.railBody}>
             <DigitField inputRef={hourRef} value={values.hour} onChange={set.setHour} label={BIRTH_DIGIT_LABEL.hour} disabled={disabled} unit="시" placeholder="0~23" digits={2} min={0} max={23} onFull={() => minuteRef.current?.focus()} />
@@ -146,29 +147,29 @@ export function BirthFields({
       )}
 
       <View style={styles.rail}>
-        <Text aria-hidden style={styles.railLabel}>{BIRTH_SELECT_LABEL.city.label}</Text>
+        <WordText aria-hidden style={styles.railLabel}>{BIRTH_SELECT_LABEL.city.label}</WordText>
         <Select {...BIRTH_SELECT_LABEL.city} disabled={disabled} value={values.city} onPick={set.setCity} options={BIRTH_CITY_OPTIONS} />
       </View>
 
       <Pressable accessibilityRole="button" accessibilityState={{ expanded: values.advanced, disabled }} disabled={disabled} onPress={() => set.setAdvanced(!values.advanced)} style={[styles.disclosure, disabled && styles.off]}>
-        <Text style={styles.disclosureLabel}>고급 설정</Text>
-        <Text style={styles.disclosureSummary} numberOfLines={1}>{ADVANCED_SETTINGS.summary}</Text>
+        <WordText style={styles.disclosureLabel}>고급 설정</WordText>
+        <WordText style={styles.disclosureSummary} numberOfLines={1}>{ADVANCED_SETTINGS.summary}</WordText>
         <FoldIcon open={values.advanced} />
       </Pressable>
 
       {values.advanced && (
         <View style={styles.fields}>
-          <Text style={styles.advancedIntro}>{ADVANCED_SETTINGS.intro}</Text>
+          <WordText style={styles.advancedIntro}>{ADVANCED_SETTINGS.intro}</WordText>
           <View style={styles.rail}>
-            <Text aria-hidden style={styles.railLabel}>{BIRTH_SELECT_LABEL.rule.label}</Text>
+            <WordText aria-hidden style={styles.railLabel}>{BIRTH_SELECT_LABEL.rule.label}</WordText>
             <Select {...BIRTH_SELECT_LABEL.rule} value={values.rule} onPick={set.setRule} options={RULES} disabled={disabled || values.hourChoice === 'unknown'} />
           </View>
           <View style={styles.rail}>
-            <Text aria-hidden style={styles.railLabel}>{BIRTH_SELECT_LABEL.basis.label}</Text>
+            <WordText aria-hidden style={styles.railLabel}>{BIRTH_SELECT_LABEL.basis.label}</WordText>
             <Select {...BIRTH_SELECT_LABEL.basis} disabled={disabled} value={values.basis} onPick={set.setBasis} options={TIME_BASES.map((one) => ({ value: one, label: TIME_BASIS[one].label, hint: TIME_BASIS[one].hint }))} />
           </View>
           <View style={styles.rail}>
-            <Text style={styles.railLabel}>세운 연도</Text>
+            <WordText style={styles.railLabel}>세운 연도</WordText>
             <DigitField value={values.saeunFrom} onChange={set.setSaeunFrom} label={BIRTH_DIGIT_LABEL.saeun} disabled={disabled} unit="년" placeholder="2026" digits={4} min={SUPPORTED_YEAR_RANGE.min} max={SUPPORTED_YEAR_RANGE.max} />
           </View>
         </View>

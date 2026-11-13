@@ -2,7 +2,7 @@ import { SERVICE_NAME, SERVICE_NAME_TOPIC } from '@brand';
 import { SHARE_COPY, sharedTitle, type ShareKind, type SharedReading } from '@reading/shared';
 import { router } from 'expo-router';
 import { useCallback, useEffect, useState, type ReactNode } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Markdown } from '@/reading/markdown';
@@ -17,6 +17,7 @@ import { Card, Paper, Tile } from '@/ui/surfaces';
 import { Mark } from './marks';
 import { readShared, type ShareRead } from './read';
 import { useStart } from './start';
+import { WordText } from '@/ui/word-text';
 
 /** 받은 사람이 보는 화면 — 세 주소가 같은 이것을 쓴다(웹의 `app/share/view.tsx`). 로그인 없이 열린다 */
 export function SharedReadingScreen({ token, expect }: { token: string; expect: ShareKind }) {
@@ -53,11 +54,11 @@ function OpenScreen({ shared, expect }: { shared: SharedReading; expect: ShareKi
       <ScrollView contentContainerStyle={styles.content}>
         <Pressable accessibilityRole="link" accessibilityLabel={SERVICE_NAME} onPress={() => router.replace('/')} style={styles.brandRow}>
           <Logo size={32} />
-          <Text style={styles.brand}>{SERVICE_NAME}</Text>
+          <WordText style={styles.brand}>{SERVICE_NAME}</WordText>
         </Pressable>
 
         <View style={styles.head}>
-          <Text style={styles.eyebrow}>{eyebrow}</Text>
+          <WordText style={styles.eyebrow}>{eyebrow}</WordText>
         </View>
 
         {(metaphor !== null || score !== null) && (
@@ -65,7 +66,7 @@ function OpenScreen({ shared, expect }: { shared: SharedReading; expect: ShareKi
             {metaphor !== null && (
               <View style={styles.metaphor}>
                 <Mark name="quote" color={COLOR.creamInk} />
-                <Text style={styles.metaphorText}>{metaphor}</Text>
+                <WordText style={styles.metaphorText}>{metaphor}</WordText>
               </View>
             )}
             {/* 궁합에서는 점수가 그 글의 일부다. 빼면 받은 사람이 다른 글을 본다 */}
@@ -73,11 +74,11 @@ function OpenScreen({ shared, expect }: { shared: SharedReading; expect: ShareKi
               <Tile tone={ELEMENT_TONE.火.soft} style={styles.score}>
                 <View style={styles.scoreLabel}>
                   <Icon name="taiji" size={16} color={ELEMENT_TONE.火.ink} />
-                  <Text style={styles.scoreName}>궁합풀이 점수</Text>
+                  <WordText style={styles.scoreName}>궁합풀이 점수</WordText>
                 </View>
                 <View style={styles.scoreLine}>
-                  <Text style={styles.scoreValue}>{score}</Text>
-                  <Text style={styles.scoreMax}>/ 100</Text>
+                  <WordText style={styles.scoreValue}>{score}</WordText>
+                  <WordText style={styles.scoreMax}>/ 100</WordText>
                 </View>
               </Tile>
             )}
@@ -91,11 +92,11 @@ function OpenScreen({ shared, expect }: { shared: SharedReading; expect: ShareKi
         {/* 다 읽은 자리에서 묻는다 — 이 화면의 유일한 시작 단추다. 가입에 코드가 든다는 줄은 걷었다(ADR 0225) */}
         <Paper style={styles.invitation}>
           <BrandCircle size={56} mark={36} />
-          <Text accessibilityRole="header" style={styles.section}>
+          <WordText accessibilityRole="header" style={styles.section}>
             {invitation.heading}
-          </Text>
-          <Text style={styles.note}>{invitation.note}</Text>
-          {failure !== null && <Text style={styles.failure}>{failure}</Text>}
+          </WordText>
+          <WordText style={styles.note}>{invitation.note}</WordText>
+          {failure !== null && <WordText style={styles.failure}>{failure}</WordText>}
           <PrimaryButton label="로그인하고 시작하기" onPress={start} disabled={going} />
         </Paper>
       </ScrollView>
@@ -136,14 +137,14 @@ function Notice({ title, lines, children }: { title: string; lines: readonly str
       <ScrollView contentContainerStyle={styles.noticeRoom}>
         <Paper style={styles.notice}>
           <BrandCircle size={64} mark={40} />
-          <Text accessibilityRole="header" style={styles.title}>
+          <WordText accessibilityRole="header" style={styles.title}>
             {title}
-          </Text>
+          </WordText>
           <View>
             {lines.map((line) => (
-              <Text key={line} style={styles.noticeLine}>
+              <WordText key={line} style={styles.noticeLine}>
                 {line}
-              </Text>
+              </WordText>
             ))}
           </View>
           <View style={styles.noticeActions}>{children}</View>

@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 
 import { PREFER_GENDER_ORDER, type PreferGender } from '@discovery';
 import { PREFER_GENDER_KO } from '@discovery/copy';
@@ -14,6 +14,7 @@ import { KEEP_VIEW } from '@/ui/keep-view';
 
 import { SwitchRow, useDoneNote, FAILURE_INSET } from './parts';
 import { savePreferGender } from './settings';
+import { WordText } from '@/ui/word-text';
 
 /**
  * 「인연 찾기 참여」 스위치 — 가입 고지가 「설정에서 언제든 끌 수 있습니다」라고 약속한 자리다. 누르면 곧 바뀌고 앱의 문을 지난다 — 요약은 서버가 짓는다(ADR 0211).
@@ -106,22 +107,22 @@ export function PreferenceRow({ current }: { current: PreferGender }) {
     <>
       <View style={styles.box}>
         <View style={styles.head}>
-          <Text style={styles.label}>소개받을 성별</Text>
-          <Text accessibilityLiveRegion="polite" style={styles.progress}>
+          <WordText style={styles.label}>소개받을 성별</WordText>
+          <WordText accessibilityLiveRegion="polite" style={styles.progress}>
             {saving ? '저장하는 중…' : done.note}
-          </Text>
+          </WordText>
         </View>
         <View style={styles.choices} accessibilityRole="radiogroup">
           {PREFER_GENDER_ORDER.map((value) => {
             const on = chosen === value;
             return (
               <Pressable key={value} accessibilityRole="radio" accessibilityState={{ checked: on }} onPress={() => choose(value)} {...KEEP_VIEW} style={[styles.choice, on && styles.chosen]}>
-                <Text style={[styles.choiceText, on && styles.chosenText]}>{PREFER_GENDER_KO[value]}</Text>
+                <WordText style={[styles.choiceText, on && styles.chosenText]}>{PREFER_GENDER_KO[value]}</WordText>
               </Pressable>
             );
           })}
         </View>
-        <Text style={styles.help}>서로 고른 성별이 맞을 때 소개돼요.</Text>
+        <WordText style={styles.help}>서로 고른 성별이 맞을 때 소개돼요.</WordText>
       </View>
       {failure !== null && <FailureLine style={FAILURE_INSET}>{`저장하지 못했어요. ${failure}`}</FailureLine>}
     </>

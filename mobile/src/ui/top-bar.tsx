@@ -1,10 +1,11 @@
 import { router, type Href } from 'expo-router';
 import type { ReactNode } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Path } from 'react-native-svg';
 
 import { COLOR, FONT, TYPE } from './tokens';
+import { WordText } from './word-text';
 
 /** 앞 화면으로 — 스택에 앞 화면이 없으면(주소로 바로 열렸다) 대체 경로를 연다. `router.back` 은 이 파일에만 있다(`scripts/mobile-back.test.ts`) */
 export function goBack(fallback: string) {
@@ -36,9 +37,9 @@ export function TopBar({ title, fallback, right, children }: { title?: string; f
       <View style={styles.middle}>
         {children ??
           (title !== undefined && title !== '' && (
-            <Text accessibilityRole="header" numberOfLines={1} style={styles.title}>
+            <WordText accessibilityRole="header" numberOfLines={1} style={styles.title}>
               {title}
-            </Text>
+            </WordText>
           ))}
       </View>
       {right !== undefined && <View style={styles.right}>{right}</View>}

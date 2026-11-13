@@ -1,6 +1,6 @@
 import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
-import { AppState, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { AppState, ScrollView, StyleSheet, View } from 'react-native';
 
 import { safeReturnPath } from '@consent/return-path';
 import { DEFAULT_QUERY, missingAnswer } from '@input/query';
@@ -23,6 +23,7 @@ import { COLOR, FONT, TYPE } from '@/ui/tokens';
 import { CardFrame, Paper } from '@/ui/surfaces';
 import { useLatestReads } from '@/ui/latest-reads';
 import { settled } from '@/ui/settled';
+import { WordText } from '@/ui/word-text';
 
 /** 홈 — 차례는 웹의 `app/me/(home)/page.tsx` 와 같다. 다른 화면에서 돌아올 때마다 다시 읽는다 */
 export default function HomeScreen() {
@@ -85,22 +86,22 @@ function Body({ home, retry }: { home: Home; retry: () => void }) {
     case 'failed':
       return (
         <View style={styles.failure}>
-          <Text style={styles.failureText}>{home.message}</Text>
+          <WordText style={styles.failureText}>{home.message}</WordText>
           <SecondaryButton label="다시 시도하기" onPress={retry} />
         </View>
       );
     case 'sign-in':
       return (
         <View style={styles.failure}>
-          <Text style={styles.failureText}>{home.message}</Text>
+          <WordText style={styles.failureText}>{home.message}</WordText>
           <SecondaryButton label="다시 로그인" onPress={() => void signOut(client)} />
         </View>
       );
     case 'notice':
       return (
         <CardFrame style={styles.notice}>
-          <Text style={styles.noticeTitle}>{home.title}</Text>
-          <Text style={styles.noticeDetail}>{home.detail}</Text>
+          <WordText style={styles.noticeTitle}>{home.title}</WordText>
+          <WordText style={styles.noticeDetail}>{home.detail}</WordText>
         </CardFrame>
       );
     case 'no-self':
@@ -115,12 +116,12 @@ function Body({ home, retry }: { home: Home; retry: () => void }) {
       <SelfCard card={home.self} />
     ) : home.self.kind === 'unreadable' ? (
       <CardFrame style={styles.unreadable}>
-        <Text style={styles.noticeDetail}>{home.self.message}</Text>
-        <Text style={styles.meta}>{home.self.note}</Text>
+        <WordText style={styles.noticeDetail}>{home.self.message}</WordText>
+        <WordText style={styles.meta}>{home.self.note}</WordText>
       </CardFrame>
     ) : (
       <View style={styles.failure}>
-        <Text style={styles.failureText}>{home.self.message}</Text>
+        <WordText style={styles.failureText}>{home.self.message}</WordText>
         <SecondaryButton label="다시 시도하기" onPress={retry} />
       </View>
     );
@@ -178,15 +179,15 @@ function NoSelf({ nickname, onSaved }: { nickname: string; onSaved: () => void }
         ))}
       </View>
       <View style={styles.paperHead}>
-        <Text accessibilityRole="header" style={styles.paperTitle}>내 사주 등록</Text>
-        <Text style={styles.paperDetail}>
-          <Text style={styles.strong}>{nickname}</Text> 님의 출생 정보를 입력해 주세요.
-        </Text>
+        <WordText accessibilityRole="header" style={styles.paperTitle}>내 사주 등록</WordText>
+        <WordText style={styles.paperDetail}>
+          <WordText style={styles.strong}>{nickname}</WordText> 님의 출생 정보를 입력해 주세요.
+        </WordText>
       </View>
       <BirthFields form={form} showName={false} />
       <PrimaryButton label={saving ? '저장하는 중…' : '내 사주로 저장'} onPress={() => void save()} disabled={missing !== null || saving} />
-      {missing !== null && <Text style={styles.meta}>{missing}</Text>}
-      {failure !== null && <Text accessibilityRole="alert" style={styles.failureText}>저장하지 못했어요. {failure}</Text>}
+      {missing !== null && <WordText style={styles.meta}>{missing}</WordText>}
+      {failure !== null && <WordText accessibilityRole="alert" style={styles.failureText}>저장하지 못했어요. {failure}</WordText>}
     </Paper>
   );
 }

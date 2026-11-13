@@ -1,5 +1,5 @@
 import { router } from 'expo-router';
-import { StyleSheet, Text } from 'react-native';
+import { StyleSheet } from 'react-native';
 
 import { GUIDE_LINKS } from '@brand/links';
 
@@ -9,18 +9,19 @@ import { InfoScreen } from '@/info/frame';
 import { LinkRow } from '@/settings/parts';
 import { Card, CardFrame } from '@/ui/surfaces';
 import { COLOR, FONT, TYPE } from '@/ui/tokens';
+import { WordText } from '@/ui/word-text';
 
 /** 고객센터 — 로그인 없이 열린다. 답 시한을 말하지 않는다: 약속할 기능이 없다 */
 export default function SupportScreen() {
   return (
     <InfoScreen title={SUPPORT_TITLE} fallback="/">
       <Card style={styles.card}>
-        <Text accessibilityRole="header" style={styles.head}>
+        <WordText accessibilityRole="header" style={styles.head}>
           {CONTACT_LABEL}
-        </Text>
-        <Text selectable style={styles.line}>
+        </WordText>
+        <WordText selectable style={styles.line}>
           {SUPPORT_MAIL_LINE}
-        </Text>
+        </WordText>
         <SendMail />
       </Card>
       <CardFrame>

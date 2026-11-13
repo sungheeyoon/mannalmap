@@ -1,6 +1,6 @@
 import { Redirect, useLocalSearchParams } from 'expo-router';
 import { useMemo, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text } from 'react-native';
+import { Pressable, ScrollView, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import type { ChartWant } from '@consent/app-destination';
@@ -23,6 +23,7 @@ import { SavePersonForReading } from '@/reading/save-self';
 import { TopBar } from '@/ui/top-bar';
 import { COLOR, FONT, TYPE } from '@/ui/tokens';
 import { CardFrame } from '@/ui/surfaces';
+import { WordText } from '@/ui/word-text';
 
 /**
  * 사주 결과 — 앱의 첫 결과는 사주 카드 · 계산값 한 줄 · 다음 행동이 먼저이고, 전문 표는 「만세력 보기」 아래 접혀 있다(#940). 표의 절 차례와 값은 웹의 `app/saju/view.tsx` · `sajuViewModelOf` 그대로다.
@@ -48,7 +49,7 @@ function ChartBody({ query, want }: { query: Query; want: ChartWant | null }) {
       <TopBar title="사주 결과" fallback="/" />
       <ScrollView contentContainerStyle={styles.content}>
         {!result.ok || model === null ? (
-          <Text style={styles.failure}>{result.ok ? '' : result.message}</Text>
+          <WordText style={styles.failure}>{result.ok ? '' : result.message}</WordText>
         ) : (
           <>
             <SelfCard
@@ -57,13 +58,13 @@ function ChartBody({ query, want }: { query: Query; want: ChartWant | null }) {
               pillars={<PillarStrip pillars={model.saju.pillars} name={query.name.trim()} />}
               actions={false}
             />
-            <Text style={styles.firstLine}>{elementsFirstLine(model.saju.analysis.elements)}</Text>
+            <WordText style={styles.firstLine}>{elementsFirstLine(model.saju.analysis.elements)}</WordText>
 
             <SavePersonForReading query={query} want={want} />
 
             <CardFrame>
               <Pressable accessibilityRole="button" accessibilityState={{ expanded: tableOpen }} onPress={() => setTableOpen(!tableOpen)} style={styles.tableHead}>
-                <Text style={styles.tableTitle}>만세력 보기</Text>
+                <WordText style={styles.tableTitle}>만세력 보기</WordText>
                 <Chevron open={tableOpen} />
               </Pressable>
             </CardFrame>
