@@ -161,7 +161,7 @@ export function ReadingFeedback({ target, runId, given }: { target: ReadingTarge
 
           {failure !== null && <WordText accessibilityRole="alert" style={styles.warn}>답을 남기지 못했어요. {failure}</WordText>}
 
-          {!ready && <WordText accessibilityRole={tried ? 'alert' : undefined} style={tried ? styles.warn : styles.small}>필수 질문 3개에 답하면 보낼 수 있어요.</WordText>}
+          {!ready && <WordText accessibilityRole={tried ? 'alert' : undefined} style={styles.warn}>필수 질문 3개에 답하면 보낼 수 있어요.</WordText>}
           <PrimaryButton label={saving ? '보내는 중…' : '의견 보내기'} onPress={() => void send()} disabled={saving} />
         </View>
       )}

@@ -280,7 +280,7 @@ export function ReadingFeedback({
             <p
               id={`feedback-locked-${runId}`}
               role={tried ? 'alert' : undefined}
-              className={`text-small leading-5 ${tried ? 'font-medium text-danger' : 'text-secondary'}`}
+              className={`text-small leading-5 ${tried ? 'font-medium text-danger' : 'text-danger'}`}
             >
               필수 질문 3개에 답하면 보낼 수 있어요.
             </p>

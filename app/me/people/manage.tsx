@@ -224,7 +224,7 @@ export function AddPerson({ slots }: { slots: PersonSlots | null }) {
             <p
               id="add-person-missing"
               role={tried ? 'alert' : undefined}
-              className={tried ? 'text-sm font-medium text-danger' : TYPE_META}
+              className={tried ? 'text-sm font-medium text-danger' : 'text-small font-medium leading-5 text-danger'}
             >
               {missing}
             </p>
