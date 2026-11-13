@@ -31,6 +31,7 @@ import { createChecks, sql, testNeed, fetchWhole, keyedRpc, sessionCookie } from
  * 하나도 없는 leaf 라 Node 가 그대로 읽는다.
  */
 import { READING_REPLACES_NOTE, READING_STALE_NOTE } from '../src/lib/reading/notes.ts';
+import { COMPAT_SCORE_LABEL } from '../src/lib/reading/copy.ts';
 import { worktreeStack } from '../src/lib/local-env.ts';
 
 const status = JSON.parse(execFileSync('npx', ['supabase', 'status', '-o', 'json'], { encoding: 'utf8' }));
@@ -262,7 +263,7 @@ try {
     const mine = plain(await body('/me/readings/self', cookie.a));
     check('저장한 글이 화면에 선다', mine.includes('스스로 정한 규칙 안에서'));
     check('내부 검토용 근거 절은 사용자 결과에서 숨긴다', !mine.includes('근거 (검사용)'));
-    check('자기 풀이에는 점수가 서지 않는다', !mine.includes('궁합풀이 점수'));
+    check('자기 풀이에는 점수가 서지 않는다', !mine.includes(COMPAT_SCORE_LABEL));
     /**
      * **경고는 이제 확인 창에 있다.**
      *
@@ -397,7 +398,7 @@ try {
 
     const filled = plain(await body(page, cookie.a));
     check('저장한 글이 그 화면에 선다', filled.includes('스스로 정한 규칙 안에서'));
-    check('한 사람짜리라 점수가 안 선다', !filled.includes('궁합풀이 점수'));
+    check('한 사람짜리라 점수가 안 선다', !filled.includes(COMPAT_SCORE_LABEL));
 
     /** 남의 것은 못 본다 — **없는 것과 못 보는 것을 가르지 않는다** */
     const stranger = await body(page, cookie.b);

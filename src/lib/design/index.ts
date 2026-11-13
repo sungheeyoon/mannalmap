@@ -6,3 +6,4 @@ export * from './tokens.generated';
 export * from './parts';
 export * from './contract';
 export * from './loading';
+export * from './gauge';

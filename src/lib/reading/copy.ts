@@ -18,3 +18,9 @@ export const TASTE_CLOSED_NOTE = '지금은 첫 문단을 열 수 없어요.';
 
 /** 기다리는 동안 첫 절 위의 한 줄 — 뒤에 「작성 중…」(`READING_OUTLINE_STATE.writing`)이 붙는다 */
 export const TASTE_WRITING_SUBJECT = '첫 문단';
+
+/**
+ * 궁합풀이 표지의 점수 이름 — 반원 게이지 아래 작은 글자(시안 A, 운영자 승인 2026-11-13). 전에는 「궁합풀이 점수」였다. 대장 「확인 전」 compat 절.
+ * 웹 · 앱의 표지와 공유본이 함께 부른다.
+ */
+export const COMPAT_SCORE_LABEL = '궁합 점수';

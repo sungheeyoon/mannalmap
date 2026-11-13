@@ -1,12 +1,14 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 
+import { COMPAT_SCORE_LABEL } from '@/src/lib/reading/copy';
 import { SHARE_COPY, sharedTitle, type SharedReading } from '@/src/lib/reading/shared';
 
 import { Markdown } from '../me/reading/markdown';
 import { BUTTON_PRIMARY } from '../ui/buttons';
 import { Icon } from '../ui/icons';
 import { Logo } from '../ui/logo';
+import { ScoreGauge } from '../ui/score-gauge';
 import { CARD_FACE, COLUMN_READING, TYPE_SECTION, TYPE_TITLE } from '../ui/surfaces';
 import { AppSheet } from './app-sheet';
 import type { ShareKind } from './path';
@@ -85,7 +87,25 @@ export function SharedReadingBody({ shared, token, expect }: { shared: SharedRea
           <h1 className={`text-pretty ${TYPE_TITLE}`}>{whose}</h1>
       </header>
 
-      {(metaphor !== null || score !== null) && (
+      {expect === 'private' && (metaphor !== null || score !== null) ? (
+        /*
+          **궁합풀이는 보낸 사람이 보던 표지와 같은 꼴이다**(시안 A, 운영자 승인 2026-11-13) — 반원 게이지와 큰 점수 · 「궁합 점수」 · 비유를 가운데로.
+          두 사람의 동그라미는 안 선다 — 공유본에는 명식(일간)이 없다. 이름은 바로 위 제목이 든다.
+        */
+        <section className="flex flex-col items-center gap-4 rounded-card bg-cream px-5 py-7 text-center sm:px-8 sm:py-9">
+          {score !== null && (
+            <div className="flex flex-col items-center gap-1.5">
+              <ScoreGauge score={score} />
+              <p className="text-small font-semibold text-secondary">{COMPAT_SCORE_LABEL}</p>
+            </div>
+          )}
+          {metaphor !== null && (
+            <p className="max-w-[18em] text-pretty font-rounded text-heading leading-[1.45] tracking-[-0.02em] text-foreground sm:text-title">
+              {metaphor}
+            </p>
+          )}
+        </section>
+      ) : (metaphor !== null || score !== null) && (
         <section className="grid overflow-hidden rounded-card bg-cream sm:grid-cols-[minmax(0,1fr)_auto]">
           <div className="flex min-w-0 gap-3 px-5 py-7 sm:px-8 sm:py-9">
             {metaphor !== null && (
@@ -102,7 +122,7 @@ export function SharedReadingBody({ shared, token, expect }: { shared: SharedRea
             <div className="tone-fire m-3 flex min-w-40 flex-col items-center justify-center rounded-card bg-[var(--tile)] px-5 py-4 text-center sm:ml-0">
               <p className="flex items-center gap-1 text-small font-semibold text-[var(--ink)]">
                 <Icon name="taiji" className="size-4" />
-                궁합풀이 점수
+                {COMPAT_SCORE_LABEL}
               </p>
               <p className="mt-1 flex items-baseline justify-center gap-1">
                 <span className="text-figure font-bold leading-none tabular-nums text-foreground">{score}</span>

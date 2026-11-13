@@ -2,20 +2,26 @@ import type { ReactNode } from 'react';
 
 import { READING_STALE_LABEL, READING_STALE_NOTE } from '@/src/lib/reading/notes';
 import { seatNicknamesOf, withNicknames, type PairNicknames } from '@/src/lib/reading/display';
-import { ELEMENTS, type Element } from '@/src/lib/saju';
+import { COMPAT_SCORE_LABEL } from '@/src/lib/reading/copy';
+import { ELEMENTS, STEM_INFO, type Element, type Stem } from '@/src/lib/saju';
 
 import { elementScope } from '../../ui/element-tone';
 import { ElementSymbol } from '../../ui/element-symbol';
-import { FaceSymbol } from '../../ui/stem-symbol';
+import { FaceSymbol, StemSymbol } from '../../ui/stem-symbol';
 import { Icon } from '../../ui/icons';
+import { ScoreGauge } from '../../ui/score-gauge';
 import { TYPE_SECTION } from '../../ui/surfaces';
 import type { CurrentReading } from '@/src/lib/reading';
 import { coverFace, readingMinutes } from './essay';
 import { discoveryLeadOf } from './discovery-lead';
 import { Markdown, READING_COLUMN } from './markdown';
+import { PairNames } from './pair-names';
 import { ShareReadingButton } from './share-button';
 import type { ReadingTarget } from './target';
 import { when } from '@/src/lib/reading/when';
+
+/** 궁합풀이 표지의 한 사람 — 이름과 일간(동그라미의 그림 · 오행 soft 색). 화면이 보이는 차례 그대로 준다 */
+export type CoverPerson = { readonly name: string; readonly stem: Stem | null };
 
 /** 다 된 글 — 표지(비유 · 점수) · 수정 전 경고 · 본문 */
 export function Result({
@@ -27,7 +33,13 @@ export function Result({
   nicknames,
   canShare = false,
   discoveryInCover = false,
+  pair,
 }: {
+  /**
+   * 궁합풀이 표지(시안 A, 운영자 승인 2026-11-13) — 두 사람 · 반원 게이지 · 비유 · 날짜를 가운데로 세운다. 화면 머리에 서던 두 사람 줄이
+   * 표지 안으로 들어온다. 비공개 궁합(`/me/compat`)만 넘긴다 — 인연 궁합은 일간 그림을 안 세운다(ADR 0215)
+   */
+  pair?: readonly [CoverPerson, CoverPerson];
   /** 상세 궁합 — 글 첫 문단(발견 한 줄)을 표지의 비유와 점수 사이로 올린다(`discoveryLeadOf`) */
   discoveryInCover?: boolean;
   reading: CurrentReading;
@@ -86,7 +98,16 @@ export function Result({
         오른쪽 아래, 비유가 흐르는 자리를 밀어내지 않는 곳에 선다. 비유는 길이가 들쭉날쭉하다(마흔 자 안팎을
         시키지만 막는 자리는 120자) — 한 줄을 전제하지 않고 `text-pretty` 로 고르게 나눈다.
       */}
-      {reading.score !== null || metaphor !== null ? (
+      {pair !== undefined ? (
+        <PairCover
+          pair={pair}
+          score={reading.score}
+          metaphor={metaphor}
+          discovery={discovery}
+          meta={meta}
+          share={canShare ? <ShareReadingButton target={target} look="icon" /> : null}
+        />
+      ) : reading.score !== null || metaphor !== null ? (
         <figure
           className={`${elementScope(firstTone)} relative rounded-card px-6 pb-6 pt-7 sm:px-10 sm:pb-8 sm:pt-10 ${face === null ? 'bg-cream' : ''}`}
           style={face === null ? undefined : { background: face.background }}
@@ -143,7 +164,7 @@ export function Result({
             <span className="flex flex-wrap items-center gap-x-2.5 gap-y-1.5 text-small text-secondary">{meta}</span>
             {reading.score !== null && (
               <span className="flex flex-col items-end">
-                <span className="text-small font-semibold text-secondary">궁합풀이 점수</span>
+                <span className="text-small font-semibold text-secondary">{COMPAT_SCORE_LABEL}</span>
                 <span className="flex items-baseline gap-1">
                   <span className="text-figure font-bold leading-none tabular-nums text-foreground">{reading.score}</span>
                   <span className="text-small font-semibold text-secondary">/ 100</span>
@@ -188,5 +209,64 @@ export function Result({
         </span>
       </div>
     </div>
+  );
+}
+
+/**
+ * **궁합풀이 표지 — 시안 A 「점수를 가운데 크게」**(운영자 승인 2026-11-13). 위에서부터 가운데로 두 사람(동그라미 + 이름) → 반원 게이지와 큰
+ * 「82점」 · 작은 「궁합 점수」 → 비유 한 줄(큰 명조) → 날짜 · 읽는 시간. 큰 따옴표와 구분선은 걷었다. 점수가 없는 옛 궁합은 게이지와 그 이름이
+ * 빠지고 이름 → 비유 → 날짜만 선다. 공유 아이콘은 표지 오른쪽 위 그대로다(#1142).
+ */
+function PairCover({
+  pair,
+  score,
+  metaphor,
+  discovery,
+  meta,
+  share,
+}: {
+  pair: readonly [CoverPerson, CoverPerson];
+  score: number | null;
+  metaphor: string | null;
+  discovery: string | null;
+  meta: ReactNode;
+  share: ReactNode;
+}) {
+  return (
+    <figure className="relative flex flex-col items-center gap-4 rounded-card bg-cream px-5 pb-6 pt-6 text-center sm:px-10 sm:pb-8 sm:pt-8">
+      {share !== null && <span className="absolute right-2 top-2 sm:right-3 sm:top-3">{share}</span>}
+      {/* 한 줄에 안 들면 세 줄(첫 사람 / × / 둘째 사람), 양옆은 공유 단추 폭만큼 비운다(`PairNames`) */}
+      <PairNames first={<CoverName person={pair[0]} />} second={<CoverName person={pair[1]} />} />
+      {score !== null && (
+        <div className="mt-1 flex flex-col items-center gap-1.5">
+          <ScoreGauge score={score} />
+          <p className="text-small font-semibold text-secondary">{COMPAT_SCORE_LABEL}</p>
+        </div>
+      )}
+      {metaphor !== null && (
+        <blockquote className="max-w-[18em] text-pretty font-rounded text-heading leading-[1.45] tracking-[-0.02em] text-foreground sm:text-title">
+          {metaphor}
+        </blockquote>
+      )}
+      {discovery !== null && (
+        <p data-discovery className="max-w-[32em] text-pretty text-lead font-medium leading-7 text-foreground">
+          {discovery}
+        </p>
+      )}
+      <figcaption className="flex flex-wrap items-center justify-center gap-x-2.5 gap-y-1.5 text-small text-secondary">{meta}</figcaption>
+    </figure>
+  );
+}
+
+/** 동그라미(그 사람의 일간 그림 · 오행 soft 색) + 이름 — 일간을 모르면 회색 동그라미만 선다 */
+function CoverName({ person }: { person: CoverPerson }) {
+  const element = person.stem === null ? null : STEM_INFO[person.stem].element;
+  return (
+    <span className="inline-flex min-w-0 items-center gap-1.5">
+      <span aria-hidden="true" className={`${elementScope(element)} grid size-8 shrink-0 place-items-center rounded-full bg-[var(--tile)]`}>
+        {person.stem !== null && <StemSymbol stem={person.stem} className="size-5" />}
+      </span>
+      <span className="min-w-0 break-words">{person.name}</span>
+    </span>
   );
 }

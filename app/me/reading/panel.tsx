@@ -21,7 +21,7 @@ import type { ReadingTarget } from './target';
 import type { TasteCarryView } from '../../taste/taste-carry';
 import { CarryCard } from './carry-card';
 import { LoadingState } from './reading-waiting';
-import { Result } from './reading-result';
+import { Result, type CoverPerson } from './reading-result';
 import { useReadingPanel } from './use-reading-panel';
 
 export function ReadingPanel({
@@ -43,6 +43,7 @@ export function ReadingPanel({
   discoveryInCover = false,
   nicknames,
   tones,
+  pair,
   carry = null,
 }: {
   target: ReadingTarget;
@@ -139,6 +140,8 @@ export function ReadingPanel({
    * 안 넘기면 크림 한 장이다(`Result`).
    */
   tones?: readonly (Element | null)[];
+  /** 궁합풀이 표지의 두 사람 — 비공개 궁합만 넘긴다(`Result`) */
+  pair?: readonly [CoverPerson, CoverPerson];
   /**
    * 가입 전에 읽던 로그인 전 사주 문단 — 내 사주풀이에만 온다(ADR 0143). 맨 위에 「아까 보던 내용」으로 선다: 누르기 전 ·
    * 만드는 동안 · 그 문단을 이은 글 위. 그 글을 새로 받으면(`shown` 에서 누름) 새 글은 이어 쓴 글이 아니라 내려간다.
@@ -322,6 +325,7 @@ export function ReadingPanel({
           discoveryInCover={discoveryInCover}
           nicknames={nicknames}
           canShare={chrome.canShare}
+          pair={pair}
         />
       )}
 

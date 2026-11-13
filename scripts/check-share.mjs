@@ -23,6 +23,7 @@ import { passNotice, chartArgs } from './notice.mjs';
 import { createChecks, fetchWhole, keyedRpc } from './checks.mjs';
 import { worktreeStack } from '../src/lib/local-env.ts';
 import { SERVICE_NAME, SERVICE_TAGLINE } from '../src/lib/brand/index.ts';
+import { COMPAT_SCORE_LABEL } from '../src/lib/reading/copy.ts';
 
 const status = JSON.parse(execFileSync('npx', ['supabase', 'status', '-o', 'json'], { encoding: 'utf8' }));
 const API = status.API_URL;
@@ -375,7 +376,7 @@ check('미리보기에는 저장한 사람의 이름이 없다',
 const compatPage = await get(`/share/compat/${pairLink.data}`);
 const compatHtml = await compatPage.text();
 check('궁합 공유 화면이 로그인 없이 열린다', compatPage.status === 200, `HTTP ${compatPage.status}`);
-check('궁합은 점수까지 화면에 선다', compatHtml.includes('궁합풀이 점수') && compatHtml.includes('72'));
+check('궁합은 점수까지 화면에 선다', compatHtml.includes(COMPAT_SCORE_LABEL) && compatHtml.includes('72'));
 check('궁합 화면이 두 사람 이름을 든다',
   compatHtml.includes(`엄마${tag}님`) && compatHtml.includes(`동생${tag}님`)
     && compatHtml.includes('궁합풀이'),
