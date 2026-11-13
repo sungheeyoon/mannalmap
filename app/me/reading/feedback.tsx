@@ -5,6 +5,7 @@ import { useRef, useState, useTransition } from 'react';
 import {
   FEEDBACK_COMMENT,
   FEEDBACK_FOLDED_NOTE,
+  FEEDBACK_LOCKED_NOTE,
   FEEDBACK_SCALE,
   FEEDBACK_SCOPE_NOTE,
   FEEDBACK_THANKS,
@@ -28,6 +29,7 @@ import { TYPE_NAME } from '../../ui/surfaces';
 import { submitReadingFeedback } from './actions';
 import type { ReadingTarget } from './target';
 import { FailureLine } from '../../ui/failure-line';
+import { FormError } from '../../ui/form-error';
 
 /**
  * 읽고 나서 답하는 자리 — **글 바로 아래**다.
@@ -270,30 +272,23 @@ export function ReadingFeedback({
           <FailureLine>답을 남기지 못했어요. {failure}</FailureLine>
         )}
 
-        <div className="-mx-5 -mb-5 flex flex-col gap-3 border-t border-border bg-surface-soft px-5 py-4 sm:-mx-7 sm:-mb-6 sm:flex-row sm:items-center sm:justify-end sm:px-7">
-          {/*
-            **다 고르기 전에만 까닭이 단추 옆에 선다**(2026-10-10 화면 점검 B20) — 셋을 다 골라야 보내지는데 어느 것이 필수인지 말이
-            없어 왜 안 눌리는지 몰랐다. 다 고르면 말은 걷힌다. 확정(대장 26, 운영자 2026-10-10). 단추는 가라앉되 누름을 받고(`aria-disabled`),
-            누른 뒤에는 같은 말이 경고 색 알림이 된다(운영자 2026-10-18)
-          */}
-          {!ready && (
-            <p
-              id={`feedback-locked-${runId}`}
-              role={tried ? 'alert' : undefined}
-              className={`text-small leading-5 ${tried ? 'font-medium text-danger' : 'text-secondary'}`}
-            >
-              필수 질문 3개에 답하면 보낼 수 있어요.
-            </p>
-          )}
+        <div className="-mx-5 -mb-5 border-t border-border bg-surface-soft px-5 py-4 sm:-mx-7 sm:-mb-6 sm:px-7">
           <button
             type="submit"
             disabled={saving}
             aria-disabled={!ready || undefined}
-            aria-describedby={ready ? undefined : `feedback-locked-${runId}`}
+            aria-describedby={!ready && tried ? `feedback-locked-${runId}` : undefined}
             className={`${BUTTON_PRIMARY} w-full sm:w-auto`}
           >
             {saving ? '보내는 중…' : '의견 보내기'}
           </button>
+          {/*
+            **다 고르기 전에 누르면 까닭이 주 단추 바로 아래 선다**(2026-10-10 화면 점검 B20 · 대장 26) — 셋을 다 골라야 보내지는데 어느 것이
+            필수인지 말이 없어 왜 안 눌리는지 몰랐다. 단추는 가라앉되 누름을 받고(`aria-disabled`), 누르기 전에는 줄이 없다(운영자 2026-11-14)
+          */}
+          <FormError show={!ready && tried} id={`feedback-locked-${runId}`}>
+            {FEEDBACK_LOCKED_NOTE}
+          </FormError>
         </div>
       </div>
     </form>

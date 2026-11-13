@@ -31,6 +31,7 @@ import { completeSignup } from './actions';
 import { actionAnswer } from '../ui/action-answer';
 import { FIELD as FIELD_BASE } from '../ui/fields';
 import { FAILURE_TEXT, FailureLine } from '../ui/failure-line';
+import { FormError } from '../ui/form-error';
 
 /** 입력 칸 — 프로필 화면과 같은 칸(`app/ui/fields.ts`)에, 거절된 칸은 테가 붉다 */
 const FIELD = `${FIELD_BASE} aria-invalid:border-danger`;
@@ -320,7 +321,7 @@ export function SignupForm({
         <FailureLine>{failure.message}</FailureLine>
       )}
 
-      <div className="flex flex-col gap-2 border-t border-border pt-5 sm:flex-row sm:items-center sm:gap-3">
+      <div className="border-t border-border pt-5">
         <button
           type="submit"
           disabled={working}
@@ -329,12 +330,10 @@ export function SignupForm({
         >
           {working ? SIGNUP_LABEL.signingUp : firstSignup ? SIGNUP_LABEL.signUp : SIGNUP_LABEL.confirm}
         </button>
-        {/* 눌렀는데 못 간 이유를 단추 옆에서 말한다 — 누르기 전에는 이 자리가 비어 있다 */}
-        {shownGap !== null && (
-          <p id="signup-gap" role="alert" className={`${FAILURE_TEXT} font-medium`}>
-            {shownGap.message}
-          </p>
-        )}
+        {/* 눌렀는데 못 간 이유를 주 단추 바로 아래에서 말한다 — 누르기 전에는 이 자리가 비어 있다 */}
+        <FormError show={shownGap !== null} id="signup-gap">
+          {shownGap?.message}
+        </FormError>
       </div>
     </form>
   );

@@ -2,6 +2,7 @@ import { BUTTON_OFF_OPACITY } from '@design';
 import {
   FEEDBACK_COMMENT,
   FEEDBACK_FOLDED_NOTE,
+  FEEDBACK_LOCKED_NOTE,
   FEEDBACK_SCALE,
   FEEDBACK_SCOPE_NOTE,
   FEEDBACK_THANKS,
@@ -20,6 +21,7 @@ import { useState, type ReactNode } from 'react';
 import { Pressable, StyleSheet, TextInput, View } from 'react-native';
 
 import { useClient } from '@/auth/connected';
+import { FormError } from '@/ui/form-error';
 import { FoldIcon } from '@/ui/icons';
 import { Card, Paper, Tile } from '@/ui/surfaces';
 import { PrimaryButton, TextButton } from '@/ui/parts';
@@ -161,8 +163,10 @@ export function ReadingFeedback({ target, runId, given }: { target: ReadingTarge
 
           {failure !== null && <WordText accessibilityRole="alert" style={styles.warn}>답을 남기지 못했어요. {failure}</WordText>}
 
-          {!ready && <WordText accessibilityRole={tried ? 'alert' : undefined} style={tried ? styles.warn : styles.small}>필수 질문 3개에 답하면 보낼 수 있어요.</WordText>}
-          <PrimaryButton label={saving ? '보내는 중…' : '의견 보내기'} onPress={() => void send()} disabled={saving} />
+          <View>
+            <PrimaryButton label={saving ? '보내는 중…' : '의견 보내기'} onPress={() => void send()} disabled={saving} />
+            <FormError show={!ready && tried}>{FEEDBACK_LOCKED_NOTE}</FormError>
+          </View>
         </View>
       )}
     </Card>

@@ -12,7 +12,7 @@ import { useHashParams, writeParams } from './hash-query';
 import { SavePersonForReading } from './save-for-reading';
 import { useSessionKnown, useSignedIn } from './signed-in';
 import { BUTTON_PRIMARY } from './ui/buttons';
-import { FAILURE_TEXT } from './ui/failure-line';
+import { FormError } from './ui/form-error';
 import { SajuView } from './saju/view';
 import { sajuViewModelOf, type SajuViewModel } from '@/src/lib/saju/view';
 import { Taste } from './taste/taste';
@@ -166,17 +166,22 @@ export function SajuCalculator({ outline }: { outline: readonly string[] }) {
         <BirthFields value={form} onChange={setForm} surface={signedIn ? 'flat' : 'panel'} />
 
         <div className="flex flex-wrap items-center gap-3">
-          <button
-            type="submit"
-            aria-describedby={tried && missing !== null ? 'natal-missing' : undefined}
-            className={`${BUTTON_PRIMARY} w-full ${signedIn ? 'sm:w-auto' : 'mt-1'}`}
-          >
-            {/*
-              **로그인 전에는 무엇이 무료인지 버튼이 말한다**(흐름 시안 g, ADR 0131) — 사주 · 오행 · 로그인 전 사주 문단은 로그인 없이
-              바로 선다. 회원(`/saju`)이 여기 넣는 것은 대개 남의 사주라 「내」를 안 붙인다(위 머리말).
-            */}
-            {query !== null ? '수정하고 다시 보기' : signedIn ? '사주 보기' : '무료로 내 사주 보기'}
-          </button>
+          <div className="w-full">
+            <button
+              type="submit"
+              aria-describedby={tried && missing !== null ? 'natal-missing' : undefined}
+              className={`${BUTTON_PRIMARY} w-full ${signedIn ? 'sm:w-auto' : 'mt-1'}`}
+            >
+              {/*
+                **로그인 전에는 무엇이 무료인지 버튼이 말한다**(흐름 시안 g, ADR 0131) — 사주 · 오행 · 로그인 전 사주 문단은 로그인 없이
+                바로 선다. 회원(`/saju`)이 여기 넣는 것은 대개 남의 사주라 「내」를 안 붙인다(위 머리말).
+              */}
+              {query !== null ? '수정하고 다시 보기' : signedIn ? '사주 보기' : '무료로 내 사주 보기'}
+            </button>
+            <FormError show={tried && missing !== null} id="natal-missing">
+              {missing}
+            </FormError>
+          </div>
 
           {/*
             **이미 쓰는 사람의 길은 주 단추 바로 아래 한 줄이다**(ADR 0226) — 생년월일을 안 적어도 들어가 홈에 선다(`/auth`, 목적지 기본값).
@@ -204,12 +209,6 @@ export function SajuCalculator({ outline }: { outline: readonly string[] }) {
           */}
           {query !== null && <CopyLinkButton />}
 
-          {/* 눌렀는데 못 간 이유를 버튼 옆에서 말한다 — 누르기 전에는 이 자리가 비어 있다 */}
-          {tried && missing !== null && (
-            <p id="natal-missing" role="alert" className={`${FAILURE_TEXT} font-medium`}>
-              {missing}
-            </p>
-          )}
         </div>
 
         {/*

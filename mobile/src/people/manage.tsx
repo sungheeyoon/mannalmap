@@ -9,6 +9,7 @@ import { endsWithBatchim } from '@saju-text/batchim';
 
 import { useClient } from '@/auth/connected';
 import { FailureLine } from '@/ui/failure-line';
+import { FormError } from '@/ui/form-error';
 import { FieldLabel, PrimaryButton, SecondaryButton, TextButton } from '@/ui/parts';
 import { COLOR, FONT, RADIUS, TYPE } from '@/ui/tokens';
 import { ConfirmDialog, DialogText } from '@/ui/confirm-dialog';
@@ -146,9 +147,11 @@ function AddForm({ remaining, onCancel, onSaved }: { remaining: number | null; o
         <SameChartAsk question={question} busy={saving} />
       ) : (
         <View style={styles.actions}>
-          <PrimaryButton label={saving ? '저장하는 중…' : '등록'} onPress={save} disabled={saving} />
+          <View>
+            <PrimaryButton label={saving ? '저장하는 중…' : '등록'} onPress={save} disabled={saving} />
+            <FormError show={tried && missing !== null}>{missing}</FormError>
+          </View>
           <SecondaryButton label="취소" onPress={onCancel} disabled={saving} />
-          {missing !== null && <WordText style={tried ? styles.warn : shared.meta}>{missing}</WordText>}
         </View>
       )}
       {failure !== null && <FailureLine>저장하지 못했어요. {failure}</FailureLine>}
@@ -224,7 +227,6 @@ const styles = StyleSheet.create({
   off: { opacity: BUTTON_OFF_OPACITY },
   form: { gap: 20 },
   actions: { gap: 8 },
-  warn: { fontSize: TYPE.note, fontFamily: FONT.medium, color: COLOR.danger },
   note: {
     minHeight: 72,
     paddingHorizontal: 14,

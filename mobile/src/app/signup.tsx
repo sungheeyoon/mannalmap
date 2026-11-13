@@ -31,6 +31,7 @@ import { AccountNotice } from '@/settings/parts';
 import { LoadingDots } from '@/ui/loading';
 import { Logo } from '@/ui/logo';
 import { FailureLine } from '@/ui/failure-line';
+import { FormError } from '@/ui/form-error';
 import { CheckRow, Field, FieldLabel, PrimaryButton, SecondaryButton, TextButton } from '@/ui/parts';
 import { COLOR, FONT, TYPE } from '@/ui/tokens';
 import { settled } from '@/ui/settled';
@@ -269,12 +270,14 @@ function SignupForm({ form, onDone }: { form: Extract<SignupState, { kind: 'form
 
       <View style={styles.action}>
         {failure !== null && failure.field === null && <WordText style={styles.failure}>{failure.message}</WordText>}
-        {shownGap !== null && <WordText style={styles.failure}>{shownGap.message}</WordText>}
-        <PrimaryButton
-          label={working ? SIGNUP_LABEL.signingUp : again ? SIGNUP_LABEL.confirm : SIGNUP_LABEL.signUp}
-          onPress={send}
-          disabled={working}
-        />
+        <View>
+          <PrimaryButton
+            label={working ? SIGNUP_LABEL.signingUp : again ? SIGNUP_LABEL.confirm : SIGNUP_LABEL.signUp}
+            onPress={send}
+            disabled={working}
+          />
+          <FormError show={shownGap !== null}>{shownGap?.message}</FormError>
+        </View>
       </View>
     </CardFrame>
   );

@@ -24,6 +24,7 @@ import { Icon } from '../../ui/icons';
 import { useLeaveGuard } from '../../ui/leave-guard';
 import { EMPTY_SLOT, TYPE_META, TYPE_SECTION } from '../../ui/surfaces';
 import { FailureLine } from '../../ui/failure-line';
+import { FormError } from '../../ui/form-error';
 
 /**
  * 목록을 손대는 세 자리 — 추가·메모·빼기.
@@ -204,13 +205,13 @@ export function AddPerson({ slots }: { slots: PersonSlots | null }) {
           }}
         />
       ) : (
-        <div className="flex flex-col gap-2">
+        <div>
           <div className="flex flex-wrap items-center gap-3">
             <button
               type="submit"
               disabled={saving}
               aria-disabled={missing !== null || undefined}
-              aria-describedby={missing !== null ? 'add-person-missing' : undefined}
+              aria-describedby={tried && missing !== null ? 'add-person-missing' : undefined}
               className={BUTTON_PRIMARY}
             >
               {saving ? '저장하는 중…' : '등록'}
@@ -219,16 +220,10 @@ export function AddPerson({ slots }: { slots: PersonSlots | null }) {
               취소
             </button>
           </div>
-          {/* 빠진 칸을 단추 곁에서 말한다 — 누르기 전에는 도움말, 누른 뒤에는 경고 색(ADR 0160 의 3) */}
-          {missing !== null && (
-            <p
-              id="add-person-missing"
-              role={tried ? 'alert' : undefined}
-              className={tried ? 'text-sm font-medium text-danger' : TYPE_META}
-            >
-              {missing}
-            </p>
-          )}
+          {/* 빠진 칸은 누른 뒤에만 주 단추 바로 아래에서 말한다(운영자 2026-11-14, `FormError`) */}
+          <FormError show={tried && missing !== null} id="add-person-missing">
+            {missing}
+          </FormError>
         </div>
       )}
 
