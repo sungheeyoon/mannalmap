@@ -11,7 +11,7 @@ import { PILLAR_COLUMNS, STEM_PICTURE } from '@saju-view';
 
 import { LoadingDots } from '@/ui/loading';
 import { KeyboardDoneBar } from '@/ui/parts';
-import { alpha, COLOR, CONTROL, ELEMENT_TONE, FONT, RADIUS, TYPE } from '@/ui/tokens';
+import { alpha, COLOR, CONTROL, ELEMENT_TONE, FONT, mix, RADIUS, TYPE } from '@/ui/tokens';
 
 import { StemSymbol } from '@/ui/stem-symbol';
 import { FailureLine } from '@/ui/failure-line';
@@ -102,17 +102,20 @@ export function PillarStrip({
   pillars,
   name,
   large = false,
+  over,
 }: {
   pillars: Record<(typeof PILLAR_COLUMNS)[number]['key'], Pillar>;
   name: string;
   large?: boolean;
+  /** 띠가 선 판의 색 — 주면 칸 바탕이 불투명이라 판 뒤의 일간 그림이 비치지 않는다(웹 `solid`, ADR 0249) */
+  over?: string;
 }) {
   return (
     <View accessibilityLabel={`${name}의 네 기둥`} style={styles.strip}>
       {PILLAR_COLUMNS.map(({ key, label }) => {
         const pillar = pillars[key];
         return (
-          <View key={key} style={[styles.pillar, key === 'day' && styles.pillarDay]}>
+          <View key={key} style={[styles.pillar, over !== undefined && { backgroundColor: mix(COLOR.surface, over, 0.78) }, key === 'day' && styles.pillarDay]}>
             <Text style={styles.pillarLabel}>{label}</Text>
             {pillar === null ? (
               <Text accessibilityLabel={HOUR_UNKNOWN_LABEL} style={[styles.glyph, large && styles.glyphLarge, { color: COLOR.secondary }]}>
