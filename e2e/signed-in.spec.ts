@@ -13,7 +13,7 @@ import {
 import { MY_PROFILE_EDIT_LABEL } from '@/src/lib/chat/copy';
 import { calculateChart, chartOf } from '@/src/lib/input/chart';
 import { DEFAULT_QUERY, queryFromSearchParams } from '@/src/lib/input/query';
-import { READING_REPLACES_NOTE, READING_USES_TICKET_NOTE, readingEvidenceOf } from '@/src/lib/reading';
+import { READING_AGAIN_LABEL, READING_NOUN, READING_REPLACES_NOTE, READING_USES_TICKET_NOTE, readingEvidenceOf, readingNoneNote } from '@/src/lib/reading';
 import { CHART_DETAIL_LABEL, COMPAT_OTHER_LABEL, PARTNER_TYPED_LABEL, chartTitleOf, compatWithLabel, partnerAskTitle, readingAskTitle, readingCostLine, readingInviteTitle } from '@/src/lib/reading/person-screen';
 import { TASTE_RUN_VERSIONS, tasteEvidenceOf, tasteFingerprintOf } from '@/src/lib/reading/taste-run';
 import type { Saju } from '@/src/lib/saju';
@@ -534,7 +534,7 @@ test.describe('초대된 사람의 로그인 흐름', () => {
 
     await expect(page).toHaveURL(/\/me\/readings\/self\?from=me$/);
     await expect(page.getByRole('heading', { name: '내 사주풀이', exact: true }).first()).toBeVisible();
-    await expect(page.getByText('아직 받은 사주풀이가 없어요')).toBeVisible();
+    await expect(page.getByText(readingNoneNote(READING_NOUN.self), { exact: true })).toBeVisible();
     await expect(page.getByRole('button', { name: '사주풀이 받기' })).toBeVisible();
     await expect(page.getByText('만세력 보기')).toHaveCount(0);
     await expect(page.getByRole('heading', { name: '사주팔자' })).toHaveCount(0);
@@ -566,7 +566,7 @@ test.describe('초대된 사람의 로그인 흐름', () => {
 
     // 다시 열어도 만들어지지 않는다 — 같은 자리에 같은 문장이 그대로 선다.
     await page.reload();
-    await expect(page.getByText('아직 받은 사주풀이가 없어요')).toBeVisible();
+    await expect(page.getByText(readingNoneNote(READING_NOUN.self), { exact: true })).toBeVisible();
   });
 
   /**
@@ -816,7 +816,7 @@ test.describe('초대된 사람의 로그인 흐름', () => {
     */
     await expect(page.getByRole('navigation', { name: '내 사주의 사주풀이와 만세력' })).toHaveCount(0);
     await expect(page.getByRole('heading', { level: 2, name: '궁합', exact: true })).toHaveCount(0);
-    await expect(page.getByText('아직 받은 사주풀이가 없어요')).toHaveCount(0);
+    await expect(page.getByText(readingNoneNote(READING_NOUN.self), { exact: true })).toHaveCount(0);
     await expect(page.getByText(readingInviteTitle(signedIn.label))).toBeVisible();
     await page.getByRole('main').getByRole('button', { name: '사주풀이 받기', exact: true }).click();
     const asking = page.getByRole('dialog', { name: readingAskTitle(signedIn.label) });
@@ -1112,7 +1112,7 @@ test.describe('초대된 사람의 로그인 흐름', () => {
    * 취소하면 닫히는가, 그리고 취소한 뒤에 아무것도 안 만들어졌는가**는 여기서만 잰다 —
    * 마지막이 이 시험의 요점이다. 확인 창이 취소를 안 지키면 걸음만 하나 는 것이 된다.
    */
-  test('사주풀이 다시 받기는 확인 창을 먼저 띄우고, 취소하면 아무것도 만들지 않는다', async ({
+  test('「다시 받기」는 확인 창을 먼저 띄우고, 취소하면 아무것도 만들지 않는다', async ({
     page,
     reader,
   }) => {
@@ -1126,7 +1126,7 @@ test.describe('초대된 사람의 로그인 흐름', () => {
     */
     await expect(page.getByText(READING_REPLACES_NOTE)).toBeHidden();
 
-    const again = page.getByRole('button', { name: '사주풀이 다시 받기' });
+    const again = page.getByRole('button', { name: READING_AGAIN_LABEL, exact: true });
     await again.click();
 
     /* 닫힌 `<dialog>` 는 접근성 트리에 없다 — 그래서 이 자리가 「열렸는가」를 잰다 */
@@ -1204,7 +1204,7 @@ test.describe('초대된 사람의 로그인 흐름', () => {
 
     await expect(page).toHaveURL(/\/me\/readings\/[0-9a-f-]+$/);
     await expect(page.getByRole('heading', { name: `${kin}의 사주풀이`, exact: true }).first()).toBeVisible();
-    await expect(page.getByText('아직 받은 사주풀이가 없어요')).toBeVisible();
+    await expect(page.getByText(readingNoneNote(READING_NOUN.self), { exact: true })).toBeVisible();
 
     await expect(page.getByRole('navigation', { name: `${kin}의 사주풀이와 만세력` })).toHaveCount(0);
 
@@ -3686,7 +3686,7 @@ test.describe('사주풀이 공유하기', () => {
     await expect(theirs.getByText('브라우저가 읽을 글입니다')).toBeVisible();
     await expect(theirs.getByRole('link', { name: '로그인하고 시작하기' })).toBeVisible();
     /* 원본 사용자의 자리는 하나도 안 선다 */
-    await expect(theirs.getByRole('button', { name: '사주풀이 다시 받기' })).toHaveCount(0);
+    await expect(theirs.getByRole('button', { name: READING_AGAIN_LABEL })).toHaveCount(0);
     await expect(theirs.getByText('이 풀이는 어떠셨어요')).toHaveCount(0);
     await guest.close();
   });

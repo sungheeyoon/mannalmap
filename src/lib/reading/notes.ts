@@ -21,11 +21,25 @@ export const READING_NOUN = {
 } as const;
 
 /**
- * 아직 만들지 않았을 때. **버튼을 자리가 아니라 이름으로 부른다** — 넓은 화면에서 버튼은 이 문장의 오른쪽에 서서
- * 「아래 버튼」이 틀렸다(화면 갤러리 감사 2026-10-09). 이름은 버튼 글자(`panelChrome.makeLabel`)와 같다.
+ * 아직 만들지 않았을 때 — 한 문장이다(운영자 2026-11-13, 대장 home-17). 뒤에 붙던 「「{noun} 받기」를 누르면 지금 저장된 출생 정보로
+ * 받을 수 있어요.」는 길었다 — 단추가 바로 아래에서 그 말을 한다.
  */
-export const readingNoneNote = (noun: string) =>
-  `아직 받은 ${noun}가 없어요. 「${noun} 받기」를 누르면 지금 저장된 출생 정보로 받을 수 있어요.`;
+export const readingNoneNote = (noun: string) => `아직 받은 ${noun}가 없어요.`;
+
+/** 글이 있을 때의 만드는 단추와 그 확인 창의 실행 — 무엇을 받는지는 칸의 제목과 창의 제목이 말한다(운영자 2026-11-13, 대장 home-15) */
+export const READING_AGAIN_LABEL = '다시 받기';
+
+/**
+ * 받기 전에 서는 풀이권 줄 — 앱 풀이 화면의 빈 카드와 저장한 사람의 받기 시트(`person-screen.ts` 가 다시 낸다)가 이 하나를 부른다
+ * (운영자 2026-11-13, 대장 home-14 · home-17). 「보유 풀이권 N장」은 뜻이 안 읽혔다. 남은 수는 예약 몫을 뺀 쓸 수 있는 수(`available`)다.
+ * 0장이면 「남은 풀이권이 없어요.」, 못 읽었으면(`null`) 남은 수 없이 앞 문장만 — 수를 지어내지 않는다.
+ */
+export const readingCostLine = (available: number | null): string =>
+  available === null
+    ? '풀이권 1장을 사용해요.'
+    : available <= 0
+      ? '남은 풀이권이 없어요.'
+      : `풀이권 1장을 사용해요. (남은 풀이권 ${available}장)`;
 
 /*
  * **「누가 썼는가」는 한 사람짜리 화면에서 내렸다.**
@@ -50,7 +64,7 @@ export const READING_USES_TICKET_NOTE = '만들지 못하면 풀이권은 돌려
  *
  * 만드는 버튼 옆에 늘 적혀 있었다. 늘 서 있는 경고는 **누르지 않을 사람에게** 하는
  * 말이고, 정작 누르는 사람은 그 자리를 배경으로 읽고 지나간다. 이제 이 문장은
- * 「사주풀이 다시 받기」를 누른 뒤 뜨는 확인 창이 든다(`panel.tsx`).
+ * 「다시 받기」를 누른 뒤 뜨는 확인 창이 든다(`panel.tsx`).
  *
  * 여기 함께 있던 「화면을 다시 열어도 이 풀이는 그대로입니다」는 화면에서 내렸다.
  * 참이지만 이 화면에서 **한 번도 틀린 적이 없는** 사실이라, 옆에 선 「출생 정보를
@@ -61,7 +75,7 @@ export const READING_REPLACES_NOTE = '새로 받으면 지금 풀이와 점수�
 /**
  * 만든 때의 명식이 지금 명식과 다르다 — 고장이 아니라 그렇게 하기로 한 것이다.
  *
- * 무엇을 누르라고는 적지 않는다. 곁의 「사주풀이 다시 받기」가 주 단추로 서 있어, 고친 출생 정보로
+ * 무엇을 누르라고는 적지 않는다. 곁의 「다시 받기」가 주 단추로 서 있어, 고친 출생 정보로
  * 새로 받는다는 것은 단추가 말한다(운영자 결정 2026-09-25).
  */
 export const READING_STALE_NOTE = '출생 정보를 수정하기 전에 만든 풀이예요.';
@@ -69,15 +83,22 @@ export const READING_STALE_NOTE = '출생 정보를 수정하기 전에 만든 �
 /** 같은 사실의 딱지 — 홈 · 관계 지도 · 사람 목록 · 책장 · 풀이 화면이 이 두 글자로 적는다 */
 export const READING_STALE_LABEL = '수정 전';
 
-/** 지난 시도가 끝나지 못했다 — **그 전에 만든 글이 화면에 서 있을 때만** 뒤 문장이 참이다 */
-export const READING_FAILED_NOTE =
-  '지난번 풀이를 끝까지 만들지 못했어요. 지금 보이는 글은 그 전에 만든 풀이예요.';
+/**
+ * 실패한 시도의 풀이권 — **돌려줬다고 말한다**(운영자 2026-11-13 「실패하면 오류와 함께 되돌려줬다고 그냥 뜨면 된다」, 대장 home-15).
+ * 시도가 서면(`running`) 쓰임 장부에 예약이 서고, 실패로 끝나면 트리거가 그 예약을 푼다(`settle_reading_credit_for_run`,
+ * `supabase/migrations/20261011090000_the_bought_credit_is_booked_by_the_bundle.sql`). 잔액은 성공 · 도는 시도만 센다
+ * (`reading_credits_used`, `20270106090000_the_talk_opens_first_and_the_detail_waits_for_a_press.sql`).
+ */
+const READING_FAILED_REFUND = '풀이권은 돌려드렸어요.';
+
+/** 지난 시도가 끝나지 못했다 — **그 전에 만든 글이 화면에 서 있을 때만** 가운데 문장이 참이다 */
+export const READING_FAILED_NOTE = `지난번 풀이를 끝까지 만들지 못했어요. 지금 보이는 글은 그 전에 만든 풀이예요. ${READING_FAILED_REFUND}`;
 
 /**
  * 같은 실패인데 **그 전에 만든 글이 없다** — 처음 받기가 실패한 자리(수락이 연 인연 궁합의 자동 생성 포함). 위 문장의 뒤 반은
  * 「아직 받은 궁합풀이가 없어요」 곁에서 거짓이 된다(운영자 2026-10-11 저녁).
  */
-export const READING_FIRST_FAILED_NOTE = '풀이를 끝까지 만들지 못했어요.';
+export const READING_FIRST_FAILED_NOTE = `풀이를 끝까지 만들지 못했어요. ${READING_FAILED_REFUND}`;
 
 /**
  * **우리가 쓰지 않은 오류가 났을 때** — 화면이 대신 하는 말.
@@ -200,30 +221,18 @@ export const readingCreditsLabel = ({ available }: { available: number }): strin
  *
  * 「새로 만들 수는 없지만 이미 만든 풀이는 언제든 다시 볼 수 있어요」가 서 있었다. 다시
  * 보기가 닫힌 적이 한 번도 없으므로 **그 자리에서 새로 알려 주는 것이 없다** — 잔액은
- * 머리글이 이미 들고 있고, 다 쓴 사람이 만드는 단추를 누르면 풀이권 창(「보유 풀이권 0장」)이 열린다.
+ * 머리글이 이미 들고 있고, 다 쓴 사람이 만드는 단추를 누르면 풀이권 창(「남은 풀이권이 없어요.」)이 열린다.
  *
- * 그래서 이 함수는 **잔액을 묻지 않는다.** 남은 갈래는 자리를 잡고 있는 둘뿐이다.
+ * 그래서 이 함수는 **잔액을 묻지 않는다.** 남은 갈래는 도는 시도 하나뿐이다.
  *
- * ## 보낸 요청도 자리를 잡는다
+ * ## 보낸 요청은 말하지 않는다
  *
- * 요청 한 건이 풀이권 한 번을 예약한다(ADR 0038). 이유를 말하지 않으면 「청하기만
- * 했는데 하나가 사라졌다」로 읽힌다 — 도는 시도와 같은 자리에서 같은 이유로 말한다.
- *
- * **도는 시도를 먼저 말한다.** 둘 다 있으면 지금 움직이고 있는 쪽이 먼저다: 그것은
- * 곧 끝나고, 요청은 상대의 답을 기다리는 일이라 시간의 결이 다르다.
+ * 「보낸 상세 궁합 요청 N건에 풀이권 N장이 예약되어 있어요 …」가 여기 섰다. 머리글의 남은 수가 이미 예약 몫을 빼고,
+ * 인연은 운영에서 닫혀 있어 걷었다(운영자 2026-11-13, 대장 home-15).
  */
-export const readingCreditsNote = ({
-  reserved,
-  requested = 0,
-}: {
-  reserved: number;
-  requested?: number;
-}): string | null => {
+export const readingCreditsNote = ({ reserved }: { reserved: number }): string | null => {
   if (reserved > 0) {
     return '만드는 중인 풀이에 풀이권 1장이 예약되어 있어요. 풀이를 만들지 못하면 돌려드려요.';
-  }
-  if (requested > 0) {
-    return `보낸 상세 궁합 요청 ${requested}건에 풀이권 ${requested}장이 예약되어 있어요. 요청을 취소하거나 72시간 안에 답이 없으면 돌려드려요.`;
   }
   return null;
 };
@@ -244,7 +253,13 @@ export const SALE_CLOSED_OK = '확인';
 export const CREDITS_SCREEN_LEAD = ['사주풀이와 궁합풀이를 받아보세요.', '풀이 한 편에 풀이권 1장을 사용해요.'] as const;
 export const CREDITS_SHORTAGE_TITLE = '풀이권이 부족해요';
 export const CREDITS_AVAILABLE_LABEL = '보유 풀이권';
-export const CREDITS_REQUIRED_LABEL = '필요 풀이권';
+
+/**
+ * 부족 창의 한 줄 — 「보유 풀이권 0장 / 필요 풀이권 1장」 표를 걷었다(운영자 2026-11-13, 대장 home-15). 한 편에 1장이라 모자란 때는
+ * 0장뿐이지만, 남은 수가 있는데 모자라면 더 필요한 수를 말한다.
+ */
+export const creditsShortageNote = (available: number, required = 1): string =>
+  available <= 0 ? '남은 풀이권이 없어요.' : `풀이권 ${required - available}장이 더 필요해요.`;
 
 /**
  * 결제 화면의 동의 체크 · 결제 단추 · 유의사항 — 리디 꼴(운영자 승인 2026-10-12, ADR 0175 · 대장 credits-03 · credits-09). 웹은 결제 단추를

@@ -54,12 +54,8 @@ export const READING_INVITE_TOPICS = '성격 · 일과 재물 · 인연 · 올�
 
 /** 받기 시트 */
 export const readingAskTitle = (name: string): string => `${clip(name)}의${breakAfter(name)}사주풀이를 받을까요?`;
-/**
- * 시트의 한 줄 — 「풀이권 1장을 사용해요. (남은 풀이권 3장)」(운영자 2026-11-13). 남은 수는 예약 몫을 뺀 쓸 수 있는 수(`available`)다.
- * 못 읽었으면 남은 수 없이 앞 문장만 — 수를 지어내지 않는다
- */
-export const readingCostLine = (available: number | null): string =>
-  available === null ? '풀이권 1장을 사용해요.' : `풀이권 1장을 사용해요. (남은 풀이권 ${available}장)`;
+/** 시트의 한 줄 — 원본은 `notes.ts` 의 `readingCostLine`(앱 풀이 화면의 빈 카드와 같은 글자) */
+export { readingCostLine } from './notes';
 export const READING_ASK_CONFIRM = '받기';
 
 /** 궁합 칸의 끝 줄 — 궁합이 있으면 「다른 사람과」, 없으면 이 사람의 이름으로 */
