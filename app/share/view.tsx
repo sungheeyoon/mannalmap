@@ -1,13 +1,14 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 
-import { SHARE_COPY, sharedTitle } from '@/src/lib/reading/shared';
+import { SHARE_COPY, sharedTitle, type SharedReading } from '@/src/lib/reading/shared';
 
 import { Markdown } from '../me/reading/markdown';
 import { BUTTON_PRIMARY } from '../ui/buttons';
 import { Icon } from '../ui/icons';
 import { Logo } from '../ui/logo';
 import { CARD_FACE, COLUMN_READING, TYPE_SECTION, TYPE_TITLE } from '../ui/surfaces';
+import { AppSheet } from './app-sheet';
 import type { ShareKind } from './path';
 import { sharedReadingOf } from './read';
 
@@ -43,6 +44,11 @@ export async function SharedReadingView({
   const shared = await sharedReadingOf(token, expect);
   if (shared === null) notFound();
 
+  return <SharedReadingBody shared={shared} token={token} expect={expect} />;
+}
+
+/** 읽어 온 공유본 하나를 그린다 — 읽기와 갈라 둔 것은 그림 도구가 꾸민 글로 같은 화면을 찍게 하려는 것이다 */
+export function SharedReadingBody({ shared, token, expect }: { shared: SharedReading; token: string; expect: ShareKind }) {
   const { metaphor, score, body } = shared;
   const whose = sharedTitle(expect, shared.nameA, shared.nameB);
   const { eyebrow, invitation } = SHARE_COPY[expect];
@@ -126,6 +132,9 @@ export async function SharedReadingView({
           <StartButton />
         </div>
       </section>
+
+      {/* 안드로이드 폰에서만 글 위에 「앱에서 볼까요?」가 선다 — 스위치(`SHARE_APP_SHEET_ON`)가 꺼져 있으면 아무것도 안 그린다(ADR 0247) */}
+      <AppSheet kind={expect} token={token} />
     </main>
   );
 }
