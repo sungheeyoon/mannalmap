@@ -9,6 +9,7 @@ import { useClient } from '@/auth/connected';
 import { editPersonInput, saveFailureOf } from '@/reading/chart-writes';
 import { followRefusal } from '@/reading/panel';
 import { FailureLine } from '@/ui/failure-line';
+import { FormError } from '@/ui/form-error';
 import { PrimaryButton, TextButton } from '@/ui/parts';
 import { COLOR, FONT, RADIUS, TYPE } from '@/ui/tokens';
 import { Card } from '@/ui/surfaces';
@@ -99,9 +100,11 @@ export function EditInputForm({
       )}
 
       <View style={styles.actions}>
-        <PrimaryButton label={saving ? '저장하는 중…' : pillarsSame && nameChanged ? '이름 저장' : '변경 사항 저장'} onPress={press} disabled={saving} />
+        <View>
+          <PrimaryButton label={saving ? '저장하는 중…' : pillarsSame && nameChanged ? '이름 저장' : '변경 사항 저장'} onPress={press} disabled={saving} />
+          <FormError show={warn && missing !== null}>{missing}</FormError>
+        </View>
         <TextButton label="작성 그만두기" onPress={onCancel} disabled={saving} />
-        {warn && missing !== null && <WordText style={styles.warn}>{missing}</WordText>}
       </View>
 
       {failure !== null && <FailureLine>저장하지 못했어요. {failure}</FailureLine>}

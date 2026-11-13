@@ -13,6 +13,7 @@ import { BUTTON_PRIMARY, BUTTON_TERTIARY } from '../ui/buttons';
 import { ConfirmDialog } from '../ui/confirm-dialog';
 import { TYPE_META, TYPE_NAME } from '../ui/surfaces';
 import { FailureLine } from '../ui/failure-line';
+import { FormError } from '../ui/form-error';
 
 /**
  * 저장된 출생 정보를 고치는 폼 — **여는 자리를 밖에서 정한다.** 익명 화면과 **같은 폼**(`BirthFields`)을 쓴다.
@@ -122,7 +123,7 @@ export function EditInputForm({
         </p>
       )}
 
-      <div className="flex flex-col gap-2">
+      <div>
         <div className="flex flex-wrap items-center gap-3">
           <button
             type="button"
@@ -142,11 +143,9 @@ export function EditInputForm({
             작성 그만두기
           </button>
         </div>
-        {warn && missing !== null && (
-          <p id={noteId} role={warn ? 'alert' : undefined} className={warn ? WARN_NOTE : TYPE_META}>
-            {missing}
-          </p>
-        )}
+        <FormError show={warn && missing !== null} id={noteId}>
+          {missing}
+        </FormError>
       </div>
 
       {failure !== null && (

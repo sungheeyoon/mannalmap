@@ -35,6 +35,7 @@ import { Icon } from './ui/icons';
 import { reducedMotion } from './ui/motion';
 import { CARD_FRAME, TYPE_META, TYPE_NAME } from './ui/surfaces';
 import { FailureLine } from './ui/failure-line';
+import { FormError } from './ui/form-error';
 
 /**
  * 궁합의 **첫 걸음** — 두 사람을 정하고 사이를 답하는 자리.
@@ -310,18 +311,10 @@ export function CompatPicker({ people }: { people: Choosable[] }) {
           }
         />
 
-        {/* 왜 눌리지 않는지 단추 곁에서 말한다 — 잠긴 단추만 두면 이유를 찾아야 한다 */}
-        {question === null && shownReason !== null && (
-          <p
-            id="compat-locked-reason"
-            className={`mt-2 flex items-center justify-end gap-1.5 text-right text-small leading-5 ${
-              reasonIsError ? 'font-medium text-danger' : 'text-secondary'
-            }`}
-          >
-            {reasonIsError && <Icon name="alert" className="size-4 shrink-0" />}
-            {shownReason}
-          </p>
-        )}
+        {/* 왜 못 갔는지 주 단추 바로 아래에서 말한다(`FormError` — 자리 · 정렬 · 모양 한 벌) */}
+        <FormError show={question === null && shownReason !== null} id="compat-locked-reason">
+          {shownReason}
+        </FormError>
 
         {question !== null && (
           <div className="mt-4">

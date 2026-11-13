@@ -13,7 +13,7 @@ import { PAIR_DRAFT_KEY } from './reading-draft';
 import { SignInCarrying } from './sign-in-carrying';
 import { BUTTON_PRIMARY } from './ui/buttons';
 import { elementScope } from './ui/element-tone';
-import { FAILURE_TEXT } from './ui/failure-line';
+import { FormError } from './ui/form-error';
 import { Icon } from './ui/icons';
 import { STEM_PICTURE, StemSymbol } from './ui/stem-symbol';
 import { CARD, PAPER, PAPER_BOTTOM, TYPE_META } from './ui/surfaces';
@@ -88,7 +88,7 @@ export function PairTaste() {
             />
           </fieldset>
         ))}
-        <div className="flex flex-col gap-2">
+        <div>
           <button
             type="submit"
             aria-describedby={tried && refused !== null ? 'pair-missing' : undefined}
@@ -96,11 +96,9 @@ export function PairTaste() {
           >
             무료로 두 사람 궁합 보기
           </button>
-          {tried && refused !== null && (
-            <p id="pair-missing" role="alert" className={`${FAILURE_TEXT} font-medium`}>
-              {refused}
-            </p>
-          )}
+          <FormError show={tried && refused !== null} id="pair-missing">
+            {refused}
+          </FormError>
         </div>
       </form>
 
