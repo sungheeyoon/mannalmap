@@ -1,8 +1,6 @@
 import { Suspense } from 'react';
 
 import { selfPersonIdOf } from '@/src/lib/account';
-import { storedChartOf } from '@/src/lib/input/stored';
-import { STEM_INFO, type Element } from '@/src/lib/saju';
 
 import { readAccount } from '../me/account';
 import { storedInputsOf } from '../me/person-input';
@@ -14,6 +12,7 @@ import { myCircle, myPeople } from '../me/home/circle';
 import { myReadings } from '../me/reading/current';
 import { TYPE_SECTION } from '../ui/surfaces';
 import { CompatSummary } from './archive';
+import { choosableOf } from './choosable';
 import { CompatRelationMap } from './relation-map-section';
 
 export const metadata = {
@@ -71,30 +70,8 @@ export default async function CompatPage() {
     ),
     selfPersonId === null ? null : myCircle(supabase, selfPersonId),
   ]);
-  const elementOf = (personId: string, label: string): Element | null => {
-    const input = stored.get(personId);
-    if (input === undefined) return null;
-    const chart = storedChartOf(input, label);
-    return chart.ok ? STEM_INFO[chart.saju.pillars.dayMaster].element : null;
-  };
-
-  const stemOf = (personId: string, label: string): string | null => {
-    const input = stored.get(personId);
-    if (input === undefined) return null;
-    const chart = storedChartOf(input, label);
-    return chart.ok ? chart.saju.pillars.dayMaster : null;
-  };
-
-  /* 고르는 목록 맨 위는 「나」 — 사람 화면의 「궁합 보러 가기」가 그 사람만 앉히고 다른 칸을 비워 둔다(2026-10-26). 나머지 차례는 그대로 */
-  const people = listed
-    .map((edge) => ({
-      personId: edge.personId,
-      label: edge.label,
-      isSelfPerson: edge.personId === selfPersonId,
-      element: elementOf(edge.personId, edge.label),
-      stem: stemOf(edge.personId, edge.label),
-    }))
-    .toSorted((x, y) => Number(y.isSelfPerson) - Number(x.isSelfPerson));
+  /* 고르는 목록 맨 위는 「나」 — 사람 화면의 「궁합 보기」 시트도 같은 사람들을 같은 차례로 세운다(`choosable.ts`) */
+  const people = choosableOf(listed, stored, selfPersonId);
 
   return (
     <main className="app-shell flex w-full flex-1 flex-col gap-8 py-6 sm:gap-10 sm:py-12">

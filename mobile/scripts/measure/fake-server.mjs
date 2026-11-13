@@ -64,7 +64,7 @@ const fresh = () => ({
   account: { user_id: ME, status: 'active', self_person_id: SELF, nickname: '달빛산책', intro: LONG, signed_up_at: ago(90000), notice_version: 'notice-v16', notice_schedule_id: 1, improvement_consent: true, marketing_consent: false, created_at: ago(90000), first_seen_at: ago(90000), notice_ack_at: ago(50000), last_active_at: ago(1), birth_year: 1990, gender: 'female' },
   schedule: [{ schedule_id: 1, ends_on: '2027-06-30', purge_by: '2027-07-30', purge_within_days: 30, operator_name: '가짜 운영자', operator_officer: '가짜 책임자', operator_contact: 'fake@example.invalid', notice_ack_floor: 'notice-v16' }],
   edges: [
-    { person_id: SELF, local_label: '윤하늘', note: null, listed: false, created_at: ago(90000) },
+    { person_id: SELF, local_label: '윤하늘', note: null, listed: true, created_at: ago(90000) },
     { person_id: P1, local_label: '엄마', note: '양력 생일로 적었어요. 음력 생일은 따로 챙기기.', listed: true, created_at: ago(80000) },
     { person_id: P2, local_label: '아주아주긴이름의오랜친구입니다', note: null, listed: true, created_at: ago(70000) },
   ],
@@ -263,7 +263,7 @@ const view = (query) => {
   const none = person === P2;
   const row = readingRow({ p_kind: kind, p_person_a: person, p_person_b: query.get('personB') ?? null, p_match_id: query.get('matchId') })[0] ?? (kind === 'self' ? readingRow({ p_kind: 'self' })[0] : null);
   const reading = none || !row ? null : { id: row.id, score: row.score, metaphor: row.metaphor, output: row.output, model: 'fake', viewedAt: row.viewed_at, createdAt: row.created_at, viewerIsFirst: true, fromCurrentChart: row.from_current_chart, sourceRunId: row.source_run_id, myFeedback: null, scoreScale: { baseline: 60, version: 'v1', relation: null }, dayMasterA: row.day_master_a, dayMasterB: row.day_master_b };
-  return { view: 'reading', reading, createdLabel: reading ? '2026년 10월 29일' : null, minutes: reading ? 4 : null, run: null, credits: { limit: 5, used: 1, reserved: 0, requested: 1, available: 3 }, outline: ['한눈에 보는 나', '일과 재물', '사람과 인연', '올해의 흐름'], waitNote: '보통 2분 안에 끝나요.', subject: kind === 'self' || kind === 'person' || person ? { name: '윤하늘', title: '윤하늘님의 사주풀이', dayMaster: { stem: '甲', element: '木' } } : null };
+  return { view: 'reading', reading, createdLabel: reading ? '2026년 10월 29일' : null, minutes: reading ? 4 : null, run: null, credits: { limit: db.credits[0].credit_limit, used: db.credits[0].used, reserved: db.credits[0].reserved, requested: db.credits[0].requested, available: db.credits[0].available }, outline: ['한눈에 보는 나', '일과 재물', '사람과 인연', '올해의 흐름'], waitNote: '보통 2분 안에 끝나요.', subject: kind === 'self' || kind === 'person' || person ? { name: '윤하늘', title: '윤하늘님의 사주풀이', dayMaster: { stem: '甲', element: '木' } } : null };
 };
 
 function send(res, code, body, headers = {}) {
