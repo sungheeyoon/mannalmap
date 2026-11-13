@@ -262,7 +262,7 @@ describe('로그인 시점과 목적지 (ADR 0213)', () => {
 
   it('풀이는 보유 수 → 확인창 차례이고, 앱에 로그인 전 풀이 · 기기 저장이 없다', () => {
     const panel = read('mobile/src/reading/panel.tsx');
-    expect(panel).toContain('readingCostNote(panel.view.credits.available)');
+    expect(panel).toContain('readingCostLine(panel.view.credits.available)');
     expect(read('mobile/src/reading/dialogs.tsx')).toContain('풀이권 1장을 사용하시겠어요?');
     expect(entry).not.toContain('AsyncStorage');
     expect(save).not.toContain('AsyncStorage');

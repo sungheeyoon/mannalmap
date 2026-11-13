@@ -26,13 +26,20 @@ export const READING_NOUN = {
  */
 export const readingNoneNote = (noun: string) => `아직 받은 ${noun}가 없어요.`;
 
+/** 글이 있을 때의 만드는 단추와 그 확인 창의 실행 — 무엇을 받는지는 칸의 제목과 창의 제목이 말한다(운영자 2026-11-13, 대장 home-15) */
+export const READING_AGAIN_LABEL = '다시 받기';
+
 /**
- * 처음 받는 단추 위의 풀이권 줄 — 「보유 풀이권 N장」은 뜻이 안 읽혔다(운영자 2026-11-13, 대장 home-17). 남은 수는 예약 몫을 뺀
- * 쓸 수 있는 수(`available`)다. 저장한 사람의 받기 시트(#1143 의 `readingCostLine`)와 같은
- * 글자다 — 둘이 main 에 서면 하나로 합친다.
+ * 받기 전에 서는 풀이권 줄 — 앱 풀이 화면의 빈 카드와 저장한 사람의 받기 시트(`person-screen.ts` 가 다시 낸다)가 이 하나를 부른다
+ * (운영자 2026-11-13, 대장 home-14 · home-17). 「보유 풀이권 N장」은 뜻이 안 읽혔다. 남은 수는 예약 몫을 뺀 쓸 수 있는 수(`available`)다.
+ * 0장이면 「남은 풀이권이 없어요.」, 못 읽었으면(`null`) 남은 수 없이 앞 문장만 — 수를 지어내지 않는다.
  */
-export const readingCostNote = (available: number): string =>
-  available <= 0 ? '남은 풀이권이 없어요.' : `풀이권 1장을 사용해요. (남은 풀이권 ${available}장)`;
+export const readingCostLine = (available: number | null): string =>
+  available === null
+    ? '풀이권 1장을 사용해요.'
+    : available <= 0
+      ? '남은 풀이권이 없어요.'
+      : `풀이권 1장을 사용해요. (남은 풀이권 ${available}장)`;
 
 /*
  * **「누가 썼는가」는 한 사람짜리 화면에서 내렸다.**

@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import {
   creditsShortageNote,
-  readingCostNote,
+  readingCostLine,
   readingNoneNote,
   READING_ALREADY_RUNNING_NOTE,
   READING_FAILED_NOTE,
@@ -162,7 +162,7 @@ describe('빈 카드', () => {
     expect(readingNoneNote('궁합풀이')).toBe('아직 받은 궁합풀이가 없어요.');
   });
   it('수 줄은 쓰는 수와 남은 수를 말하고, 0장이면 없다고 말한다', () => {
-    expect(readingCostNote(3)).toBe('풀이권 1장을 사용해요. (남은 풀이권 3장)');
-    expect(readingCostNote(0)).toBe('남은 풀이권이 없어요.');
+    expect(readingCostLine(3)).toBe('풀이권 1장을 사용해요. (남은 풀이권 3장)');
+    expect(readingCostLine(0)).toBe('남은 풀이권이 없어요.');
   });
 });

@@ -1,4 +1,5 @@
 import type { CurrentReading } from './current-reading';
+import { READING_AGAIN_LABEL } from './notes';
 import type { ReadingKind } from './policy';
 
 /** 만드는 버튼이 보는 풀이권 — 머리글의 수 전부가 아니라 이 두 칸이다 */
@@ -97,7 +98,7 @@ export function panelChrome({
      * 글이 있으면 「다시 받기」 — 무엇을 받는지는 칸의 제목과 확인 창이 말한다. 「사주풀이 다시 받기」는 공유와 반반으로 선
      * 좁은 폰 · 큰 글자에서 「사주풀이 다시…」로 잘렸다(운영자 승인 2026-11-13, 대장 home-15). 처음 받는 단추는 이름을 든다.
      */
-    makeLabel: reading === null ? `${noun} 받기` : '다시 받기',
+    makeLabel: reading === null ? `${noun} 받기` : READING_AGAIN_LABEL,
 
     /**
      * **공유는 다 된 내 사주풀이에만 붙는다.**

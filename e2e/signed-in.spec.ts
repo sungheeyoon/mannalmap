@@ -13,7 +13,8 @@ import {
 import { MY_PROFILE_EDIT_LABEL } from '@/src/lib/chat/copy';
 import { calculateChart, chartOf } from '@/src/lib/input/chart';
 import { DEFAULT_QUERY, queryFromSearchParams } from '@/src/lib/input/query';
-import { READING_REPLACES_NOTE, READING_USES_TICKET_NOTE, readingEvidenceOf } from '@/src/lib/reading';
+import { READING_AGAIN_LABEL, READING_NOUN, READING_REPLACES_NOTE, READING_USES_TICKET_NOTE, readingEvidenceOf, readingNoneNote } from '@/src/lib/reading';
+import { CHART_DETAIL_LABEL, COMPAT_OTHER_LABEL, PARTNER_TYPED_LABEL, chartTitleOf, compatWithLabel, partnerAskTitle, readingAskTitle, readingCostLine, readingInviteTitle } from '@/src/lib/reading/person-screen';
 import { TASTE_RUN_VERSIONS, tasteEvidenceOf, tasteFingerprintOf } from '@/src/lib/reading/taste-run';
 import type { Saju } from '@/src/lib/saju';
 import { CHART_ENGINE_VERSION, EVIDENCE_CONTRACT, chartSnapshotOf } from '@/src/lib/saju';
@@ -512,7 +513,7 @@ test.describe('초대된 사람의 로그인 흐름', () => {
     await page.keyboard.press('Escape');
     await expect(mine.getByRole('link', { name: /만세력 보기/ })).toHaveAttribute(
       'href',
-      `/me/people/${signedIn.selfPersonId}?tab=chart`,
+      `/me/people/${signedIn.selfPersonId}?tab=chart&from=me`,
     );
 
     /* 이번 달 흐름은 걷었다(ADR 0129 「2026-09-29 u2」) */
@@ -533,7 +534,7 @@ test.describe('초대된 사람의 로그인 흐름', () => {
 
     await expect(page).toHaveURL(/\/me\/readings\/self\?from=me$/);
     await expect(page.getByRole('heading', { name: '내 사주풀이', exact: true }).first()).toBeVisible();
-    await expect(page.getByText('아직 받은 사주풀이가 없어요')).toBeVisible();
+    await expect(page.getByText(readingNoneNote(READING_NOUN.self), { exact: true })).toBeVisible();
     await expect(page.getByRole('button', { name: '사주풀이 받기' })).toBeVisible();
     await expect(page.getByText('만세력 보기')).toHaveCount(0);
     await expect(page.getByRole('heading', { name: '사주팔자' })).toHaveCount(0);
@@ -565,7 +566,7 @@ test.describe('초대된 사람의 로그인 흐름', () => {
 
     // 다시 열어도 만들어지지 않는다 — 같은 자리에 같은 문장이 그대로 선다.
     await page.reload();
-    await expect(page.getByText('아직 받은 사주풀이가 없어요')).toBeVisible();
+    await expect(page.getByText(readingNoneNote(READING_NOUN.self), { exact: true })).toBeVisible();
   });
 
   /**
@@ -809,14 +810,28 @@ test.describe('초대된 사람의 로그인 흐름', () => {
       page.getByRole('heading', { level: 1, name: signedIn.label, exact: true }),
     ).toBeVisible();
 
-    await expect(page.getByRole('button', { name: '사주풀이 받기' })).toHaveCount(0);
-    const tabs = page.getByRole('navigation', { name: '내 사주의 사주풀이와 만세력' });
-    /* 사주풀이 탭이 기본이다(운영자 결정 2026-10-26, 안 2) — 받는 길은 머리의 「사주풀이 받기」, 탭 안은 빈 문구 한 줄 */
-    await expect(tabs.getByRole('link', { name: '사주풀이', exact: true })).toHaveAttribute('aria-current', 'page');
-    await expect(page.getByRole('region', { name: '사주풀이' }).getByText('아직 받은 사주풀이가 없어요.')).toBeVisible();
-    await page.getByRole('main').getByRole('link', { name: '사주풀이 받기', exact: true }).click();
-    await expect(page).toHaveURL(/\/me\/readings\/self$/);
-    await expect(page.getByRole('heading', { name: '내 사주풀이', exact: true }).first()).toBeVisible();
+    /*
+      **한 장이다 — 탭도 머리의 단추도 없다**(운영자 승인 2026-11-13, ADR 0249). 내 명식이면 궁합 칸이 빠지고 사주풀이 칸은 내 사주풀이다.
+      아직 없으면 진한 카드의 「사주풀이 받기」가 그 자리의 확인 시트를 연다 — 취소하면 아무것도 시작하지 않는다
+    */
+    await expect(page.getByRole('navigation', { name: '내 사주의 사주풀이와 만세력' })).toHaveCount(0);
+    await expect(page.getByRole('heading', { level: 2, name: '궁합', exact: true })).toHaveCount(0);
+    await expect(page.getByText(readingNoneNote(READING_NOUN.self), { exact: true })).toHaveCount(0);
+    await expect(page.getByText(readingInviteTitle(signedIn.label))).toBeVisible();
+    await page.getByRole('main').getByRole('button', { name: '사주풀이 받기', exact: true }).click();
+    const asking = page.getByRole('dialog', { name: readingAskTitle(signedIn.label) });
+    await expect(asking).toBeVisible();
+    /* 시트는 제목 · 풀이권 한 줄 · 단추 둘이다 — 환불 · 예약 줄과 「보유」는 걷었다(운영자 2026-11-13) */
+    await expect(asking.getByText(readingCostLine(5), { exact: true })).toBeVisible();
+    await expect(asking.getByText(READING_USES_TICKET_NOTE)).toHaveCount(0);
+    await expect(asking.getByText(/보유|예약/)).toHaveCount(0);
+    await asking.getByRole('button', { name: '취소' }).click();
+    await expect(asking).toBeHidden();
+    await expect(page).toHaveURL(new RegExp(`/me/people/${signedIn.selfPersonId}$`));
+    /* 만세력은 머리의 「만세력 자세히」가 여는 같은 주소의 다른 자리다 */
+    await page.getByRole('link', { name: CHART_DETAIL_LABEL }).click();
+    await expect(page).toHaveURL(new RegExp(`/me/people/${signedIn.selfPersonId}\\?tab=chart$`));
+    await expect(page.getByRole('heading', { level: 1, name: chartTitleOf(signedIn.label) })).toBeVisible();
   });
 
   /**
@@ -840,11 +855,9 @@ test.describe('초대된 사람의 로그인 흐름', () => {
       page.getByRole('heading', { level: 1, name: signedIn.label, exact: true }),
     ).toBeVisible();
 
-    await expect(page.getByRole('button', { name: '사주풀이 받기' })).toHaveCount(0);
-    await expect(
-      page.getByRole('navigation', { name: '내 사주의 사주풀이와 만세력' })
-        .getByRole('link', { name: '사주풀이', exact: true }),
-    ).toHaveAttribute('href', `/me/people/${signedIn.selfPersonId}`);
+    /* 내 명식으로 읽혔다 — 궁합 칸이 없고, 이 화면이 짓는 주소는 DB 가 낸 id 다(주소의 대문자가 아니다) */
+    await expect(page.getByRole('heading', { level: 2, name: '궁합', exact: true })).toHaveCount(0);
+    await expect(page.getByRole('link', { name: CHART_DETAIL_LABEL })).toHaveAttribute('href', `/me/people/${signedIn.selfPersonId}?tab=chart`);
   });
 
   /** 저장된 글이 그 사람의 화면에 실제로 서는가 — 위 시험은 빈 자리까지만 본다 */
@@ -1113,7 +1126,7 @@ test.describe('초대된 사람의 로그인 흐름', () => {
     */
     await expect(page.getByText(READING_REPLACES_NOTE)).toBeHidden();
 
-    const again = page.getByRole('button', { name: '다시 받기', exact: true });
+    const again = page.getByRole('button', { name: READING_AGAIN_LABEL, exact: true });
     await again.click();
 
     /* 닫힌 `<dialog>` 는 접근성 트리에 없다 — 그래서 이 자리가 「열렸는가」를 잰다 */
@@ -1176,8 +1189,8 @@ test.describe('초대된 사람의 로그인 흐름', () => {
     await expect(rows.nth(8)).toContainText('완료');
   });
 
-  /** 사람 카드의 단일 진입점이 풀이로 가고, 명식은 그 화면의 탭으로 오간다. */
-  test('저장한 사람의 풀이 화면에는 탭이 없고, 명식 화면에서 풀이로 돌아온다', async ({
+  /** 사람 카드의 단일 진입점이 풀이로 가고, 사람 화면은 한 장이며 받기는 그 자리의 시트에서 묻는다. */
+  test('저장한 사람의 풀이 화면에는 탭이 없고, 사람 화면의 받기는 시트로 묻는다', async ({
     page,
     signedIn,
   }) => {
@@ -1191,21 +1204,28 @@ test.describe('초대된 사람의 로그인 흐름', () => {
 
     await expect(page).toHaveURL(/\/me\/readings\/[0-9a-f-]+$/);
     await expect(page.getByRole('heading', { name: `${kin}의 사주풀이`, exact: true }).first()).toBeVisible();
-    await expect(page.getByText('아직 받은 사주풀이가 없어요')).toBeVisible();
+    await expect(page.getByText(readingNoneNote(READING_NOUN.self), { exact: true })).toBeVisible();
 
     await expect(page.getByRole('navigation', { name: `${kin}의 사주풀이와 만세력` })).toHaveCount(0);
 
-    /* 명식은 목록의 이름에서 열고, 명식 화면의 탭이 풀이로 돌려보낸다 */
-    const readingUrl = page.url();
+    /*
+      명식은 목록의 이름에서 연다. 그 사람 화면은 한 장이다 — 탭이 없고, 사주풀이 칸의 「사주풀이 받기」는 풀이 화면을 거치지 않고
+      그 자리의 확인 시트를 연다(운영자 승인 2026-11-13, ADR 0249). 시트를 닫으면 아무것도 시작하지 않는다
+    */
     await page.goto('/me/people');
     await page.getByRole('link', { name: kin, exact: true }).first().click();
     await expect(page.getByRole('heading', { level: 1, name: kin, exact: true })).toBeVisible();
-    /* 사주풀이 탭이 기본이다(운영자 결정 2026-10-26, 안 2) — 머리의 「사주풀이 받기」가 그 글 화면이다 */
-    await page.getByRole('main').getByRole('link', { name: '사주풀이 받기', exact: true }).click();
-    await expect(page).toHaveURL(readingUrl);
-
-    const make = page.getByRole('button', { name: '사주풀이 받기' });
-    await expect(make).toBeVisible();
+    await expect(page.getByRole('navigation', { name: `${kin}의 사주풀이와 만세력` })).toHaveCount(0);
+    await page.getByRole('main').getByRole('button', { name: '사주풀이 받기', exact: true }).click();
+    const asking = page.getByRole('dialog', { name: readingAskTitle(kin) });
+    await expect(asking).toBeVisible();
+    await expect(asking.getByText(readingCostLine(5), { exact: true })).toBeVisible();
+    await expect(asking.getByText(READING_USES_TICKET_NOTE)).toHaveCount(0);
+    await expect(asking.getByText(/보유|예약/)).toHaveCount(0);
+    await asking.getByRole('button', { name: '취소' }).click();
+    await expect(asking).toBeHidden();
+    /* 궁합 칸 — 아직 본 궁합이 없으면 「{이름}과 궁합 보기」 한 줄이다 */
+    await expect(page.getByRole('button', { name: compatWithLabel(kin), exact: true })).toBeVisible();
 
     /* 풀이권은 kind 를 안 묻는다 — 전역 다섯에서 함께 센다 */
     await expectReadingCredits(page, '풀이권 5장');
@@ -1215,7 +1235,7 @@ test.describe('초대된 사람의 로그인 흐름', () => {
       화면을 여는 것이 요금이 되면 새로고침이 곧 비용이다.
     */
     await page.reload();
-    await expect(page.getByText('아직 받은 사주풀이가 없어요')).toBeVisible();
+    await expect(page.getByText(readingInviteTitle(kin))).toBeVisible();
   });
 
   /**
@@ -1266,9 +1286,9 @@ test.describe('초대된 사람의 로그인 흐름', () => {
     await page.goto('/me');
 
     await page.getByRole('link', { name: '만세력 보기' }).click();
-    /* 사람 화면의 만세력 탭으로 연다 — 그 화면은 사주풀이 탭이 기본이다(2026-10-26) */
-    await expect(page).toHaveURL(new RegExp(`/me/people/${signedIn.selfPersonId}\\?tab=chart$`));
-    await expect(page.getByRole('heading', { level: 1, name: signedIn.label, exact: true })).toBeVisible();
+    /* 사람 화면의 만세력 자리로 연다 — ← 가 홈이다(`from=me`, ADR 0249) */
+    await expect(page).toHaveURL(new RegExp(`/me/people/${signedIn.selfPersonId}\\?tab=chart&from=me$`));
+    await expect(page.getByRole('heading', { level: 1, name: chartTitleOf(signedIn.label), exact: true })).toBeVisible();
     await expect(page.getByRole('heading', { name: '사주팔자' })).toBeVisible();
 
     /* ← 는 판 밖 위의 작은 글자 「홈」(2026-10-26) — 머리글의 「홈」 탭과 갈라 본문 안에서 찾는다 */
@@ -1644,18 +1664,22 @@ test.describe('초대된 사람의 로그인 흐름', () => {
     /* 명식은 카드의 이름에서 연다 — 풀이 화면에는 사주로 가는 탭이 없다 */
     await friendCard.getByRole('link', { name: '친구', exact: true }).click();
     await expect(page.getByRole('heading', { level: 1, name: '친구', exact: true })).toBeVisible();
-    /* 사람 화면은 사주풀이 탭이 기본이다(2026-10-26) — 만세력 탭에 표가 선다 */
-    await page.getByRole('link', { name: '만세력', exact: true }).click();
-    await expect(page.getByRole('heading', { name: '사주팔자' })).toBeVisible();
-
     /*
-      **사람 상세가 궁합으로 가는 길을 낸다**(ADR 0036). 저장한 사람을 보고 있는 사람이
-      「이 사람과 누구」를 떠올리는 자리가 여기라, 궁합의 첫 걸음이 **첫 칸이 이 사람으로
-      채워진 채** 열린다(ADR 0054 — 주소의 `#a.person`).
+      **사람 상세가 궁합으로 가는 길을 낸다**(ADR 0036 · 0249). 궁합 칸의 끝 줄이 그 자리의 시트 「누구를 볼까요?」를 연다 —
+      직접 입력은 궁합 화면의 적는 칸으로, 이 사람이 첫 칸에 앉은 채 간다(`#a.person` · `b.typed`)
     */
-    await expect(
-      page.getByRole('link', { name: '궁합 보러 가기' }),
-    ).toHaveAttribute('href', /^\/compat#a\.person=.+/);
+    /* 본 궁합이 있으면 「다른 사람과」, 없으면 「{이름}과」 — 둘 다 같은 시트를 연다 */
+    await page.getByRole('button', { name: new RegExp(`^(${COMPAT_OTHER_LABEL}|${compatWithLabel('친구')})$`) }).click();
+    const picking = page.getByRole('dialog', { name: partnerAskTitle('친구') });
+    await expect(picking).toBeVisible();
+    await expect(picking.getByRole('link', { name: PARTNER_TYPED_LABEL })).toHaveAttribute('href', /^\/compat#a\.person=.+&b\.typed=1$/);
+    await picking.getByRole('button', { name: '닫기' }).click();
+
+    /* 만세력은 머리의 「만세력 자세히」가 여는 같은 주소의 다른 자리다 — 표가 서고 ← 가 이 사람 화면이다 */
+    await page.getByRole('link', { name: CHART_DETAIL_LABEL }).click();
+    await expect(page.getByRole('heading', { name: '사주팔자' })).toBeVisible();
+    await page.getByRole('main').getByRole('link', { name: '친구', exact: true }).click();
+    await expect(page.getByRole('heading', { level: 1, name: '친구', exact: true })).toBeVisible();
 
     await page.getByRole('main').getByRole('link', { name: '저장한 사람', exact: true }).click();
     await expect(page).toHaveURL(/\/me\/people$/);
@@ -3662,7 +3686,7 @@ test.describe('사주풀이 공유하기', () => {
     await expect(theirs.getByText('브라우저가 읽을 글입니다')).toBeVisible();
     await expect(theirs.getByRole('link', { name: '로그인하고 시작하기' })).toBeVisible();
     /* 원본 사용자의 자리는 하나도 안 선다 */
-    await expect(theirs.getByRole('button', { name: '다시 받기' })).toHaveCount(0);
+    await expect(theirs.getByRole('button', { name: READING_AGAIN_LABEL })).toHaveCount(0);
     await expect(theirs.getByText('이 풀이는 어떠셨어요')).toHaveCount(0);
     await guest.close();
   });

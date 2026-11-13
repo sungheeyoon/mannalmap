@@ -71,7 +71,9 @@ function slotFrom(params: URLSearchParams, side: CompatSide, people: Choosable[]
   }
 
   const typed = queryFromSearchParams(params, PREFIX[side]);
-  return typed === null ? null : { from: 'typed', query: typed };
+  if (typed !== null) return { from: 'typed', query: typed };
+  /* 사람 화면의 「직접 입력」(`#a.person=…&b.typed=1`, ADR 0249) — 그 칸을 빈 적는 칸으로 연다 */
+  return params.has(`${PREFIX[side]}typed`) ? { from: 'typed', query: DEFAULT_QUERY } : null;
 }
 
 /**

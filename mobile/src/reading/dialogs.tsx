@@ -2,6 +2,7 @@ import {
   BUY_CREDITS_LABEL,
   CREDITS_DIALOG_CLOSE,
   CREDITS_SHORTAGE_TITLE,
+  READING_AGAIN_LABEL,
   READING_REPLACES_NOTE,
   READING_USES_TICKET_NOTE,
   SALE_CLOSED_NOTE,
@@ -32,7 +33,7 @@ export function ConfirmMake({
     <ConfirmDialog
       open
       title="풀이권 1장을 사용하시겠어요?"
-      confirmLabel={hasReading ? '다시 받기' : `${noun} 받기`}
+      confirmLabel={hasReading ? READING_AGAIN_LABEL : `${noun} 받기`}
       onConfirm={onConfirm}
       onClose={onClose}
     >

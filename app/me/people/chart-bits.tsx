@@ -48,11 +48,17 @@ export function PillarStrip({
   pillars,
   name,
   size = 'md',
+  solid = false,
 }: {
   pillars: Record<PillarKey, Pillar>;
   /** 누구의 기둥인가 — 표의 이름이 된다 */
   name: string;
   size?: 'md' | 'lg';
+  /**
+   * 칸 바탕을 비치지 않게 — 같은 색(흰 면 78% + 판 색)을 불투명으로 섞는다. 판 뒤의 일간 그림이 칸을 지나갈 때 쓴다(사람 화면 머리, ADR 0249).
+   * 판(`elementScope`)의 `--tile` 안에서만 뜻이 있다
+   */
+  solid?: boolean;
 }) {
   const glyph = size === 'lg' ? 'flex flex-col items-center text-title' : 'text-lead';
 
@@ -63,7 +69,7 @@ export function PillarStrip({
         return (
           <div
             key={key}
-            className={`flex flex-col items-center gap-0.5 rounded-cell bg-[color-mix(in_srgb,var(--surface)_78%,transparent)] px-1 pb-1.5 pt-1 ${
+            className={`flex flex-col items-center gap-0.5 rounded-cell ${solid ? 'bg-[color-mix(in_srgb,var(--surface)_78%,var(--tile))]' : 'bg-[color-mix(in_srgb,var(--surface)_78%,transparent)]'} px-1 pb-1.5 pt-1 ${
               key === 'day' ? 'ring-2 ring-[color-mix(in_srgb,var(--foreground)_22%,transparent)]' : ''
             }`}
           >

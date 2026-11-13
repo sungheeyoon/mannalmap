@@ -1,5 +1,5 @@
 import type { PairNicknames } from '@reading/display';
-import { readingCostNote, readingNoneNote } from '@reading/notes';
+import { readingCostLine, readingNoneNote } from '@reading/notes';
 import { readingOutline } from '@reading/outline';
 import type { Element } from '@saju';
 import { router } from 'expo-router';
@@ -135,7 +135,7 @@ export function ReadingPanel({
     );
   const note = creditsNote !== null && <Text style={styles.small}>{creditsNote}</Text>;
   /* 처음 받는 사람이 확인창 앞에 가진 수를 먼저 본다(ADR 0213) — 수는 서버의 답이고 지어내지 않는다 */
-  const available = reading === null && panel.view.credits !== null && <Text style={styles.small}>{readingCostNote(panel.view.credits.available)}</Text>;
+  const available = reading === null && panel.view.credits !== null && <Text style={styles.small}>{readingCostLine(panel.view.credits.available)}</Text>;
 
   return (
     <View style={styles.panel}>
