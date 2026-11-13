@@ -1,31 +1,38 @@
 'use client';
 
+import Image from 'next/image';
 import { useEffect, useRef, useSyncExternalStore } from 'react';
 
 import { SERVICE_NAME } from '@/src/lib/brand';
 
-import { BUTTON_PRIMARY, BUTTON_SECONDARY } from '../ui/buttons';
+import appIcon from '../apple-icon.png';
+import { BUTTON_PRIMARY } from '../ui/buttons';
 import { closeSheet, openSheet } from '../ui/sheet';
 import { TYPE_SECTION } from '../ui/surfaces';
 import { APP_SHEET_DISMISSED_KEY, appOpenHref, shouldOfferApp } from './app-link';
 import type { ShareKind } from './path';
 
-/** 글자는 운영자가 불러 준 그대로다(2026-11-13, 대장 public-18) */
+/**
+ * 제목 · 한 줄 · [앱에서 보기]는 운영자가 불러 준 그대로다(2026-11-13). 「웹으로 계속하기」는 굿닥의 글자다(대장 public-18 확인 전).
+ */
 const SHEET_COPY = {
   title: `${SERVICE_NAME} 앱에서 볼까요?`,
   note: '내 사주도 바로 볼 수 있어요.',
   open: '앱에서 보기',
-  stay: '웹으로 볼게요',
+  stay: '웹으로 계속하기',
 } as const;
+
 
 /**
  * **「앱에서 볼까요?」 시트** — 안드로이드 폰에서 공유 링크를 열면 글 위에 어두운 면과 함께 아래에서 올라온다(운영자 승인 2026-11-13, ADR 0247).
  *
  * - 글은 그 밑에 이미 다 그려져 있다 — 시트는 묻기만 하고, 닫으면 그대로 읽는다.
  * - 판정은 브라우저에서 한다(user agent · 브라우저 저장소). 서버 HTML 에는 시트가 없다 — 미리보기 수집기와 아이폰 · 데스크톱은 안 본다.
- * - [웹으로 볼게요] · 어두운 면 누름 · 뒤로 가기가 닫기다. 닫으면 그 브라우저에서 다시 안 묻는다. 저장소를 못 읽으면 묻되, 닫기는 늘 된다.
+ * - 「웹으로 계속하기」 · 어두운 면 누름 · 뒤로 가기가 닫기다. 닫으면 그 브라우저에서 다시 안 묻는다. 저장소를 못 읽으면 묻되, 닫기는 늘 된다.
  * - [앱에서 보기]는 진짜 링크다 — intent 주소는 누름 안에서 열려야 브라우저가 앱을 띄운다. 누르면 다시 안 묻는 것으로 적고 시트는 그대로 둔다 —
- *   앱으로 넘어갔다 돌아온 사람이 [웹으로 볼게요]로 닫는다.
+ *   앱으로 넘어갔다 돌아온 사람이 「웹으로 계속하기」로 닫는다.
+ * - 「웹으로 계속하기」는 단추가 아니라 작은 회색 글자 줄이다(운영자 2026-11-13) — 한국 서비스가 웹으로 계속 보는 길을 눈에 덜 띄게 둔다
+ *   (굿닥 「상대적으로 눈에 띄진 않습니다」, <https://yozm.wishket.com/magazine/detail/1030>). 누를 자리는 44px 이다.
  */
 export function AppSheet({ kind, token }: { kind: ShareKind; token: string }) {
   const sheet = useRef<HTMLDialogElement>(null);
@@ -74,15 +81,26 @@ export function AppSheet({ kind, token }: { kind: ShareKind; token: string }) {
     >
       <div className="flex flex-col gap-5 px-5 pb-[max(1.5rem,env(safe-area-inset-bottom))] pt-3 lg:p-6">
         <span aria-hidden="true" className="mx-auto h-1.5 w-10 rounded-full bg-border-strong lg:hidden" />
-        <div className="flex flex-col gap-1.5">
-          <h2 id="share-app-sheet-title" className={TYPE_SECTION}>{SHEET_COPY.title}</h2>
-          <p className="text-body leading-7 text-secondary">{SHEET_COPY.note}</p>
+        <div className="flex items-center gap-3.5">
+          {/*
+            앱 아이콘 — 새로 그리지 않고 웹의 앱 아이콘(`app/apple-icon.png`, 홈 화면에 붙이는 그림)을 쓴다. 무신사 · 원티드 · 리멤버가 시트의
+            제목 왼쪽에 앱 아이콘을 둔다(<https://yozm.wishket.com/magazine/detail/1030>, 확인 2026-11-13)
+          */}
+          <Image src={appIcon} alt="" width={48} height={48} unoptimized className="size-12 shrink-0 rounded-cell shadow-card" />
+          <div className="flex min-w-0 flex-col gap-0.5">
+            <h2 id="share-app-sheet-title" className={TYPE_SECTION}>{SHEET_COPY.title}</h2>
+            <p className="text-body text-secondary">{SHEET_COPY.note}</p>
+          </div>
         </div>
-        <div className="flex flex-col gap-2">
+        <div className="flex flex-col items-center gap-1">
           <a href={href} onClick={writeDismissed} className={`${BUTTON_PRIMARY} w-full`}>
             {SHEET_COPY.open}
           </a>
-          <button type="button" onClick={dismiss} className={`${BUTTON_SECONDARY} w-full`}>
+          <button
+            type="button"
+            onClick={dismiss}
+            className="inline-flex min-h-11 items-center px-3 text-small text-secondary underline underline-offset-4 hover:text-foreground"
+          >
             {SHEET_COPY.stay}
           </button>
         </div>
