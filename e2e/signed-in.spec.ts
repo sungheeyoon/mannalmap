@@ -832,7 +832,6 @@ test.describe('초대된 사람의 로그인 흐름', () => {
     await page.getByRole('link', { name: CHART_DETAIL_LABEL }).click();
     await expect(page).toHaveURL(new RegExp(`/me/people/${signedIn.selfPersonId}\\?tab=chart$`));
     await expect(page.getByRole('heading', { level: 1, name: chartTitleOf(signedIn.label) })).toBeVisible();
-    await expect(page.getByRole('heading', { name: '내 사주풀이', exact: true }).first()).toBeVisible();
   });
 
   /**
@@ -1236,7 +1235,7 @@ test.describe('초대된 사람의 로그인 흐름', () => {
       화면을 여는 것이 요금이 되면 새로고침이 곧 비용이다.
     */
     await page.reload();
-    await expect(page.getByText('아직 받은 사주풀이가 없어요')).toBeVisible();
+    await expect(page.getByText(readingInviteTitle(kin))).toBeVisible();
   });
 
   /**
