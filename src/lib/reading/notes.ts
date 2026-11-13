@@ -21,11 +21,18 @@ export const READING_NOUN = {
 } as const;
 
 /**
- * 아직 만들지 않았을 때. **버튼을 자리가 아니라 이름으로 부른다** — 넓은 화면에서 버튼은 이 문장의 오른쪽에 서서
- * 「아래 버튼」이 틀렸다(화면 갤러리 감사 2026-10-09). 이름은 버튼 글자(`panelChrome.makeLabel`)와 같다.
+ * 아직 만들지 않았을 때 — 한 문장이다(운영자 2026-11-13, 대장 home-17). 뒤에 붙던 「「{noun} 받기」를 누르면 지금 저장된 출생 정보로
+ * 받을 수 있어요.」는 길었다 — 단추가 바로 아래에서 그 말을 한다.
  */
-export const readingNoneNote = (noun: string) =>
-  `아직 받은 ${noun}가 없어요. 「${noun} 받기」를 누르면 지금 저장된 출생 정보로 받을 수 있어요.`;
+export const readingNoneNote = (noun: string) => `아직 받은 ${noun}가 없어요.`;
+
+/**
+ * 처음 받는 단추 위의 풀이권 줄 — 「보유 풀이권 N장」은 뜻이 안 읽혔다(운영자 2026-11-13, 대장 home-17). 남은 수는 예약 몫을 뺀
+ * 쓸 수 있는 수(`available`)다. 저장한 사람의 받기 시트(#1143 의 `readingCostLine`)와 같은
+ * 글자다 — 둘이 main 에 서면 하나로 합친다.
+ */
+export const readingCostNote = (available: number): string =>
+  available <= 0 ? '남은 풀이권이 없어요.' : `풀이권 1장을 사용해요. (남은 풀이권 ${available}장)`;
 
 /*
  * **「누가 썼는가」는 한 사람짜리 화면에서 내렸다.**
