@@ -12,7 +12,6 @@ import {
   COMPAT_OTHER_LABEL,
   PERSON_COMPAT_SECTION,
   PERSON_READING_SECTION,
-  READING_COST_LABEL,
   READING_INVITE_TOPICS,
   READING_OPEN_LABEL,
   chartTitleOf,
@@ -242,7 +241,6 @@ function PersonPage({
             <Text style={styles.inviteTitle}>{readingInviteTitle(person.name)}</Text>
             <Text style={styles.inviteTopics}>{READING_INVITE_TOPICS}</Text>
             <View style={styles.inviteFoot}>
-              <Text style={styles.inviteCost}>{READING_COST_LABEL}</Text>
               <Button label="사주풀이 받기" variant="secondary-small" onPress={ask.open} />
             </View>
           </Tile>
@@ -309,8 +307,7 @@ const styles = StyleSheet.create({
   invite: { gap: 6, padding: 20 },
   inviteTitle: { fontFamily: FONT.bold, fontSize: TYPE.lead, lineHeight: 27, color: COLOR.onAccent },
   inviteTopics: { fontFamily: FONT.medium, fontSize: TYPE.small, lineHeight: 20, color: alpha(COLOR.onAccent, 0.75) },
-  inviteFoot: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12, marginTop: 10 },
-  inviteCost: { fontFamily: FONT.medium, fontSize: TYPE.fine, color: alpha(COLOR.onAccent, 0.7) },
+  inviteFoot: { flexDirection: 'row', justifyContent: 'flex-end', marginTop: 10 },
   row: { minHeight: 64, flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 16, paddingVertical: 12, borderTopWidth: 1, borderTopColor: COLOR.border, marginTop: -1 },
   rowBody: { flex: 1, minWidth: 0 },
   rowTitle: { flex: 1, fontSize: TYPE.body, lineHeight: 22, fontFamily: FONT.bold, color: COLOR.foreground },

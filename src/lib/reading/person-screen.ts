@@ -51,7 +51,6 @@ export const READING_OPEN_LABEL = '읽기';
 /** 아직 안 받았을 때의 진한 카드 — 「없어요」 대신 받으면 무엇을 알게 되는지 */
 export const readingInviteTitle = (name: string): string => `${clipTopic(name)}${breakAfter(name)}어떤 사람일까요?`;
 export const READING_INVITE_TOPICS = '성격 · 일과 재물 · 인연 · 올해 흐름';
-export const READING_COST_LABEL = '풀이권 1장';
 
 /** 받기 시트 */
 export const readingAskTitle = (name: string): string => `${clip(name)}의${breakAfter(name)}사주풀이를 받을까요?`;

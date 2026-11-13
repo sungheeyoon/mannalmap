@@ -12,7 +12,6 @@ import {
   PARTNER_SELF_LABEL,
   PARTNER_TYPED_LABEL,
   READING_ASK_CONFIRM,
-  READING_COST_LABEL,
   READING_INVITE_TOPICS,
   partnerAskTitle,
   readingAskTitle,
@@ -133,8 +132,7 @@ export function ReadingInvite({
         <Icon name="spark" className="pointer-events-none absolute -bottom-6 -right-4 size-28 opacity-15" />
         <p className="relative whitespace-pre-line break-keep text-lead font-bold leading-snug">{readingInviteTitle(name)}</p>
         <p className="relative text-small text-on-accent/75">{READING_INVITE_TOPICS}</p>
-        <div className="relative mt-3 flex items-center justify-between gap-3">
-          <span className="text-fine text-on-accent/70">{READING_COST_LABEL}</span>
+        <div className="relative mt-3 flex items-center justify-end">
           <button type="button" onClick={press} disabled={buy.checking} className={BUTTON_SECONDARY_SMALL}>
             사주풀이 받기
           </button>
