@@ -342,7 +342,7 @@ describe('앱은 Android 에서만 Google Play 로 판다 (ADR 0230)', () => {
     expect(dialogs).toContain('confirmLabel={storeAvailable ? BUY_CREDITS_LABEL : SALE_CLOSED_OK}');
     expect(dialogs).toContain('onConfirm={storeAvailable ? buy : onClose}');
     expect(dialogs).toContain('cancelLabel={storeAvailable ? CREDITS_DIALOG_CLOSE : null}');
-    expect(dialogs).toContain('{!storeAvailable && <Text style={styles.line}>{SALE_CLOSED_NOTE}</Text>}');
+    expect(dialogs).toContain('{!storeAvailable && <WordText style={styles.line}>{SALE_CLOSED_NOTE}</WordText>}');
     expect(dialogs).toMatch(/router\.push\(`\/me\/credits\?back=\$\{back\}&noun=\$\{encodeURIComponent\(noun\)\}`/);
     /* 판매 여부를 다른 값으로 가르지 않는다 — iOS 에 구매 단추가 생기는 길을 막는다 */
     expect(dialogs.match(/BUY_CREDITS_LABEL/g)?.length).toBe(2);

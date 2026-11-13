@@ -1,6 +1,6 @@
 import { router } from 'expo-router';
 import { Fragment, useEffect, useRef, useState } from 'react';
-import { BackHandler, Pressable, StyleSheet, Text, View } from 'react-native';
+import { BackHandler, Pressable, StyleSheet, View } from 'react-native';
 
 import { calculateChart } from '@input/chart';
 import { DEFAULT_QUERY, missingAnswer, type Query } from '@input/query';
@@ -22,6 +22,7 @@ import { CardFrame } from '@/ui/surfaces';
 import { settled } from '@/ui/settled';
 
 import { openPair, readPairRelation, type Choosable, type PairAnswers, type PairSide } from './data';
+import { WordText } from '@/ui/word-text';
 
 const SIDES: readonly CompatSide[] = ['a', 'b'];
 const SIDE_LABEL: Record<CompatSide, string> = { a: '첫 번째', b: '두 번째' };
@@ -144,7 +145,7 @@ export function CompatPicker({ people, pickA, pickB, typeB = false }: { people: 
 
   return (
     <CardFrame >
-      <Text style={[shared.name, styles.frameTitle]}>누구와 누구를 볼까요?</Text>
+      <WordText style={[shared.name, styles.frameTitle]}>누구와 누구를 볼까요?</WordText>
       {SIDES.map((side) => (
         <Fragment key={side}>
           {/*
@@ -161,7 +162,7 @@ export function CompatPicker({ people, pickA, pickB, typeB = false }: { people: 
             </View>
           )}
           <View style={[styles.side, side === 'a' ? styles.sideFirst : styles.sideSecond]}>
-            <Text style={shared.meta}>{SIDE_PERSON[side]}</Text>
+            <WordText style={shared.meta}>{SIDE_PERSON[side]}</WordText>
             {/* 방식을 먼저 고르고 그 아래에 사람 목록이나 입력칸이 선다 — 두 방식의 차례가 같다(운영자 확정 2026-11-08, 대장 all-11) */}
             <Choices
               value={slots[side].from}
@@ -182,15 +183,15 @@ export function CompatPicker({ people, pickA, pickB, typeB = false }: { people: 
                 onChoose={(personId) => setSlot(side, { from: 'saved', personId })}
               />
             )}
-            {people.length === 0 && slots[side].from === 'saved' && <Text style={shared.meta}>아직 저장한 사람이 없어요.</Text>}
+            {people.length === 0 && slots[side].from === 'saved' && <WordText style={shared.meta}>아직 저장한 사람이 없어요.</WordText>}
             {slots[side].from === 'typed' && <TypedSlot onChange={(query) => setSlot(side, { from: 'typed', query })} />}
           </View>
         </Fragment>
       ))}
 
       <View style={styles.relation}>
-        <Text style={shared.name}>{RELATION_QUESTION}</Text>
-        <Text style={shared.meta}>{RELATION_WHY}</Text>
+        <WordText style={shared.name}>{RELATION_QUESTION}</WordText>
+        <WordText style={shared.meta}>{RELATION_WHY}</WordText>
         <View style={styles.chips}>
           {[...RELATIONS, null].map((choice) => {
             const picked = relation === choice;
@@ -205,7 +206,7 @@ export function CompatPicker({ people, pickA, pickB, typeB = false }: { people: 
                 }}
                 style={[styles.chip, picked && styles.chipOn]}
               >
-                <Text style={[styles.chipText, picked && styles.chipTextOn]}>{choice === null ? RELATION_NONE_LABEL : RELATION_LABEL[choice]}</Text>
+                <WordText style={[styles.chipText, picked && styles.chipTextOn]}>{choice === null ? RELATION_NONE_LABEL : RELATION_LABEL[choice]}</WordText>
               </Pressable>
             );
           })}
@@ -216,7 +217,7 @@ export function CompatPicker({ people, pickA, pickB, typeB = false }: { people: 
         ) : (
           <>
             <PrimaryButton label={opening ? '여는 중…' : '궁합 보기'} onPress={press} disabled={opening} />
-            {reason !== null && <Text style={reasonIsError ? styles.reasonError : styles.reason}>{reason}</Text>}
+            {reason !== null && <WordText style={reasonIsError ? styles.reasonError : styles.reason}>{reason}</WordText>}
           </>
         )}
         {failure !== null && <FailureLine>{failure}</FailureLine>}
@@ -259,7 +260,7 @@ function PersonChoice({ people, taken, chosenId, onChoose }: { people: readonly 
     <View style={styles.choice}>
       <Pressable accessibilityRole="button" accessibilityState={{ expanded: open }} onPress={() => setOpen(!open)} style={[styles.choiceHead, open && styles.choiceOpen]}>
         {chosen !== null && <Face person={chosen} />}
-        <Text style={[styles.choiceText, chosen === null && styles.choiceEmpty]} numberOfLines={1}>{chosen?.label ?? '상대를 골라 주세요'}</Text>
+        <WordText style={[styles.choiceText, chosen === null && styles.choiceEmpty]} numberOfLines={1}>{chosen?.label ?? '상대를 골라 주세요'}</WordText>
         {/* 웹의 같은 칸(`app/person-combobox.tsx`) — 12px · 굵기 3.2 · secondary */}
         <FoldIcon open={open} size={12} color={COLOR.secondary} strokeWidth={3.2} />
       </Pressable>
@@ -270,7 +271,7 @@ function PersonChoice({ people, taken, chosenId, onChoose }: { people: readonly 
               <Field value={typed} onChange={setTyped} placeholder="이름으로 찾기" label="이름으로 찾기" />
             </View>
           )}
-          {candidates.length === 0 && people.length > 0 && <Text style={[shared.meta, styles.menuEmpty]}>찾는 사람이 없어요</Text>}
+          {candidates.length === 0 && people.length > 0 && <WordText style={[shared.meta, styles.menuEmpty]}>찾는 사람이 없어요</WordText>}
           {candidates.map((one) => (
             <Pressable
               key={one.personId}
@@ -282,7 +283,7 @@ function PersonChoice({ people, taken, chosenId, onChoose }: { people: readonly 
               style={[styles.menuItem, one.personId === chosenId && styles.menuChosen]}
             >
               <Face person={one} />
-              <Text style={styles.choiceText} numberOfLines={1}>{one.label}</Text>
+              <WordText style={styles.choiceText} numberOfLines={1}>{one.label}</WordText>
             </Pressable>
           ))}
         </View>

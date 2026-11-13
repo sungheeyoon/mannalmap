@@ -11,11 +11,12 @@ import {
 } from '@reading/notes';
 import { currentPath } from '@consent/app-destination';
 import { router, useGlobalSearchParams, usePathname } from 'expo-router';
-import { StyleSheet, Text } from 'react-native';
+import { StyleSheet } from 'react-native';
 
 import { storeAvailable } from '@/credits/store';
 import { ConfirmDialog } from '@/ui/confirm-dialog';
 import { COLOR, FONT, TYPE } from '@/ui/tokens';
+import { WordText } from '@/ui/word-text';
 
 /** 되돌릴 수 없는 누름 앞의 확인 — 글자는 웹의 `panel.tsx` 와 같다 */
 export function ConfirmMake({
@@ -37,8 +38,8 @@ export function ConfirmMake({
       onConfirm={onConfirm}
       onClose={onClose}
     >
-      {hasReading && <Text style={styles.danger}>{READING_REPLACES_NOTE}</Text>}
-      <Text style={styles.line}>{READING_USES_TICKET_NOTE}</Text>
+      {hasReading && <WordText style={styles.danger}>{READING_REPLACES_NOTE}</WordText>}
+      <WordText style={styles.line}>{READING_USES_TICKET_NOTE}</WordText>
     </ConfirmDialog>
   );
 }
@@ -65,8 +66,8 @@ export function CreditsShortage({ available, noun, onClose }: { available: numbe
       cancelLabel={storeAvailable ? CREDITS_DIALOG_CLOSE : null}
       onClose={onClose}
     >
-      <Text style={styles.line}>{creditsShortageNote(available)}</Text>
-      {!storeAvailable && <Text style={styles.line}>{SALE_CLOSED_NOTE}</Text>}
+      <WordText style={styles.line}>{creditsShortageNote(available)}</WordText>
+      {!storeAvailable && <WordText style={styles.line}>{SALE_CLOSED_NOTE}</WordText>}
     </ConfirmDialog>
   );
 }

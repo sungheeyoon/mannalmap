@@ -17,15 +17,6 @@ const RAW_TEXT_EXCEPTIONS: readonly { file: string; why: string }[] = [
   { file: 'ui/parts.tsx', why: '고르는 칸 · 입력칸 곁의 값 — ADR 0109 추기 2026-11-02 의 「고르는 입력의 값」' },
   { file: 'chat/room.tsx', why: '채팅 말풍선 — 사람이 쓴 글이고 복사되는 글(ADR 0109 추기 2026-11-02)' },
   { file: 'app/dev-parts.tsx', why: '개발 빌드에서만 서는 부품 견줌' },
-  // 나란히 도는 PR(#1143 · #1144)이 고치는 파일 — 그 PR 이 머지된 뒤 옮긴다(ADR 0250 「남은 것」)
-  { file: 'ui/sheet.tsx', why: '#1143 이 고친다 — 머지 뒤 옮긴다' },
-  { file: 'people/parts.tsx', why: '#1143 이 고친다 — 머지 뒤 옮긴다' },
-  { file: 'compat/picker.tsx', why: '#1143 이 고친다 — 머지 뒤 옮긴다' },
-  { file: 'app/me/(tabs)/compat/index.tsx', why: '#1143 이 고친다 — 머지 뒤 옮긴다' },
-  { file: 'app/me/people/[personId].tsx', why: '#1143 이 고친다 — 머지 뒤 옮긴다' },
-  { file: 'app/me/people/index.tsx', why: '#1143 이 고친다 — 머지 뒤 옮긴다' },
-  { file: 'reading/dialogs.tsx', why: '#1144 가 고친다 — 머지 뒤 옮긴다' },
-  { file: 'reading/panel.tsx', why: '#1144 가 고친다 — 머지 뒤 옮긴다' },
 ];
 
 function walk(dir: string): string[] {

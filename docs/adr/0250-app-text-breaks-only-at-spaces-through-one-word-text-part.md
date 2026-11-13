@@ -39,6 +39,5 @@
 
 ## 남은 것
 
-- 나란히 도는 PR(#1143 · #1144)이 고치는 파일(`ui/sheet.tsx` · `people/parts.tsx` · `compat/picker.tsx` · `app/me/(tabs)/compat/index.tsx` ·
-  `app/me/people/*` · `reading/dialogs.tsx` · `reading/panel.tsx`)은 아직 RN `Text` 다 — 시험의 예외 표가 들고, 그 PR 이 머지된 뒤 옮긴다.
-  풀이 화면의 풀이권 안내 줄(「…돌 / 려드려요」)과 실패 줄이 `reading/panel.tsx` 에 있어 그때까지 낱말 가운데서 꺾인다.
+- 없음. 나란히 돌던 #1143 · #1144 가 고친 파일(시트 · 저장한 사람 · 궁합 고르기 · 풀이 패널 · 풀이 확인 창)도 그 PR 들이 머지된 뒤 같은 PR 에서
+  옮겼다. #1143 이 시트 제목에 넣은 정해진 줄바꿈(`\n`)은 띄어쓰기처럼 꺾일 자리로 남는다.

@@ -14,7 +14,7 @@ import {
 } from '@reading/person-screen';
 import type { Element, Stem } from '@saju';
 import { useRef, useState, type ReactNode } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 
 import { useClient } from '@/auth/connected';
 import { readPicker, openPair, readPairRelation, type Choosable } from '@/compat/data';
@@ -33,6 +33,7 @@ import { COLOR, CONTROL, ELEMENT_TONE, FONT, RADIUS, TYPE } from '@/ui/tokens';
 import { UNREACHABLE } from '@/auth/signup';
 
 import { go } from './parts';
+import { WordText } from '@/ui/word-text';
 
 /*
   **저장한 사람 화면의 누름 둘 — 그 자리의 시트에서 끝난다**(운영자 승인 2026-11-13, ADR 0249 · 웹 `app/me/people/[personId]/person-sheets.tsx`).
@@ -80,7 +81,7 @@ function AskBody({
     <View style={styles.body}>
       {children}
       <View style={styles.lines}>
-        <Text style={styles.cost}>{readingCostLine(credits?.available ?? null)}</Text>
+        <WordText style={styles.cost}>{readingCostLine(credits?.available ?? null)}</WordText>
       </View>
       {failure !== null && <FailureLine>{failure}</FailureLine>}
       <View style={styles.lines}>
@@ -260,7 +261,7 @@ export function useCompatAdd({
                     }}
                     style={[styles.chip, picked && styles.chipOn]}
                   >
-                    <Text style={[styles.chipText, picked && styles.chipTextOn]}>{choice === null ? RELATION_NONE_LABEL : RELATION_LABEL[choice]}</Text>
+                    <WordText style={[styles.chipText, picked && styles.chipTextOn]}>{choice === null ? RELATION_NONE_LABEL : RELATION_LABEL[choice]}</WordText>
                   </Pressable>
                 );
               })}
@@ -272,7 +273,7 @@ export function useCompatAdd({
             {(partners ?? []).map((one) => (
               <Pressable key={one.personId} accessibilityRole="button" onPress={() => choose(one)} style={styles.row}>
                 <Face stem={one.stem} element={one.element} />
-                <Text style={styles.rowText} numberOfLines={1}>{one.isSelfPerson ? PARTNER_SELF_LABEL : one.label}</Text>
+                <WordText style={styles.rowText} numberOfLines={1}>{one.isSelfPerson ? PARTNER_SELF_LABEL : one.label}</WordText>
                 <Icon name="chevron" size={16} color={COLOR.muted} />
               </Pressable>
             ))}
@@ -287,7 +288,7 @@ export function useCompatAdd({
               <View style={[styles.face, { backgroundColor: COLOR.surfaceSunken }]}>
                 <Icon name="plus" size={16} color={COLOR.secondary} />
               </View>
-              <Text style={styles.rowText} numberOfLines={1}>{PARTNER_TYPED_LABEL}</Text>
+              <WordText style={styles.rowText} numberOfLines={1}>{PARTNER_TYPED_LABEL}</WordText>
               <Icon name="chevron" size={16} color={COLOR.muted} />
             </Pressable>
           </View>
