@@ -273,15 +273,18 @@ export function ReadingFeedback({
         )}
 
         <div className="-mx-5 -mb-5 border-t border-border bg-surface-soft px-5 py-4 sm:-mx-7 sm:-mb-6 sm:px-7">
-          <button
-            type="submit"
-            disabled={saving}
-            aria-disabled={!ready || undefined}
-            aria-describedby={!ready && tried ? `feedback-locked-${runId}` : undefined}
-            className={`${BUTTON_PRIMARY} w-full sm:w-auto`}
-          >
-            {saving ? '보내는 중…' : '의견 보내기'}
-          </button>
+          {/* 단추는 넓은 화면에서 오른쪽 끝이다 — 오류 줄만 그 아래 왼쪽에 선다(`FormError`) */}
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-end">
+            <button
+              type="submit"
+              disabled={saving}
+              aria-disabled={!ready || undefined}
+              aria-describedby={!ready && tried ? `feedback-locked-${runId}` : undefined}
+              className={`${BUTTON_PRIMARY} w-full sm:w-auto`}
+            >
+              {saving ? '보내는 중…' : '의견 보내기'}
+            </button>
+          </div>
           {/*
             **다 고르기 전에 누르면 까닭이 주 단추 바로 아래 선다**(2026-10-10 화면 점검 B20 · 대장 26) — 셋을 다 골라야 보내지는데 어느 것이
             필수인지 말이 없어 왜 안 눌리는지 몰랐다. 단추는 가라앉되 누름을 받고(`aria-disabled`), 누르기 전에는 줄이 없다(운영자 2026-11-14)
