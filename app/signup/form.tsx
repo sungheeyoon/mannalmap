@@ -322,14 +322,17 @@ export function SignupForm({
       )}
 
       <div className="border-t border-border pt-5">
-        <button
-          type="submit"
-          disabled={working}
-          aria-describedby={shownGap !== null ? 'signup-gap' : undefined}
-          className={BUTTON_PRIMARY}
-        >
-          {working ? SIGNUP_LABEL.signingUp : firstSignup ? SIGNUP_LABEL.signUp : SIGNUP_LABEL.confirm}
-        </button>
+        {/* 폰에서는 단추가 폭을 채운다 — 오류 줄만 그 아래에 선다(`FormError`) */}
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
+          <button
+            type="submit"
+            disabled={working}
+            aria-describedby={shownGap !== null ? 'signup-gap' : undefined}
+            className={BUTTON_PRIMARY}
+          >
+            {working ? SIGNUP_LABEL.signingUp : firstSignup ? SIGNUP_LABEL.signUp : SIGNUP_LABEL.confirm}
+          </button>
+        </div>
         {/* 눌렀는데 못 간 이유를 주 단추 바로 아래에서 말한다 — 누르기 전에는 이 자리가 비어 있다 */}
         <FormError show={shownGap !== null} id="signup-gap">
           {shownGap?.message}
