@@ -4,8 +4,9 @@ import { useId, useRef, useState, useTransition } from 'react';
 
 import { INPUT_EDIT_CHANGE_CONFIRM } from '@/src/lib/consent';
 
-import { BirthFields, focusBirthGap } from '../birth-form';
-import { missingAnswer, type Query } from '@/src/lib/input/query';
+import { BirthFields } from '../birth-form';
+import type { Query } from '@/src/lib/input/query';
+import { birthSectionErrors } from '@/src/lib/input/section-errors';
 import { samePillarInput } from '@/src/lib/input/edit';
 import { editPersonInput } from './actions';
 import { actionAnswer } from '../ui/action-answer';
@@ -13,7 +14,7 @@ import { BUTTON_PRIMARY, BUTTON_TERTIARY } from '../ui/buttons';
 import { ConfirmDialog } from '../ui/confirm-dialog';
 import { TYPE_META, TYPE_NAME } from '../ui/surfaces';
 import { FailureLine } from '../ui/failure-line';
-import { FormError } from '../ui/form-error';
+import { useSectionErrors } from '../ui/section-error';
 
 /**
  * 저장된 출생 정보를 고치는 폼 — **여는 자리를 밖에서 정한다.** 익명 화면과 **같은 폼**(`BirthFields`)을 쓴다.
@@ -57,22 +58,25 @@ export function EditInputForm({
     setQueryNow(next);
   };
 
-  const missing = missingAnswer(query);
+  /* 빈 칸 · 틀린 칸은 누른 뒤 그 문단 아래에서 말한다(ADR 0252) — 「바뀐 것이 없어요」는 칸의 오류가 아니라 곁의 말이다 */
+  const errors = birthSectionErrors(query, { name: editableName });
+  const sections = useSectionErrors(errors, fields);
+  const missing = errors.length > 0;
   const nameChanged = editableName && query.name.trim() !== current.name.trim();
   const pillarsSame = samePillarInput(current, query);
   /** 저장할 것이 없다 — 빈 칸이 있거나 아무것도 안 바뀌었다. 단추는 가라앉되 누름을 받는다 */
   const unchanged = pillarsSame && !nameChanged;
-  const blocked = missing !== null || unchanged;
+  const blocked = missing || unchanged;
   const warn = tried && blocked;
 
   /**
    * **단추를 잠그지 않는다**(운영자 결정 2026-10-18 G-97 ④, ADR 0160 의 3) — 저장할 것이 없으면 누른 그때 곁의 말을 경고 색으로
-   * 세운다. 빈 칸이면 그 칸으로 데려간다(사람 추가의 「등록」과 같은 몸짓).
+   * 세운다. 빈 칸 · 틀린 칸이면 그 문단 아래에서 말하고 맨 위 붉은 칸으로 데려간다(사람 추가의 「등록」과 같은 몸짓, ADR 0252).
    */
   const press = () => {
-    if (blocked) {
+    if (!sections.press()) return;
+    if (unchanged) {
       setTried(true);
-      if (missing !== null) focusBirthGap(fields.current);
       return;
     }
     if (confirmsRequests && !pillarsSame) setConfirming(true);
@@ -104,7 +108,7 @@ export function EditInputForm({
       )}
 
       <div ref={fields}>
-        <BirthFields value={query} onChange={setQuery} showName={editableName} surface="flat" />
+        <BirthFields value={query} onChange={setQuery} showName={editableName} surface="flat" errors={sections} />
       </div>
 
       {/*
@@ -113,9 +117,9 @@ export function EditInputForm({
       */}
       {pillarsSame && (nameChanged || warn) && (
         <p
-          id={unchanged && missing === null ? noteId : undefined}
-          role={warn && unchanged && missing === null ? 'alert' : undefined}
-          className={warn && unchanged && missing === null ? WARN_NOTE : TYPE_META}
+          id={unchanged && !missing ? noteId : undefined}
+          role={warn && unchanged && !missing ? 'alert' : undefined}
+          className={warn && unchanged && !missing ? WARN_NOTE : TYPE_META}
         >
           {nameChanged
             ? '이름만 바뀌었어요. 이름은 여덟 글자에 들어가지 않아서 출생 정보와 사주는 그대로예요.'
@@ -134,7 +138,7 @@ export function EditInputForm({
             onClick={press}
             disabled={saving}
             aria-disabled={blocked || undefined}
-            aria-describedby={warn ? noteId : undefined}
+            aria-describedby={warn && unchanged && !missing ? noteId : undefined}
             className={BUTTON_PRIMARY}
           >
             {saving ? '저장하는 중…' : pillarsSame && nameChanged ? '이름 저장' : '변경 사항 저장'}
@@ -143,9 +147,6 @@ export function EditInputForm({
             작성 그만두기
           </button>
         </div>
-        <FormError show={warn && missing !== null} id={noteId}>
-          {missing}
-        </FormError>
       </div>
 
       {failure !== null && (

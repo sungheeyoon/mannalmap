@@ -475,6 +475,21 @@
   outline: 3px solid color-mix(in srgb, var(--accent) 55%, transparent);
   outline-offset: -3px;
 }
+/*
+  누른 뒤 걸린 문단의 칸 — 붉은 테 2px(1px 테 + 1px 그림자, ADR 0252). 숫자 칸은 면도 옅게 붉다. 적는 도중에는 붉히지 않는다
+*/
+.name input[aria-invalid='true'],
+.options[aria-invalid='true'] .option {
+  border-color: var(--danger);
+  box-shadow: 0 0 0 1px var(--danger);
+}
+.name input[aria-invalid='true']:focus {
+  box-shadow: 0 0 0 1px var(--danger), 0 0 0 4px var(--danger-wash);
+}
+/* 문단 아래 줄 — 격자의 줄 사이(8px)가 곧 문단과의 띄움이다 */
+.sectionError {
+  margin: 0;
+}
 .digit input[aria-invalid='true'] {
   background: var(--danger-wash);
   color: var(--danger);

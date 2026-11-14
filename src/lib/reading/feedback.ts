@@ -17,6 +17,7 @@
  * **체감 적합성** — 읽고서 실제와 맞는다고 느낀 정도다(`prd-archive`).
  */
 
+import type { SectionError } from '../input/section-errors';
 import type { ReadingKind } from './policy';
 
 /** 눈금 하나의 폭 — 양 끝의 말이 함께 서야 무엇을 매기는지가 정해진다 */
@@ -130,8 +131,27 @@ export const FEEDBACK_THANKS = '답해 주셔서 고마워요. 다음 풀이를 
  */
 export const FEEDBACK_FOLDED_NOTE = '필수 질문 3개 · 1분이면 돼요';
 
-/** 다 고르기 전에 「의견 보내기」를 누른 뒤에만 단추 곁에 서는 붉은 줄(대장 26, 운영자 2026-11-14 — 누르기 전에는 안 선다) */
-export const FEEDBACK_LOCKED_NOTE = '필수 질문 3개에 답하면 보낼 수 있어요.';
+/**
+ * 다 고르기 전에 「의견 보내기」를 누르면 **안 고른 질문마다 그 아래** 서는 붉은 줄(ADR 0252) — 구글 설문지의 「필수 질문입니다.」를
+ * 해요체로(대장 home 「확인 전」). 단추 아래 모아 쓰던 「필수 질문 3개에 답하면 보낼 수 있어요.」(대장 26)를 걷었다.
+ */
+export const FEEDBACK_REQUIRED = '필수 질문이에요.';
+
+/** 의견의 필수 문단 셋 — 화면의 차례(도움 · 맞음 · 분량) */
+export type FeedbackSection = 'usefulness' | 'fit' | 'length';
+
+/** 안 고른 필수 질문 전부 — 아쉬운 점과 적는 칸은 비워도 된다(아쉬운 것이 없는 것도 답이다) */
+export function feedbackSectionErrors(answer: {
+  usefulness: FeedbackScore | null;
+  fit: FeedbackScore | null;
+  feltLength: FeltLength | null;
+}): SectionError<FeedbackSection>[] {
+  const errors: SectionError<FeedbackSection>[] = [];
+  if (answer.usefulness === null) errors.push({ section: 'usefulness', message: FEEDBACK_REQUIRED });
+  if (answer.fit === null) errors.push({ section: 'fit', message: FEEDBACK_REQUIRED });
+  if (answer.feltLength === null) errors.push({ section: 'length', message: FEEDBACK_REQUIRED });
+  return errors;
+}
 
 export const FEEDBACK_SCOPE_NOTE = '지금 읽은 이 풀이에 대한 답이에요. 풀이를 새로 만들면 다시 여쭤볼게요.';
 

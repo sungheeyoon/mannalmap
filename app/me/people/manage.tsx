@@ -6,8 +6,9 @@ import { useEffect, useRef, useState, useTransition } from 'react';
 
 import type { PersonSlots } from '@/src/lib/people';
 
-import { BirthFields, focusBirthGap } from '../../birth-form';
-import { DEFAULT_QUERY, missingAnswer, type Query } from '@/src/lib/input/query';
+import { BirthFields } from '../../birth-form';
+import { DEFAULT_QUERY, type Query } from '@/src/lib/input/query';
+import { birthSectionErrors } from '@/src/lib/input/section-errors';
 import { NOTE_MAX, noteEdited } from '@/src/lib/input/edit';
 import { useHashParams } from '../../hash-query';
 import { addManagedPerson, removeFromList, updateNote } from '../actions';
@@ -24,7 +25,7 @@ import { Icon } from '../../ui/icons';
 import { useLeaveGuard } from '../../ui/leave-guard';
 import { EMPTY_SLOT, TYPE_META, TYPE_SECTION } from '../../ui/surfaces';
 import { FailureLine } from '../../ui/failure-line';
-import { FormError } from '../../ui/form-error';
+import { useSectionErrors } from '../../ui/section-error';
 
 /**
  * 목록을 손대는 세 자리 — 추가·메모·빼기.
@@ -74,10 +75,10 @@ export function AddPerson({ slots }: { slots: PersonSlots | null }) {
   const [question, setQuestion] = useState<SameChartQuestion | null>(null);
   const [saving, startSaving] = useTransition();
   const form = useRef<HTMLFormElement>(null);
-  /** 「등록」을 눌러 봤나 — 빠진 칸의 말이 도움말에서 경고로 바뀌는 때(ADR 0160 의 3) */
-  const [tried, setTried] = useState(false);
-
-  const missing = missingAnswer(query);
+  /** 누른 뒤의 문단 오류 — 빠진 칸은 그 문단 아래에서 말한다(ADR 0252) */
+  const errors = birthSectionErrors(query);
+  const sections = useSectionErrors(errors, form);
+  const missing = errors.length > 0;
   /* 적어 둔 메모가 있으면 탭을 닫기 전에 묻는다 — 출생 정보 칸은 다시 고르면 되지만 메모는 다시 적어야 한다 */
   useLeaveGuard(open && note.trim() !== '');
 
@@ -120,16 +121,11 @@ export function AddPerson({ slots }: { slots: PersonSlots | null }) {
   const settle = (outcome: SaveOutcome) => settleSaveOutcome(outcome, setFailure, setQuestion);
 
   /**
-   * **단추를 잠그지 않는다** — 빠진 칸이 있으면 누른 그때 말하고 그 칸으로 데려간다(`docs/context/copy.md` §8 「거절은 누른 뒤에
-   * 말한다」, ADR 0160). 초점은 이름이 비었으면 이름 칸, 아니면 아직 빈 입력 칸이다 — 궁합 고르는 판(`compat-picker.tsx`)과 같은 몸짓.
+   * **단추를 잠그지 않는다** — 빠진 칸이 있으면 누른 그때 걸린 문단마다 그 아래에서 말하고 맨 위 붉은 칸으로 데려간다
+   * (`docs/context/copy.md` §8 「거절은 누른 뒤에 말한다」, ADR 0160 · 0252).
    */
   const save = () => {
-    if (missing !== null) {
-      setTried(true);
-      focusBirthGap(form.current);
-      return;
-    }
-    setTried(false);
+    if (!sections.press()) return;
     setFailure(null);
     startSaving(async () => settle(await attempt(false)));
   };
@@ -184,7 +180,7 @@ export function AddPerson({ slots }: { slots: PersonSlots | null }) {
         </p>
       </header>
 
-      <BirthFields value={query} onChange={setQuery} namePlaceholder="엄마" surface="flat" />
+      <BirthFields value={query} onChange={setQuery} namePlaceholder="엄마" surface="flat" errors={sections} />
 
       {/* 메모 칸도 출생 정보 칸들과 같은 폭에서 끝난다 — 넓은 화면에서 폼은 43rem 까지만 넓어진다(`birth-form.module.css`) */}
       <div className="max-w-[43rem]">
@@ -210,8 +206,7 @@ export function AddPerson({ slots }: { slots: PersonSlots | null }) {
             <button
               type="submit"
               disabled={saving}
-              aria-disabled={missing !== null || undefined}
-              aria-describedby={tried && missing !== null ? 'add-person-missing' : undefined}
+              aria-disabled={missing || undefined}
               className={BUTTON_PRIMARY}
             >
               {saving ? '저장하는 중…' : '등록'}
@@ -220,10 +215,6 @@ export function AddPerson({ slots }: { slots: PersonSlots | null }) {
               취소
             </button>
           </div>
-          {/* 빠진 칸은 누른 뒤에만 주 단추 바로 아래에서 말한다(운영자 2026-11-14, `FormError`) */}
-          <FormError show={tried && missing !== null} id="add-person-missing">
-            {missing}
-          </FormError>
         </div>
       )}
 

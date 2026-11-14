@@ -16,7 +16,7 @@ import { calculateChart, chartOf } from '@/src/lib/input/chart';
 import { DEFAULT_QUERY, queryFromSearchParams } from '@/src/lib/input/query';
 import { READING_AGAIN_LABEL, READING_NOUN, READING_REPLACES_NOTE, READING_USES_TICKET_NOTE, readingEvidenceOf, readingNoneNote } from '@/src/lib/reading';
 import { readingConfirmTitle } from '@/src/lib/reading/credit-ask';
-import { FEEDBACK_LOCKED_NOTE } from '@/src/lib/reading/feedback';
+import { FEEDBACK_REQUIRED } from '@/src/lib/reading/feedback';
 import { CHART_DETAIL_LABEL, COMPAT_OTHER_LABEL, PARTNER_TYPED_LABEL, chartTitleOf, compatWithLabel, partnerAskTitle, readingAskTitle, readingCostLine, readingInviteTitle } from '@/src/lib/reading/person-screen';
 import { TASTE_RUN_VERSIONS, tasteEvidenceOf, tasteFingerprintOf } from '@/src/lib/reading/taste-run';
 import type { Saju } from '@/src/lib/saju';
@@ -946,21 +946,23 @@ test.describe('초대된 사람의 로그인 흐름', () => {
 
     /* **세 가지를 다 고르기 전에는 못 보낸다** — 안 고른 것이 어느 값으로든 저장되면 안 된다 */
     const send = page.getByRole('button', { name: '의견 보내기' });
-    const locked = page.getByText(FEEDBACK_LOCKED_NOTE);
+    const locked = page.locator('[data-section-error]').filter({ hasText: FEEDBACK_REQUIRED });
     await expect(send).toHaveAttribute('aria-disabled', 'true');
 
     /*
-      **단추는 가라앉되 누름을 받는다**(운영자 2026-10-18 G-97 ④, ADR 0160 의 3) — 곁의 말은 누르기 전에는 안 서고(운영자 2026-11-14), 덜 고른 채
-      누르면 경고 알림으로 서며 아직 안 고른 첫 질문으로 데려간다. 잠긴 모양의 단추는 Playwright 가 기다리므로 `force` 로 누른다
+      **단추는 가라앉되 누름을 받는다**(운영자 2026-10-18 G-97 ④, ADR 0160 의 3) — 줄은 누르기 전에는 안 서고, 덜 고른 채 누르면 안 고른
+      질문마다 그 아래에 서며(ADR 0252) 맨 위 안 고른 질문으로 데려간다. 잠긴 모양의 단추는 Playwright 가 기다리므로 `force` 로 누른다
     */
     await page.getByRole('radio', { name: '5 — 많이 됐어요' }).check();
     await expect(locked).toHaveCount(0);
     await send.click({ force: true });
-    await expect(page.getByRole('alert').filter({ hasText: FEEDBACK_LOCKED_NOTE })).toBeVisible();
+    await expect(locked).toHaveCount(2);
     await expect(page.getByRole('radio', { name: '1 — 많이 달라요' })).toBeFocused();
     await expect(page.getByText('답해 주셔서 고마워요')).toHaveCount(0);
 
+    /* 고친 질문의 줄만 걷힌다 */
     await page.getByRole('radio', { name: '1 — 많이 달라요' }).check();
+    await expect(locked).toHaveCount(1);
     await expect(send).toHaveAttribute('aria-disabled', 'true');
     await page.getByRole('radio', { name: '길어요' }).check();
     await expect(send).not.toHaveAttribute('aria-disabled', /.*/);

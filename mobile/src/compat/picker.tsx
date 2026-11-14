@@ -2,10 +2,10 @@ import { router } from 'expo-router';
 import { Fragment, useEffect, useRef, useState } from 'react';
 import { BackHandler, Pressable, StyleSheet, View } from 'react-native';
 
-import { calculateChart } from '@input/chart';
-import { DEFAULT_QUERY, missingAnswer, type Query } from '@input/query';
+import { DEFAULT_QUERY, type Query } from '@input/query';
+import { birthSectionErrors, prefixed, type BirthSection, type SectionError } from '@input/section-errors';
 import { RELATIONS, RELATION_LABEL, RELATION_NONE_LABEL, RELATION_QUESTION, RELATION_WHY, type Relation } from '@people';
-import { dropUnlisted, findsInList, pickable, stillListed } from '@people/pick';
+import { dropUnlisted, findsInList, pickable, seatSectionErrors, type SeatSection } from '@people/pick';
 import type { CompatSide } from '@saju';
 
 import { useClient } from '@/auth/connected';
@@ -13,7 +13,7 @@ import { BirthFields, useBirthForm } from '@/people/birth-fields';
 import { styles as shared } from '@/people/parts';
 import { SameChartAsk, type SameChartQuestion } from '@/people/same-chart-ask';
 import { FailureLine } from '@/ui/failure-line';
-import { FormError } from '@/ui/form-error';
+import { SectionErrorLine, sideSections, useSectionErrors, type SectionErrors } from '@/ui/section-error';
 import { FoldIcon, Icon } from '@/ui/icons';
 import { StemSymbol } from '@/ui/stem-symbol';
 import { ElementSymbol } from '@/ui/element-symbol';
@@ -47,25 +47,6 @@ const secondSlot = (people: readonly Choosable[], asked: string | undefined, ask
   return askedFirst !== undefined || people.length >= 2 ? { from: 'saved', personId: '' } : { from: 'typed', query: DEFAULT_QUERY };
 };
 
-/** 고른 칸은 그 사람이 **지금 목록에 있어야** 찬 것이다 — 칸이 그리는 「골라 주세요」(`PersonChoice`)와 같은 기준 */
-const complete = (slot: Slot, people: readonly Choosable[]): boolean =>
-  slot.from === 'saved' ? stillListed(people, slot.personId) : calculateChart(slot.query).ok && missingAnswer(slot.query) === null;
-
-const gapOf = (slots: Record<CompatSide, Slot>, people: readonly Choosable[]): string | null => {
-  for (const side of SIDES) {
-    const slot = slots[side];
-    if (slot.from === 'saved') {
-      if (!stillListed(people, slot.personId)) return `${SIDE_PERSON[side]}을 골라 주세요.`;
-      continue;
-    }
-    const gap = missingAnswer(slot.query);
-    if (gap !== null) return `${SIDE_PERSON[side]}의 ${gap}`;
-    const refused = calculateChart(slot.query);
-    if (!refused.ok) return refused.message;
-  }
-  return null;
-};
-
 const sideOf = (slot: Slot): PairSide => (slot.from === 'saved' ? { from: 'saved', personId: slot.personId } : { from: 'typed', query: slot.query });
 
 /**
@@ -86,10 +67,26 @@ export function CompatPicker({ people, pickA, pickB, typeB = false }: { people: 
   const [question, setQuestion] = useState<SameChartQuestion | null>(null);
   const [failure, setFailure] = useState<string | null>(null);
   const [opening, setOpening] = useState(false);
-  const [tried, setTried] = useState(false);
+  /** 직접 입력 칸의 문단 오류 — 그 칸이 시 · 분 숫자까지 알아 들고 올린다(`TypedSlot`) */
+  const [typedErrors, setTypedErrors] = useState<Record<CompatSide, SectionError<BirthSection>[]>>(() => ({
+    a: birthSectionErrors(DEFAULT_QUERY),
+    b: birthSectionErrors(DEFAULT_QUERY),
+  }));
 
-  const chosen = SIDES.every((side) => complete(slots[side], people));
   const sameTwice = slots.a.from === 'saved' && slots.b.from === 'saved' && slots.a.personId !== '' && slots.a.personId === slots.b.personId;
+  /**
+   * **빈 칸의 말은 누른 뒤에만, 그 칸의 문단 아래에 선다**(웹 `app/compat-picker.tsx`, ADR 0252) — 두 칸의 걸린 문단이 다 함께 서고,
+   * 같은 사람 둘은 둘째 칸의 고르는 칸 아래다.
+   */
+  const errors = SIDES.flatMap((side) => {
+    const slot = slots[side];
+    return prefixed(
+      side,
+      slot.from === 'typed' ? typedErrors[side] : seatSectionErrors(slot, { people, who: SIDE_PERSON[side], sameAsOther: side === 'b' && sameTwice }),
+    );
+  });
+  const sections = useSectionErrors<`${CompatSide}.${SeatSection}`>(errors);
+  const chosen = errors.length === 0;
   const pairKey = slots.a.from === 'saved' && slots.b.from === 'saved' && chosen && !sameTwice ? [slots.a.personId, slots.b.personId].sort().join('|') : '';
 
   /* 적어 둔 답을 칸에 세운다 — 못 읽었으면 칸을 안 건드린다. 「못 읽었다」를 「모른다」로 세우지 않는다 */
@@ -108,6 +105,8 @@ export function CompatPicker({ people, pickA, pickB, typeB = false }: { people: 
 
   const setSlot = (side: CompatSide, next: Slot) => {
     setFailure(null);
+    /* 방식을 바꾸거나 사람을 고르면 그 칸의 고르는 줄이 걷힌다 — 출생 정보 칸의 줄은 폼이 제 문단마다 걷는다 */
+    if (next.from === 'saved' || slots[side].from !== next.from) sections.edit(`${side}.pick`);
     setSlots((now) => ({ ...dropUnlisted(now, people), [side]: next }));
   };
 
@@ -132,17 +131,11 @@ export function CompatPicker({ people, pickA, pickB, typeB = false }: { people: 
     });
   };
 
+  /** 잠긴 모양이어도 누름을 받는다 — 걸린 문단이 있으면 그 아래에서 말하고 맨 위 칸으로 데려간다 */
   const press = () => {
-    if (!chosen || sameTwice) {
-      setTried(true);
-      return;
-    }
+    if (!sections.press()) return;
     void open({});
   };
-
-  const gap = gapOf(slots, people);
-  const reason = opening ? null : sameTwice ? '같은 사람은 한 번만 고를 수 있어요. 서로 다른 두 사람을 골라 주세요.' : gap;
-  const reasonIsError = sameTwice || tried;
 
   return (
     <CardFrame >
@@ -174,6 +167,7 @@ export function CompatPicker({ people, pickA, pickB, typeB = false }: { people: 
               ]}
             />
             {slots[side].from === 'saved' && (
+              <View ref={sections.anchor(`${side}.pick`)}>
               <PersonChoice
                 people={people}
                 taken={(() => {
@@ -182,10 +176,21 @@ export function CompatPicker({ people, pickA, pickB, typeB = false }: { people: 
                 })()}
                 chosenId={(slots[side] as { personId: string }).personId}
                 onChoose={(personId) => setSlot(side, { from: 'saved', personId })}
+                refused={sections.shown[`${side}.pick`] !== undefined}
               />
+              <SectionErrorLine message={sections.shown[`${side}.pick`]} />
+              </View>
             )}
             {people.length === 0 && slots[side].from === 'saved' && <WordText style={shared.meta}>아직 저장한 사람이 없어요.</WordText>}
-            {slots[side].from === 'typed' && <TypedSlot onChange={(query) => setSlot(side, { from: 'typed', query })} />}
+            {slots[side].from === 'typed' && (
+              <TypedSlot
+                errors={sideSections<BirthSection, CompatSide>(sections, side)}
+                onChange={(query, typed) => {
+                  setTypedErrors((now) => ({ ...now, [side]: typed }));
+                  setSlot(side, { from: 'typed', query });
+                }}
+              />
+            )}
           </View>
         </Fragment>
       ))}
@@ -216,12 +221,7 @@ export function CompatPicker({ people, pickA, pickB, typeB = false }: { people: 
         {question !== null ? (
           <SameChartAsk question={question} busy={opening} />
         ) : (
-          <>
-            <View>
-              <PrimaryButton label={opening ? '여는 중…' : '궁합 보기'} onPress={press} disabled={opening} />
-              <FormError show={reason !== null && reasonIsError}>{reason}</FormError>
-            </View>
-          </>
+          <PrimaryButton label={opening ? '여는 중…' : '궁합 보기'} onPress={press} disabled={opening} />
         )}
         {failure !== null && <FailureLine>{failure}</FailureLine>}
       </View>
@@ -229,21 +229,23 @@ export function CompatPicker({ people, pickA, pickB, typeB = false }: { people: 
   );
 }
 
-function TypedSlot({ onChange }: { onChange: (query: Query) => void }) {
+function TypedSlot({ onChange, errors }: { onChange: (query: Query, errors: SectionError<BirthSection>[]) => void; errors: SectionErrors<BirthSection> }) {
   const form = useBirthForm();
-  const key = JSON.stringify(form.query);
+  /* 시 · 분 숫자도 든다 — 「25시」는 값(`time`)이 비어 바뀐 줄 모른다 */
+  const key = JSON.stringify([form.query, form.values.hour, form.values.minute]);
   const latest = useRef(onChange);
   // eslint-disable-next-line react-hooks/refs -- 최신 콜백을 효과에 넘기는 ref - 렌더 값으로 안 쓴다
   latest.current = onChange;
   /* 칸의 값이 바뀌면 판에 알린다 — 값은 이 칸이 들고 판은 그 답만 본다 */
   useEffect(() => {
-    latest.current(JSON.parse(key) as Query);
+    latest.current((JSON.parse(key) as [Query])[0], form.errorsWithName);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- 오류는 같은 값(`key`)에서 난다
   }, [key]);
-  return <BirthFields form={form} namePlaceholder="이름" />;
+  return <BirthFields form={form} namePlaceholder="이름" errors={errors} />;
 }
 
 /** 찾아 고르는 칸 — 이름을 누르면 펼치고, 여섯부터 찾는 칸이 선다. 다른 칸에서 고른 사람은 빠진다(`app/person-combobox.tsx`) */
-function PersonChoice({ people, taken, chosenId, onChoose }: { people: readonly Choosable[]; taken: string | null; chosenId: string; onChoose: (personId: string) => void }) {
+function PersonChoice({ people, taken, chosenId, onChoose, refused = false }: { people: readonly Choosable[]; taken: string | null; chosenId: string; onChoose: (personId: string) => void; refused?: boolean }) {
   const [open, setOpen] = useState(false);
   const [typed, setTyped] = useState('');
   const chosen = people.find((one) => one.personId === chosenId) ?? null;
@@ -261,7 +263,7 @@ function PersonChoice({ people, taken, chosenId, onChoose }: { people: readonly 
 
   return (
     <View style={styles.choice}>
-      <Pressable accessibilityRole="button" accessibilityState={{ expanded: open }} onPress={() => setOpen(!open)} style={[styles.choiceHead, open && styles.choiceOpen]}>
+      <Pressable accessibilityRole="button" accessibilityState={{ expanded: open }} onPress={() => setOpen(!open)} style={[styles.choiceHead, open && styles.choiceOpen, refused && styles.choiceWrong]}>
         {chosen !== null && <Face person={chosen} />}
         <WordText style={[styles.choiceText, chosen === null && styles.choiceEmpty]} numberOfLines={1}>{chosen?.label ?? '상대를 골라 주세요'}</WordText>
         {/* 웹의 같은 칸(`app/person-combobox.tsx`) — 12px · 굵기 3.2 · secondary */}
@@ -317,6 +319,8 @@ const styles = StyleSheet.create({
   choice: { gap: 6 },
   choiceHead: { minHeight: CONTROL + 4, flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 14, borderRadius: RADIUS.cell, borderWidth: 1, borderColor: COLOR.borderStrong, backgroundColor: COLOR.surface },
   choiceOpen: { borderColor: COLOR.creamInk },
+  /* 누른 뒤 안 고른 칸 — 붉은 테 2(ADR 0252, `@/ui/parts` 의 `wrong` 과 같은 꼴) */
+  choiceWrong: { borderColor: COLOR.danger, borderWidth: 2 },
   choiceText: { flex: 1, fontSize: TYPE.field, fontFamily: FONT.medium, color: COLOR.foreground },
   choiceEmpty: { color: COLOR.muted },
   menu: { borderRadius: RADIUS.cell, borderWidth: 1, borderColor: COLOR.borderStrong, overflow: 'hidden', backgroundColor: COLOR.surface },

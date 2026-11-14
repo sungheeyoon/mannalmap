@@ -27,11 +27,12 @@
 | 부르는 쪽 | 부르는 것 |
 | --- | --- |
 | `brand` | `reading`(약관 · 환불정책이 묶음 가격을 `READING_BUNDLES` 에서 끼운다, ADR 0176) |
-| `consent` | `discovery` · `presence` · `reading` · `saju` |
+| `consent` | `discovery` · `input`(가입 폼의 문단 오류 틀 `SectionError`, ADR 0252) · `presence` · `reading` · `saju` |
 | `discovery` | `saju` |
 | `input` | `saju` · `local-env` |
 | `matching` | `consent` · `db` · `discovery` · `presence` · `profile` · `reading` · `saju`(인연 탭의 행 옮김과 덱을 웹 · 앱이 함께 쓴다, G-123) |
-| `reading` | `discovery` · `people` · `saju` |
+| `people` | `input`(궁합 한 칸의 문단 오류가 출생 정보 판정을 잇는다, ADR 0252) |
+| `reading` | `discovery` · `input`(의견의 문단 오류 틀) · `people` · `saju` |
 
 **`src/lib/db` 는 타입만 낸다.** 생성된 `Database` 와 `rpcArgs` 다(ADR 0078). 호출은 없다.
 
@@ -80,7 +81,7 @@
 | `proxy.ts` | 관문 — 레이아웃에 못 사는 판단(ADR 0041) | `src/lib/consent` · `app/auth/config` · `app/beta-schedule`(일정을 읽는 문) |
 | `supabase/migrations/` | 표·함수·정책. **앱이 아는 DB 의 모양 전부는 여기서 생성된 `database.generated.ts` 다** | — |
 | `supabase/tests/` | pgTAP — 역할을 갈아입고 「막힌다」를 잰다 | — |
-| `app/ui/` | 공용 부품 — 단추 · 판(`CARD` 포함) · 오행 색(`element-tone`) · 아이콘 · 로고의 모양 상수, 오행 · 천간 그림(`element-symbol` · `stem-symbol`), 두 궤도 지도의 같은 문법(`orbit`), 탭의 뼈대(`skeleton`, ADR 0116), 액션 부름을 받는 래퍼(`action-answer`) · 확인하고 쓰는 누름의 자물쇠(`one-at-a-time`) · 화면 안 실패 줄(`failure-line`) · 누른 링크 표시(`link-pending`, ADR 0164), 작은 부품, 메뉴 닫기 · 줄인 움직임 같은 작은 훅(G-58). 여러 화면이 부르므로 **화면 층의 바닥**이다 | `src/lib` · `app/ui` 뿐. 문 · 액션 · 클라이언트 · `@supabase` 는 모른다 |
+| `app/ui/` | 공용 부품 — 단추 · 판(`CARD` 포함) · 오행 색(`element-tone`) · 아이콘 · 로고의 모양 상수, 오행 · 천간 그림(`element-symbol` · `stem-symbol`), 두 궤도 지도의 같은 문법(`orbit`), 탭의 뼈대(`skeleton`, ADR 0116), 액션 부름을 받는 래퍼(`action-answer`) · 확인하고 쓰는 누름의 자물쇠(`one-at-a-time`) · 화면 안 실패 줄(`failure-line`) · 입력 오류의 문단 아래 줄(`section-error`, ADR 0252) · 누른 링크 표시(`link-pending`, ADR 0164), 작은 부품, 메뉴 닫기 · 줄인 움직임 같은 작은 훅(G-58). 여러 화면이 부르므로 **화면 층의 바닥**이다 | `src/lib` · `app/ui` 뿐. 문 · 액션 · 클라이언트 · `@supabase` 는 모른다 |
 | `src/lab/` | **실험 · 평가 코드** — 프롬프트 변형 · 출력 재기 · 인연 입력 두 판의 자(`reading/`), 궁합 공식 비교기(`matching/formula-comparison/`). 앱이 안 부르고 시험 · 잠긴 실호출 · e2e 만 쓴다(ADR 0179) | 엔진 · 도메인 lib. 밖으로는 도메인 lib 과 같은 줄이고, **부르는 쪽은 시험(`*.test.ts` · `*.spec.ts` · `e2e/`)뿐**이다 |
 | `scripts/` | 흐름 검사·생성기·UI 훑기. **화면 모듈을 안 부른다** — 주소로 두드린다 | `src/lib` |
 | `e2e/` | Playwright. 같다 | `src/lib` · `src/lab`(실험판이 화면에 안 서는지 재려고 변형 id 를 읽는다) |
