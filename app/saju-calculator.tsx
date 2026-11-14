@@ -179,12 +179,13 @@ export function SajuCalculator({ outline }: { outline: readonly string[] }) {
           </button>
 
           {/*
-            **눌렀는데 못 간 이유는 단추 줄 바로 아래 한 줄이다**(`FormError`). 단추와 링크 복사가 나란히 서는 넓은 화면에서는 그 줄
-            아래(`sm:order-last`), 둘이 위아래로 서는 폰에서는 주 단추 바로 아래다. 단추를 감싸면 링크 복사가 다음 줄로 밀린다(#1149 에서 되돌림).
+            **눌렀는데 못 간 이유는 주 단추 바로 아래 한 줄이다**(`FormError`). 회원의 넓은 화면에서는 단추와 링크 복사가 나란히 서니 그
+            줄 아래(`sm:order-last`)다. 로그인 전에는 단추가 폭을 다 채우니 순서를 그대로 둔다 — 넓은 화면에서도 로그인 줄 · 링크 복사보다
+            위, 단추 바로 아래다. 단추를 감싸면 링크 복사가 다음 줄로 밀린다(#1149 에서 되돌림).
             `-mt-3` 은 줄 사이 `gap-3` 을 지워 단추와의 간격을 `FormError` 의 8 로 맞춘다
           */}
           {tried && missing !== null && (
-            <div className="-mt-3 w-full sm:order-last">
+            <div className={`-mt-3 w-full ${signedIn ? 'sm:order-last' : ''}`}>
               <FormError show id="natal-missing">
                 {missing}
               </FormError>
