@@ -101,7 +101,10 @@ export function TextButton({ label, onPress, disabled = false }: { label: string
   return <Button label={label} onPress={onPress} disabled={disabled} variant="tertiary" style={styles.textButton} />;
 }
 
-/** 숫자 칸 — 숫자만 받고, 범위 밖이면 붉어지고, 다 적으면 다음 칸으로 간다. 판정은 웹과 같은 `digitOutOfRange` 다 */
+/**
+ * 숫자 칸 — 숫자만 받고, 다 적으면 다음 칸으로 간다(범위 밖이면 안 넘어간다 — 웹과 같은 `digitOutOfRange`). 붉은 테는 누른 뒤 그 칸의
+ * 문단이 걸렸을 때만이다(`refused`, ADR 0252) — 적는 도중에는 붉히지 않는다.
+ */
 export function DigitField({
   value,
   onChange,
@@ -133,7 +136,7 @@ export function DigitField({
   label: string;
   disabled?: boolean;
 }) {
-  const wrong = refused || digitOutOfRange(value, digits, min, max);
+  const wrong = refused;
   return (
     <View style={styles.digit}>
       <TextInput

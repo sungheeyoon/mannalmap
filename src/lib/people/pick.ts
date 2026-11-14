@@ -1,3 +1,6 @@
+import type { Query } from '../input/query';
+import { birthSectionErrors, type BirthSection, type SectionError } from '../input/section-errors';
+
 /**
  * 저장한 사람을 **이름으로 찾아 고르는** 판단 — 궁합의 두 칸과 사람 목록 위의 찾는 칸이 쓴다.
  *
@@ -129,4 +132,24 @@ export function dropUnlisted<S extends Seat, K extends string>(
     changed = true;
   }
   return changed ? next : slots;
+}
+
+/** 같은 사람을 두 칸에 다 골랐을 때 — 둘째 칸 아래에 선다(웹 · 앱 같은 글자) */
+export const SAME_PERSON_TWICE = '같은 사람은 한 번만 고를 수 있어요. 서로 다른 두 사람을 골라 주세요.';
+
+/** 궁합 한 칸의 문단 — 저장한 사람을 고르는 칸(`pick`)이거나 직접 적는 출생 정보의 문단이다 */
+export type SeatSection = 'pick' | BirthSection;
+
+/**
+ * 궁합 한 칸의 **문단별 오류**(ADR 0252) — 저장한 사람 칸이면 고른 사람이 지금 목록에 있나 · 다른 칸과 같은 사람인가(`sameAsOther`,
+ * 둘째 칸만 넘긴다), 직접 입력 칸이면 출생 정보의 문단(`birthSectionErrors`). 줄은 그 칸 안 문단 아래에 서므로 「첫 번째 사람의」를
+ * 앞에 붙이지 않는다 — 고르는 칸의 말만 누구인지(`who`)를 든다(「두 번째 사람을 골라 주세요.」).
+ */
+export function seatSectionErrors(
+  seat: { readonly from: 'saved'; readonly personId: string } | { readonly from: 'typed'; readonly query: Query },
+  { people, who, sameAsOther = false }: { people: readonly Pickable[]; who: string; sameAsOther?: boolean },
+): SectionError<SeatSection>[] {
+  if (seat.from === 'typed') return birthSectionErrors(seat.query);
+  if (!stillListed(people, seat.personId)) return [{ section: 'pick', message: `${who}을 골라 주세요.` }];
+  return sameAsOther ? [{ section: 'pick', message: SAME_PERSON_TWICE }] : [];
 }

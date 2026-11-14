@@ -2,12 +2,14 @@ import { describe, expect, it } from 'vitest';
 
 import {
   FEEDBACK_COMMENT,
+  FEEDBACK_REQUIRED,
   FEEDBACK_SCALE,
   FELT_LENGTHS,
   FELT_LENGTH_LABEL,
   ISSUE_TAGS,
   ISSUE_TAG_LABEL,
   feedbackQuestions,
+  feedbackSectionErrors,
 } from './feedback';
 import { READING_KINDS } from './policy';
 
@@ -147,5 +149,17 @@ describe('적는 칸', () => {
   it('적지 말라고 미리 의심하지 않는다', () => {
     expect(FEEDBACK_COMMENT.hint).not.toContain('생년월일');
     expect(FEEDBACK_COMMENT.hint).not.toContain('말아');
+  });
+});
+
+describe('의견은 안 고른 필수 질문마다 그 아래에서 말한다(ADR 0252)', () => {
+  it('셋 다 비면 셋, 다 고르면 없다', () => {
+    expect(feedbackSectionErrors({ usefulness: null, fit: null, feltLength: null }).map((one) => one.section)).toEqual([
+      'usefulness',
+      'fit',
+      'length',
+    ]);
+    expect(feedbackSectionErrors({ usefulness: 5, fit: null, feltLength: 'long' })).toEqual([{ section: 'fit', message: FEEDBACK_REQUIRED }]);
+    expect(feedbackSectionErrors({ usefulness: 5, fit: 1, feltLength: 'long' })).toEqual([]);
   });
 });

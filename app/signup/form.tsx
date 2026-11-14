@@ -13,7 +13,7 @@ import {
   SIGNUP_NOTICE_DISCOVERY,
   SIGNUP_NOTICE_KEEP,
   SIGNUP_NOTICE_USE,
-  signupGap,
+  signupSectionErrors,
   type SignupField,
 } from '@/src/lib/consent';
 import {
@@ -31,17 +31,17 @@ import { completeSignup } from './actions';
 import { actionAnswer } from '../ui/action-answer';
 import { FIELD as FIELD_BASE } from '../ui/fields';
 import { FAILURE_TEXT, FailureLine } from '../ui/failure-line';
-import { FormError } from '../ui/form-error';
+import { INVALID_RING, SectionErrorLine, useSectionErrors } from '../ui/section-error';
 
-/** 입력 칸 — 프로필 화면과 같은 칸(`app/ui/fields.ts`)에, 거절된 칸은 테가 붉다 */
-const FIELD = `${FIELD_BASE} aria-invalid:border-danger`;
+/** 입력 칸 — 프로필 화면과 같은 칸(`app/ui/fields.ts`)에, 거절된 칸은 테가 붉다(2px, ADR 0252) */
+const FIELD = `${FIELD_BASE} ${INVALID_RING}`;
 
 /**
  * 확인 상자 한 줄 — 줄 전체가 누를 자리이고, 고르면 먹색 테와 크림 면이 선다(상자도 그대로 남는다). 초점 테는 전역 초점 테두리와
  * 같은 섞음(accent 55%, `globals.css`)이다 — `accent-soft` 는 크림 바탕에서 거의 안 보였다
  */
 const BOX =
-  'flex cursor-pointer gap-3 rounded-cell border border-border bg-surface p-4 hover:border-border-strong has-checked:border-foreground has-checked:bg-cream has-[[aria-invalid=true]]:border-danger has-[:focus-visible]:outline has-[:focus-visible]:outline-3 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-[color-mix(in_srgb,var(--accent)_55%,transparent)]';
+  'flex cursor-pointer gap-3 rounded-cell border border-border bg-surface p-4 hover:border-border-strong has-checked:border-foreground has-checked:bg-cream has-[[aria-invalid=true]]:border-danger has-[[aria-invalid=true]]:shadow-[0_0_0_1px_var(--danger)] has-[:focus-visible]:outline has-[:focus-visible]:outline-3 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-[color-mix(in_srgb,var(--accent)_55%,transparent)]';
 
 const LABEL = 'text-body font-semibold';
 
@@ -95,25 +95,21 @@ export function SignupForm({
   /*
     **단추를 잠그지 않고, 누르면 거절한다** — 내 사주 등록(`app/saju-calculator.tsx`)과 같은 방식이다. 잠근 단추 옆에
     닉네임 규칙만 서 있어, 코드가 비었거나 확인을 안 한 사람은 왜 안 눌리는지 몰랐다(2026-10-09 화면 점검).
-    눌렀을 때 **위에서부터 처음 걸린 칸 하나**를 말하고 그 칸으로 초점을 옮긴다. 칸을 고치면 말도 다음 칸으로 넘어간다.
+    눌렀을 때 **걸린 문단마다 그 아래 한 줄**을 세우고 맨 위 붉은 칸으로 초점을 옮긴다. 그 문단을 고치면 그 줄만 걷힌다(ADR 0252).
   */
-  const [tried, setTried] = useState(false);
+  const form = useRef<HTMLFormElement>(null);
   const nicknameField = useRef<HTMLInputElement>(null);
-  const ageField = useRef<HTMLInputElement>(null);
-  const ackField = useRef<HTMLInputElement>(null);
-  const gap = signupGap({ nicknameGap: missing, fourteen, acknowledged });
-  const shownGap = tried ? gap : null;
-  /** 「중복 확인」을 눌렀는데 닉네임이 규칙에 안 맞았나 — 그 말이 닉네임 칸 아래에 선다 */
+  const sections = useSectionErrors(signupSectionErrors({ nicknameGap: missing, fourteen, acknowledged }), form);
+  /** 「중복 확인」을 눌렀는데 닉네임이 규칙에 안 맞았나 — 그 말이 닉네임 문단 아래에 선다(누른 뒤의 줄과 같은 자리 · 같은 말) */
   const [checkTried, setCheckTried] = useState(false);
   const refusedHere = (field: SignupField) => failure !== null && failure.field === field;
+  const nicknameLine = sections.shown.nickname ?? (checkTried ? missing : null);
   const invalid = (field: 'nickname' | 'age' | 'ack') =>
-    shownGap?.field === field
-      ? { 'aria-invalid': true, 'aria-describedby': 'signup-gap' }
+    sections.shown[field] !== undefined || (field === 'nickname' && nicknameLine !== null)
+      ? { 'aria-invalid': true, 'aria-describedby': `signup-${field}-line` }
       : field === 'nickname' && refusedHere(field)
         ? { 'aria-invalid': true, 'aria-describedby': `signup-${field}-refused` }
-        : field === 'nickname' && checkTried && missing !== null
-          ? { 'aria-invalid': true, 'aria-describedby': 'signup-nickname-check' }
-          : {};
+        : {};
 
   /**
    * **「중복 확인」도 잠그지 않는다** — 닉네임이 규칙에 안 맞으면 누른 그때 그 칸 아래에 말하고 칸으로 초점을 옮긴다
@@ -136,12 +132,7 @@ export function SignupForm({
 
   const send = () => {
     setFailure(null);
-    if (gap !== null) {
-      setTried(true);
-      ({ nickname: nicknameField, age: ageField, ack: ackField })[gap.field].current?.focus();
-      return;
-    }
-    setTried(false);
+    if (!sections.press()) return;
     startWorking(async () => {
       /*
         **성공하면 이 줄 아래로 안 온다.** 서버 액션이 스스로 목적지로 보낸다 — 여기서
@@ -167,6 +158,7 @@ export function SignupForm({
   return (
     /* 폼이다 — 칸에서 Enter · 자판의 「이동」이 곧 가입이다. 「중복 확인」은 제출이 아니다(`type="button"`) */
     <form
+      ref={form}
       onSubmit={(event) => {
         event.preventDefault();
         if (!working) send();
@@ -192,6 +184,8 @@ export function SignupForm({
               value={nickname}
               onChange={(event) => {
                 setNickname(event.target.value.slice(0, NICKNAME_MAX));
+                sections.edit('nickname');
+                setCheckTried(false);
                 if (failure?.field === 'nickname') setFailure(null);
               }}
               maxLength={NICKNAME_MAX}
@@ -223,11 +217,7 @@ export function SignupForm({
           >
             {answer === null ? '' : answer.available ? NICKNAME_AVAILABLE_NOTE : NICKNAME_TAKEN_NOTE}
           </p>
-          {checkTried && missing !== null && (
-            <p id="signup-nickname-check" role="alert" className={`${FAILURE_TEXT} font-medium`}>
-              {missing}
-            </p>
-          )}
+          <SectionErrorLine id="signup-nickname-line" message={nicknameLine} className="mt-0.5" />
           {refusedHere('nickname') && (
             <p id="signup-nickname-refused" role="alert" className={`${FAILURE_TEXT} font-medium`}>
               {failure?.message}
@@ -262,23 +252,28 @@ export function SignupForm({
         <input
           type="checkbox"
           id="signup-age"
-          ref={ageField}
           {...invalid('age')}
           checked={fourteen}
-          onChange={(event) => setFourteen(event.target.checked)}
+          onChange={(event) => {
+            setFourteen(event.target.checked);
+            sections.edit('age');
+          }}
           className="mt-0.5 size-5 shrink-0 accent-[var(--accent)]"
         />
         <span className="block text-sm font-semibold">{SIGNUP_AGE_LABEL}</span>
       </label>
+      <SectionErrorLine id="signup-age-line" message={sections.shown.age} className="-mt-4" />
 
       <label htmlFor="notice-ack" className={BOX}>
         <input
           type="checkbox"
           id="notice-ack"
-          ref={ackField}
           {...invalid('ack')}
           checked={acknowledged}
-          onChange={(event) => setAcknowledged(event.target.checked)}
+          onChange={(event) => {
+            setAcknowledged(event.target.checked);
+            sections.edit('ack');
+          }}
           className="mt-0.5 size-5 shrink-0 accent-[var(--accent)]"
         />
         <span>
@@ -286,6 +281,7 @@ export function SignupForm({
           <span className="mt-1 block text-sm leading-6 text-secondary">{NOTICE_ACK_NOTE}</span>
         </span>
       </label>
+      <SectionErrorLine id="signup-ack-line" message={sections.shown.ack} className="-mt-4" />
 
       {/*
         **기본값은 꺼짐이다.** 미리 켜 두면 고른 것이 아니라 안 끈 것이 되고, 그것을
@@ -322,21 +318,16 @@ export function SignupForm({
       )}
 
       <div className="border-t border-border pt-5">
-        {/* 폰에서는 단추가 폭을 채운다 — 오류 줄만 그 아래에 선다(`FormError`) */}
+        {/* 폰에서는 단추가 폭을 채운다. 칸의 오류는 그 문단 아래에 선다(ADR 0252) — 칸을 모르는 서버 거절은 위 `FailureLine` 이다 */}
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
           <button
             type="submit"
             disabled={working}
-            aria-describedby={shownGap !== null ? 'signup-gap' : undefined}
             className={BUTTON_PRIMARY}
           >
             {working ? SIGNUP_LABEL.signingUp : firstSignup ? SIGNUP_LABEL.signUp : SIGNUP_LABEL.confirm}
           </button>
         </div>
-        {/* 눌렀는데 못 간 이유를 주 단추 바로 아래에서 말한다 — 누르기 전에는 이 자리가 비어 있다 */}
-        <FormError show={shownGap !== null} id="signup-gap">
-          {shownGap?.message}
-        </FormError>
       </div>
     </form>
   );

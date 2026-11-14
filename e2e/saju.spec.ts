@@ -3,6 +3,7 @@ import type { Page } from '@playwright/test';
 import { expect, test } from './anon';
 
 import { BIRTH_YEAR_MAX } from '@/src/lib/input/query';
+import { DATE_MISSING, timePartsRefusal } from '@/src/lib/input/section-errors';
 import { EVIDENCE_CONTRACT } from '@/src/lib/saju';
 
 import {
@@ -300,8 +301,8 @@ test('생년월일시는 숫자로 적고 범위 밖이면 눌러도 안 넘어�
 
   const year = page.getByLabel('출생 연도');
   const show = page.getByRole('button', { name: '사주 보기' });
-  /* 폼 안에 서는 거절 하나 — 결과 자리의 알림과 섞이지 않게 폼으로 좁힌다 */
-  const refusal = page.locator('form').getByRole('alert');
+  /* 폼 안 문단 아래의 줄 — 걸린 문단마다 하나다(ADR 0252). 이 시험은 생년월일 · 출생 시각 문단을 차례로 어긴다 */
+  const refusal = page.locator('form [data-section-error]');
   await page.getByLabel('이름', { exact: true }).fill('민수');
 
   // 숫자만 들어간다 — 「19o0」 같은 값이 애초에 만들어지지 않는다.
@@ -316,11 +317,14 @@ test('생년월일시는 숫자로 적고 범위 밖이면 눌러도 안 넘어�
   // **누르기 전에는 아무 말도 안 한다.** 어긴 것이 생기는 시점이 제출이다.
   await expect(refusal).toHaveCount(0);
   await show.click();
-  await expect(refusal).toHaveText('생년월일을 입력해 주세요.');
+  await expect(refusal).toHaveText(DATE_MISSING);
+  await expect(year).toHaveAttribute('aria-invalid', 'true');
 
   // 아직 오지 않은 해는 거절한다 — 이유를 말하고 결과는 안 선다.
   const tooLate = BIRTH_YEAR_MAX + 1;
   await year.fill(String(tooLate));
+  // 그 문단의 칸을 고치면 그 줄은 걷힌다 — 다시 틀려도 다음 누름까지 안 선다
+  await expect(refusal).toHaveCount(0);
   await show.click();
   await expect(refusal).toHaveText(
     `1900~${BIRTH_YEAR_MAX}년에 태어난 분만 계산할 수 있어요. 태어난 해(${tooLate}년)를 확인해 주세요.`,
@@ -333,8 +337,8 @@ test('생년월일시는 숫자로 적고 범위 밖이면 눌러도 안 넘어�
 
   /*
     **고르는 칸이던 동안에는 「2월 30일」이 만들어질 수가 없었다.** 적는 칸은 그 보호막을
-    내주므로 자리마다의 범위를 칸이 안다 — 벗어나면 칸이 붉어지고, 누르면 무엇이 틀렸는지
-    말하며 그 칸으로 데려간다. 적은 숫자는 지우지 않는다.
+    내주므로 자리마다의 범위를 판정이 안다 — 적는 도중에는 붉히지 않고, 누르면 무엇이 틀렸는지
+    생년월일 문단 아래에서 말하며 그 칸을 붉히고 데려간다. 적은 숫자는 지우지 않는다.
   */
   await year.fill('1990');
   for (const [label, bad, good, said] of [
@@ -342,9 +346,10 @@ test('생년월일시는 숫자로 적고 범위 밖이면 눌러도 안 넘어�
     ['출생 일', '30', '15', '2월은 28일까지예요.'],
   ] as const) {
     await page.getByLabel(label).fill(bad);
-    await expect(page.getByLabel(label)).toHaveAttribute('aria-invalid', 'true');
+    await expect(page.getByLabel(label)).not.toHaveAttribute('aria-invalid', 'true');
     await show.click();
     await expect(refusal).toHaveText(said);
+    await expect(page.getByLabel(label)).toHaveAttribute('aria-invalid', 'true');
     await expect(page.getByLabel(label)).toBeFocused();
     await expect(page.getByLabel(label)).toHaveValue(bad);
     await page.getByLabel(label).fill(good);
@@ -352,7 +357,7 @@ test('생년월일시는 숫자로 적고 범위 밖이면 눌러도 안 넘어�
   }
 
   /*
-    **달력을 바꿔도 적은 숫자는 남는다.** 양력 31일을 음력(30일까지)으로 옮기면 날 칸만 붉어진다 — 세 칸을 비우지 않는다.
+    **달력을 바꿔도 적은 숫자는 남는다.** 양력 31일을 음력(30일까지)으로 옮겨 누르면 날 칸만 붉어진다 — 세 칸을 비우지 않는다.
   */
   await page.getByLabel('출생 월').fill('01');
   await page.getByLabel('출생 일').fill('31');
@@ -360,6 +365,7 @@ test('생년월일시는 숫자로 적고 범위 밖이면 눌러도 안 넘어�
   await expect(year).toHaveValue('1990');
   await expect(page.getByLabel('출생 월')).toHaveValue('01');
   await expect(page.getByLabel('출생 일')).toHaveValue('31');
+  await show.click();
   await expect(page.getByLabel('출생 일')).toHaveAttribute('aria-invalid', 'true');
   await chooseCalendar(page, 'solar');
   await expect(page.getByLabel('출생 일')).not.toHaveAttribute('aria-invalid', 'true');
@@ -369,11 +375,11 @@ test('생년월일시는 숫자로 적고 범위 밖이면 눌러도 안 넘어�
   // 2월은 스물여덟까지다 — 그 달의 마지막 날을 칸이 안다.
   await expect(page.getByLabel('출생 일')).toHaveAttribute('placeholder', '1~28');
 
-  // 시각도 같다. 25시는 계산으로 흘러가지 않는다.
+  // 시각도 같다. 25시는 계산으로 흘러가지 않는다 — 출생 시각 문단 아래에서 범위를 말한다.
   await page.getByLabel('출생 시', { exact: true }).fill('25');
-  await expect(page.getByLabel('출생 시', { exact: true })).toHaveAttribute('aria-invalid', 'true');
   await show.click();
-  await expect(refusal).toHaveText('출생 시각을 입력해 주세요.');
+  await expect(refusal).toHaveText(timePartsRefusal({ hour: '25', minute: '30' })!);
+  await expect(page.getByLabel('출생 시', { exact: true })).toHaveAttribute('aria-invalid', 'true');
   await page.getByLabel('출생 시', { exact: true }).fill('14');
 
   await page.getByRole('button', { name: '사주 보기' }).click();

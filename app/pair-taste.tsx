@@ -1,19 +1,20 @@
 'use client';
 
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 
 import { COMPAT_CREDIT_NOTE, COMPAT_SIGN_IN_ACTION } from '@/src/lib/brand/guide';
 import { RESUME_PAIR_PATH } from '@/src/lib/consent';
 import { calculateChart } from '@/src/lib/input/chart';
-import { DEFAULT_QUERY, mergeSearchParams, missingAnswer, toSearchParams, type Query } from '@/src/lib/input/query';
+import { DEFAULT_QUERY, mergeSearchParams, toSearchParams, type Query } from '@/src/lib/input/query';
+import { birthSectionErrors, prefixed, sideOf, type BirthSection } from '@/src/lib/input/section-errors';
 import { pairTasteOf, type PairTaste as Taste } from '@/src/lib/matching/pair-taste';
 
-import { BirthFields, focusBirthGap } from './birth-form';
+import { BirthFields } from './birth-form';
 import { PAIR_DRAFT_KEY } from './reading-draft';
 import { SignInCarrying } from './sign-in-carrying';
 import { BUTTON_PRIMARY } from './ui/buttons';
 import { elementScope } from './ui/element-tone';
-import { FormError } from './ui/form-error';
+import { useSectionErrors } from './ui/section-error';
 import { Icon } from './ui/icons';
 import { STEM_PICTURE, StemSymbol } from './ui/stem-symbol';
 import { CARD, PAPER, PAPER_BOTTOM, TYPE_META } from './ui/surfaces';
@@ -31,25 +32,18 @@ import { STEM_INFO } from '@/src/lib/saju';
  */
 export function PairTaste() {
   const [forms, setForms] = useState<{ a: Query; b: Query }>({ a: DEFAULT_QUERY, b: DEFAULT_QUERY });
-  const [tried, setTried] = useState(false);
   const [shown, setShown] = useState<{ taste: Taste; names: { a: string; b: string }; draft: string } | null>(null);
+  const formRef = useRef<HTMLFormElement>(null);
 
-  const missing = missingAnswer(forms.a) ?? missingAnswer(forms.b);
+  /* 두 사람의 문단이 한 목록이다 — 누르면 「나」 · 「상대」의 걸린 문단이 다 함께 서고 맨 위로 데려간다(ADR 0252) */
+  const sections = useSectionErrors([...prefixed('a', birthSectionErrors(forms.a)), ...prefixed('b', birthSectionErrors(forms.b))], formRef);
 
-  const submit = (form: HTMLFormElement) => {
-    if (missing !== null) {
-      setTried(true);
-      focusBirthGap(form);
-      return;
-    }
+  const submit = () => {
+    if (!sections.press()) return;
     const a = calculateChart(forms.a);
     const b = calculateChart(forms.b);
-    if (!a.ok || !b.ok) {
-      setTried(true);
-      focusBirthGap(form);
-      return;
-    }
-    setTried(false);
+    // 문단 판정이 계산의 거절까지 든다(`birthSectionErrors`) — 여기 오면 둘 다 선다
+    if (!a.ok || !b.ok) return;
     const names = { a: forms.a.name.trim(), b: forms.b.name.trim() };
     setShown({
       taste: pairTasteOf({ a: a.saju, b: b.saju }, names),
@@ -58,21 +52,14 @@ export function PairTaste() {
     });
   };
 
-  /* 계산이 거절한 까닭(없는 날짜 등)은 빠진 칸 다음에 말한다 */
-  const refused = (() => {
-    if (missing !== null) return missing;
-    const a = calculateChart(forms.a);
-    if (!a.ok) return a.message;
-    const b = calculateChart(forms.b);
-    return b.ok ? null : b.message;
-  })();
-
   return (
     <div className="flex flex-col gap-4">
       <form
+        ref={formRef}
+        noValidate
         onSubmit={(event) => {
           event.preventDefault();
-          submit(event.currentTarget);
+          submit();
         }}
         // 첫 화면 종이의 아래 토막 — 입구 「궁합 보기」 곧장 아래에 「나」 · 「상대」 판 두 장이 선다(ADR 0132)
         className={`${PAPER_BOTTOM} flex flex-col gap-4`}
@@ -85,21 +72,16 @@ export function PairTaste() {
               value={forms[side]}
               onChange={(next) => setForms((current) => ({ ...current, [side]: next }))}
               surface="panel"
+              errors={{
+                shown: sideOf<BirthSection>(sections.shown, side),
+                edit: (section) => sections.edit(`${side}.${section}`),
+              }}
             />
           </fieldset>
         ))}
-        <div>
-          <button
-            type="submit"
-            aria-describedby={tried && refused !== null ? 'pair-missing' : undefined}
-            className={`${BUTTON_PRIMARY} mt-1 w-full`}
-          >
-            무료로 두 사람 궁합 보기
-          </button>
-          <FormError show={tried && refused !== null} id="pair-missing">
-            {refused}
-          </FormError>
-        </div>
+        <button type="submit" className={`${BUTTON_PRIMARY} mt-1 w-full`}>
+          무료로 두 사람 궁합 보기
+        </button>
       </form>
 
       {shown !== null && <PairTasteResult {...shown} />}
