@@ -76,7 +76,7 @@ ADR 0230 의 1 은 「지급 뒤 소비, 소비가 실패해도 지급은 섰다
 - 처음 낸 판은 「지급이 이른 차례로 100 줄」을 늘 처음부터 봤다. 앞 100 줄이 계속 404 면 101번째는 영영 조회되지 않고 답은 초록이었다(검토 재현 2026-11-16).
 - **어떤 응답도 재시도를 끝내지 않는다.** Developer API 문서는 `purchases.products` 의 상태 코드마다 영구인지 말하지 않는다(리소스 쪽 「Error codes」 표에 줄이 없다,
   2026-11-16). Google 의 일반 지침은 `NOT_FOUND` 를 「A client **should not** retry until a resource is created」, `RESOURCE_EXHAUSTED`(429)를 「Retries therefore may not be expected to
-  work for several hours」, `UNAVAILABLE` 을 「generally transient」라 한다(<https://google.aip.dev/194>) — 404 를 영구로 단정할 근거는 아니다. 그래서 400 · 404 · 410 도 4일 창 안에서는
+  work for several hours」, `UNAVAILABLE` 을 「generally transient」라 한다(<https://google.aip.dev/194>) — 404 를 영구로 단정할 근거는 아니다. 그래서 400 · 404 · 410 도 지급 3일 창 안에서는
   다시 묻는다. 재시도의 끝은 응답이 아니라 **창(지급 뒤 3일 — 실제 기한의 가장 늦은 때)** 이다. Google 이 취소로 답한 줄은 그때 목록에서 빠진다. 무효가 오면 무효 대조가 적는다.
 - **차례를 돌리는 칸 셋** — `store_purchase.consume_attempts` · `consume_tried_at` · `consume_last_outcome`(갈래와 Google 상태). 못 끝낸 줄은 그 자리에서 적고
   (`note_store_consume_missed` — 크론과 앱 · 통지 문이 함께 부른다), 다음 목록은 **한 번도 못 끝낸 적 없는 줄 먼저, 그다음 가장 오래전에 시도한 줄부터**(같으면 구매가 이른
