@@ -45,14 +45,19 @@ ADR 0230 의 1 은 「지급 뒤 소비, 소비가 실패해도 지급은 섰다
   시각보다 이르지 않다 — **`purchased_at` ≤ 전환 ≤ `granted_at`.**
   - **급한 정도 · 알림은 `purchased_at` + 3일**(가장 이른 기한). 실제보다 이르면 일찍 울릴 뿐 늦지 않다. 처음 낸 판은 지급 시각으로 셌다 — 그것은 실제 기한보다 늦을 수
     있는 쪽이었다(구매 완료 → 지급이 48시간 늦으면 지급 하루 뒤에 이미 기한이다).
-  - **다시 볼 줄의 범위는 `granted_at` + 4일**. 실제 기한은 `granted_at` + 3일보다 늦지 않으니 그 안의 줄을 빠뜨리지 않는다.
+  - **가장 이른 기한을 넘겨도 끝난 것이 아니다.** 실제 기한은 그 뒤 어딘가다 — 보류가 5일 이어진 결제는 `purchased_at` + 3일이 지나도 실제로는 며칠 남았을 수 있다. 그래서
+    넘긴 줄도 급한 알림 · 다시 소비 · Run 안내를 그대로 받는다. **끝난 것으로 다루는 것은 Google 이 확인해 준 것뿐이다** — 다시 물어 「구매」(0)가 아니라는 답을 받았거나
+    (`consume_last_outcome = 'canceled'`) 무효가 적혔을(`voided_at`) 때. 처음 낸 판(재검토 전)은 넘긴 줄을 「기한 지남 — Run 대상 아님」으로 갈라 급한 알림에서 뺐다 —
+    틀렸다(재검토 2026-11-16).
+  - **다시 볼 줄의 범위는 `granted_at` + 4일**. 실제 기한은 `granted_at` + 3일보다 늦지 않으니(전환 ≤ 지급) **보류가 아무리 길었어도 기한이 남은 줄은 이 창 안에 있다** —
+    보류 5일 · 지급 48시간 지연이어도 지급 시각이 창의 기준이라 지급 뒤 4일까지 크론이 본다. 그 뒤의 줄은 실제 기한까지 지났다.
   - 남는 틈: Google 이 `purchaseTimeMillis` 를 안 주면 지급 문이 `purchased_at` 을 지급 시각으로 메운다(`grant_store_purchase` 의 `coalesce`) — 그 줄은 기한을 늦게 잡을 수 있다.
     문서에 그 칸이 빠지는 경우는 적혀 있지 않다.
 - **하루 크론이 기한 전에 도는가 — 늘 그렇지는 않다.** 크론은 하루 한 번(매일 21:07 UTC, ±59분 — Vercel Hobby, `docs/ops/runbook/moderation.md` 「닫힌 방」 · ADR 0020)이라 지급
   뒤 첫 실행까지 길어야 26시간, 둘째까지 50시간이다. 그래서 **지급이 전환 뒤 22시간 안에 서면** 기한(72시간) 안에 적어도 두 번 돈다. 보류 결제가 늦게 끝나 통지 · 앱이
   늦게 닿거나 그 길들이 오래 멎었던 뒤라 **지급이 그보다 늦으면 하루 크론으로는 보장하지 못한다.** 그 구매는 이렇게 다룬다:
-  - 앱 · 통지 문이 소비에 실패하는 **그 자리에서** 장부에 적는다(`note_store_consume_missed`). DB 가 가장 이른 기한까지 36시간이 안 남았고 아직 지나지 않은 것을 보면
-    **바로** 운영 알림 `store-consume-urgent`(하루 한 번, 수만)를 보낸다 — 운영자가 크론을 손으로 Run 한다(런북). 이미 지난 구매로는 울리지 않는다 — Run 으로 바뀌지 않는다.
+  - 앱 · 통지 문이 소비에 실패하는 **그 자리에서** 장부에 적는다(`note_store_consume_missed`). DB 가 가장 이른 기한까지 36시간이 안 남았거나 이미 넘긴 것을 보면
+    **바로** 운영 알림 `store-consume-urgent`(하루 한 번, 수만)를 보낸다 — 운영자가 크론을 손으로 Run 한다(런북). Google 이 취소로 답한 구매로는 울리지 않는다.
   - 감시 잡이 매일 그 줄을 다시 센다(아래 관측).
 
 #### 1-2. 차례 — 앞의 줄이 계속 실패해도 뒤의 줄이 차례를 받는다
@@ -61,7 +66,7 @@ ADR 0230 의 1 은 「지급 뒤 소비, 소비가 실패해도 지급은 섰다
 - **어떤 응답도 재시도를 끝내지 않는다.** Developer API 문서는 `purchases.products` 의 상태 코드마다 영구인지 말하지 않는다(리소스 쪽 「Error codes」 표에 줄이 없다,
   2026-11-16). Google 의 일반 지침은 `NOT_FOUND` 를 「A client **should not** retry until a resource is created」, `RESOURCE_EXHAUSTED`(429)를 「Retries therefore may not be expected to
   work for several hours」, `UNAVAILABLE` 을 「generally transient」라 한다(<https://google.aip.dev/194>) — 404 를 영구로 단정할 근거는 아니다. 그래서 400 · 404 · 410 도 4일 창 안에서는
-  다시 묻는다. 재시도의 끝은 응답이 아니라 **창(지급 뒤 4일)** 이다 — 그 뒤는 Google 의 3일 환불이 지난 때라 무효 대조의 일이다.
+  다시 묻는다. 재시도의 끝은 응답이 아니라 **창(지급 뒤 4일)** 이다 — 그 뒤는 실제 기한(지급 뒤 3일 안)까지 지났다. 무효가 오면 무효 대조가 적는다.
 - **차례를 돌리는 칸 셋** — `store_purchase.consume_attempts` · `consume_tried_at` · `consume_last_outcome`(갈래와 Google 상태). 못 끝낸 줄은 그 자리에서 적고
   (`note_store_consume_missed` — 크론과 앱 · 통지 문이 함께 부른다), 다음 목록은 **한 번도 못 끝낸 적 없는 줄 먼저, 그다음 가장 오래전에 시도한 줄부터**(같으면 구매가 이른
   줄부터) 준다. 앞의 줄이 늘 실패해도 다음 실행에서 뒤의 줄이 앞에 온다. 시간 예산이 한 줄만 허락해도 줄마다 차례가 돈다.
@@ -80,12 +85,16 @@ ADR 0230 의 1 은 「지급 뒤 소비, 소비가 실패해도 지급은 섰다
   상한 밖에 남은 줄. `overdue`(기한까지 36시간이 안 남은 줄을 못 끝냄)는 오류 기록 한 줄.
 - **알림은 DB 가 보낸다.** 크론의 500 과 오류 기록은 알림이 아니다 — 크론 문은 던지지 않으니 서버 오류 알림(`instrumentation.ts`)이 안 울리고, Hobby 로그는 한 시간이며,
   Vercel 크론은 `cron-watch` 밖이다(`docs/ops/runbook/jobs.md`). 그래서 둘이다.
-  - **`store-consume-urgent`** — 앱 · 통지 · 크론이 소비를 못 끝냈다고 적는 순간, 그 구매의 가장 이른 기한까지 36시간이 안 남았고 아직 지나지 않았으면(위 1-1).
-  - **`store-consume-overdue`** — pg_cron 의 `store-consume-watch`(매일 07:37 UTC)가 결과를 센다: 무효가 아니고 소비가 안 적힌 지급(지급 7일 안)을 **둘로 나눠** —
-    **기한 36시간 안**(Run 하면 된다)과 **기한 지남**(구매 뒤 3일이 지났다 — Run 대상이 아니다, Google 이 돌려줬을 결제라 무효 대조 · 환불을 본다) — 세고, **받을 줄이 100 을
-    넘었는가**를 본다. 셋을 따로 싣는다 — 처음 판은 둘을 한 수로 세어, 기한이 지난 줄 하나로 매일 울리는데 Run 해도 바뀌지 않았다(재검토 2026-11-16). 크론이 등록 안 됐든 · 비밀이 어긋났든 · Google 권한이 빠졌든 같은 얼굴로 잡히고, 감시 잡 자신의 실패는
-    `cron-watch` 가 본다. 날마다 도니 지급이 제때 선 구매는 기한 36시간 전 ~ 12시간 전 사이에 적어도 한 번 본다. 7일 밖은 Google 이 돌려줬을 결제라 무효 대조의 일이고,
-    끝없이 울리지 않게 뺀다. 닫힌 방 파기의 `chat-purge-watch`(ADR 0217)와 같은 꼴이다.
+  - **`store-consume-urgent`** — 앱 · 통지 · 크론이 소비를 못 끝냈다고 적는 순간(`failed` · `gone`), 그 구매의 가장 이른 기한까지 36시간이 안 남았거나 이미 넘겼으면(위 1-1).
+    Google 이 취소로 답한 구매(`canceled`)는 울리지 않는다.
+  - **`store-consume-overdue`** — pg_cron 의 `store-consume-watch`(매일 07:37 UTC)가 결과를 센다. 무효가 아니고 소비가 안 적힌 지급(지급 7일 안)을 **셋으로 나눠** 따로 싣는다.
+    - **가장 이른 기한 36시간 안** — Run 한다.
+    - **가장 이른 기한 지남(실제 기한 미확인, 다시 소비 계속)** — Run 한다. 끝난 것이 아니다.
+    - **Google 이 취소 · 환불로 확인** — 크론이 다시 물어 「구매」가 아니라는 답을 받았는데 무효가 아직 안 적혔다. 무효 대조를 본다.
+    받을 줄이 100 을 넘었는가도 본다. 재검토 전 판들은 처음엔 둘을 한 수로, 그다음엔 가장 이른 기한을 넘긴 줄을 「Run 대상 아님」으로 셌다(재검토 2026-11-16).
+    크론이 등록 안 됐든 · 비밀이 어긋났든 · Google 권한이 빠졌든 같은 얼굴로 잡히고, 감시 잡 자신의 실패는 `cron-watch` 가 본다. 날마다 도니 지급이 제때 선 구매는 가장
+    이른 기한 36시간 전 ~ 12시간 전 사이에 적어도 한 번 본다. 지급 7일 밖은 실제 기한(지급 뒤 3일 안)까지 지난 줄이라 세지 않는다 — 끝없이 울리지 않게. 닫힌 방 파기의
+    `chat-purge-watch`(ADR 0217)와 같은 꼴이다.
   - 둘 다 수와 가장 오래된 나이만 싣는다. 운영자의 질의는 런북 credits.md 「Google Play 결제」의 「소비 안 됨」이다.
 
 ### 2. Google 의 답은 `ProductPurchase` 문서의 계약대로 읽는다 — 모르면 `null`
@@ -126,8 +135,13 @@ Google 은 multi-quantity 를 켠 앱이 「grant entitlement based on the speci
 
 ## 되돌리기
 
-운영 SQL 로 `select cron.unschedule('store-consume-watch');` → 함수 셋(`watch_store_consume` · `note_store_consume_missed` · `store_purchases_to_consume`) → 색인
-`store_purchase_unconsumed` → 칸 셋을 지우고, `supabase migration repair --status reverted 20270119090000` 로 이력을 맞춘다. 코드(크론)가 배포돼 있으면 그것을 먼저 되돌린다.
+1. **먼저 코드 PR(#1156) 이전 판을 배포한다** — 크론만이 아니라 앱의 구매 문(`/api/mobile/credits/purchase`)과 통지(RTDN) 문(`/api/store/google-play`)도 소비가
+   실패하면 `note_store_consume_missed` 를 부른다. 그 부름을 걷은 뒤에 DB 를 되돌린다.
+2. 운영 SQL 로 `select cron.unschedule('store-consume-watch');` → 함수 셋(`watch_store_consume` · `note_store_consume_missed` · `store_purchases_to_consume`) → 색인
+   `store_purchase_unconsumed` → 칸 셋.
+3. `supabase migration repair --status reverted 20270119090000` 로 이력을 맞춘다.
+
+순서가 바뀌면(DB 먼저) 배포된 코드가 없는 함수를 부른다 — 구매 문 · 통지 문의 소비 실패 기록이 실패하고(지급은 선다), 크론은 목록 문이 없어 503 이다.
 칸 셋은 차례를 돌리는 데만 쓰므로 지워도 장부(지급 · 소비 · 무효)는 그대로다. 걸음은 DB PR(#1158) 본문에 있다.
 
 ## 치르는 값
