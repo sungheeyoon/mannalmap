@@ -10,9 +10,9 @@ import type { Client } from '@/auth/client';
  * **업체를 갈아 끼우는 자리**(ADR 0214). 본인확인 화면을 열고 서버가 결과를 검증해 `confirm_adult_check` 를 적을 때까지가 `start` 의 일이다.
  * 앱은 그 답을 믿지 않고 `my_adult_check` 를 다시 읽는다. 업체가 정해지기 전이라 `null` 이고, 그동안 안내 화면에 단추가 안 선다.
  */
-export interface AdultCheckProvider {
+export type AdultCheckProvider = {
   start(): Promise<AdultCheckOutcome>;
-}
+};
 export const adultCheckProvider: AdultCheckProvider | null = null;
 
 /** 못 읽으면 `null` — 안내를 안 세우고 거절은 문이 말한다 */
