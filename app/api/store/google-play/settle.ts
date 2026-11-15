@@ -35,8 +35,13 @@ export type Ledger = {
   >;
   /** 소비를 적는다. @returns 적었나(그 토큰의 구매가 있었나) — 못 닿았으면 `false` */
   consumed(purchaseToken: string): Promise<boolean>;
-  /** 지급은 섰는데 소비가 안 적힌 구매 — 이른 지급부터 `limit` 줄. 못 닿았으면 `null` */
-  unconsumed(limit: number): Promise<readonly UnconsumedPurchase[] | null>;
+  /**
+   * 지급은 섰는데 소비가 안 적힌 구매 — 못 끝낸 적 없는 줄 먼저, 그다음 가장 오래전에 시도한 줄부터 `limit` 줄과, 받을 줄의 전체 수.
+   * 못 닿았으면 `null`
+   */
+  unconsumed(limit: number): Promise<{ readonly rows: readonly UnconsumedPurchase[]; readonly waiting: number } | null>;
+  /** 서버가 소비를 못 끝냈다 — 다시 소비할 차례를 뒤로 돌리고, 기한이 가까우면 DB 가 바로 알린다. @returns 적었나 */
+  missed(purchaseToken: string, outcome: ConsumeMiss, status: number | null): Promise<boolean>;
   void(input: {
     purchaseToken: string;
     orderId: string | null;
@@ -49,7 +54,17 @@ export type Ledger = {
 };
 
 /** 다시 소비할 구매 하나 — 장부가 아는 것만 */
-export type UnconsumedPurchase = { readonly purchaseToken: string; readonly productId: string; readonly grantedAt: string };
+export type UnconsumedPurchase = {
+  readonly purchaseToken: string;
+  readonly productId: string;
+  readonly grantedAt: string;
+  /** Google 의 `purchaseTimeMillis` — 기한(「구매」가 된 때 + 3일)을 가장 이르게 잡는 시각이다(ADR 0253) */
+  readonly purchasedAt: string;
+  readonly attempts: number;
+};
+
+/** 소비를 못 끝낸 갈래 — 실패(못 닿음 · 못 읽음 · 401 · 403 · 429 · 5xx) · 그런 토큰 없음(400 · 404 · 410) · Google 에서 「구매」가 아님 */
+export type ConsumeMiss = 'failed' | 'gone' | 'canceled';
 
 export type Settled =
   /** 지급됐다(이번에 · 앞서) — 앱은 성공을 말하고 잔액을 다시 읽는다 */
@@ -130,7 +145,11 @@ export async function settlePurchase(
   } else {
     const consumed = await play.consume(productId, purchaseToken);
     if (consumed.ok) await ledger.consumed(purchaseToken);
-    else console.error('store purchase: consume failed', consumed.status);
+    else {
+      console.error('store purchase: consume failed', consumed.status);
+      /* 크론의 차례에 남기고, 기한이 가까우면(지급이 늦게 선 구매) DB 가 바로 알린다 */
+      await ledger.missed(purchaseToken, noSuchToken(consumed.status) ? 'gone' : 'failed', consumed.status);
+    }
   }
 
   return { kind: 'granted', credits: granted.credits, replayed: granted.outcome === 'replayed' };
@@ -144,15 +163,19 @@ export type ConsumeSweep = {
   noted: number;
   /** Google 에서 「구매」가 아니다(취소 · 환불) — 소비하지 않는다. 무효는 통지 · 무효 대조가 적는다 */
   canceled: number;
-  /** Google 이 그 토큰을 모른다(4xx) — 소비할 것이 없다 */
+  /** Google 이 그런 토큰이 없다고 했다(400 · 404 · 410) — 다음 실행이 다시 본다(영구라고 단정하지 않는다) */
   gone: number;
-  /** Google · DB 에 못 닿았거나 Google 의 답을 못 읽었다 — 다음 실행이 다시 본다 */
+  /** Google · DB 에 못 닿았거나 Google 의 답을 못 읽었거나 Google 이 거절했다(401 · 403 · 429 · 5xx) — 다음 실행이 다시 본다 */
   failed: number;
-  /** 아직 소비가 안 적혔는데 지급된 지 이틀이 넘었다 — 다음 실행이 기한(3일) 안의 마지막일 수 있다 */
+  /** 못 끝낸 줄 가운데 가장 이른 기한(구매 뒤 3일)까지 36시간이 안 남은 것 */
   overdue: number;
   /** 시간이 모자라 이번에 못 본 줄 */
   left: number;
+  /** 받을 줄의 전체 수 — 한 번의 상한보다 크면 적체다 */
+  waiting: number;
 };
+
+const HOUR = 60 * 60 * 1000;
 
 /**
  * **지급은 섰는데 소비가 안 적힌 구매를 서버가 스스로 끝낸다**(ADR 0253, G-164). 날마다의 크론(`/api/cron/store-consume`)이 부른다.
@@ -160,42 +183,50 @@ export type ConsumeSweep = {
  * 줄마다 Google 에 상태를 다시 묻고(`purchases.products.get`) — **「구매」(0)일 때만** 소비한다. 취소 · 환불된 구매는 소비하지 않는다.
  * Google 이 이미 「소비됨」이라 하면 적기만 한다(소비 뒤 기록이 실패했던 줄). 지급은 하지 않는다 — 장부에 이미 선 줄만 받으므로
  * 몇 번 돌아도, 앱 · 통지와 나란히 돌아도 지급이 늘지 않는다. 소비가 겹쳐 실패하면 한 번 더 물어 「소비됨」이면 적는다.
+ * 못 끝낸 줄은 장부에 적어(`missed`) 다음 실행의 차례를 뒤로 돌린다 — 앞의 줄이 계속 실패해도 뒤의 줄이 차례를 받는다.
  */
 export async function finishUnconsumed(
-  { play, ledger }: { play: PlayApi; ledger: Pick<Ledger, 'consumed' | 'unconsumed'> },
+  { play, ledger }: { play: PlayApi; ledger: Pick<Ledger, 'consumed' | 'unconsumed' | 'missed'> },
   { limit, now = () => Date.now(), budgetMs }: { limit: number; now?: () => number; budgetMs: number },
 ): Promise<ConsumeSweep | null> {
   const started = now();
-  const rows = await ledger.unconsumed(limit);
-  if (rows === null) return null;
+  const listed = await ledger.unconsumed(limit);
+  if (listed === null) return null;
+  const { rows, waiting } = listed;
 
-  const sweep: ConsumeSweep = { consumed: 0, noted: 0, canceled: 0, gone: 0, failed: 0, overdue: 0, left: 0 };
-  const twoDaysAgo = started - 2 * 24 * 60 * 60 * 1000;
+  const sweep: ConsumeSweep = { consumed: 0, noted: 0, canceled: 0, gone: 0, failed: 0, overdue: 0, left: 0, waiting };
+  const nearDeadline = started - 36 * HOUR;
 
   for (const [index, row] of rows.entries()) {
     if (now() - started > budgetMs) {
       sweep.left = rows.length - index;
       break;
     }
-    const done = await finishOne(row, play, ledger);
+    const { done, status } = await finishOne(row, play, ledger);
     sweep[done] += 1;
-    if ((done === 'failed' || done === 'gone') && Date.parse(row.grantedAt) < twoDaysAgo) sweep.overdue += 1;
+    if (done === 'failed' || done === 'gone' || done === 'canceled') await ledger.missed(row.purchaseToken, done, status);
+    if ((done === 'failed' || done === 'gone') && Date.parse(row.purchasedAt) < nearDeadline) sweep.overdue += 1;
   }
   return sweep;
 }
+
+type Finished = { done: 'consumed' | 'noted' | ConsumeMiss; status: number | null };
 
 async function finishOne(
   { purchaseToken, productId }: UnconsumedPurchase,
   play: PlayApi,
   ledger: Pick<Ledger, 'consumed'>,
-): Promise<'consumed' | 'noted' | 'canceled' | 'gone' | 'failed'> {
-  const noted = async (as: 'consumed' | 'noted') => ((await ledger.consumed(purchaseToken)) ? as : 'failed');
+): Promise<Finished> {
+  const noted = async (as: 'consumed' | 'noted'): Promise<Finished> => ({
+    done: (await ledger.consumed(purchaseToken)) ? as : 'failed',
+    status: null,
+  });
 
   const looked = await play.getPurchase(productId, purchaseToken);
-  if (!looked.ok) return noSuchToken(looked.status) ? 'gone' : 'failed';
+  if (!looked.ok) return { done: noSuchToken(looked.status) ? 'gone' : 'failed', status: looked.status };
   const purchase = looked.value;
-  if (purchase.purchaseState === null) return 'failed';
-  if (purchase.purchaseState !== 0) return 'canceled';
+  if (purchase.purchaseState === null) return { done: 'failed', status: null };
+  if (purchase.purchaseState !== 0) return { done: 'canceled', status: null };
   if (purchase.consumptionState === 1) return noted('noted');
 
   const consumed = await play.consume(productId, purchaseToken);
@@ -205,12 +236,14 @@ async function finishOne(
   const again = await play.getPurchase(productId, purchaseToken);
   if (again.ok && again.value.consumptionState === 1) return noted('noted');
   console.error('store-consume: consume failed', consumed.status);
-  return 'failed';
+  return { done: noSuchToken(consumed.status) ? 'gone' : 'failed', status: consumed.status };
 }
 
 /**
  * Google 이 「그런 토큰은 없다」고 답했나 — 400 · 404 · 410 만. 다른 4xx(401 · 403 권한 빠짐, 429 할당량)는 토큰이 아니라 우리 열쇠 ·
- * 호출량의 문제라 다시 시도할 실패다 — 「없다」로 읽으면 크론이 조용히 초록이 된다(ADR 0253).
+ * 호출량의 문제라 다시 시도할 실패다 — 「없다」로 읽으면 크론이 조용히 초록이 된다(ADR 0253). **영구라는 뜻은 아니다** — Developer API 의
+ * 문서는 상태 코드마다 영구인지 말하지 않는다(2026-11-16 확인). 크론은 400 · 404 · 410 도 4일 창 안에서 다시 묻고, 앱 · 통지 문은 「없는
+ * 구매」로 답할 뿐 장부를 바꾸지 않는다.
  */
 function noSuchToken(status: number | null): boolean {
   return status === 400 || status === 404 || status === 410;

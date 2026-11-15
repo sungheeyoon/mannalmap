@@ -111,24 +111,23 @@ export type PlayApi = {
   listVoided(startMillis: number): Promise<PlayAnswer<readonly PlayVoided[]>>;
 };
 
+/**
+ * 정수 칸 — Google 이 쓰는 칸은 모두 정수다(`integer`, 시각은 int64 를 글자로 — 문서 표기 그대로). 받는 꼴은 둘뿐이다: 안전한 정수인 수,
+ * 또는 십진 정수만 적은 글자(`/^-?\d+$/`). `Number()` 로 바꾸지 않는다 — `""` · `" "` · `"\n"` 이 0, `"0x0"` 이 0, `"1e3"` 이 1000 이 된다
+ * (0 은 「구매됨」이다, ADR 0253).
+ */
 const numberOf = (value: unknown): number | null => {
-  const n = typeof value === 'string' ? Number(value) : typeof value === 'number' ? value : NaN;
-  return Number.isFinite(n) ? n : null;
+  const n = typeof value === 'number' ? value : typeof value === 'string' && /^-?\d+$/.test(value) ? Number(value) : NaN;
+  return Number.isSafeInteger(n) ? n : null;
 };
 const textOf = (value: unknown): string | null => (typeof value === 'string' && value.length > 0 ? value : null);
-
-/** 정수 칸 — 수든 수를 적은 글자든 정수일 때만. 문서는 `integer` 로 적지만 int64 칸처럼 글자로 와도 읽는다 */
-const integerOf = (value: unknown): number | null => {
-  const n = numberOf(value);
-  return n !== null && Number.isInteger(n) ? n : null;
-};
 const oneOf = <T extends number>(value: unknown, allowed: readonly T[]): T | null => {
-  const n = integerOf(value);
+  const n = numberOf(value);
   return n !== null && (allowed as readonly number[]).includes(n) ? (n as T) : null;
 };
 
 export function purchaseOf(body: Record<string, unknown>): PlayPurchase {
-  const quantity = body.quantity === undefined || body.quantity === null ? 1 : integerOf(body.quantity);
+  const quantity = body.quantity === undefined || body.quantity === null ? 1 : numberOf(body.quantity);
   return {
     purchaseState: oneOf(body.purchaseState, [0, 1, 2] as const),
     consumptionState: oneOf(body.consumptionState, [0, 1] as const),

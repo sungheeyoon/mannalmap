@@ -2524,6 +2524,9 @@ export type Database = {
       }
       store_purchase: {
         Row: {
+          consume_attempts: number
+          consume_last_outcome: string | null
+          consume_tried_at: string | null
           consumed_at: string | null
           granted_at: string
           id: string
@@ -2539,6 +2542,9 @@ export type Database = {
           voided_at: string | null
         }
         Insert: {
+          consume_attempts?: number
+          consume_last_outcome?: string | null
+          consume_tried_at?: string | null
           consumed_at?: string | null
           granted_at?: string
           id?: string
@@ -2554,6 +2560,9 @@ export type Database = {
           voided_at?: string | null
         }
         Update: {
+          consume_attempts?: number
+          consume_last_outcome?: string | null
+          consume_tried_at?: string | null
           consumed_at?: string | null
           granted_at?: string
           id?: string
@@ -4146,6 +4155,10 @@ export type Database = {
         }
         Returns: boolean
       }
+      note_store_consume_missed: {
+        Args: { p_outcome: string; p_purchase_token: string; p_status: number }
+        Returns: boolean
+      }
       note_store_purchase_consumed: {
         Args: { p_purchase_token: string }
         Returns: boolean
@@ -5180,9 +5193,12 @@ export type Database = {
       store_purchases_to_consume: {
         Args: { p_limit: number }
         Returns: {
+          attempts: number
           granted_at: string
           product_id: string
           purchase_token: string
+          purchased_at: string
+          waiting: number
         }[]
       }
       survey_sole_conflict: {

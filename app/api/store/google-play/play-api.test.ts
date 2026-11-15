@@ -133,6 +133,18 @@ describe('구매 한 줄 — ProductPurchase 의 계약대로 (ADR 0253)', () =>
     }
   });
 
+  it('정수는 수 또는 십진 정수 글자만 — 빈 글자 · 공백 · 줄바꿈 · 16진 · 지수 · 소수 글자는 0(구매됨)이 되지 않는다', () => {
+    for (const purchaseState of ['', ' ', '\n', '0x0', '0e0', '0.0', ' 0', '0 ', '+0']) {
+      expect(purchaseOf({ ...base, purchaseState }).purchaseState, JSON.stringify(purchaseState)).toBeNull();
+    }
+    for (const quantity of ['', ' ', '\n', '0x1', '1e0']) {
+      expect(purchaseOf({ ...base, quantity }).quantity, JSON.stringify(quantity)).toBeNull();
+    }
+    expect(purchaseOf({ ...base, purchaseTimeMillis: ' ' }).purchaseTimeMillis).toBeNull();
+    expect(purchaseOf({ ...base, purchaseTimeMillis: '1762400000000' }).purchaseTimeMillis).toBe(1762400000000);
+    expect(voidedOf({ purchaseToken: 'a', voidedQuantity: '' })?.voidedQuantity).toBeNull();
+  });
+
   it('소비 상태는 0 · 1 만 읽고, 칸이 없거나 그 밖이면 모른다(null) — 「소비 전」으로 메우지 않는다', () => {
     expect(purchaseOf({ ...base, consumptionState: 1 }).consumptionState).toBe(1);
     for (const consumptionState of [undefined, null, 2, 'yes']) {

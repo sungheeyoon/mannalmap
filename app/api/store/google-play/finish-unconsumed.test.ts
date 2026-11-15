@@ -7,7 +7,8 @@ import { finishUnconsumed, settlePurchase, type Ledger } from './settle';
  * **소비가 안 된 지급을 서버가 스스로 끝낸다**(ADR 0253, G-164) — 실패의 경계를 상태를 든 가짜로 잰다.
  *
  * 가짜 Google 은 토큰마다 구매 · 소비 상태를 들고 소비를 한 번만 받는다(두 번째 소비는 400). 가짜 장부는 토큰마다 한 줄 ·
- * 지급 수 · 소비 시각을 든다 — `store_purchases_to_consume` 의 거르기(소비 안 적힘 · 무효 아님 · 이른 차례)를 흉내 낸다. 그 SQL 자체는
+ * 지급 수 · 소비 시각 · 못 끝낸 때를 든다 — `store_purchases_to_consume` 의 거르기(소비 안 적힘 · 무효 아님)와 차례(못 끝낸 적 없는 줄 먼저,
+ * 그다음 가장 오래전에 시도한 줄, 같으면 구매가 이른 줄)를 흉내 낸다. 그 SQL 자체는
  * `supabase/tests/99_store_purchase_consume.test.sql` 이 잰다. 실제 Play 와의 확인은 런북 credits.md 「Google Play 결제」의 샌드박스 차례다.
  */
 
@@ -17,7 +18,15 @@ const DAY = 24 * 60 * 60 * 1000;
 const NOW = Date.UTC(2026, 10, 15, 21, 7);
 
 type GoogleRow = { purchaseState: 0 | 1 | 2 | null; consumptionState: 0 | 1 };
-type LedgerRow = { productId: string; grantedAt: string; consumedAt: string | null; voided: boolean };
+type LedgerRow = {
+  productId: string;
+  grantedAt: string;
+  purchasedAt: string;
+  consumedAt: string | null;
+  voided: boolean;
+  triedAt: number | null;
+  attempts: number;
+};
 
 function world() {
   const google = new Map<string, GoogleRow>();
@@ -25,6 +34,8 @@ function world() {
   const fail = { consume: 0, get: 0, note: false, listing: false };
   let grants = 0;
   let consumedByGoogle = 0;
+  /** 못 끝낸 때의 차례 — 시계 대신 늘기만 하는 수 */
+  let tick = 0;
 
   const purchase = (row: GoogleRow): PlayPurchase => ({
     purchaseState: row.purchaseState,
@@ -66,7 +77,8 @@ function world() {
   const ledger = {
     grant: vi.fn(async ({ purchaseToken, productId }: Parameters<Ledger['grant']>[0]): ReturnType<Ledger['grant']> => {
       if (rows.has(purchaseToken)) return { outcome: 'replayed', credits: 3 };
-      rows.set(purchaseToken, { productId, grantedAt: new Date(NOW - DAY).toISOString(), consumedAt: null, voided: false });
+      const at = new Date(NOW - DAY).toISOString();
+      rows.set(purchaseToken, { productId, grantedAt: at, purchasedAt: at, consumedAt: null, voided: false, triedAt: null, attempts: 0 });
       grants += 1;
       return { outcome: 'granted', credits: 3 };
     }),
@@ -79,11 +91,30 @@ function world() {
     }),
     unconsumed: vi.fn(async (limit: number) => {
       if (fail.listing) return null;
-      return [...rows.entries()]
+      const waiting = [...rows.entries()]
         .filter(([, row]) => row.consumedAt === null && !row.voided)
-        .sort(([, a], [, b]) => a.grantedAt.localeCompare(b.grantedAt))
-        .slice(0, limit)
-        .map(([purchaseToken, row]) => ({ purchaseToken, productId: row.productId, grantedAt: row.grantedAt }));
+        .sort(
+          ([, a], [, b]) =>
+            (a.triedAt ?? -1) - (b.triedAt ?? -1) || a.purchasedAt.localeCompare(b.purchasedAt),
+        );
+      return {
+        rows: waiting.slice(0, limit).map(([purchaseToken, row]) => ({
+          purchaseToken,
+          productId: row.productId,
+          grantedAt: row.grantedAt,
+          purchasedAt: row.purchasedAt,
+          attempts: row.attempts,
+        })),
+        waiting: waiting.length,
+      };
+    }),
+    missed: vi.fn(async (token: string) => {
+      const row = rows.get(token);
+      if (row === undefined || row.consumedAt !== null) return false;
+      tick += 1;
+      row.triedAt = tick;
+      row.attempts += 1;
+      return true;
     }),
     void: vi.fn(),
   } satisfies Ledger;
@@ -93,10 +124,23 @@ function world() {
     google.set(token, { purchaseState: 0, consumptionState: 0 });
     return settlePurchase({ userId: USER, productId: PRODUCT, purchaseToken: token }, { play, ledger });
   };
-  /** 장부에 이미 선 줄 하나 — 지급된 때를 정한다 */
-  const granted = (token: string, at: number, google_: GoogleRow = { purchaseState: 0, consumptionState: 0 }) => {
-    google.set(token, google_);
-    rows.set(token, { productId: PRODUCT, grantedAt: new Date(at).toISOString(), consumedAt: null, voided: false });
+  /** 장부에 이미 선 줄 하나 — 지급된 때(와 구매된 때)를 정한다 */
+  const granted = (
+    token: string,
+    at: number,
+    google_: GoogleRow | null = { purchaseState: 0, consumptionState: 0 },
+    boughtAt = at,
+  ) => {
+    if (google_ !== null) google.set(token, google_);
+    rows.set(token, {
+      productId: PRODUCT,
+      grantedAt: new Date(at).toISOString(),
+      purchasedAt: new Date(boughtAt).toISOString(),
+      consumedAt: null,
+      voided: false,
+      triedAt: null,
+      attempts: 0,
+    });
   };
   const sweep = (over: { now?: () => number; budgetMs?: number; limit?: number } = {}) =>
     finishUnconsumed({ play, ledger }, { limit: 25, budgetMs: 45_000, now: () => NOW, ...over });
@@ -164,7 +208,7 @@ describe('소비가 실패한 지급 — 앱 재실행 · 통지 재수신 없�
     w.granted('tok', NOW - DAY);
     await w.sweep();
     w.play.getPurchase.mockClear();
-    expect(await w.sweep()).toEqual({ consumed: 0, noted: 0, canceled: 0, gone: 0, failed: 0, overdue: 0, left: 0 });
+    expect(await w.sweep()).toEqual({ consumed: 0, noted: 0, canceled: 0, gone: 0, failed: 0, overdue: 0, left: 0, waiting: 0 });
     expect(w.play.getPurchase).not.toHaveBeenCalled();
   });
 });
@@ -241,7 +285,7 @@ describe('비정상 응답', () => {
     expect(await w.sweep()).toMatchObject({ failed: 1 });
 
     const gone = world();
-    gone.rows.set('b', { productId: PRODUCT, grantedAt: new Date(NOW - DAY).toISOString(), consumedAt: null, voided: false });
+    gone.granted('b', NOW - DAY, null);
     expect(await gone.sweep()).toMatchObject({ gone: 1, failed: 0 });
   });
 
@@ -260,8 +304,8 @@ describe('비정상 응답', () => {
   });
 });
 
-describe('기한과 양', () => {
-  it('이틀이 넘도록 못 끝낸 줄은 기한이 가깝다고 센다', async () => {
+describe('기한 — 구매가 「구매」가 된 때부터 3일, 우리가 아는 가장 이른 시각(구매 시각)으로 센다 (ADR 0253)', () => {
+  it('기한까지 36시간이 안 남은 줄을 못 끝내면 기한이 가깝다고 센다 — 지급 시각이 아니라 구매 시각으로', async () => {
     const w = world();
     w.granted('old', NOW - 2.5 * DAY);
     w.granted('new', NOW - 0.5 * DAY);
@@ -269,15 +313,70 @@ describe('기한과 양', () => {
     expect(await w.sweep()).toMatchObject({ failed: 2, overdue: 1 });
   });
 
-  it('지급이 이른 줄부터 보고, 시간이 모자라면 남은 수를 센다', async () => {
+  it('구매 완료 → 지급이 48시간 늦고 소비가 실패하면, 그 자리에서 장부에 적혀(DB 가 바로 알린다) 크론의 첫 실행이 기한이 가깝다고 센다', async () => {
     const w = world();
-    w.granted('late', NOW - DAY);
-    w.granted('early', NOW - 2 * DAY);
-    let clock = NOW;
-    const sweep = await w.sweep({ now: () => (clock += 30_000), budgetMs: 45_000 });
-    expect(sweep).toMatchObject({ consumed: 1, left: 1 });
-    expect(w.google.get('early')?.consumptionState).toBe(1);
-    expect(w.google.get('late')?.consumptionState).toBe(0);
+    w.google.set('late-grant', { purchaseState: 0, consumptionState: 0 });
+    w.fail.consume = 1;
+    /* 앱 · 통지가 구매 48시간 뒤에야 닿았다 — 지급은 지금, 구매 시각은 48시간 전 */
+    w.play.getPurchase.mockImplementationOnce(async () => ({
+      ok: true,
+      value: {
+        purchaseState: 0,
+        consumptionState: 0,
+        quantity: 1,
+        orderId: 'GPA.9',
+        purchaseTimeMillis: NOW - 2 * DAY,
+        obfuscatedExternalAccountId: USER,
+        purchaseType: null,
+      },
+    }));
+    await settlePurchase({ userId: USER, productId: PRODUCT, purchaseToken: 'late-grant' }, { play: w.play, ledger: w.ledger });
+    expect(w.ledger.missed).toHaveBeenCalledWith('late-grant', 'failed', 503);
+
+    /* 크론이 보는 줄의 구매 시각이 48시간 전이다 — 지급 시각(지금)으로 세면 기한이 멀어 보인다 */
+    const row = w.rows.get('late-grant');
+    if (row) row.purchasedAt = new Date(NOW - 2 * DAY).toISOString();
+    w.fail.consume = 2;
+    expect(await w.sweep()).toMatchObject({ failed: 1, overdue: 1 });
+  });
+});
+
+describe('차례가 돈다 — 앞의 줄이 계속 실패해도 뒤의 구매가 차례를 받는다', () => {
+  it('101 줄 가운데 앞 100 줄이 늘 404 여도 두 번째 실행에서 101번째가 소비된다 — 실패 줄은 지우지 않고 남는다', async () => {
+    const w = world();
+    for (let n = 0; n < 100; n += 1) w.granted(`dead-${n}`, NOW - 2 * DAY + n, null);
+    w.granted('alive', NOW - DAY);
+
+    expect(await w.sweep({ limit: 100 })).toMatchObject({ gone: 100, consumed: 0, waiting: 101 });
+    expect(w.google.get('alive')?.consumptionState).toBe(0);
+
+    const second = await w.sweep({ limit: 100 });
+    expect(second).toMatchObject({ consumed: 1, waiting: 101 });
+    expect(w.google.get('alive')?.consumptionState).toBe(1);
+    expect(w.rows.get('dead-0')).toMatchObject({ consumedAt: null, voided: false, attempts: 2 });
+  });
+
+  it('시간이 모자라 한 줄만 보는 실행이 이어져도 줄마다 차례가 온다', async () => {
+    const w = world();
+    w.granted('a', NOW - 3 * DAY, null);
+    w.granted('b', NOW - 2 * DAY, null);
+    w.granted('c', NOW - DAY);
+    const oneRow = () => {
+      let clock = NOW;
+      return w.sweep({ now: () => (clock += 30_000), budgetMs: 45_000 });
+    };
+    expect(await oneRow()).toMatchObject({ gone: 1, left: 2 });
+    expect(await oneRow()).toMatchObject({ gone: 1, left: 2 });
+    expect(await oneRow()).toMatchObject({ consumed: 1, left: 2 });
+    expect(w.google.get('c')?.consumptionState).toBe(1);
+  });
+
+  it('취소된 구매도 차례를 뒤로 돌린다 — 소비하지 않는다', async () => {
+    const w = world();
+    w.granted('canceled', NOW - 2 * DAY, { purchaseState: 1, consumptionState: 0 });
+    await w.sweep();
+    expect(w.ledger.missed).toHaveBeenCalledWith('canceled', 'canceled', null);
+    expect(w.play.consume).not.toHaveBeenCalled();
   });
 
   it('한 번에 받는 줄 수를 장부에 넘긴다', async () => {

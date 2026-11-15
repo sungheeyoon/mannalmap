@@ -989,6 +989,8 @@ select is(
     'note_reading_checks',
     /** 만드는 동안 몇 번째 절까지 썼는지 적는 문 — 절 번호만, 글은 안 받는다(`20261103090000`) */
     'note_reading_progress',
+    /** 서버가 소비를 못 끝낸 것을 적는 문 — 다시 소비할 차례를 돌린다(`20270119090000`, ADR 0253) */
+    'note_store_consume_missed',
     'note_store_purchase_consumed',
     'note_taste_checks',
     'open_reading_jobs',
@@ -1048,7 +1050,7 @@ select is(
     'set_person_chart',
     'settle_push_delivery',
     'store_purchase_refusal',
-    /** 지급은 섰는데 소비가 안 된 구매를 크론이 다시 소비할 목록 — 토큰 · 상품 · 지급 시각만(`20270119090000`, ADR 0253 · `99_store_purchase_consume`) */
+    /** 지급은 섰는데 소비가 안 된 구매를 크론이 다시 소비할 목록 — 토큰 · 상품 · 시각 · 횟수만(`20270119090000`, ADR 0253 · `99_store_purchase_consume`) */
     'store_purchases_to_consume',
     /** 얼린 작업을 집는 문 — 조회가 아니라 `frozen` → `preparing` 전이다(ADR 0071 · #66) */
     'take_reading_job',

@@ -76,20 +76,50 @@ describe('소비를 적기', () => {
 });
 
 describe('다시 소비할 목록', () => {
-  it('줄을 우리 이름으로 옮긴다', async () => {
+  it('줄을 우리 이름으로 옮기고 받을 줄의 전체 수를 함께 말한다', async () => {
     rpc.mockResolvedValue({
-      data: [{ purchase_token: 'tok', product_id: 'reading_credits_1', granted_at: '2026-11-14T00:00:00Z' }],
+      data: [
+        {
+          purchase_token: 'tok',
+          product_id: 'reading_credits_1',
+          granted_at: '2026-11-14T00:00:00Z',
+          purchased_at: '2026-11-13T00:00:00Z',
+          attempts: 2,
+          waiting: 130,
+        },
+      ],
       error: null,
     });
-    expect(await storeLedger('시험').unconsumed(25)).toEqual([
-      { purchaseToken: 'tok', productId: 'reading_credits_1', grantedAt: '2026-11-14T00:00:00Z' },
-    ]);
-    expect(rpc).toHaveBeenCalledWith('store_purchases_to_consume', { p_limit: 25 });
+    expect(await storeLedger('시험').unconsumed(100)).toEqual({
+      rows: [
+        {
+          purchaseToken: 'tok',
+          productId: 'reading_credits_1',
+          grantedAt: '2026-11-14T00:00:00Z',
+          purchasedAt: '2026-11-13T00:00:00Z',
+          attempts: 2,
+        },
+      ],
+      waiting: 130,
+    });
+    expect(rpc).toHaveBeenCalledWith('store_purchases_to_consume', { p_limit: 100 });
   });
 
-  it('못 닿으면 null', async () => {
-    rpc.mockResolvedValue({ data: null, error: { code: '42501' } });
-    expect(await storeLedger('시험').unconsumed(25)).toBeNull();
+  it('줄이 없으면 받을 줄 0, 못 닿으면 null', async () => {
+    rpc.mockResolvedValueOnce({ data: [], error: null }).mockResolvedValueOnce({ data: null, error: { code: '42501' } });
+    const ledger = storeLedger('시험');
+    expect(await ledger.unconsumed(100)).toEqual({ rows: [], waiting: 0 });
+    expect(await ledger.unconsumed(100)).toBeNull();
+  });
+});
+
+describe('못 끝낸 소비', () => {
+  it('갈래 · 상태를 DB 이름으로 넘기고 적었나를 말한다', async () => {
+    rpc.mockResolvedValueOnce({ data: true, error: null }).mockResolvedValueOnce({ data: null, error: { code: '08006' } });
+    const ledger = storeLedger('시험');
+    expect(await ledger.missed('tok', 'gone', 404)).toBe(true);
+    expect(rpc).toHaveBeenCalledWith('note_store_consume_missed', { p_purchase_token: 'tok', p_outcome: 'gone', p_status: 404 });
+    expect(await ledger.missed('tok', 'failed', null)).toBe(false);
   });
 });
 

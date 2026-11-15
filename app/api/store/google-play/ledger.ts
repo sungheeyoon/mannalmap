@@ -8,7 +8,7 @@ import type { Ledger } from './settle';
 /**
  * **스토어 결제의 장부 문 — 열쇠를 드는 자리 하나**(ADR 0230).
  *
- * 부르는 문은 다섯뿐이다 — 지급 · 소비 · 무효 · 살 수 있나(`20270113090000`) · 다시 소비할 목록(`20270119090000`, ADR 0253). 다섯 다
+ * 부르는 문은 여섯뿐이다 — 지급 · 소비 · 무효 · 살 수 있나(`20270113090000`) · 다시 소비할 목록 · 못 끝낸 소비(`20270119090000`, ADR 0253). 여섯 다
  * 서버 열쇠에만 열렸다. 사람 id 는 이 모듈이 짓지 않는다 — 앱의 문은 세션의 사람을, 통지는 Google 이 돌려준 계정 표지를 넘긴다.
  * 오류는 코드만 기록에 남기고 `null`(소비는 `false`)로 말한다. 지급 문의 `22023`(남의 토큰 · 없는 상품 — 다시 보내도 같다)만은
  * 못 닿은 것과 갈라 `foreign` 으로 말한다 — 「다시 시도」로 돌지 않게(ADR 0253).
@@ -62,7 +62,28 @@ export function storeLedger(what: string): Ledger & {
         console.error('store ledger: unconsumed', error?.code ?? 'no rows');
         return null;
       }
-      return data.map((row) => ({ purchaseToken: row.purchase_token, productId: row.product_id, grantedAt: row.granted_at }));
+      return {
+        rows: data.map((row) => ({
+          purchaseToken: row.purchase_token,
+          productId: row.product_id,
+          grantedAt: row.granted_at,
+          purchasedAt: row.purchased_at,
+          attempts: row.attempts,
+        })),
+        waiting: data[0]?.waiting ?? 0,
+      };
+    },
+
+    async missed(purchaseToken, outcome, status) {
+      const { data, error } = await keyed.rpc(
+        'note_store_consume_missed',
+        rpcArgs<'note_store_consume_missed'>({ p_purchase_token: purchaseToken, p_outcome: outcome, p_status: status }),
+      );
+      if (error !== null) {
+        console.error('store ledger: missed', error.code);
+        return false;
+      }
+      return data === true;
     },
 
     async void({ purchaseToken, orderId, source, voidedReason, voidedSource, refundType, voidedAt }) {

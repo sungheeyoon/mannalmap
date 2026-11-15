@@ -37,7 +37,8 @@ function fakes(
       outcome === null ? null : outcome === 'foreign' ? { outcome } : { outcome, credits: 3 },
     ),
     consumed: vi.fn(async () => true),
-    unconsumed: vi.fn(async () => []),
+    unconsumed: vi.fn(async () => ({ rows: [], waiting: 0 })),
+    missed: vi.fn(async () => true),
     void: vi.fn(async () => ({ outcome: 'voided', revoked: 1, kept: 2 })),
   } satisfies Ledger;
   return { play, ledger };
@@ -80,6 +81,7 @@ describe('Google Play 구매 — 확인 · 지급 · 소비', () => {
     deps.play.consume.mockResolvedValue({ ok: false, status: 500 });
     expect(await settle(deps)).toEqual({ kind: 'granted', credits: 3, replayed: false });
     expect(deps.ledger.consumed).not.toHaveBeenCalled();
+    expect(deps.ledger.missed).toHaveBeenCalledWith(TOKEN, 'failed', 500);
   });
 
   it('라이선스 테스터의 시험 구매는 시험으로 적는다', async () => {
