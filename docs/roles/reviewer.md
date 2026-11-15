@@ -1,14 +1,14 @@
 # 역할 — 검토 · 감사 (읽기만)
 
-조율자가 두 번째 의견을 모을 때 띄우는 역할이다. 관점 하나(아래 열여섯 가운데)를 받고, 고치지 않고 보고한다.
+조율자가 두 번째 의견을 모을 때 띄우는 역할이다. 관점 하나(아래 목록에서)를 받고, 고치지 않고 보고한다.
 
 ## 먼저 읽는 것
 
 - `docs/agents/delegation/coordinator.md` 「조율자 세션」 — 「확인한 흔적을 붙여 전한다」 · 「위험에 따라 두 번째 검토」 · 「전체 감사」 줄
 - 하나를 고른다 — 받은 관점의 원본
-  - 코드 규칙 — `CODING_STANDARDS.md` 의 차례에서 [그 주제 파일](../agents/code-rules/)
-  - 아키텍트 — `docs/architecture.md`
-  - 시험 — `docs/agents/test-map.md` 의 차례에서 [그 주제 파일](../agents/test-map/) · ADR 0079(부재 단언은 반증할 수 있어야 한다)
+  - 코드 규칙 — `CODING_STANDARDS.md` 의 차례에서 [그 주제 파일](../agents/code-rules/) · 앱 린트 `mobile/eslint.config.js`
+  - 아키텍트 — `docs/architecture.md` · 앱 쪽 잠금 `scripts/mobile-closure.test.ts` · `scripts/mobile-screen-db.test.ts`
+  - 시험 — `docs/agents/test-map.md` 의 차례에서 [그 주제 파일](../agents/test-map/) · ADR 0079(부재 단언은 반증할 수 있어야 한다) · 앱 단위 시험은 뿌리 vitest 의 `mobile/src`
   - 보안 — `docs/ops/runbook/security.md` 「보안 점검」 · `docs/ops/runbook/access.md` 「개인정보는 화면으로만」 · `app/ops/denial.ts`(운영자 문의 거절을 적는 갈래) · ADR 0191 · ADR 0209(운영자 로그인 · 2단계 인증) · 결제 정합은 ADR 0230 · `docs/ops/runbook/credits.md` 「Google Play 결제 — 확인 · 한 번 지급 · 소비, 스토어 환불의 회수」 · ADR 0184 · ADR 0192
   - DB — `docs/ops/runbook/deploy.md` 「규약 넷 — 앱과 DB 는 따로 간다」 · ADR 0084(모양을 잠근다)
   - 프런트 — `docs/agents/code-rules/screen-copy.md` 「화면 문구」 · `docs/product/copy-ledger.md`(규칙 · 여러 화면 · 무리 색인) · ADR 0109(디자인 체계) · 본 화면의 [PRD 무리 파일](../product/prd/screens/)과 [문구 무리 파일](../product/copy-ledger/)
@@ -18,7 +18,7 @@
   - CI · 워크플로 — `docs/agents/test-map/ci.md` 「CI」 · `docs/agents/test-map/what-to-run.md` · `.github/workflows/` — 차선 판정 코드는 `ci.md` 가 가리킨다
   - 모바일(Expo) — `mobile/AGENTS.md` · `docs/ops/runbook/mobile-release.md` · ADR 0211 · ADR 0230 · ADR 0233
   - 세션 잔재 — `docs/agents/delegation/coordinator.md` 「라운드 끝 정리」 · `docs/agents/delegation/local-env.md` 「로컬 환경의 함정」
-  - UI 집중화(디자인 체계) — ADR 0109 · `docs/adr/README.md` 「디자인 체계 · 화면 문구」 · `docs/architecture.md` 「그 밖의 자리」 · `app/ui/`
+  - UI 집중화(디자인 체계) — ADR 0109 · `docs/adr/README.md` 「디자인 체계 · 화면 문구」 · `docs/architecture.md` 「그 밖의 자리」 · `app/ui/` · `src/lib/design/contract.ts` · 잠금 `scripts/design-contract.test.ts` · `scripts/mobile-surfaces.test.ts` · `scripts/mobile-design-tokens.test.ts` · `app/ui/scale.test.ts`
   - 사용자 약속 · 게시 문구 · 법적 절차 — `docs/legal/README.md` · `docs/legal/terms-grounds.md` · 약관 원본(`src/lib/brand/`) — 개정 공지 · 시행일 · 재확인 기준
   - 리팩터의 동작 보존 — PR 의 diff 와 그 자리를 재는 시험(`docs/agents/test-map.md`) — 옮긴 뒤 같은 입력에 같은 결과인지, 시험이 옛 동작을 실제로 잡는지
   - 남은 일 흔적 · 죽은 코드 — `docs/agents/delegation/working.md` 「일하는 법」(죽은 코드는 셋으로 가른다) · `docs/product/gaps.md` — knip 은 설치돼 있지 않다(`package.json` 에 없다). `npx knip` 으로 받아 돌리면 설정(진입점)이 없어 오탐이 많다 — 나온 이름은 grep 으로 다시 잰다

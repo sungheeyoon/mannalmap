@@ -32,7 +32,7 @@
 
 ## 하지 않는 것 · 묻는 것
 
-- 화면 흐름 · 메뉴 구조는 결정이다 — PR 까지 만들고 머지하지 않는다. 새 문구는 사후 확인이라 머지까지 가지만, 권한 · 보존 · 요금 · 환불에도 걸리면 결정이다([결정 점검표](../agents/delegation/decisions.md) · [무인 라운드](../agents/delegation/unattended.md))
+- 코드 PR 은 운영자 검토 뒤 머지([출시 흐름](../agents/delegation/coordinator.md)). 화면 흐름 · 메뉴 구조는 결정, 새 문구는 사후 확인이나 권한 · 보존 · 요금 · 환불에 걸리면 결정이다([결정 점검표](../agents/delegation/decisions.md) · [무인 라운드](../agents/delegation/unattended.md))
 - 남이 띄운 dev 서버(3000)는 죽이기 전에 묻는다 — 그 서버를 재사용한 e2e 는 운영 DB 를 본다([로컬 환경의 함정](../agents/delegation/local-env.md))
 - 운영 배포 · 운영 smoke 는 안 한다 — 머지는 배포가 아니다([권한 등급](../agents/delegation/permissions.md) · [운영 역할](ops.md))
 
@@ -51,7 +51,7 @@
 - 화면 글자를 하나라도 바꾸거나 새로 쓰면 → [고칠 화면의 대장 무리 파일](../product/copy-ledger/) — 고칠 자리(파일 이름 · 지금 글자)로 그 무리 파일과 대장 머리 `docs/product/copy-ledger.md` 의 여러 무리에 걸친 줄(탭 · 서비스 이름 · 확인창 · 출생 정보 폼 · 실패 줄)을 찾는다. 있으면 그 문구를 쓴다(ADR 0169). 옛 글자(제목 · 단추)를 `e2e/` 에서 grep 해 스펙도 같이 고친다([일하는 법](../agents/delegation/working.md#일하는-법--세션마다-다시-배우던-것) 「사용자와」)
 - 문구 상수를 판정 · 프롭에서 부르고 싶으면 → [`scripts/ci-plan.test.ts`](../../scripts/ci-plan.test.ts) — `src/lib/*/copy.ts` 는 화면만 부른다(ADR 0159)
 - 시드(`scripts/ui-seed.mjs`)가 멈추거나 그림이 「끝났어요」를 찍으면 → [로컬 환경의 함정](../agents/delegation/local-env.md) 의 `scripts/ui-seed.mjs` 줄
-- e2e 를 돌려야 하나 망설이거나 CI 의 주소 차선이 붉으면 → [CI](../agents/test-map/ci.md#ci)
+- e2e 를 돌려야 하나 망설이거나 CI 의 차선이 붉으면 → [CI](../agents/test-map/ci.md#ci)
 - dev 서버를 띄우거나 `next build` 를 돌리면 → [로컬 환경의 함정](../agents/delegation/local-env.md) — 남의 dev 서버 · `next build` 만 잡는 파일 이름
 - 무인(밤) 라운드로 맡았으면 → [무인 라운드](../agents/delegation/unattended.md) — 뜻을 바꾸지 않는 다듬기의 경계
 - 그림 도구(`ui-seed` · `ui-shots`)를 돌리면 → [자주 하는 실수](../agents/delegation/coordinator.md#자주-하는-실수--한-줄과-고치는-법-2026-11-06) — 먼저 씨앗 · 환경값(종료일 · 무료 몫 · 카카오 키)이 운영과 같은지 본다(도구 고침 #1027). `scripts/ui-shots.mjs` 는 1280 · 390 · 1920 세 폭을 찍고 `UI_SIZES=` 로 고른다
