@@ -187,6 +187,17 @@ describe('Google 의 답을 문서의 계약대로 읽는다 (ADR 0253)', () => 
     expect(deps.ledger.grant).toHaveBeenCalledTimes(1);
   });
 
+  it('구매 시각이 없으면 지급은 하되 기록을 남긴다 — 장부가 지급 시각으로 메워 기한을 늦게 잡을 수 있다', async () => {
+    const deps = fakes({ ok: true, value: bought({ purchaseTimeMillis: null }) });
+    expect(await settle(deps)).toEqual({ kind: 'granted', credits: 3, replayed: false });
+    expect(deps.ledger.grant).toHaveBeenCalledWith(expect.objectContaining({ purchasedAt: null }));
+    expect(console.error).toHaveBeenCalledWith('store purchase: no purchase time');
+
+    vi.mocked(console.error).mockClear();
+    await settle(fakes({ ok: true, value: bought() }));
+    expect(console.error).not.toHaveBeenCalledWith('store purchase: no purchase time');
+  });
+
   it('소비 상태를 모르는 거절된 구매는 환불을 부르지 않는다 — 소비 전인지 모른다', async () => {
     const deps = fakes({ ok: true, value: bought({ consumptionState: null }) }, 'restricted');
     expect(await settle(deps)).toEqual({ kind: 'refused', why: 'restricted' });

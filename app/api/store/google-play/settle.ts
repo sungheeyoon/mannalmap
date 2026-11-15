@@ -117,6 +117,9 @@ export async function settlePurchase(
   /* 통지로 왔는데 계정 표지가 없다 — 앱이 다시 보낼 때 세션의 사람으로 선다 */
   if (who === null) return { kind: 'not-found' };
 
+  /* 구매 시각이 없으면 장부가 지급 시각으로 메운다 — 그 줄은 기한(구매 뒤 3일)을 늦게 잡을 수 있다(ADR 0253 1-1). 지급은 막지 않고 기록만 */
+  if (purchase.purchaseTimeMillis === null) console.error('store purchase: no purchase time');
+
   const granted = await ledger.grant({
     userId: who,
     productId,
