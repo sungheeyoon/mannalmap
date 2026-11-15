@@ -22,7 +22,7 @@
 
 **닫힌 방의 말이 남으면 잡이 스스로 알린다** — `chat-purge-overdue`(크론 `chat-purge-watch`, 매일 06:57 UTC, G-132 · ADR 0217). 보존 기간을 이틀 넘긴 말의 수만 싣는다. 할 일은 `docs/ops/runbook/moderation.md` 「실패는 어떻게 드러나나」.
 
-**소비가 안 된 Google Play 지급이 남으면 잡이 스스로 알린다** — `store-consume-overdue`(크론 `store-consume-watch`, 매일 07:37 UTC, G-164 · ADR 0253 — DB PR 의 `20270119090000` 을 `db push` 할 때 선다). 무효가 아니고 소비가 안 적힌 지급 가운데 가장 이른 기한(구매 시각 + 3일)까지 36시간이 안 남은 것(지급 7일 안)이나 100 줄 넘는 적체가 있을 때 수와 가장 오래된 나이만 싣는다. 기한이 가까운 줄을 못 끝낸 순간에는 `store-consume-urgent` 가 따로 온다. 할 일은 `docs/ops/runbook/credits.md` 「통지 · 크론이 이상하면」.
+**소비가 안 된 Google Play 지급이 남으면 잡이 스스로 알린다** — `store-consume-overdue`(크론 `store-consume-watch`, 매일 07:37 UTC, G-164 · ADR 0253 — DB PR 의 `20270119090000` 을 `db push` 할 때 선다). 무효가 아니고 소비가 안 적힌 지급(지급 7일 안)을 「가장 이른 기한(구매 시각 + 3일) 36시간 안」 · 「가장 이른 기한 지남(실제 기한 미확인, 다시 소비 계속)」 · 「Google 이 취소 · 환불로 확인」으로 나누고 100 줄 넘는 적체와 함께 수 · 가장 오래된 나이만 싣는다. 가장 이른 기한이 가깝거나 넘긴 줄을 못 끝낸 순간에는 `store-consume-urgent` 가 따로 온다. 할 일은 `docs/ops/runbook/credits.md` 「통지 · 크론이 이상하면」.
 
 **지급 장부의 대조도 잡이 스스로 알린다** — `credit-grant-mismatch:<계정 id>`(크론 `credit-grant-watch`, 매일 05:41 UTC, G-111 R-8 ·
 ADR 0191). 무상 지급 장부의 합과 예외 몫(`reading_credit_grant.extra`)이 다른 계정마다 하루 한 줄이고 아무것도 고치지 않는다. 할 일은

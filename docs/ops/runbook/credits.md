@@ -312,8 +312,9 @@ update retention.reading_payment set hold_reason = null, held_at = null where or
 서버가 `purchases.products.get` 으로 확인한 뒤 `grant_store_purchase` 로 **토큰마다 한 번** 지급하고 `purchases.products.consume` 으로 소비한다 — 앱은
 소비하지 않는다. 결제 중 앱이 꺼진 구매는 앱을 켤 때 · 풀이권 화면을 열 때 다시 보내고, RTDN 의 「팔렸다」 통지로도 선다. **지급은 섰는데 소비가 실패한 구매는
 날마다의 크론 `/api/cron/store-consume`(매일 21:07 UTC)이 Google 에 다시 묻고 「구매」일 때만 소비한다**(ADR 0253 — 지급된 지 4일 안, 못 끝낸 적 없는 줄 먼저 · 그다음 가장 오래전에 시도한 줄, 100 줄 · 20초, 취소 · 무효는 소비하지 않는다). 기한은 구매 시각(`purchased_at`) + 3일로
-가장 이르게 센다. 못 끝낸 소비는 장부에 적히고(`consume_attempts` · `consume_tried_at`) 기한까지 36시간이 안 남았고 아직 안 지났으면 그 자리에서 운영 알림 `store-consume-urgent`, DB 의 감시
-`store-consume-watch`(pg_cron, 매일 07:37 UTC)가 「기한 36시간 안」 · 「기한 지남」 · 100 줄 넘는 적체를 나눠 세어 `store-consume-overdue` 를 보낸다.
+가장 이르게 센다. 못 끝낸 소비는 장부에 적히고(`consume_attempts` · `consume_tried_at`) 가장 이른 기한까지 36시간이 안 남았거나 넘겼으면(실제 기한은 더 늦을 수 있다) 그 자리에서 운영 알림
+`store-consume-urgent`, DB 의 감시 `store-consume-watch`(pg_cron, 매일 07:37 UTC)가 「가장 이른 기한 36시간 안」 · 「가장 이른 기한 지남(실제 기한 미확인, 다시 소비 계속)」 ·
+「Google 이 취소 · 환불로 확인」 · 100 줄 넘는 적체를 나눠 세어 `store-consume-overdue` 를 보낸다. 끝난 것으로 다루는 것은 Google 이 확인해 준 줄(취소 답 · 무효)뿐이다.
 **(G-164 — 결정 대기 · DB PR 의 `db push` · 코드 PR 배포 전이다. 그때까지 다시 소비하는 길은 앱의 재전송 · 통지뿐이다.)** 무효(이용자의 Play 환불 · Google 의
 취소 · 차지백 · 3일 미소비 자동 환불 · 운영자의 Play Console 전액 환불)는 통지 문 `POST /api/store/google-play`(Pub/Sub 푸시)와 날마다의 대조
 `/api/cron/store-voided`(Voided Purchases API, 지난 사흘)가 `void_store_purchase` 로 적는다 — **그 결제가 준 장수만큼, 계정에 남은 유료 풀이권에서(그 묶음 → 늦게 산 묶음), 바닥 0 으로 회수한다**
@@ -392,9 +393,10 @@ npm run db:remote -- --purpose "스토어 환불 집계" \
   "select date_trunc('day', v.recorded_at)::date as 날, count(*), sum(v.refunded_amount) as 돌려준돈, sum(v.share_amount) as 우리셈, sum(v.credits_revoked) as 걷은장수, sum(v.credits_kept) as 못걷은장수 from public.store_purchase_void v join public.store_purchase s on s.id = v.purchase_id where not s.is_test and not s.is_promo group by 1 order by 1 desc limit 30"
 
 # 지급 · 소비 — 소비가 안 적힌 지급(무효는 뺀다)을 가장 이른 기한(구매 시각 + 3일)까지 남은 시간으로. 36시간 넘게 남은 줄은 크론이 아직 안 돌았거나 한 번 실패했다.
-# 36시간이 안 남은 줄은 크론을 손으로 Run 하고 로그를 본다. 기한이 지난 줄은 Google 이 돌려줬을 것이다 — 무효 대조가 적는다. 시도 수 · 마지막 갈래(예 gone:404)는 크론이 못 끝낸 까닭이다(ADR 0253)
+# 36시간이 안 남은 줄과 가장 이른 기한을 넘긴 줄은 크론을 손으로 Run 하고 로그를 본다 — 넘긴 줄도 실제 기한은 모른다(보류가 길었던 결제는 더 늦다), 끝난 것이 아니다.
+# 「취소확인」은 크론이 Google 에 다시 물어 「구매」가 아니라는 답을 받은 줄이다 — 무효 대조가 적을 차례다. 시도 수 · 마지막 갈래(예 gone:404)는 크론이 못 끝낸 까닭이다(ADR 0253)
 npm run db:remote -- --purpose "스토어 구매 소비 대조" \
-  "select count(*) filter (where purchased_at >= now() - interval '36 hours') as 넉넉함, count(*) filter (where purchased_at < now() - interval '36 hours' and purchased_at >= now() - interval '3 days') as 기한36시간안, count(*) filter (where purchased_at < now() - interval '3 days') as 기한지남, max(consume_attempts) as 최대시도, string_agg(distinct consume_last_outcome, ' ') as 마지막갈래 from public.store_purchase where consumed_at is null and voided_at is null and granted_at > now() - interval '7 days'"
+  "select count(*) filter (where consume_last_outcome is distinct from 'canceled' and purchased_at >= now() - interval '36 hours') as 넉넉함, count(*) filter (where consume_last_outcome is distinct from 'canceled' and purchased_at < now() - interval '36 hours' and purchased_at >= now() - interval '3 days') as 가장이른기한36시간안, count(*) filter (where consume_last_outcome is distinct from 'canceled' and purchased_at < now() - interval '3 days') as 가장이른기한지남, count(*) filter (where consume_last_outcome = 'canceled') as 취소확인, max(consume_attempts) as 최대시도, string_agg(distinct consume_last_outcome, ' ') as 마지막갈래 from public.store_purchase where consumed_at is null and voided_at is null and granted_at > now() - interval '7 days'"
 ```
 
 **반복 악용 — 검토 뒤에만 제한한다**(자동 제한 없음). 무엇을 반복으로 볼지 정한 수는 없다 — 운영자가 본다.
@@ -438,15 +440,17 @@ SQL
 `store purchase: no purchase time`(Google 이 구매 시각을 안 줬다 — 지급은 섰고 장부가 지급 시각으로 메워 기한을 늦게 잡을 수 있다, ADR 0253 1-1), `store purchase: unreadable purchase state` · `quantity is not one <수>`(Google 의 답이 문서 밖 — 지급 · 소비하지 않았다. 수량이면 Play Console 의 multi-quantity 가 켜졌는지 보고, 그 주문은 콘솔에서 먼저 환불해도 된다),
 `store-voided <건수>`(대조가 새로 적은 무효), `store-consume {…}`(다시 소비한 수 — 못 끝낸 것(`failed` · `gone` · `left` · 상한 밖 `waiting`)이 있으면 크론이 500), `store-consume: overdue <수>`(기한까지 36시간이 안 남은 줄을 못 끝냈다 — 위 소비 대조 질의와 로그의 `consume failed` 상태를 본다).
 
-**알림은 로그가 아니라 DB 다** — 둘이고, 감시의 알림은 수를 셋으로 나눠 싣는다. 수마다 볼 차례가 다르다.
+**알림은 로그가 아니라 DB 다** — 둘이고, 감시의 알림은 수를 나눠 싣는다. 수마다 볼 차례가 다르다. **가장 이른 기한(구매 시각 + 3일)을 넘겼다고 끝난 것이 아니다** —
+보류가 길었던 결제는 실제 기한이 더 늦다. 끝난 것은 Google 이 확인해 준 것(취소 답 · 무효)뿐이다(ADR 0253 1-1).
 
-- **`store-consume-urgent`**(「소비를 못 끝냈고 기한까지 36시간이 안 남았다」 — 앱 · 통지 · 크론이 못 끝낸 순간) · **`store-consume-overdue` 의 「기한 36시간 안 N건(Run 하면 된다)」** ·
-  **「다시 소비할 줄 N건」이 100 을 넘음** — 아직 고칠 수 있다. Vercel → Cron Jobs 에 `/api/cron/store-consume` 가 있나 → **Run** → 응답(403 이면 `CRON_SECRET`, 503 이면 열쇠 · DB,
-  500 이면 답의 `failed` · `gone` · `waiting` — Google 이 401 · 403 이면 결제 검증 서비스 계정의 권한 · 키, 429 면 할당량) → 위 소비 대조 질의의 「기한36시간안」이 줄었나.
-  적체면 여러 번 Run 한다(한 번에 100 줄, 차례가 돈다).
-- **`store-consume-overdue` 의 「기한 지남 N건(Run 대상 아님)」** — 구매 뒤 3일이 지났다. Run 해도 바뀌지 않는다 — Google 이 돌려줬을 결제다. 본다: 무효 대조 크론
-  (`/api/cron/store-voided`)의 응답 · 로그(`store-voided <건수>`)와 위 「스토어 환불 집계」 질의에 그 무효가 적혔나, Play Console → Order management 의 그 주문이 환불됐나.
-  무효가 적히면 그 줄은 셈에서 빠지고, 지급 7일이 지나도 빠진다. 무효가 안 오는데 Play Console 은 환불이면 무효 대조(통지 · 목록)가 멈춘 것이다 — 이 문단 앞의 `play notification` · `store-voided` 줄로 본다.
+- **`store-consume-urgent`**(「소비를 못 끝냈고 가장 이른 기한까지 36시간이 안 남았거나 넘겼다」 — 앱 · 통지 · 크론이 못 끝낸 순간) · **`store-consume-overdue` 의
+  「가장 이른 기한 36시간 안 N건」 · 「가장 이른 기한 지남(실제 기한 미확인, 다시 소비 계속) N건」** · **「다시 소비할 줄 N건」이 100 을 넘음** — 다시 소비한다.
+  Vercel → Cron Jobs 에 `/api/cron/store-consume` 가 있나 → **Run** → 응답(403 이면 `CRON_SECRET`, 503 이면 열쇠 · DB, 500 이면 답의 `failed` · `gone` · `waiting` — Google 이
+  401 · 403 이면 결제 검증 서비스 계정의 권한 · 키, 429 면 할당량) → 위 소비 대조 질의의 두 칸이 줄었나. 적체면 여러 번 Run 한다(한 번에 100 줄, 차례가 돈다). Run 이
+  그 줄을 「취소확인」으로 옮기면 Google 이 끝났다고 답한 것이다 — 아래 줄로 간다. 지급 4일이 지나면 크론이 그 줄을 더 받지 않는다(실제 기한은 지급 뒤 3일 안이다).
+- **`store-consume-overdue` 의 「Google 이 취소 · 환불로 확인 N건」** — 크론이 다시 물어 「구매」가 아니라는 답을 받았는데 무효가 아직 안 적혔다. Run 할 것은 없다. 본다:
+  무효 대조 크론(`/api/cron/store-voided`)의 응답 · 로그(`store-voided <건수>`)와 위 「스토어 환불 집계」 질의에 그 무효가 적혔나, Play Console → Order management 의 그 주문.
+  무효가 적히면 그 줄은 셈에서 빠진다. 무효가 하루 넘게 안 오면 무효 대조(통지 · 목록)가 멈춘 것이다 — 이 문단 앞의 `play notification` · `store-voided` 줄로 본다.
 
 Pub/Sub 구독의 「Unacked messages」가 쌓이면 문이 503 을 주고 있다는 뜻이다. 차지백 검토 요청(`refund review`)은 받기만 한다 — 답하지 않는다(ADR 0230).
 
