@@ -38,7 +38,7 @@
 | 메인에서 쓰던 로컬 DB 가 갑자기 비었다 | 다른 에이전트가 부른 `db:reset` 의 대상이 **메인 스택**이었다 | `db:reset` 앞에 `npm run stack:slot -- --auto` 를 밟고, 부르기 전에 대상 스택(`SAJU_STACK_ID`)이 제 것인지 본다 |
 | `supabase test db` 뒤에 psql 로 `plan()` · `ok()` 를 부르면 함수가 없다 | 그 명령이 pgTAP 확장을 지우고 끝난다 | 손으로 돌릴 때는 `create extension if not exists pgtap` 을 다시 부른다 |
 | 스택을 다시 안 세우고 함수 하나만 바꿔 재고 싶다(돌연변이 · 고치기 전 재현) | 지금 DB 를 고치면 다음 시험까지 번진다 | 같은 스택의 psql 에서 `create database <복제> template postgres`(원본에 접속이 없어야 한다) 뒤 복제에만 `create or replace function` 을 넣어 재고 `drop database` 한다 |
-| `npm test` 를 나란히 돌리는 동안 vitest 일부가 붉고 단독으로 돌리면 초록이다(calibration · seoul-date · comparison 등) | 시간 초과다. 시험은 5초나 그 시험의 30초를, `calibration` 은 `beforeAll` 30초를 넘는다 — 그래서 시험 넷이 건너뛰어지고 파일만 붉다. **JSON 보고의 `STACK_TRACE_ERROR` 도 시간 초과다** — Vitest 가 붙이는 스택이라 원문은 텍스트 보고에서 읽는다. 일꾼 수가 늘수록 훅이 느려진다(측정한 값은 `docs/notes/2026-11-08-docs-diet.md`) | `--maxWorkers=4` 로 다시 돈다 — 벽시계는 느려지지 않는다. 단독에서도 붉거나 메시지가 시간 초과가 아니면 코드로 본다 |
+| `npm test` 를 나란히 돌리는 동안 vitest 일부가 붉고 단독으로 돌리면 초록이다(calibration · seoul-date · comparison 등) | 시간 초과다. 시험은 5초나 그 시험의 30초를, `calibration` 은 `beforeAll` 30초를 넘는다 — 그래서 시험 넷이 건너뛰어지고 파일만 붉다(`docs/agents/test-map/kinds.md` 「시험 하나의 시간」). **JSON 보고의 `STACK_TRACE_ERROR` 도 시간 초과다** — Vitest 가 붙이는 스택이라 원문은 텍스트 보고에서 읽는다. 일꾼 수가 늘수록 무거운 시험이 느려진다 — 로컬 일꾼은 2026-11-16 부터 config 가 넷까지로 둔다(잰 값은 같은 절) | `--maxWorkers` 를 넷보다 높여 돌렸으면 빼고 다시 돈다. 넷으로도 붉으면 무거운 실행(`next build` · e2e · 다른 `npm test`)이 겹쳤는지 보고 `node scripts/heavy.mjs npm test` 로 다시. 단독에서도 붉거나 메시지가 시간 초과가 아니면 코드로 본다 |
 | `npx tsc --noEmit` 이 `LayoutProps` 를 못 찾는다 | `next typegen` 이 먼저 돌아야 한다 | `npm run typecheck` 로 돌린다 |
 | `scripts/ui-seed.mjs` 가 시드 중에 멈춘다 · 그림이 「테스트가 끝났어요」를 찍는다 | 로컬 일정 줄이 지난 날짜다. 씨앗의 종료일은 오늘에서 센다(`BETA_ENDS_ON = checkEndsOn()` — 서울 날짜로 다다음 달 1일, 흐름 검사 · 로그인 e2e 와 같은 규칙, #1027). 그래서 그림의 종료일은 운영 종료일(G-62)과 다를 수 있다 | `node scripts/ui-seed.mjs` 로 일정 줄을 다시 세우고 찍힌 날짜를 본다. 날짜를 손으로 고치지 않는다 |
 | `scripts/ui-seed.mjs` 가 「가입을 못 끝냈습니다」로 멈춘다(`app_user_nickname_is_unique`) | 기본 닉네임이 `벗` + 꼬리표(`tag`) 끝 네 자리다 — 같은 꼬리표로 두 번 만들거나, 같은 스택에 남은 앞 시드와 끝 네 자리가 겹치면 유일 색인에 걸린다 | 사람마다 `nickname` 을 따로 주거나 꼬리표를 바꾼다. 스택을 지우지 않는다 |
@@ -47,7 +47,6 @@
 | `npx playwright test e2e/match.spec.ts` 만 붉다 | 그 spec 은 직렬이어야 한다 | `npm run test:e2e:match`(`--workers=1`) |
 | `db query` 가 `cannot insert multiple commands` | prepared statement 라 `begin; … rollback;` 을 못 받는다 | 트랜잭션이 필요하면 `docker exec -i supabase_db_<SAJU_STACK_ID> psql -U postgres -d postgres` |
 | `db diff --linked` 가 비밀번호를 묻는다 | 다른 인증 경로다(`db query --linked` 는 된다) | 양쪽에 같은 질의를 돌려 손으로 견준다 |
-| 기계가 바쁠 때(빌드 · 다른 워크트리의 시험과 겹칠 때) `npm test` 의 엔진 시험이 `Test timed out in 5000ms` 로 붉다 | 로컬 `testTimeout` 은 5초다(`vitest.config.mts`, CI 는 30초) — 코드가 아니라 일꾼 수가 부하를 키운다. CI 에서는 안 나서 시한을 안 고쳤다(측정한 값은 `docs/notes/2026-11-08-docs-diet.md`) | `npx vitest run --maxWorkers=4` 로 다시. 그래도 붉으면 그때 코드를 본다 |
 | `timeout` 이 없다 | macOS | coreutils 의 `gtimeout` |
 | `pkill -f <글자>` 를 부르자 명령이 결과 없이 죽는다 | 그 글자가 제 셸의 명령줄에도 들어 있어 셸이 저를 죽인다 | 띄울 때 받은 PID 로 끈다. 글자로 찾아야 하면 첫 글자를 묶는다 — `pkill -f '[e]xpo start'`. 남이 띄운 프로세스는 끄지 않는다 |
 | 넓은 `pkill -f` 뒤 다른 에이전트의 재기가 갑자기 끊긴다 · 가짜 서버가 응답하지 않는다 | 나란히 도는 에이전트의 가짜 서버(`fake-server.mjs`) · Metro 까지 글자가 맞아 함께 죽는다 | 띄울 때 받은 PID 나 제 포트의 PID 로만 끈다. 포트도 저마다 잡는다(`FAKE_PORT` · `--port`) |

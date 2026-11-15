@@ -1,4 +1,5 @@
 import { readFileSync } from 'node:fs';
+import { availableParallelism } from 'node:os';
 import { dirname, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -84,5 +85,15 @@ export default defineConfig({
      * 시험의 달아남을 잡는 자리가 함께 헐거워진다.
      */
     testTimeout: process.env.CI ? 30_000 : 5_000,
+    /**
+     * **로컬 일꾼은 넷까지다.** CI 는 vitest 의 기본(코어 − 1)을 그대로 쓴다 — 러너 하나에 실행 하나고, 거기서는 시간 초과가 안 났다.
+     *
+     * 기본은 이 기계(8코어 16스레드)에서 일꾼 열다섯이다. 시험 하나가 혼자일 때보다 3~4배 느려져 모집단 훅이 30초에, 전수
+     * 시험이 5초에 닿았다 — 혼자 7초인 `calibration` 훅이 기본 전체 실행에서 27~28초, 서울 날짜 전수가 1.7초에서 3.7~5.3초(셋에 하나
+     * 붉음). 넷이면 11초 · 1.9초이고 벽시계는 94~95초로 기본(88~98초)과 같다. 다른 워크트리의 실행과 겹치면 기본 둘은 시간 초과
+     * 열셋 · 훅 둘로 붉고(153초), 넷 둘은 다 초록이다(138초). 잰 값은 `docs/agents/test-map/kinds.md` 「시험 하나의 시간」(2026-11-16).
+     * 늘려 보려면 `--maxWorkers=<n>` 이 이것을 덮는다.
+     */
+    maxWorkers: process.env.CI ? undefined : Math.min(4, Math.max(1, availableParallelism() - 1)),
   },
 });
