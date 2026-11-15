@@ -5333,6 +5333,7 @@ export type Database = {
       watch_cron: { Args: never; Returns: number }
       watch_photo_sweep: { Args: { p_now?: string }; Returns: number }
       watch_reading_credit_grants: { Args: never; Returns: number }
+      watch_store_consume: { Args: { p_now?: string }; Returns: number }
       write_person_input: {
         Args: {
           p_actor: string
