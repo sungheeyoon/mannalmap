@@ -310,7 +310,8 @@ update retention.reading_payment set hold_reason = null, held_at = null where or
 
 **무엇이 서 있나.** 앱(Android)의 풀이권 화면이 Google 결제창을 열고, 돌려받은 구매 토큰을 앱의 문 `POST /api/mobile/credits/purchase` 에 넘긴다.
 서버가 `purchases.products.get` 으로 확인한 뒤 `grant_store_purchase` 로 **토큰마다 한 번** 지급하고 `purchases.products.consume` 으로 소비한다 — 앱은
-소비하지 않는다. 결제 중 앱이 꺼진 구매는 앱을 켤 때 · 풀이권 화면을 열 때 다시 보내고, RTDN 의 「팔렸다」 통지로도 선다. 무효(이용자의 Play 환불 · Google 의
+소비하지 않는다. 결제 중 앱이 꺼진 구매는 앱을 켤 때 · 풀이권 화면을 열 때 다시 보내고, RTDN 의 「팔렸다」 통지로도 선다. **지급은 섰는데 소비가 실패한 구매는
+날마다의 크론 `/api/cron/store-consume`(매일 21:07 UTC)이 Google 에 다시 묻고 「구매」일 때만 소비한다**(ADR 0253 — 지급된 지 4일 안, 이른 차례로 25 줄, 취소 · 무효는 소비하지 않는다). 무효(이용자의 Play 환불 · Google 의
 취소 · 차지백 · 3일 미소비 자동 환불 · 운영자의 Play Console 전액 환불)는 통지 문 `POST /api/store/google-play`(Pub/Sub 푸시)와 날마다의 대조
 `/api/cron/store-voided`(Voided Purchases API, 지난 사흘)가 `void_store_purchase` 로 적는다 — **그 결제가 준 장수만큼, 계정에 남은 유료 풀이권에서(그 묶음 → 늦게 산 묶음), 바닥 0 으로 회수한다**
 (ADR 0230 추기 A, `20270114090000` — 운영 DB 에 있다, 2026-11-07). 무료 · 예외 몫과 다음 구매에서는 빼지 않는다. 주문은 장부 그대로(`provider = 'google_play'`, 주문 번호 `rdo_…`, 거래 번호 = Google 주문 번호 `GPA.…`)라
@@ -338,7 +339,7 @@ update retention.reading_payment set hold_reason = null, held_at = null where or
    | `reading_credits_5` | 풀이권 5장 | 19,900원 |
    | `reading_credits_20` | 풀이권 20장 | 59,000원 |
 
-   소비형이다 — 서버가 소비한다. **판매 국가는 대한민국만 고른다**(ADR 0230 — 장부 · 고지가 원화 전제). 상품의 가격 · 국가와 앱의 국가/지역(Production → Countries / regions) 둘 다
+   소비형이다 — 서버가 소비한다. **multi-quantity(한 번에 여럿 사기)는 켜지 않는다** — 서버는 수량 1 만 지급하고, 2 이상이면 지급 · 소비하지 않아 Google 이 사흘 뒤 돌려준다(ADR 0253). **판매 국가는 대한민국만 고른다**(ADR 0230 — 장부 · 고지가 원화 전제). 상품의 가격 · 국가와 앱의 국가/지역(Production → Countries / regions) 둘 다
 3. **결제 검증용 서비스 계정** — Google Cloud → IAM & Admin → Service Accounts → 새 계정 → Keys → JSON. 같은 프로젝트에서 **Google Play Android Developer API** 를 켠다.
    Play Console → Users and permissions → Invite → 그 이메일 → 이 앱에 **View financial data, orders, and cancellation survey responses** · **Manage orders and subscriptions** 둘만.
    키를 Vercel 의 `GOOGLE_PLAY_SERVICE_ACCOUNT_JSON` 에 — **운영자**
@@ -349,7 +350,9 @@ update retention.reading_payment set hold_reason = null, held_at = null where or
    「… and all voided purchases」 만 고르면 결제 중 앱이 꺼진 구매를 통지로 못 줍는다). audience · 서비스 계정 이메일을 Vercel 의 둘에 — **운영자**
 5. **`db push` — 했다(2026-11-07).** `20270113090000` · `20270114090000`(걷는 장수 · 시험 · 프로모션 구매) · `20270114100000`(구매 제한 기록 1년 — `notice-v17` 게시 02:37 KST 뒤 02:55, ADR 0098)이
    모두 운영 DB 에 있다. 그날은 `npm run db:remote -- --purpose "스토어 구매 표 확인" "select count(*) from public.store_purchase"` 가 0 인지만 본다
-6. **배포** — 「배포」 답 뒤(`deploy.md`). 그 뒤 Monetization setup 의 **Send test message** → Vercel 로그에 `play notification: refused` · `not configured` 가 없다(문은 204)
+6. **배포** — 「배포」 답 뒤(`deploy.md`). 그 뒤 Monetization setup 의 **Send test message** → Vercel 로그에 `play notification: refused` · `not configured` 가 없다(문은 204).
+   다시 소비 크론은 `20270119090000` 의 `db push` 뒤에 배포한다(크론이 그 문을 부른다). Vercel → Settings → Cron Jobs 에 `/api/cron/store-consume` 가 서고, **Run** 한 번의
+   응답이 200 · `{"consumed":0,…}`(키 전이면 `{"configured":false}`)인지 본다 — **운영자**
 7. **라이선스 테스터** — Play Console → Settings → License testing 에 시험할 구글 계정. 시험 구매는 돈이 안 오가고 장부에 `is_test` 로 선다. Play 프로모션 코드로 받은 구매(`purchaseType = 1`)는 금액 0 의 주문으로 서고(`is_promo`) 매출 · 환불 금액에 안 든다(ADR 0230 추기)
 
 **샌드박스 확인 — 그날 밟고 값을 #937 에 적는다**(#937 「끝났다고 말할 조건」). 장부는 개인을 안 가리키는 질의로 본다(아래).
@@ -382,9 +385,10 @@ update retention.reading_payment set hold_reason = null, held_at = null where or
 npm run db:remote -- --purpose "스토어 환불 집계" \
   "select date_trunc('day', v.recorded_at)::date as 날, count(*), sum(v.refunded_amount) as 돌려준돈, sum(v.share_amount) as 우리셈, sum(v.credits_revoked) as 걷은장수, sum(v.credits_kept) as 못걷은장수 from public.store_purchase_void v join public.store_purchase s on s.id = v.purchase_id where not s.is_test and not s.is_promo group by 1 order by 1 desc limit 30"
 
-# 지급 · 소비 — 소비 안 된 지급이 하루 넘게 남았나(0 이어야 한다. 남으면 앱이 다시 보내거나 3일 뒤 Google 이 돌려준다)
+# 지급 · 소비 — 소비가 안 적힌 지급을 나이별로(무효는 뺀다). 하루 안은 크론이 아직 안 돈 것일 수 있다. 1 ~ 2일이 남으면 크론이 실패하고 있다(아래 로그),
+# 2 ~ 4일은 다음 크론이 기한(3일) 안의 마지막이다 — 크론을 손으로 Run 하고 로그를 본다. 4일 넘은 줄은 크론이 더 안 본다 — Google 이 돌려줬으면 무효 대조가 적는다(ADR 0253)
 npm run db:remote -- --purpose "스토어 구매 소비 대조" \
-  "select count(*) filter (where consumed_at is null and granted_at < now() - interval '1 day') as 소비안됨, count(*) filter (where is_test) as 시험구매, count(*) as 전체 from public.store_purchase"
+  "select count(*) filter (where consumed_at is null and voided_at is null and granted_at >= now() - interval '1 day') as 하루안, count(*) filter (where consumed_at is null and voided_at is null and granted_at < now() - interval '1 day' and granted_at >= now() - interval '2 days') as 하루이틀, count(*) filter (where consumed_at is null and voided_at is null and granted_at < now() - interval '2 days' and granted_at >= now() - interval '4 days') as 이틀나흘, count(*) filter (where consumed_at is null and voided_at is null and granted_at < now() - interval '4 days') as 나흘넘음, count(*) filter (where is_test) as 시험구매, count(*) as 전체 from public.store_purchase"
 ```
 
 **반복 악용 — 검토 뒤에만 제한한다**(자동 제한 없음). 무엇을 반복으로 볼지 정한 수는 없다 — 운영자가 본다.
@@ -424,7 +428,9 @@ SQL
 남는 것 · 이어지는 때 · 잘못 이어졌을 때는 `docs/ops/runbook/erasure.md` 「구매 제한 기록」.
 
 **통지 · 크론이 이상하면.** Vercel 로그의 `play notification: refused <까닭>`(403 — audience · 서비스 계정이 Vercel 값과 다르다), `not configured`(503 — 셋 중 하나가 비었다),
-`store ledger: <문> <코드>`(DB), `store purchase: consume failed <상태>`(소비 실패 — 다음에 다시 소비한다), `store-voided <건수>`(대조가 새로 적은 무효). Pub/Sub 구독의
+`store ledger: <문> <코드>`(DB), `store ledger: grant refused 22023`(남의 토큰 — 끝난 답, 앱 · 통지는 200), `store purchase: consume failed <상태>`(소비 실패 — 그날 크론이 다시 소비한다),
+`store purchase: unreadable purchase state` · `quantity is not one <수>`(Google 의 답이 문서 밖 — 지급 · 소비하지 않았다. 수량이면 Play Console 의 multi-quantity 가 켜졌는지 보고, 그 주문은 콘솔에서 먼저 환불해도 된다),
+`store-voided <건수>`(대조가 새로 적은 무효), `store-consume {…}`(다시 소비한 수 — `failed` 가 있으면 크론이 500), `store-consume: overdue <수>`(지급된 지 이틀 넘은 줄을 못 끝냈다 — 위 소비 대조 질의와 로그의 `consume failed` 상태를 본다). Pub/Sub 구독의
 「Unacked messages」가 쌓이면 문이 503 을 주고 있다는 뜻이다. 차지백 검토 요청(`refund review`)은 받기만 한다 — 답하지 않는다(ADR 0230).
 
 #### 결제 알림 · 결제 이상 알림 (G-23 ⑥ · G-110 ④)

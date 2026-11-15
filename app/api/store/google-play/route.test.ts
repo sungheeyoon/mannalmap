@@ -71,7 +71,7 @@ describe('RTDN 통지 문', () => {
   it('팔렸다는 통지는 확인 · 지급 · 소비 — 사람은 결제창의 계정 표지다', async () => {
     api.getPurchase.mockResolvedValue({
       ok: true,
-      value: { purchaseState: 0, consumptionState: 0, orderId: 'GPA.2', purchaseTimeMillis: null, obfuscatedExternalAccountId: 'u-9', purchaseType: null },
+      value: { purchaseState: 0, consumptionState: 0, quantity: 1, orderId: 'GPA.2', purchaseTimeMillis: null, obfuscatedExternalAccountId: 'u-9', purchaseType: null },
     });
     api.consume.mockResolvedValue({ ok: true, value: null });
     ledger.grant.mockResolvedValue({ outcome: 'granted', credits: 5 });

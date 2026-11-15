@@ -13,7 +13,7 @@ import { PLAY_PACKAGE_NAME } from '@/src/lib/reading/store-products';
  * 2026-11-06). 라이브러리를 들이지 않고 OAuth 2.0 서비스 계정 흐름(JWT → 토큰)을 `node:crypto` 로 밟는다 — 애플 키(`apple-tokens.ts`)와 같은 꼴.
  *
  * 쓰는 문 넷(https://developers.google.com/android-publisher/api-ref/rest/v3, 2026-11-06):
- * - `purchases.products.get` — 구매 상태(0 구매 · 1 취소 · 2 보류) · 소비 상태 · 주문 번호 · 계정 표지 · 구매 갈래(0 시험)
+ * - `purchases.products.get` — 구매 상태(0 구매 · 1 취소 · 2 보류) · 소비 상태 · 수량 · 주문 번호 · 계정 표지 · 구매 갈래(0 시험)
  * - `purchases.products.consume` — 「if your app has a secure backend, we recommend that you use Purchases.products:consume」. 소비가
  *   승인을 겸한다 — 3일 안에 안 하면 Google 이 돌려준다
  * - `orders.refund`(`revoke=true`) — 지급하지 않을 구매(제한된 계정)는 3일을 기다리지 말고 돌려준다(Google 「Never call … consume on
@@ -54,12 +54,21 @@ export function assertionOf(account: PlayServiceAccount, now: Date): string {
   return `${head}.${body}.${base64url(signature)}`;
 }
 
-/** Google 이 돌려준 구매 — 우리가 쓰는 칸만 */
+/**
+ * Google 이 돌려준 구매 — 우리가 쓰는 칸만. 칸의 뜻은 `ProductPurchase` 문서 그대로다
+ * (https://developers.google.com/android-publisher/api-ref/rest/v3/purchases.products, 2026-11-15 확인 — ADR 0253).
+ * 정수 칸은 문서가 `integer` 로 적고, 정한 값 밖이거나 칸이 없으면 **`null`(모른다)** 이다 — 「구매됨」 · 「소비 전」으로 메우지 않는다.
+ */
 export type PlayPurchase = {
-  /** 0 구매 · 1 취소 · 2 보류 */
-  readonly purchaseState: number;
-  /** 0 소비 전 · 1 소비됨 */
-  readonly consumptionState: number;
+  /** 「0. Purchased 1. Canceled 2. Pending」 — 칸이 없거나 그 밖의 값이면 `null`. `null` 은 지급하지 않는다(`settle.ts`) */
+  readonly purchaseState: 0 | 1 | 2 | null;
+  /** 「0. Yet to be consumed 1. Consumed」 — 칸이 없거나 그 밖의 값이면 `null` */
+  readonly consumptionState: 0 | 1 | null;
+  /**
+   * 한 구매의 수 — 「If not present, the quantity is 1.」 그래서 칸이 없으면 1 이다. 1 이상의 정수가 아니면 `null`.
+   * 우리는 상품마다 한 번에 하나만 판다(Play Console 의 multi-quantity 를 켜지 않는다) — 1 이 아니면 지급하지 않는다(`settle.ts`)
+   */
+  readonly quantity: number | null;
   readonly orderId: string | null;
   readonly purchaseTimeMillis: number | null;
   /** 앱이 결제창을 열 때 실은 계정 표지 — 우리 계정 id 다 */
@@ -106,10 +115,22 @@ const numberOf = (value: unknown): number | null => {
 };
 const textOf = (value: unknown): string | null => (typeof value === 'string' && value.length > 0 ? value : null);
 
+/** 정수 칸 — 수든 수를 적은 글자든 정수일 때만. 문서는 `integer` 로 적지만 int64 칸처럼 글자로 와도 읽는다 */
+const integerOf = (value: unknown): number | null => {
+  const n = numberOf(value);
+  return n !== null && Number.isInteger(n) ? n : null;
+};
+const oneOf = <T extends number>(value: unknown, allowed: readonly T[]): T | null => {
+  const n = integerOf(value);
+  return n !== null && (allowed as readonly number[]).includes(n) ? (n as T) : null;
+};
+
 export function purchaseOf(body: Record<string, unknown>): PlayPurchase {
+  const quantity = body.quantity === undefined || body.quantity === null ? 1 : integerOf(body.quantity);
   return {
-    purchaseState: numberOf(body.purchaseState) ?? 0,
-    consumptionState: numberOf(body.consumptionState) ?? 0,
+    purchaseState: oneOf(body.purchaseState, [0, 1, 2] as const),
+    consumptionState: oneOf(body.consumptionState, [0, 1] as const),
+    quantity: quantity !== null && quantity >= 1 ? quantity : null,
     orderId: textOf(body.orderId),
     purchaseTimeMillis: numberOf(body.purchaseTimeMillis),
     obfuscatedExternalAccountId: textOf(body.obfuscatedExternalAccountId),

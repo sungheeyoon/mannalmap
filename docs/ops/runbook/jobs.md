@@ -74,8 +74,8 @@ group by 1, 2 order by 1, 2;
 「청소가 멈췄을 때 · 못 지운 줄이 쌓일 때」. `20270108154600`(ADR 0218)이 `sanction-retention-purge`(매일 05:17 UTC — 정지된 채 떠난 로그인의 제재 기록 1년, `docs/ops/runbook/erasure.md` 「제재 기록」)를 세운다. `20270114100000`(ADR 0230)이 `store-restriction-retention-purge`(매일 05:13 UTC — 구매가 제한된 채 떠난 로그인의 기록 1년, `docs/ops/runbook/erasure.md` 「구매 제한 기록」)를 세운다 — 운영에는 2026-11-07 02:55 KST `db push` 로 만들어졌다(`13 5 * * *`, 켜짐). `20261230090000`(G-118)이 `ops-heartbeat`(10분마다, 매시 5 · 15 · 25 … 분 — `cron-watch` 와 5분 엇갈림)를
 세운다 — 바깥 감시에 「살아 있다」를 보낸다. Vault 의 `ops_heartbeat_url` 이 없으면 아무것도 안 한다(아래 「바깥 감시」).
 `20270107100000`(ADR 0217)이 `chat-purge-watch`(매일 06:57 UTC)를 세운다.
-Vercel Cron 은 다섯이다(`vercel.json`) — 복구기의 하루 청소(`/api/cron/reading`), 접속기록 반출(`/api/cron/audit-export`,
-ADR 0105), 사진 청소의 예비(`/api/cron/photo-sweep`, 하루 한 번 — 매시 실행은 pg_cron 이 깨운다, ADR 0204), 닫힌 방의 메시지 파기(`/api/cron/chat-purge`, ADR 0217 — `chat-purge-watch` 가 남은 말을 본다), Google Play 무효 대조(`/api/cron/store-voided`, 매일 20:57 UTC, ADR 0230 — 서비스 계정 키가 없으면 `{ configured: false }` 로 끝난다, `docs/ops/runbook/credits.md` 「Google Play 결제」). 다섯은 `cron-watch` 가 못 본다 —
+Vercel Cron 은 여섯이다(`vercel.json`) — 복구기의 하루 청소(`/api/cron/reading`), 접속기록 반출(`/api/cron/audit-export`,
+ADR 0105), 사진 청소의 예비(`/api/cron/photo-sweep`, 하루 한 번 — 매시 실행은 pg_cron 이 깨운다, ADR 0204), 닫힌 방의 메시지 파기(`/api/cron/chat-purge`, ADR 0217 — `chat-purge-watch` 가 남은 말을 본다), Google Play 무효 대조(`/api/cron/store-voided`, 매일 20:57 UTC, ADR 0230 — 서비스 계정 키가 없으면 `{ configured: false }` 로 끝난다, `docs/ops/runbook/credits.md` 「Google Play 결제」), 소비가 안 된 Google Play 지급의 다시 소비(`/api/cron/store-consume`, 매일 21:07 UTC, ADR 0253 — 못 끝낸 줄이 있으면 500, 같은 런북). 여섯은 `cron-watch` 가 못 본다 —
 반출은 pg_cron 의 `audit-export-watch` 가 매일 본다(시도나 성공이 이틀 넘게 없으면 알린다), 사진 청소는 `photo-sweep-watch` 가 본다(끝까지 돈
 실행이 세 시간 넘게 없으면 — 어느 쪽이 깨웠든).
 **`failed` 가 한 줄이라도 있으면 그 잡은 지금 안 도는 것이다.**

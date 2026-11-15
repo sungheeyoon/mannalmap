@@ -2,7 +2,7 @@ import { generateKeyPairSync, verify } from 'node:crypto';
 
 import { describe, expect, it, vi } from 'vitest';
 
-import { assertionOf, playApi, playServiceAccountFromEnv, refundTypeOf, voidedOf } from './play-api';
+import { assertionOf, playApi, playServiceAccountFromEnv, purchaseOf, refundTypeOf, voidedOf } from './play-api';
 
 /** Play Developer API — 가짜 `fetch` 로 토큰 받기 · 문 넷의 주소와 답 옮기기를 잰다 */
 const { privateKey, publicKey } = generateKeyPairSync('rsa', { modulusLength: 2048 });
@@ -50,7 +50,7 @@ describe('문 넷', () => {
     const api = playApi(account, { fetch: send as unknown as typeof fetch });
     expect(await api.getPurchase('reading_credits_3', 'tok')).toEqual({
       ok: true,
-      value: { purchaseState: 0, consumptionState: 0, orderId: 'GPA.1', purchaseTimeMillis: 1762400000000, obfuscatedExternalAccountId: 'u-1', purchaseType: 0 },
+      value: { purchaseState: 0, consumptionState: 0, quantity: 1, orderId: 'GPA.1', purchaseTimeMillis: 1762400000000, obfuscatedExternalAccountId: 'u-1', purchaseType: 0 },
     });
     expect(send.mock.calls.filter(([url]) => url === 'https://oauth2.googleapis.com/token')).toHaveLength(1);
   });
@@ -93,5 +93,37 @@ describe('무효 한 줄', () => {
     expect(part?.voidedQuantity).toBe(1);
     expect(full && refundTypeOf(full)).toBe(1);
     expect(part && refundTypeOf(part)).toBe(2);
+  });
+});
+
+describe('구매 한 줄 — ProductPurchase 의 계약대로 (ADR 0253)', () => {
+  const base = { purchaseState: 0, consumptionState: 0, orderId: 'GPA.1' };
+
+  it('수량 칸이 없으면 1 이다 — 「If not present, the quantity is 1.」', () => {
+    expect(purchaseOf(base).quantity).toBe(1);
+    expect(purchaseOf({ ...base, quantity: null }).quantity).toBe(1);
+    expect(purchaseOf({ ...base, quantity: 3 }).quantity).toBe(3);
+    expect(purchaseOf({ ...base, quantity: '2' }).quantity).toBe(2);
+  });
+
+  it('수량이 1 이상의 정수가 아니면 모른다(null)', () => {
+    for (const quantity of [0, -1, 1.5, 'many', true, {}]) {
+      expect(purchaseOf({ ...base, quantity }).quantity, JSON.stringify(quantity)).toBeNull();
+    }
+  });
+
+  it('구매 상태는 0 · 1 · 2 만 읽고, 칸이 없거나 그 밖이면 모른다(null) — 「구매됨」으로 메우지 않는다', () => {
+    expect(purchaseOf({ ...base, purchaseState: 2 }).purchaseState).toBe(2);
+    expect(purchaseOf({ ...base, purchaseState: '1' }).purchaseState).toBe(1);
+    for (const purchaseState of [undefined, null, 3, -1, 0.5, 'purchased']) {
+      expect(purchaseOf({ ...base, purchaseState }).purchaseState, String(purchaseState)).toBeNull();
+    }
+  });
+
+  it('소비 상태는 0 · 1 만 읽고, 칸이 없거나 그 밖이면 모른다(null) — 「소비 전」으로 메우지 않는다', () => {
+    expect(purchaseOf({ ...base, consumptionState: 1 }).consumptionState).toBe(1);
+    for (const consumptionState of [undefined, null, 2, 'yes']) {
+      expect(purchaseOf({ ...base, consumptionState }).consumptionState, String(consumptionState)).toBeNull();
+    }
   });
 });

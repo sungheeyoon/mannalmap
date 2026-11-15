@@ -1048,6 +1048,8 @@ select is(
     'set_person_chart',
     'settle_push_delivery',
     'store_purchase_refusal',
+    /** 지급은 섰는데 소비가 안 된 구매를 크론이 다시 소비할 목록 — 토큰 · 상품 · 지급 시각만(`20270119090000`, ADR 0253 · `99_store_purchase_consume`) */
+    'store_purchases_to_consume',
     /** 얼린 작업을 집는 문 — 조회가 아니라 `frozen` → `preparing` 전이다(ADR 0071 · #66) */
     'take_reading_job',
     'taste_continuation_of_run',

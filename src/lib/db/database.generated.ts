@@ -5177,6 +5177,14 @@ export type Database = {
         Returns: boolean
       }
       store_purchase_refusal: { Args: { p_user_id: string }; Returns: string }
+      store_purchases_to_consume: {
+        Args: { p_limit: number }
+        Returns: {
+          granted_at: string
+          product_id: string
+          purchase_token: string
+        }[]
+      }
       survey_sole_conflict: {
         Args: { p_picked: string[]; p_sole: string[] }
         Returns: boolean
