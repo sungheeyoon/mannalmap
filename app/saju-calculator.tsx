@@ -5,20 +5,20 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { MEMBER_SIGN_IN_ASK } from '@/src/lib/brand/guide';
 
-import { BirthFields, focusBirthGap } from './birth-form';
+import { BirthFields } from './birth-form';
 import { CopyLinkButton } from './copy-link';
 import { calculateChart } from '@/src/lib/input/chart';
 import { useHashParams, writeParams } from './hash-query';
 import { SavePersonForReading } from './save-for-reading';
 import { useSessionKnown, useSignedIn } from './signed-in';
 import { BUTTON_PRIMARY } from './ui/buttons';
-import { FormError } from './ui/form-error';
+import { useSectionErrors } from './ui/section-error';
 import { SajuView } from './saju/view';
 import { sajuViewModelOf, type SajuViewModel } from '@/src/lib/saju/view';
 import { Taste } from './taste/taste';
+import { birthSectionErrors } from '@/src/lib/input/section-errors';
 import {
   DEFAULT_QUERY,
-  missingAnswer,
   queryFromSearchParams,
   toSearchParams,
   type Query,
@@ -75,20 +75,16 @@ export function SajuCalculator({ outline }: { outline: readonly string[] }) {
    */
   const [viewedAt, setViewedAt] = useState(() => Date.now());
 
-  const missing = missingAnswer(form);
+  const formRef = useRef<HTMLFormElement>(null);
 
   /**
-   * **눌러 본 적이 있는가** — 빠진 칸을 말할 시점을 정하는 값.
+   * **눌러 본 뒤에만 말한다** — 고칠 문단마다 그 아래 한 줄(ADR 0252).
    *
-   * 버튼을 잠가 두었다. 그러면 왜 안 눌리는지 묻게 되고, 옆에 답을 적어 두어도 그것은
-   * **아직 아무것도 안 한 사람에게 하는 말**이라 회색으로 늘 서 있었다. 잠긴 버튼은
-   * 키보드 포커스도 안 받아서, 화면을 못 보는 사람에게는 이유가 있는 자리 자체가 없다.
-   *
-   * 그래서 누르게 두고 **누른 뒤에** 말한다. 그때의 문장은 안내가 아니라 실제로 일어난
-   * 거절이므로 경고 색으로 선다 — 「경고는 되돌릴 수 없는 누름 직전에 선다」와 같은
-   * 규율의 다른 쪽 면이다(ADR 0028). 채워지면 스스로 사라진다.
+   * 버튼을 잠가 두었다. 그러면 왜 안 눌리는지 묻게 되고, 옆에 답을 적어 두어도 그것은 **아직 아무것도 안 한 사람에게 하는 말**이라
+   * 회색으로 늘 서 있었다. 잠긴 버튼은 키보드 포커스도 안 받는다. 그래서 누르게 두고 **누른 뒤에** 말한다 — 걸린 문단이 다 함께
+   * 서고, 맨 위 붉은 칸으로 데려간다. 그 문단의 칸을 고치면 그 줄만 걷힌다.
    */
-  const [tried, setTried] = useState(false);
+  const sections = useSectionErrors(birthSectionErrors(form), formRef);
 
   // 주소가 밖에서 바뀌면(뒤로가기·앞으로가기·링크로 들어옴) 폼도 그 값으로 되돌린다.
   // 화면은 주소가 가리키는 사주를 보여주는데 폼만 옛 입력을 들고 있으면,
@@ -144,31 +140,26 @@ export function SajuCalculator({ outline }: { outline: readonly string[] }) {
   return (
     <div className="flex flex-col gap-6">
       <form
+        ref={formRef}
+        noValidate
         onSubmit={(event) => {
           event.preventDefault();
           /*
             **거절은 여기서 한 번만 한다.** 버튼의 잠금이 아니라 제출이 막으므로,
             엔터로 보내든 버튼을 누르든 같은 답을 받는다.
           */
-          if (missing !== null) {
-            setTried(true);
-            // 고칠 칸으로 데려간다 — 붉어진 칸, 없으면 아직 빈 칸
-            focusBirthGap(event.currentTarget);
-            return;
-          }
-          setTried(false);
+          if (!sections.press()) return;
           submit(form);
         }}
         // 로그인 전에는 첫 화면 종이의 아래 토막이다 — 머리(`home-hero.tsx`)와 한 장으로 선다. 회원(`/saju`)은 흰 카드다(ADR 0132)
         className={signedIn ? `${CARD} flex flex-col gap-5` : `${PAPER_BOTTOM} flex flex-col gap-3`}
       >
         {/* 칸은 같고 바탕만 다르다 — 회원의 폼은 흰 카드 안이라 판을 다시 그리지 않는다(ADR 0132 덧) */}
-        <BirthFields value={form} onChange={setForm} surface={signedIn ? 'flat' : 'panel'} />
+        <BirthFields value={form} onChange={setForm} surface={signedIn ? 'flat' : 'panel'} errors={sections} />
 
         <div className="flex flex-wrap items-center gap-3">
           <button
             type="submit"
-            aria-describedby={tried && missing !== null ? 'natal-missing' : undefined}
             className={`${BUTTON_PRIMARY} w-full ${signedIn ? 'sm:w-auto' : 'mt-1'}`}
           >
             {/*
@@ -177,19 +168,6 @@ export function SajuCalculator({ outline }: { outline: readonly string[] }) {
             */}
             {query !== null ? '수정하고 다시 보기' : signedIn ? '사주 보기' : '무료로 내 사주 보기'}
           </button>
-
-          {/*
-            **눌렀는데 못 간 이유는 단추 줄 바로 아래 한 줄이다**(`FormError`). 단추와 링크 복사가 나란히 서는 넓은 화면에서는 그 줄
-            아래(`sm:order-last`), 둘이 위아래로 서는 폰에서는 주 단추 바로 아래다. 단추를 감싸면 링크 복사가 다음 줄로 밀린다(#1149 에서 되돌림).
-            `-mt-3` 은 줄 사이 `gap-3` 을 지워 단추와의 간격을 `FormError` 의 8 로 맞춘다
-          */}
-          {tried && missing !== null && (
-            <div className="-mt-3 w-full sm:order-last">
-              <FormError show id="natal-missing">
-                {missing}
-              </FormError>
-            </div>
-          )}
 
           {/*
             **이미 쓰는 사람의 길은 주 단추 바로 아래 한 줄이다**(ADR 0226) — 생년월일을 안 적어도 들어가 홈에 선다(`/auth`, 목적지 기본값).

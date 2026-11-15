@@ -6,6 +6,7 @@ import { pickable, stepTo, type Step } from '@/src/lib/people/pick';
 import type { Element } from '@/src/lib/saju';
 
 import { Icon } from './ui/icons';
+import { INVALID_RING, invalidProps } from './ui/section-error';
 import { FaceSymbol } from './ui/stem-symbol';
 
 /**
@@ -69,6 +70,7 @@ export function PersonCombobox({
   taken,
   chosenId,
   onChoose,
+  invalid,
 }: {
   label: string;
   hideLabel?: boolean;
@@ -78,6 +80,8 @@ export function PersonCombobox({
   taken: string | null;
   chosenId: string;
   onChoose: (personId: string) => void;
+  /** 누른 뒤 이 칸의 문단이 걸렸다 — 붉은 테. 값은 문단 아래 줄의 `id` 다(ADR 0252) */
+  invalid?: string;
 }) {
   const base = useId();
   const inputId = `${base}-input`;
@@ -191,6 +195,7 @@ export function PersonCombobox({
           aria-expanded={listed}
           aria-controls={listId}
           aria-activedescendant={listed && current >= 0 ? optionId(current) : undefined}
+          {...invalidProps(invalid !== undefined, invalid)}
           autoComplete="off"
           autoCorrect="off"
           autoCapitalize="off"
@@ -210,7 +215,7 @@ export function PersonCombobox({
           }}
           onKeyDown={onKeyDown}
           onBlur={close}
-          className={`h-11 w-full rounded-cell border border-border-strong bg-surface pr-10 text-field font-semibold placeholder:font-normal placeholder:text-secondary focus:border-border-strong focus:ring-2 focus:ring-accent-wash ${
+          className={`h-11 w-full rounded-cell border border-border-strong bg-surface pr-10 text-field font-semibold placeholder:font-normal placeholder:text-secondary focus:border-border-strong focus:ring-2 focus:ring-accent-wash ${INVALID_RING} ${
             chosen !== undefined && typed === null ? 'pl-11' : 'pl-4'
           }`}
         />

@@ -1,9 +1,9 @@
 import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
-import { AppState, ScrollView, StyleSheet, View } from 'react-native';
+import { AppState, StyleSheet, View } from 'react-native';
 
 import { safeReturnPath } from '@consent/return-path';
-import { DEFAULT_QUERY, missingAnswer } from '@input/query';
+import { DEFAULT_QUERY } from '@input/query';
 import { ELEMENTS } from '@saju';
 
 import { useClient } from '@/auth/connected';
@@ -14,6 +14,7 @@ import { homeUnreachable, readHome, readRunning, type Home } from '@/home/read';
 import { MatchOpenAlert } from '@/home/match-open-alert';
 import { SelfCard } from '@/home/self-card';
 import { BirthFields, useBirthForm } from '@/people/birth-fields';
+import { SectionScrollView, useSectionErrors } from '@/ui/section-error';
 import { openParticipation, saveFailureOf, saveSelfPerson } from '@/reading/chart-writes';
 import { followRefusal } from '@/reading/panel';
 import { ElementSymbol } from '@/ui/element-symbol';
@@ -73,9 +74,9 @@ export default function HomeScreen() {
 
   if (home === null) return <LoadingDots />;
   return (
-    <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled" automaticallyAdjustKeyboardInsets>
+    <SectionScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled" automaticallyAdjustKeyboardInsets>
       <Body home={home} retry={load} />
-    </ScrollView>
+    </SectionScrollView>
   );
 }
 
@@ -156,9 +157,11 @@ function NoSelf({ nickname, onSaved }: { nickname: string; onSaved: () => void }
   const form = useBirthForm({ ...DEFAULT_QUERY, name: nickname });
   const [saving, setSaving] = useState(false);
   const [failure, setFailure] = useState<string | null>(null);
-  const missing = missingAnswer(form.query);
+  /* 단추를 잠그지 않는다 — 누르면 걸린 문단마다 그 아래에서 말하고 맨 위 칸으로 데려간다(ADR 0160 · 0252) */
+  const sections = useSectionErrors(form.errors);
 
   const save = async () => {
+    if (!sections.press()) return;
     setSaving(true);
     setFailure(null);
     const answer = await saveSelfPerson(client, form.query);
@@ -184,9 +187,8 @@ function NoSelf({ nickname, onSaved }: { nickname: string; onSaved: () => void }
           <WordText style={styles.strong}>{nickname}</WordText> 님의 출생 정보를 입력해 주세요.
         </WordText>
       </View>
-      <BirthFields form={form} showName={false} />
-      <PrimaryButton label={saving ? '저장하는 중…' : '내 사주로 저장'} onPress={() => void save()} disabled={missing !== null || saving} />
-      {missing !== null && <WordText style={styles.meta}>{missing}</WordText>}
+      <BirthFields form={form} showName={false} errors={sections} />
+      <PrimaryButton label={saving ? '저장하는 중…' : '내 사주로 저장'} onPress={() => void save()} disabled={saving} />
       {failure !== null && <WordText accessibilityRole="alert" style={styles.failureText}>저장하지 못했어요. {failure}</WordText>}
     </Paper>
   );

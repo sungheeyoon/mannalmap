@@ -1,3 +1,5 @@
+import type { SectionError } from '../input/section-errors';
+
 import { NOTICE_ACK_LABEL, NOTICE_AGAIN_NOTE } from './notice';
 
 /**
@@ -36,20 +38,25 @@ export const SIGNUP_AGE_LABEL = '만 14세 이상입니다';
 const ACK_MISSING = `‘${NOTICE_ACK_LABEL}’에 표시해 주세요.`;
 const AGE_MISSING = `‘${SIGNUP_AGE_LABEL}’에 표시해 주세요.`;
 
-export type SignupGap = { field: SignupField | 'age' | 'ack'; message: string };
+/** 가입 폼의 문단 — 닉네임 · 만 14세 확인 · 안내 확인(ADR 0252) */
+export type SignupSection = SignupField | 'age' | 'ack';
 
-/** 눌렀을 때 **위에서부터 처음 걸린 칸 하나** — 칸을 고치면 말도 다음 칸으로 넘어간다 */
-export function signupGap(form: {
+/**
+ * 눌렀을 때 **걸린 문단 전부** — 위에서부터 닉네임 → 만 14세 → 안내 확인. 화면은 문단마다 그 아래에 한 줄을 세우고 맨 위로
+ * 데려간다(`useSectionErrors`). 그 문단을 고치면 그 줄만 걷힌다.
+ */
+export function signupSectionErrors(form: {
   /** `missingNickname` 의 답 — 이름을 안 묻는 사람은 `null` */
   nicknameGap: string | null;
   /** 만 14세 이상이라고 표시했나(`SIGNUP_AGE_LABEL`) */
   fourteen: boolean;
   acknowledged: boolean;
-}): SignupGap | null {
-  if (form.nicknameGap !== null) return { field: 'nickname', message: form.nicknameGap };
-  if (!form.fourteen) return { field: 'age', message: AGE_MISSING };
-  if (!form.acknowledged) return { field: 'ack', message: ACK_MISSING };
-  return null;
+}): SectionError<SignupSection>[] {
+  const errors: SectionError<SignupSection>[] = [];
+  if (form.nicknameGap !== null) errors.push({ section: 'nickname', message: form.nicknameGap });
+  if (!form.fourteen) errors.push({ section: 'age', message: AGE_MISSING });
+  if (!form.acknowledged) errors.push({ section: 'ack', message: ACK_MISSING });
+  return errors;
 }
 
 /**

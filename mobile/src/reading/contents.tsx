@@ -7,6 +7,7 @@ import { KEEP_VIEW } from '@/ui/keep-view';
 import { Card } from '@/ui/surfaces';
 import { COLOR, FONT, RADIUS, TYPE } from '@/ui/tokens';
 import { WordText } from '@/ui/word-text';
+import { SectionScrollHost } from '@/ui/section-error';
 
 /** 대장 all-18 — 접힌 줄은 「목차 N개」, 낭독 이름은 기다리는 동안의 목차(`waiting.tsx`)와 같은 「풀이 목차」 */
 export const CONTENTS_TITLE = '목차';
@@ -68,9 +69,12 @@ export function ReadingScrollView({ children, ...props }: Omit<ScrollViewProps, 
 
   return (
     <ContentsContext.Provider value={contents}>
-      <ScrollView ref={scroll} onScroll={onScroll} scrollEventThrottle={32} {...props}>
-        {children}
-      </ScrollView>
+      {/* 글 끝 의견에서 누른 뒤 안 고른 질문으로 데려간다(ADR 0252) */}
+      <SectionScrollHost scroll={scroll}>
+        <ScrollView ref={scroll} onScroll={onScroll} scrollEventThrottle={32} {...props}>
+          {children}
+        </ScrollView>
+      </SectionScrollHost>
     </ContentsContext.Provider>
   );
 }

@@ -8,8 +8,10 @@ import {
 } from './session';
 
 import {
+  NOTICE_ACK_LABEL,
   NOTICE_NOT_READY,
   NOTICE_VERSION,
+  SIGNUP_AGE_LABEL,
   asKoreanDay,
   noticeEdition,
 } from '@/src/lib/consent';
@@ -168,27 +170,33 @@ test.describe('시작하기 전에', () => {
     /*
       **확인 없이는 안 넘어간다.** 버튼 하나가 확인을 겸하던 자리를 칸으로 꺼냈다 —
       가입 폼에서는 버튼이 「가입」을 뜻하므로, 읽었다는 표시가 그 안에 섞이면 남는
-      기록이 무엇에 대한 것인지 흐려진다. 단추는 잠그지 않고, 누르면 위에서부터 처음 걸린
-      칸을 말하고 그 칸으로 초점을 옮긴다(2026-10-09 — 잠근 단추 옆에 닉네임 규칙만 서 있었다).
+      기록이 무엇에 대한 것인지 흐려진다. 단추는 잠그지 않고, 누르면 걸린 문단마다 그 아래에서
+      말하고 맨 위 칸으로 초점을 옮긴다(ADR 0252 — 전에는 단추 아래 한 줄이 처음 걸린 칸 하나를 말했다).
     */
     const start = page.getByRole('button', { name: '가입하고 시작하기' });
-    const gap = page.locator('#signup-gap');
-    /* 코드 칸은 없다(ADR 0225) — 처음 걸리는 칸은 닉네임이다 */
+    const ageLine = page.locator('#signup-age-line');
+    const gap = page.locator('#signup-ack-line');
+    /* 코드 칸은 없다(ADR 0225) — 맨 위에서 걸리는 칸은 닉네임이다 */
     await expect(page.getByLabel('테스트 코드')).toHaveCount(0);
     await start.click();
     await expect(page.getByLabel('닉네임')).toBeFocused();
+    await expect(page.locator('form [data-section-error]')).toHaveCount(3);
 
     await page.getByLabel('닉네임').fill(`벗${String(Date.now()).slice(-6)}`);
     await page.getByRole('button', { name: '중복 확인' }).click();
     await expect(page.getByText('사용할 수 있는 닉네임입니다.')).toBeVisible();
 
     await start.click();
-    await expect(gap).toHaveText('‘만 14세 이상입니다’에 표시해 주세요.');
-    await expect(page.getByRole('checkbox', { name: '만 14세 이상입니다' })).toBeFocused();
-    await page.getByRole('checkbox', { name: '만 14세 이상입니다' }).check();
+    await expect(ageLine).toHaveText(`‘${SIGNUP_AGE_LABEL}’에 표시해 주세요.`);
+    await expect(gap).toHaveText(`‘${NOTICE_ACK_LABEL}’에 표시해 주세요.`);
+    await expect(page.getByRole('checkbox', { name: SIGNUP_AGE_LABEL })).toBeFocused();
+    await page.getByRole('checkbox', { name: SIGNUP_AGE_LABEL }).check();
+    /* 고친 문단의 줄만 걷힌다 */
+    await expect(ageLine).toHaveCount(0);
+    await expect(gap).toBeVisible();
 
     await start.click();
-    await expect(gap).toHaveText('‘위 내용을 확인했습니다’에 표시해 주세요.');
+    await expect(gap).toHaveText(`‘${NOTICE_ACK_LABEL}’에 표시해 주세요.`);
     await expect(page.getByRole('checkbox', { name: /위 내용을 확인/ })).toBeFocused();
     await expect(page).toHaveURL(/\/signup/);
 

@@ -27,6 +27,7 @@ const ROOT = resolve(__dirname, '..');
 const ALLOWED_LIB_EDGES = new Set([
   'brand → reading',
   'consent → discovery',
+  'consent → input',
   'consent → presence',
   'consent → reading',
   'consent → saju',
@@ -40,7 +41,9 @@ const ALLOWED_LIB_EDGES = new Set([
   'matching → profile',
   'matching → reading',
   'matching → saju',
+  'people → input',
   'reading → discovery',
+  'reading → input',
   'reading → people',
   'reading → saju',
 ]);

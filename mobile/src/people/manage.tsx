@@ -3,13 +3,12 @@ import { StyleSheet, TextInput, View } from 'react-native';
 
 import { BUTTON_OFF_OPACITY } from '@design';
 import { NOTE_MAX, noteEdited } from '@input/edit';
-import { missingAnswer } from '@input/query';
 import type { PersonSlots } from '@people';
 import { endsWithBatchim } from '@saju-text/batchim';
 
 import { useClient } from '@/auth/connected';
 import { FailureLine } from '@/ui/failure-line';
-import { FormError } from '@/ui/form-error';
+import { useSectionErrors } from '@/ui/section-error';
 import { FieldLabel, PrimaryButton, SecondaryButton, TextButton } from '@/ui/parts';
 import { COLOR, FONT, RADIUS, TYPE } from '@/ui/tokens';
 import { ConfirmDialog, DialogText } from '@/ui/confirm-dialog';
@@ -93,8 +92,8 @@ function AddForm({ remaining, onCancel, onSaved }: { remaining: number | null; o
   const [failure, setFailure] = useState<string | null>(null);
   const [question, setQuestion] = useState<SameChartQuestion | null>(null);
   const [saving, setSaving] = useState(false);
-  const [tried, setTried] = useState(false);
-  const missing = missingAnswer(form.query);
+  /* 빠진 칸은 누른 뒤 걸린 문단마다 그 아래에서 말한다(ADR 0252) */
+  const sections = useSectionErrors(form.errorsWithName);
 
   const attempt = async (evenIfSameChart: boolean) => {
     setSaving(true);
@@ -126,11 +125,7 @@ function AddForm({ remaining, onCancel, onSaved }: { remaining: number | null; o
   };
 
   const save = () => {
-    if (missing !== null) {
-      setTried(true);
-      return;
-    }
-    setTried(false);
+    if (!sections.press()) return;
     void attempt(false);
   };
 
@@ -141,16 +136,13 @@ function AddForm({ remaining, onCancel, onSaved }: { remaining: number | null; o
         이 이름은 내 목록에만 보여요.
         {remaining !== null && remaining <= 5 && ` 앞으로 ${remaining}명 더 저장할 수 있어요.`}
       </WordText>
-      <BirthFields form={form} namePlaceholder="엄마" disabled={saving} />
+      <BirthFields form={form} namePlaceholder="엄마" disabled={saving} errors={sections} />
       <NoteField value={note} onChange={setNote} disabled={saving} />
       {question !== null ? (
         <SameChartAsk question={question} busy={saving} />
       ) : (
         <View style={styles.actions}>
-          <View>
-            <PrimaryButton label={saving ? '저장하는 중…' : '등록'} onPress={save} disabled={saving} />
-            <FormError show={tried && missing !== null}>{missing}</FormError>
-          </View>
+          <PrimaryButton label={saving ? '저장하는 중…' : '등록'} onPress={save} disabled={saving} />
           <SecondaryButton label="취소" onPress={onCancel} disabled={saving} />
         </View>
       )}

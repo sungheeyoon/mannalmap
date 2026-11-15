@@ -3,13 +3,13 @@ import { StyleSheet, View } from 'react-native';
 
 import { INPUT_EDIT_CHANGE_CONFIRM } from '@consent/index';
 import { samePillarInput } from '@input/edit';
-import { missingAnswer, type Query } from '@input/query';
+import type { Query } from '@input/query';
 
 import { useClient } from '@/auth/connected';
 import { editPersonInput, saveFailureOf } from '@/reading/chart-writes';
 import { followRefusal } from '@/reading/panel';
 import { FailureLine } from '@/ui/failure-line';
-import { FormError } from '@/ui/form-error';
+import { useSectionErrors } from '@/ui/section-error';
 import { PrimaryButton, TextButton } from '@/ui/parts';
 import { COLOR, FONT, RADIUS, TYPE } from '@/ui/tokens';
 import { Card } from '@/ui/surfaces';
@@ -48,11 +48,13 @@ export function EditInputForm({
   const [tried, setTried] = useState(false);
 
   const { query } = form;
-  const missing = missingAnswer(query);
+  /* 빈 칸 · 틀린 칸은 누른 뒤 그 문단 아래에서 말한다(ADR 0252) — 「바뀐 것이 없어요」는 칸의 오류가 아니라 곁의 말이다 */
+  const sections = useSectionErrors(editableName ? form.errorsWithName : form.errors);
+  const missing = (editableName ? form.errorsWithName : form.errors).length > 0;
   const nameChanged = editableName && query.name.trim() !== current.name.trim();
   const pillarsSame = samePillarInput(current, query);
   const unchanged = pillarsSame && !nameChanged;
-  const blocked = missing !== null || unchanged;
+  const blocked = missing || unchanged;
   const warn = tried && blocked;
 
   const save = async () => {
@@ -70,7 +72,8 @@ export function EditInputForm({
   };
 
   const press = () => {
-    if (blocked) {
+    if (!sections.press()) return;
+    if (unchanged) {
       setTried(true);
       return;
     }
@@ -91,19 +94,16 @@ export function EditInputForm({
         </View>
       )}
 
-      <BirthFields form={form} showName={editableName} />
+      <BirthFields form={form} showName={editableName} errors={sections} />
 
       {pillarsSame && (nameChanged || warn) && (
-        <WordText style={warn && unchanged && missing === null ? styles.warn : shared.meta}>
+        <WordText style={warn && unchanged && !missing ? styles.warn : shared.meta}>
           {nameChanged ? '이름만 바뀌었어요. 이름은 여덟 글자에 들어가지 않아서 출생 정보와 사주는 그대로예요.' : '바뀐 것이 없어요.'}
         </WordText>
       )}
 
       <View style={styles.actions}>
-        <View>
-          <PrimaryButton label={saving ? '저장하는 중…' : pillarsSame && nameChanged ? '이름 저장' : '변경 사항 저장'} onPress={press} disabled={saving} />
-          <FormError show={warn && missing !== null}>{missing}</FormError>
-        </View>
+        <PrimaryButton label={saving ? '저장하는 중…' : pillarsSame && nameChanged ? '이름 저장' : '변경 사항 저장'} onPress={press} disabled={saving} />
         <TextButton label="작성 그만두기" onPress={onCancel} disabled={saving} />
       </View>
 

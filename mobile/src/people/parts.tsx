@@ -1,6 +1,6 @@
 import { router, type Href } from 'expo-router';
 import type { ReactNode } from 'react';
-import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { KeyboardAvoidingView, Platform, Pressable, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { accountFailureOf, accountNoticeOf, type AccountState } from '@account/index';
@@ -16,6 +16,7 @@ import { alpha, COLOR, CONTROL, ELEMENT_TONE, FONT, mix, RADIUS, TYPE } from '@/
 import { StemSymbol } from '@/ui/stem-symbol';
 import { FailureLine } from '@/ui/failure-line';
 import { Scrim } from '@/ui/scrim';
+import { SectionScrollView } from '@/ui/section-error';
 import { CardFrame, SheetPanel } from '@/ui/surfaces';
 import { WordText } from '@/ui/word-text';
 
@@ -25,9 +26,10 @@ export const go = (path: string) => router.push(path as Href);
 /** 한 화면의 틀 — `bar` 는 스크롤 밖 맨 위 줄이다. `/me` 아래 틀이라 위는 머리나 맨 위 줄이, 아래는 탭이 안전 영역을 낸다 */
 export function ScreenFrame({ children, keyboard = false, bar }: { children: ReactNode; keyboard?: boolean; bar?: ReactNode }) {
   const body = (
-    <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled" keyboardDismissMode="on-drag">
+    /* 누른 뒤 걸린 문단으로 데려가는 스크롤(ADR 0252) — 안은 그대로 `ScrollView` 다 */
+    <SectionScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled" keyboardDismissMode="on-drag">
       {children}
-    </ScrollView>
+    </SectionScrollView>
   );
   return (
     <SafeAreaView style={styles.screen} edges={['left', 'right']}>

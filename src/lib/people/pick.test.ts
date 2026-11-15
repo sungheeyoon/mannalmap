@@ -1,6 +1,19 @@
 import { describe, expect, it } from 'vitest';
 
-import { FIND_FROM, dropUnlisted, findStatus, findsInList, matchesName, pickable, stepTo, stillListed } from './pick';
+import { DEFAULT_QUERY } from '../input/query';
+import { NAME_MISSING } from '../input/section-errors';
+import {
+  FIND_FROM,
+  SAME_PERSON_TWICE,
+  dropUnlisted,
+  findStatus,
+  findsInList,
+  matchesName,
+  pickable,
+  seatSectionErrors,
+  stepTo,
+  stillListed,
+} from './pick';
 
 const people = [
   { personId: 'me', label: '서연' },
@@ -159,5 +172,23 @@ describe('목록에서 빠진 사람의 칸', () => {
   it('목록이 비면 고른 칸은 모두 빈다', () => {
     const slots = { a: { from: 'saved', personId: 'me' }, b: { from: 'saved', personId: 'dad' } } as const;
     expect(dropUnlisted(slots, [])).toEqual({ a: { from: 'saved', personId: '' }, b: { from: 'saved', personId: '' } });
+  });
+});
+
+describe('궁합 한 칸의 문단 오류(ADR 0252)', () => {
+  const pool = [{ personId: 'p1', label: '엄마' }];
+  it('고르지 않은 칸은 고르는 칸의 말, 같은 사람 둘은 둘째 칸의 말', () => {
+    expect(seatSectionErrors({ from: 'saved', personId: '' }, { people: pool, who: '두 번째 사람' })).toEqual([
+      { section: 'pick', message: '두 번째 사람을 골라 주세요.' },
+    ]);
+    expect(seatSectionErrors({ from: 'saved', personId: 'p1' }, { people: pool, who: '두 번째 사람', sameAsOther: true })).toEqual([
+      { section: 'pick', message: SAME_PERSON_TWICE },
+    ]);
+    expect(seatSectionErrors({ from: 'saved', personId: 'p1' }, { people: pool, who: '첫 번째 사람' })).toEqual([]);
+  });
+
+  it('직접 입력 칸은 출생 정보의 문단이다 — 「첫 번째 사람의」를 앞에 붙이지 않는다', () => {
+    const errors = seatSectionErrors({ from: 'typed', query: { ...DEFAULT_QUERY, name: '' } }, { people: pool, who: '첫 번째 사람' });
+    expect(errors[0]).toEqual({ section: 'name', message: NAME_MISSING });
   });
 });

@@ -12,14 +12,14 @@ import { asPosix, filesUnder } from './ui/source-files';
 
 const KEPT: Readonly<Record<string, { count: number; why: string }>> = {
   'app/error-screen.tsx': { count: 1, why: '화면 전체의 오류 경계 — 화면 안의 줄이 아니다' },
-  /* 주 단추 바로 아래의 폼 오류 한 줄 — 첫 화면 · 궁합 · 사람 추가 · 출생 정보 수정 · 풀이 의견 · 가입이 이 부품 하나를 쓴다(운영자 2026-11-14) */
+  /* 주 단추 바로 아래의 오류 한 줄 — 칸과 상관없는 까닭만(칸의 오류는 문단 아래 `SectionErrorLine`, ADR 0252) */
   'app/ui/form-error.tsx': { count: 1, why: '폼 오류 한 줄 — 단추가 aria-describedby 로 가리킨다' },
   'app/saju-calculator.tsx': {
     count: 1,
     why: '계산이 거절한 입력을 결과 자리에 세우는 카드(고칠 입력을 말한다)',
   },
   'app/me/compat/screen.tsx': { count: 1, why: '같은 사람을 둘 고른 것을 결과 자리에 세우는 카드 — 고를 것을 말한다' },
-  'app/signup/form.tsx': { count: 2, why: '칸 곁의 거절 · 검증 문장 — 칸이 aria-describedby 로 가리킨다' },
+  'app/signup/form.tsx': { count: 1, why: '닉네임 칸 곁의 서버 거절 — 칸이 aria-describedby 로 가리킨다' },
   /* 옮길 자리인데 다른 작업이 맡았다 — 줄어들기만 한다 */
   'app/me/chat/composer.tsx': { count: 1, why: '채팅 작업이 맡은 파일 — 옮길 자리(ADR 0164 「덧」)' },
 };

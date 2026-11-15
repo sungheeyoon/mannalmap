@@ -5,7 +5,7 @@ import { useRef, useState, useTransition } from 'react';
 import {
   FEEDBACK_COMMENT,
   FEEDBACK_FOLDED_NOTE,
-  FEEDBACK_LOCKED_NOTE,
+  feedbackSectionErrors,
   FEEDBACK_SCALE,
   FEEDBACK_SCOPE_NOTE,
   FEEDBACK_THANKS,
@@ -29,7 +29,7 @@ import { TYPE_NAME } from '../../ui/surfaces';
 import { submitReadingFeedback } from './actions';
 import type { ReadingTarget } from './target';
 import { FailureLine } from '../../ui/failure-line';
-import { FormError } from '../../ui/form-error';
+import { SectionErrorLine, invalidProps, useSectionErrors } from '../../ui/section-error';
 
 /**
  * 읽고 나서 답하는 자리 — **글 바로 아래**다.
@@ -71,9 +71,9 @@ export function ReadingFeedback({
   const [comment, setComment] = useState(given?.comment ?? '');
   const [failure, setFailure] = useState<string | null>(null);
   const [saving, startSaving] = useTransition();
-  /** 다 고르기 전에 「의견 보내기」를 눌러 봤나 — 곁의 말이 도움말에서 경고로 바뀌는 때(ADR 0160 의 3) */
-  const [tried, setTried] = useState(false);
   const form = useRef<HTMLFormElement>(null);
+  /** 다 고르기 전에 「의견 보내기」를 누르면 안 고른 질문마다 그 아래에서 말한다(ADR 0252) */
+  const sections = useSectionErrors(feedbackSectionErrors({ usefulness, fit, feltLength }), form);
   /* 첫 질문의 대상(나를 · 이 사람을 · 두 사람을)은 풀이의 kind 가 고른다 — 열과 보낼 수 있는 조건은 그대로다 */
   const questions = feedbackQuestions(target.kind);
 
@@ -96,20 +96,11 @@ export function ReadingFeedback({
   const ready = usefulness !== null && fit !== null && feltLength !== null;
 
   /**
-   * **단추를 잠그지 않는다**(운영자 결정 2026-10-18 G-97 ④, ADR 0160 의 3) — 다 고르기 전에 누르면 곁의 말을 경고 색으로 세우고
-   * 아직 안 고른 첫 질문으로 데려간다.
+   * **단추를 잠그지 않는다**(운영자 결정 2026-10-18 G-97 ④, ADR 0160 의 3) — 다 고르기 전에 누르면 안 고른 질문마다 그 아래에 붉은
+   * 줄을 세우고 맨 위 안 고른 질문으로 데려간다(ADR 0252).
    */
-  const refuse = () => {
-    setTried(true);
-    const gap = usefulness === null ? `useful-${runId}` : fit === null ? `fit-${runId}` : `length-${runId}`;
-    form.current?.querySelector<HTMLInputElement>(`input[name="${gap}"]`)?.focus();
-  };
-
   const send = () => {
-    if (!ready) {
-      refuse();
-      return;
-    }
+    if (!sections.press() || usefulness === null || fit === null || feltLength === null) return;
     setFailure(null);
 
     startSaving(async () => {
@@ -191,20 +182,31 @@ export function ReadingFeedback({
             name={`useful-${runId}`}
             question={questions.usefulness}
             value={usefulness}
-            onChange={setUsefulness}
+            onChange={(next) => {
+              setUsefulness(next);
+              sections.edit('usefulness');
+            }}
+            error={sections.shown.usefulness}
           />
           <Scale
             name={`fit-${runId}`}
             question={questions.perceivedFit}
             value={fit}
-            onChange={setFit}
+            onChange={(next) => {
+              setFit(next);
+              sections.edit('fit');
+            }}
+            error={sections.shown.fit}
           />
         </div>
 
         <div className="flex flex-col gap-6 border-t border-border pt-6">
           <fieldset>
             <legend className="float-left mb-4 w-full text-body font-semibold">분량은 어땠나요?</legend>
-            <div className="grid grid-cols-3 gap-2 clear-both">
+            <div
+              {...invalidProps(sections.shown.length !== undefined, `length-${runId}-line`)}
+              className="grid grid-cols-3 gap-2 clear-both"
+            >
               {FELT_LENGTHS.map((choice) => (
                 <Chip
                   key={choice}
@@ -212,12 +214,17 @@ export function ReadingFeedback({
                   name={`length-${runId}`}
                   type="radio"
                   picked={feltLength === choice}
-                  onPick={() => setFeltLength(choice)}
+                  wrong={sections.shown.length !== undefined}
+                  onPick={() => {
+                    setFeltLength(choice);
+                    sections.edit('length');
+                  }}
                 >
                   {FELT_LENGTH_LABEL[choice]}
                 </Chip>
               ))}
             </div>
+            <SectionErrorLine id={`length-${runId}-line`} message={sections.shown.length} />
           </fieldset>
 
           <fieldset className="border-t border-border pt-6">
@@ -273,25 +280,17 @@ export function ReadingFeedback({
         )}
 
         <div className="-mx-5 -mb-5 border-t border-border bg-surface-soft px-5 py-4 sm:-mx-7 sm:-mb-6 sm:px-7">
-          {/* 단추는 넓은 화면에서 오른쪽 끝이다 — 오류 줄만 그 아래 왼쪽에 선다(`FormError`) */}
+          {/* 단추는 넓은 화면에서 오른쪽 끝이다. 안 고른 질문은 그 질문 아래에서 말한다(ADR 0252) */}
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-end">
             <button
               type="submit"
               disabled={saving}
               aria-disabled={!ready || undefined}
-              aria-describedby={!ready && tried ? `feedback-locked-${runId}` : undefined}
               className={`${BUTTON_PRIMARY} w-full sm:w-auto`}
             >
               {saving ? '보내는 중…' : '의견 보내기'}
             </button>
           </div>
-          {/*
-            **다 고르기 전에 누르면 까닭이 주 단추 바로 아래 선다**(2026-10-10 화면 점검 B20 · 대장 26) — 셋을 다 골라야 보내지는데 어느 것이
-            필수인지 말이 없어 왜 안 눌리는지 몰랐다. 단추는 가라앉되 누름을 받고(`aria-disabled`), 누르기 전에는 줄이 없다(운영자 2026-11-14)
-          */}
-          <FormError show={!ready && tried} id={`feedback-locked-${runId}`}>
-            {FEEDBACK_LOCKED_NOTE}
-          </FormError>
         </div>
       </div>
     </form>
@@ -306,11 +305,14 @@ function Scale({
   question,
   value,
   onChange,
+  error,
 }: {
   name: string;
   question: FeedbackQuestion;
   value: FeedbackScore | null;
   onChange: (next: FeedbackScore) => void;
+  /** 누른 뒤 이 질문이 비었다 — 칩이 붉고 판 아래에 한 줄(ADR 0252) */
+  error?: string;
 }) {
   return (
     /*
@@ -323,7 +325,7 @@ function Scale({
     */
     <fieldset className="rounded-card bg-surface-soft p-4">
       <legend className="float-left mb-4 w-full text-body font-semibold">{question.label}</legend>
-      <div className="grid grid-cols-5 gap-2 clear-both">
+      <div {...invalidProps(error !== undefined, `${name}-line`)} className="grid grid-cols-5 gap-2 clear-both">
         {FEEDBACK_SCALE.map((score) => (
           <Chip
             key={score}
@@ -331,6 +333,7 @@ function Scale({
             name={name}
             type="radio"
             picked={value === score}
+            wrong={error !== undefined}
             onPick={() => onChange(score)}
             /* 숫자만 읽어 주면 무엇을 매기는지 안 들린다 — 양 끝은 이름으로 읽힌다 */
             label={
@@ -349,6 +352,7 @@ function Scale({
         <span>{question.low}</span>
         <span>{question.high}</span>
       </div>
+      <SectionErrorLine id={`${name}-line`} message={error} />
     </fieldset>
   );
 }
@@ -366,12 +370,15 @@ function Chip({
   picked,
   onPick,
   label,
+  wrong = false,
   children,
 }: {
   id: string;
   name: string;
   type: 'radio' | 'checkbox';
   picked: boolean;
+  /** 누른 뒤 이 묶음이 비었다 — 붉은 테 2px */
+  wrong?: boolean;
   onPick: () => void;
   label?: string;
   children: React.ReactNode;
@@ -382,7 +389,9 @@ function Chip({
       className={`relative flex min-h-11 min-w-11 cursor-pointer items-center justify-center rounded-full border px-3.5 py-2 text-center text-note active:scale-[0.97] has-[:focus-visible]:outline has-[:focus-visible]:outline-3 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-[color-mix(in_srgb,var(--accent)_55%,transparent)] ${
         picked
           ? 'border-accent bg-accent font-semibold text-on-accent'
-          : 'border-border bg-surface text-foreground hover:border-border-strong'
+          : wrong
+            ? 'border-danger bg-surface text-foreground shadow-[0_0_0_1px_var(--danger)]'
+            : 'border-border bg-surface text-foreground hover:border-border-strong'
       }`}
     >
       <input

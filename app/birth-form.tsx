@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useId, useState } from 'react';
 
 import {
   CALENDARS,
@@ -16,7 +16,10 @@ import { dateRefusal } from '@/src/lib/input/chart';
 import { ADVANCED_SETTINGS } from '@/src/lib/input/copy';
 import { BIRTH_CITY_OPTIONS, BIRTH_DIGIT_LABEL, BIRTH_SELECT_LABEL, DEFAULT_QUERY, NAME_MAX, TIME_BASES, TIME_BASIS, type Query } from '@/src/lib/input/query';
 
+import type { BirthSection } from '@/src/lib/input/section-errors';
+
 import { Icon } from './ui/icons';
+import { SectionErrorLine, invalidProps } from './ui/section-error';
 import styles from './birth-form.module.css';
 import { ChoiceField, SelectField, cx } from './birth-choices';
 import { DateFields, TimeFields } from './birth-digits';
@@ -41,9 +44,21 @@ import { convertedLine } from '@/src/lib/input/entry';
  *
  * 그래서 년·월·일과 시·분을 각각 숫자로 적게 한다.
  *
- * **적은 숫자는 폼이 지우지 않는다.** 달력을 바꾸든 없는 날을 적든 칸의 숫자는 그대로 서고, 어긋난 칸만 붉어진다
- * (`dateRefusal`) — 무엇이 틀렸는지는 버튼 곁의 문장이 말하고(`missingAnswer`), 누르면 그 칸으로 초점이 간다(`focusBirthGap`).
+ * **적은 숫자는 폼이 지우지 않는다.** 달력을 바꾸든 없는 날을 적든 칸의 숫자는 그대로 선다. 무엇이 틀렸는지는 누른 뒤에 그
+ * 문단 아래 한 줄이 말하고 어긋난 칸이 붉다(`errors`, ADR 0252).
+ *
+ * ## 문단
+ *
+ * 오류 줄은 문단(칸 몇 줄의 묶음)의 마지막 줄 아래 왼쪽에 선다 — 이름 · 성별 줄 아래, 양력 · 음력 · 음력 윤달 줄 아래, 시 · 분 줄
+ * (「모름」이면 출생 시각 줄) 아래. 출생지는 기본값이 있어 걸리지 않는다. 판정은 `birthSectionErrors`(`src/lib/input/section-errors.ts`),
+ * 보여 줄 줄과 고치면 걷는 일은 쓰는 화면의 `useSectionErrors`(`app/ui/section-error.tsx`)가 들고 여기로 넘긴다.
  */
+
+/** 폼을 쓰는 화면이 넘기는 문단 오류 — 보여 줄 줄(`shown`)과 그 문단의 칸을 고쳤다는 알림(`edit`) */
+export type BirthErrors = {
+  shown: Partial<Record<BirthSection, string>>;
+  edit: (section: BirthSection) => void;
+};
 
 /**
  * 폼은 **칸 모양 한 벌**이고 이 폼을 쓰는 화면이 전부 같은 칸이다(ADR 0132 덧). 치수는 `birth-form.module.css` 머리에
@@ -56,28 +71,13 @@ import { convertedLine } from '@/src/lib/input/entry';
  * - **숫자 칸**(생년월일 · 시각)은 단위(년 · 월 · 일 · 시 · 분)를 칸 안 오른쪽에 든다(`DigitsField` · `NumberField`).
  */
 
-/**
- * 고칠 칸으로 데려간다 — 붉어진 칸, 없으면 아직 빈 칸. 데려갔으면 `true`.
- *
- * 폼을 쓰는 화면이 누름을 받았는데 넘어가지 못할 때 부른다. 라디오 · 잠긴 칸은 빼고 적는 칸만 본다.
- */
-export function focusBirthGap(scope: ParentNode | null | undefined): boolean {
-  const fields = [
-    ...(scope?.querySelectorAll<HTMLInputElement>(
-      'input:not([type=hidden]):not([type=radio]):not([type=checkbox]):not(:disabled)',
-    ) ?? []),
-  ];
-  const target = fields.find((one) => one.getAttribute('aria-invalid') === 'true') ?? fields.find((one) => one.value === '');
-  target?.focus();
-  return target !== undefined;
-}
-
 export function BirthFields({
   value,
   onChange,
   surface,
   namePlaceholder,
   showName = true,
+  errors,
 }: {
   value: Query;
   onChange: (next: Query) => void;
@@ -92,9 +92,23 @@ export function BirthFields({
   namePlaceholder?: string;
   /** 본인은 계정 닉네임으로 부르므로 출생 정보에서 이름을 다시 묻지 않는다 */
   showName?: boolean;
+  /** 누른 뒤의 문단 오류 — 없으면 아무 칸도 붉지 않다 */
+  errors?: BirthErrors;
 }) {
   const panel = surface === 'panel' && styles.panel;
-  const set = <K extends keyof Query>(key: K, next: Query[K]) => onChange({ ...value, [key]: next });
+  const shown = errors?.shown ?? {};
+  const lineId = useId();
+  const lineOf = (section: BirthSection) => `${lineId}-${section}`;
+  /** 칸이 어느 문단의 것인가 — 고치면 그 문단의 줄만 걷힌다 */
+  const sectionOf = (key: keyof Query): BirthSection | null =>
+    key === 'name' || key === 'gender' ? 'name' : key === 'date' || key === 'calendar' ? 'date' : key === 'hourKnown' || key === 'time' ? 'hour' : null;
+  const edited = (section: BirthSection | null) => {
+    if (section !== null) errors?.edit(section);
+  };
+  const set = <K extends keyof Query>(key: K, next: Query[K]) => {
+    edited(sectionOf(key));
+    onChange({ ...value, [key]: next });
+  };
 
   /** 한 폼에서 펼치는 칸은 하나만 열린다 — 다른 칸을 누르면 앞의 것이 접힌다 */
   const [open, setOpen] = useState<SelectKey | null>(null);
@@ -112,7 +126,7 @@ export function BirthFields({
    * 달력을 바꿔도 **날짜는 그대로다.** 양력 1908년을 음력으로 옮기면 그 해는 음력 표 밖(1912~)이지만, 지우지 않고
    * 해 칸을 붉힌다 — 지우면 사용자가 다시 적어야 하고, 무엇이 틀렸는지는 버튼 곁의 문장이 말한다(ADR 0132 「2026-10-11 덧」).
    */
-  const chooseCalendar = (calendar: Calendar) => onChange({ ...value, calendar });
+  const chooseCalendar = (calendar: Calendar) => set('calendar', calendar);
 
   // 미리보기도 계산과 **같은 함수**를 부른다. 폼이 따로 변환하면 화면에 보인
   // 양력과 계산에 들어간 양력이 갈릴 수 있다.
@@ -138,6 +152,7 @@ export function BirthFields({
                 maxLength={NAME_MAX}
                 /* 이 칸은 대개 남의 이름이다(「엄마」 · 궁합 상대) — 브라우저가 내 이름을 채우지 않게 한다 */
                 autoComplete="off"
+                {...invalidProps(shown.name !== undefined, lineOf('name'))}
               />
             </label>
           )}
@@ -148,8 +163,16 @@ export function BirthFields({
             onPick={pick('gender')}
             options={GENDERS.map((gender) => ({ value: gender, label: GENDER_KO[gender] }))}
           />
+          {/* 문단 「이름 · 성별」의 줄 — 그 줄 아래 왼쪽 */}
+          <SectionErrorLine id={lineOf('name')} message={shown.name} className={styles.sectionError} />
 
-          <DateFields value={value} onDate={(date) => set('date', date)} refused={refused} />
+          <DateFields
+            value={value}
+            onDate={(date) => set('date', date)}
+            refused={refused}
+            error={shown.date !== undefined}
+            lineId={lineOf('date')}
+          />
 
           {/*
             **달력은 날짜 바로 아래다.** 「1984-10-05」는 양력인지 음력인지가 정해져야 비로소 하루를 가리키고,
@@ -163,8 +186,20 @@ export function BirthFields({
             onPick={chooseCalendar}
             options={CALENDARS.map((calendar) => ({ value: calendar, label: CALENDAR_KO[calendar] }))}
           />
+          {/* 문단 「생년월일」의 줄 — 양력 · 음력 · 음력 윤달 줄 아래 */}
+          <SectionErrorLine id={lineOf('date')} message={shown.date} className={styles.sectionError} />
 
-          <TimeFields value={value} onChange={onChange} />
+          {/* 문단 「출생 시각」의 줄은 시 · 분 줄 아래다 — 칸의 숫자를 아는 `TimeFields` 가 세운다 */}
+          <TimeFields
+            value={value}
+            onChange={(next) => {
+              edited('hour');
+              onChange(next);
+            }}
+            error={shown.hour}
+            lineId={lineOf('hour')}
+            lineClassName={styles.sectionError}
+          />
 
           {/*
             **출생지는 폼 안에 선다** — 진태양시의 경도라 계산에 들고(운영자 2026-09-29 「출생지도 폼에 넣어야」),
@@ -185,7 +220,8 @@ export function BirthFields({
           계산 전에.** 사용자가 아는 것은 음력 날짜뿐인데, 우리가 무엇을 양력으로 잡았는지 못 보면 잘못 골랐다는
           것을 결과 화면에 가서야 알게 된다.
         */}
-        {converted !== null && (
+        {/* 못 바꾼 까닭은 누른 뒤에는 생년월일 문단 아래 줄이 같은 말을 한다 — 두 번 세우지 않는다 */}
+        {converted !== null && (converted.ok || shown.date === undefined) && (
           <p
             role={converted.ok ? undefined : 'alert'}
             // 색으로만 가르지 않는다 — 못 바꾼 줄은 문장 자체가 이유를 말한다.

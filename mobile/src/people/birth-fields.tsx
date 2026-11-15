@@ -5,11 +5,13 @@ import { BUTTON_OFF_OPACITY } from '@design';
 import { dateRefusal } from '@input/chart';
 import { convertedLine, dateOfParts, limitsOf, splitDate, splitTime, timeOfParts } from '@input/entry';
 import { ADVANCED_SETTINGS, HOUR_UNKNOWN_HINT } from '@input/copy';
+import { birthSectionErrors, dateDigitWrong, timeDigitWrong, type BirthSection } from '@input/section-errors';
 import { BIRTH_CITY_OPTIONS, BIRTH_DIGIT_LABEL, BIRTH_SELECT_LABEL, DEFAULT_QUERY, HOUR_UNKNOWN_CHOICE, NAME_MAX, TIME_BASES, TIME_BASIS, type Query } from '@input/query';
 import { CALENDARS, CALENDAR_KO, GENDERS, GENDER_KO, SUPPORTED_YEAR_RANGE, type CityName, type LateNightRule } from '@saju';
 
 import { FoldIcon } from '@/ui/icons';
 import { Choices, DigitField, Field, FieldLabel, Select } from '@/ui/parts';
+import { SectionErrorLine, type SectionErrors } from '@/ui/section-error';
 import { COLOR, FONT, RADIUS, TYPE } from '@/ui/tokens';
 import { WordText } from '@/ui/word-text';
 
@@ -62,6 +64,10 @@ export function useBirthForm(initial: Query = DEFAULT_QUERY) {
 
   return {
     query,
+    /** 문단 오류(ADR 0252) — 시 · 분 칸의 숫자를 알아 「25시」를 범위로 말한다 */
+    errors: birthSectionErrors(query, { name: false, time: { hour, minute } }),
+    /** 이름을 묻는 폼의 문단 오류 */
+    errorsWithName: birthSectionErrors(query, { time: { hour, minute } }),
     values: { name, gender, year, month, day, calendar, hourChoice, hour, minute, city, advanced, rule, basis, saeunFrom },
     set: { setName, setGender, setYear, setMonth, setDay, setCalendar, setHour, setMinute, setCity, setAdvanced, setRule, setBasis, setSaeunFrom },
     chooseHour: (next: 'known' | 'unknown') => {
@@ -80,49 +86,100 @@ export function BirthFields({
   namePlaceholder,
   showName = true,
   disabled = false,
+  errors,
 }: {
   form: ReturnType<typeof useBirthForm>;
+  /** 누른 뒤의 문단 오류(`useSectionErrors`) — 없으면 아무 칸도 붉지 않다 */
+  errors?: SectionErrors<BirthSection>;
   namePlaceholder?: string;
   showName?: boolean;
   /** 저장하는 동안 칸 · 고르기를 다 잠근다 — 저장이 끝나 폼이 비면 그 사이 고친 값이 사라진다 */
   disabled?: boolean;
 }) {
-  const { query, values, set, chooseHour } = form;
+  const { query, values, chooseHour: pickHour } = form;
+  const refused = dateRefusal(query)?.part ?? null;
+  const shown = errors?.shown ?? {};
+  const nameRef = useRef<ComponentRef<typeof TextInput>>(null);
+  const yearRef = useRef<ComponentRef<typeof TextInput>>(null);
+  /** 칸을 고치면 그 칸의 문단 줄만 걷힌다(ADR 0252) */
+  const edited =
+    <T,>(section: BirthSection, setter: (next: T) => void) =>
+    (next: T) => {
+      errors?.edit(section);
+      setter(next);
+    };
+  const set = {
+    ...form.set,
+    setName: edited('name', form.set.setName),
+    setGender: edited('name', form.set.setGender),
+    setYear: edited('date', form.set.setYear),
+    setMonth: edited('date', form.set.setMonth),
+    setDay: edited('date', form.set.setDay),
+    setCalendar: edited('date', form.set.setCalendar),
+    setHour: edited('hour', form.set.setHour),
+    setMinute: edited('hour', form.set.setMinute),
+  };
+  const chooseHour = edited('hour', pickHour);
+  const dateWrong = (part: 'year' | 'month' | 'day') => shown.date !== undefined && dateDigitWrong(part, values[part], refused);
   const monthRef = useRef<ComponentRef<typeof TextInput>>(null);
   const dayRef = useRef<ComponentRef<typeof TextInput>>(null);
   const hourRef = useRef<ComponentRef<typeof TextInput>>(null);
   const minuteRef = useRef<ComponentRef<typeof TextInput>>(null);
 
   const { years, maxDay } = limitsOf(values.calendar, values.year, values.month);
-  const refused = dateRefusal(query)?.part ?? null;
   const converted = convertedLine(query);
+  /**
+   * 문단의 첫 적는 칸을 데려갈 자리로 단다 — 누른 뒤 맨 위 걸린 문단이면 그 칸으로 스크롤하고 초점을 준다(`useSectionErrors`).
+   * 그 칸의 ref(다음 칸으로 넘기는 데 쓴다)도 함께 채운다.
+   */
+  type Input = ComponentRef<typeof TextInput> | null;
+  const nameField = (node: Input) => {
+    nameRef.current = node;
+    errors?.anchor('name')(node);
+  };
+  const yearField = (node: Input) => {
+    yearRef.current = node;
+    errors?.anchor('date')(node);
+  };
+  const hourField = (node: Input) => {
+    hourRef.current = node;
+    errors?.anchor('hour')(node);
+  };
 
   return (
     <View style={styles.fields}>
-      <View style={styles.pair}>
-        {showName && (
+      <View>
+        <View style={styles.pair}>
+          {showName && (
+            <View style={styles.half}>
+              <FieldLabel>이름</FieldLabel>
+              <Field inputRef={nameField} value={values.name} onChange={set.setName} maxLength={NAME_MAX} placeholder={namePlaceholder} label="이름" disabled={disabled} refused={shown.name !== undefined} />
+            </View>
+          )}
           <View style={styles.half}>
-            <FieldLabel>이름</FieldLabel>
-            <Field value={values.name} onChange={set.setName} maxLength={NAME_MAX} placeholder={namePlaceholder} label="이름" disabled={disabled} />
+            <FieldLabel>성별</FieldLabel>
+            <Choices disabled={disabled} value={values.gender} onPick={set.setGender} options={GENDERS.map((one) => ({ value: one, label: GENDER_KO[one] }))} />
           </View>
-        )}
-        <View style={styles.half}>
-          <FieldLabel>성별</FieldLabel>
-          <Choices disabled={disabled} value={values.gender} onPick={set.setGender} options={GENDERS.map((one) => ({ value: one, label: GENDER_KO[one] }))} />
         </View>
+        <SectionErrorLine message={shown.name} />
       </View>
 
       <View style={styles.group}>
         <FieldLabel>생년월일</FieldLabel>
         <View style={styles.row}>
-          <DigitField value={values.year} onChange={set.setYear} label={BIRTH_DIGIT_LABEL.year} disabled={disabled} unit="년" placeholder={String(years.max - 30)} digits={4} min={years.min} max={years.max} refused={refused === 'year'} onFull={() => monthRef.current?.focus()} />
-          <DigitField inputRef={monthRef} value={values.month} onChange={set.setMonth} label={BIRTH_DIGIT_LABEL.month} disabled={disabled} unit="월" placeholder="1~12" digits={2} min={1} max={12} advanceEarly refused={refused === 'month'} onFull={() => dayRef.current?.focus()} />
-          <DigitField inputRef={dayRef} value={values.day} onChange={set.setDay} label={BIRTH_DIGIT_LABEL.day} disabled={disabled} unit="일" placeholder={`1~${maxDay}`} digits={2} min={1} max={maxDay} advanceEarly refused={refused === 'day'} onFull={() => (values.hourChoice === 'known' ? hourRef.current?.focus() : Keyboard.dismiss())} />
+          <DigitField inputRef={yearField} value={values.year} onChange={set.setYear} label={BIRTH_DIGIT_LABEL.year} disabled={disabled} unit="년" placeholder={String(years.max - 30)} digits={4} min={years.min} max={years.max} refused={dateWrong('year')} onFull={() => monthRef.current?.focus()} />
+          <DigitField inputRef={monthRef} value={values.month} onChange={set.setMonth} label={BIRTH_DIGIT_LABEL.month} disabled={disabled} unit="월" placeholder="1~12" digits={2} min={1} max={12} advanceEarly refused={dateWrong('month')} onFull={() => dayRef.current?.focus()} />
+          <DigitField inputRef={dayRef} value={values.day} onChange={set.setDay} label={BIRTH_DIGIT_LABEL.day} disabled={disabled} unit="일" placeholder={`1~${maxDay}`} digits={2} min={1} max={maxDay} advanceEarly refused={dateWrong('day')} onFull={() => (values.hourChoice === 'known' ? hourRef.current?.focus() : Keyboard.dismiss())} />
         </View>
-        {converted !== null && <WordText style={[styles.converted, !converted.ok && styles.refused]}>{converted.text}</WordText>}
+        {/* 못 바꾼 까닭은 누른 뒤에는 아래 생년월일 줄이 같은 말을 한다 — 두 번 세우지 않는다 */}
+        {converted !== null && (converted.ok || shown.date === undefined) && (
+          <WordText style={[styles.converted, !converted.ok && styles.refused]}>{converted.text}</WordText>
+        )}
         <View style={styles.row}>
           <Choices disabled={disabled} value={values.calendar} onPick={set.setCalendar} options={CALENDARS.map((one) => ({ value: one, label: CALENDAR_KO[one] }))} />
         </View>
+        {/* 문단 「생년월일」의 줄 — 양력 · 음력 · 음력 윤달 줄 아래(ADR 0252) */}
+        <SectionErrorLine message={shown.date} gap={6} />
       </View>
 
       <View style={styles.group}>
@@ -131,20 +188,23 @@ export function BirthFields({
           <Choices disabled={disabled} value={values.hourChoice} onPick={chooseHour} options={HOUR_CHOICES} />
         </View>
         {values.hourChoice === 'unknown' && <WordText style={styles.choiceHint}>{HOUR_UNKNOWN_HINT}</WordText>}
-      </View>
 
       {values.hourChoice === 'known' && (
-        <View style={styles.rail}>
+        /* 묶음 안이라 사이가 6 이다 — 따로 서던 때의 18 을 맞춘다 */
+        <View style={[styles.rail, styles.timeRow]}>
           <View style={styles.railHead}>
             <WordText style={styles.railLabel}>시각</WordText>
             <WordText style={styles.railNote}>24시간</WordText>
           </View>
           <View style={styles.railBody}>
-            <DigitField inputRef={hourRef} value={values.hour} onChange={set.setHour} label={BIRTH_DIGIT_LABEL.hour} disabled={disabled} unit="시" placeholder="0~23" digits={2} min={0} max={23} onFull={() => minuteRef.current?.focus()} />
-            <DigitField inputRef={minuteRef} value={values.minute} onChange={set.setMinute} label={BIRTH_DIGIT_LABEL.minute} disabled={disabled} unit="분" placeholder="0~59" digits={2} min={0} max={59} onFull={Keyboard.dismiss} />
+            <DigitField inputRef={hourField} value={values.hour} onChange={set.setHour} label={BIRTH_DIGIT_LABEL.hour} disabled={disabled} unit="시" placeholder="0~23" digits={2} min={0} max={23} refused={shown.hour !== undefined && timeDigitWrong(values.hour, 23)} onFull={() => minuteRef.current?.focus()} />
+            <DigitField inputRef={minuteRef} value={values.minute} onChange={set.setMinute} label={BIRTH_DIGIT_LABEL.minute} disabled={disabled} unit="분" placeholder="0~59" digits={2} min={0} max={59} refused={shown.hour !== undefined && timeDigitWrong(values.minute, 59)} onFull={Keyboard.dismiss} />
           </View>
         </View>
       )}
+        {/* 문단 「출생 시각」의 줄 — 시 · 분 줄(「모름」이면 고르는 줄) 아래 */}
+        <SectionErrorLine message={shown.hour} gap={6} />
+      </View>
 
       <View style={styles.rail}>
         <WordText aria-hidden style={styles.railLabel}>{BIRTH_SELECT_LABEL.city.label}</WordText>
@@ -185,6 +245,7 @@ const styles = StyleSheet.create({
   group: { gap: 6 },
   row: { flexDirection: 'row', gap: 6 },
   rail: { flexDirection: 'row', alignItems: 'flex-start', gap: 8 },
+  timeRow: { marginTop: 12 },
   railHead: { width: 64, minHeight: 44, justifyContent: 'center' },
   railLabel: { width: 64, minHeight: 44, lineHeight: 44, fontSize: TYPE.small, fontFamily: FONT.bold, color: COLOR.secondary },
   railNote: { fontFamily: FONT.medium, fontSize: TYPE.fine, color: COLOR.muted, marginTop: -14 },
