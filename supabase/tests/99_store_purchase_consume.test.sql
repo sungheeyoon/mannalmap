@@ -2,20 +2,22 @@
 --
 -- 여기서 재는 것 여섯.
 --
--- 1. **소비가 안 적힌 4일 안의 지급만** — 소비가 적힌 줄 · 무효가 된 줄 · 지급된 지 4일이 지난 줄은 주지 않는다
+-- 1. **소비가 안 적힌 3일 안의 지급만** — 소비가 적힌 줄 · 무효가 된 줄 · 지급된 지 3일이 지난 줄(실제 기한이 확실히 지났다) · Google 이
+--    취소로 답한 줄은 주지 않는다
 -- 2. **차례가 돈다** — 한 번도 못 끝낸 적 없는 줄 먼저, 그다음 가장 오래전에 시도한 줄. 앞 100 줄이 계속 실패해도 101번째가 차례를 받고,
 --    받을 줄의 전체 수(`waiting`)가 상한 밖 적체를 말한다. 못 끝낸 것을 적어도 장부 줄은 그대로(소비 · 무효 칸을 안 건드린다)
 -- 3. **한 번에 1 ~ 100 줄** — 0 · 음수 · `null` 은 1, 101 은 100
 -- 4. **오래 보류된 뒤 늦게 지급된 구매** — 보류 5일 → 구매 완료 → 48시간 뒤 지급 → 소비 실패. 가장 이른 기한(구매 시각 + 3일)은 넘겼지만 실제
---    기한은 모른다 — 끝난 것으로 다루지 않는다. 그 자리에서 급한 알림이 서고, 다시 소비할 목록에 든다. **Google 이 취소로 답한 줄만** 끝남
---    갈래로 가고 급한 알림을 울리지 않는다
--- 5. **감시** — 「가장 이른 기한 36시간 안」 · 「가장 이른 기한 지남(실제 기한 미확인, 다시 소비 계속)」 · 「Google 이 취소 · 환불로 확인」을 나눠 세고,
+--    기한은 모른다 — 끝난 것으로 다루지 않는다. 그 자리에서 급한 알림이 서고, 다시 소비할 목록에 든다. **지급 3일이 지난 줄**은 실제 기한까지
+--    확실히 지났다 — 목록 · 급한 알림 밖이다. **Google 이 취소로 답한 줄**은 끝남이고, 그 표시는 뒤의 일시 실패(5xx)에 덮이지 않는다
+-- 5. **감시** — 「가장 이른 기한 36시간 안」 · 「가장 이른 기한 지남(실제 기한 미확인, 다시 소비 계속)」 · 「실제 기한 지남(Google 확인 없음)」 ·
+--    「Google 이 취소 · 환불로 확인」을 나눠 세고,
 --    상한을 넘은 적체와 함께 하루 한 번 알린다, 수만 싣는다
 -- 6. **문은 서버 열쇠만** — 로그인한 사람은 못 부른다, 감시는 열쇠도 못 부른다
 --
 -- 이 파일이 만든 토큰만 센다 — 다른 시험이 남긴 줄과 섞이지 않게.
 begin;
-select plan(32);
+select plan(37);
 
 create or replace function pg_temp.grant(who uuid, token text)
 returns text language sql as $$
@@ -46,7 +48,7 @@ select pg_temp.aged('consume-late', interval '10 hours', interval '10 hours');
 update public.store_purchase set voided_at = now() where purchase_token = 'consume-voided';
 select pg_temp.aged('consume-stale', interval '9 days', interval '9 days');
 
--- ── 1. 소비가 안 적힌 4일 안의 지급만, 기한이 이른 차례 ─────────────────────────
+-- ── 1. 소비가 안 적힌 3일 안의 지급만, 기한이 이른 차례 ─────────────────────────
 
 set local role service_role;
 select is(
@@ -54,7 +56,7 @@ select is(
    from public.store_purchases_to_consume(100) with ordinality as c(purchase_token, product_id, granted_at, purchased_at, attempts, waiting, ord)
    where c.purchase_token like 'consume-%'),
   array['consume-early', 'consume-late'],
-  '소비가 적힌 줄 · 무효 · 4일 지난 줄은 빠지고, 시도한 적 없는 줄은 기한이 이른 차례다');
+  '소비가 적힌 줄 · 무효 · 3일 지난 줄은 빠지고, 시도한 적 없는 줄은 기한이 이른 차례다');
 select is(
   (select c.product_id || ':' || c.attempts from public.store_purchases_to_consume(100) c where c.purchase_token = 'consume-early'),
   'reading_credits_1:0',
@@ -101,7 +103,7 @@ select is((select count(*)::integer from public.store_purchases_to_consume(null)
 select is((select count(*)::integer from public.store_purchases_to_consume(101)), 100, '101 은 100 줄로 자른다(받을 줄은 102)');
 reset role;
 
--- ── 4. 오래 보류된 뒤 늦게 지급된 구매 · Google 이 취소로 답한 구매 ──────────
+-- ── 4. 오래 보류된 뒤 늦게 지급된 구매 · 실제 기한이 지난 구매 · Google 이 취소로 답한 구매 ──
 
 update public.store_purchase set purchased_at = now(), granted_at = now(), consume_tried_at = null
 where purchase_token like 'consume-bulk-%';
@@ -109,12 +111,15 @@ set local role service_role;
 select pg_temp.grant((select buyer from folks), 'consume-delayed');
 select pg_temp.grant((select buyer from folks), 'consume-longpend');
 select pg_temp.grant((select buyer from folks), 'consume-refunded');
+select pg_temp.grant((select buyer from folks), 'consume-lapsed');
 reset role;
 /* 구매 48시간 뒤 지급 */
 select pg_temp.aged('consume-delayed', interval '48 hours', interval '0 hours');
 /* 보류 5일 → 구매 완료 → 48시간 뒤 지급: 구매 시각(처음 시도)은 7일 전, 지급은 지금 — 실제 기한은 지급 뒤에도 남아 있을 수 있다 */
 select pg_temp.aged('consume-longpend', interval '7 days', interval '0 hours');
 select pg_temp.aged('consume-refunded', interval '60 hours', interval '60 hours');
+/* 구매 6일 · 지급 5일 — 실제 기한(지급 뒤 3일 안)까지 확실히 지났다 */
+select pg_temp.aged('consume-lapsed', interval '6 days', interval '5 days');
 
 set local role service_role;
 select public.note_store_consume_missed('consume-late', 'canceled', null);
@@ -122,20 +127,33 @@ reset role;
 select is((select count(*)::int from public.ops_alert where kind = 'store-consume-urgent'), 0, '기한이 먼 구매의 취소로는 급한 알림이 서지 않는다');
 set local role service_role;
 select is(public.note_store_consume_missed('consume-refunded', 'canceled', null), true, 'Google 이 취소로 답한 구매를 적는다');
+select is(public.note_store_consume_missed('consume-refunded', 'failed', 503), true, '다음 날 Google 이 5xx 를 줬다');
+reset role;
+select is((select consume_last_outcome from public.store_purchase where purchase_token = 'consume-refunded'), 'canceled',
+  '취소 표시는 뒤의 일시 실패에 덮이지 않는다 — 취소는 되돌아오지 않는다');
+select is((select count(*)::int from public.ops_alert where kind = 'store-consume-urgent'), 0,
+  'Google 이 취소로 답한 구매는 끝남 갈래다 — 가장 이른 기한 36시간 안이고 뒤에 5xx 가 와도 급한 알림이 서지 않는다');
+set local role service_role;
+select is(public.note_store_consume_missed('consume-lapsed', 'failed', 503), true, '구매 6일 · 지급 5일 · 소비 실패를 적는다');
 reset role;
 select is((select count(*)::int from public.ops_alert where kind = 'store-consume-urgent'), 0,
-  'Google 이 취소로 답한 구매는 끝남 갈래다 — 가장 이른 기한 36시간 안이어도 급한 알림이 서지 않는다');
+  '실제 기한이 확실히 지난 줄(지급 3일 넘음)로는 급한 알림이 서지 않는다 — Run 이 도움이 안 된다');
 set local role service_role;
+select is(
+  (select array_agg(c.purchase_token order by c.purchase_token) from public.store_purchases_to_consume(100) c
+   where c.purchase_token in ('consume-lapsed', 'consume-refunded', 'consume-late')),
+  null,
+  '지급 3일이 지난 줄 · Google 이 취소로 답한 줄은 다시 소비할 목록에 없다');
 select is(
   (select c.purchase_token from public.store_purchases_to_consume(100) c limit 1),
   'consume-longpend',
-  '가장 이른 기한을 넘긴 줄도 다시 소비할 목록에 들고 맨 앞이다 — 창은 지급 시각으로 센다');
+  '가장 이른 기한을 넘긴 줄도 지급 3일 안이면 다시 소비할 목록에 들고 맨 앞이다 — 창은 지급 시각으로 센다');
 select is(public.note_store_consume_missed('consume-longpend', 'failed', 503), true, '보류 5일 · 늦은 지급 · 소비 실패를 적는다');
 reset role;
 select is(
   (select count(*)::int from public.ops_alert where kind = 'store-consume-urgent' and detail ~ '구매 2건' and detail ~ '넘겼다' and detail !~ 'consume-'),
   1,
-  '가장 이른 기한을 넘겼어도 끝난 것이 아니다 — 그 자리에서 급한 알림이 서고, Google 이 취소로 답한 줄은 세지 않는다(오래 보류 · 늦은 지급 둘)');
+  '가장 이른 기한을 넘겼어도 실제 기한이 안 지났을 수 있으면 그 자리에서 급한 알림이 선다 — 취소 · 실제 기한 지난 줄은 세지 않는다(오래 보류 · 늦은 지급 둘)');
 
 -- ── 5. 감시 ──────────────────────────────────────────────────────────────────────
 
@@ -143,35 +161,37 @@ select ok(not has_function_privilege('service_role', 'public.watch_store_consume
 select ok(not has_function_privilege('authenticated', 'public.watch_store_consume(timestamptz)', 'execute'), '감시는 로그인한 사람도 못 부른다');
 select is((select schedule from cron.job where jobname = 'store-consume-watch'), '37 7 * * *', '감시 잡이 하루 한 번 선다');
 
-select is(public.watch_store_consume(), 1, '기한이 가까운 줄 · 가장 이른 기한을 넘긴 줄 · Google 이 취소로 답한 줄 · 적체가 있으면 알린다');
+select is(public.watch_store_consume(), 1, '기한이 가까운 줄 · 가장 이른 기한을 넘긴 줄 · 실제 기한이 지난 줄 · 취소 줄 · 적체가 있으면 알린다');
 select is(public.watch_store_consume(), 0, '같은 날에는 한 번이다');
 select is(
   (select count(*)::int from public.ops_alert
    where kind = 'store-consume-overdue'
      and detail ~ '36시간 안 1건'
      and detail ~ '다시 소비 계속\) 1건'
+     and detail ~ 'Google 확인 없음\) 1건'
      and detail ~ '환불로 확인 2건'
      and detail ~ '구매 168시간 전'
-     and detail ~ '줄 105건'
+     and detail ~ '줄 103건'
      and detail !~ '이미 환불'
      and detail !~ 'consume-'),
   1,
-  '셋을 나눠 싣는다 — 가장 이른 기한을 넘긴 줄은 「다시 소비 계속」이고, 끝남은 Google 이 취소로 답한 줄뿐이다');
+  '넷을 나눠 싣는다 — 지급 5일 줄은 「다시 소비 계속」이 아니라 「실제 기한 지남(Google 확인 없음)」이고, 끝남은 Google 이 취소로 답한 줄뿐이다');
 
 -- 기한 · 취소 줄을 걷으면(무효가 적혔다) 적체만 남는다 — 이른 하나 + 100
 delete from public.ops_alert where kind = 'store-consume-overdue';
 update public.store_purchase set voided_at = now()
-where purchase_token in ('consume-delayed', 'consume-longpend', 'consume-refunded', 'consume-late');
+where purchase_token in ('consume-delayed', 'consume-longpend', 'consume-refunded', 'consume-late', 'consume-lapsed');
 select is(public.watch_store_consume(), 1, '받을 줄이 한 번의 상한을 넘으면 알린다 — 기한에 가까운 줄이 없어도');
 select is(
   (select count(*)::int from public.ops_alert
-   where kind = 'store-consume-overdue' and detail ~ '36시간 안 0건' and detail ~ '계속\) 0건' and detail ~ '확인 0건' and detail ~ '줄 101건'),
+   where kind = 'store-consume-overdue' and detail ~ '36시간 안 0건' and detail ~ '계속\) 0건' and detail ~ '없음\) 0건'
+     and detail ~ '확인 0건' and detail ~ '줄 101건'),
   1,
   '적체 알림은 받을 줄의 수를 싣는다');
 
 delete from public.ops_alert where kind = 'store-consume-overdue';
 update public.store_purchase set consumed_at = now() where purchase_token like 'consume-bulk-%';
-select is(public.watch_store_consume(), 0, '기한에 가까운 줄 · 넘긴 줄 · 취소 줄 · 적체가 없으면 알리지 않는다');
+select is(public.watch_store_consume(), 0, '기한에 가까운 줄 · 넘긴 줄 · 지난 줄 · 취소 줄 · 적체가 없으면 알리지 않는다');
 
 -- ── 6. 문은 서버 열쇠만 ─────────────────────────────────────────────────────────
 
