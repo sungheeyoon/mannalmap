@@ -3,7 +3,7 @@ import { ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Logo } from './logo';
-import { COLOR, FONT, RADIUS, TYPE } from './tokens';
+import { COLOR, FONT, RADIUS, TYPE, TYPE_TITLE } from './tokens';
 import { Paper } from './surfaces';
 import { WordText } from './word-text';
 
@@ -56,7 +56,7 @@ const styles = StyleSheet.create({
   card: { gap: 24 },
   head: { gap: 8 },
   badge: { width: 64, height: 64, alignItems: 'center', justifyContent: 'center', borderRadius: RADIUS.pill, backgroundColor: COLOR.surface, marginBottom: 12 },
-  title: { fontFamily: FONT.bold, fontSize: TYPE.title, lineHeight: 35, color: COLOR.foreground },
+  title: { ...TYPE_TITLE },
   description: { gap: 12 },
   line: { fontFamily: FONT.medium, fontSize: TYPE.body, lineHeight: 26, color: COLOR.secondary },
   actions: { gap: 8 },

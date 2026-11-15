@@ -194,7 +194,7 @@ export function ReadingFeedback({ target, runId, given }: { target: ReadingTarge
 
           {failure !== null && <WordText accessibilityRole="alert" style={styles.warn}>답을 남기지 못했어요. {failure}</WordText>}
 
-          <PrimaryButton label={saving ? '보내는 중…' : '의견 보내기'} onPress={() => void send()} disabled={saving} />
+          <PrimaryButton label={saving ? '보내는 중…' : '의견 보내기'} onPress={() => void send()} busy={saving} />
         </View>
       )}
     </Card>

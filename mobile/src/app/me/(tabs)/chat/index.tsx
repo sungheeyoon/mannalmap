@@ -19,7 +19,7 @@ import { settled } from '@/ui/settled';
 import { noteActivity, readRoomListScreen, type ChatRoom, type RoomListScreen } from '@/chat/reads';
 import { Icon } from '@/ui/icons';
 import { LoadingDots } from '@/ui/loading';
-import { COLOR, FONT, RADIUS, TYPE } from '@/ui/tokens';
+import { COLOR, FONT, RADIUS, TYPE, TYPE_TITLE } from '@/ui/tokens';
 import { KEEP_VIEW } from '@/ui/keep-view';
 import { WordText } from '@/ui/word-text';
 
@@ -188,7 +188,7 @@ function RoomRow({ room }: { room: ChatRoom }) {
 
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: COLOR.background },
-  title: { paddingHorizontal: 16, paddingTop: 8, paddingBottom: 16, fontSize: TYPE.title, fontFamily: FONT.bold, color: COLOR.foreground },
+  title: { ...TYPE_TITLE, paddingHorizontal: 16, paddingTop: 8, paddingBottom: 16 },
   pad: { paddingHorizontal: 16 },
   snack: { alignSelf: 'center', marginBottom: 8, paddingHorizontal: 14, paddingVertical: 8, borderRadius: RADIUS.pill, backgroundColor: COLOR.accent },
   snackText: { fontFamily: FONT.medium, fontSize: TYPE.small, color: COLOR.onAccent },

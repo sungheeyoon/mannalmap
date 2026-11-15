@@ -14,7 +14,7 @@ import { Icon } from '@/ui/icons';
 import { LoadingDots } from '@/ui/loading';
 import { PrimaryButton } from '@/ui/parts';
 import { TopBar, goBack } from '@/ui/top-bar';
-import { COLOR, FONT, RADIUS, TYPE } from '@/ui/tokens';
+import { COLOR, FONT, RADIUS, TYPE, TYPE_TITLE } from '@/ui/tokens';
 import { CardFrame, EmptySlot } from '@/ui/surfaces';
 import { WordText } from '@/ui/word-text';
 
@@ -183,7 +183,7 @@ const styles = StyleSheet.create({
   retry: { minHeight: 44, justifyContent: 'center', alignSelf: 'flex-start' },
   retryText: { fontFamily: FONT.bold, fontSize: TYPE.note, color: COLOR.foreground },
   notFound: { flex: 1, justifyContent: 'center', gap: 16, padding: 24 },
-  title: { fontFamily: FONT.bold, fontSize: TYPE.title, lineHeight: 34, color: COLOR.foreground },
+  title: { ...TYPE_TITLE },
   line: { fontFamily: FONT.medium, fontSize: TYPE.body, lineHeight: 26, color: COLOR.secondary },
   blocked: { gap: 12, padding: 20 },
 });

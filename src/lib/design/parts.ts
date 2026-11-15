@@ -57,3 +57,11 @@ export const BUTTON_PRIMARY_OFF = { backgroundColor: COLOR.surfaceSunken, color:
 /** 나머지 단추가 못 눌릴 때의 흐림 · 누를 때 줄어듦 — 웹의 `PRESS` */
 export const BUTTON_OFF_OPACITY = 0.55;
 export const BUTTON_PRESSED_SCALE = 0.97;
+
+/**
+ * **글자 모양** — 웹 `app/ui/surfaces.ts` 의 같은 이름 상수(`TYPE_*`)의 크기 · 줄 높이 · 색. 굵기는 앱의 글꼴 이름(`FONT.bold`)이 든다.
+ * 화면은 줄 높이를 다시 적지 않고 이것을 편다 — 화면 제목이 34 · 35 로 갈렸었다(2026-11-15). 넓은 화면(`lg:`) 단과 자간(`tracking-*`)은 앱에 없다.
+ */
+export const TEXT_STYLE = {
+  TYPE_TITLE: { fontSize: TEXT.title, lineHeight: 35, color: COLOR.foreground },
+} as const;

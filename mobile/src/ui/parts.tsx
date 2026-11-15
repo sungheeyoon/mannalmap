@@ -91,14 +91,23 @@ export function CheckRow({ checked, onToggle, refused = false, disabled = false,
   );
 }
 
+/**
+ * **단추의 짧은 이름** — `Button` 에 변형 하나를 끼운 것이다. `busy` 는 일하는 중인 그 단추에만 준다 — 못 누르는 것은 `disabled` 와
+ * 같고 보조기기가 「처리 중」을 읽는다. 곁의 단추를 막을 때는 `disabled`.
+ *
+ * 이름 둘(`SecondaryButton` = `secondary-small`, `TextButton` = `tertiary`)은 웹 상수(`BUTTON_SECONDARY_SMALL` · `BUTTON_TERTIARY`)와
+ * 어긋난다 — 약속 표(`src/lib/design/contract.ts`)대로 앱을 웹에 맞추는 일은 G-155 다(부르는 파일 30개에 결제 화면이 든다).
+ */
+type ButtonProps = { label: string; onPress: () => void; disabled?: boolean; busy?: boolean };
+
 /** 작은 보조 단추 — 칸 곁의 「중복 확인」 */
-export function SecondaryButton({ label, onPress, disabled = false }: { label: string; onPress: () => void; disabled?: boolean }) {
-  return <Button label={label} onPress={onPress} disabled={disabled} variant="secondary-small" />;
+export function SecondaryButton({ label, onPress, disabled = false, busy = false }: ButtonProps) {
+  return <Button label={label} onPress={onPress} disabled={disabled} busy={busy} variant="secondary-small" />;
 }
 
 /** 글자만 있는 단추 — 처리방침 · 나가는 길 */
-export function TextButton({ label, onPress, disabled = false }: { label: string; onPress: () => void; disabled?: boolean }) {
-  return <Button label={label} onPress={onPress} disabled={disabled} variant="tertiary" style={styles.textButton} />;
+export function TextButton({ label, onPress, disabled = false, busy = false }: ButtonProps) {
+  return <Button label={label} onPress={onPress} disabled={disabled} busy={busy} variant="tertiary" style={styles.textButton} />;
 }
 
 /**
@@ -285,8 +294,8 @@ export function Select<T extends string>({
   );
 }
 
-export function PrimaryButton({ label, onPress, disabled = false }: { label: string; onPress: () => void; disabled?: boolean }) {
-  return <Button label={label} onPress={onPress} disabled={disabled} />;
+export function PrimaryButton({ label, onPress, disabled = false, busy = false }: ButtonProps) {
+  return <Button label={label} onPress={onPress} disabled={disabled} busy={busy} variant="primary" />;
 }
 
 const styles = StyleSheet.create({

@@ -20,7 +20,7 @@ import { followRefusal } from '@/reading/panel';
 import { ElementSymbol } from '@/ui/element-symbol';
 import { LoadingDots } from '@/ui/loading';
 import { PrimaryButton, SecondaryButton } from '@/ui/parts';
-import { COLOR, FONT, TYPE } from '@/ui/tokens';
+import { COLOR, FONT, TYPE, TYPE_TITLE } from '@/ui/tokens';
 import { CardFrame, Paper } from '@/ui/surfaces';
 import { useLatestReads } from '@/ui/latest-reads';
 import { settled } from '@/ui/settled';
@@ -206,7 +206,7 @@ const styles = StyleSheet.create({
   symbols: { flexDirection: 'row', gap: 8 },
   paperHead: { gap: 8 },
   strong: { fontFamily: FONT.bold, color: COLOR.foreground },
-  paperTitle: { fontFamily: FONT.bold, fontSize: TYPE.title, lineHeight: 35, color: COLOR.foreground },
+  paperTitle: { ...TYPE_TITLE },
   notice: { gap: 4, paddingHorizontal: 20, paddingVertical: 16 },
   unreadable: { gap: 8, padding: 20 },
   paperDetail: { fontFamily: FONT.medium, fontSize: TYPE.body, lineHeight: 24, color: COLOR.secondary },

@@ -11,7 +11,7 @@ import { goHome } from '@/info/go-home';
 import { Icon } from '@/ui/icons';
 import { Logo } from '@/ui/logo';
 import { PrimaryButton, SecondaryButton } from '@/ui/parts';
-import { COLOR, FONT, RADIUS, TYPE } from '@/ui/tokens';
+import { COLOR, FONT, RADIUS, TYPE, TYPE_TITLE } from '@/ui/tokens';
 import { Card, CardFrame, Paper } from '@/ui/surfaces';
 import { WordText } from '@/ui/word-text';
 
@@ -76,7 +76,7 @@ export default function AboutScreen() {
 const styles = StyleSheet.create({
   head: { gap: 12 },
   meta: { fontFamily: FONT.medium, fontSize: TYPE.small, lineHeight: 20, color: COLOR.secondary },
-  title: { fontFamily: FONT.bold, fontSize: TYPE.title, lineHeight: 34, color: COLOR.foreground },
+  title: { ...TYPE_TITLE },
   lead: { fontFamily: FONT.medium, fontSize: TYPE.body, lineHeight: 26, color: COLOR.creamInk },
   section: { gap: 16 },
   sectionTitle: { fontFamily: FONT.bold, fontSize: TYPE.heading, lineHeight: 28, color: COLOR.foreground },

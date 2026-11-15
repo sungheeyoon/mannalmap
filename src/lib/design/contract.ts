@@ -13,7 +13,21 @@ export type PartContract = {
   variants?: Readonly<Record<string, string>>;
   /** 두 쪽이 같은 이름으로 드는 속성 · 상태 */
   props?: readonly string[];
+  /**
+   * 웹 클래스 낱말 → 같은 값을 적은 앱 글자. 웹이 상수 없이 JSX 에 클래스를 적은 부품의 모양을 두 쪽 파일의 글자로 견준다 —
+   * 상수로 선 모양은 `src/lib/design/parts.ts` 가 값으로 들고 `scripts/mobile-design-tokens.test.ts` 가 잰다.
+   */
+  values?: Readonly<Record<string, string>>;
   pending?: string;
+};
+
+/** 붉은 작은 굵은 한 줄(`mt-2 text-left text-small font-medium leading-5 text-danger`) — 단추 아래 줄과 문단 아래 줄이 같은 꼴이다(ADR 0252) */
+const ERROR_LINE: Readonly<Record<string, string>> = {
+  'text-small': 'fontSize: TYPE.small',
+  'leading-5': 'lineHeight: 20',
+  'font-medium': 'fontFamily: FONT.medium',
+  'text-danger': 'color: COLOR.danger',
+  'text-left': "textAlign: 'left'",
 };
 
 const WEB_SURFACES = 'app/ui/surfaces.ts';
@@ -92,6 +106,27 @@ export const PARTS: readonly PartContract[] = [
     web: { file: 'app/ui/failure-line.tsx', symbols: ['FailureLine', 'FAILURE_TEXT'] },
     app: { file: 'mobile/src/ui/failure-line.tsx', symbol: 'FailureLine' },
     props: ['signIn'],
+  },
+  {
+    name: 'FormError',
+    web: { file: 'app/ui/form-error.tsx', symbols: ['FormError'] },
+    app: { file: 'mobile/src/ui/form-error.tsx', symbol: 'FormError' },
+    props: ['show'],
+    values: { ...ERROR_LINE, 'mt-2': 'marginTop: 8' },
+  },
+  {
+    name: 'SectionErrorLine',
+    web: { file: 'app/ui/section-error.tsx', symbols: ['SectionErrorLine'] },
+    app: { file: 'mobile/src/ui/section-error.tsx', symbol: 'SectionErrorLine' },
+    props: ['message'],
+    /* 앱은 둘레의 사이(`gap`)를 빼고 8 을 채운다 — 웹은 그 자리에서 `className` 으로 걷는다 */
+    values: { ...ERROR_LINE, 'mt-2': 'marginTop: 8 - gap' },
+  },
+  {
+    name: 'useSectionErrors',
+    web: { file: 'app/ui/section-error.tsx', symbols: ['useSectionErrors'] },
+    app: { file: 'mobile/src/ui/section-error.tsx', symbol: 'useSectionErrors' },
+    props: ['shown', 'press', 'edit', 'clear'],
   },
   { name: 'Scrim', web: { file: 'app/globals.css', symbols: ['--color-scrim'] }, app: { file: 'mobile/src/ui/scrim.tsx', symbol: 'Scrim' } },
   {

@@ -399,3 +399,14 @@ Navigation) · 토스 TDS(Toast · Result) · Material 3 Snackbar 다(확인 202
   지름 160 · 굵기 12 · 호의 경로는 `src/lib/design/gauge.ts` 한 원본에서 난다 — 두 벌이 저마다 셈하지 않는다.
 - **색은 있는 토큰 둘이다** — 바탕 호 `track`, 찬 호 `earth-mid`. 두 사람의 오행 색을 쓰지 않는다: 같은 오행끼리는 구분이 안 되고, 색이 점수의 뜻처럼 읽힌다.
 - **그림은 꾸밈이다.** 낭독기에 안 읽히고 수(「82점」)와 이름(「궁합 점수」)은 글자로 선다. 0점이면 찬 호를 안 그린다(둥근 끝이 점 하나로 서지 않게).
+
+## 추기 — 앱의 화면 제목 한 벌과 오류 줄의 약속 (2026-11-15, 감사)
+
+규칙을 새로 정하지 않았다 — 이미 정한 값에서 어긋난 앱을 되돌리고 잠갔다.
+
+- **앱의 화면 제목은 `TYPE_TITLE`(`mobile/src/ui/tokens.ts`)을 편다** — 값(26 · 줄 높이 35 · 글자색)은 `src/lib/design/parts.ts` 의 `TEXT_STYLE` 이 들고
+  `scripts/mobile-design-tokens.test.ts` 가 웹 `app/ui/surfaces.ts` 의 `TYPE_TITLE` 글자와 견준다. 화면마다 34 · 35 로 갈렸었다.
+  `tokens.json` 에 글자 모양을 올리지 않았다 — 웹은 줄 높이를 상수가 적고(`app/globals.css` 「줄 높이는 싣지 않는다」), 맞출 값이 하나라 상수 하나로 족하다.
+- **단추 아래 줄(`FormError`) · 문단 아래 줄(`SectionErrorLine`) · `useSectionErrors` 가 약속 표에 든다**(ADR 0252). 웹이 상수 없이 JSX 에 적은 모양은
+  표의 `values`(웹 클래스 낱말 → 앱 글자)로 두 쪽 파일을 견준다.
+- 앱 `parts.tsx` 의 짧은 단추(`PrimaryButton` · `SecondaryButton` · `TextButton`)는 `busy` 를 `Button` 에 넘긴다 — 일하는 그 단추에만 준다.

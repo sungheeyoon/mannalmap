@@ -1,5 +1,5 @@
 import type { Element } from '@saju';
-import { COLOR as DESIGN_COLOR, FIXED, RADIUS as DESIGN_RADIUS, TEXT, TONE } from '@design';
+import { COLOR as DESIGN_COLOR, FIXED, RADIUS as DESIGN_RADIUS, TEXT, TEXT_STYLE, TONE } from '@design';
 
 /**
  * 앱의 디자인 토큰 — 값의 원본은 `src/lib/design/tokens.json` 이다(웹 CSS 와 한 원본에서 난다, ADR 0109 추기 2026-10-31). 여기는 앱의 이름만 든다.
@@ -41,6 +41,9 @@ export const ELEMENT_TONE: Record<Element, { ink: string; soft: string; mid: str
 export const FONT = { medium: 'BusanDandiMyeongjoM', bold: 'BusanDandiMyeongjoB' } as const;
 
 export const TYPE = TEXT;
+
+/** 화면 제목 — 웹 `TYPE_TITLE`(26 · 줄 높이 35 · 굵게). 화면은 `...TYPE_TITLE` 로 펴고 줄 높이를 다시 적지 않는다 */
+export const TYPE_TITLE = { ...TEXT_STYLE.TYPE_TITLE, fontFamily: FONT.bold } as const;
 
 export const CONTROL = 44;
 

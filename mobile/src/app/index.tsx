@@ -23,7 +23,7 @@ import { SunMark } from '@/share/marks';
 import { SectionErrorLine, SectionScrollView, useSectionErrors } from '@/ui/section-error';
 import { FoldIcon, Icon } from '@/ui/icons';
 import { Logo } from '@/ui/logo';
-import { COLOR, FONT, RADIUS, TYPE } from '@/ui/tokens';
+import { COLOR, FONT, RADIUS, TYPE, TYPE_TITLE } from '@/ui/tokens';
 import { CardFrame, Paper } from '@/ui/surfaces';
 import { KEEP_VIEW } from '@/ui/keep-view';
 import { WordText } from '@/ui/word-text';
@@ -404,7 +404,7 @@ const styles = StyleSheet.create({
   memberSignInText: { fontSize: TYPE.small, fontFamily: FONT.bold, color: COLOR.foreground, textDecorationLine: 'underline' },
   retry: { alignItems: 'center', justifyContent: 'center', gap: 12, padding: 24 },
   retryLine: { fontSize: TYPE.body, lineHeight: 24, fontFamily: FONT.medium, color: COLOR.foreground, textAlign: 'center' },
-  title: { fontSize: TYPE.title, lineHeight: 35, fontFamily: FONT.bold, color: COLOR.foreground },
+  title: { ...TYPE_TITLE },
   form: { padding: 16, gap: 18, borderWidth: 0 },
   pair: { flexDirection: 'row', gap: 12 },
   half: { flex: 1 },
