@@ -3,7 +3,7 @@
 > 운영자 지시(2026-11-06): 「코드랑 문서랑 정책 따로 놀아」, 그리고 지금의 출시 흐름이 틀렸다. 조율자가 대화에서 받아 이 PR 에 넣게 했다.
 > 그날 사정은 `docs/notes/2026-11-06-handoff-retro.md` 가 든다.
 >
-> 이 결정이 대체하는 것 — ADR 0152 (일부: 4 「운영자가 고치라고 한 일은 커밋 · PR · `--auto` 까지 묻지 않는다」 가운데 코드 PR 의 `--auto`)
+> 이 결정이 대체하는 것 — ADR 0152 (일부: 4 「운영자가 고치라고 한 일은 커밋 · PR · `--auto` 까지 묻지 않는다」 가운데 코드 PR 의 `--auto`) · ADR 0196 (일부: 「답을 기다리지 않고 PR · 머지까지 간다」 가운데 코드 PR 의 머지 — 문구를 표로 묻지 않는 사후 확인은 그대로, 2026-11-15 에 짝 줄을 달았다)
 
 ## 정한 것
 
@@ -25,6 +25,9 @@
 - `docs/agents/delegation/coordinator.md` 「조율자 세션」: 「운영자가 고치라고 한 일은 커밋 · PR · `--auto` 까지 묻지 않는다」, 에이전트에게 「결정이 아닌 PR 은 gate 뒤 `--auto` 머지까지」를 주라는 줄, 브리프의 「내보내기」 칸, 화면 세션은 「전후 스크린샷과 로컬 최소 셋으로 보고 머지한다」. 모두 코드 PR 을 운영자 검토 없이 머지했다.
 - `docs/agents/delegation/unattended.md` 「무인 라운드」: 「gate 통과 뒤 `--auto` 머지 — 결정이 아닌 PR | 허용」과 「자동으로 고쳐도 되는 경계」의 `--auto`.
 - `docs/agents/delegation/coordinator.md` 「라운드 끝 정리」: 워크트리를 걷기 전에 사람에게 한 번 확인했다. 머지되고 배포 기록까지 적힌 PR 의 것은 이제 묻지 않고 걷는다.
+- 2026-11-15 감사로 더 찾아 이 결정에 맞춘 자리 — `docs/agents/delegation/unattended.md` 「자동으로 고쳐도 되는 경계」의 「되돌리는 수정 — `--auto`」 · 「화면 다듬기 — `--auto` 해도 된다」 · 「새 사용자 문구는 머지까지」와
+  「묶음(파동)」 · 「흐름 한 장」의 `--auto`(코드 PR 을 가르지 않았다), `docs/agents/delegation/permissions.md` 「권한 등급」 등급 2 의 「리뷰 뒤 `--auto`」(PR 종류를 가르지 않았다),
+  `docs/agents/code-rules/screen-copy.md` 「화면 문구」 · `docs/agents/delegation/decisions.md` 「화면 문구」 줄 · `docs/roles/ui.md` 「하지 않는 것 · 묻는 것」의 「새 문구는 운영자 답 없이 머지까지」, ADR 0196 「정한 것」 첫 줄.
 
 ## 까닭
 

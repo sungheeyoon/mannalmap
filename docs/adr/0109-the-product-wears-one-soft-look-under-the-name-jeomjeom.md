@@ -129,6 +129,9 @@ sans-serif`)을 `--font-sans` · `--font-rounded` 의 대체 · `body` · `.glyp
 
 ## 추기 — 글자 크기 · 모서리도 토큰이다 (2026-10-12)
 
+> 뒤에서 바뀜 — 이 추기의 `text-section` · `text-headline` · `rounded-paper` · `rounded-tile` · `rounded-row` 와 `text-title` 의 값은
+> 아래 추기 「글자는 일곱 벌 · 모서리는 세 단 · 바탕은 단색」(2026-10-24)이 삭제하거나 바꿨다. 지금 이름은 그 추기와 `app/globals.css` 에 있다.
+
 점검에서 화면이 글자 크기를 임의값으로 450곳 넘게(34가지) 적고, 모서리 1.75rem · 1.25rem 같은 판의 단도 자리마다 다시 적는 것을
 쟀다. `@theme` 에 단이 없어 `text-[13px]` 와 `text-[0.8125rem]` 가 같은 뜻인지 아무도 모른다. **많이 쓰이는 값에 이름을 붙이고
 (`app/globals.css` 의 `@theme inline`), 화면은 이름으로 부른다** — 운영자 승인(2026-10-12 「남은 것 다 하자」), 모양은 픽셀 그대로.
@@ -152,6 +155,9 @@ sans-serif`)을 `--font-sans` · `--font-rounded` 의 대체 · `body` · `.glyp
   rem 으로 적은 위 셋은 수의 천장이 있어 줄기만 한다(2026-10-14 에 0 — 아래 추기). 크기 토큰 이름이 색 이름(`text-secondary`)과 겹치지 않는 것도 본다.
 
 ## 추기 — 토큰 밖 값은 허용 목록뿐이다 (2026-10-14)
+
+> 뒤에서 바뀜 — 여기 적은 `text-section` · `rounded-tile` · `rounded-row` · `TYPE_DISPLAY` 와 「등이 각진 책 표지의 네 귀 따로 모서리」는
+> 아래 추기 「글자는 일곱 벌 · 모서리는 세 단 · 바탕은 단색」(2026-10-24)이 삭제했다. 허용 목록의 지금 모양은 `app/ui/scale.test.ts` 의 `OUTSIDE_SCALE` 이다.
 
 운영자 승인(2026-10-14): 위 추기가 남긴 이상값을 단으로 맞춘다 — 모양이 바뀌어도 되지만 폭은 가장 작게.
 

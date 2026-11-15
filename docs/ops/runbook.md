@@ -15,7 +15,7 @@
 
 | 파일 | 절 | 무엇을 드나 |
 | --- | --- | --- |
-| `docs/ops/runbook/access.md` | 「어디서 실행하나」 | 원격 프로젝트 ref · 개인정보는 화면으로만(break-glass) · 접속값 여섯 |
+| `docs/ops/runbook/access.md` | 「어디서 실행하나」 | 원격 프로젝트 ref · 개인정보는 화면으로만(break-glass) · 접속값을 넣는 손 |
 | `docs/ops/runbook/secret-leak.md` | 「비밀이 새면」 | 교체 순서 넷 · 비밀마다 새 값 · 넣는 자리 · 확인과 끊기 · git 기록에 새었을 때 |
 | `docs/ops/runbook/signup.md` | 「테스트 시작하기」 · 「초대」 · 「가입을 닫고 연다」 | 베타 날짜 한 줄 · 가입 코드는 걷었다(ADR 0225) · 운영자가 자리를 비울 때 가입 닫기 |
 | `docs/ops/runbook/credits.md` | 「풀이권」 | 풀이권 예외 · 산 풀이권(주문 · 묶음 · 쓰임 · 수동 환불) · 결제 알림 |
