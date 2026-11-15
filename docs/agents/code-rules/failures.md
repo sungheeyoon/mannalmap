@@ -36,8 +36,7 @@
 `docs/context/chart.md` 「입력」 항목이 그 경계다.
 
 **`console`** — 앱(`src/` · `app/`)에 `console.log` · `console.info` 는 없다. `console.error` 는 답을 안 바꾸고 **기록에만**
-남기는 자리뿐이고, 2026-11-06 에 잰 값으로 줄 일흔여덟 · 파일 마흔둘이다(`grep -rn 'console\.error' app src --include=*.ts --include=*.tsx`, 시험 파일 제외 —
-2026-10-22 에는 마흔여덟 · 스물다섯). 갈래는 일곱이다 — ① 못 옮긴 DB 오류의 원문(`app/db-error.ts` 한 곳), 그리고 장부 문이 코드만 남기는 DB 실패(`app/api/store/google-play/ledger.ts`).
+남기는 자리뿐이다. 수는 적지 않는다 — `grep -rn 'console\.error' app src --include=*.ts --include=*.tsx`(시험 파일 제외)가 찍는다. 갈래는 일곱이다 — ① 못 옮긴 DB 오류의 원문(`app/db-error.ts` 한 곳), 그리고 장부 문이 코드만 남기는 DB 실패(`app/api/store/google-play/ledger.ts`).
 ② 답에 안 싣는 거절 까닭 — webhook 의 서명 거절(G-23 ⑧). ③ 운영자 거절 기록을 못 적은 것(`app/ops/denial.ts`) · 환불 확보를 못 푼 까닭(`app/ops/orders`). ④ 크론 · 반출의 실패 —
 접속기록 반출(ADR 0105) · 사진 쓸기 · 닫힌 방 파기 · 스토어 무효 대조 · 풀이 크론. ⑤ **뒤에서 받치는 쓰기를 못 한 것** — 복구기 · 만료가 닫을 일감을
 못 닫음(응답 뒤 `after` 에서 풀이를 못 떠나보낸 것 포함), 오행 요약 · 발견 참여 갱신 실패, webhook 처리 표시, 활동을 못 적음(`app/auth/signed-in.ts` · `app/api/mobile/session.ts`, ADR 0118),
