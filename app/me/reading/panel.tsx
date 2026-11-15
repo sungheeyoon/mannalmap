@@ -16,7 +16,7 @@ import type { ReadingCredits } from '@/src/lib/reading/credits';
 import { ReadingFeedback } from './feedback';
 import { ShareReadingButton } from './share-button';
 import { READING_COLUMN } from './markdown';
-import { readingOutline } from './outline';
+import { readingOutline } from '@/src/lib/reading/outline';
 import type { ReadingTarget } from './target';
 import type { TasteCarryView } from '../../taste/taste-carry';
 import { CarryCard } from './carry-card';

@@ -1,5 +1,5 @@
 import type { ReadingNewsRead } from './actions';
-import type { PageVisibility } from './watch-run';
+import type { PageVisibility } from '@/src/lib/reading/watch-run';
 
 /**
  * **결과 화면이 보인 글의 완성 소식을 읽음으로 바꾼다** — 언제 · 몇 번 부르는가만 든다(ADR 0157 「2026-10-10 덧」).

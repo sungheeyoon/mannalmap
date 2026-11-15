@@ -1,4 +1,4 @@
-import type { MapModel } from '../me/home/map/model';
+import type { MapModel } from '@/src/lib/reading/relation-map';
 
 /** 궁합 탭이 결과 화면에 싣는 온 곳 — 결과의 ← 와 탭 불이 궁합 탭을 가리킨다(「2026-09-29 u2」) */
 const FROM_COMPAT = 'from=compat';

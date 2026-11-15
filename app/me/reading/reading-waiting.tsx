@@ -3,7 +3,7 @@ import { READING_LEAVE_SAFE_NOTE, READING_OUTLINE_STATE, readingWaitNote } from 
 import { LoadingOrbit } from '../../ui/loading';
 import { GENERATION } from './generation';
 import { READING_COLUMN } from './markdown';
-import type { OutlineRow } from './outline';
+import type { OutlineRow } from '@/src/lib/reading/outline';
 import flow from './flow.module.css';
 
 /**

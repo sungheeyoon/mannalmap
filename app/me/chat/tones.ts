@@ -1,8 +1,7 @@
-import { STEM_INFO, type Element, type Stem } from '@/src/lib/saju';
+import { STEM_INFO, storedChartSnapshot, type Element, type Stem } from '@/src/lib/saju';
 
 import { supabaseOnServer } from '../../auth/server-client';
 import { read, unread, type SkippableRead } from '../../db-error';
-import { storedPillarChart } from '../../shared-pillar';
 import type { ChatRoom } from './rooms';
 
 /**
@@ -40,8 +39,8 @@ async function scopeOf(matchId: string): Promise<SkippableRead<RoomScope | null>
   if (row === undefined) return read(null);
   /* 상대의 지금 소개 — 상대 프로필 시트가 쓴다(운영자 결정 2026-10-11). 같은 줄에 이미 온 칸이라 더 묻지 않는다 */
   const intro = row.partner_intro ?? null;
-  const mine = storedPillarChart(row.my_chart);
-  const theirs = storedPillarChart(row.partner_chart);
+  const mine = storedChartSnapshot(row.my_chart);
+  const theirs = storedChartSnapshot(row.partner_chart);
   if (mine === null || theirs === null) return read({ tones: null, intro });
 
   return read({

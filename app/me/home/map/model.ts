@@ -3,9 +3,6 @@ import type { ReadingEntry } from '@/src/lib/reading';
 
 import { readingHref } from '../../reading/line';
 
-export { linksOf, pairWithSelf, readingOf, selfReadingOf } from '@/src/lib/reading/relation-map';
-export type { HomePerson, MapModel, MapPerson } from '@/src/lib/reading/relation-map';
-
 /** 사람 타일의 `id` — 지도의 원이 자바스크립트 없이 가는 자리 */
 export const tileAnchor = (personId: string): string => `person-${personId}`;
 

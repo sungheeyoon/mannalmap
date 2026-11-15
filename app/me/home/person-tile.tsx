@@ -8,7 +8,8 @@ import { STALE_CHIP } from '../../ui/surfaces';
 import type { ReadingEntry } from '@/src/lib/reading';
 import { HOME_ROW, HOME_ROW_INNER, HOME_ROW_VALUE, HomeMark } from './home-list';
 import { READING_CONTINUE_NOTE, SELF_READING_MAKING } from '@/src/lib/home/making';
-import { tileAnchor, type HomePerson } from './map/model';
+import type { HomePerson } from '@/src/lib/reading/relation-map';
+import { tileAnchor } from './map/model';
 
 /*
   **한 사람 = 흰 판 안의 줄 하나**(2026-10-25 홈 위계 정리 — 그 전에는 일간 파스텔 타일 2열이었다). 왼쪽의 작은 표시가 그 사람의

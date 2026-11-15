@@ -13,7 +13,7 @@ import { Icon } from '../../ui/icons';
 import { ReportBlock } from '../requests/report-block';
 import { CardPhotos, pagesPhotos } from './card-photos';
 import { CandidatePhoto } from './candidate-photo';
-import { elementOf, supplyOf, type DeckCard } from './deck-card';
+import { elementOf, supplyOf, type DeckCard } from '@/src/lib/matching/deck-card';
 import { reducedMotion } from '../../ui/motion';
 import styles from './orbit.module.css';
 
