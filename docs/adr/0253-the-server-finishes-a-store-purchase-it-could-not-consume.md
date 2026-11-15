@@ -37,11 +37,18 @@ ADR 0230 의 1 은 「지급 뒤 소비, 소비가 실패해도 지급은 섰다
   3일 창은 결제가 「구매」가 된 때부터 세고(「The three-day acknowledgement window begins only when the purchase state transitions from 'PENDING' to 'PURCHASED'」,
   integrate 쪽), 지급은 그 뒤라 지급 시각으로 세면 안전한 쪽이다.
 - **4일** — 3일 창 + 크론 하루. 그 뒤의 줄은 Google 이 돌려줬을 것이라 무효 대조가 적는다. 4일 안의 줄은 크론이 적어도 세 번 본다(기록 실패의 복구가 그 안에 선다).
-- **양 — 한 번에 25 줄, 45초 안**(`maxDuration` 60). 줄마다 Google 에 두세 번 묻는다. 못 본 줄은 `left` 로 세고 다음 날 이른 차례로 다시 온다. 소비 실패는 드문
-  일이라(Google 장애 · DB 장애의 짧은 창) 하루 25 줄이 모자라는 날은 그 자체가 장애다 — 아래 관측이 붉다.
-- **관측** — 답과 로그는 수만 싣는다(`consumed` · `noted` · `canceled` · `gone` · `failed` · `overdue` · `left`), 토큰 · 주문은 싣지 않는다. 하나라도 못 끝내면(`failed`) 500 이라
-  Vercel 의 크론 기록이 붉다. **지급된 지 이틀이 넘었는데 못 끝낸 줄**(`overdue`)은 `console.error('store-consume: overdue', n)` — 다음 실행이 기한 안의 마지막일 수 있다.
-  운영자의 질의는 런북 credits.md 「Google Play 결제」의 「소비 안 됨」(지급 나이별)이다.
+- **양 — 한 번에 100 줄(DB 문의 상한), 20초 안에 시작한 줄만**(`maxDuration` 60). 줄마다 Google 에 두세 번 묻고 **한 호출은 8초에 끊는다**(`AbortSignal.timeout`) —
+  마지막 줄이 토큰 받기까지 길어야 32초라 60초 안이다. 상한까지 받는 것은 빨리 실패하는 오래된 줄(모르는 상태 · 4xx)이 새 줄을 막지 않게다. 매번 시간 제한에 걸리는
+  것은 Google 장애라 줄 차례로는 못 피한다 — 아래 감시가 알린다. 못 본 줄은 `left` 로 세고 다음 날 이른 차례로 다시 온다.
+- **「없는 토큰」은 400 · 404 · 410 만** — 401 · 403(결제 검증 계정의 권한 빠짐) · 429(할당량)는 토큰이 아니라 우리 열쇠 · 호출량의 문제다. 크론은 `failed`(500)로,
+  앱 · 통지 문은 `unavailable`(503 — 앱은 「다시 시도」, Pub/Sub 은 다시 보낸다)로 답한다. 전에는 4xx 전부가 「없는 토큰」이라 권한이 빠지면 앱은 「구매를 찾지 못함」을
+  받고 크론은 조용히 초록이 됐다.
+- **관측 — 알림은 DB 의 감시가 보낸다.** 크론의 500 과 오류 기록(`store-consume: overdue`)은 알림이 아니다 — 크론 문은 던지지 않으니 서버 오류 알림(`instrumentation.ts`)이
+  안 울리고, Hobby 로그는 한 시간이며, Vercel 크론은 `cron-watch` 밖이다(`docs/ops/runbook/jobs.md`). 그래서 **pg_cron 의 `store-consume-watch`(매일 07:37 UTC)가 결과를 센다** —
+  무효가 아니고 소비가 안 적힌 지급이 **이틀을 넘기고 7일 안**이면 `notify_ops('store-consume-overdue', …)` 한 줄(하루 한 번, 수와 가장 오래된 나이만). 닫힌 방 파기의
+  `chat-purge-watch`(ADR 0217)와 같은 꼴이다. 크론이 등록 안 됐든 · 비밀이 어긋났든 · Google 권한이 빠졌든 같은 얼굴로 잡히고, 감시 잡 자신의 실패는 `cron-watch` 가 본다.
+  이틀은 크론이 적어도 한 번 빠진 것이고 Google 의 기한까지 하루가 남는 때다. 7일 밖은 Google 이 돌려줬을 결제라 무효 대조의 일이고, 끝없이 울리지 않게 뺀다.
+  크론의 답과 로그는 그대로 수만 싣는다(`consumed` · `noted` · `canceled` · `gone` · `failed` · `overdue` · `left`). 운영자의 질의는 런북 credits.md 「Google Play 결제」의 「소비 안 됨」(지급 나이별)이다.
 
 ### 2. Google 의 답은 `ProductPurchase` 문서의 계약대로 읽는다 — 모르면 `null`
 
@@ -69,6 +76,7 @@ Google 은 multi-quantity 를 켠 앱이 「grant entitlement based on the speci
 
 - **소비 실패를 503 으로 답해 Pub/Sub · 앱이 다시 보내게** — 앱 문의 실패는 사람에게 「결제가 안 됐다」로 읽히는데 지급은 섰다. 통지만 503 으로 하면 통지가 안 온
   구매(설정 전 · 놓친 통지)는 그대로 남는다.
+- **크론의 500 을 서버 오류 알림으로 보내기(던지기)** — 크론이 아예 안 돌면(등록 안 됨 · 비밀 어긋남) 울리지 않는다. 결과를 세는 감시는 원인과 무관하게 잡는다.
 - **크론을 더 자주** — Hobby 는 하루 한 번이다. pg_cron 은 Google 을 부를 수 없고, 매시 깨우는 길(ADR 0204 의 사진 청소)은 이 드문 실패에 비해 무겁다. 하루 두 번 이상이
   필요해지면 Pro 와 함께 다시 본다.
 - **수량만큼 지급** — 위 3. 가격 · 지급량의 결정이다.
@@ -76,7 +84,7 @@ Google 은 multi-quantity 를 켠 앱이 「grant entitlement based on the speci
 
 ## 치르는 값
 
-- 크론 하나(`store-consume`)가 는다. Google API 호출은 소비가 안 된 줄마다 하루 두세 번 — 요금은 없다.
+- 크론 하나(`store-consume`)와 pg_cron 감시 잡 하나(`store-consume-watch`)가 는다. Google API 호출은 소비가 안 된 줄마다 하루 두세 번 — 요금은 없다.
 - 소비 실패 뒤 크론까지 최대 하루 남짓 Google 의 결제가 「승인 전」으로 남는다. 그 사이 Google 이 돌려주는 일은 없다(3일).
 - 문서 밖의 답(모르는 상태 · 수량 2 이상)을 받은 진짜 결제는 지급되지 않고 사흘 뒤 Google 이 돌려준다 — 기록 한 줄로 운영자가 본다.
 
@@ -84,6 +92,8 @@ Google 은 multi-quantity 를 켠 앱이 「grant entitlement based on the speci
 
 - ADR 0230 의 1 「소비가 실패해도 지급은 섰다 — 다시 보내면 소비만 다시 한다」에 크론의 길이 더해진다. 3 · 4(회수)와 7(통지 문의 자격)은 그대로다.
 - G-112(결제 대조, 보류)는 시작하지 않는다 — 스토어 장부와 우리 장부를 견주지 않는다.
+
+앱 · 통지 문의 답이 하나 바뀐다 — Google 이 401 · 403 · 429 를 주면 전에는 「없는 구매」(200 `not-found`)였고 이제 503 이다.
 
 마이그레이션 `20270119090000` · pgTAP `99_store_purchase_consume` · 문 `app/api/cron/store-consume` · `app/api/store/google-play/settle.ts`(`finishUnconsumed`) ·
 `play-api.ts`(`purchaseOf`) · `ledger.ts`.

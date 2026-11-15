@@ -109,6 +109,15 @@ describe('Google Play 구매 — 확인 · 지급 · 소비', () => {
     expect(unknown.play.getPurchase).not.toHaveBeenCalled();
   });
 
+  it('400 · 404 · 410 만 없는 토큰이다 — 401 · 403 · 429 는 우리 열쇠 · 할당량 문제라 다시 시도할 갈래다', async () => {
+    for (const status of [400, 404, 410]) {
+      expect(await settle(fakes({ ok: false, status })), String(status)).toEqual({ kind: 'not-found' });
+    }
+    for (const status of [401, 403, 429]) {
+      expect(await settle(fakes({ ok: false, status })), String(status)).toEqual({ kind: 'unavailable', step: 'play' });
+    }
+  });
+
   it('Google 에 못 닿으면 다시 시도할 갈래다', async () => {
     expect(await settle(fakes({ ok: false, status: 503 }))).toEqual({ kind: 'unavailable', step: 'play' });
     expect(await settle(fakes({ ok: false, status: null }))).toEqual({ kind: 'unavailable', step: 'play' });

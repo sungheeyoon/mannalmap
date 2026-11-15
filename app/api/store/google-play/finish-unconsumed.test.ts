@@ -217,6 +217,23 @@ describe('비정상 응답', () => {
     expect(w.play.consume).not.toHaveBeenCalled();
   });
 
+  it('그런 토큰이 없다는 답은 400 · 404 · 410 만이다 — 401 · 403(권한 빠짐) · 429(할당량)는 실패로 센다(조용히 초록이 되지 않게)', async () => {
+    for (const [status, counted] of [
+      [400, 'gone'],
+      [404, 'gone'],
+      [410, 'gone'],
+      [401, 'failed'],
+      [403, 'failed'],
+      [429, 'failed'],
+    ] as const) {
+      const w = world();
+      w.granted('tok', NOW - DAY);
+      w.play.getPurchase.mockResolvedValueOnce({ ok: false, status });
+      expect((await w.sweep())?.[counted], String(status)).toBe(1);
+      expect(w.play.consume).not.toHaveBeenCalled();
+    }
+  });
+
   it('Google 에 못 닿으면 실패, 그 토큰을 모르면(4xx) 소비할 것이 없다', async () => {
     const w = world();
     w.granted('a', NOW - DAY);

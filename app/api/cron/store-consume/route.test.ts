@@ -56,14 +56,14 @@ describe('스토어 다시 소비 크론', () => {
     expect(await response.json()).toEqual({ configured: false });
   });
 
-  it('남은 줄을 소비하고 센 수를 답한다 — 한 번에 25 줄', async () => {
+  it('남은 줄을 소비하고 센 수를 답한다 — 한 번에 100 줄', async () => {
     unconsumed.mockResolvedValue([{ purchaseToken: 'tok', productId: 'reading_credits_1', grantedAt: new Date().toISOString() }]);
     getPurchase.mockResolvedValue(purchase(0));
     consume.mockResolvedValue({ ok: true, value: null });
     const response = await GET(authorized());
     expect(response.status).toBe(200);
     expect(await response.json()).toMatchObject({ consumed: 1, failed: 0 });
-    expect(unconsumed).toHaveBeenCalledWith(25);
+    expect(unconsumed).toHaveBeenCalledWith(100);
     expect(consumed).toHaveBeenCalledWith('tok');
   });
 

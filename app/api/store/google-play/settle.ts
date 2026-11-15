@@ -78,10 +78,8 @@ export async function settlePurchase(
 
   const looked = await play.getPurchase(productId, purchaseToken);
   if (!looked.ok) {
-    /* 400 · 404 · 410 은 그런 토큰이 없다는 답이다 */
-    return looked.status !== null && looked.status >= 400 && looked.status < 500
-      ? { kind: 'not-found' }
-      : { kind: 'unavailable', step: 'play' };
+    /* 400 · 404 · 410 만 그런 토큰이 없다는 답이다 — 401 · 403(권한 빠짐) · 429(할당량)는 우리 쪽 문제라 다시 시도한다(ADR 0253) */
+    return noSuchToken(looked.status) ? { kind: 'not-found' } : { kind: 'unavailable', step: 'play' };
   }
   const purchase = looked.value;
 
@@ -194,7 +192,7 @@ async function finishOne(
   const noted = async (as: 'consumed' | 'noted') => ((await ledger.consumed(purchaseToken)) ? as : 'failed');
 
   const looked = await play.getPurchase(productId, purchaseToken);
-  if (!looked.ok) return looked.status !== null && looked.status >= 400 && looked.status < 500 ? 'gone' : 'failed';
+  if (!looked.ok) return noSuchToken(looked.status) ? 'gone' : 'failed';
   const purchase = looked.value;
   if (purchase.purchaseState === null) return 'failed';
   if (purchase.purchaseState !== 0) return 'canceled';
@@ -208,6 +206,14 @@ async function finishOne(
   if (again.ok && again.value.consumptionState === 1) return noted('noted');
   console.error('store-consume: consume failed', consumed.status);
   return 'failed';
+}
+
+/**
+ * Google 이 「그런 토큰은 없다」고 답했나 — 400 · 404 · 410 만. 다른 4xx(401 · 403 권한 빠짐, 429 할당량)는 토큰이 아니라 우리 열쇠 ·
+ * 호출량의 문제라 다시 시도할 실패다 — 「없다」로 읽으면 크론이 조용히 초록이 된다(ADR 0253).
+ */
+function noSuchToken(status: number | null): boolean {
+  return status === 400 || status === 404 || status === 410;
 }
 
 /** 무효가 된 구매 하나를 장부로 — 통지든 목록이든 같은 문이다. @returns DB 의 결과, 못 닿았으면 `null` */

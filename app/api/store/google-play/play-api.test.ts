@@ -65,6 +65,19 @@ describe('문 넷', () => {
     expect(await api.refundAndRevoke('GPA.1')).toEqual({ ok: false, status: 400 });
   });
 
+  it('호출마다 시간 제한을 싣고, 끊기면(던지면) 상태 없이 실패다 (ADR 0253)', async () => {
+    const signals: unknown[] = [];
+    const send = vi.fn(async (url: string, init?: RequestInit) => {
+      signals.push(init?.signal);
+      if (url === 'https://oauth2.googleapis.com/token') return Response.json({ access_token: 'at-1' });
+      throw new DOMException('The operation was aborted due to timeout', 'TimeoutError');
+    });
+    const answer = await playApi(account, { fetch: send as unknown as typeof fetch }).getPurchase('reading_credits_1', 't');
+    expect(answer).toEqual({ ok: false, status: null });
+    expect(signals).toHaveLength(2);
+    for (const signal of signals) expect(signal).toBeInstanceOf(AbortSignal);
+  });
+
   it('토큰을 못 받으면 상태 없이 실패다', async () => {
     const send = vi.fn(async () => new Response(null, { status: 401 }));
     expect(await playApi(account, { fetch: send as unknown as typeof fetch }).getPurchase('reading_credits_1', 't')).toEqual({ ok: false, status: null });

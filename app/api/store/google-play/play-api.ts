@@ -25,6 +25,8 @@ import { PLAY_PACKAGE_NAME } from '@/src/lib/reading/store-products';
 const API = `https://androidpublisher.googleapis.com/androidpublisher/v3/applications/${PLAY_PACKAGE_NAME}/`;
 const TOKEN_URL = 'https://oauth2.googleapis.com/token';
 const SCOPE = 'https://www.googleapis.com/auth/androidpublisher';
+/** 한 호출의 시간 제한 — 넘으면 못 닿은 것(`status: null`)이다. 크론 · 문이 한 줄에 매여 서지 않게(ADR 0253) */
+const TIMEOUT_MS = 8_000;
 
 export type PlayServiceAccount = { readonly clientEmail: string; readonly privateKey: string };
 
@@ -165,6 +167,7 @@ export function playApi(
       try {
         const response = await send(TOKEN_URL, {
           method: 'POST',
+          signal: AbortSignal.timeout(TIMEOUT_MS),
           headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
           body: new URLSearchParams({
             grant_type: 'urn:ietf:params:oauth:grant-type:jwt-bearer',
@@ -187,7 +190,11 @@ export function playApi(
     const bearer = await accessToken();
     if (bearer === null) return { ok: false, status: null };
     try {
-      const response = await send(API + path, { method, headers: { Authorization: `Bearer ${bearer}` } });
+      const response = await send(API + path, {
+        method,
+        headers: { Authorization: `Bearer ${bearer}` },
+        signal: AbortSignal.timeout(TIMEOUT_MS),
+      });
       if (!response.ok) return { ok: false, status: response.status };
       const text = await response.text();
       const body: unknown = text.length > 0 ? JSON.parse(text) : {};

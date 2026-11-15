@@ -311,7 +311,9 @@ update retention.reading_payment set hold_reason = null, held_at = null where or
 **무엇이 서 있나.** 앱(Android)의 풀이권 화면이 Google 결제창을 열고, 돌려받은 구매 토큰을 앱의 문 `POST /api/mobile/credits/purchase` 에 넘긴다.
 서버가 `purchases.products.get` 으로 확인한 뒤 `grant_store_purchase` 로 **토큰마다 한 번** 지급하고 `purchases.products.consume` 으로 소비한다 — 앱은
 소비하지 않는다. 결제 중 앱이 꺼진 구매는 앱을 켤 때 · 풀이권 화면을 열 때 다시 보내고, RTDN 의 「팔렸다」 통지로도 선다. **지급은 섰는데 소비가 실패한 구매는
-날마다의 크론 `/api/cron/store-consume`(매일 21:07 UTC)이 Google 에 다시 묻고 「구매」일 때만 소비한다**(ADR 0253 — 지급된 지 4일 안, 이른 차례로 25 줄, 취소 · 무효는 소비하지 않는다). 무효(이용자의 Play 환불 · Google 의
+날마다의 크론 `/api/cron/store-consume`(매일 21:07 UTC)이 Google 에 다시 묻고 「구매」일 때만 소비한다**(ADR 0253 — 지급된 지 4일 안, 이른 차례로 100 줄 · 20초, 취소 · 무효는 소비하지 않는다).
+그 결과를 DB 의 감시 `store-consume-watch`(pg_cron, 매일 07:37 UTC)가 세어, 소비가 안 적힌 지급이 이틀을 넘기면 운영 알림 `store-consume-overdue` 를 보낸다.
+**(G-164 — 결정 대기 · `20270119090000` 의 `db push` · 배포 전이다. 그때까지 다시 소비하는 길은 앱의 재전송 · 통지뿐이다.)** 무효(이용자의 Play 환불 · Google 의
 취소 · 차지백 · 3일 미소비 자동 환불 · 운영자의 Play Console 전액 환불)는 통지 문 `POST /api/store/google-play`(Pub/Sub 푸시)와 날마다의 대조
 `/api/cron/store-voided`(Voided Purchases API, 지난 사흘)가 `void_store_purchase` 로 적는다 — **그 결제가 준 장수만큼, 계정에 남은 유료 풀이권에서(그 묶음 → 늦게 산 묶음), 바닥 0 으로 회수한다**
 (ADR 0230 추기 A, `20270114090000` — 운영 DB 에 있다, 2026-11-07). 무료 · 예외 몫과 다음 구매에서는 빼지 않는다. 주문은 장부 그대로(`provider = 'google_play'`, 주문 번호 `rdo_…`, 거래 번호 = Google 주문 번호 `GPA.…`)라
@@ -368,6 +370,7 @@ update retention.reading_payment set hold_reason = null, held_at = null where or
 | 7 | 지급이 안 선 구매(서버 키를 비운 Preview 등)를 소비하지 않은 채 둔다 | 3일 뒤 Google 이 돌려주고 무효가 4 처럼 적힌다 — 날짜가 걸려 따로 적는다 |
 | 8 | 구매 제한을 건 계정으로 결제를 시도 | 앱에 「지금은 풀이권을 구매할 수 없어요.」, 결제창이 안 열린다 |
 | 9 | 운영자 환불 — 확보(예: 3장 묶음에서 1장 · 청약철회) → Play Console 에서 **일부 환불** → 확정 | 콘솔의 일부 환불 칸이 **세전 금액**인지 본다 — 세전이면 확보 금액 ÷ 1.1 을 넣고, 이용자에게 돌아간 금액이 확보 금액과 같은지 Play 주문의 환불 내역으로 본다. 다르면 멈추고 조율자에게. 본 결과로 운영자 환불 2 의 금액 넣는 법을 고정한다 |
+| 10 | 첫 구매 뒤 Vercel 로그 | Google 의 원 응답에 `purchaseState` 가 실렸는지 — 로그에 `store purchase: unreadable purchase state` · `quantity is not one` 이 0 줄이다(있으면 지급이 안 선 결제다 — 멈추고 조율자에게, ADR 0253) |
 
 **운영자 환불(이용자가 우리에게 청한 것) — 세 걸음 그대로, 콘솔이 Play Console 이다.** 금액은 DB 의 셈(ADR 0148 · 0192)이다.
 
@@ -430,7 +433,10 @@ SQL
 **통지 · 크론이 이상하면.** Vercel 로그의 `play notification: refused <까닭>`(403 — audience · 서비스 계정이 Vercel 값과 다르다), `not configured`(503 — 셋 중 하나가 비었다),
 `store ledger: <문> <코드>`(DB), `store ledger: grant refused 22023`(남의 토큰 — 끝난 답, 앱 · 통지는 200), `store purchase: consume failed <상태>`(소비 실패 — 그날 크론이 다시 소비한다),
 `store purchase: unreadable purchase state` · `quantity is not one <수>`(Google 의 답이 문서 밖 — 지급 · 소비하지 않았다. 수량이면 Play Console 의 multi-quantity 가 켜졌는지 보고, 그 주문은 콘솔에서 먼저 환불해도 된다),
-`store-voided <건수>`(대조가 새로 적은 무효), `store-consume {…}`(다시 소비한 수 — `failed` 가 있으면 크론이 500), `store-consume: overdue <수>`(지급된 지 이틀 넘은 줄을 못 끝냈다 — 위 소비 대조 질의와 로그의 `consume failed` 상태를 본다). Pub/Sub 구독의
+`store-voided <건수>`(대조가 새로 적은 무효), `store-consume {…}`(다시 소비한 수 — `failed` 가 있으면 크론이 500), `store-consume: overdue <수>`(지급된 지 이틀 넘은 줄을 못 끝냈다 — 위 소비 대조 질의와 로그의 `consume failed` 상태를 본다).
+**알림은 로그가 아니라 감시다** — 운영 알림 `store-consume-overdue`(「소비가 안 적힌 Google Play 구매 N건이 이틀을 넘겼다」)가 오면 차례로 본다: Vercel → Cron Jobs 에
+`/api/cron/store-consume` 가 있나 · **Run** 의 응답(403 이면 `CRON_SECRET`, 503 이면 열쇠 · DB, 500 이면 답의 `failed` — Google 이 401 · 403 이면 결제 검증 서비스 계정의 권한 · 키,
+429 면 할당량) · 위 소비 대조 질의. 기한(지급 뒤 3일) 안이면 Run 한 번으로 끝난다. 넘겼으면 Google 이 돌려준 결제라 무효 대조가 적는다(ADR 0253). Pub/Sub 구독의
 「Unacked messages」가 쌓이면 문이 503 을 주고 있다는 뜻이다. 차지백 검토 요청(`refund review`)은 받기만 한다 — 답하지 않는다(ADR 0230).
 
 #### 결제 알림 · 결제 이상 알림 (G-23 ⑥ · G-110 ④)
