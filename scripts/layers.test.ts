@@ -76,9 +76,21 @@ const SOURCE_FILES = [
 
 const relPath = (file: string) => relative(ROOT, file).split(sep).join('/');
 
+/**
+ * 파일마다 한 번만 읽고 짓는다 — 시험이 도는 동안 디스크는 안 바뀌고, 나무를 고치는 시험은 없다(`scripts/code-rules.test.ts` 와 같은 꼴).
+ *
+ * `EDGES` 가 불러올 때 트리 전부를 짓는데, 입구 · 열쇠 · DB 이름 시험이 저마다 그 트리를 다시 지었다. 혼자 0.5~1.2초씩이던 것이
+ * `npm test` 전체 아래서 3.5초를 넘었고, 기계가 바쁠 때 「폴더 밖이 부르는 이름」이 로컬 5초에 걸렸다(2026-11-16). 짓기는 불러올 때
+ * 한 번이고, 불러오기는 시험의 시간 제한 밖이다.
+ */
+const parsed = new Map<string, ts.SourceFile>();
 function parse(file: string): ts.SourceFile {
+  const cached = parsed.get(file);
+  if (cached) return cached;
   const kind = file.endsWith('.tsx') ? ts.ScriptKind.TSX : file.endsWith('.jsx') ? ts.ScriptKind.JSX : /\.(js|mjs|cjs)$/.test(file) ? ts.ScriptKind.JS : ts.ScriptKind.TS;
-  return ts.createSourceFile(file, readFileSync(file, 'utf8'), ts.ScriptTarget.Latest, true, kind);
+  const source = ts.createSourceFile(file, readFileSync(file, 'utf8'), ts.ScriptTarget.Latest, true, kind);
+  parsed.set(file, source);
+  return source;
 }
 
 /** `spec` 이 `null` 이면 대상을 **정적으로 알 수 없는** import 다 */
