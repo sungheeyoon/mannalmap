@@ -5,7 +5,7 @@ import { talkLineOf, type TalkLine } from '@chat/room/talk';
 import { MESSAGE_WINDOW, messagesOf, type ChatMessage } from '@chat/room/message';
 import type { SendResult } from '@chat/room/pending';
 import { rpcArgs } from '@db';
-import { answerOfThrown, userFacingDbMessage } from '@db-error';
+import { answerOfThrown, dbFailure, userFacingDbMessage } from '@db-error';
 import { activityBandOf, type ActivityBand } from '@presence';
 import { focusOf, focusesOf, leadFocusOf, type PhotoFocus } from '@profile';
 
@@ -189,9 +189,10 @@ export async function readRoomScreen(client: Client, matchId: string): Promise<R
   const notice = roomNoticeOf(room);
   const open = notice === null && room.partnerUserId !== null;
   const [messages, intro, mine, detail, requests] = await Promise.all([
+    /* 문이 지은 우리말(`DbFailure`)만 옮긴다 — 나머지 예외는 기록에 가고 일반 문장이 선다 */
     readMessages(client, matchId).then(
       (page) => ({ ok: true as const, page }),
-      (failure: Error) => ({ ok: false as const, message: failure.message }),
+      (thrown: unknown) => ({ ok: false as const, message: answerOfThrown(thrown, 'my_chat_messages') }),
     ),
     open ? readIntro(client, matchId) : null,
     /* 내 시트의 사진 — 꾸밈이라 못 읽으면 사진 없는 나로 선다(ADR 0078) */
@@ -234,7 +235,7 @@ export async function readMessages(client: Client,
     p_limit: page.limit ?? MESSAGE_WINDOW,
     ...(page.before === undefined ? {} : { p_before_seq: page.before }),
   });
-  if (error !== null) throw new Error(userFacingDbMessage(error, 'my_chat_messages'));
+  if (error !== null) throw dbFailure(error, 'my_chat_messages');
   return messagesOf(data ?? []);
 }
 

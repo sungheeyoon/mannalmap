@@ -28,7 +28,8 @@
 
 넷 다 한 가지를 지킨다: **`error.message` 를 사용자에게 그대로 내지 않는다.** 우리가 쓴 한국어
 거절만 옮기고 나머지는 `console.error` 로 기록에 보낸다 — `app/db-error.boundary.test.ts` 가
-모든 파일을 훑는다(#67). `if (error) return null` 은 「DB 실패」와 「없음」을 한 값으로 합치므로
+웹(`src/` · `app/`)과 앱(`mobile/src`)의 모든 파일을 훑는다(#67). 잡은 것의 `.message` 는 `catch` 절 · `.catch` · `.then` 의 실패 쪽 어디서
+잡았든 센다. 앱에는 운영의 Next 같은 덮개가 없어 던진 문장이 그대로 화면에 선다 — 던지는 문은 `throw dbFailure(…)`, 받는 자리는 `answerOfThrown` 이다. `if (error) return null` 은 「DB 실패」와 「없음」을 한 값으로 합치므로
 새로 쓰지 않는다. 남은 하나는 지문으로 잠겨 있다. `error` 를 꺼내지도 않는 자리는 이제 없다 — 예산 0 이다.
 
 **엔진과 도메인 lib** 은 DB 를 모르므로 다르다 — 사용자가 고칠 수 있는 것은 **값**으로

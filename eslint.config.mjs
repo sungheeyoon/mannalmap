@@ -5,6 +5,8 @@ import nextVitals from "eslint-config-next/core-web-vitals";
 import nextTs from "eslint-config-next/typescript";
 import importPlugin from "eslint-plugin-import";
 
+import codeRules from "./eslint-code-rules.cjs";
+
 /**
  * **층의 방향과 화면의 DB 호출은 린트가 막는다** (ADR 0085, `docs/architecture.md`).
  *
@@ -97,21 +99,10 @@ const NO_DB_CALL_IN_SCREENS = [
 // -----------------------------------------------------------------------------
 
 /**
- * **모양은 셋뿐이다** — `type`(interface 0건), 상수 표, 함수. 2026-09-22 에 재어 보니 `enum` 0건,
- * `class` 는 내장을 잇는 여덟뿐이었다(`Error` 일곱, 훑기용 시계가 `Date` 하나). 제 손으로 짓는
- * 클래스가 하나 생기면 그 안의 판단은 vitest 가 닿기 어려운 자리로 들어간다(ADR 0080 의 같은 결).
- * 어느 내장을 잇는지는 `scripts/code-rules.test.ts` 가 이름으로 든다.
+ * 모양(`CODE_SHAPE` — enum · 내장을 잇지 않는 class) · 미결 표시(`NO_LOOSE_ENDS`) · `console`(`NO_CONSOLE`)의 값은 앱과 한 벌이다 —
+ * `eslint-code-rules.cjs`. 어디에 거는지만 여기서 정한다.
  */
-const CODE_SHAPE = [
-  { selector: "TSEnumDeclaration", message: "enum 을 쓰지 않는다 — 문자열 리터럴 유니언으로 적는다 (CODING_STANDARDS.md)" },
-  {
-    selector: "ClassDeclaration:not([superClass]), ClassExpression:not([superClass])",
-    message: "class 는 내장(Error·Date)을 잇는 자리에만 쓴다 — 나머지는 type 과 함수다 (CODING_STANDARDS.md)",
-  },
-];
-
-/** 코드에 남기는 미결은 TODO 가 아니라 ADR 의 「잠그지 않은 것」·PRD §9·이슈다 — 2026-09-22 기준 0건 */
-const NO_LOOSE_ENDS = ["error", { terms: ["todo", "fixme", "xxx", "hack"], location: "anywhere" }];
+const { CODE_SHAPE, NO_LOOSE_ENDS, NO_CONSOLE } = codeRules;
 
 /**
  * **열쇠(`service_role`)를 드는 자리는 이름으로 든다**(ADR 0010 · 0136). 열쇠는 사용자 JWT 에 닫아 둔 문을 부를 때만
@@ -255,7 +246,7 @@ const eslintConfig = defineConfig([
      */
     files: [`src/**/*.${ANY}`, `app/**/*.${ANY}`, "proxy.ts"],
     ignores: ["**/*.live.test.ts"],
-    rules: { "no-console": ["error", { allow: ["error", "warn"] }] },
+    rules: { "no-console": NO_CONSOLE },
   },
   {
     /** 이름 있는 export 만 — `export default` 는 Next 가 요구하는 `app/` 과 루트 설정 파일에만 있다 */

@@ -194,12 +194,12 @@ describe('CI 계획 — 앱 검사 (mobile 차선)', () => {
   const yml = readFileSync(resolve(__dirname, '../.github/workflows/verify.yml'), 'utf8');
 
   it('앱이 부르는 자리가 바뀐 PR 만 돈다 — 어느 단계든', () => {
-    for (const file of ['mobile/src/app/index.tsx', 'mobile/src/a.test.ts', 'mobile/package-lock.json', 'mobile/app.json', 'src/lib/saju/index.ts', 'src/lib/design/tokens.json', 'app/db-error.ts', 'src/lib/account/sign-in-again.ts', '.github/workflows/verify.yml', '.nvmrc', 'scripts/mobile-native.mjs']) {
+    for (const file of ['mobile/src/app/index.tsx', 'mobile/src/a.test.ts', 'mobile/package-lock.json', 'mobile/app.json', 'src/lib/saju/index.ts', 'src/lib/design/tokens.json', 'app/db-error.ts', 'src/lib/account/sign-in-again.ts', '.github/workflows/verify.yml', '.nvmrc', 'scripts/mobile-native.mjs', 'eslint-code-rules.cjs']) {
       expect(pr([file]).lanes.mobile, file).toBe(true);
       expect(pr(['docs/prd.md', file]).lanes.mobile, file).toBe(true);
     }
     expect(pr(['mobile/src/app/index.tsx']).lanes.mobile).toBe(true);
-    for (const file of ['app/page.tsx', 'app/ui/icons.tsx', 'docs/prd.md', 'mobile/AGENTS.md', 'src/lib/saju/index.test.ts', 'scripts/ci-plan.test.ts', 'package-lock.json', 'supabase/migrations/1_x.sql']) {
+    for (const file of ['app/page.tsx', 'app/ui/icons.tsx', 'docs/prd.md', 'mobile/AGENTS.md', 'src/lib/saju/index.test.ts', 'scripts/ci-plan.test.ts', 'package-lock.json', 'supabase/migrations/1_x.sql', 'eslint.config.mjs']) {
       expect(pr([file]).lanes.mobile, file).toBe(false);
     }
   });

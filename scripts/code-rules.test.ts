@@ -4,8 +4,8 @@
  * `eslint.config.mjs` 가 구문으로 잡을 수 있는 것(enum·class·interface·console·미결 표시·default export)은
  * 린트가 잡는다. 여기는 린트가 못 보는 것을 잰다 — **파일 이름**, **ADR 참조가 실제 파일을
  * 가리키는가**, 그리고 **탈출구의 지문**(이중 캐스트·`!`·`if (error)` 뒤에서 실패를 지우는 자리·
- * `error` 를 꺼내지도 않는 자리·예외 표시). 지문 목록은 2026-09-22 에 잰 값이고 **줄어들기만 한다** — 하나를 고치면 여기서
- * 지우고, 새 자리는 못 든다(ADR 0085 §3 의 화면 DB 호출과 같은 결).
+ * `error` 를 꺼내지도 않는 자리·예외 표시)과 **주석의 날짜**. 지문 목록은 처음 잰 값이고 **줄어들기만 한다** — 하나를 고치면 여기서
+ * 지우고, 새 자리는 못 든다(ADR 0085 §3 의 화면 DB 호출과 같은 결). 웹과 앱(`mobile/src`)을 함께 센다.
  *
  * 수가 아니라 지문으로 잠그는 까닭은 ADR 0085 정정 둘째에 있다 — 수를 세면 하나를 지운 예산을
  * 다른 새 자리가 쓴다.
@@ -33,12 +33,14 @@ const SOURCE_FILES = [
 ];
 const isTest = (rel: string) => /\.(test|spec)\.(ts|tsx|mts)$/.test(rel);
 /**
- * Expo 앱(`mobile/src`)의 제품 코드 — 파일 이름 · 층 같은 웹의 규칙은 제 것이 따로 있어(Expo Router 의 `[id].tsx` · `_layout.tsx`) 안 보고,
- * **탈출구의 지문만** 함께 센다(ADR 0243). 앞서는 이 목록에 없어 앱의 이중 캐스트가 예산 밖이었다(2026-11-08 감사).
+ * Expo 앱(`mobile/src`)의 소스 — 파일 이름 · 층 같은 웹의 규칙은 제 것이 따로 있어(Expo Router 의 `[id].tsx` · `_layout.tsx`) 안 본다.
+ * 함께 세는 것은 **탈출구의 지문**(이중 캐스트 · `!` · 실패를 지우는 자리 · `@ts-expect-error` · `eslint-disable` · class 가 잇는 것)과
+ * **주석의 날짜**다(ADR 0243). 모양 · 미결 · `console` · `export default` 는 앱의 린트가 든다(`mobile/eslint.config.js`).
  */
-const MOBILE_PRODUCT_FILES = filesUnder(join(ROOT, 'mobile/src')).filter(
-  (file) => SOURCE_EXTENSIONS.includes(extname(file)) && !file.endsWith('.d.ts') && !isTest(relPath(file)),
-);
+const MOBILE_SOURCE_FILES = filesUnder(join(ROOT, 'mobile/src')).filter((file) => SOURCE_EXTENSIONS.includes(extname(file)) && !file.endsWith('.d.ts'));
+const MOBILE_PRODUCT_FILES = MOBILE_SOURCE_FILES.filter((file) => !isTest(relPath(file)));
+/** 웹의 소스와 앱의 소스 — 예외 표시 · class · import 따옴표는 시험 파일까지 함께 센다 */
+const WITH_MOBILE = [...SOURCE_FILES, ...MOBILE_SOURCE_FILES];
 /** 앱과 lib 의 **제품 코드** — 시험·검사 도구는 뺀다. 탈출구는 여기서만 센다 */
 const PRODUCT_FILES = [
   ...SOURCE_FILES.filter((file) => {
@@ -313,6 +315,80 @@ function adrHeadParagraphs(text: string): { first: string; body: string }[] {
   return paragraphs;
 }
 
+// -----------------------------------------------------------------------------
+// 주석의 날짜 — 결정 · 경위의 날짜는 주석에 두지 않는다 (comments.md)
+// -----------------------------------------------------------------------------
+
+/**
+ * **주석에 날짜를 새로 적지 않는다** — 날짜가 붙은 주석은 거의 다 「언제 누가 정했나 · 언제 바뀌었나」다. 그 경위는 ADR ·
+ * `docs/product/prd-changelog.md` · 노트가 들고, 주석은 지금 참인 것만 든다(`docs/agents/code-rules/comments.md` 「주석과 ADR 참조」).
+ * 낱말(「운영자」 · 「결정」)로 가르면 「(2026-10-11)」 같은 맨 날짜와 「불러 준 그대로」 같은 말이 지나가므로 **날짜 자체**를 센다.
+ *
+ * 하나만 예외다 — **밖의 문서를 확인한 날**(출처 날짜). 남의 문서는 바뀌므로 언제 읽었는가가 지금도 참인 사실이다. 꼴은
+ * `확인 YYYY-MM-DD` · `YYYY-MM-DD 확인` 이고, 바로 앞이 「운영자 · 조율자」면 사람의 답이라 예외가 아니다.
+ *
+ * 있던 자리는 `scripts/dated-comments.json` 이 `파일 :: 날짜` 지문으로 든다 — **줄어들기만 한다.** 그 파일을 고칠 때 손댄 자리 둘레의
+ * 날짜를 걷고 목록에서 지운다(주석만 걷는 전역 정리 PR 은 열지 않는다 — 같은 절). 제품 코드만 센다 — 웹(`src/` · `app/` · `proxy.ts`)과
+ * 앱(`mobile/src`), 시험 · 생성 파일은 뺀다.
+ */
+const DATED_COMMENTS_FILE = join(ROOT, 'scripts/dated-comments.json');
+const DATE_IN_COMMENT = /\b20\d\d-\d\d-\d\d\b/g;
+
+/** 밖의 문서를 확인한 날 — `확인 2026-10-26` · `2026-11-07 확인`. 앞이 「운영자 · 조율자」면 사람의 답이다 */
+function isSourceDate(line: string, at: number, date: string): boolean {
+  const before = line.slice(0, at);
+  const after = line.slice(at + date.length);
+  if (/(운영자|조율자)\s*(확인\s*)?$/.test(before)) return false;
+  return /확인\s*$/.test(before) || /^\s*확인/.test(after);
+}
+
+/** 제품 코드의 주석에 선 날짜 — 출처 날짜는 뺀다 */
+function datedComments(files: readonly string[]) {
+  const out: { file: string; line: number; fingerprint: string }[] = [];
+  for (const file of files) {
+    // 날짜가 한 글자도 없는 파일은 주석을 모으지 않는다 — 토큰까지 펴는 일이 이 시험의 시간 거의 전부다
+    if (!/\b20\d\d-\d\d-\d\d\b/.test(parse(file).text)) continue;
+    const rel = relPath(file);
+    // 주석을 모으는 법은 아래 「운영 소스의 주석이 가리키는 경로」와 한 벌이다 — 문자열 · JSX 글자 속의 날짜는 값이라 안 센다
+    for (const comment of commentsOf(file)) {
+      const startLine = comment.source.getLineAndCharacterOfPosition(comment.pos).line;
+      comment.text
+        .split('\n')
+        .forEach((line, offset) => {
+          for (const match of line.matchAll(DATE_IN_COMMENT)) {
+            if (isSourceDate(line, match.index ?? 0, match[0])) continue;
+            out.push({ file: rel, line: startLine + offset + 1, fingerprint: `${rel} :: ${match[0]}` });
+          }
+        });
+    }
+  }
+  return out;
+}
+
+const datedCommentsAllowed = () => JSON.parse(readFileSync(DATED_COMMENTS_FILE, 'utf8')) as string[];
+
+describe('주석의 날짜 (docs/agents/code-rules/comments.md) — 줄어들기만 한다', () => {
+  beforeAll(parseAll(PRODUCT_FILES), PARSE_TIMEOUT_MS);
+
+  it('결정 · 경위의 날짜는 있던 자리에만 있다 — 밖의 문서를 확인한 날만 새로 적는다', () => {
+    expectExactly(datedComments(PRODUCT_FILES), datedCommentsAllowed());
+  });
+
+  it('목록은 정렬돼 있다 — 걷는 사람이 파일 이름으로 찾는다', () => {
+    const allowed = datedCommentsAllowed();
+    expect(allowed).toEqual([...allowed].sort());
+  });
+
+  it('출처 날짜만 예외다 — 사람의 답은 「확인」이 붙어도 센다', () => {
+    const at = (line: string, date: string) => isSourceDate(line, line.indexOf(date), date);
+    expect(at('(seed-design.io/components/snackbar, 확인 2026-10-26)', '2026-10-26')).toBe(true);
+    expect(at('— https://firebase.google.com/docs (2026-11-07 확인)', '2026-11-07')).toBe(true);
+    expect(at('공지 받을 이용자가 없어(운영자 확인 2026-11-07)', '2026-11-07')).toBe(false);
+    expect(at('(운영자 결정 2026-11-08)', '2026-11-08')).toBe(false);
+    expect(at('## 닉네임은 스스로 확인한다 (2026-10-11)', '2026-10-11')).toBe(false);
+  });
+});
+
 describe('현재 결정 색인 (docs/adr/README.md)', () => {
   const index = readFileSync(join(ADR_DIR, 'README.md'), 'utf8');
   /** 색인의 줄은 `- ADR NNNN — 제목` 이다. 머리말의 `ADR NNNN` 은 줄로 세지 않는다 */
@@ -465,6 +541,36 @@ const DISABLES_STILL_THERE = [
   'app/me/matching/candidate-photo.tsx :: @next/next/no-img-element',
   'app/me/profile/eraser.tsx :: @next/next/no-img-element',
   'app/me/profile/photo-grid.tsx :: @next/next/no-img-element',
+  // 앱(`mobile/src`) — 대개 `react-hooks` 의 refs · set-state-in-effect 다. 왜 끄는지는 그 줄의 `-- 까닭` 이 말한다
+  'mobile/src/app/help.tsx :: react-hooks/set-state-in-effect',
+  'mobile/src/app/me/chat/[matchId].tsx :: react-hooks/set-state-in-effect',
+  'mobile/src/app/me/match/[matchId].tsx :: react-hooks/set-state-in-effect',
+  'mobile/src/app/signup.tsx :: react-hooks/exhaustive-deps',
+  'mobile/src/chat/room.tsx :: react-hooks/refs',
+  'mobile/src/compat/picker.tsx :: react-hooks/refs',
+  'mobile/src/compat/picker.tsx :: react-hooks/exhaustive-deps',
+  'mobile/src/compat/relation-map.tsx :: react-hooks/refs',
+  'mobile/src/compat/relation-map.tsx :: react-hooks/refs',
+  'mobile/src/compat/relation-map.tsx :: react-hooks/refs',
+  'mobile/src/compat/relation-map.tsx :: react-hooks/refs',
+  'mobile/src/compat/relation-map.tsx :: react-hooks/refs',
+  'mobile/src/compat/relation-map.tsx :: react-hooks/refs',
+  'mobile/src/home/warning-notice.tsx :: react-hooks/set-state-in-effect',
+  'mobile/src/push/device.ts :: import/namespace',
+  'mobile/src/reading/panel.tsx :: react-hooks/set-state-in-effect',
+  'mobile/src/reading/use-reading-panel.ts :: react-hooks/refs',
+  'mobile/src/reading/use-reading-panel.ts :: react-hooks/exhaustive-deps',
+  'mobile/src/settings/birth-section.tsx :: react-hooks/set-state-in-effect',
+  'mobile/src/settings/photo-framer.tsx :: react-hooks/refs',
+  'mobile/src/settings/photo-grid.tsx :: react-hooks/set-state-in-effect',
+  'mobile/src/settings/photo-grid.tsx :: react-hooks/refs',
+  'mobile/src/settings/photo-grid.tsx :: react-hooks/refs',
+  'mobile/src/settings/photo-grid.tsx :: react-hooks/refs',
+  'mobile/src/settings/photo-viewer.tsx :: react-hooks/set-state-in-effect',
+  'mobile/src/settings/photo-viewer.tsx :: react-hooks/refs',
+  'mobile/src/settings/profile-screen.tsx :: react-hooks/set-state-in-effect',
+  'mobile/src/settings/survey-screen.tsx :: react-hooks/set-state-in-effect',
+  'mobile/src/share/view.tsx :: react-hooks/set-state-in-effect',
 ];
 /** 까닭(`-- …`) 없이 선 표시 — 새 표시는 까닭을 적는다 */
 const DISABLES_WITHOUT_A_REASON: readonly string[] = [];
@@ -478,7 +584,7 @@ const isUnknown = (type: ts.TypeNode) =>
   type.kind === ts.SyntaxKind.UnknownKeyword || type.kind === ts.SyntaxKind.NeverKeyword || type.kind === ts.SyntaxKind.AnyKeyword;
 
 describe('탈출구의 지문 (docs/agents/code-rules/escapes.md) — 줄어들기만 한다', () => {
-  beforeAll(parseAll(SOURCE_FILES), PARSE_TIMEOUT_MS);
+  beforeAll(parseAll(WITH_MOBILE), PARSE_TIMEOUT_MS);
 
   it('제품 코드를 실제로 읽고 있다', () => {
     expect(PRODUCT_FILES.length).toBeGreaterThan(150);
@@ -614,7 +720,7 @@ describe('탈출구의 지문 (docs/agents/code-rules/escapes.md) — 줄어들�
     const found: { file: string; line: number; fingerprint: string }[] = [];
     const withoutReason: string[] = [];
     const wrongForm: string[] = [];
-    for (const file of SOURCE_FILES) {
+    for (const file of WITH_MOBILE) {
       const rel = relPath(file);
       const lines = readFileSync(file, 'utf8').split('\n');
       lines.forEach((line, at) => {
@@ -641,7 +747,7 @@ describe('탈출구의 지문 (docs/agents/code-rules/escapes.md) — 줄어들�
 
   it('class 는 Error 를 잇는다 — 다른 것을 잇는 자리는 이름으로 든다', () => {
     // 트리를 한 번만 돈다 — 두 번 돌던 때 이 시험이 파일에서 가장 느렸다
-    const classes = fingerprints(SOURCE_FILES, (node, source) => {
+    const classes = fingerprints(WITH_MOBILE, (node, source) => {
       if (!ts.isClassDeclaration(node) && !ts.isClassExpression(node)) return null;
       const heritage = node.heritageClauses?.find((clause) => clause.token === ts.SyntaxKind.ExtendsKeyword);
       const parent = heritage?.types[0]?.expression.getText(source) ?? null;
@@ -654,7 +760,7 @@ describe('탈출구의 지문 (docs/agents/code-rules/escapes.md) — 줄어들�
   });
 
   it('import 는 홑따옴표다', () => {
-    const found = fingerprints(SOURCE_FILES, (node, source) => {
+    const found = fingerprints(WITH_MOBILE, (node, source) => {
       const spec = ts.isImportDeclaration(node) || ts.isExportDeclaration(node) ? node.moduleSpecifier : undefined;
       return spec && spec.getText(source).startsWith('"') ? oneLine(node.getText(source)) : null;
     });

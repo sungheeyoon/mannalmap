@@ -153,9 +153,10 @@ const ENGINE = [/^src\/lib\/saju\//, /^app\/saju\//];
 export const DEPENDENCY_LISTS = ['package.json', 'package-lock.json', 'mobile/package.json', 'mobile/package-lock.json'];
 /**
  * 앱이 부르는 자리와 CI 자체 — 위 「앱 검사」. `app/` 은 파일로 적는다 — 앱이 닿는 것이 그 파일들뿐이고, 시험이 닫힘과 견준다.
- * `scripts/mobile-native.mjs` 는 앱이 부르지 않지만 그 차선에서만 실제 의존에 대고 돈다 — 고치면 그 차선이 다시 잰다
+ * `scripts/mobile-native.mjs` 는 앱이 부르지 않지만 그 차선에서만 실제 의존에 대고 돈다 — 고치면 그 차선이 다시 잰다.
+ * `eslint-code-rules.cjs` 는 앱의 린트(`mobile/eslint.config.js`)가 읽는 규칙의 값이다
  */
-const MOBILE_REACH = [/^mobile\//, /^src\/lib\//, /^app\/db-error\.ts$/, /^\.github\/workflows\//, /^\.nvmrc$/, /^scripts\/mobile-native\.mjs$/];
+const MOBILE_REACH = [/^mobile\//, /^src\/lib\//, /^app\/db-error\.ts$/, /^\.github\/workflows\//, /^\.nvmrc$/, /^scripts\/mobile-native\.mjs$/, /^eslint-code-rules\.cjs$/];
 /** 문서는 앱을 안 바꾼다. 웹 쪽 시험은 앱에 안 닿지만 `mobile/` 의 시험은 앱의 `tsc` 가 함께 읽는다 */
 export const reachesMobile = (file) => matches(MOBILE_REACH, file) && !/\.md$/.test(file) && (file.startsWith('mobile/') || !/\.test\.tsx?$/.test(file));
 /** DB 차선에서만 재어지는 자리 — 단계와 상관없이 전부를 돈다 */
