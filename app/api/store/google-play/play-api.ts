@@ -13,7 +13,7 @@ import { PLAY_PACKAGE_NAME } from '@/src/lib/reading/store-products';
  * 2026-11-06). 라이브러리를 들이지 않고 OAuth 2.0 서비스 계정 흐름(JWT → 토큰)을 `node:crypto` 로 밟는다 — 애플 키(`apple-tokens.ts`)와 같은 꼴.
  *
  * 쓰는 문 넷(https://developers.google.com/android-publisher/api-ref/rest/v3, 2026-11-06):
- * - `purchases.products.get` — 구매 상태(0 구매 · 1 취소 · 2 보류) · 소비 상태 · 주문 번호 · 계정 표지 · 구매 갈래(0 시험)
+ * - `purchases.products.get` — 구매 상태(0 구매 · 1 취소 · 2 보류) · 소비 상태 · 수량 · 주문 번호 · 계정 표지 · 구매 갈래(0 시험)
  * - `purchases.products.consume` — 「if your app has a secure backend, we recommend that you use Purchases.products:consume」. 소비가
  *   승인을 겸한다 — 3일 안에 안 하면 Google 이 돌려준다
  * - `orders.refund`(`revoke=true`) — 지급하지 않을 구매(제한된 계정)는 3일을 기다리지 말고 돌려준다(Google 「Never call … consume on
@@ -25,6 +25,8 @@ import { PLAY_PACKAGE_NAME } from '@/src/lib/reading/store-products';
 const API = `https://androidpublisher.googleapis.com/androidpublisher/v3/applications/${PLAY_PACKAGE_NAME}/`;
 const TOKEN_URL = 'https://oauth2.googleapis.com/token';
 const SCOPE = 'https://www.googleapis.com/auth/androidpublisher';
+/** 한 호출의 시간 제한 — 넘으면 못 닿은 것(`status: null`)이다. 크론 · 문이 한 줄에 매여 서지 않게(ADR 0253) */
+const TIMEOUT_MS = 8_000;
 
 export type PlayServiceAccount = { readonly clientEmail: string; readonly privateKey: string };
 
@@ -54,12 +56,21 @@ export function assertionOf(account: PlayServiceAccount, now: Date): string {
   return `${head}.${body}.${base64url(signature)}`;
 }
 
-/** Google 이 돌려준 구매 — 우리가 쓰는 칸만 */
+/**
+ * Google 이 돌려준 구매 — 우리가 쓰는 칸만. 칸의 뜻은 `ProductPurchase` 문서 그대로다
+ * (https://developers.google.com/android-publisher/api-ref/rest/v3/purchases.products, 2026-11-15 확인 — ADR 0253).
+ * 정수 칸은 문서가 `integer` 로 적고, 정한 값 밖이거나 칸이 없으면 **`null`(모른다)** 이다 — 「구매됨」 · 「소비 전」으로 메우지 않는다.
+ */
 export type PlayPurchase = {
-  /** 0 구매 · 1 취소 · 2 보류 */
-  readonly purchaseState: number;
-  /** 0 소비 전 · 1 소비됨 */
-  readonly consumptionState: number;
+  /** 「0. Purchased 1. Canceled 2. Pending」 — 칸이 없거나 그 밖의 값이면 `null`. `null` 은 지급하지 않는다(`settle.ts`) */
+  readonly purchaseState: 0 | 1 | 2 | null;
+  /** 「0. Yet to be consumed 1. Consumed」 — 칸이 없거나 그 밖의 값이면 `null` */
+  readonly consumptionState: 0 | 1 | null;
+  /**
+   * 한 구매의 수 — 「If not present, the quantity is 1.」 그래서 칸이 없으면 1 이다. 1 이상의 정수가 아니면 `null`.
+   * 우리는 상품마다 한 번에 하나만 판다(Play Console 의 multi-quantity 를 켜지 않는다) — 1 이 아니면 지급하지 않는다(`settle.ts`)
+   */
+  readonly quantity: number | null;
   readonly orderId: string | null;
   readonly purchaseTimeMillis: number | null;
   /** 앱이 결제창을 열 때 실은 계정 표지 — 우리 계정 id 다 */
@@ -100,16 +111,27 @@ export type PlayApi = {
   listVoided(startMillis: number): Promise<PlayAnswer<readonly PlayVoided[]>>;
 };
 
+/**
+ * 정수 칸 — Google 이 쓰는 칸은 모두 정수다(`integer`, 시각은 int64 를 글자로 — 문서 표기 그대로). 받는 꼴은 둘뿐이다: 안전한 정수인 수,
+ * 또는 십진 정수만 적은 글자(`/^-?\d+$/`). `Number()` 로 바꾸지 않는다 — `""` · `" "` · `"\n"` 이 0, `"0x0"` 이 0, `"1e3"` 이 1000 이 된다
+ * (0 은 「구매됨」이다, ADR 0253).
+ */
 const numberOf = (value: unknown): number | null => {
-  const n = typeof value === 'string' ? Number(value) : typeof value === 'number' ? value : NaN;
-  return Number.isFinite(n) ? n : null;
+  const n = typeof value === 'number' ? value : typeof value === 'string' && /^-?\d+$/.test(value) ? Number(value) : NaN;
+  return Number.isSafeInteger(n) ? n : null;
 };
 const textOf = (value: unknown): string | null => (typeof value === 'string' && value.length > 0 ? value : null);
+const oneOf = <T extends number>(value: unknown, allowed: readonly T[]): T | null => {
+  const n = numberOf(value);
+  return n !== null && (allowed as readonly number[]).includes(n) ? (n as T) : null;
+};
 
 export function purchaseOf(body: Record<string, unknown>): PlayPurchase {
+  const quantity = body.quantity === undefined || body.quantity === null ? 1 : numberOf(body.quantity);
   return {
-    purchaseState: numberOf(body.purchaseState) ?? 0,
-    consumptionState: numberOf(body.consumptionState) ?? 0,
+    purchaseState: oneOf(body.purchaseState, [0, 1, 2] as const),
+    consumptionState: oneOf(body.consumptionState, [0, 1] as const),
+    quantity: quantity !== null && quantity >= 1 ? quantity : null,
     orderId: textOf(body.orderId),
     purchaseTimeMillis: numberOf(body.purchaseTimeMillis),
     obfuscatedExternalAccountId: textOf(body.obfuscatedExternalAccountId),
@@ -144,6 +166,7 @@ export function playApi(
       try {
         const response = await send(TOKEN_URL, {
           method: 'POST',
+          signal: AbortSignal.timeout(TIMEOUT_MS),
           headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
           body: new URLSearchParams({
             grant_type: 'urn:ietf:params:oauth:grant-type:jwt-bearer',
@@ -166,7 +189,11 @@ export function playApi(
     const bearer = await accessToken();
     if (bearer === null) return { ok: false, status: null };
     try {
-      const response = await send(API + path, { method, headers: { Authorization: `Bearer ${bearer}` } });
+      const response = await send(API + path, {
+        method,
+        headers: { Authorization: `Bearer ${bearer}` },
+        signal: AbortSignal.timeout(TIMEOUT_MS),
+      });
       if (!response.ok) return { ok: false, status: response.status };
       const text = await response.text();
       const body: unknown = text.length > 0 ? JSON.parse(text) : {};

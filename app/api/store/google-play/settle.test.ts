@@ -14,6 +14,7 @@ const TOKEN = 'token-abc';
 const bought = (over: Partial<PlayPurchase> = {}): PlayPurchase => ({
   purchaseState: 0,
   consumptionState: 0,
+  quantity: 1,
   orderId: 'GPA.1111-2222-3333-44444',
   purchaseTimeMillis: Date.UTC(2026, 10, 6, 3, 0, 0),
   obfuscatedExternalAccountId: USER,
@@ -21,7 +22,10 @@ const bought = (over: Partial<PlayPurchase> = {}): PlayPurchase => ({
   ...over,
 });
 
-function fakes(purchase: PlayAnswer<PlayPurchase>, outcome: 'granted' | 'replayed' | 'restricted' | 'inactive' | null = 'granted') {
+function fakes(
+  purchase: PlayAnswer<PlayPurchase>,
+  outcome: 'granted' | 'replayed' | 'restricted' | 'inactive' | 'foreign' | null = 'granted',
+) {
   const play = {
     getPurchase: vi.fn(async () => purchase),
     consume: vi.fn(async (): Promise<PlayAnswer<null>> => ({ ok: true, value: null })),
@@ -29,8 +33,12 @@ function fakes(purchase: PlayAnswer<PlayPurchase>, outcome: 'granted' | 'replaye
     listVoided: vi.fn(),
   } satisfies PlayApi;
   const ledger = {
-    grant: vi.fn(async () => (outcome === null ? null : { outcome, credits: 3 })),
-    consumed: vi.fn(async () => {}),
+    grant: vi.fn(async (): ReturnType<Ledger['grant']> =>
+      outcome === null ? null : outcome === 'foreign' ? { outcome } : { outcome, credits: 3 },
+    ),
+    consumed: vi.fn(async () => true),
+    unconsumed: vi.fn(async () => ({ rows: [], waiting: 0 })),
+    missed: vi.fn(async () => true),
     void: vi.fn(async () => ({ outcome: 'voided', revoked: 1, kept: 2 })),
   } satisfies Ledger;
   return { play, ledger };
@@ -73,6 +81,7 @@ describe('Google Play 구매 — 확인 · 지급 · 소비', () => {
     deps.play.consume.mockResolvedValue({ ok: false, status: 500 });
     expect(await settle(deps)).toEqual({ kind: 'granted', credits: 3, replayed: false });
     expect(deps.ledger.consumed).not.toHaveBeenCalled();
+    expect(deps.ledger.missed).toHaveBeenCalledWith(TOKEN, 'failed', 500);
   });
 
   it('라이선스 테스터의 시험 구매는 시험으로 적는다', async () => {
@@ -102,6 +111,15 @@ describe('Google Play 구매 — 확인 · 지급 · 소비', () => {
     expect(unknown.play.getPurchase).not.toHaveBeenCalled();
   });
 
+  it('400 · 404 · 410 만 없는 토큰이다 — 401 · 403 · 429 는 우리 열쇠 · 할당량 문제라 다시 시도할 갈래다', async () => {
+    for (const status of [400, 404, 410]) {
+      expect(await settle(fakes({ ok: false, status })), String(status)).toEqual({ kind: 'not-found' });
+    }
+    for (const status of [401, 403, 429]) {
+      expect(await settle(fakes({ ok: false, status })), String(status)).toEqual({ kind: 'unavailable', step: 'play' });
+    }
+  });
+
   it('Google 에 못 닿으면 다시 시도할 갈래다', async () => {
     expect(await settle(fakes({ ok: false, status: 503 }))).toEqual({ kind: 'unavailable', step: 'play' });
     expect(await settle(fakes({ ok: false, status: null }))).toEqual({ kind: 'unavailable', step: 'play' });
@@ -124,6 +142,13 @@ describe('Google Play 구매 — 확인 · 지급 · 소비', () => {
     expect(unmarked.ledger.grant).not.toHaveBeenCalled();
   });
 
+  it('같은 토큰이 다른 계정으로 이미 섰으면(DB 22023) 남의 구매다 — 다시 시도로 돌지 않고 소비도 하지 않는다', async () => {
+    const deps = fakes({ ok: true, value: bought({ obfuscatedExternalAccountId: null }) }, 'foreign');
+    expect(await settle(deps)).toEqual({ kind: 'not-theirs' });
+    expect(deps.play.consume).not.toHaveBeenCalled();
+    expect(deps.ledger.consumed).not.toHaveBeenCalled();
+  });
+
   it('제한된 계정의 구매는 소비하지 않고 환불 · 회수를 부른다', async () => {
     const deps = fakes({ ok: true, value: bought() }, 'restricted');
     expect(await settle(deps)).toEqual({ kind: 'refused', why: 'restricted' });
@@ -134,6 +159,49 @@ describe('Google Play 구매 — 확인 · 지급 · 소비', () => {
   it('이용 중이 아닌 계정도 같다', async () => {
     const deps = fakes({ ok: true, value: bought() }, 'inactive');
     expect(await settle(deps)).toEqual({ kind: 'refused', why: 'inactive' });
+    expect(deps.play.consume).not.toHaveBeenCalled();
+  });
+});
+
+describe('Google 의 답을 문서의 계약대로 읽는다 (ADR 0253)', () => {
+  it('구매 상태를 모르면(칸 없음 · 정한 값 밖) 지급도 소비도 하지 않는다 — 「구매됨」으로 메우지 않는다', async () => {
+    const deps = fakes({ ok: true, value: bought({ purchaseState: null }) });
+    expect(await settle(deps)).toEqual({ kind: 'not-found' });
+    expect(deps.ledger.grant).not.toHaveBeenCalled();
+    expect(deps.play.consume).not.toHaveBeenCalled();
+  });
+
+  it('한 번에 여럿(수량 2) · 읽을 수 없는 수량은 지급도 소비도 하지 않는다 — 묶음 하나만 주면 낸 돈보다 적게 준다', async () => {
+    for (const quantity of [2, null]) {
+      const deps = fakes({ ok: true, value: bought({ quantity }) });
+      expect(await settle(deps), String(quantity)).toEqual({ kind: 'not-found' });
+      expect(deps.ledger.grant).not.toHaveBeenCalled();
+      expect(deps.play.consume).not.toHaveBeenCalled();
+    }
+  });
+
+  it('소비 상태를 모르면 소비를 부른다 — 이미 소비됐으면 Google 이 거절할 뿐 지급은 늘지 않는다', async () => {
+    const deps = fakes({ ok: true, value: bought({ consumptionState: null }) });
+    expect(await settle(deps)).toEqual({ kind: 'granted', credits: 3, replayed: false });
+    expect(deps.play.consume).toHaveBeenCalledTimes(1);
+    expect(deps.ledger.grant).toHaveBeenCalledTimes(1);
+  });
+
+  it('구매 시각이 없으면 지급은 하되 기록을 남긴다 — 장부가 지급 시각으로 메워 기한을 늦게 잡을 수 있다', async () => {
+    const deps = fakes({ ok: true, value: bought({ purchaseTimeMillis: null }) });
+    expect(await settle(deps)).toEqual({ kind: 'granted', credits: 3, replayed: false });
+    expect(deps.ledger.grant).toHaveBeenCalledWith(expect.objectContaining({ purchasedAt: null }));
+    expect(console.error).toHaveBeenCalledWith('store purchase: no purchase time');
+
+    vi.mocked(console.error).mockClear();
+    await settle(fakes({ ok: true, value: bought() }));
+    expect(console.error).not.toHaveBeenCalledWith('store purchase: no purchase time');
+  });
+
+  it('소비 상태를 모르는 거절된 구매는 환불을 부르지 않는다 — 소비 전인지 모른다', async () => {
+    const deps = fakes({ ok: true, value: bought({ consumptionState: null }) }, 'restricted');
+    expect(await settle(deps)).toEqual({ kind: 'refused', why: 'restricted' });
+    expect(deps.play.refundAndRevoke).not.toHaveBeenCalled();
     expect(deps.play.consume).not.toHaveBeenCalled();
   });
 });

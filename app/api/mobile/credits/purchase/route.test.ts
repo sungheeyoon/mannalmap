@@ -23,7 +23,7 @@ const buy = (body: unknown) =>
 
 const purchase = (over: Record<string, unknown> = {}) => ({
   ok: true,
-  value: { purchaseState: 0, consumptionState: 0, orderId: 'GPA.1', purchaseTimeMillis: null, obfuscatedExternalAccountId: USER, purchaseType: null, ...over },
+  value: { purchaseState: 0, consumptionState: 0, quantity: 1, orderId: 'GPA.1', purchaseTimeMillis: null, obfuscatedExternalAccountId: USER, purchaseType: null, ...over },
 });
 
 beforeEach(() => {
