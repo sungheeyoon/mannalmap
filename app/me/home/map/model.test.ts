@@ -5,7 +5,8 @@ import { DEFAULT_QUERY } from '@/src/lib/input/query';
 
 import { STEM_PICTURE } from '../../../ui/stem-symbol';
 import type { ReadingEntry } from '@/src/lib/reading';
-import { compatHrefOf, linksOf, mapModelOf, pairWithSelf, readingOf, type HomePerson } from './model';
+import { linksOf, pairWithSelf, readingOf, type HomePerson } from '@/src/lib/reading/relation-map';
+import { compatHrefOf, mapModelOf } from './model';
 
 const entry = (over: Partial<ReadingEntry>): ReadingEntry => ({
   kind: 'private',

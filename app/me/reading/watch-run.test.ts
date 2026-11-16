@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { RUN_ASK_EVERY_MS, watchRun, type PageVisibility } from './watch-run';
+import { RUN_ASK_EVERY_MS, watchRun, type PageVisibility } from '@/src/lib/reading/watch-run';
 
 /** 손으로 숨기고 보이는 탭 — `document` 의 `visibilitychange` 대신 */
 function fakeTab(hidden = false) {

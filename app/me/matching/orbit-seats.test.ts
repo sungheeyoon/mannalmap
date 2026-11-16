@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { ELEMENT_ANGLE } from '../../ui/orbit';
-import type { DeckCard } from './deck-card';
+import type { DeckCard } from '@/src/lib/matching/deck-card';
 import { GEOMETRY, MAP_LIMIT, anglesOf, departureOf, queueOf, type MapStatus, type Shape } from './orbit-seats';
 
 const card = (id: string, element?: string): DeckCard => ({

@@ -1,7 +1,7 @@
 import { focusPosition, initialOf } from '@/src/lib/profile';
 
 import { elementScope } from '../../ui/element-tone';
-import { focusAt, photosOf, type PhotoFace } from './deck-card';
+import { focusAt, photosOf, type PhotoFace } from '@/src/lib/matching/deck-card';
 
 /**
  * 후보의 얼굴 한 자리 — 덱 · 지도 · 확인 창 · 지나친 인연이 모두 이것을 쓴다.

@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
 
 import {
+  chartSnapshotOf,
   ELEMENT_KO,
   GENDER_KO,
   STEM_INFO,
@@ -15,7 +16,7 @@ import { elementScope } from './ui/element-tone';
 import { DayMasterChip, PillarStrip } from './me/people/chart-bits';
 import { Icon } from './ui/icons';
 import { StemSymbol } from './ui/stem-symbol';
-import { sharedPillarChartOf, type SharedPillarChart } from './shared-pillar';
+import type { SharedPillarChart } from './shared-pillar';
 import { TILE, TYPE_META, TYPE_NAME, TYPE_SECTION } from './ui/surfaces';
 
 /**
@@ -92,8 +93,8 @@ export function CompatView({
         <div className="mt-6 flex flex-col gap-6">
           <PillarPair
             charts={{
-              a: { ...sharedPillarChartOf(charts.a.pillars), gender: charts.a.meta.gender },
-              b: { ...sharedPillarChartOf(charts.b.pillars), gender: charts.b.meta.gender },
+              a: { ...chartSnapshotOf(charts.a.pillars), gender: charts.a.meta.gender },
+              b: { ...chartSnapshotOf(charts.b.pillars), gender: charts.b.meta.gender },
             }}
             names={names}
             note={notice}

@@ -6,7 +6,7 @@ import { useEffect, useState } from 'react';
 
 import { Icon } from '../../ui/icons';
 import { TYPE_META } from '../../ui/surfaces';
-import { watchRun, type PageVisibility } from '../reading/watch-run';
+import { watchRun, type PageVisibility } from '@/src/lib/reading/watch-run';
 import { runningLinesNow } from './actions';
 import { HOME_LIST, HOME_ROW, HOME_ROW_LINK } from './home-list';
 import { READING_MAKING } from '@/src/lib/home/making';

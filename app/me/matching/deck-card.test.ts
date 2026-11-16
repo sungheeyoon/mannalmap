@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { elementOf, photosOf, supplyOf, type DeckCard } from './deck-card';
+import { elementOf, photosOf, supplyOf, type DeckCard } from '@/src/lib/matching/deck-card';
 
 const card = (patch: Partial<DeckCard> = {}): DeckCard => ({
   candidateUserId: 'u1',

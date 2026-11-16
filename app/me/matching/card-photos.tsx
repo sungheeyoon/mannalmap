@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState, type RefObject } from 'react';
 
 import { CandidatePhoto } from './candidate-photo';
-import { photosOf, type DeckCard, type PhotoFace } from './deck-card';
+import { photosOf, type DeckCard, type PhotoFace } from '@/src/lib/matching/deck-card';
 import { ICON_BUTTON_ON_PHOTO_FACE } from '../../ui/buttons';
 import { Icon } from '../../ui/icons';
 import { reducedMotion } from '../../ui/motion';

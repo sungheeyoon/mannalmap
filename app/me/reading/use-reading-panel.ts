@@ -6,9 +6,9 @@ import type { CurrentReading, RunProgress } from '@/src/lib/reading';
 import { READING_NOUN, readingCreditsNote } from '@/src/lib/reading/notes';
 
 import { generateReading, markReadingReadyRead, readingRunState, skipTasteCarry } from './actions';
-import { progressSoFar } from './outline';
-import { panelChrome } from './panel-chrome';
-import { watchRun, type PageVisibility } from './watch-run';
+import { progressSoFar } from '@/src/lib/reading/outline';
+import { panelChrome } from '@/src/lib/reading/panel-chrome';
+import { watchRun, type PageVisibility } from '@/src/lib/reading/watch-run';
 import { markAndAnnounce, newsKeyOf, readNewsWhenSeen } from './news-read';
 import { announceNotificationsUnreadMoved } from '../requests/unread-signal';
 import { skipCarriedTaste, takeTasteArrival } from '../../taste/carried-taste';

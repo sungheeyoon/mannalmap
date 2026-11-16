@@ -35,7 +35,7 @@ import { DotsMark, ELEMENT_ANGLE, ORBIT_GLOW, ORBIT_LABEL_PAD, ORBIT_NAME_TAG, O
 import { StemSymbol } from '../../../ui/stem-symbol';
 import { STALE_CHIP, TYPE_META, TYPE_NAME, TYPE_SECTION } from '../../../ui/surfaces';
 import { LivingStem } from './living-stem';
-import { linksOf, type MapModel, type MapPerson } from './model';
+import { linksOf, type MapModel, type MapPerson } from '@/src/lib/reading/relation-map';
 import { RADIUS, SIZE, curve, curveAway, phaseOf, pointAt, seatAngles, stepsAlong, type Point } from '@/src/lib/saju/view/orbit';
 import styles from './relation-map.module.css';
 

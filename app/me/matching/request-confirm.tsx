@@ -6,7 +6,7 @@ import { ConfirmDialog } from '../../ui/confirm-dialog';
 import { elementScope } from '../../ui/element-tone';
 import { ElementSymbol } from '../../ui/element-symbol';
 import { CandidatePhoto } from './candidate-photo';
-import { supplyOf, type DeckCard } from './deck-card';
+import { supplyOf, type DeckCard } from '@/src/lib/matching/deck-card';
 
 /**
  * 대화를 시작하기 직전의 확인 창 — 대화는 수락 없이 열리고 풀이권을 안 쓴다(ADR 0215). 상세 궁합은 방에서 따로 청한다.

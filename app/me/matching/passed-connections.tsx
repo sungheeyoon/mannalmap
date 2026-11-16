@@ -8,8 +8,8 @@ import { ElementSymbol } from '../../ui/element-symbol';
 import { FailureLine } from '../../ui/failure-line';
 import { Icon } from '../../ui/icons';
 import { CandidatePhoto } from './candidate-photo';
-import { supplyOf, type DeckCard } from './deck-card';
-import { PASSED_LIMIT } from './deck-state';
+import { supplyOf, type DeckCard } from '@/src/lib/matching/deck-card';
+import { PASSED_LIMIT } from '@/src/lib/matching/deck-state';
 import { DetailSheet, openSheet } from '../../ui/sheet';
 import { TYPE_NAME, TYPE_SECTION } from '../../ui/surfaces';
 

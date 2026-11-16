@@ -19,8 +19,7 @@ import type { Done } from '@/answer';
 /** 내 사진 한 장 — 자리와 판본(웹 `app/me/profile/photos.ts`) */
 export type MyPhoto = { readonly position: number; readonly version: number; readonly focus: PhotoFocus };
 
-/** 고른 사진 — 기기의 주소와 줄인 바이트. 못 줄였으면 까닭 한 줄 */
-export type Picked = { uri: string };
+/** 줄인 사진의 바이트 — 못 줄였으면 까닭 한 줄 */
 type Baked = { ok: true; contentType: string; base64: string } | { ok: false; message: string };
 
 /** 사진 올리기를 막은, 우리가 안 쓴 문장 — 웹 `use-photo-uploads.ts` 와 같은 글자 */

@@ -126,7 +126,7 @@ const NOT_YET: readonly string[] = [];
  * **다른 모양으로 받는 자리** — 부름 바로 곁이 아니라서 위의 셋으로는 안 보이지만 받는다. 까닭을 적는다.
  */
 const RECEIVED_ELSEWHERE: Readonly<Record<string, string>> = {
-  'app/me/home/running-band-live.tsx :: runningLinesNow': '부르는 `ask` 를 `watchRun` 이 `try` 로 받는다(`app/me/reading/watch-run.ts`)',
+  'app/me/home/running-band-live.tsx :: runningLinesNow': '부르는 `ask` 를 `watchRun` 이 `try` 로 받는다(`src/lib/reading/watch-run.ts`)',
   'app/me/reading/share-button.tsx :: shareMyReading': '약속을 클립보드에 넘기려고 기다리지 않고 들고, `issued.catch` 와 `answered.catch` 로 받는다',
 };
 

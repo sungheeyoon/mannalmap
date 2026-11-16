@@ -16,7 +16,7 @@ import { openDiscoveryParticipation } from '../discovery/participation';
 import { myCircle } from '../home/circle';
 import { MyPeople, circlePeopleOf } from '../home/circle-view';
 import { isFirstVisit } from '@/src/lib/home/first-visit';
-import { selfReadingOf } from '../home/map/model';
+import { selfReadingOf } from '@/src/lib/reading/relation-map';
 import { ReceivedReadings } from '../home/received-readings';
 import { runningReadings } from '../home/running';
 import { RunningReadings } from '../home/running-band';

@@ -7,8 +7,8 @@ import { REQUEST_UNSURE } from '@/src/lib/matching/requests';
 
 import { passCandidate, restorePassed, startTalk } from '../discovery/actions';
 import { reducedMotion } from '../../ui/motion';
-import type { DeckCard } from './deck-card';
-import { deckReducer, PASSED_LIMIT } from './deck-state';
+import type { DeckCard } from '@/src/lib/matching/deck-card';
+import { deckReducer, PASSED_LIMIT } from '@/src/lib/matching/deck-state';
 import type { MapStatus } from './orbit-seats';
 
 // 고른 것을 읽을 시간을 주고 나서 카드가 떠난다.

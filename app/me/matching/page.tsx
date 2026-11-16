@@ -16,7 +16,7 @@ import { myDiscoveryProfile } from '../discovery/discovery-profile';
 import { matchesForViewer, type InboxMatch } from '../requests/inbox';
 import { openParticipation } from '../chart-writes';
 import { selfElementSummary } from '../summary';
-import type { DeckCard } from './deck-card';
+import type { DeckCard } from '@/src/lib/matching/deck-card';
 import { historyExtrasForViewer } from './ended-talks-read';
 import { historySummary } from './history';
 import { HistoryRow } from './history-row';

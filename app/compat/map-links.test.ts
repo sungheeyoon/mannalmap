@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import type { MapModel } from '../me/home/map/model';
+import type { MapModel } from '@/src/lib/reading/relation-map';
 import { compatTabMap, fromCompat } from './map-links';
 
 /**

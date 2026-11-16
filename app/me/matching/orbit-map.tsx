@@ -9,7 +9,7 @@ import { ElementSymbol } from '../../ui/element-symbol';
 import { DotsMark, ORBIT_GLOW, ORBIT_LABEL_PAD, ORBIT_NAME_TAG, ORBIT_RING, ThreadMark, round2 } from '../../ui/orbit';
 import { StemSymbol } from '../../ui/stem-symbol';
 import { CandidatePhoto } from './candidate-photo';
-import { elementOf, supplyOf, type DeckCard } from './deck-card';
+import { elementOf, supplyOf, type DeckCard } from '@/src/lib/matching/deck-card';
 import type { MeMark } from './me-mark';
 import motion from './orbit-motion.module.css';
 import {

@@ -3,7 +3,7 @@ import { ELEMENT_PICTURE_KO } from '@/src/lib/saju';
 import { elementScope } from '../../ui/element-tone';
 import { ElementSymbol } from '../../ui/element-symbol';
 import { Icon } from '../../ui/icons';
-import { elementOf, type DeckCard } from './deck-card';
+import { elementOf, type DeckCard } from '@/src/lib/matching/deck-card';
 
 /** 채워 주는 기운 — 상징 + 이름 + 문장. 색 혼자 말하지 않고, 색은 상징의 동그라미에만 둔다 */
 export function SupplyBody({ card, explorationNote }: { card: DeckCard; explorationNote: string | null }) {

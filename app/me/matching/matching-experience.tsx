@@ -6,7 +6,7 @@ import { useRef, useState, type ReactNode } from 'react';
 import { elementScope } from '../../ui/element-tone';
 import { Icon, type IconName } from '../../ui/icons';
 import { TYPE_META, TYPE_SECTION, TYPE_TITLE } from '../../ui/surfaces';
-import { supplyOf, type DeckCard } from './deck-card';
+import { supplyOf, type DeckCard } from '@/src/lib/matching/deck-card';
 import type { MeMark } from './me-mark';
 import { ApproachMap, Legend } from './orbit-map';
 import { PassedConnections } from './passed-connections';
