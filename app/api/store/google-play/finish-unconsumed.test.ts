@@ -222,6 +222,15 @@ describe('취소 · 환불된 구매는 소비하지 않는다', () => {
     expect(w.rows.get('tok')?.consumedAt).toBeNull();
   });
 
+  it('보류(2)는 취소로 적지 않는다 — 실패로 적어 다음 실행이 다시 묻는다', async () => {
+    const w = world();
+    w.granted('tok', NOW - DAY, { purchaseState: 2, consumptionState: 0 });
+    expect(await w.sweep()).toMatchObject({ canceled: 0, failed: 1, consumed: 0 });
+    expect(w.ledger.missed).toHaveBeenCalledWith('tok', 'failed', null);
+    expect(w.ledger.missed).not.toHaveBeenCalledWith('tok', 'canceled', null);
+    expect(w.play.consume).not.toHaveBeenCalled();
+  });
+
   it('장부에 무효로 적힌 줄은 아예 받지 않는다', async () => {
     const w = world();
     w.granted('tok', NOW - DAY);

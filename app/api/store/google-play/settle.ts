@@ -229,7 +229,9 @@ async function finishOne(
   if (!looked.ok) return { done: noSuchToken(looked.status) ? 'gone' : 'failed', status: looked.status };
   const purchase = looked.value;
   if (purchase.purchaseState === null) return { done: 'failed', status: null };
-  if (purchase.purchaseState !== 0) return { done: 'canceled', status: null };
+  /* 「끝남」은 취소(1)만 — 한 번 적으면 DB 가 덮지 않고 목록에서 뺀다. 보류(2)나 모르는 값은 다시 물을 실패다 */
+  if (purchase.purchaseState === 1) return { done: 'canceled', status: null };
+  if (purchase.purchaseState !== 0) return { done: 'failed', status: null };
   if (purchase.consumptionState === 1) return noted('noted');
 
   const consumed = await play.consume(productId, purchaseToken);
