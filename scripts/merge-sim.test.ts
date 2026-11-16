@@ -74,6 +74,8 @@ describe('merge:sim — vitest 보고를 셋으로 가른다', () => {
     const output = ' FAIL  src/lib/b.test.ts > 다른 것\nError: 다른 파일\n FAIL  src/lib/c.test.ts > 모집단\nError: Hook timed out in 30000ms.\n';
     expect(testsOf(hooked, ROOT, output).unit.failed).toEqual(['src/lib/c.test.ts > (파일) Error: Hook timed out in 30000ms.']);
     expect(testsOf(hooked, ROOT).unit.failed).toEqual(['src/lib/c.test.ts > (파일) 파일이 서지 못했다']);
+    const theirs = ' FAIL  src/lib/c.test.ts > 모집단\nthrown: 글자\n FAIL  src/lib/d.test.ts > 다른 것\nAssertionError: 남의 것\n';
+    expect(testsOf(hooked, ROOT, theirs).unit.failed).toEqual(['src/lib/c.test.ts > (파일) 파일이 서지 못했다']);
   });
 
   it('보고가 비면 붉은 것도 없다고 읽는다 — 보고가 없는 경우는 부르는 쪽이 따로 붉힌다', () => {

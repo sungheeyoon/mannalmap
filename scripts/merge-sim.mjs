@@ -103,12 +103,13 @@ export function testsOf(report, root, output = '') {
   return out;
 }
 
-/** 텍스트 보고에서 `FAIL  <파일>` 다음의 첫 `…Error:` 줄 — 훅 시간 초과(`Error: Hook timed out in 30000ms.`)가 여기에만 남는다 */
+/** 텍스트 보고에서 `FAIL  <파일>` 다음 · 다음 `FAIL` 앞의 첫 `…Error:` 줄 — 훅 시간 초과(`Error: Hook timed out in 30000ms.`)가 여기에만 남는다 */
 function errorAfterFail(output, rel) {
   const lines = output.split('\n');
   const at = lines.findIndex((line) => line.includes(`FAIL  ${rel}`));
   if (at === -1) return undefined;
-  return lines.slice(at + 1).find((line) => /^\w*Error:/.test(line.trim()))?.trim();
+  const next = lines.findIndex((line, i) => i > at && line.includes(' FAIL  '));
+  return lines.slice(at + 1, next === -1 ? undefined : next).find((line) => /^\w*Error:/.test(line.trim()))?.trim();
 }
 
 /**
