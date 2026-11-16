@@ -69,6 +69,13 @@ describe('merge:sim — vitest 보고를 셋으로 가른다', () => {
     expect(buckets.layers).toEqual({ passed: 1, skipped: 0, failed: [] });
   });
 
+  it('훅이 시간을 넘긴 파일은 JSON 이 비므로 텍스트 보고의 오류 줄을 든다', () => {
+    const hooked = { testResults: [{ name: `${ROOT}/src/lib/c.test.ts`, status: 'failed', message: '', assertionResults: [{ status: 'skipped' }] }] };
+    const output = ' FAIL  src/lib/b.test.ts > 다른 것\nError: 다른 파일\n FAIL  src/lib/c.test.ts > 모집단\nError: Hook timed out in 30000ms.\n';
+    expect(testsOf(hooked, ROOT, output).unit.failed).toEqual(['src/lib/c.test.ts > (파일) Error: Hook timed out in 30000ms.']);
+    expect(testsOf(hooked, ROOT).unit.failed).toEqual(['src/lib/c.test.ts > (파일) 파일이 서지 못했다']);
+  });
+
   it('보고가 비면 붉은 것도 없다고 읽는다 — 보고가 없는 경우는 부르는 쪽이 따로 붉힌다', () => {
     expect(testsOf({}, ROOT).unit).toEqual({ passed: 0, skipped: 0, failed: [] });
   });

@@ -45,7 +45,7 @@
 `--reporter=json --outputFile=<파일>` 의 `testResults[].assertionResults[].duration` 을 정렬한다. 늘리기 전에 시험이 안 읽는
 것을 짓지 않는지 본다(#509 는 18.9초 → 1.2초).
 
-**로컬 일꾼은 넷까지다**(`vitest.config.mts` 의 `maxWorkers`, CI 는 vitest 기본). 기본(코어 − 1)은 이 기계(8코어 16스레드)에서 열다섯이고,
+**로컬 일꾼은 넷까지다**(`vitest.config.mts` 의 `maxWorkers`, GitHub 러너만 vitest 기본 — `CI=1` 로 30초 한도를 빌리는 `merge:sim` 도 넷이다). 기본(코어 − 1)은 이 기계(8코어 16스레드)에서 열다섯이고,
 그때 무거운 시험은 혼자일 때의 3~4배가 걸려 위 상한에 닿았다. 2026-11-16 에 `node scripts/heavy.mjs npx vitest run` 으로 잰 값(다른 에이전트의
 실행이 있어 load 5~22):
 

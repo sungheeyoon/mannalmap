@@ -16,7 +16,7 @@
  * 부르는 쪽은 시험하지 않는다.
  */
 import { spawnSync } from 'node:child_process';
-import { existsSync, mkdtempSync, readFileSync, realpathSync, rmSync } from 'node:fs';
+import { existsSync, mkdtempSync, readFileSync, realpathSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, relative, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -77,10 +77,12 @@ const SCOPES = /** @type {const} */ ([
 /**
  * vitest 의 JSON 보고(`--reporter=json`)를 셋으로 가른다 — 두 잠금 시험과 나머지 단위 시험. 붉은 것은 `파일 > 이름` 이다.
  * 파일이 아예 못 선 경우(import 실패)는 assertion 이 없으므로 파일 이름과 첫 줄로 든다.
+ * **훅이 시간을 넘긴 파일은 JSON 의 `message` 가 비고 시험은 `skipped` 다** — 그때는 텍스트 보고(`output`)의 `FAIL  <파일>` 뒤 첫 오류 줄을 든다.
  * @param {any} report
  * @param {string} root 저장소 뿌리 — 보고의 절대 경로를 뿌리 기준으로 줄인다
+ * @param {string} [output] 같은 실행의 텍스트 보고
  */
-export function testsOf(report, root) {
+export function testsOf(report, root, output = '') {
   const blank = () => ({ passed: 0, failed: /** @type {string[]} */ ([]), skipped: 0 });
   /** @type {Record<'unit' | 'code-rules' | 'layers', ReturnType<typeof blank>>} */
   const out = { unit: blank(), 'code-rules': blank(), layers: blank() };
@@ -94,11 +96,19 @@ export function testsOf(report, root) {
       else bucket.skipped += 1;
     }
     if (file.status === 'failed' && !assertions.some((/** @type {any} */ one) => one.status === 'failed')) {
-      const first = String(file.message ?? '').split('\n').find((line) => line.trim() !== '') ?? '파일이 서지 못했다';
+      const first = String(file.message ?? '').split('\n').find((line) => line.trim() !== '') ?? errorAfterFail(output, rel) ?? '파일이 서지 못했다';
       bucket.failed.push(`${rel} > (파일) ${first.trim()}`);
     }
   }
   return out;
+}
+
+/** 텍스트 보고에서 `FAIL  <파일>` 다음의 첫 `…Error:` 줄 — 훅 시간 초과(`Error: Hook timed out in 30000ms.`)가 여기에만 남는다 */
+function errorAfterFail(output, rel) {
+  const lines = output.split('\n');
+  const at = lines.findIndex((line) => line.includes(`FAIL  ${rel}`));
+  if (at === -1) return undefined;
+  return lines.slice(at + 1).find((line) => /^\w*Error:/.test(line.trim()))?.trim();
 }
 
 /**
@@ -269,13 +279,17 @@ function simulate(prs) {
 
     console.log('단위 시험을 돈다…');
     const reportFile = join(dir, '.merge-sim-vitest.json');
-    // CI=1 — vitest 의 느린 기계 한도(30초)를 쓴다. 합치기가 도는 동안 다른 세션이 기계를 나눠 쓴다
+    // CI=1 — vitest 의 느린 기계 한도(30초)를 쓴다. 합치기가 도는 동안 다른 세션이 기계를 나눠 쓴다.
+    // 일꾼 수는 CI 로 가르지 않는다 — config 가 GitHub 러너 밖에서는 넷까지로 둔다(vitest.config.mts)
     const env = { ...process.env, CI: '1' };
     const unit = run('npx', ['vitest', 'run', '--reporter=dot', '--reporter=json', `--outputFile.json=${reportFile}`], { cwd: dir, env });
+    /* 원문은 임시 워크트리와 함께 걷히지 않게 밖에 둔다 — 붉으면 요약 아래에 경로를 댄다 */
+    const kept = join(tmpdir(), 'merge-sim-last-vitest.txt');
+    writeFileSync(kept, `${unit.stdout}\n${unit.stderr}`);
     /** @type {Check[]} */
     const checks = [];
     if (existsSync(reportFile)) {
-      const buckets = testsOf(JSON.parse(readFileSync(reportFile, 'utf8')), dir);
+      const buckets = testsOf(JSON.parse(readFileSync(reportFile, 'utf8')), dir, `${unit.stdout}\n${unit.stderr}`);
       checks.push(checkOfTests('단위 시험', buckets.unit));
       for (const scope of SCOPES) checks.push(checkOfTests(scope.label, buckets[scope.key]));
     } else {
@@ -302,6 +316,7 @@ function simulate(prs) {
 
     console.log('');
     console.log(summaryOf({ base, prs, checks, dependenciesChanged }));
+    if (unit.status !== 0) console.log(`\n단위 시험의 텍스트 보고 원문: ${kept}`);
     return checks.every((check) => check.ok) ? EXIT.green : EXIT.red;
   } finally {
     if (added) run('git', ['worktree', 'remove', '--force', dir], { cwd });

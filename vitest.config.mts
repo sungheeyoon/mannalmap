@@ -86,7 +86,8 @@ export default defineConfig({
      */
     testTimeout: process.env.CI ? 30_000 : 5_000,
     /**
-     * **로컬 일꾼은 넷까지다.** CI 는 vitest 의 기본(코어 − 1)을 그대로 쓴다 — 러너 하나에 실행 하나고, 거기서는 시간 초과가 안 났다.
+     * **로컬 일꾼은 넷까지다.** GitHub 러너만 vitest 의 기본(코어 − 1)을 그대로 쓴다 — 러너 하나에 실행 하나고, 거기서는 시간 초과가 안 났다.
+     * 가르는 것은 `CI` 가 아니라 `GITHUB_ACTIONS` 다 — `merge:sim` 처럼 로컬에서 `CI=1` 로 30초 한도만 빌리는 실행도 이 기계의 일꾼 수로 돈다.
      *
      * 기본은 이 기계(8코어 16스레드)에서 일꾼 열다섯이다. 시험 하나가 혼자일 때보다 3~4배 느려져 모집단 훅이 30초에, 전수
      * 시험이 5초에 닿았다 — 혼자 7초인 `calibration` 훅이 기본 전체 실행에서 27~28초, 서울 날짜 전수가 1.7초에서 3.7~5.3초(셋에 하나
@@ -94,6 +95,6 @@ export default defineConfig({
      * 열셋 · 훅 둘로 붉고(153초), 넷 둘은 다 초록이다(138초). 잰 값은 `docs/agents/test-map/kinds.md` 「시험 하나의 시간」(2026-11-16).
      * 늘려 보려면 `--maxWorkers=<n>` 이 이것을 덮는다.
      */
-    maxWorkers: process.env.CI ? undefined : Math.min(4, Math.max(1, availableParallelism() - 1)),
+    maxWorkers: process.env.GITHUB_ACTIONS ? undefined : Math.min(4, Math.max(1, availableParallelism() - 1)),
   },
 });
