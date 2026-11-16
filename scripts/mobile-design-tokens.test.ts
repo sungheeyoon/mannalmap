@@ -3,7 +3,7 @@ import { join } from 'node:path';
 
 import { describe, expect, it } from 'vitest';
 
-import { BUTTON, BUTTON_PRIMARY_OFF, CELL, COLOR, FIELD, RADIUS, SURFACE, TEXT, TONE } from '../src/lib/design';
+import { BUTTON, BUTTON_PRIMARY_OFF, CELL, COLOR, FIELD, RADIUS, SURFACE, TEXT, TEXT_STYLE, TONE } from '../src/lib/design';
 
 /**
  * **앱의 면 · 칸 · 단추 값이 웹 상수와 같다**(ADR 0109 추기 2026-10-31). 토큰은 한 원본에서 나지만(`design-tokens.test.ts`) 면은 웹이 클래스 글자로 든다 —
@@ -42,6 +42,8 @@ function styleOf(classes: string): Record<string, unknown> {
     else if (color('bg-')) style.backgroundColor = color('bg-');
     else if (color('text-')) style.color = color('text-');
     else if (name.startsWith('text-') && SIZES[name.slice(5)] !== undefined) style.fontSize = SIZES[name.slice(5)];
+    else if (number('leading') !== undefined) style.lineHeight = number('leading');
+    else if (/^leading-\[[\d.]+rem\]$/.test(name)) style.lineHeight = Number(name.slice('leading-['.length, -'rem]'.length)) * 16;
     else if (number('p') !== undefined) style.padding = number('p');
     else if (number('px') !== undefined) style.paddingHorizontal = number('px');
     else if (number('py') !== undefined) style.paddingVertical = number('py');
@@ -69,6 +71,10 @@ describe('면 · 칸 · 단추의 값', () => {
     expect(FIELD).toEqual(styleOf(classesOf('app/ui/fields.ts', 'FIELD')));
     expect(CELL).toEqual(styleOf('rounded-cell bg-surface-soft p-3'));
     expect(read('app/ui/surfaces.ts')).toContain('rounded-cell');
+  });
+
+  it.each(Object.entries(TEXT_STYLE))('%s 가 `surfaces.ts` 의 같은 이름과 크기 · 줄 높이 · 색이 같다', (name, value) => {
+    expect(value).toEqual(styleOf(classesOf('app/ui/surfaces.ts', name)));
   });
 
   it('주 단추의 못 누름은 웹의 `PRIMARY_OFF` 다', () => {

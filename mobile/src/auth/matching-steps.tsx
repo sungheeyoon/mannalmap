@@ -27,5 +27,5 @@ const styles = StyleSheet.create({
   row: { flexDirection: 'row', gap: 8 },
   number: { fontFamily: FONT.bold, fontSize: TYPE.note, lineHeight: 22, color: COLOR.secondary },
   text: { flex: 1, fontFamily: FONT.medium, fontSize: TYPE.note, lineHeight: 22, color: COLOR.foreground },
-  leave: { fontFamily: FONT.medium, fontSize: TYPE.small, lineHeight: 19, color: COLOR.secondary },
+  leave: { fontFamily: FONT.medium, fontSize: TYPE.small, lineHeight: 20, color: COLOR.secondary },
 });

@@ -79,7 +79,7 @@ export default function AdultCheckScreen() {
           {adultCheckProvider === null ? (
             <WordText style={styles.body}>{ADULT_CHECK_UNAVAILABLE}</WordText>
           ) : (
-            <PrimaryButton label={ADULT_CHECK_ACTION} onPress={() => void start()} disabled={working} />
+            <PrimaryButton label={ADULT_CHECK_ACTION} onPress={() => void start()} busy={working} />
           )}
           <WordText style={styles.note}>{MATCHING_START_LEAVE}</WordText>
         </CardFrame>

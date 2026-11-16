@@ -11,7 +11,7 @@ import { PILLAR_COLUMNS, STEM_PICTURE } from '@saju-view';
 
 import { LoadingDots } from '@/ui/loading';
 import { KeyboardDoneBar } from '@/ui/parts';
-import { alpha, COLOR, CONTROL, ELEMENT_TONE, FONT, mix, RADIUS, TYPE } from '@/ui/tokens';
+import { alpha, COLOR, CONTROL, ELEMENT_TONE, FONT, mix, RADIUS, TYPE, TYPE_TITLE } from '@/ui/tokens';
 
 import { StemSymbol } from '@/ui/stem-symbol';
 import { FailureLine } from '@/ui/failure-line';
@@ -171,7 +171,7 @@ const GLYPH_FONT = Platform.select({ ios: 'System', android: 'sans-serif', defau
 export const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: COLOR.background },
   content: { padding: 16, gap: 14, paddingBottom: 40 },
-  title: { fontSize: TYPE.title, lineHeight: 35, fontFamily: FONT.bold, color: COLOR.foreground },
+  title: { ...TYPE_TITLE },
   section: { fontSize: TYPE.heading, lineHeight: 29, fontFamily: FONT.bold, color: COLOR.foreground },
   name: { fontSize: TYPE.lead, lineHeight: 24, fontFamily: FONT.bold, color: COLOR.foreground },
   body: { fontSize: TYPE.body, lineHeight: 24, fontFamily: FONT.medium, color: COLOR.secondary },

@@ -142,7 +142,7 @@ function AddForm({ remaining, onCancel, onSaved }: { remaining: number | null; o
         <SameChartAsk question={question} busy={saving} />
       ) : (
         <View style={styles.actions}>
-          <PrimaryButton label={saving ? '저장하는 중…' : '등록'} onPress={save} disabled={saving} />
+          <PrimaryButton label={saving ? '저장하는 중…' : '등록'} onPress={save} busy={saving} />
           <SecondaryButton label="취소" onPress={onCancel} disabled={saving} />
         </View>
       )}
@@ -172,7 +172,7 @@ export function NoteEditor({ personId, note, onDone, onCancel }: { personId: str
   return (
     <Card style={styles.noteForm}>
       <NoteField value={value} onChange={setValue} />
-      <PrimaryButton label={saving ? '저장하는 중…' : '메모 저장'} onPress={save} disabled={!changed || saving} />
+      <PrimaryButton label={saving ? '저장하는 중…' : '메모 저장'} onPress={save} disabled={!changed} busy={saving} />
       <TextButton label="작성 그만두기" onPress={() => leave(onCancel)} disabled={saving} />
       {failure !== null && <FailureLine>{failure}</FailureLine>}
       {leaveDialog}

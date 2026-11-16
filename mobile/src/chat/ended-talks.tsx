@@ -48,7 +48,7 @@ const styles = StyleSheet.create({
   section: { gap: 12 },
   head: { gap: 4 },
   title: { fontFamily: FONT.bold, fontSize: TYPE.heading, color: COLOR.foreground },
-  meta: { fontFamily: FONT.medium, fontSize: TYPE.small, lineHeight: 19, color: COLOR.muted },
+  meta: { fontFamily: FONT.medium, fontSize: TYPE.small, lineHeight: 20, color: COLOR.muted },
   row: { flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: 56, paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: COLOR.border },
   flex: { flex: 1, minWidth: 0 },
   name: { fontFamily: FONT.bold, fontSize: TYPE.note, color: COLOR.foreground },

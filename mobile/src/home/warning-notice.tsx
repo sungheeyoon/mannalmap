@@ -49,7 +49,7 @@ export function WarningNotice() {
             <WordText key={line} style={styles.line}>{line}</WordText>
           ))}
         </View>
-        <PrimaryButton label={WARNING_ACKNOWLEDGE_LABEL} onPress={() => void acknowledge()} disabled={saving} />
+        <PrimaryButton label={WARNING_ACKNOWLEDGE_LABEL} onPress={() => void acknowledge()} busy={saving} />
         {failure !== null && <WordText accessibilityRole="alert" style={styles.failure}>{failure}</WordText>}
       </CardFrame>
     </View>

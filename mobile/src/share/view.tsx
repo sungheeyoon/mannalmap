@@ -11,7 +11,7 @@ import { Icon } from '@/ui/icons';
 import { Logo } from '@/ui/logo';
 import { ScoreGauge } from '@/ui/score-gauge';
 import { PrimaryButton, SecondaryButton } from '@/ui/parts';
-import { COLOR, ELEMENT_TONE, FONT, RADIUS, TYPE } from '@/ui/tokens';
+import { COLOR, ELEMENT_TONE, FONT, RADIUS, TYPE, TYPE_TITLE } from '@/ui/tokens';
 import { settled } from '@/ui/settled';
 import { TopBar } from '@/ui/top-bar';
 import { Card, Paper, Tile } from '@/ui/surfaces';
@@ -182,7 +182,7 @@ const styles = StyleSheet.create({
   brand: { fontSize: TYPE.heading, fontFamily: FONT.bold, color: COLOR.foreground },
   head: { gap: 6 },
   eyebrow: { fontSize: TYPE.small, fontFamily: FONT.bold, color: COLOR.creamInk },
-  title: { fontSize: TYPE.title, lineHeight: 35, fontFamily: FONT.bold, color: COLOR.foreground },
+  title: { ...TYPE_TITLE },
   cover: { padding: 0, overflow: 'hidden' },
   pairCover: { alignItems: 'center', gap: 16, paddingHorizontal: 20, paddingVertical: 28 },
   pairScore: { alignItems: 'center', gap: 6 },

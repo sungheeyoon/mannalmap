@@ -18,7 +18,7 @@ import { useDeck } from '@/matching/use-deck';
 import { FailureLine } from '@/ui/failure-line';
 import { Icon } from '@/ui/icons';
 import { LoadingDots } from '@/ui/loading';
-import { COLOR, FONT, RADIUS, TYPE } from '@/ui/tokens';
+import { COLOR, FONT, RADIUS, TYPE, TYPE_TITLE } from '@/ui/tokens';
 import { CardFrame, RowCard } from '@/ui/surfaces';
 import { WordText } from '@/ui/word-text';
 
@@ -254,7 +254,7 @@ const styles = StyleSheet.create({
   flex: { flex: 1, minWidth: 0 },
   head: { flexDirection: 'row', alignItems: 'flex-end', gap: 12 },
   date: { fontFamily: FONT.medium, fontSize: TYPE.small, color: COLOR.muted },
-  title: { fontFamily: FONT.bold, fontSize: TYPE.title, lineHeight: 34, color: COLOR.foreground },
+  title: { ...TYPE_TITLE },
   pill: { flexDirection: 'row', alignItems: 'center', gap: 6, minHeight: 44, paddingHorizontal: 14, borderRadius: RADIUS.pill, borderWidth: 1, borderColor: COLOR.border, backgroundColor: COLOR.surface },
   pillText: { fontFamily: FONT.bold, fontSize: TYPE.small, color: COLOR.foreground },
   pillCount: { fontFamily: FONT.bold, fontSize: TYPE.small, color: COLOR.secondary },

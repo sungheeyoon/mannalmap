@@ -33,11 +33,33 @@ describe.each(PARTS.map((part) => [part.name, part] as const))('%s', (_, part) =
     }
   });
 
+  it('두 쪽이 같은 값을 적는다 — 웹 클래스 낱말과 앱 글자', () => {
+    for (const [word, text] of Object.entries(part.values ?? {})) {
+      expect(web, `${part.web.file} 의 ${word}`).toMatch(new RegExp(`(?<![\\w-])${word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(?![\\w-])`));
+      expect(app, `${part.app.file} 의 ${text}`).toContain(text);
+    }
+  });
+
   it('두 쪽이 같은 이름의 속성을 든다', () => {
     for (const prop of part.props ?? []) {
       expect(web, `${part.web.file} 의 ${prop}`).toMatch(new RegExp(`\\b${prop}\\b`));
       expect(app, `${part.app.file} 의 ${prop}`).toMatch(new RegExp(`\\b${prop}\\b`));
     }
+  });
+});
+
+describe('단추의 짧은 이름', () => {
+  const parts = read('mobile/src/ui/parts.tsx');
+  const wrappers = [...parts.matchAll(/export function (\w+Button)\(([^)]*)\)[^{]*\{\s*return <Button ([^>]*)\/>/g)];
+
+  it('앱 `parts.tsx` 에 `Button` 을 감싼 단추가 있다', () => {
+    expect(wrappers.map((one) => one[1])).toEqual(['SecondaryButton', 'TextButton', 'PrimaryButton']);
+  });
+
+  it.each(wrappers.map((one) => [one[1], one] as const))('%s 가 `busy` 를 `Button` 에 넘긴다 — 보조기기가 「처리 중」을 읽는다', (_, one) => {
+    expect(one[2]).toContain('busy');
+    expect(one[3]).toContain('busy={busy}');
+    expect(one[3]).toMatch(/variant="[\w-]+"/);
   });
 });
 

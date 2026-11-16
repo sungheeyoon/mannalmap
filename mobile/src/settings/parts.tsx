@@ -7,7 +7,7 @@ import { SUPPORT_EMAIL } from '@brand';
 
 import { FailureLine } from '@/ui/failure-line';
 import { Switch } from '@/ui/switch';
-import { COLOR, FONT, TYPE } from '@/ui/tokens';
+import { COLOR, FONT, TYPE, TYPE_TITLE } from '@/ui/tokens';
 import { CardFrame } from '@/ui/surfaces';
 import { WordText } from '@/ui/word-text';
 
@@ -116,7 +116,7 @@ export function TextRow({ label, onPress, disabled = false }: { label: string; o
 }
 
 export const settingsText = StyleSheet.create({
-  title: { fontSize: TYPE.title, lineHeight: 34, fontFamily: FONT.bold, color: COLOR.foreground },
+  title: { ...TYPE_TITLE },
   meta: { fontSize: TYPE.small, lineHeight: 20, fontFamily: FONT.medium, color: COLOR.secondary },
   section: { fontSize: TYPE.lead, lineHeight: 26, fontFamily: FONT.bold, color: COLOR.foreground },
   body: { fontSize: TYPE.body, lineHeight: 24, fontFamily: FONT.medium, color: COLOR.secondary },

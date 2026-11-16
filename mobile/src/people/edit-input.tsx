@@ -103,7 +103,7 @@ export function EditInputForm({
       )}
 
       <View style={styles.actions}>
-        <PrimaryButton label={saving ? '저장하는 중…' : pillarsSame && nameChanged ? '이름 저장' : '변경 사항 저장'} onPress={press} disabled={saving} />
+        <PrimaryButton label={saving ? '저장하는 중…' : pillarsSame && nameChanged ? '이름 저장' : '변경 사항 저장'} onPress={press} busy={saving} />
         <TextButton label="작성 그만두기" onPress={onCancel} disabled={saving} />
       </View>
 

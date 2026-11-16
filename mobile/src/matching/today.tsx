@@ -378,7 +378,8 @@ export function PassedConnections({
           )}
           <PrimaryButton
             label={restoring ? '복원하는 중…' : '다시 만나보기'}
-            disabled={working || restoring}
+            disabled={working}
+            busy={restoring}
             onPress={async () => {
               setRestoring(true);
               setFailure(null);
