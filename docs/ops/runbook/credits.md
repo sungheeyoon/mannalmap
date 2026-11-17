@@ -362,13 +362,13 @@ update retention.reading_payment set hold_reason = null, held_at = null where or
    응답이 200 · `{"consumed":0,…}`(키 전이면 `{"configured":false}`)인지 본다 — **운영자**
 7. **라이선스 테스터** — Play Console → Settings → License testing 에 시험할 구글 계정. 시험 구매는 돈이 안 오가고 장부에 `is_test` 로 선다. Play 프로모션 코드로 받은 구매(`purchaseType = 1`)는 금액 0 의 주문으로 서고(`is_promo`) 매출 · 환불 금액에 안 든다(ADR 0230 추기)
 
-**운영의 실제 값(2026-11-17 — 운영자 지시로 조율자가 운영자 브라우저 · Cloud Shell 에서 만들었다).** 위 1 ~ 4 · 7 앞의 상태다. 6(배포 · Send test message)과 7(라이선스 테스터)은 남았다.
+**운영의 실제 값(2026-11-17 — 운영자 지시로 조율자가 운영자 브라우저 · Cloud Shell 에서 만들었다).** 1 ~ 4 · 6 이 섰다 — 배포 `f8450ea2`(2026-11-17 20:25 KST) 뒤 Send test message 가 통지 문에 204, `store-consume` Run 이 200. 7(라이선스 테스터)과 샌드박스 확인이 남았다.
 
 - **상품 넷**(2): 위 표 그대로, 모두 활성. 구매 옵션 id `buy`(구입, 「이전 버전과의 호환성」), **대한민국만**(다른 나라는 「사용할 수 없음」), 여러 개 구매 꺼짐, 분류 「디지털 콘텐츠」, 세금 카테고리 「디지털 앱 판매」. 콘솔의 대한민국 세금 칸은 「VAT 없음」 — 넣은 가격이 이용자가 내는 값이다. 20장(59,000원)에는 「KRW 57,000 초과 가격은 다중 수량 결제가 불가능」 안내가 선다(어차피 끔). 이름 「풀이권 N장」, 설명 「사주풀이 · 궁합풀이를 받을 때 쓰는 풀이권 N장이에요. 구매한 풀이권은 기한 없이 쓸 수 있어요.」(문구 확인 전)
 - **Cloud 프로젝트**: 구글 로그인이 든 운영자 개인 계정의 「My First Project」(id `project-274ffaa2-8d30-41bc-b32` · 번호 `278971727146`, `play-console.md` 「읽은 지문」 아래). 결제 계정은 무료 체험이 끝나 가서 **정식으로 올렸다**(Pub/Sub 은 결제 계정이 있어야 돈다, 체험 크레딧은 남는다). Play Developer API · Pub/Sub API 를 켰다
 - **서비스 계정 둘**: `play-billing@…`(결제 검증 — Play Console 사용자로 초대, 이 앱에 앱 정보 보기 · 재무 데이터 보기 · 주문 및 구독 관리) · `play-rtdn-push@…`(푸시 인증만, 키 없음, Pub/Sub 서비스 에이전트에 Token Creator)
 - **Pub/Sub**: 주제 `play-billing`(Publisher = `google-play-developer-notifications@system.gserviceaccount.com`) · 푸시 구독 `play-billing-push` — 끝점과 audience 모두 `https://<도메인>/api/store/google-play`(도메인은 `domain.md` 맨 위의 운영 주소 — www 붙은 쪽은 308 이라 쓰지 않는다, 같은 문서 표 7). Play Console RTDN 은 켰고 주제 `projects/project-274ffaa2-8d30-41bc-b32/topics/play-billing`, 「정기 결제, 무효화된 구매, 모든 일회성 제품」
-- **Vercel Production 세 값**: 위 표대로 넣었다(`GOOGLE_PLAY_SERVICE_ACCOUNT_JSON` 은 sensitive). 배포 전에는 안 읽힌다
+- **Vercel Production 세 값**: 위 표대로 넣었다(`GOOGLE_PLAY_SERVICE_ACCOUNT_JSON` 은 sensitive) — 값을 바꾸면 다시 배포해야 읽힌다
 - **키를 다시 만들 때 — 조직 정책이 막는다.** 프로젝트가 조직(`68743236293`, 운영자 계정이 조직 관리자) 아래라 새 조직의 기본 정책 `iam.disableServiceAccountKeyCreation` 이 키 만들기를 막는다. 그날은 운영자 결정으로 **이 프로젝트에서만 잠깐 풀고 → 키 하나 → 되돌렸다**: 운영자 계정에 `roles/orgpolicy.policyAdmin` 을 조직에서 주고 → 프로젝트에 `enforce: false` 재정의 → 몇 분 뒤 Cloud 콘솔 IAM → 서비스 계정 → `play-billing` → 키 → 키 추가 → JSON(Cloud Shell 의 `cloudshell download` 는 에이전트 브라우저에서 파일이 안 받아졌다) → `gcloud org-policies delete iam.disableServiceAccountKeyCreation --project=<프로젝트 id>`(번호가 아니라 id) → 역할을 걷는다. 지금 살아 있는 키는 하나(`605ebe06…`), 키 파일 사본은 남기지 않았다. 새면 `secret-leak.md` 의 줄, 그때 같은 차례로 새 키를 만들고 옛 키를 지운다
 
 **샌드박스 확인 — 그날 밟고 값을 #937 에 적는다**(#937 「끝났다고 말할 조건」). 장부는 개인을 안 가리키는 질의로 본다(아래).
