@@ -316,7 +316,7 @@ update retention.reading_payment set hold_reason = null, held_at = null where or
 지급 뒤 3일 안 어딘가다) 그 자리에서 운영 알림 `store-consume-urgent`, DB 의 감시 `store-consume-watch`(pg_cron, 매일 07:37 UTC)가 「가장 이른 기한 36시간 안」 ·
 「가장 이른 기한 지남(실제 기한 미확인, 다시 소비 계속)」 · 「실제 기한 지남(지급 뒤 3일, Google 확인 없음)」 · 「Google 이 취소 · 환불로 확인」 · 100 줄 넘는 적체를 나눠 세어
 `store-consume-overdue` 를 보낸다. 끝난 것으로 다루는 것은 Google 이 확인해 준 줄(취소 답 · 무효)뿐이다. 목록 · 급한 알림 · 「Run 하라」는 한 경계(지급 뒤 3일)다.
-**(G-164 — 결정 대기 · DB PR 의 `db push` · 코드 PR 배포 전이다. 그때까지 다시 소비하는 길은 앱의 재전송 · 통지뿐이다.)** 무효(이용자의 Play 환불 · Google 의
+**(G-164 — `20270119090000` 은 2026-11-16 12:54 KST 운영 DB 에, 크론은 같은 날 배포 `67a72a81` 로 섰다. 키가 들어간 배포 전에는 `{ configured: false }` 로 끝난다.)** 무효(이용자의 Play 환불 · Google 의
 취소 · 차지백 · 3일 미소비 자동 환불 · 운영자의 Play Console 전액 환불)는 통지 문 `POST /api/store/google-play`(Pub/Sub 푸시)와 날마다의 대조
 `/api/cron/store-voided`(Voided Purchases API, 지난 사흘)가 `void_store_purchase` 로 적는다 — **그 결제가 준 장수만큼, 계정에 남은 유료 풀이권에서(그 묶음 → 늦게 산 묶음), 바닥 0 으로 회수한다**
 (ADR 0230 추기 A, `20270114090000` — 운영 DB 에 있다, 2026-11-07). 무료 · 예외 몫과 다음 구매에서는 빼지 않는다. 주문은 장부 그대로(`provider = 'google_play'`, 주문 번호 `rdo_…`, 거래 번호 = Google 주문 번호 `GPA.…`)라
@@ -361,6 +361,15 @@ update retention.reading_payment set hold_reason = null, held_at = null where or
    「예외 — 마이그레이션이 든 PR」, 크론이 그 문을 부른다). Vercel → Settings → Cron Jobs 에 `/api/cron/store-consume` 가 서고, **Run** 한 번의
    응답이 200 · `{"consumed":0,…}`(키 전이면 `{"configured":false}`)인지 본다 — **운영자**
 7. **라이선스 테스터** — Play Console → Settings → License testing 에 시험할 구글 계정. 시험 구매는 돈이 안 오가고 장부에 `is_test` 로 선다. Play 프로모션 코드로 받은 구매(`purchaseType = 1`)는 금액 0 의 주문으로 서고(`is_promo`) 매출 · 환불 금액에 안 든다(ADR 0230 추기)
+
+**운영의 실제 값(2026-11-17 — 운영자 지시로 조율자가 운영자 브라우저 · Cloud Shell 에서 만들었다).** 위 1 ~ 4 · 7 앞의 상태다. 6(배포 · Send test message)과 7(라이선스 테스터)은 남았다.
+
+- **상품 넷**(2): 위 표 그대로, 모두 활성. 구매 옵션 id `buy`(구입, 「이전 버전과의 호환성」), **대한민국만**(다른 나라는 「사용할 수 없음」), 여러 개 구매 꺼짐, 분류 「디지털 콘텐츠」, 세금 카테고리 「디지털 앱 판매」. 콘솔의 대한민국 세금 칸은 「VAT 없음」 — 넣은 가격이 이용자가 내는 값이다. 20장(59,000원)에는 「KRW 57,000 초과 가격은 다중 수량 결제가 불가능」 안내가 선다(어차피 끔). 이름 「풀이권 N장」, 설명 「사주풀이 · 궁합풀이를 받을 때 쓰는 풀이권 N장이에요. 구매한 풀이권은 기한 없이 쓸 수 있어요.」(문구 확인 전)
+- **Cloud 프로젝트**: 구글 로그인이 든 운영자 개인 계정의 「My First Project」(id `project-274ffaa2-8d30-41bc-b32` · 번호 `278971727146`, `play-console.md` 「읽은 지문」 아래). 결제 계정은 무료 체험이 끝나 가서 **정식으로 올렸다**(Pub/Sub 은 결제 계정이 있어야 돈다, 체험 크레딧은 남는다). Play Developer API · Pub/Sub API 를 켰다
+- **서비스 계정 둘**: `play-billing@…`(결제 검증 — Play Console 사용자로 초대, 이 앱에 앱 정보 보기 · 재무 데이터 보기 · 주문 및 구독 관리) · `play-rtdn-push@…`(푸시 인증만, 키 없음, Pub/Sub 서비스 에이전트에 Token Creator)
+- **Pub/Sub**: 주제 `play-billing`(Publisher = `google-play-developer-notifications@system.gserviceaccount.com`) · 푸시 구독 `play-billing-push` — 끝점과 audience 모두 `https://<도메인>/api/store/google-play`(도메인은 `domain.md` 맨 위의 운영 주소 — www 붙은 쪽은 308 이라 쓰지 않는다, 같은 문서 표 7). Play Console RTDN 은 켰고 주제 `projects/project-274ffaa2-8d30-41bc-b32/topics/play-billing`, 「정기 결제, 무효화된 구매, 모든 일회성 제품」
+- **Vercel Production 세 값**: 위 표대로 넣었다(`GOOGLE_PLAY_SERVICE_ACCOUNT_JSON` 은 sensitive). 배포 전에는 안 읽힌다
+- **키를 다시 만들 때 — 조직 정책이 막는다.** 프로젝트가 조직(`68743236293`, 운영자 계정이 조직 관리자) 아래라 새 조직의 기본 정책 `iam.disableServiceAccountKeyCreation` 이 키 만들기를 막는다. 그날은 운영자 결정으로 **이 프로젝트에서만 잠깐 풀고 → 키 하나 → 되돌렸다**: 운영자 계정에 `roles/orgpolicy.policyAdmin` 을 조직에서 주고 → 프로젝트에 `enforce: false` 재정의 → 몇 분 뒤 Cloud 콘솔 IAM → 서비스 계정 → `play-billing` → 키 → 키 추가 → JSON(Cloud Shell 의 `cloudshell download` 는 에이전트 브라우저에서 파일이 안 받아졌다) → `gcloud org-policies delete iam.disableServiceAccountKeyCreation --project=<프로젝트 id>`(번호가 아니라 id) → 역할을 걷는다. 지금 살아 있는 키는 하나(`605ebe06…`), 키 파일 사본은 남기지 않았다. 새면 `secret-leak.md` 의 줄, 그때 같은 차례로 새 키를 만들고 옛 키를 지운다
 
 **샌드박스 확인 — 그날 밟고 값을 #937 에 적는다**(#937 「끝났다고 말할 조건」). 장부는 개인을 안 가리키는 질의로 본다(아래).
 
