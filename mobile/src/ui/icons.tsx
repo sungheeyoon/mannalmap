@@ -4,7 +4,7 @@ import Svg, { Circle, Path, Rect } from 'react-native-svg';
 
 import { COLOR } from './tokens';
 
-export type IconName = 'home' | 'people' | 'chat' | 'bell' | 'gear' | 'chevron' | 'plus' | 'taiji' | 'search' | 'ticket' | 'undo' | 'close' | 'arrow' | 'flag' | 'exchange' | 'spark' | 'reading' | 'alert' | 'more' | 'block' | 'send' | 'lock' | 'check' | 'share';
+export type IconName = 'home' | 'people' | 'chat' | 'bell' | 'gear' | 'chevron' | 'plus' | 'taiji' | 'search' | 'ticket' | 'undo' | 'close' | 'arrow' | 'flag' | 'exchange' | 'spark' | 'reading' | 'alert' | 'more' | 'manage' | 'block' | 'send' | 'lock' | 'check' | 'share';
 
 /** 웹의 `app/ui/icons.tsx` 와 같은 24 격자 · 같은 경로 값이다. 이름은 곁의 글자나 단추의 이름이 든다 */
 const shapes = (color: string): Record<IconName, ReactNode> => ({
@@ -83,6 +83,13 @@ const shapes = (color: string): Record<IconName, ReactNode> => ({
       <Circle cx={6} cy={12} r={1.2} fill={color} stroke="none" />
       <Circle cx={12} cy={12} r={1.2} fill={color} stroke="none" />
       <Circle cx={18} cy={12} r={1.2} fill={color} stroke="none" />
+    </>
+  ),
+  /** 연필과 점 둘 — 「고칠 것들이 여기 있다」. 웹 `app/ui/icons.tsx` 의 `manage` 와 같은 길이다 */
+  manage: (
+    <>
+      <Path d="M4 16.2 14.1 6.1a1.9 1.9 0 0 1 2.7 2.7L6.7 18.9l-3.2.5Z" />
+      <Path d="M20 15.5h.01M20 19h.01" strokeWidth={2.4} />
     </>
   ),
   block: (

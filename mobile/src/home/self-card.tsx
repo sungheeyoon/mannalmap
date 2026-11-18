@@ -9,9 +9,10 @@ import { withFromMe } from '@web-home/from-me';
 import { SELF_READING_MAKING } from '@web-home/making';
 
 import { AnchoredMenu } from '@/chat/menu';
-import { DayMasterChip, styles as shared } from '@/people/parts';
+import { DayMasterChip } from '@/people/parts';
 import { Button } from '@/ui/buttons';
 import { ElementSymbol } from '@/ui/element-symbol';
+import { Icon } from '@/ui/icons';
 import { StemSymbol } from '@/ui/stem-symbol';
 import { alpha, COLOR, ELEMENT_TONE, FONT, RADIUS, TYPE } from '@/ui/tokens';
 import { Tile } from '@/ui/surfaces';
@@ -113,12 +114,13 @@ export function SelfCard({
         <View style={styles.menu}>
           <AnchoredMenu
             label={`${label} 관리`}
+            face="quiet"
             items={[
               { label: '출생 정보 수정', onPress: () => router.push('/me/profile?edit=birth' as never) },
               { label: MY_PROFILE_EDIT_LABEL, onPress: () => router.push('/me/profile' as never) },
             ]}
           >
-            <WordText style={shared.manageDots}>⋯</WordText>
+            <Icon name="more" size={20} color={COLOR.secondary} />
           </AnchoredMenu>
         </View>
       )}

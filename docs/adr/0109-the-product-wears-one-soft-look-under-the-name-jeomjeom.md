@@ -416,3 +416,8 @@ Navigation) · 토스 TDS(Toast · Result) · Material 3 Snackbar 다(확인 202
 - **단추 아래 줄(`FormError`) · 문단 아래 줄(`SectionErrorLine`) · `useSectionErrors` 가 약속 표에 든다**(ADR 0252). 웹이 상수 없이 JSX 에 적은 모양은
   표의 `values`(웹 클래스 낱말 → 앱 글자)로 두 쪽 파일을 견준다.
 - 앱 `parts.tsx` 의 짧은 단추(`PrimaryButton` · `SecondaryButton` · `TextButton`)는 `busy` 를 `Button` 에 넘긴다 — 일하는 그 단추에만 준다.
+
+## 추기 — 앱의 딱지 한 벌 (2026-11-18, Play 출시 전 점검)
+
+- 안 읽은 수는 앱도 웹 `BADGE` 값(20 · `badge` · `on-badge` · `tag`)의 `Badge`(`mobile/src/ui/surfaces.tsx`)로 선다. 수는 딱지를 단 단추 · 탭의 읽는 이름이
+  「… N건 안 읽음」(`UNREAD_WORDS`, `src/lib/chat`)으로 든다.

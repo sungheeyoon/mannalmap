@@ -3,7 +3,7 @@ import { join } from 'node:path';
 
 import { describe, expect, it } from 'vitest';
 
-import { BUTTON, BUTTON_PRIMARY_OFF, CELL, COLOR, FIELD, RADIUS, SURFACE, TEXT, TEXT_STYLE, TONE } from '../src/lib/design';
+import { BADGE, BUTTON, BUTTON_PRIMARY_OFF, CELL, COLOR, FIELD, RADIUS, SURFACE, TEXT, TEXT_STYLE, TONE } from '../src/lib/design';
 
 /**
  * **앱의 면 · 칸 · 단추 값이 웹 상수와 같다**(ADR 0109 추기 2026-10-31). 토큰은 한 원본에서 나지만(`design-tokens.test.ts`) 면은 웹이 클래스 글자로 든다 —
@@ -48,6 +48,8 @@ function styleOf(classes: string): Record<string, unknown> {
     else if (number('px') !== undefined) style.paddingHorizontal = number('px');
     else if (number('py') !== undefined) style.paddingVertical = number('py');
     else if (number('min-h') !== undefined) style.minHeight = number('min-h');
+    else if (number('min-w') !== undefined) style.minWidth = number('min-w');
+    else if (number('h') !== undefined) style.height = number('h');
     else if (number('size') !== undefined) Object.assign(style, { width: number('size'), height: number('size') });
     else if (name.startsWith('shadow-') && elevation[name.slice(7)] !== undefined) style.boxShadow = elevation[name.slice(7)];
     else if (name === 'overflow-hidden') style.overflow = 'hidden';
@@ -75,6 +77,10 @@ describe('면 · 칸 · 단추의 값', () => {
 
   it.each(Object.entries(TEXT_STYLE))('%s 가 `surfaces.ts` 의 같은 이름과 크기 · 줄 높이 · 색이 같다', (name, value) => {
     expect(value).toEqual(styleOf(classesOf('app/ui/surfaces.ts', name)));
+  });
+
+  it('딱지는 `surfaces.ts` 의 `BADGE` 와 같다', () => {
+    expect(BADGE).toEqual(styleOf(classesOf('app/ui/surfaces.ts', 'BADGE')));
   });
 
   it('주 단추의 못 누름은 웹의 `PRIMARY_OFF` 다', () => {

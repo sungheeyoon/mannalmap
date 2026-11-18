@@ -1,7 +1,10 @@
 import type { ReactNode } from 'react';
 import { Pressable, StyleSheet, View, type StyleProp, type ViewProps, type ViewStyle } from 'react-native';
 
-import { CELL, SHEET, SURFACE } from '@design';
+import { BADGE, CELL, SHEET, SURFACE } from '@design';
+
+import { FONT } from './tokens';
+import { WordText } from './word-text';
 
 /**
  * **앱의 면 한 벌** — 웹 `app/ui/surfaces.ts` 와 같은 이름 · 같은 값이다(값 `src/lib/design/parts.ts`, ADR 0109 추기 2026-10-31).
@@ -70,7 +73,24 @@ export const DialogPanel = (props: FaceProps) => <Face face={styles.dialog} {...
 /** 아래에서 올라오는 판 — 위 모서리만 둥글다. 웹 `DetailSheet` · `ActionSheet` 의 `rounded-t-card bg-background` */
 export const SheetPanel = (props: FaceProps) => <Face face={styles.sheet} {...props} />;
 
+const { fontSize: BADGE_SIZE, color: BADGE_INK, ...BADGE_FACE } = BADGE;
+
+/**
+ * 딱지 — 안 읽은 수. 웹 `BADGE`(`app/ui/surfaces.ts`)와 같은 면 · 글자다. 자리(`position` · `top` · `right`)는 쓰는 자리가 `style` 로 붙인다.
+ * 보조기기는 이 수를 따로 읽지 않는다 — 수는 딱지를 단 단추 · 탭의 이름이 「… N건 안 읽음」으로 든다(`UNREAD_WORDS`)
+ */
+export function Badge({ count, style }: { count: number; style?: StyleProp<ViewStyle> }) {
+  if (count <= 0) return null;
+  return (
+    <View aria-hidden importantForAccessibility="no-hide-descendants" style={[styles.badge, style]}>
+      <WordText style={styles.badgeText}>{count}</WordText>
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
+  badge: { ...BADGE_FACE, alignItems: 'center', justifyContent: 'center' },
+  badgeText: { fontFamily: FONT.bold, fontSize: BADGE_SIZE, color: BADGE_INK, fontVariant: ['tabular-nums'] },
   card: SURFACE.CARD,
   frame: SURFACE.CARD_FRAME,
   paper: SURFACE.PAPER,

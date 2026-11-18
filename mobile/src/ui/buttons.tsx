@@ -70,6 +70,11 @@ const ICON_OF: Record<IconButtonVariant, keyof typeof BUTTON> = {
   ghost: 'ICON_BUTTON_GHOST',
 };
 
+/** 아이콘 단추의 면만 — 다른 누름(`AnchoredMenu` 의 여는 단추)이 같은 면을 입을 때 */
+export function iconButtonFace(variant: IconButtonVariant): ViewStyle {
+  return split(BUTTON[ICON_OF[variant]]).face;
+}
+
 export function IconButton({
   label,
   onPress,

@@ -132,7 +132,8 @@ function ShelfBody({
 
   return (
     <View style={styles.body}>
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chips}>
+      {/* 누를 자리는 칩(36)보다 위아래로 넓다 — 웹 `after:-inset-y-1` 처럼. 판이 그만큼 커지고 바깥 여백을 같은 만큼 거둬 보이는 자리는 그대로다 */}
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.chipRow} contentContainerStyle={styles.chips}>
         {chips.map((one) => {
           const on = one.chip === chip;
           return (
@@ -141,9 +142,11 @@ function ShelfBody({
               accessibilityRole="button"
               accessibilityState={{ selected: on }}
               onPress={() => setChip(one.chip)}
-              style={[styles.chip, on && styles.chipOn]}
+              style={styles.chipHit}
             >
-              <WordText style={[styles.chipLabel, on && styles.chipLabelOn]}>{one.label}</WordText>
+              <View style={[styles.chip, on && styles.chipOn]}>
+                <WordText style={[styles.chipLabel, on && styles.chipLabelOn]}>{one.label}</WordText>
+              </View>
             </Pressable>
           );
         })}
@@ -229,6 +232,9 @@ function Group({ title, note, children }: { title: string; note: string; childre
   );
 }
 
+/** 칩(36) 위아래로 더 누를 수 있는 폭 — 웹 칩의 `after:-inset-y-1`(4)로 44 */
+const CHIP_REACH = 4;
+
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: COLOR.background },
   content: { gap: 16, padding: 16, paddingBottom: 48 },
@@ -237,7 +243,9 @@ const styles = StyleSheet.create({
   body: { gap: 24 },
   noticeTitle: { fontFamily: FONT.bold, fontSize: TYPE.lead, color: COLOR.foreground },
   line: { fontFamily: FONT.medium, fontSize: TYPE.body, lineHeight: 24, color: COLOR.secondary },
+  chipRow: { marginVertical: -CHIP_REACH },
   chips: { gap: 8 },
+  chipHit: { paddingVertical: CHIP_REACH },
   chip: { minHeight: 36, justifyContent: 'center', paddingHorizontal: 14, borderWidth: 1, borderColor: COLOR.border, borderRadius: RADIUS.pill, backgroundColor: COLOR.surface },
   chipOn: { borderColor: COLOR.foreground, backgroundColor: COLOR.foreground },
   chipLabel: { fontFamily: FONT.bold, fontSize: TYPE.note, color: COLOR.secondary },
