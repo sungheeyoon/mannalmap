@@ -2,7 +2,7 @@ import { Platform } from 'react-native';
 import type { Purchase } from 'expo-iap';
 
 import { STORE_PRODUCTS, type StorePurchaseAnswer, type StorePurchaseOpen } from '@reading/store-products';
-import { creditsGrantedNow, storeReceiptDecision } from '@reading/store-purchase';
+import { storeReceiptDecision, type StoreResend } from '@reading/store-purchase';
 
 import type { Client } from '@/auth/client';
 import { door, type DoorAnswer } from '@/reading/api';
@@ -92,7 +92,7 @@ export async function openPurchase(client: Client, productId: string): Promise<'
 
 /**
  * 결제창의 결과를 듣는다 — 결제 완료면 서버에 보내고 그 답을, 취소 · 실패면 그 갈래를 넘긴다. 보낼까는 다시 보내는 손과 같은 판정
- * (`storeReceiptDecision`)이고, 끝난 결제인데 보낼 것이 없으면(토큰 없음 · 우리 상품 아님) 실패로 넘긴다 — 단추가 「결제 중」에 남지 않게.
+ * (`storeReceiptDecision`)이고, 보낼 것이 없으면(토큰 없음 · 우리 상품 아님 · 모르는 상태) 실패로 넘긴다 — 단추가 「결제 중」에 남지 않게.
  * @returns 듣기를 끄는 함수
  */
 export function listenStorePurchases(client: Client, on: {
@@ -118,8 +118,8 @@ export function listenStorePurchases(client: Client, on: {
     const updated = purchaseUpdatedListener((purchase: Purchase) => {
       const decided = storeReceiptDecision(purchase);
       if (decided.kind === 'pending') return on.pending();
-      if (decided.kind === 'unusable') return on.failed();
-      if (decided.kind !== 'send') return;
+      /* 보낼 것이 없다(토큰 없음 · 우리 상품 아님 · 끝나지 않은 그 밖의 상태) — 단추가 「결제 진행 중…」에 남지 않게 실패로 놓는다 */
+      if (decided.kind !== 'send') return on.failed();
       /* `sendPurchase` 는 던지지 않는다 — 못 닿으면 `unavailable` 값이다(`askDoor`) */
       void (async () => on.answered(await sendPurchase(client, decided.productId, decided.purchaseToken)))();
     });
@@ -140,23 +140,24 @@ export function listenStorePurchases(client: Client, on: {
 }
 
 /**
- * 소비되지 않은 구매를 다시 보낸다 — 결제 중 앱이 꺼졌거나 서버에 못 닿았던 구매. 앱을 켤 때 · 풀이권 화면을 열 때 부른다.
- * @returns 이번에 지급이 선 장수의 합(0 이면 보낼 것이 없었거나 이미 섰다)
+ * 소비되지 않은 구매를 다시 보낸다 — 결제 중 앱이 꺼졌거나 서버에 못 닿았던 구매. 앱을 켤 때 · 풀이권 화면을 열 때 · 「이미 가진 상품」일 때 부른다.
+ * 화면이 말할 줄은 `storeResendNotice` 가 이 값에서 가른다 — 못 닿은 구매를 0장으로 세어 지우지 않는다.
+ * @returns Play 에서 남은 구매를 읽었나와 보낸 구매마다의 답
  */
-export async function resendUnfinishedPurchases(client: Client): Promise<number> {
-  if (!(await connectStore())) return 0;
+export async function resendUnfinishedPurchases(client: Client): Promise<StoreResend> {
+  if (!(await connectStore())) return { read: false, answers: [] };
   let purchases: Purchase[];
   try {
     const { getAvailablePurchases } = await iap();
     purchases = (await getAvailablePurchases()) ?? [];
   } catch {
-    return 0;
+    return { read: false, answers: [] };
   }
-  let credits = 0;
+  const answers: DoorAnswer<StorePurchaseAnswer>[] = [];
   for (const purchase of purchases) {
     const decided = storeReceiptDecision(purchase);
     if (decided.kind !== 'send') continue;
-    credits += creditsGrantedNow(await sendPurchase(client, decided.productId, decided.purchaseToken));
+    answers.push(await sendPurchase(client, decided.productId, decided.purchaseToken));
   }
-  return credits;
+  return { read: true, answers };
 }

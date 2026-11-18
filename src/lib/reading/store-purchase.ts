@@ -3,6 +3,7 @@ import {
   PURCHASE_DONE_TITLE,
   PURCHASE_FAILED_NOTE,
   PURCHASE_PENDING_NOTE,
+  PURCHASE_PRIOR_RUNNING_NOTE,
   PURCHASE_UNDELIVERED_NOTE,
   SALE_CLOSED_NOTE,
   purchaseAddedNote,
@@ -100,4 +101,34 @@ export function storeReceiptDecision(receipt: StoreReceipt): StoreReceiptDecisio
 export function creditsGrantedNow(answer: DoorAnswer<StorePurchaseAnswer>): number {
   if (!answer.ok || answer.value.outcome !== 'granted' || answer.value.replayed) return 0;
   return answer.value.credits;
+}
+
+/**
+ * **소비되지 않은 구매를 다시 보낸 한 차례**(`resendUnfinishedPurchases`) — `read` 는 Play 에서 남은 구매를 읽었나, `answers` 는 보낸 구매마다 서버의 답이다.
+ */
+export type StoreResend = { readonly read: boolean; readonly answers: readonly DoorAnswer<StorePurchaseAnswer>[] };
+
+/**
+ * 다시 보낸 까닭 — `opened` 화면을 열 때 스스로 · `owned` 같은 상품을 눌렀는데 Play 가 「이미 가진 상품」이라 결제창이 안 열림 ·
+ * `retry` 「충전이 완료되지 않았어요」의 다시 시도
+ */
+export type StoreResendCause = 'opened' | 'owned' | 'retry';
+
+/**
+ * **다시 보낸 뒤 화면이 말할 줄**(대장 credits-11 · credits-15). 차례는 이렇다.
+ *
+ * 1. 이번에 선 지급이 있으면 그 합으로 결제 완료 창이다
+ * 2. 하나라도 서버에 못 닿았으면 「충전이 완료되지 않았어요」와 다시 시도다 — 화면을 열 때도. 결제는 됐는데 풀이권이 없는 사람이 아무 말도 못 듣지 않게
+ * 3. 「이미 가진 상품」으로 왔으면 앞선 결제를 처리하는 중이라는 한 줄이다 — 앞서 지급은 섰는데 Google 의 소비가 안 끝난 구매다. 서버가 다시 보낸 답에서
+ *    소비를 다시 하므로(`settlePurchase`) 잠시 뒤 다시 누르면 결제창이 열린다. 안 열리면 날마다의 크론이 소비한다(ADR 0253)
+ * 4. 다시 시도했는데 Play 에서 남은 구매를 못 읽었으면 실패 줄이 남는다
+ * 5. 그 밖은 줄이 없다 — 화면을 열 때마다 이미 선 구매를 다시 말하지 않는다
+ */
+export function storeResendNotice(resend: StoreResend, cause: StoreResendCause): StorePurchaseNotice | null {
+  const credits = resend.answers.reduce((sum, answer) => sum + creditsGrantedNow(answer), 0);
+  if (credits > 0) return storePurchaseNotice({ ok: true, value: { outcome: 'granted', credits, replayed: false } });
+  if (resend.answers.some((answer) => !answer.ok)) return { kind: 'undelivered', body: PURCHASE_UNDELIVERED_NOTE };
+  if (cause === 'owned') return { kind: 'waiting', body: PURCHASE_PRIOR_RUNNING_NOTE };
+  if (cause === 'retry' && !resend.read) return { kind: 'undelivered', body: PURCHASE_UNDELIVERED_NOTE };
+  return null;
 }

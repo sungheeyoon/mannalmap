@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { STORE_PRODUCTS } from './store-products';
-import { creditsGrantedNow, purchaseReturnOf, storePurchaseNotice, storeReceiptDecision } from './store-purchase';
+import { creditsGrantedNow, purchaseReturnOf, storePurchaseNotice, storeReceiptDecision, storeResendNotice } from './store-purchase';
 
 /** Google Play 결제의 결과 줄 — 문의 답마다 화면이 무엇을 말하는가(ADR 0230 · 대장 credits-11) */
 describe('Google Play 결제의 결과 줄', () => {
@@ -111,5 +111,48 @@ describe('다시 보낸 구매가 이번에 선 장수', () => {
     expect(creditsGrantedNow({ ok: true, value: { outcome: 'refused', why: 'restricted' } })).toBe(0);
     expect(creditsGrantedNow({ ok: true, value: { outcome: 'not-found' } })).toBe(0);
     expect(creditsGrantedNow({ ok: false, refused: { refused: 'unavailable', message: '계정을 확인하지 못했어요.' } })).toBe(0);
+  });
+});
+
+/** 소비되지 않은 구매를 다시 보낸 뒤 화면이 무엇을 말하나 — 못 닿은 구매가 아무 말 없이 지나가지 않게(대장 credits-15) */
+describe('다시 보낸 뒤의 줄', () => {
+  const fresh = { ok: true, value: { outcome: 'granted', credits: 5, replayed: false } } as const;
+  const replayed = { ok: true, value: { outcome: 'granted', credits: 5, replayed: true } } as const;
+  const unreached = { ok: false, refused: { refused: 'unavailable', message: 'x' } } as const;
+
+  it('이번에 선 지급이 있으면 그 합으로 결제 완료 — 못 닿은 구매가 함께 있어도', () => {
+    expect(storeResendNotice({ read: true, answers: [fresh, unreached, fresh] }, 'opened')).toEqual({
+      kind: 'done',
+      title: '결제가 완료됐어요',
+      body: '풀이권 10장이 추가됐어요.',
+      credits: 10,
+    });
+  });
+
+  it('하나라도 서버에 못 닿았으면 충전이 완료되지 않았다 — 화면을 열 때도', () => {
+    for (const cause of ['opened', 'owned', 'retry'] as const) {
+      expect(storeResendNotice({ read: true, answers: [replayed, unreached] }, cause), cause).toEqual({
+        kind: 'undelivered',
+        body: '풀이권 충전이 완료되지 않았어요.',
+      });
+    }
+  });
+
+  it('이미 가진 상품이라 결제창이 안 열렸고 새로 선 것이 없으면 앞선 결제를 처리하는 중', () => {
+    const prior = { kind: 'waiting', body: '이전 결제를 처리하고 있어요. 잠시 후 다시 시도해 주세요.' };
+    expect(storeResendNotice({ read: true, answers: [replayed] }, 'owned')).toEqual(prior);
+    expect(storeResendNotice({ read: true, answers: [] }, 'owned')).toEqual(prior);
+    expect(storeResendNotice({ read: false, answers: [] }, 'owned')).toEqual(prior);
+  });
+
+  it('다시 시도했는데 Play 에서 남은 구매를 못 읽었으면 실패 줄이 남는다', () => {
+    expect(storeResendNotice({ read: false, answers: [] }, 'retry')?.kind).toBe('undelivered');
+  });
+
+  it('화면을 열 때 보낼 것이 없거나 이미 섰으면 아무 말도 안 한다 — Play 를 못 읽어도', () => {
+    expect(storeResendNotice({ read: true, answers: [] }, 'opened')).toBeNull();
+    expect(storeResendNotice({ read: true, answers: [replayed] }, 'opened')).toBeNull();
+    expect(storeResendNotice({ read: false, answers: [] }, 'opened')).toBeNull();
+    expect(storeResendNotice({ read: true, answers: [replayed] }, 'retry')).toBeNull();
   });
 });

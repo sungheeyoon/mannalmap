@@ -284,5 +284,7 @@ export const PURCHASE_RUNNING_LABEL = '결제 진행 중…';
 export const PURCHASE_FAILED_NOTE = '결제가 완료되지 않았어요.';
 export const PURCHASE_UNDELIVERED_NOTE = '풀이권 충전이 완료되지 않았어요.';
 export const PURCHASE_PENDING_NOTE = '결제가 완료되면 풀이권이 추가돼요.';
+/** 같은 상품의 앞선 구매가 아직 끝나지 않아 결제창이 안 열렸을 때(Play 「이미 가진 상품」) — 대장 credits-15 「확인 전」 */
+export const PURCHASE_PRIOR_RUNNING_NOTE = '이전 결제를 처리하고 있어요. 잠시 후 다시 시도해 주세요.';
 /** 앱 풀이권 구매 칸이 서버에 못 닿았거나 Play 상품 조회가 실패한 때의 실패 줄 — 판매가 닫힌 `SALE_CLOSED_NOTE` 와 갈린다(대장 all-15) */
 export const STORE_LOAD_FAILED_NOTE = '풀이권 상품을 불러오지 못했어요.';
