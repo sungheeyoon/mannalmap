@@ -146,7 +146,7 @@ export function StoreSection({ onBought, returnTo }: { onBought: () => Promise<n
     })();
   };
 
-  if (shelf.kind === 'checking') return <LoadingDots />;
+  if (shelf.kind === 'checking') return <LoadingDots inline />;
   if (shelf.kind === 'failed')
     return (
       <FailureLine signIn={shelf.signIn} onRetry={load}>
