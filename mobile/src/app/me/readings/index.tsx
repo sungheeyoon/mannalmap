@@ -13,7 +13,7 @@ import { BlankBook, BookRow, MakingRow, SHELF_CHIPS, SHELF_TITLE, type ShelfChip
 import { EmptyState } from '@/ui/empty-state';
 import { goTab } from '@/ui/go-tab';
 import { LoadingDots } from '@/ui/loading';
-import { COLOR, FONT, RADIUS, TYPE } from '@/ui/tokens';
+import { COLOR, FONT, RADIUS, reach, TYPE } from '@/ui/tokens';
 import { settled } from '@/ui/settled';
 import { UNREACHABLE } from '@/auth/signup';
 import { TopBar } from '@/ui/top-bar';
@@ -232,8 +232,8 @@ function Group({ title, note, children }: { title: string; note: string; childre
   );
 }
 
-/** 칩(36) 위아래로 더 누를 수 있는 폭 — 웹 칩의 `after:-inset-y-1`(4)로 44 */
-const CHIP_REACH = 4;
+/** 칩(36) 위아래로 더 누를 수 있는 폭 — 앱은 누를 자리의 바닥(`TOUCH` 48)까지 넓힌다. 웹 칩은 `after:-inset-y-1` 로 44 다 */
+const CHIP_REACH = reach(36);
 
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: COLOR.background },

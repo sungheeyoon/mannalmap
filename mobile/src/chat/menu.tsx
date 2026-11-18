@@ -5,7 +5,7 @@ import { iconButtonFace, type IconButtonVariant } from '@/ui/buttons';
 import { MenuPanel } from '@/ui/surfaces';
 import { Icon, type IconName } from '@/ui/icons';
 import { Scrim } from '@/ui/scrim';
-import { COLOR, CONTROL, FONT, RADIUS, TYPE } from '@/ui/tokens';
+import { COLOR, CONTROL, FONT, RADIUS, reach, TYPE } from '@/ui/tokens';
 import { WordText } from '@/ui/word-text';
 
 
@@ -30,7 +30,7 @@ export function AnchoredMenu({ label, items, above = false, face, children }: { 
 
   return (
     <>
-      <Pressable ref={anchor} accessibilityRole="button" accessibilityLabel={label} onPress={open} style={face === undefined ? styles.anchor : iconButtonFace(face)}>
+      <Pressable ref={anchor} accessibilityRole="button" accessibilityLabel={label} hitSlop={reach(CONTROL)} onPress={open} style={face === undefined ? styles.anchor : iconButtonFace(face)}>
         {children}
       </Pressable>
       <Scrim open={place !== null} place="free" animation="none" tint={false} onRequestClose={() => setPlace(null)} onOutside={() => setPlace(null)} outsideLabel="닫기">

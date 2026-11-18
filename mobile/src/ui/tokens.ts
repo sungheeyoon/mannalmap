@@ -47,4 +47,13 @@ export const TYPE_TITLE = { ...TEXT_STYLE.TYPE_TITLE, fontFamily: FONT.bold } as
 
 export const CONTROL = 44;
 
+/**
+ * **손가락이 닿는 자리의 바닥 — 48dp**(안드로이드 접근성 권장 · Play 출시 전 보고서가 이보다 작은 누름을 짚는다). 보이는 크기(`CONTROL` 44 · 칩 36)는 웹과 같게 두고,
+ * 누를 자리만 `reach(보이는 크기)` 만큼 둘레로 넓힌다(`hitSlop`). 웹(`CONTROL` · `size-11`)은 그대로다 — 앱만의 값이라 `tokens.json` 에 두지 않는다
+ */
+export const TOUCH = 48;
+
+/** 보이는 크기에서 48 까지 한쪽에 더할 폭 — `hitSlop={reach(CONTROL)}` */
+export const reach = (size: number) => Math.max(0, (TOUCH - size) / 2);
+
 export const RADIUS = DESIGN_RADIUS;

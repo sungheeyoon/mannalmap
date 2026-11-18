@@ -25,7 +25,7 @@ import { LoadingOrbit } from '@/ui/loading';
 import { Logo } from '@/ui/logo';
 import { SecondaryButton } from '@/ui/parts';
 import { Badge } from '@/ui/surfaces';
-import { COLOR, ELEMENT_TONE, FONT, RADIUS, TYPE } from '@/ui/tokens';
+import { COLOR, CONTROL, ELEMENT_TONE, FONT, RADIUS, reach, TYPE } from '@/ui/tokens';
 import { KEEP_VIEW } from '@/ui/keep-view';
 import { resendUnfinishedPurchases } from '@/credits/store';
 import { WordText } from '@/ui/word-text';
@@ -110,7 +110,7 @@ export default function MeLayout() {
         <LiveChannel client={client} />
         {appHeadStands(pathname, search) && (
         <View style={[styles.header, { paddingTop: insets.top }]}>
-          <Pressable accessibilityRole="link" accessibilityLabel={`${SERVICE_NAME} 홈`} onPress={() => goTab('/me')} style={styles.logo}>
+          <Pressable accessibilityRole="link" accessibilityLabel={`${SERVICE_NAME} 홈`} hitSlop={{ top: reach(CONTROL), bottom: reach(CONTROL) }} onPress={() => goTab('/me')} style={styles.logo}>
             <Logo size={32} />
           </Pressable>
           <View style={styles.tools}>
@@ -120,6 +120,7 @@ export default function MeLayout() {
                 accessibilityRole="button"
                 accessibilityLabel={readingCreditsLabel({ available: counts.credits })}
                 onPress={() => router.push('/me/credits' as never)}
+                hitSlop={reach(CONTROL)}
                 style={[styles.tool, styles.credits]}
               >
                 <Icon name="ticket" size={20} />
@@ -127,11 +128,11 @@ export default function MeLayout() {
               </Pressable>
             )}
             {/* 읽는 이름은 웹 종과 같다 — 「소식」 뒤에 안 읽은 수(웹 `site-header.tsx` 의 `NewsBell` · `UnreadBadge`) */}
-            <Pressable accessibilityRole="link" accessibilityLabel={counts.news > 0 ? `소식 ${counts.news}${UNREAD_WORDS}` : '소식'} onPress={() => router.push('/me/requests' as never)} style={styles.tool}>
+            <Pressable accessibilityRole="link" accessibilityLabel={counts.news > 0 ? `소식 ${counts.news}${UNREAD_WORDS}` : '소식'} onPress={() => router.push('/me/requests' as never)} hitSlop={reach(CONTROL)} style={styles.tool}>
               <Icon name="bell" size={20} />
               <Badge count={counts.news} style={styles.toolBadge} />
             </Pressable>
-            <Pressable accessibilityRole="link" accessibilityLabel="설정" onPress={() => router.push('/me/settings' as never)} style={styles.tool}>
+            <Pressable accessibilityRole="link" accessibilityLabel="설정" onPress={() => router.push('/me/settings' as never)} hitSlop={reach(CONTROL)} style={styles.tool}>
               <Icon name="gear" size={20} />
             </Pressable>
           </View>
