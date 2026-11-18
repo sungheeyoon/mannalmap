@@ -1,18 +1,22 @@
 import { useRef, useState, type ComponentRef, type ReactNode } from 'react';
 import { Dimensions, Pressable, StyleSheet } from 'react-native';
 
+import { iconButtonFace, type IconButtonVariant } from '@/ui/buttons';
 import { MenuPanel } from '@/ui/surfaces';
 import { Icon, type IconName } from '@/ui/icons';
 import { Scrim } from '@/ui/scrim';
-import { COLOR, CONTROL, FONT, RADIUS, TYPE } from '@/ui/tokens';
+import { COLOR, CONTROL, FONT, RADIUS, reach, TYPE } from '@/ui/tokens';
 import { WordText } from '@/ui/word-text';
 
 
 /** `icon` 을 안 주면 글자만 선다 — 홈 내 사주 카드의 메뉴 */
 export type MenuItem = { readonly label: string; readonly icon?: IconName; readonly danger?: boolean; readonly onPress: () => void };
 
-/** 「⋯」 같은 작은 판 — 누른 자리 곁에 서고, 바깥을 누르거나 뒤로 가면 닫힌다. 고르면 먼저 닫고 그 일을 한다. 화면 읽기에는 메뉴와 그 항목으로 읽힌다 */
-export function AnchoredMenu({ label, items, above = false, children }: { label: string; items: readonly MenuItem[]; above?: boolean; children: ReactNode }) {
+/**
+ * 「⋯」 같은 작은 판 — 누른 자리 곁에 서고, 바깥을 누르거나 뒤로 가면 닫힌다. 고르면 먼저 닫고 그 일을 한다. 화면 읽기에는 메뉴와 그 항목으로 읽힌다.
+ * `face` 를 주면 여는 단추가 그 아이콘 단추의 면(웹 `ICON_BUTTON_*`)을 입는다 — 홈 내 사주 카드의 `quiet`
+ */
+export function AnchoredMenu({ label, items, above = false, face, children }: { label: string; items: readonly MenuItem[]; above?: boolean; face?: IconButtonVariant; children: ReactNode }) {
   const anchor = useRef<ComponentRef<typeof Pressable>>(null);
   const [place, setPlace] = useState<{ right: number; top?: number; bottom?: number } | null>(null);
 
@@ -26,7 +30,7 @@ export function AnchoredMenu({ label, items, above = false, children }: { label:
 
   return (
     <>
-      <Pressable ref={anchor} accessibilityRole="button" accessibilityLabel={label} onPress={open} style={styles.anchor}>
+      <Pressable ref={anchor} accessibilityRole="button" accessibilityLabel={label} hitSlop={reach(CONTROL)} onPress={open} style={face === undefined ? styles.anchor : iconButtonFace(face)}>
         {children}
       </Pressable>
       <Scrim open={place !== null} place="free" animation="none" tint={false} onRequestClose={() => setPlace(null)} onOutside={() => setPlace(null)} outsideLabel="닫기">

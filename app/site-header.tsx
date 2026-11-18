@@ -6,7 +6,7 @@ import { Suspense, useEffect, useRef, useState, type ReactNode } from 'react';
 
 import { SIGN_OUT_PENDING } from '@/src/lib/account/copy';
 import { SERVICE_NAME } from '@/src/lib/brand';
-import { CHAT_TAB_LABEL } from '@/src/lib/chat';
+import { CHAT_TAB_LABEL, UNREAD_WORDS } from '@/src/lib/chat';
 import { readingCreditsLabel } from '@/src/lib/reading/notes';
 import { SURVEY_COPY } from '@/src/lib/survey';
 import { SAJU_PATH, signInFrom } from '@/src/lib/consent';
@@ -371,7 +371,7 @@ function useUnreadCount(
 /** 딱지 뒤의 보이지 않는 말 — 수만으로는 무엇을 센 것인지 모른다 */
 const BADGE_WORDS: Partial<Record<(typeof MEMBER_TABS)[number]['href'], string>> = { '/me/matching': '건 답할 요청' };
 
-function UnreadBadge({ count, words = '건 안 읽음' }: { count: number; words?: string }) {
+function UnreadBadge({ count, words = UNREAD_WORDS }: { count: number; words?: string }) {
   if (count === 0) return null;
   return (
     <span className={BADGE}>

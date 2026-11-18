@@ -45,6 +45,7 @@ export const PARTS: readonly PartContract[] = [
   { name: 'RowCard', web: { file: WEB_SURFACES, symbols: ['ROW_CARD'] }, app: { file: APP_SURFACES, symbol: 'RowCard' } },
   { name: 'RowLine', web: { file: WEB_SURFACES, symbols: ['ROW_LINE'] }, app: { file: APP_SURFACES, symbol: 'RowLine' } },
   { name: 'EmptySlot', web: { file: WEB_SURFACES, symbols: ['EMPTY_SLOT'] }, app: { file: APP_SURFACES, symbol: 'EmptySlot' } },
+  { name: 'Badge', web: { file: WEB_SURFACES, symbols: ['BADGE'] }, app: { file: APP_SURFACES, symbol: 'Badge' } },
   {
     name: 'Button',
     web: { file: WEB_BUTTONS, symbols: ['BUTTON_PRIMARY', 'BUTTON_SECONDARY', 'BUTTON_TERTIARY', 'BUTTON_DANGER', 'BUTTON_PRIMARY_WOOD'] },

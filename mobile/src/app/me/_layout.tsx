@@ -4,6 +4,7 @@ import { Pressable, StyleSheet, View } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { SERVICE_NAME } from '@brand';
+import { UNREAD_WORDS } from '@chat';
 import { gateFor } from '@consent/gate';
 import { readingCreditsLabel } from '@reading/notes';
 import { withReturnPath } from '@consent/return-path';
@@ -23,7 +24,8 @@ import { Icon } from '@/ui/icons';
 import { LoadingOrbit } from '@/ui/loading';
 import { Logo } from '@/ui/logo';
 import { SecondaryButton } from '@/ui/parts';
-import { COLOR, ELEMENT_TONE, FONT, RADIUS, TYPE } from '@/ui/tokens';
+import { Badge } from '@/ui/surfaces';
+import { COLOR, CONTROL, ELEMENT_TONE, FONT, RADIUS, reach, TYPE } from '@/ui/tokens';
 import { KEEP_VIEW } from '@/ui/keep-view';
 import { resendUnfinishedPurchases } from '@/credits/store';
 import { WordText } from '@/ui/word-text';
@@ -108,7 +110,7 @@ export default function MeLayout() {
         <LiveChannel client={client} />
         {appHeadStands(pathname, search) && (
         <View style={[styles.header, { paddingTop: insets.top }]}>
-          <Pressable accessibilityRole="link" accessibilityLabel={`${SERVICE_NAME} 홈`} onPress={() => goTab('/me')} style={styles.logo}>
+          <Pressable accessibilityRole="link" accessibilityLabel={`${SERVICE_NAME} 홈`} hitSlop={{ top: reach(CONTROL), bottom: reach(CONTROL) }} onPress={() => goTab('/me')} style={styles.logo}>
             <Logo size={32} />
           </Pressable>
           <View style={styles.tools}>
@@ -118,21 +120,19 @@ export default function MeLayout() {
                 accessibilityRole="button"
                 accessibilityLabel={readingCreditsLabel({ available: counts.credits })}
                 onPress={() => router.push('/me/credits' as never)}
+                hitSlop={reach(CONTROL)}
                 style={[styles.tool, styles.credits]}
               >
                 <Icon name="ticket" size={20} />
                 <WordText style={styles.creditsCount}>{counts.credits}</WordText>
               </Pressable>
             )}
-            <Pressable accessibilityRole="link" accessibilityLabel="소식" onPress={() => router.push('/me/requests' as never)} style={styles.tool}>
+            {/* 읽는 이름은 웹 종과 같다 — 「소식」 뒤에 안 읽은 수(웹 `site-header.tsx` 의 `NewsBell` · `UnreadBadge`) */}
+            <Pressable accessibilityRole="link" accessibilityLabel={counts.news > 0 ? `소식 ${counts.news}${UNREAD_WORDS}` : '소식'} onPress={() => router.push('/me/requests' as never)} hitSlop={reach(CONTROL)} style={styles.tool}>
               <Icon name="bell" size={20} />
-              {counts.news > 0 && (
-                <View style={[styles.badge, styles.toolBadge]}>
-                  <WordText style={styles.badgeText}>{counts.news}</WordText>
-                </View>
-              )}
+              <Badge count={counts.news} style={styles.toolBadge} />
             </Pressable>
-            <Pressable accessibilityRole="link" accessibilityLabel="설정" onPress={() => router.push('/me/settings' as never)} style={styles.tool}>
+            <Pressable accessibilityRole="link" accessibilityLabel="설정" onPress={() => router.push('/me/settings' as never)} hitSlop={reach(CONTROL)} style={styles.tool}>
               <Icon name="gear" size={20} />
             </Pressable>
           </View>
@@ -162,6 +162,7 @@ export default function MeLayout() {
                 <Pressable
                   key={tab.href}
                   accessibilityRole="tab"
+                  accessibilityLabel={count > 0 ? `${tab.label} ${count}${UNREAD_WORDS}` : tab.label}
                   accessibilityState={{ selected: active }}
                   onPress={() => goTab(tab.href)}
                   style={styles.tab}
@@ -170,11 +171,7 @@ export default function MeLayout() {
                     <Icon name={tab.icon} color={active ? ELEMENT_TONE.木.ink : COLOR.secondary} />
                   </View>
                   <WordText style={[styles.tabLabel, active && styles.tabLabelOn]}>{tab.label}</WordText>
-                  {count > 0 && (
-                    <View style={[styles.badge, styles.tabBadge]}>
-                      <WordText style={styles.badgeText}>{count}</WordText>
-                    </View>
-                  )}
+                  <Badge count={count} style={styles.tabBadge} />
                 </Pressable>
               );
             })}
@@ -206,8 +203,6 @@ const styles = StyleSheet.create({
   tabMarkOn: { backgroundColor: ELEMENT_TONE.木.soft },
   tabLabel: { fontFamily: FONT.bold, fontSize: TYPE.fine, color: COLOR.secondary },
   tabLabelOn: { color: COLOR.foreground },
-  badge: { position: 'absolute', minWidth: 18, height: 18, paddingHorizontal: 5, alignItems: 'center', justifyContent: 'center', borderRadius: RADIUS.pill, backgroundColor: COLOR.danger },
-  badgeText: { fontFamily: FONT.bold, fontSize: 11, color: COLOR.onAccent },
-  toolBadge: { top: 4, right: 4 },
-  tabBadge: { top: 0, left: '56%' },
+  toolBadge: { position: 'absolute', top: 4, right: 4 },
+  tabBadge: { position: 'absolute', top: 0, left: '56%' },
 });

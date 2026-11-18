@@ -1,7 +1,7 @@
 import { TALK_UNANSWERED_LABEL } from '@/src/lib/chat/room/detail-copy';
 import Link from 'next/link';
 
-import { CHAT_TAB_LABEL, messageTimeLabel, partnerNameOf, roomNoticeOf } from '@/src/lib/chat';
+import { CHAT_TAB_LABEL, UNREAD_WORDS, messageTimeLabel, partnerNameOf, roomNoticeOf } from '@/src/lib/chat';
 import { ROOM_NO_MESSAGES_YET } from '@/src/lib/chat/copy';
 import { foldUnanswered } from '@/src/lib/chat/room/talk';
 import type { InboxRequest } from '@/src/lib/matching/inbox';
@@ -162,7 +162,7 @@ function RoomRow({ room, active, tone }: { room: ChatRoom; active: boolean; tone
           {unread > 0 && (
             <span className={`${BADGE_FACE} shrink-0 px-1.5`}>
               {unread}
-              <span className="sr-only">건 안 읽음</span>
+              <span className="sr-only">{UNREAD_WORDS}</span>
             </span>
           )}
         </span>

@@ -416,3 +416,15 @@ Navigation) · 토스 TDS(Toast · Result) · Material 3 Snackbar 다(확인 202
 - **단추 아래 줄(`FormError`) · 문단 아래 줄(`SectionErrorLine`) · `useSectionErrors` 가 약속 표에 든다**(ADR 0252). 웹이 상수 없이 JSX 에 적은 모양은
   표의 `values`(웹 클래스 낱말 → 앱 글자)로 두 쪽 파일을 견준다.
 - 앱 `parts.tsx` 의 짧은 단추(`PrimaryButton` · `SecondaryButton` · `TextButton`)는 `busy` 를 `Button` 에 넘긴다 — 일하는 그 단추에만 준다.
+
+## 추기 — 앱의 딱지 한 벌 (2026-11-18, Play 출시 전 점검)
+
+- 안 읽은 수는 앱도 웹 `BADGE` 값(20 · `badge` · `on-badge` · `tag`)의 `Badge`(`mobile/src/ui/surfaces.tsx`)로 선다. 수는 딱지를 단 단추 · 탭의 읽는 이름이
+  「… N건 안 읽음」(`UNREAD_WORDS`, `src/lib/chat`)으로 든다.
+
+## 추기 — 앱의 누를 자리는 48 이고 보이는 크기는 웹과 같다 (2026-11-18, Play 출시 전 점검)
+
+- **앱은 누를 자리의 바닥을 48dp 로 둔다**(`TOUCH` · `reach()`, `mobile/src/ui/tokens.ts`) — 안드로이드 접근성 권장값이고 Play 출시 전 보고서가 이보다 작은 누름을 짚는다.
+  웹은 44(`CONTROL` · `size-11`)대로다. `tokens.json` 에 올리지 않았다 — 앱만의 값이다.
+- **보이는 크기는 바꾸지 않고 둘레만 넓힌다.** 아이콘 단추 · 작은 단추 · 「⋯」 여는 단추 · 앱 머리의 도구는 `hitSlop` 으로, 가로로 흐르는 칩은 누르는 판을 48 로 두고
+  칩의 면(36)을 그 안에 세운 뒤 바깥 여백을 같은 만큼 거둔다(풀이 보관함). 화면마다 손으로 적은 44 아래의 누름은 아직 그대로다.

@@ -3,7 +3,7 @@ import { Pressable, StyleSheet, type AccessibilityRole, type StyleProp, type Tex
 
 import { BUTTON, BUTTON_OFF_OPACITY, BUTTON_PRESSED_SCALE, BUTTON_PRIMARY_OFF } from '@design';
 
-import { FONT } from './tokens';
+import { CONTROL, FONT, reach, TOUCH } from './tokens';
 import { WordText } from './word-text';
 
 /** 웹 `app/ui/buttons.ts` 의 단추 여덟 벌 — 변형 낱말과 상수의 짝은 `src/lib/design/contract.ts` */
@@ -45,6 +45,8 @@ export function Button({
   accessibilityRole?: AccessibilityRole;
 }) {
   const { face, text } = split(BUTTON[BUTTON_OF[variant]]);
+  /* 작은 단추(44)는 위아래로 48 까지 누를 자리를 넓힌다 — 보이는 높이는 웹과 같다 */
+  const slop = reach(typeof face.minHeight === 'number' ? face.minHeight : TOUCH);
   const off = disabled || busy;
   const primaryOff = off && (variant === 'primary' || variant === 'primary-small');
   return (
@@ -52,6 +54,7 @@ export function Button({
       accessibilityRole={accessibilityRole}
       accessibilityState={{ disabled: off, busy }}
       disabled={off}
+      hitSlop={slop > 0 ? { top: slop, bottom: slop } : undefined}
       onPress={onPress}
       style={({ pressed }) => [face, primaryOff ? styles.primaryOff : off && styles.off, pressed && styles.pressed, style]}
     >
@@ -69,6 +72,11 @@ const ICON_OF: Record<IconButtonVariant, keyof typeof BUTTON> = {
   active: 'ICON_BUTTON_ACTIVE',
   ghost: 'ICON_BUTTON_GHOST',
 };
+
+/** 아이콘 단추의 면만 — 다른 누름(`AnchoredMenu` 의 여는 단추)이 같은 면을 입을 때 */
+export function iconButtonFace(variant: IconButtonVariant): ViewStyle {
+  return split(BUTTON[ICON_OF[variant]]).face;
+}
 
 export function IconButton({
   label,
@@ -92,6 +100,7 @@ export function IconButton({
       accessibilityLabel={label}
       accessibilityState={{ disabled }}
       disabled={disabled}
+      hitSlop={reach(CONTROL)}
       onPress={onPress}
       style={({ pressed }) => [face, disabled && styles.off, pressed && styles.pressedIcon, style]}
     >
