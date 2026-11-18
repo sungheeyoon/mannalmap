@@ -282,7 +282,18 @@ export const PURCHASE_DONE_OK = '확인';
 export const purchaseResumeLabel = (noun: string): string => `${noun} 받으러 가기`;
 export const PURCHASE_RUNNING_LABEL = '결제 진행 중…';
 export const PURCHASE_FAILED_NOTE = '결제가 완료되지 않았어요.';
-export const PURCHASE_UNDELIVERED_NOTE = '풀이권 충전이 완료되지 않았어요.';
+/**
+ * 결제 알림 창 셋(대장 credits-16 「확인 전」) — 결제는 됐는데 지급이 안 섬 · 같은 상품의 앞선 구매가 남아 결제창이 안 열림(Play 「이미 가진 상품」) ·
+ * 보류 결제. 제목은 credits-11 · credits-15 의 줄을 창의 제목으로 옮긴 것이다
+ */
+export const PURCHASE_UNDELIVERED_TITLE = '풀이권 충전이 완료되지 않았어요';
+export const PURCHASE_UNDELIVERED_NOTE = '다시 시도하면 결제한 풀이권이 충전돼요.';
+export const PURCHASE_RETRY_LABEL = '다시 시도하기';
+/** 「취소」가 아니다 — 결제 화면에서 「취소」는 결제를 무르는 말로 읽힌다(대장 01 규칙의 「닫기」 갈래 · credits-04 의 부족 창 「닫기」) */
+export const PURCHASE_CLOSE_LABEL = '닫기';
+export const PURCHASE_PRIOR_TITLE = '이전 결제를 처리하고 있어요';
+export const PURCHASE_PRIOR_NOTE = '잠시 후 다시 시도해 주세요.';
+export const PURCHASE_PENDING_TITLE = '결제가 아직 처리 중이에요';
 export const PURCHASE_PENDING_NOTE = '결제가 완료되면 풀이권이 추가돼요.';
 /** 앱 풀이권 구매 칸이 서버에 못 닿았거나 Play 상품 조회가 실패한 때의 실패 줄 — 판매가 닫힌 `SALE_CLOSED_NOTE` 와 갈린다(대장 all-15) */
 export const STORE_LOAD_FAILED_NOTE = '풀이권 상품을 불러오지 못했어요.';

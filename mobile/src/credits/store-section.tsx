@@ -1,5 +1,5 @@
 import { useFocusEffect } from 'expo-router';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 
 import { SUPPORT_EMAIL } from '@brand';
@@ -18,12 +18,21 @@ import {
   STORE_LOAD_FAILED_NOTE,
   checkoutPayLabel,
 } from '@reading/notes';
-import { storePurchaseNotice, type PurchaseReturn, type StorePurchaseNotice } from '@reading/store-purchase';
+import {
+  storeNoticeDialog,
+  storePurchaseNotice,
+  storeResendNotice,
+  type PurchaseReturn,
+  type StorePurchaseNotice,
+  type StoreResendCause,
+} from '@reading/store-purchase';
 
 import { useClient } from '@/auth/connected';
 import { legalPagesOpen, openLegalPage } from '@/info/legal-web';
 import { settingsText } from '@/settings/parts';
+import { ConfirmDialog } from '@/ui/confirm-dialog';
 import { FailureLine } from '@/ui/failure-line';
+import { LoadingDots } from '@/ui/loading';
 import { CheckRow, PrimaryButton, TextButton } from '@/ui/parts';
 import { Card } from '@/ui/surfaces';
 import { COLOR, FONT, RADIUS, TYPE } from '@/ui/tokens';
@@ -51,11 +60,15 @@ type Shelf =
 
 /**
  * **풀이권 구매 — Google Play**(ADR 0230). 꼴은 결제 화면의 리디 꼴 그대로다(ADR 0175 · 대장 credits-03): 묶음 목록 → 동의 체크 → 「N원 결제하기」 →
- * 작은 글씨 유의사항. 결제 뒤 · 실패 · 미지급의 줄은 `storePurchaseNotice`(대장 credits-11)이고, 미지급의 다시 시도는 네이버웹툰 쿠키샵처럼 결제를
+ * 작은 글씨 유의사항. 결제 뒤 · 실패 · 미지급의 알림은 `storePurchaseNotice`(대장 credits-11)이고, 미지급의 다시 시도는 네이버웹툰 쿠키샵처럼 결제를
  * 다시 하지 않고 소비되지 않은 구매를 서버에 다시 보낸다. 화면을 열 때마다 그것을 먼저 한 번 한다 — 결제 중 앱이 꺼진 구매의 복구.
  *
  * **지급이 서면 결제 완료 창이 뜬다**(`purchase-done.tsx`) — 새로 결제한 것 · 화면을 열 때 복구된 것 · 미지급을 다시 시도해 선 것 모두 같은 창이다.
  * 창은 보유 수를 다시 읽은 **뒤에** 뜬다 — 창의 보유 수와 화면의 보유 카드가 같은 값이다.
+ *
+ * 다시 보낸 뒤의 알림은 `storeResendNotice` 가 가른다 — 못 닿은 구매는 화면을 열 때도 「충전이 완료되지 않았어요」, 같은 상품의 앞선 구매가 남아
+ * 결제창이 안 열리면 「이전 결제를 처리하고 있어요」(대장 credits-15). 미지급 · 앞선 결제 · 보류는 창이고 그 밖의 실패는 단추 밑 한 줄이다
+ * (`storeNoticeDialog`, 대장 credits-16). 진열은 처음 한 번만 로딩을 그리고, 다시 들어올 때는 그린 목록을 둔 채 새로 읽는다.
  */
 export function StoreSection({ onBought, returnTo }: { onBought: () => Promise<number | null>; returnTo: PurchaseReturn | null }) {
   const client = useClient();
@@ -65,25 +78,36 @@ export function StoreSection({ onBought, returnTo }: { onBought: () => Promise<n
   const [agreed, setAgreed] = useState(false);
   const [agreeMissing, setAgreeMissing] = useState(false);
   const [running, setRunning] = useState(false);
+  /** 같은 틱의 두 번째 누름이 결제창을 또 열지 않게 — 상태는 다음 그림에서야 단추를 막는다 */
+  const opening = useRef(false);
+  const release = useCallback(() => {
+    opening.current = false;
+    setRunning(false);
+  }, []);
   const [notice, setNotice] = useState<StorePurchaseNotice | null>(null);
+  /** 미지급 창의 「다시 시도하기」가 도는 동안 — 창은 열린 채 단추만 멈춘다 */
+  const [retrying, setRetrying] = useState(false);
   const [done, setDone] = useState<{ credits: number; balance: number | null } | null>(null);
   const show = useCallback((next: StorePurchaseNotice) => {
-    setRunning(false);
+    release();
     if (next.kind !== 'done') return setNotice(next);
     setNotice(null);
     void (async () => setDone({ credits: next.credits, balance: await onBought() }))();
-  }, [onBought]);
+  }, [onBought, release]);
 
-  /** 소비되지 않은 구매를 다시 보낸다 — 선 것이 있으면 결제 완료 줄을 세운다 */
-  const resend = useCallback(async (quiet: boolean) => {
-    const credits = await resendUnfinishedPurchases(client);
-    if (credits > 0) show(storePurchaseNotice({ ok: true, value: { outcome: 'granted', credits, replayed: false } }));
-    else if (!quiet) setNotice(null);
+  /** 소비되지 않은 구매를 다시 보낸다 — 선 것이 있으면 결제 완료 창, 못 닿은 것이 있으면 실패 줄(`storeResendNotice`) */
+  const resend = useCallback(async (cause: StoreResendCause) => {
+    const next = storeResendNotice(await resendUnfinishedPurchases(client), cause);
+    if (next !== null) show(next);
+    else if (cause !== 'opened') setNotice(null);
   }, [client, show]);
 
   const load = useCallback(() => {
+    /* 다른 화면에 다녀오면 결제창은 이미 닫혔다 — 「결제 진행 중…」을 풀어 둔다 */
+    release();
     void (async () => {
-      setShelf({ kind: 'checking' });
+      /* 로딩은 처음 한 번만 — 그린 목록은 둔 채 새로 읽는다 */
+      setShelf((now) => (now.kind === 'open' ? now : { kind: 'checking' }));
       const [open, prices] = await Promise.all([readStoreOpen(client), loadStorePrices()]);
       if (!open.ok && (open.refused.refused === 'unavailable' || open.refused.refused === 'sign-in'))
         return setShelf({ kind: 'failed', signIn: open.refused.refused === 'sign-in' });
@@ -94,9 +118,9 @@ export function StoreSection({ onBought, returnTo }: { onBought: () => Promise<n
       /* 고른 값이 이번 진열에 없으면(조회 안 된 상품) 첫 줄로 — 늘 하나가 선택 표시된다 */
       setChosen((now) => pickedOf(items, now)?.productId ?? now);
       setShelf({ kind: 'open', items });
-      await resend(true);
+      await resend('opened');
     })();
-  }, [client, resend]);
+  }, [client, release, resend]);
   useFocusEffect(load);
 
   useEffect(
@@ -104,21 +128,27 @@ export function StoreSection({ onBought, returnTo }: { onBought: () => Promise<n
       listenStorePurchases(client, {
         answered: (answer) => show(storePurchaseNotice(answer)),
         pending: () => show(storePurchaseNotice({ ok: true, value: { outcome: 'pending' } })),
-        cancelled: () => setRunning(false),
+        cancelled: release,
         failed: () => show({ kind: 'failed', body: PURCHASE_FAILED_NOTE }),
-        owned: () => {
-          setRunning(false);
-          void resend(false);
-        },
+        owned: () => void resend('owned'),
       }),
-    [client, show, resend],
+    [client, show, release, resend],
   );
 
   const picked = shelf.kind === 'open' ? pickedOf(shelf.items, chosen) : null;
+  const dialog = notice === null ? null : storeNoticeDialog(notice);
+  const retry = () => {
+    setRetrying(true);
+    void (async () => {
+      await resend('retry');
+      setRetrying(false);
+    })();
+  };
 
   const buy = () => {
-    if (picked === null) return;
+    if (picked === null || opening.current) return;
     if (!agreed) return setAgreeMissing(true);
+    opening.current = true;
     /* 단추의 금액과 같은 줄의 번호다 — 둘은 `picked` 하나에서 나온다 */
     const { productId } = picked;
     setNotice(null);
@@ -129,7 +159,7 @@ export function StoreSection({ onBought, returnTo }: { onBought: () => Promise<n
     })();
   };
 
-  if (shelf.kind === 'checking') return null;
+  if (shelf.kind === 'checking') return <LoadingDots inline />;
   if (shelf.kind === 'failed')
     return (
       <FailureLine signIn={shelf.signIn} onRetry={load}>
@@ -180,15 +210,11 @@ export function StoreSection({ onBought, returnTo }: { onBought: () => Promise<n
 
       <PrimaryButton label={running ? PURCHASE_RUNNING_LABEL : checkoutPayLabel(picked?.price ?? '')} onPress={buy} disabled={running} />
 
-      {notice !== null &&
-        notice.kind !== 'done' &&
-        (notice.kind === 'undelivered' ? (
-          <FailureLine onRetry={() => void resend(false)}>{notice.body}</FailureLine>
-        ) : (
-          <WordText accessibilityRole="alert" style={settingsText.meta}>
-            {notice.body}
-          </WordText>
-        ))}
+      {notice !== null && notice.kind !== 'done' && dialog === null && (
+        <WordText accessibilityRole="alert" style={settingsText.meta}>
+          {notice.body}
+        </WordText>
+      )}
 
       <View accessibilityLabel="유의사항" style={styles.notes}>
         {[CHECKOUT_REFUND_NOTE, checkoutRefundLine(businessInfoFrom({ email: SUPPORT_EMAIL })), CHECKOUT_PROVIDED_NOTE, CHECKOUT_FREE_FIRST_NOTE].map(
@@ -201,6 +227,20 @@ export function StoreSection({ onBought, returnTo }: { onBought: () => Promise<n
         )}
         {legalPagesOpen && <TextButton label="자세히 알아보기" onPress={() => openLegalPage('/refund')} />}
       </View>
+
+      {notice !== null && notice.kind !== 'done' && dialog !== null && 'title' in notice && (
+        <ConfirmDialog
+          open
+          title={notice.title}
+          confirmLabel={dialog.confirmLabel}
+          onConfirm={dialog.retry ? retry : () => setNotice(null)}
+          cancelLabel={dialog.cancelLabel}
+          onClose={() => setNotice(null)}
+          busy={retrying}
+        >
+          <WordText style={styles.dialogLine}>{notice.body}</WordText>
+        </ConfirmDialog>
+      )}
 
       {done !== null && (
         <PurchaseDone
@@ -226,5 +266,6 @@ const styles = StyleSheet.create({
   price: { fontSize: TYPE.body, fontFamily: FONT.bold, color: COLOR.foreground },
   wrong: { fontSize: TYPE.small, fontFamily: FONT.medium, color: COLOR.danger },
   notes: { gap: 6, marginTop: 4 },
+  dialogLine: { fontFamily: FONT.medium, fontSize: TYPE.body, lineHeight: 24, color: COLOR.secondary },
   note: { fontSize: TYPE.fine, lineHeight: 18, fontFamily: FONT.medium, color: COLOR.secondary },
 });
