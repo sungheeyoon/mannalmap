@@ -19,6 +19,7 @@ import {
   checkoutPayLabel,
 } from '@reading/notes';
 import {
+  storeNoticeDialog,
   storePurchaseNotice,
   storeResendNotice,
   type PurchaseReturn,
@@ -29,6 +30,7 @@ import {
 import { useClient } from '@/auth/connected';
 import { legalPagesOpen, openLegalPage } from '@/info/legal-web';
 import { settingsText } from '@/settings/parts';
+import { ConfirmDialog } from '@/ui/confirm-dialog';
 import { FailureLine } from '@/ui/failure-line';
 import { LoadingDots } from '@/ui/loading';
 import { CheckRow, PrimaryButton, TextButton } from '@/ui/parts';
@@ -58,14 +60,15 @@ type Shelf =
 
 /**
  * **풀이권 구매 — Google Play**(ADR 0230). 꼴은 결제 화면의 리디 꼴 그대로다(ADR 0175 · 대장 credits-03): 묶음 목록 → 동의 체크 → 「N원 결제하기」 →
- * 작은 글씨 유의사항. 결제 뒤 · 실패 · 미지급의 줄은 `storePurchaseNotice`(대장 credits-11)이고, 미지급의 다시 시도는 네이버웹툰 쿠키샵처럼 결제를
+ * 작은 글씨 유의사항. 결제 뒤 · 실패 · 미지급의 알림은 `storePurchaseNotice`(대장 credits-11)이고, 미지급의 다시 시도는 네이버웹툰 쿠키샵처럼 결제를
  * 다시 하지 않고 소비되지 않은 구매를 서버에 다시 보낸다. 화면을 열 때마다 그것을 먼저 한 번 한다 — 결제 중 앱이 꺼진 구매의 복구.
  *
  * **지급이 서면 결제 완료 창이 뜬다**(`purchase-done.tsx`) — 새로 결제한 것 · 화면을 열 때 복구된 것 · 미지급을 다시 시도해 선 것 모두 같은 창이다.
  * 창은 보유 수를 다시 읽은 **뒤에** 뜬다 — 창의 보유 수와 화면의 보유 카드가 같은 값이다.
  *
- * 다시 보낸 뒤의 줄은 `storeResendNotice` 가 가른다 — 못 닿은 구매는 화면을 열 때도 「충전이 완료되지 않았어요」, 같은 상품의 앞선 구매가 남아
- * 결제창이 안 열리면 「이전 결제를 처리하고 있어요」(대장 credits-15). 진열은 처음 한 번만 로딩을 그리고, 다시 들어올 때는 그린 목록을 둔 채 새로 읽는다.
+ * 다시 보낸 뒤의 알림은 `storeResendNotice` 가 가른다 — 못 닿은 구매는 화면을 열 때도 「충전이 완료되지 않았어요」, 같은 상품의 앞선 구매가 남아
+ * 결제창이 안 열리면 「이전 결제를 처리하고 있어요」(대장 credits-15). 미지급 · 앞선 결제 · 보류는 창이고 그 밖의 실패는 단추 밑 한 줄이다
+ * (`storeNoticeDialog`, 대장 credits-16). 진열은 처음 한 번만 로딩을 그리고, 다시 들어올 때는 그린 목록을 둔 채 새로 읽는다.
  */
 export function StoreSection({ onBought, returnTo }: { onBought: () => Promise<number | null>; returnTo: PurchaseReturn | null }) {
   const client = useClient();
@@ -82,6 +85,8 @@ export function StoreSection({ onBought, returnTo }: { onBought: () => Promise<n
     setRunning(false);
   }, []);
   const [notice, setNotice] = useState<StorePurchaseNotice | null>(null);
+  /** 미지급 창의 「다시 시도하기」가 도는 동안 — 창은 열린 채 단추만 멈춘다 */
+  const [retrying, setRetrying] = useState(false);
   const [done, setDone] = useState<{ credits: number; balance: number | null } | null>(null);
   const show = useCallback((next: StorePurchaseNotice) => {
     release();
@@ -131,6 +136,14 @@ export function StoreSection({ onBought, returnTo }: { onBought: () => Promise<n
   );
 
   const picked = shelf.kind === 'open' ? pickedOf(shelf.items, chosen) : null;
+  const dialog = notice === null ? null : storeNoticeDialog(notice);
+  const retry = () => {
+    setRetrying(true);
+    void (async () => {
+      await resend('retry');
+      setRetrying(false);
+    })();
+  };
 
   const buy = () => {
     if (picked === null || opening.current) return;
@@ -197,15 +210,11 @@ export function StoreSection({ onBought, returnTo }: { onBought: () => Promise<n
 
       <PrimaryButton label={running ? PURCHASE_RUNNING_LABEL : checkoutPayLabel(picked?.price ?? '')} onPress={buy} disabled={running} />
 
-      {notice !== null &&
-        notice.kind !== 'done' &&
-        (notice.kind === 'undelivered' ? (
-          <FailureLine onRetry={() => void resend('retry')}>{notice.body}</FailureLine>
-        ) : (
-          <WordText accessibilityRole="alert" style={settingsText.meta}>
-            {notice.body}
-          </WordText>
-        ))}
+      {notice !== null && notice.kind !== 'done' && dialog === null && (
+        <WordText accessibilityRole="alert" style={settingsText.meta}>
+          {notice.body}
+        </WordText>
+      )}
 
       <View accessibilityLabel="유의사항" style={styles.notes}>
         {[CHECKOUT_REFUND_NOTE, checkoutRefundLine(businessInfoFrom({ email: SUPPORT_EMAIL })), CHECKOUT_PROVIDED_NOTE, CHECKOUT_FREE_FIRST_NOTE].map(
@@ -218,6 +227,20 @@ export function StoreSection({ onBought, returnTo }: { onBought: () => Promise<n
         )}
         {legalPagesOpen && <TextButton label="자세히 알아보기" onPress={() => openLegalPage('/refund')} />}
       </View>
+
+      {notice !== null && notice.kind !== 'done' && dialog !== null && 'title' in notice && (
+        <ConfirmDialog
+          open
+          title={notice.title}
+          confirmLabel={dialog.confirmLabel}
+          onConfirm={dialog.retry ? retry : () => setNotice(null)}
+          cancelLabel={dialog.cancelLabel}
+          onClose={() => setNotice(null)}
+          busy={retrying}
+        >
+          <WordText style={styles.dialogLine}>{notice.body}</WordText>
+        </ConfirmDialog>
+      )}
 
       {done !== null && (
         <PurchaseDone
@@ -243,5 +266,6 @@ const styles = StyleSheet.create({
   price: { fontSize: TYPE.body, fontFamily: FONT.bold, color: COLOR.foreground },
   wrong: { fontSize: TYPE.small, fontFamily: FONT.medium, color: COLOR.danger },
   notes: { gap: 6, marginTop: 4 },
+  dialogLine: { fontFamily: FONT.medium, fontSize: TYPE.body, lineHeight: 24, color: COLOR.secondary },
   note: { fontSize: TYPE.fine, lineHeight: 18, fontFamily: FONT.medium, color: COLOR.secondary },
 });
