@@ -105,12 +105,27 @@ describe('CI 계획 — 공개 출시 전 단계는 전부다 (ADR 0242)', () =>
     expect(CORE_STEPS).toContain('npm run build');
     // 빌드를 건너뛰는 갈래(문구만 · 앱만 바뀐 운영 베타의 PR)는 ADR 0242 이 지웠다 — 계획에 `build` 출력이 없다
     expect(yml).not.toContain('outputs.build');
-    expect(runsOf('anon')).toEqual(['npm ci', 'npx playwright install --with-deps chromium', 'npm run test:e2e']);
+    const restoreDebs = "mkdir -p ~/apt-debs && sudo find ~/apt-debs -maxdepth 1 -name '*.deb' -exec cp -t /var/cache/apt/archives/ {} +";
+    expect(runsOf('anon')).toEqual(['npm ci', restoreDebs, 'npx playwright install --with-deps chromium', 'npm run test:e2e']);
     // 바깥(apt)에서 받는 단계는 단계 한도로만 묶는다 — 안에서 끊으면 남은 apt-get 이 dpkg 잠금을 쥔다(2026-11-19, ADR 0257)
     for (const job of ['anon', 'authed']) {
       expect(yml, job).toMatch(new RegExp(`\\n  ${job}:\\n[\\s\\S]*?- run: npx playwright install --with-deps chromium\\n {8}timeout-minutes: 10\\n`));
     }
     expect(yml).not.toMatch(/timeout \d+ npx playwright/);
+    // apt 가 받는 .deb 는 캐시에서 되살려 미러가 다 서도 설치가 지난다 — 되살리기 · 넣기가 설치 앞, 거두기 · 남기기가 뒤(G-169 항목 4)
+    for (const job of ['anon', 'authed']) {
+      const block = new RegExp(`\\n  ${job}:\\n([\\s\\S]*?)\\n  [a-z]+:\\n`).exec(yml)?.[1] ?? '';
+      const at = (needle: string) => block.indexOf(needle);
+      const order = [
+        'uses: actions/cache/restore@',
+        `- run: ${restoreDebs}`,
+        '- run: npx playwright install --with-deps chromium',
+        'id: apt-collect',
+        'uses: actions/cache/save@',
+      ].map(at);
+      expect(order.every((one) => one >= 0), job).toBe(true);
+      expect([...order].sort((a, b) => a - b), job).toEqual(order);
+    }
   });
 
   /**
