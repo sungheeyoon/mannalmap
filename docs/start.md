@@ -25,7 +25,7 @@
 | 기능이나 흐름을 더하거나 동작을 바꾼다 | `docs/roles/feature.md` | `feature` |
 | 표 · 함수 · 정책(마이그레이션) · pgTAP 을 고친다 | `docs/roles/db.md` | `db` |
 | 풀이 글 · 프롬프트 · 문장 층 · 만세력 엔진을 고친다 | `docs/roles/reading.md` | `reading` |
-| 배포 · 운영 DB 확인 · 크론 · 운영 절차를 밟는다 | `docs/roles/ops.md` | `ops` |
+| 배포 · 운영 DB 확인 · 크론 · 운영 절차를 밟는다 — CI 워크플로 · 의존성 감사(`audit` 실패) · 앱 빌드 · 스토어 제출도 | `docs/roles/ops.md` | `ops` |
 | 읽기만 하는 검토 · 감사 · 두 번째 의견 | `docs/roles/reviewer.md` | `reviewer` |
 | 문서 · 대장 · 세션 기록을 맞춘다 | `docs/roles/docs.md` | `docs` |
 | 사람과 말하며 위의 에이전트 여럿을 맡긴다 | `docs/roles/coordinator.md` | — (사람과 말하는 세션 자신) |
@@ -50,6 +50,7 @@
 | 이미 정한 화면 문구 | `docs/product/copy-ledger.md`(규칙 · 무리 색인) → `docs/product/copy-ledger/` 의 그 화면 무리 | 없으면 실사례를 출처와 함께 넣고 나중에 확인받는다(`docs/agents/code-rules/screen-copy.md` 「화면 문구」) |
 | 맡기는 법 · 권한 · 병렬 · PR 의 칸 | `docs/agents/delegation.md` | 권한 표는 `.claude/settings.json` 과 시험이 견준다 |
 | 운영에서 무엇을 어떤 차례로 | `docs/ops/runbook.md` | — |
+| 앱 빌드 · 트랙 · Play 콘솔 차례가 지금 어디인가 | `docs/ops/runbook/mobile-release.md` 「지금 나간 빌드」 · `docs/ops/runbook/play-console.md` 「지금 어디까지 왔나」 | 간극 대장 · 다른 런북 · #770 은 값을 다시 적지 않고 이 두 절을 가리킨다(ADR 0256) |
 | 운영 주소 · 도메인 | `docs/ops/runbook/domain.md` 맨 위 | 주석 · 다른 문서는 주소를 적지 않고 여기를 가리킨다 — `scripts/code-rules.test.ts` 가 잰다 |
 | 풀이 문장이 무엇까지 말하나 | `docs/text/` | — |
 | 법무 · 변호사 검토 | `docs/legal/README.md` | — |

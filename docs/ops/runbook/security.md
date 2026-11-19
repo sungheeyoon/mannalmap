@@ -436,9 +436,9 @@ from public.report where public.report_is_open(reviewed_at, review_outcome);
 계정 내리기). 4 에 같은 계정이 여럿이면 그 UUID 로 신고 · 이용 정지를 본다. 5 의 마지막 반출이 이틀보다 오래면 Vercel 의
 Cron 실행 기록과 환경변수를 본다. 처리 결과를 점검 기록에 적는다.
 
-## 운영 의존성 취약점 — `audit` 이나 바깥 검사가 붉을 때 (G-23 ①, ADR 0104 · 0257)
+## 운영 의존성 취약점 — CI 의 `audit` 이 붉을 때 (G-23 ①, ADR 0104)
 
-운영 의존성 감사(`npm audit --omit=dev`, 문턱 high)는 두 자리에서 돈다(ADR 0257).
+운영 의존성 감사(`npm audit --omit=dev`, 문턱 high)는 두 자리에서 돈다 — PR 의 `audit` 차선과 하루 한 번의 바깥 검사다(ADR 0257). 바깥 검사의 이슈(`ci-outside-red`)가 알릴 때도 이 절이다.
 
 - **PR 의 `audit` 차선** — 뿌리는 `npm audit --omit=dev --audit-level=high`, 앱은 `node scripts/audit-app.mjs`. **감사의 답을 바꾸는 파일**(뿌리 · `mobile/` 의
   `package.json` · `package-lock.json` 과 `mobile/audit-exceptions.json` — `scripts/ci-plan.mjs` 의 `DEPENDENCY_LISTS`)을 바꾼 PR 에서 머지를 막는다. 붉으면

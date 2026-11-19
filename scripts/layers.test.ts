@@ -19,6 +19,8 @@ import { dirname, join, relative, resolve, sep } from 'node:path';
 import ts from 'typescript';
 import { describe, expect, it } from 'vitest';
 
+import codeRules from '../eslint-code-rules.cjs';
+
 import { SOURCE_EXTENSIONS, sourceFilesUnder } from './source-files';
 
 const ROOT = resolve(__dirname, '..');
@@ -57,8 +59,8 @@ const SCREEN_DB_CALLS_STILL_THERE = new Set<string>([
   // 마지막 하나(`app/save-for-reading.tsx` 의 자리 수 읽기)가 2026-10-14 에 문(`app/person-slots.ts` 의 `readPersonSlots`)으로 갔다(G-109)
 ]);
 const SCREEN_EXCEPTION = 'eslint-disable-next-line no-restricted-syntax';
-/** `.from()` 이름이 겹치는 내장 — `eslint.config.mjs` 의 셀렉터와 같은 목록 */
-const NOT_A_DB_OBJECT = /^(Array|Buffer|Uint8Array|Int32Array|Float64Array|Object|Promise|Set|Map|String)$/;
+/** `.from()` 이름이 겹치는 내장 — `eslint.config.mjs` 의 셀렉터가 읽는 한 벌(`eslint-code-rules.cjs`) */
+const { NOT_A_DB_OBJECT } = codeRules;
 
 const APP_ONLY_PACKAGES = /^(react|react-dom|next|ai|openai)(\/|$)|^@ai-sdk\//;
 const SUPABASE = /^@supabase\//;

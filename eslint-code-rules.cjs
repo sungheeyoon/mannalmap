@@ -24,4 +24,20 @@ const NO_LOOSE_ENDS = ['error', { terms: ['todo', 'fixme', 'xxx', 'hack'], locat
 /** 찍어 보는 `console.log` 는 없다 — 기록에 남기는 `error` · 지나간 일의 `warn` 만(`docs/agents/code-rules/failures.md` 「`console`」) */
 const NO_CONSOLE = ['error', { allow: ['error', 'warn'] }];
 
-module.exports = { CODE_SHAPE, NO_LOOSE_ENDS, NO_CONSOLE };
+/**
+ * **타입을 끄는 탈출구 — `any` · `@ts-ignore` · `@ts-nocheck` 는 0 이다**(`docs/agents/code-rules/escapes.md`). 웹은 프리셋(`typescript-eslint`
+ * recommended)이 이미 걸지만 앱 프리셋(`eslint-config-expo`)은 안 건다 — 문서가 기대는 값이라 여기 두고 두 설정이 함께 건다.
+ * `@ts-expect-error` 는 프리셋대로 설명을 달면 린트를 지나고, 그 예산 0 은 `scripts/code-rules.test.ts` 가 든다.
+ */
+const NO_TYPE_ESCAPES = {
+  '@typescript-eslint/no-explicit-any': 'error',
+  '@typescript-eslint/ban-ts-comment': ['error', { 'ts-expect-error': 'allow-with-description', 'ts-ignore': true, 'ts-nocheck': true, 'ts-check': false }],
+};
+
+/**
+ * `.from()` 이름이 겹치는 내장 — DB 호출이 아니다. 웹 린트의 화면 DB 호출 셀렉터(`eslint.config.mjs`)와 층 · 코드 규칙 · 앱 화면 DB
+ * 시험(`scripts/layers.test.ts` · `scripts/code-rules.test.ts` · `scripts/mobile-screen-db.test.ts`)이 이 한 벌을 읽는다.
+ */
+const NOT_A_DB_OBJECT = /^(Array|Buffer|Uint8Array|Int32Array|Float64Array|Object|Promise|Set|Map|String)$/;
+
+module.exports = { CODE_SHAPE, NO_LOOSE_ENDS, NO_CONSOLE, NO_TYPE_ESCAPES, NOT_A_DB_OBJECT };

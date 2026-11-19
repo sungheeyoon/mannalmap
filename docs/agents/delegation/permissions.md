@@ -20,7 +20,7 @@
 
 | 등급 | 무엇 | 예 | 잠금 |
 | --- | --- | --- | --- |
-| **0 읽는다** | 저장소·로컬 스택·CI 로그·이슈를 읽는다 | `git log` · `npm test` · `gh run view` · 로컬 DB 질의 | 없음 |
+| **0 읽는다** | 저장소·로컬 스택·CI 로그·이슈를 읽는다. herdr 의 리뷰어 Codex 는 이 가운데 코드만 읽는다(`docs/agents/delegation/herdr.md` 「저장소 규약과 다른 자리」) | `git log` · `npm test` · `gh run view` · 로컬 DB 질의 | 없음 |
 | **1 로컬에서 고친다** | 작업 가지에서 파일을 고치고 시험을 돌린다. 로컬 스택은 마음껏 되돌린다 | `npm run db:reset` · `npm run test:e2e:authed` | 없음 |
 | **1 로컬에서 고친다 — 묻지 않게 허용** | 머지되거나 닫힌 PR 의 워크트리 · 로컬 가지를 걷는다. 기본은 미리보기이고 `--apply` 도 PR 이 끝났고 push 안 된 커밋 · 더러운 변경이 없는 것만 걷는다(`docs/agents/delegation/coordinator.md` 「출시 흐름」 4 · 「라운드 끝 정리」, 운영자 답 2026-11-06) | `npm run sweep:merged` · `npm run sweep:merged -- --apply` | 허용 `Bash(npm run sweep:merged:*)` |
 | **1 로컬에서 고친다 — 지울 때마다 사람이 본다** | 이 저장소의 로컬 스택 볼륨을 지운다. 기본은 진단만이고, `--apply` 는 이름을 댄 볼륨 가운데 컨테이너가 붙지 않고 어느 워크트리도 쥐지 않은 것만 지운다. 로컬 DB 데이터를 영구히 없애 되돌릴 수 없다. 이미지는 지우지 않는다(`docs/agents/delegation/coordinator.md` 「라운드 끝 정리」, 운영자 답 2026-11-07) | `npm run sweep:docker` · `npm run sweep:docker -- --apply <볼륨>` | 사람 — allow 에 넣지 않는다 |
