@@ -5,7 +5,7 @@ import ts from 'typescript';
 import { describe, expect, it } from 'vitest';
 
 import { COPY_FILES } from './ci-plan.mjs';
-import { addedTexts, copyTarget, ledgerOf, missingFromLedger, summaryOf } from './new-copy.mjs';
+import { addedTexts, copyTarget, ledgerOf, libSlotsOf, libTarget, missingFromLedger, summaryOf } from './new-copy.mjs';
 
 /**
  * **대장에 없는 새 화면 글자는 경고만 한다**(ADR 0257). 자리는 묶음 배포의 「문구만」 판정(`syntaxOf` 의 `slots`)과 같다 — 여기서 재는 것은
@@ -59,9 +59,38 @@ describe('새 화면 글자 — 대장 대조 (ADR 0257)', () => {
 
   it('보는 파일 — 웹 app/**/*.tsx · 앱 mobile/src/**/*.tsx · 문구 상수 파일. 운영 화면 · 시험 · 그 밖은 안 본다', () => {
     for (const file of ['app/me/page.tsx', 'app/ui/button.tsx', 'mobile/src/app/index.tsx', ...COPY_FILES]) expect(copyTarget(file), file).toBe(true);
-    for (const file of ['app/ops/reports/page.tsx', 'app/ops/page.tsx', 'app/me/page.test.tsx', 'mobile/src/a.test.tsx', 'app/me/actions.ts', 'src/lib/saju/index.ts', 'e2e/home.spec.ts', 'docs/x.md']) {
+    for (const file of ['app/ops/reports/page.tsx', 'app/ops/page.tsx', 'app/me/page.test.tsx', 'mobile/src/a.test.tsx', 'app/me/actions.ts', 'src/lib/saju/index.ts', 'src/lib/saju/pillars/index.ts', 'e2e/home.spec.ts', 'docs/x.md']) {
       expect(copyTarget(file), file).toBe(false);
     }
+  });
+
+  /** JSX 글자만 보던 때 — `src/lib/reading/notes.ts` 꼴(문구 상수 · 문구 함수가 다른 코드와 섞인 파일)의 새 글자는 대장 대조에 안 섰다(#1167) */
+  it('src/lib/** 의 내보낸 문구 상수 · 문구 함수의 새 글자도 센다 — 내보내지 않은 문 · 키 · 오류 문자열은 아니다', () => {
+    const before = [
+      "import { x } from './x';",
+      "export const READING_AGAIN_LABEL = '다시 받기';",
+      'export const count = 3;',
+    ].join('\n');
+    // 일부러 어긴 꼴 — 대장에 없는 새 상수 · 표 · 문구 함수(삼항 · 템플릿) · 함수 선언을 더했다. 내보내지 않은 상수 · 오류 · 표의 키는 문구가 아니다
+    const after = [
+      before,
+      "export const NEW_NOTE = '새로 더한 상수 문장';",
+      "export const NOUN = { self: '새 표의 낱말' } as const;",
+      "export const costLine = (n: number | null) => (n === null ? '새 함수의 앞 문장' : `남은 새 풀이권 ${n}장이에요`);",
+      "export function emptyNote(noun: string) { if (!noun) throw new Error('오류 문장은 문구가 아니다'); return `아직 새 ${noun} 가 없어요`; }",
+      "const HIDDEN = '내보내지 않은 문장';",
+      "export const lookup = (key: string) => ({ 키는문구아님: 1 })[key];",
+    ].join('\n');
+    const file = 'src/lib/reading/notes.ts';
+    expect(libTarget(file)).toBe(true);
+    const added = addedTexts(ts, file, before, after);
+    expect(added).toEqual(['새로 더한 상수 문장', '새 표의 낱말', '새 함수의 앞 문장', '남은 새 풀이권', '장이에요', '아직 새', '가 없어요']);
+    expect(missingFromLedger([{ file, texts: added }], '「새 표의 낱말」')[0].texts).not.toContain('새 표의 낱말');
+    // 진짜 파일 — 문구 상수와 문구 함수의 글자가 읽힌다
+    const notes = readFileSync(resolve(ROOT, file), 'utf8');
+    expect(libSlotsOf(ts, file, notes)).toEqual(expect.arrayContaining(['다시 받기', '남은 풀이권이 없어요.', '사주풀이']));
+    for (const odd of ['src/lib/saju/pillars/index.ts', 'src/lib/reading/notes.test.ts', COPY_FILES[0], 'src/lib/reading/x.md']) expect(libTarget(odd), odd).toBe(false);
+    expect(copyTarget('src/lib/home/today.ts')).toBe(true);
   });
 
   it('문구 상수 파일의 새 값도 센다 — 키는 아니다', () => {

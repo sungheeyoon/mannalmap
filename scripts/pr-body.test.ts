@@ -3,7 +3,7 @@ import { resolve } from 'node:path';
 
 import { describe, expect, it } from 'vitest';
 
-import { CODE_DIRS, DOC_TYPES, bodyProblems } from './pr-body.mjs';
+import { CODE_DIRS, DOC_TYPES, bodyProblems, isBot, typeOf } from './pr-body.mjs';
 
 /**
  * **PR 본문의 「문서」 칸**(ADR 0257). 2026-11-19 까지 아무것도 이 칸을 안 쟀다 — 코드 PR #1169 는 칸이 없었고, #1149 는 「결정 여부: 있음」인데
@@ -62,6 +62,28 @@ describe('PR 본문의 「문서」 칸 (ADR 0257)', () => {
     // 그 밖의 type 과 코드 밖의 파일은 칸 · 줄만 잰다
     for (const type of ['refactor', 'test', 'chore', 'ci', 'ui', 'perf', 'docs']) expect(bodyProblems({ title: `${type}(x): 한 줄`, body: plain, files: app }), type).toEqual([]);
     expect(bodyProblems({ title: 'fix(ci): 한 줄', body: plain, files: ['scripts/ci-plan.mjs', '.github/workflows/verify.yml'] })).toEqual([]);
+  });
+
+  /** 깨는 변경의 `!` — `[(:]` 로만 읽어 `feat!:` 의 type 이 비었고, 코드만 고친 깨는 변경이 「문서 없음」을 안 들어도 초록이었다 */
+  it('깨는 변경의 `feat!:` · `fix(x)!:` 도 type 으로 읽는다 — 꼴이 아닌 제목은 비운다', () => {
+    const plain = bodyWith('결정 여부: 없음');
+    for (const title of ['feat!: 한 줄', 'fix!: 한 줄', 'feat(x)!: 한 줄']) expect(bodyProblems({ title, body: plain, files: app }), title).toHaveLength(1);
+    expect(typeOf('fix(deps)!: x')).toBe('fix');
+    expect(typeOf('fix: x')).toBe('fix');
+    for (const odd of ['Fix: x', 'fix x', 'fix!x', '']) expect(typeOf(odd), odd).toBe('');
+  });
+
+  /** Dependabot 보안 업데이트를 켜는 날 — 봇이 쓴 본문은 PR 틀을 안 따라 모든 봇 PR 이 붉었을 것이다 */
+  it('봇(`dependabot[bot]` 꼴)이 연 PR 은 재지 않는다 — 사람이 연 PR 은 그대로 잰다', () => {
+    const botBody = 'Bumps [next](https://github.com/vercel/next.js) from 16.0.0 to 16.0.1.';
+    for (const author of [{ login: 'dependabot[bot]', type: 'Bot' }, { login: 'renovate[bot]' }, { login: 'x', type: 'Bot' }]) {
+      expect(isBot(author), author.login).toBe(true);
+      expect(bodyProblems({ title: 'fix(deps): bump next', body: botBody, files: app, author }), author.login).toEqual([]);
+    }
+    for (const author of [{ login: 'octocat', type: 'User' }, { login: 'bot' }, null]) {
+      expect(isBot(author)).toBe(false);
+      expect(bodyProblems({ title: 'fix(deps): bump next', body: botBody, files: app, author })).toHaveLength(1);
+    }
   });
 
   it('「결정 여부: 있음」은 같은 PR 의 ADR 이나 그 줄의 까닭(있는 ADR · 화면 문구 · 「ADR 없음 — 까닭」)을 든다', () => {
