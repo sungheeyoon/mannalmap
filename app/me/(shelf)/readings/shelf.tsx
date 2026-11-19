@@ -21,6 +21,7 @@ import type { CameFrom } from '../../../came-from';
 import type { Book } from './book';
 import { CoverLink, ShelfItem } from './frame';
 import type { DayMaster } from './subject';
+import { SHELF_COMPAT_NOTE, SHELF_EMPTY, SHELF_HOME_NOTE, SHELF_MATCH_NOTE } from '@/src/lib/reading/words';
 
 /**
  * **책장** — 만든 글이 한 권씩 꽂힌다(시안 3차 warm · 2026-10-26 안 D).
@@ -377,7 +378,7 @@ export function MakingShelf({
       {titled && (
         <div>
           <h2 className={TYPE_SECTION}>인연 궁합</h2>
-          <p className="mt-0.5 text-small leading-5 text-secondary">서로 동의해 두 사람이 함께 보는 궁합풀이예요.</p>
+          <p className="mt-0.5 text-small leading-5 text-secondary">{SHELF_MATCH_NOTE}</p>
         </div>
       )}
       <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-1">
@@ -442,7 +443,7 @@ export function Nothing({ hasSelf }: { hasSelf: boolean }) {
   return (
     <EmptyState
       icon="reading"
-      title="아직 만든 풀이가 없어요"
+      title={SHELF_EMPTY}
       action={
         hasSelf
           ? { href: '/me/readings/self', label: '사주풀이 받기', icon: 'reading' }
@@ -450,8 +451,8 @@ export function Nothing({ hasSelf }: { hasSelf: boolean }) {
       }
     >
       {/* 쉼표에서 꺾는다 — 가운데 정렬의 두 줄이 「…홈 탭에서, 두 / 사람의…」로 낱말 하나를 윗줄에 남겼다(2026-10-26 390px) */}
-      내 사주와 저장한 사람의 풀이는 홈 탭에서,{' '}
-      <br />두 사람의 궁합은 궁합 탭에서 시작할 수 있어요.
+      {SHELF_HOME_NOTE}{' '}
+      <br />{SHELF_COMPAT_NOTE}
     </EmptyState>
   );
 }

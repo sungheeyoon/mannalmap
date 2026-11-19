@@ -17,6 +17,7 @@ import { DayMasterChip, ManageButton, PillarStrip, Sheet, SheetItem, go, styles 
 import { StemSymbol } from '@/ui/stem-symbol';
 import { Tile } from '@/ui/surfaces';
 import { WordText } from '@/ui/word-text';
+import { BIRTH_EDIT } from '@people/words';
 
 type Panel = 'menu' | 'edit-input' | 'note' | 'remove';
 
@@ -150,7 +151,7 @@ export function PersonCard({
       {panel === 'menu' && (
         <Sheet label="닫기" onClose={() => setPanel(null)}>
           <WordText style={shared.section}>{person.label}</WordText>
-          {person.chart.ok && <SheetItem label="출생 정보 수정" onPress={() => setPanel('edit-input')} />}
+          {person.chart.ok && <SheetItem label={BIRTH_EDIT} onPress={() => setPanel('edit-input')} />}
           <SheetItem label={note === '' ? '메모 넣기' : '메모 고치기'} onPress={() => setPanel('note')} />
           <SheetItem label="삭제" danger onPress={() => setPanel('remove')} />
         </Sheet>

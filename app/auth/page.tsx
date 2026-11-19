@@ -17,6 +17,7 @@ import { RESUME_PAIR_PATH, RESUME_READING_PATH, afterSignIn, safeReturnPath, vis
 import { HomeLink } from '../home-link';
 import { matchOpenForSignedOut } from '../match-opening';
 import { matchEntriesStand } from '@/src/lib/matching/opening';
+import { SIGN_IN_LEAD } from '@/src/lib/account/words';
 
 export default async function SignInPage({
   searchParams,
@@ -47,7 +48,7 @@ export default async function SignInPage({
           <p>
             {forReading
               ? '로그인하면 방금 본 사주로 돌아와요. 출생 정보를 저장하면 사주풀이를 받을 수 있어요.'
-              : '로그인하면 저장한 사람과 사주풀이를 다음에도 이어서 볼 수 있어요.'}
+              : SIGN_IN_LEAD}
           </p>
         )
       }

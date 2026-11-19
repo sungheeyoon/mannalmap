@@ -45,9 +45,10 @@ describe('앱 입구', () => {
     expect(read('app/pair-taste.tsx')).toContain('{COMPAT_SIGN_IN_ACTION}');
     expect(read('app/pair-taste.tsx')).toContain('{COMPAT_CREDIT_NOTE}');
     expect(entry).toContain("withReturnPath('/auth', '/me/compat')");
-    /* 주 단추는 웹 첫 화면과 같은 글자다 */
-    expect(entry).toContain("'무료로 내 사주 보기'");
-    expect(read('app/saju-calculator.tsx')).toContain("'무료로 내 사주 보기'");
+    /* 주 단추는 웹 첫 화면과 같은 글자다 — 두 쪽이 한 원본(`src/lib/brand/words.ts`)을 부른다(G-168) */
+    expect(read('src/lib/brand/words.ts')).toContain("export const SEE_MY_SAJU_FREE = '무료로 내 사주 보기';");
+    expect(entry).toMatch(/\bSEE_MY_SAJU_FREE\b/);
+    expect(read('app/saju-calculator.tsx')).toMatch(/\bSEE_MY_SAJU_FREE\b/);
   });
 
   it('주 단추 바로 아래 이미 쓰는 사람의 한 줄이 웹 첫 화면과 같은 글자로 선다 — 제목 아래 설명 줄은 없다(ADR 0226)', () => {
@@ -302,9 +303,25 @@ describe('결과 화면의 저장', () => {
   const screen = read('mobile/src/reading/save-self.tsx');
   const web = read('app/save-for-reading.tsx');
 
-  it.each(['이 사주가 내 사주 맞나요?', '첫 화면에 입력한 정보예요.', '내 사주로 저장', '다른 사람의 사주예요', '이 사람의 사주는 어떤 뜻일까요?', '저장했어요', '저장한 사람 보기', '저장한 사람 관리 →'])('%s', (words) => {
-    expect(web).toContain(words);
-    expect(screen).toContain(words);
+  /* 두 쪽이 한 원본(`src/lib/reading/words.ts`)의 같은 이름을 부른다(G-168) — 「저장했어요」만 두 쪽이 글자로 적는다 */
+  const shared = read('src/lib/reading/words.ts');
+  it.each([
+    ['SAVE_SELF_QUESTION', '이 사주가 내 사주 맞나요?'],
+    ['SAVE_FIRST_SCREEN_NOTE', '첫 화면에 입력한 정보예요.'],
+    ['SAVE_AS_SELF', '내 사주로 저장'],
+    ['SAVE_OTHER_TITLE', '다른 사람의 사주예요'],
+    ['SAVE_OTHER_QUESTION', '이 사람의 사주는 어떤 뜻일까요?'],
+    ['SAVED_PEOPLE_SEE', '저장한 사람 보기'],
+    ['SAVED_PEOPLE_MANAGE_LINK', '저장한 사람 관리 →'],
+  ])('%s — %s', (name, words) => {
+    expect(shared).toContain(`export const ${name} = '${words}';`);
+    expect(web).toMatch(new RegExp(`\\b${name}\\b`));
+    expect(screen).toMatch(new RegExp(`\\b${name}\\b`));
+  });
+
+  it('저장했어요', () => {
+    expect(web).toContain('저장했어요');
+    expect(screen).toContain('저장했어요');
   });
 
   it('내 사주 물음이 저장 카드보다 먼저 갈린다 — 묻지 않고 내 사주로 저장하지 않는다', () => {

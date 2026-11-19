@@ -45,7 +45,9 @@ describe('다섯 화면 — 4 단계가 적은 그대로', () => {
     const hero = readFileSync(join(ROOT, 'app/home-hero.tsx'), 'utf8');
     const auth = readFileSync(join(ROOT, 'app/auth/page.tsx'), 'utf8');
     const brand = readFileSync(join(ROOT, 'src/lib/brand/index.ts'), 'utf8');
-    expect(hero).toContain(SCREENS[0].h1);
+    // 첫 화면 제목은 웹 · 앱이 함께 부르는 한 원본의 글자다(G-168)
+    expect(readFileSync(join(ROOT, 'src/lib/brand/words.ts'), 'utf8')).toContain(`export const HERO_QUESTION = '${SCREENS[0].h1}';`);
+    expect(hero).toMatch(/\bHERO_QUESTION\b/);
     // 로그인 화면의 기본 제목은 `${SERVICE_NAME} 시작하기`, 궁합에서 온 사람은 forCompat 갈래다
     expect(auth).toContain('`${SERVICE_NAME} 시작하기`');
     expect(brand).toContain(`export const SERVICE_NAME = '${SCREENS[1].h1.replace(' 시작하기', '')}'`);

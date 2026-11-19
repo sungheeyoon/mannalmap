@@ -37,6 +37,7 @@ import { LoadingDots } from '@/ui/loading';
 
 import type { PairOutcome } from './data';
 import { WordText } from '@/ui/word-text';
+import { COMPAT_BETWEEN, COMPAT_BOTH_CHARTS, COMPAT_SIDE_BY_SIDE } from '@people/words';
 
 type Ok = Extract<PairOutcome, { kind: 'ok' }>;
 
@@ -122,7 +123,7 @@ export function CompatResult({ outcome, onReadingChanged }: { outcome: Ok; onRea
         onReadingChanged={onReadingChanged}
       />
 
-      <Fold title="두 사람의 명식 보기">
+      <Fold title={COMPAT_BOTH_CHARTS}>
         <View style={styles.stack}>
           <Paper style={styles.board}>
             <WordText style={styles.boardEyebrow}>각자의 사주</WordText>
@@ -132,7 +133,7 @@ export function CompatResult({ outcome, onReadingChanged }: { outcome: Ok; onRea
             ))}
           </Paper>
 
-          <Fold title="두 사주를 맞대어 본 표" note="사이에 걸리는 관계와, 그 표에서 말할 수 있는 것.">
+          <Fold title={COMPAT_SIDE_BY_SIDE} note="사이에 걸리는 관계와, 그 표에서 말할 수 있는 것.">
             <Between compat={compat} names={names} />
           </Fold>
         </View>
@@ -238,7 +239,7 @@ function Between({ compat, names }: { compat: Compatibility; names: Record<Compa
   return (
     <View style={styles.between}>
       <View style={styles.part}>
-        <T size="lead" bold>두 사주 사이의 관계</T>
+        <T size="lead" bold>{COMPAT_BETWEEN}</T>
         <T tone="secondary">{relations.length === 0 ? '걸리는 것이 없습니다' : `${relations.length}개`}</T>
         {dayToDay.length > 0 && (
           <View style={styles.dayToDay}>

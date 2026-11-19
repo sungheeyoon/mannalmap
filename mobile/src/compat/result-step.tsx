@@ -17,6 +17,7 @@ import { UNREACHABLE } from '@/auth/signup';
 import { readPair, type PairOutcome } from './data';
 import { CompatResult } from './result';
 import { WordText } from '@/ui/word-text';
+import { COMPAT_SAME_PERSON, COMPAT_UNAVAILABLE } from '@people/words';
 
 function Loading({ bar }: { bar: ReactNode }) {
   return (
@@ -77,10 +78,10 @@ export function CompatResultStep({ a, b, back: to }: { a: string; b: string; bac
   /* 거절은 그 자리에서 말한다 — 고르는 자리로 되돌려 보내면 왜 되돌아왔는지 모른다 */
   return (
     <ScreenFrame bar={<TopBar title="궁합" fallback="/me/compat" />}>
-      <WordText style={shared.title}>궁합을 볼 수 없습니다</WordText>
+      <WordText style={shared.title}>{COMPAT_UNAVAILABLE}</WordText>
       <Card style={styles.refusal}>
         {outcome.kind === 'same' ? (
-          <WordText style={shared.body}>같은 사람은 한 번만 고를 수 있어요. 서로 다른 두 사람을 골라 주세요.</WordText>
+          <WordText style={shared.body}>{COMPAT_SAME_PERSON}</WordText>
         ) : (
           <>
             <WordText style={shared.body}>{outcome.message}</WordText>

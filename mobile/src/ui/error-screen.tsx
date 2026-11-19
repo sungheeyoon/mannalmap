@@ -5,6 +5,7 @@ import { SUPPORT_MAIL_LINE } from '@/info/copy';
 
 import { NoticeLine, NoticeScreen } from './notice-screen';
 import { PrimaryButton, SecondaryButton } from './parts';
+import { SCREEN_FAILED_TITLE, TRY_AGAIN_LATER } from '@brand/words';
 
 /**
  * 그리다 던진 화면 대신 서는 것 — 웹 `app/error-screen.tsx` 와 같은 글자다. **`error` 는 안 받는다** — 원문을 세우지 않는다.
@@ -13,10 +14,10 @@ import { PrimaryButton, SecondaryButton } from './parts';
 export function ErrorScreen({ retry }: { retry: () => void }) {
   return (
     <NoticeScreen
-      title="화면을 불러오지 못했어요"
+      title={SCREEN_FAILED_TITLE}
       description={
         <View accessibilityRole="alert">
-          <NoticeLine>잠시 후 다시 시도해 주세요.</NoticeLine>
+          <NoticeLine>{TRY_AGAIN_LATER}</NoticeLine>
           <NoticeLine>{SUPPORT_MAIL_LINE}</NoticeLine>
         </View>
       }

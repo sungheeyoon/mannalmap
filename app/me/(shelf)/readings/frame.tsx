@@ -7,7 +7,8 @@ import { createContext, useContext, useEffect, useId, useRef, useState, type CSS
 import { findStatus, findsInList, matchesName } from '@/src/lib/people/pick';
 import type { Element } from '@/src/lib/saju';
 
-import { NO_MATCH, PLACEHOLDER } from '../../../person-combobox';
+import { PLACEHOLDER } from '../../../person-combobox';
+import { PERSON_SEARCH_EMPTY } from '@/src/lib/people/words';
 
 import { elementScope } from '../../../ui/element-tone';
 import { FaceSymbol } from '../../../ui/stem-symbol';
@@ -378,7 +379,7 @@ function ShelfHead({
             role="status"
             className={find.found.kind === 'idle' ? 'sr-only' : 'px-2 text-small text-secondary'}
           >
-            {find.found.kind === 'none' ? NO_MATCH : find.found.kind === 'some' ? `검색 결과 ${find.found.count}권` : ''}
+            {find.found.kind === 'none' ? PERSON_SEARCH_EMPTY : find.found.kind === 'some' ? `검색 결과 ${find.found.count}권` : ''}
           </p>
         </div>
       )}

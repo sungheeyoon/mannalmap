@@ -7,6 +7,7 @@ import { SERVICE_FEATURES, featureText } from '@/src/lib/brand/features';
 import { useBrowserSession } from './auth/browser-session';
 import { Icon, type IconName } from './ui/icons';
 import { FLAT_CARD_FACE, TYPE_NAME, TYPE_SECTION } from './ui/surfaces';
+import { WHAT_YOU_CAN_DO } from '@/src/lib/brand/words';
 
 /**
  * 로그인 전 첫 화면의 **「할 수 있는 것」** — 폼 아래. 서비스 소개(`/about`)의 같은 구역 이름이다.
@@ -35,7 +36,7 @@ export function LandingGuide({ matchOpen }: { matchOpen: boolean }) {
       {/* 폰에서는 제목이 두 줄로 갈리지 않게 링크가 아랫줄로 내려간다 */}
       <div className="flex flex-wrap items-end justify-between gap-x-3 gap-y-1">
         <h2 id="landing-guide" className={TYPE_SECTION}>
-          할 수 있는 것
+          {WHAT_YOU_CAN_DO}
         </h2>
         <Link href="/about" className="inline-flex min-h-11 shrink-0 items-center gap-1 text-sm font-semibold text-foreground">
           서비스 소개

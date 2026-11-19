@@ -14,6 +14,7 @@ import { PrimaryButton, SecondaryButton } from '@/ui/parts';
 import { COLOR, FONT, RADIUS, TYPE, TYPE_TITLE } from '@/ui/tokens';
 import { Card, CardFrame, Paper } from '@/ui/surfaces';
 import { WordText } from '@/ui/word-text';
+import { FAQ_TITLE, SEE_MY_SAJU_FREE, WHAT_YOU_CAN_DO } from '@brand/words';
 
 /**
  * 서비스 소개 — 웹의 `/about`. 로그인 없이 열리고 세션은 안 읽는다. DB 는 인연의 열림 하나만 묻는다(`useMatchOpen`) —
@@ -31,7 +32,7 @@ export default function AboutScreen() {
       </Paper>
 
       <View style={styles.section}>
-        <WordText style={styles.sectionTitle}>할 수 있는 것</WordText>
+        <WordText style={styles.sectionTitle}>{WHAT_YOU_CAN_DO}</WordText>
         {SERVICE_FEATURES.map((feature) => {
           const { body, note } = featureText(feature, matchOpen);
           return (
@@ -66,8 +67,8 @@ export default function AboutScreen() {
       </View>
 
       <View style={styles.actions}>
-        <PrimaryButton label="무료로 내 사주 보기" onPress={() => void goHome()} />
-        <SecondaryButton label="자주 묻는 질문" onPress={() => router.push('/help')} />
+        <PrimaryButton label={SEE_MY_SAJU_FREE} onPress={() => void goHome()} />
+        <SecondaryButton label={FAQ_TITLE} onPress={() => router.push('/help')} />
       </View>
     </InfoScreen>
   );

@@ -10,6 +10,7 @@ import { visitorLandingOf } from './saju-landing';
 import { SignedInProvider } from './signed-in';
 import { Bone } from './ui/skeleton';
 import { TYPE_SECTION } from './ui/surfaces';
+import { ENTER_BIRTH } from '@/src/lib/brand/words';
 
 /**
  * `/saju` 의 얼굴 — **로그인한 사람이 저장하지 않고 한 사람의 사주를 보는 자리**(ADR 0144). 홈 탭의 한 화면이다.
@@ -33,7 +34,7 @@ export function SajuHero({ calculator }: { calculator: ReactNode }) {
       <section id="calculator" className="scroll-mt-24">
         <div className="mb-5">
           <p className="text-small font-semibold text-cream-ink">직접 입력</p>
-          <h2 className={`mt-1 ${TYPE_SECTION}`}>출생 정보를 입력해 주세요</h2>
+          <h2 className={`mt-1 ${TYPE_SECTION}`}>{ENTER_BIRTH}</h2>
           <p className="mt-2 text-sm leading-6 text-secondary">출생 시각을 모르면 「{HOUR_UNKNOWN_CHOICE}」을 고르세요.</p>
         </div>
         {/*

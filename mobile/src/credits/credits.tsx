@@ -27,6 +27,7 @@ import { readReadingCredits, readReadingOrders } from './remaining';
 import { storeAvailable } from './store';
 import { StoreSection } from './store-section';
 import { WordText } from '@/ui/word-text';
+import { ORDER_NUMBER_ASK, PAYMENTS_EMPTY } from '@account/words';
 
 type Read<T> = { ok: true; value: T } | { ok: false; message: string };
 
@@ -116,7 +117,7 @@ export function CreditsHistoryScreen() {
           (!read.ok ? (
             <FailureLine onRetry={load}>{read.message}</FailureLine>
           ) : read.value.length === 0 ? (
-            <WordText style={settingsText.meta}>결제 내역이 없어요.</WordText>
+            <WordText style={settingsText.meta}>{PAYMENTS_EMPTY}</WordText>
           ) : (
             read.value.map((order) => <OrderCard key={order.orderNumber} order={order} />)
           ))}
@@ -126,7 +127,7 @@ export function CreditsHistoryScreen() {
           </WordText>
           {/* 사업자 정보 가운데 이메일만 공개 상수다 — 이 줄이 쓰는 값은 그것뿐이다 */}
           <WordText style={settingsText.body}>{refundRequestLine(businessInfoFrom({ email: SUPPORT_EMAIL }))}</WordText>
-          <WordText style={settingsText.body}>주문 번호를 함께 알려 주세요.</WordText>
+          <WordText style={settingsText.body}>{ORDER_NUMBER_ASK}</WordText>
           {legalPagesOpen && <TextButton label="환불정책 보기" onPress={() => openLegalPage('/refund')} />}
         </Card>
       </ScrollView>

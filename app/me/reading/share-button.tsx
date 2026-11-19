@@ -8,6 +8,7 @@ import { shareMyReading } from './share';
 import type { ReadingTarget } from './target';
 import { FailureLine } from '../../ui/failure-line';
 import { MENU_PANEL } from '../../ui/surfaces';
+import { SHARE_NOT_ISSUED } from '@/src/lib/reading/words';
 
 /**
  * 내 사주풀이를 **링크로 보낸다** — 누르면 주소가 클립보드에 들어간다.
@@ -136,7 +137,7 @@ export function ShareReadingButton({
       setNotice(
         answer !== null && !answer.ok
           ? answer.message
-          : '공유 링크를 만들지 못했어요. 잠시 뒤 다시 시도해 주세요.',
+          : SHARE_NOT_ISSUED,
       );
       return;
     }

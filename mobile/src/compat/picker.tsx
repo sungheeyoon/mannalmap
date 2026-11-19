@@ -24,6 +24,7 @@ import { settled } from '@/ui/settled';
 
 import { openPair, readPairRelation, type Choosable, type PairAnswers, type PairSide } from './data';
 import { WordText } from '@/ui/word-text';
+import { COMPAT_PICK_OTHER, COMPAT_PICK_TITLE, PERSON_SEARCH_EMPTY, PICKER_PEOPLE_EMPTY } from '@people/words';
 
 const SIDES: readonly CompatSide[] = ['a', 'b'];
 const SIDE_LABEL: Record<CompatSide, string> = { a: '첫 번째', b: '두 번째' };
@@ -139,7 +140,7 @@ export function CompatPicker({ people, pickA, pickB, typeB = false }: { people: 
 
   return (
     <CardFrame >
-      <WordText style={[shared.name, styles.frameTitle]}>누구와 누구를 볼까요?</WordText>
+      <WordText style={[shared.name, styles.frameTitle]}>{COMPAT_PICK_TITLE}</WordText>
       {SIDES.map((side) => (
         <Fragment key={side}>
           {/*
@@ -181,7 +182,7 @@ export function CompatPicker({ people, pickA, pickB, typeB = false }: { people: 
               <SectionErrorLine message={sections.shown[`${side}.pick`]} />
               </View>
             )}
-            {people.length === 0 && slots[side].from === 'saved' && <WordText style={shared.meta}>아직 저장한 사람이 없어요.</WordText>}
+            {people.length === 0 && slots[side].from === 'saved' && <WordText style={shared.meta}>{PICKER_PEOPLE_EMPTY}</WordText>}
             {slots[side].from === 'typed' && (
               <TypedSlot
                 errors={sideSections<BirthSection, CompatSide>(sections, side)}
@@ -265,7 +266,7 @@ function PersonChoice({ people, taken, chosenId, onChoose, refused = false }: { 
     <View style={styles.choice}>
       <Pressable accessibilityRole="button" accessibilityState={{ expanded: open }} onPress={() => setOpen(!open)} style={[styles.choiceHead, open && styles.choiceOpen, refused && styles.choiceWrong]}>
         {chosen !== null && <Face person={chosen} />}
-        <WordText style={[styles.choiceText, chosen === null && styles.choiceEmpty]} numberOfLines={1}>{chosen?.label ?? '상대를 골라 주세요'}</WordText>
+        <WordText style={[styles.choiceText, chosen === null && styles.choiceEmpty]} numberOfLines={1}>{chosen?.label ?? COMPAT_PICK_OTHER}</WordText>
         {/* 웹의 같은 칸(`app/person-combobox.tsx`) — 12px · 굵기 3.2 · secondary */}
         <FoldIcon open={open} size={12} color={COLOR.secondary} strokeWidth={3.2} />
       </Pressable>
@@ -276,7 +277,7 @@ function PersonChoice({ people, taken, chosenId, onChoose, refused = false }: { 
               <Field value={typed} onChange={setTyped} placeholder="이름으로 찾기" label="이름으로 찾기" />
             </View>
           )}
-          {candidates.length === 0 && people.length > 0 && <WordText style={[shared.meta, styles.menuEmpty]}>찾는 사람이 없어요</WordText>}
+          {candidates.length === 0 && people.length > 0 && <WordText style={[shared.meta, styles.menuEmpty]}>{PERSON_SEARCH_EMPTY}</WordText>}
           {candidates.map((one) => (
             <Pressable
               key={one.personId}

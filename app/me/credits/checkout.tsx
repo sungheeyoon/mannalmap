@@ -16,6 +16,7 @@ import { CHECKOUT_FREE_FIRST_NOTE, CHECKOUT_PROVIDED_NOTE, CHECKOUT_REFUND_NOTE 
 import { BUTTON_TERTIARY_FACE } from '../../ui/buttons';
 import { TYPE_META, TYPE_NAME } from '../../ui/surfaces';
 import { withReturnTo, type ReturnTo } from './return-to';
+import { LEARN_MORE } from '@/src/lib/account/words';
 
 /**
  * **풀이권 묶음 · 유의사항** (G-21, ADR 0175 · 0212).
@@ -80,7 +81,7 @@ export function Checkout({ refundLine, back }: { refundLine: string; back: Retur
           <li>{CHECKOUT_FREE_FIRST_NOTE}</li>
         </ul>
         <Link href={withReturnTo('/refund?from=credits', back)} className={`${BUTTON_TERTIARY_FACE} self-start text-fine font-medium text-secondary`}>
-          자세히 알아보기
+          {LEARN_MORE}
         </Link>
       </div>
     </>

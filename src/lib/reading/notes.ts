@@ -283,7 +283,7 @@ export const purchaseResumeLabel = (noun: string): string => `${noun} 받으러 
 export const PURCHASE_RUNNING_LABEL = '결제 진행 중…';
 export const PURCHASE_FAILED_NOTE = '결제가 완료되지 않았어요.';
 /**
- * 결제 알림 창 셋(대장 credits-16 「확인 전」) — 결제는 됐는데 지급이 안 섬 · 같은 상품의 앞선 구매가 남아 결제창이 안 열림(Play 「이미 가진 상품」) ·
+ * 결제 알림 창 셋(대장 credits-16 확정 문구) — 결제는 됐는데 지급이 안 섬 · 같은 상품의 앞선 구매가 남아 결제창이 안 열림(Play 「이미 가진 상품」) ·
  * 보류 결제. 제목은 credits-11 · credits-15 의 줄을 창의 제목으로 옮긴 것이다
  */
 export const PURCHASE_UNDELIVERED_TITLE = '풀이권 충전이 완료되지 않았어요';

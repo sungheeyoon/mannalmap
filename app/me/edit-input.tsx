@@ -15,6 +15,7 @@ import { ConfirmDialog } from '../ui/confirm-dialog';
 import { CARD_FACE, TYPE_META, TYPE_NAME } from '../ui/surfaces';
 import { FailureLine } from '../ui/failure-line';
 import { useSectionErrors } from '../ui/section-error';
+import { NAME_ONLY_CHANGED, NOTHING_CHANGED, SAVE_CHANGES, SELF_NAME_NOTE } from '@/src/lib/people/words';
 
 /**
  * 저장된 출생 정보를 고치는 폼 — **여는 자리를 밖에서 정한다.** 익명 화면과 **같은 폼**(`BirthFields`)을 쓴다.
@@ -103,7 +104,7 @@ export function EditInputForm({
         <div className="rounded-cell bg-surface-sunken px-3.5 py-2.5 text-body">
           <span className="text-secondary">닉네임</span>{' '}
           <strong className="font-semibold">{current.name}</strong>
-          <p className={`mt-0.5 ${TYPE_META}`}>내 이름은 프로필 닉네임으로 보여요.</p>
+          <p className={`mt-0.5 ${TYPE_META}`}>{SELF_NAME_NOTE}</p>
         </div>
       )}
 
@@ -122,8 +123,8 @@ export function EditInputForm({
           className={warn && unchanged && !missing ? WARN_NOTE : TYPE_META}
         >
           {nameChanged
-            ? '이름만 바뀌었어요. 이름은 여덟 글자에 들어가지 않아서 출생 정보와 사주는 그대로예요.'
-            : '바뀐 것이 없어요.'}
+            ? NAME_ONLY_CHANGED
+            : NOTHING_CHANGED}
         </p>
       )}
 
@@ -141,7 +142,7 @@ export function EditInputForm({
             aria-describedby={warn && unchanged && !missing ? noteId : undefined}
             className={BUTTON_PRIMARY}
           >
-            {saving ? '저장하는 중…' : pillarsSame && nameChanged ? '이름 저장' : '변경 사항 저장'}
+            {saving ? '저장하는 중…' : pillarsSame && nameChanged ? '이름 저장' : SAVE_CHANGES}
           </button>
           <button type="button" onClick={onCancel} disabled={saving} className={BUTTON_TERTIARY}>
             작성 그만두기

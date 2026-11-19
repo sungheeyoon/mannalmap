@@ -18,6 +18,7 @@ import { Icon } from './ui/icons';
 import { StemSymbol } from './ui/stem-symbol';
 import type { SharedPillarChart } from './shared-pillar';
 import { FLAT_CARD_FACE, PAPER_FACE, TILE, TYPE_META, TYPE_NAME, TYPE_SECTION } from './ui/surfaces';
+import { COMPAT_BOTH_CHARTS, COMPAT_SIDE_BY_SIDE } from '@/src/lib/people/words';
 
 /**
  * 궁합 **결과 영역** — 계산이 끝난 값만 받는다.
@@ -83,7 +84,7 @@ export function CompatView({
       {verdict}
       <details className="group/pair">
         <summary className={`flex min-h-14 cursor-pointer list-none items-center justify-between gap-3 ${FLAT_CARD_FACE} px-5 py-4 hover:border-border-strong active:scale-[0.99] sm:px-6 [&::-webkit-details-marker]:hidden`}>
-          <span className={TYPE_NAME}>두 사람의 명식 보기</span>
+          <span className={TYPE_NAME}>{COMPAT_BOTH_CHARTS}</span>
           <span aria-hidden className="flex shrink-0 items-center gap-1 text-small font-semibold text-secondary">
             <span className="group-open/pair:hidden">펼치기</span>
             <span className="hidden group-open/pair:inline">접기</span>
@@ -136,7 +137,7 @@ function FoldedAnalysis({
       */}
       <summary className={`flex min-h-14 cursor-pointer list-none items-center justify-between gap-3 ${FLAT_CARD_FACE} px-5 py-4 hover:border-border-strong active:scale-[0.99] sm:px-6 [&::-webkit-details-marker]:hidden`}>
         <span>
-          <span className={TYPE_NAME}>두 사주를 맞대어 본 표</span>
+          <span className={TYPE_NAME}>{COMPAT_SIDE_BY_SIDE}</span>
           <span className="mt-0.5 block text-small leading-5 text-secondary">
             사이에 걸리는 관계와, 그 표에서 말할 수 있는 것.
           </span>

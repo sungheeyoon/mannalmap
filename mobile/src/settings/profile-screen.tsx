@@ -23,6 +23,7 @@ import { BirthSection } from './birth-section';
 import { myPhotos, photoUploadMode, type MyPhoto } from './photos';
 import { saveProfile } from './profile';
 import { WordText } from '@/ui/word-text';
+import { INTRO_PLACEHOLDER, PROFILE_LEAD, PROFILE_SAVE } from '@account/words';
 
 const NICKNAME_CHECK_AFTER_MS = 500;
 
@@ -95,7 +96,7 @@ export function ProfileScreen() {
       <TopBar title="프로필" fallback="/me/settings" />
       <KeyboardAvoidingView style={styles.screen} behavior="padding">
         <ScrollView ref={scrollRef} contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled" keyboardDismissMode="on-drag" scrollEnabled={!lifting}>
-          <WordText style={settingsText.meta}>앱에서 쓸 닉네임과 프로필을 정해요.</WordText>
+          <WordText style={settingsText.meta}>{PROFILE_LEAD}</WordText>
 
           {data.current === null ? (
             <AccountNotice state={data.state} onRetry={() => void reloadAll()} />
@@ -228,7 +229,7 @@ function ProfileForm({ current, onSaved }: { current: ProfileInput; onSaved: (sa
           multiline
           value={profile.intro}
           maxLength={INTRO_MAX}
-          placeholder="간단한 소개를 입력해 주세요"
+          placeholder={INTRO_PLACEHOLDER}
           placeholderTextColor={COLOR.muted}
           onChangeText={(intro) => setProfile({ ...profile, intro })}
           style={styles.area}
@@ -239,7 +240,7 @@ function ProfileForm({ current, onSaved }: { current: ProfileInput; onSaved: (sa
       </View>
       <View style={styles.action}>
         <View style={missing !== null || !changed ? styles.quiet : undefined}>
-          <PrimaryButton label={saving ? '저장하는 중…' : '닉네임 · 소개 저장'} onPress={() => void save()} />
+          <PrimaryButton label={saving ? '저장하는 중…' : PROFILE_SAVE} onPress={() => void save()} />
         </View>
         <WordText accessibilityLiveRegion="polite" style={styles.note}>
           {changed ? '' : done.note}

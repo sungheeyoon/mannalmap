@@ -4,6 +4,7 @@ import { BUTTON_TERTIARY } from '../../../ui/buttons';
 import { CARD, COLUMN, TYPE_META, TYPE_NAME, TYPE_TITLE } from '../../../ui/surfaces';
 import { won } from '@/src/lib/reading/bundle';
 import type { PaidOrder } from './orders';
+import { ORDER_NUMBER_ASK, PAYMENTS_EMPTY } from '@/src/lib/account/words';
 
 function OrderCard({ order }: { order: PaidOrder }) {
   const rows: (readonly [string, string])[] = [
@@ -42,7 +43,7 @@ export function HistoryView({ orders, refundLine }: { orders: readonly PaidOrder
       </header>
 
       {orders.length === 0 ? (
-        <p className={TYPE_META}>결제 내역이 없어요.</p>
+        <p className={TYPE_META}>{PAYMENTS_EMPTY}</p>
       ) : (
         <ul className="flex flex-col gap-3">
           {orders.map((order) => (
@@ -56,7 +57,7 @@ export function HistoryView({ orders, refundLine }: { orders: readonly PaidOrder
           환불 신청
         </h2>
         <p className="text-body leading-7 text-secondary">{refundLine}</p>
-        <p className="text-body leading-7 text-secondary">주문 번호를 함께 알려 주세요.</p>
+        <p className="text-body leading-7 text-secondary">{ORDER_NUMBER_ASK}</p>
         <p>
           <Link href="/refund" className={BUTTON_TERTIARY}>
             환불정책 보기

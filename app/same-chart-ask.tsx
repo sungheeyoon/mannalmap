@@ -22,6 +22,7 @@
 
 import { BUTTON_PRIMARY_SMALL, BUTTON_SECONDARY_SMALL } from './ui/buttons';
 import { WARNING_CARD_FACE } from './ui/surfaces';
+import { SAME_CHART_BODY, SAME_CHART_NO, SAME_CHART_TITLE, SAME_CHART_YES } from '@/src/lib/people/words';
 
 /** 이어서 할 일 — 답이 무엇이든 다시 결과 하나다(궁합은 두 번 물을 수 있다) */
 export type SameChartQuestion = {
@@ -64,7 +65,7 @@ export function SameChartAsk({
   return (
     <section
       role="group"
-      aria-label="같은 사람인지 확인"
+      aria-label={SAME_CHART_TITLE}
       className={`flex flex-col gap-3 ${WARNING_CARD_FACE} border border-warning-line px-4 py-4 sm:px-5`}
     >
       <div>
@@ -75,7 +76,7 @@ export function SameChartAsk({
           무엇이 같아서 묻는지 한 문장만 적는다(2026-11-08 운영자 결정) — 고르면 어떻게 되는지는 두 단추가 말한다.
           풀이권 이야기는 걷었다: 저장은 무료이고 풀이권은 풀이를 받을 때 들어서, 「한 번 더 쓴다」는 저장의 값처럼 읽혔다.
         */}
-        <p className="mt-1 text-small leading-5 text-secondary">여덟 글자와 태어난 시각이 같습니다.</p>
+        <p className="mt-1 text-small leading-5 text-secondary">{SAME_CHART_BODY}</p>
       </div>
 
       <div className="flex flex-wrap gap-2">
@@ -85,7 +86,7 @@ export function SameChartAsk({
           onClick={() => onAnswer(true)}
           className={`${BUTTON_PRIMARY_SMALL} flex-1`}
         >
-          네, 같은 사람입니다
+          {SAME_CHART_YES}
         </button>
         <button
           type="button"
@@ -93,7 +94,7 @@ export function SameChartAsk({
           onClick={() => onAnswer(false)}
           className={`${BUTTON_SECONDARY_SMALL} flex-1`}
         >
-          아니요, 다른 사람입니다
+          {SAME_CHART_NO}
         </button>
       </div>
     </section>

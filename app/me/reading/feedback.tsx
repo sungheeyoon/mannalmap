@@ -30,6 +30,7 @@ import { submitReadingFeedback } from './actions';
 import type { ReadingTarget } from './target';
 import { FailureLine } from '../../ui/failure-line';
 import { SectionErrorLine, invalidProps, useSectionErrors } from '../../ui/section-error';
+import { FEEDBACK_FAILED, FEEDBACK_LENGTH_QUESTION, FEEDBACK_MISSING_QUESTION, FEEDBACK_MULTI, FEEDBACK_QUESTION } from '@/src/lib/reading/words';
 
 /**
  * 읽고 나서 답하는 자리 — **글 바로 아래**다.
@@ -133,7 +134,7 @@ export function ReadingFeedback({
   const shown = foldable ? unfolded : true;
   const head = (
     <span className="flex min-w-0 flex-1 flex-col">
-      <span className={TYPE_NAME}>이 풀이는 어떠셨어요?</span>
+      <span className={TYPE_NAME}>{FEEDBACK_QUESTION}</span>
       <span className="mt-1 text-small leading-5 text-secondary">{foldable ? FEEDBACK_FOLDED_NOTE : FEEDBACK_SCOPE_NOTE}</span>
     </span>
   );
@@ -202,7 +203,7 @@ export function ReadingFeedback({
 
         <div className="flex flex-col gap-6 border-t border-border pt-6">
           <fieldset>
-            <legend className="float-left mb-4 w-full text-body font-semibold">분량은 어땠나요?</legend>
+            <legend className="float-left mb-4 w-full text-body font-semibold">{FEEDBACK_LENGTH_QUESTION}</legend>
             <div
               {...invalidProps(sections.shown.length !== undefined, `length-${runId}-line`)}
               className="grid grid-cols-3 gap-2 clear-both"
@@ -229,8 +230,8 @@ export function ReadingFeedback({
 
           <fieldset className="border-t border-border pt-6">
             <legend className="float-left mb-4 w-full text-body font-semibold">
-              아쉬운 점이 있다면요?
-              <span className="ml-1.5 text-small font-medium text-secondary">중복 선택 가능</span>
+              {FEEDBACK_MISSING_QUESTION}
+              <span className="ml-1.5 text-small font-medium text-secondary">{FEEDBACK_MULTI}</span>
             </legend>
             <div className="flex flex-wrap gap-2 clear-both">
               {ISSUE_TAGS.map((tag) => (
@@ -276,7 +277,7 @@ export function ReadingFeedback({
         </div>
 
         {failure !== null && (
-          <FailureLine>답을 남기지 못했어요. {failure}</FailureLine>
+          <FailureLine>{FEEDBACK_FAILED} {failure}</FailureLine>
         )}
 
         <div className="-mx-5 -mb-5 border-t border-border bg-surface-soft px-5 py-4 sm:-mx-7 sm:-mb-6 sm:px-7">

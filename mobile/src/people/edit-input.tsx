@@ -17,6 +17,7 @@ import { Card } from '@/ui/surfaces';
 import { BirthFields, useBirthForm } from './birth-fields';
 import { Sheet, styles as shared } from './parts';
 import { WordText } from '@/ui/word-text';
+import { NAME_ONLY_CHANGED, NOTHING_CHANGED, SAVE_CHANGES, SELF_NAME_NOTE } from '@people/words';
 
 /**
  * 저장된 출생 정보를 고치는 폼 — 웹의 `app/me/edit-input.tsx` 와 같은 판정 · 글자다. 여덟 글자는 서버가 이 입력에서 센다(ADR 0211).
@@ -90,7 +91,7 @@ export function EditInputForm({
           <WordText style={shared.body}>
             닉네임 <WordText style={shared.bodyStrong}>{current.name}</WordText>
           </WordText>
-          <WordText style={shared.meta}>내 이름은 프로필 닉네임으로 보여요.</WordText>
+          <WordText style={shared.meta}>{SELF_NAME_NOTE}</WordText>
         </View>
       )}
 
@@ -98,12 +99,12 @@ export function EditInputForm({
 
       {pillarsSame && (nameChanged || warn) && (
         <WordText style={warn && unchanged && !missing ? styles.warn : shared.meta}>
-          {nameChanged ? '이름만 바뀌었어요. 이름은 여덟 글자에 들어가지 않아서 출생 정보와 사주는 그대로예요.' : '바뀐 것이 없어요.'}
+          {nameChanged ? NAME_ONLY_CHANGED : NOTHING_CHANGED}
         </WordText>
       )}
 
       <View style={styles.actions}>
-        <PrimaryButton label={saving ? '저장하는 중…' : pillarsSame && nameChanged ? '이름 저장' : '변경 사항 저장'} onPress={press} busy={saving} />
+        <PrimaryButton label={saving ? '저장하는 중…' : pillarsSame && nameChanged ? '이름 저장' : SAVE_CHANGES} onPress={press} busy={saving} />
         <TextButton label="작성 그만두기" onPress={onCancel} disabled={saving} />
       </View>
 

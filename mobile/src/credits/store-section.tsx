@@ -47,6 +47,7 @@ import {
 import { PurchaseDone } from './purchase-done';
 import { pickedOf, shelfOf, type ShelfItem } from './shelf';
 import { WordText } from '@/ui/word-text';
+import { LEARN_MORE } from '@account/words';
 
 /**
  * 화면이 그리는 판 — 묻는 중 · 못 읽음(서버에 못 닿음 · Play 연결이나 상품 조회가 던짐) · 살 수 없음(제한 · 정지 · 베타 끝 · Play 상품이 아직 없음 · 가격이 묶음 가격과 다름) · 살 수 있음.
@@ -225,7 +226,7 @@ export function StoreSection({ onBought, returnTo }: { onBought: () => Promise<n
             </WordText>
           ),
         )}
-        {legalPagesOpen && <TextButton label="자세히 알아보기" onPress={() => openLegalPage('/refund')} />}
+        {legalPagesOpen && <TextButton label={LEARN_MORE} onPress={() => openLegalPage('/refund')} />}
       </View>
 
       {notice !== null && notice.kind !== 'done' && dialog !== null && 'title' in notice && (

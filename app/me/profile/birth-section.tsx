@@ -9,6 +9,7 @@ import { CALENDAR_KO, GENDER_KO } from '@/src/lib/saju';
 import { BUTTON_SECONDARY_SMALL } from '../../ui/buttons';
 import { EditInputForm } from '../edit-input';
 import { FLAT_CARD_FACE } from '../../ui/surfaces';
+import { BIRTH_EDIT } from '@/src/lib/people/words';
 
 /** 판 한 장 — 위 프로필 판과 같은 흰 판(`form.tsx` 의 `PANEL`) */
 const PANEL = `flex flex-col gap-4 ${FLAT_CARD_FACE} p-5 sm:p-6`;
@@ -80,7 +81,7 @@ export function BirthSection({ personId, query }: { personId: string; query: Que
           type="button"
           onClick={() => setOpen(true)}
           aria-expanded={false}
-          aria-label="출생 정보 수정"
+          aria-label={BIRTH_EDIT}
           className={`${BUTTON_SECONDARY_SMALL} shrink-0`}
         >
           수정

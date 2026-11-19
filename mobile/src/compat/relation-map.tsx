@@ -16,6 +16,7 @@ import { Icon } from '@/ui/icons';
 import { alpha, COLOR, ELEMENT_TONE, FONT, RADIUS as CORNER, TYPE } from '@/ui/tokens';
 import { CardFrame, Paper } from '@/ui/surfaces';
 import { WordText } from '@/ui/word-text';
+import { MAP_EMPTY_HINT, MAP_OTHERS_COMPAT, MAP_PAIR_UNSEEN, MAP_PEOPLE_COMPAT, MAP_TAP_HINT } from '@people/words';
 
 /** 누른 뒤의 박자(ms) — 웹의 `BEAT` 와 같다 */
 const BEAT = { depart: 900, travel: 900 } as const;
@@ -297,7 +298,7 @@ function AddSeat({ width }: { width: number }) {
 }
 
 function Legend({ empty }: { empty: boolean }) {
-  if (empty) return <WordText style={[styles.note, styles.legendRoom]}>사람을 저장하면 그 사람의 기운 쪽 궤도에 앉아요</WordText>;
+  if (empty) return <WordText style={[styles.note, styles.legendRoom]}>{MAP_EMPTY_HINT}</WordText>;
   return (
     <View style={[styles.legend, styles.legendRoom]}>
       <View style={styles.legendRow}>
@@ -311,10 +312,10 @@ function Legend({ empty }: { empty: boolean }) {
           <Svg width={24} height={8}>
             <Line x1={1} y1={4} x2={23} y2={4} stroke={COLOR.secondary} strokeWidth={2} strokeDasharray="0.01 5" strokeLinecap="round" />
           </Svg>
-          <WordText style={styles.legendText}>사람끼리 본 궁합</WordText>
+          <WordText style={styles.legendText}>{MAP_PEOPLE_COMPAT}</WordText>
         </View>
       </View>
-      <WordText style={styles.note}>누르면 나와의 궁합을 볼 수 있어요. 궁합을 본 사람이면 두 그림이 서로 만나요</WordText>
+      <WordText style={styles.note}>{MAP_TAP_HINT}</WordText>
     </View>
   );
 }
@@ -353,7 +354,7 @@ function PersonCard({ person, links, onClose }: { person: MapPerson; links: Retu
         <>
           <WordText numberOfLines={2} style={styles.cardLine}>
             {compat.seen && !compat.current && <WordText style={styles.stale}>{READING_STALE_LABEL} </WordText>}
-            {compat.seen ? compat.metaphor : <WordText style={{ color: tone.ink }}>아직 둘의 궁합을 보지 않았어요</WordText>}
+            {compat.seen ? compat.metaphor : <WordText style={{ color: tone.ink }}>{MAP_PAIR_UNSEEN}</WordText>}
           </WordText>
           <PrimaryButton label={compat.seen ? '궁합풀이 보기' : '궁합 보러 가기'} onPress={() => go(compat.href)} />
           <Pressable accessibilityRole="link" onPress={() => go(person.detailHref)} style={styles.tertiary}>
@@ -363,7 +364,7 @@ function PersonCard({ person, links, onClose }: { person: MapPerson; links: Retu
 
           {links.length > 0 && (
             <View style={styles.links}>
-              <WordText style={styles.note}>다른 사람과 본 궁합</WordText>
+              <WordText style={styles.note}>{MAP_OTHERS_COMPAT}</WordText>
               {links.map((link) => (
                 <Pressable
                   key={link.href}

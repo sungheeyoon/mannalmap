@@ -4,6 +4,7 @@ import { Pressable, StyleSheet, View } from 'react-native';
 
 import { READING_STALE_LABEL } from '@reading/notes';
 import { readingDate } from '@reading/seoul-date';
+import { NAMELESS } from '@reading/words';
 import { STEM_INFO, type Stem } from '@saju';
 import { withFromMe } from '@web-home/from-me';
 import { READING_CONTINUE_NOTE, SELF_READING_MAKING } from '@web-home/making';
@@ -16,6 +17,7 @@ import { CardFrame } from '@/ui/surfaces';
 
 import type { HomePerson, ReadingRow, RunningLine } from './read';
 import { WordText } from '@/ui/word-text';
+import { PEOPLE_LEAD, SAVED_PEOPLE_MANAGE } from '@people/words';
 
 const go = (href: string) => router.push(href as never);
 
@@ -122,7 +124,7 @@ export function ReceivedReadings({ readings }: { readings: readonly ReadingRow[]
             <HomeMark stem={reading.stem} />
             <View style={styles.body}>
               <View style={styles.line}>
-                <WordText style={[styles.name, styles.grow]} numberOfLines={1}>{reading.label ?? '이름 없음'}</WordText>
+                <WordText style={[styles.name, styles.grow]} numberOfLines={1}>{reading.label ?? NAMELESS}</WordText>
                 {reading.stale && <WordText style={styles.stale}>{READING_STALE_LABEL}</WordText>}
                 <WordText style={styles.date}>{readingDate(reading.createdAt)}</WordText>
               </View>
@@ -182,12 +184,12 @@ export function SavedPeople({ people, slots }: { people: readonly HomePerson[]; 
       <SectionHead
         title="저장한 사람"
         count={slots === null ? null : `${slots.used}/${slots.limit}명`}
-        link={people.length > 0 ? { label: '관리', name: '저장한 사람 관리', href: '/me/people' } : undefined}
+        link={people.length > 0 ? { label: '관리', name: SAVED_PEOPLE_MANAGE, href: '/me/people' } : undefined}
       />
       {people.length === 0 ? (
         <CardFrame >
           <View style={styles.row}>
-            <WordText style={styles.empty}>가족이나 친구의 출생 정보를 저장하고 관리하세요.</WordText>
+            <WordText style={styles.empty}>{PEOPLE_LEAD}</WordText>
           </View>
           {add}
         </CardFrame>

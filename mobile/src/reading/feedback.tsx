@@ -30,6 +30,7 @@ import { COLOR, CONTROL, FONT, RADIUS, TYPE } from '@/ui/tokens';
 import type { ReadingTarget } from './api';
 import { leaveFeedback } from './feedback-writes';
 import { WordText } from '@/ui/word-text';
+import { FEEDBACK_FAILED, FEEDBACK_LENGTH_QUESTION, FEEDBACK_MISSING_QUESTION, FEEDBACK_MULTI, FEEDBACK_QUESTION } from '@reading/words';
 
 /**
  * 읽고 나서 답하는 자리 — **글 바로 아래**다. 물음 · 글자는 웹과 같은 `@reading/feedback` 이고 차례도 `app/me/reading/feedback.tsx` 와 같다.
@@ -87,7 +88,7 @@ export function ReadingFeedback({ target, runId, given }: { target: ReadingTarge
   const shown = foldable ? unfolded : true;
   const head = (
     <View style={styles.headWords}>
-      <WordText style={styles.headTitle}>이 풀이는 어떠셨어요?</WordText>
+      <WordText style={styles.headTitle}>{FEEDBACK_QUESTION}</WordText>
       <WordText style={styles.small}>{foldable ? FEEDBACK_FOLDED_NOTE : FEEDBACK_SCOPE_NOTE}</WordText>
     </View>
   );
@@ -132,7 +133,7 @@ export function ReadingFeedback({ target, runId, given }: { target: ReadingTarge
           </View>
 
           <View style={styles.part} ref={sections.anchor('length')}>
-            <WordText style={styles.legend}>분량은 어땠나요?</WordText>
+            <WordText style={styles.legend}>{FEEDBACK_LENGTH_QUESTION}</WordText>
             <View style={styles.chips}>
               {FELT_LENGTHS.map((choice) => (
                 <Chip
@@ -156,7 +157,7 @@ export function ReadingFeedback({ target, runId, given }: { target: ReadingTarge
 
           <View style={styles.part}>
             <WordText style={styles.legend}>
-              아쉬운 점이 있다면요? <WordText style={styles.small}>중복 선택 가능</WordText>
+              {FEEDBACK_MISSING_QUESTION} <WordText style={styles.small}>{FEEDBACK_MULTI}</WordText>
             </WordText>
             <View style={styles.chipsWrap}>
               {ISSUE_TAGS.map((tag) => (
@@ -192,7 +193,7 @@ export function ReadingFeedback({ target, runId, given }: { target: ReadingTarge
             </WordText>
           </View>
 
-          {failure !== null && <WordText accessibilityRole="alert" style={styles.warn}>답을 남기지 못했어요. {failure}</WordText>}
+          {failure !== null && <WordText accessibilityRole="alert" style={styles.warn}>{FEEDBACK_FAILED} {failure}</WordText>}
 
           <PrimaryButton label={saving ? '보내는 중…' : '의견 보내기'} onPress={() => void send()} busy={saving} />
         </View>

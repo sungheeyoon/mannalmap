@@ -15,6 +15,7 @@ import { addStoredPhoto, readPhotoUploadMode, replaceStoredPhoto, type BakedVari
 import { SITE_URL } from '@/site';
 
 import type { Done } from '@/answer';
+import { UNREADABLE_PHOTO } from '@account/words';
 
 /** 내 사진 한 장 — 자리와 판본(웹 `app/me/profile/photos.ts`) */
 export type MyPhoto = { readonly position: number; readonly version: number; readonly focus: PhotoFocus };
@@ -22,8 +23,6 @@ export type MyPhoto = { readonly position: number; readonly version: number; rea
 /** 줄인 사진의 바이트 — 못 줄였으면 까닭 한 줄 */
 type Baked = { ok: true; contentType: string; base64: string } | { ok: false; message: string };
 
-/** 사진 올리기를 막은, 우리가 안 쓴 문장 — 웹 `use-photo-uploads.ts` 와 같은 글자 */
-export const UNREADABLE_PHOTO = '사진을 열지 못했어요. 다른 사진을 골라 주세요.';
 
 export async function myPhotos(client: Client): Promise<MyPhoto[]> {
   const { data, error } = await client.rpc('my_photos');

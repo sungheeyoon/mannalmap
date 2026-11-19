@@ -19,6 +19,8 @@ import { UNREACHABLE } from '@/auth/signup';
 import { TopBar } from '@/ui/top-bar';
 import { Card } from '@/ui/surfaces';
 import { WordText } from '@/ui/word-text';
+import { SHELF_COMPAT_NOTE, SHELF_EMPTY, SHELF_HOME_NOTE, SHELF_MATCH_NOTE, SHELF_PAIR_NOTE, SHELF_SINGLE_NOTE } from '@reading/words';
+import { PERSON_SEARCH_EMPTY } from '@people/words';
 
 type Shelf = Extract<ShelfView, { view: 'shelf' }>;
 
@@ -87,10 +89,10 @@ function ShelfBody({
     return (
       <EmptyState
         icon="reading"
-        title="아직 만든 풀이가 없어요"
+        title={SHELF_EMPTY}
         action={hasSelf ? { label: '사주풀이 받기', onPress: () => router.push('/me/readings/self' as never) } : { label: '내 사주 등록하기', onPress: () => goTab('/me') }}
       >
-        내 사주와 저장한 사람의 풀이는 홈 탭에서,{'\n'}두 사람의 궁합은 궁합 탭에서 시작할 수 있어요.
+        {SHELF_HOME_NOTE}{'\n'}{SHELF_COMPAT_NOTE}
       </EmptyState>
     );
   }
@@ -164,7 +166,7 @@ function ShelfBody({
             autoCapitalize="none"
             style={styles.find}
           />
-          {found.kind === 'none' && <WordText style={styles.found}>찾는 사람이 없어요</WordText>}
+          {found.kind === 'none' && <WordText style={styles.found}>{PERSON_SEARCH_EMPTY}</WordText>}
           {found.kind === 'some' && <WordText style={styles.found}>검색 결과 {found.count}권</WordText>}
         </View>
       )}
@@ -180,14 +182,14 @@ function ShelfBody({
             </View>
           )}
           {fated.length > 0 && (
-            <Group title="인연 궁합" note="서로 동의해 두 사람이 함께 보는 궁합풀이예요.">
+            <Group title="인연 궁합" note={SHELF_MATCH_NOTE}>
               {fated.map((book) => (
                 <BookRow key={book.key} book={book} />
               ))}
             </Group>
           )}
           {(singles.length > 0 || wanted === '') && (
-            <Group title="사주풀이" note="나와 저장한 사람을 한 사람씩 본 풀이예요.">
+            <Group title="사주풀이" note={SHELF_SINGLE_NOTE}>
               {singles.map((book) => (
                 <BookRow key={book.key} book={book} />
               ))}
@@ -195,7 +197,7 @@ function ShelfBody({
             </Group>
           )}
           {(privates.length > 0 || wanted === '') && (
-            <Group title="궁합풀이" note="두 사람을 함께 맞대어 본 풀이예요.">
+            <Group title="궁합풀이" note={SHELF_PAIR_NOTE}>
               {privates.map((book) => (
                 <BookRow key={book.key} book={book} />
               ))}

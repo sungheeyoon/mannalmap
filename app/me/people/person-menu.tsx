@@ -12,6 +12,7 @@ import { MENU_ITEM, MENU_PANEL } from '../../ui/surfaces';
 import { EditInputForm } from '../edit-input';
 import { usePanelSlot } from './finder';
 import { NoteEditor, RemoveConfirm } from './manage';
+import { BIRTH_EDIT } from '@/src/lib/people/words';
 
 /**
  * 카드 하나를 손대는 **한 자리.**
@@ -77,7 +78,7 @@ export function PersonActions({
         <div className={`${MENU_PANEL} absolute right-0 top-13 z-40 w-56 p-1.5`}>
           {current !== null && (
             <MenuItem icon="pencil" onClick={() => choose('edit-input')}>
-              출생 정보 수정
+              {BIRTH_EDIT}
             </MenuItem>
           )}
           <MenuItem icon="note" onClick={() => choose('note')}>

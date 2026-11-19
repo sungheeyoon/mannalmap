@@ -16,6 +16,7 @@ import { UNREACHABLE } from '@/auth/signup';
 import { readRunningReadings } from '@/reading/running';
 import { readMyReadings } from '@/reading/my-readings';
 import { readEdges, readInputs } from '@/people/data';
+import { SELF_CHART_FAILED } from '@reading/words';
 
 export type ReadingRow = {
   kind: string;
@@ -142,7 +143,7 @@ export async function readHome(client: Client): Promise<Home> {
   const stood = selfInput !== undefined && selfEdge !== null ? storedChartOf(selfInput, selfEdge.label) : null;
   const self: SelfCardData =
     stood === null
-      ? { kind: 'failed', message: '내 사주를 불러오지 못했어요.' }
+      ? { kind: 'failed', message: SELF_CHART_FAILED }
       : !stood.ok
         ? { kind: 'unreadable', message: stood.message, note: UNREADABLE_INPUT_NOTE }
         : {

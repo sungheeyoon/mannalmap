@@ -3,6 +3,7 @@
 import { BUTTON_PRIMARY, BUTTON_SECONDARY } from './ui/buttons';
 import { NoticeScreen } from './ui/notice-screen';
 import { HomeLink } from './home-link';
+import { SCREEN_FAILED_TITLE, TRY_AGAIN_LATER } from '@/src/lib/brand/words';
 
 /**
  * **오류 경계 둘이 세우는 한 화면** — `app/error.tsx`(화면 한 칸)와 `app/global-error.tsx`(루트 레이아웃).
@@ -24,8 +25,8 @@ import { HomeLink } from './home-link';
 export function ErrorScreen({ retry }: { retry: () => void }) {
   return (
     <NoticeScreen
-      title="화면을 불러오지 못했어요"
-      description={<p role="alert">잠시 후 다시 시도해 주세요.</p>}
+      title={SCREEN_FAILED_TITLE}
+      description={<p role="alert">{TRY_AGAIN_LATER}</p>}
       actions={
         <>
           <button type="button" onClick={() => retry()} className={BUTTON_PRIMARY}>

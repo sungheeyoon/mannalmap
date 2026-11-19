@@ -8,6 +8,7 @@ import { ICON_BUTTON_QUIET } from '../../ui/buttons';
 import { useDetailsMenu } from '../../ui/details-menu';
 import { Icon } from '../../ui/icons';
 import { MENU_ITEM, MENU_PANEL } from '../../ui/surfaces';
+import { BIRTH_EDIT } from '@/src/lib/people/words';
 
 /**
  * 홈 내 사주 카드의 「⋯」 — **저장한 사람 카드의 관리 메뉴(`app/me/people/person-menu.tsx`)와 같은 단추 · 같은 판 · 같은 줄이다**
@@ -33,7 +34,7 @@ export function SelfCardMenu() {
 
       <div className={`${MENU_PANEL} absolute right-0 top-13 z-40 w-56 p-1.5`}>
         <Link href="/me/profile#birth" onClick={close} className={`${MENU_ITEM} text-foreground`}>
-          출생 정보 수정
+          {BIRTH_EDIT}
         </Link>
         <Link href="/me/profile" onClick={close} className={`${MENU_ITEM} text-foreground`}>
           {MY_PROFILE_EDIT_LABEL}

@@ -25,6 +25,7 @@ import { CardFrame, Paper } from '@/ui/surfaces';
 import { useLatestReads } from '@/ui/latest-reads';
 import { settled } from '@/ui/settled';
 import { WordText } from '@/ui/word-text';
+import { SAVE_AS_SELF } from '@reading/words';
 
 /** 홈 — 차례는 웹의 `app/me/(home)/page.tsx` 와 같다. 다른 화면에서 돌아올 때마다 다시 읽는다 */
 export default function HomeScreen() {
@@ -188,7 +189,7 @@ function NoSelf({ nickname, onSaved }: { nickname: string; onSaved: () => void }
         </WordText>
       </View>
       <BirthFields form={form} showName={false} errors={sections} />
-      <PrimaryButton label={saving ? '저장하는 중…' : '내 사주로 저장'} onPress={() => void save()} disabled={saving} />
+      <PrimaryButton label={saving ? '저장하는 중…' : SAVE_AS_SELF} onPress={() => void save()} disabled={saving} />
       {failure !== null && <WordText accessibilityRole="alert" style={styles.failureText}>저장하지 못했어요. {failure}</WordText>}
     </Paper>
   );

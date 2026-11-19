@@ -13,6 +13,7 @@ import { saveSelfPerson } from './actions';
 import { actionAnswer } from '../ui/action-answer';
 import { FailureLine } from '../ui/failure-line';
 import { useSectionErrors } from '../ui/section-error';
+import { SAVE_AS_SELF } from '@/src/lib/reading/words';
 
 /**
  * 자기 사주를 한 번 등록하는 화면.
@@ -67,7 +68,7 @@ export function Onboarding({ nickname }: { nickname: string }) {
 
       <div className="flex flex-wrap items-center gap-3 max-sm:px-3">
         <button type="button" onClick={save} disabled={saving} className={BUTTON_PRIMARY}>
-          {saving ? '저장하는 중…' : '내 사주로 저장'}
+          {saving ? '저장하는 중…' : SAVE_AS_SELF}
         </button>
       </div>
 

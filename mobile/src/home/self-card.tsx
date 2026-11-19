@@ -20,6 +20,7 @@ import { Tile } from '@/ui/surfaces';
 import type { SelfCardData } from './read';
 import { SelfProfile } from './self-profile';
 import { WordText } from '@/ui/word-text';
+import { BIRTH_EDIT } from '@people/words';
 
 type Ok = Extract<SelfCardData, { kind: 'ok' }>;
 
@@ -116,7 +117,7 @@ export function SelfCard({
             label={`${label} 관리`}
             face="quiet"
             items={[
-              { label: '출생 정보 수정', onPress: () => router.push('/me/profile?edit=birth' as never) },
+              { label: BIRTH_EDIT, onPress: () => router.push('/me/profile?edit=birth' as never) },
               { label: MY_PROFILE_EDIT_LABEL, onPress: () => router.push('/me/profile' as never) },
             ]}
           >

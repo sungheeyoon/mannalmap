@@ -29,8 +29,9 @@ describe('앱 공유본 · 소개 화면의 글자', () => {
   }
 
   it('막힌 링크의 「로그인 없이 사주를 볼 수 있어요」는 웹의 그 줄이다 — 앱도 만세력까지 로그인을 묻지 않는다(ADR 0213)', () => {
-    const line = '생일만 넣으면 로그인 없이 사주를 볼 수 있어요.';
-    expect(read('app/share/not-found.tsx')).toContain(line);
-    expect(withoutComments(read('mobile/src/share/view.tsx'))).toContain(line);
+    /* 두 쪽이 한 원본(`src/lib/brand/words.ts`)의 같은 이름을 부른다(G-168) */
+    expect(read('src/lib/brand/words.ts')).toContain("export const SHARE_GONE_INVITE = '생일만 넣으면 로그인 없이 사주를 볼 수 있어요.';");
+    expect(read('app/share/not-found.tsx')).toMatch(/\bSHARE_GONE_INVITE\b/);
+    expect(withoutComments(read('mobile/src/share/view.tsx'))).toMatch(/\bSHARE_GONE_INVITE\b/);
   });
 });

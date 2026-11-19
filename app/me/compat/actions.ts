@@ -9,6 +9,7 @@ import { missingAnswer, type Query } from '@/src/lib/input/query';
 import { pairSeatArgs, unsupportedForSaving } from '@/src/lib/input/edit';
 import { answerOfThrown, recordDbFailure, userFacingDbMessage } from '../../db-error';
 import { rpcArgs } from '@/src/lib/db';
+import { COMPAT_OPEN_FAILED } from '@/src/lib/people/words';
 
 /**
  * 이 쌍에 적어 둔 사이 — **화면이 저장된 값을 보여 주려고 읽는다.**
@@ -179,7 +180,7 @@ export async function openPairScreen(
 
   const pair = ((data ?? []) as { person_a: string; person_b: string }[])[0];
   if (pair === undefined) {
-    return { ok: false, kind: 'failed', message: '두 사람의 궁합을 열지 못했어요. 잠시 뒤 다시 시도해 주세요.' };
+    return { ok: false, kind: 'failed', message: COMPAT_OPEN_FAILED };
   }
 
   /**

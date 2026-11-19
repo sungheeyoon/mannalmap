@@ -15,6 +15,7 @@ import { ClaimStrengthLegend, UtteranceList } from './utterances';
 import { BETWEEN_RELATIONS_NOTE, DAY_TO_DAY_NOTE } from '@/src/lib/saju/view/notes';
 import { TOPICS_THE_TABLE_HOLDS, TOPIC_TABLE_FOOTNOTE, said, warningsToShow } from '@/src/lib/saju/view';
 import { CARD, TYPE_NAME } from './ui/surfaces';
+import { COMPAT_BETWEEN } from '@/src/lib/people/words';
 
 /**
  * 두 사람 **사이**에 대해 말할 수 있는 것 — 명식은 받지 않는다.
@@ -113,7 +114,7 @@ function BetweenRelations({
   return (
     <section className={CARD}>
       <div className="flex flex-wrap items-baseline gap-x-3">
-        <h2 className={TYPE_NAME}>두 사주 사이의 관계</h2>
+        <h2 className={TYPE_NAME}>{COMPAT_BETWEEN}</h2>
         <p className="text-sm text-secondary">
           {relations.length === 0 ? '걸리는 것이 없습니다' : `${relations.length}개`}
         </p>

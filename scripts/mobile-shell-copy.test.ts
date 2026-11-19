@@ -3,7 +3,12 @@ import { join } from 'node:path';
 
 import { describe, expect, it } from 'vitest';
 
-/** **앱 껍데기 · 홈의 짧은 말은 웹의 글자 그대로다** — 웹에서 글자를 고치면 이 시험이 앱 쪽 옛 글자를 이름으로 댄다 */
+/**
+ * **앱 껍데기 · 홈의 짧은 말은 웹의 글자 그대로다** — 웹에서 글자를 고치면 이 시험이 앱 쪽 옛 글자를 이름으로 댄다.
+ *
+ * 웹 쪽 목록(`WEB`)은 웹이 글자를 적는 자리만 든다. 웹 · 앱이 함께 부르는 원본(`src/lib/<영역>/words.ts` · `src/lib/reading/running.ts` 등, G-168)에 산
+ * 글자는 앱 파일에 글자로 남지 않으니 이 시험이 잴 것이 없다 — 그 원본을 목록에 넣으면 「앱이 웹 글자를 베꼈나」가 아니라 「원본에 있나」를 재게 된다.
+ */
 const ROOT = join(import.meta.dirname, '..');
 const read = (path: string) => readFileSync(join(ROOT, path), 'utf8');
 
@@ -25,8 +30,6 @@ const WEB = [
   'app/me/home/self-menu.tsx',
   'app/me/home/self-profile.tsx',
   'app/me/home/running-line.ts',
-  /* 만드는 중인 풀이의 이름은 웹 · 앱이 함께 쓰는 이 파일에 산다(G-168) */
-  'src/lib/reading/running.ts',
   'app/me/home/circle.ts',
   'app/me/onboarding.tsx',
   'app/ui/failure-line.tsx',

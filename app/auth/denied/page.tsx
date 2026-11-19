@@ -5,6 +5,7 @@ import { NoticeScreen } from '../../ui/notice-screen';
 import { SIGNED_OUT_EXIT, SIGNED_OUT_REACH } from '../../service-features';
 import { visitorExitOf, withReturnPath } from '@/src/lib/consent';
 import { HomeLink } from '../../home-link';
+import { SIGN_IN_DENIED_BODY, SIGN_IN_DENIED_TITLE } from '@/src/lib/account/words';
 
 /**
  * 로그인이 끝나지 못한 자리.
@@ -28,11 +29,10 @@ export default async function DeniedPage({
 
   return (
     <NoticeScreen
-      title="로그인하지 못했어요"
+      title={SIGN_IN_DENIED_TITLE}
       description={
         <p>
-          로그인을 마치지 못했어요. 연결이 끊겼을 수 있어요. 아래
-          「다시 로그인」을 눌러 주세요.
+          {SIGN_IN_DENIED_BODY}
         </p>
       }
       actions={

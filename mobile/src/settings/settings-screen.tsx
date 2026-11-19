@@ -34,8 +34,8 @@ import { AccountNotice, LinkRow, SettingsGroup, TextRow, FAILURE_INSET } from '.
 import { myPhotos, photoSource } from './photos';
 import { readSettings, settingsUnreachable, type SettingsData } from './settings';
 import { WordText } from '@/ui/word-text';
+import { DISCOVERY_SETTINGS_FAILED, NOT_CONFIRMED_YET, PRIVACY_NOTICE_ROW, SIGN_OUT_FAILED } from '@account/words';
 
-const SIGN_OUT_FAILED = '로그아웃하지 못했어요. 다시 시도해 주세요.';
 
 /**
  * 설정 — 나 → 인연 → 동의 → 고객센터 → 약관 및 정책 · 소개 → 계정 → 탈퇴하기. 자주 바꾸는 것이 위, 되돌리기 어려운 것이 맨 아래.
@@ -127,7 +127,7 @@ export function SettingsScreen() {
                 {matchEntriesStand(matchOpen) && <PreferenceRow key={discovery.preferGender} current={discovery.preferGender} />}
               </>
             ) : (
-              <FailureLine style={FAILURE_INSET} onRetry={load}>{`인연 찾기 설정을 불러오지 못했어요. ${discovery.reason}`}</FailureLine>
+              <FailureLine style={FAILURE_INSET} onRetry={load}>{`${DISCOVERY_SETTINGS_FAILED} ${discovery.reason}`}</FailureLine>
             )}
           </SettingsGroup>
         )}
@@ -173,8 +173,8 @@ function goRow(link: { href: string; label: string }) {
 /** 처리 안내 — 전문은 웹의 `/privacy` 현행 판이다(ADR 0172 추기 2026-11-07). 웹 주소가 없는 빌드에는 안 선다 */
 function PrivacyRow({ ackAt }: { ackAt: string | null }) {
   if (!legalPagesOpen) return null;
-  const label = '개인정보 처리 안내';
-  const help = ackAt === null ? '아직 확인하지 않았어요.' : `${asKoreanDay(ackAt.slice(0, 10))}에 확인했어요.`;
+  const label = PRIVACY_NOTICE_ROW;
+  const help = ackAt === null ? NOT_CONFIRMED_YET : `${asKoreanDay(ackAt.slice(0, 10))}에 확인했어요.`;
   return <LinkRow label={label} help={help} onPress={() => openLegalPage('/privacy')} />;
 }
 

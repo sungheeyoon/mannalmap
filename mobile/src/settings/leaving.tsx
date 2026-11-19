@@ -11,6 +11,7 @@ import { revokeAppleBeforeLeaving } from './apple-revoke';
 import { unlinkKakaoBeforeLeaving } from './kakao-unlink';
 import { requestAccountDeletion } from './settings';
 import { WordText } from '@/ui/word-text';
+import { LEAVE_TITLE } from '@account/words';
 
 /**
  * 떠나는 자리 — 웹 `app/me/leaving.tsx` 와 같은 차례다: **여는 누름은 아무것도 안 지운다.** 창이 무엇이 지워지고 무엇이 남는지 먼저
@@ -56,7 +57,7 @@ export function RequestDeletion({ onDone, style }: {
           setAsking(false);
           setFailure(null);
         }}
-        title="정말 탈퇴할까요?"
+        title={LEAVE_TITLE}
         confirmLabel={working ? '보내는 중…' : '탈퇴'}
         onConfirm={() => void leave()}
         danger

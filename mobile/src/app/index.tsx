@@ -22,6 +22,7 @@ import { COLOR, FONT, RADIUS, TYPE, TYPE_TITLE } from '@/ui/tokens';
 import { Paper } from '@/ui/surfaces';
 import { KEEP_VIEW } from '@/ui/keep-view';
 import { WordText } from '@/ui/word-text';
+import { ENTER_BIRTH, HERO_QUESTION, SEE_MY_SAJU_FREE } from '@brand/words';
 
 type Doorway = 'self' | 'pair';
 
@@ -151,11 +152,11 @@ function BirthScreen({ signedOut }: { signedOut: boolean }) {
           <Paper style={styles.paper}>
             {signedOut ? (
               <View style={styles.head}>
-                <WordText accessibilityRole="header" style={styles.title}>나는 어떤 사람일까?</WordText>
+                <WordText accessibilityRole="header" style={styles.title}>{HERO_QUESTION}</WordText>
                 <EntryTabs value={doorway} onPick={setDoorway} />
               </View>
             ) : (
-              <WordText style={[styles.title, styles.titleAlone]}>출생 정보를 입력해 주세요</WordText>
+              <WordText style={[styles.title, styles.titleAlone]}>{ENTER_BIRTH}</WordText>
             )}
 
             {/* 궁합 쪽 — 앱에는 로그인 전 궁합 결과가 없어 로그인으로 잇는다(ADR 0213 의 11 · ADR 0226). 입력 판은 내려 두지 않고 숨긴다 — 적던 값이 남는다 */}
@@ -175,7 +176,7 @@ function BirthScreen({ signedOut }: { signedOut: boolean }) {
             {/* 폼이 짧은 화면에서도 단추는 엄지가 닿는 맨 아래에 선다 */}
             <View style={styles.action}>
               {/* 로그인 전에는 웹 첫 화면의 주 단추와 같은 글자다 — 무엇이 무료인지 단추가 말한다(ADR 0131 · 0226) */}
-              <PrimaryButton label={signedOut ? '무료로 내 사주 보기' : '사주 보기'} onPress={submit} />
+              <PrimaryButton label={signedOut ? SEE_MY_SAJU_FREE : '사주 보기'} onPress={submit} />
               {/* 이미 쓰는 사람의 길 — 주 단추 바로 아래 한 줄, 웹 첫 화면과 같은 글자다(ADR 0226). 생년월일 없이 홈으로 간다 */}
               {signedOut && (
                 <View style={styles.member}>

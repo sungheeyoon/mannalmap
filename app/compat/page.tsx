@@ -14,6 +14,7 @@ import { PAPER_FACE, TYPE_SECTION } from '../ui/surfaces';
 import { CompatSummary } from './archive';
 import { choosableOf } from './choosable';
 import { CompatRelationMap } from './relation-map-section';
+import { COMPAT_DIRECT_NOT_SAVED, COMPAT_NEW } from '@/src/lib/people/words';
 
 export const metadata = {
   title: '궁합',
@@ -85,13 +86,13 @@ export default async function CompatPage() {
       {/* 지도가 칸을 채우면 고르는 칸이 이 구역을 머리글 아래로 데려오고 제목에 초점을 둔다(`compat-picker.tsx`) */}
       <section aria-labelledby="compat-new" className="flex scroll-mt-24 flex-col gap-4">
         <h2 id="compat-new" tabIndex={-1} className={`${TYPE_SECTION} outline-none`}>
-          궁합 새로 보기
+          {COMPAT_NEW}
         </h2>
         <Suspense fallback={<div className={`h-72 ${PAPER_FACE}`} />}>
           <CompatPicker people={people} />
         </Suspense>
         <p className="text-small leading-6 text-secondary">
-          직접 입력한 사람은 <strong className="font-semibold text-foreground">저장한 사람에 추가되지 않아요.</strong>
+          직접 입력한 사람은 <strong className="font-semibold text-foreground">{COMPAT_DIRECT_NOT_SAVED}</strong>
         </p>
       </section>
 

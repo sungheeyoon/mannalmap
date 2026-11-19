@@ -28,6 +28,7 @@ import type { MyPhoto } from './photos';
 import { FailureLine } from '../../ui/failure-line';
 import { FIELD } from '../../ui/fields';
 import { FLAT_CARD_FACE } from '../../ui/surfaces';
+import { INTRO_PLACEHOLDER, PROFILE_SAVE } from '@/src/lib/account/words';
 
 /** 판 한 장 — 무리 지은 목록과 같은 흰 판 */
 const PANEL = `flex flex-col gap-5 ${FLAT_CARD_FACE} p-5 sm:p-6`;
@@ -247,7 +248,7 @@ export function ProfileForm({
             }
             maxLength={INTRO_MAX}
             rows={3}
-            placeholder="간단한 소개를 입력해 주세요"
+            placeholder={INTRO_PLACEHOLDER}
             aria-describedby="intro-count"
             className={`${FIELD} py-3 leading-6`}
           />
@@ -264,7 +265,7 @@ export function ProfileForm({
             className={BUTTON_PRIMARY}
           >
             {/* 사진은 따로 바로 저장된다 — 이 단추가 드는 둘만 이름에 적는다(대장 40) */}
-            {saving ? '저장하는 중…' : '닉네임 · 소개 저장'}
+            {saving ? '저장하는 중…' : PROFILE_SAVE}
           </button>
           {/* 저장이 성공한 뒤에만 잠깐 — 다시 고치기 시작하면 걷힌다(대장 31) */}
           <DoneNote>{changed ? '' : done.note}</DoneNote>

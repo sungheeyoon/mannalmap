@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { BUTTON_PRIMARY, BUTTON_SECONDARY } from '../../ui/buttons';
 import { NoticeScreen } from '../../ui/notice-screen';
 import { COMPAT_ENTRY_LABEL } from '../../service-features';
+import { PERSON_NOT_FOUND, PERSON_PICK_AGAIN } from '@/src/lib/people/words';
 
 /**
  * **없는 사람과 못 보는 사람이 도착하는 같은 자리.**
@@ -21,9 +22,9 @@ export default function PersonNotFound() {
       title="찾을 수 없어요"
       description={
         <p>
-          주소에 적힌 사람을 찾지 못했어요.
+          {PERSON_NOT_FOUND}
           <br />
-          목록에서 다시 골라 주세요.
+          {PERSON_PICK_AGAIN}
         </p>
       }
       actions={

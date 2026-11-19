@@ -15,7 +15,8 @@ import {
 
 import { findStatus, findsInList, pickable } from '@/src/lib/people/pick';
 
-import { NO_MATCH, PLACEHOLDER } from '../../person-combobox';
+import { PLACEHOLDER } from '../../person-combobox';
+import { PERSON_SEARCH_EMPTY } from '@/src/lib/people/words';
 import { Icon } from '../../ui/icons';
 
 /**
@@ -140,7 +141,7 @@ export function PeopleFinder({ people }: { people: Findable[] }) {
             안 쳤으면 비어 있다.
           */}
           <p id={statusId} role="status" className={status.kind === 'idle' ? 'sr-only' : 'px-2 text-small text-secondary'}>
-            {status.kind === 'none' ? NO_MATCH : status.kind === 'some' ? `검색 결과 ${status.count}명` : ''}
+            {status.kind === 'none' ? PERSON_SEARCH_EMPTY : status.kind === 'some' ? `검색 결과 ${status.count}명` : ''}
           </p>
         </div>
       )}

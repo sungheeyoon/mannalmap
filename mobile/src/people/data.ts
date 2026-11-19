@@ -15,6 +15,7 @@ import { readAccount } from '@/auth/account';
 import type { Done } from '@/answer';
 import { readRunningReadings } from '@/reading/running';
 import { readMyReadings } from '@/reading/my-readings';
+import { PERSON_SAVE_UNKNOWN } from '@people/words';
 
 export type { SameChart };
 
@@ -226,7 +227,7 @@ export async function addPerson(client: Client, query: Query, note: string, even
   const { data, error } = await client.rpc('create_managed_person', rpcArgs<'create_managed_person'>(managedPersonArgs(query, note)));
   if (error !== null) return { ok: false, kind: 'failed', message: userFacingDbMessage(error, 'create_managed_person') };
   if (typeof data !== 'string') {
-    return { ok: false, kind: 'failed', message: '저장이 끝났는지 알 수 없어요. 저장한 사람 목록을 다시 열어 봐 주세요.' };
+    return { ok: false, kind: 'failed', message: PERSON_SAVE_UNKNOWN };
   }
   return { ok: true, personId: data };
 }
