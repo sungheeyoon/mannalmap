@@ -36,7 +36,7 @@ const appVisibility: PageVisibility = {
  * **결과 칸의 상태와 누름** — 웹의 `app/me/reading/use-reading-panel.ts` 와 같은 판단(`reading-flow` · `panel-chrome` · `watch-run`)을 탄다.
  *
  * 웹과 다른 자리는 하나다. 웹은 끝난 것을 본 액션의 응답이 화면을 다시 싣고, 앱은 그런 길이 없어 **끝난 것을 본 물음에서 풀이 칸을
- * 한 번 더 읽는다.** 맛보기 잇기 · 예시 글은 없다(입구 결정 · 웹의 개발 기계 전용).
+ * 한 번 더 읽는다.** 로그인 전 사주 문단 잇기 · 예시 글은 없다(입구 결정 · 웹의 개발 기계 전용).
  */
 export function useReadingPanel({
   target,

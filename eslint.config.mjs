@@ -78,9 +78,9 @@ const NO_NODE = [
  * 화면(.tsx)은 DB 를 직접 부르지 않는다 — **문**(.ts)이 부른다 (ADR 0072·0078).
  *
  * 구문으로 거른다: `.rpc()` 와 `.from()`. `.from()` 은 `Array.from` 같은 이름과 겹쳐서 객체
- * 이름으로 뺀다. 잠근 날 이미 부르고 있던 열셋 중 남은 자리는 **그 줄에** `eslint-disable-next-line`
- * 이 붙어 있다. 그 표시는 줄 하나를 통째로 끄므로, **어느 호출인지와 몇 자리인지는 `scripts/layers.test.ts`
- * 가 지문으로 잠근다** — 같은 줄의 둘째 호출도, 지운 자리의 예산을 쓰는 새 호출도 거기서 빨개진다.
+ * 이름(`NOT_A_DB_OBJECT`)으로 뺀다. 잠근 날 이미 부르고 있던 열셋은 모두 문으로 옮겨 남은 자리가 0 이다(G-109). 이 규칙을
+ * 끄는 `eslint-disable-next-line` 은 줄 하나를 통째로 끄므로, **어느 호출인지와 몇 자리인지는 `scripts/layers.test.ts`
+ * 가 지문으로 잠근다** — 그 목록(`SCREEN_DB_CALLS_STILL_THERE`)이 비어 있어 새 호출은 표시를 달아도 거기서 빨개진다.
  */
 const NO_DB_CALL_IN_SCREENS = [
   {
@@ -88,8 +88,7 @@ const NO_DB_CALL_IN_SCREENS = [
     message: "화면(.tsx)에서 .rpc() 를 부르지 않는다 — 읽는 문(.ts)으로 옮긴다 (docs/architecture.md)",
   },
   {
-    selector:
-      "CallExpression[callee.property.name='from']:not([callee.object.name=/^(Array|Buffer|Uint8Array|Int32Array|Float64Array|Object|Promise|Set|Map|String)$/])",
+    selector: `CallExpression[callee.property.name='from']:not([callee.object.name=/${codeRules.NOT_A_DB_OBJECT.source}/])`,
     message: "화면(.tsx)에서 .from() 을 부르지 않는다 — 읽는 문(.ts)으로 옮긴다 (docs/architecture.md)",
   },
 ];
@@ -99,10 +98,10 @@ const NO_DB_CALL_IN_SCREENS = [
 // -----------------------------------------------------------------------------
 
 /**
- * 모양(`CODE_SHAPE` — enum · 내장을 잇지 않는 class) · 미결 표시(`NO_LOOSE_ENDS`) · `console`(`NO_CONSOLE`)의 값은 앱과 한 벌이다 —
- * `eslint-code-rules.cjs`. 어디에 거는지만 여기서 정한다.
+ * 모양(`CODE_SHAPE` — enum · 내장을 잇지 않는 class) · 미결 표시(`NO_LOOSE_ENDS`) · `console`(`NO_CONSOLE`) · 타입을 끄는
+ * 탈출구(`NO_TYPE_ESCAPES`)의 값은 앱과 한 벌이다 — `eslint-code-rules.cjs`. 어디에 거는지만 여기서 정한다.
  */
-const { CODE_SHAPE, NO_LOOSE_ENDS, NO_CONSOLE } = codeRules;
+const { CODE_SHAPE, NO_LOOSE_ENDS, NO_CONSOLE, NO_TYPE_ESCAPES } = codeRules;
 
 /**
  * **열쇠(`service_role`)를 드는 자리는 이름으로 든다**(ADR 0010 · 0136). 열쇠는 사용자 JWT 에 닫아 둔 문을 부를 때만
@@ -150,6 +149,19 @@ const eslintConfig = defineConfig([
   {
     /** 안 걸리는 예외 표시는 지운다 — 남겨 두면 다음 사람이 그 줄을 또 끈다 */
     linterOptions: { reportUnusedDisableDirectives: "error" },
+  },
+  {
+    /**
+     * **경고도 붉다** — `npm run lint` 는 `--max-warnings 0` 이다. 안 쓰는 이름의 경고(프리셋 `eslint-config-next/typescript`)는
+     * `_` 로 시작하는 이름과 나머지(`...rest`)를 꺼내려고 버린 칸을 세지 않는다 — 자리를 지키는 인자(`(name, ..._args)`)와
+     * `const { a: _a, ...rest } = x` 는 일부러 안 쓴다. 앱 프리셋(`eslint-config-expo`)도 나머지의 형제는 안 센다.
+     */
+    rules: {
+      "@typescript-eslint/no-unused-vars": [
+        "warn",
+        { argsIgnorePattern: "^_", varsIgnorePattern: "^_", caughtErrorsIgnorePattern: "^_", destructuredArrayIgnorePattern: "^_", ignoreRestSiblings: true },
+      ],
+    },
   },
   // Override default ignores of eslint-config-next.
   globalIgnores([
@@ -231,11 +243,12 @@ const eslintConfig = defineConfig([
   // 코드 규칙 (ADR 0086, `CODING_STANDARDS.md`)
   // ---------------------------------------------------------------------------
   {
-    /** 모양·미결 — 소스 전부. `no-restricted-syntax` 의 몫(enum·class)은 위 블록마다 `CODE_SHAPE` 로 든다 */
+    /** 모양·미결·타입 탈출구 — 소스 전부. `no-restricted-syntax` 의 몫(enum·class)은 위 블록마다 `CODE_SHAPE` 로 든다 */
     files: [`src/**/*.${ANY}`, `app/**/*.${ANY}`, `scripts/**/*.${ANY}`, `e2e/**/*.${ANY}`, "proxy.ts"],
     rules: {
       "@typescript-eslint/consistent-type-definitions": ["error", "type"],
       "no-warning-comments": NO_LOOSE_ENDS,
+      ...NO_TYPE_ESCAPES,
     },
   },
   {

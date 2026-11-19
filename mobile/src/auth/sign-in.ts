@@ -28,7 +28,7 @@ export async function signInWithGoogle(): Promise<SignInAnswer> {
     if (current.session === null) {
       let google: typeof import('@react-native-google-signin/google-signin');
       try {
-        google = require('@react-native-google-signin/google-signin');
+        google = await import('@react-native-google-signin/google-signin');
       } catch {
         return notReady();
       }
@@ -75,14 +75,14 @@ export async function signOut(client: Client): Promise<boolean> {
     return false;
   }
   try {
-    const google: typeof import('@react-native-google-signin/google-signin') = require('@react-native-google-signin/google-signin');
+    const google = await import('@react-native-google-signin/google-signin');
     await google.GoogleSignin.signOut();
   } catch (thrown) {
     /* 네이티브 모듈이 없는 Expo Go · 구글 쪽 실패 — 우리 세션은 이미 끊겼다 */
     console.error('google sign-out', thrown);
   }
   /* 카카오도 끊어야 다음 로그인에서 다른 카카오계정을 고를 수 있다(ADR 0224). 여기서 불러들인다 — `./kakao` 가 이 파일을 부른다 */
-  const kakao: typeof import('./kakao') = require('./kakao');
+  const kakao = await import('./kakao');
   await kakao.signOutOfKakao();
   return true;
 }

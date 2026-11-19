@@ -28,7 +28,7 @@ type KakaoModules = { core: typeof import('@react-native-kakao/core'); user: typ
 async function kakaoReady(key: string): Promise<KakaoModules | null> {
   let modules: KakaoModules;
   try {
-    modules = { core: require('@react-native-kakao/core'), user: require('@react-native-kakao/user') };
+    modules = { core: await import('@react-native-kakao/core'), user: await import('@react-native-kakao/user') };
   } catch {
     return null;
   }

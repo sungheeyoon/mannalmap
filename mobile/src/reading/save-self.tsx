@@ -71,7 +71,7 @@ function useSaveContext(): SaveContext | null {
 
 /**
  * **결과 화면의 다음 행동** — 갈래와 글자는 웹의 `app/save-for-reading.tsx` 다. 로그인 전이면 무료 풀이 단추 하나가 서고(ADR 0213 추기 2026-11-12), 내 사주가
- * 없으면 내 사주인지 먼저 묻고(ADR 0128), 아니면 「저장한 사람」으로 저장한다. 웹이 함께 잇는 로그인 전 맛보기는 앱에 없어 그 갈래도 없다.
+ * 없으면 내 사주인지 먼저 묻고(ADR 0128), 아니면 「저장한 사람」으로 저장한다. 웹이 함께 잇는 로그인 전 사주 문단은 앱에 없어 그 갈래도 없다.
  * `want` 는 로그인 전에 누른 일(풀이)이다 — 로그인 화면이 그 까닭을 말하고, 세션이 끊겨 다시 물을 때 주소에 그대로 싣는다. 내 사주를 저장하면 풀이 칸으로 간다.
  */
 export function SavePersonForReading({ query, want }: { query: Query; want: ChartWant | null }) {
