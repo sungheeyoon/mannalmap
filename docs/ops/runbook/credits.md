@@ -344,6 +344,8 @@ update retention.reading_payment set hold_reason = null, held_at = null where or
    | `reading_credits_5` | 풀이권 5장 | 19,900원 |
    | `reading_credits_20` | 풀이권 20장 | 59,000원 |
 
+   **가격은 이 표(코드의 `READING_BUNDLES`) 그대로 건다 — 다르면 앱이 그 묶음을 진열에서 뺀다**(G-166, ADR 0259 — 약관 · 환불정책 · 장부가 이 값을 적는다). 콘솔 가격만 바꾸면 그 묶음이 앱에서 사라질 뿐 알림은 오지 않는다 — 가격을 바꾸려면 코드 · 약관을 먼저 바꾼다.
+
    소비형이다 — 서버가 소비한다. **multi-quantity(한 번에 여럿 사기)는 켜지 않는다** — 서버는 수량 1 만 지급하고, 2 이상이면 지급 · 소비하지 않아 Google 이 사흘 뒤 돌려준다(ADR 0253). **판매 국가는 대한민국만 고른다**(ADR 0230 — 장부 · 고지가 원화 전제). 상품의 가격 · 국가와 앱의 국가/지역(Production → Countries / regions) 둘 다
 3. **결제 검증용 서비스 계정** — Google Cloud → IAM & Admin → Service Accounts → 새 계정 → Keys → JSON. 같은 프로젝트에서 **Google Play Android Developer API** 를 켠다.
    Play Console → Users and permissions → Invite → 그 이메일 → 이 앱에 **View financial data, orders, and cancellation survey responses** · **Manage orders and subscriptions** 둘만.

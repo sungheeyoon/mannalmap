@@ -57,7 +57,7 @@ CI=1 npx vitest run --coverage --coverage.reporter=text \
 - **커버리지 문턱** — 위 표가 까닭이다
 - **앱의 누름 · 화면 상태** — 앱(`mobile/`)을 CI 가 재는 것은 타입 · 린트 · 번들 · 단위 시험과 앱이 부르는 DB · 문(`scripts/check-mobile.mjs`)까지다. 기기에서 누르는 흐름과
   화면의 상태(로딩 · 빈 칸 · 실패)는 안 잰다 — 대신 기기 · Play 샌드박스 런북(`docs/ops/runbook/mobile-release.md` 「스토어에 올리기 전에 네이티브에서 본다」 ·
-  `docs/ops/runbook/credits.md` 「Google Play 결제 — 확인 · 한 번 지급 · 소비, 스토어 환불의 회수」)이 사람의 걸음으로 든다. 잴지는 간극 대장의 G-167 이 묻는다
+  `docs/ops/runbook/credits.md` 「Google Play 결제 — 확인 · 한 번 지급 · 소비, 스토어 환불의 회수」)이 사람의 걸음으로 든다. 자동 시험(에뮬레이터 · Maestro · Detox 꼴)은 두지 않는다 — 보류, 실기기에서 구매 칸 상태 회귀가 다시 나면 다시 본다(G-167, ADR 0259)
 
 ## 어디를 봐야 하나
 
