@@ -3,7 +3,7 @@ import { fileURLToPath } from 'node:url';
 
 import { describe, expect, it } from 'vitest';
 
-import { appAndroid, nativeFindings, report } from './mobile-native.mjs';
+import { MAVEN_ATTEMPTS, MAVEN_CONCURRENCY, appAndroid, locate, nativeFindings, report } from './mobile-native.mjs';
 
 /**
  * 고정 자료는 `@react-native-kakao` 두 판의 실제 파일이다 — `android/` 의 gradle 은 그대로, `package.json` 은 이름 · 판 · `sdkVersions.android` 만.
@@ -20,6 +20,9 @@ const app = appAndroid({ catalogText, buildProperties: { extraMavenRepos: [kakao
 
 /** 카카오 SDK 는 카카오 저장소에만 있다 — 실제 저장소들의 답과 같다(2026-11-07 `curl -I`) */
 const head = async (url: string) => (url.startsWith('https://devrepo.kakao.com/') ? 200 : 404);
+
+/** 다시 묻기 전에 쉬지 않는다 — 시험이 기다리지 않게 */
+const quick = async () => {};
 
 const failsOf = async (input: Parameters<typeof nativeFindings>[0]) =>
   (await nativeFindings(input)).filter((line) => line.level === 'fail').map((line) => `${line.lib.name} ${line.what}`);
@@ -132,8 +135,74 @@ describe('Maven 저장소', () => {
     const offline = async () => {
       throw new Error('ENOTFOUND');
     };
-    const lines = await nativeFindings({ app: appAndroid({ catalogText }), modules: kakao('3.2.0'), head: offline });
+    const lines = await nativeFindings({ app: appAndroid({ catalogText }), modules: kakao('3.2.0'), head: offline, pause: quick });
     expect(lines.filter((one) => one.what === 'maven').map((one) => one.level)).toEqual(['warn', 'warn']);
+  });
+
+  /**
+   * #1170 — Maven Central 이 429 로 막은 좌표 34 개를 「없다」로 세어 main 이 붉었다(경고 0). 「없다」는 저장소가 404 · 410 으로 말한 것뿐이다.
+   * 고치기 전의 `locate`(200 이 아니면 없다)로 되돌리면 아래 첫 단언이 `['fail', 'fail']` 로 붉다
+   */
+  it('429 · 403 · 5xx 는 「없다」가 아니다 — 다시 묻고 그래도 그러면 경고다. 모든 저장소가 404 · 410 이면 붉다 (#1170)', async () => {
+    const noRepo = appAndroid({ catalogText });
+    const levels = async (status: number) =>
+      (await nativeFindings({ app: noRepo, modules: kakao('3.2.0'), head: async () => status, pause: quick })).filter((one) => one.what === 'maven').map((one) => one.level);
+    for (const status of [429, 403, 500, 502, 503]) expect(await levels(status), String(status)).toEqual(['warn', 'warn']);
+    for (const status of [404, 410]) expect(await levels(status), String(status)).toEqual(['fail', 'fail']);
+    const fail = (await nativeFindings({ app: noRepo, modules: kakao('3.2.0'), head: async () => 404, pause: quick })).find((one) => one.level === 'fail');
+    expect(fail?.coord).toBe('com.kakao.sdk:v2-common:2.25.1');
+  });
+
+  it('다시 물어 답이 서면 그 답이다 — 한 주소에 세 번까지, 한 저장소가 막혀도 다른 저장소에 있으면 찾음이다', async () => {
+    const coord = { group: 'com.example', artifact: 'lib', version: '1.0.0' };
+    const answers = (list: number[]) => {
+      let at = 0;
+      return async () => list[Math.min(at++, list.length - 1)];
+    };
+    expect(await locate(coord, ['https://r'], answers([429, 200]), { pause: quick })).toBe('https://r');
+    expect(await locate(coord, ['https://r'], answers([503, 404]), { pause: quick })).toBeNull();
+    const asked: string[] = [];
+    const waited: number[] = [];
+    const pause = async (attempt: number) => {
+      waited.push(attempt);
+    };
+    expect(await locate(coord, ['https://r'], async (url) => (asked.push(url), 429), { pause })).toBe('unreached');
+    expect(asked).toEqual(Array(MAVEN_ATTEMPTS).fill('https://r/com/example/lib/1.0.0/lib-1.0.0.pom'));
+    expect(waited).toEqual([1, 2]);
+    expect(await locate(coord, ['https://a', 'https://b'], async (url) => (url.startsWith('https://a') ? 429 : 200), { pause: quick })).toBe('https://b');
+    // 한 저장소가 막히고 나머지는 없다고 하면 모른다 — 막힌 쪽에 있을 수 있다
+    expect(await locate(coord, ['https://a', 'https://b'], async (url) => (url.startsWith('https://a') ? 429 : 404), { pause: quick })).toBe('unreached');
+  });
+
+  it(`한 번에 ${MAVEN_CONCURRENCY} 개까지만 묻고, 모듈 여럿이 적은 같은 좌표는 한 번만 묻는다`, async () => {
+    const files: Record<string, string> = {};
+    const modules = Array.from({ length: 10 }, (_, at) => {
+      files[`/m/lib${at}/android/build.gradle`] = [
+        "plugins { id 'expo-module-gradle-plugin' }",
+        'dependencies {',
+        `  implementation 'com.example:own${at}:1.0.0'`,
+        `  implementation 'com.example:own${at}b:1.0.0'`,
+        "  implementation 'com.example:shared:1.0.0'",
+        '}',
+      ].join('\n');
+      return { name: `lib${at}`, version: '1.0.0', androidDir: `/m/lib${at}/android` };
+    });
+    let active = 0;
+    let most = 0;
+    const asked: string[] = [];
+    const slow = async (url: string) => {
+      active += 1;
+      most = Math.max(most, active);
+      asked.push(url);
+      await new Promise((resolve) => setTimeout(resolve, 5));
+      active -= 1;
+      return 200;
+    };
+    const lines = await nativeFindings({ app, modules, head: slow, read: memory(files) });
+    expect(lines.filter((one) => one.what === 'maven' && one.level === 'ok')).toHaveLength(30);
+    expect(most).toBe(MAVEN_CONCURRENCY);
+    expect(asked.filter((url) => url.includes('/shared/'))).toHaveLength(1);
+    expect(asked).toHaveLength(21);
   });
 
   it('버전이 식인 좌표는 저장소를 안 묻고 따로 모은다', async () => {

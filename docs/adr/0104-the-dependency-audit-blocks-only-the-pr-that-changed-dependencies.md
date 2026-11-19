@@ -1,5 +1,7 @@
 # 운영 의존성 감사는 의존성을 바꾼 PR 만 막고, 새 advisory 는 main 이 알린다
 
+> 후속 결정(일부): ADR 0257 — 새로 뜬 advisory 는 main 이 아니라 하루 한 번의 바깥 검사(`outside.yml`)가 제 이슈 `ci-outside-red` 로 알린다. `audit` 은 PR 에서만 돌고(앱의 예외 파일도 그 목록에 든다), 낡은 예외는 그 이슈에서 붉음이 아니라 「걷어도 된다」다. 「제 워크플로와 제 이슈 딱지」를 버린 까닭은 그 ADR 이 다시 쟀다
+
 G-23 ① 은 「`npm audit --omit=dev` 가 high 이상 0 이고 CI 가 그것을 잰다」다. 2026-09-23 에 쟀다 — 운영 의존성 46개에
 high 이상 0(Next 16.3.6 이 `1e1f6c8` 에서 critical 셋 · sharp high 를 닫은 뒤), 그 전 잠금 파일(Next 16.3.1)은 critical 1 ·
 high 1 로 `--audit-level=high` 가 1 로 끝난다. 남은 것은 **어디에 거는가**였다.

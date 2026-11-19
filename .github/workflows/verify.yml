@@ -43,7 +43,8 @@ jobs:
       contents: read
       actions: read
     # 차선마다 한 줄 — 계획이 고른다(2026-10-01, ADR 0097 · 0119 추기 — 좁힌 갈래는 ADR 0242 이 지웠다). `authed_lanes` 는 로그인
-    # 차선 이름의 JSON 배열이고 `authed` matrix 가 그대로 받는다. `authed` 는 그 배열이 비었는가다.
+    # 차선 이름의 JSON 배열이고 `authed` matrix 가 그대로 받는다. `authed` 는 그 배열이 비었는가다. `mobile_maven` 은 차선이 아니라
+    # `mobile` 차선이 Maven 저장소에 묻는가다(ADR 0257).
     outputs:
       policy: ${{ steps.plan.outputs.policy }}
       core: ${{ steps.plan.outputs.core }}
@@ -53,6 +54,7 @@ jobs:
       flow: ${{ steps.plan.outputs.flow }}
       audit: ${{ steps.plan.outputs.audit }}
       mobile: ${{ steps.plan.outputs.mobile }}
+      mobile_maven: ${{ steps.plan.outputs.mobile_maven }}
     steps:
       - uses: actions/checkout@v7
         with:
@@ -180,7 +182,12 @@ jobs:
           node-version-file: .nvmrc
           cache: npm
       - run: npm ci
+      # 브라우저와 그 시스템 라이브러리(apt)는 바깥에서 받는다. apt 가 DNS 를 못 풀자 차선마다 약 11분 매달린 뒤 섰다(2026-11-11,
+      # run 43044796756 — 평소 20초). 단계 한도로 그 매달림만 줄인다(`authed` 도 같다). **안에서 끊고 다시 받지 않는다** — 2026-11-19 에 미러가
+      # 느려(글꼴 패키지 하나에 약 50초) 2분 반에 끊자, 끊긴 명령 밑의 apt-get 이 살아 dpkg 잠금을 쥐어 다시 받기가 「Could not get lock」으로 섰다
+      # (run 44486457814 의 로그인 차선 둘). 느려도 끝나는 설치를 끊지 않게 한도는 넉넉히 둔다
       - run: npx playwright install --with-deps chromium
+        timeout-minutes: 10
       - run: npm run test:e2e
         env:
           # 껍데기 값이다. 로그인하지 않은 사람을 돌려보내는 데 살아 있는 Supabase 가
@@ -241,18 +248,21 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npx playwright install --with-deps chromium
+        timeout-minutes: 10
 
       # CLI 는 devDependency 다 — `npm ci` 가 이미 놓았다. 안 쓰는 서비스는 빼고 띄운다
       # (`db:start`). 이 job 이 재는 것에 storage·studio 는 안 든다. realtime 은 띄운다 — 계정마다
       # 비공개 채널의 정책(`realtime.messages`)을 pgTAP 과 e2e 가 잰다(ADR 0155).
       #
       # **임시 포트 범위를 스택 포트 위로 올린다.** 2026-09-23 main 실행(35821662685)이 새 러너에서
-      # `0.0.0.0:54322 … address already in use` 로 죽었다. `supabase start` 는 한 번만 불렸고 그 전에
-      # 이미지를 여럿 나란히 받았다 — Ubuntu 의 임시 포트 범위(32768–60999)가 543xx 를 품어, 나가는
-      # 연결 하나가 그 자리를 잡았을 가능성이 가장 크다(재현은 못 했다). 범위를 60000 위로 올리고,
-      # 그래도 서지 않으면 반쯤 선 것을 걷고 한 번 더 띄운다. `flow` 도 같다.
+      # `0.0.0.0:54322 … address already in use` 로 죽었다. Ubuntu 의 임시 포트 범위(32768–60999)가 543xx 를 품어 나가는 연결 하나가
+      # 그 자리를 잡았을 가능성이 가장 크다고 보고 범위를 60000 위로 올렸다. **그래도 2026-11-13 에 다시 났다**(job 131957026205) —
+      # 이미지는 CLI 가 「Rate exceeded」 뒤 4초 만에 스스로 다시 받았고, 선 것은 54322 였으며 2초 뒤의 재시도도 같았다. 범위를 바꾸기
+      # 전에 열린 오래 사는 연결은 범위를 안 따르므로 이것으로 다 막히지 않는다(원인은 확인 전). 그래서 서지 않으면 그 포트를 쥔 것을
+      # 찍고, 반쯤 선 것을 걷고, 10초 쉬고 한 번 더 띄운다 — 다음에 나면 찍힌 줄이 원인을 말한다. `flow` 도 같다.
       - run: sudo sysctl -w net.ipv4.ip_local_port_range="60000 65535"
-      - run: npm run db:start || { npx supabase stop --no-backup; npm run db:start; }
+      - run: npm run db:start || { sudo ss -tanp | grep -E ':5432[0-9] ' || true; npx supabase stop --no-backup; sleep 10; npm run db:start; }
+        timeout-minutes: 10
 
       # **표 검사가 e2e 보다 먼저다 — 순서가 뜻을 갖는다.**
       #
@@ -321,16 +331,18 @@ jobs:
       - run: npm ci
       # 임시 포트 범위와 한 번 더 — `authed` 의 주석이 까닭이다
       - run: sudo sysctl -w net.ipv4.ip_local_port_range="60000 65535"
-      - run: npm run db:start || { npx supabase stop --no-backup; npm run db:start; }
+      - run: npm run db:start || { sudo ss -tanp | grep -E ':5432[0-9] ' || true; npx supabase stop --no-backup; sleep 10; npm run db:start; }
+        timeout-minutes: 10
       - run: npm run test:flow
 
   # ---------------------------------------------------------------------------
   # 운영 의존성 감사 — high 이상이 하나라도 있으면 붉다 (G-23 ①, ADR 0104)
   # ---------------------------------------------------------------------------
   #
-  # **이 차선만 밖의 advisory DB 가 결과를 바꾼다.** 그래서 PR 에서는 의존성 목록을 바꾼 PR 에만 켜고
-  # (`ci-plan.mjs`), 새로 뜬 advisory 는 main 푸시와 하루 한 번의 일정이 잡아 `ci-main-red` 이슈로 든다 —
-  # 아무것도 안 바꾼 PR 이 어느 날 붉어져 남의 빨간불을 제 것으로 읽는 일이 없게. 잠금 파일만 읽으므로
+  # **이 차선은 밖의 advisory DB 가 결과를 바꾼다.** 그래서 감사의 답을 바꾸는 파일(의존성 목록 · 앱 예외 — `ci-plan.mjs` 의
+  # `DEPENDENCY_LISTS`)을 바꾼 PR 에만 켠다 — 아무것도 안 바꾼 PR 이 어느 날 붉어져 남의 빨간불을 제 것으로 읽는 일이 없게.
+  # **main 푸시 · 일정 · 손으로 켠 실행에서는 안 돈다**(ADR 0257) — 새로 뜬 advisory 와 철회로 낡은 예외는 하루 한 번의 바깥 검사
+  # (`outside.yml`)가 제 이슈(`ci-outside-red`)에 적는다. 코드가 그대로인 main 이 바깥 탓에 붉어 새 작업과 배포를 세우지 않게. 잠금 파일만 읽으므로
   # `npm ci` 가 없다. 개발 의존성은 운영에 안 실려 여기서 안 막는다(G-23 ⑫). 앱(`mobile/`)도 제 잠금 파일로 같은 문턱을 돈다 —
   # 뿌리가 붉어도 앱은 돈다.
   audit:
@@ -389,9 +401,13 @@ jobs:
         env:
           EXPO_OFFLINE: '1'
       # 네이티브 의존 — 연결되는 안드로이드 모듈이 앱의 compileSdk · minSdk 와 어긋나거나 박은 Maven 좌표가 앱이 받는 저장소 어디에도 없으면 붉다.
-      # Gradle 은 EAS 에서만 돌아 이 둘은 빌드에서야 드러났다(#1071 · #1072). 망에 닿지 못한 좌표는 경고다 — 붉음은 「없다」는 답뿐이다.
-      - run: node ../scripts/mobile-native.mjs
+      # Gradle 은 EAS 에서만 돌아 이 둘은 빌드에서야 드러났다(#1071 · #1072). 붉음은 모든 저장소의 「없다」(404 · 410)뿐이고 429 · 5xx · 망 실패는
+      # 다시 묻고 경고다. **저장소 조회는 좌표 · 저장소와 그 조회를 바꾸는 PR 에서만**(계획의 `mobile_maven` — `ci-plan.mjs` 의 `MAVEN_INPUTS`) — 그 밖은 `--offline` 으로
+      # SDK 만 잰다. 저장소의 답은 코드가 그대로여도 바뀌어 main 이 34 줄 붉었다(#1170) — 하루 한 번 `outside.yml` 이 묻는다(ADR 0257).
+      - run: node ../scripts/mobile-native.mjs $OFFLINE
         if: ${{ !cancelled() && steps.install.outcome == 'success' }}
+        env:
+          OFFLINE: ${{ needs.plan.outputs.mobile_maven != 'true' && '--offline' || '' }}
       # 잠금 파일을 쓰는 로컬 npm(`MOBILE_LOCK_NPM`)도 같은 잠금을 받는가. npm 판마다 `npm ci` 의 짝 맞춤 검사가 달라
       # #1043 의 잠금은 Node 24.12.0 에 든 npm 11.6.2 는 받고 11.14.0 · 10.9.9 는 `EUSAGE Missing: @emnapi/core` 로 거절했다(2026-11-07, #1062).
       # 맨 끝에 둔다 — 앞에 두면 붉을 때 `if` 없는 `tsc` 가 건너뛰어진다. 판을 박는다 — `npm@11` 이면 새 npm 이 나온 날 아무것도 안 바꾼 PR 이 붉다. 로컬 npm 을 올리면 이 판도 올린다.
