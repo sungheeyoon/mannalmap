@@ -11,7 +11,7 @@
 | 폴더 | 파일과 같다. Next 의 `[userId]` · `(group)` 은 그대로 | |
 | 시험 | 소스 **옆에** `*.test.ts`. 중간 이름은 넷 — `.live`(운영·환경을 두드린다, CI 밖) · `.boundary`(여러 파일을 훑는 장부) · `.external`(외부 사례 대조) · `.generated`(생성 표). e2e 는 `e2e/*.spec.ts`. `__tests__` 폴더는 없다 | 102 · 6 |
 | pgTAP · 마이그레이션 | `NN_snake.test.sql` · `YYYYMMDDHHMMSS_english_sentence.sql` — 이름이 **문장**이다(`the_revision_store_is_gone`) | 33 · 81 |
-| ADR | `NNNN-english-sentence.md`, 제목은 한국어 문장, 번호는 빈틈없이 | 85 |
+| ADR | `NNNN-english-sentence.md`, 제목은 한국어 문장, 번호는 한 파일에 하나(빈틈은 재지 않는다, ADR 0254) | 85 |
 | 타입 | `type`, PascalCase. `interface` 는 안 쓴다 | 398 / 0 |
 | 값 | 정책 표·상수는 SCREAMING_CASE(`STRENGTH_POLICY` · `HOUR_UNKNOWN_LABEL`), 함수는 camelCase. Next 가 이름을 정한 것(`metadata` · `maxDuration`)만 예외 | 336 · 63 |
 | `enum` · `class` | `enum` 은 없다 — 문자열 리터럴 유니언이다. `class` 는 내장을 잇는 자리뿐(`InvalidSajuInputError extends Error`) — 상태를 가진 클래스는 없다 | 0 · 10 |
