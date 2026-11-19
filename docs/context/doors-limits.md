@@ -41,6 +41,16 @@ _Avoid_: 추가 지급, 보너스, 무제한
 **산 수 − 걷은 수**가 얹힌다. 주문을 승인으로 만드는 것은 서버뿐이다(ADR 0100 · 0106). 만료되지 않는다(ADR 0212). **웹에서는 팔지 않는다** — 웹의 판매 스위치는 꺼진 채이고, 파는 곳은 안드로이드 앱의 Google Play 결제다(ADR 0230 — 안드로이드 출시 뒤, 운영자 확인 2026-11-06). Apple 인앱결제는 나중이다.
 _Avoid_: 충전, 포인트, 캐시
 
+**소비** — `purchases.products.consume` · `store_purchase.consumed_at` · `/api/cron/store-consume` : 서버가 풀이권을 지급한 Google Play 구매를
+Google 에 「다 썼다」고 알리는 것. 소비해야 같은 상품을 다시 살 수 있고, 구매가 끝난 때부터 3일 안에 승인 · 소비가 없으면 Google 이 결제를
+돌려준다. **앱은 소비하지 않는다** — 서버가 지급 뒤에 하고, 못 한 것은 날마다의 크론이 다시 한다(ADR 0230 · 0253).
+_Avoid_: 사용(풀이권을 쓰는 것이다), 승인(Google 의 acknowledge — 소비가 승인을 겸하지만 다른 낱말이다)
+
+**미지급** — `undelivered`(`StorePurchaseNotice`) · `resendUnfinishedPurchases` : Google Play 에서 결제는 됐는데 서버가 아직 풀이권을 지급하지
+못한 구매 — 앱이 서버에 못 닿았거나 결제 중에 앱이 꺼졌다. 앱은 켤 때 · 풀이권 화면을 열 때 남은 구매를 서버에 다시 보내고, 화면은 창으로
+알린다(대장 credits-16). 다시 시도는 결제를 다시 하지 않는다(ADR 0230).
+_Avoid_: 미충전, 결제 실패(결제는 됐다)
+
 **심사 계정** — `reading_sale_reviewer` 표 : 판매가 닫힌 동안에도 주문을 열 수 있는 계정 — 카드사 심사 때만 둔다. 풀이권을 더 주지
 않는다(그것은 풀이권 예외다). 운영자가 SQL 로 넣고 심사가 끝나면 걷는다(ADR 0171). PG 를 하지 않아 쓸 일이 없다 — 표를 걷을지는 #937(ADR 0212). 판정은 `reading_sale_is_open_for` 하나다.
 _Avoid_: 관리자, 테스트 계정, 화이트리스트
@@ -67,6 +77,16 @@ _Avoid_: 차감 내역, 잔고
 PRD §7.0 이 든다. 이 문서는 이름만 든다.
 _Avoid_: 「출시」 단독(둘째와 셋째를 함께 가리켜 모호하다 — 「공개 출시」처럼 단계 이름
 안에서만 쓴다), 개발 중, 베타(어느 베타인지 말하지 않는다)
+
+**내부 테스트(Play)** — `mobile/eas.json` 의 `submit.production.android.track: "internal"` : Google Play 의 내부 테스트 트랙 — 이메일 목록의
+테스터(최대 100명)만 받고, `production` AAB 만 올라가며 Play 가 다시 서명한다. **프로덕션 신청의 연속 14일은 이 트랙으로 세지 않는다** — 그것은
+비공개 테스트다(ADR 0246). 트랙마다 지금 버전은 `docs/ops/runbook/mobile-release.md` 「지금 나간 빌드」(ADR 0256).
+_Avoid_: 「내부 빌드」 단독(아래 내부 배포와 헷갈린다)
+
+**내부 배포(EAS)** — `mobile/eas.json` 의 `distribution: "internal"`(`preview` · `development` 프로필) : EAS 가 구운 APK 를 링크로 내려받아 까는
+길 — Play 를 거치지 않고 업로드 키로 서명된다. 2026-11-02 의 옛 내부 배포 APK 는 앱 안에서 일정 줄의 종료일을 견줘 12-01 부터 닫히고, 다시
+내지 않는다(G-62). 두 설정이 모두 `internal` 이라 적혀 헷갈린다 — 문서에서는 괄호의 이름까지 붙여 쓴다.
+_Avoid_: 「내부 빌드」 단독, 내부 테스트(그것은 Play 의 트랙이다)
 
 **테스트 코드** — `signup_code` 표(`valid_on` · `max_uses`) : **걷었다 — 가입은 코드를 묻지 않는다(ADR 0225).** 표와
 `app_user.signup_code` 는 운영 베타의 기록으로만 남는다. 아래는 쓰던 때의 뜻이다. 운영자가 만들어 전하던 문자열

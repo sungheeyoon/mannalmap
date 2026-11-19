@@ -37,7 +37,7 @@ curl -s -o /dev/null -w "%{http_code}\n" "<운영 주소>/api/mobile/readings"  
 
 서버가 받아 주는 가장 옛 안드로이드 빌드는 DB 의 `public.android_min_version_code()` 다(Play 의 versionCode, ADR 0237). 그보다 낮은 빌드는 켤 때 ·
 앞으로 다시 가져올 때 **업데이트 화면만** 세운다(「업데이트 알림」 · 단추 「업데이트하기」 하나 → Play 의 이 앱 자리, 아래 작은 줄은 웹의 계정 관리). 값을 못 읽으면 막지 않는다.
-**이 판정이 든 첫 빌드 전의 빌드(2026-11-07 까지의 내부 테스트 빌드)는 묻지 않는다** — 그 빌드는 DB 의 거절만 받는다.
+**이 판정이 든 첫 빌드 전의 빌드(2026-11-07 까지의 내부 배포(EAS) APK)는 묻지 않는다** — 그 빌드는 DB 의 거절만 받는다.
 
 **올리는 때** — 아래 하나라도 있으면 올린다. 처리방침의 재확인 기준(`public.notice_ack_floor()`)도 같은 마이그레이션에서 함께 본다.
 
@@ -119,7 +119,7 @@ npx eas-cli@latest env:list production --format short
 | --- | --- | --- |
 | `EXPO_PUBLIC_SUPABASE_URL` · `_PUBLISHABLE_KEY` · `EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID` · `EXPO_PUBLIC_SITE_URL` | 있다 — 운영 프로젝트 · 운영 주소 | 앱이 안 돈다 · 약관 셋(이용약관 · 환불정책 · 처리방침)의 줄이 안 선다. `production` 빌드는 이 넷 가운데 하나라도 비거나 주소 둘(`EXPO_PUBLIC_SITE_URL` · `EXPO_PUBLIC_SUPABASE_URL`)이 https 가 아니면, `preview` 빌드는 `EXPO_PUBLIC_SITE_URL` 이 없거나 https 가 아니면 `app.config.js` 에서 선다 — 까닭 한 줄에 빈 이름만 싣는다. 앱에서 웹의 주소를 읽는 자리는 `mobile/src/site.ts` 하나다(ADR 0233 · 추기 2026-11-06) |
 | `EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID` · `_URL_SCHEME` | 없다 — Google iOS 클라이언트가 먼저다 | **iOS 빌드 전에 `production` 에 넣는다** — `app.config.js` 가 이 값으로 URL 스킴을 세운다 |
-| `EXPO_PUBLIC_KAKAO_NATIVE_APP_KEY` | 있다 — `production` · `preview`(2026-11-05, #770). 이 값이 포함된 첫 빌드는 안드로이드 `preview` `63d07224`(2026-11-07)다 — `production` · iOS 빌드는 아직 없다(`docs/ops/runbook/kakao-login.md` 「카카오 로그인을 켜는 차례」 10) | 카카오 단추가 안 서고 `app.config.js` 가 카카오 플러그인을 뺀다. 넣으면 **새 빌드**가 든다 — URL 스킴이 빌드에 박힌다 |
+| `EXPO_PUBLIC_KAKAO_NATIVE_APP_KEY` | 있다 — `production` · `preview`(2026-11-05, #770). 이 값이 포함된 첫 빌드는 안드로이드 `preview` `63d07224`(2026-11-07)이고, 그 뒤의 `production` 빌드도 같은 값으로 굽는다(아래 「지금 나간 빌드」). iOS 빌드는 아직 없다(`docs/ops/runbook/kakao-login.md` 「카카오 로그인을 켜는 차례」 10) | 카카오 단추가 안 서고 `app.config.js` 가 카카오 플러그인을 뺀다. 넣으면 **새 빌드**가 든다 — URL 스킴이 빌드에 박힌다 |
 | `GOOGLE_SERVICES_JSON`(**파일** 환경값, ADR 0236) | 없다 — 운영자가 Firebase 프로젝트를 만든 뒤 넣는다(`docs/ops/runbook/push.md` 「앱 푸시를 켠다」 3) | 풀이 완성 알림이 꺼진다 — 권한을 안 묻고 설정의 알림 줄이 안 선다. 풀이는 그대로. 넣으면 **새 빌드**가 든다 — `google-services.json` 이 빌드에 든다 |
 | 사업자 정보 | 환경값이 아니다 — 웹과 같은 상수 `BUSINESS`(`src/lib/brand/business.ts`)가 번들에 든다(ADR 0232). EAS 에 남은 `EXPO_PUBLIC_BUSINESS_*` 여덟은 아무도 안 읽는다 — 지운다(#770 B) | 상수의 빈 칸(대표전화)만 줄이 안 선다 |
 
@@ -151,6 +151,20 @@ apksigner verify --print-certs <apk>                                   # 서명�
 
 ### 빌드와 제출
 
+**굽기 전에 셋을 본다**(ADR 0256) — 셋 다 맞아야 굽는다.
+
+1. **EAS 의 이달 남은 Android 빌드 수를 운영자에게 한 줄로 알린다** — 「이번 달 N번 남음」. 다 써 가면 굽기 전에 경고한다(운영자 2026-11-19 「한달
+   제한이 있으니 보고하고 했으면 좋겠다, 경고를」). **실패 · 중단한 빌드도 한 번으로 센다.** 수는 expo.dev 의 계정 사용량 화면이 말하고, 그 화면을 못
+   보면 `npx eas-cli@latest build:list --platform android --limit 50 --json --non-interactive` 에서 이달 1일 뒤의 빌드를 상태와 상관없이 센다 — 이달 한도의
+   숫자는 그 화면에서 읽고 여기 적지 않는다. 다 썼으면 아래 「무료 빌드 횟수가 떨어지면」
+2. **앱 손질은 묶어서 한 번에 굽는다** — 화면 PR 이 승인될 때마다 굽지 않고 「이 묶음에 더 넣을 것이 있나」를 먼저 본다. 운영자가 올리라고 할 때 한 번
+   굽고, 올리기 전 네이티브 확인(아래 「스토어에 올리기 전에 네이티브에서 본다」)도 한 번에 한다. 테스터 누구나 겪는 결함 하나만 따로 먼저 낼 수 있다
+   (운영자 2026-11-12 「그런데 왜 한 번에 처리 안 하고 한 번씩 하는 거야」 — 그날 versionCode 4 를 굽고 버렸다)
+3. **굽는 커밋은 main 의 `verify` 의 가장 최근 실행이 성공인 커밋이다** — `gh run list --commit <전체 SHA> --workflow verify --limit 1 --json conclusion,event,createdAt`
+   (줄인 SHA 는 빈 목록을 준다). 머지 때 성공했어도 그 뒤 일정 실행이 실패했으면 그 실패가 답이다 — 고친 main 의 커밋에서 굽는다. 웹 「묶음 배포」 0 과 같은
+   기준이다(`docs/ops/runbook/deploy.md`). 2026-11-19 versionCode 10 의 커밋 `c61303aa` 는 머지 때 push 실행은 성공, 그날 일정 실행은 `audit` · `mobile` 이
+   실패였다
+
 **EAS 로그인을 먼저 본다** — `npx eas-cli@latest whoami` 가 `sungheeyoon` 이어야 한다(`mobile/app.json` 의 `owner`). 없으면 운영자가 `! npx eas-cli@latest login --device --non-interactive` → 브라우저에서 승인 → 받은 숫자로 `--resume <id> --match <숫자>` 를 부른다(2026-11-07 — 로그인이 없으면 빌드 앞에서 선다). 새 워크트리면 `mobile/` 의 `npm ci` 도 먼저다 — 없으면 `env:list` 부터 `expo-router` 플러그인을 못 찾고 선다.
 
 ```bash
@@ -163,7 +177,7 @@ npx eas-cli@latest submit --profile production --platform ios                   
 
 - **`submit` 은 스토어 제출이다 — 조율자 · 운영자 몫이다.** 빌드는 에이전트가 해도 된다.
 - **빌드는 끝나면 돌아오는 명령으로 기다린다** — `npx eas-cli@latest build:view <id>` (또는 `build:list --limit 1 --json`)의 `status` 가 `FINISHED` · `ERRORED` 일 때까지. 실패면 `logFiles` 의 Gradle 줄을 읽는다(위 「새 네이티브 의존을 추가할 때」)
-- **지금 나간 빌드** — 안드로이드 `production` **로컬 빌드**(커밋 `c61303aa` · versionCode 10 · 1.0.0, 2026-11-19) — Play **내부 테스트**에 콘솔에서 AAB 파일로 올려 「내부 테스터에게 제공됨」. 결제 안내 팝업 · 미지급 다시 보내기(#1167) · 딱지 · 「⋯」 아이콘 · 누를 자리 48(#1168)이 들었다. 비공개 테스트 - Alpha 에는 아직 `6 (1.0.0)` 이다. versionCode 7 · 8 · 9 는 실패 · 중단한 빌드가 원격 번호만 올린 빈 번호다. 그 앞 비공개 테스트 판은 `production` `045b92a7`(커밋 `57dbaa25` · versionCode 6 · 1.0.0, 2026-11-14) — Play **비공개 테스트 - Alpha** 에 콘솔에서 AAB 파일로 올려 검토에 보냈다(웹 Production 이 같은 커밋으로 선 뒤). 공유창(#1142) · 저장한 사람 화면(#1143) · 풀이권 문구(#1144) · 낱말 가운데서 안 꺾이는 줄바꿈 `WordText`(#1145) · 풀이권 확인과 0장의 구매 입구(#1146) · 궁합 표지(#1148) · 입력 오류 줄 `FormError`(#1149 · #1150)가 들었다. 올리기 전 에뮬레이터(Expo Go + 가짜 서버)에서 홈 ↔ 궁합 25번 왕복 — 홈 글자 93 → 93 · `removeViewAt` · FATAL 0줄. 앞 판은 `af938956`(커밋 `047e5b81` · versionCode 5, 2026-11-12 — 출생지 시 · 도 아홉 곳 · 「첫 풀이 무료」 카드 · 홈 「⋯」 메뉴 · 궁합 고르기의 태극 줄 · 문구 셋 걷기, #1132 · #1134 · #1135 · #1137 · #1138)이고, 그 앞 판은 `6743c9a7`(커밋 `0de149d8` · versionCode 3, 탭 묶음 · 딱지 「배우자」)이고, `c9c5d3ef`(versionCode 4)는 굽기만 하고 올리지 않았다 — 고칠 것을 묶어 한 번에 올린다. 내부 테스트 트랙에는 앞 빌드 `7d203dc7`(커밋 `73791ff0` · versionCode 2)이 남아 있다(`docs/ops/runbook/play-console.md` 「지금 어디까지 왔나」). FCM 값 · 대표전화 · 신고기관 없이 구웠다. 그 앞은 `preview` `477348f4`(커밋 `23770375` · versionCode 1 · 1.0.0 · 만료 2026-11-23, 2026-11-09) — #1089 ~ #1111 의 앱 쪽이 들었고 FCM 값이 없어 알림은 꺼진 채다. 앞 판 `63d07224`(커밋 `f112e2f6`, 2026-11-07)가 첫 성공 빌드다. 앞선 둘은 실패했다 — `ebef4d0c` 는 카카오 SDK 를 jitpack 에서 찾다 401(→ #1071 카카오 Maven 저장소), `4b3d8c51` 은 카카오 모듈이 `compileSdk` 33 으로 컴파일돼 AAR metadata 검사에서 섰다(→ #1072 3.2.0). 링크 · 서명 대조는 #770 의 그날 댓글이다. 다음 빌드가 나가면 이 줄을 고친다
+- **어느 빌드가 어느 트랙에 있나는 아래 「지금 나간 빌드」 하나가 원본이다**(ADR 0256) — 빌드를 굽거나 트랙에 올린 날 그 절을 고친다
 - **CLI 는 Android 를 내부 트랙까지만 올린다**(`submit.production.android.track`). 비공개 테스트 · 프로덕션은 Play Console 에서 사람이 옮긴다. 비공개 테스트에는 빌드의 AAB 를 내려받아 Alpha 트랙의 「새 버전 만들기」 → 「App Bundle 업로드」에 파일로 올리고 「다음」 → 「저장」 → 게시 개요 「검토를 위해 변경사항 1개 제출」로 낸다(2026-11-14 `6 (1.0.0)` · 게시 개요에 바뀐 항목이 「비공개 테스트 - Alpha · 6 (1.0.0) · 전체 출시 시작」 하나인지 보고 낸다).
 - Android 제출에는 Google 서비스 계정 키가 든다([Expo](https://docs.expo.dev/submit/android.md)). 키는 EAS 에 올리고 저장소에 두지 않는다.
 - iOS 를 `--non-interactive` 로 내려면 `submit.production.ios.ascAppId` 가 든다([Expo](https://docs.expo.dev/submit/ios.md)) — App Store Connect 에 앱을 만든 뒤 적는다. 앞서는 대화형으로 낸다.
@@ -188,7 +202,7 @@ cd mobile && taskset -c 0-7 nice -n 19 npx eas-cli@latest build --local --profil
 2. **CPU · 메모리를 묶는다** — 묶지 않으면 Gradle · clang 이 16코어를 다 써서 Windows 터미널이 멈추고 재부팅했다. `taskset -c 0-7` · `nice` · Gradle 일꾼 넷. 그래도 C++ 컴파일 때 가용 메모리가 1GB 아래 · 스왑 4GB 까지 갔다 — 다른 무거운 일과 겹치지 않는다.
 3. **ABI 는 둘(arm64 · armv7)** — x86 둘을 빼 컴파일을 줄였다. Play 는 「지원 기기 · 전화 2대 줄어듦」 경고 하나를 띄운다(에뮬레이터 · 일부 크롬북 몫). 출시 판에 x86 을 넣을지는 그때 정한다.
 
-빌드 시간은 받는 것을 빼고 약 25분이었다. **이 판은 `eas submit` 이 Play 에 막힌다** — `HTTP 403: To comply with Korean law, developers in Korea must provide additional information on the Account Details page` (계정 세부정보의 한국 칸 — 대표전화 · 신고기관, `play-console.md` 차례 2). 그 칸이 차기 전에는 AAB 를 콘솔 「새 버전 만들기」에 파일로 올린다.
+빌드 시간은 받는 것을 빼고 약 25분이었다. **계정 칸이 차기 전까지 모든 제출이 `eas submit` 에서 Play 에 막힌다** — 로컬 · 클라우드 빌드가 같다. `HTTP 403: To comply with Korean law, developers in Korea must provide additional information on the Account Details page` (계정 세부정보의 한국 칸 — 대표전화 · 신고기관, `play-console.md` 차례 2 — 상태는 같은 문서 「지금 어디까지 왔나」). 그 칸이 차기 전에는 AAB 를 콘솔 「새 버전 만들기」에 파일로 올린다.
 
 ### 스토어에 올리기 전에 네이티브에서 본다
 
@@ -201,6 +215,33 @@ cd mobile && taskset -c 0-7 nice -n 19 npx eas-cli@latest build --local --profil
 3. **탭 · 스택 · 뒤로 가기를 건드린 PR 은 머지 전에 1 을 돈다** — 내비게이션 구조는 네이티브에서만 깨진다.
 
 에뮬레이터의 함정 둘: `-no-snapshot-save` 로 띄우면 껐다 켤 때 깔아 둔 빌드 · 로그인이 사라져 옛 빌드가 뜬다 — 재기 전에 `dumpsys package com.mannalmap.app` 의 `versionCode` · `lastUpdateTime` 을 본다. 에뮬레이터의 `com.mannalmap.app` 이 운영자 계정으로 운영에 로그인돼 있을 수 있다 — 그 앱 위에서는 탭만 누르고, 자료를 바꾸는 누름은 가짜 서버에 문 Expo Go 에서 한다.
+
+## 지금 나간 빌드
+
+**앱 빌드와 트랙의 지금 상태는 이 절 하나가 원본이다**(ADR 0256) — 간극 대장 · 다른 런북 · #770 은 값을 다시 적지 않고 이 절을 가리킨다. 빌드를 굽거나
+트랙에 올린 날 이 절을 고치고, 그 일로 끝 조건이 찬 간극 대장의 G 줄도 같은 PR 에서 고친다. 콘솔의 차례(계정 · 상품 · 테스터 · 14일)는
+`docs/ops/runbook/play-console.md` 「지금 어디까지 왔나」다. 빌드마다의 링크 · 서명 대조는 #770 의 그날 댓글이다. 지금까지의 빌드는 모두 FCM 값(G-150) ·
+대표전화 · 신고기관(`play-console.md` 차례 1 · 3) 없이 구웠다.
+
+| 트랙 | 지금 버전 | 올린 날 |
+| --- | --- | --- |
+| Play 내부 테스트 | `10 (1.0.0)` — 아래 표 첫 줄. 테스터 목록은 `play-console.md` 「지금 어디까지 왔나」 | 2026-11-19 |
+| Play 비공개 테스트 - Alpha | `6 (1.0.0)` | 2026-11-14 |
+| Play 프로덕션 | 없다 — 비공개 테스트 14일 뒤 신청(`play-console.md` 「지금 어디까지 왔나」 13 · 14) | — |
+| EAS 내부 배포(`preview` APK) | `477348f4` — 만료 2026-11-23. 2026-11-02 의 옛 APK 는 앱 안에서 12-01 부터 닫힌다(G-62) | 2026-11-09 |
+| iOS | 없다 — Apple Developer 가입 전(#770 B 「iOS 때」) | — |
+
+| versionCode | 빌드 · 커밋 | 날짜 | 올린 곳 | 포함된 것 |
+| --- | --- | --- | --- | --- |
+| 10 | 로컬 `production`(위 「무료 빌드 횟수가 떨어지면」) · `c61303aa` | 2026-11-19 | Play 내부 테스트 — 콘솔에 AAB 파일로(`eas submit` 은 403) | 6 뒤의 앱 쪽 — 입력 오류 줄(#1153) · 화면 제목 · 짧은 단추(#1155) · 결제 안내 창 · 미지급 다시 보내기(#1167) · 딱지 · 「⋯」 아이콘 · 누를 자리 48(#1168). #1157 · #1159 는 동작이 같다 |
+| 9 · 8 · 7 | — | 2026-11-19 | 없다 — 실패 · 중단한 빌드가 원격 번호만 올린 빈 번호다 | — |
+| 6 | EAS `production` `045b92a7` · `57dbaa25` | 2026-11-14 | 비공개 테스트 - Alpha — 콘솔에 AAB 파일로, 웹 Production 이 같은 커밋으로 나간 뒤 | 공유창(#1142) · 저장한 사람 화면(#1143) · 풀이권 문구(#1144) · `WordText`(#1145) · 0장의 구매 입구(#1146) · 궁합 표지(#1148) · `FormError`(#1149 · #1150). 올리기 전 홈 ↔ 궁합 25번 왕복 — 글자 93 → 93 · `removeViewAt` · FATAL 0줄 |
+| 5 | EAS `production` `af938956` · `047e5b81` | 2026-11-12 | 비공개 테스트 - Alpha | 출생지 시 · 도 아홉 곳 · 「첫 풀이 무료」 카드 · 홈 「⋯」 메뉴 · 궁합 고르기의 태극 줄(#1132 · #1134 · #1135 · #1137 · #1138) |
+| 4 | EAS `production` `c9c5d3ef` | 2026-11-12 | 없다 — 굽고 올리지 않았다(위 「굽기 전에 셋을 본다」 2 의 까닭) | — |
+| 3 | EAS `production` `6743c9a7` · `0de149d8` | 2026-11-12 | 비공개 테스트 - Alpha | 탭 묶음(#1130 — 탭을 오가면 본문이 비던 #1126) · 일주 딱지 「배우자」 |
+| 2 | EAS `production` `7d203dc7` · `73791ff0` | 2026-11-11 | Play 내부 테스트(첫 AAB) · 비공개 테스트 - Alpha 의 첫 버전 | 결제 라이브러리 — 이 버전이 올라가 상품을 만들 수 있었다 |
+| 1 | EAS `preview` `477348f4` · `23770375` | 2026-11-09 | 내부 배포 APK — 만료 2026-11-23 | #1089 ~ #1111 의 앱 쪽 |
+| 1 | EAS `preview` `63d07224` · `f112e2f6` | 2026-11-07 | 내부 배포 APK — 만료 2026-11-21 | 첫 성공 빌드 — 카카오 로그인 · 결제 라이브러리 · 푸시 코드. 앞선 둘은 실패했다 — `ebef4d0c` 는 카카오 SDK 를 jitpack 에서 찾다 401(→ #1071), `4b3d8c51` 은 카카오 모듈의 `compileSdk` 33(→ #1072) |
 
 ## 내부 트랙과 비공개 테스트는 다르다
 
@@ -216,7 +257,7 @@ cd mobile && taskset -c 0-7 nice -n 19 npx eas-cli@latest build --local --profil
 
 - **이 요건이 우리에게 걸린다** — 운영자는 개인 계정을 만든다(2026-11-09, ADR 0246). 콘솔 경로와 신청의 물음은 `docs/ops/runbook/play-console.md` 「내부 테스트에서 프로덕션으로」 3 · 4, 계정 차례는 같은 문서 「계정을 만드는 날의 차례」 13 · 14.
 - 12명은 문턱이다. 나가는 사람을 세어 15~20명을 모은다 — 모으는 일은 운영자가 한다(G-162).
-- **일정 줄의 종료일은 테스트 날짜를 막지 않는다.** `notice-v17` 배포와 `20270114095000` 의 `db push`(둘 다 2026-11-07)로 종료일(지금 `2026-11-30`)은 아무것도 끝내지 않는다(ADR 0234). 2026-11-02 의 옛 내부 테스트 빌드만 앱 안에서 그 날을 견줘 12-01 부터 닫힌다 — 운영자가 받아들였고 새 내부 빌드는 내지 않는다(#1050 댓글, `docs/ops/runbook/signup.md`).
+- **일정 줄의 종료일은 테스트 날짜를 막지 않는다.** `notice-v17` 배포와 `20270114095000` 의 `db push`(둘 다 2026-11-07)로 종료일(지금 `2026-11-30`)은 아무것도 끝내지 않는다(ADR 0234). 2026-11-02 의 옛 내부 배포(EAS) APK 만 앱 안에서 그 날을 견줘 12-01 부터 닫힌다 — 운영자가 받아들였고 2026-11-02 의 EAS 내부 배포 APK 는 다시 내지 않는다(#1050 댓글, `docs/ops/runbook/signup.md`). 그 뒤에 나간 빌드는 위 「지금 나간 빌드」.
 
 ## 애플 로그인을 켜는 차례
 
