@@ -40,3 +40,4 @@ Which ADR holds now, by area, is `docs/adr/README.md` — it points, it does not
   `## 추기 …` 절은 더 달지 않는다. 예외는 둘이다 — 사실 정정(정책은 그대로이고 ADR 의 문장이 코드와 다를 때, 짧은 `## 정정 …` 절 하나)과
   깨진 링크 · 오타. 이미 있는 추기는 그대로 둔다. 2026-11-08 에 정한 뒤에도 머지된 ADR 에 추기 16개가 더 붙었다(2026-11-19 감사) —
   이 줄이 이 절에 없었다.
+  이제 ADR 마다 추기 머리 수를 `scripts/code-rules.test.ts` 가 지문으로 들고 늘면 붉다(ADR 0260).
