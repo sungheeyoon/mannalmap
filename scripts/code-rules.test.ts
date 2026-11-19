@@ -237,6 +237,32 @@ describe('ADR 참조 (docs/agents/code-rules/comments.md)', () => {
     expect([...files.values()].filter((names) => names.length > 1)).toEqual([]);
   });
 
+  /**
+   * **머지된 ADR 에 추기를 더 달지 않는다**(ADR 0240 「정한 것」 2) — 정책이 바뀌면 새 ADR 이고, 옛 ADR 머리에 `> 후속 결정` 한 줄이다. 예외인
+   * 사실 정정은 `## 정정 …` 이라 여기서 안 센다. 이미 단 추기는 걷지 않으므로(같은 절) ADR 마다 지금의 추기 머리 수를 지문으로 든다 — 줄어들기만
+   * 한다. 0240 뒤에 붙은 것(ADR 0109 의 여섯 등)도 세운 날(2026-11-19)의 수 그대로다(ADR 0260).
+   */
+  const ADDENDA_STILL_THERE: Readonly<Record<string, number>> = {
+    '0024': 1, '0028': 1, '0047': 1, '0060': 1, '0067': 1, '0092': 1, '0097': 1, '0098': 2, '0099': 4, '0104': 1, '0105': 2,
+    '0106': 1, '0108': 1, '0109': 26, '0113': 1, '0115': 1, '0116': 2, '0119': 2, '0129': 1, '0139': 1, '0143': 1, '0149': 3,
+    '0161': 1, '0163': 1, '0166': 3, '0172': 1, '0185': 1, '0205': 1, '0207': 4, '0208': 1, '0211': 3, '0212': 1, '0213': 5,
+    '0214': 1, '0221': 1, '0222': 1, '0224': 3, '0225': 2, '0227': 1, '0228': 1, '0230': 1, '0233': 1, '0236': 1, '0245': 1,
+  };
+  /** ADR 본문의 추기 머리(`## 추기 …` · `### 추기 …`) 수 */
+  const addendaIn = (text: string) => (text.match(/^#{2,3} 추기(?![가-힣])/gm) ?? []).length;
+
+  it('머지된 ADR 에 추기 머리가 늘지 않는다 — ADR 마다 세운 날의 수 그대로 (ADR 0240 · 0260)', () => {
+    const counts = Object.fromEntries(
+      ADR_FILES.map((name) => [name.slice(0, 4), addendaIn(readFileSync(join(ADR_DIR, name), 'utf8'))] as const).filter(([, count]) => count > 0),
+    );
+    expect(Object.keys(counts).length).toBeGreaterThan(40);
+    expect(counts, '추기 대신 새 ADR 과 옛 ADR 머리의 `> 후속 결정` 한 줄 — 줄였으면 목록도 줄인다').toEqual(ADDENDA_STILL_THERE);
+  });
+
+  it('추기 머리를 센다 — `## 정정` 과 본문 속 「추기」 낱말은 안 센다', () => {
+    expect(addendaIn(['## 추기 — 하나 (2026-11-20)', '### 추기 둘', '## 정정 — 문장', '본문의 추기', '## 추기된 것'].join('\n'))).toBe(2);
+  });
+
   it('코드·SQL·문서의 `ADR NNNN` 은 전부 있는 파일을 가리킨다', () => {
     const dangling: string[] = [];
     let seen = 0;
@@ -1238,17 +1264,35 @@ describe('화면 무리 — PRD 화면 파일과 문구 대장이 같은 무리�
     expect(numbers, '새 절은 `## <파일 이름>-NN …` 이다 — 머리의 「무리 색인」').toEqual(Array.from({ length: LAST_SHARED_NUMBER }, (_, i) => i + 1));
   });
 
-  it('새 절의 번호는 그 파일 이름을 달고(머리는 `all`) 한 파일 안에서 01 부터 끊기지 않는다 — 나란히 도는 PR 이 다른 무리에 같은 번호를 노리지 않게 (ADR 0169)', () => {
-    const files = [LEDGER, ...groupsIn(LEDGER_DIR).map((name) => `${LEDGER_DIR}/${name}`)];
+  /** 무리 파일의 번호 붙은 절 머리 가운데 꼴이 틀리거나(남의 이름 · `00`) 같은 번호가 둘인 것 */
+  const namedSectionsWrong = (file: string, own: string, text: string): string[] => {
     const wrong: string[] = [];
-    for (const file of files) {
-      const own = file === LEDGER ? 'all' : file.slice(LEDGER_DIR.length + 1, -'.md'.length);
-      const named = [...readFileSync(join(ROOT, file), 'utf8').matchAll(/^## ([a-z]+)-(\d{2}) /gm)];
-      for (const match of named) if (match[1] !== own) wrong.push(`${file}: ${match[1]}-${match[2]} — 이 파일의 절은 ${own}-NN`);
-      const mine = named.filter((match) => match[1] === own).map((match) => Number(match[2]));
-      if (mine.join(' ') !== mine.map((_, i) => i + 1).join(' ')) wrong.push(`${file}: ${own}-${mine.join(' · ')} — 01 부터 끊기지 않게`);
+    const seen = new Set<string>();
+    for (const match of text.matchAll(/^## ([a-z]+)-(\d{2}) /gm)) {
+      if (match[1] !== own) wrong.push(`${file}: ${match[1]}-${match[2]} — 이 파일의 절은 ${own}-NN`);
+      else if (match[2] === '00') wrong.push(`${file}: ${own}-00 — 번호는 01 부터`);
+      else if (seen.has(match[2])) wrong.push(`${file}: ${own}-${match[2]} — 같은 번호의 절이 둘`);
+      seen.add(match[2]);
     }
+    return wrong;
+  };
+
+  // 번호의 빈틈은 재지 않는다 — 나란히 도는 PR 이 뒤 번호를 먼저 들여도 붉지 않다(ADR 0260). 열린 PR 끼리의 겹침은 gate(ADR 0238)
+  it('새 절의 번호는 그 파일 이름을 달고(머리는 `all`) 한 파일 안에서 같은 번호가 둘이 아니다 (ADR 0169 · 0260)', () => {
+    const files = [LEDGER, ...groupsIn(LEDGER_DIR).map((name) => `${LEDGER_DIR}/${name}`)];
+    const wrong = files.flatMap((file) =>
+      namedSectionsWrong(file, file === LEDGER ? 'all' : file.slice(LEDGER_DIR.length + 1, -'.md'.length), readFileSync(join(ROOT, file), 'utf8')),
+    );
     expect(wrong).toEqual([]);
+  });
+
+  it('남의 이름 · 같은 번호 둘은 잡고, 빈 번호는 지나간다', () => {
+    const text = ['## home-01 a', '## home-03 빈 번호 뒤', '## home-03 같은 번호', '## first-04 남의 이름', '## home-00 영'].join('\n');
+    expect(namedSectionsWrong('home.md', 'home', text)).toEqual([
+      'home.md: home-03 — 같은 번호의 절이 둘',
+      'home.md: first-04 — 이 파일의 절은 home-NN',
+      'home.md: home-00 — 번호는 01 부터',
+    ]);
   });
 
   /**
@@ -1257,6 +1301,8 @@ describe('화면 무리 — PRD 화면 파일과 문구 대장이 같은 무리�
    * 가운데 하나다. 출처가 「조율자 지시」뿐인 줄은 셋이 없어 붉다. 이 셈을 세운 날 셋이 없던 줄은 아래 목록이
    * `절 :: 자리 칸의 앞 40자` 지문으로 든다 — 줄어들기만 한다. 줄을 「확정 문구」 절로 옮기거나 사례를 채우면 목록에서 지운다.
    */
+  /** 표의 구분선(`| --- | --- |`) */
+  const TABLE_RULE = /^\|(?:\s*:?-{3,}:?\s*\|)+\s*$/;
   const NEAREST_MISSING_STILL_THERE: readonly string[] = [
     'all-22 :: 출생 시각 문단 — 분 칸이 60 이상',
     'all-22 :: 풀이 의견 — 안 고른 필수 질문마다 그 아래 `FEEDBACK_REQU',
@@ -1382,12 +1428,14 @@ describe('화면 무리 — PRD 화면 파일과 문구 대장이 같은 무리�
     const texts = files.map((file) => readFileSync(join(ROOT, file), 'utf8'));
     const sections = new Set(texts.flatMap((text) => [...text.matchAll(/^## ([a-z]+-\d{2}) /gm)].map((match) => match[1])));
     const shared = new Set(texts.flatMap((text) => [...text.matchAll(/^## (\d{2}) /gm)].map((match) => match[1])));
-    const constants = new Set(PRODUCT_FILES.flatMap((file) => readFileSync(file, 'utf8').match(/\b[A-Z][A-Z0-9_]{2,}\b/g) ?? []));
+    // 상수는 제품 코드가 `const NAME` · `export const NAME` 으로 정의한 이름뿐이다 — 아무 대문자 낱말(`URL`)은 사례가 아니다
+    const constants = new Set(PRODUCT_FILES.flatMap((file) => [...readFileSync(file, 'utf8').matchAll(/\bconst\s+([A-Z][A-Z0-9_]{2,})\b/g)].map((match) => match[1])));
     expect(sections.size).toBeGreaterThan(50);
     expect(constants.size).toBeGreaterThan(200);
-    const nearest = (source: string) =>
+    // 제 절(`public-03` 줄의 `public-03`)은 가까운 사례가 아니다
+    const nearest = (source: string, own: string) =>
       (/https?:\/\//.test(source) && /\d{4}-\d{2}-\d{2}/.test(source)) ||
-      [...source.matchAll(/\b([a-z]+-\d{2})\b/g)].some((match) => sections.has(match[1])) ||
+      [...source.matchAll(/\b([a-z]+-\d{2})\b/g)].some((match) => match[1] !== own && sections.has(match[1])) ||
       [...source.matchAll(/대장 (\d{2})\b/g)].some((match) => shared.has(match[1])) ||
       [...source.matchAll(/`([A-Z][A-Z0-9_]{2,})(?:\.[\w.]+)?`/g)].some((match) => constants.has(match[1]));
     const wrong: string[] = [];
@@ -1407,7 +1455,8 @@ describe('화면 무리 — PRD 화면 파일과 문구 대장이 같은 무리�
           section = id === undefined ? null : { id, heading: line, rows: 0 };
           continue;
         }
-        if (section === null || !line.startsWith('| ') || /^\| (---|자리) /.test(line)) continue;
+        // 구분선과 그 바로 위의 표 머리 줄만 거른다 — 자리 칸이 「자리」로 시작하는 줄은 센다
+        if (section === null || !line.startsWith('| ') || TABLE_RULE.test(line) || TABLE_RULE.test(lines[at + 1] ?? '')) continue;
         section.rows += 1;
         if (!line.includes('실사례 없음')) {
           if (!(/https?:\/\//.test(line) && /\d{4}-\d{2}-\d{2}/.test(line))) wrong.push(`${file}: ${line.slice(0, 40)} — 출처 링크 · 확인 날짜가 없다`);
@@ -1417,7 +1466,7 @@ describe('화면 무리 — PRD 화면 파일과 문구 대장이 같은 무리�
         // 칸은 `|` 로 가른다 — 칸 안의 `\|` 는 글자다. 끝 칸이 출처다(머리 줄이 `… | 출처 |` 로 끝난다)
         const cells = line.trim().replace(/^\|/, '').replace(/\|$/, '').replace(/\\\|/g, '\u0000').split('|');
         const place = cells[0].replace(/\u0000/g, '\\|').trim();
-        if (!nearest(cells[cells.length - 1])) missing.push({ file, line: at + 1, fingerprint: `${section.id} :: ${place.slice(0, 40).trim()}` });
+        if (!nearest(cells[cells.length - 1], section.id)) missing.push({ file, line: at + 1, fingerprint: `${section.id} :: ${place.slice(0, 40).trim()}` });
       }
       close();
     });
@@ -2004,10 +2053,18 @@ describe('위임 규약 (docs/agents/delegation.md 색인 → docs/agents/delega
   /**
    * 라운드 노트의 「헤맨 것」 · 「회고」 절은 줄마다 `→ 놓은 자리`를 단다(`docs/agents/delegation/notes.md` 「세션 기록」) — 자리는 파일(`경로` ·
    * `이름.md`) · 「절」 · `G-nn` · `#NNN`(이슈 · PR)이다. 「다음 retro 로」 · 「다음 `/retro` 의 입력」은 자리가 아니다 — 그렇게 적은 줄은 아무
-   * 문서에도 안 닿고 다음 라운드가 같은 자리에서 헤맨다. 줄은 `- ` · `1. ` 로 시작하고 그 아래 들여 쓴 줄까지다.
+   * 문서에도 안 닿고 다음 라운드가 같은 자리에서 헤맨다. 줄은 `- ` · `1. ` 로 시작하고 그 아래 들여 쓴 줄까지다. 「절」은 저장소 문서에
+   * 실제로 있는 절 머리(`#` ~ `######`)의 글자일 때만 자리다 — 「다음에 보기」 같은 따옴표 말은 자리가 아니다(ADR 0260).
    */
-  const LESSON_PLACE = /`[^`\s]+\.(?:md|ts|tsx|mts|mjs|cjs|js|json|sql|yml)`|\b[\w./-]+\.(?:md|ts|tsx|mts|mjs|cjs|js|json|sql|yml)\b|「[^」]+」|\bG-\d{2,3}\b|#\d+/;
-  const lessonsWithoutPlace = (text: string): string[] =>
+  const LESSON_PLACE = /`[^`\s]+\.(?:md|ts|tsx|mts|mjs|cjs|js|json|sql|yml)`|\b[\w./-]+\.(?:md|ts|tsx|mts|mjs|cjs|js|json|sql|yml)\b|\bG-\d{2,3}\b|#\d+/;
+  /** 저장소 문서의 절 머리 글자 — `docs/` · 뿌리 문서 */
+  const docHeadings = (): string[] =>
+    REFERRING_FILES.filter((file) => file.endsWith('.md')).flatMap((file) =>
+      [...readFileSync(file, 'utf8').matchAll(/^#{1,6} (.+)$/gm)].map((match) => match[1]),
+    );
+  const placed = (tail: string, headings: readonly string[]) =>
+    LESSON_PLACE.test(tail) || [...tail.matchAll(/「([^」]+)」/g)].some((match) => headings.some((heading) => heading.includes(match[1])));
+  const lessonsWithoutPlace = (text: string, headings: readonly string[]): string[] =>
     text
       .split(/^(?=#{2,3} )/m)
       .filter((section) => /^#{2,3} .*(?:헤맨 것|회고)/.test(section))
@@ -2017,7 +2074,7 @@ describe('위임 규약 (docs/agents/delegation.md 색인 → docs/agents/delega
           if (/^(?:[-*]|\d+\.) /.test(line)) items.push(line);
           else if (/^\s+\S/.test(line) && items.length > 0) items[items.length - 1] += ` ${line.trim()}`;
         }
-        return items.filter((item) => !LESSON_PLACE.test(item.split('→').slice(1).join('→'))).map((item) => item.slice(0, 60));
+        return items.filter((item) => !placed(item.split('→').slice(1).join('→'), headings)).map((item) => item.slice(0, 60));
       });
   /** 이 셈을 세운 다음 날 — 그 전의 노트는 그날의 기록이라 재지 않는다 */
   const LESSONS_PLACED_FROM = '2026-11-20';
@@ -2027,7 +2084,9 @@ describe('위임 규약 (docs/agents/delegation.md 색인 → docs/agents/delega
       const name = basename(file);
       return /^\d{4}-\d{2}-\d{2}-.+\.md$/.test(name) && name.slice(0, 10) >= LESSONS_PLACED_FROM;
     });
-    expect(notes.flatMap((file) => lessonsWithoutPlace(readFileSync(file, 'utf8')).map((item) => `${relPath(file)}: ${item}`))).toEqual([]);
+    const headings = docHeadings();
+    expect(headings.length).toBeGreaterThan(1000);
+    expect(notes.flatMap((file) => lessonsWithoutPlace(readFileSync(file, 'utf8'), headings).map((item) => `${relPath(file)}: ${item}`))).toEqual([]);
   });
 
   it('놓은 자리가 없는 줄을 잡는다 — 「다음 retro 로」는 자리가 아니다', () => {
@@ -2040,12 +2099,18 @@ describe('위임 규약 (docs/agents/delegation.md 색인 → docs/agents/delega
       '- 쌓은 PR 은 CI 가 다시 안 돈다',
       '  → #1175',
       '- 관점 목록이 없다(다음 `/retro` 의 입력)',
+      '4. 함정을 또 밟았다 → 「로컬 환경의 함정」',
+      '5. 따옴표 말뿐이다 → 「다음에 보기」',
       '',
       '## 남은 것',
       '',
       '- 이 절은 재지 않는다',
     ].join('\n');
-    expect(lessonsWithoutPlace(note)).toEqual(['3. 검토 관점이 없다 → 다음 retro 로', '- 관점 목록이 없다(다음 `/retro` 의 입력)']);
+    expect(lessonsWithoutPlace(note, ['로컬 환경의 함정', '세션 기록'])).toEqual([
+      '3. 검토 관점이 없다 → 다음 retro 로',
+      '- 관점 목록이 없다(다음 `/retro` 의 입력)',
+      '5. 따옴표 말뿐이다 → 「다음에 보기」',
+    ]);
   });
 });
 
