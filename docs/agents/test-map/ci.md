@@ -56,7 +56,7 @@ squash-merge 하고 배포한다. 동작 변경이 없다고 판별된 경우 ma
 `scripts/ci-plan.test.ts` 가 차례까지 잰다): 타입 · 린트 · 안드로이드 번들 · SDK 정합(`expo install --check`, 오프라인) · 네이티브 의존 검사(`scripts/mobile-native.mjs`) ·
 박은 로컬 npm 의 잠금 받기. 뿌리 `npm ci` 없이 돌고, 뿌리 `node_modules` 는 앱의 것으로 잇는다.
 PR 에서는 앱이 부르는 자리(`ci-plan.mjs` 의 `MOBILE_REACH` 와 `reachesMobile` — 문서와 웹 쪽 시험은 빼고)와 CI 자체(`.github/workflows/**` · `.nvmrc`)가 바뀌었을 때만 돈다. 라벨 · 빈 diff · 일정 · 손으로 켠 실행 · 정책만이 아닌 main 푸시도 돈다.
-**네이티브 의존 검사의 Maven 저장소 조회는 좌표를 바꾸는 PR 에서만**(계획의 `mobile_maven` — `ci-plan.mjs` 의 `MAVEN_INPUTS` 와 빈 diff, ADR 0257) — 그 밖은 `--offline` 으로
+**네이티브 의존 검사의 Maven 저장소 조회는 좌표 · 저장소와 그 조회를 바꾸는 PR 에서만**(계획의 `mobile_maven` — `ci-plan.mjs` 의 `MAVEN_INPUTS` 와 빈 diff, ADR 0257) — 그 밖은 `--offline` 으로
 SDK 만 잰다. 저장소의 「없다」는 404 · 410 뿐이고 429 · 5xx · 망 실패는 다시 묻고 경고다.
 앱이 새 웹 파일을 들이면 `scripts/mobile-closure.test.ts` 가 목록에 더하라고 붉다. 앱이 DB · 앱의 문을 부르는 자리(`scripts/check-mobile.mjs`)는
 `flow` 가 잰다 — `mobile/**` 는 정책도 엔진도 아니라 전부다.

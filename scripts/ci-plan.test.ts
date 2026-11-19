@@ -248,14 +248,14 @@ describe('CI 계획 — 앱 검사 (mobile 차선)', () => {
     expect(planFor({ files: ['mobile/src/app/index.tsx'], event: 'push', pushed }).tier).toBe('full');
   });
 
-  it('Maven 저장소 조회는 좌표를 바꾸는 PR(앱의 잠금 파일 · app.json)과 빈 diff 에서만 — 라벨 · main · 일정 · 손 실행은 안 묻는다 (ADR 0257)', () => {
+  it('Maven 저장소 조회는 좌표 · 저장소와 그 조회를 바꾸는 PR(앱의 잠금 파일 · app.json · app.config.js · mobile-native.mjs)과 빈 diff 에서만 — 라벨 · main · 일정 · 손 실행은 안 묻는다 (ADR 0257)', () => {
     for (const file of MAVEN_INPUTS) {
       expect(pr([file]).mobileMaven, file).toBe(true);
       expect(pr(['docs/prd.md', 'app/page.tsx', file]).mobileMaven, file).toBe(true);
     }
-    expect([...MAVEN_INPUTS].sort()).toEqual(['mobile/app.json', 'mobile/package-lock.json']);
+    expect([...MAVEN_INPUTS].sort()).toEqual(['mobile/app.config.js', 'mobile/app.json', 'mobile/package-lock.json', 'scripts/mobile-native.mjs']);
     expect(pr([]).mobileMaven).toBe(true);
-    for (const files of [['mobile/src/app/index.tsx'], ['mobile/package.json'], ['scripts/mobile-native.mjs'], ['mobile/audit-exceptions.json'], ['app/page.tsx'], ['docs/prd.md']]) {
+    for (const files of [['mobile/src/app/index.tsx'], ['mobile/package.json'], ['scripts/mobile-native.test.ts'], ['mobile/audit-exceptions.json'], ['app/page.tsx'], ['docs/prd.md']]) {
       expect(pr(files).mobileMaven, files[0]).toBe(false);
     }
     expect(pr(['mobile/src/app/index.tsx'], [FULL_LABEL]).mobileMaven).toBe(false);
