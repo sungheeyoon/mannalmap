@@ -1,6 +1,6 @@
 # 역할 — 운영 (배포 · 운영 확인 · 크론 · 절차)
 
-운영 DB 와 Vercel 에 닿는 일이다. 대개 조율자가 라운드 끝에 겸한다.
+운영 DB 와 Vercel 에 닿는 일이다. CI 워크플로 · 의존성 감사 · 앱 빌드 · 스토어 제출도 이 역할이다([역할 고르기](../start.md#역할-고르기)). 대개 조율자가 라운드 끝에 겸한다.
 
 ## 먼저 읽는 것
 
@@ -39,5 +39,7 @@
 손대기 전에 다 읽지 않는다 — 일이 그 자리에 닿을 때 연다(ADR 0147).
 
 - 앱을 굽거나 스토어에 내면 → [앱 출시의 차례](../ops/runbook/mobile-release.md#앱-출시의-차례)
+- CI 의 `audit` 이 실패하면 → [운영 의존성 취약점](../ops/runbook/security.md#운영-의존성-취약점--ci-의-audit-이-붉을-때-g-23-①-adr-0104) — 새 advisory 인지 범위의 커밋인지부터
+- CI 워크플로(`.github/workflows/`)를 고치면 → [CI](../agents/test-map/ci.md#ci) — 차선과 계획기의 판정
 - 보안 점검(advisor · 접속기록)을 맡았으면 → [보안 점검](../ops/runbook/security.md#보안-점검--advisor-와-접속기록-g-23-⑩-⑪) — 증거는 [간극 대장](../product/gaps.md)의 G-23 줄에
 - 배포 뒤 운영자의 거절(`refused`)이 접속기록에 남는지 보려면 → [월 점검](../ops/runbook/security.md#월-점검--개인정보-없이) 의 질의 「4-2」 — 배포 runbook 에는 그 확인 걸음이 없다(2026-10-18)

@@ -19,19 +19,22 @@
 - [층 넷](../architecture.md#층-넷) · [새 것을 놓을 때](../architecture.md#새-것을-놓을-때) — 방향 · 자리 · 도메인 lib 사이 새 방향
 - [실패를 말하는 법](../agents/code-rules/failures.md#실패를-말하는-법) · [이름](../agents/code-rules/names.md#이름) · [주석과 ADR 참조](../agents/code-rules/comments.md#주석과-adr-참조)
 - [무엇을 고쳤으면 무엇을 돌리나](../agents/test-map/what-to-run.md#무엇을-고쳤으면-무엇을-돌리나) — 로컬 최소와 예외 넷
+- [레퍼런스](../agents/code-rules/references.md#레퍼런스) — 흐름 · 처리 상태 · 한도 숫자 · 정책 빈틈을 한국 서비스에서 찾는 차례 · 확인 수준 · 남기는 자리
 
 ## 하지 않는 것 · 묻는 것
 
-- 결정 점검표 여섯 중 하나라도 바뀌면 머지하지 않고 보고에 올린다 — 문구 말고는 ADR 을 같은 PR 에, 문구는 운영자 사후 확인([결정 점검표](../agents/delegation/decisions.md))
+- 결정 점검표 일곱 중 하나라도 바뀌면 머지하지 않고 보고에 올린다 — 문구 말고는 ADR 을 같은 PR 에, 문구는 운영자 사후 확인([결정 점검표](../agents/delegation/decisions.md))
 - `app/api/**` 에 자격을 묻지 않는 문을 더하면 결정이다 — 시험이 붉기 전에 묻는다([결정 점검표](../agents/delegation/decisions.md))
 - 실호출은 안 한다 — 명령과 볼 값을 「사람이 할 걸음」에([권한 등급](../agents/delegation/permissions.md))
 - PRD 절 번호를 코드 주석에 적지 않는다 — changelog 의 날짜나 `G-nn` 을 든다([일하는 법](../agents/delegation/working.md))
 - 운영 개인정보를 읽는 SQL 을 보내지 않는다([권한 등급](../agents/delegation/permissions.md) · ADR 0105)
+- 레퍼런스 없이 새 글자 · 배치 · 흐름을 넣지 않는다 — 정책 · 새 흐름인데 사례가 없으면 짓지 않고 구조와 선택지를 보고에([정책 · 흐름의 빈틈](../agents/delegation/decisions.md#정책--흐름의-빈틈--묻기-전에-찾는-차례))
 
 ## 끝날 때 고치는 것
 
 - [ ] [끝났다는 것](../agents/delegation/done.md) — PR 칸 여섯. 「문서」 칸이 고칠 원본을 든다
 - [ ] 새 운영 절차 · 운영 SQL → `docs/ops/runbook/` 의 그 작업 파일(새 파일이면 색인에 한 줄)
+- [ ] 새로 찾은 레퍼런스 → [남기는 자리](../agents/code-rules/references.md#남기는-자리) — 다시 쓸 것은 레퍼런스 모음에 한 줄
 
 ## 닿을 때 여는 것
 
@@ -45,3 +48,4 @@
 - DB 함수(RPC)의 입력 경계(길이 · 범위 · 허용 값)를 시험에 옮기면 → [그 함수의 최신 마이그레이션](../../supabase/migrations/) — 옛 정의의 값은 바뀌었을 수 있다. `grep -l 'function public.<이름>' supabase/migrations/* | sort | tail -1`
 - 열린 PR 밑에서 main 이 움직여 가지를 올려야 하면 → [로컬 환경의 함정](../agents/delegation/local-env.md#로컬-환경의-함정) — 격리에서는 rebase 뒤 force-push 가 거절된다. main 을 merge 해 올린다
 - 웹 · 앱이 같은 읽기 함수를 함께 쓰게 하려면 → [층 시험](../../scripts/layers.test.ts)(`src/lib` 에 DB 함수 이름 금지)과 [CI 계획](../../scripts/ci-plan.mjs)의 `MOBILE_REACH` 를 먼저 본다 — 어디에 두면 시험이 실패하고 어느 PR 이 앱 검사를 부르는지
+- 새 흐름 · 처리 상태 · 한도 숫자의 레퍼런스를 찾으면 → [레퍼런스 모음](../context/references.md) — 화면 꼴별로 이미 찾은 한국 서비스 사례를 먼저 보고, 새로 찾은 것은 그 꼴에 한 줄

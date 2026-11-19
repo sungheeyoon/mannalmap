@@ -34,22 +34,33 @@
 | 13 | **비공개 테스트 — 테스터 12명 이상이 연속 14일** 옵트인해 있다. 테스터는 운영자가 모은다(G-162) | **운영자**(테스터 · 콘솔) · 조율자 | 아래 「내부 테스트에서 프로덕션으로」 3. 시작한 날 · 테스터 수를 #770 댓글로 |
 | 14 | 대시보드 「Apply for production」 → 승인 뒤 프로덕션 출시 | 운영자 · 조율자 | 아래 「내부 테스트에서 프로덕션으로」 4 · 5 |
 
-### 지금 어디까지 왔나 (2026-11-17)
+### 지금 어디까지 왔나
 
-운영자 지시로 조율자가 운영자의 브라우저(개발자 계정 「갑자기탐구생활」 · 개인)에서 콘솔을 직접 채웠다 — 위 「콘솔은 에이전트가 만지지 않는다」의 이번 한 번 예외다.
+**Play 콘솔 차례의 지금 상태는 이 표 하나가 원본이다**(ADR 0256) — 간극 대장 · 다른 런북 · #770 은 값을 다시 적지 않고 차례 번호로 이 표를 가리킨다.
+어느 빌드가 어느 트랙에 있나는 `docs/ops/runbook/mobile-release.md` 「지금 나간 빌드」다. 콘솔은 운영자 지시로 조율자가 운영자의 브라우저(개발자 계정
+「갑자기탐구생활」 · 개인)에서 직접 채운 날이 있다 — 위 「콘솔 · 클라우드 화면은 에이전트가 만지지 않는다」의 그날마다의 예외다.
+
+**차례가 끝나면 이 표와, 그 차례를 가리키는 간극 대장의 G 줄을 같은 PR 에서 고친다**(ADR 0256) — 끝 조건이 찼으면 줄을 닫고 changelog 에 적는다(대장 머리말).
+2026-11-17 에 차례 10 이 끝났는데 G-21 · G-128 · G-164 가 2026-11-19 감사까지 그 전 상태를 적고 있었다.
 
 | 차례 | 상태 | 값 |
 | --- | --- | --- |
-| 5 앱 만들기 | 끝 | 앱 id `4975172422160581388` · 패키지 `com.mannalmap.app` · 한국어 · 앱 · 무료 |
-| 8 첫 AAB | 끝 | EAS `production` 빌드 `7d203dc7`(커밋 `73791ff0` · versionCode 2 · 1.0.0) → 콘솔에 파일로 올려 **내부 테스트**에 출시(테스터 목록은 아직 없다). 대표전화 · 신고기관은 빈 채로 구웠다(차례 3 은 남았다) |
+| 1 대표전화 | **남았다** — 출시 때 정한다(#770 「지금 할 것」 1 · 3) | 번호는 이 문서 · 이슈에 적지 않는다(원본은 3 의 상수). Play 의 공개 개발자 전화에는 운영자 휴대폰을 넣었다 — 웹 상수에도 같은 번호를 쓸지는 운영자 답이 남았다(#770) |
+| 2 개인 계정 | **계정은 만들었다(2026-11-10, 개인 · ADR 0246) — 한국 개발자 칸이 다 차지 않았다** | 위 「개인 계정 만들기」 7 의 칸이 다 차기 전에는 `eas submit` 이 `HTTP 403: To comply with Korean law, developers in Korea must provide additional information on the Account Details page` 로 막힌다(2026-11-19) — 그동안 AAB 는 콘솔 「새 버전 만들기」에 파일로 올린다(`mobile-release.md` 「무료 빌드 횟수가 떨어지면」 끝). 대표전화 · 신고기관(1 · 3)이 정해지면 채운다 |
+| 3 사업자 정보 상수 PR | **남았다** — 신고기관 이름은 정해졌다(2026-11-19), 대표전화는 1 | `BUSINESS.phone` · `MAIL_ORDER_AUTHORITY` 가 아직 빈 문자열이다. 값은 이 문서에 적지 않고 그 PR 이 상수에 넣는다 |
 | 4 판매자 프로필 · 정산 계좌 | **끝(2026-11-18) — 시험 입금액을 넣어 「은행 계좌가 확인됨」** | 결제 프로필은 개발자 등록 때 쓴 「성희윤 · Play용 개인 프로필」(유형 개인)에 이었다. 공개 판매자 프로필: 업체명 `갑자기탐구생활` · 웹사이트 운영 주소 · 품목 「인터넷, 네트워크 및 디지털 미디어」 · 고객지원 `mannalmap@gmail.com` · 카드 명세서 이름 `MANNALMAP`(명세서에는 `Google*MANNALMAP`). 정산 계좌는 국민은행(은행 코드 004) · 예금주 성희윤 · 기본 지급 수단 — 번호는 적지 않는다. Google 이 2~3 영업일 안에 「GOOGLE」 이름으로 ₩250 미만을 넣고, 그 금액을 계정 관리 → 결제 프로필 → 지급받을 방법에 넣으면 끝 |
-| 15% 서비스 수수료 | **계정 그룹만 만듦(2026-11-17) — 약관 동의가 남았다. 2026-11-18 계좌 확인 직후에도 · 2026-11-19 에도 「검토 및 등록」이 없었다** | 계정 그룹 `갑자기탐구생활`(기본 계정 = 이 개발자 계정 하나). 등록은 그룹 + 서비스 수수료 약관 동의인데, 그날 「검토 및 등록」 단추가 어느 화면에도 안 섰다 — 다시 보고 계정 관리 → 연결된 개발자 계정의 배너에서 동의한다. 옛 개발자 계정 「Sungheeyoon」(`6490245393431647656`)은 2026-04-07 「사용되지 않아 해지」(정책 위반 아님), 결제 설정이 안 열려 그룹에 넣을 것이 없다. 요건 · 100만 달러 기준은 [서비스 수수료](https://support.google.com/googleplay/android-developer/answer/112622) · [15% 등급](https://support.google.com/googleplay/android-developer/answer/10632485) |
-| 6 서비스 계정 키 | **끝(2026-11-18)** — 결제 검증 키는 2026-11-17(`credits.md` 「운영의 실제 값」). 제출 키는 `eas-submit@`(같은 Cloud 프로젝트, 키 `4ca60f9b…`)를 Play 사용자로 초대하고 expo.dev Credentials 의 「Google service account key for Expo Submit」에 올렸다. 키 파일 사본은 남기지 않았다 | 권한은 아래 「EAS 제출 잇기」 2 의 여섯(콘솔이 「앱 품질 정보 보기」 등을 따라 켜 9 로 선다), 재무 권한 없음. 키를 다시 만들 때는 `credits.md` 「키를 다시 만들 때」와 같은 차례 |
+| 5 앱 만들기 | 끝 | 앱 id `4975172422160581388` · 패키지 `com.mannalmap.app` · 한국어 · 앱 · 무료 |
+| 6 서비스 계정 키 | **끝(2026-11-18)** — 결제 검증 키는 2026-11-17(`credits.md` 「운영의 실제 값」). 제출 키는 `eas-submit@`(같은 Cloud 프로젝트, 키 `4ca60f9b…`)를 Play 사용자로 초대하고 expo.dev Credentials 의 「Google service account key for Expo Submit」에 올렸다. 키 파일 사본은 남기지 않았다 | 권한은 아래 「EAS 제출 잇기」 2 의 여섯(콘솔이 「앱 품질 정보 보기」 등을 따라 켜 9 로 선다), 재무 권한 없음. 키를 다시 만들 때는 `credits.md` 「키를 다시 만들 때」와 같은 차례. 제출 키가 있어도 2 의 한국 칸이 차기 전에는 `eas submit` 이 403 이다 |
+| 7 앱 푸시의 Firebase 값 | **안 했다** — G-150 | `docs/ops/runbook/push.md` 「앱 푸시를 켠다」. 지금까지의 버전은 알림 없이 나갔다 |
+| 8 첫 AAB | **끝** | 첫 AAB 는 EAS `production` `7d203dc7`(versionCode 2)이고 콘솔에 파일로 올려 내부 테스트에 냈다. 트랙마다 지금 버전은 `docs/ops/runbook/mobile-release.md` 「지금 나간 빌드」, 내부 테스트의 테스터 목록은 이 표 맨 끝 줄 |
 | 9 앱 서명 키 지문 | **끝(2026-11-11)** — 등록했고, Play 내부 테스트로 깐 앱에서 구글 · 카카오 로그인이 됐다(운영자 실기기) | 아래 「읽은 지문」 — Google OAuth 안드로이드 클라이언트 셋(`mannalmap-android-play-1` ~ `3`) · 카카오 네이티브 앱 키의 키 해시 셋을 넣었다. 카카오 키 해시는 EAS 키의 것까지 넷이다 |
-| 10 상품 · 결제 키 · RTDN | **끝(2026-11-17) — 배포 `f8450ea2` 뒤 테스트 알림 204 · `store-consume` Run 200. 샌드박스(11)가 남았다** | 상품 넷 · Cloud · 변수의 값은 `docs/ops/runbook/credits.md` 「Google Play 결제」의 「운영의 실제 값」 |
+| 10 상품 · 결제 키 · RTDN | **끝(2026-11-17) — 배포 `f8450ea2` 뒤 테스트 알림 204 · `store-consume` Run 200** | 상품 넷 · Cloud · 변수의 값은 `docs/ops/runbook/credits.md` 「Google Play 결제」의 「운영의 실제 값」 |
+| 11 샌드박스 확인 | **남았다** — 라이선스 테스터는 2026-11-19 에 넣었다(`credits.md` 「운영의 실제 값」) | `credits.md` 「샌드박스 확인」 표 1 ~ 9 — 운영자가 폰을 들고 조율자와 함께, 값은 #937 에(#770 「지금 할 것」) |
 | 12 등록정보 · 양식 | **끝(2026-11-11)** | 12 가운데 12 — 앞의 아홉에 더해 로그인 세부정보(심사 전용 구글 계정, 값은 콘솔 칸에만) · 타겟층(13–15 · 16–17 · 18세 이상) · 데이터 보안(제출). 스크린샷 4장은 캡션을 얹은 판으로 바꿨다(`docs/ops/play-listing.md` 「스크린샷 캡션」) |
-| 13 비공개 테스트 | **진행 중 — 1일차 2026-11-11** | 트랙 「비공개 테스트 - Alpha」 · 국가 「대한민국」만. 테스터는 구글 그룹 `mannalmap-testers`(누구나 가입 · 글쓰기와 회원 목록은 관리자만)로 받는다 — 그룹 가입 → `play.google.com/apps/testing/com.mannalmap.app` 에서 참여. 2026-11-11 대시보드에 「12명 이상의 테스터가 비공개 테스트 참여를 선택」이 체크됐다(그날 밤 그룹 회원 17명). 콘솔은 참여 인원 · 남은 날을 숫자로 안 보여 준다 — 체크와 「프로덕션 신청」 단추로 안다. **새 버전을 올려도 테스터의 참여 상태는 그대로다** — `3 (1.0.0)` 을 2026-11-12 에 같은 트랙에 올렸다. 테스터 설정을 바꾸는 것도 검토를 지난다. **등록정보는 「임시보관함에 저장」만으로는 안 나간다** — 편집 화면의 「다음」 → 「저장」을 지나야 게시 개요에 서고, 검토 중에 더 보내면 검토가 다시 시작된다. 일회성 제품 화면은 판매자 프로필(차례 4, 2026-11-17) 뒤 열렸다 |
-| 내부 테스트로 깔아 보기 | 끝(2026-11-11) | 내부 테스트 트랙에 운영자 주소 한 명의 목록 `operator` 를 넣었다. 참여 뒤 한두 시간은 스토어의 앱 페이지가 「항목을 찾을 수 없습니다」 · 「요청한 URL을 서버에서 찾을 수 없습니다」였고, 비공개 테스트를 검토에 보낸 뒤에 열렸다(어느 쪽 때문인지는 모른다). Play 스토어 앱이 참여한 계정으로 열려 있어야 한다. 검토 전이라 스토어에는 옛 스크린샷 · 임시 이름이 보인다 |
+| 13 비공개 테스트 | **진행 중 — 1일차 2026-11-11, 연속 14일의 끝은 2026-11-25 무렵** | 트랙 「비공개 테스트 - Alpha」 · 국가 「대한민국」만. 테스터는 구글 그룹 `mannalmap-testers`(누구나 가입 · 글쓰기와 회원 목록은 관리자만)로 받는다 — 그룹 가입 → `play.google.com/apps/testing/com.mannalmap.app` 에서 참여. 2026-11-11 대시보드에 「12명 이상의 테스터가 비공개 테스트 참여를 선택」이 체크됐다(그날 밤 그룹 회원 17명). 콘솔은 참여 인원 · 남은 날을 숫자로 안 보여 준다 — 체크와 「프로덕션 신청」 단추로 안다. **새 버전을 올려도 테스터의 참여 상태는 그대로다** — `3 (1.0.0)` 을 2026-11-12 에 같은 트랙에 올렸다. 테스터 설정을 바꾸는 것도 검토를 지난다. **등록정보는 「임시보관함에 저장」만으로는 안 나간다** — 편집 화면의 「다음」 → 「저장」을 지나야 게시 개요에 서고, 검토 중에 더 보내면 검토가 다시 시작된다. 일회성 제품 화면은 판매자 프로필(차례 4, 2026-11-17) 뒤 열렸다 |
+| 14 프로덕션 신청 | **13 뒤** — 2026-11-25 무렵 대시보드에 「프로덕션 신청」이 열리면 | 아래 「내부 테스트에서 프로덕션으로」 4 · 5. 낸 날과 그때의 테스터 수는 G-162 에 |
+| 15% 서비스 수수료(차례 밖) | **계정 그룹만 만듦(2026-11-17) — 약관 동의가 남았다. 2026-11-18 계좌 확인 직후에도 · 2026-11-19 에도 「검토 및 등록」이 없었다** | 계정 그룹 `갑자기탐구생활`(기본 계정 = 이 개발자 계정 하나). 등록은 그룹 + 서비스 수수료 약관 동의인데, 그날 「검토 및 등록」 단추가 어느 화면에도 안 섰다 — 다시 보고 계정 관리 → 연결된 개발자 계정의 배너에서 동의한다. 옛 개발자 계정 「Sungheeyoon」(`6490245393431647656`)은 2026-04-07 「사용되지 않아 해지」(정책 위반 아님), 결제 설정이 안 열려 그룹에 넣을 것이 없다. 요건 · 100만 달러 기준은 [서비스 수수료](https://support.google.com/googleplay/android-developer/answer/112622) · [15% 등급](https://support.google.com/googleplay/android-developer/answer/10632485) |
+| 내부 테스트의 테스터 목록(차례 밖) | **끝(2026-11-11)** — 목록 `operator`(운영자 주소 하나) | 내부 테스트 트랙에 그 목록을 넣었다. 라이선스 테스트(11)도 같은 목록이다. 참여 뒤 한두 시간은 스토어의 앱 페이지가 「항목을 찾을 수 없습니다」 · 「요청한 URL을 서버에서 찾을 수 없습니다」였고, 비공개 테스트를 검토에 보낸 뒤에 열렸다(어느 쪽 때문인지는 모른다). Play 스토어 앱이 참여한 계정으로 열려 있어야 한다. 검토 전이라 스토어에는 옛 스크린샷 · 임시 이름이 보인다 |
 
 **읽은 지문** — Play Console → Google Play로 보호됨 → 앱 서명(주소 끝 `/keymanagement`). 새 앱이라 앱 서명 키가 셋이다(양자 대비 서명). 값은 「복사」 단추로만 나온다. 비밀이 아니다.
 
@@ -181,8 +192,8 @@ done
 1. **제출용 서비스 계정** — Google Cloud → IAM & Admin → Service Accounts → Create Service Account → Manage keys → Create new key → **JSON**. 같은 프로젝트에서 **Google Play Android Developer API** 를 켠다 — **운영자**
 2. Play Console → **Users and permissions → Invite new users** → 그 서비스 계정 이메일 → App permissions 에서 앱을 고르고 이것만: View app information (read-only) · Edit and delete draft apps · Release to production, exclude devices, and use Play App Signing · Release apps to testing tracks · Manage testing tracks and edit tester lists · Manage store presence. 「You don't need Admin (all permissions), View financial data, Manage orders and subscriptions」 — 제출 키에 결제 권한을 주지 않는다(결제 키는 「결제의 전제」 3) — **운영자**
 3. **JSON 키를 EAS 에 올린다** — expo.dev → 프로젝트 → Credentials → Android → 「Service credentials」 → **Google service account key for Expo Submit** → Add, 또는 `npx eas-cli@latest credentials --platform android`. 키 파일은 저장소 · 이슈에 두지 않는다(`mobile/eas.json` 에 `serviceAccountKeyPath` 를 적지 않는다 — 「If you omit this field, Expo Submit uses the key that is assigned to your app on Expo servers」) — **운영자**
-4. **`mobile/eas.json` 은 그대로 된다** — `submit.production.android.track` 이 `internal` 이다. 첫 제출도 CLI 로 간다 — 「If this is your app's first submission, the default eas submit command works out of the box and creates your app's first release on the internal testing track」, 「The app stays in draft status in Play Console until you complete the store listing and setup tasks」. 그래서 등록정보가 다 차기 전에 낸 판은 초안(draft)으로 선다 — 그 동안 `releaseStatus: "draft"` 를 더할 까닭은 없다
-5. 제출은 `docs/ops/runbook/mobile-release.md` 「빌드와 제출」의 두 줄(`build --profile production --platform android` → `submit --profile production --platform android`) — **`submit` 은 조율자 · 운영자 몫**이다. 빌드 전 EAS `production` 값(카카오 키)을 같은 문서 「EAS 프로필과 환경값」으로 본다. 사업자 정보는 EAS 값이 아니라 사업자 정보 상수(`src/lib/brand/business.ts`)다 — 대표전화 · 신고기관을 넣는 PR(차례 3)이 main 에 든 뒤에 굽는다
+4. **`mobile/eas.json` 은 그대로 된다** — `submit.production.android.track` 이 `internal` 이다. 첫 제출도 CLI 로 간다 — 「If this is your app's first submission, the default eas submit command works out of the box and creates your app's first release on the internal testing track」, 「The app stays in draft status in Play Console until you complete the store listing and setup tasks」. 그래서 등록정보가 다 차기 전에 낸 판은 초안(draft)으로 선다 — 그 동안 `releaseStatus: "draft"` 를 더할 까닭은 없다. **다만 한국 개발자 칸(위 「개인 계정 만들기」 7)이 다 차기 전에는 첫 제출이든 아니든 `eas submit` 이 403 으로 막힌다**(2026-11-19 — 위 「지금 어디까지 왔나」 2). 그동안은 AAB 를 콘솔 「새 버전 만들기」에 파일로 올린다
+5. 제출은 `docs/ops/runbook/mobile-release.md` 「빌드와 제출」의 두 줄(`build --profile production --platform android` → `submit --profile production --platform android`) — **`submit` 은 조율자 · 운영자 몫**이다. 4 의 403 이 해결되기 전에는 `submit` 대신 콘솔에 파일로 올린다. 굽기 전 셋(남은 빌드 수 · 묶어서 한 번 · main 검증)은 같은 문서 「빌드와 제출」 앞머리, 빌드 전 EAS `production` 값(카카오 키)은 같은 문서 「EAS 프로필과 환경값」으로 본다. 사업자 정보는 EAS 값이 아니라 사업자 정보 상수(`src/lib/brand/business.ts`)다 — 대표전화 · 신고기관을 넣는 PR(차례 3)이 main 에 든 뒤에 굽는다
 
 ## 내부 테스트에서 프로덕션으로
 
