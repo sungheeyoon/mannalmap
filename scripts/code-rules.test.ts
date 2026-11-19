@@ -17,6 +17,7 @@ import { basename, dirname, extname, join, relative, resolve, sep } from 'node:p
 import ts from 'typescript';
 import { beforeAll, describe, expect, it } from 'vitest';
 
+import codeRules from '../eslint-code-rules.cjs';
 import { SUPPORT_EMAIL } from '../src/lib/brand';
 
 import { ON_DEMAND_SECTION, TABLE_COLUMNS, linksOf, readBudgetOf, sectionOf as sectionIn, tableOf } from './read-budget.mjs';
@@ -506,8 +507,8 @@ const ERRORS_NEVER_READ_STILL_THERE: readonly string[] = [];
  * 그렇게 고쳤다.
  */
 const DB_RESULTS_DROPPED_STILL_THERE: readonly string[] = [];
-/** `.from()` 이름이 겹치는 내장 — `scripts/layers.test.ts` 의 `NOT_A_DB_OBJECT` 와 같은 목록 */
-const NOT_A_DB_OBJECT = /^(Array|Buffer|Uint8Array|Int32Array|Float64Array|Object|Promise|Set|Map|String)$/;
+/** `.from()` 이름이 겹치는 내장 — 린트 · 층 시험과 한 벌이다(`eslint-code-rules.cjs`) */
+const { NOT_A_DB_OBJECT } = codeRules;
 
 /** 식 안의 첫 `.rpc()`·`.from()` 호출 — 층 시험의 화면 DB 호출 지문과 같은 모양으로 적는다 */
 function dbCallIn(node: ts.Node, source: ts.SourceFile): string | null {
@@ -707,11 +708,17 @@ describe('탈출구의 지문 (docs/agents/code-rules/escapes.md) — 줄어들�
     expectExactly(found, DB_RESULTS_DROPPED_STILL_THERE);
   });
 
-  it('`@ts-expect-error` 는 없다 — 타입 오류를 끄는 표시도 예산 0 이다', () => {
-    const found = PRODUCT_FILES.flatMap((file) =>
+  /**
+   * 린트는 `@ts-ignore` · `@ts-nocheck` 를 막고 `@ts-expect-error` 는 설명을 달면 지나게 둔다(`NO_TYPE_ESCAPES`). 셋 다 예산 0 은 여기서 든다 —
+   * 앱의 시험 파일은 어느 린트도 안 보므로(`mobile/eslint.config.js` 가 뺀다) 함께 센다
+   */
+  it('`@ts-expect-error` · `@ts-ignore` · `@ts-nocheck` 는 없다 — 타입 오류를 끄는 표시도 예산 0 이다', () => {
+    const files = [...PRODUCT_FILES, ...MOBILE_SOURCE_FILES.filter((file) => isTest(relPath(file)))];
+    expect(files.length).toBeGreaterThan(PRODUCT_FILES.length);
+    const found = files.flatMap((file) =>
       readFileSync(file, 'utf8')
         .split('\n')
-        .flatMap((line, at) => (/(\/\/|\/\*)\s*@ts-expect-error/.test(line) ? [`${relPath(file)}:${at + 1} ${line.trim()}`] : [])),
+        .flatMap((line, at) => (/(\/\/|\/\*)\s*@ts-(ignore|nocheck|expect-error)/.test(line) ? [`${relPath(file)}:${at + 1} ${line.trim()}`] : [])),
     );
     expect(found).toEqual([]);
   });
@@ -799,16 +806,63 @@ const ENTRY_DOCS = [
 /** 저장소 뿌리에서 시작하는 경로만 잰다 — `person-input.ts` 같은 줄임과 `NNNN-….md` 같은 틀은 경로가 아니다 */
 const ROOTED_PATH = /^(app|src|scripts|e2e|docs|supabase|public|\.github)\/[A-Za-z0-9_.\/\[\]-]+$/;
 
+/** 미결 표시 — 린트 `no-warning-comments` 의 낱말(`eslint-code-rules.cjs` 의 `NO_LOOSE_ENDS`)과 같은 넷, 낱말 경계 · 대소문자 무시 */
+const LOOSE_END = /\b(?:todo|fixme|xxx|hack)\b/i;
+
+/** 앱의 재기 도구와 뿌리 설정(`mobile/scripts/` · `mobile/*.js`) — 앱 린트는 `mobile/src` · `mobile/scripts` 만, 시험 파일은 빼고 본다 */
+const MOBILE_TOOL_FILES = [
+  ...filesUnder(join(ROOT, 'mobile/scripts')),
+  ...readdirSync(join(ROOT, 'mobile')).map((name) => join(ROOT, 'mobile', name)),
+].filter((file) => SOURCE_EXTENSIONS.includes(extname(file)) && !file.endsWith('.d.ts'));
+
 describe('금지어 (docs/agents/code-rules/banned-words.md)', () => {
   /**
    * 「맛보기」는 화면에서 걷었고(#349) 한국어로는 「로그인 전 결과」로 부른다(`docs/context/evidence.md`, 2026-09-30). 주석에 남은
-   * 낱말이 다음 작업에서 화면 글자로 다시 번졌으므로 **주석까지** 센다 — 예산 0 이다.
+   * 낱말이 다음 작업에서 화면 글자로 다시 번졌으므로 **주석까지** 센다 — 예산 0 이다. 앱(`mobile/src`)은 화면과 문이 한 폴더라 `.ts` 도 센다.
    */
-  it('화면 파일(`app/**/*.tsx`)에 「맛보기」가 없다 — 주석도', () => {
+  it('화면 파일(`app/**/*.tsx`)과 앱(`mobile/src/**/*.{ts,tsx}`)에 「맛보기」가 없다 — 주석도', () => {
     const screens = SOURCE_FILES.filter((file) => relPath(file).startsWith('app/') && file.endsWith('.tsx'));
     expect(screens.length).toBeGreaterThan(50);
-    const found = screens.filter((file) => readFileSync(file, 'utf8').includes('맛보기')).map(relPath);
+    const app = MOBILE_SOURCE_FILES.filter((file) => /\.tsx?$/.test(file));
+    expect(app.length).toBeGreaterThan(50);
+    const found = [...screens, ...app].filter((file) => readFileSync(file, 'utf8').includes('맛보기')).map(relPath);
     expect(found).toEqual([]);
+  });
+
+  /**
+   * **주석의 미결 표시는 시험도 든다.** 린트(`no-warning-comments`)는 core · 앱 차선에서 도는데, 바뀐 줄이 전부 주석인 PR 은 정책
+   * 차선만 돈다(ADR 0153) — 정책 차선의 린트는 `scripts/` 만 보므로 `app/` 주석에 선 미결 표시가 지나갔다. 이 시험은 정책 차선에서 돈다.
+   * 린트가 안 보는 앱의 시험 파일 · 뿌리 설정 파일도 센다. 글자가 문자열 · 정규식 안이면 주석이 아니다(`src/lib/brand/business.ts`).
+   */
+  it('주석에 TODO · FIXME · XXX · HACK 이 없다 — 웹 · 앱 · 시험, 주석만 바뀐 PR 도', () => {
+    const files = [...WITH_MOBILE, ...ROOT_FILES, ...MOBILE_TOOL_FILES];
+    expect(files.length).toBeGreaterThan(1000);
+    const found = files
+      .filter((file) => LOOSE_END.test(readFileSync(file, 'utf8')))
+      .flatMap((file) =>
+        commentsOf(file)
+          .filter((comment) => LOOSE_END.test(comment.text))
+          .map((comment) => `${relPath(file)}:${comment.source.getLineAndCharacterOfPosition(comment.pos).line + 1}`),
+      );
+    expect(found).toEqual([]);
+  });
+
+  it('주석을 읽는 길은 문자열 · 정규식 · JSX 글자를 주석으로 세지 않는다', () => {
+    const probe = 'probe.tsx';
+    const text = [
+      "const a = 'TODO';",
+      'const b = /FIXME/;',
+      'const c = `HACK ${a}`;',
+      'const d = <p>XXX // 글자</p>;',
+      '// TODO 하나',
+      'function f() {',
+      '  /* FIXME 둘 */',
+      '}',
+      'const e = <p>{/* HACK 셋 */}</p>;',
+    ].join('\n');
+    const source = ts.createSourceFile(probe, text, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX);
+    const lines = commentsIn(source).map((comment) => `${source.getLineAndCharacterOfPosition(comment.pos).line + 1} ${comment.text}`);
+    expect(lines.sort()).toEqual(['5 // TODO 하나', '7 /* FIXME 둘 */', '9 /* HACK 셋 */']);
   });
 });
 
@@ -879,9 +933,12 @@ const COMMENT_PATHS_NOT_THERE: readonly { at: string; why: string; ignored?: tru
   { at: 'src/lib/reading/parts.ts :: src/lib/saju/evidence/prompt.ts', why: '역사 — 이 파일이 엔진 안에 있던 옛 자리(ADR 0047)' },
 ];
 
-/** 한 파일의 주석 전부 — `//` · `/* *\/` · JSDoc, JSX 안의 `{/* *\/}` 도. JSX 글자(`JsxText`)는 주석이 아니다 */
+/** 한 파일의 주석 전부 — `//` · `/* *\/` · JSDoc, JSX 안의 `{/* *\/}` 도. JSX 글자(`JsxText`) · 문자열 · 정규식 · 템플릿은 주석이 아니다 */
 function commentsOf(file: string): { text: string; pos: number; source: ts.SourceFile }[] {
-  const source = parse(file);
+  return commentsIn(parse(file));
+}
+
+function commentsIn(source: ts.SourceFile): { text: string; pos: number; source: ts.SourceFile }[] {
   const text = source.getFullText();
   const jsxText: [number, number][] = [];
   const ranges = new Map<number, ts.CommentRange>();
@@ -1194,21 +1251,183 @@ describe('화면 무리 — PRD 화면 파일과 문구 대장이 같은 무리�
     expect(wrong).toEqual([]);
   });
 
-  it('「확인 전」 절의 줄은 출처 링크와 확인 날짜를 든다 — 실사례가 없으면 「실사례 없음」 (ADR 0196)', () => {
+  /**
+   * **「실사례 없음」 줄도 가장 가까운 사례를 든다**(`docs/agents/code-rules/screen-copy.md` 「화면 문구」) — 출처 칸(줄의 끝 칸)에 그 사례의 링크와
+   * 날짜, 대장의 절 번호(`home-13` 꼴 · 옛 「대장 42」 꼴 — 있는 절), 코드의 상수 이름(`` `HOUR_UNKNOWN_LABEL` `` 꼴 — 지금 제품 코드에 있는 이름)
+   * 가운데 하나다. 출처가 「조율자 지시」뿐인 줄은 셋이 없어 붉다. 이 셈을 세운 날 셋이 없던 줄은 아래 목록이
+   * `절 :: 자리 칸의 앞 40자` 지문으로 든다 — 줄어들기만 한다. 줄을 「확정 문구」 절로 옮기거나 사례를 채우면 목록에서 지운다.
+   */
+  const NEAREST_MISSING_STILL_THERE: readonly string[] = [
+    'all-22 :: 출생 시각 문단 — 분 칸이 60 이상',
+    'all-22 :: 풀이 의견 — 안 고른 필수 질문마다 그 아래 `FEEDBACK_REQU',
+    'all-22 :: 궁합 고르기 직접 입력 칸 안의 줄',
+    'all-22 :: 내 사주 등록 단추 곁의 회색 곁말',
+    'compat-01 :: 관계 표 아래 각주 `BETWEEN_RELATIONS_NOTE`',
+    'compat-02 :: 표지 · 공유본의 점수 이름 `COMPAT_SCORE_LABEL` — 인',
+    'compat-02 :: 게이지 가운데의 수 `app/ui/score-gauge.tsx` · `m',
+    'credits-12 :: 약관 제13조⑥ `src/lib/brand/terms.ts`',
+    'credits-12 :: 약관 제14조④ 끝 `src/lib/brand/terms.ts`',
+    'credits-12 :: 환불정책 「한눈에」 끝 줄 `src/lib/brand/refund.ts`',
+    'credits-12 :: 약관 부칙(개정 시행일이 서면) `src/lib/brand/terms.t',
+    'credits-13 :: 부족 창 본문 — 남은 수가 0장',
+    'credits-13 :: 부족 창 본문 — 남았는데 모자랄 때(한 편 1장이라 지금은 안 선다)',
+    'credits-14 :: 풀이 화면 확인 창 제목(`readingConfirmTitle`, 웹 `',
+    'credits-14 :: 「풀이권이 부족해요」 창(credits-04 · credits-06 ·',
+    'first-01 :: 제목',
+    'first-01 :: 주 단추',
+    'first-01 :: 인연 입구',
+    'first-02 :: 로그인 전 주 단추 `mobile/src/reading/save-self',
+    'first-02 :: 저장을 누르고 온 사람의 저장 뒤',
+    'first-02 :: 표를 접은 줄 `mobile/src/app/chart.tsx`',
+    'first-04 :: 앱 입구 제목 아래 한 줄 `mobile/src/app/index.tsx',
+    'first-04 :: 앱 입구가 상태를 못 읽었을 때',
+    'first-04 :: 앱 입구 제목 아래 두 링크',
+    'first-04 :: 앱 입구 제목 아래 두 탭 `mobile/src/app/index.tsx',
+    'first-04 :: 앱 「궁합 보기」 탭 제목',
+    'first-04 :: 앱 「궁합 보기」 탭 한 줄 `COMPAT_CREDIT_NOTE`',
+    'first-04 :: 앱 「궁합 보기」 탭 단추 `COMPAT_SIGN_IN_ACTION` →',
+    'first-04 :: 앱 입구 주 단추(로그인 전)',
+    'first-05 :: 통관 각주 `tonggwanNote`',
+    'first-05 :: 조후 · 억부 각주 끝',
+    'first-05 :: 국 각주 `WEIGHT_SHIFTS_NOTE`',
+    'first-05 :: 월운 각주 `WOLUN_NOTE`',
+    'first-05 :: 대운 각주 `daeunNote`',
+    'first-06 :: 사주팔자 표 일지 칸 아래 딱지',
+    'first-07 :: 둘째 단추(앱) → 로그인 화면(`want=save`)',
+    'first-07 :: 웹 잠긴 목차의 주 단추',
+    'first-07 :: 웹 잠긴 목차의 단추 아래 한 줄 `CHART_READING_OFFER.',
+    'first-07 :: 앱 로그인 화면의 풀이 까닭 한 줄 `CHART_SIGN_IN.readi',
+    'home-11 :: 신청 뒤 설명 `MATCH_OPEN_ALERT_ASKED`',
+    'home-12 :: 「⋯」 단추의 읽는 이름 — 웹 · 앱',
+    'home-14 :: 머리 오른쪽 아래 링크 `CHART_DETAIL_LABEL`',
+    'home-14 :: 머리의 출생 한 줄 `birthLineOf`',
+    'home-14 :: 만세력 화면 제목 `chartTitleOf`',
+    'home-14 :: 받은 풀이 카드의 아래 줄 `readingReceivedLine` · `',
+    'home-14 :: 안 받았을 때의 진한 카드 `readingInviteTitle` · `R',
+    'home-14 :: 받기 시트 제목 · 줄 · 단추 `readingAskTitle` · `r',
+    'home-14 :: 궁합 칸의 끝 줄 `COMPAT_OTHER_LABEL` · `compat',
+    'home-14 :: 상대 고르기 시트 `partnerAskTitle` · `PARTNER_S',
+    'home-16 :: 다시 받기가 실패한 줄 `READING_FAILED_NOTE`',
+    'matching-09 :: 소식 화면 아래 안내 줄 `app/me/requests/page.tsx`',
+    'matching-15 :: 제목',
+    'matching-15 :: 예시 카드 값',
+    'matching-15 :: 서로 수락',
+    'matching-15 :: 무료 채팅',
+    'matching-17 :: 안내 제목 `mobile/src/app/me/(tabs)/matching',
+    'matching-18 :: 답 전 둘째 말',
+    'matching-18 :: 답 전 상세 청하기',
+    'matching-18 :: 닫힌 대화',
+    'matching-18 :: 글 있음',
+    'matching-18 :: 잔액 없음',
+    'matching-18 :: 시도를 못 연 누름',
+    'matching-18 :: 동의 전 만들기',
+    'matching-18 :: 꺼짐',
+    'matching-18 :: 같은 상대 시간당',
+    'matching-18 :: 새 대화 하루',
+    'matching-19 :: 카드 점수 `TALK_SCORE_LABEL`',
+    'matching-19 :: 점수 정보 `TALK_SCORE_INFO`',
+    'matching-19 :: 둘째 말을 누른 뒤 `TALK_WAIT_REPLY`',
+    'matching-19 :: 목록의 접힌 줄 `TALK_UNANSWERED_LABEL`',
+    'matching-19 :: 방 상단 `DETAIL_DOOR_LABEL`',
+    'matching-19 :: 소개 `DETAIL_INTRO`',
+    'matching-19 :: 열기 · 달라짐',
+    'matching-19 :: 잔액 없음',
+    'matching-19 :: 구매자의 대기',
+    'matching-19 :: 받은 사람 단추 · 기한',
+    'matching-19 :: 결과에 글이 없음 `DETAIL_NOT_YET`',
+    'matching-19 :: 소식',
+    'matching-20 :: 받은 사람 제목 `DETAIL_CONSENT_TITLE`',
+    'matching-20 :: 전송 `DETAIL_CONSENT_SENDS`',
+    'matching-20 :: 안 보냄 `DETAIL_CONSENT_KEEPS`',
+    'matching-20 :: 글자 `DETAIL_CONSENT_PILLARS`',
+    'matching-20 :: 함께 봄 `DETAIL_CONSENT_SHARED`',
+    'matching-20 :: 재시도 `DETAIL_CONSENT_RETRY`',
+    'matching-20 :: 구매자 `DETAIL_BUYER_SENDS`',
+    'ops-01 :: 주문 카드 「회차」 줄의 이름 `app/ops/orders/order-v',
+    'ops-01 :: 같은 줄 — 도는 풀이가 잡은 수 · 회원 화면의 칩 · 이력 칸(`ap',
+    'ops-01 :: 금액 식 줄',
+    'public-04 :: 나가는 단추 `mobile/src/app/auth/index.tsx`',
+    'public-05 :: 입구 머리의 둘째 줄 `mobile/src/app/index.tsx` ·',
+    'public-06 :: 첫 줄 `mobile/src/app/auth/denied.tsx`',
+    'public-07 :: 앱 카카오 단추, 누른 뒤 `mobile/src/app/auth/inde',
+    'public-08 :: 가입 화면 제목 `src/lib/consent/signup.ts` · `',
+    'public-08 :: 가입 화면 머리 설명',
+    'public-08 :: 가입 화면 설명(메타데이터) `app/signup/page.tsx`',
+    'public-08 :: 다시 확인하는 사람의 설명 `NOTICE_AGAIN_NOTE`',
+    'public-08 :: 코드 칸 · 칸 설명 · 빈 칸 거절 · 틀린 코드 거절(웹 · 앱 가입',
+    'public-08 :: 로그인 화면 설명 끝 `app/auth/page.tsx` · `mobil',
+    'public-08 :: 받은 공유본 · 서비스 소개의 한 줄 `BETA_SIGNUP_CODE_N',
+    'public-08 :: 자주 묻는 질문 `src/lib/brand/guide.ts` · `HEL',
+    'public-08 :: 서비스 소개 단계 「로그인 · 가입」 `ABOUT_STEPS`',
+    'public-08 :: 앱 인연 입구의 둘째 단계 `MATCHING_START_STEPS`',
+    'public-09 :: 바닥글 한 줄 `app/site-footer.tsx`',
+    'public-09 :: 판매가 닫힌 본문 `SALE_CLOSED_NOTE`',
+    'public-09 :: 일정이 없을 때 `NOTICE_NOT_READY`',
+    'public-09 :: 가입 고지 둘째 줄 `signupNoticeDates`',
+    'public-09 :: 가입 고지 첫 줄 `SIGNUP_NOTICE_USE`',
+    'public-09 :: 처리방침 머리 `PRIVACY_INTRO`',
+    'public-09 :: 처리방침 문의 줄 `PRIVACY_RIGHTS_LINES`',
+    'public-09 :: 처리방침 기간 줄 · 파기 줄 · 끝 줄',
+    'public-11 :: 처리방침 「무엇을 받고」 첫 줄의 카카오 대목',
+    'public-11 :: 처리방침 「무엇을 받고」 둘째 줄(새 줄)',
+    'public-11 :: 처리방침 신고 기록의 보관 항목',
+    'public-11 :: 가입 고지 첫 줄 `SIGNUP_NOTICE_USE`',
+    'public-13 :: 그 칸을 안 고르고 눌렀을 때',
+    'public-13 :: 일정이 없을 때 `NOTICE_NOT_READY`',
+    'public-13 :: `/closed` 제목 `SERVICE_ENDED_TITLE`(웹 · 앱',
+    'public-13 :: `/closed` 첫 줄 `serviceEndedNote`',
+    'settings-09 :: 성별 줄 이름',
+    'settings-14 :: 고객센터의 줄',
+    'settings-14 :: 메일 앱을 못 열 때',
+  ];
+
+  it('「확인 전」 절의 줄은 출처 링크와 확인 날짜를 든다 — 실사례가 없으면 「실사례 없음」과 가장 가까운 사례(링크 · 대장 절 · 상수) (ADR 0196)', () => {
     const files = [LEDGER, ...groupsIn(LEDGER_DIR).map((name) => `${LEDGER_DIR}/${name}`)];
+    const texts = files.map((file) => readFileSync(join(ROOT, file), 'utf8'));
+    const sections = new Set(texts.flatMap((text) => [...text.matchAll(/^## ([a-z]+-\d{2}) /gm)].map((match) => match[1])));
+    const shared = new Set(texts.flatMap((text) => [...text.matchAll(/^## (\d{2}) /gm)].map((match) => match[1])));
+    const constants = new Set(PRODUCT_FILES.flatMap((file) => readFileSync(file, 'utf8').match(/\b[A-Z][A-Z0-9_]{2,}\b/g) ?? []));
+    expect(sections.size).toBeGreaterThan(50);
+    expect(constants.size).toBeGreaterThan(200);
+    const nearest = (source: string) =>
+      (/https?:\/\//.test(source) && /\d{4}-\d{2}-\d{2}/.test(source)) ||
+      [...source.matchAll(/\b([a-z]+-\d{2})\b/g)].some((match) => sections.has(match[1])) ||
+      [...source.matchAll(/대장 (\d{2})\b/g)].some((match) => shared.has(match[1])) ||
+      [...source.matchAll(/`([A-Z][A-Z0-9_]{2,})(?:\.[\w.]+)?`/g)].some((match) => constants.has(match[1]));
     const wrong: string[] = [];
-    for (const file of files) {
-      for (const section of readFileSync(join(ROOT, file), 'utf8').split(/^(?=## )/m)) {
-        if (!/^## [a-z]+-\d{2} 확인 전/.test(section)) continue;
-        const rows = section.split('\n').filter((line) => line.startsWith('| ') && !/^\| (---|자리) /.test(line));
-        if (rows.length === 0) wrong.push(`${file}: ${section.split('\n')[0]} — 줄이 없다`);
-        for (const row of rows) {
-          const sourced = /https?:\/\//.test(row) && /\d{4}-\d{2}-\d{2}/.test(row);
-          if (!sourced && !row.includes('실사례 없음')) wrong.push(`${file}: ${row.slice(0, 40)} — 출처 링크 · 확인 날짜가 없다`);
+    const missing: { file: string; line: number; fingerprint: string }[] = [];
+    let unsourced = 0;
+    files.forEach((file, index) => {
+      const lines = texts[index].split('\n');
+      let section: { id: string; heading: string; rows: number } | null = null;
+      const close = () => {
+        if (section !== null && section.rows === 0) wrong.push(`${file}: ${section.heading} — 줄이 없다`);
+      };
+      for (let at = 0; at < lines.length; at += 1) {
+        const line = lines[at];
+        if (line.startsWith('## ')) {
+          close();
+          const id = /^## ([a-z]+-\d{2}) 확인 전/.exec(line)?.[1];
+          section = id === undefined ? null : { id, heading: line, rows: 0 };
+          continue;
         }
+        if (section === null || !line.startsWith('| ') || /^\| (---|자리) /.test(line)) continue;
+        section.rows += 1;
+        if (!line.includes('실사례 없음')) {
+          if (!(/https?:\/\//.test(line) && /\d{4}-\d{2}-\d{2}/.test(line))) wrong.push(`${file}: ${line.slice(0, 40)} — 출처 링크 · 확인 날짜가 없다`);
+          continue;
+        }
+        unsourced += 1;
+        // 칸은 `|` 로 가른다 — 칸 안의 `\|` 는 글자다. 끝 칸이 출처다(머리 줄이 `… | 출처 |` 로 끝난다)
+        const cells = line.trim().replace(/^\|/, '').replace(/\|$/, '').replace(/\\\|/g, '\u0000').split('|');
+        const place = cells[0].replace(/\u0000/g, '\\|').trim();
+        if (!nearest(cells[cells.length - 1])) missing.push({ file, line: at + 1, fingerprint: `${section.id} :: ${place.slice(0, 40).trim()}` });
       }
-    }
+      close();
+    });
+    expect(unsourced).toBeGreaterThan(0);
     expect(wrong).toEqual([]);
+    expectExactly(missing, NEAREST_MISSING_STILL_THERE);
   });
 
   it('ui 역할의 「고칠 화면의 무리」 선택지는 무리마다 하나이고 그 무리의 PRD 화면 파일을 들며, 대장 무리 파일은 「닿을 때 여는 것」이 폴더로 든다 (ADR 0169)', () => {
@@ -1758,6 +1977,53 @@ describe('위임 규약 (docs/agents/delegation.md 색인 → docs/agents/delega
     expect(files.filter((name) => !readme.includes(`| \`${name}\` |`))).toEqual([]);
     const listed = [...readme.matchAll(/^\| `([a-z0-9-]+\.md)` \|/gm)].map((match) => match[1]);
     expect(listed.filter((name) => !existsSync(join(dir, name)))).toEqual([]);
+  });
+
+  /**
+   * 라운드 노트의 「헤맨 것」 · 「회고」 절은 줄마다 `→ 놓은 자리`를 단다(`docs/agents/delegation/notes.md` 「세션 기록」) — 자리는 파일(`경로` ·
+   * `이름.md`) · 「절」 · `G-nn` · `#NNN`(이슈 · PR)이다. 「다음 retro 로」 · 「다음 `/retro` 의 입력」은 자리가 아니다 — 그렇게 적은 줄은 아무
+   * 문서에도 안 닿고 다음 라운드가 같은 자리에서 헤맨다. 줄은 `- ` · `1. ` 로 시작하고 그 아래 들여 쓴 줄까지다.
+   */
+  const LESSON_PLACE = /`[^`\s]+\.(?:md|ts|tsx|mts|mjs|cjs|js|json|sql|yml)`|\b[\w./-]+\.(?:md|ts|tsx|mts|mjs|cjs|js|json|sql|yml)\b|「[^」]+」|\bG-\d{2,3}\b|#\d+/;
+  const lessonsWithoutPlace = (text: string): string[] =>
+    text
+      .split(/^(?=#{2,3} )/m)
+      .filter((section) => /^#{2,3} .*(?:헤맨 것|회고)/.test(section))
+      .flatMap((section) => {
+        const items: string[] = [];
+        for (const line of section.split('\n').slice(1)) {
+          if (/^(?:[-*]|\d+\.) /.test(line)) items.push(line);
+          else if (/^\s+\S/.test(line) && items.length > 0) items[items.length - 1] += ` ${line.trim()}`;
+        }
+        return items.filter((item) => !LESSON_PLACE.test(item.split('→').slice(1).join('→'))).map((item) => item.slice(0, 60));
+      });
+  /** 이 셈을 세운 다음 날 — 그 전의 노트는 그날의 기록이라 재지 않는다 */
+  const LESSONS_PLACED_FROM = '2026-11-20';
+
+  it('라운드 노트의 헤맨 것 · 회고 줄마다 `→ 놓은 자리` 가 있다 — 2026-11-20 뒤의 새 노트부터', () => {
+    const notes = filesUnder(join(ROOT, 'docs/notes')).filter((file) => {
+      const name = basename(file);
+      return /^\d{4}-\d{2}-\d{2}-.+\.md$/.test(name) && name.slice(0, 10) >= LESSONS_PLACED_FROM;
+    });
+    expect(notes.flatMap((file) => lessonsWithoutPlace(readFileSync(file, 'utf8')).map((item) => `${relPath(file)}: ${item}`))).toEqual([]);
+  });
+
+  it('놓은 자리가 없는 줄을 잡는다 — 「다음 retro 로」는 자리가 아니다', () => {
+    const note = [
+      '## 헤맨 것 · 틀린 것 — 놓은 자리',
+      '',
+      '1. 격리가 heredoc 을 거절했다 → `docs/agents/delegation/local-env.md` 「로컬 환경의 함정」.',
+      '2. 같은 대장 번호를 잡았다 → G-170',
+      '3. 검토 관점이 없다 → 다음 retro 로',
+      '- 쌓은 PR 은 CI 가 다시 안 돈다',
+      '  → #1175',
+      '- 관점 목록이 없다(다음 `/retro` 의 입력)',
+      '',
+      '## 남은 것',
+      '',
+      '- 이 절은 재지 않는다',
+    ].join('\n');
+    expect(lessonsWithoutPlace(note)).toEqual(['3. 검토 관점이 없다 → 다음 retro 로', '- 관점 목록이 없다(다음 `/retro` 의 입력)']);
   });
 });
 
