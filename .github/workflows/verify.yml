@@ -201,9 +201,10 @@ jobs:
       # `Acquire::Retries` 를 1 로 둔다)까지 실패하면 다음 미러로 넘어간다 — 그날은 첫 미러가 503 · 연결 시간 초과, 뒤의 둘은 TLS 연결에서
       # 15초 시간 초과(「Could not wait for server fd」)였다. 그래서 로그 끝에 security.ubuntu.com 이 찍힌다. 미러가 다 서면 다시 받기로는
       # 못 견디고, 받을 것을 손에 들고 있어야 한다. apt 는 `/var/cache/apt/archives` 에 이름과 크기가 맞는 .deb 가 있으면 받지 않는다 — 해시는
-      # 다시 안 보니 캐시가 믿을 만해야 한다. PR 실행은 제 merge ref 와 main 의 캐시만 되살리고 제 merge ref 에만 남긴다(GitHub 의 캐시 범위) —
-      # 남의 PR 이 남긴 꾸러미를 받지 않는다. `apt-get update` 는 그대로 돌지만 실패해도 경고뿐이고 이미지의 옛 목록으로 이어 간다. 키는 꾸러미
-      # 파일 이름들의 해시라 판이 바뀌면 새로 받아 새 키로 남긴다
+      # 안 보니 넣기 전에 apt 목록의 SHA256 과 우리가 견주고 안 맞는 것은 버린다(`scripts/ci-apt-debs.sh` — 깨진 파일이 캐시에 남아 되살아나지
+      # 않게). 거두기는 지금 깔린 판만이라 캐시가 판마다 커지지 않는다. PR 실행은 제 merge ref 와 main 의 캐시만 되살리고 제 merge ref 에만
+      # 남긴다(GitHub 의 캐시 범위). `apt-get update` 는 그대로 돌지만 실패해도 경고뿐이고 이미지의 옛 목록으로 이어 간다. 키는 꾸러미 파일
+      # 이름들의 해시라 판이 바뀌면 새로 받아 새 키로 남긴다
       - id: apt-key
         run: echo "prefix=playwright-apt-$ImageOS-$(dpkg --print-architecture)-" >> "$GITHUB_OUTPUT"
       - id: apt-restore
@@ -212,14 +213,12 @@ jobs:
           path: ~/apt-debs
           key: ${{ steps.apt-key.outputs.prefix }}latest
           restore-keys: ${{ steps.apt-key.outputs.prefix }}
-      - run: mkdir -p ~/apt-debs && sudo find ~/apt-debs -maxdepth 1 -name '*.deb' -exec cp -t /var/cache/apt/archives/ {} +
+      - run: scripts/ci-apt-debs.sh restore ~/apt-debs
       - run: npx playwright install --with-deps chromium
         timeout-minutes: 10
       - id: apt-collect
         run: |
-          rm -rf ~/apt-debs && mkdir ~/apt-debs
-          find /var/cache/apt/archives -maxdepth 1 -name '*.deb' -exec cp -t ~/apt-debs/ {} +
-          ls ~/apt-debs
+          scripts/ci-apt-debs.sh collect ~/apt-debs
           echo "count=$(ls ~/apt-debs | wc -l)" >> "$GITHUB_OUTPUT"
           echo "key=${{ steps.apt-key.outputs.prefix }}$(ls ~/apt-debs | sha256sum | cut -c1-16)" >> "$GITHUB_OUTPUT"
       - if: steps.apt-collect.outputs.count != '0' && steps.apt-collect.outputs.key != steps.apt-restore.outputs.cache-matched-key
@@ -295,14 +294,12 @@ jobs:
           path: ~/apt-debs
           key: ${{ steps.apt-key.outputs.prefix }}latest
           restore-keys: ${{ steps.apt-key.outputs.prefix }}
-      - run: mkdir -p ~/apt-debs && sudo find ~/apt-debs -maxdepth 1 -name '*.deb' -exec cp -t /var/cache/apt/archives/ {} +
+      - run: scripts/ci-apt-debs.sh restore ~/apt-debs
       - run: npx playwright install --with-deps chromium
         timeout-minutes: 10
       - id: apt-collect
         run: |
-          rm -rf ~/apt-debs && mkdir ~/apt-debs
-          find /var/cache/apt/archives -maxdepth 1 -name '*.deb' -exec cp -t ~/apt-debs/ {} +
-          ls ~/apt-debs
+          scripts/ci-apt-debs.sh collect ~/apt-debs
           echo "count=$(ls ~/apt-debs | wc -l)" >> "$GITHUB_OUTPUT"
           echo "key=${{ steps.apt-key.outputs.prefix }}$(ls ~/apt-debs | sha256sum | cut -c1-16)" >> "$GITHUB_OUTPUT"
       - if: steps.apt-collect.outputs.count != '0' && steps.apt-collect.outputs.key != steps.apt-restore.outputs.cache-matched-key
