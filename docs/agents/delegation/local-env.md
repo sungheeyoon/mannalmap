@@ -75,7 +75,8 @@
 3. Supabase 응답은 Playwright 의 가로채기로 가짜를 끼운다 — 운영 DB 를 밟지 않는다(개발 빌드도 운영 Supabase 를 본다). 로그인은 `__DEV__` 가 건너뛴다.
 4. 부품을 웹과 나란히 보려면 띄운 채 `APP_URL=http://localhost:<포트> node scripts/design-compare.mjs <폴더>` — 웹 상수와 앱의 `/dev-parts` 를 같은 차례로 찍어 `compare.png` 한 장을 낸다.
    데이터가 찬 화면은 `localStorage` 에 가짜 세션(`sb-<주소의 첫 토막>-auth-token`)을 넣는다. 가짜 값의 함정 — `late_night_rule` 은 `jo` · `ya`, `time_basis` 는 `record` 등 진짜 값이어야 명식이 선다. 관문은 `current_beta_schedule` 을 못 읽으면 가입을 마친 사람을 들여보낸다(500 을 주면 빠르다). `EXPO_PUBLIC_SITE_URL` 쪽 앱용 문도 가로챈다.
-   `mobile/scripts/measure/fake-server.mjs` 를 복사해 쓰면 두 가지가 비어 있다 — `current_beta_schedule` 의 `notice_ack_floor` 값과 「인연 닫힘」 모드. 복사본에 채워야 앱이 오류 화면에서 멈추지 않는다. 원본 가짜 서버에 이 둘을 넣는 편이 낫다 — 아직 안 넣었다.
+   `mobile/scripts/measure/fake-server.mjs` 에는 CORS 답이 없다 — 브라우저(Playwright)를 `--disable-web-security` 로 띄워야 로그인 뒤 화면이 보인다.
+   그 파일을 복사해 쓰면 두 가지가 비어 있다 — `current_beta_schedule` 의 `notice_ack_floor` 값과 「인연 닫힘」 모드. 복사본에 채워야 앱이 오류 화면에서 멈추지 않는다. 원본 가짜 서버에 이 둘을 넣는 편이 낫다 — 아직 안 넣었다.
 5. 코드를 고친 뒤 번들이 옛 글자를 주면 Metro 를 끄고 `--clear` 로 다시 띄운다 — 워크트리에서 파일 감시가 안 잡을 수 있다. **`CI=1` 로 띄운 Metro 는 파일 변경을 아예 받지 않는다** — 코드를 고치거나 되돌릴 때마다 `--clear` 로 다시 띄운다.
    워크트리 격리는 변수 경로 · heredoc · 파이프가 섞인 셸 명령을 거절한다 — 스크립트를 파일로 적어 부르거나, 파일 고치기는 편집 도구로 한다(아래 표의 격리 줄).
    **풀이권 구매 칸은 웹 번들에 아예 안 그려진다** — 웹에서는 `storeAvailable` 이 거짓이다. 그 칸을 찍으려면 `expo-iap` 를 가짜 모듈로 잠시 바꿔 끼우고(상품 목록 · 구매 갱신 · 오류 리스너를 흉내), 찍은 뒤 지운다 — 커밋하지 않는다(#1167). 에이전트끼리 스크래치패드를 같이 쓰면 찍는 스크립트가 덮어써진다 — 제 하위 폴더를 쓴다.
@@ -92,7 +93,7 @@
 3. `mobile/.env.local` 을 가짜로 둔다 — `EXPO_PUBLIC_SUPABASE_URL` · `EXPO_PUBLIC_SITE_URL` 은 `http://localhost:18999`, `EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY` 는 아무 글자. **운영 값을 넣지 않는다.**
 4. `node mobile/scripts/measure/fake-server.mjs` — 상태는 `curl 'localhost:18999/__set?m=<상태>'`(`reset` · `empty` · `unsigned` · `closed` · `suspended` · `warning` · `no-credits` · `no-self` · `match-shut` — 인연이 닫힌 운영 상태, 탭 둘). 망 흉내는 `down` · `broken` · `slow` · `up`, 관문을 지나 화면 하나의 실패 · 로딩만 보려면 `screens-down` · `screens-slow` — 끊긴 읽기는 재시도로 수십 초 뒤에 실패한다.
 5. `mobile/` 에서 `REACT_EDITOR=none EXPO_NO_TELEMETRY=1 npx expo start --clear --port 8081 --go > "$MEASURE_DIR/metro.log" 2>&1`.
-6. `mobile/scripts/measure/dev-seed.tsx.txt` 를 `mobile/src/app/dev-seed.tsx` 로 잠시 복사하고 `python3 mobile/scripts/measure/device.py link /dev-seed` 로 세션을 넣는다. **이 복사본과 `.env.local` 은 끝나면 지운다 — 커밋하지 않는다.**
+6. `mobile/scripts/measure/dev-seed.tsx.txt` 를 `mobile/src/app/dev-seed.tsx` 로 잠시 복사하고 `python3 mobile/scripts/measure/device.py link /dev-seed` 로 세션을 넣는다. **이 복사본과 `.env.local` 은 끝나면 지운다 — 커밋하지 않는다.** 복사본이 있는 동안 `scripts/` 시험 넷(`code-rules` 의 `!` 지문 · `mobile-back` · `mobile-supabase-env` · `mobile-word-text`)이 실패한다 — 지운 뒤 돌린다.
 7. 라우트를 쓴다 — `python3 mobile/scripts/measure/sweep.py me=/me chat=/me/chat …` 가 그림 · 글자 · 새 로그를 모은다. 누르는 흐름은 `device.py` 의 `tap` · `input` · `type` · `key` 로 스크립트 파일에 적는다.
 
 환경값은 `ADB`(WSL 은 Windows SDK 의 `adb.exe` 전체 경로) · `MEASURE_DIR`(기본은 임시 폴더의 `saju-measure`) · `FAKE_PORT` · `METRO_PORT` 다. 에이전트가 나란히 쓰면 포트를 저마다 잡고 기기는 잠금으로 차례를 지킨다 — 개발 번들의 홈은 명식 계산으로 수십 초 걸리니 고정 대기가 아니라 글자를 기다린다. 앱이 새 DB 함수를 부르면 가짜 서버 기록에 `!! 없는 rpc` 가 찍힌다 — 그 답을 `fake-server.mjs` 에 더한다.
@@ -141,7 +142,7 @@
    (`reuseExistingServer`). 주지 않으면 제 포트에 하나를 더 띄우려다 「한 디렉터리에 dev 서버 하나」(위 표)에 걸린다.
 7. **로그인 상태로 찍는 임시 spec 은 이름을 `playwright.config.ts` 의 `AUTHED` 꼴에 맞춘다** — 예: 이름 끝을 `signed-in.spec.ts` 로.
    맞지 않으면 로그인 없는 프로젝트에서 돌아 운영 화면 대신 로그인 화면을 찍는다.
-8. **Docker 가 없으면(위 표의 `LegacyDockerLifecycleInspectError`) 꾸민 데이터로 찍는다** — 1 의 스택 없이 `next dev` 에 가짜 Supabase
+8. **Docker 가 없거나 켤 사람이 없으면(위 표의 `LegacyDockerLifecycleInspectError` · WSL 의 「could not be found」 줄) 꾸민 데이터로 찍는다** — 로그인 뒤 화면(`/me/**`)도 같다. 1 의 스택 없이 `next dev` 에 가짜 Supabase
    값(`NEXT_PUBLIC_SUPABASE_URL=http://127.0.0.1:54321` 처럼 로컬 주소 — `remoteDevRefusal` 이 통과시킨다)을 주고, `/me/**` 아래의 임시
    주소에 고친 진짜 부품과 꾸민 데이터를 넣어 찍는다. 함정 셋 —
    ① 임시 주소가 `app/` 아래 있는 동안 경계 시험 셋(`app/auth/signed-in.boundary.test.ts` · `scripts/ci-plan.test.ts` · `app/action-calls.boundary.test.ts`)이
