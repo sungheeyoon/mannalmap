@@ -129,17 +129,15 @@ const plain = (html) => html.replace(/<!--\s*-->/g, '');
 const HISTORY = '/me/matching/history';
 
 /**
- * 머리글 종의 수 — 머리글이 브라우저에서 읽는 문(`readUnreadNotifications`)과 같은 목록 · 같은 셈(`bellCount`). 대화가 왔다는
- * 소식(인연을 든 `request_received`)은 종이 센다 — 인연 탭에는 답할 일이 없다(ADR 0215).
+ * 머리글 종의 수 — 웹 머리글(`readUnreadNotifications`) · 앱 머리가 읽는 목록 문에 같은 셈(`bellCount`)을 건다. 대화가 왔다는
+ * 소식도 종이 센다(ADR 0215).
  *
- * 전에는 `/me` 의 서버 HTML 에서 홈의 소식 띠 배지(`건 안 읽음`)를 쟀다. 그 띠는 종과 겹쳐 걷었고(운영자 2026-10-09),
  * 종은 브라우저에서 세므로 서버 HTML 에는 수가 없다 — HTML 로 재면 늘 「0」이라 검사가 소리 없이 통과한다.
  */
 const bell = async (client) => {
   const { data, error } = await client.rpc('my_notifications');
   if (error) throw error;
-  const kindOf = (row) => (row.kind === 'request_received' && row.match_id ? 'talk_received' : row.kind);
-  return String(bellCount((data ?? []).map((row) => ({ kind: kindOf(row), unread: row.read_at === null }))));
+  return String(bellCount(data ?? []));
 };
 
 try {

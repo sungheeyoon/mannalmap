@@ -32,8 +32,7 @@ export async function matchesForViewer(client?: SupabaseClient<Database>): Promi
 /**
  * 지금 내 소식 — 종(`/me/requests`)의 본체다.
  *
- * `unread` 는 **읽음으로 바꿀 것의 수**라
- * 요청이 왔다는 소식까지 센다 — 이 화면에 들어오면 그 줄도 읽은 것이다. 머리글의 딱지(`bellCount`)와는 다른 값이다.
+ * `unread` 는 **읽음으로 바꿀 것의 수**다 — 이 화면에 들어오면 안 읽은 줄이 다 읽은 것이 된다.
  */
 export async function inboxForViewer(): Promise<Inbox> {
   const supabase = await supabaseOnServer();

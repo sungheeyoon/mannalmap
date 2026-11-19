@@ -541,8 +541,8 @@ test.describe('초대된 사람의 로그인 흐름', () => {
     await expect(page.getByRole('button', { name: '사주풀이 받기' })).toBeVisible();
     await expect(page.getByText('만세력 보기')).toHaveCount(0);
     await expect(page.getByRole('heading', { name: '사주팔자' })).toHaveCount(0);
-    /* 풀이 화면에는 사주/사주풀이 탭이 없다 — 두 자리는 각 화면의 입구에서 연다 */
-    await expect(page.getByRole('navigation', { name: '내 사주의 사주풀이와 만세력' })).toHaveCount(0);
+    /* 풀이 화면에는 사주/사주풀이 탭이 없다 — 만세력으로 가는 길이 이 화면에 없고, 두 자리는 각 화면의 입구에서 연다 */
+    await expect(page.getByRole('main').locator('a[href*="tab=chart"]')).toHaveCount(0);
 
     /*
       **풀이권은 머리글에 선다 — 설정 옆이다.**
@@ -819,7 +819,7 @@ test.describe('초대된 사람의 로그인 흐름', () => {
       **한 장이다 — 탭도 머리의 단추도 없다**(운영자 승인 2026-11-13, ADR 0249). 내 명식이면 궁합 칸이 빠지고 사주풀이 칸은 내 사주풀이다.
       아직 없으면 진한 카드의 「사주풀이 받기」가 그 자리의 확인 시트를 연다 — 취소하면 아무것도 시작하지 않는다
     */
-    await expect(page.getByRole('navigation', { name: '내 사주의 사주풀이와 만세력' })).toHaveCount(0);
+    await expect(page.getByRole('main').getByRole('navigation')).toHaveCount(0);
     await expect(page.getByRole('heading', { level: 2, name: '궁합', exact: true })).toHaveCount(0);
     await expect(page.getByText(readingNoneNote(READING_NOUN.self), { exact: true })).toHaveCount(0);
     await expect(page.getByText(readingInviteTitle(signedIn.label))).toBeVisible();
@@ -886,7 +886,7 @@ test.describe('초대된 사람의 로그인 흐름', () => {
     await expect(page.getByText('어머니의 결')).toBeVisible();
     await expect(page.getByText('만세력 보기')).toHaveCount(0);
     await expect(page.getByRole('heading', { name: '사주팔자' })).toHaveCount(0);
-    await expect(page.getByRole('navigation', { name: '어머니의 사주풀이와 만세력' })).toHaveCount(0);
+    await expect(page.getByRole('main').locator('a[href*="tab=chart"]')).toHaveCount(0);
 
     /* 한 사람짜리라 궁합 점수가 안 선다 */
     await expect(page.getByText(COMPAT_SCORE_LABEL)).toBeHidden();
@@ -1215,7 +1215,8 @@ test.describe('초대된 사람의 로그인 흐름', () => {
     await expect(page.getByRole('heading', { name: `${kin}의 사주풀이`, exact: true }).first()).toBeVisible();
     await expect(page.getByText(readingNoneNote(READING_NOUN.self), { exact: true })).toBeVisible();
 
-    await expect(page.getByRole('navigation', { name: `${kin}의 사주풀이와 만세력` })).toHaveCount(0);
+    /* 풀이 화면에서 만세력으로 가는 길(탭)이 없다 */
+    await expect(page.getByRole('main').locator('a[href*="tab=chart"]')).toHaveCount(0);
 
     /*
       명식은 목록의 이름에서 연다. 그 사람 화면은 한 장이다 — 탭이 없고, 사주풀이 칸의 「사주풀이 받기」는 풀이 화면을 거치지 않고
@@ -1224,7 +1225,7 @@ test.describe('초대된 사람의 로그인 흐름', () => {
     await page.goto('/me/people');
     await page.getByRole('link', { name: kin, exact: true }).first().click();
     await expect(page.getByRole('heading', { level: 1, name: kin, exact: true })).toBeVisible();
-    await expect(page.getByRole('navigation', { name: `${kin}의 사주풀이와 만세력` })).toHaveCount(0);
+    await expect(page.getByRole('main').getByRole('navigation')).toHaveCount(0);
     await page.getByRole('main').getByRole('button', { name: '사주풀이 받기', exact: true }).click();
     const asking = page.getByRole('dialog', { name: readingAskTitle(kin) });
     await expect(asking).toBeVisible();
