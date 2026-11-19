@@ -155,7 +155,7 @@ export function AddPerson({ slots }: { slots: PersonSlots | null }) {
           사람 추가
         </button>
         {remaining !== null && remaining <= 5 && (
-          <span className={TYPE_META}>앞으로 {remaining}명 더 저장할 수 있어요.</span>
+          <span className={TYPE_META}>{peopleRoomLeft(remaining)}</span>
         )}
       </div>
     );

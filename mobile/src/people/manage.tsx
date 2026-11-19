@@ -67,7 +67,7 @@ export function AddPerson({ slots, startOpen, onSaved }: { slots: PersonSlots | 
       {!open && (
         <View style={styles.addRow}>
           <PrimaryButton label="사람 추가" onPress={() => setOpen(true)} />
-          {remaining !== null && remaining <= 5 && <WordText style={shared.meta}>앞으로 {remaining}명 더 저장할 수 있어요.</WordText>}
+          {remaining !== null && remaining <= 5 && <WordText style={shared.meta}>{peopleRoomLeft(remaining)}</WordText>}
         </View>
       )}
       <View style={open ? undefined : styles.hidden}>
