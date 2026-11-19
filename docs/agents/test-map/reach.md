@@ -55,13 +55,16 @@ CI=1 npx vitest run --coverage --coverage.reporter=text \
 - **화면 단위** — jsdom 이 없다. 화면의 판단은 `.ts` 로 내린다
 - **`app/hash-query.ts` · `app/me/reading/preview.ts` 의 단위** — 브라우저 구독과 DB 를 읽는 문이라 위 「커버리지」 표대로 e2e · 흐름이 든다
 - **커버리지 문턱** — 위 표가 까닭이다
+- **앱의 누름 · 화면 상태** — 앱(`mobile/`)을 CI 가 재는 것은 타입 · 린트 · 번들 · 단위 시험과 앱이 부르는 DB · 문(`scripts/check-mobile.mjs`)까지다. 기기에서 누르는 흐름과
+  화면의 상태(로딩 · 빈 칸 · 실패)는 안 잰다 — 대신 기기 · Play 샌드박스 런북(`docs/ops/runbook/mobile-release.md` 「스토어에 올리기 전에 네이티브에서 본다」 ·
+  `docs/ops/runbook/credits.md` 「Google Play 결제 — 확인 · 한 번 지급 · 소비, 스토어 환불의 회수」)이 사람의 걸음으로 든다. 잴지는 간극 대장의 G-167 이 묻는다
 
 ## 어디를 봐야 하나
 
-- `scripts/ci-plan.mjs` — 공용 위험 · 주소 대응 · 알려진 `core` 자리, 공개 출시 뒤의 세 단계. 규칙의 원본
-- `.github/workflows/verify.yml` — 차선 일곱(`policy` · `core` · `anon` · `authed` · `flow` · `audit` · `mobile`)과 `gate`
-- `playwright.config.ts` — 프로젝트 다섯(`desktop-chromium` · `mobile-chromium` · `authed-desktop` · `authed-mobile` · `notice-gate`), 서버 띄우기
-- `scripts/run-checks.mjs` — 흐름 열네 벌(`SCRIPTS`)을 **전부** 돌리고 끝에 한 번 답한다(사슬이면 첫 실패가 나머지를 삼킨다)
+- `scripts/ci-plan.mjs` — 세 단계(정책 · 엔진 · 전부)와 주석만 · 문구만 바뀐 파일의 판정, 단계와 따로 켜는 `audit` · `mobile`. 규칙의 원본
+- `.github/workflows/verify.yml` — 차선(`plan` · `gate` 밖의 job 전부 — `scripts/ci-plan.test.ts` 가 계획의 차선과 견준다)과 `gate`. 바깥 검사는 `.github/workflows/outside.yml`(ADR 0257)
+- `playwright.config.ts` — 프로젝트(`projects` — 비로그인 둘 · 로그인 둘 · 관문), 서버 띄우기
+- `scripts/run-checks.mjs` — 흐름 검사(`SCRIPTS`)를 **전부** 돌리고 끝에 한 번 답한다(사슬이면 첫 실패가 나머지를 삼킨다)
 - `e2e/session.ts` — 로컬 스택에 초대된 계정을 만든다
 - `e2e/hydrated.ts` — 하이드레이션 전의 누름은 사라진다. **모든 시험의 `goto` · `reload` 가 하이드레이션까지 기다린다**(자동 손잡이, `anon.ts` · `session.ts` 가 이어받는다 — 2026-09-26). 그 뒤에 늦게 붙는 요소는 `hydrated(locator)` 로 누른다
 - `e2e/target.ts` — 누르는 넓이(`elementFromPoint` 로 손가락이 닿는 자리) · 초점 테두리 · 바탕 이음매를 재는 도우미(#229)

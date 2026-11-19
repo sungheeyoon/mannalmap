@@ -138,7 +138,8 @@ describe('CI 계획 — 공개 출시 전 단계는 전부다 (ADR 0242)', () =>
     const GUARD = "${{ !cancelled() && steps.install.outcome == 'success' }}";
     const expected = {
       core: ['npm ci', ...CORE_STEPS],
-      policy: ['npm ci', 'npx vitest run scripts/', 'npm run typecheck', 'npx eslint scripts/'],
+      // 린트는 경고 하나에도 붉다(ADR 0257)
+      policy: ['npm ci', 'npx vitest run scripts/', 'npm run typecheck', 'npx eslint scripts/ --max-warnings 0'],
     };
     for (const [name, runs] of Object.entries(expected)) {
       const steps = stepsOf(name);
@@ -278,7 +279,7 @@ describe('CI 계획 — 앱 검사 (mobile 차선)', () => {
 
   it('verify.yml 의 mobile job 은 mobile/ 에서 돌고, 앞이 붉어도 뒤가 돌며, 붉음을 삼키지 않는다', () => {
     const job = /\n {2}mobile:\n([\s\S]*?)\n {2}[a-z]+:\n/.exec(yml)?.[1] ?? '';
-    for (const run of ['npx expo lint', 'npx expo export --platform android --output-dir dist', 'node ../scripts/mobile-native.mjs $OFFLINE']) {
+    for (const run of ['npx expo lint --max-warnings 0', 'npx expo export --platform android --output-dir dist', 'node ../scripts/mobile-native.mjs $OFFLINE']) {
       expect(job, run).toContain(`- run: ${run}\n        if: \${{ !cancelled() && steps.install.outcome == 'success' }}`);
     }
     expect(job).toContain('working-directory: mobile');
@@ -288,7 +289,7 @@ describe('CI 계획 — 앱 검사 (mobile 차선)', () => {
       'npm ci',
       'ln -s mobile/node_modules ../node_modules',
       'npx tsc --noEmit',
-      'npx expo lint',
+      'npx expo lint --max-warnings 0',
       'npx expo export --platform android --output-dir dist',
       'npx expo install --check',
       'node ../scripts/mobile-native.mjs $OFFLINE',
