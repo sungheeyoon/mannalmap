@@ -22,6 +22,7 @@ import {
   type StatusKind,
   type StatusPlan,
 } from './suspension';
+import { SOFT_CARD_FACE } from '../../ui/surfaces';
 
 const ROW = 'flex flex-col gap-2';
 const LABEL = 'text-xs font-semibold text-muted';
@@ -124,7 +125,7 @@ export function StatusPanel({
       {!opened && failure !== null && <FailureLine>{failure}</FailureLine>}
 
       {opened && (
-        <form onSubmit={open} className="flex flex-col gap-4 rounded-card bg-surface-soft p-4" aria-label={title}>
+        <form onSubmit={open} className={`flex flex-col gap-4 ${SOFT_CARD_FACE} p-4`} aria-label={title}>
           <fieldset className={ROW}>
             <legend className={`${LABEL} mb-2`}>사유</legend>
             <div className={`${SEGMENTS} grid-cols-2 sm:max-w-lg sm:grid-flow-col sm:auto-cols-fr sm:grid-cols-none`}>

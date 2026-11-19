@@ -1,4 +1,5 @@
 import { Bone, SkeletonMain } from '../../ui/skeleton';
+import { FLAT_CARD_FACE } from '../../ui/surfaces';
 
 /**
  * 풀이의 뼈대 — 책장(제목 · 종류 칩 · 구역 둘의 제목 · 설명 · 표지), 넓은 화면은 그 옆에 글 한 칸(`readings/frame.tsx` ·
@@ -35,7 +36,7 @@ export default function ReadingsLoading() {
             </div>
           ))}
         </div>
-        <div className="hidden min-h-80 flex-col gap-4 rounded-card border border-border bg-surface p-6 lg:flex">
+        <div className={`hidden min-h-80 flex-col gap-4 ${FLAT_CARD_FACE} p-6 lg:flex`}>
           <Bone className="h-9 w-56 rounded-full" />
           <Bone className="h-5 w-full rounded-full" />
           <Bone className="h-5 w-5/6 rounded-full" />

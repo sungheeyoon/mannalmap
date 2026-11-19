@@ -13,7 +13,7 @@ import { choosableOf } from '../../../compat/choosable';
 import { SajuResult } from '../../../saju/view';
 import { BUTTON_TERTIARY } from '../../../ui/buttons';
 import { Icon } from '../../../ui/icons';
-import { COLUMN, TYPE_META, TYPE_TITLE } from '../../../ui/surfaces';
+import { COLUMN, FLAT_CARD_FACE, TYPE_META, TYPE_TITLE } from '../../../ui/surfaces';
 import { AccountNotice } from '../../account-notice';
 import { readAccount } from '../../account';
 import { readReadingCredits } from '../../credits/remaining';
@@ -80,7 +80,7 @@ export default async function PersonSajuPage({
   if (view.kind === 'unreadable-input') {
     return (
       <main className={`app-shell flex ${COLUMN} flex-1 flex-col gap-6 py-8 sm:py-12`}>
-        <section className="flex flex-col gap-2 rounded-card border border-border bg-surface p-5 sm:p-6">
+        <section className={`flex flex-col gap-2 ${FLAT_CARD_FACE} p-5 sm:p-6`}>
           <p className="text-body">{view.message}</p>
           <p className={TYPE_META}>{UNREADABLE_INPUT_NOTE}</p>
         </section>

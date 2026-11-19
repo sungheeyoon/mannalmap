@@ -16,6 +16,7 @@ import { CandidatePhoto } from './candidate-photo';
 import { elementOf, supplyOf, type DeckCard } from '@/src/lib/matching/deck-card';
 import { reducedMotion } from '../../ui/motion';
 import styles from './orbit.module.css';
+import { TILE_FACE } from '../../ui/surfaces';
 
 /*
   **오늘의 인연 한 장 — 사진이 주인공이고, 넘기는 일은 단추가 한다**(운영자 2026-09-25, 시안 A · 기운 1안 · 끌기 없음).
@@ -104,7 +105,7 @@ export function TodayCard({
           aria-hidden="true"
           inert
           style={nextStyle}
-          className={`${elementScope(supplyOf(next))} absolute inset-0 overflow-hidden rounded-card bg-[var(--tile)] motion-reduce:transition-none`}
+          className={`${elementScope(supplyOf(next))} absolute inset-0 overflow-hidden ${TILE_FACE} motion-reduce:transition-none`}
         >
           <CandidatePhoto card={next} initialClass={INITIAL_ON_CARD} />
           <FaceText card={next} onScoreInfo={onScoreInfo} />
@@ -115,7 +116,7 @@ export function TodayCard({
         key={profile.candidateUserId}
         ref={panel}
         style={cardStyle}
-        className={`${elementScope(supplyOf(profile))} ${styles.arrive} absolute inset-0 select-none overflow-hidden rounded-card bg-[var(--tile)] shadow-float motion-reduce:transition-none`}
+        className={`${elementScope(supplyOf(profile))} ${styles.arrive} absolute inset-0 select-none overflow-hidden ${TILE_FACE} shadow-float motion-reduce:transition-none`}
       >
         <CardPhotos card={profile} bounce={panel} initialClass={INITIAL_ON_CARD} />
 

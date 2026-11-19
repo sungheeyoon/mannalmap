@@ -3,6 +3,7 @@ import { useState, type ReactNode } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 
 import { READING_STALE_LABEL } from '@reading/notes';
+import { readingDate } from '@reading/seoul-date';
 import { STEM_INFO, type Stem } from '@saju';
 import { withFromMe } from '@web-home/from-me';
 import { READING_CONTINUE_NOTE, SELF_READING_MAKING } from '@web-home/making';
@@ -13,7 +14,7 @@ import { StemSymbol } from '@/ui/stem-symbol';
 import { COLOR, ELEMENT_TONE, FONT, RADIUS, TYPE } from '@/ui/tokens';
 import { CardFrame } from '@/ui/surfaces';
 
-import { readingDate, type HomePerson, type ReadingRow, type RunningLine } from './read';
+import type { HomePerson, ReadingRow, RunningLine } from './read';
 import { WordText } from '@/ui/word-text';
 
 const go = (href: string) => router.push(href as never);

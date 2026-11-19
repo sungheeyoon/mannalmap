@@ -9,7 +9,7 @@ import { BUTTON_PRIMARY } from '../ui/buttons';
 import { Icon } from '../ui/icons';
 import { Logo } from '../ui/logo';
 import { ScoreGauge } from '../ui/score-gauge';
-import { CARD_FACE, COLUMN_READING, TYPE_SECTION, TYPE_TITLE } from '../ui/surfaces';
+import { CARD_FACE, COLUMN_READING, PAPER_FACE, TILE_FACE, TYPE_SECTION, TYPE_TITLE } from '../ui/surfaces';
 import { AppSheet } from './app-sheet';
 import type { ShareKind } from './path';
 import { sharedReadingOf } from './read';
@@ -92,7 +92,7 @@ export function SharedReadingBody({ shared, token, expect }: { shared: SharedRea
           **궁합풀이는 보낸 사람이 보던 표지와 같은 꼴이다**(시안 A, 운영자 승인 2026-11-13) — 반원 게이지와 큰 점수 · 「궁합 점수」 · 비유를 가운데로.
           두 사람의 동그라미는 안 선다 — 공유본에는 명식(일간)이 없다. 이름은 바로 위 제목이 든다.
         */
-        <section className="flex flex-col items-center gap-4 rounded-card bg-cream px-5 py-7 text-center sm:px-8 sm:py-9">
+        <section className={`flex flex-col items-center gap-4 ${PAPER_FACE} px-5 py-7 text-center sm:px-8 sm:py-9`}>
           {score !== null && (
             <div className="flex flex-col items-center gap-1.5">
               <ScoreGauge score={score} />
@@ -106,7 +106,7 @@ export function SharedReadingBody({ shared, token, expect }: { shared: SharedRea
           )}
         </section>
       ) : (metaphor !== null || score !== null) && (
-        <section className="grid overflow-hidden rounded-card bg-cream sm:grid-cols-[minmax(0,1fr)_auto]">
+        <section className={`grid overflow-hidden ${PAPER_FACE} sm:grid-cols-[minmax(0,1fr)_auto]`}>
           <div className="flex min-w-0 gap-3 px-5 py-7 sm:px-8 sm:py-9">
             {metaphor !== null && (
               <>
@@ -119,7 +119,7 @@ export function SharedReadingBody({ shared, token, expect }: { shared: SharedRea
           </div>
           {/* 궁합에서는 **점수가 그 글의 일부다.** 빼면 받은 사람이 다른 글을 본다 */}
           {score !== null && (
-            <div className="tone-fire m-3 flex min-w-40 flex-col items-center justify-center rounded-card bg-[var(--tile)] px-5 py-4 text-center sm:ml-0">
+            <div className={`tone-fire m-3 flex min-w-40 flex-col items-center justify-center ${TILE_FACE} px-5 py-4 text-center sm:ml-0`}>
               <p className="flex items-center gap-1 text-small font-semibold text-[var(--ink)]">
                 <Icon name="taiji" className="size-4" />
                 {COMPAT_SCORE_LABEL}
@@ -142,7 +142,7 @@ export function SharedReadingBody({ shared, token, expect }: { shared: SharedRea
         **다 읽은 자리에서 묻는다** — 글을 읽고 나서 생긴 마음에 붙은 길이고, 이 화면의 유일한 시작 단추다.
         가입에 테스트 코드가 든다는 줄은 걷었다 — 가입은 코드를 묻지 않는다(ADR 0225).
       */}
-      <section className="flex flex-col gap-3 rounded-card bg-cream px-5 py-7 sm:px-8">
+      <section className={`flex flex-col gap-3 ${PAPER_FACE} px-5 py-7 sm:px-8`}>
         <span className="grid size-14 place-items-center rounded-full bg-surface shadow-card">
           <Logo className="size-9" />
         </span>

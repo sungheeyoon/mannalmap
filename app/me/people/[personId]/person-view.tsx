@@ -19,7 +19,7 @@ import { BUTTON_TERTIARY } from '../../../ui/buttons';
 import { elementScope } from '../../../ui/element-tone';
 import { Icon } from '../../../ui/icons';
 import { StemSymbol } from '../../../ui/stem-symbol';
-import { CARD_FRAME, COLUMN, TYPE_SECTION, TYPE_TITLE } from '../../../ui/surfaces';
+import { CARD_FRAME, COLUMN, TILE_FACE, TYPE_SECTION, TYPE_TITLE } from '../../../ui/surfaces';
 import type { ReadingTarget } from '../../reading/target';
 import { DayMasterChip, PillarStrip } from '../chart-bits';
 import { CompatAdd, ReadingInvite, type Partner } from './person-sheets';
@@ -82,7 +82,7 @@ export function PersonView({
         **머리 — 이 사람이 누구인지**(시안 0-1 A). 일간 색 판에 일간 칩 · 큰 이름 · 출생 한 줄 · 네 기둥 띠(일주 칸만 테, 글자마다 오행 색) ·
         오른쪽 아래 「만세력 자세히」. 단추는 두지 않는다 — 받기 · 궁합은 아래 칸이 든다.
       */}
-      <header className={`${elementScope(element)} relative flex flex-col gap-3 overflow-hidden rounded-card bg-[var(--tile)] p-5 sm:p-8`}>
+      <header className={`${elementScope(element)} relative flex flex-col gap-3 overflow-hidden ${TILE_FACE} p-5 sm:p-8`}>
         <StemSymbol
           stem={person.saju.pillars.dayMaster}
           className="pointer-events-none absolute -right-8 top-6 size-40 opacity-15 sm:size-56"

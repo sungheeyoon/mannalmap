@@ -12,6 +12,7 @@ import { CALENDARS, CALENDAR_KO, GENDERS, GENDER_KO, SUPPORTED_YEAR_RANGE, type 
 import { FoldIcon } from '@/ui/icons';
 import { Choices, DigitField, Field, FieldLabel, Select } from '@/ui/parts';
 import { SectionErrorLine, type SectionErrors } from '@/ui/section-error';
+import { CardFrame } from '@/ui/surfaces';
 import { COLOR, FONT, RADIUS, TYPE } from '@/ui/tokens';
 import { WordText } from '@/ui/word-text';
 
@@ -25,8 +26,8 @@ const RULES: readonly { value: LateNightRule; label: string; hint: string }[] = 
 ];
 
 /**
- * 출생 정보 칸의 값 — 입력 화면(`mobile/src/app/index.tsx`)과 같은 차례 · 같은 함수다. 저장하는 화면이라고 다른 폼을 두면 한쪽만
- * 고쳐져 같은 값에서 다른 사주가 난다(`app/me/people/manage.tsx`).
+ * 출생 정보 칸의 값 — 입력 화면(`mobile/src/app/index.tsx`)도 사람 추가 · 출생 정보 수정도 이 하나를 쓴다. 저장하는 화면이라고 다른
+ * 폼을 두면 한쪽만 고쳐져 같은 값에서 다른 사주가 난다(`app/me/people/manage.tsx`).
  */
 export function useBirthForm(initial: Query = DEFAULT_QUERY) {
   const date = splitDate(initial.date);
@@ -86,9 +87,15 @@ export function BirthFields({
   namePlaceholder,
   showName = true,
   disabled = false,
+  cards = false,
   errors,
 }: {
   form: ReturnType<typeof useBirthForm>;
+  /**
+   * 입력 화면(`mobile/src/app/index.tsx`)의 꼴 — 기본 칸과 고급 설정을 카드 둘에 담고 그 사이에 펼치기 줄을 둔다. 셋은 둘레의 사이를
+   * 따른다. 끄면 한 판 안에 차례로 선다(사람 추가 · 출생 정보 수정)
+   */
+  cards?: boolean;
   /** 누른 뒤의 문단 오류(`useSectionErrors`) — 없으면 아무 칸도 붉지 않다 */
   errors?: SectionErrors<BirthSection>;
   namePlaceholder?: string;
@@ -146,8 +153,8 @@ export function BirthFields({
     errors?.anchor('hour')(node);
   };
 
-  return (
-    <View style={styles.fields}>
+  const basic = (
+    <>
       <View>
         <View style={styles.pair}>
           {showName && (
@@ -210,36 +217,56 @@ export function BirthFields({
         <WordText aria-hidden style={styles.railLabel}>{BIRTH_SELECT_LABEL.city.label}</WordText>
         <Select {...BIRTH_SELECT_LABEL.city} disabled={disabled} value={values.city} onPick={set.setCity} options={BIRTH_CITY_OPTIONS} />
       </View>
+    </>
+  );
 
-      <Pressable accessibilityRole="button" accessibilityState={{ expanded: values.advanced, disabled }} disabled={disabled} onPress={() => set.setAdvanced(!values.advanced)} style={[styles.disclosure, disabled && styles.off]}>
-        <WordText style={styles.disclosureLabel}>고급 설정</WordText>
-        <WordText style={styles.disclosureSummary} numberOfLines={1}>{ADVANCED_SETTINGS.summary}</WordText>
-        <FoldIcon open={values.advanced} />
-      </Pressable>
+  const disclosure = (
+    <Pressable accessibilityRole="button" accessibilityState={{ expanded: values.advanced, disabled }} disabled={disabled} onPress={() => set.setAdvanced(!values.advanced)} style={[styles.disclosure, disabled && styles.off]}>
+      <WordText style={styles.disclosureLabel}>고급 설정</WordText>
+      <WordText style={styles.disclosureSummary} numberOfLines={1}>{ADVANCED_SETTINGS.summary}</WordText>
+      <FoldIcon open={values.advanced} />
+    </Pressable>
+  );
 
-      {values.advanced && (
-        <View style={styles.fields}>
-          <WordText style={styles.advancedIntro}>{ADVANCED_SETTINGS.intro}</WordText>
-          <View style={styles.rail}>
-            <WordText aria-hidden style={styles.railLabel}>{BIRTH_SELECT_LABEL.rule.label}</WordText>
-            <Select {...BIRTH_SELECT_LABEL.rule} value={values.rule} onPick={set.setRule} options={RULES} disabled={disabled || values.hourChoice === 'unknown'} />
-          </View>
-          <View style={styles.rail}>
-            <WordText aria-hidden style={styles.railLabel}>{BIRTH_SELECT_LABEL.basis.label}</WordText>
-            <Select {...BIRTH_SELECT_LABEL.basis} disabled={disabled} value={values.basis} onPick={set.setBasis} options={TIME_BASES.map((one) => ({ value: one, label: TIME_BASIS[one].label, hint: TIME_BASIS[one].hint }))} />
-          </View>
-          <View style={styles.rail}>
-            <WordText style={styles.railLabel}>세운 연도</WordText>
-            <DigitField value={values.saeunFrom} onChange={set.setSaeunFrom} label={BIRTH_DIGIT_LABEL.saeun} disabled={disabled} unit="년" placeholder="2026" digits={4} min={SUPPORTED_YEAR_RANGE.min} max={SUPPORTED_YEAR_RANGE.max} />
-          </View>
-        </View>
-      )}
+  const advanced = (
+    <>
+      <WordText style={styles.advancedIntro}>{ADVANCED_SETTINGS.intro}</WordText>
+      <View style={styles.rail}>
+        <WordText aria-hidden style={styles.railLabel}>{BIRTH_SELECT_LABEL.rule.label}</WordText>
+        <Select {...BIRTH_SELECT_LABEL.rule} value={values.rule} onPick={set.setRule} options={RULES} disabled={disabled || values.hourChoice === 'unknown'} />
+      </View>
+      <View style={styles.rail}>
+        <WordText aria-hidden style={styles.railLabel}>{BIRTH_SELECT_LABEL.basis.label}</WordText>
+        <Select {...BIRTH_SELECT_LABEL.basis} disabled={disabled} value={values.basis} onPick={set.setBasis} options={TIME_BASES.map((one) => ({ value: one, label: TIME_BASIS[one].label, hint: TIME_BASIS[one].hint }))} />
+      </View>
+      <View style={styles.rail}>
+        <WordText style={styles.railLabel}>세운 연도</WordText>
+        <DigitField value={values.saeunFrom} onChange={set.setSaeunFrom} label={BIRTH_DIGIT_LABEL.saeun} disabled={disabled} unit="년" placeholder="2026" digits={4} min={SUPPORTED_YEAR_RANGE.min} max={SUPPORTED_YEAR_RANGE.max} />
+      </View>
+    </>
+  );
+
+  if (cards) {
+    return (
+      <>
+        <CardFrame style={styles.card}>{basic}</CardFrame>
+        {disclosure}
+        {values.advanced && <CardFrame style={styles.card}>{advanced}</CardFrame>}
+      </>
+    );
+  }
+  return (
+    <View style={styles.fields}>
+      {basic}
+      {disclosure}
+      {values.advanced && <View style={styles.fields}>{advanced}</View>}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   fields: { gap: 18 },
+  card: { padding: 16, gap: 18, borderWidth: 0 },
   pair: { flexDirection: 'row', gap: 12 },
   half: { flex: 1 },
   group: { gap: 6 },

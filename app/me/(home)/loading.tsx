@@ -1,5 +1,5 @@
 import { Bone, SkeletonMain } from '../../ui/skeleton';
-import { COLUMN } from '../../ui/surfaces';
+import { COLUMN, FLAT_CARD_FACE, PLAIN_CARD_FACE } from '../../ui/surfaces';
 
 /**
  * 홈의 뼈대 — 인사 · 줄인 내 사주 카드와 그 아래 「다른 사람 사주 보기」 줄 · 내가 받은 사주풀이 줄 · 저장한 사람 줄
@@ -34,7 +34,7 @@ export default function HomeLoading() {
       <div className="contents">
         <div className="flex min-w-0 flex-col gap-3">
           {/* 줄인 내 사주 카드 — 폰에서는 오행 칸과 출생 정보 상자가 없어 낮고(224px), 넓은 화면은 그 둘이 선다(594px) */}
-          <div className="flex min-h-56 flex-col justify-between gap-3 rounded-card bg-surface p-4 sm:min-h-[37.125rem] sm:gap-6 sm:p-8">
+          <div className={`flex min-h-56 flex-col justify-between gap-3 ${PLAIN_CARD_FACE} p-4 sm:min-h-[37.125rem] sm:gap-6 sm:p-8`}>
             <div className="flex flex-col gap-2 sm:gap-3">
               {/* 동그란 내 프로필(56px)과 딱지 · 이름 — 원은 이름 묶음의 가운데에 선다(`home/self-card.tsx`) */}
               <div className="flex items-center gap-3">
@@ -93,7 +93,7 @@ export default function HomeLoading() {
 /** 흰 판 안의 줄 뼈대 — 동그란 표시와 글 두 줄. 선이 없고 판 위아래에 8px(`home/home-list.tsx`) */
 function RowsBone({ rows }: { rows: number }) {
   return (
-    <div className="flex flex-col overflow-hidden rounded-card border border-border bg-surface py-2">
+    <div className={`flex flex-col overflow-hidden ${FLAT_CARD_FACE} py-2`}>
       {Array.from({ length: rows }, (_, row) => (
         <div key={row} className="mx-2 flex min-h-16 items-center gap-3 px-2 py-2.5">
           <Bone className="size-10 shrink-0 rounded-full" />

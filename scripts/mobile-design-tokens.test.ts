@@ -102,7 +102,8 @@ describe('앱이 값을 베끼지 않는다', () => {
     expect(read('mobile/src/ui/scrim.tsx')).toContain('COLOR.scrim');
     for (const path of ['app/ui/surfaces.ts', 'app/ui/sheet.tsx', 'app/ui/action-sheet.tsx']) {
       const web = read(path);
-      expect(web, path).toContain('backdrop:bg-scrim');
+      // 아래 판은 덮개를 `surfaces.ts` 의 `SHEET_FACE` 로 입는다(ADR 0261)
+      expect(web, path).toMatch(/backdrop:bg-scrim|\bSHEET_FACE\b/);
       expect(web, path).not.toMatch(/backdrop:bg-black/);
     }
   });

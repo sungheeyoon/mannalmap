@@ -2,6 +2,7 @@ import { CHAT_EMPTY_DETAIL, CHAT_EMPTY_TITLE } from '@/src/lib/chat/copy';
 
 import { ELEMENT_TONE } from '../../ui/element-tone';
 import { EmptyState } from '../../ui/empty-state';
+import { RING_CARD_FACE } from '../../ui/surfaces';
 
 /**
  * **아직 방이 없을 때** — 목록 판(`RoomListPanel`) 안에 선다. 빈 상태 한 벌(`EmptyState`)이다 — 폰은 제목 아래 크림 판에 그림과 함께,
@@ -30,7 +31,7 @@ export function EmptyChat({ hasSelf }: { hasSelf: boolean }) {
 /** 넓은 화면에서 아직 방을 안 고른 오른쪽 칸 — 그림과 한 줄. 방이 하나도 없으면(`empty`) 그림만 선다 — 할 말은 왼쪽 판이 든다 */
 export function NoRoomChosen({ empty = false }: { empty?: boolean }) {
   return (
-    <section className="flex flex-1 flex-col items-center justify-center gap-4 rounded-card bg-surface px-6 text-center ring-1 ring-border">
+    <section className={`flex flex-1 flex-col items-center justify-center gap-4 ${RING_CARD_FACE} px-6 text-center`}>
       <ChatIllustration className={`h-auto opacity-80 ${empty ? 'w-[16rem]' : 'w-[11rem]'}`} />
       {!empty && <p className="text-body text-secondary">채팅방을 선택하면 여기에 대화가 표시돼요.</p>}
     </section>

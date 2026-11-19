@@ -12,7 +12,7 @@ import { PRICE_LABEL, SURVEY_QUESTION_TITLE, choiceLabel, type PriceOption } fro
 import { supabaseOnServer } from '../../auth/server-client';
 import { signedInUser } from '../../auth/signed-in';
 import { redirectToSignIn } from '../../auth/sign-in-redirect';
-import { readingDate } from '../../me/reading/line';
+import { readingDate } from '@/src/lib/reading/seoul-date';
 import {
   DENIED,
   operatorSurvey,

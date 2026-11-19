@@ -1,5 +1,5 @@
 import { Bone, SkeletonMain } from '../../ui/skeleton';
-import { COLUMN } from '../../ui/surfaces';
+import { COLUMN, FLAT_CARD_FACE, PAPER_FACE } from '../../ui/surfaces';
 
 /**
  * 서비스 설문의 뼈대 — 크림 머리 판(`PAPER`: 제목 · 몇 줄의 안내 · 한 줄), 문항 판 둘(묻는 줄 · 안내 · 고르는 줄 넷)
@@ -12,7 +12,7 @@ import { COLUMN } from '../../ui/surfaces';
 export default function SurveyLoading() {
   return (
     <SkeletonMain name="survey" className={`app-shell flex w-full ${COLUMN} flex-1 flex-col gap-6 py-8 sm:py-12`}>
-      <div className="flex flex-col gap-2 rounded-card bg-cream p-6 sm:p-8">
+      <div className={`flex flex-col gap-2 ${PAPER_FACE} p-6 sm:p-8`}>
         <Bone className="h-[2.275rem] w-56 max-w-full rounded-full sm:h-[2.6rem]" />
         <div className="flex flex-col gap-2 py-1">
           <Bone className="h-5 w-full rounded-full" />
@@ -24,7 +24,7 @@ export default function SurveyLoading() {
       </div>
       <div className="flex flex-col gap-5">
         {[0, 1].map((panel) => (
-          <div key={panel} className="flex flex-col gap-3 rounded-card border border-border bg-surface p-5 sm:p-6">
+          <div key={panel} className={`flex flex-col gap-3 ${FLAT_CARD_FACE} p-5 sm:p-6`}>
             <Bone className="h-7 w-64 max-w-full rounded-full" />
             <Bone className="h-5 w-28 rounded-full" />
             <div className="flex flex-col gap-2">

@@ -10,7 +10,7 @@ import { ElementSymbol } from '../../ui/element-symbol';
 import { FaceSymbol, StemSymbol } from '../../ui/stem-symbol';
 import { Icon } from '../../ui/icons';
 import { ScoreGauge } from '../../ui/score-gauge';
-import { TYPE_SECTION } from '../../ui/surfaces';
+import { PAPER_FACE, TYPE_SECTION, WARNING_CARD_FACE } from '../../ui/surfaces';
 import type { CurrentReading } from '@/src/lib/reading';
 import { coverFace, readingMinutes } from './essay';
 import { discoveryLeadOf } from './discovery-lead';
@@ -109,7 +109,7 @@ export function Result({
         />
       ) : reading.score !== null || metaphor !== null ? (
         <figure
-          className={`${elementScope(firstTone)} relative rounded-card px-6 pb-6 pt-7 sm:px-10 sm:pb-8 sm:pt-10 ${face === null ? 'bg-cream' : ''}`}
+          className={`${elementScope(firstTone)} relative ${face === null ? PAPER_FACE : 'rounded-card'} px-6 pb-6 pt-7 sm:px-10 sm:pb-8 sm:pt-10`}
           style={face === null ? undefined : { background: face.background }}
         >
           {/*
@@ -182,7 +182,7 @@ export function Result({
         말이라 확인 창이 든다. 색만으로 말하지 않는다 — 「수정 전」 낱말이 함께 선다.
       */}
       {target.kind !== 'match' && !reading.fromCurrentChart && (
-        <p className="flex gap-2.5 rounded-card bg-warning-wash px-4 py-3.5 text-note leading-6 text-foreground">
+        <p className={`flex gap-2.5 ${WARNING_CARD_FACE} px-4 py-3.5 text-note leading-6 text-foreground`}>
           <Icon name="alert" className="mt-0.5 size-5 text-warning" />
           <span>
             <span className="mr-1.5 font-semibold text-warning">{READING_STALE_LABEL}</span>
@@ -233,7 +233,7 @@ function PairCover({
   share: ReactNode;
 }) {
   return (
-    <figure className="relative flex flex-col items-center gap-4 rounded-card bg-cream px-5 pb-6 pt-6 text-center sm:px-10 sm:pb-8 sm:pt-8">
+    <figure className={`relative flex flex-col items-center gap-4 ${PAPER_FACE} px-5 pb-6 pt-6 text-center sm:px-10 sm:pb-8 sm:pt-8`}>
       {share !== null && <span className="absolute right-2 top-2 sm:right-3 sm:top-3">{share}</span>}
       {/* 한 줄에 안 들면 세 줄(첫 사람 / × / 둘째 사람), 양옆은 공유 단추 폭만큼 비운다(`PairNames`) */}
       <PairNames first={<CoverName person={pair[0]} />} second={<CoverName person={pair[1]} />} />

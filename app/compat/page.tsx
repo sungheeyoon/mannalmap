@@ -10,7 +10,7 @@ import { redirectToSignIn } from '../auth/sign-in-redirect';
 import { CompatPicker } from '../compat-picker';
 import { myCircle, myPeople } from '../me/home/circle';
 import { myReadings } from '../me/reading/current';
-import { TYPE_SECTION } from '../ui/surfaces';
+import { PAPER_FACE, TYPE_SECTION } from '../ui/surfaces';
 import { CompatSummary } from './archive';
 import { choosableOf } from './choosable';
 import { CompatRelationMap } from './relation-map-section';
@@ -87,7 +87,7 @@ export default async function CompatPage() {
         <h2 id="compat-new" tabIndex={-1} className={`${TYPE_SECTION} outline-none`}>
           궁합 새로 보기
         </h2>
-        <Suspense fallback={<div className="h-72 rounded-card bg-cream" />}>
+        <Suspense fallback={<div className={`h-72 ${PAPER_FACE}`} />}>
           <CompatPicker people={people} />
         </Suspense>
         <p className="text-small leading-6 text-secondary">

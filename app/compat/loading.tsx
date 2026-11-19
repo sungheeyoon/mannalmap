@@ -1,4 +1,5 @@
 import { Bone, SkeletonMain } from '../ui/skeleton';
+import { FLAT_CARD_FACE, PAPER_FACE } from '../ui/surfaces';
 
 /**
  * 궁합 탭의 뼈대 — 「궁합 새로 보기」와 흰 고르는 판(두 칸 · 사이를 묻는 띠) · 한 줄 안내, 관계 지도
@@ -20,7 +21,7 @@ export default function CompatLoading() {
         <Bone className="h-8 w-40 rounded-full" />
 
         {/* 고르는 판 — `CARD_FRAME` 과 같은 흰 판 */}
-        <div className="overflow-hidden rounded-card border border-border bg-surface">
+        <div className={`overflow-hidden ${FLAT_CARD_FACE}`}>
           <div className="px-5 pt-6 sm:px-6">
             <Bone className="h-7 w-56 max-w-full rounded-full" />
           </div>
@@ -66,7 +67,7 @@ export default function CompatLoading() {
       </div>
 
       {/* 관계 지도 — 크림 판 · 머리 줄 · 정사각 궤도(폰 24rem · 넓은 화면 30rem) · 범례(설명이 폰은 두 줄) */}
-      <div className="flex flex-col rounded-card bg-cream">
+      <div className={`flex flex-col ${PAPER_FACE}`}>
         <div className="px-5 pt-5 sm:px-6 sm:pt-6">
           <Bone className="h-8 w-32 rounded-full" />
         </div>

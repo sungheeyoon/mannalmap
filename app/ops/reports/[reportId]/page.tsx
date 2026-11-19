@@ -32,7 +32,7 @@ import {
 import { NO_FILTERS } from '../filters';
 import { HELD_SUSPENSION, SIDE_NAME, sanctionLabel, type ReviewLogLine } from '../review';
 import { ReviewPanel } from './review-panel';
-import { CARD } from '../../../ui/surfaces';
+import { CARD, SOFT_CARD_FACE, WARNING_CARD_FACE } from '../../../ui/surfaces';
 import { FailureLine } from '../../../ui/failure-line';
 import { secondFactorGate } from '../../second-factor';
 
@@ -229,7 +229,7 @@ function Result({ report, next }: { report: ResultReport; next: string | null })
         </Item>
       </dl>
       {held !== null && (
-        <p className="rounded-card bg-warning-wash p-3 text-sm font-semibold text-warning">
+        <p className={`${WARNING_CARD_FACE} p-3 text-sm font-semibold text-warning`}>
           {SIDE_LABEL[held]} · {HELD_SUSPENSION}
         </p>
       )}
@@ -334,7 +334,7 @@ function ReviewLog({ lines }: { lines: readonly ReviewLogLine[] }) {
       <summary className="cursor-pointer text-xs font-semibold text-secondary">처분 이력 {lines.length}건</summary>
       <ol className="mt-2 flex flex-col gap-2">
         {lines.map((line) => (
-          <li key={line.version} className="flex flex-col gap-0.5 rounded-card bg-surface-soft p-3">
+          <li key={line.version} className={`flex flex-col gap-0.5 ${SOFT_CARD_FACE} p-3`}>
             <p className="flex flex-wrap gap-x-2 text-xs text-muted">
               <span className="tabular-nums">{line.version}차</span>
               <span className="tabular-nums">{evidenceTime(line.at)}</span>

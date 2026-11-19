@@ -6,6 +6,7 @@ import { HomeHero } from './home-hero';
 import { LandingGuide } from './landing-guide';
 import { SajuCalculator } from './saju-calculator';
 import { matchOpenWhilePrerendered } from './signed-out-match-open';
+import { PAPER_BOTTOM_FACE } from './ui/surfaces';
 
 /**
  * 로그인 전 결과의 잠긴 목차 — **본 풀이가 실제로 세우는 절 이름**(ADR 0131).
@@ -37,7 +38,7 @@ export default async function Home() {
       <HomeHero
         calculator={
           // 미리 그려진 HTML 은 첫 화면이다 — 자리표시도 그 종이의 아래 토막 모양이다(`PAPER_BOTTOM`, ADR 0132)
-          <Suspense fallback={<div className="h-[26rem] rounded-b-card bg-cream" />}>
+          <Suspense fallback={<div className={`h-[26rem] ${PAPER_BOTTOM_FACE}`} />}>
             <SajuCalculator outline={READING_OUTLINE} />
           </Suspense>
         }

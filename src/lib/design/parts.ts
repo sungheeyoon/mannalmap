@@ -23,7 +23,7 @@ export const SURFACE = {
 /** 딱지 — 안 읽은 수. 웹 `BADGE`(`h-5 min-w-5 rounded-full bg-badge text-tag font-bold px-1 text-on-badge`). 글자색 · 크기는 앱의 `Text` 가 든다 */
 export const BADGE = { height: 20, minWidth: 20, borderRadius: RADIUS.pill, backgroundColor: COLOR.badge, paddingHorizontal: 4, fontSize: TEXT.tag, color: COLOR.onBadge } as const;
 
-/** 아래에서 올라오는 판 — 웹은 상수 없이 `rounded-t-card bg-background` 다(`app/ui/sheet.tsx` · `action-sheet.tsx`) */
+/** 아래에서 올라오는 판 — 웹은 `app/ui/surfaces.ts` 의 `SHEET_FACE`(`rounded-t-card bg-background` …, `app/ui/sheet.tsx` · `action-sheet.tsx`) */
 export const SHEET = { borderTopLeftRadius: RADIUS.card, borderTopRightRadius: RADIUS.card, backgroundColor: COLOR.background } as const;
 
 /** 칸 — 웹은 상수 없이 `rounded-cell` 에 그 자리의 면을 붙인다. 가장 많이 쓰는 면(`rounded-cell bg-surface-soft p-3`)이 기본이다 */

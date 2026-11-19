@@ -33,7 +33,7 @@ import { Icon } from '../../../ui/icons';
 import { reducedMotion } from '../../../ui/motion';
 import { DotsMark, ELEMENT_ANGLE, ORBIT_GLOW, ORBIT_LABEL_PAD, ORBIT_NAME_TAG, ORBIT_RING, ThreadMark, round2 } from '../../../ui/orbit';
 import { StemSymbol } from '../../../ui/stem-symbol';
-import { STALE_CHIP, TYPE_META, TYPE_NAME, TYPE_SECTION } from '../../../ui/surfaces';
+import { PAPER_FACE, RING_CARD_FACE, STALE_CHIP, TYPE_META, TYPE_NAME, TYPE_SECTION } from '../../../ui/surfaces';
 import { LivingStem } from './living-stem';
 import { linksOf, type MapModel, type MapPerson } from '@/src/lib/reading/relation-map';
 import { RADIUS, SIZE, curve, curveAway, phaseOf, pointAt, seatAngles, stepsAlong, type Point } from '@/src/lib/saju/view/orbit';
@@ -96,7 +96,7 @@ export function RelationMap({ model, addHref, canAdd }: { model: MapModel; addHr
   };
 
   return (
-    <section aria-labelledby="home-orbit" className="relative flex h-full min-w-0 flex-col overflow-hidden rounded-card bg-cream">
+    <section aria-labelledby="home-orbit" className={`relative flex h-full min-w-0 flex-col overflow-hidden ${PAPER_FACE}`}>
       <header className="flex items-baseline justify-between gap-3 px-5 pt-5 sm:px-6 sm:pt-6">
         <h2 id="home-orbit" className={TYPE_SECTION}>
           관계 지도
@@ -578,7 +578,7 @@ function PersonCard({ person, links, onClose }: { person: MapPerson; links: Retu
   return (
     <article
       aria-labelledby="home-orbit-card-name"
-      className={`${elementScope(person.day?.element ?? null)} ${styles.arrive} mx-3 mb-3 flex flex-col gap-2.5 rounded-card bg-surface p-3 ring-1 ring-border sm:mx-4 sm:px-4`}
+      className={`${elementScope(person.day?.element ?? null)} ${styles.arrive} mx-3 mb-3 flex flex-col gap-2.5 ${RING_CARD_FACE} p-3 sm:mx-4 sm:px-4`}
     >
       <div className="flex items-center gap-2.5">
         <span

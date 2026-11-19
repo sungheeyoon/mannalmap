@@ -13,9 +13,7 @@ import {
 } from '@/src/lib/saju/view';
 import { STAR_BASIS_NOTE, STAR_NATURE_NOTE } from '@/src/lib/saju/view/notes';
 import { Rich } from './rich';
-import {
-  DISCLOSURE_SUMMARY,
-} from '../ui/surfaces';
+import { DISCLOSURE_SUMMARY, SOFT_CARD_FACE } from '../ui/surfaces';
 
 
 /**
@@ -42,7 +40,7 @@ export function StarTable({ saju }: { saju: Saju }) {
     >
 
       {stars.length === 0 ? (
-        <div className="rounded-card bg-surface-soft px-4 py-5 text-center text-sm text-secondary">
+        <div className={`${SOFT_CARD_FACE} px-4 py-5 text-center text-sm text-secondary`}>
           걸린 신살이 없습니다
         </div>
       ) : (

@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react';
 
 import { Icon } from '../ui/icons';
-import { TYPE_NAME } from '../ui/surfaces';
+import { CARD_FACE, TYPE_NAME } from '../ui/surfaces';
 
 /**
  * **분석 표 한 장 — 접힌 채 선다**(5차, 부드러움).
@@ -16,7 +16,7 @@ import { TYPE_NAME } from '../ui/surfaces';
  * **자바스크립트가 없어도 열린다** — 브라우저의 `<details>` 다. 결과 바로가기는 목적지가 접혀 있으면 열고
  * 나서 옮긴다(`result-nav.tsx`). 표시 `data-fold` 가 그 짝이다.
  */
-const FOLD_CARD = 'group/fold rounded-card border border-border bg-surface shadow-card';
+const FOLD_CARD = `group/fold ${CARD_FACE} border-border bg-surface`;
 
 export function Fold({
   id,

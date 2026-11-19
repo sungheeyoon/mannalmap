@@ -5,13 +5,10 @@ import { selfSectionTitlesOf } from '@/src/lib/reading';
 import { SELF_READING_MAKING } from '@/src/lib/home/making';
 import {
   READING_PREPARING,
-  makingPeopleOf,
-  makingSelf,
   runningHref,
-  runningName,
   runningStage,
 } from './running-line';
-import type { RunningReading } from '@/src/lib/reading/running';
+import { makingPeopleOf, makingSelf, runningName, type RunningReading } from '@/src/lib/reading/running';
 
 const fresh = { jobStatus: 'frozen', sectionsBegun: 0, bodyWritten: false } as const;
 
