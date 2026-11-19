@@ -48,6 +48,7 @@
 | 코드를 어떻게 적나 | `CODING_STANDARDS.md` | `scripts/code-rules.test.ts` · 린트가 맞다 |
 | 무엇을 돌리나 | `docs/agents/test-map.md` | `scripts/ci-plan.mjs` 가 맞다 |
 | 이미 정한 화면 문구 | `docs/product/copy-ledger.md`(규칙 · 무리 색인) → `docs/product/copy-ledger/` 의 그 화면 무리 | 없으면 실사례를 출처와 함께 넣고 나중에 확인받는다(`docs/agents/code-rules/screen-copy.md` 「화면 문구」) |
+| 모르는 글자 · 배치 · 흐름 · 한도 · 정책을 무엇에 기대어 정하나 | `docs/agents/code-rules/references.md`(찾는 차례 · 확인 수준) → `docs/context/references.md`(다시 쓰는 모음) | 지어내지 않는다 — 한국 서비스 실사례가 없으면 「실사례 없음」과 가장 가까운 것(ADR 0255) |
 | 맡기는 법 · 권한 · 병렬 · PR 의 칸 | `docs/agents/delegation.md` | 권한 표는 `.claude/settings.json` 과 시험이 견준다 |
 | 운영에서 무엇을 어떤 차례로 | `docs/ops/runbook.md` | — |
 | 앱 빌드 · 트랙 · Play 콘솔 차례가 지금 어디인가 | `docs/ops/runbook/mobile-release.md` 「지금 나간 빌드」 · `docs/ops/runbook/play-console.md` 「지금 어디까지 왔나」 | 간극 대장 · 다른 런북 · #770 은 값을 다시 적지 않고 이 두 절을 가리킨다(ADR 0256) |
