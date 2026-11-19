@@ -539,6 +539,9 @@ export function noticeFor(operator: Operator): readonly NoticeSection[] {
   ];
 }
 
+/** 선택 동의의 이름 — 가입 폼이 드는 값(`SignupChoices`)과 보내는 인자가 이 낱말로 묶인다 */
+export type OptionalConsentKey = 'improvement';
+
 /**
  * 선택 항목 하나 — **거절해도 서비스는 그대로다.**
  *
@@ -547,7 +550,7 @@ export function noticeFor(operator: Operator): readonly NoticeSection[] {
  * 덩어리가 통째로 안 읽혔고, 정작 누르기 직전에 읽어야 하는 것은 뒤쪽이다(ADR 0022·0028).
  */
 type OptionalConsent = {
-  readonly key: 'improvement';
+  readonly key: OptionalConsentKey;
   readonly label: string;
   readonly detail: string;
   /** 끄거나 기간이 지나면 어떻게 되는가 — **지움과 보관 기한이 여기 산다** */

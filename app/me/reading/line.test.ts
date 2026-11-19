@@ -1,7 +1,9 @@
 import { describe, expect, it } from 'vitest';
 
 import type { ReadingEntry } from '@/src/lib/reading';
-import { readingDate, readingHref, readingTitle } from './line';
+import { readingDate } from '@/src/lib/reading/seoul-date';
+
+import { readingHref, readingTitle } from './line';
 
 /**
  * 목록 한 줄 — **제목과 주소는 한 갈래에서 함께 난다.**

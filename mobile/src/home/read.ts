@@ -3,8 +3,8 @@ import { SUPPORT_EMAIL } from '@brand';
 import type { Query } from '@input/query';
 import { UNREADABLE_INPUT_NOTE, chartOfStored, storedChartOf } from '@input/stored';
 import { runningStageOf } from '@reading/running-stage';
-import type { RunningReading } from '@reading/running';
-import type { ReadingTarget } from '@reading/target';
+import { makingPeopleOf, makingSelf, runningName, type RunningReading } from '@reading/running';
+import { readingHrefOf } from '@reading/target';
 import { focusOf, type PhotoFocus } from '@profile';
 import type { Saju, Stem } from '@saju';
 import { withFromMe } from '@web-home/from-me';
@@ -70,42 +70,12 @@ const faceOf = (userId: string | undefined, nickname: string | null, intro: stri
     ? null
     : { userId, nickname, intro, focuses: [...photos].sort((x, y) => x.position - y.position).map((row) => focusOf(row.focus_x, row.focus_y)) };
 
-const called = (label: string | null) => label ?? '이름 없음';
-
-/** 웹의 `runningName` 과 같은 갈래다 — `scripts/mobile-shell-copy.test.ts` 가 글자를 잰다 */
-function runningName({ target, labelA, labelB }: RunningReading): string {
-  switch (target.kind) {
-    case 'self':
-      return '내 사주풀이';
-    case 'person':
-      return labelA === null ? '사주풀이' : `${labelA} 사주풀이`;
-    case 'private':
-      return `${called(labelA)} × ${called(labelB)} 궁합풀이`;
-    case 'match':
-      return labelA === null ? '인연 궁합' : `${labelA} 님과의 인연 궁합`;
-  }
-}
-
-/** 웹의 `readingHrefOf` 와 같은 갈래다 */
-function runningHref(target: ReadingTarget): string {
-  switch (target.kind) {
-    case 'self':
-      return '/me/readings/self';
-    case 'person':
-      return `/me/readings/${target.personId}`;
-    case 'private':
-      return `/me/compat?a=${target.personA}&b=${target.personB}`;
-    case 'match':
-      return `/me/match/${target.matchId}`;
-  }
-}
-
 const runningLinesOf = (running: readonly RunningReading[]): RunningLine[] =>
   running.map((one) => ({
     key: `${one.target.kind}:${one.createdAt}`,
     name: runningName(one),
     stage: runningStageOf(one.target.kind, one.progress),
-    href: withFromMe(runningHref(one.target)),
+    href: withFromMe(readingHrefOf(one.target)),
   }));
 
 /** 만드는 중인 줄만 다시 묻는다 — 홈에 머무는 동안. 못 읽으면 `null` 이고 지금 줄을 그대로 둔다 */
@@ -165,6 +135,7 @@ export async function readHome(client: Client): Promise<Home> {
     stem: entry.dayMasterA,
   }));
   const runningRows = running ?? [];
+  const makingPeople = makingPeopleOf(runningRows);
   const selfReading = rows.find((row) => row.kind === 'self') ?? null;
 
   const selfInput = inputs.get(selfPersonId);
@@ -182,7 +153,7 @@ export async function readHome(client: Client): Promise<Home> {
             saju: stood.saju,
             metaphor: selfReading?.metaphor ?? null,
             hasReading: selfReading !== null,
-            making: runningRows.some(({ target }) => target.kind === 'self'),
+            making: makingSelf(runningRows),
             face: faceOf(session.data.session?.user.id, account?.nickname ?? null, account?.intro ?? null, photos.error === null ? (photos.data ?? []) : []),
           };
 
@@ -199,7 +170,7 @@ export async function readHome(client: Client): Promise<Home> {
       note: edge.note,
       chart: chart.ok ? { ok: true, saju: chart.saju } : { ok: false, message: chart.message },
       reading: rows.find((row) => row.kind === 'person' && row.personA === edge.personId) ?? null,
-      making: runningRows.some(({ target }) => target.kind === 'person' && target.personId === edge.personId),
+      making: makingPeople.has(edge.personId),
       score: pair?.score ?? null,
     };
   });
@@ -216,7 +187,3 @@ export async function readHome(client: Client): Promise<Home> {
     slots: one === undefined ? null : { limit: one.person_limit, used: one.used, remaining: one.remaining },
   };
 }
-
-/** 웹의 `readingDate` 와 같다 */
-export const readingDate = (iso: string): string =>
-  new Date(iso).toLocaleDateString('ko-KR', { timeZone: 'Asia/Seoul', year: 'numeric', month: 'long', day: 'numeric' });

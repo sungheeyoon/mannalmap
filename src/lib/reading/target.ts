@@ -3,7 +3,7 @@ import type { ReadingKind } from './policy';
 /**
  * **풀이의 대상** — 웹의 누름 · 앱의 문(`app/api/mobile`, ADR 0211) · 앱 화면이 같은 네 갈래를 쓴다.
  *
- * RPC 인자와 주소로 푸는 일은 `app/me/reading/target.ts` 가 든다. 여기는 낱말이 가리키는 것과, 문을 건너는 동안의 모양뿐이다.
+ * 누르면 가는 주소(`readingHrefOf`)도 앱이 들어 여기 산다(G-168). 읽기 RPC 인자와 무를 곳은 웹만 쓰여 `app/me/reading/target.ts` 가 든다.
  */
 export type ReadingTarget =
   | { kind: 'self' }
@@ -25,6 +25,25 @@ void _kindsAgree;
 /** id 의 모양 — DB 가 uuid 로 거절하면 그 거절이 오류로 선다. 모양이 틀린 것은 문 앞에서 「대상이 아니다」다 */
 const ID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const isId = (value: unknown): value is string => typeof value === 'string' && ID.test(value);
+
+/**
+ * 누르면 가는 곳 — **그 풀이의 화면**이다. 웹과 앱이 같은 주소를 쓴다(G-168).
+ *
+ * 한 사람의 명식과 풀이가 갈라졌으므로 자기·저장한 사람은 풀이 전용 주소로 간다
+ * (ADR 0055). 궁합은 이미 결과 화면이 독립되어 있어 그 주소를 그대로 쓴다.
+ */
+export function readingHrefOf(target: ReadingTarget): string {
+  switch (target.kind) {
+    case 'self':
+      return '/me/readings/self';
+    case 'person':
+      return `/me/readings/${target.personId}`;
+    case 'private':
+      return `/me/compat?a=${target.personA}&b=${target.personB}`;
+    case 'match':
+      return `/me/match/${target.matchId}`;
+  }
+}
 
 /** 문을 건넌 값을 대상으로 — 모르는 갈래 · 빠진 칸 · 모양이 틀린 id 는 `null`. 누구의 것인가는 여기서 안 묻는다(DB 가 묻는다) */
 export function readingTargetOf(value: unknown): ReadingTarget | null {
