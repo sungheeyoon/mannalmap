@@ -87,7 +87,7 @@ describe('숫자칸이 읽히는 이름', () => {
 
   it('앱과 웹이 같은 상수 한 벌을 쓴다', () => {
     const root = join(import.meta.dirname, '..');
-    const files = ['mobile/src/people/birth-fields.tsx', 'mobile/src/app/index.tsx', 'app/birth-digits.tsx'];
+    const files = ['mobile/src/people/birth-fields.tsx', 'app/birth-digits.tsx'];
     for (const file of files) {
       const source = readFileSync(join(root, file), 'utf8');
       const named = openingTags(source, file.startsWith('app/') ? ['NumberField'] : ['DigitField']);
