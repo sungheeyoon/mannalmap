@@ -159,14 +159,43 @@ async function awaitUsable(client) {
 }
 
 /**
+ * **씨앗의 표 — `UI_SEED_TAG` 를 주면 결정적이다.**
+ *
+ * 표는 닉네임 · 라벨 · 이메일에 들어가고, 라벨이 일간을 정한다(`scripts/notice.mjs` 의 `chartFor` — 이름 글자의 코드값 합).
+ * 그래서 시각으로 지은 표는 판마다 「내 사주」 기호 · 색 · 궁합 점수 · 인연 후보 카드를 바꿔, 전후 그림이 모양 차이 없이도 「다름」으로 나온다
+ * (11-20 — 209쌍 중 125쌍이 씨앗 값뿐이었다).
+ *
+ * 고정한 표에서도 **한 판 안의 여러 계정은 겹치지 않는다** — 지을 때마다 차례 번호를 더한다(닉네임은 유일하다,
+ * `app_user_nickname_is_unique`). 같은 `db:reset` 상태에서 같은 `UI_ONLY` · `UI_SIZES` 로 두 번 찍으면 차례가 같으니 값도 같다.
+ * 변수를 안 주면 예전처럼 시각에서 짓는다.
+ */
+export function tagFor(fixed, n, now = Date.now()) {
+  if (fixed === undefined || fixed === '') return `${now}`.slice(-6);
+  if (!/^\d{6}$/.test(fixed)) throw new Error(`UI_SEED_TAG 는 숫자 여섯이어야 합니다 — 받은 값: ${fixed}`);
+  return `${(Number(fixed) + n) % 1_000_000}`.padStart(6, '0');
+}
+
+let tagsMade = 0;
+/** 상태 하나를 지을 때마다 새 표 — `ui-states.mjs` 의 `build` 가 부른다 */
+export const seedTag = () => tagFor(process.env.UI_SEED_TAG, tagsMade++);
+
+let emailsMade = 0;
+/**
+ * 이메일의 꼬리 — 한 표를 두 사람이 나눠 쓰는 상태(`board` · `pair`)도 겹치지 않게. 표를 고정하면 판 안의 차례 번호,
+ * 아니면 예전처럼 무작위다(이메일은 계정 메뉴 · 설정에 보인다).
+ */
+const emailTail = () =>
+  process.env.UI_SEED_TAG ? `n${emailsMade++}` : Math.random().toString(36).slice(2, 6);
+
+/**
  * 사람 하나를 세운다.
  *
  * `label` 은 앱 안에서 부르는 이름이 아니라 **출생 정보에 붙인 이름**이고, `nickname` 이
  * 남에게 보이는 이름이다. 둘을 같은 값으로 두면 화면에서 어느 쪽이 서 있는지 못 가른다.
  */
 export async function seed(local, wanted, tag) {
-  const stamp = tag ?? `${Date.now()}`.slice(-6);
-  const email = `ui-${stamp}-${Math.random().toString(36).slice(2, 6)}@example.com`;
+  const stamp = tag ?? seedTag();
+  const email = `ui-${stamp}-${emailTail()}@example.com`;
   const password = `pw-${stamp}-Aa1!`;
   const label = wanted.label ?? `민수${stamp.slice(-3)}`;
   const nickname = wanted.nickname ?? `벗${stamp.slice(-4)}`;

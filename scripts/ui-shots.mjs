@@ -3,6 +3,7 @@
  *
  *     node scripts/ui-shots.mjs [내보낼 곳]
  *     UI_SIZES=wide,mobile UI_ONLY=auth node scripts/ui-shots.mjs [내보낼 곳]
+ *     UI_SEED_TAG=123456 node scripts/ui-shots.mjs <전 · 후>   # 씨앗을 고정한다 — 견주기는 `scripts/ui-shots-diff.mjs`
  *
  * `ui-walk.mjs` 와 같은 상태를 쓴다. 다른 것은 사람이 모는 대신 목록을 따라 돌며
  * 폭마다 한 장씩 남긴다는 것뿐이다 — 데스크톱 1280 · 모바일 390 · 전체 화면 1920(`SIZES`).
