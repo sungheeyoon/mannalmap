@@ -1,6 +1,6 @@
 import type { SectionError } from '../input/section-errors';
 
-import { NOTICE_ACK_LABEL, NOTICE_AGAIN_NOTE } from './notice';
+import { NOTICE_ACK_LABEL, NOTICE_AGAIN_NOTE, type OptionalConsentKey } from './notice';
 
 /**
  * **가입 폼의 판정과 글자** — 웹(`app/signup`)과 앱(`mobile/src/app/signup.tsx`)이 함께 쓴다.
@@ -59,6 +59,15 @@ export function signupSectionErrors(form: {
   return errors;
 }
 
+/** 가입 폼이 드는 선택 동의 — 항목마다 켰는가. 웹 · 앱의 폼이 이 모양으로 들고, 이 모양 그대로 보낸다(G-168) */
+export type SignupChoices = Readonly<Record<OptionalConsentKey, boolean>>;
+
+/**
+ * 선택 동의의 첫 값 — **다 꺼짐이다.** 미리 켜 두면 고른 것이 아니라 안 끈 것이 되고, 그것을 동의라고 부를 수 없다.
+ * 항목이 늘면 이 줄이 컴파일에서 걸린다 — 두 폼이 따로 적던 첫 값이 여기 하나다.
+ */
+export const SIGNUP_CHOICES_OFF: SignupChoices = { improvement: false };
+
 /**
  * `complete_signup` 의 인자. **빈 칸은 `null` 로 보낸다** — 이미 이름을 가진 사람은 그 칸을 안 보므로 빈 문자열이 온다.
  * DB 가 그것을 「짓겠다」로 읽으면 2자 미만이라고 거절한다.
@@ -68,11 +77,10 @@ export function signupSectionErrors(form: {
  * **`p_contact` 는 안 보낸다**(ADR 0245 추기) — 「인터뷰 요청 받기」를 걷었다. DB 는 옛 앱 빌드 때문에 그 인자를 기본값과 함께 받기만 하고 읽지
  * 않는다. 인자를 걷는 일은 G-160 이다.
  */
-export const signupRequest = (answer: {
+export const signupRequest = (answer: SignupChoices & {
   nickname: string;
   version: string;
   scheduleId: number;
-  improvement: boolean;
 }) => ({
   p_code: null,
   p_nickname: answer.nickname.trim() || null,

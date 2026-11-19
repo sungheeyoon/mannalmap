@@ -4,12 +4,12 @@ import { READING_KINDS, type ReadingKind } from '@/src/lib/reading';
 
 import {
   isShareable,
-  readingHrefOf,
   readingPathsOf,
   readingTargetArgs,
   shareTargetArgs,
   type ReadingTarget,
 } from './target';
+import { readingHrefOf } from '@/src/lib/reading/target';
 
 /**
  * **네 갈래를 푸는 자리가 하나인가.**

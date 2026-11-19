@@ -8,6 +8,7 @@ import { sameChartAmong, type SameChart } from '@input/same-chart';
 import { PERSON_INPUT_COLUMNS, chartOfStored, storedInputOfRow, type ListedChart, type StoredInput } from '@input/stored';
 import { personSlotsFrom, type PersonSlots } from '@people';
 import type { Stem } from '@saju';
+import { makingPeopleOf } from '@reading/running';
 
 import type { Client } from '@/auth/client';
 import { readAccount } from '@/auth/account';
@@ -101,7 +102,7 @@ export async function readReadings(client: Client): Promise<readonly MyReading[]
 /** 사주풀이를 지금 만드는 중인 사람들 — 부속 정보다. 못 읽으면 단추는 「받기」로 선다 */
 export async function readMaking(client: Client): Promise<ReadonlySet<string>> {
   const running = await readRunningReadings(client);
-  return new Set((running ?? []).flatMap(({ target }) => (target.kind === 'person' ? [target.personId] : [])));
+  return makingPeopleOf(running ?? []);
 }
 
 export async function readSlots(client: Client): Promise<PersonSlots | null> {

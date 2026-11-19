@@ -12,14 +12,14 @@ import { STEM_INFO } from '@/src/lib/saju';
 import { readAccount } from '../../../me/account';
 import { readReadingCredits } from '../../../me/credits/remaining';
 import { runningReadings } from '../../../me/home/running';
-import { runningName } from '../../../me/home/running-line';
+import { runningName } from '@/src/lib/reading/running';
 import { bookOf, shelfNamesOf } from '../../../me/(shelf)/readings/book';
 import { shelfKindOfReading } from '../../../me/(shelf)/readings/kind';
 import { dayMastersOf, savedPersonOf } from '../../../me/(shelf)/readings/subject';
 import { currentReading, lastReadingRun, myReadings } from '../../../me/reading/current';
 import { readingMinutes } from '../../../me/reading/essay';
 import { GENERATION } from '../../../me/reading/generation';
-import { readingHrefOf } from '../../../me/reading/target';
+import { readingHrefOf } from '@/src/lib/reading/target';
 import { matchesForViewer } from '../../../me/requests/inbox';
 import { when } from '@/src/lib/reading/when';
 

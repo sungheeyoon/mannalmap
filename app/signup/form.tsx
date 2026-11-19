@@ -9,11 +9,13 @@ import {
   OPTIONAL_CONSENTS,
   OPTIONAL_CONSENT_NOTE,
   SIGNUP_AGE_LABEL,
+  SIGNUP_CHOICES_OFF,
   SIGNUP_LABEL,
   SIGNUP_NOTICE_DISCOVERY,
   SIGNUP_NOTICE_KEEP,
   SIGNUP_NOTICE_USE,
   signupSectionErrors,
+  type SignupChoices,
   type SignupField,
 } from '@/src/lib/consent';
 import {
@@ -80,7 +82,7 @@ export function SignupForm({
   const [nickname, setNickname] = useState('');
   const [fourteen, setFourteen] = useState(false);
   const [acknowledged, setAcknowledged] = useState(false);
-  const [chosen, setChosen] = useState<Record<string, boolean>>({ improvement: false });
+  const [chosen, setChosen] = useState<SignupChoices>(SIGNUP_CHOICES_OFF);
   /** 서버의 거절 — 어느 칸의 것인지 알면 그 칸 곁에, 모르면 단추 곁에 선다(`refusedField`) */
   const [failure, setFailure] = useState<{ message: string; field: SignupField | null } | null>(null);
   const [working, startWorking] = useTransition();
@@ -145,7 +147,7 @@ export function SignupForm({
           version,
           /* 이 사람이 **본 안내의 줄**이다. 그 사이에 바뀌었으면 DB 가 거절한다 */
           scheduleId,
-          improvement: chosen.improvement === true,
+          ...chosen,
         }),
       );
 

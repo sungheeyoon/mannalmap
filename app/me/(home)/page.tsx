@@ -20,7 +20,7 @@ import { selfReadingOf } from '@/src/lib/reading/relation-map';
 import { ReceivedReadings } from '../home/received-readings';
 import { runningReadings } from '../home/running';
 import { RunningReadings } from '../home/running-band';
-import { makingPeopleOf, makingSelf } from '../home/running-line';
+import { makingPeopleOf, makingSelf } from '@/src/lib/reading/running';
 import { SelfCard } from '../home/self-card';
 import { NO_FACE, myHomeFace } from '../home/self-face';
 import { Onboarding } from '../onboarding';
