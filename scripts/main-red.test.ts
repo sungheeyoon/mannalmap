@@ -94,9 +94,9 @@ describe('ci-main-red — main 의 결과로 이슈 하나를 든다 (ADR 0097)'
    * #1170 — `c61303a` 가 11-18 에 전부 초록이었다가 코드 그대로 11-19 의 일정에서 붉었고, 이슈는 빈 범위 `git log c61303a..c61303a` 를
    * 보라고 했다. 같은 SHA 면 범위가 아니라 바깥이다 (ADR 0257)
    */
-  it('마지막 초록이 이 커밋이면 빈 범위 대신 「코드가 같다 — 바깥」이라고 적는다', () => {
+  it('마지막 초록이 이 커밋이면 빈 범위 대신 「코드가 같다 — 바깥이거나 흔들리는 시험」이라고 적는다', () => {
     const same = reportOf({ runUrl: 'https://x/run/1', sha: MAIN, lastGreen: MAIN, failedJobs: ['mobile'], failedSteps: ['mobile › Run npx expo lint'] });
-    expect(same).toContain('코드가 같다 — 바깥이다');
+    expect(same).toContain('코드가 같다 — 바깥이거나 흔들리는 시험');
     expect(same).toContain(`\`${MAIN.slice(0, 7)}\` 는 전에 전부 초록이었다`);
     expect(same).not.toContain('git log');
     expect(same).toContain('붉은 단계: `mobile › Run npx expo lint`');

@@ -74,9 +74,9 @@
  * `scripts/mobile-closure.test.ts` 가 앱에서 import 를 따라 닿는 파일이 전부 여기 걸리는지 잰다. `audit` 처럼 단계와 따로 켠다.
  * `mobile/**` 는 정책도 엔진도 아니라 웹 쪽은 전부다 — 앱이 DB · 앱의 문을 부르는 자리(`scripts/check-mobile.mjs`)는 `flow` 가 잰다.
  *
- * **네이티브 의존 검사의 Maven 저장소 조회도 바깥이 답을 바꾼다**(ADR 0257) — 그 조회는 좌표를 바꾸는 파일(`MAVEN_INPUTS` — 앱의 잠금 파일과
- * `app.json` 의 `extraMavenRepos`)을 바꾼 PR 과 빈 diff 에서만 켜고(계획의 `mobileMaven`, 출력 `mobile_maven`), 그 밖의 `mobile` 차선은
- * `--offline` 으로 SDK 만 잰다. 저장소는 바깥 검사가 하루 한 번 묻는다.
+ * **네이티브 의존 검사의 Maven 저장소 조회도 바깥이 답을 바꾼다**(ADR 0257) — 그 조회는 좌표 · 저장소와 그 조회를 바꾸는 파일(`MAVEN_INPUTS` —
+ * 앱의 잠금 파일, `extraMavenRepos` 를 정하는 `app.json` · `app.config.js`, 묻는 쪽 `scripts/mobile-native.mjs`)을 바꾼 PR 과 빈 diff 에서만 켜고
+ * (계획의 `mobileMaven`, 출력 `mobile_maven`), 그 밖의 `mobile` 차선은 `--offline` 으로 SDK 만 잰다. 저장소는 바깥 검사가 하루 한 번 묻는다.
  *
  * ## 주석만 바뀐 코드 파일은 정책으로 센다 (ADR 0153)
  *
@@ -160,8 +160,12 @@ const ENGINE = [/^src\/lib\/saju\//, /^app\/saju\//];
  * 2026-11-19 까지 `audit` 을 안 돌아 그 예외가 PR 에서 재어지지 않았다(#1169, ADR 0257)
  */
 export const DEPENDENCY_LISTS = ['package.json', 'package-lock.json', 'mobile/package.json', 'mobile/package-lock.json', 'mobile/audit-exceptions.json'];
-/** Maven 좌표 · 저장소를 바꾸는 파일 — 이것을 바꾼 PR 만 `mobile` 차선이 저장소에 묻는다(위 「앱 검사」, ADR 0257) */
-export const MAVEN_INPUTS = ['mobile/package-lock.json', 'mobile/app.json'];
+/**
+ * Maven 좌표 · 저장소와 그 조회를 바꾸는 파일 — 이것을 바꾼 PR 만 `mobile` 차선이 저장소에 묻는다(위 「앱 검사」, ADR 0257). 잠금 파일이 연결되는 모듈과
+ * 그 좌표를, `app.json` · `app.config.js` 가 `expo config` 로 읽히는 `extraMavenRepos` 를 정한다. `scripts/mobile-native.mjs` 는 묻는 쪽이다 — 그것을 고친
+ * PR 이 필수 검사에서 `--offline` 으로만 돌면 고친 조회가 머지 전에 한 번도 안 돈다(독립 검토 2026-11-19)
+ */
+export const MAVEN_INPUTS = ['mobile/package-lock.json', 'mobile/app.json', 'mobile/app.config.js', 'scripts/mobile-native.mjs'];
 /**
  * 앱이 부르는 자리와 CI 자체 — 위 「앱 검사」. `app/` 은 파일로 적는다 — 앱이 닿는 것이 그 파일들뿐이고, 시험이 닫힘과 견준다.
  * `scripts/mobile-native.mjs` 는 앱이 부르지 않지만 그 차선에서만 실제 의존에 대고 돈다 — 고치면 그 차선이 다시 잰다.
@@ -968,7 +972,7 @@ function audits({ files, labels, event }) {
 }
 
 /**
- * `mobile` 차선이 Maven 저장소에 묻는가 — 좌표 · 저장소를 바꾸는 파일(`MAVEN_INPUTS`)을 바꾼 PR 과 빈 diff 만이다. 라벨은 켜지 않는다 —
+ * `mobile` 차선이 Maven 저장소에 묻는가 — 좌표 · 저장소와 그 조회를 바꾸는 파일(`MAVEN_INPUTS`)을 바꾼 PR 과 빈 diff 만이다. 라벨은 켜지 않는다 —
  * 전부를 돌리려는 PR 이 바깥의 429 로 붉지 않게. main 푸시 · 일정 · 손으로 켠 실행은 안 묻는다(바깥 검사가 하루 한 번, ADR 0257)
  */
 function mavenLookups({ files, event }) {

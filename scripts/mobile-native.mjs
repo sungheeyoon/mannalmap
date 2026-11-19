@@ -17,7 +17,7 @@
  *    짧게 다시 묻고, 그래도 그러면 경고다(`locate`) — Maven Central 의 429 를 「없다」로 세어 main 이 34 줄 붉었다(2026-11-19, #1170).
  *    묻는 것은 한 번에 `MAVEN_CONCURRENCY` 개까지이고 같은 좌표는 한 번만 묻는다. 좌표를 못 읽은 것도 경고다. 옮겨 오는(transitive) 의존은 못 본다
  *
- * 저장소의 답은 코드가 그대로여도 바뀐다 — CI 는 `mobile/package-lock.json` · `mobile/app.json` 을 바꾼 PR 에서만 묻고(계획의 `mobile_maven`),
+ * 저장소의 답은 코드가 그대로여도 바뀐다 — CI 는 좌표 · 저장소와 이 조회를 바꾸는 PR(`ci-plan.mjs` 의 `MAVEN_INPUTS` — 이 파일도 든다)에서만 묻고(계획의 `mobile_maven`),
  * 그 밖에는 `--offline` 으로 1 ~ 3 만 잰다. 저장소는 하루 한 번 `scripts/outside-red.mjs` 가 묻는다(ADR 0257).
  *
  * `node scripts/mobile-native.mjs` — `mobile/node_modules` 가 있어야 한다(`npm run mobile:native`). `--offline` 이면 저장소를 안 묻는다.

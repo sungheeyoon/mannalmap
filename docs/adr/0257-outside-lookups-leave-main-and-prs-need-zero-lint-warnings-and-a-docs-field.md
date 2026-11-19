@@ -47,11 +47,12 @@
    - **PR 의 감사는 그대로다.** `audit` 은 감사의 답을 바꾸는 파일을 바꾼 PR 에서 머지를 막는다 — 그 목록(`DEPENDENCY_LISTS`)에 `mobile/audit-exceptions.json` 을
      더해 예외만 바꾼 PR 도 재어지게 한다. 라벨 · 빈 diff 도 켠다. main 푸시 · 일정 · 손 실행에서는 안 돈다. 그래서 전부를 잰 main 실행의 셈
      (`main-red.mjs` 의 `measuredEverything`)은 `audit` 의 건너뜀을 뺀다(`offWhenFull` 이 일정의 계획에서 읽는다).
-   - **Maven 조회는 좌표를 바꾸는 PR 에서만 verify 가 한다** — `mobile/package-lock.json` · `mobile/app.json`(계획의 `mobile_maven`)과 빈 diff. 라벨은 켜지 않는다.
+   - **Maven 조회는 좌표 · 저장소와 그 조회를 바꾸는 PR 에서만 verify 가 한다** — `mobile/package-lock.json` · `mobile/app.json` · `mobile/app.config.js`(`expo config` 로
+     `extraMavenRepos` 를 바꿀 수 있다) · `scripts/mobile-native.mjs`(묻는 쪽 — 고친 조회가 필수 검사에서 한 번은 돈다), 곧 계획의 `MAVEN_INPUTS`(출력 `mobile_maven`)와 빈 diff. 라벨은 켜지 않는다.
      그 밖의 `mobile` 차선은 `scripts/mobile-native.mjs --offline` 으로 SDK 만 잰다.
    - **「없다」는 저장소가 404 · 410 으로 말한 것뿐이다** — 429 · 403 · 5xx · 망 실패는 짧게 다시 묻고(세 번, 1초 · 2초 쉼) 그래도 그러면 경고다. 한 번에 넷까지 묻고
      같은 좌표는 한 번만 묻는다.
-   - **`ci-main-red` 의 보고는 같은 SHA 를 가른다** — 마지막 전부 초록이 그 커밋이면 범위 대신 「코드가 같다 — 바깥이다」라고 적고, 붉은 단계의 이름을 함께 적는다.
+   - **`ci-main-red` 의 보고는 같은 SHA 를 가른다** — 마지막 전부 초록이 그 커밋이면 범위 대신 「코드가 같다 — 바깥이거나 흔들리는 시험」이라고 적고, 붉은 단계의 이름을 함께 적는다 — 같은 SHA 가 붉는 까닭에는 흔들리는 시험도 있다.
 2. **PR 은 린트 경고로도 붉고, 본문의 「문서」 칸이 비면 붉다.**
    - **린트 경고 0 — 린트 셋 모두 `--max-warnings 0` 이다.** 이 결정이 셋의 원본이다(#1177 에는 ADR 이 따로 없다).
      - 웹 `npm run lint`(`package.json`, `core` 차선)는 #1177 이 넣는다 — 남은 경고를 0 으로 걷고, 안 쓰는 이름의 규칙이 `_` 로 시작하는 이름과 나머지(`...rest`)를
@@ -71,7 +72,9 @@
   운영 의존성의 high 는 새 작업보다 먼저 고칠 만하다고 봤다. 공개 출시 뒤 잰 값은 그 근거가 더는 서지 않는다는 것이다 — 바깥의 붉음 넷 중 넷이 그 규칙을 타고
   모든 새 작업과 배포를 세웠고, 그중 고칠 코드가 있던 것은 없었다(철회 · rate limit · DNS · 고친 판 없는 advisory). advisory 는 이제 Dependabot 경고와 이
   이슈 둘이 알리고, 의존성을 바꾼 PR 은 여전히 `audit` 에 막힌다. high 를 먼저 볼지는 고친 판이 있는 날 사람이 정한다.
-- **Maven 조회를 라벨에도 켠다** — 전부를 돌리려고 라벨을 단 PR(워크플로를 고친 PR 등)이 바깥의 429 로 붉는다. 그 PR 의 검사는 `outside.yml` 의 PR 실행이 본다.
+- **Maven 조회를 라벨에도 켠다** — 전부를 돌리려고 라벨을 단 PR(워크플로를 고친 PR 등)이 바깥의 429 로 붉는다. 묻는 쪽을 고친 PR 은 `MAVEN_INPUTS` 가
+  `scripts/mobile-native.mjs` 로 켜고, 바깥 검사 파일 넷(`outside.yml` 의 `paths`)을 고친 PR 은 `outside.yml` 의 PR 실행도 돈다. `verify.yml` 만 고친 PR 은
+  저장소를 묻지 않는다 — 그 PR 의 `mobile` 차선은 `--offline` 이다.
 
 ## 남는 위험
 
