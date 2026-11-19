@@ -1349,6 +1349,8 @@ describe('역할 문서 (docs/start.md · docs/roles/, ADR 0140)', () => {
     const at = text.indexOf(`\n## ${ON_DEMAND_SECTION}\n`);
     return at < 0 ? text : text.slice(0, at + 1);
   };
+  /** 「닿을 때 여는 것」의 여는 말 — 그 칸에는 이 한 줄과 목록 줄만 선다 */
+  const ON_DEMAND_OPENING = '손대기 전에 다 읽지 않는다 — 일이 그 자리에 닿을 때 연다(ADR 0147).';
 
   /**
    * `CLAUDE.md` 는 매 턴 실린다 — `@AGENTS.md` 와 Claude Code 만의 호출법만 든다. 원본을 다시 말하던 네 절(3,214 바이트)은
@@ -1374,11 +1376,21 @@ describe('역할 문서 (docs/start.md · docs/roles/, ADR 0140)', () => {
       const headings = [...text.matchAll(/^## (.+)$/gm)].map((match) => match[1].trim());
       expect(headings, role).toEqual(headings.length > COLUMNS.length ? [...COLUMNS, ON_DEMAND_SECTION] : COLUMNS);
       const screen = screenOf(text);
-      if (screen.length < text.length) trimmed += 1;
       expect(screen, role).toContain(`## ${COLUMNS.at(-1)}\n`);
       expect(Buffer.byteLength(screen), role).toBeLessThanOrEqual(MAX_BYTES);
+      if (!headings.includes(ON_DEMAND_SECTION)) continue;
+      // 머리가 있으면 거기서 잘린다 — 머리 끝 공백 · CRLF 로 못 자르면 아래 칸의 꼴 시험까지 조용히 건너뛴다
+      expect(screen.length, `${role} — 「${ON_DEMAND_SECTION}」 머리에서 못 잘랐다`).toBeLessThan(text.length);
+      trimmed += 1;
+      // 세지 않는 칸에는 여는 말 한 줄과 목록 줄만 선다 — 문단을 들이면 한 화면의 셈 밖으로 원본을 옮겨 적는 길이 된다
+      const prose = text
+        .slice(screen.length)
+        .split('\n')
+        .slice(1)
+        .filter((line) => line.trim() !== '' && !line.startsWith('- ') && line !== ON_DEMAND_OPENING);
+      expect(prose, `${role} 「${ON_DEMAND_SECTION}」의 목록 밖 줄`).toEqual([]);
     }
-    // 자르는 자리를 실제로 찾는다 — 머리 꼴이 어긋나(끝 공백 등) 못 찾으면 그 문서는 「닿을 때」까지 다 잰다
+    // 칸이 있는 역할이 이만큼은 된다 — 목록 밖 줄 시험이 빈 셈으로 초록이 되지 않게
     expect(trimmed).toBeGreaterThan(5);
   });
 
