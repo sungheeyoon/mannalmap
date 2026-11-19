@@ -35,6 +35,7 @@ const { check, finish } = createChecks('check-push');
 
 const stamp = Date.now();
 const tag = String(stamp).slice(-4);
+const nicknames = { a: `민푸${tag}`, b: `지푸${tag}` };
 const password = `pw-${stamp}-Aa1!`;
 const mail = { a: `push-a-${stamp}@example.com`, b: `push-b-${stamp}@example.com` };
 const userId = (email) => sql(`select id from auth.users where email = '${email}'`);
@@ -55,7 +56,7 @@ const person = async (email, label, birth) => {
 // ── 무대: 두 사람 · 한 방 ────────────────────────────────────────────────────
 const a = await person(mail.a, '민수', { date: '1990-05-15', city: '서울', gender: 'male' });
 const b = await person(mail.b, '지영', { date: '1992-03-03', city: '부산', gender: 'female' });
-for (const [client, nickname] of [[a, `민푸${tag}`], [b, `지푸${tag}`]]) {
+for (const [client, nickname] of [[a, nicknames.a], [b, nicknames.b]]) {
   await client.rpc('save_my_profile', { p_nickname: nickname, p_intro: null });
   await keyedRpc(client, 'set_discovery_participation', { p_on: true, p_summary: shapeOnlySummary, p_need: testNeed() });
 }
@@ -167,7 +168,9 @@ try {
   check('푸시 서비스가 받은 것을 풀면 주소와 표뿐이다', JSON.stringify(got?.payload) === JSON.stringify(pushPayloadFor(matchId)),
     JSON.stringify(got?.payload ?? got?.error));
   check('암호를 풀기 전의 본문에 메시지 · 닉네임이 없다 — 풀린 값에도 없다',
-    !JSON.stringify(got?.payload ?? {}).includes('비밀 본문') && !JSON.stringify(got?.payload ?? {}).includes(tag));
+    // 숫자 넷(tag)만 찾으면 풀린 값의 uuid 16진 글자와 우연히 겹친다 — 실린 본문 · 닉네임 그대로를 찾는다
+    !['비밀 본문', nicknames.a, nicknames.b].some((secret) => JSON.stringify(got?.payload ?? {}).includes(secret)),
+    JSON.stringify(got?.payload ?? got?.error));
   check('TTL · Urgency · Topic 을 싣는다',
     got?.headers.ttl === String(PUSH_TTL_SECONDS) && got?.headers.urgency === 'high' && got?.headers.topic === pushTopicFor(matchId),
     JSON.stringify({ ttl: got?.headers.ttl, urgency: got?.headers.urgency, topic: got?.headers.topic }));
