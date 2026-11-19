@@ -21,7 +21,7 @@ OAuth 되돌아옴 · 복구기 주소 · OpenAI 웹훅 · 옛 주소 넘김이 
 | 4 | **확인 전** | 저장소에서 못 잰다 | 운영자 — Google Cloud Console → OAuth consent screen 의 승인된 도메인 · 앱 홈 · 처리방침 링크가 새 도메인인지 본다(#770 B) |
 | 5 | **안 했다** | 2026-10-23 `db:remote` — Vault `reading_recovery_url` 의 호스트가 **옛 별칭**이다(호스트만 읽었다 — 비밀이 아닌 공개 주소). 지난 한 시간 복구기 부름 60번이 모두 200 — 옛 별칭이 200 이라 지금은 돈다 | 8 **전에** 아래 5 의 한 줄. 운영 SQL 이라 에이전트가 묻지 않고 수행하고 값을 적는다(2026-11-07 부터 — ADR 0093 「배포만 묻는다」)(`docs/agents/delegation/permissions.md` 「권한 등급」) |
 | 6 | **확인 전** | 저장소에서 못 잰다 — 결과가 웹훅으로 왔는지 복구기로 왔는지 DB 에 남지 않는다 | 운영자 — platform.openai.com → Settings → Webhooks 의 endpoint 호스트가 새 도메인인지 본다(#770 B). 옛 별칭이면 아래 6 |
-| 7 | 해당 없음 | Google Play 통지의 Pub/Sub 푸시 구독이 아직 없다 — 개인 개발자 계정을 만드는 날 만든다(`docs/ops/runbook/play-console.md` 「계정을 만드는 날의 차례」 10)(`docs/ops/runbook/credits.md` 「Google Play 결제」, ADR 0230) | 만들 때 그날의 도메인으로 |
+| 7 | 했다 | 2026-11-17 — Pub/Sub 푸시 구독 `play-billing-push` 의 끝점 · audience 를 새 도메인의 `/api/store/google-play` 로 만들었고, 그날 배포 뒤 Play Console 「테스트 알림 보내기」가 204 였다(`docs/ops/runbook/credits.md` 「Google Play 결제」의 「운영의 실제 값」, #770 그날의 배포 댓글, ADR 0230) | 도메인을 다시 옮기면 아래 표의 7 |
 | 8 | 안 했다 | 2026-10-23 `curl` — 옛 별칭 `/` 200 | 5 · 6 이 새 도메인으로 선 뒤 |
 | 9 | 했다 | `deploy.md` 는 주소 대신 이 문서를 가리킨다(ADR 0152) | — |
 | 10 | 해당 없음 | 2026-10-23 `db:remote` — Vault `push_dispatch_url` 이 없다(웹 푸시는 G-71 보류) | 켜는 날 새 도메인으로 넣는다(`docs/ops/runbook/push.md`) |
@@ -57,3 +57,22 @@ Slack · Discord 쪽이다.
 
 **모두가 한 번 다시 로그인한다** — 세션 쿠키는 오리진마다다. 미리 알릴지 · 무엇이라 알릴지는 옮기는 날 운영자가 정한다
 (화면 문구 — `docs/agents/delegation/decisions.md` 「결정 점검표」).
+
+## 메일 DNS — SPF · DMARC
+
+**운영 도메인은 지금 메일을 보내지 않는다** — 그래서 이 도메인 이름을 단 메일을 받는 쪽이 거절하게 두 레코드를 넣었다(2026-11-18 보안 점검,
+#770). 운영 도메인의 DNS 는 Vercel(Project → Settings → Domains 의 그 도메인)이 관리한다.
+
+| 레코드 | 이름 | 값 | 뜻 |
+| --- | --- | --- | --- |
+| TXT | 맨 도메인 | `v=spf1 -all` | 이 도메인으로 메일을 보내는 서버가 없다 |
+| TXT | `_dmarc` | `v=DMARC1; p=reject` | SPF · DKIM 검사를 이 도메인으로 통과하지 못한 메일은 받는 쪽이 거절하게 한다 |
+
+```bash
+dig +short TXT <운영 도메인>          # "v=spf1 -all" — 도메인은 이 문서 맨 위
+dig +short TXT _dmarc.<운영 도메인>   # "v=DMARC1; p=reject"
+```
+
+**함정 — 메일 발송 업체를 붙이는 날(G-26 · G-57, G-21 의 계약내용 교부)에는 그 업체를 SPF 에 더하고 업체가 주는 DKIM 레코드도 함께 넣는다.**
+안 하면 그 업체가 보낸 우리 메일이 `-all` · `p=reject` 에 걸려 받는 쪽에서 막힌다. 넣은 뒤 업체의 도메인 확인 화면이 통과로 바뀌는지, 시험 메일 한 통의
+머리(`Authentication-Results`)에 `dmarc=pass` 가 있는지 본다.
