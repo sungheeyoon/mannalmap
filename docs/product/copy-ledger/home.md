@@ -305,15 +305,15 @@
 
 | 자리 | 이전 | 넣은 글자 | 출처 |
 | --- | --- | --- | --- |
-| 머리 오른쪽 아래 링크 `CHART_DETAIL_LABEL` | (탭 「만세력」) | 만세력 자세히 › | 운영자 승인 시안 0-1 A(<https://claude.ai/artifact/QH2P9sZgiuwpXgHYzE3Yvj>, 확인 2026-11-13) |
-| 머리의 출생 한 줄 `birthLineOf` | (없음) | 1991년 7월 21일 · 남성 · 출생 시각 모름(알면 시:분) | 운영자 승인 시안 0-1 A(<https://claude.ai/artifact/QH2P9sZgiuwpXgHYzE3Yvj>, 확인 2026-11-13) — 성별 · 시각 모름은 사람 목록의 글자 |
-| 만세력 화면 제목 `chartTitleOf` | (없음 — 탭 안) | {이름}의 만세력 | 운영자 승인 시안 0 의 C(<https://claude.ai/artifact/QH2P9sZgiuwpXgHYzE3Yvj>, 확인 2026-11-13) |
-| 받은 풀이 카드의 아래 줄 `readingReceivedLine` · `READING_OPEN_LABEL` | {이름}의 사주풀이 › | 11월 13일 받음 · 읽는 데 약 4분 / 읽기 › | 운영자 승인 시안 0-1 A(<https://claude.ai/artifact/QH2P9sZgiuwpXgHYzE3Yvj>, 확인 2026-11-13) — 「읽는 데 약 N분」은 풀이 화면의 글자 |
-| 안 받았을 때의 진한 카드 `readingInviteTitle` · `READING_INVITE_TOPICS` | 아직 받은 사주풀이가 없어요. | {이름}은/는 어떤 사람일까요? / 성격 · 일과 재물 · 인연 · 올해 흐름 / 「사주풀이 받기」 | 운영자 승인 시안 0-1 A 「사주풀이가 없을 때」(<https://claude.ai/artifact/QH2P9sZgiuwpXgHYzE3Yvj>, 확인 2026-11-13) — 시안의 왼쪽 아래 「풀이권 1장」은 걷었다(운영자 2026-11-13 — 숫자만 놓여 뜻이 안 읽힌다, 시트가 말한다) |
-| 받기 시트 제목 · 줄 · 단추 `readingAskTitle` · `readingCostLine` · `READING_ASK_CONFIRM` | (풀이 화면의 확인 창 「풀이권 1장을 사용하시겠어요?」) | {이름}의 사주풀이를 받을까요? / 풀이권 1장을 사용해요. (남은 풀이권 N장) / 받기 · 취소 | 운영자 승인 시안 0 의 A(<https://claude.ai/artifact/QH2P9sZgiuwpXgHYzE3Yvj>, 확인 2026-11-13) — 가운데 줄은 운영자가 글자를 정했다(2026-11-13, 시안의 「풀이권 1장 · 보유 N장」이 안 읽힌다). 예약 줄(`readingCreditsNote`) · 「만들지 못하면 풀이권은 돌려드려요.」는 이 시트 · 사이 시트에 두지 않는다(운영자 2026-11-13) |
-| 궁합 칸의 끝 줄 `COMPAT_OTHER_LABEL` · `compatWithLabel` | 궁합 보러 가기 · 아직 본 궁합이 없어요. | + 다른 사람과 궁합 보기 / (궁합이 없으면) + {이름}과/와 궁합 보기 | 운영자 승인 시안 0-1 A(<https://claude.ai/artifact/QH2P9sZgiuwpXgHYzE3Yvj>, 확인 2026-11-13) |
-| 상대 고르기 시트 `partnerAskTitle` · `PARTNER_SELF_LABEL` · `PARTNER_TYPED_LABEL` | (궁합 탭의 「누구와 누구를 볼까요?」) | {이름}과/와 누구를 볼까요? / 나 · 직접 입력 | 운영자 승인 시안 0 의 B(<https://claude.ai/artifact/QH2P9sZgiuwpXgHYzE3Yvj>, 확인 2026-11-13) |
-| 사이 고르기 시트 `relationAskTitle` · `COMPAT_ASK_CONFIRM` | (궁합 탭의 「두 사람은 어떤 사이인가요?」) | {이름} · {상대}은/는 어떤 사이예요? / 궁합 보기 · 취소 | 운영자 승인 시안 0 의 B(<https://claude.ai/artifact/QH2P9sZgiuwpXgHYzE3Yvj>, 확인 2026-11-13) — 고르는 낱말 넷은 궁합 탭의 `RELATION_LABEL` · `RELATION_NONE_LABEL` 그대로 |
+| 머리 오른쪽 아래 링크 `CHART_DETAIL_LABEL` | (탭 「만세력」) | 만세력 자세히 › | 실사례 없음 — 운영자 승인 시안 0-1 A(아티팩트(2026-11-19 지움), 확인 2026-11-13) |
+| 머리의 출생 한 줄 `birthLineOf` | (없음) | 1991년 7월 21일 · 남성 · 출생 시각 모름(알면 시:분) | 실사례 없음 — 운영자 승인 시안 0-1 A(아티팩트(2026-11-19 지움), 확인 2026-11-13) — 성별 · 시각 모름은 사람 목록의 글자 |
+| 만세력 화면 제목 `chartTitleOf` | (없음 — 탭 안) | {이름}의 만세력 | 실사례 없음 — 운영자 승인 시안 0 의 C(아티팩트(2026-11-19 지움), 확인 2026-11-13) |
+| 받은 풀이 카드의 아래 줄 `readingReceivedLine` · `READING_OPEN_LABEL` | {이름}의 사주풀이 › | 11월 13일 받음 · 읽는 데 약 4분 / 읽기 › | 실사례 없음 — 운영자 승인 시안 0-1 A(아티팩트(2026-11-19 지움), 확인 2026-11-13) — 「읽는 데 약 N분」은 풀이 화면의 글자 |
+| 안 받았을 때의 진한 카드 `readingInviteTitle` · `READING_INVITE_TOPICS` | 아직 받은 사주풀이가 없어요. | {이름}은/는 어떤 사람일까요? / 성격 · 일과 재물 · 인연 · 올해 흐름 / 「사주풀이 받기」 | 실사례 없음 — 운영자 승인 시안 0-1 A 「사주풀이가 없을 때」(아티팩트(2026-11-19 지움), 확인 2026-11-13) — 시안의 왼쪽 아래 「풀이권 1장」은 걷었다(운영자 2026-11-13 — 숫자만 놓여 뜻이 안 읽힌다, 시트가 말한다) |
+| 받기 시트 제목 · 줄 · 단추 `readingAskTitle` · `readingCostLine` · `READING_ASK_CONFIRM` | (풀이 화면의 확인 창 「풀이권 1장을 사용하시겠어요?」) | {이름}의 사주풀이를 받을까요? / 풀이권 1장을 사용해요. (남은 풀이권 N장) / 받기 · 취소 | 실사례 없음 — 운영자 승인 시안 0 의 A(아티팩트(2026-11-19 지움), 확인 2026-11-13) — 가운데 줄은 운영자가 글자를 정했다(2026-11-13, 시안의 「풀이권 1장 · 보유 N장」이 안 읽힌다). 예약 줄(`readingCreditsNote`) · 「만들지 못하면 풀이권은 돌려드려요.」는 이 시트 · 사이 시트에 두지 않는다(운영자 2026-11-13) |
+| 궁합 칸의 끝 줄 `COMPAT_OTHER_LABEL` · `compatWithLabel` | 궁합 보러 가기 · 아직 본 궁합이 없어요. | + 다른 사람과 궁합 보기 / (궁합이 없으면) + {이름}과/와 궁합 보기 | 실사례 없음 — 운영자 승인 시안 0-1 A(아티팩트(2026-11-19 지움), 확인 2026-11-13) |
+| 상대 고르기 시트 `partnerAskTitle` · `PARTNER_SELF_LABEL` · `PARTNER_TYPED_LABEL` | (궁합 탭의 「누구와 누구를 볼까요?」) | {이름}과/와 누구를 볼까요? / 나 · 직접 입력 | 실사례 없음 — 운영자 승인 시안 0 의 B(아티팩트(2026-11-19 지움), 확인 2026-11-13) |
+| 사이 고르기 시트 `relationAskTitle` · `COMPAT_ASK_CONFIRM` | (궁합 탭의 「두 사람은 어떤 사이인가요?」) | {이름} · {상대}은/는 어떤 사이예요? / 궁합 보기 · 취소 | 실사례 없음 — 운영자 승인 시안 0 의 B(아티팩트(2026-11-19 지움), 확인 2026-11-13) — 고르는 낱말 넷은 궁합 탭의 `RELATION_LABEL` · `RELATION_NONE_LABEL` 그대로 |
 
 ## home-15 확정 문구 — 풀이 끝 다시 받는 단추를 줄이고 보낸 요청의 풀이권 줄을 걷는다 (운영자 승인 2026-11-13)
 
