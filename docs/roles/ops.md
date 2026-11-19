@@ -39,7 +39,8 @@
 손대기 전에 다 읽지 않는다 — 일이 그 자리에 닿을 때 연다(ADR 0147).
 
 - 앱을 굽거나 스토어에 내면 → [앱 출시의 차례](../ops/runbook/mobile-release.md#앱-출시의-차례)
-- CI 의 `audit` 이 실패하면 → [운영 의존성 취약점](../ops/runbook/security.md#운영-의존성-취약점--ci-의-audit-이-붉을-때-g-23-①-adr-0104) — 새 advisory 인지 범위의 커밋인지부터
+- CI 의 `audit` 이 PR 에서 실패하면 → [운영 의존성 취약점](../ops/runbook/security.md#운영-의존성-취약점--ci-의-audit-이-붉을-때-g-23-①-adr-0104) — 그 PR 이 들인 의존성인지부터. main 의 바깥 조회(advisory DB · Maven)는 하루 한 번 `outside.yml` 이 돌고 `ci-outside-red` 이슈에 적는다(ADR 0257)
 - CI 워크플로(`.github/workflows/`)를 고치면 → [CI](../agents/test-map/ci.md#ci) — 차선과 계획기의 판정
 - 보안 점검(advisor · 접속기록)을 맡았으면 → [보안 점검](../ops/runbook/security.md#보안-점검--advisor-와-접속기록-g-23-⑩-⑪) — 증거는 [간극 대장](../product/gaps.md)의 G-23 줄에
 - 배포 뒤 운영자의 거절(`refused`)이 접속기록에 남는지 보려면 → [월 점검](../ops/runbook/security.md#월-점검--개인정보-없이) 의 질의 「4-2」 — 배포 runbook 에는 그 확인 걸음이 없다(2026-10-18)
+- CI 워크플로 · 계획기를 고치면 → [CI](../agents/test-map/ci.md#ci) — 차선 판정은 `scripts/ci-plan.mjs`, 워크플로는 `.github/workflows/` 이고 둘 다 순차 자원이다(`docs/agents/delegation/parallel.md` 「나란히 맡길 때」)
