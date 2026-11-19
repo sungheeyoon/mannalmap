@@ -23,8 +23,8 @@
 | 워크트리에 `node_modules` 가 **있는데도** vitest 가 `server-only` 를 못 찾는다 | 그 폴더가 캐시만 든 껍데기다(`.vite` 하나뿐) — 이름이 있어 위 줄을 안 밟고, vitest 는 위 폴더로 올라가 찾다 선다 | `ls node_modules` 로 패키지가 있는지 보고, 껍데기면 지우고 위 줄대로 링크하거나 복사한다 |
 | 워크트리에서 `npm run db:remote` · `supabase migration list` · `db push` 가 `LegacyProjectNotLinkedError` 로 선다 | 원격 프로젝트 연결(project-ref)은 `supabase/` 아래 `.temp` 폴더에 있고 gitignore 라 git 이 안 든다 — 새 워크트리에는 없다 | 메인 체크아웃의 그 `.temp` 를 열어 `project-ref` 가 운영 프로젝트인지 본 뒤 워크트리의 `supabase/` 아래로 복사한다(`cp -a` 로 폴더째) |
 | 에이전트 워크트리에서 `cannot be shown …` 으로 거절된다 — 변수 · 명령 치환(`$()`) · heredoc(특히 `git` 글자가 든 것) · `for` 루프 · `xargs` · `git` 출력을 받는 파이프 · `&&` 로 이은 `git` · `gh` 명령 · `vercel inspect <url> \| grep alias` 처럼 운영 CLI 출력을 받는 파이프 · `gh … -q '<jq 식>'` · `git` 글자가 든 스크립트를 heredoc 으로 넘긴 `python3` · `node` | Claude Code 의 워크트리 격리가 실행 때 정해지는 명령을 막는다 — 늘 막히는 것은 아니다. 앞에 `cd` 를 붙인 `git`(`cd <경로>; git merge …`) · `git -C <경로>` · `cd … &&` 뒤의 아무 명령 · `gh … --jq` 에 `\(…)` 템플릿을 쓴 식도 걸린다(겪은 라운드는 `docs/notes/2026-11-08-docs-diet.md`) | `git` · `gh` 명령은 하나씩 따로 부르고 값은 글자로 옮긴다. `vercel inspect <url>` 은 파이프 없이 불러 출력의 Aliases 를 눈으로 읽는다(`docs/ops/runbook/deploy.md` 「배포」 3 단계). 커밋 · PR 본문처럼 긴 글은 파일로 써서 `-F` · `--body-file` 로 준다. 여러 파일이나 이어진 걸음은 스크립트 파일(`node` · `sh`)에 절대 경로를 주고 그 파일을 돌린다. 그 파일을 두는 자리는 `docs/agents/delegation/done.md` 「끝났다는 것」의 「임시 파일」 줄 — 제 워크트리 안이다 |
-| 에이전트 워크트리에서 뿌리 glob(`*.ts`)이 든 `grep` · 이름에 「GIT」이 든 변수(`GITHUB_OUTPUT`)를 쓴 명령 · 남의 워크트리를 겨눈 `git -C` 가 거절된다 | 위 줄과 같은 격리다 — 변수 이름 속 글자까지 `git` 으로 읽는다(2026-11-19 라운드) | glob 은 `git ls-files '*.ts'` 처럼 따옴표로 넘기거나 스크립트 파일에 쓴다. 나란히 도는 일은 남의 워크트리가 아니라 `gh pr list` · `git ls-remote --heads origin` 으로 본다 |
-| `git fetch origin main` 이 `incorrect old value provided` 로 선다 | 나란히 도는 다른 세션이 같은 순간 같은 원격 추적 가지를 갱신했다(2026-11-19) | `git log -1 origin/main` 이 이미 최신인지 보고, 아니면 잠시 뒤 다시 `fetch` 한다 |
+| 에이전트 워크트리에서 뿌리 glob(`*.ts`)이 든 `grep` · 이름에 「GIT」이 든 변수(`GITHUB_OUTPUT`)를 쓴 명령 · 남의 워크트리를 겨눈 `git -C` 가 거절된다 | 위 줄과 같은 격리다 — 변수 이름 속 글자까지 `git` 으로 읽는다 | glob 은 `git ls-files '*.ts'` 처럼 따옴표로 넘기거나 스크립트 파일에 쓴다. 나란히 도는 일은 남의 워크트리가 아니라 `gh pr list` · `git ls-remote --heads origin` 으로 본다 |
+| `git fetch origin main` 이 `incorrect old value provided` 로 선다 | 나란히 도는 다른 세션이 같은 순간 같은 원격 추적 가지를 갱신했다 | `git log -1 origin/main` 이 이미 최신인지 보고, 아니면 잠시 뒤 다시 `fetch` 한다 |
 | (ego-browser) 구글 · Play 콘솔에서 내려받은 파일이 안 보인다 · Cloud Shell 에 글자가 안 들어간다 · 드롭다운이 안 열린다 | 다운로드는 `C:\Users\<사용자>\.ego-browser\state\downloads\<GUID>` 에 GUID 이름으로 떨어진다 · Cloud Shell(xterm)은 `insertText` 를 안 받는다 · Play 콘솔 드롭다운은 마우스를 놓친다 | GUID 폴더에서 찾고 키 파일이면 쓴 뒤 사본까지 지운다 · `keyboard.type` 으로 친다(탭이 멈추면 새 탭에서 다시 연다) · 드롭다운은 키보드로, 안 눌리는 단추는 좌표 클릭. 키는 Cloud 콘솔 UI 에서 만든다(`cloudshell download` 는 쓸 파일을 남기지 않았다) |
 | `npm run build` 가 `FileSystemPath("").join("../../../node_modules/tailwindcss/index.css") leaves the filesystem root` 로 선다 | `.claude/worktrees/` 아래 워크트리 · 복사한 `node_modules` 에서 났다 — 같은 꼴로 빌드가 된 적도 있어 원인은 확인 전 | CI `core` 차선의 빌드를 보거나, 저장소 밖 홈 디스크의 워크트리(`git worktree add --detach ~/saju-wt/<이름>`)에서 빌드하고 끝나면 걷는다 — `/tmp` 는 아래 줄 |
 | 에이전트 워크트리에서 `git worktree add`(예: `docs/ops/runbook/deploy.md` 「묶음 배포」 1 단계의 임시 폴더)가 거절된다 | 워크트리 격리가 제 워크트리를 겨누지 않는 `git` 명령을 막는다 | `git -C <제 워크트리> worktree add --detach ~/saju-wt/<이름> <SHA>` 로 제 워크트리를 겨눠 부른다. 끝나면 같은 꼴의 `worktree remove` 로 걷는다. `git -C` 도 거절되면 그 명령을 스크립트 파일에 써서 그 파일을 돌린다(위 줄) |
@@ -41,7 +41,7 @@
 | 메인에서 쓰던 로컬 DB 가 갑자기 비었다 | 다른 에이전트가 부른 `db:reset` 의 대상이 **메인 스택**이었다 | `db:reset` 앞에 `npm run stack:slot -- --auto` 를 밟고, 부르기 전에 대상 스택(`SAJU_STACK_ID`)이 제 것인지 본다 |
 | `supabase test db` 뒤에 psql 로 `plan()` · `ok()` 를 부르면 함수가 없다 | 그 명령이 pgTAP 확장을 지우고 끝난다 | 손으로 돌릴 때는 `create extension if not exists pgtap` 을 다시 부른다 |
 | 스택을 다시 안 세우고 함수 하나만 바꿔 재고 싶다(돌연변이 · 고치기 전 재현) | 지금 DB 를 고치면 다음 시험까지 번진다 | 같은 스택의 psql 에서 `create database <복제> template postgres`(원본에 접속이 없어야 한다) 뒤 복제에만 `create or replace function` 을 넣어 재고 `drop database` 한다 |
-| `npm test` 를 나란히 돌리는 동안 vitest 일부가 붉고 단독으로 돌리면 초록이다(calibration · seoul-date · comparison 등) | 시간 초과다. 시험은 5초나 그 시험의 30초를, `calibration` 은 `beforeAll` 30초를 넘는다 — 그래서 시험 넷이 건너뛰어지고 파일만 붉다(`docs/agents/test-map/kinds.md` 「시험 하나의 시간」). **JSON 보고의 `STACK_TRACE_ERROR` 도 시간 초과다** — Vitest 가 붙이는 스택이라 원문은 텍스트 보고에서 읽는다. 일꾼 수가 늘수록 무거운 시험이 느려진다 — 로컬 일꾼은 2026-11-16 부터 config 가 넷까지로 둔다(잰 값은 같은 절) | `--maxWorkers` 를 넷보다 높여 돌렸으면 빼고 다시 돈다. 넷으로도 붉으면 무거운 실행(`next build` · e2e · 다른 `npm test`)이 겹쳤는지 보고 `node scripts/heavy.mjs npm test` 로 다시. 단독에서도 붉거나 메시지가 시간 초과가 아니면 코드로 본다 |
+| `npm test` 를 나란히 돌리는 동안 vitest 일부가 붉고 단독으로 돌리면 초록이다(calibration · seoul-date · comparison 등) | 시간 초과다. 시험은 5초나 그 시험의 30초를, `calibration` 은 `beforeAll` 30초를 넘는다 — 그래서 시험 넷이 건너뛰어지고 파일만 붉다(`docs/agents/test-map/kinds.md` 「시험 하나의 시간」). **JSON 보고의 `STACK_TRACE_ERROR` 도 시간 초과다** — Vitest 가 붙이는 스택이라 원문은 텍스트 보고에서 읽는다. 일꾼 수가 늘수록 무거운 시험이 느려진다 — config 가 로컬 일꾼을 넷까지로 둔다(잰 값은 같은 절) | `--maxWorkers` 를 넷보다 높여 돌렸으면 빼고 다시 돈다. 넷으로도 붉으면 무거운 실행(`next build` · e2e · 다른 `npm test`)이 겹쳤는지 보고 `node scripts/heavy.mjs npm test` 로 다시. 단독에서도 붉거나 메시지가 시간 초과가 아니면 코드로 본다 |
 | `npx tsc --noEmit` 이 `LayoutProps` 를 못 찾는다 | `next typegen` 이 먼저 돌아야 한다 | `npm run typecheck` 로 돌린다 |
 | `scripts/ui-seed.mjs` 가 시드 중에 멈춘다 · 그림이 「테스트가 끝났어요」를 찍는다 | 로컬 일정 줄이 지난 날짜다. 씨앗의 종료일은 오늘에서 센다(`BETA_ENDS_ON = checkEndsOn()` — 서울 날짜로 다다음 달 1일, 흐름 검사 · 로그인 e2e 와 같은 규칙, #1027). 그래서 그림의 종료일은 운영 종료일(G-62)과 다를 수 있다 | `node scripts/ui-seed.mjs` 로 일정 줄을 다시 세우고 찍힌 날짜를 본다. 날짜를 손으로 고치지 않는다 |
 | `scripts/ui-seed.mjs` 가 「가입을 못 끝냈습니다」로 멈춘다(`app_user_nickname_is_unique`) | 기본 닉네임이 `벗` + 꼬리표(`tag`) 끝 네 자리다 — 같은 꼬리표로 두 번 만들거나, 같은 스택에 남은 앞 시드와 끝 네 자리가 겹치면 유일 색인에 걸린다 | 사람마다 `nickname` 을 따로 주거나 꼬리표를 바꾼다. 스택을 지우지 않는다 |
@@ -75,13 +75,13 @@
 3. Supabase 응답은 Playwright 의 가로채기로 가짜를 끼운다 — 운영 DB 를 밟지 않는다(개발 빌드도 운영 Supabase 를 본다). 로그인은 `__DEV__` 가 건너뛴다.
 4. 부품을 웹과 나란히 보려면 띄운 채 `APP_URL=http://localhost:<포트> node scripts/design-compare.mjs <폴더>` — 웹 상수와 앱의 `/dev-parts` 를 같은 차례로 찍어 `compare.png` 한 장을 낸다.
    데이터가 찬 화면은 `localStorage` 에 가짜 세션(`sb-<주소의 첫 토막>-auth-token`)을 넣는다. 가짜 값의 함정 — `late_night_rule` 은 `jo` · `ya`, `time_basis` 는 `record` 등 진짜 값이어야 명식이 선다. 관문은 `current_beta_schedule` 을 못 읽으면 가입을 마친 사람을 들여보낸다(500 을 주면 빠르다). `EXPO_PUBLIC_SITE_URL` 쪽 앱용 문도 가로챈다.
-   `mobile/scripts/measure/fake-server.mjs` 를 복사해 쓰면 두 가지가 비어 있다 — `current_beta_schedule` 의 `notice_ack_floor` 값과 「인연 닫힘」 모드. 복사본에 채워야 앱이 오류 화면에서 멈추지 않는다(2026-11-09). 원본 가짜 서버에 이 둘을 넣는 편이 낫다 — 아직 안 넣었다.
+   `mobile/scripts/measure/fake-server.mjs` 를 복사해 쓰면 두 가지가 비어 있다 — `current_beta_schedule` 의 `notice_ack_floor` 값과 「인연 닫힘」 모드. 복사본에 채워야 앱이 오류 화면에서 멈추지 않는다. 원본 가짜 서버에 이 둘을 넣는 편이 낫다 — 아직 안 넣었다.
 5. 코드를 고친 뒤 번들이 옛 글자를 주면 Metro 를 끄고 `--clear` 로 다시 띄운다 — 워크트리에서 파일 감시가 안 잡을 수 있다. **`CI=1` 로 띄운 Metro 는 파일 변경을 아예 받지 않는다** — 코드를 고치거나 되돌릴 때마다 `--clear` 로 다시 띄운다.
    워크트리 격리는 변수 경로 · heredoc · 파이프가 섞인 셸 명령을 거절한다 — 스크립트를 파일로 적어 부르거나, 파일 고치기는 편집 도구로 한다(아래 표의 격리 줄).
-   **풀이권 구매 칸은 웹 번들에 아예 안 그려진다** — 웹에서는 `storeAvailable` 이 거짓이다. 그 칸을 찍으려면 `expo-iap` 를 가짜 모듈로 잠시 바꿔 끼우고(상품 목록 · 구매 갱신 · 오류 리스너를 흉내), 찍은 뒤 지운다 — 커밋하지 않는다(#1167, 2026-11-18). 에이전트끼리 스크래치패드를 같이 쓰면 찍는 스크립트가 덮어써진다 — 제 하위 폴더를 쓴다.
+   **풀이권 구매 칸은 웹 번들에 아예 안 그려진다** — 웹에서는 `storeAvailable` 이 거짓이다. 그 칸을 찍으려면 `expo-iap` 를 가짜 모듈로 잠시 바꿔 끼우고(상품 목록 · 구매 갱신 · 오류 리스너를 흉내), 찍은 뒤 지운다 — 커밋하지 않는다(#1167). 에이전트끼리 스크래치패드를 같이 쓰면 찍는 스크립트가 덮어써진다 — 제 하위 폴더를 쓴다.
 6. **이것은 네이티브가 아니다** — 구글 로그인 창 · 사진 고르기와 굽기 · 딥 링크 · 키보드는 안 돈다. PR 의 「안 돌린 것」에 적는다.
 
-**`mobile/.env.local` 에 운영 값이 있으면 셸 환경값으로 가짜 주소를 줘도 번들에는 운영 주소가 박힌다** — 가짜 서버로 잴 때는 `mobile/.env.development.local`(git 이 무시한다)에 가짜 주소를 잠시 두고, 끝나면 지운다. 브라우저에서 localhost 가 아닌 요청을 끊어 두면 운영에 닿지 않는다(2026-11-11 Play 스크린샷을 찍으며 확인).
+**`mobile/.env.local` 에 운영 값이 있으면 셸 환경값으로 가짜 주소를 줘도 번들에는 운영 주소가 박힌다** — 가짜 서버로 잴 때는 `mobile/.env.development.local`(git 이 무시한다)에 가짜 주소를 잠시 두고, 끝나면 지운다. 브라우저에서 localhost 가 아닌 요청을 끊어 두면 운영에 닿지 않는다.
 
 ## 앱을 네이티브로 재기
 
@@ -103,17 +103,17 @@
 | WSL 의 `expo start` 가 adb 를 못 찾는다 | expo 는 `ANDROID_HOME/platform-tools/adb` 를 찾는데 Windows SDK 에는 `adb.exe` 뿐이다 | 저장소 밖 폴더에 `platform-tools/adb` → Windows 의 `adb.exe` symlink 를 두고 그 폴더를 `ANDROID_HOME` 으로 준다 |
 | API 37 에서 Expo Go 가 Metro 에 못 붙는다 | 로컬 네트워크 권한(`ACCESS_LOCAL_NETWORK`)이 없다 | 1 의 `pm grant` |
 | 딥 링크가 앱으로 안 간다 | `am start` 끝에 패키지 인자를 붙였다 | `am start -a android.intent.action.VIEW -p host.exp.exponent -d 'exp://127.0.0.1:8081/--/<경로>'`(`device.py link`) |
-| 딥 링크가 기기에 깔린 `preview` · 출시 빌드를 연다 | 그 빌드도 `exp://` 를 받는다 — Expo Go 가 꺼져 있으면 안드로이드가 그쪽으로 보낸다(2026-11-11, 운영에 로그인된 앱이 앞에 섰다) | 링크를 `-p host.exp.exponent` 로 묶는다. 누르기 전에 `dumpsys activity activities` 의 `topResumedActivity` 가 Expo Go 인지 본다 |
+| 딥 링크가 기기에 깔린 `preview` · 출시 빌드를 연다 | 그 빌드도 `exp://` 를 받는다 — Expo Go 가 꺼져 있으면 안드로이드가 그쪽으로 보낸다 | 링크를 `-p host.exp.exponent` 로 묶는다. 누르기 전에 `dumpsys activity activities` 의 `topResumedActivity` 가 Expo Go 인지 본다 |
 | Expo Go 에서 붉은 화면 「expo-notifications … removed from Expo Go」 | 푸시(ADR 0236)가 든 뒤 안드로이드 Expo Go 가 푸시 토큰 호출에서 던진다 | 재는 동안만 **제 워크트리의** `mobile/node_modules/expo-notifications/build/warnOfExpoGoPushUsage.js` 의 `throw` 를 `console.warn` 으로 바꾸고 Expo Go 를 강제 종료한 뒤 다시 연다. 저장소 파일은 안 바꾼다. 푸시는 못 잰다 |
-| Expo Go 가 첫 화면(로고)에서 멈추고 넘어가지 않는다(2026-11-13) | 루트 레이아웃의 `<ReadyPushOpener />`(`mobile/src/app/_layout.tsx`)가 Expo Go 에 없는 푸시를 기다린다 | 재는 동안만 그 줄을 주석으로 빼고 띄운다. **끝나면 되돌린다 — 커밋하지 않는다.** 푸시를 여는 길은 못 잰다 |
-| Expo Go 가 붉은 화면 「Cannot find native module 'ExpoApplication'」(2026-11-13) | 판본 바닥(`mobile/src/release/floor.ts`)이 부르는 `expo-application` 이 Expo Go 에 없다 | 재는 동안만 그 파일 첫 줄의 import 를 `const Application = { nativeBuildVersion: null as string \| null };` 로 바꾼다. **끝나면 되돌린다** |
+| Expo Go 가 첫 화면(로고)에서 멈추고 넘어가지 않는다 | 루트 레이아웃의 `<ReadyPushOpener />`(`mobile/src/app/_layout.tsx`)가 Expo Go 에 없는 푸시를 기다린다 | 재는 동안만 그 줄을 주석으로 빼고 띄운다. **끝나면 되돌린다 — 커밋하지 않는다.** 푸시를 여는 길은 못 잰다 |
+| Expo Go 가 붉은 화면 「Cannot find native module 'ExpoApplication'」 | 판본 바닥(`mobile/src/release/floor.ts`)이 부르는 `expo-application` 이 Expo Go 에 없다 | 재는 동안만 그 파일 첫 줄의 import 를 `const Application = { nativeBuildVersion: null as string \| null };` 로 바꾼다. **끝나면 되돌린다** |
 | 풀이권 구매 · 결제 완료 창을 재야 한다 | Expo Go 에는 Play 결제 모듈이 없다 | 가짜 서버가 `/api/mobile/credits/purchase` 를 답한다(살 수 있음 · 보낸 상품의 장수 지급). 재는 동안만 `mobile/src/credits/store.ts` 의 가격 · 결제창을 `__DEV__` 가짜로 바꿔 그 문에 보낸다 — 실제 Play 결제는 못 잰다. 받은 풀이만 비우는 상태는 `m=no-readings` |
 | 탭을 눌렀는데 `texts` · `tap` 이 앞 화면 글자를 낸다 | 궁합 고르기처럼 idle 이 안 되는 화면은 `uiautomator dump` 가 실패한다(`could not get idle state`) | 그 화면은 그림(`shot`)으로 본다 — 빈 본문은 PNG 가 눈에 띄게 작다. `device.py` 는 앞 덤프를 지우고 읽어 실패가 빈 목록으로 보인다 |
 | 붉은 화면의 스택 줄을 누르자 PC 에 VS Code 가 뜬다 | Metro 가 편집기를 연다 | `REACT_EDITOR=none` 으로 띄운다 |
 | 누른 자리가 엉뚱하다 | 좌표는 Expo 도구 단추 · 판 크기로 어긋난다 | 좌표를 쓰지 않는다 — `uiautomator` 덤프의 글자로 찾아 누른다(`device.py tap`) |
 | `input text` 를 보냈는데 메뉴가 뜨거나 앱이 다시 읽힌다 | 입력칸에 초점이 없으면 글자가 RN 단축키(`r` · `d` …)로 먹는다 | `device.py input` 으로 초점을 준 뒤 `type`. 한글은 못 넣는다 |
 | 눌렀는데 앞 화면 글자가 읽힌다 | 글자가 화면 전환보다 늦게 바뀐다 | 전환 뒤 몇 초 기다리고 읽는다 — 안 나왔다고 바로 판정하지 않는다 |
-| `adb` 가 결과 없이 멈춘다 | Windows 쪽 `adb.exe` 프로세스가 쌓여 데몬이 멈춘다 | `adb.exe kill-server` 로 내리고 다시 부른다. 부를 때 `timeout` 을 두고 나란히 부르지 않는다. kill-server 도 멈추면(2026-11-13, 아흔 개가 쌓였다) `taskkill.exe /IM adb.exe /F` |
+| `adb` 가 결과 없이 멈춘다 | Windows 쪽 `adb.exe` 프로세스가 쌓여 데몬이 멈춘다 | `adb.exe kill-server` 로 내리고 다시 부른다. 부를 때 `timeout` 을 두고 나란히 부르지 않는다. kill-server 도 멈추면 `taskkill.exe /IM adb.exe /F` |
 | 뿌리 `node_modules` 가 없다 | `mobile/` 의 `npm ci` 만으로 Metro · `tsc` 가 도는 것은 `.claude/worktrees/` 가 메인의 `node_modules` 밑에 있어서다. `scripts/` 시험은 그래도 못 돌고, 저장소 밖 복사본은 `src/lib` 의 `astronomy-engine` 을 못 찾는다 | 뿌리에 `npm ci`, 또는 CI 처럼 `node_modules` 를 잇는다 |
 | `git` · `github` · `timeout` 글자가 든 복합 명령이 거절된다 | 워크트리 격리가 복합 명령을 못 잰다(위 표의 격리 줄) | 스크립트 파일에 적고 파일을 부른다 |
 
@@ -167,11 +167,11 @@
 
 - **운영자만 부르는 것** — `retro` · `wayfinder` · `triage`(2026-11 버전)는 머리에 `disable-model-invocation: true` 가 있다. 에이전트는
   스스로 부르지 못한다 — 운영자에게 `/<이름>` 을 청하거나 그 `SKILL.md` 를 읽고 절차를 따른다
-- **있어도 옛 버전일 수 있다** — 스크립트는 있는지만 확인한다. 2026-11-07 이 맥의 `triage` 는 2026-05-18 버전이라 `docs/agents/issue-tracker.md` 의
-  PR 표지를 모른다. 버전을 올리는 것은 `npx skills update <이름> -g -y`
+- **있어도 옛 버전일 수 있다** — 스크립트는 있는지만 확인한다. 옛 `triage` 는 `docs/agents/issue-tracker.md` 의 PR 표지를 모른다.
+  버전을 올리는 것은 `npx skills update <이름> -g -y`
 - **표에 넣지 않은 것** — 플러그인(`vercel` · `figma` · `pstack`)은 이 맥에 깔려 있지만 저장소 문서가 이름으로 부르지 않는다 — 스크립트도
   확인하지 않는다. `/code-review` 는 Claude Code 내장을 쓴다 — `mattpocock/skills` 에도 같은 이름이 있고, 깔면 내장을 덮는다
   (`docs/notes/2026-10-06-night-skills-and-read-budget.md`). `research`(`docs/notes/2026-10-07-reading-credit-refund-research.md`)는
-  한 번 쓴 기록이다. 운영자가 `retro` 와 함께 깐 `writing-for-agents` 는 저장소가 부르지 않는다
+  한 번 쓴 기록이다. 운영자가 `retro` 와 함께 깐 `writing-for-agents` 는 `docs/agents/delegation/done.md` 「읽기량 예상치는 보고다」의 잣대 열의 출처다 — 그 열이 원본이라 스킬이 없어도 따른다
 - **이름이 바뀐 것**(2026-11-07 `mattpocock/skills`) — `to-issues` → `to-tickets` · `to-prd` → `to-spec` · `diagnose` → `diagnosing-bugs`,
   `zoom-out` · `caveman` · `write-a-skill` 은 출처에 없다. 저장소 문서는 이 이름을 부르지 않는다 — 이 맥에 깔린 옛 이름은 그대로 돈다
