@@ -56,7 +56,7 @@
 - e2e 를 돌려야 하나 망설이거나 CI 의 차선이 붉으면 → [CI](../agents/test-map/ci.md#ci)
 - dev 서버를 띄우거나 `next build` 를 돌리면 → [로컬 환경의 함정](../agents/delegation/local-env.md) — 남의 dev 서버 · `next build` 만 잡는 파일 이름
 - 무인(밤) 라운드로 맡았으면 → [무인 라운드](../agents/delegation/unattended.md) — 뜻을 바꾸지 않는 다듬기의 경계
-- 전후 그림을 찍으면 → [워크트리에서 전후 그림 찍기](../agents/delegation/local-env.md#워크트리에서-전후-그림-찍기) — 씨앗 · 환경값은 `ui-seed` · `ui-shots` 가 맞춘다 · 폭 · `UI_ONLY` · `aria-disabled` 단추 · 로그인 spec 이름
+- 전후 그림을 찍으면 → [워크트리에서 전후 그림 찍기](../agents/delegation/local-env.md#워크트리에서-전후-그림-찍기) — 씨앗 · 환경값은 `ui-seed` · `ui-shots` 가 맞춘다 · 폭 · `UI_ONLY` · `aria-disabled` 단추 · 로그인 spec 이름 · Docker 가 없을 때(8)
 - 화면의 동작(흐름 · 상태)까지 바꾸면 → [PRD 색인](../prd.md) — 무리 파일 머리가 가리키는 그 영역 절(§4 · §5 · §6 · §7.1). 새 동작이면 `feature` 역할도 읽는다
 - 서비스 이름이나 로고가 바뀌면 → [ADR 0149](../adr/0149-the-service-is-named-mannaljido-and-the-footer-carries-the-business-information.md) 의 1 · 5 — 상수를 따라오지 않는 셋: 이름 뒤에 글자로 붙인 조사(은/는/을/를) · 이름이나 로고를 구운 그림(`scripts/brand-share-images.mjs`) · Next 가 빌드에서만 보는 탭 그림(`app/favicon.ico` · `app/apple-icon.png` · `app/icon.svg`, `scripts/brand-icons.mjs`) · 앱의 아이콘(`mobile/scripts/brand-icons.mjs`)
 - 대장에 없는 글자나 새 배치 · 흐름의 레퍼런스를 찾으면 → [레퍼런스 모음](../context/references.md) — 화면 꼴별로 이미 찾은 한국 서비스 사례를 먼저 보고, 새로 찾은 것은 그 꼴에 한 줄

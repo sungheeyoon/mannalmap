@@ -20,7 +20,7 @@
   - 세션 잔재 — `docs/agents/delegation/coordinator.md` 「라운드 끝 정리」 · `docs/agents/delegation/local-env.md` 「로컬 환경의 함정」
   - UI 집중화(디자인 체계) — ADR 0109 · `docs/adr/README.md` 「디자인 체계 · 화면 문구」 · `docs/architecture.md` 「그 밖의 자리」 · `app/ui/` · `src/lib/design/contract.ts` · 잠금 `scripts/design-contract.test.ts` · `scripts/mobile-surfaces.test.ts` · `scripts/mobile-design-tokens.test.ts` · `app/ui/scale.test.ts`
   - 사용자 약속 · 게시 문구 · 법적 절차 — `docs/legal/README.md` · `docs/legal/terms-grounds.md` · 약관 원본(`src/lib/brand/`) — 개정 공지 · 시행일 · 재확인 기준
-  - 리팩터의 동작 보존 — PR 의 diff 와 그 자리를 재는 시험(`docs/agents/test-map.md`) — 옮긴 뒤 같은 입력에 같은 결과인지, 시험이 옛 동작을 실제로 잡는지
+  - 리팩터의 동작 보존 — PR 의 diff 와 그 자리를 재는 시험(`docs/agents/test-map.md`) — 옮긴 뒤 같은 입력에 같은 결과인지, 시험이 옛 동작을 실제로 잡는지 · 화면 class 의 대조는 `docs/agents/delegation/working.md` 「일하는 법 — 세션마다 다시 배우던 것」
   - 남은 일 흔적 · 죽은 코드 — `docs/agents/delegation/working.md` 「일하는 법」(죽은 코드는 셋으로 가른다) · `docs/product/gaps.md` — knip 은 깔려 있지 않고 설정(진입점)도 없다. `npx knip` 이 낸 이름은 grep 으로 다시 잰다
 - `docs/architecture.md` 「무엇이 잠겨 있나 — 그리고 무엇이 아닌가」 — 잠기지 않은 자리가 볼 곳이다
 
