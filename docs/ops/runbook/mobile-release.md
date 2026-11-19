@@ -163,12 +163,32 @@ npx eas-cli@latest submit --profile production --platform ios                   
 
 - **`submit` 은 스토어 제출이다 — 조율자 · 운영자 몫이다.** 빌드는 에이전트가 해도 된다.
 - **빌드는 끝나면 돌아오는 명령으로 기다린다** — `npx eas-cli@latest build:view <id>` (또는 `build:list --limit 1 --json`)의 `status` 가 `FINISHED` · `ERRORED` 일 때까지. 실패면 `logFiles` 의 Gradle 줄을 읽는다(위 「새 네이티브 의존을 추가할 때」)
-- **지금 나간 빌드** — 안드로이드 `production` `045b92a7`(커밋 `57dbaa25` · versionCode 6 · 1.0.0, 2026-11-14) — Play **비공개 테스트 - Alpha** 에 콘솔에서 AAB 파일로 올려 검토에 보냈다(웹 Production 이 같은 커밋으로 선 뒤). 공유창(#1142) · 저장한 사람 화면(#1143) · 풀이권 문구(#1144) · 낱말 가운데서 안 꺾이는 줄바꿈 `WordText`(#1145) · 풀이권 확인과 0장의 구매 입구(#1146) · 궁합 표지(#1148) · 입력 오류 줄 `FormError`(#1149 · #1150)가 들었다. 올리기 전 에뮬레이터(Expo Go + 가짜 서버)에서 홈 ↔ 궁합 25번 왕복 — 홈 글자 93 → 93 · `removeViewAt` · FATAL 0줄. 앞 판은 `af938956`(커밋 `047e5b81` · versionCode 5, 2026-11-12 — 출생지 시 · 도 아홉 곳 · 「첫 풀이 무료」 카드 · 홈 「⋯」 메뉴 · 궁합 고르기의 태극 줄 · 문구 셋 걷기, #1132 · #1134 · #1135 · #1137 · #1138)이고, 그 앞 판은 `6743c9a7`(커밋 `0de149d8` · versionCode 3, 탭 묶음 · 딱지 「배우자」)이고, `c9c5d3ef`(versionCode 4)는 굽기만 하고 올리지 않았다 — 고칠 것을 묶어 한 번에 올린다. 내부 테스트 트랙에는 앞 빌드 `7d203dc7`(커밋 `73791ff0` · versionCode 2)이 남아 있다(`docs/ops/runbook/play-console.md` 「지금 어디까지 왔나」). FCM 값 · 대표전화 · 신고기관 없이 구웠다. 그 앞은 `preview` `477348f4`(커밋 `23770375` · versionCode 1 · 1.0.0 · 만료 2026-11-23, 2026-11-09) — #1089 ~ #1111 의 앱 쪽이 들었고 FCM 값이 없어 알림은 꺼진 채다. 앞 판 `63d07224`(커밋 `f112e2f6`, 2026-11-07)가 첫 성공 빌드다. 앞선 둘은 실패했다 — `ebef4d0c` 는 카카오 SDK 를 jitpack 에서 찾다 401(→ #1071 카카오 Maven 저장소), `4b3d8c51` 은 카카오 모듈이 `compileSdk` 33 으로 컴파일돼 AAR metadata 검사에서 섰다(→ #1072 3.2.0). 링크 · 서명 대조는 #770 의 그날 댓글이다. 다음 빌드가 나가면 이 줄을 고친다
+- **지금 나간 빌드** — 안드로이드 `production` **로컬 빌드**(커밋 `c61303aa` · versionCode 10 · 1.0.0, 2026-11-19) — Play **내부 테스트**에 콘솔에서 AAB 파일로 올려 「내부 테스터에게 제공됨」. 결제 안내 팝업 · 미지급 다시 보내기(#1167) · 딱지 · 「⋯」 아이콘 · 누를 자리 48(#1168)이 들었다. 비공개 테스트 - Alpha 에는 아직 `6 (1.0.0)` 이다. versionCode 7 · 8 · 9 는 실패 · 중단한 빌드가 원격 번호만 올린 빈 번호다. 그 앞 비공개 테스트 판은 `production` `045b92a7`(커밋 `57dbaa25` · versionCode 6 · 1.0.0, 2026-11-14) — Play **비공개 테스트 - Alpha** 에 콘솔에서 AAB 파일로 올려 검토에 보냈다(웹 Production 이 같은 커밋으로 선 뒤). 공유창(#1142) · 저장한 사람 화면(#1143) · 풀이권 문구(#1144) · 낱말 가운데서 안 꺾이는 줄바꿈 `WordText`(#1145) · 풀이권 확인과 0장의 구매 입구(#1146) · 궁합 표지(#1148) · 입력 오류 줄 `FormError`(#1149 · #1150)가 들었다. 올리기 전 에뮬레이터(Expo Go + 가짜 서버)에서 홈 ↔ 궁합 25번 왕복 — 홈 글자 93 → 93 · `removeViewAt` · FATAL 0줄. 앞 판은 `af938956`(커밋 `047e5b81` · versionCode 5, 2026-11-12 — 출생지 시 · 도 아홉 곳 · 「첫 풀이 무료」 카드 · 홈 「⋯」 메뉴 · 궁합 고르기의 태극 줄 · 문구 셋 걷기, #1132 · #1134 · #1135 · #1137 · #1138)이고, 그 앞 판은 `6743c9a7`(커밋 `0de149d8` · versionCode 3, 탭 묶음 · 딱지 「배우자」)이고, `c9c5d3ef`(versionCode 4)는 굽기만 하고 올리지 않았다 — 고칠 것을 묶어 한 번에 올린다. 내부 테스트 트랙에는 앞 빌드 `7d203dc7`(커밋 `73791ff0` · versionCode 2)이 남아 있다(`docs/ops/runbook/play-console.md` 「지금 어디까지 왔나」). FCM 값 · 대표전화 · 신고기관 없이 구웠다. 그 앞은 `preview` `477348f4`(커밋 `23770375` · versionCode 1 · 1.0.0 · 만료 2026-11-23, 2026-11-09) — #1089 ~ #1111 의 앱 쪽이 들었고 FCM 값이 없어 알림은 꺼진 채다. 앞 판 `63d07224`(커밋 `f112e2f6`, 2026-11-07)가 첫 성공 빌드다. 앞선 둘은 실패했다 — `ebef4d0c` 는 카카오 SDK 를 jitpack 에서 찾다 401(→ #1071 카카오 Maven 저장소), `4b3d8c51` 은 카카오 모듈이 `compileSdk` 33 으로 컴파일돼 AAR metadata 검사에서 섰다(→ #1072 3.2.0). 링크 · 서명 대조는 #770 의 그날 댓글이다. 다음 빌드가 나가면 이 줄을 고친다
 - **CLI 는 Android 를 내부 트랙까지만 올린다**(`submit.production.android.track`). 비공개 테스트 · 프로덕션은 Play Console 에서 사람이 옮긴다. 비공개 테스트에는 빌드의 AAB 를 내려받아 Alpha 트랙의 「새 버전 만들기」 → 「App Bundle 업로드」에 파일로 올리고 「다음」 → 「저장」 → 게시 개요 「검토를 위해 변경사항 1개 제출」로 낸다(2026-11-14 `6 (1.0.0)` · 게시 개요에 바뀐 항목이 「비공개 테스트 - Alpha · 6 (1.0.0) · 전체 출시 시작」 하나인지 보고 낸다).
 - Android 제출에는 Google 서비스 계정 키가 든다([Expo](https://docs.expo.dev/submit/android.md)). 키는 EAS 에 올리고 저장소에 두지 않는다.
 - iOS 를 `--non-interactive` 로 내려면 `submit.production.ios.ascAppId` 가 든다([Expo](https://docs.expo.dev/submit/ios.md)) — App Store Connect 에 앱을 만든 뒤 적는다. 앞서는 대화형으로 낸다.
 - **Play 에서 받은 앱은 Google 키로 다시 서명된다** — 구글 로그인이 `DEVELOPER_ERROR` 면 설정이 어긋난 것이다([google-signin](https://react-native-google-signin.github.io/docs/troubleshooting)). 내부 트랙의 첫 빌드에서 구글 로그인을 먼저 본다.
 - 2026-11-02 의 빌드 `expirationDate` 는 만든 날 + 14일이다 — 링크를 오래 쓰지 않는다. **이 칸의 뜻은 공식 문서에서 못 찾았다(확인 전).** 찾은 공식 문장은 산출물 보관뿐이고 — 「EAS Build logs and artifacts are stored for up to 90 days before being deleted」([Expo](https://expo.dev/security)) — 14일과 어떻게 이어지는지는 안 적혀 있다. 설치된 앱의 사용기한이라는 문장도, 아니라는 문장도 못 찾았다([내부 배포](https://docs.expo.dev/build/internal-distribution/)에도 없다).
+
+### 무료 빌드 횟수가 떨어지면 — 이 PC 에서 굽는다(2026-11-19)
+
+EAS Free 는 Android 빌드 횟수가 달마다 정해져 있다 — 다 쓰면 `This account has used its Android builds from the Free plan this month` 로 서고 다음 달 1일에 풀린다. 그때는 같은 명령에 `--local` 을 붙여 WSL 에서 굽는다(서명 키는 EAS 의 것을 받아 쓴다). WSL 에는 Linux 판 JDK 17 · Android SDK 가 들고, Windows 의 Android Studio 는 쓰지 못한다 — `~/opt/jdk-17*` · `~/opt/android-sdk`(cmdline-tools → `sdkmanager --licenses` · `platform-tools` · `platforms;android-36` · `build-tools;36.0.0`, NDK · CMake 는 Gradle 이 받는다)에 관리자 권한 없이 풀었다.
+
+```bash
+export TMPDIR=~/opt/tmp EAS_LOCAL_BUILD_WORKINGDIR=~/opt/eas-work JAVA_HOME=~/opt/jdk-17.0.21.1+2 ANDROID_HOME=~/opt/android-sdk ANDROID_SDK_ROOT=~/opt/android-sdk
+export PATH=$JAVA_HOME/bin:$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools:$PATH
+export GRADLE_OPTS="-Dorg.gradle.workers.max=4 -Dorg.gradle.daemon=false -Djava.io.tmpdir=$HOME/opt/tmp"
+export ORG_GRADLE_PROJECT_reactNativeArchitectures=arm64-v8a,armeabi-v7a
+cd mobile && taskset -c 0-7 nice -n 19 npx eas-cli@latest build --local --profile production --platform android --non-interactive --output ~/opt/build-logs/mannalmap.aab
+```
+
+함정 셋(2026-11-19 에 다 밟았다):
+
+1. **작업 폴더를 디스크에 둔다** — 기본은 `/tmp` 인데 WSL 의 `/tmp` 는 4.9GB tmpfs 라 4.4GB 의 작업 파일로 차서 빌드와 다른 명령이 다 섰다. `TMPDIR` · `EAS_LOCAL_BUILD_WORKINGDIR` 를 `~/opt` 밑으로.
+2. **CPU · 메모리를 묶는다** — 묶지 않으면 Gradle · clang 이 16코어를 다 써서 Windows 터미널이 멈추고 재부팅했다. `taskset -c 0-7` · `nice` · Gradle 일꾼 넷. 그래도 C++ 컴파일 때 가용 메모리가 1GB 아래 · 스왑 4GB 까지 갔다 — 다른 무거운 일과 겹치지 않는다.
+3. **ABI 는 둘(arm64 · armv7)** — x86 둘을 빼 컴파일을 줄였다. Play 는 「지원 기기 · 전화 2대 줄어듦」 경고 하나를 띄운다(에뮬레이터 · 일부 크롬북 몫). 출시 판에 x86 을 넣을지는 그때 정한다.
+
+빌드 시간은 받는 것을 빼고 약 25분이었다. **이 판은 `eas submit` 이 Play 에 막힌다** — `HTTP 403: To comply with Korean law, developers in Korea must provide additional information on the Account Details page` (계정 세부정보의 한국 칸 — 대표전화 · 신고기관, `play-console.md` 차례 2). 그 칸이 차기 전에는 AAB 를 콘솔 「새 버전 만들기」에 파일로 올린다.
 
 ### 스토어에 올리기 전에 네이티브에서 본다
 
