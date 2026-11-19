@@ -723,10 +723,11 @@ test.describe('매칭된 한 쌍의 채팅', () => {
       ops.page.getByText('신고 당시 저장된 대화 일부입니다. 전체 대화는 열 수 없습니다.'),
     ).toBeVisible();
 
-    // 처분은 이 화면의 폼 하나다(ADR 0188) — 신고 id 를 복사해 SQL 로 가는 길은 걷혔고, 방으로 가는 길도, 이메일도 없다
+    // 처분은 이 화면의 폼 하나다(ADR 0188) — 누름은 모두 그 폼 안에 있다. 신고 id 를 복사해 SQL 로 가는 길(폼 밖의 단추)은 걷혔고, 방으로 가는 길도, 이메일도 없다
     const main = ops.page.getByRole('main');
-    await expect(main.getByRole('form', { name: '처분' })).toBeVisible();
-    await expect(main.getByRole('button', { name: '신고 id 복사' })).toHaveCount(0);
+    const review = main.getByRole('form', { name: '처분' });
+    await expect(review).toBeVisible();
+    await expect(main.getByRole('button')).toHaveCount(await review.getByRole('button').count());
     await expect(main.locator('a[href^="/me/chat"]')).toHaveCount(0);
     await expect(main.getByText(a.account.email)).toHaveCount(0);
     await expect(main.getByText(b.account.email)).toHaveCount(0);
