@@ -222,15 +222,15 @@ const REFERRING_FILES = [
 ];
 
 describe('ADR 참조 (docs/agents/code-rules/comments.md)', () => {
-  it('ADR 파일은 `NNNN-영어-문장.md` 이고 번호가 빈틈없이 이어진다', () => {
+  // 번호의 빈틈은 재지 않는다 — 머지가 번호 순이 아니어도 된다(ADR 0254). 같은 번호 둘은 아래 시험과 gate(ADR 0238)가,
+  // 없는 번호를 가리키는 것은 「있는 파일을 가리킨다」가 든다
+  it('ADR 파일은 `NNNN-영어-문장.md` 이다', () => {
+    expect(ADR_FILES.length).toBeGreaterThan(200);
     expect(ADR_FILES.filter((name) => !/^\d{4}-[a-z0-9]+(-[a-z0-9]+)*\.md$/.test(name))).toEqual([]);
-    const numbers = [...ADR_NUMBERS].map(Number).sort((a, b) => a - b);
-    expect(numbers[0]).toBe(1);
-    expect(numbers.at(-1)).toBe(numbers.length);
   });
 
-  it('ADR 번호는 한 파일에만 있다 — 나란히 쓴 둘이 같은 번호를 잡으면 이음 시험은 못 본다', () => {
-    // 2026-10-23 라운드에 세 PR 이 같은 0201 을 썼다(#809 · #811 · #804) — 번호가 집합이라 위 시험은 초록이었다
+  it('ADR 번호는 한 파일에만 있다 — 나란히 쓴 둘이 같은 번호를 잡으면 이름 시험은 못 본다', () => {
+    // 2026-10-23 라운드에 세 PR 이 같은 0201 을 썼다(#809 · #811 · #804) — 번호를 집합으로 세던 이음 시험은 초록이었다
     const files = new Map<string, string[]>();
     for (const name of ADR_FILES) files.set(name.slice(0, 4), [...(files.get(name.slice(0, 4)) ?? []), name]);
     expect([...files.values()].filter((names) => names.length > 1)).toEqual([]);
@@ -1339,8 +1339,18 @@ describe('역할 문서 (docs/start.md · docs/roles/, ADR 0140)', () => {
   /** 사람과 말하는 세션 자신이라 에이전트 정의가 없는 역할 */
   const WITHOUT_AGENT = ['coordinator'];
   const COLUMNS = ['먼저 읽는 것', '이 저장소의 방식', '하지 않는 것 · 묻는 것', '끝날 때 고치는 것'];
-  /** 한 화면 — 넘으면 원본으로 옮길 것을 옮겨 적고 있다는 뜻이다 */
+  /**
+   * 한 화면 — 넘으면 원본으로 옮길 것을 옮겨 적고 있다는 뜻이다. 손대기 전에 읽는 머리와 칸 넷만 잰다 — 「닿을 때 여는 것」은
+   * 그때 여는 칸이라 세지 않는다(ADR 0254). 그 칸의 줄 꼴과 가리킨 자리는 아래 시험이 그대로 든다
+   */
   const MAX_BYTES = 8000;
+  /** 「닿을 때 여는 것」 머리 앞까지 — 그 칸이 없으면 문서 전부 */
+  const screenOf = (text: string): string => {
+    const at = text.indexOf(`\n## ${ON_DEMAND_SECTION}\n`);
+    return at < 0 ? text : text.slice(0, at + 1);
+  };
+  /** 「닿을 때 여는 것」의 여는 말 — 그 칸에는 이 한 줄과 목록 줄만 선다 */
+  const ON_DEMAND_OPENING = '손대기 전에 다 읽지 않는다 — 일이 그 자리에 닿을 때 연다(ADR 0147).';
 
   /**
    * `CLAUDE.md` 는 매 턴 실린다 — `@AGENTS.md` 와 Claude Code 만의 호출법만 든다. 원본을 다시 말하던 네 절(3,214 바이트)은
@@ -1359,13 +1369,29 @@ describe('역할 문서 (docs/start.md · docs/roles/, ADR 0140)', () => {
     expect([...new Set(listed)].sort()).toEqual([...roles].sort());
   });
 
-  it('역할 문서마다 칸 넷이 그 차례로 있고(「닿을 때 여는 것」은 있으면 맨 뒤) 한 화면 안이다', () => {
+  it('역할 문서마다 칸 넷이 그 차례로 있고(「닿을 때 여는 것」은 있으면 맨 뒤) 칸 넷까지가 한 화면 안이다', () => {
+    let trimmed = 0;
     for (const role of roles) {
       const text = readFileSync(join(ROLES_DIR, `${role}.md`), 'utf8');
       const headings = [...text.matchAll(/^## (.+)$/gm)].map((match) => match[1].trim());
       expect(headings, role).toEqual(headings.length > COLUMNS.length ? [...COLUMNS, ON_DEMAND_SECTION] : COLUMNS);
-      expect(Buffer.byteLength(text), role).toBeLessThanOrEqual(MAX_BYTES);
+      const screen = screenOf(text);
+      expect(screen, role).toContain(`## ${COLUMNS.at(-1)}\n`);
+      expect(Buffer.byteLength(screen), role).toBeLessThanOrEqual(MAX_BYTES);
+      if (!headings.includes(ON_DEMAND_SECTION)) continue;
+      // 머리가 있으면 거기서 잘린다 — 머리 끝 공백 · CRLF 로 못 자르면 아래 칸의 꼴 시험까지 조용히 건너뛴다
+      expect(screen.length, `${role} — 「${ON_DEMAND_SECTION}」 머리에서 못 잘랐다`).toBeLessThan(text.length);
+      trimmed += 1;
+      // 세지 않는 칸에는 여는 말 한 줄과 목록 줄만 선다 — 문단을 들이면 한 화면의 셈 밖으로 원본을 옮겨 적는 길이 된다
+      const prose = text
+        .slice(screen.length)
+        .split('\n')
+        .slice(1)
+        .filter((line) => line.trim() !== '' && !line.startsWith('- ') && line !== ON_DEMAND_OPENING);
+      expect(prose, `${role} 「${ON_DEMAND_SECTION}」의 목록 밖 줄`).toEqual([]);
     }
+    // 칸이 있는 역할이 이만큼은 된다 — 목록 밖 줄 시험이 빈 셈으로 초록이 되지 않게
+    expect(trimmed).toBeGreaterThan(5);
   });
 
   it('`경로.md` 「절」 로 가리킨 절은 그 파일에 제목으로 있다 — 원본의 절을 옮기면 가리키는 쪽도 옮긴다', () => {
