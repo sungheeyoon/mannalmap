@@ -436,12 +436,20 @@ from public.report where public.report_is_open(reviewed_at, review_outcome);
 계정 내리기). 4 에 같은 계정이 여럿이면 그 UUID 로 신고 · 이용 정지를 본다. 5 의 마지막 반출이 이틀보다 오래면 Vercel 의
 Cron 실행 기록과 환경변수를 본다. 처리 결과를 점검 기록에 적는다.
 
-## 운영 의존성 취약점 — CI 의 `audit` 이 붉을 때 (G-23 ①, ADR 0104)
+## 운영 의존성 취약점 — `audit` 이나 바깥 검사가 붉을 때 (G-23 ①, ADR 0104 · 0257)
 
-`audit` 차선은 `npm audit --omit=dev --audit-level=high` 다. **의존성 목록을 바꾼 PR** 과 **main 푸시 · 하루 한 번의
-일정**에서 돈다. PR 에서 붉으면 그 PR 이 들인 것이고, main 에서 붉으면 `ci-main-red` 이슈가 「붉은 차선」을 적는다 —
-`audit` 만이면 커밋이 아니라 밖의 advisory DB 가 바뀐 것이다(새로 뜬 advisory, 또는 앱 예외의 advisory 가 철회돼 낡은 예외 — 아래 5).
-어느 쪽이든 새 작업보다 먼저 한다.
+운영 의존성 감사(`npm audit --omit=dev`, 문턱 high)는 두 자리에서 돈다(ADR 0257).
+
+- **PR 의 `audit` 차선** — 뿌리는 `npm audit --omit=dev --audit-level=high`, 앱은 `node scripts/audit-app.mjs`. **감사의 답을 바꾸는 파일**(뿌리 · `mobile/` 의
+  `package.json` · `package-lock.json` 과 `mobile/audit-exceptions.json` — `scripts/ci-plan.mjs` 의 `DEPENDENCY_LISTS`)을 바꾼 PR 에서 머지를 막는다. 붉으면
+  그 PR 이 들인 high 이거나 그 PR 이 걷을 낡은 예외다.
+- **하루 한 번의 바깥 검사** — `.github/workflows/outside.yml`(05:30 KST · 손 실행)이 같은 판정과 앱의 Maven 좌표 조회를 돌고, 알릴 것이 있으면 이슈 하나
+  (`ci-outside-red`)에 적는다(`scripts/outside-red.mjs`). **main 은 붉지 않고 새 작업 · 묶음 배포를 막지 않는다** — 코드가 그대로인데 바깥(새 advisory · 철회 ·
+  저장소의 429)이 바뀌어 main 이 붉던 것을 뺐다(#1165 · #1170). 그 이슈의 「붉음」은 아래 1 ~ 4, 「걷어도 된다」는 5 다. 판정이 같으면 댓글을 더 안 달고, 맑으면 닫힌다.
+
+**Dependabot 경고가 켜져 있다(2026-11-18 부터)** — Security → Dependabot 에 운영 · 개발 의존성의 경고가 선다(`gh api "repos/{owner}/{repo}/dependabot/alerts?state=open"`).
+막는 것은 위 둘이고 경고는 보는 자리다 — 새 advisory 는 바깥 검사의 다음 실행보다 경고가 먼저 알린다. 2026-11-18 에 선 운영(runtime) high 는 앱의
+picomatch `GHSA-fc5q-39xc-vjpf` 하나였고 다음 날 철회됐다(#1170).
 
 ```bash
 npm audit --omit=dev                 # 무엇이 · 어느 판에서 · 고친 판이 있나
@@ -456,13 +464,15 @@ npm audit --omit=dev --audit-level=high ; echo $?   # 0 이어야 한다
    `npm install` 한 번이 다시 맞췄다. CI 의 차선은 `npm ci` 로 깐다(`.github/workflows/verify.yml`).
 3. **PR 은 `fix(deps): ...`** 로 낸다. 잠금 파일이 바뀌므로 그 PR 에서 `audit` 이 다시 돌아 0 을 잰다.
 4. **고친 판이 아직 없으면** 막을 자리를 본다 — 그 경로를 우리가 부르나(`npm audit` 의 advisory 본문). 안 부르면
-   간극 대장 G-23 ① 에 패키지 · advisory · 까닭 · 다시 볼 날을 적고, 그동안 붉은 main 은 이슈가 들고 있다.
+   간극 대장 G-23 ① 에 패키지 · advisory · 까닭 · 다시 볼 날을 적고, 그동안 바깥 검사의 이슈(`ci-outside-red`)가 들고 있다 — main 은 붉지 않고, 같은
+   판정이면 그 이슈에 날마다 댓글이 쌓이지 않는다. 그 패키지를 바꾸는 PR 은 `audit` 에 막히니 같은 메이저 안에서 고친 판을 먼저 찾는다.
    `--audit-level` 을 critical 로 올리거나 차선을 끄지 않는다.
 5. **앱(`mobile/`)은 `node scripts/audit-app.mjs` 가 같은 문턱으로 잰다.** 앱 번들에 안 실리는 빌드 도구의 high 이고 같은 메이저에 고친 판이 없을 때만
-   운영자에게 물어 `mobile/audit-exceptions.json` 에 한 줄(GHSA id · 패키지 · 사유 · 걷을 조건 · 결정)을 더한다. 감사에 더는 안 나오는 줄은 「낡은 예외」로
-   붉으니 묻지 않고 걷는다 — 고친 판이 들었거나 의존성이 바뀌었거나 advisory 가 철회된 것이다. 철회는 `gh api /advisories/<GHSA id>` 의 `withdrawn_at` 이
-   적는다(2026-11-19 — picomatch 예외 `GHSA-fc5q-39xc-vjpf` 가 머지 1시간 27분 뒤 철회로 낡았다, #1170). 예외 파일만 바꾼 PR 에는 `audit` 이 안 돈다(의존성
-   목록이 아니다) — `full-ci` 라벨을 단다. 그 PR 은 이미 「전부」라 더 도는 것은 `audit` 하나다(2026-11-19 계획기로 잼).
-   Expo SDK 를 올리는 PR 은 예외를 다 걷고 다시 잰다(ADR 0104 추기 2026-11-06).
+   운영자에게 물어 `mobile/audit-exceptions.json` 에 한 줄(GHSA id · 패키지 · 사유 · 걷을 조건 · 결정)을 더한다. 감사에 더는 안 나오는 줄은 「낡은 예외」다 —
+   바깥 검사의 이슈에 「걷어도 된다」로 적히고(붉음이 아니다), 의존성 목록을 바꾼 PR 의 `audit` 에서는 붉다. 묻지 않고 걷는다 — 고친 판이 들었거나 의존성이
+   바뀌었거나 advisory 가 철회된 것이다. 철회는 `gh api /advisories/<GHSA id>` 의 `withdrawn_at` 이 적는다(2026-11-19 — picomatch 예외 `GHSA-fc5q-39xc-vjpf` 가
+   머지 1시간 27분 뒤 철회로 낡았다, #1170). 예외 파일만 바꾼 PR 도 `audit` 이 돈다 — 그 파일이 감사의 답을 바꾸는 목록에 든다(2026-11-19, ADR 0257. 그 전에는
+   `full-ci` 라벨을 달아야 돌았다). Expo SDK 를 올리는 PR 은 예외를 다 걷고 다시 잰다(ADR 0104 추기 2026-11-06).
 
-개발 의존성(`npm audit` 전체)은 CI 가 안 막는다 — 운영에 안 실린다. 같은 절차로 손으로 정리한다(G-23 ⑫).
+**개발 의존성은 CI 가 안 막는다** — 운영에 안 실린다(G-23 ⑫). Dependabot 경고와 `npm audit`(전체)로 보고 위와 같은 절차로 손으로 정리한다. 2026-11-18 에 선
+것은 뿌리의 `vite` high `GHSA-587h-7wmj-h5pm`(vitest 를 거쳐 든다) 같은 개발 의존성 경고다 — 바깥 검사의 이슈에는 안 선다.

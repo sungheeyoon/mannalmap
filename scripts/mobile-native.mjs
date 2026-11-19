@@ -12,10 +12,15 @@
  * 3. **모듈이 값을 정하는 꼴** — `build.gradle` 과 그것이 `apply from` 하는 파일을 읽어 셋으로 가른다. 앱의 값을 따른다(Expo 모듈
  *    플러그인 · 뿌리 `ext` 를 읽는 함수 · `rootProject.findProperty`) · 박은 숫자(글자 · `package.json` 의 `sdkVersions`) · 모른다.
  *    박은 `compileSdk` 가 앱보다 낮거나 `minSdk` 가 앱보다 높으면 붉다. 모르는 꼴은 경고로 찍는다
- * 4. **Maven 저장소** — 모듈이 글자로 적은 의존 좌표(`group:artifact:version`)가 Google · Maven Central · 앱의 `extraMavenRepos` ·
- *    모듈이 스스로 적은 저장소 가운데 어디에도 없으면 붉다. 좌표를 못 읽은 것과 망 실패는 경고다. 옮겨 오는(transitive) 의존은 못 본다
+ * 4. **Maven 저장소** — 모듈이 글자로 적은 의존 좌표(`group:artifact:version`)를 Google · Maven Central · 앱의 `extraMavenRepos` ·
+ *    모듈이 스스로 적은 저장소에 묻는다. **모든 저장소가 「없다」(404 · 410)고 답했을 때만 붉다.** 그 밖의 답(429 · 403 · 5xx)과 망 실패는
+ *    짧게 다시 묻고, 그래도 그러면 경고다(`locate`) — Maven Central 의 429 를 「없다」로 세어 main 이 34 줄 붉었다(2026-11-19, #1170).
+ *    묻는 것은 한 번에 `MAVEN_CONCURRENCY` 개까지이고 같은 좌표는 한 번만 묻는다. 좌표를 못 읽은 것도 경고다. 옮겨 오는(transitive) 의존은 못 본다
  *
- * `node scripts/mobile-native.mjs` — `mobile/node_modules` 가 있어야 한다(`npm run mobile:native`).
+ * 저장소의 답은 코드가 그대로여도 바뀐다 — CI 는 `mobile/package-lock.json` · `mobile/app.json` 을 바꾼 PR 에서만 묻고(계획의 `mobile_maven`),
+ * 그 밖에는 `--offline` 으로 1 ~ 3 만 잰다. 저장소는 하루 한 번 `scripts/outside-red.mjs` 가 묻는다(ADR 0257).
+ *
+ * `node scripts/mobile-native.mjs` — `mobile/node_modules` 가 있어야 한다(`npm run mobile:native`). `--offline` 이면 저장소를 안 묻는다.
  */
 import { execFileSync } from 'node:child_process';
 import { existsSync, readFileSync } from 'node:fs';
@@ -278,31 +283,99 @@ export function moduleMaven(lib, read = readOrNull) {
 
 const pomUrl = (repo, { group, artifact, version }) => `${repo.replace(/\/$/, '')}/${group.replace(/\./g, '/')}/${artifact}/${version}/${artifact}-${version}.pom`;
 
+/** 저장소가 「그 파일이 없다」고 말한 답 — 이것만 「없다」로 센다. 429 · 403 · 5xx 는 막혔거나 아픈 것이지 없다는 답이 아니다 */
+const ABSENT = new Set([404, 410]);
+
+/** 한 저장소에 몇 번까지 묻나 — 「없다」 · 「있다」 밖의 답이면 다시 묻는다 */
+export const MAVEN_ATTEMPTS = 3;
+
+/** 한 번에 묻는 좌표 수 — 모듈 마흔다섯의 좌표를 한꺼번에 물었을 때 Maven Central 이 429 로 막았다(2026-11-19, #1170) */
+export const MAVEN_CONCURRENCY = 4;
+
+/** 다시 묻기 전에 쉰다 — 1초 · 2초 */
+const backoff = (attempt) => new Promise((resolve) => setTimeout(resolve, 1000 * 2 ** (attempt - 1)));
+
 /**
- * 좌표가 저장소 가운데 어디에 있나 — `found` 저장소 주소, 아무 데도 없으면 `null`, 묻지 못한 곳이 있어 모르면 `'unreached'`.
+ * 한 주소에 묻는다 — 2xx 면 `found`, 404 · 410 이면 `absent`, 그 밖의 답이나 던진 것(망 실패 · 시간 초과)은 `attempts` 번까지 다시 묻고
+ * 그래도 그러면 `unreached` 다
+ */
+async function ask(url, head, attempts, pause) {
+  for (let attempt = 1; attempt <= attempts; attempt += 1) {
+    let status = null;
+    try {
+      status = await head(url);
+    } catch {
+      status = null;
+    }
+    if (status !== null && status >= 200 && status < 300) return 'found';
+    if (status !== null && ABSENT.has(status)) return 'absent';
+    if (attempt < attempts) await pause(attempt);
+  }
+  return 'unreached';
+}
+
+/**
+ * 좌표가 저장소 가운데 어디에 있나 — `found` 저장소 주소, **모든 저장소가 「없다」(404 · 410)고 답하면** `null`, 묻지 못한 곳이 있어 모르면 `'unreached'`.
  *
  * @param {(url: string) => Promise<number>} head 상태 코드를 돌려준다. 던지면 망 실패다
+ * @param {{ attempts?: number, pause?: (attempt: number) => Promise<void> }} [retry]
  */
-export async function locate(coord, repos, head) {
+export async function locate(coord, repos, head, { attempts = MAVEN_ATTEMPTS, pause = backoff } = {}) {
   let unreached = false;
   for (const repo of repos) {
-    try {
-      if ((await head(pomUrl(repo, coord))) === 200) return repo;
-    } catch {
-      unreached = true;
-    }
+    const answer = await ask(pomUrl(repo, coord), head, attempts, pause);
+    if (answer === 'found') return repo;
+    if (answer === 'unreached') unreached = true;
   }
   return unreached ? 'unreached' : null;
 }
 
+/** 한 번에 `size` 개까지만 돌리는 줄 — 넘긴 일은 차례로 기다린다 */
+export function limiter(size) {
+  let active = 0;
+  const waiting = [];
+  const next = () => {
+    if (active >= size || waiting.length === 0) return;
+    active += 1;
+    const { task, resolve, reject } = waiting.shift();
+    task()
+      .then(resolve, reject)
+      .finally(() => {
+        active -= 1;
+        next();
+      });
+  };
+  return (task) =>
+    new Promise((resolve, reject) => {
+      waiting.push({ task, resolve, reject });
+      next();
+    });
+}
+
+/**
+ * 판정 한 줄 — `level` 은 `ok` · `warn` · `fail` · `skip`(버전이 식이라 안 물은 좌표), `what` 은 `compileSdk` · `minSdk` · `gradle` · `maven`.
+ * Maven 줄만 `coord`(`group:artifact:version`)를 든다
+ *
+ * @typedef {{ level: string, lib: { name: string, version: string, androidDir: string }, what: string, text: string, coord?: string }} NativeLine
+ */
+
 /**
  * 모든 판정 — SDK 줄과 Maven 줄.
  *
- * @param {{ app: ReturnType<typeof appAndroid>, modules: { name: string, version: string, androidDir: string }[], head?: (url: string) => Promise<number>, read?: (path: string) => string | null }} input
+ * @param {{ app: ReturnType<typeof appAndroid>, modules: { name: string, version: string, androidDir: string }[], head?: (url: string) => Promise<number>, read?: (path: string) => string | null, concurrency?: number, attempts?: number, pause?: (attempt: number) => Promise<void> }} input
+ * @returns {Promise<NativeLine[]>}
  */
-export async function nativeFindings({ app, modules, head, read = readOrNull }) {
+export async function nativeFindings({ app, modules, head, read = readOrNull, concurrency = MAVEN_CONCURRENCY, attempts = MAVEN_ATTEMPTS, pause = backoff }) {
   const lines = modules.flatMap((lib) => judgeModule(lib, app, read));
   if (!head) return lines;
+  const queue = limiter(concurrency);
+  /** 같은 좌표 · 같은 저장소 목록은 한 번만 묻는다 — 코루틴 · okhttp 처럼 모듈 여럿이 같은 좌표를 적는다 */
+  const asked = new Map();
+  const lookup = (coord, where) => {
+    const key = `${coord.group}:${coord.artifact}:${coord.version} ${where.join(' ')}`;
+    if (!asked.has(key)) asked.set(key, queue(() => locate(coord, where, head, { attempts, pause })));
+    return asked.get(key);
+  };
   const checks = modules.flatMap((lib) => {
     const { coords, unread, repos } = moduleMaven(lib, read);
     const extra = unread.length > 0 ? [Promise.resolve({ level: 'skip', lib, what: 'maven', text: unread.join(' · ') })] : [];
@@ -311,11 +384,12 @@ export async function nativeFindings({ app, modules, head, read = readOrNull }) 
       ...extra,
       ...coords.map(async (coord) => {
         const name = `${coord.group}:${coord.artifact}:${coord.version}`;
-        const found = await locate(coord, where, head);
-        if (found === 'unreached') return { level: 'warn', lib, what: 'maven', text: `${name} — 저장소에 닿지 못해 모른다` };
+        const found = await lookup(coord, where);
+        if (found === 'unreached')
+          return { level: 'warn', lib, what: 'maven', coord: name, text: `${name} — 저장소가 「없다」 밖의 답(429 · 403 · 5xx)을 하거나 닿지 못해 모른다(${attempts}번 물음)` };
         if (found === null)
-          return { level: 'fail', lib, what: 'maven', text: `${name} 이 Google · Maven Central · 앱의 extraMavenRepos 어디에도 없다 — 그 SDK 의 저장소를 mobile/app.json 의 expo-build-properties android.extraMavenRepos 에 더한다` };
-        return { level: 'ok', lib, what: 'maven', text: `${name} — ${found}` };
+          return { level: 'fail', lib, what: 'maven', coord: name, text: `${name} 이 Google · Maven Central · 앱의 extraMavenRepos 어디에도 없다(404 · 410) — 그 SDK 의 저장소를 mobile/app.json 의 expo-build-properties android.extraMavenRepos 에 더한다` };
+        return { level: 'ok', lib, what: 'maven', coord: name, text: `${name} — ${found}` };
       }),
     ];
   });
@@ -368,10 +442,13 @@ export function report(lines, app) {
   return { text: out.join('\n'), fails };
 }
 
-async function main() {
-  const { stopIfMissing } = await import('./preflight.mjs');
-  const root = fileURLToPath(new URL('..', import.meta.url));
-  stopIfMissing('mobile-native', root, ['mobile-modules']);
+/**
+ * 앱의 값과 연결되는 모듈을 읽어 판정한다 — `mobile/node_modules` 가 있어야 한다(없으면 Expo 의 명령이 던진다). `offline` 이면 저장소를 안 묻는다.
+ * 하루 한 번의 바깥 검사(`scripts/outside-red.mjs`)도 이것으로 Maven 줄을 얻는다
+ *
+ * @param {{ root: string, offline: boolean }} input
+ */
+export async function nativeOf({ root, offline }) {
   const mobile = join(root, 'mobile');
   const bin = (name) => join(mobile, 'node_modules/.bin', name);
   const json = (command, args) => JSON.parse(execFileSync(command, args, { cwd: mobile, encoding: 'utf8', stdio: ['ignore', 'pipe', 'inherit'] }));
@@ -384,9 +461,16 @@ async function main() {
   if (!existsSync(catalog)) throw new Error(`React Native 의 버전 카탈로그가 없다: ${catalog}`);
   const app = appAndroid({ catalogText: readFileSync(catalog, 'utf8'), buildProperties });
 
-  const offline = process.argv.includes('--offline');
   const head = offline ? undefined : async (url) => (await fetch(url, { method: 'HEAD', signal: AbortSignal.timeout(15_000) })).status;
-  const lines = await nativeFindings({ app, modules: linkedModules(expoResolved, rnConfig), head });
+  return { app, lines: await nativeFindings({ app, modules: linkedModules(expoResolved, rnConfig), head }) };
+}
+
+async function main() {
+  const { stopIfMissing } = await import('./preflight.mjs');
+  const root = fileURLToPath(new URL('..', import.meta.url));
+  stopIfMissing('mobile-native', root, ['mobile-modules']);
+  const offline = process.argv.includes('--offline');
+  const { app, lines } = await nativeOf({ root, offline });
   const { text, fails } = report(lines, app);
   console.log(text);
   if (offline) console.log('(--offline — Maven 저장소는 안 봤다)');

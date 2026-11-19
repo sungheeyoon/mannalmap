@@ -17,7 +17,7 @@
 | 바뀐 것 | 도는 차선 |
 | --- | --- |
 | 계획 밖 이벤트(일정 · 손으로 켠 실행) · `full-ci` 라벨 · 빈 diff · `supabase/**` · 단계 모름 · **공개 출시 전 단계**(ADR 0242) | 전부 — `core` · `anon` · `authed` 전부(`AUTHED_LANES`) · `flow` |
-| main 푸시 — 푸시 전 SHA(`github.event.before`)부터의 변경 전체가 정책 · 주석만 바뀐 코드 파일뿐이고 푸시 전 SHA 의 verify 가 초록으로 끝났다(ADR 0154, 판정은 `ci-plan.mjs` 「문서만 바뀐 main 푸시」). 그 밖 · 0 SHA · 강제 갱신 · 앞 실행이 끊김 · 붉음 · 못 읽음은 전부 | `policy` 만(`audit` 도 건너뛴다). `ci-main-red` 는 이 초록으로 이슈를 닫지 않고 「마지막 초록」으로도 안 센다 |
+| main 푸시 — 푸시 전 SHA(`github.event.before`)부터의 변경 전체가 정책 · 주석만 바뀐 코드 파일뿐이고 푸시 전 SHA 의 verify 가 초록으로 끝났다(ADR 0154, 판정은 `ci-plan.mjs` 「문서만 바뀐 main 푸시」). 그 밖 · 0 SHA · 강제 갱신 · 앞 실행이 끊김 · 붉음 · 못 읽음은 전부 | `policy` 만. `ci-main-red` 는 이 초록으로 이슈를 닫지 않고 「마지막 초록」으로도 안 센다 |
 | 주석만 바뀐 코드 파일 — base(merge-base)와 구문 나무가 같고 뜻이 있는 주석이 그대로(ADR 0153, 판정은 `ci-plan.mjs` 「주석만 바뀐 코드 파일」) | 정책으로 센다 — 아래 줄은 나머지 파일로 잰다 |
 | 정책(문서 · `.claude/**` · `scripts/*.test.ts`)만 | `policy`(scripts 시험 · 타입 · 린트) |
 | 엔진(`src/lib/saju/**`) · `app/saju/**` 와 정책뿐 — DB 검사식이 보는 엔진 파일(`ENGINE_DB_FACING`)은 빼고 | `core`(단위 · 타입 · 린트 · 빌드) + `anon`(익명 e2e) |
@@ -42,14 +42,22 @@ squash-merge 하고 배포한다. 동작 변경이 없다고 판별된 경우 ma
 **라벨만 달면 다시 안 돈다** — `pull_request` 트리거에 `labeled` 가 없어서, `full-ci` 를 단 뒤 커밋을 하나 더 밀어야 전부가
 선다. 라벨은 더할 수만 있다.
 
-**운영 의존성 감사 `audit` 은 단계와 따로 켠다**(G-23 ①, ADR 0104) — `npm audit --omit=dev --audit-level=high`. 결과를 바꾸는
-것이 바뀐 파일이 아니라 밖의 advisory DB 라서, PR 에서는 **`package.json` · `package-lock.json` 을 바꾼 PR 에만** 머지를
-막는다(라벨 · 빈 diff 도 켠다). 아무것도 안 바꾼 PR 이 어느 날 붉어지는 일이 없다. 새로 뜬 advisory 는 main 푸시와 하루
-한 번의 일정이 잡고, `ci-main-red` 가 「`audit` 만 붉다」고 적는다. 절차는 `docs/ops/runbook/security.md` 「운영 의존성 취약점」. 개발 의존성은
-CI 가 안 막는다.
+**운영 의존성 감사 `audit` 은 PR 에서만 켠다**(G-23 ①, ADR 0104 · 0257) — 뿌리의 `npm audit --omit=dev --audit-level=high` 와 앱의 `node scripts/audit-app.mjs`.
+결과를 바꾸는 것이 바뀐 파일이 아니라 밖의 advisory DB 라서, **감사의 답을 바꾸는 파일(`ci-plan.mjs` 의 `DEPENDENCY_LISTS` — 의존성 목록과 앱의 예외 파일)을
+바꾼 PR 에만** 머지를 막는다(라벨 · 빈 diff 도 켠다). 아무것도 안 바꾼 PR 이 어느 날 붉어지는 일이 없다. **main 푸시 · 일정 · 손으로 켠 실행에서는 안 돈다** —
+코드가 그대로인 main 이 바깥 탓에 붉어 새 작업과 배포를 세우지 않게. 그래서 전부를 잰 main 실행의 셈(`offWhenFull`)도 `audit` 의 건너뜀을 뺀다.
 
-**앱 검사 `mobile` 도 단계와 따로 켠다**(ADR 0097 덧 2026-10-31) — `mobile/` 에서 `npm ci` · `npx tsc --noEmit` · `npx expo lint` · `npx expo export --platform android` · 네이티브 의존 검사(`scripts/mobile-native.mjs`)다. 뿌리 `npm ci` 없이 돌고, 뿌리 `node_modules` 는 앱의 것으로 잇는다.
-PR 에서는 앱이 부르는 자리(`ci-plan.mjs` 의 `reachesMobile` — `mobile/**` · `src/lib/**` · `app/db-error.ts` · `scripts/mobile-native.mjs`, 문서와 시험은 빼고)와 CI 자체(`.github/workflows/**` · `.nvmrc`)가 바뀌었을 때만 돈다. 라벨 · 빈 diff · 일정 · 손으로 켠 실행 · 정책만이 아닌 main 푸시도 돈다.
+**바깥 검사 `outside.yml` — 하루 한 번, main 의 verify 밖**(ADR 0257). 일정 · 손으로 켠 실행에서 운영 의존성 감사(뿌리 · 앱)와 앱의 Maven 좌표 조회를 돌고,
+알릴 것이 있으면 `ci-main-red` 가 아닌 이슈 하나(`ci-outside-red`)에 적는다 — `gate` 도 배포의 기다림(`mainRedOf`)도 그 이슈를 안 본다. 판단은
+`scripts/outside-red.mjs` 의 머리 표(붉음 · 걷어도 된다 · 모른다)다. 그 검사를 고친 PR(워크플로의 `paths`)에서도 돌고, 그때는 요약에만 찍는다 — 필수 검사가
+아니다. 절차는 `docs/ops/runbook/security.md` 「운영 의존성 취약점」. 개발 의존성은 CI 가 안 막는다.
+
+**앱 검사 `mobile` 도 단계와 따로 켠다**(ADR 0097 덧 2026-10-31) — `mobile/` 에서 `npm ci` 와 그 job 의 검사들이다(목록은 `verify.yml` 의 `mobile` job —
+`scripts/ci-plan.test.ts` 가 차례까지 잰다): 타입 · 린트 · 안드로이드 번들 · SDK 정합(`expo install --check`, 오프라인) · 네이티브 의존 검사(`scripts/mobile-native.mjs`) ·
+박은 로컬 npm 의 잠금 받기. 뿌리 `npm ci` 없이 돌고, 뿌리 `node_modules` 는 앱의 것으로 잇는다.
+PR 에서는 앱이 부르는 자리(`ci-plan.mjs` 의 `MOBILE_REACH` 와 `reachesMobile` — 문서와 웹 쪽 시험은 빼고)와 CI 자체(`.github/workflows/**` · `.nvmrc`)가 바뀌었을 때만 돈다. 라벨 · 빈 diff · 일정 · 손으로 켠 실행 · 정책만이 아닌 main 푸시도 돈다.
+**네이티브 의존 검사의 Maven 저장소 조회는 좌표를 바꾸는 PR 에서만**(계획의 `mobile_maven` — `ci-plan.mjs` 의 `MAVEN_INPUTS` 와 빈 diff, ADR 0257) — 그 밖은 `--offline` 으로
+SDK 만 잰다. 저장소의 「없다」는 404 · 410 뿐이고 429 · 5xx · 망 실패는 다시 묻고 경고다.
 앱이 새 웹 파일을 들이면 `scripts/mobile-closure.test.ts` 가 목록에 더하라고 붉다. 앱이 DB · 앱의 문을 부르는 자리(`scripts/check-mobile.mjs`)는
 `flow` 가 잰다 — `mobile/**` 는 정책도 엔진도 아니라 전부다.
 
@@ -77,7 +85,7 @@ plan job 의 step summary(`summaryOf`)가, 차선마다 걸린 시간은 `gh run
 `authed-test-results-<차선>`(콜론을 `-` 로, 예: `authed-test-results-signed-in-mobile`). 안에는 시도마다의 `error-context.md` 와
 첫 재시도의 `trace.zip` 이 있다 — `gh run download <run id> -n <이름>` 뒤 `npx playwright show-trace <…>/trace.zip`. 리포터가
 `github` 하나라 `playwright-report/` 는 없다. 스택을 내리는 `db:stop` 단계는 없다 — hosted runner 는 job 마다 버려진다.
-`full-ci` 라벨은 더할 수만 있다. 일정과 손으로 켠 실행은 계획을 안 보고 전부 돈다. `main` 푸시는 계획을 본다 — 푸시 전
+`full-ci` 라벨은 더할 수만 있다. 일정과 손으로 켠 실행은 계획을 안 보고 전부 돈다(`audit` 만 빼고 — 바깥 검사 몫이다). `main` 푸시는 계획을 본다 — 푸시 전
 SHA 부터의 변경이 정책 · 주석만이고 앞 실행이 초록이면 `policy` 만, 그 밖은 전부다(ADR 0154, 위 표의 둘째 줄 · `verify.yml` 의
 `concurrency` 머리말).
 **main 푸시는 최신 하나만 끝까지 돈다** — 새 푸시가 앞 실행을 끊는다(#161 이 #143 의 「커밋마다 제 그룹」을

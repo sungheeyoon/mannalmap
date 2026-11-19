@@ -57,13 +57,15 @@
  * `npm run build` 를 넣는다 — 빌드는 끝에 비밀 검사도 돈다(G-23 ⑧). `verify.yml` 의 `core` job 은 이 목록을
  * 그대로 돌고, 시험이 둘을 견준다. 단위 · 타입 · 린트 · 빌드를 도는 job 은 이것 하나다 — `anon` 은 익명 e2e 만 돈다.
  *
- * ## 운영 의존성 감사는 단계와 따로 켠다 (2026-09-23, G-23 ①, ADR 0104)
+ * ## 운영 의존성 감사는 PR 에서만 켠다 (2026-09-23, G-23 ①, ADR 0104 · 0257)
  *
  * `audit` 차선은 `npm audit --omit=dev --audit-level=high` 를 뿌리에서, 같은 문턱을 `mobile/` 에서(`scripts/audit-app.mjs` — 이름 지정 예외를 뺀다, ADR 0104 추기 2026-11-06) 돈다. 위 단계들과 달리 **바뀐 파일이 아니라 밖의
  * advisory DB 가 결과를 바꾼다** — 모든 PR 에 걸면 아무것도 안 바꾼 PR 이 어느 날 붉어지고, 나란히 선 세션이
- * 그것을 제 빨간불로 읽는다. 그래서 PR 에서는 **의존성 목록(뿌리 · `mobile/` 의 `package.json` · `package-lock.json`)을 바꾼 PR 에만**
- * 머지를 막고, 새로 뜬 advisory 는 main 푸시 · 하루 한 번의 일정이 잡아 `ci-main-red` 이슈로 알린다.
- * 라벨 · 빈 diff · 계획 밖 이벤트는 「전부」와 같이 켠다.
+ * 그것을 제 빨간불로 읽는다. 그래서 **감사의 답을 바꾸는 파일(`DEPENDENCY_LISTS` — 뿌리 · `mobile/` 의 `package.json` · `package-lock.json` 과
+ * 앱의 예외 `mobile/audit-exceptions.json`)을 바꾼 PR 에만** 머지를 막는다. 라벨 · 빈 diff 도 켠다.
+ * **main 푸시 · 일정 · 손으로 켠 실행에서는 안 돈다**(ADR 0257) — 코드가 그대로인데 바깥이 바뀌어 main 이 붉으면 「새 작업보다 먼저」와
+ * 배포의 기다림이 함께 걸렸다(공개 출시 뒤 붉은 main 넷이 다 바깥 탓). 새로 뜬 advisory · 철회로 낡은 예외는 하루 한 번의 바깥 검사
+ * (`.github/workflows/outside.yml`, `scripts/outside-red.mjs`)가 잡아 제 이슈(`ci-outside-red`)에 적는다.
  *
  * ## 앱 검사는 앱이 부르는 자리가 바뀔 때 켠다 (2026-10-31)
  *
@@ -71,6 +73,10 @@
  * CI 가 없었다. 앱은 `src/lib` 와 `app/` 의 몇 파일을 함께 쓰므로 웹 쪽 수정도 앱을 깬다 — `MOBILE_REACH` 가 그 자리이고,
  * `scripts/mobile-closure.test.ts` 가 앱에서 import 를 따라 닿는 파일이 전부 여기 걸리는지 잰다. `audit` 처럼 단계와 따로 켠다.
  * `mobile/**` 는 정책도 엔진도 아니라 웹 쪽은 전부다 — 앱이 DB · 앱의 문을 부르는 자리(`scripts/check-mobile.mjs`)는 `flow` 가 잰다.
+ *
+ * **네이티브 의존 검사의 Maven 저장소 조회도 바깥이 답을 바꾼다**(ADR 0257) — 그 조회는 좌표를 바꾸는 파일(`MAVEN_INPUTS` — 앱의 잠금 파일과
+ * `app.json` 의 `extraMavenRepos`)을 바꾼 PR 과 빈 diff 에서만 켜고(계획의 `mobileMaven`, 출력 `mobile_maven`), 그 밖의 `mobile` 차선은
+ * `--offline` 으로 SDK 만 잰다. 저장소는 바깥 검사가 하루 한 번 묻는다.
  *
  * ## 주석만 바뀐 코드 파일은 정책으로 센다 (ADR 0153)
  *
@@ -115,7 +121,7 @@
  * 머지 뒤 main 의 전체(약 11분)는 문서 PR 에도 돌았다 — 재는 것이 없는데 러너와 `ci-main-red` 의 기다림만 들었다. 그래서
  * main 푸시도 계획을 본다. 판정하는 것은 **푸시 전 SHA(`github.event.before`)와 뒤 SHA 사이의 변경 전체**다 — 여러 PR 이 한 푸시에
  * 들어도 그 범위 전부. 그 안이 정책 파일과 주석만 바뀐 코드 파일(위, base 는 푸시 전 SHA)뿐이면 `policy` 만, 하나라도 그 밖이면
- * 전부다. 단계는 안 본다 — main 의 일은 전체 검증이다. `audit` 도 `policy` 만일 때는 건너뛴다(새 advisory 는 일정이 잡는다).
+ * 전부다. 단계는 안 본다 — main 의 일은 전체 검증이다. `audit` 은 main 푸시에서 아예 안 돈다(위 「운영 의존성 감사」, ADR 0257).
  *
  * **앞 커밋이 초록으로 끝났을 때만 좁힌다.** main 의 concurrency 는 새 푸시가 앞 실행을 끊는다. 코드 커밋 A 의 전체가 문서 커밋 B 에
  * 끊기고 B 가 `policy` 만 돌면 A 는 아무도 안 잰다. 그래서 푸시 전 SHA 의 verify 실행(main 의 push · 일정 · 손으로 켠 것)이 하나라도
@@ -149,8 +155,13 @@ const PLANNED_EVENTS = new Set(['pull_request']);
 /** 정책 — 사람과 에이전트가 읽는 규약, 그리고 그것을 견주는 시험. 코드가 아니라 `scripts/` 시험이 잰다 */
 const POLICY = [/^docs\//, /\.md$/, /^\.claude\//, /^scripts\/[^/]+\.test\.ts$/];
 const ENGINE = [/^src\/lib\/saju\//, /^app\/saju\//];
-/** 의존성 목록 — 이것을 바꾼 PR 만 `audit` 이 머지를 막는다 */
-export const DEPENDENCY_LISTS = ['package.json', 'package-lock.json', 'mobile/package.json', 'mobile/package-lock.json'];
+/**
+ * 감사의 답을 바꾸는 파일 — 의존성 목록과 앱 감사의 이름 지정 예외. 이것을 바꾼 PR 만 `audit` 이 머지를 막는다. 예외 파일만 바꾼 PR 은
+ * 2026-11-19 까지 `audit` 을 안 돌아 그 예외가 PR 에서 재어지지 않았다(#1169, ADR 0257)
+ */
+export const DEPENDENCY_LISTS = ['package.json', 'package-lock.json', 'mobile/package.json', 'mobile/package-lock.json', 'mobile/audit-exceptions.json'];
+/** Maven 좌표 · 저장소를 바꾸는 파일 — 이것을 바꾼 PR 만 `mobile` 차선이 저장소에 묻는다(위 「앱 검사」, ADR 0257) */
+export const MAVEN_INPUTS = ['mobile/package-lock.json', 'mobile/app.json'];
 /**
  * 앱이 부르는 자리와 CI 자체 — 위 「앱 검사」. `app/` 은 파일로 적는다 — 앱이 닿는 것이 그 파일들뿐이고, 시험이 닫힘과 견준다.
  * `scripts/mobile-native.mjs` 는 앱이 부르지 않지만 그 차선에서만 실제 의존에 대고 돈다 — 고치면 그 차선이 다시 잰다.
@@ -904,11 +915,12 @@ const picked = ({ policy = false, core = false, anon = false, authedLanes = [], 
 const EVERYTHING = { core: true, anon: true, authedLanes: AUTHED_LANES, flow: true };
 
 /**
- * 전부(`tier: 'full'`)일 때도 켜지 않는 차선 — `verify.yml` 의 job 이름. `policy` 는 정책만일 때의 차선이다.
- * `main-red.mjs` 의 `measuredEverything` 이 이 job 들의 건너뜀을 빼고 센다 — 손 목록을 따로 두지 않는다
+ * 전부를 잰 main 실행(일정 · 손으로 켠 실행 · 정책 밖 main 푸시)도 켜지 않는 차선 — `verify.yml` 의 job 이름. `policy` 는 정책만일 때의
+ * 차선이고, `audit` 은 PR 에서만 돈다(ADR 0257). `main-red.mjs` 의 `measuredEverything` 이 이 job 들의 건너뜀을 빼고 센다 — 손 목록을
+ * 따로 두지 않고 일정의 계획에서 읽는다
  */
 export const offWhenFull = () =>
-  Object.entries(picked(EVERYTHING).lanes)
+  Object.entries(planFor({ files: [], event: 'schedule' }).lanes)
     .filter(([, on]) => !on)
     .map(([name]) => name);
 
@@ -921,36 +933,52 @@ export const offWhenFull = () =>
  * 빠지거나 `null` 이면 지금 규칙 그대로다.
  *
  * `tier` 는 사람이 읽는 요약이다 — job 은 `lanes` 와 `authedLanes` 만 읽는다. `cause` 는 전부로 간 갈래의 이름이다.
+ * `mobileMaven` 은 차선이 아니라 `mobile` 차선 안의 한 갈래다 — 그 차선이 Maven 저장소에 묻는가(위 「앱 검사」, ADR 0257).
  *
  * @param {{ files: readonly string[], labels?: readonly string[], event?: string, stage?: string | null, sourceOf?: (file: string) => string | null, baseSourceOf?: (file: string) => string | null, ts?: typeof import('typescript') | null, pushed?: { before: string | null, forced: boolean, beforeGreen: boolean | null } | null }} input
- * @returns {{ tier: 'policy' | 'engine' | 'full', reason: string, cause: string | null, lanes: { policy: boolean, core: boolean, anon: boolean, authed: boolean, flow: boolean, audit: boolean, mobile: boolean }, authedLanes: string[] }}
+ * @returns {{ tier: 'policy' | 'engine' | 'full', reason: string, cause: string | null, lanes: { policy: boolean, core: boolean, anon: boolean, authed: boolean, flow: boolean, audit: boolean, mobile: boolean }, authedLanes: string[], mobileMaven: boolean }}
  */
 export function planFor({ files, labels = [], event = 'pull_request', stage = null, sourceOf = sourceFromDisk, baseSourceOf = () => null, ts = null, pushed = null }) {
   const decided =
     event === 'push' ? decidePush({ files, pushed, sourceOf, baseSourceOf, ts }) : decide({ files, labels, event, stage, sourceOf, baseSourceOf, ts });
   const { lanes, authedLanes } = picked(decided.tier === 'full' ? EVERYTHING : decided.pick ?? {});
+  const mobile = mobiles({ files, labels, event, tier: decided.tier });
   return {
     tier: decided.tier,
     reason: decided.reason,
     cause: decided.cause ?? null,
-    lanes: { ...lanes, audit: audits({ files, labels, event, tier: decided.tier }), mobile: mobiles({ files, labels, event, tier: decided.tier }) },
+    lanes: { ...lanes, audit: audits({ files, labels, event }), mobile },
     authedLanes,
+    mobileMaven: mobile && mavenLookups({ files, event }),
   };
 }
 
-/** 단계와 상관없다 — 위 「운영 의존성 감사」. main 푸시는 `policy` 만일 때 건너뛴다(위 「문서만 바뀐 main 푸시」) */
-function audits({ files, labels, event, tier }) {
-  if (event === 'push') return tier !== 'policy';
-  if (!PLANNED_EVENTS.has(event) || labels.includes(FULL_LABEL)) return true;
-  const changed = files.map((one) => one.trim()).filter((one) => one !== '');
+/** PR 의 바뀐 파일 — 빈 줄을 걷는다 */
+const changedOf = (files) => files.map((one) => one.trim()).filter((one) => one !== '');
+
+/** 단계와 상관없다 — 위 「운영 의존성 감사」. PR 에서만 돈다 — main 푸시 · 일정 · 손으로 켠 실행의 바깥 조회는 바깥 검사가 한다(ADR 0257) */
+function audits({ files, labels, event }) {
+  if (!PLANNED_EVENTS.has(event)) return false;
+  if (labels.includes(FULL_LABEL)) return true;
+  const changed = changedOf(files);
   return changed.length === 0 || changed.some((one) => DEPENDENCY_LISTS.includes(one));
 }
 
-/** 단계와 상관없다 — 위 「앱 검사」. 계획 밖 · 라벨 · 빈 diff · main 푸시는 `audit` 과 같다 */
+/**
+ * `mobile` 차선이 Maven 저장소에 묻는가 — 좌표 · 저장소를 바꾸는 파일(`MAVEN_INPUTS`)을 바꾼 PR 과 빈 diff 만이다. 라벨은 켜지 않는다 —
+ * 전부를 돌리려는 PR 이 바깥의 429 로 붉지 않게. main 푸시 · 일정 · 손으로 켠 실행은 안 묻는다(바깥 검사가 하루 한 번, ADR 0257)
+ */
+function mavenLookups({ files, event }) {
+  if (!PLANNED_EVENTS.has(event)) return false;
+  const changed = changedOf(files);
+  return changed.length === 0 || changed.some((one) => MAVEN_INPUTS.includes(one));
+}
+
+/** 단계와 상관없다 — 위 「앱 검사」. 계획 밖 · 라벨 · 빈 diff 는 켜고, main 푸시는 `policy` 만일 때 건너뛴다 */
 function mobiles({ files, labels, event, tier }) {
   if (event === 'push') return tier !== 'policy';
   if (!PLANNED_EVENTS.has(event) || labels.includes(FULL_LABEL)) return true;
-  const changed = files.map((one) => one.trim()).filter((one) => one !== '');
+  const changed = changedOf(files);
   return changed.length === 0 || changed.some(reachesMobile);
 }
 
@@ -1170,7 +1198,10 @@ function decideLaunched(changed) {
 /** 사람이 읽는 표 — step summary 에 찍는다 */
 export function summaryOf(plan, files) {
   const lanes = Object.entries(plan.lanes)
-    .map(([lane, on]) => `| \`${lane}\` | ${on ? (lane === 'authed' ? plan.authedLanes.map((one) => `\`${one}\``).join(' · ') : '돈다') : '건너뛴다'} |`)
+    .map(([lane, on]) => {
+      const shown = on ? (lane === 'authed' ? plan.authedLanes.map((one) => `\`${one}\``).join(' · ') : '돈다') : '건너뛴다';
+      return `| \`${lane}\` | ${lane === 'mobile' && on ? `${shown} — Maven 저장소 조회 ${plan.mobileMaven ? '함' : '안 함(`--offline`)'}` : shown} |`;
+    })
     .join('\n');
   return [
     `## CI 계획: \`${plan.tier}\``,
@@ -1264,6 +1295,7 @@ async function main() {
         `tier=${plan.tier}`,
         ...Object.entries(plan.lanes).map(([lane, on]) => `${lane}=${on}`),
         `authed_lanes=${JSON.stringify(plan.authedLanes)}`,
+        `mobile_maven=${plan.mobileMaven}`,
         '',
       ].join('\n'),
     );

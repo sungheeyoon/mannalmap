@@ -8,6 +8,9 @@
  *
  * 뿌리는 예외가 없어 `npm audit --omit=dev --audit-level=high` 그대로다(`verify.yml` 의 `audit`). 이 스크립트는 `npm ci` 없이 잠금 파일만 읽는다.
  *
+ * `verify.yml` 의 `audit` 은 의존성 목록 · 이 예외 파일을 바꾼 PR 에서만 돈다. 새 advisory 와 철회로 낡은 예외는 하루 한 번의 바깥 검사
+ * (`scripts/outside-red.mjs`)가 같은 판정(`auditVerdict`)으로 잡아 제 이슈에 적는다 — 거기서 낡은 예외는 붉음이 아니라 「걷어도 된다」다(ADR 0257).
+ *
  *     node scripts/audit-app.mjs
  */
 import { spawnSync } from 'node:child_process';
@@ -62,21 +65,35 @@ export function exceptionsOf(text) {
   return list;
 }
 
-function main() {
-  const mobile = fileURLToPath(new URL('../mobile/', import.meta.url));
-  const exceptions = exceptionsOf(readFileSync(new URL('../mobile/audit-exceptions.json', import.meta.url), 'utf8'));
-  const run = spawnSync('npm', ['audit', '--omit=dev', '--json'], { cwd: mobile, encoding: 'utf8', maxBuffer: 1 << 26 });
+/** 앱의 예외 목록 — `mobile/audit-exceptions.json` */
+export const appExceptions = () => exceptionsOf(readFileSync(new URL('../mobile/audit-exceptions.json', import.meta.url), 'utf8'));
+
+/**
+ * `npm audit --omit=dev --json` 의 답 — 그 폴더의 잠금 파일만 읽는다. 답을 못 읽었거나 npm 이 오류(레지스트리 · advisory DB 실패)를 답하면 던진다
+ *
+ * @param {string} cwd
+ */
+export function auditReportOf(cwd) {
+  const run = spawnSync('npm', ['audit', '--omit=dev', '--json'], { cwd, encoding: 'utf8', maxBuffer: 1 << 26 });
   let report;
   try {
     report = JSON.parse(run.stdout);
   } catch {
-    console.error(`npm audit 의 답을 못 읽었다(종료 ${run.status}) — 붉게 끝낸다\n${run.stderr}`);
+    throw new Error(`npm audit 의 답을 못 읽었다(종료 ${run.status}) ${String(run.stderr ?? '').trim().split('\n').at(-1) ?? ''}`.trim());
+  }
+  if (report?.error) throw new Error(`npm audit 이 실패했다: ${JSON.stringify(report.error)}`);
+  return report;
+}
+
+function main() {
+  let report;
+  try {
+    report = auditReportOf(fileURLToPath(new URL('../mobile/', import.meta.url)));
+  } catch (error) {
+    console.error(`${error instanceof Error ? error.message : String(error)} — 붉게 끝낸다`);
     process.exit(1);
   }
-  if (report.error) {
-    console.error(`npm audit 이 실패했다 — 붉게 끝낸다: ${JSON.stringify(report.error)}`);
-    process.exit(1);
-  }
+  const exceptions = appExceptions();
   const { blocking, excepted, stale } = auditVerdict(report, exceptions);
   for (const id of excepted) console.log(`예외 ${id} — ${exceptions.find((one) => one.id === id).reason}`);
   for (const line of blocking) console.error(`예외 밖의 high 이상: ${line}`);

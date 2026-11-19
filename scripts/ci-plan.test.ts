@@ -18,6 +18,7 @@ import {
   DEPENDENCY_LISTS,
   ENGINE_DB_FACING,
   FULL_LABEL,
+  MAVEN_INPUTS,
   ACCESSIBLE_NAME_ATTRIBUTES,
   COPY_ATTRIBUTES,
   copyConstantMisuses,
@@ -104,7 +105,11 @@ describe('CI 계획 — 공개 출시 전 단계는 전부다 (ADR 0242)', () =>
     expect(CORE_STEPS).toContain('npm run build');
     // 빌드를 건너뛰는 갈래(문구만 · 앱만 바뀐 운영 베타의 PR)는 ADR 0242 이 지웠다 — 계획에 `build` 출력이 없다
     expect(yml).not.toContain('outputs.build');
-    expect(runsOf('anon')).toEqual(['npm ci', 'npx playwright install --with-deps chromium', 'npm run test:e2e']);
+    expect(runsOf('anon')).toEqual([
+      'npm ci',
+      'timeout 150 npx playwright install --with-deps chromium || { sleep 20; timeout 150 npx playwright install --with-deps chromium; }',
+      'npm run test:e2e',
+    ]);
   });
 
   /**
@@ -173,12 +178,25 @@ describe('CI 계획 — 운영 의존성 감사 (G-23 ①, ADR 0104)', () => {
     }
   });
 
-  it('main 푸시 · 일정 · 손으로 켠 실행 · 라벨 · 빈 diff 는 켠다 — 새 advisory 는 거기서 잡힌다', () => {
+  it('라벨 · 빈 diff 는 켜고, main 푸시 · 일정 · 손으로 켠 실행은 안 켠다 — 새 advisory 는 하루 한 번의 바깥 검사가 잡는다 (ADR 0257)', () => {
+    const pushed = { before: 'a'.repeat(40), forced: false, beforeGreen: true };
     for (const event of ['push', 'schedule', 'workflow_dispatch']) {
-      expect(planFor({ files: [], event }).lanes.audit, event).toBe(true);
+      expect(planFor({ files: [], event }).lanes.audit, event).toBe(false);
+      expect(planFor({ files: ['package-lock.json', 'mobile/package-lock.json'], event, pushed }).lanes.audit, event).toBe(false);
     }
     expect(pr(['app/page.tsx'], [FULL_LABEL]).lanes.audit).toBe(true);
     expect(pr([]).lanes.audit).toBe(true);
+  });
+
+  it('앱 감사의 예외 파일만 바꾼 PR 도 audit 이 돈다 — 그 예외가 PR 에서 재어진다 (#1169)', () => {
+    expect(DEPENDENCY_LISTS).toContain('mobile/audit-exceptions.json');
+    expect(pr(['mobile/audit-exceptions.json']).lanes.audit).toBe(true);
+  });
+
+  it('바깥 검사 워크플로가 감사와 Maven 조회를 하루 한 번 맡는다 — main 의 verify 밖이다', () => {
+    const outside = readFileSync(resolve(__dirname, '../.github/workflows/outside.yml'), 'utf8');
+    expect(outside).toMatch(/schedule:\n\s+- cron: /);
+    expect(outside).toContain('run: node scripts/outside-red.mjs check');
   });
 
   it('verify.yml 이 audit 차선을 계획대로 켜고 gate 가 그것을 물린다', () => {
@@ -229,9 +247,38 @@ describe('CI 계획 — 앱 검사 (mobile 차선)', () => {
     expect(planFor({ files: ['mobile/src/app/index.tsx'], event: 'push', pushed }).tier).toBe('full');
   });
 
+  it('Maven 저장소 조회는 좌표를 바꾸는 PR(앱의 잠금 파일 · app.json)과 빈 diff 에서만 — 라벨 · main · 일정 · 손 실행은 안 묻는다 (ADR 0257)', () => {
+    for (const file of MAVEN_INPUTS) {
+      expect(pr([file]).mobileMaven, file).toBe(true);
+      expect(pr(['docs/prd.md', 'app/page.tsx', file]).mobileMaven, file).toBe(true);
+    }
+    expect([...MAVEN_INPUTS].sort()).toEqual(['mobile/app.json', 'mobile/package-lock.json']);
+    expect(pr([]).mobileMaven).toBe(true);
+    for (const files of [['mobile/src/app/index.tsx'], ['mobile/package.json'], ['scripts/mobile-native.mjs'], ['mobile/audit-exceptions.json'], ['app/page.tsx'], ['docs/prd.md']]) {
+      expect(pr(files).mobileMaven, files[0]).toBe(false);
+    }
+    expect(pr(['mobile/src/app/index.tsx'], [FULL_LABEL]).mobileMaven).toBe(false);
+    const pushed = { before: 'a'.repeat(40), forced: false, beforeGreen: true };
+    for (const event of ['push', 'schedule', 'workflow_dispatch']) {
+      expect(planFor({ files: [], event }).mobileMaven, event).toBe(false);
+      expect(planFor({ files: ['mobile/package-lock.json'], event, pushed }).mobileMaven, event).toBe(false);
+    }
+    // 요약은 mobile 줄에 조회 여부를 단다
+    expect(summaryOf(pr(['mobile/app.json']), ['mobile/app.json'])).toContain('| `mobile` | 돈다 — Maven 저장소 조회 함 |');
+    expect(summaryOf(pr(['mobile/src/app/index.tsx']), ['mobile/src/app/index.tsx'])).toContain('| `mobile` | 돈다 — Maven 저장소 조회 안 함(`--offline`) |');
+  });
+
+  it('verify.yml 의 mobile job 은 계획이 Maven 조회를 안 켜면 네이티브 검사를 --offline 으로 돈다', () => {
+    const job = /\n {2}mobile:\n([\s\S]*?)\n {2}[a-z]+:\n/.exec(yml)?.[1] ?? '';
+    expect(job).toContain(
+      "- run: node ../scripts/mobile-native.mjs $OFFLINE\n        if: ${{ !cancelled() && steps.install.outcome == 'success' }}\n        env:\n          OFFLINE: ${{ needs.plan.outputs.mobile_maven != 'true' && '--offline' || '' }}\n",
+    );
+    expect(yml).toContain('mobile_maven: ${{ steps.plan.outputs.mobile_maven }}');
+  });
+
   it('verify.yml 의 mobile job 은 mobile/ 에서 돌고, 앞이 붉어도 뒤가 돌며, 붉음을 삼키지 않는다', () => {
     const job = /\n {2}mobile:\n([\s\S]*?)\n {2}[a-z]+:\n/.exec(yml)?.[1] ?? '';
-    for (const run of ['npx expo lint', 'npx expo export --platform android --output-dir dist', 'node ../scripts/mobile-native.mjs']) {
+    for (const run of ['npx expo lint', 'npx expo export --platform android --output-dir dist', 'node ../scripts/mobile-native.mjs $OFFLINE']) {
       expect(job, run).toContain(`- run: ${run}\n        if: \${{ !cancelled() && steps.install.outcome == 'success' }}`);
     }
     expect(job).toContain('working-directory: mobile');
@@ -244,7 +291,7 @@ describe('CI 계획 — 앱 검사 (mobile 차선)', () => {
       'npx expo lint',
       'npx expo export --platform android --output-dir dist',
       'npx expo install --check',
-      'node ../scripts/mobile-native.mjs',
+      'node ../scripts/mobile-native.mjs $OFFLINE',
       'npx -y "npm@$MOBILE_LOCK_NPM" ci --dry-run --ignore-scripts',
     ]);
     // SDK 정합은 잠금 파일의 expo 가 든 표(`expo/bundledNativeModules.json`)로만 잰다 — Expo 서버의 최신 판과 견주면 아무것도 안 바꾼 PR 이
@@ -371,6 +418,8 @@ describe('CI 계획 — ci-plan.mjs 의 차선과 verify.yml 이 짝을 이룬�
   const jobs = new Map(
     [...yml.split(/^jobs:\n/m)[1].matchAll(/^  ([a-z][\w-]*):\n([\s\S]*?)(?=^  [a-z][\w-]*:\n|(?![\s\S]))/gm)].map((one) => [one[1], one[2]]),
   );
+  /** 차선이 아닌 계획의 출력 — 로그인 차선 목록과 `mobile` 차선의 Maven 조회 여부(ADR 0257) */
+  const extraOutputs = ['authed_lanes', 'mobile_maven'];
 
   it('계획 job 의 outputs 는 차선마다 한 줄이고 같은 이름의 step 출력을 넘긴다', () => {
     const plan = jobs.get('plan') ?? '';
@@ -378,7 +427,7 @@ describe('CI 계획 — ci-plan.mjs 의 차선과 verify.yml 이 짝을 이룬�
     const pairs = [...block.matchAll(/^ {6}([\w-]+): \$\{\{ steps\.plan\.outputs\.([\w-]+) \}\}$/gm)].map((one) => [one[1], one[2]]);
     expect(pairs.length).toBe(block.trim().split('\n').length);
     for (const [key, value] of pairs) expect(value, key).toBe(key);
-    expect(pairs.map(([key]) => key).sort()).toEqual([...lanes, 'authed_lanes'].sort());
+    expect(pairs.map(([key]) => key).sort()).toEqual([...lanes, ...extraOutputs].sort());
   });
 
   it('차선마다 같은 이름의 job 이 있고 그 job 은 제 출력 하나로만 켜진다', () => {
@@ -389,7 +438,7 @@ describe('CI 계획 — ci-plan.mjs 의 차선과 verify.yml 이 짝을 이룬�
       expect(job, lane).toMatch(new RegExp(`^ {4}if: needs\\.plan\\.outputs\\.${lane} == 'true'$`, 'm'));
     }
     const read = [...yml.matchAll(/needs\.plan\.outputs\.([\w-]+)/g)].map((one) => one[1]);
-    expect(read.filter((name) => !lanes.includes(name) && name !== 'authed_lanes')).toEqual([]);
+    expect(read.filter((name) => !lanes.includes(name) && !extraOutputs.includes(name))).toEqual([]);
   });
 
   /**
@@ -420,13 +469,13 @@ describe('CI 계획 — ci-plan.mjs 의 차선과 verify.yml 이 짝을 이룬�
     expect(needs.sort()).toEqual(['plan', ...lanes].sort());
   });
 
-  it('전부일 때 core · anon · authed 전부 · flow 가 모두 선다 — 라벨 · push · 일정 · 손으로 켠 실행', () => {
+  it('전부일 때 core · anon · authed 전부 · flow 가 모두 선다 — 라벨 · push · 일정 · 손으로 켠 실행. main 쪽은 audit 만 빼고 (ADR 0257)', () => {
     const everything = { lanes: { ...FULL, audit: true, mobile: true }, authedLanes: AUTHED_LANES };
     const labelled = pr(['src/lib/saju/strength/index.ts'], [FULL_LABEL]);
     expect({ lanes: labelled.lanes, authedLanes: labelled.authedLanes }).toEqual(everything);
     for (const event of ['push', 'schedule', 'workflow_dispatch']) {
       const plan = planFor({ files: [], event });
-      expect({ lanes: plan.lanes, authedLanes: plan.authedLanes }, event).toEqual(everything);
+      expect({ lanes: plan.lanes, authedLanes: plan.authedLanes }, event).toEqual({ ...everything, lanes: { ...everything.lanes, audit: false } });
     }
   });
 });
@@ -689,7 +738,8 @@ describe('CI 계획 — 문서만 바뀐 main 푸시는 policy 만 (ADR 0154)', 
       const plan = push(['docs/prd.md', code]);
       expect(plan.tier, code).toBe('full');
       expect(plan.cause, code).toBe('main 푸시');
-      expect(plan.lanes, code).toEqual({ ...FULL, audit: true, mobile: true });
+      // main 은 바깥 조회(`audit`)를 안 돈다 — 하루 한 번의 바깥 검사 몫이다(ADR 0257)
+      expect(plan.lanes, code).toEqual({ ...FULL, audit: false, mobile: true });
       expect(plan.authedLanes, code).toEqual(AUTHED_LANES);
     }
     expect(push(['docs/prd.md', 'supabase/migrations/20261008000000_x.sql']).cause).toBe('DB');
@@ -714,7 +764,7 @@ describe('CI 계획 — 문서만 바뀐 main 푸시는 policy 만 (ADR 0154)', 
     expect(push(docs, { ...GREEN, forced: true }).cause).toBe('강제 갱신');
     expect(push([]).cause).toBe('빈 diff');
     expect(push(['', ' ']).cause).toBe('빈 diff');
-    for (const pushed of [null, { ...GREEN, forced: true }]) expect(push(docs, pushed).lanes.audit).toBe(true);
+    for (const pushed of [null, { ...GREEN, forced: true }]) expect(push(docs, pushed).lanes).toEqual({ ...FULL, audit: false, mobile: true });
   });
 
   it('앞 커밋의 verify 가 초록으로 끝나지 않았으면(끊김 · 붉음 · 못 읽음) 정책만이어도 전부다 — 끊긴 코드 커밋이 안 재어진 채 남지 않게', () => {
@@ -722,7 +772,7 @@ describe('CI 계획 — 문서만 바뀐 main 푸시는 policy 만 (ADR 0154)', 
       const plan = push(['docs/prd.md'], { ...GREEN, beforeGreen });
       expect(plan.tier, String(beforeGreen)).toBe('full');
       expect(plan.cause, String(beforeGreen)).toBe('앞 커밋 미검증');
-      expect(plan.lanes.audit).toBe(true);
+      expect(plan.lanes).toEqual({ ...FULL, audit: false, mobile: true });
     }
   });
 
