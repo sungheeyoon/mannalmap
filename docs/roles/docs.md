@@ -21,6 +21,7 @@ PRD · 간극 대장 · changelog · 용어집 · 노트 · 역할 문서를 코
 - [나란히 맡길 때](../agents/delegation/parallel.md) — 중앙 문서는 제 줄만 · 머지는 하나씩 · `union`
 - [린트가 잠근 것 · 시험이 잠근 것](../agents/code-rules/locks.md#린트가-잠근-것--시험이-잠근-것) — 입구 · 역할 문서의 경로 · 절 · 링크를 재는 시험
 - [Writing an ADR](../agents/domain.md#writing-an-adr) — 색인 줄과 후속 결정 줄
+- [읽기량 예상치는 보고다](../agents/delegation/done.md#읽기량-예상치는-보고다) — 문서를 고치거나 줄일 때 보는 잣대 열
 
 ## 하지 않는 것 · 묻는 것
 
