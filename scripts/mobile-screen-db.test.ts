@@ -4,6 +4,8 @@ import { join, relative, sep } from 'node:path';
 import ts from 'typescript';
 import { describe, expect, it } from 'vitest';
 
+import codeRules from '../eslint-code-rules.cjs';
+
 import { sourceFilesUnder } from './source-files';
 
 /**
@@ -20,8 +22,8 @@ import { sourceFilesUnder } from './source-files';
 const ROOT = join(import.meta.dirname, '..');
 const MOBILE_SRC = join(ROOT, 'mobile/src');
 
-/** `.from()` 이름이 겹치는 내장 — `scripts/layers.test.ts` 와 같은 목록 */
-const NOT_A_DB_OBJECT = /^(Array|Buffer|Uint8Array|Int32Array|Float64Array|Object|Promise|Set|Map|String)$/;
+/** `.from()` 이름이 겹치는 내장 — 웹의 린트 · 층 시험과 한 벌이다(`eslint-code-rules.cjs`) */
+const { NOT_A_DB_OBJECT } = codeRules;
 
 /** 웹과 같은 옮기기를 쓰는 RPC → 앱에서 그것을 부르는 유일한 문 */
 const ONE_DOOR: Readonly<Record<string, string>> = {

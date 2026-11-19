@@ -1,7 +1,7 @@
 const { defineConfig, globalIgnores } = require('eslint/config');
 const expoConfig = require('eslint-config-expo/flat');
 
-const { CODE_SHAPE, NO_LOOSE_ENDS, NO_CONSOLE } = require('../eslint-code-rules.cjs');
+const { CODE_SHAPE, NO_LOOSE_ENDS, NO_CONSOLE, NO_TYPE_ESCAPES } = require('../eslint-code-rules.cjs');
 
 /**
  * 앱의 린트 — `expo lint`. 뿌리의 린트는 `mobile/` 을 안 본다.
@@ -31,9 +31,12 @@ module.exports = defineConfig([
     },
   },
   {
-    /** `interface` → `type` — 타입 규칙의 플러그인은 `.ts` · `.tsx` 에만 걸려 있다(`eslint-config-expo`) */
+    /**
+     * `interface` → `type`, 그리고 `any` · `@ts-ignore` · `@ts-nocheck`(`NO_TYPE_ESCAPES` — 앱 프리셋은 안 건다). 타입 규칙의 플러그인은
+     * `.ts` · `.tsx` 에만 걸려 있다(`eslint-config-expo`)
+     */
     files: ['src/**/*.{ts,tsx}', 'scripts/**/*.{ts,tsx}'],
-    rules: { '@typescript-eslint/consistent-type-definitions': ['error', 'type'] },
+    rules: { '@typescript-eslint/consistent-type-definitions': ['error', 'type'], ...NO_TYPE_ESCAPES },
   },
   {
     /** 찍어 보는 자리는 재기 도구(`scripts/`)뿐이다 */
