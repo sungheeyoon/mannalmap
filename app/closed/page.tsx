@@ -5,6 +5,7 @@ import { BUTTON_PRIMARY } from '../ui/buttons';
 import { NoticeScreen } from '../ui/notice-screen';
 import { SUPPORT_EMAIL } from '@/src/lib/brand';
 import { SERVICE_ENDED_ON, SERVICE_ENDED_TITLE, serviceEndedNote, serviceIsOver } from '@/src/lib/consent';
+import { CLOSED_SETTINGS_NOTE, CLOSED_THANKS } from '@/src/lib/brand/words';
 
 export const metadata = {
   title: SERVICE_ENDED_TITLE,
@@ -42,9 +43,9 @@ export default function ClosedPage() {
       description={
         <>
           <p>{serviceEndedNote(SERVICE_ENDED_ON)}</p>
-          <p>함께해 주셔서 고맙습니다. 남은 문의는 {SUPPORT_EMAIL}으로 보내 주세요.</p>
+          <p>{CLOSED_THANKS} {SUPPORT_EMAIL}으로 보내 주세요.</p>
           {/* 파기 전까지는 자료가 아직 남아 있다. 그동안 철회와 탈퇴 신청이 닿아야 한다 */}
-          <p>선택 동의 철회와 탈퇴 신청은 설정에서 계속하실 수 있습니다.</p>
+          <p>{CLOSED_SETTINGS_NOTE}</p>
         </>
       }
       actions={

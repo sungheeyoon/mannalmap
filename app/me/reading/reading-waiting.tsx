@@ -6,6 +6,7 @@ import { READING_COLUMN } from './markdown';
 import type { OutlineRow } from '@/src/lib/reading/outline';
 import flow from './flow.module.css';
 import { PAPER_FACE, PLAIN_CARD_FACE } from '../../ui/surfaces';
+import { READING_WAITING_LEAD, READING_WAITING_NOTE } from '@/src/lib/reading/words';
 
 /**
  * **멈춘 화면이 아니라는 것을 무엇이 말하는가** — 서버가 적은 진행이다(ADR 0127).
@@ -29,8 +30,8 @@ export function LoadingState({ rows }: { rows: readonly OutlineRow[] }) {
           {/* 오래 걸리는 자리라 로고의 궤도가 돈다(운영자 결정 2026-11-08) — 상태는 곁의 글이 읽히므로 낭독기에는 숨긴다 */}
           <LoadingOrbit decorative />
           <div className="min-w-0">
-            <p className="text-lead font-semibold text-foreground">사주의 흐름을 이어 읽고 있어요</p>
-            <p className="text-small leading-5 text-cream-ink">근거를 확인하고, 단정하지 않는 문장으로 옮기고 있어요.</p>
+            <p className="text-lead font-semibold text-foreground">{READING_WAITING_LEAD}</p>
+            <p className="text-small leading-5 text-cream-ink">{READING_WAITING_NOTE}</p>
           </div>
         </div>
         {/*

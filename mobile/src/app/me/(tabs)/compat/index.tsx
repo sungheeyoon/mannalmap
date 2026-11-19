@@ -18,6 +18,7 @@ import { RowLine } from '@/ui/surfaces';
 import { settled } from '@/ui/settled';
 import { UNREACHABLE } from '@/auth/signup';
 import { WordText } from '@/ui/word-text';
+import { COMPAT_DIRECT_NOT_SAVED, COMPAT_NEW } from '@people/words';
 
 /**
  * 궁합 — 앱에는 `/compat` 이 없어(입구 결정) 이 주소가 두 걸음을 다 든다. `a` · `b` 가 있으면 두 명식을 보고, 없으면 두 사람을 정한다.
@@ -53,7 +54,7 @@ function PickStep({ pickA, pickB, typeB }: { pickA?: string; pickB?: string; typ
   if (read.kind === 'failed') {
     return (
       <ScreenFrame>
-        <WordText style={shared.section}>궁합 새로 보기</WordText>
+        <WordText style={shared.section}>{COMPAT_NEW}</WordText>
         <FailureLine onRetry={load}>{read.message}</FailureLine>
       </ScreenFrame>
     );
@@ -64,14 +65,14 @@ function PickStep({ pickA, pickB, typeB }: { pickA?: string; pickB?: string; typ
 
   return (
     <ScreenFrame keyboard>
-      <WordText style={shared.section}>궁합 새로 보기</WordText>
+      <WordText style={shared.section}>{COMPAT_NEW}</WordText>
       {isBlocked(state) ? (
         <AccountNotice state={state} onRetry={load} />
       ) : (
         <>
           <CompatPicker people={people} pickA={pickA} pickB={pickB} typeB={typeB} />
           <WordText style={shared.meta}>
-            직접 입력한 사람은 <WordText style={shared.bodyStrong}>저장한 사람에 추가되지 않아요.</WordText>
+            직접 입력한 사람은 <WordText style={shared.bodyStrong}>{COMPAT_DIRECT_NOT_SAVED}</WordText>
           </WordText>
           {latest !== undefined && (
             <RowLine accessibilityRole="link" onPress={() => go('/me/readings?kind=compat&from=compat')} style={styles.summary}>

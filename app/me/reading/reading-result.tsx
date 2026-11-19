@@ -19,6 +19,7 @@ import { PairNames } from './pair-names';
 import { ShareReadingButton } from './share-button';
 import type { ReadingTarget } from './target';
 import { when } from '@/src/lib/reading/when';
+import { READING_PAIR_TITLE } from '@/src/lib/reading/words';
 
 /** 궁합풀이 표지의 한 사람 — 이름과 일간(동그라미의 그림 · 오행 soft 색). 화면이 보이는 차례 그대로 준다 */
 export type CoverPerson = { readonly name: string; readonly stem: Stem | null };
@@ -194,7 +195,7 @@ export function Result({
       <div className={`${elementScope(firstTone)} flex flex-col gap-2 pt-4 sm:pt-8`}>
         {target.kind === 'match' && (
           <header className={READING_COLUMN}>
-            <p className="text-small font-semibold text-secondary">두 사람의 풀이</p>
+            <p className="text-small font-semibold text-secondary">{READING_PAIR_TITLE}</p>
             <h2 className={`mt-1 ${TYPE_SECTION}`}>궁합풀이 결과</h2>
           </header>
         )}

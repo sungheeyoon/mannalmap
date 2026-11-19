@@ -18,6 +18,7 @@ import { RequestDeletion } from '../leaving';
 import { SETTINGS_GROUP, SETTINGS_TEXT_WRAP, SettingsGroup, SettingsLinkRow } from './card';
 import { PushRow } from './push-row';
 import { SignOutRow } from './sign-out-row';
+import { DISCOVERY_SETTINGS_FAILED, NOT_CONFIRMED_YET, PRIVACY_NOTICE_ROW } from '@/src/lib/account/words';
 
 /** 화면이 그리는 데 쓰는 값 — 읽기는 `page.tsx` 가 한다(화면은 그리기만, `docs/architecture.md`) */
 export type SettingsData = {
@@ -122,7 +123,7 @@ export function SettingsView({ data }: { data: SettingsData }): ReactNode {
               </>
             ) : (
               <FailureLine retry className="px-6 py-3">
-                인연 찾기 설정을 불러오지 못했어요. {discoveryProfile.reason}
+                {DISCOVERY_SETTINGS_FAILED} {discoveryProfile.reason}
               </FailureLine>
             )}
           </SettingsGroup>
@@ -140,10 +141,10 @@ export function SettingsView({ data }: { data: SettingsData }): ReactNode {
             {/* 처리 안내도 이 무리의 한 줄이다 — 무엇을 켰나 · 껐나 · 확인했나 셋이 한 무리다 */}
             <SettingsLinkRow
               href="/privacy"
-              label="개인정보 처리 안내"
+              label={PRIVACY_NOTICE_ROW}
               help={
                 account.notice_ack_at === null
-                  ? '아직 확인하지 않았어요.'
+                  ? NOT_CONFIRMED_YET
                   : `${asKoreanDay(account.notice_ack_at.slice(0, 10))}에 확인했어요.`
               }
             />

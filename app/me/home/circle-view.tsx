@@ -12,6 +12,7 @@ import { compatHrefOf } from './map/model';
 import { HOME_HEAD, HOME_HEAD_COUNT, HOME_HEAD_LINK, HOME_LIST, HOME_ROW, HOME_ROW_INNER, HOME_ROW_LINK } from './home-list';
 import { PersonTile } from './person-tile';
 import { MoreList } from './more-list';
+import { PEOPLE_LEAD, SAVED_PEOPLE_MANAGE } from '@/src/lib/people/words';
 
 /** 접힌 동안 서는 사람 수 — 다섯(폰 한 화면). 「사람 추가」 줄은 따로 늘 선다 */
 const PEOPLE_SHOWN = 5;
@@ -100,7 +101,7 @@ function SavedPeople({
         </h2>
         {people.length > 0 && (
           /* 바로 위 제목이 「저장한 사람」이라 화면 글자는 「관리」, 읽는 이름은 온전히 */
-          <Link href="/me/people" className={HOME_HEAD_LINK} aria-label="저장한 사람 관리">
+          <Link href="/me/people" className={HOME_HEAD_LINK} aria-label={SAVED_PEOPLE_MANAGE}>
             관리
             <Icon name="chevron" className="size-4" />
           </Link>
@@ -111,7 +112,7 @@ function SavedPeople({
         /* 아무도 없으면 같은 판에 설명 한 줄과 「사람 추가」 줄 — 주 단추(먹색)는 내 사주 카드에만 선다 */
         <ul className={HOME_LIST}>
           <li className={HOME_ROW}>
-            <p className={`${HOME_ROW_INNER} break-keep text-pretty text-body leading-6 text-secondary`}>가족이나 친구의 출생 정보를 저장하고 관리하세요.</p>
+            <p className={`${HOME_ROW_INNER} break-keep text-pretty text-body leading-6 text-secondary`}>{PEOPLE_LEAD}</p>
           </li>
           <AddRow />
         </ul>

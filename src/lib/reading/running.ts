@@ -1,6 +1,7 @@
 import { READING_KINDS } from './policy';
 import type { RunProgress } from './run';
 import type { ReadingTarget } from './target';
+import { NAMELESS } from './words';
 
 /**
  * **만드는 중인 풀이 한 줄**(ADR 0157) — 대상 · 부를 이름 · 서버가 적은 진행(ADR 0127)뿐이다. 글도 실패 이유도 없다.
@@ -68,7 +69,7 @@ function targetOf(kind: string, personA: string | null, personB: string | null, 
   }
 }
 
-const called = (label: string | null): string => label ?? '이름 없음';
+const called = (label: string | null): string => label ?? NAMELESS;
 
 /** 무엇을 만드는가 — 보관함의 줄 이름(`readingTitle`)과 같은 갈래에 「풀이」 낱말을 붙인 꼴. 웹 · 앱의 홈 띠가 같은 글자를 쓴다(G-168) */
 export function runningName(running: Pick<RunningReading, 'target' | 'labelA' | 'labelB'>): string {

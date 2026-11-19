@@ -26,6 +26,7 @@ import { SecondaryButton, TextButton } from '@/ui/parts';
 import { COLOR, FONT, RADIUS, TYPE } from '@/ui/tokens';
 import { goBack } from '@/ui/top-bar';
 import { WordText } from '@/ui/word-text';
+import { SIGN_IN_LEAD } from '@account/words';
 
 /**
  * 로그인 — 웹의 `/auth` 와 같은 글자이고 로그인은 네이티브 구글, 키가 든 빌드에서는 그 밑에 카카오(ADR 0224), iOS 에서는 애플이 나란히 선다(ADR 0219). 돌아갈 곳은 앱에 있는 `/me` 아래와 결과 화면이다 —
@@ -69,7 +70,7 @@ export default function SignInScreen() {
       title={want !== null ? CHART_SIGN_IN[want].title : destination === '/me/compat' ? COMPAT_SIGN_IN_TITLE : `${SERVICE_NAME} 시작하기`}
       description={
         <NoticeLine>
-          {want !== null ? CHART_SIGN_IN[want].note : '로그인하면 저장한 사람과 사주풀이를 다음에도 이어서 볼 수 있어요.'}
+          {want !== null ? CHART_SIGN_IN[want].note : SIGN_IN_LEAD}
         </NoticeLine>
       }
       actions={

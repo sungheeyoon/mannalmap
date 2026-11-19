@@ -10,6 +10,7 @@ import { Logo } from '../ui/logo';
 import { CARD, COLUMN, FLAT_CARD_FACE, PAPER, TYPE_META, TYPE_NAME, TYPE_SECTION, TYPE_TITLE } from '../ui/surfaces';
 import { HomeLink } from '../home-link';
 import { matchOpenWhilePrerendered } from '../signed-out-match-open';
+import { FAQ_TITLE, SEE_MY_SAJU_FREE, WHAT_YOU_CAN_DO } from '@/src/lib/brand/words';
 
 /** 인연의 열림을 다시 묻는 간격(초) — 첫 화면(`app/page.tsx`)과 같다 */
 export const revalidate = 60;
@@ -46,7 +47,7 @@ export default async function AboutPage() {
 
       <section aria-labelledby="about-features" className="flex flex-col gap-4">
         <h2 id="about-features" className={TYPE_SECTION}>
-          할 수 있는 것
+          {WHAT_YOU_CAN_DO}
         </h2>
         <ul className="grid gap-3 sm:grid-cols-2">
           {SERVICE_FEATURES.map((feature) => (
@@ -82,10 +83,10 @@ export default async function AboutPage() {
 
       <p className="flex flex-col gap-2 sm:flex-row">
         <HomeLink className={BUTTON_PRIMARY}>
-          무료로 내 사주 보기
+          {SEE_MY_SAJU_FREE}
         </HomeLink>
         <Link href="/help" className={BUTTON_SECONDARY}>
-          자주 묻는 질문
+          {FAQ_TITLE}
         </Link>
       </p>
     </main>

@@ -7,9 +7,8 @@ import type { Client } from '@/auth/client';
 import { SITE_URL } from '@/site';
 
 import { readReadingView, type ReadingTarget } from './api';
+import { SHARE_NOTHING_YET, SHARE_NOT_ISSUED, SHARE_PAIR_BLOCKED } from '@reading/words';
 
-/** 링크를 못 냈다 — 까닭을 우리가 못 고를 때 이 단추가 세우는 한 문장 */
-const NOT_ISSUED = '공유 링크를 만들지 못했어요. 잠시 뒤 다시 시도해 주세요.';
 
 /**
  * 풀이를 공유본으로 내놓고 **주소를 받는다** — 웹의 `app/me/reading/share.ts` 와 같은 차례다. `share_my_reading` 은 그 사람의 토큰으로 바로 부른다.
@@ -18,20 +17,20 @@ const NOT_ISSUED = '공유 링크를 만들지 못했어요. 잠시 뒤 다시 �
  * 인연 궁합은 못 내보낸다. 생성이 없어 풀이권은 안 움직인다.
  */
 export async function shareMyReading(client: Client, target: ReadingTarget): Promise<{ ok: true; url: string } | { ok: false; message: string }> {
-  if (!isShareable(target)) return { ok: false, message: '인연 궁합은 공유 링크를 만들 수 없어요.' };
-  if (!SITE_URL) return { ok: false, message: NOT_ISSUED };
+  if (!isShareable(target)) return { ok: false, message: SHARE_PAIR_BLOCKED };
+  if (!SITE_URL) return { ok: false, message: SHARE_NOT_ISSUED };
 
   const read = await readReadingView(client, target);
-  if (!read.ok) return { ok: false, message: read.refused.refused === 'unavailable' ? read.refused.message : NOT_ISSUED };
+  if (!read.ok) return { ok: false, message: read.refused.refused === 'unavailable' ? read.refused.message : SHARE_NOT_ISSUED };
   const reading = read.value.view === 'reading' ? read.value.reading : null;
-  if (reading === null) return { ok: false, message: '아직 공유할 풀이가 없어요. 풀이를 먼저 받아 주세요.' };
+  if (reading === null) return { ok: false, message: SHARE_NOTHING_YET };
 
   const { data, error } = await client.rpc(
     'share_my_reading',
     rpcArgs<'share_my_reading'>({ p_body: reading.output, p_metaphor: reading.metaphor, ...shareTargetArgs(target) }),
   );
-  if (error !== null) return { ok: false, message: userFacingDbMessage(error, 'share_my_reading', NOT_ISSUED) };
-  if (typeof data !== 'string' || data === '') return { ok: false, message: NOT_ISSUED };
+  if (error !== null) return { ok: false, message: userFacingDbMessage(error, 'share_my_reading', SHARE_NOT_ISSUED) };
+  if (typeof data !== 'string' || data === '') return { ok: false, message: SHARE_NOT_ISSUED };
 
   return { ok: true, url: `${SITE_URL}${sharePath(target.kind as ShareKind, data)}` };
 }

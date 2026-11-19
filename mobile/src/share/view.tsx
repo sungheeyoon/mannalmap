@@ -20,6 +20,7 @@ import { Mark } from './marks';
 import { readShared, type ShareRead } from './read';
 import { useStart } from './start';
 import { WordText } from '@/ui/word-text';
+import { SCREEN_FAILED_TITLE, SEE_MY_SAJU_FREE, SHARE_GONE_ASK, SHARE_GONE_BODY, SHARE_GONE_INVITE, SHARE_GONE_TITLE, SHARE_SIGN_IN_START, TRY_AGAIN_LATER } from '@brand/words';
 
 /** 받은 사람이 보는 화면 — 세 주소가 같은 이것을 쓴다(웹의 `app/share/view.tsx`). 로그인 없이 열린다 */
 export function SharedReadingScreen({ token, expect }: { token: string; expect: ShareKind }) {
@@ -110,7 +111,7 @@ function OpenScreen({ shared, expect }: { shared: SharedReading; expect: ShareKi
           </WordText>
           <WordText style={styles.note}>{invitation.note}</WordText>
           {failure !== null && <WordText style={styles.failure}>{failure}</WordText>}
-          <PrimaryButton label="로그인하고 시작하기" onPress={start} disabled={going} />
+          <PrimaryButton label={SHARE_SIGN_IN_START} onPress={start} disabled={going} />
         </Paper>
       </ScrollView>
     </SafeAreaView>
@@ -123,10 +124,10 @@ function OpenScreen({ shared, expect }: { shared: SharedReading; expect: ShareKi
 function GoneScreen() {
   return (
     <Notice
-      title="열 수 없는 링크예요"
-      lines={['주소가 잘못됐거나 더 이상 남아 있지 않은 풀이예요.', '보낸 분에게 링크를 다시 받아 주세요.', `${SERVICE_NAME_TOPIC} 생일만 넣으면 로그인 없이 사주를 볼 수 있어요.`]}
+      title={SHARE_GONE_TITLE}
+      lines={[SHARE_GONE_BODY, SHARE_GONE_ASK, `${SERVICE_NAME_TOPIC} ${SHARE_GONE_INVITE}`]}
     >
-      <PrimaryButton label="무료로 내 사주 보기" onPress={() => router.replace('/')} />
+      <PrimaryButton label={SEE_MY_SAJU_FREE} onPress={() => router.replace('/')} />
     </Notice>
   );
 }
@@ -134,7 +135,7 @@ function GoneScreen() {
 /** 문이 터졌을 때 — 멀쩡한 링크를 「없어진 풀이」라고 하지 않는다. 글자는 웹의 `app/error-screen.tsx` 다 */
 function FailedScreen({ onRetry }: { onRetry: () => void }) {
   return (
-    <Notice title="화면을 불러오지 못했어요" lines={['잠시 후 다시 시도해 주세요.']}>
+    <Notice title={SCREEN_FAILED_TITLE} lines={[TRY_AGAIN_LATER]}>
       <PrimaryButton label="다시 시도하기" onPress={onRetry} />
       <SecondaryButton label="홈으로" onPress={() => router.replace('/')} />
     </Notice>

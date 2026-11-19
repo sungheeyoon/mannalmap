@@ -24,6 +24,7 @@ import {
   type Query,
 } from '@/src/lib/input/query';
 import { CARD, PAPER_BOTTOM } from './ui/surfaces';
+import { SEE_MY_SAJU_FREE } from '@/src/lib/brand/words';
 
 /**
  * 계산기 — **엔진이 순수 함수라 명식은 서버 없이 브라우저에서 그대로 돈다.**
@@ -166,7 +167,7 @@ export function SajuCalculator({ outline }: { outline: readonly string[] }) {
               **로그인 전에는 무엇이 무료인지 버튼이 말한다**(흐름 시안 g, ADR 0131) — 사주 · 오행 · 로그인 전 사주 문단은 로그인 없이
               바로 선다. 회원(`/saju`)이 여기 넣는 것은 대개 남의 사주라 「내」를 안 붙인다(위 머리말).
             */}
-            {query !== null ? '수정하고 다시 보기' : signedIn ? '사주 보기' : '무료로 내 사주 보기'}
+            {query !== null ? '수정하고 다시 보기' : signedIn ? '사주 보기' : SEE_MY_SAJU_FREE}
           </button>
 
           {/*

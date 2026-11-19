@@ -1,5 +1,6 @@
 import type { ReadingEntry } from '@/src/lib/reading';
 import { readingHrefOf, type ReadingTarget } from '@/src/lib/reading/target';
+import { NAMELESS } from '@/src/lib/reading/words';
 
 /**
  * 목록 한 줄이 **뭐라고 적히고 어디로 가는가.**
@@ -78,4 +79,4 @@ export const readingHref = (entry: ReadingEntry): string => readingHrefOf(target
  * 「 사주」로 서는 줄을 만들 수는 없어서 받아 둔다 — 타입이 `null` 을 허용하는 한
  * 화면 어딘가는 그 값을 그릴 수 있어야 한다.
  */
-const called = (label: string | null): string => label ?? '이름 없음';
+const called = (label: string | null): string => label ?? NAMELESS;

@@ -21,6 +21,7 @@ import { Scrim } from '@/ui/scrim';
 import { SectionScrollView } from '@/ui/section-error';
 import { CardFrame, SheetPanel } from '@/ui/surfaces';
 import { WordText } from '@/ui/word-text';
+import { PERSON_NOT_FOUND, PERSON_PICK_AGAIN } from '@people/words';
 
 /** 아직 없는 경로도 그대로 잇는다 — 나란히 짓는 화면이 그 자리에 선다 */
 export const go = (path: string) => router.push(path as Href);
@@ -83,8 +84,8 @@ export function NotFound({ children }: { children: ReactNode }) {
   return (
     <View style={styles.notFound}>
       <WordText style={styles.title}>찾을 수 없어요</WordText>
-      <WordText style={styles.noticeBody}>주소에 적힌 사람을 찾지 못했어요.</WordText>
-      <WordText style={styles.noticeBody}>목록에서 다시 골라 주세요.</WordText>
+      <WordText style={styles.noticeBody}>{PERSON_NOT_FOUND}</WordText>
+      <WordText style={styles.noticeBody}>{PERSON_PICK_AGAIN}</WordText>
       <View style={styles.notFoundActions}>{children}</View>
     </View>
   );

@@ -35,6 +35,7 @@ import { reducedMotion } from './ui/motion';
 import { CARD_FRAME, TYPE_META, TYPE_NAME } from './ui/surfaces';
 import { FailureLine } from './ui/failure-line';
 import { SectionErrorLine, useSectionErrors } from './ui/section-error';
+import { COMPAT_PICK_OTHER, COMPAT_PICK_TITLE, PICKER_PEOPLE_EMPTY } from '@/src/lib/people/words';
 
 /**
  * 궁합의 **첫 걸음** — 두 사람을 정하고 사이를 답하는 자리.
@@ -234,7 +235,7 @@ export function CompatPicker({ people }: { people: Choosable[] }) {
 
   return (
     <div ref={root} className={CARD_FRAME}>
-      <h3 className={`px-5 pt-6 sm:px-6 ${TYPE_NAME}`}>누구와 누구를 볼까요?</h3>
+      <h3 className={`px-5 pt-6 sm:px-6 ${TYPE_NAME}`}>{COMPAT_PICK_TITLE}</h3>
       <div className="grid items-start sm:grid-cols-[1fr_auto_1fr]">
         {SIDES.map((side) => (
           <Fragment key={side}>
@@ -393,7 +394,7 @@ function SlotCard({
           <PersonCombobox
             label={SIDE_LABEL[side]}
             hideLabel
-            placeholder="상대를 골라 주세요"
+            placeholder={COMPAT_PICK_OTHER}
             people={people}
             taken={taken}
             chosenId={slot.personId}
@@ -401,7 +402,7 @@ function SlotCard({
             invalid={shown.pick === undefined ? undefined : pickLine}
           />
           <SectionErrorLine id={pickLine} message={shown.pick} />
-          {people.length === 0 && <span className={TYPE_META}>아직 저장한 사람이 없어요.</span>}
+          {people.length === 0 && <span className={TYPE_META}>{PICKER_PEOPLE_EMPTY}</span>}
         </div>
       )}
 

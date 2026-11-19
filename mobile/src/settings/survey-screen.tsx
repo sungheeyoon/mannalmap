@@ -53,6 +53,7 @@ import { AccountNotice, settingsText } from './parts';
 import { setOptionalConsent } from './settings';
 import { loadSurvey, saveSurvey, type Loaded } from './survey';
 import { WordText } from '@/ui/word-text';
+import { SURVEY_CONSENT_NEEDED, SURVEY_CONSENT_NOTE, SURVEY_CONSENT_OPEN, SURVEY_DRAFT_SAVING, SURVEY_FAILED, SURVEY_RETRY_NOTE } from '@account/words';
 
 /** 서비스 설문 — 웹 `app/me/survey/` 와 같다. 어느 문항이 서는지는 DB 가 답한다(`service_survey_context`) */
 export function SurveyScreen() {
@@ -88,14 +89,14 @@ export function SurveyScreen() {
               </Paper>
               {data.kind === 'failed' ? (
                 <CardFrame style={styles.failed}>
-                  <FailureLine onRetry={() => void reload()}>설문을 불러오지 못했어요.</FailureLine>
+                  <FailureLine onRetry={() => void reload()}>{SURVEY_FAILED}</FailureLine>
                 </CardFrame>
               ) : data.context.consented ? (
                 <SurveyForm context={data.context} given={data.given} />
               ) : (
                 <CardFrame style={styles.section}>
                   <View style={styles.tight}>
-                    <WordText style={settingsText.section}>먼저 동의가 필요합니다</WordText>
+                    <WordText style={settingsText.section}>{SURVEY_CONSENT_NEEDED}</WordText>
                     <WordText style={styles.sm}>{SURVEY_COPY.consentNeeded}</WordText>
                   </View>
                   <ConsentSwitch onDone={() => void reload()} />
@@ -124,8 +125,8 @@ function ConsentSwitch({ onDone }: { onDone: () => void }) {
   };
   return (
     <View style={styles.consent}>
-      <PrimaryButton label={saving ? '켜는 중…' : '동의하고 설문 열기'} onPress={() => void turnOn()} disabled={saving} />
-      <WordText style={styles.small}>설정 화면에서 언제든 다시 끄실 수 있습니다. 끄시면 지금까지 남기신 설문 답도 함께 지웁니다.</WordText>
+      <PrimaryButton label={saving ? '켜는 중…' : SURVEY_CONSENT_OPEN} onPress={() => void turnOn()} disabled={saving} />
+      <WordText style={styles.small}>{SURVEY_CONSENT_NOTE}</WordText>
       {failure !== null && <FailureLine>{failure}</FailureLine>}
     </View>
   );
@@ -279,8 +280,8 @@ function SurveyForm({ context, given }: { context: SurveyContext; given: MySurve
 
 function DraftMark({ state }: { state: DraftState }) {
   if (state === 'idle') return null;
-  if (state === 'failed') return <WordText style={styles.draftFailed}>{`${SURVEY_COPY.draftFailed} 답을 다시 고치면 한 번 더 저장해 볼게요.`}</WordText>;
-  return <WordText style={styles.small}>{state === 'saving' ? '임시 저장하는 중…' : SURVEY_COPY.draftSaved}</WordText>;
+  if (state === 'failed') return <WordText style={styles.draftFailed}>{`${SURVEY_COPY.draftFailed} ${SURVEY_RETRY_NOTE}`}</WordText>;
+  return <WordText style={styles.small}>{state === 'saving' ? SURVEY_DRAFT_SAVING : SURVEY_COPY.draftSaved}</WordText>;
 }
 
 function Picks<T extends string>({

@@ -10,16 +10,13 @@ import { setPhotoFocus } from './actions';
 import { sendNewPhoto, sendReplacement } from './photo-send';
 import type { MyPhoto } from './photos';
 import type { usePhotoRemoval } from './use-photo-removal';
+import { FOCUS_SAVED, PHOTO_CHANGED, PHOTO_SAVED, UNREADABLE_PHOTO } from '@/src/lib/account/words';
 
-/** 사진 올리기를 막은, 우리가 안 쓴 문장 — 우리 문장 하나로 선다(`app/db-error.boundary.test.ts`) */
-const UNREADABLE_PHOTO = '사진을 열지 못했어요. 다른 사진을 골라 주세요.';
 /** 바꾸려던 장이 그 사이 서버 목록에서 빠졌다 — DB 가 낡은 누름에 내는 문장과 같은 글자(`20261202090000`) */
 const REPLACE_FAILED = '사진을 바꾸지 못했어요. 다시 시도해 주세요.';
 /** 맞추려던 장이 그 사이 서버 목록에서 빠졌다 — DB 가 낡은 누름에 내는 문장과 같은 글자(`20261203090000`) */
 const FOCUS_FAILED = '위치를 저장하지 못했어요. 다시 시도해 주세요.';
 
-/** 「위치 조정」이 끝난 말 — 사진 저장의 말과 같은 꼴(대장 settings-01) */
-const FOCUS_SAVED = '위치를 저장했어요';
 
 /** 고른 순간 칸에 서는 기기의 사진 — 서버가 그 장을 내줄 때까지의 미리보기 */
 export type Upload = { key: number; url: string; done: boolean; focus: PhotoFocus };
@@ -224,7 +221,7 @@ export function usePhotoUploads({
 
       sent += 1;
       setUploads((was) => was.map((upload) => (upload.key === key ? { ...upload, done: true } : upload)));
-      done.say(sent === 1 ? '사진을 저장했어요' : `사진 ${sent}장을 저장했어요`);
+      done.say(sent === 1 ? PHOTO_SAVED : `사진 ${sent}장을 저장했어요`);
     }
     setSending(false);
   };
@@ -271,7 +268,7 @@ export function usePhotoUploads({
       failed(message ?? REPLACE_FAILED);
     } else {
       setReplacing({ version, url, next, focus });
-      done.say('사진을 변경했어요');
+      done.say(PHOTO_CHANGED);
     }
     setSending(false);
   };

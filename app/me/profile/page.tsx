@@ -15,6 +15,7 @@ import { myPhotos } from './photos';
 import { myBirth } from './birth';
 import { BirthSection } from './birth-section';
 import { UNREADABLE_INPUT_NOTE } from '@/src/lib/input/stored';
+import { PROFILE_LEAD } from '@/src/lib/account/words';
 
 export const metadata = {
   title: '프로필',
@@ -84,7 +85,7 @@ export default async function ProfilePage() {
     <main className={`app-shell flex w-full ${COLUMN} flex-1 flex-col gap-6 py-8 sm:py-12 lg:max-w-none`}>
       <header className="flex flex-col gap-1">
         <h1 className={TYPE_TITLE}>프로필</h1>
-        <p className={TYPE_META}>앱에서 쓸 닉네임과 프로필을 정해요.</p>
+        <p className={TYPE_META}>{PROFILE_LEAD}</p>
       </header>
 
       <ProfileForm

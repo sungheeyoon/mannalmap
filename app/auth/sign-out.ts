@@ -5,6 +5,7 @@ import { useState } from 'react';
 
 import { forgetThisDevicePush } from '../me/push/browser';
 import { supabaseInBrowser } from './browser-client';
+import { SIGN_OUT_FAILED } from '@/src/lib/account/words';
 
 /**
  * 로그아웃 한 벌 — 머리글의 톱니 판 · 설정 · 가입 화면의 나가는 길이 같이 부른다.
@@ -28,7 +29,7 @@ export function useSignOut(): { leaving: boolean; failure: string | null; signOu
     const { error } = await supabaseInBrowser().auth.signOut();
     if (error) {
       setLeaving(false);
-      setFailure('로그아웃하지 못했어요. 다시 시도해 주세요.');
+      setFailure(SIGN_OUT_FAILED);
       return;
     }
     router.replace('/');

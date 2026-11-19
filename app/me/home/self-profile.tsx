@@ -11,12 +11,11 @@ import { Icon } from '../../ui/icons';
 import { StemSymbol } from '../../ui/stem-symbol';
 import { Avatar } from '../avatar';
 import { MyProfileEditFooter, PartnerSheet, usePartnerSheet } from '../partner-sheet';
+import { INTRO_PLACEHOLDER } from '@/src/lib/account/words';
 
 /** 동그라미의 읽는 이름 — 누르면 「내 프로필」 시트가 열린다(카카오톡 친구 탭 맨 위 「내 프로필」) */
 const MY_PROFILE_LABEL = '내 프로필';
 
-/** 소개가 비었을 때의 줄 — 프로필 수정 화면 소개 칸의 자리표시와 같은 글자(`app/me/profile/form.tsx`) */
-const INTRO_PLACEHOLDER = '간단한 소개를 입력해 주세요';
 
 /**
  * **홈의 동그란 내 프로필** — 내 사주 카드 이름 왼쪽의 56px 원(2026-10-26 운영자).

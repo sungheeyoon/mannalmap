@@ -40,8 +40,8 @@ import { settled } from '@/ui/settled';
 import { goBack } from '@/ui/top-bar';
 import { Card, CardFrame, Paper, Tile } from '@/ui/surfaces';
 import { WordText } from '@/ui/word-text';
+import { SIGN_OUT_FAILED } from '@account/words';
 
-const SIGN_OUT_FAILED = '로그아웃하지 못했어요. 다시 시도해 주세요.';
 
 /**
  * 가입 — 웹의 `/signup` 과 같은 한 폼이다(ADR 0042). 마치면 이 자리를 들고 온 목적지 `next` 로 갈아 끼운다(ADR 0128 · 0213).

@@ -14,6 +14,7 @@ import type { ReadingEntry } from '@reading/entry';
 import type { Client } from '@/auth/client';
 import { readAccount } from '@/auth/account';
 import { findSameChart, readEdges, readInputs, readReadings, readSlots, signedIn, type MyReading, type Read, type SameChart } from '@/people/data';
+import { COMPAT_OPEN_FAILED } from '@people/words';
 
 /** 고를 수 있는 사람 — 그 사람의 얼굴에 쓸 일간까지만 */
 export type Choosable = {
@@ -153,7 +154,7 @@ export async function openPair(client: Client, a: PairSide, b: PairSide, relatio
   if (error !== null) return { ok: false, kind: 'failed', message: userFacingDbMessage(error, 'create_pair_for_reading') };
 
   const pair = ((data ?? []) as { person_a: string; person_b: string }[])[0];
-  if (pair === undefined) return { ok: false, kind: 'failed', message: '두 사람의 궁합을 열지 못했어요. 잠시 뒤 다시 시도해 주세요.' };
+  if (pair === undefined) return { ok: false, kind: 'failed', message: COMPAT_OPEN_FAILED };
 
   /* 「모른다」로 되돌리는 것도 답이다 — 문은 사이를 적기만 하므로 여기서 지운다 */
   if (relation === null) {

@@ -38,6 +38,7 @@ import { LivingStem } from './living-stem';
 import { linksOf, type MapModel, type MapPerson } from '@/src/lib/reading/relation-map';
 import { RADIUS, SIZE, curve, curveAway, phaseOf, pointAt, seatAngles, stepsAlong, type Point } from '@/src/lib/saju/view/orbit';
 import styles from './relation-map.module.css';
+import { MAP_EMPTY_HINT, MAP_OTHERS_COMPAT, MAP_PAIR_UNSEEN, MAP_PEOPLE_COMPAT, MAP_TAP_HINT } from '@/src/lib/people/words';
 
 const MOVE = 'transition-[left,top,opacity] duration-[520ms] ease-[cubic-bezier(.2,.8,.2,1)] motion-reduce:transition-none';
 
@@ -545,7 +546,7 @@ function AddSeat({ href }: { href: string }) {
 function Legend({ empty }: { empty: boolean }) {
   if (empty) {
     return (
-      <p className="px-5 pb-5 text-small leading-5 text-secondary sm:px-6">사람을 저장하면 그 사람의 기운 쪽 궤도에 앉아요</p>
+      <p className="px-5 pb-5 text-small leading-5 text-secondary sm:px-6">{MAP_EMPTY_HINT}</p>
     );
   }
   return (
@@ -557,10 +558,10 @@ function Legend({ empty }: { empty: boolean }) {
         </li>
         <li className="flex items-center gap-1.5">
           <DotsMark />
-          사람끼리 본 궁합
+          {MAP_PEOPLE_COMPAT}
         </li>
       </ul>
-      <p className={TYPE_META}>누르면 나와의 궁합을 볼 수 있어요. 궁합을 본 사람이면 두 그림이 서로 만나요</p>
+      <p className={TYPE_META}>{MAP_TAP_HINT}</p>
     </div>
   );
 }
@@ -624,7 +625,7 @@ function PersonCard({ person, links, onClose }: { person: MapPerson; links: Retu
         <>
           <p className="line-clamp-2 font-rounded text-field leading-snug text-foreground">
             {compat.seen && !compat.current && <span className={`mr-1.5 align-middle ${STALE_CHIP}`}>{READING_STALE_LABEL}</span>}
-            {compat.seen ? compat.metaphor : <span className="text-[var(--ink)]">아직 둘의 궁합을 보지 않았어요</span>}
+            {compat.seen ? compat.metaphor : <span className="text-[var(--ink)]">{MAP_PAIR_UNSEEN}</span>}
           </p>
 
           <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
@@ -642,7 +643,7 @@ function PersonCard({ person, links, onClose }: { person: MapPerson; links: Retu
           {links.length > 0 && (
             <section aria-labelledby="home-orbit-card-links" className="flex flex-wrap items-center gap-1.5">
               <h4 id="home-orbit-card-links" className={`${TYPE_META} mr-1`}>
-                다른 사람과 본 궁합
+                {MAP_OTHERS_COMPAT}
               </h4>
               <ul className="contents">
                 {links.map((link) => (

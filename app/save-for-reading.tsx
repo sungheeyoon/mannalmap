@@ -32,6 +32,8 @@ import { actionAnswer } from './ui/action-answer';
 import { FailureLine } from './ui/failure-line';
 import { Icon } from './ui/icons';
 import { LoadingDots } from './ui/loading';
+import { SAVED_PEOPLE_MANAGE_LINK, SAVED_PEOPLE_SEE, SAVE_AS_SELF, SAVE_BOTH_ADD_NOTE, SAVE_FIRST_SCREEN_NOTE, SAVE_OTHER_QUESTION, SAVE_OTHER_TITLE, SAVE_READING_PITCH, SAVE_REMOVE_NOTE, SAVE_SELF_QUESTION } from '@/src/lib/reading/words';
+import { peopleRoomLeft } from '@/src/lib/people/words';
 
 /**
  * 직접 입력한 사람을 **저장해서 풀이까지 가는 길.**
@@ -207,8 +209,8 @@ function SaveCard({
     <section id="reading-next" className={`${CARD} scroll-mt-24 flex flex-col gap-4`}>
       <div>
         {/* 로그인 전 카드가 2026-11-12 까지 쓰던 제목(「이 사주가 내 삶에서는 어떤 뜻일까요?」)의 꼴을 이 사람에게 맞춘 것이다 */}
-        <h2 className="text-base font-semibold">이 사람의 사주는 어떤 뜻일까요?</h2>
-        <p className="mt-1.5 text-sm leading-6 text-secondary">성향부터 일과 연애, 운의 흐름까지 글로 풀어드려요.</p>
+        <h2 className="text-base font-semibold">{SAVE_OTHER_QUESTION}</h2>
+        <p className="mt-1.5 text-sm leading-6 text-secondary">{SAVE_READING_PITCH}</p>
       </div>
 
       {question !== null ? (
@@ -229,7 +231,7 @@ function SaveCard({
             href="/me/people"
             className="self-start text-sm font-semibold text-accent hover:opacity-70"
           >
-            저장한 사람 관리 →
+            {SAVED_PEOPLE_MANAGE_LINK}
           </Link>
         </div>
       ) : (
@@ -249,8 +251,7 @@ function SaveCard({
           */}
           <p className="text-xs leading-5 text-muted">
             {note}
-            {slots !== null && ` 앞으로 ${slots.remaining}명 더 저장할 수 있어요.`} 목록에서
-            빼려면 ‘저장한 사람’으로 이동해 주세요.
+            {slots !== null && ` ${peopleRoomLeft(slots.remaining)}`} {SAVE_REMOVE_NOTE}
           </p>
         </div>
       )}
@@ -360,7 +361,7 @@ export function SavePersonForReading({ query }: { query: Query }) {
       note={
         query.name.trim()
           ? `두 단추 모두 저장한 사람 목록에 「${query.name.trim()}」 이름으로 추가돼요.`
-          : '두 단추 모두 저장한 사람 목록에 이 사람이 추가돼요.'
+          : SAVE_BOTH_ADD_NOTE
       }
       onSave={(stay) => savePerson(false, stay)}
     />
@@ -380,7 +381,7 @@ function SavedOtherCard({ personId }: { personId: string }) {
           사주풀이 받기
         </Link>
         <Link href="/me/people" className={`${BUTTON_SECONDARY} w-full sm:w-auto`}>
-          저장한 사람 보기
+          {SAVED_PEOPLE_SEE}
         </Link>
       </div>
     </section>
@@ -514,8 +515,8 @@ function SelfConfirm({
   return (
     <section id="reading-next" className="scroll-mt-24 flex flex-col gap-4">
       <div>
-        <h2 className="text-base font-semibold">이 사주가 내 사주 맞나요?</h2>
-        <p className="mt-1.5 text-sm leading-6 text-secondary">첫 화면에 입력한 정보예요.</p>
+        <h2 className="text-base font-semibold">{SAVE_SELF_QUESTION}</h2>
+        <p className="mt-1.5 text-sm leading-6 text-secondary">{SAVE_FIRST_SCREEN_NOTE}</p>
       </div>
 
       <SelfCard
@@ -552,7 +553,7 @@ function SelfConfirm({
                 disabled={saving}
                 className={`${BUTTON_PRIMARY_FACE} flex-1 px-4 sm:flex-none sm:min-w-52 sm:px-5`}
               >
-                {saving ? '저장하는 중…' : '내 사주로 저장'}
+                {saving ? '저장하는 중…' : SAVE_AS_SELF}
               </button>
               <button
                 type="button"
@@ -564,7 +565,7 @@ function SelfConfirm({
                 disabled={saving}
                 className={`${BUTTON_SECONDARY_FACE} flex-1 px-4 sm:flex-none sm:px-5`}
               >
-                다른 사람의 사주예요
+                {SAVE_OTHER_TITLE}
               </button>
             </>
           )

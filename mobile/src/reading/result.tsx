@@ -17,6 +17,7 @@ import { Markdown } from './markdown';
 import { ReadingContents, headingsOf } from './contents';
 import type { ReadingTarget } from './api';
 import { WordText } from '@/ui/word-text';
+import { READING_PAIR_TITLE } from '@reading/words';
 
 const softOf = (element: Element | null | undefined) => (element ? ELEMENT_TONE[element].soft : COLOR.noneSoft);
 
@@ -126,7 +127,7 @@ export function Result({
 
       {target.kind === 'match' && (
         <View>
-          <WordText style={styles.coverTitle}>두 사람의 풀이</WordText>
+          <WordText style={styles.coverTitle}>{READING_PAIR_TITLE}</WordText>
           <WordText style={styles.bodyHead}>궁합풀이 결과</WordText>
         </View>
       )}

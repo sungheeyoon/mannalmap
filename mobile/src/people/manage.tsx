@@ -20,6 +20,7 @@ import { addPerson, removeFromList, updateNote } from './data';
 import { go, styles as shared } from './parts';
 import { SameChartAsk, type SameChartQuestion } from './same-chart-ask';
 import { WordText } from '@/ui/word-text';
+import { PERSON_DELETE_BODY, PERSON_DELETE_FAILED, PERSON_DELETE_FINAL, PERSON_NAME_PRIVATE, PERSON_NOTE_HINT, peopleRoomLeft } from '@people/words';
 
 /** 메모 칸 — 사주 계산에 쓰지 않는다 */
 function NoteField({ value, onChange, disabled = false }: { value: string; onChange: (next: string) => void; disabled?: boolean }) {
@@ -35,7 +36,7 @@ function NoteField({ value, onChange, disabled = false }: { value: string; onCha
         maxLength={NOTE_MAX}
         multiline
         numberOfLines={2}
-        placeholder="기억해 둘 것 — 사주 계산에는 쓰지 않아요"
+        placeholder={PERSON_NOTE_HINT}
         placeholderTextColor={COLOR.muted}
         accessibilityLabel="메모 (선택)"
       />
@@ -133,8 +134,8 @@ function AddForm({ remaining, onCancel, onSaved }: { remaining: number | null; o
     <Card style={styles.form}>
       <WordText style={shared.section}>사람 추가</WordText>
       <WordText style={shared.body}>
-        이 이름은 내 목록에만 보여요.
-        {remaining !== null && remaining <= 5 && ` 앞으로 ${remaining}명 더 저장할 수 있어요.`}
+        {PERSON_NAME_PRIVATE}
+        {remaining !== null && remaining <= 5 && ` ${peopleRoomLeft(remaining)}`}
       </WordText>
       <BirthFields form={form} namePlaceholder="엄마" disabled={saving} errors={sections} />
       <NoteField value={note} onChange={setNote} disabled={saving} />
@@ -200,14 +201,14 @@ export function RemoveConfirm({ personId, label, onDone, onCancel }: { personId:
       open
       danger
       title={`${label}${endsWithBatchim(label) ? '을' : '를'} 삭제할까요?`}
-      irreversible="삭제한 사람은 되돌릴 수 없어요."
+      irreversible={PERSON_DELETE_FINAL}
       confirmLabel={removing ? '삭제하는 중…' : '삭제'}
       busy={removing}
-      failure={failure === null ? null : `삭제하지 못했어요. ${failure}`}
+      failure={failure === null ? null : `${PERSON_DELETE_FAILED} ${failure}`}
       onConfirm={remove}
       onClose={onCancel}
     >
-      <DialogText>삭제하면 저장한 출생 정보와 이 사람의 풀이가 목록에서 사라져요.</DialogText>
+      <DialogText>{PERSON_DELETE_BODY}</DialogText>
     </ConfirmDialog>
   );
 }

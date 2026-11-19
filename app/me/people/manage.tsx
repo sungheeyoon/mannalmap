@@ -26,6 +26,7 @@ import { useLeaveGuard } from '../../ui/leave-guard';
 import { CARD_FACE, EMPTY_SLOT, PLAIN_CARD_FACE, TYPE_META, TYPE_SECTION } from '../../ui/surfaces';
 import { FailureLine } from '../../ui/failure-line';
 import { useSectionErrors } from '../../ui/section-error';
+import { PERSON_DELETE_BODY, PERSON_DELETE_FAILED, PERSON_DELETE_FINAL, PERSON_NAME_PRIVATE, PERSON_NOTE_HINT, peopleRoomLeft } from '@/src/lib/people/words';
 
 /**
  * 목록을 손대는 세 자리 — 추가·메모·빼기.
@@ -175,8 +176,8 @@ export function AddPerson({ slots }: { slots: PersonSlots | null }) {
       <header className="flex flex-col gap-1.5">
         <h2 className={TYPE_SECTION}>사람 추가</h2>
         <p className="text-body leading-6 text-secondary">
-          이 이름은 내 목록에만 보여요.
-          {remaining !== null && remaining <= 5 && ` 앞으로 ${remaining}명 더 저장할 수 있어요.`}
+          {PERSON_NAME_PRIVATE}
+          {remaining !== null && remaining <= 5 && ` ${peopleRoomLeft(remaining)}`}
         </p>
       </header>
 
@@ -247,7 +248,7 @@ function NoteField({
         onChange={(event) => onChange(event.target.value.slice(0, NOTE_MAX))}
         maxLength={NOTE_MAX}
         rows={2}
-        placeholder="기억해 둘 것 — 사주 계산에는 쓰지 않아요"
+        placeholder={PERSON_NOTE_HINT}
         className="rounded-cell border border-border-strong bg-surface px-3.5 py-2.5 text-field leading-6 placeholder:text-secondary focus:border-border-strong focus:ring-2 focus:ring-accent-wash"
       />
     </label>
@@ -361,10 +362,10 @@ export function RemoveConfirm({
       onConfirm={remove}
       danger
       busy={removing}
-      failure={failure === null ? null : `삭제하지 못했어요. ${failure}`}
-      irreversible="삭제한 사람은 되돌릴 수 없어요."
+      failure={failure === null ? null : `${PERSON_DELETE_FAILED} ${failure}`}
+      irreversible={PERSON_DELETE_FINAL}
     >
-      <p>삭제하면 저장한 출생 정보와 이 사람의 풀이가 목록에서 사라져요.</p>
+      <p>{PERSON_DELETE_BODY}</p>
     </ConfirmDialog>
   );
 }

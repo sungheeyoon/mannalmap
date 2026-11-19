@@ -17,6 +17,7 @@ import { settled } from '@/ui/settled';
 import { COLOR, CONTROL, FONT, RADIUS, TYPE } from '@/ui/tokens';
 import { CardFrame } from '@/ui/surfaces';
 import { WordText } from '@/ui/word-text';
+import { BIRTH_EDIT } from '@people/words';
 
 
 type MyBirth = { kind: 'none' } | { kind: 'failed' } | { kind: 'unreadable'; message: string } | { kind: 'ready'; personId: string; query: Query };
@@ -91,7 +92,7 @@ export function BirthSection({ startOpen = false }: { startOpen?: boolean }) {
     <CardFrame style={styles.panel}>
       <View style={styles.head}>
         <WordText accessibilityRole="header" style={styles.title}>출생 정보</WordText>
-        <Pressable accessibilityRole="button" accessibilityLabel="출생 정보 수정" onPress={() => setOpen(true)} style={styles.edit}>
+        <Pressable accessibilityRole="button" accessibilityLabel={BIRTH_EDIT} onPress={() => setOpen(true)} style={styles.edit}>
           <WordText style={styles.editText}>수정</WordText>
         </Pressable>
       </View>

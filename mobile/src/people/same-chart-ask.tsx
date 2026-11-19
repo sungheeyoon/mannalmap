@@ -4,17 +4,18 @@ import { PrimaryButton, SecondaryButton } from '@/ui/parts';
 import { COLOR, FONT, TYPE } from '@/ui/tokens';
 import { CardFrame } from '@/ui/surfaces';
 import { WordText } from '@/ui/word-text';
+import { SAME_CHART_BODY, SAME_CHART_NO, SAME_CHART_TITLE, SAME_CHART_YES } from '@people/words';
 
 export type SameChartQuestion = { readonly label: string; readonly answer: (sameperson: boolean) => void };
 
 /** 「이미 저장된 그 사람인가요?」 — 거절이 아니라 물음이고 두 답이 나란히 선다(`app/same-chart-ask.tsx`, ADR 0034) */
 export function SameChartAsk({ question, busy }: { question: SameChartQuestion; busy: boolean }) {
   return (
-    <CardFrame accessibilityLabel="같은 사람인지 확인" style={styles.box}>
+    <CardFrame accessibilityLabel={SAME_CHART_TITLE} style={styles.box}>
       <WordText style={styles.title}>저장된 {question.label} 님과 같은 사람인가요?</WordText>
-      <WordText style={styles.body}>여덟 글자와 태어난 시각이 같습니다.</WordText>
-      <PrimaryButton label="네, 같은 사람입니다" disabled={busy} onPress={() => question.answer(true)} />
-      <SecondaryButton label="아니요, 다른 사람입니다" disabled={busy} onPress={() => question.answer(false)} />
+      <WordText style={styles.body}>{SAME_CHART_BODY}</WordText>
+      <PrimaryButton label={SAME_CHART_YES} disabled={busy} onPress={() => question.answer(true)} />
+      <SecondaryButton label={SAME_CHART_NO} disabled={busy} onPress={() => question.answer(false)} />
     </CardFrame>
   );
 }

@@ -15,10 +15,10 @@ import { COLOR, FONT, RADIUS, TYPE } from '@/ui/tokens';
 
 import type { SelfFace } from './read';
 import { WordText } from '@/ui/word-text';
+import { INTRO_PLACEHOLDER } from '@account/words';
 
 /** 웹의 `app/me/home/self-profile.tsx` 와 같은 글자다 */
 const MY_PROFILE_LABEL = '내 프로필';
-const INTRO_PLACEHOLDER = '간단한 소개를 입력해 주세요';
 
 /** 프로필 수정은 설정 영역의 주소다 — 시트를 닫고 간다 */
 const toProfile = (close: () => void) => () => {

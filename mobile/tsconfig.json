@@ -90,6 +90,9 @@
       "@people/pick": [
         "../src/lib/people/pick.ts"
       ],
+      "@people/words": [
+        "../src/lib/people/words.ts"
+      ],
       "@matching": [
         "../src/lib/matching/index.ts"
       ],

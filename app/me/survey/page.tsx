@@ -12,6 +12,7 @@ import { ConsentSwitch } from './consent-switch';
 import { SurveyForm } from './form';
 import { mySurvey, surveyContext } from './read';
 import { FailureLine } from '../../ui/failure-line';
+import { SURVEY_CONSENT_NEEDED, SURVEY_FAILED } from '@/src/lib/account/words';
 
 export const metadata = {
   title: '서비스 설문',
@@ -66,7 +67,7 @@ export default async function SurveyPage() {
 
       {context === null ? (
         <FailureLine retry className={`${FLAT_CARD_FACE} p-5`}>
-          설문을 불러오지 못했어요.
+          {SURVEY_FAILED}
         </FailureLine>
       ) : context.consented ? (
         <SurveyForm context={context} given={given} />
@@ -78,7 +79,7 @@ export default async function SurveyPage() {
         */
         <section className={`flex flex-col gap-4 ${FLAT_CARD_FACE} p-5 sm:p-6`}>
           <div className="flex flex-col gap-1">
-            <h2 className={TYPE_SECTION}>먼저 동의가 필요합니다</h2>
+            <h2 className={TYPE_SECTION}>{SURVEY_CONSENT_NEEDED}</h2>
             <p className="text-sm leading-6 text-secondary">{SURVEY_COPY.consentNeeded}</p>
           </div>
           <ConsentSwitch />

@@ -13,6 +13,7 @@ import { CARD_FACE, COLUMN_READING, PAPER_FACE, TILE_FACE, TYPE_SECTION, TYPE_TI
 import { AppSheet } from './app-sheet';
 import type { ShareKind } from './path';
 import { sharedReadingOf } from './read';
+import { SHARE_SIGN_IN_START } from '@/src/lib/brand/words';
 
 /**
  * 받은 사람이 보는 화면 — **세 주소가 같은 이것을 쓴다.**
@@ -168,7 +169,7 @@ export function SharedReadingBody({ shared, token, expect }: { shared: SharedRea
 function StartButton() {
   return (
     <Link href="/auth" className={`${BUTTON_PRIMARY} w-full sm:w-auto`}>
-      로그인하고 시작하기
+      {SHARE_SIGN_IN_START}
     </Link>
   );
 }

@@ -6,9 +6,10 @@ import { BUTTON_SECONDARY } from '../ui/buttons';
 import { Icon } from '../ui/icons';
 import { OpenHashed } from './open-hashed';
 import { CARD, COLUMN, DISCLOSURE_SUMMARY_FACE, TYPE_SECTION, TYPE_TITLE } from '../ui/surfaces';
+import { FAQ_LEAD, FAQ_TITLE } from '@/src/lib/brand/words';
 
 export const metadata = {
-  title: '자주 묻는 질문',
+  title: FAQ_TITLE,
   description: '풀이권 · 궁합 · 공유 링크 · 탈퇴에 대해 답해 드려요.',
 };
 
@@ -31,8 +32,8 @@ export default function HelpPage() {
     <main className={`app-shell flex w-full ${COLUMN} flex-1 flex-col gap-8 py-8 sm:py-12`}>
       <OpenHashed />
       <header className="flex flex-col gap-2">
-        <h1 className={TYPE_TITLE}>자주 묻는 질문</h1>
-        <p className="text-body leading-7 text-secondary">궁금한 물음을 누르면 답이 펼쳐져요.</p>
+        <h1 className={TYPE_TITLE}>{FAQ_TITLE}</h1>
+        <p className="text-body leading-7 text-secondary">{FAQ_LEAD}</p>
       </header>
 
       {/* 묶음으로 바로 가는 줄 — 긴 목록에서 「풀이권」만 찾는 사람이 끝까지 내리지 않게 */}

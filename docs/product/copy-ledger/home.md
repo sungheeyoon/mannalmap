@@ -45,7 +45,7 @@
 | --- | --- | --- |
 | 저장한 사람으로 가는 링크 `app/me/home/circle-view.tsx` | 전체 관리 | 화면 글자 「관리」 · 읽는 이름(`aria-label`) 「저장한 사람 관리」 |
 | 출생 정보 변경 확인창(풀이권) `src/lib/consent/index.ts:279` | …모두 취소되고… | 답을 기다리는 인연 요청은 모두 무효가 되고, 예약된 풀이권은 돌아옵니다. 바뀐 정보로 다시 요청해 주세요. (합니다체 유지 · 용어만) |
-| 저장 결과 오류 `app/me/actions.ts` | 저장한 사람을 찾지 못했습니다. | 저장이 끝났는지 알 수 없어요. 저장한 사람 목록을 다시 열어 봐 주세요. |
+| 저장 결과 오류 `app/me/actions.ts` · 글자 `src/lib/people/words.ts` 의 `PERSON_SAVE_UNKNOWN` | 저장한 사람을 찾지 못했습니다. | 저장이 끝났는지 알 수 없어요. 저장한 사람 목록을 다시 열어 봐 주세요. |
 | 목차 진행 `src/lib/reading/notes.ts` | 쓰는 중 · 검토 중 | 작성 중… · 검토 중… |
 | 빈 점선 표지 `received-readings.tsx` · `shelf.tsx` · `layout.tsx` | 내 사주 등록 · 내 사주풀이 | 내 사주 등록하기 · 사주풀이 받기 |
 
@@ -138,8 +138,8 @@
 | --- | --- | --- |
 | 폼의 액션 부름이 던졌을 때(망 · 배포 직후) `app/ui/action-answer.ts` — 모든 폼 | (화면 전체가 「화면을 불러오지 못했어요」로 바뀌고 입력이 사라졌다) | 처리하지 못했어요. 다시 시도해 주세요. |
 | 화면 안 한 칸을 못 읽은 줄의 단추 `app/ui/failure-line.tsx` — 홈 · 소식 · 받은 요청 · 인연 기록 · 설문 | (없음 — 새로고침뿐) | 다시 시도하기 |
-| 홈의 내 사주를 못 읽음 `app/me/(home)/page.tsx` | 내 사주를 불러오지 못했어요. 잠시 뒤 새로고침해 주세요. | 내 사주를 불러오지 못했어요. |
-| 설문을 못 읽음 `app/me/survey/page.tsx` | 설문을 불러오지 못했어요. 잠시 뒤에 새로고침해 주세요. | 설문을 불러오지 못했어요. |
+| 홈의 내 사주를 못 읽음 `app/me/(home)/page.tsx` · 글자 `src/lib/reading/words.ts` 의 `SELF_CHART_FAILED` | 내 사주를 불러오지 못했어요. 잠시 뒤 새로고침해 주세요. | 내 사주를 불러오지 못했어요. |
+| 설문을 못 읽음 `app/me/survey/page.tsx` · 글자 `src/lib/account/words.ts` 의 `SURVEY_FAILED` | 설문을 불러오지 못했어요. 잠시 뒤에 새로고침해 주세요. | 설문을 불러오지 못했어요. |
 
 ## 41 확정 문구 — 다 쓴 풀이의 목차 · 풀이 보관함의 이름 찾기 (조율자 승인 2026-10-11, 외부 UX 리뷰)
 
@@ -362,7 +362,7 @@ home-12 의 줄 가운데 운영자가 본 시안의 글자 그대로인 한 줄
 
 | 자리 | 이전 | 확정 | 출처 |
 | --- | --- | --- | --- |
-| 메뉴의 첫 줄 — 웹 `app/me/home/self-menu.tsx` · 앱 `mobile/src/home/self-card.tsx` | 수정 (읽는 이름 「출생 정보 수정」, all-19) | 출생 정보 수정 | 운영자 승인 시안 「수정 A안」의 글자 그대로(2026-11-12) — 저장한 사람 카드 관리 메뉴의 첫 줄(`app/me/people/person-menu.tsx` · `mobile/src/people/person-card.tsx`)이자 이 카드에서 걷은 「수정」의 읽는 이름(all-19) |
+| 메뉴의 첫 줄 — 웹 `app/me/home/self-menu.tsx` · 앱 `mobile/src/home/self-card.tsx` · 글자 `src/lib/people/words.ts` 의 `BIRTH_EDIT` | 수정 (읽는 이름 「출생 정보 수정」, all-19) | 출생 정보 수정 | 운영자 승인 시안 「수정 A안」의 글자 그대로(2026-11-12) — 저장한 사람 카드 관리 메뉴의 첫 줄(`app/me/people/person-menu.tsx` · `mobile/src/people/person-card.tsx`)이자 이 카드에서 걷은 「수정」의 읽는 이름(all-19) |
 
 ## home-19 확인 전 — 저장한 사람 화면의 출생 한 줄 · 받은 풀이 카드 (운영자 승인 2026-11-13 시안 「0-1 A」와 다른 둘, home-14 에서 나눔 2026-11-19)
 

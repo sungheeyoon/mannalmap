@@ -29,6 +29,7 @@ import { CARD, TYPE_META, TYPE_TITLE } from '../../ui/surfaces';
 import { TopBar } from '../../ui/top-bar';
 import { backOf, placeOf, type Back } from '../../came-from';
 import { COMPAT_ENTRY_LABEL } from '../../service-features';
+import { COMPAT_SAME_PERSON, COMPAT_UNAVAILABLE } from '@/src/lib/people/words';
 
 /** 주소가 드는 값 — Next 의 `searchParams` 는 같은 이름이 둘이면 배열을 준다 */
 export type CompatQuery = {
@@ -135,7 +136,7 @@ export async function CompatScreen({ params, frame }: { params: CompatQuery; fra
       <header>
         <TopBar back={{ href: '/compat', label: COMPAT_ENTRY_LABEL }}>
           <p className="text-small font-semibold text-secondary">궁합</p>
-          <Title frame={frame}>궁합을 볼 수 없습니다</Title>
+          <Title frame={frame}>{COMPAT_UNAVAILABLE}</Title>
         </TopBar>
       </header>
 
@@ -318,7 +319,7 @@ async function Result({ outcome, reading: preloaded }: { outcome: Outcome; readi
   if (outcome.kind === 'same') {
     return (
       <p role="alert" className={`${CARD} text-body leading-6`}>
-        같은 사람은 한 번만 고를 수 있어요. 서로 다른 두 사람을 골라 주세요.
+        {COMPAT_SAME_PERSON}
       </p>
     );
   }

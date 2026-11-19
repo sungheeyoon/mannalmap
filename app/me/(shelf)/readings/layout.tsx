@@ -21,6 +21,7 @@ import { ReadingsFrame, ShelfItem, type NextBook } from './frame';
 import { SHELF_KIND_LABEL, shelfKindOfReading, type ShelfKind } from './kind';
 import type { ShelfLists } from './opening';
 import { BlankBook, MakingGroup, MakingMatchRow, MakingRow, Nothing, Shelf, ShelfRow } from './shelf';
+import { SHELF_MATCH_NOTE, SHELF_PAIR_NOTE, SHELF_SINGLE_NOTE } from '@/src/lib/reading/words';
 
 /**
  * **풀이 보관함** — 만든 글이 **한 목록에** 서는 자리 (ADR 0033) — 그리고 그 목록 옆에서 글을 읽는 자리.
@@ -169,7 +170,7 @@ export default async function ReadingsLayout({ children }: { children: ReactNode
     /*
       **사주풀이 묶음은 비어도 선다 — 점선 한 줄로.** 내 사주풀이가 아직 없으면 그 받는 자리가 끝에 선다. 내 사주가 없으면 등록이다.
     */
-    <Shelf {...(titled ? { title: '사주풀이', description: '나와 저장한 사람을 한 사람씩 본 풀이예요.' } : {})}>
+    <Shelf {...(titled ? { title: '사주풀이', description: SHELF_SINGLE_NOTE } : {})}>
       {!titled && makingRows('saju')}
       {singles.map((book) => (
         <ShelfItem key={book.key} href={book.href}>
@@ -186,7 +187,7 @@ export default async function ReadingsLayout({ children }: { children: ReactNode
 
   /* 직접 본 궁합 — 비면 궁합 탭으로 가는 점선 한 줄. 만드는 중인 것은 맨 위에 있으므로 그때는 점선을 안 세운다 */
   const compatShelf = (titled: boolean) => (
-    <Shelf {...(titled ? { title: '궁합풀이', description: '두 사람을 함께 맞대어 본 풀이예요.' } : {})}>
+    <Shelf {...(titled ? { title: '궁합풀이', description: SHELF_PAIR_NOTE } : {})}>
       {!titled && makingRows('compat')}
       {privates.map(({ book }) => (
         <ShelfItem key={book.key} href={book.href}>
@@ -202,7 +203,7 @@ export default async function ReadingsLayout({ children }: { children: ReactNode
   /* 인연 궁합 — 다 된 글. 전체 칸에서는 한 권도 없으면 묶음이 안 선다. 인연 궁합 칩에서 아무것도 없으면 오늘의 인연으로 가는 점선 한 줄 */
   const fatedShelf = (titled: boolean) =>
     (fated.length > 0 || !titled) && (
-      <Shelf {...(titled ? { title: '인연 궁합', description: '서로 동의해 두 사람이 함께 보는 궁합풀이예요.' } : {})}>
+      <Shelf {...(titled ? { title: '인연 궁합', description: SHELF_MATCH_NOTE } : {})}>
         {!titled && makingRows('match')}
         {fated.map(({ book, matchId }) => (
           <ShelfItem key={book.key} href={book.href}>

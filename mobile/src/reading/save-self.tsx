@@ -25,6 +25,8 @@ import { COLOR, ELEMENT_TONE, FONT, RADIUS, TYPE } from '@/ui/tokens';
 
 import { saveSelfPerson } from './chart-writes';
 import { WordText } from '@/ui/word-text';
+import { SAVED_PEOPLE_MANAGE_LINK, SAVED_PEOPLE_SEE, SAVE_AS_SELF, SAVE_BOTH_ADD_NOTE, SAVE_FIRST_SCREEN_NOTE, SAVE_OTHER_QUESTION, SAVE_OTHER_TITLE, SAVE_READING_PITCH, SAVE_REMOVE_NOTE, SAVE_SELF_QUESTION } from '@reading/words';
+import { peopleRoomLeft } from '@people/words';
 
 /**
  * `out` 은 아직 저장할 수 없는 사람(로그인 전 · 가입 전)이다 — 세션이 없으면 서버를 안 부른다(ADR 0213). 가입 전인 사람에게 내 사주를 묻지 않는다.
@@ -149,7 +151,7 @@ function SavedOtherCard({ personId }: { personId: string }) {
       <WordText accessibilityRole="alert" style={styles.title}>저장했어요</WordText>
       <View style={styles.answers}>
         <PrimaryButton label="사주풀이 받기" onPress={() => router.push(`/me/readings/${personId}` as never)} />
-        <SecondaryButton label="저장한 사람 보기" onPress={() => router.push('/me/people' as never)} />
+        <SecondaryButton label={SAVED_PEOPLE_SEE} onPress={() => router.push('/me/people' as never)} />
       </View>
     </Card>
   );
@@ -195,8 +197,8 @@ function SaveCard({ query, slots, onSavedHere }: { query: Query; slots: PersonSl
   return (
     <Card style={styles.card}>
       <View style={styles.head}>
-        <WordText accessibilityRole="header" style={styles.title}>이 사람의 사주는 어떤 뜻일까요?</WordText>
-        <WordText style={styles.line}>성향부터 일과 연애, 운의 흐름까지 글로 풀어드려요.</WordText>
+        <WordText accessibilityRole="header" style={styles.title}>{SAVE_OTHER_QUESTION}</WordText>
+        <WordText style={styles.line}>{SAVE_READING_PITCH}</WordText>
       </View>
 
       {question !== null ? (
@@ -204,7 +206,7 @@ function SaveCard({ query, slots, onSavedHere }: { query: Query; slots: PersonSl
       ) : noRoom !== null ? (
         <View style={styles.noRoom}>
           <WordText style={styles.line}>{noRoom}</WordText>
-          <TextButton label="저장한 사람 관리 →" onPress={() => router.push('/me/people' as never)} />
+          <TextButton label={SAVED_PEOPLE_MANAGE_LINK} onPress={() => router.push('/me/people' as never)} />
         </View>
       ) : (
         <>
@@ -213,8 +215,8 @@ function SaveCard({ query, slots, onSavedHere }: { query: Query; slots: PersonSl
             <SecondaryButton label={pending === 'stay' ? '저장하는 중…' : '저장하기'} onPress={() => void save(false, 'stay')} disabled={saving} />
           </View>
           <WordText style={styles.fine}>
-            {name !== '' ? `두 단추 모두 저장한 사람 목록에 「${name}」 이름으로 추가돼요.` : '두 단추 모두 저장한 사람 목록에 이 사람이 추가돼요.'}
-            {slots !== null && ` 앞으로 ${slots.remaining}명 더 저장할 수 있어요.`} 목록에서 빼려면 ‘저장한 사람’으로 이동해 주세요.
+            {name !== '' ? `두 단추 모두 저장한 사람 목록에 「${name}」 이름으로 추가돼요.` : SAVE_BOTH_ADD_NOTE}
+            {slots !== null && ` ${peopleRoomLeft(slots.remaining)}`} {SAVE_REMOVE_NOTE}
           </WordText>
         </>
       )}
@@ -252,12 +254,12 @@ function SelfConfirm({ query, want, name, onSomeoneElse }: { query: Query; want:
   return (
     <Card style={styles.card}>
       <View style={styles.head}>
-        <WordText accessibilityRole="header" style={styles.title}>이 사주가 내 사주 맞나요?</WordText>
-        <WordText style={styles.line}>첫 화면에 입력한 정보예요.</WordText>
+        <WordText accessibilityRole="header" style={styles.title}>{SAVE_SELF_QUESTION}</WordText>
+        <WordText style={styles.line}>{SAVE_FIRST_SCREEN_NOTE}</WordText>
       </View>
       <View style={styles.answers}>
-        <PrimaryButton label={saving ? '저장하는 중…' : '내 사주로 저장'} onPress={() => void save()} disabled={saving} />
-        <SecondaryButton label="다른 사람의 사주예요" onPress={onSomeoneElse} disabled={saving} />
+        <PrimaryButton label={saving ? '저장하는 중…' : SAVE_AS_SELF} onPress={() => void save()} disabled={saving} />
+        <SecondaryButton label={SAVE_OTHER_TITLE} onPress={onSomeoneElse} disabled={saving} />
       </View>
       {failure !== null && <WordText accessibilityRole="alert" style={styles.failure}>저장하지 못했어요. {failure}</WordText>}
     </Card>

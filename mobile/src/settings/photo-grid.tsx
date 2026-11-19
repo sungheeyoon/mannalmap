@@ -18,13 +18,11 @@ import { useDoneNote } from './parts';
 import { PHOTO_FRAME_TITLE, PhotoFramer, contentPositionOf } from './photo-framer';
 import { moveShownFirst } from './photo-move';
 import { PhotoViewer, type PhotoChoice } from './photo-viewer';
-import { UNREADABLE_PHOTO, addPhoto, movePhoto, photoSource, pickPhotos, removePhoto, replacePhoto, setPhotoFocus, type MyPhoto } from './photos';
+import { addPhoto, movePhoto, photoSource, pickPhotos, removePhoto, replacePhoto, setPhotoFocus, type MyPhoto } from './photos';
 import { WordText } from '@/ui/word-text';
+import { FOCUS_SAVED, PHOTO_CHANGED, PHOTO_REORDER_HINT, PHOTO_SAVED, PHOTO_SAVES_ITSELF, PHOTO_SAVING, UNREADABLE_PHOTO } from '@account/words';
 
 const PHOTO_SECTION_TITLE = '프로필 사진';
-const PHOTO_SAVES_ITSELF = '사진은 바로 저장돼요';
-const PHOTO_REORDER_HINT = '사진을 길게 눌러 순서를 바꿀 수 있어요';
-const FOCUS_SAVED = '위치를 저장했어요';
 
 const GAP = 8;
 const LIFT_MS = 300;
@@ -165,7 +163,7 @@ export function PhotoGrid({
       sent += 1;
       await reload();
       setWaiting((was) => was.filter((one) => one.key !== key));
-      done.say(sent === 1 ? '사진을 저장했어요' : `사진 ${sent}장을 저장했어요`);
+      done.say(sent === 1 ? PHOTO_SAVED : `사진 ${sent}장을 저장했어요`);
     }
     setWaiting([]);
     setSending(false);
@@ -196,7 +194,7 @@ export function PhotoGrid({
     if (message !== null) failed(message);
     else {
       await reload();
-      done.say('사진을 변경했어요');
+      done.say(PHOTO_CHANGED);
     }
     setCovering(null);
     setSending(false);
@@ -346,7 +344,7 @@ export function PhotoGrid({
     );
   };
 
-  const status = done.note !== '' ? done.note : sending ? '사진 저장 중…' : '';
+  const status = done.note !== '' ? done.note : sending ? PHOTO_SAVING : '';
   const gridHeight = width === 0 ? 0 : slotRect(6, width).top + slotRect(6, width).height;
 
   return (

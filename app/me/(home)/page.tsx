@@ -31,6 +31,7 @@ import { HOME_ROW_LINK } from '../home/home-list';
 import { MatchOpenAlert } from '../home/match-open-alert';
 import { openOf, readMatchOpen, readMatchOpenAlert } from '../../match-opening';
 import { matchOpenAlertStands } from '@/src/lib/matching/opening';
+import { SELF_CHART_FAILED } from '@/src/lib/reading/words';
 
 /**
  * 로그인한 사람이 도착하는 자리 — **홈.**
@@ -158,7 +159,7 @@ async function Home({
 
   const selfCard =
     stood === null ? (
-      <FailureLine retry>내 사주를 불러오지 못했어요.</FailureLine>
+      <FailureLine retry>{SELF_CHART_FAILED}</FailureLine>
     ) : !stood.ok ? (
       <section className={`flex flex-col gap-2 ${FLAT_CARD_FACE} p-5 sm:p-6`}>
         <p className={TYPE_BODY}>{stood.message}</p>

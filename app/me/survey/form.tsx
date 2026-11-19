@@ -43,6 +43,7 @@ import { FLAT_CARD_FACE, TYPE_SECTION } from '../../ui/surfaces';
 import { actionAnswer } from '../../ui/action-answer';
 import { FailureLine } from '../../ui/failure-line';
 import { useLeaveGuard } from '../../ui/leave-guard';
+import { SURVEY_DRAFT_SAVING, SURVEY_RETRY_NOTE } from '@/src/lib/account/words';
 
 /**
  * 서비스 설문 폼 — **쓰는 동안 저절로 남고, 제출은 손으로 한다.**
@@ -351,14 +352,14 @@ function DraftMark({ state }: { state: DraftState }) {
   if (state === 'failed') {
     return (
       <span role="status" className="text-small font-semibold text-danger">
-        {SURVEY_COPY.draftFailed} 답을 다시 고치면 한 번 더 저장해 볼게요.
+        {SURVEY_COPY.draftFailed} {SURVEY_RETRY_NOTE}
       </span>
     );
   }
 
   return (
     <span role="status" className="text-small text-muted">
-      {state === 'saving' ? '임시 저장하는 중…' : SURVEY_COPY.draftSaved}
+      {state === 'saving' ? SURVEY_DRAFT_SAVING : SURVEY_COPY.draftSaved}
     </span>
   );
 }

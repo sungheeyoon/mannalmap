@@ -8,6 +8,7 @@ import { actionAnswer } from '../ui/action-answer';
 import { ConfirmDialog } from '../ui/confirm-dialog';
 import { requestAccountDeletion } from './requests/actions';
 import { SETTINGS_TEXT_ROW_QUIET } from './settings/card';
+import { LEAVE_TITLE } from '@/src/lib/account/words';
 
 /**
  * 떠나는 자리 — **한 번 더 묻고, 무엇이 지워지지 않는지 먼저 말한다.**
@@ -57,7 +58,7 @@ export function RequestDeletion({ className = SETTINGS_TEXT_ROW_QUIET }: {
           setAsking(false);
           setFailure(null);
         }}
-        title="정말 탈퇴할까요?"
+        title={LEAVE_TITLE}
         confirmLabel={working ? '보내는 중…' : '탈퇴'}
         onConfirm={leave}
         danger

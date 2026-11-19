@@ -9,6 +9,7 @@ import { memberLandingOf } from './saju-landing';
 import { SignedInProvider } from './signed-in';
 import { SunMark, TaijiMark } from './ui/entry-marks';
 import { PAPER_TOP, TYPE_TITLE } from './ui/surfaces';
+import { ENTER_BIRTH, HERO_QUESTION } from '@/src/lib/brand/words';
 
 /**
  * `/` 의 얼굴 — **로그인 전 첫 화면 하나다**(ADR 0144). 로그인한 사람은 세션을 안 순간 홈(`/me`)으로, 입력을 든 주소면
@@ -56,7 +57,7 @@ export function HomeHero({ calculator }: { calculator: ReactNode }) {
       <section id="calculator" className="scroll-mt-24">
         <div id="self-panel" role="tabpanel" aria-labelledby="entry-self" hidden={pair}>
           {/* 제목은 눈에 안 보인다 — 바로 위 입구 「내 사주 보기」가 같은 말을 하고, 입구 아래 곧장 폼이 선다 */}
-          <h2 className="sr-only">출생 정보를 입력해 주세요</h2>
+          <h2 className="sr-only">{ENTER_BIRTH}</h2>
           {/*
             계산기를 여기서 만들지 않는다 — `Suspense` 경계는 서버가 세운 것을 그대로 쓰고(`page.tsx`), 값만 통로로
             내려보낸다(`signed-in.tsx`). 모름까지 그대로 보낸다: 로그인 전 결과는 입력을 서버로 보내므로 세션을 알기 전에는 안 선다.
@@ -94,7 +95,7 @@ function VisitorFace({ entry, onEntry }: { entry: Entry; onEntry: (entry: Entry)
     <div className="relative px-3 pb-4 pt-5 sm:px-10 sm:pt-9">
       {/* 제목 아래 설명 줄은 걷었다(운영자 2026-10-09) — 제목만 서고, 탭과의 틈은 위 여백(pt-5 · sm:pt-9)과 맞춘다 */}
       <h1 className={`px-1 ${TYPE_TITLE}`}>
-        나는 어떤 사람일까?
+        {HERO_QUESTION}
       </h1>
       <div role="tablist" aria-label="무엇을 볼까요" className="mt-5 sm:mt-6 grid grid-cols-2 gap-0.5 rounded-cell bg-surface-sunken p-0.5">
         {ENTRIES.map(({ id, Mark, title }) => (

@@ -11,6 +11,7 @@ import { SecondaryButton } from '@/ui/parts';
 import { COLOR, FONT, RADIUS, TYPE } from '@/ui/tokens';
 import { Card } from '@/ui/surfaces';
 import { WordText } from '@/ui/word-text';
+import { FAQ_LEAD, FAQ_TITLE } from '@brand/words';
 
 /** 답이 궁합 첫 신호까지 약속하는데 앱에는 로그인 전 궁합 결과가 없다 — 물음째 뺀다(ADR 0213) */
 const SIGNED_OUT_QUESTION = 'without-sign-in';
@@ -60,9 +61,9 @@ export default function HelpScreen() {
   };
 
   return (
-    <InfoScreen ref={scroller} gap={32} title="자주 묻는 질문" fallback="/">
+    <InfoScreen ref={scroller} gap={32} title={FAQ_TITLE} fallback="/">
       <View style={styles.head}>
-        <WordText style={styles.answer}>궁금한 물음을 누르면 답이 펼쳐져요.</WordText>
+        <WordText style={styles.answer}>{FAQ_LEAD}</WordText>
       </View>
 
       <View style={styles.chips}>

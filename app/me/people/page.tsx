@@ -35,6 +35,7 @@ import { Icon } from '../../ui/icons';
 import { EmptyState } from '../../ui/empty-state';
 import { COLUMN, STALE_CHIP, TILE, TYPE_META, TYPE_NAME, TYPE_TITLE } from '../../ui/surfaces';
 import { LINK_PENDING_RING, LinkPending } from '../../ui/link-pending';
+import { PEOPLE_EMPTY_BODY, PEOPLE_EMPTY_TITLE, PEOPLE_LEAD } from '@/src/lib/people/words';
 
 /*
   **이 화면의 이름은 「저장한 사람」 하나다.**
@@ -140,7 +141,7 @@ export default async function PeoplePage() {
         <div className="flex flex-col gap-1.5 max-sm:contents">
           <h1 className={TYPE_TITLE}>저장한 사람</h1>
           <p className="text-body leading-6 text-secondary max-sm:order-last max-sm:basis-full">
-            가족이나 친구의 출생 정보를 저장하고 관리하세요.
+            {PEOPLE_LEAD}
             {slots !== null && (
               <span className="ml-2 whitespace-nowrap text-small font-semibold tabular-nums">
                 {slots.used}/{slots.limit}명
@@ -184,8 +185,8 @@ function PeopleList({
   if (people.length === 0) {
     return (
       /* 빈 상태 한 벌 — 단추는 없다. 「사람 추가」가 바로 위에 서 있다(같은 길을 두 번 세우지 않는다, PRD §3.2) */
-      <EmptyState icon="people" title="아직 저장한 사람이 없어요">
-        이름과 출생 정보를 입력해 사람을 추가해 보세요.
+      <EmptyState icon="people" title={PEOPLE_EMPTY_TITLE}>
+        {PEOPLE_EMPTY_BODY}
       </EmptyState>
     );
   }

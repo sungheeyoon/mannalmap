@@ -8,6 +8,7 @@ import { EASE, MOTION, useReducedMotion } from '@/ui/motion';
 import { Paper, Tile } from '@/ui/surfaces';
 import { COLOR, ELEMENT_TONE, FONT, RADIUS, TYPE } from '@/ui/tokens';
 import { WordText } from '@/ui/word-text';
+import { READING_WAITING_LEAD, READING_WAITING_NOTE } from '@reading/words';
 
 /**
  * 기다리는 칸 — 줄마다 서버가 적은 진행 그대로다(ADR 0127). 시간으로 단계를 짓지 않고, 흐르는 띠는 차오르지 않는다.
@@ -19,8 +20,8 @@ export function LoadingState({ rows, waitNote }: { rows: readonly OutlineRow[]; 
         {/* 오래 걸리는 자리라 로고의 궤도가 돈다(운영자 결정 2026-11-08, 웹 `reading-waiting.tsx` 와 같다) — 상태는 곁의 글이 읽힌다 */}
         <LoadingOrbit decorative />
         <View accessibilityRole="progressbar" accessibilityLiveRegion="polite" style={styles.headText}>
-          <WordText style={styles.title}>사주의 흐름을 이어 읽고 있어요</WordText>
-          <WordText style={styles.note}>근거를 확인하고, 단정하지 않는 문장으로 옮기고 있어요.</WordText>
+          <WordText style={styles.title}>{READING_WAITING_LEAD}</WordText>
+          <WordText style={styles.note}>{READING_WAITING_NOTE}</WordText>
         </View>
       </View>
       <WordText style={styles.note}>
