@@ -699,8 +699,11 @@ export function copyOnlyChanged(ts, file, before, after) {
   if (texts.length === 0) return null;
   const unknownEntity = (text) => [...text.matchAll(/&([a-z][a-z0-9]*);/gi)].some((one) => !(one[1] in ENTITIES));
   if (texts.some(unknownEntity)) return null;
-  return [...new Set(texts.map((text) => squeezed(decoded(text))).filter((text) => text !== ''))];
+  return [...new Set(texts.map(screenTextOf).filter((text) => text !== ''))];
 }
+
+/** 문구 자리의 글자가 화면에 서는 모양 — 엔티티를 풀고 공백을 접는다. 대장 대조(`scripts/new-copy.mjs`, ADR 0257)도 이것으로 견준다 */
+export const screenTextOf = (text) => squeezed(decoded(text));
 
 /**
  * 바뀐 파일 중 문구만 바뀐 것과 그 앞뒤 글자 — 파서가 없으면 없다. **바뀐 글자를 시험이 글자 그대로 찾으면 문구만이 아니다**

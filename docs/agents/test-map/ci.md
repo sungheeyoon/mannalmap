@@ -7,10 +7,15 @@
 `scripts/ci-plan.mjs` 가 **출시 단계**(PRD §7.0 의 「(지금)」, `scripts/release-stage.mjs`)와 바뀐 파일로 계획을
 고르고, `verify.yml` 은 그 답을 읽을 뿐이다. `gate` 가 필수 검사라 `--auto` 머지는 초록까지 기다린다.
 
-**차선은 일곱이고 서로 따로 선다**(2026-10-01, `mobile` 은 2026-10-31) — `policy`(scripts 시험 · 타입 · 린트) · `core`(단위 · 타입 · 린트 · 빌드, 명령은
+**차선은 서로 따로 선다**(2026-10-01, `mobile` 은 2026-10-31 — 목록은 `verify.yml` 의 `plan` · `gate` 밖 job 이고 `scripts/ci-plan.test.ts` 가 계획과 견준다) — `policy`(scripts 시험 · 타입 · 린트) · `core`(단위 · 타입 · 린트 · 빌드, 명령은
 `ci-plan.mjs` 의 `CORE_STEPS`) · `anon`(익명 e2e 만) · `authed`(로그인 차선 — 목록은 `ci-plan.mjs` 의 `AUTHED_LANES`, 계획이 넘기는 것은 `authed_lanes`) · `flow` · `audit` · `mobile`(앱의 타입 · 번들).
 단위 · 타입 · 린트 · 빌드를 도는 것은 `core` 하나다 — 전부일 때도 `anon` 이 다시 돌지 않는다. **`core` · `policy` 안에서는 앞 검사가 붉어도 뒤 검사가 돈다**(`!cancelled()`, 설치가 섰을 때만 — ADR 0097 덧 2026-10-22) — 붉은 단계가 하나라도 있으면 job 과 `gate` 는 그대로 실패다. 옛 이름은 `fast` → `core`,
 `verify`(job) → `anon` 이다. 워크플로 이름 `verify` 와 npm 스크립트 `npm run verify` 는 그대로다.
+
+**PR 에서 `gate` 는 둘을 더 잰다** — 나란히 열린 PR 과 겹친 공유 번호(ADR 0238, `scripts/shared-numbers.mjs`)와 PR 본문의 「문서」 칸(ADR 0257,
+`scripts/pr-body.mjs` — 칸 · 「결정 여부」 줄 · 코드를 고친 `feat` · `fix` 의 문서 또는 「문서 없음 — <까닭>」 · 「있음」의 ADR 또는 까닭). 본문은 실행 때의 것을
+읽으니 고친 뒤 `gate` job 만 다시 돌린다. PR 틀은 「결정 여부」의 값을 비워 둔다 — 틀을 그대로 둔 본문은 붉다. **`plan` 은 새 화면 글자의 대장 대조를 요약에 찍는다** — 경고만이고 막지 않는다(`scripts/new-copy.mjs`).
+**린트는 세 자리 다 경고 하나에도 붉다**(`--max-warnings 0` — 웹 `npm run lint` · 정책 차선의 `scripts/` · 앱의 `expo lint`, ADR 0257).
 
 **공개 출시(지금, 2026-11-05 부터) — 머지 전에 전체를 잰다.** 판정은 위에서 아래로, 먼저 걸린 줄이 답이다.
 

@@ -98,6 +98,13 @@ jobs:
             base="$BEFORE"
           fi
           printf '%s\n' "$files" | node scripts/ci-plan.mjs --event "$EVENT" --labels "$LABELS" --base "$base" --before "$BEFORE" --forced "$FORCED"
+      # 새 화면 글자가 문구 대장에 있는가 — **경고만, 막지 않는다**(ADR 0257). PR 이 더한 문구 자리의 글자 가운데 대장에 글자 그대로 없는 것을
+      # 이 job 의 요약에 찍는다(`scripts/new-copy.mjs`). 이 단계가 서도 계획은 그대로다
+      - if: github.event_name == 'pull_request'
+        continue-on-error: true
+        env:
+          BASE: ${{ github.base_ref }}
+        run: node scripts/new-copy.mjs
 
   # ---------------------------------------------------------------------------
   # 정책 — 문서 · 도구 설정 · scripts 시험만 바뀐 PR (#145)
@@ -123,7 +130,8 @@ jobs:
       - run: npx vitest run scripts/
       - run: npm run typecheck
         if: ${{ !cancelled() && steps.install.outcome == 'success' }}
-      - run: npx eslint scripts/
+      # 경고 하나에도 붉다(ADR 0257) — 웹 `npm run lint` 와 같은 문턱. 경고가 쌓여도 아무것도 안 막던 자리다
+      - run: npx eslint scripts/ --max-warnings 0
         if: ${{ !cancelled() && steps.install.outcome == 'success' }}
 
   # ---------------------------------------------------------------------------
@@ -207,7 +215,7 @@ jobs:
           retention-days: 7
 
   # ---------------------------------------------------------------------------
-  # 로그인 뒤 화면 — **살아 있는 Supabase 를 세워서 잰다** (ADR 0050), 차선 넷이 나란히
+  # 로그인 뒤 화면 — **살아 있는 Supabase 를 세워서 잰다** (ADR 0050), 차선마다 나란히(목록은 `ci-plan.mjs` 의 `AUTHED_LANES`)
   # ---------------------------------------------------------------------------
   #
   # 이 job 이 없던 동안 로그인 뒤 화면 74개 시험을 **아무도 안 밟았다.** CI 는 익명만
@@ -269,8 +277,8 @@ jobs:
       # pgTAP 은 표를 전역으로 세는 자리가 있어서(「얼린 입력이 0개인가」·「후보로
       # 서는가」) **먼저 만들어진 남의 행에 걸린다.** 로컬에서 이것이 빨간불이었고
       # 원인이 e2e 가 남긴 계정이었다 — `supabase db reset` 뒤에 669건이 다 통과했다.
-      # 뒤에 두면 CI 에서도 같은 오염을 만든다. 차선 넷 중 가장 짧은 `notice` 에만 둔다. 계획이 `notice` 를 빼는 것은
-      # `supabase/**` 를 안 바꾼 PR 뿐이다 — 마이그레이션 · pgTAP 이 섞이면 전부다(`ci-plan.mjs`).
+      # 뒤에 두면 CI 에서도 같은 오염을 만든다. 로그인 차선 가운데 가장 짧은 `notice` 에만 둔다. 계획은 `authed` 를 켜면 로그인 차선을
+      # 모두 켠다(ADR 0242) — 정책 · 엔진만 바뀐 PR 은 `authed` 가 없어 여기도 안 돌고, 마이그레이션 · pgTAP 이 섞이면 전부다(`ci-plan.mjs`).
       #
       # **생성 타입은 마이그레이션과 함께 움직인다.**
       #
@@ -309,7 +317,7 @@ jobs:
       # 차선마다 약 14초를 쓰고 뒤에 기대는 단계가 없었다(`flow` 도 같다).
 
   # ---------------------------------------------------------------------------
-  # 흐름 검사 일곱 벌 — RPC 로 동의하고 화면을 두드린다, 모델은 안 부른다
+  # 흐름 검사 전부(`scripts/run-checks.mjs` 의 `SCRIPTS`) — RPC 로 동의하고 화면을 두드린다, 모델은 안 부른다
   # ---------------------------------------------------------------------------
   #
   # 검사들은 서버 액션을 한 번도 안 누르고(POST 0건) RPC 로 동의하므로 모델로 가는
@@ -389,7 +397,8 @@ jobs:
       - run: ln -s mobile/node_modules ../node_modules
       # **앞 검사가 붉어도 뒤 검사는 돈다** — `core` 의 주석이 까닭이다.
       - run: npx tsc --noEmit
-      - run: npx expo lint
+      # 경고 하나에도 붉다(ADR 0257) — `expo lint` 가 ESLint 에 그대로 넘긴다
+      - run: npx expo lint --max-warnings 0
         if: ${{ !cancelled() && steps.install.outcome == 'success' }}
       # 타입이 못 보는 것 — 안 풀리는 import · Metro 설정 · Hermes 컴파일. 웹의 `npm run build` 자리다.
       - run: npx expo export --platform android --output-dir dist
@@ -453,6 +462,16 @@ jobs:
           PR_NUMBER: ${{ github.event.pull_request.number }}
           GH_TOKEN: ${{ github.token }}
         run: node scripts/shared-numbers.mjs
+      # PR 본문의 「문서」 칸 — 칸과 「결정 여부」 줄이 있나, 그 칸이 바뀐 파일과 맞나(ADR 0257, 판정은 `scripts/pr-body.mjs`). 차선을 안 세우게
+      # `plan` 이 아니라 여기다(ADR 0238 과 같은 까닭). 본문은 실행 때의 것을 API 로 읽는다 — 본문을 고친 뒤 이 job 만 다시 돌리면 된다.
+      # 파일 목록을 못 읽으면 칸 · 줄만 잰다(경고)
+      - if: ${{ !cancelled() && github.event_name == 'pull_request' && steps.numbers-checkout.outcome == 'success' && steps.numbers-node.outcome == 'success' }}
+        env:
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          PR_TITLE: ${{ github.event.pull_request.title }}
+          PR_BODY: ${{ github.event.pull_request.body }}
+          GH_TOKEN: ${{ github.token }}
+        run: node scripts/pr-body.mjs
       - if: ${{ !cancelled() && (contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled')) }}
         env:
           RESULTS: ${{ toJSON(needs) }}

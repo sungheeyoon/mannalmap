@@ -20,7 +20,8 @@
 - **결정은 `ADR NNNN` 으로 가리킨다.** 네 자리, 띄어쓰기 하나(`ADR 0078`), 여럿은 `·` 로
   (`ADR 0072·0078`). 붙여 쓰거나 하이픈으로 잇거나 자릿수를 줄이지 않는다 — 시험이 그 표기를 센다.
   전부 실제 파일을 가리키는지 시험이 잰다(2026-09-22 에 806 건 · 264 파일). 이슈는 `#67` 이다.
-- **TODO · FIXME 를 남기지 않는다**(0건). 미결은 간극 대장(`docs/product/gaps.md`)의
+- **TODO · FIXME · XXX · HACK 을 남기지 않는다**(0건 — 웹 · 앱 · 시험 · 뿌리 설정의 주석. 린트 `no-warning-comments`(`eslint-code-rules.cjs` 의 `NO_LOOSE_ENDS`)와
+  `scripts/code-rules.test.ts` 「주석에 TODO · FIXME · XXX · HACK 이 없다」가 잰다). 미결은 간극 대장(`docs/product/gaps.md`)의
   `G-nn` 줄이나 이슈다(`docs/agents/delegation/decisions.md` 「결정 점검표」 아래). 코드 안의 TODO 는 아무도 안 세는 목록이다.
 - 시험 이름은 **참인 문장**이다 — `it('src/lib 은 app 과 관문을 모른다')`. 무엇을 잰다가 아니라
   무엇이 참이다.
