@@ -34,11 +34,12 @@ describe('전후 그림 견주기', () => {
     expect(comparePixels(picture(6, 6), after).box).toEqual({ left: 0, top: 1, right: 4, bottom: 5 });
   });
 
-  it('JPEG 의 작은 흔들림은 허용 안이면 같다 — 0 이면 다르다', () => {
+  it('기본은 정확히 견준다 — 채널 하나의 작은 차이도 다르다, 허용은 그때만 연다', () => {
     const after = picture(2, 2);
     after.data[0] = 210;
-    expect(comparePixels(picture(2, 2), after, 16).box).toBeNull();
+    expect(comparePixels(picture(2, 2), after).count).toBe(1);
     expect(comparePixels(picture(2, 2), after, 0).count).toBe(1);
+    expect(comparePixels(picture(2, 2), after, 16).box).toBeNull();
   });
 
   it('알파 칸은 보지 않는다', () => {

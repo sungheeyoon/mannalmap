@@ -8,8 +8,9 @@
  * 세션마다 이 비교를 새로 쓰고 있었다(11-20 한 세션에 셋). 씨앗이 판마다 달라 거의 다 「다름」이던 것은
  * `UI_SEED_TAG` 가 걷는다(`scripts/ui-seed.mjs` 의 `seedTag`) — 그 뒤에 남는 차이는 DB 가 찍는 시각과 움직임이다.
  *
- * 그림은 JPEG 다(`quality: 72`). 같은 화면이면 같은 바이트가 나오지만, 화소 하나의 값이 조금 흔들리는 일을 「다름」으로
- * 세지 않도록 채널마다 `UI_DIFF_TOLERANCE`(기본 16) 이하의 차이는 같다고 본다. 0 이면 한 값이라도 다르면 다르다.
+ * **기본은 정확히 견준다** — 채널 값 하나라도 다르면 다르다. 같은 화면이면 같은 JPEG 바이트가 나오고(11-20 그림 84쌍이 그랬다),
+ * 「화면 그대로」를 재는 도구가 토큰 색을 조금 바꾼 것(채널마다 한 자릿수)까지 같다고 보면 안 된다. 글자 가장자리처럼 렌더가
+ * 흔들리는 자리를 넘겨 보려면 `UI_DIFF_TOLERANCE=<채널 차이>` 로 그때만 연다.
  */
 
 import { mkdir, readdir, rm } from 'node:fs/promises';
@@ -29,7 +30,7 @@ export const CROPS = 'diff-crops';
  *
  * 크기가 다르면 `{ size: true }`, 아니면 다른 화소 수와 그것을 다 덮는 상자(`null` 이면 같음).
  */
-export function comparePixels(a, b, tolerance = 16) {
+export function comparePixels(a, b, tolerance = 0) {
   if (a.width !== b.width || a.height !== b.height) return { size: true, count: 0, box: null };
   const channels = Math.min(a.channels, b.channels, 3);
   let count = 0;
@@ -118,7 +119,7 @@ async function writeCrop(beforeFile, afterFile, region, target) {
 }
 
 async function main(beforeDir, afterDir) {
-  const tolerance = Number(process.env.UI_DIFF_TOLERANCE ?? 16);
+  const tolerance = Number(process.env.UI_DIFF_TOLERANCE ?? 0);
   const crops = join(afterDir, CROPS);
   await rm(crops, { recursive: true, force: true });
 
