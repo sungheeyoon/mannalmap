@@ -194,8 +194,38 @@ jobs:
       # run 43044796756 — 평소 20초). 단계 한도로 그 매달림만 줄인다(`authed` 도 같다). **안에서 끊고 다시 받지 않는다** — 2026-11-19 에 미러가
       # 느려(글꼴 패키지 하나에 약 50초) 2분 반에 끊자, 끊긴 명령 밑의 apt-get 이 살아 dpkg 잠금을 쥐어 다시 받기가 「Could not get lock」으로 섰다
       # (run 44486457814 의 로그인 차선 둘). 느려도 끝나는 설치를 끊지 않게 한도는 넉넉히 둔다
+      #
+      # **apt 가 받는 꾸러미(.deb)는 캐시에서 되살린다**(G-169 항목 4). 러너 이미지에 라이브러리는 이미 있고 받는 것은 글꼴 아홉(약 22MB)뿐인데,
+      # 2026-11-19 21:22 ~ 21:33(서울)에 그 아홉에서 차선 열이 섰다(run 44523228732 · 44522950363). 미러 목록(`/etc/apt/apt-mirrors.txt`)은
+      # 클라우드 미러 → https archive → https security 차례이고(이미지의 `configure-apt-sources.sh`), apt 는 한 미러에서 다시 받기(이미지가
+      # `Acquire::Retries` 를 1 로 둔다)까지 실패하면 다음 미러로 넘어간다 — 그날은 첫 미러가 503 · 연결 시간 초과, 뒤의 둘은 TLS 연결에서
+      # 15초 시간 초과(「Could not wait for server fd」)였다. 그래서 로그 끝에 security.ubuntu.com 이 찍힌다. 미러가 다 서면 다시 받기로는
+      # 못 견디고, 받을 것을 손에 들고 있어야 한다. apt 는 `/var/cache/apt/archives` 에 이름과 크기가 맞는 .deb 가 있으면 받지 않는다 — 해시는
+      # 안 보니 넣기 전에 apt 목록의 SHA256 과 우리가 견주고 안 맞는 것은 버린다(`scripts/ci-apt-debs.sh` — 깨진 파일이 캐시에 남아 되살아나지
+      # 않게). 거두기는 지금 깔린 판만이라 캐시가 판마다 커지지 않는다. PR 실행은 제 merge ref 와 main 의 캐시만 되살리고 제 merge ref 에만
+      # 남긴다(GitHub 의 캐시 범위). `apt-get update` 는 그대로 돌지만 실패해도 경고뿐이고 이미지의 옛 목록으로 이어 간다. 키는 꾸러미 파일
+      # 이름들의 해시라 판이 바뀌면 새로 받아 새 키로 남긴다
+      - id: apt-key
+        run: echo "prefix=playwright-apt-$ImageOS-$(dpkg --print-architecture)-" >> "$GITHUB_OUTPUT"
+      - id: apt-restore
+        uses: actions/cache/restore@v6
+        with:
+          path: ~/apt-debs
+          key: ${{ steps.apt-key.outputs.prefix }}latest
+          restore-keys: ${{ steps.apt-key.outputs.prefix }}
+      - run: scripts/ci-apt-debs.sh restore ~/apt-debs
       - run: npx playwright install --with-deps chromium
         timeout-minutes: 10
+      - id: apt-collect
+        run: |
+          scripts/ci-apt-debs.sh collect ~/apt-debs
+          echo "count=$(ls ~/apt-debs | wc -l)" >> "$GITHUB_OUTPUT"
+          echo "key=${{ steps.apt-key.outputs.prefix }}$(ls ~/apt-debs | sha256sum | cut -c1-16)" >> "$GITHUB_OUTPUT"
+      - if: steps.apt-collect.outputs.count != '0' && steps.apt-collect.outputs.key != steps.apt-restore.outputs.cache-matched-key
+        uses: actions/cache/save@v6
+        with:
+          path: ~/apt-debs
+          key: ${{ steps.apt-collect.outputs.key }}
       - run: npm run test:e2e
         env:
           # 껍데기 값이다. 로그인하지 않은 사람을 돌려보내는 데 살아 있는 Supabase 가
@@ -255,8 +285,28 @@ jobs:
           node-version-file: .nvmrc
           cache: npm
       - run: npm ci
+      # 브라우저 · apt 꾸러미 — 까닭은 `anon` 의 같은 단계(단계 한도 · .deb 캐시)
+      - id: apt-key
+        run: echo "prefix=playwright-apt-$ImageOS-$(dpkg --print-architecture)-" >> "$GITHUB_OUTPUT"
+      - id: apt-restore
+        uses: actions/cache/restore@v6
+        with:
+          path: ~/apt-debs
+          key: ${{ steps.apt-key.outputs.prefix }}latest
+          restore-keys: ${{ steps.apt-key.outputs.prefix }}
+      - run: scripts/ci-apt-debs.sh restore ~/apt-debs
       - run: npx playwright install --with-deps chromium
         timeout-minutes: 10
+      - id: apt-collect
+        run: |
+          scripts/ci-apt-debs.sh collect ~/apt-debs
+          echo "count=$(ls ~/apt-debs | wc -l)" >> "$GITHUB_OUTPUT"
+          echo "key=${{ steps.apt-key.outputs.prefix }}$(ls ~/apt-debs | sha256sum | cut -c1-16)" >> "$GITHUB_OUTPUT"
+      - if: steps.apt-collect.outputs.count != '0' && steps.apt-collect.outputs.key != steps.apt-restore.outputs.cache-matched-key
+        uses: actions/cache/save@v6
+        with:
+          path: ~/apt-debs
+          key: ${{ steps.apt-collect.outputs.key }}
 
       # CLI 는 devDependency 다 — `npm ci` 가 이미 놓았다. 안 쓰는 서비스는 빼고 띄운다
       # (`db:start`). 이 job 이 재는 것에 storage·studio 는 안 든다. realtime 은 띄운다 — 계정마다
