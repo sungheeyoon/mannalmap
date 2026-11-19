@@ -440,7 +440,8 @@ Cron 실행 기록과 환경변수를 본다. 처리 결과를 점검 기록에 
 
 `audit` 차선은 `npm audit --omit=dev --audit-level=high` 다. **의존성 목록을 바꾼 PR** 과 **main 푸시 · 하루 한 번의
 일정**에서 돈다. PR 에서 붉으면 그 PR 이 들인 것이고, main 에서 붉으면 `ci-main-red` 이슈가 「붉은 차선」을 적는다 —
-`audit` 만이면 커밋이 아니라 새로 뜬 advisory 다. 어느 쪽이든 새 작업보다 먼저 한다.
+`audit` 만이면 커밋이 아니라 밖의 advisory DB 가 바뀐 것이다(새로 뜬 advisory, 또는 앱 예외의 advisory 가 철회돼 낡은 예외 — 아래 5).
+어느 쪽이든 새 작업보다 먼저 한다.
 
 ```bash
 npm audit --omit=dev                 # 무엇이 · 어느 판에서 · 고친 판이 있나
@@ -458,7 +459,10 @@ npm audit --omit=dev --audit-level=high ; echo $?   # 0 이어야 한다
    간극 대장 G-23 ① 에 패키지 · advisory · 까닭 · 다시 볼 날을 적고, 그동안 붉은 main 은 이슈가 들고 있다.
    `--audit-level` 을 critical 로 올리거나 차선을 끄지 않는다.
 5. **앱(`mobile/`)은 `node scripts/audit-app.mjs` 가 같은 문턱으로 잰다.** 앱 번들에 안 실리는 빌드 도구의 high 이고 같은 메이저에 고친 판이 없을 때만
-   운영자에게 물어 `mobile/audit-exceptions.json` 에 한 줄(GHSA id · 패키지 · 사유 · 걷을 조건 · 결정)을 더한다. 감사에 더는 안 나오는 줄은 붉으니 걷는다.
+   운영자에게 물어 `mobile/audit-exceptions.json` 에 한 줄(GHSA id · 패키지 · 사유 · 걷을 조건 · 결정)을 더한다. 감사에 더는 안 나오는 줄은 「낡은 예외」로
+   붉으니 묻지 않고 걷는다 — 고친 판이 들었거나 의존성이 바뀌었거나 advisory 가 철회된 것이다. 철회는 `gh api /advisories/<GHSA id>` 의 `withdrawn_at` 이
+   적는다(2026-11-19 — picomatch 예외 `GHSA-fc5q-39xc-vjpf` 가 머지 1시간 27분 뒤 철회로 낡았다, #1170). 예외 파일만 바꾼 PR 에는 `audit` 이 안 돈다(의존성
+   목록이 아니다) — `full-ci` 라벨을 단다. 그 PR 은 이미 「전부」라 더 도는 것은 `audit` 하나다(2026-11-19 계획기로 잼).
    Expo SDK 를 올리는 PR 은 예외를 다 걷고 다시 잰다(ADR 0104 추기 2026-11-06).
 
 개발 의존성(`npm audit` 전체)은 CI 가 안 막는다 — 운영에 안 실린다. 같은 절차로 손으로 정리한다(G-23 ⑫).

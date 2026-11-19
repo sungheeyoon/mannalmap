@@ -39,12 +39,19 @@ describe('앱 의존성 감사의 예외', () => {
     expect(auditVerdict(lowered, [ZOD])).toEqual({ blocking: [], excepted: [], stale: [] });
   });
 
-  it('예외 파일은 줄마다 GHSA id · 패키지 · 사유 · 걷을 조건 · 결정을 든다', () => {
-    const list = exceptionsOf(readFileSync(join(ROOT, 'mobile', 'audit-exceptions.json'), 'utf8'));
-    /* zod 의 예외는 Expo SDK 58 판 맞춤(2026-11-07)으로 걷었다. picomatch 는 빌드 도구만 쓰고 고친 판이 없어 운영자가 정했다 */
-    expect(list.map((one: { id: string }) => one.id)).toEqual(['GHSA-fc5q-39xc-vjpf']);
-    expect(() => exceptionsOf('{"exceptions":[{"id":"GHSA-x","package":"zod","reason":"","until":"u","decided":"d"}]}')).toThrow(/reason/);
-    expect(() => exceptionsOf('{"exceptions":[{"id":"CVE-1","package":"zod","reason":"r","until":"u","decided":"d"}]}')).toThrow(/GHSA/);
+  it('예외 파일은 줄마다 GHSA id · 패키지 · 사유 · 걷을 조건 · 결정을 든다 — 줄이 없어도 된다', () => {
+    /* 지금 어느 advisory 가 예외인지는 박지 않는다 — 그 목록의 원본은 예외 파일 하나이고, 맞는지는 감사가 잰다(안 나오는 줄은 「낡은 예외」로 붉다).
+       박아 두었을 때는 예외를 넣고 걷을 때마다 이 시험도 손으로 고쳤다(#1073 · #1169 · #1170) */
+    expect(() => exceptionsOf(readFileSync(join(ROOT, 'mobile', 'audit-exceptions.json'), 'utf8'))).not.toThrow();
+    expect(exceptionsOf('{"exceptions":[]}')).toEqual([]);
+    const line = { id: 'GHSA-x', package: 'zod', reason: 'r', until: 'u', decided: 'd' };
+    expect(exceptionsOf(JSON.stringify({ exceptions: [line] }))).toEqual([line]);
+    for (const field of Object.keys(line)) {
+      const without = Object.fromEntries(Object.entries(line).filter(([key]) => key !== field));
+      expect(() => exceptionsOf(JSON.stringify({ exceptions: [without] }))).toThrow(`예외 줄에 ${field} 가 없다`);
+      expect(() => exceptionsOf(JSON.stringify({ exceptions: [{ ...line, [field]: ' ' }] }))).toThrow(`예외 줄에 ${field} 가 없다`);
+    }
+    expect(() => exceptionsOf(JSON.stringify({ exceptions: [{ ...line, id: 'CVE-1' }] }))).toThrow(/GHSA/);
     expect(() => exceptionsOf('{}')).toThrow(/exceptions/);
   });
 
