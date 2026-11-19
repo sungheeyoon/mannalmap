@@ -9,7 +9,7 @@ import { redirectToSignIn } from '../../auth/sign-in-redirect';
 import { answerOfThrown } from '../../db-error';
 import { Icon, type IconName } from '../../ui/icons';
 import { EmptyState } from '../../ui/empty-state';
-import { COLUMN, TYPE_META, TYPE_TITLE } from '../../ui/surfaces';
+import { COLUMN, FLAT_CARD_FACE, TYPE_META, TYPE_TITLE } from '../../ui/surfaces';
 import { AccountNotice } from '../account-notice';
 import { readAccount } from '../account';
 import { inboxForViewer, type Inbox } from './inbox';
@@ -108,7 +108,7 @@ function Notifications({ inbox }: { inbox: Inbox }) {
           새 요청이나 풀이 결과가 생기면 여기에 알려드릴게요.
         </EmptyState>
       ) : (
-        <ul className="overflow-hidden rounded-card border border-border bg-surface">
+        <ul className={`overflow-hidden ${FLAT_CARD_FACE}`}>
           {inbox.notifications.map((notification) => {
             const warns = NOTIFICATION_WARNS.includes(notification.kind);
             const inner = (

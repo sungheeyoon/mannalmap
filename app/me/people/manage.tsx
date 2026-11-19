@@ -23,7 +23,7 @@ import { actionAnswer } from '../../ui/action-answer';
 import { ConfirmDialog } from '../../ui/confirm-dialog';
 import { Icon } from '../../ui/icons';
 import { useLeaveGuard } from '../../ui/leave-guard';
-import { EMPTY_SLOT, TYPE_META, TYPE_SECTION } from '../../ui/surfaces';
+import { CARD_FACE, EMPTY_SLOT, TYPE_META, TYPE_SECTION } from '../../ui/surfaces';
 import { FailureLine } from '../../ui/failure-line';
 import { useSectionErrors } from '../../ui/section-error';
 
@@ -170,7 +170,7 @@ export function AddPerson({ slots }: { slots: PersonSlots | null }) {
         if (question === null && !saving) save();
       }}
       noValidate
-      className="flex scroll-mt-24 scroll-mb-28 flex-col gap-5 rounded-card border border-border bg-surface p-5 shadow-card sm:p-7"
+      className={`flex scroll-mt-24 scroll-mb-28 flex-col gap-5 ${CARD_FACE} border-border bg-surface p-5 sm:p-7`}
     >
       <header className="flex flex-col gap-1.5">
         <h2 className={TYPE_SECTION}>사람 추가</h2>

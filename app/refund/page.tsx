@@ -8,7 +8,7 @@ import { HomeLink } from '../home-link';
 import { LegalBody } from '../legal-body';
 import { returnToOf, withReturnTo } from '../me/credits/return-to';
 import { BUTTON_TERTIARY } from '../ui/buttons';
-import { COLUMN, TYPE_TITLE } from '../ui/surfaces';
+import { COLUMN, PAPER_FACE, TYPE_TITLE } from '../ui/surfaces';
 
 export const metadata = {
   title: '환불정책',
@@ -33,7 +33,7 @@ export default async function RefundPage({
   const policy = refundPolicyFor(BUSINESS_INFO);
   return (
     <main className={`app-shell flex w-full ${COLUMN} flex-1 flex-col gap-4 py-8 sm:py-12`}>
-      <header className="mb-2 rounded-card bg-cream px-6 py-7 sm:px-8">
+      <header className={`mb-2 ${PAPER_FACE} px-6 py-7 sm:px-8`}>
         <p className="text-small font-semibold text-cream-ink">환불정책</p>
         <h1 className={`mt-1 ${TYPE_TITLE}`}>{SERVICE_NAME} 환불정책</h1>
         {policy.effectiveDate ? (

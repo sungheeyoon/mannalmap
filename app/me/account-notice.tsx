@@ -2,6 +2,7 @@ import { accountFailureOf, accountNoticeOf, type AccountState } from '@/src/lib/
 import { SUPPORT_EMAIL } from '@/src/lib/brand';
 
 import { FailureLine } from '../ui/failure-line';
+import { FLAT_CARD_FACE } from '../ui/surfaces';
 
 /**
  * 계정이 막혀 있을 때 화면 대신 보는 것.
@@ -30,7 +31,7 @@ export function AccountNotice({ state }: { state: AccountState }) {
   if (text === null) return null;
 
   return (
-    <div className="flex flex-col gap-1 rounded-card border border-border bg-surface px-5 py-4">
+    <div className={`flex flex-col gap-1 ${FLAT_CARD_FACE} px-5 py-4`}>
       <p className="text-body font-semibold text-foreground">{text.title}</p>
       <p className="text-sm text-secondary">{text.detail}</p>
     </div>

@@ -36,6 +36,7 @@ import { useOutbox } from './use-outbox';
 import { useRoomHeight } from './use-room-height';
 import { useScrollKeeper } from './use-scroll-keeper';
 import { useThread, type MergeKind } from './use-thread';
+import { SOFT_CARD_FACE } from '../../../ui/surfaces';
 
 /** 방 위에 선 창 — 신고 창이나 차단을 묻는 창. 입력 자리는 그대로 남는다 */
 type Opened = 'report' | 'block' | null;
@@ -265,7 +266,7 @@ export function ChatRoomView({ room }: { room: RoomView }) {
         {/* 차단이 끝나 다시 읽으면 방이 닫혀 있다 — 입력 칸 대신 닫힌 까닭이 선다 */}
         {closed ? (
           /* 닫힌 까닭 한 줄 — 상대가 떠났으면 넷째 줄(PRD 「앱 내 채팅」) */
-          <p role="status" className="flex items-center gap-2.5 rounded-card bg-surface-soft px-4 py-3 text-note text-secondary">
+          <p role="status" className={`flex items-center gap-2.5 ${SOFT_CARD_FACE} px-4 py-3 text-note text-secondary`}>
             <Icon name="lock" className="size-4" />
             {room.notice}
           </p>

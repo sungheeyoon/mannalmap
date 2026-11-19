@@ -4,6 +4,7 @@ import { useState } from 'react';
 
 import { BUTTON_TERTIARY } from '../../ui/buttons';
 import { Icon } from '../../ui/icons';
+import { RING_CARD_FACE } from '../../ui/surfaces';
 
 /** 이보다 긴 소개는 세 줄로 접어 두고 「더 보기」로 편다 — 소개가 카드를 늘어뜨리지 않게 */
 const LETTER_FOLD_AT = 90;
@@ -17,7 +18,7 @@ export function Letter({ nickname, intro }: { nickname: string; intro: string | 
   const [open, setOpen] = useState(false);
   const long = intro !== null && intro.length > LETTER_FOLD_AT;
   return (
-    <figure className="flex flex-col gap-2 rounded-card bg-surface px-5 py-4 ring-1 ring-border">
+    <figure className={`flex flex-col gap-2 ${RING_CARD_FACE} px-5 py-4`}>
       {intro !== null ? (
         <blockquote className={`font-rounded text-field leading-7 text-foreground ${long && !open ? 'line-clamp-3' : ''}`}>
           <Icon name="quote" className="mr-1.5 inline size-4 -translate-y-0.5 text-cream-ink" />

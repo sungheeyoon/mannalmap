@@ -1,5 +1,5 @@
 import { BUTTON_TERTIARY } from '../ui/buttons';
-import { CARD, COLUMN, TYPE_NAME, TYPE_TITLE } from '../ui/surfaces';
+import { CARD, COLUMN, PAPER_FACE, SOFT_CARD_FACE, TYPE_NAME, TYPE_TITLE } from '../ui/surfaces';
 import {
   NOTICE_NOT_READY,
   OPTIONAL_CONSENTS,
@@ -57,7 +57,7 @@ export default async function PrivacyPage() {
         **읽는 모양만 5차의 것이다** — 글자는 고지한 판 그대로다. 줄이 길면 눈이 다음 줄 머리를 놓치므로
         글줄을 3xl(48rem)로 묶고, 조항마다 카드 한 장 · 둥근 제목 · 점 목록으로 선다.
       */}
-      <header className="mb-2 rounded-card bg-cream px-6 py-7 sm:px-8">
+      <header className={`mb-2 ${PAPER_FACE} px-6 py-7 sm:px-8`}>
         <p className="text-small font-semibold text-cream-ink">처리방침</p>
         <h1 className={`mt-1 ${TYPE_TITLE}`}>개인정보 처리방침</h1>
         <p className="mt-2 text-body leading-7 text-secondary">{PRIVACY_INTRO}</p>
@@ -113,7 +113,7 @@ export default async function PrivacyPage() {
             <p className="text-body leading-7 text-secondary">{OPTIONAL_CONSENT_NOTE}</p>
             <ul className="flex flex-col gap-3">
               {OPTIONAL_CONSENTS.map((one) => (
-                <li key={one.key} className="rounded-card bg-surface-soft px-4 py-3">
+                <li key={one.key} className={`${SOFT_CARD_FACE} px-4 py-3`}>
                   <p className="text-body font-semibold">{one.label}</p>
                   <p className="mt-1 text-body leading-7 text-secondary">{one.detail}</p>
                   <p className="mt-0.5 text-body leading-7 text-secondary">{one.erasure}</p>

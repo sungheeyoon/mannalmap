@@ -19,7 +19,7 @@ import motion from './taste.module.css';
 import { BUTTON_PRIMARY_WOOD, BUTTON_TERTIARY_FACE } from '../ui/buttons';
 import { Icon } from '../ui/icons';
 import { reducedMotion } from '../ui/motion';
-import { CARD, TYPE_META, TYPE_NAME } from '../ui/surfaces';
+import { CARD, FLAT_CARD_FACE, TYPE_META, TYPE_NAME } from '../ui/surfaces';
 
 /**
  * 로그인 전 결과의 첫머리 — **내 사주 카드와 잠긴 목차**(흐름 시안 g 의 2~3단계, ADR 0131 의 6 · 7 · ADR 0143).
@@ -89,7 +89,7 @@ export function Taste({
       <LockedOutline outline={outline} draft={draft} tasteDraft={tasteDraftOf(query)} />
 
       <details id="saju-detail" data-fold="" className="group/detail scroll-mt-24">
-        <summary className="flex min-h-14 cursor-pointer list-none items-center justify-between gap-3 rounded-card border border-border bg-surface px-5 py-4 hover:border-border-strong sm:px-6 [&::-webkit-details-marker]:hidden">
+        <summary className={`flex min-h-14 cursor-pointer list-none items-center justify-between gap-3 ${FLAT_CARD_FACE} px-5 py-4 hover:border-border-strong sm:px-6 [&::-webkit-details-marker]:hidden`}>
           <span className="min-w-0">
             <span className={TYPE_NAME}>만세력 보기</span>
             <span className="mt-0.5 block text-small leading-5 text-secondary">여덟 글자 · 신살 · 오행 · 용신 · 관계 · 운</span>

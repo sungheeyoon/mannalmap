@@ -6,7 +6,7 @@ import { SERVICE_FEATURES, featureText } from '@/src/lib/brand/features';
 
 import { useBrowserSession } from './auth/browser-session';
 import { Icon, type IconName } from './ui/icons';
-import { TYPE_NAME, TYPE_SECTION } from './ui/surfaces';
+import { FLAT_CARD_FACE, TYPE_NAME, TYPE_SECTION } from './ui/surfaces';
 
 /**
  * 로그인 전 첫 화면의 **「할 수 있는 것」** — 폼 아래. 서비스 소개(`/about`)의 같은 구역 이름이다.
@@ -46,7 +46,7 @@ export function LandingGuide({ matchOpen }: { matchOpen: boolean }) {
         {SERVICE_FEATURES.filter((feature) => feature.title !== '사주').map((feature) => (
           <li
             key={feature.title}
-            className="flex gap-4 rounded-card border border-border bg-surface p-5 sm:p-6"
+            className={`flex gap-4 ${FLAT_CARD_FACE} p-5 sm:p-6`}
           >
             <span className={`grid size-11 shrink-0 place-items-center rounded-cell ${TONES[feature.icon] ?? TONE_DEFAULT}`}>
               <Icon name={feature.icon} className="size-[22px]" />

@@ -1,4 +1,5 @@
 import { Bone, SkeletonMain } from '../../../ui/skeleton';
+import { RING_CARD_FACE } from '../../../ui/surfaces';
 
 /**
  * 채팅 목록의 뼈대 — 제목 · 대화방 줄 셋, 넓은 화면은 두 칸 틀(`room-list.tsx` 의 `ChatFrame` · `RoomList` · `RoomRow`).
@@ -28,7 +29,7 @@ export default function ChatLoading() {
             ))}
           </div>
         </div>
-        <div className="hidden rounded-card bg-surface ring-1 ring-border lg:block" />
+        <div className={`hidden ${RING_CARD_FACE} lg:block`} />
       </div>
     </SkeletonMain>
   );

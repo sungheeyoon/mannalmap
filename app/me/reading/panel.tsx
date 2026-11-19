@@ -11,7 +11,7 @@ import type { Element } from '@/src/lib/saju';
 import { BUTTON_PRIMARY_FACE, BUTTON_SECONDARY_FACE } from '../../ui/buttons';
 import { ConfirmDialog } from '../../ui/confirm-dialog';
 import { Icon } from '../../ui/icons';
-import { TYPE_NAME } from '../../ui/surfaces';
+import { DANGER_CARD_FACE, FLAT_CARD_FACE, TYPE_NAME, WARNING_CARD_FACE } from '../../ui/surfaces';
 import type { ReadingCredits } from '@/src/lib/reading/credits';
 import { ReadingFeedback } from './feedback';
 import { ShareReadingButton } from './share-button';
@@ -219,7 +219,7 @@ export function ReadingPanel({
   const makeAtEnd = chrome.makeInHeader && !stale;
 
   const makeBlock = chrome.hideMake ? null : (
-    <div className="flex flex-col gap-3 rounded-card border border-border bg-surface px-5 py-5 sm:px-6">
+    <div className={`flex flex-col gap-3 ${FLAT_CARD_FACE} px-5 py-5 sm:px-6`}>
       {/* 먼저 정할 것이 있으면 버튼보다 앞에 선다 — 정하고 나서 누르는 차례다 */}
       {ask}
       {/*
@@ -249,7 +249,7 @@ export function ReadingPanel({
   const alert = failure === null ? null : (
     <div
       role={phase === 'error' ? 'alert' : 'status'}
-      className={`flex gap-2.5 rounded-card px-4 py-3.5 text-body leading-6 ${phase === 'error' ? 'bg-danger-wash text-danger' : 'bg-warning-wash text-warning'}`}
+      className={`flex gap-2.5 ${phase === 'error' ? DANGER_CARD_FACE : WARNING_CARD_FACE} px-4 py-3.5 text-body leading-6 ${phase === 'error' ? 'text-danger' : 'text-warning'}`}
     >
       <Icon name="alert" className="mt-0.5 size-5" />
       <div className="min-w-0">

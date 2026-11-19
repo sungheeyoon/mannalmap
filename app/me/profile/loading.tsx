@@ -1,5 +1,5 @@
 import { Bone, SkeletonMain } from '../../ui/skeleton';
-import { COLUMN } from '../../ui/surfaces';
+import { COLUMN, FLAT_CARD_FACE, PAPER_FACE } from '../../ui/surfaces';
 
 /**
  * 프로필의 뼈대 — 제목 · 한 줄 설명, 크림 사진 판(큰 대표 2×2 · 작은 칸 다섯), 흰 판의 닉네임 · 소개 · 저장 줄
@@ -19,7 +19,7 @@ export default function ProfileLoading() {
       </div>
 
       <div className="flex flex-col gap-5 lg:grid lg:grid-cols-[22rem_minmax(0,1fr)] lg:items-start">
-        <div className="flex flex-col gap-4 rounded-card bg-cream px-4 py-5 sm:px-6 sm:py-6">
+        <div className={`flex flex-col gap-4 ${PAPER_FACE} px-4 py-5 sm:px-6 sm:py-6`}>
           <div className="grid grid-cols-3 gap-2 sm:gap-3">
             <Bone className="col-span-2 row-span-2 h-full rounded-cell" />
             {[2, 3, 4, 5, 6].map((position) => (
@@ -29,7 +29,7 @@ export default function ProfileLoading() {
           <Bone className="h-5 w-3/4 rounded-full" />
         </div>
 
-        <div className="flex flex-col gap-5 rounded-card border border-border bg-surface p-5 sm:p-6">
+        <div className={`flex flex-col gap-5 ${FLAT_CARD_FACE} p-5 sm:p-6`}>
           <div className="flex flex-col gap-1.5">
             <Bone className="h-5 w-14 rounded-full" />
             <div className="flex items-center gap-2">

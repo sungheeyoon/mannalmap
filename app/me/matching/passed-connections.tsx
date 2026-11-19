@@ -11,7 +11,7 @@ import { CandidatePhoto } from './candidate-photo';
 import { supplyOf, type DeckCard } from '@/src/lib/matching/deck-card';
 import { PASSED_LIMIT } from '@/src/lib/matching/deck-state';
 import { DetailSheet, openSheet } from '../../ui/sheet';
-import { TYPE_NAME, TYPE_SECTION } from '../../ui/surfaces';
+import { CARD_FACE, PAPER_FACE, TYPE_NAME, TYPE_SECTION } from '../../ui/surfaces';
 
 /*
   **지나친 인연 — 「오늘의 인연」 옆의 두 번째 보기.**
@@ -68,7 +68,7 @@ export function PassedConnections({
       </div>
 
       {map !== null && (
-        <div className="w-full overflow-hidden rounded-card bg-cream px-2 pt-4 lg:max-w-xl">
+        <div className={`w-full overflow-hidden ${PAPER_FACE} px-2 pt-4 lg:max-w-xl`}>
           <div className="mx-auto max-w-[28rem]">{map}</div>
         </div>
       )}
@@ -101,7 +101,7 @@ export function PassedConnections({
                   setLooking(card);
                   if (looking?.candidateUserId === card.candidateUserId) openSheet(sheet.current);
                 }}
-                className="flex size-full flex-col overflow-hidden rounded-card border border-border bg-surface text-left shadow-card hover:border-border-strong active:scale-[0.98]"
+                className={`flex size-full flex-col overflow-hidden ${CARD_FACE} border-border bg-surface text-left hover:border-border-strong active:scale-[0.98]`}
               >
                 <span className="relative block aspect-square text-[3rem]">
                   <CandidatePhoto card={card} />

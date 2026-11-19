@@ -8,7 +8,7 @@ import { AccountNotice } from '../me/account-notice';
 import { RequestDeletion } from '../me/leaving';
 import { FailureLine } from '../ui/failure-line';
 import { Logo } from '../ui/logo';
-import { CARD, COLUMN, PAPER, TYPE_TITLE } from '../ui/surfaces';
+import { CARD, COLUMN, FLAT_CARD_FACE, PAPER, TYPE_TITLE } from '../ui/surfaces';
 import { SignOutLink } from './sign-out-link';
 import { mayRequestDeletion } from '@/src/lib/account';
 import { SERVICE_NAME_OBJECT } from '@/src/lib/brand';
@@ -162,7 +162,7 @@ export default async function SignupPage({ searchParams }: {
         */
         <p className={`${CARD} text-sm leading-6`}>{NOTICE_NOT_READY}</p>
       ) : (
-        <section className="rounded-card border border-border bg-surface p-5 sm:p-7">
+        <section className={`${FLAT_CARD_FACE} p-5 sm:p-7`}>
           <SignupForm
             returnTo={returnTo}
             firstSignup={account.signed_up_at === null}

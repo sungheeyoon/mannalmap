@@ -4,6 +4,9 @@
  * 모서리는 세 단이다 — 카드 20px(`rounded-card`: 판 · 종이 · 타일 · 줄 카드 · 띄움 판) · 칸 12px(`rounded-cell`: 그 안의 칸 · 작은 상자) ·
  * 단추는 알약. 글자 크기도 단이다(`text-small` 13px · `text-body` 15px …) — 토큰은 `app/globals.css` 의 `@theme inline`,
  * 잠금은 `app/ui/scale.test.ts`(ADR 0109 추기 2026-10-12). 간격은 4 · 8 · 12 · 16 · 24 · 32 · 48 단계다(시안 `NOTES.md`).
+ *
+ * **화면은 카드 면을 손으로 쓰지 않는다**(ADR 0261) — 카드 모서리에 면(바탕 · 테 · 그림자)을 칠하려면 이 파일의 면 상수(`*_FACE` · `CARD` …)를
+ * 부르고 여백 · 자리만 덧붙인다. 잠금과 손으로 두는 자리의 표는 `app/ui/surfaces.test.ts`.
  */
 
 /*
@@ -61,13 +64,18 @@ export const PAPER = `${PAPER_FACE} p-6 sm:p-8`;
  */
 export const PAPER_TOP = 'rounded-t-card bg-cream';
 
-export const PAPER_BOTTOM = 'rounded-b-card bg-cream px-3 pb-5 sm:px-10 sm:pb-9';
+/** 면(`PAPER_BOTTOM_FACE`)은 여백을 뺐다 — 첫 화면 폼이 뜨기 전의 빈 자리(`app/page.tsx`)가 쓴다 */
+export const PAPER_BOTTOM_FACE = 'rounded-b-card bg-cream';
+
+export const PAPER_BOTTOM = `${PAPER_BOTTOM_FACE} px-3 pb-5 sm:px-10 sm:pb-9`;
 
 /**
  * 오행 타일 — `ELEMENT_TONE[x].scope`(또는 `elementScope`)와 함께 단다. 면이 그 오행의 파스텔이 되고 안의
- * `BUTTON_ON_TILE` · `ElementSymbol` 이 같은 색을 따른다.
+ * `BUTTON_ON_TILE` · `ElementSymbol` 이 같은 색을 따른다. 면(`TILE_FACE`)은 여백 · 글자 색을 뺐다 — 내 사주 카드 · 사람 머리 ·
+ * 오늘의 인연 카드처럼 여백이 다른 자리가 쓴다.
  */
-export const TILE = 'rounded-card bg-[var(--tile)] p-4 text-foreground';
+export const TILE_FACE = 'rounded-card bg-[var(--tile)]';
+export const TILE = `${TILE_FACE} p-4 text-foreground`;
 
 /**
  * 띄움 메뉴 판 — 단추 아래(위)에 떠서 고를 줄을 드는 흰 판(설정 톱니 · 풀이권 · 대화방 「⋯」 · 신고 · 차단 · 사진 한 장의 메뉴 ·
@@ -82,9 +90,27 @@ export const MENU_PANEL = 'rounded-card bg-surface shadow-float ring-1 ring-bord
  */
 export const MENU_ITEM = 'flex min-h-11 w-full items-center gap-2.5 rounded-cell px-3 text-left text-body font-semibold hover:bg-surface-sunken';
 
-/** 줄 카드 — 목록의 한 줄(소식 · 대화방 · 풀이 줄). 면(`ROW_CARD_FACE`)은 여백만 뺐다 */
-export const ROW_CARD_FACE = 'rounded-card border border-border bg-surface';
-export const ROW_CARD = `${ROW_CARD_FACE} px-4 py-3`;
+/**
+ * 그림자 없는 카드 — 흰 면 · 가는 테. 판 안에 다시 선 카드, 묶음 목록의 판, 접이칸 머리, 안내 판이 입는다. 카드(`CARD`)와 다른 것은
+ * 그림자 하나다. 여백은 쓰는 자리가 붙인다
+ */
+export const FLAT_CARD_FACE = 'rounded-card border border-border bg-surface';
+
+/** 줄 카드 — 목록의 한 줄(소식 · 대화방 · 풀이 줄). 그림자 없는 카드(`FLAT_CARD_FACE`)에 줄의 여백을 얹었다 */
+export const ROW_CARD = `${FLAT_CARD_FACE} px-4 py-3`;
+
+/**
+ * 테가 `ring` 인 흰 카드 — 테가 판의 폭을 먹지 않는다. 인연 편지 · 대화방의 빈 자리 · 관계 지도의 사람 판이 입는다. 띄움 메뉴 판(`MENU_PANEL`)은
+ * 여기에 띄움 그림자를 얹은 꼴이다
+ */
+export const RING_CARD_FACE = 'rounded-card bg-surface ring-1 ring-border';
+
+/** 옅은 상자 — 판 안에 한 단 가라앉은 카드 모서리의 상자(신살 없음 · 처리 상태 줄 · 운영 화면의 폼). 여백은 쓰는 자리가 붙인다 */
+export const SOFT_CARD_FACE = 'rounded-card bg-surface-soft';
+
+/** 알림 판 — 경고(노랑) · 위험(빨강)의 옅은 면. 테 · 글자 색 · 여백은 쓰는 자리가 붙인다 */
+export const WARNING_CARD_FACE = 'rounded-card bg-warning-wash';
+export const DANGER_CARD_FACE = 'rounded-card bg-danger-wash';
 
 /**
  * 선 줄 — 판 없이 위아래 가는 선 사이에 서는 한 줄. 카드와 카드 사이에 끼는 요약 한 줄(궁합 탭의 「궁합풀이」)이 쓴다 —

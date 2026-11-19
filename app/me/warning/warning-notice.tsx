@@ -3,6 +3,7 @@ import { SUPPORT_EMAIL } from '@/src/lib/brand';
 
 import { AcknowledgeWarning } from './acknowledge';
 import { readWarningNotice } from './notice';
+import { DANGER_CARD_FACE } from '../../ui/surfaces';
 
 /**
  * **경고를 받은 사람에게 서는 안내** — 로그인한 화면의 맨 위, 「확인했습니다」를 누를 때까지 (ADR 0108, G-57).
@@ -19,7 +20,7 @@ export async function WarningNotice() {
     <div className="app-shell w-full pt-6 sm:pt-8">
       <section
         aria-labelledby="warning-notice-title"
-        className="flex flex-col gap-3 rounded-card bg-danger-wash p-5 ring-1 ring-danger-line sm:p-6"
+        className={`flex flex-col gap-3 ${DANGER_CARD_FACE} p-5 ring-1 ring-danger-line sm:p-6`}
       >
         <h2 id="warning-notice-title" className="text-lead font-bold text-danger">
           {WARNING_NOTICE_TITLE}

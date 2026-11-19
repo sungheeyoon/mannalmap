@@ -12,7 +12,7 @@ import { NO_MATCH, PLACEHOLDER } from '../../../person-combobox';
 import { elementScope } from '../../../ui/element-tone';
 import { FaceSymbol } from '../../../ui/stem-symbol';
 import { Icon } from '../../../ui/icons';
-import { TYPE_TITLE } from '../../../ui/surfaces';
+import { FLAT_CARD_FACE, TYPE_TITLE } from '../../../ui/surfaces';
 import { backOf, isOpenResult, placeOf, resultKindOf, withCameFrom, type CameFrom } from '../../../came-from';
 import { SHELF_KIND_LABEL, SHELF_KINDS, SHELF_TITLE, shelfKindOf, withShelfKind, type ShelfKind } from './kind';
 import {
@@ -276,7 +276,7 @@ function NextCard({ book }: { book: NextBook }) {
   return (
     <Link
       href={place.from === null ? book.href : withCameFrom(book.href, place.from, place.shelfKind)}
-      className={`${elementScope(book.element)} group flex w-full max-w-[36rem] items-center gap-4 self-center rounded-card border border-border bg-surface p-4 text-left transition-colors hover:border-[color-mix(in_srgb,var(--ink)_40%,transparent)] active:scale-[0.99]`}
+      className={`${elementScope(book.element)} group flex w-full max-w-[36rem] items-center gap-4 self-center ${FLAT_CARD_FACE} p-4 text-left transition-colors hover:border-[color-mix(in_srgb,var(--ink)_40%,transparent)] active:scale-[0.99]`}
     >
       <span className="grid size-12 shrink-0 place-items-center rounded-cell bg-[var(--tile)]">
         <FaceSymbol stem={book.stem} className="size-7" />

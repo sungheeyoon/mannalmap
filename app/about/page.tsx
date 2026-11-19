@@ -7,7 +7,7 @@ import { SERVICE_FEATURES, featureText } from '@/src/lib/brand/features';
 import { BUTTON_PRIMARY, BUTTON_SECONDARY } from '../ui/buttons';
 import { Icon } from '../ui/icons';
 import { Logo } from '../ui/logo';
-import { CARD, COLUMN, PAPER, TYPE_META, TYPE_NAME, TYPE_SECTION, TYPE_TITLE } from '../ui/surfaces';
+import { CARD, COLUMN, FLAT_CARD_FACE, PAPER, TYPE_META, TYPE_NAME, TYPE_SECTION, TYPE_TITLE } from '../ui/surfaces';
 import { HomeLink } from '../home-link';
 import { matchOpenWhilePrerendered } from '../signed-out-match-open';
 
@@ -67,7 +67,7 @@ export default async function AboutPage() {
         </h2>
         <ol className="flex flex-col gap-2">
           {ABOUT_STEPS.map((step, index) => (
-            <li key={step.title} className="flex gap-4 rounded-card border border-border bg-surface px-4 py-4">
+            <li key={step.title} className={`flex gap-4 ${FLAT_CARD_FACE} px-4 py-4`}>
               <span className="grid size-8 shrink-0 place-items-center rounded-full bg-accent text-sm font-bold text-on-accent tabular-nums">
                 {index + 1}
               </span>

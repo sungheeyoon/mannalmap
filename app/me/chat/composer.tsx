@@ -7,6 +7,7 @@ import { CHAT_INPUT_PLACEHOLDER, CHAT_SEND_LABEL } from '@/src/lib/chat/copy';
 
 import { Icon } from '../../ui/icons';
 import { readDraft, writeDraft } from '@/src/lib/chat/room/draft';
+import { SOFT_CARD_FACE } from '../../ui/surfaces';
 
 /** 글자 수는 한도에 가까워질 때만 선다 — 늘 서 있는 「0/1,000」은 읽을 것 없는 숫자다 */
 const COUNT_FROM = Math.floor(CHAT_POLICY.maxLength * 0.9);
@@ -85,7 +86,7 @@ export function Composer({
       }}
     >
       {/* 둥근 알약 하나 — 칸과 보내기가 한 몸이라 엄지가 닿는 자리에 둘이 함께 선다 */}
-      <div className="flex items-end gap-2 rounded-card bg-surface-soft p-1.5 pl-4 ring-1 ring-border focus-within:ring-2 focus-within:ring-[color-mix(in_srgb,var(--accent)_55%,transparent)]">
+      <div className={`flex items-end gap-2 ${SOFT_CARD_FACE} p-1.5 pl-4 ring-1 ring-border focus-within:ring-2 focus-within:ring-[color-mix(in_srgb,var(--accent)_55%,transparent)]`}>
         <label className="flex min-w-0 flex-1">
           <span className="sr-only">메시지</span>
           <textarea

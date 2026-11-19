@@ -21,6 +21,7 @@
  */
 
 import { BUTTON_PRIMARY_SMALL, BUTTON_SECONDARY_SMALL } from './ui/buttons';
+import { WARNING_CARD_FACE } from './ui/surfaces';
 
 /** 이어서 할 일 — 답이 무엇이든 다시 결과 하나다(궁합은 두 번 물을 수 있다) */
 export type SameChartQuestion = {
@@ -64,7 +65,7 @@ export function SameChartAsk({
     <section
       role="group"
       aria-label="같은 사람인지 확인"
-      className="flex flex-col gap-3 rounded-card border border-warning-line bg-warning-wash px-4 py-4 sm:px-5"
+      className={`flex flex-col gap-3 ${WARNING_CARD_FACE} border border-warning-line px-4 py-4 sm:px-5`}
     >
       <div>
         <p className="text-body font-semibold leading-6">

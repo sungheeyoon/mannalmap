@@ -15,7 +15,7 @@ import { actionAnswer } from '../../ui/action-answer';
 import { BUTTON_SECONDARY, BUTTON_SECONDARY_SMALL } from '../../ui/buttons';
 import { ConfirmDialog } from '../../ui/confirm-dialog';
 import { DoneNote, useDoneNote } from '../../ui/done-note';
-import { TYPE_BODY, TYPE_META } from '../../ui/surfaces';
+import { FLAT_CARD_FACE, TYPE_BODY, TYPE_META } from '../../ui/surfaces';
 import { clearIntro, removePhoto } from './actions';
 import type { MyPhoto } from './photos';
 
@@ -65,7 +65,7 @@ export function ProfileEraser({ photos, userId, hasIntro }: { photos: readonly M
     <div className="flex flex-col gap-2">
       <section
         aria-label={PROFILE_ERASE_TITLE}
-        className="flex flex-col divide-y divide-border rounded-card border border-border bg-surface"
+        className={`flex flex-col divide-y divide-border ${FLAT_CARD_FACE}`}
       >
         <div className="flex flex-col gap-4 p-5 sm:p-6">
           <p className={TYPE_BODY}>
