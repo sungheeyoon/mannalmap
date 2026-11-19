@@ -183,9 +183,11 @@ jobs:
           cache: npm
       - run: npm ci
       # 브라우저와 그 시스템 라이브러리(apt)는 바깥에서 받는다. apt 가 DNS 를 못 풀자 차선마다 약 11분 매달린 뒤 섰다(2026-11-11,
-      # run 43044796756 — 평소 20초) — 한 번에 2분 반까지, 실패하면 20초 쉬고 한 번 더. 단계 한도가 그 둘을 덮는다(`authed` 도 같다)
-      - run: timeout 150 npx playwright install --with-deps chromium || { sleep 20; timeout 150 npx playwright install --with-deps chromium; }
-        timeout-minutes: 6
+      # run 43044796756 — 평소 20초). 단계 한도로 그 매달림만 줄인다(`authed` 도 같다). **안에서 끊고 다시 받지 않는다** — 2026-11-19 에 미러가
+      # 느려(글꼴 패키지 하나에 약 50초) 2분 반에 끊자, 끊긴 명령 밑의 apt-get 이 살아 dpkg 잠금을 쥐어 다시 받기가 「Could not get lock」으로 섰다
+      # (run 44486457814 의 로그인 차선 둘). 느려도 끝나는 설치를 끊지 않게 한도는 넉넉히 둔다
+      - run: npx playwright install --with-deps chromium
+        timeout-minutes: 10
       - run: npm run test:e2e
         env:
           # 껍데기 값이다. 로그인하지 않은 사람을 돌려보내는 데 살아 있는 Supabase 가
@@ -245,8 +247,8 @@ jobs:
           node-version-file: .nvmrc
           cache: npm
       - run: npm ci
-      - run: timeout 150 npx playwright install --with-deps chromium || { sleep 20; timeout 150 npx playwright install --with-deps chromium; }
-        timeout-minutes: 6
+      - run: npx playwright install --with-deps chromium
+        timeout-minutes: 10
 
       # CLI 는 devDependency 다 — `npm ci` 가 이미 놓았다. 안 쓰는 서비스는 빼고 띄운다
       # (`db:start`). 이 job 이 재는 것에 storage·studio 는 안 든다. realtime 은 띄운다 — 계정마다
