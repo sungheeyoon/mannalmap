@@ -25,6 +25,8 @@ const WEB = [
   'app/me/home/self-menu.tsx',
   'app/me/home/self-profile.tsx',
   'app/me/home/running-line.ts',
+  /* 만드는 중인 풀이의 이름은 웹 · 앱이 함께 쓰는 이 파일에 산다(G-168) */
+  'src/lib/reading/running.ts',
   'app/me/home/circle.ts',
   'app/me/onboarding.tsx',
   'app/ui/failure-line.tsx',

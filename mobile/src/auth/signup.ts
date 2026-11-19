@@ -1,7 +1,7 @@
 import { accountFailureOf, type AccountState } from '@account/index';
 import { gateAccountOf, serviceIsOver, signupDone } from '@consent/gate';
 import { NOTICE_NOT_READY, NOTICE_VERSION } from '@consent/notice';
-import { refusedField, signupRequest, type SignupField } from '@consent/signup';
+import { refusedField, signupRequest, type SignupChoices, type SignupField } from '@consent/signup';
 import { rpcArgs } from '@db';
 import { userFacingDbMessage } from '@db-error';
 
@@ -69,10 +69,9 @@ export async function checkNickname(client: Client, nickname: string): Promise<{
 }
 
 /** 이름 · 안내 확인 · 선택 답이 **한 번에** 나간다(ADR 0042). 테스트 코드는 걷었다(ADR 0225). 판본과 본 안내의 줄은 화면이 들고 온다 — 그 사이 바뀌었으면 DB 가 거절한다 */
-export async function completeSignup(client: Client, answer: {
+export async function completeSignup(client: Client, answer: SignupChoices & {
   nickname: string;
   scheduleId: number;
-  improvement: boolean;
 }): Promise<{ ok: true } | { ok: false; message: string; field: SignupField | null }> {
   const { error } = await client.rpc(
     'complete_signup',

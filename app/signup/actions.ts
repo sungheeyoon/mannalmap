@@ -5,7 +5,7 @@ import { redirect } from 'next/navigation';
 import { refresh } from '../refresh';
 import { supabaseOnServer } from '../auth/server-client';
 import { userFacingDbMessage } from '../db-error';
-import { refusedField, safeReturnPath, signupRequest, type SignupField } from '@/src/lib/consent';
+import { refusedField, safeReturnPath, signupRequest, type SignupChoices, type SignupField } from '@/src/lib/consent';
 import { rpcArgs } from '@/src/lib/db';
 
 /**
@@ -24,13 +24,12 @@ import { rpcArgs } from '@/src/lib/db';
  * 화면이 `/me` 로 보내고 거기서 관문이 한 번 더 튕기게 두면, 그 두 번째 튕김에서 화면이
  * 빈다(커밋 `2cbb31f`). 튕김이 하나면 그 자리가 없다.
  */
-export async function completeSignup(answer: {
+export async function completeSignup(answer: SignupChoices & {
   /** 가입을 마치고 갈 곳 — 화면이 보낸 값이라 여기서 다시 좁힌다(ADR 0128) */
   returnTo: string;
   nickname: string;
   version: string;
   scheduleId: number;
-  improvement: boolean;
 }): Promise<{ ok: false; message: string; field: SignupField | null }> {
   const supabase = await supabaseOnServer();
 

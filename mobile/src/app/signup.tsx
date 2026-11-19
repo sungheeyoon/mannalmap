@@ -9,12 +9,14 @@ import { safeReturnPath } from '@consent/return-path';
 import { NOTICE_ACK_LABEL, NOTICE_ACK_NOTE, OPTIONAL_CONSENTS, OPTIONAL_CONSENT_NOTE } from '@consent/notice';
 import {
   SIGNUP_AGE_LABEL,
+  SIGNUP_CHOICES_OFF,
   SIGNUP_HEAD,
   SIGNUP_LABEL,
   SIGNUP_NOTICE_DISCOVERY,
   SIGNUP_NOTICE_KEEP,
   SIGNUP_NOTICE_USE,
   signupSectionErrors,
+  type SignupChoices,
   type SignupField,
 } from '@consent/signup';
 import { NICKNAME_AVAILABLE_NOTE, NICKNAME_MAX, NICKNAME_MIN, NICKNAME_TAKEN_NOTE, missingNickname, nicknameKey } from '@profile';
@@ -142,7 +144,7 @@ function SignupForm({ form, onDone }: { form: Extract<SignupState, { kind: 'form
   const [nickname, setNickname] = useState('');
   const [fourteen, setFourteen] = useState(false);
   const [acknowledged, setAcknowledged] = useState(false);
-  const [chosen, setChosen] = useState<Record<string, boolean>>({ improvement: false });
+  const [chosen, setChosen] = useState<SignupChoices>(SIGNUP_CHOICES_OFF);
   const [failure, setFailure] = useState<{ message: string; field: SignupField | null } | null>(null);
   const [working, setWorking] = useState(false);
   const [checked, setChecked] = useState<{ key: string; available: boolean } | null>(null);
@@ -182,7 +184,7 @@ function SignupForm({ form, onDone }: { form: Extract<SignupState, { kind: 'form
     const result = await completeSignup(client, {
       nickname,
       scheduleId,
-      improvement: chosen.improvement === true,
+      ...chosen,
     });
     setWorking(false);
     if (result.ok) {

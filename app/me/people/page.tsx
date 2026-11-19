@@ -17,7 +17,7 @@ import type { ReadingEntry } from '@/src/lib/reading';
 import { myReadings } from '../reading/current';
 import { readingHref } from '../reading/line';
 import { runningReadings } from '../home/running';
-import { makingPeopleOf } from '../home/running-line';
+import { makingPeopleOf } from '@/src/lib/reading/running';
 import { READING_CONTINUE_NOTE, SELF_READING_MAKING } from '@/src/lib/home/making';
 import { AccountNotice } from '../account-notice';
 import { readAccount } from '../account';
