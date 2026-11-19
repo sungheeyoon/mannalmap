@@ -2,7 +2,7 @@ import type { MatchPreview } from '@/src/lib/matching';
 import { MATCH_INDEX_BADGE, MATCH_INDEX_NOTE, MATCH_INDEX_POLICY_BADGE, MATCH_INDEX_SCALE, MATCH_INDEX_UNSCALED } from '@/src/lib/matching/copy';
 
 import { Icon } from './ui/icons';
-import { CARD } from './ui/surfaces';
+import { CARD, PAPER_FACE } from './ui/surfaces';
 
 /**
  * 「궁합 베타」 지표를 화면에 세우는 자리 — **여기서는 아무것도 계산하지 않는다.**
@@ -57,7 +57,7 @@ export function MatchIndexCard({
           수 하나가 크게 서되 **「베타 탐색 지표」라는 이름이 늘 곁에 붙는다** — 정답처럼 읽히지 않게.
           크림 원은 홈 · 지도의 「나와 궁합 78」과 같은 말투다.
         */}
-        <div className="flex flex-col items-center gap-1 rounded-card bg-cream px-5 py-6 text-center">
+        <div className={`flex flex-col items-center gap-1 ${PAPER_FACE} px-5 py-6 text-center`}>
           <p className="text-small font-semibold text-cream-ink">
             {names.a} × {names.b}
           </p>

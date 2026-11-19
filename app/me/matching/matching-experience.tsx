@@ -5,7 +5,7 @@ import { useRef, useState, type ReactNode } from 'react';
 
 import { elementScope } from '../../ui/element-tone';
 import { Icon, type IconName } from '../../ui/icons';
-import { TYPE_META, TYPE_SECTION, TYPE_TITLE } from '../../ui/surfaces';
+import { PAPER_FACE, RING_CARD_FACE, TYPE_META, TYPE_SECTION, TYPE_TITLE } from '../../ui/surfaces';
 import { supplyOf, type DeckCard } from '@/src/lib/matching/deck-card';
 import type { MeMark } from './me-mark';
 import { ApproachMap, Legend } from './orbit-map';
@@ -102,7 +102,7 @@ export function MatchingExperience({
         <p className="font-rounded text-heading leading-snug text-[var(--ink)]">{card.verdict}</p>
         <p className="max-w-prose text-body leading-6 text-foreground">{card.reason}</p>
       </div>
-      <div className="flex flex-col gap-2 rounded-card bg-surface p-4 ring-1 ring-border">
+      <div className={`flex flex-col gap-2 ${RING_CARD_FACE} p-4`}>
         <SupplyBody card={card} explorationNote={explorationNote} />
       </div>
     </>
@@ -229,7 +229,7 @@ export function MatchingExperience({
             자리에만 선다.
           */}
           <div className="hidden min-w-0 flex-col gap-4 lg:flex">
-            <section aria-labelledby="matching-map" className="flex flex-col overflow-hidden rounded-card bg-cream">
+            <section aria-labelledby="matching-map" className={`flex flex-col overflow-hidden ${PAPER_FACE}`}>
               <div className="flex items-baseline justify-between gap-3 px-6 pt-6">
                 <h2 id="matching-map" className={TYPE_SECTION}>
                   내 궤도로 다가오는 인연
@@ -266,7 +266,7 @@ export function MatchingExperience({
           <div className={`${elementScope(supplyOf(profile))} flex flex-col gap-4`}>
             {details}
             {letter}
-            <div className="overflow-hidden rounded-card bg-cream px-2 pt-3">
+            <div className={`overflow-hidden ${PAPER_FACE} px-2 pt-3`}>
               <ApproachMap shape="arc" me={me} cards={mapCards} statusOf={statusOf} className="mx-auto max-w-[28rem]" />
             </div>
             <p className="text-fine leading-5 text-secondary">{TALK_SCORE_INFO}</p>

@@ -5,7 +5,7 @@ import { CREDITS_AVAILABLE_LABEL, CREDITS_SCREEN_LEAD } from '@/src/lib/reading/
 import { supabaseOnServer } from '../../auth/server-client';
 import { signedInUser } from '../../auth/signed-in';
 import { redirectToSignIn } from '../../auth/sign-in-redirect';
-import { COLUMN, TYPE_META, TYPE_TITLE } from '../../ui/surfaces';
+import { COLUMN, PAPER_FACE, TYPE_META, TYPE_TITLE } from '../../ui/surfaces';
 import { TopBar } from '../../ui/top-bar';
 import { Checkout } from './checkout';
 import { readReadingCredits } from './remaining';
@@ -53,7 +53,7 @@ export default async function CreditsPage({
       </TopBar>
 
       {available !== null && (
-        <p className="flex items-baseline justify-between gap-4 rounded-card bg-cream px-5 py-4 text-body text-cream-ink">
+        <p className={`flex items-baseline justify-between gap-4 ${PAPER_FACE} px-5 py-4 text-body text-cream-ink`}>
           <span>{CREDITS_AVAILABLE_LABEL}</span>
           <span className="font-semibold tabular-nums">{available}장</span>
         </p>

@@ -27,9 +27,10 @@ import { PhotoGrid, PhotoGridFailed } from './photo-grid';
 import type { MyPhoto } from './photos';
 import { FailureLine } from '../../ui/failure-line';
 import { FIELD } from '../../ui/fields';
+import { FLAT_CARD_FACE } from '../../ui/surfaces';
 
 /** 판 한 장 — 무리 지은 목록과 같은 흰 판 */
-const PANEL = 'flex flex-col gap-5 rounded-card border border-border bg-surface p-5 sm:p-6';
+const PANEL = `flex flex-col gap-5 ${FLAT_CARD_FACE} p-5 sm:p-6`;
 
 const LABEL = 'text-small font-semibold text-secondary';
 

@@ -7,6 +7,7 @@ import { Icon } from '../../ui/icons';
 import { shareMyReading } from './share';
 import type { ReadingTarget } from './target';
 import { FailureLine } from '../../ui/failure-line';
+import { MENU_PANEL } from '../../ui/surfaces';
 
 /**
  * 내 사주풀이를 **링크로 보낸다** — 누르면 주소가 클립보드에 들어간다.
@@ -206,7 +207,7 @@ export function ShareReadingButton({
             실패는 읽어야 하는 말이라 단추 아래 판으로 뜬다 — 폭이 좁은 아이콘 칸에 끼우지 않는다. 아이콘은 표지 안쪽 오른쪽 끝에 서므로 판의
             폭은 화면 양쪽 1.5rem 을 남긴다 — 320px 폰에서도 왼쪽이 화면 밖으로 안 나간다(#855 검토)
           */
-          <div className="absolute right-0 top-full z-10 mt-1.5 flex w-72 max-w-[calc(100vw-3rem)] flex-col gap-2 rounded-card bg-surface p-3 shadow-float ring-1 ring-border">
+          <div className={`absolute right-0 top-full z-10 mt-1.5 flex w-72 max-w-[calc(100vw-3rem)] flex-col gap-2 ${MENU_PANEL} p-3`}>
             <FailureLine>{notice}</FailureLine>
             {link !== null && (
               <input

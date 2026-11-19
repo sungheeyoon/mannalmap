@@ -1,7 +1,7 @@
 import Link from 'next/link';
 
 import { BUTTON_TERTIARY } from '../../ui/buttons';
-import { ROW_CARD } from '../../ui/surfaces';
+import { RING_CARD_FACE, ROW_CARD } from '../../ui/surfaces';
 import { FailureLine } from '../../ui/failure-line';
 import { HISTORY_HREF } from './history-href';
 import { REQUEST_UNSURE } from './use-deck';
@@ -32,7 +32,7 @@ export function Feedback({
   return (
     <>
       {undo !== null && (
-        <p className="flex flex-wrap items-center justify-between gap-x-4 rounded-card bg-surface px-4 py-1 text-note font-medium text-foreground ring-1 ring-border">
+        <p className={`flex flex-wrap items-center justify-between gap-x-4 ${RING_CARD_FACE} px-4 py-1 text-note font-medium text-foreground`}>
           <span className="py-2">지나친 인연에 보관했어요</span>
           <button type="button" onClick={undo} disabled={working} className={BUTTON_TERTIARY}>
             실행 취소

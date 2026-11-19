@@ -11,7 +11,7 @@ import { ElementSymbol } from '../../../ui/element-symbol';
 import { FaceSymbol, STEM_PICTURE, StemSymbol } from '../../../ui/stem-symbol';
 import { Icon } from '../../../ui/icons';
 import { EmptyState } from '../../../ui/empty-state';
-import { EMPTY_SLOT_FACE, STALE_CHIP, TYPE_SECTION } from '../../../ui/surfaces';
+import { EMPTY_SLOT_FACE, PAPER_FACE, STALE_CHIP, TYPE_SECTION } from '../../../ui/surfaces';
 import { Avatar } from '../../avatar';
 import { READING_CONTINUE_NOTE, READING_MAKING } from '@/src/lib/home/making';
 import { coverFace } from '../../reading/essay';
@@ -389,7 +389,7 @@ export function MakingShelf({
               {/* 보관함 옆 칸에 펼친 편지에도 테가 선다 — 표지와 같은 링크(`CoverLink`)다 */}
               <CoverLink
                 href={hrefOf(match.matchId)}
-                className="group flex h-full flex-col gap-4 rounded-card bg-cream p-5 transition-transform hover:-translate-y-0.5 active:scale-[0.99]"
+                className={`group flex h-full flex-col gap-4 ${PAPER_FACE} p-5 transition-transform hover:-translate-y-0.5 active:scale-[0.99]`}
               >
                 <span className="flex items-center gap-3.5">
                   <Avatar userId={match.partnerUserId} nickname={match.nickname} hasPhoto={match.hasPhoto} focus={match.photoFocus} size={56} />

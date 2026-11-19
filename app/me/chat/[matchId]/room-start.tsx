@@ -4,7 +4,7 @@ import { STEM_INFO, type Stem } from '@/src/lib/saju';
 import { elementScope } from '../../../ui/element-tone';
 import { Icon } from '../../../ui/icons';
 import { StemSymbol } from '../../../ui/stem-symbol';
-import { TYPE_NAME } from '../../../ui/surfaces';
+import { TILE_FACE, TYPE_NAME } from '../../../ui/surfaces';
 import { Avatar } from '../../avatar';
 import { partnerSheetName } from '../../partner-sheet';
 import { DayMasterChip } from '../../people/chart-bits';
@@ -88,7 +88,7 @@ function StartSide({
   openName: string;
 }) {
   const info = STEM_INFO[stem];
-  const face = `${elementScope(info.element)} relative flex min-w-0 flex-col gap-2 overflow-hidden rounded-card bg-[var(--tile)] p-4 text-left`;
+  const face = `${elementScope(info.element)} relative flex min-w-0 flex-col gap-2 overflow-hidden ${TILE_FACE} p-4 text-left`;
   const body = (
     <>
       <StemSymbol stem={stem} className="pointer-events-none absolute -bottom-4 -right-4 size-20 opacity-20" />

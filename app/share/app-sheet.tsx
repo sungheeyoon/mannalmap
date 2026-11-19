@@ -8,7 +8,7 @@ import { SERVICE_NAME } from '@/src/lib/brand';
 import appIcon from '../apple-icon.png';
 import { BUTTON_PRIMARY } from '../ui/buttons';
 import { closeSheet, openSheet } from '../ui/sheet';
-import { TYPE_SECTION } from '../ui/surfaces';
+import { SHEET_FACE, TYPE_SECTION } from '../ui/surfaces';
 import { APP_SHEET_DISMISSED_KEY, appOpenHref, shouldOfferApp } from './app-link';
 import type { ShareKind } from './path';
 
@@ -77,7 +77,7 @@ export function AppSheet({ kind, token }: { kind: ShareKind; token: string }) {
       onClick={(event) => { if (event.target === event.currentTarget) dismiss(); }}
       onCancel={(event) => { event.preventDefault(); dismiss(); }}
       onClose={writeDismissed}
-      className="mx-auto mb-0 mt-auto w-full max-w-[28rem] outline-none rounded-t-card bg-background p-0 text-foreground backdrop:bg-scrim lg:my-auto lg:rounded-card lg:shadow-float"
+      className={`${SHEET_FACE} max-w-[28rem] outline-none`}
     >
       <div className="flex flex-col gap-5 px-5 pb-[max(1.5rem,env(safe-area-inset-bottom))] pt-3 lg:p-6">
         <span aria-hidden="true" className="mx-auto h-1.5 w-10 rounded-full bg-border-strong lg:hidden" />

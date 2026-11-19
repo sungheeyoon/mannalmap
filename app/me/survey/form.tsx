@@ -39,7 +39,7 @@ import {
 import { BUTTON_PRIMARY, BUTTON_SECONDARY } from '../../ui/buttons';
 import { saveServiceSurvey } from './actions';
 import type { MySurvey, SurveyContext } from './read';
-import { TYPE_SECTION } from '../../ui/surfaces';
+import { FLAT_CARD_FACE, TYPE_SECTION } from '../../ui/surfaces';
 import { actionAnswer } from '../../ui/action-answer';
 import { FailureLine } from '../../ui/failure-line';
 import { useLeaveGuard } from '../../ui/leave-guard';
@@ -61,7 +61,7 @@ import { useLeaveGuard } from '../../ui/leave-guard';
  * 여기서도 하는 것은, 화면에 안 보이는 값이 요청에 실려 나가지 않게 하기 위해서다.
  */
 /** 문항 한 장 — 무리 지은 목록과 같은 흰 판 */
-const PANEL = 'flex flex-col gap-3 rounded-card border border-border bg-surface p-5 sm:p-6';
+const PANEL = `flex flex-col gap-3 ${FLAT_CARD_FACE} p-5 sm:p-6`;
 
 /** 문항의 물음 — 본문보다 확실히 크고 굵게. 긴 문장이라 둥근 서체 대신 시스템 서체다 */
 const ASK = 'block text-lead font-bold leading-7 text-foreground';
@@ -148,7 +148,7 @@ export function SurveyForm({ context, given }: { context: SurveyContext; given: 
 
   if (!open) {
     return (
-      <section className="flex flex-col gap-4 rounded-card border border-border bg-surface p-5 sm:p-6">
+      <section className={`flex flex-col gap-4 ${FLAT_CARD_FACE} p-5 sm:p-6`}>
         <div className="flex flex-col gap-1">
           <h2 className={TYPE_SECTION}>{SURVEY_COPY.thanks}</h2>
           <p className="text-sm leading-6 text-secondary">{SURVEY_COPY.editable}</p>

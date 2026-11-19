@@ -12,7 +12,7 @@ import { editPersonInput } from './actions';
 import { actionAnswer } from '../ui/action-answer';
 import { BUTTON_PRIMARY, BUTTON_TERTIARY } from '../ui/buttons';
 import { ConfirmDialog } from '../ui/confirm-dialog';
-import { TYPE_META, TYPE_NAME } from '../ui/surfaces';
+import { CARD_FACE, TYPE_META, TYPE_NAME } from '../ui/surfaces';
 import { FailureLine } from '../ui/failure-line';
 import { useSectionErrors } from '../ui/section-error';
 
@@ -95,7 +95,7 @@ export function EditInputForm({
 
   return (
     <section
-      className="flex flex-col gap-4 rounded-card border border-border bg-surface p-4 text-foreground shadow-card sm:p-5"
+      className={`flex flex-col gap-4 ${CARD_FACE} border-border bg-surface p-4 text-foreground sm:p-5`}
     >
       <h2 className={TYPE_NAME}>수정하기</h2>
 

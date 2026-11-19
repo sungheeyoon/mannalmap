@@ -5,6 +5,7 @@ import { GENERATION } from './generation';
 import { READING_COLUMN } from './markdown';
 import type { OutlineRow } from '@/src/lib/reading/outline';
 import flow from './flow.module.css';
+import { PAPER_FACE, PLAIN_CARD_FACE } from '../../ui/surfaces';
 
 /**
  * **멈춘 화면이 아니라는 것을 무엇이 말하는가** — 서버가 적은 진행이다(ADR 0127).
@@ -18,7 +19,7 @@ import flow from './flow.module.css';
  */
 export function LoadingState({ rows }: { rows: readonly OutlineRow[] }) {
   return (
-    <div role="status" aria-live="polite" className="rounded-card bg-cream p-5 sm:p-7">
+    <div role="status" aria-live="polite" className={`${PAPER_FACE} p-5 sm:p-7`}>
       {/*
         **띠 · 목차 · 안내가 한 열이다.** 띠만 카드 폭을 다 쓰고 목차는 36rem 에서 멈춰, 넓은 화면에서 띠가 목차보다
         길게 뻗었다(화면 갤러리 감사 2026-10-09). 열의 폭은 본문과 같다 — 기다린 자리에 글이 그 폭으로 선다.
@@ -50,7 +51,7 @@ export function LoadingState({ rows }: { rows: readonly OutlineRow[] }) {
           {rows.map((row, at) => (
             <li
               key={`${at}-${row.label}`}
-              className="flex items-center justify-between gap-3 rounded-card bg-surface px-4 py-3 text-note"
+              className={`flex items-center justify-between gap-3 ${PLAIN_CARD_FACE} px-4 py-3 text-note`}
             >
               <span className={row.state === 'waiting' ? 'text-secondary' : 'text-foreground'}>{row.label}</span>
               <OutlineMark state={row.state} />

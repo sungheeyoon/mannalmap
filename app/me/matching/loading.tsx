@@ -1,4 +1,5 @@
 import { Bone, SkeletonMain } from '../../ui/skeleton';
+import { PAPER_FACE } from '../../ui/surfaces';
 
 /**
  * 오늘의 인연의 뼈대 — 제목 줄(날짜 · 제목 / 보기 전환) · 카드 한 장과 그 아래 단추 줄, 넓은 화면은 그 옆에 크림 궤도 판 ·
@@ -33,7 +34,7 @@ export default function MatchingLoading() {
           </div>
         </div>
         <div className="hidden min-w-0 flex-col gap-4 lg:flex">
-          <div className="flex flex-col rounded-card bg-cream">
+          <div className={`flex flex-col ${PAPER_FACE}`}>
             <div className="px-6 pt-6">
               <Bone className="h-8 w-56 rounded-full" />
             </div>

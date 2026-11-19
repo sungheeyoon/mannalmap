@@ -5,7 +5,7 @@ import { SURVEY_COPY } from '@/src/lib/survey';
 import { supabaseOnServer } from '../../auth/server-client';
 import { signedInUser } from '../../auth/signed-in';
 import { redirectToSignIn } from '../../auth/sign-in-redirect';
-import { COLUMN, PAPER, TYPE_SECTION, TYPE_TITLE } from '../../ui/surfaces';
+import { COLUMN, FLAT_CARD_FACE, PAPER, TYPE_SECTION, TYPE_TITLE } from '../../ui/surfaces';
 import { AccountNotice } from '../account-notice';
 import { readAccount } from '../account';
 import { ConsentSwitch } from './consent-switch';
@@ -65,7 +65,7 @@ export default async function SurveyPage() {
       </header>
 
       {context === null ? (
-        <FailureLine retry className="rounded-card border border-border bg-surface p-5">
+        <FailureLine retry className={`${FLAT_CARD_FACE} p-5`}>
           설문을 불러오지 못했어요.
         </FailureLine>
       ) : context.consented ? (
@@ -76,7 +76,7 @@ export default async function SurveyPage() {
           헤더는 브라우저에서 세션만 읽는다. 그 값을 물으려고 문을 하나 더 여는 대신,
           화면이 이유를 말하고 그 자리에서 켜게 한다.
         */
-        <section className="flex flex-col gap-4 rounded-card border border-border bg-surface p-5 sm:p-6">
+        <section className={`flex flex-col gap-4 ${FLAT_CARD_FACE} p-5 sm:p-6`}>
           <div className="flex flex-col gap-1">
             <h2 className={TYPE_SECTION}>먼저 동의가 필요합니다</h2>
             <p className="text-sm leading-6 text-secondary">{SURVEY_COPY.consentNeeded}</p>

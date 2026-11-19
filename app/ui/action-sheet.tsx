@@ -5,6 +5,7 @@ import { useEffect, useRef } from 'react';
 import { BUTTON_SECONDARY } from './buttons';
 import { Icon, type IconName } from './icons';
 import { closeSheet, openSheet } from './sheet';
+import { PLAIN_CARD_FACE, SHEET_FACE } from './surfaces';
 
 /** 고르는 줄 하나 — 위험한 일(지우기)은 `tone: 'danger'` 로 붉게, 다른 줄과 선 하나로 떨어져 선다 */
 export type ActionChoice = { icon: IconName; label: string; tone?: 'danger'; run: () => void };
@@ -83,11 +84,11 @@ export function ActionSheet({
         event.stopPropagation();
         onClose();
       }}
-      className="mx-auto mb-0 mt-auto w-full max-w-[28rem] rounded-t-card bg-background p-0 text-foreground backdrop:bg-scrim lg:my-auto lg:w-[22rem] lg:rounded-card lg:shadow-float"
+      className={`${SHEET_FACE} max-w-[28rem] lg:w-[22rem]`}
     >
       <div className="flex flex-col gap-3 px-4 pb-[max(1.25rem,env(safe-area-inset-bottom))] pt-3 lg:p-4">
         <span aria-hidden="true" className="mx-auto h-1.5 w-10 rounded-full bg-border-strong lg:hidden" />
-        <div className="flex flex-col rounded-card bg-surface p-1.5">
+        <div className={`flex flex-col ${PLAIN_CARD_FACE} p-1.5`}>
           {quiet.map(row)}
           {danger.length > 0 && quiet.length > 0 && <hr className="mx-3 my-1 border-border" />}
           {danger.map(row)}

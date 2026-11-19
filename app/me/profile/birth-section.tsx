@@ -8,9 +8,10 @@ import { CALENDAR_KO, GENDER_KO } from '@/src/lib/saju';
 
 import { BUTTON_SECONDARY_SMALL } from '../../ui/buttons';
 import { EditInputForm } from '../edit-input';
+import { FLAT_CARD_FACE } from '../../ui/surfaces';
 
 /** 판 한 장 — 위 프로필 판과 같은 흰 판(`form.tsx` 의 `PANEL`) */
-const PANEL = 'flex flex-col gap-4 rounded-card border border-border bg-surface p-5 sm:p-6';
+const PANEL = `flex flex-col gap-4 ${FLAT_CARD_FACE} p-5 sm:p-6`;
 
 /** 칸의 이름 — 닉네임 · 소개 칸의 이름과 같은 글자 크기 · 굵기(`form.tsx` 의 `LABEL`) */
 const LABEL = 'text-small font-semibold text-secondary';

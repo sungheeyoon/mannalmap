@@ -18,6 +18,7 @@ import { LINK_PENDING_SPINNER, LinkPending } from '../../ui/link-pending';
 import type { HomeFace } from './self-face';
 import { SelfCardMenu } from './self-menu';
 import { SelfProfile } from './self-profile';
+import { TILE_FACE } from '../../ui/surfaces';
 
 /*
   **나 — 홈의 기준점.** 카드가 내 일간의 파스텔을 입는다(아래 사람 타일과 같은 규칙이라 「나도 이 목록의
@@ -90,7 +91,7 @@ export function SelfCard({
   return (
     <section
       aria-label="내 사주"
-      className={`${elementScope(dayElement)} relative flex h-full min-w-0 flex-col justify-between overflow-hidden rounded-card bg-[var(--tile)] sm:gap-6 sm:p-8 ${compact ? 'gap-3 p-4' : 'gap-4 p-5'}`}
+      className={`${elementScope(dayElement)} relative flex h-full min-w-0 flex-col justify-between overflow-hidden ${TILE_FACE} sm:gap-6 sm:p-8 ${compact ? 'gap-3 p-4' : 'gap-4 p-5'}`}
     >
       {/* 오행 칸이 채움을 벗은 뒤(2026-10-28) 넓은 화면에서 이 그림이 「물」 칸 숫자 뒤로 비쳐 — 넓은 화면은 더 아래 · 더 옅게 */}
       <StemSymbol

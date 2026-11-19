@@ -8,7 +8,7 @@ import { redirectToSignIn } from '../../auth/sign-in-redirect';
 import { answerOfThrown, dbFailure, read, type SkippableRead } from '../../db-error';
 import { BUTTON_PRIMARY } from '../../ui/buttons';
 import { Icon } from '../../ui/icons';
-import { TYPE_SECTION, TYPE_TITLE } from '../../ui/surfaces';
+import { PAPER_FACE, TYPE_SECTION, TYPE_TITLE } from '../../ui/surfaces';
 import { readAccount } from '../account';
 import { AccountNotice } from '../account-notice';
 import { candidatesForViewer, passedForViewer } from '../candidates';
@@ -177,7 +177,7 @@ function Quiet({
   return (
     <main className="app-shell flex flex-1 flex-col gap-5 py-6 sm:gap-7 sm:py-12">
       <h1 className={TYPE_TITLE}>오늘의 인연</h1>
-      <section className="grid items-center gap-6 overflow-hidden rounded-card bg-cream p-6 sm:grid-cols-[minmax(0,14rem)_minmax(0,1fr)] sm:gap-10 sm:p-10">
+      <section className={`grid items-center gap-6 overflow-hidden ${PAPER_FACE} p-6 sm:grid-cols-[minmax(0,14rem)_minmax(0,1fr)] sm:gap-10 sm:p-10`}>
         <QuietOrbit me={me} />
         <div className="flex min-w-0 flex-col items-start gap-5">
           <div className="flex flex-col gap-2">

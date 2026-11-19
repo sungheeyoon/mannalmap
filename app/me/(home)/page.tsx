@@ -8,7 +8,7 @@ import { supabaseOnServer } from '../../auth/server-client';
 import { signedInUser } from '../../auth/signed-in';
 import { redirectToSignIn } from '../../auth/sign-in-redirect';
 import { Icon } from '../../ui/icons';
-import { CARD_FRAME, COLUMN, TYPE_BODY, TYPE_META, TYPE_TITLE } from '../../ui/surfaces';
+import { CARD_FRAME, COLUMN, FLAT_CARD_FACE, TYPE_BODY, TYPE_META, TYPE_TITLE } from '../../ui/surfaces';
 import { readAccount } from '../account';
 import { AccountNotice } from '../account-notice';
 import { myDiscoveryProfile } from '../discovery/discovery-profile';
@@ -160,7 +160,7 @@ async function Home({
     stood === null ? (
       <FailureLine retry>내 사주를 불러오지 못했어요.</FailureLine>
     ) : !stood.ok ? (
-      <section className="flex flex-col gap-2 rounded-card border border-border bg-surface p-5 sm:p-6">
+      <section className={`flex flex-col gap-2 ${FLAT_CARD_FACE} p-5 sm:p-6`}>
         <p className={TYPE_BODY}>{stood.message}</p>
         <p className={TYPE_META}>{UNREADABLE_INPUT_NOTE}</p>
       </section>
