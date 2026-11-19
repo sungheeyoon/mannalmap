@@ -103,4 +103,5 @@
 
 `hooks.SessionStart`(matcher `compact`)가 `scripts/compact-hint.mjs` 를 돈다 — 대화가 압축된 직후 한 번, 역할 문서를 다시 읽고
 `node scripts/session-status.mjs` 로 지금을 재며 운영자에게는 쉬운 한국어로 말하라는 한 줄을 건넨다. 압축 뒤에는 역할 문서가 맥락에서
-빠져 그 규칙이 새던 것을 막는다(2026-11-20 회고 — 압축 직후 영어 보고 · 막힌 보고 파일 요구). 묻지도 막지도 않는다(`additionalContext` 만).
+빠져 그 규칙이 새던 것을 막는다(2026-11-20 회고 — 압축 직후 영어 보고 · 막힌 보고 파일 요구). 묻지도 막지도 않는다(`additionalContext` 만). Claude Code 만
+돈다 — 다른 에이전트에게는 `docs/agents/delegation/coordinator.md` 「세션을 열 때」 · 「조율자 세션」의 문장이 전부다.
