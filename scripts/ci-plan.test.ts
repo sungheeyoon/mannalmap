@@ -105,11 +105,12 @@ describe('CI 계획 — 공개 출시 전 단계는 전부다 (ADR 0242)', () =>
     expect(CORE_STEPS).toContain('npm run build');
     // 빌드를 건너뛰는 갈래(문구만 · 앱만 바뀐 운영 베타의 PR)는 ADR 0242 이 지웠다 — 계획에 `build` 출력이 없다
     expect(yml).not.toContain('outputs.build');
-    expect(runsOf('anon')).toEqual([
-      'npm ci',
-      'timeout 150 npx playwright install --with-deps chromium || { sleep 20; timeout 150 npx playwright install --with-deps chromium; }',
-      'npm run test:e2e',
-    ]);
+    expect(runsOf('anon')).toEqual(['npm ci', 'npx playwright install --with-deps chromium', 'npm run test:e2e']);
+    // 바깥(apt)에서 받는 단계는 단계 한도로만 묶는다 — 안에서 끊으면 남은 apt-get 이 dpkg 잠금을 쥔다(2026-11-19, ADR 0257)
+    for (const job of ['anon', 'authed']) {
+      expect(yml, job).toMatch(new RegExp(`\\n  ${job}:\\n[\\s\\S]*?- run: npx playwright install --with-deps chromium\\n {8}timeout-minutes: 10\\n`));
+    }
+    expect(yml).not.toMatch(/timeout \d+ npx playwright/);
   });
 
   /**
