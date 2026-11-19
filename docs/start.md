@@ -25,7 +25,7 @@
 | 기능이나 흐름을 더하거나 동작을 바꾼다 | `docs/roles/feature.md` | `feature` |
 | 표 · 함수 · 정책(마이그레이션) · pgTAP 을 고친다 | `docs/roles/db.md` | `db` |
 | 풀이 글 · 프롬프트 · 문장 층 · 만세력 엔진을 고친다 | `docs/roles/reading.md` | `reading` |
-| 배포 · 운영 DB 확인 · 크론 · 운영 절차를 밟는다 | `docs/roles/ops.md` | `ops` |
+| 배포 · 운영 DB 확인 · 크론 · 운영 절차를 밟는다 — CI 워크플로 · 의존성 감사(`audit` 실패) · 앱 빌드 · 스토어 제출도 | `docs/roles/ops.md` | `ops` |
 | 읽기만 하는 검토 · 감사 · 두 번째 의견 | `docs/roles/reviewer.md` | `reviewer` |
 | 문서 · 대장 · 세션 기록을 맞춘다 | `docs/roles/docs.md` | `docs` |
 | 사람과 말하며 위의 에이전트 여럿을 맡긴다 | `docs/roles/coordinator.md` | — (사람과 말하는 세션 자신) |

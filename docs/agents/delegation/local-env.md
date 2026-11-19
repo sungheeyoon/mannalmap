@@ -160,6 +160,7 @@
 | `wayfinder` | `docs/agents/issue-tracker.md` 「Wayfinding operations」 | `mattpocock/skills` | `npx skills add mattpocock/skills@wayfinder -g -y` |
 | `wizard` | `scripts/aws-wizard.sh` 머리 — 마법사 라이브러리를 다시 낼 때 | `mattpocock/skills` | `npx skills add mattpocock/skills@wizard -g -y` |
 | `ego-browser` | 로컬 화면을 브라우저로 볼 때(`docs/notes/2026-10-03-ui-proposals.md`) | ego lite 앱 — 첫 실행 온보딩이 `~/.local/share/ego/ego-skills` 를 링크한다 | ego lite 앱을 깔고 첫 실행 온보딩을 마친다 |
+| `herdr` | `docs/agents/delegation/herdr.md` 「herdr 로 돌릴 때」 — `hc` · `herdr-app` 첫 호출 전에 | herdr 를 깔 때 함께 선 `~/.agents/skills/herdr`(2026-11-09) — `npx skills` 의 잠금 파일에는 없다 | 확인 전 — herdr 를 다시 깔고 `ls ~/.claude/skills/herdr/SKILL.md` 로 링크를 본다 |
 
 - **운영자만 부르는 것** — `retro` · `wayfinder` · `triage`(2026-11 버전)는 머리에 `disable-model-invocation: true` 가 있다. 에이전트는
   스스로 부르지 못한다 — 운영자에게 `/<이름>` 을 청하거나 그 `SKILL.md` 를 읽고 절차를 따른다
