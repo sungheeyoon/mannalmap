@@ -27,9 +27,9 @@
 
 ## 하지 않는 것 · 묻는 것
 
-- 코드 PR 의 중앙 문서 줄을 대신 고치지 않는다 — [나란히 맡길 때](../agents/delegation/parallel.md)
-- `보류` 줄을 다시 권하지 않는다. 미룬 결정을 새 질문으로 되살리지 않는다 — [조율자 세션](../agents/delegation/coordinator.md)
-- 저장소 전역을 건드리는 정리를 병렬 라운드에 넣지 않는다 — 다른 PR 이 다 든 뒤 순차로([병렬 라운드 노트](../notes/2026-09-30-parallel-round.md))
+- 코드 PR 의 중앙 문서 줄은 그 PR 이 고친다 — [나란히 맡길 때](../agents/delegation/parallel.md)
+- `보류` 줄과 미룬 결정은 조건이 올 때까지 그대로 둔다 — [조율자 세션](../agents/delegation/coordinator.md)
+- 저장소 전역을 건드리는 정리는 다른 PR 이 다 든 뒤 순차로 돌린다([병렬 라운드 노트](../notes/2026-09-30-parallel-round.md))
 
 ## 끝날 때 고치는 것
 
@@ -44,4 +44,4 @@
 
 - 두 번째 의견 · 감사를 모으면 → [검토 역할](reviewer.md) — 관점마다 하나
 - herdr(`hc`)로 Codex 찾기 · Claude 워커 · Codex 리뷰를 돌리면 → [herdr 로 돌릴 때](../agents/delegation/herdr.md) — 흐름 1 ~ 8 · Lead 규칙 · 이 규약과 다른 네 자리
-- 브리프가 어느 역할이 무엇을 읽는지(「모든 에이전트의 길 밖」 등) 단정하기 전에 → [읽기량의 셈](../../scripts/read-budget.mjs) — `npm run read-budget -- <역할>` 은 파일 표만 찍고, 역할마다 합계(예상치)는 인자 없이(`npm run read-budget`) 나온다 — 보고이고 문턱은 없다(ADR 0177)
+- 브리프가 어느 역할이 무엇을 읽는지(「모든 에이전트의 길 밖」 등) 단정하기 전에 → [읽기량의 셈](../../scripts/read-budget.mjs) — 무엇을 세나와 안 세나. 문턱 없는 보고다(ADR 0177)
