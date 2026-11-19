@@ -24,8 +24,9 @@
 
 규칙은 아래 원본에만 있다 — 여기는 어디를 열지만 말한다(ADR 0145).
 
-- [시안 먼저](../agents/delegation/working.md#화면은-시안-먼저) — 승인 전엔 화면만 꾸며 찍는다
+- [시안 먼저](../agents/delegation/working.md#화면은-시안-먼저) — 대장 · 한국 레퍼런스로 시작해 화면만 꾸며 찍고, 보이기 전에 다섯을 스스로 견준다
 - [화면 문구](../agents/code-rules/screen-copy.md#화면-문구) · [문구 대장의 규칙](../product/copy-ledger.md#01-규칙--버튼은-결과를-말하고-닫는-것은-취소다) — 대장에 없으면 실사례를 출처와 함께 넣고 나중에 확인받는다 · 같은 사실은 상수 하나
+- [레퍼런스](../agents/code-rules/references.md#레퍼런스) — 글자 · 배치 · 흐름 · 처리 상태 · 한도 숫자를 한국 서비스에서 찾는 차례 · 확인 수준 · 남기는 자리
 - [그 밖의 자리](../architecture.md#그-밖의-자리) · [새 것을 놓을 때](../architecture.md#새-것을-놓을-때) — 토큰과 `app/ui/` · 화면은 DB 를 부르지 않는다(ADR 0109 · 0080)
 - [무엇을 고쳤으면 무엇을 돌리나](../agents/test-map/what-to-run.md#무엇을-고쳤으면-무엇을-돌리나) — 로컬 최소 · e2e 의 예외
 - [끝났다는 것](../agents/delegation/done.md) — 전후 그림은 저장소 밖 제 폴더에 두고 경로를 보고
@@ -35,12 +36,14 @@
 - 코드 PR 은 운영자 검토 뒤 머지([출시 흐름](../agents/delegation/coordinator.md)). 화면 흐름 · 메뉴 구조는 결정, 새 문구는 사후 확인이나 권한 · 보존 · 요금 · 환불에 걸리면 결정이다([결정 점검표](../agents/delegation/decisions.md) · [무인 라운드](../agents/delegation/unattended.md))
 - 남이 띄운 dev 서버(3000)는 죽이기 전에 묻는다 — 그 서버를 재사용한 e2e 는 운영 DB 를 본다([로컬 환경의 함정](../agents/delegation/local-env.md))
 - 운영 배포 · 운영 smoke 는 안 한다 — 머지는 배포가 아니다([권한 등급](../agents/delegation/permissions.md) · [운영 역할](ops.md))
+- 레퍼런스 없이 새 글자 · 배치 · 흐름을 넣지 않는다 — 대장에 없으면 한국 사례를 출처와 함께, 없으면 「실사례 없음」과 가장 가까운 것([레퍼런스](../agents/code-rules/references.md#레퍼런스))
 
 ## 끝날 때 고치는 것
 
 - [ ] [끝났다는 것](../agents/delegation/done.md) — PR 칸 여섯 · 전후 그림은 커밋하지 않고 경로를 보고. 「문서」 칸이 고칠 원본을 든다
 - [ ] 넣은 문구 → 「확인 전」 절(줄마다 출처 링크와 확인 날짜 — 없으면 `scripts/code-rules.test.ts` 가 붉다, ADR 0196 · #770 에 한 줄)로, 운영자가 정해 준 문구는 「확정 문구」 절로 — 그 화면의 무리 파일(`docs/product/copy-ledger/`) 끝에 그 파일 이름을 단 다음 번호의 절(`settings-01` 꼴)로 더한다(그 PR 이). 번호가 끊기면 시험이 붉다 — 번호를 다는 법은 대장 머리의 「무리 색인」. 여러 무리에 걸친 줄은 머리의 「검토 대기」 앞에 `all-NN`
-- [ ] 토큰 · 공용 부품의 규칙을 바꿨으면 → ADR 0109 추기 또는 새 ADR
+- [ ] 토큰 · 공용 부품의 규칙을 바꿨으면 → 새 ADR(ADR 0109 의 대목을 바꿨으면 그 머리에 후속 결정 줄) — 추기는 달지 않는다([Writing an ADR](../agents/domain.md#writing-an-adr))
+- [ ] 새로 찾은 레퍼런스 → [남기는 자리](../agents/code-rules/references.md#남기는-자리) — 다시 쓸 것은 레퍼런스 모음에 한 줄
 
 ## 닿을 때 여는 것
 
@@ -58,3 +61,4 @@
 - 전후 그림을 찍으면 → [워크트리에서 전후 그림 찍기](../agents/delegation/local-env.md#워크트리에서-전후-그림-찍기) — 자체 로컬 DB · 진짜 `node_modules` · `UI_ONLY` · `aria-disabled` 단추 · 로그인 spec 이름
 - 화면의 동작(흐름 · 상태)까지 바꾸면 → [PRD 색인](../prd.md) — 무리 파일 머리가 가리키는 그 영역 절(§4 · §5 · §6 · §7.1). 새 동작이면 `feature` 역할도 읽는다
 - 서비스 이름이나 로고가 바뀌면 → [ADR 0149](../adr/0149-the-service-is-named-mannaljido-and-the-footer-carries-the-business-information.md) 의 1 · 5 — 상수를 따라오지 않는 셋: 이름 뒤에 글자로 붙인 조사(은/는/을/를) · 이름이나 로고를 구운 그림(`scripts/brand-share-images.mjs`) · Next 가 빌드에서만 보는 탭 그림(`app/favicon.ico` · `app/apple-icon.png` · `app/icon.svg`, `scripts/brand-icons.mjs`) · 앱의 아이콘(`mobile/scripts/brand-icons.mjs`)
+- 대장에 없는 글자나 새 배치 · 흐름의 레퍼런스를 찾으면 → [레퍼런스 모음](../context/references.md) — 화면 꼴별로 이미 찾은 한국 서비스 사례를 먼저 보고, 새로 찾은 것은 그 꼴에 한 줄

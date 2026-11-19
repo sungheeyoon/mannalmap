@@ -16,9 +16,9 @@
 
 | 파일 | 절 | 무엇을 드나 |
 | --- | --- | --- |
-| `docs/agents/delegation/working.md` | 「시작하기 전에」 · 「일하는 법」 · 「화면은 시안 먼저」 | 붉은 main 이 먼저 · 재는 법 · 사용자와 · 저장소와(워크트리 여는 순서 · 원격 DB 명령) · 화면은 시안 → 승인 → 구현 |
+| `docs/agents/delegation/working.md` | 「시작하기 전에」 · 「일하는 법」 · 「화면은 시안 먼저」 | 붉은 main 이 먼저 · 재는 법 · 사용자와 · 저장소와(워크트리 여는 순서 · 원격 DB 명령) · 화면은 시안 → 승인 → 구현 — 대장 · 한국 레퍼런스로 시작 · 보여 드리기 전 스스로 견주기 |
 | `docs/agents/delegation/issues.md` | 「맡길 이슈」 | `ready-for-agent` 이슈의 칸 아홉 — 이슈 틀과 같은 표 |
-| `docs/agents/delegation/decisions.md` | 「결정 점검표」 | 무엇이 바뀌면 결정인가 · 안 정한 것은 간극 대장에만 · 반대쪽 상태까지 걷기 |
+| `docs/agents/delegation/decisions.md` | 「결정 점검표」 | 무엇이 바뀌면 결정인가(일곱 — 화면 흐름 · 메뉴 구조 포함) · 승인 시안의 글자는 확정 · 안 정한 것은 간극 대장에만 · 반대쪽 상태까지 걷기 · 정책 · 흐름의 빈틈 |
 | `docs/agents/delegation/parallel.md` | 「나란히 맡길 때」 | 공유 자원 표 · 「병렬 가능」의 조건 · 충돌 영역 |
 | `docs/agents/delegation/coordinator.md` | 「세션을 열 때」 · 「조율자 세션」 · 「출시 흐름」 · 「인계」 · 「자주 하는 실수」 · 「라운드 끝 정리」 | 세션을 열 때 잴 넷 · 사람 하나 · 백그라운드 에이전트 여럿 — 브리프 · 묻는 곳 · 머지는 배포가 아니다 · 코드 PR 은 운영자 검토 뒤 머지(ADR 0229) · 인계의 체크 · 되풀이한 실수 · 라운드 끝에 걷을 것 |
 | `docs/agents/delegation/unattended.md` | 「무인 라운드」 | 운영자가 자는 동안 — 권한 봉투 · 자동으로 고쳐도 되는 경계 · 아침 보고 |
