@@ -23,6 +23,7 @@ const GROUPS = HELP_GROUPS.map((group) => ({ ...group, items: group.items.filter
 /**
  * 자주 묻는 질문 — 웹의 `/help`. `/help#credits` 처럼 물음 하나를 가리켜 오면 펴서 연다(웹의 `open-hashed.tsx`).
  * 묶음 단추도 웹처럼 그 묶음의 첫 물음을 펴고 간다. 물음의 자리는 묶음 · 판 · 줄의 세 층을 더해 안다.
+ * 답은 앱의 것(`inApp`)이 있으면 그것이다 — 앱의 단추 이름이 웹과 다른 물음이다.
  */
 export default function HelpScreen() {
   const { '#': hash } = useLocalSearchParams<{ '#'?: string }>();
@@ -113,7 +114,7 @@ export default function HelpScreen() {
                     </Pressable>
                     {isOpen && (
                       <View style={styles.answers}>
-                        {item.a.map((line) => (
+                        {(item.inApp ?? item.a).map((line) => (
                           <WordText key={line} style={styles.answer}>
                             {line}
                           </WordText>
