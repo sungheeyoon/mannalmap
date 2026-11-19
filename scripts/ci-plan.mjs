@@ -369,21 +369,32 @@ export function copyConstantsOf(ts, tree) {
   if (tree.statements.length === 0) return null;
   const constants = new Map();
   for (const statement of tree.statements) {
-    if (!ts.isVariableStatement(statement)) return null;
-    const modifiers = statement.modifiers ?? [];
-    if (modifiers.length !== 1 || modifiers[0].kind !== ts.SyntaxKind.ExportKeyword) return null;
-    const list = statement.declarationList;
-    if ((list.flags & ts.NodeFlags.BlockScoped) !== ts.NodeFlags.Const || list.declarations.length !== 1) return null;
-    const [one] = list.declarations;
-    if (!ts.isIdentifier(one.name) || one.type !== undefined || one.exclamationToken !== undefined || one.initializer === undefined) return null;
-    if (isPlainText(ts, one.initializer)) constants.set(one.name.text, { kind: 'text', values: [one.initializer] });
-    else {
-      const values = tableValuesOf(ts, one.initializer);
-      if (values === null) return null;
-      constants.set(one.name.text, { kind: 'table', values });
-    }
+    const one = copyConstantOf(ts, statement);
+    if (one === null) return null;
+    constants.set(one.name, { kind: one.kind, values: one.values });
   }
   return constants;
+}
+
+/**
+ * 문 하나가 문구 상수의 모양인가 — `copyConstantsOf` 가 문마다 쓰는 판정이다. 대장 대조(`scripts/new-copy.mjs`)는 `COPY_FILES` 밖의
+ * `src/lib/**` 에서 이 모양의 문만 골라 쓴다(ADR 0257)
+ *
+ * @param {typeof import('typescript')} ts
+ * @param {import('typescript').Statement} statement
+ * @returns {{ name: string, kind: 'text' | 'table', values: import('typescript').Expression[] } | null}
+ */
+export function copyConstantOf(ts, statement) {
+  if (!ts.isVariableStatement(statement)) return null;
+  const modifiers = statement.modifiers ?? [];
+  if (modifiers.length !== 1 || modifiers[0].kind !== ts.SyntaxKind.ExportKeyword) return null;
+  const list = statement.declarationList;
+  if ((list.flags & ts.NodeFlags.BlockScoped) !== ts.NodeFlags.Const || list.declarations.length !== 1) return null;
+  const [one] = list.declarations;
+  if (!ts.isIdentifier(one.name) || one.type !== undefined || one.exclamationToken !== undefined || one.initializer === undefined) return null;
+  if (isPlainText(ts, one.initializer)) return { name: one.name.text, kind: 'text', values: [one.initializer] };
+  const values = tableValuesOf(ts, one.initializer);
+  return values === null ? null : { name: one.name.text, kind: 'table', values };
 }
 
 /**
@@ -413,7 +424,7 @@ const isIntrinsicTag = (ts, tag) => ts.isIdentifier(tag) && /^[a-z][a-z0-9]*$/.t
  * @param {import('typescript').Expression} node
  * @param {Set<import('typescript').Node>} slots
  */
-function renderedTextsOf(ts, node, slots) {
+export function renderedTextsOf(ts, node, slots) {
   if (ts.isStringLiteral(node) || ts.isNoSubstitutionTemplateLiteral(node)) slots.add(node);
   else if (ts.isTemplateExpression(node)) {
     slots.add(node.head);

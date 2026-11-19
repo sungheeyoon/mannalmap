@@ -9,12 +9,12 @@
  *
  * | 갈래 | 무엇 | 이슈 |
  * | --- | --- | --- |
- * | 붉음 | 예외 밖의 high 이상(뿌리 · 앱) · 모든 저장소가 「없다」(404 · 410)고 답한 좌표 · 검사를 못 돌렸다 | 연다 · 열렸으면 댓글 |
+ * | 붉음 | 예외 밖의 high 이상(뿌리 · 앱) · 모든 저장소가 「없다」(404 · 410)고 답한 좌표 · 검사를 못 돌렸다 · Maven 좌표를 하나도 못 찾았거나 답을 하나도 못 받았다 | 연다 · 열렸으면 댓글 |
  * | 걷어도 된다 | 감사에 더는 안 나오는 앱 예외(`mobile/audit-exceptions.json`) — 고친 판이 들었거나 advisory 가 철회됐다 | 연다 — 붉음은 아니다 |
  * | 모른다 | 다시 물어도 「없다」 밖의 답(429 · 403 · 5xx)이거나 닿지 못한 좌표 | 위 둘로 열 때 함께 적는다 |
  *
  * 붉음도 걷을 예외도 없으면 열린 이슈를 닫는다. 지난 보고와 판정이 같으면 댓글을 더 달지 않는다 — 고친 판이 없는 advisory 가 날마다
- * 같은 댓글을 쌓지 않게. 이 검사를 고친 PR 에서는 요약에만 찍는다 — 이슈를 쓰는 `report` job 은 main 의 일정 · 손 실행에서만 돈다(`outside.yml`).
+ * 같은 댓글을 쌓지 않게. 판정의 열쇠는 바깥의 오류 문구를 뺀 갈래만 든다 — 「못 돌렸다」의 까닭(시각 · 주소가 든 오류)이 날마다 달라도 같은 판정이다. 이 검사를 고친 PR 에서는 요약에만 찍는다 — 이슈를 쓰는 `report` job 은 main 의 일정 · 손 실행에서만 돈다(`outside.yml`).
  *
  *     node scripts/outside-red.mjs check    # 잰다 — 요약과 판정(`GITHUB_OUTPUT` 의 `verdict` · `red`)
  *     node scripts/outside-red.mjs report   # 판정(`VERDICT`)으로 이슈를 연다 · 댓글 · 닫는다 — `issues: write` 는 그 job 에만
@@ -34,15 +34,33 @@ export const LABEL = 'ci-outside-red';
 const KEY_MARK = /<!-- outside-verdict: (.*?) -->/;
 
 /**
- * Maven 줄(`mobile-native.mjs` 의 `nativeFindings`)을 갈래로 — 모든 저장소가 「없다」고 한 좌표와 묻지 못한 좌표. 모듈은 `이름@판` 으로 단다
+ * Maven 줄(`mobile-native.mjs` 의 `nativeFindings`)을 갈래로 — 모든 저장소가 「없다」고 한 좌표와 묻지 못한 좌표, 그리고 찾은 좌표의 수.
+ * 모듈은 `이름@판` 으로 단다
  *
  * @param {readonly { level: string, what: string, coord?: string, lib: { name: string, version: string } }[]} lines
- * @returns {{ missing: string[], unreached: string[] }}
+ * @returns {{ missing: string[], unreached: string[], found: number }}
  */
 export function mavenOf(lines) {
-  const of = (level) => lines.filter((one) => one.what === 'maven' && one.level === level).map((one) => `${one.coord} (${one.lib.name}@${one.lib.version})`);
-  return { missing: of('fail'), unreached: of('warn') };
+  const maven = lines.filter((one) => one.what === 'maven' && one.coord !== undefined);
+  const of = (level) => maven.filter((one) => one.level === level).map((one) => `${one.coord} (${one.lib.name}@${one.lib.version})`);
+  return { missing: of('fail'), unreached: of('warn'), found: maven.filter((one) => one.level === 'ok').length };
 }
+
+/**
+ * 「못 돌렸다」 줄의 머리 — 줄은 `머리 — 바깥의 오류 문구` 꼴이고, 판정의 열쇠(`keyOf`)는 머리만 든다. 오류 문구는 시각 · 주소가 들어
+ * 날마다 달라서다
+ */
+const UNRUN = {
+  root: '뿌리 감사를 못 돌렸다',
+  app: '앱 감사를 못 돌렸다',
+  maven: 'Maven 좌표를 못 물었다',
+};
+
+/** Maven 을 물었지만 잰 것이 없다 — 「모른다」만이거나 좌표가 없다. 안 잰 것을 맑다고 하지 않는다 */
+export const MAVEN_NONE = {
+  unreached: 'Maven 좌표의 답을 하나도 못 받았다 — 모든 좌표가 「모른다」다(아래)',
+  empty: 'Maven 좌표를 하나도 찾지 못했다 — 앱의 의존(`mobile` 의 `npm ci`)이 안 깔렸거나 좌표를 읽는 길이 깨졌다',
+};
 
 /**
  * 세 검사를 판정 하나로. 검사가 `error` 를 들면(답을 못 읽음 · 명령 실패) 「못 돌렸다」로 붉다 — 안 잰 것을 맑다고 하지 않는다.
@@ -50,7 +68,7 @@ export function mavenOf(lines) {
  * @param {{
  *   root: { blocking: string[] } | { error: string },
  *   app: { blocking: string[], stale: string[] } | { error: string },
- *   maven: { missing: string[], unreached: string[] } | { error: string },
+ *   maven: { missing: string[], unreached: string[], found: number } | { error: string },
  * }} checks
  * @returns {{ red: string[], removable: string[], unknown: string[] }}
  */
@@ -58,23 +76,27 @@ export function outsideVerdict({ root, app, maven }) {
   const red = [];
   const removable = [];
   const unknown = [];
-  if ('error' in root) red.push(`뿌리 감사를 못 돌렸다 — ${root.error}`);
+  if ('error' in root) red.push(`${UNRUN.root} — ${root.error}`);
   else red.push(...root.blocking.map((line) => `뿌리 운영 의존성의 high 이상 — ${line}`));
-  if ('error' in app) red.push(`앱 감사를 못 돌렸다 — ${app.error}`);
+  if ('error' in app) red.push(`${UNRUN.app} — ${app.error}`);
   else {
     red.push(...app.blocking.map((line) => `앱 운영 의존성의 예외 밖 high 이상 — ${line}`));
     removable.push(...app.stale);
   }
-  if ('error' in maven) red.push(`Maven 좌표를 못 물었다 — ${maven.error}`);
+  if ('error' in maven) red.push(`${UNRUN.maven} — ${maven.error}`);
   else {
     red.push(...maven.missing.map((line) => `어느 저장소에도 없는 좌표(404 · 410) — ${line}`));
     unknown.push(...maven.unreached);
+    if (maven.found === 0 && maven.missing.length === 0) red.push(maven.unreached.length > 0 ? MAVEN_NONE.unreached : MAVEN_NONE.empty);
   }
   return { red, removable, unknown };
 }
 
-/** 판정의 열쇠 — 붉음과 걷을 예외만. 모르는 좌표는 날마다 달라 넣지 않는다 */
-export const keyOf = (verdict) => JSON.stringify({ red: [...verdict.red].sort(), removable: [...verdict.removable].sort() });
+/** 「못 돌렸다」 줄은 머리만 — 바깥의 오류 문구를 뺀다 */
+const stableOf = (line) => Object.values(UNRUN).find((head) => line.startsWith(`${head} — `)) ?? line;
+
+/** 판정의 열쇠 — 붉음과 걷을 예외만. 모르는 좌표와 바깥의 오류 문구는 날마다 달라 넣지 않는다 */
+export const keyOf = (verdict) => JSON.stringify({ red: [...new Set(verdict.red.map(stableOf))].sort(), removable: [...verdict.removable].sort() });
 
 /** 판정의 모양인가 — `check` 의 출력을 못 받았으면(검사 job 이 섰다) 아니다 */
 export function isVerdict(value) {

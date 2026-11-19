@@ -24,11 +24,11 @@
 ## 하지 않는 것 · 묻는 것
 
 - 결정 점검표 일곱 중 하나라도 바뀌면 머지하지 않고 보고에 올린다 — 문구 말고는 ADR 을 같은 PR 에, 문구는 운영자 사후 확인([결정 점검표](../agents/delegation/decisions.md))
-- `app/api/**` 에 자격을 묻지 않는 문을 더하면 결정이다 — 시험이 붉기 전에 묻는다([결정 점검표](../agents/delegation/decisions.md))
-- 실호출은 안 한다 — 명령과 볼 값을 「사람이 할 걸음」에([권한 등급](../agents/delegation/permissions.md))
-- PRD 절 번호를 코드 주석에 적지 않는다 — changelog 의 날짜나 `G-nn` 을 든다([일하는 법](../agents/delegation/working.md))
-- 운영 개인정보를 읽는 SQL 을 보내지 않는다([권한 등급](../agents/delegation/permissions.md) · ADR 0105)
-- 레퍼런스 없이 새 글자 · 배치 · 흐름을 넣지 않는다 — 정책 · 새 흐름인데 사례가 없으면 짓지 않고 구조와 선택지를 보고에([정책 · 흐름의 빈틈](../agents/delegation/decisions.md#정책--흐름의-빈틈--묻기-전에-찾는-차례))
+- `app/api/**` 에 자격을 묻지 않는 문은 더하기 전에 보고에 올린다 — 결정이다([결정 점검표](../agents/delegation/decisions.md))
+- 실호출은 명령과 볼 값을 「사람이 할 걸음」에 적어 넘긴다([권한 등급](../agents/delegation/permissions.md))
+- 코드 주석의 출처는 `G-nn` 이나 ADR 이다 — PRD 절 번호는 옮겨지고, 날짜는 주석에 새로 적지 않는다([일하는 법](../agents/delegation/working.md) · [주석과 ADR 참조](../agents/code-rules/comments.md#주석과-adr-참조))
+- 운영 데이터가 필요하면 질의를 써서 건넨다 — 운영 개인정보를 읽는 SQL 은 보내지 않는다([권한 등급](../agents/delegation/permissions.md) · ADR 0105)
+- 새 글자 · 배치 · 흐름은 레퍼런스와 함께 넣는다 — 정책 · 새 흐름인데 사례가 없으면 구조와 선택지를 보고에([정책 · 흐름의 빈틈](../agents/delegation/decisions.md#정책--흐름의-빈틈--묻기-전에-찾는-차례))
 
 ## 끝날 때 고치는 것
 

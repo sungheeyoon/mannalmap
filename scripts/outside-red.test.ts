@@ -3,7 +3,7 @@ import { resolve } from 'node:path';
 
 import { describe, expect, it } from 'vitest';
 
-import { LABEL, bodyOf, decide, isVerdict, keyOf, lastKeyOf, mavenOf, outsideVerdict } from './outside-red.mjs';
+import { LABEL, MAVEN_NONE, bodyOf, decide, isVerdict, keyOf, lastKeyOf, mavenOf, outsideVerdict } from './outside-red.mjs';
 
 /**
  * **바깥이 답을 바꾸는 검사는 하루 한 번 따로 돌고 제 이슈에 적는다**(ADR 0257). 공개 출시 뒤 main 이 붉었던 네 번(#1131 · #1147 · #1165 · #1170)이
@@ -11,7 +11,7 @@ import { LABEL, bodyOf, decide, isVerdict, keyOf, lastKeyOf, mavenOf, outsideVer
  * 못 잰 것을 맑다고 하지 않는가다.
  */
 const lib = { name: 'expo-image', version: '58.0.18' };
-const clean = { root: { blocking: [] }, app: { blocking: [], stale: [] }, maven: { missing: [], unreached: [] } };
+const clean = { root: { blocking: [] }, app: { blocking: [], stale: [] }, maven: { missing: [], unreached: [], found: 3 } };
 
 describe('바깥 검사의 판정', () => {
   it('맑으면 붉음도 걷을 예외도 없다', () => {
@@ -22,7 +22,7 @@ describe('바깥 검사의 판정', () => {
     const verdict = outsideVerdict({
       root: { blocking: ['GHSA-aaaa-bbbb-cccc next high'] },
       app: { blocking: ['GHSA-dddd-eeee-ffff zod high'], stale: [] },
-      maven: { missing: ['com.example:gone:1.0.0 (expo-image@58.0.18)'], unreached: [] },
+      maven: { missing: ['com.example:gone:1.0.0 (expo-image@58.0.18)'], unreached: [], found: 2 },
     });
     expect(verdict.red).toEqual([
       '뿌리 운영 의존성의 high 이상 — GHSA-aaaa-bbbb-cccc next high',
@@ -38,8 +38,20 @@ describe('바깥 검사의 판정', () => {
   });
 
   it('닿지 못한 좌표는 붉음이 아니라 「모른다」다', () => {
-    const verdict = outsideVerdict({ ...clean, maven: { missing: [], unreached: ['org.example:slow:1.0 (expo@58.0.23)'] } });
+    const verdict = outsideVerdict({ ...clean, maven: { missing: [], unreached: ['org.example:slow:1.0 (expo@58.0.23)'], found: 2 } });
     expect(verdict).toEqual({ red: [], removable: [], unknown: ['org.example:slow:1.0 (expo@58.0.23)'] });
+  });
+
+  /** 안 잰 것을 맑다고 하지 않는다 — 모든 좌표가 「모른다」면 잰 것이 없고, 좌표가 0 이면 읽는 길(앱의 의존 · gradle 읽기)이 깨졌다 */
+  it('Maven 좌표의 답을 하나도 못 받았거나 좌표를 하나도 못 찾았으면 맑지 않다 — 붉어 이슈에 적는다', () => {
+    const allUnknown = outsideVerdict({ ...clean, maven: { missing: [], unreached: ['org.example:slow:1.0 (expo@58.0.23)'], found: 0 } });
+    expect(allUnknown.red).toEqual([MAVEN_NONE.unreached]);
+    expect(allUnknown.unknown).toEqual(['org.example:slow:1.0 (expo@58.0.23)']);
+    const none = outsideVerdict({ ...clean, maven: mavenOf([]) });
+    expect(none.red).toEqual([MAVEN_NONE.empty]);
+    expect(decide({ verdict: allUnknown, openIssue: 7 }).action).toBe('comment');
+    expect(decide({ verdict: none, openIssue: null }).action).toBe('open');
+    expect(bodyOf({ verdict: none })).not.toContain('바깥 검사가 맑다');
   });
 
   it('검사를 못 돌렸으면 맑다고 하지 않는다 — 「못 돌렸다」로 붉다', () => {
@@ -59,7 +71,7 @@ describe('바깥 검사의 판정', () => {
       { level: 'fail', what: 'compileSdk', lib },
       { level: 'skip', what: 'maven', lib },
     ];
-    expect(mavenOf(lines)).toEqual({ missing: ['com.example:gone:1.0.0 (expo-image@58.0.18)'], unreached: ['com.example:slow:1.0.0 (expo-image@58.0.18)'] });
+    expect(mavenOf(lines)).toEqual({ missing: ['com.example:gone:1.0.0 (expo-image@58.0.18)'], unreached: ['com.example:slow:1.0.0 (expo-image@58.0.18)'], found: 1 });
   });
 });
 
@@ -78,6 +90,19 @@ describe('바깥 검사의 이슈 — 하나만, 같은 판정이면 더 안 단
     expect(decide({ verdict: red, openIssue: 7, lastKey: keyOf(red) }).action).toBe('none');
     expect(decide({ verdict: { ...red, unknown: ['x'] }, openIssue: 7, lastKey: keyOf(red) }).action).toBe('none');
     expect(decide({ verdict: red, openIssue: 7, lastKey: keyOf(removable) }).action).toBe('comment');
+  });
+
+  /** 「못 돌렸다」의 까닭은 바깥의 오류 문구다 — 시각 · 주소가 들어 날마다 달라도 같은 판정이라 댓글이 쌓이지 않는다 */
+  it('판정의 열쇠는 바깥의 오류 문구를 빼고 갈래만 든다', () => {
+    const unrun = (error: string) => outsideVerdict({ root: { error }, app: { error }, maven: { error } });
+    const monday = unrun('getaddrinfo ENOTFOUND registry.npmjs.org at 2026-11-17T20:30:01Z');
+    const tuesday = unrun('Request failed 503 at 2026-11-18T20:30:04Z');
+    expect(keyOf(monday)).toBe(keyOf(tuesday));
+    expect(decide({ verdict: tuesday, openIssue: 7, lastKey: keyOf(monday) }).action).toBe('none');
+    expect(keyOf(monday)).not.toContain('ENOTFOUND');
+    expect(bodyOf({ verdict: monday })).toContain('getaddrinfo ENOTFOUND');
+    const fixed = outsideVerdict({ ...clean, root: { error: 'x' } });
+    expect(decide({ verdict: fixed, openIssue: 7, lastKey: keyOf(monday) }).action).toBe('comment');
   });
 
   it('맑으면(모르는 좌표만 있어도) 열린 이슈를 닫고, 열린 것이 없으면 아무것도 안 한다', () => {

@@ -21,7 +21,7 @@
   - UI 집중화(디자인 체계) — ADR 0109 · `docs/adr/README.md` 「디자인 체계 · 화면 문구」 · `docs/architecture.md` 「그 밖의 자리」 · `app/ui/` · `src/lib/design/contract.ts` · 잠금 `scripts/design-contract.test.ts` · `scripts/mobile-surfaces.test.ts` · `scripts/mobile-design-tokens.test.ts` · `app/ui/scale.test.ts`
   - 사용자 약속 · 게시 문구 · 법적 절차 — `docs/legal/README.md` · `docs/legal/terms-grounds.md` · 약관 원본(`src/lib/brand/`) — 개정 공지 · 시행일 · 재확인 기준
   - 리팩터의 동작 보존 — PR 의 diff 와 그 자리를 재는 시험(`docs/agents/test-map.md`) — 옮긴 뒤 같은 입력에 같은 결과인지, 시험이 옛 동작을 실제로 잡는지
-  - 남은 일 흔적 · 죽은 코드 — `docs/agents/delegation/working.md` 「일하는 법」(죽은 코드는 셋으로 가른다) · `docs/product/gaps.md` — knip 은 설치돼 있지 않다(`package.json` 에 없다). `npx knip` 으로 받아 돌리면 설정(진입점)이 없어 오탐이 많다 — 나온 이름은 grep 으로 다시 잰다
+  - 남은 일 흔적 · 죽은 코드 — `docs/agents/delegation/working.md` 「일하는 법」(죽은 코드는 셋으로 가른다) · `docs/product/gaps.md` — knip 은 깔려 있지 않고 설정(진입점)도 없다. `npx knip` 이 낸 이름은 grep 으로 다시 잰다
 - `docs/architecture.md` 「무엇이 잠겨 있나 — 그리고 무엇이 아닌가」 — 잠기지 않은 자리가 볼 곳이다
 
 ## 이 저장소의 방식
@@ -36,10 +36,10 @@
 
 - 고치지 않는다 — 등급 0 이다. 고치는 에이전트가 코드에서 다시 확인한다([권한 등급](../agents/delegation/permissions.md))
 - 운영 개인정보를 조회하지 않는다. 원격 질의가 필요하면 조회문을 보고에 적는다([권한 등급](../agents/delegation/permissions.md) · ADR 0105)
-- 찾기 · 검토는 지금 운영에 열린 기능만이다 — 닫힌 기능(지금은 인연)의 발견은 「보류」로 권한다. `scripts/ui-seed.mjs` 는 로컬에서 인연을 열어 찍는다([조율자 세션](../agents/delegation/coordinator.md))
-- 보고 파일(`.md`)을 못 쓸 수 있다 — 보고는 메시지로 한다([조율자 세션](../agents/delegation/coordinator.md))
-- 메인 체크아웃을 기준으로 삼지 않는다 — 기준은 `origin/main` 이고 메인 체크아웃은 뒤처질 수 있다([조율자 세션](../agents/delegation/coordinator.md))
-- 남의 워크트리(조율자 · 다른 에이전트)에서 `git checkout` 하지 않는다 — 검토자가 조율자의 가지를 바꿔 놓았다(2026-10-17). PR 의 코드는 아래 「닿을 때 여는 것」의 `git archive` 로 풀어 읽는다([라운드 끝 정리](../agents/delegation/coordinator.md#라운드-끝-정리) — 남의 것은 건드리지 않는다)
+- 찾기 · 검토는 지금 운영에 열린 기능만 — 닫힌 기능(지금은 인연)의 발견은 「보류」로 권한다([조율자 세션](../agents/delegation/coordinator.md))
+- 보고는 메시지로 한다 — 하네스가 `.md` 보고 파일을 막을 수 있다([조율자 세션](../agents/delegation/coordinator.md))
+- 기준은 fetch 한 `origin/main` 의 `파일:줄`이다 — 메인 체크아웃은 뒤처질 수 있다([조율자 세션](../agents/delegation/coordinator.md))
+- PR 의 코드는 아래 「닿을 때 여는 것」의 `git archive` 로 풀어 읽는다 — 남의 워크트리에서 `git checkout` 하면 그 세션의 가지가 바뀐다([라운드 끝 정리](../agents/delegation/coordinator.md#라운드-끝-정리) — 남의 것은 건드리지 않는다)
 
 ## 끝날 때 고치는 것
 
@@ -53,8 +53,8 @@
 - 발견의 꼴 예시가 필요하면 → [감사 노트의 팀](../notes/2026-09-28-overnight-audit.md#팀--감사읽기만) — 관점 여덟과 그때 찾은 것
 - 프런트 관점에서 흐름 · 문구를 한국 서비스 사례와 견주려면 → [한국 서비스 사례 표](../notes/2026-11-02-korean-app-flow-references.md) — 요구사항이 아니라 재료다
 - 규모(몇 건 · 몇 %)를 보고에 적으려면 → [감사 노트의 세션 끝 상태](../notes/2026-09-28-overnight-audit.md#세션-끝-상태-2026-09-28-저녁-갱신--다음-세션은-여기서-시작) — 재는 법 · 뒤쪽 정정
-- CI 기록을 읽으려면 → [CI](../agents/test-map/ci.md#ci) — 붉은 job 은 `gh run view <run id> --log-failed`, 빈 출력이면 `gh api --allow-escape-sequences "repos/{owner}/{repo}/actions/jobs/<job id>/logs"`
+- CI 기록을 읽으려면 → [CI](../agents/test-map/ci.md#ci) — 붉은 job 의 기록 · 빈 출력일 때 API 로 여는 길
 - 셸 명령이 `cannot be shown …` 으로 거절되면(heredoc · `&&` · `for` · `$()`) → [로컬 환경의 함정](../agents/delegation/local-env.md#로컬-환경의-함정) — 워크트리 격리가 막는 명령과 돌아가는 길
 - 머지 전 PR 의 코드를 넓게 읽거나 판정 함수(`scripts/` 의 `.mjs`)를 그 PR 의 코드로 돌려 보려면 → [일하는 법](../agents/delegation/working.md#일하는-법--세션마다-다시-배우던-것) — `git fetch origin pull/<N>/head:pr-<N>` 뒤 `git archive pr-<N> | tar -x -C <스크래치>`(판정 함수만이면 `pr-<N> scripts/`; 격리가 파이프를 막으면 `git archive -o <스크래치>/x.tar pr-<N>` 뒤 `tar -xf`)로 풀어 거기서 읽고 부른다. 그 사본은 git 저장소가 아니라 `scripts/code-rules.test.ts` 의 `git ls-files` 잠금은 늘 붉다 — 판정이 아니다
-- 감사에서 최근 커밋의 파일 목록이 필요하면 → [로컬 환경의 함정](../agents/delegation/local-env.md#로컬-환경의-함정) — 셸 반복문(`for`)은 격리가 거절하므로 커밋마다 `git show --stat <SHA>`. 감사 중 기준 main 이 움직이면 보고 끝에 마지막으로 본 SHA 와 그사이 머지된 PR 을 적는다
-- 나란히 도는 세션의 일을 보려면 → [로컬 환경의 함정](../agents/delegation/local-env.md#로컬-환경의-함정) — `gh pr list` · `git ls-remote --heads origin` 으로 본다. 남의 워크트리에 `git -C` 를 대면 격리가 거절한다(2026-11-19)
+- 감사에서 최근 커밋의 파일 목록이 필요하면 → [로컬 환경의 함정](../agents/delegation/local-env.md#로컬-환경의-함정) — 커밋마다 `git show --stat <SHA>`. 감사 중 main 이 움직이면 보고 끝에 마지막으로 본 SHA 와 그사이 머지된 PR
+- 나란히 도는 세션의 일을 보려면 → [로컬 환경의 함정](../agents/delegation/local-env.md#로컬-환경의-함정) — `gh pr list` · `git ls-remote --heads origin` 으로 본다
