@@ -9,8 +9,8 @@
 ## 정한 것
 
 1. **운영자가 바이패스 모드로 돌리는 세션에서는 코드 PR 머지 승인을 묻지 않는다.** 결정 점검표(`docs/agents/delegation/decisions.md`)에 걸린 PR 의
-   독립 검토와 CI 초록 뒤 조율자가 머지한다 — 그 PR 의 결정 물음(정책 · 비용 같은 내용)에 운영자가 아직 답하지 않았으면 그 답도 뒤다. 이 말이 걷은 것은
-   머지 승인이다. 결정 점검표에 걸리지 않은 코드 PR 은 전처럼 독립 검토가 의무가 아니라(`docs/agents/delegation/coordinator.md` 「조율자 세션」의
+   독립 검토와 CI 초록 뒤 조율자가 머지한다 — 그 PR 의 결정 물음(정책 · 비용 같은 내용)에 운영자가 아직 답하지 않았으면 그 답도 뒤다. 이 말이 없앤 것은
+   머지 승인뿐이다. 결정 점검표에 걸리지 않은 코드 PR 은 전처럼 독립 검토가 의무가 아니라(`docs/agents/delegation/coordinator.md` 「조율자 세션」의
    「위험에 따라 두 번째 검토」) CI 초록 뒤 조율자가 머지한다. 원본 문장은 `docs/agents/delegation/coordinator.md` 「출시 흐름」이다.
    바이패스 모드는 Claude Code 의 권한 모드 `bypassPermissions`(`--dangerously-skip-permissions`)다.
 2. **화면 · 흐름 PR 의 아티팩트 보고는 그대로 낸다** — 실제 그림 · 잰 값 · 무엇을 왜 바꿨나(「출시 흐름」 2). 머지를 막고 운영자의 답을 기다리지 않는다.

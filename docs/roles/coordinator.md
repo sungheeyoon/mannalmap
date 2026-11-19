@@ -4,7 +4,7 @@
 
 ## 먼저 읽는 것
 
-- `docs/agents/delegation/coordinator.md` 「세션을 열 때」 — 보고 · 질문 전에 origin/main · Production SHA · 열린 PR · #770 을 잰다
+- `docs/agents/delegation/coordinator.md` 「세션을 열 때」 — 보고 · 질문 전에 `node scripts/session-status.mjs` 한 장(main 의 CI 실패 · origin/main · Production SHA · 열린 PR)과 #770 을 확인한다
 - `docs/agents/delegation/coordinator.md` 「조율자 세션」 · `docs/agents/delegation/unattended.md` 「무인 라운드」 — 이 역할의 규약 전부
 - `docs/agents/delegation/parallel.md` 「나란히 맡길 때」 — 무엇이 병렬이고 무엇이 순차인가
 - `docs/agents/delegation/decisions.md` 「결정 점검표 — 무엇이 바뀌면 결정인가」 · `docs/agents/delegation/permissions.md` 「권한 등급」
@@ -33,7 +33,7 @@
 
 ## 끝날 때 고치는 것
 
-- [ ] [인계 — 세션을 끝낼 때 남기는 것](../agents/delegation/coordinator.md#인계--세션을-끝낼-때-남기는-것-2026-11-06)의 체크 일곱을 채우고 #770 에 인계 댓글
+- [ ] [인계 — 세션을 끝낼 때 남기는 것](../agents/delegation/coordinator.md#인계--세션을-끝낼-때-남기는-것-2026-11-06)의 체크를 채우고 #770 에 인계 댓글 — `node scripts/session-status.mjs` 의 출력에 사람 칸만 손으로
 - [ ] [세션 기록](../agents/delegation/notes.md)의 기준대로 라운드 노트와 `docs/notes/README.md` 「최근」 한 줄, PR `--auto`
 - [ ] 세션을 비우기 전에 `/retro` — 운영자만 부르는 스킬이라(`disable-model-invocation`) 운영자에게 청하거나 그 `SKILL.md` 의 절차를 따른다([전역 스킬](../agents/delegation/local-env.md#전역-스킬--저장소가-이름으로-부르는-것)). 입력은 보고의 「헤맨 것 · 틀린 절」, 놓는 자리는 길잡이 → `docs/roles/`(AGENTS.md · CLAUDE.md 아님) · 기계로 잡을 실수 → `eslint.config.mjs` · `scripts/` 의 시험 · 판단 → `docs/agents/code-rules/`(색인 CODING_STANDARDS.md). 같은 노트 PR — [선순환](../start.md#선순환--일이-문서로-돌아오는-길) 3
 - [ ] 운영자만 할 수 있는 일 → 운영자 할 일 이슈. 워크트리 · 가지 · 스택 · 내가 띄운 셸과 에이전트 · 그림은 [라운드 끝 정리](../agents/delegation/coordinator.md#라운드-끝-정리)대로
@@ -43,4 +43,5 @@
 손대기 전에 다 읽지 않는다 — 일이 그 자리에 닿을 때 연다(ADR 0147).
 
 - 두 번째 의견 · 감사를 모으면 → [검토 역할](reviewer.md) — 관점마다 하나
+- herdr(`hc`)로 Codex 찾기 · Claude 워커 · Codex 리뷰를 돌리면 → [herdr 로 돌릴 때](../agents/delegation/herdr.md) — 흐름 1 ~ 8 · Lead 규칙 · 이 규약과 다른 네 자리
 - 브리프가 어느 역할이 무엇을 읽는지(「모든 에이전트의 길 밖」 등) 단정하기 전에 → [읽기량의 셈](../../scripts/read-budget.mjs) — `npm run read-budget -- <역할>` 은 파일 표만 찍고, 역할마다 합계(예상치)는 인자 없이(`npm run read-budget`) 나온다 — 보고이고 문턱은 없다(ADR 0177)

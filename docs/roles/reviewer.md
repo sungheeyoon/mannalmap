@@ -7,14 +7,14 @@
 - `docs/agents/delegation/coordinator.md` 「조율자 세션」 — 「확인한 흔적을 붙여 전한다」 · 「위험에 따라 두 번째 검토」 · 「전체 감사」 줄
 - 하나를 고른다 — 받은 관점의 원본
   - 코드 규칙 — `CODING_STANDARDS.md` 의 차례에서 [그 주제 파일](../agents/code-rules/) · 앱 린트 `mobile/eslint.config.js`
-  - 아키텍트 — `docs/architecture.md` · 앱 쪽 잠금 `scripts/mobile-closure.test.ts` · `scripts/mobile-screen-db.test.ts`
+  - 아키텍트 — `docs/architecture.md` · 앱 쪽 잠금 `scripts/mobile-closure.test.ts` · `scripts/mobile-screen-db.test.ts` · 앱 글자가 웹 글자 그대로인지 `scripts/mobile-*-copy.test.ts`
   - 시험 — `docs/agents/test-map.md` 의 차례에서 [그 주제 파일](../agents/test-map/) · ADR 0079(부재 단언은 반증할 수 있어야 한다) · 앱 단위 시험은 뿌리 vitest 의 `mobile/src`
   - 보안 — `docs/ops/runbook/security.md` 「보안 점검」 · `docs/ops/runbook/access.md` 「개인정보는 화면으로만」 · `app/ops/denial.ts`(운영자 문의 거절을 적는 갈래) · ADR 0191 · ADR 0209(운영자 로그인 · 2단계 인증) · 결제 정합은 ADR 0230 · `docs/ops/runbook/credits.md` 「Google Play 결제 — 확인 · 한 번 지급 · 소비, 스토어 환불의 회수」 · ADR 0184 · ADR 0192
   - DB — `docs/ops/runbook/deploy.md` 「규약 넷 — 앱과 DB 는 따로 간다」 · ADR 0084(모양을 잠근다)
-  - 프런트 — `docs/agents/code-rules/screen-copy.md` 「화면 문구」 · `docs/product/copy-ledger.md`(규칙 · 여러 화면 · 무리 색인) · ADR 0109(디자인 체계) · 본 화면의 [PRD 무리 파일](../product/prd/screens/)과 [문구 무리 파일](../product/copy-ledger/)
-  - 문서 — `docs/prd.md` 의 차례에서 [그 영역 파일](../product/prd/) · `docs/product/gaps.md`
+  - 프런트 — `docs/agents/code-rules/screen-copy.md` 「화면 문구」 · `docs/product/copy-ledger.md`(규칙 · 여러 화면 · 무리 색인) · ADR 0109(디자인 체계) · 본 화면의 [PRD 무리 파일](../product/prd/screens/)과 [문구 무리 파일](../product/copy-ledger/) · `docs/agents/delegation/working.md` 「화면은 시안 먼저」
+  - 문서 — `docs/prd.md` 의 차례에서 [그 영역 파일](../product/prd/) · `docs/product/gaps.md` · 운영 절차 `docs/ops/runbook.md` 의 차례 · 운영 상태와 인계는 #770 · `docs/agents/delegation/done.md` 「끝났다는 것」(코드 · 문서 · 정책을 한 차례에) · `docs/agents/delegation/notes.md` 「세션 기록」 · ADR 0240(사실 하나는 원본 한 곳 · 머지된 ADR 은 다시 쓰지 않는다)
   - SRE — `docs/ops/runbook.md` 의 차례에서 [그 작업 파일](../ops/runbook/)
-  - 문서 규칙 · 프로세스 — `docs/start.md` 「원본 — 무엇이 무엇을 답하나」 · `docs/agents/delegation.md` 의 차례에서 [그 주제 파일](../agents/delegation/) · `docs/agents/domain.md` 「Writing an ADR」
+  - 문서 규칙 · 프로세스 — `docs/start.md` 「원본 — 무엇이 무엇을 답하나」 · `docs/agents/delegation.md` 의 차례에서 [그 주제 파일](../agents/delegation/) · `docs/agents/domain.md` 「Writing an ADR」 · 저장소 밖의 규칙 자리 — 사용자 설정의 auto 모드 환경(`~/.claude/settings.json` 의 `autoMode`) · Claude 기억(`~/.claude/projects/` 아래 이 저장소의 `memory/`) · Codex 기억(`~/.codex/memories/`) · herdr 틀(`docs/agents/delegation/herdr.md` 「herdr 로 돌릴 때」의 표). 저장소에 없는 규칙이 거기 있으면 발견이다
   - CI · 워크플로 — `docs/agents/test-map/ci.md` 「CI」 · `docs/agents/test-map/what-to-run.md` · `.github/workflows/` — 차선 판정 코드는 `ci.md` 가 가리킨다
   - 모바일(Expo) — `mobile/AGENTS.md` · `docs/ops/runbook/mobile-release.md` · ADR 0211 · ADR 0230 · ADR 0233
   - 세션 잔재 — `docs/agents/delegation/coordinator.md` 「라운드 끝 정리」 · `docs/agents/delegation/local-env.md` 「로컬 환경의 함정」
@@ -36,6 +36,7 @@
 
 - 고치지 않는다 — 등급 0 이다. 고치는 에이전트가 코드에서 다시 확인한다([권한 등급](../agents/delegation/permissions.md))
 - 운영 개인정보를 조회하지 않는다. 원격 질의가 필요하면 조회문을 보고에 적는다([권한 등급](../agents/delegation/permissions.md) · ADR 0105)
+- 찾기 · 검토는 지금 운영에 열린 기능만이다 — 닫힌 기능(지금은 인연)의 발견은 「보류」로 권한다. `scripts/ui-seed.mjs` 는 로컬에서 인연을 열어 찍는다([조율자 세션](../agents/delegation/coordinator.md))
 - 보고 파일(`.md`)을 못 쓸 수 있다 — 보고는 메시지로 한다([조율자 세션](../agents/delegation/coordinator.md))
 - 메인 체크아웃을 기준으로 삼지 않는다 — 기준은 `origin/main` 이고 메인 체크아웃은 뒤처질 수 있다([조율자 세션](../agents/delegation/coordinator.md))
 - 남의 워크트리(조율자 · 다른 에이전트)에서 `git checkout` 하지 않는다 — 검토자가 조율자의 가지를 바꿔 놓았다(2026-10-17). PR 의 코드는 아래 「닿을 때 여는 것」의 `git archive` 로 풀어 읽는다([라운드 끝 정리](../agents/delegation/coordinator.md#라운드-끝-정리) — 남의 것은 건드리지 않는다)
@@ -50,6 +51,7 @@
 손대기 전에 다 읽지 않는다 — 일이 그 자리에 닿을 때 연다(ADR 0147).
 
 - 발견의 꼴 예시가 필요하면 → [감사 노트의 팀](../notes/2026-09-28-overnight-audit.md#팀--감사읽기만) — 관점 여덟과 그때 찾은 것
+- 프런트 관점에서 흐름 · 문구를 한국 서비스 사례와 견주려면 → [한국 서비스 사례 표](../notes/2026-11-02-korean-app-flow-references.md) — 요구사항이 아니라 재료다
 - 규모(몇 건 · 몇 %)를 보고에 적으려면 → [감사 노트의 세션 끝 상태](../notes/2026-09-28-overnight-audit.md#세션-끝-상태-2026-09-28-저녁-갱신--다음-세션은-여기서-시작) — 재는 법 · 뒤쪽 정정
 - CI 기록을 읽으려면 → [CI](../agents/test-map/ci.md#ci) — 붉은 job 은 `gh run view <run id> --log-failed`, 빈 출력이면 `gh api --allow-escape-sequences "repos/{owner}/{repo}/actions/jobs/<job id>/logs"`
 - 셸 명령이 `cannot be shown …` 으로 거절되면(heredoc · `&&` · `for` · `$()`) → [로컬 환경의 함정](../agents/delegation/local-env.md#로컬-환경의-함정) — 워크트리 격리가 막는 명령과 돌아가는 길
