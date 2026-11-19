@@ -81,10 +81,16 @@ export const ABOUT_STEPS: readonly { title: string; body: string; whileShut?: st
   { title: '풀이 받기', body: '사주풀이 · 궁합 · 인연 중 마음 가는 것부터 시작해요.', whileShut: '사주풀이 · 궁합 중 마음 가는 것부터 시작해요.' },
 ];
 
-/** 자주 묻는 질문 — 물음마다 `id` 를 들어 다른 화면이 바로 가리킬 수 있다(`/help#credits` 처럼). 묶음의 차례가 화면의 차례다 */
+/** 공유 물음의 끝 줄 — 웹 · 앱의 답이 같이 든다 */
+const SHARE_REACH = '링크를 아는 사람은 누구나 이 풀이를 볼 수 있어요. 상세 궁합은 보낼 수 없어요.';
+
+/**
+ * 자주 묻는 질문 — 물음마다 `id` 를 들어 다른 화면이 바로 가리킬 수 있다(`/help#credits` 처럼). 묶음의 차례가 화면의 차례다.
+ * `inApp` 은 앱이 `a` 대신 세우는 답이다 — 앱의 단추가 웹과 다른 물음만 든다(공유: 웹 「공유 링크 복사」 · 앱 「공유하기」, 대장 home-13)
+ */
 export const HELP_GROUPS: readonly {
   title: string;
-  items: readonly { id: string; q: string; a: readonly string[]; link?: { href: string; label: string } }[];
+  items: readonly { id: string; q: string; a: readonly string[]; inApp?: readonly string[]; link?: { href: string; label: string } }[];
 }[] = [
   {
     title: '시작하기',
@@ -141,10 +147,9 @@ export const HELP_GROUPS: readonly {
       {
         id: 'share',
         q: '사주풀이를 다른 사람에게 보낼 수 있나요?',
-        a: [
-          '다 만들어진 풀이의 「공유 링크 복사」를 누르면 로그인 없이 열리는 주소가 복사돼요.',
-          '링크를 아는 사람은 누구나 이 풀이를 볼 수 있어요. 상세 궁합은 보낼 수 없어요.',
-        ],
+        a: ['다 만들어진 풀이의 「공유 링크 복사」를 누르면 로그인 없이 열리는 주소가 복사돼요.', SHARE_REACH],
+        /* 대장 public-20 「확인 전」 */
+        inApp: ['다 만들어진 풀이의 「공유하기」를 누르면 로그인 없이 열리는 주소를 보낼 수 있어요.', SHARE_REACH],
       },
       {
         id: 'matching-off',

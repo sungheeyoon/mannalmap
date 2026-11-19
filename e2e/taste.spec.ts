@@ -60,8 +60,9 @@ test('무료로 내 사주 보기 → 결과 머리로 내려가고 · 잠긴 �
     다음 시도가 열려 있으면(모델 실패) 「다시 시도하기」가, 서버가 닫았으면(CI 의 익명 차선은 DB 가 없다) 줄 하나만 선다
     (운영자 결정 2026-10-10, ADR 0143 「2026-10-10 덧」)
   */
-  await expect(page.getByRole('region', { name: '사주가 보여 주는 나' })).toHaveCount(0);
   const outline = page.getByRole('region', { name: '전체 사주풀이 목차' });
+  /* 결과의 칸(`section`)은 목차 하나다 — 문단이 제 칸을 세우면 카드 · 목차 · 만세력 곁에 칸이 하나 는다 */
+  await expect(outline.locator('xpath=../section')).toHaveCount(1);
   await expect(outline).toHaveAttribute('aria-busy', 'false', { timeout: 30_000 });
   const trouble = outline.getByRole('status');
   await expect(trouble).toHaveText(new RegExp(`^(${TASTE_FAILED_NOTE}\\s*${TASTE_RETRY_LABEL}|${TASTE_CLOSED_NOTE})$`));
