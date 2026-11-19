@@ -5,7 +5,7 @@ import { GENERATION } from './generation';
 import { READING_COLUMN } from './markdown';
 import type { OutlineRow } from '@/src/lib/reading/outline';
 import flow from './flow.module.css';
-import { PAPER_FACE } from '../../ui/surfaces';
+import { PAPER_FACE, PLAIN_CARD_FACE } from '../../ui/surfaces';
 
 /**
  * **멈춘 화면이 아니라는 것을 무엇이 말하는가** — 서버가 적은 진행이다(ADR 0127).
@@ -51,7 +51,7 @@ export function LoadingState({ rows }: { rows: readonly OutlineRow[] }) {
           {rows.map((row, at) => (
             <li
               key={`${at}-${row.label}`}
-              className="flex items-center justify-between gap-3 rounded-card bg-surface px-4 py-3 text-note"
+              className={`flex items-center justify-between gap-3 ${PLAIN_CARD_FACE} px-4 py-3 text-note`}
             >
               <span className={row.state === 'waiting' ? 'text-secondary' : 'text-foreground'}>{row.label}</span>
               <OutlineMark state={row.state} />

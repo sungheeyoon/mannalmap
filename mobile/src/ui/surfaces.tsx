@@ -70,7 +70,7 @@ export const EmptySlot = (props: FaceProps) => <Face face={styles.slot} {...prop
 /** 확인 창의 판 */
 export const DialogPanel = (props: FaceProps) => <Face face={styles.dialog} {...props} />;
 
-/** 아래에서 올라오는 판 — 위 모서리만 둥글다. 웹 `DetailSheet` · `ActionSheet` 의 `rounded-t-card bg-background` */
+/** 아래에서 올라오는 판 — 위 모서리만 둥글다. 웹 `DetailSheet` · `ActionSheet` 의 `SHEET_FACE`(`rounded-t-card bg-background` …) */
 export const SheetPanel = (props: FaceProps) => <Face face={styles.sheet} {...props} />;
 
 const { fontSize: BADGE_SIZE, color: BADGE_INK, ...BADGE_FACE } = BADGE;

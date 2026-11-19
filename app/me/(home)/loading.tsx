@@ -1,5 +1,5 @@
 import { Bone, SkeletonMain } from '../../ui/skeleton';
-import { COLUMN, FLAT_CARD_FACE } from '../../ui/surfaces';
+import { COLUMN, FLAT_CARD_FACE, PLAIN_CARD_FACE } from '../../ui/surfaces';
 
 /**
  * 홈의 뼈대 — 인사 · 줄인 내 사주 카드와 그 아래 「다른 사람 사주 보기」 줄 · 내가 받은 사주풀이 줄 · 저장한 사람 줄
@@ -34,7 +34,7 @@ export default function HomeLoading() {
       <div className="contents">
         <div className="flex min-w-0 flex-col gap-3">
           {/* 줄인 내 사주 카드 — 폰에서는 오행 칸과 출생 정보 상자가 없어 낮고(224px), 넓은 화면은 그 둘이 선다(594px) */}
-          <div className="flex min-h-56 flex-col justify-between gap-3 rounded-card bg-surface p-4 sm:min-h-[37.125rem] sm:gap-6 sm:p-8">
+          <div className={`flex min-h-56 flex-col justify-between gap-3 ${PLAIN_CARD_FACE} p-4 sm:min-h-[37.125rem] sm:gap-6 sm:p-8`}>
             <div className="flex flex-col gap-2 sm:gap-3">
               {/* 동그란 내 프로필(56px)과 딱지 · 이름 — 원은 이름 묶음의 가운데에 선다(`home/self-card.tsx`) */}
               <div className="flex items-center gap-3">

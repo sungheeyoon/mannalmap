@@ -23,7 +23,7 @@ import { actionAnswer } from '../../ui/action-answer';
 import { ConfirmDialog } from '../../ui/confirm-dialog';
 import { Icon } from '../../ui/icons';
 import { useLeaveGuard } from '../../ui/leave-guard';
-import { CARD_FACE, EMPTY_SLOT, TYPE_META, TYPE_SECTION } from '../../ui/surfaces';
+import { CARD_FACE, EMPTY_SLOT, PLAIN_CARD_FACE, TYPE_META, TYPE_SECTION } from '../../ui/surfaces';
 import { FailureLine } from '../../ui/failure-line';
 import { useSectionErrors } from '../../ui/section-error';
 
@@ -305,7 +305,7 @@ export function NoteEditor({
         event.preventDefault();
         if (changed && !saving) save();
       }}
-      className="flex flex-col gap-3 rounded-card bg-surface p-4 shadow-card"
+      className={`flex flex-col gap-3 ${PLAIN_CARD_FACE} p-4 shadow-card`}
     >
       <NoteField value={value} onChange={setValue} idPrefix={personId} />
       <div className="flex flex-wrap items-center gap-3">

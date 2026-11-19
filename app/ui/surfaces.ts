@@ -105,6 +105,19 @@ export const ROW_CARD = `${FLAT_CARD_FACE} px-4 py-3`;
  */
 export const RING_CARD_FACE = 'rounded-card bg-surface ring-1 ring-border';
 
+/**
+ * 테 없는 흰 카드 — 크림 종이 · 회색 판 위에 서는 흰 면(고르기 판의 줄 묶음 · 풀이 목차 줄 · 내 사주 카드의 뼈대 · 메모 판). 여백 · 그림자는 쓰는
+ * 자리가 붙인다
+ */
+export const PLAIN_CARD_FACE = 'rounded-card bg-surface';
+
+/**
+ * 아래에서 올라오는 판 — 폰은 위 모서리만 둥근 아래 판, 넓은 화면(lg)은 가운데 뜬 창이다. `<dialog>` 에 단다. `DetailSheet` · `ActionSheet` ·
+ * 앱 받기 판(`app/share/app-sheet.tsx`)이 입는다. 폭 · 높이는 쓰는 자리가 붙인다
+ */
+export const SHEET_FACE =
+  'mx-auto mb-0 mt-auto w-full rounded-t-card bg-background p-0 text-foreground backdrop:bg-scrim lg:my-auto lg:rounded-card lg:shadow-float';
+
 /** 옅은 상자 — 판 안에 한 단 가라앉은 카드 모서리의 상자(신살 없음 · 처리 상태 줄 · 운영 화면의 폼). 여백은 쓰는 자리가 붙인다 */
 export const SOFT_CARD_FACE = 'rounded-card bg-surface-soft';
 
