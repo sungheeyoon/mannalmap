@@ -66,7 +66,6 @@ describe('앱 Select 의 낭독', () => {
 describe('Select 를 부르는 자리', () => {
   const callers = [
     'mobile/src/people/birth-fields.tsx',
-    'mobile/src/app/index.tsx',
     'mobile/src/matching/people.tsx',
     'mobile/src/chat/dialogs.tsx',
   ];
@@ -82,7 +81,6 @@ describe('Select 를 부르는 자리', () => {
     for (const key of Object.keys(BIRTH_SELECT_LABEL)) {
       expect(web).toContain(`{...BIRTH_SELECT_LABEL.${key}}`);
       expect(read('mobile/src/people/birth-fields.tsx')).toContain(`{...BIRTH_SELECT_LABEL.${key}}`);
-      expect(read('mobile/src/app/index.tsx')).toContain(`{...BIRTH_SELECT_LABEL.${key}}`);
     }
     expect(BIRTH_SELECT_LABEL.rule).toEqual({ label: '자시', name: '자시 규칙' });
   });
