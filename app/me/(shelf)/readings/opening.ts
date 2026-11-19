@@ -1,5 +1,5 @@
 import { isOpenResult, withCameFrom } from '../../../came-from';
-import { readingHrefOf } from '../../reading/target';
+import { readingHrefOf } from '@/src/lib/reading/target';
 import { SHELF_KINDS, type ShelfKind } from './kind';
 
 /**

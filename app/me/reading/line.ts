@@ -1,5 +1,5 @@
 import type { ReadingEntry } from '@/src/lib/reading';
-import { readingHrefOf, type ReadingTarget } from './target';
+import { readingHrefOf, type ReadingTarget } from '@/src/lib/reading/target';
 
 /**
  * 목록 한 줄이 **뭐라고 적히고 어디로 가는가.**
@@ -70,22 +70,6 @@ const targetOf = (entry: ReadingEntry): ReadingTarget => {
  */
 export const readingHref = (entry: ReadingEntry): string => readingHrefOf(targetOf(entry));
 
-/**
- * 날짜만 — 목록에서 분 단위는 읽는 데 방해만 된다.
- *
- * **한 사실에는 한 표기**(docs/context/copy.md). 「본 궁합」과 이 목록이 같은 날짜를 다르게 적으면
- * 사용자는 같은 글인지 확인하는 데 눈을 쓴다.
- *
- * **시간대는 한국이다.** 책장과 운영 설문 화면은 서버(UTC)가 그리므로, 적지 않으면 한국 시각 0~9시에 만든
- * 글이 전날 날짜로 섰다. 채팅 목록의 시각(`src/lib/chat` 의 `messageTimeLabel`)과 같은 규율이다.
- */
-export const readingDate = (iso: string): string =>
-  new Date(iso).toLocaleDateString('ko-KR', {
-    timeZone: 'Asia/Seoul',
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-  });
 
 /**
  * 이름이 비어 있을 때 — **빈 자리를 남기지 않는다.**

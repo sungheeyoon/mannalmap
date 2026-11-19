@@ -67,3 +67,27 @@ function targetOf(kind: string, personA: string | null, personB: string | null, 
       return null;
   }
 }
+
+const called = (label: string | null): string => label ?? '이름 없음';
+
+/** 무엇을 만드는가 — 보관함의 줄 이름(`readingTitle`)과 같은 갈래에 「풀이」 낱말을 붙인 꼴. 웹 · 앱의 홈 띠가 같은 글자를 쓴다(G-168) */
+export function runningName(running: Pick<RunningReading, 'target' | 'labelA' | 'labelB'>): string {
+  switch (running.target.kind) {
+    case 'self':
+      return '내 사주풀이';
+    case 'person':
+      return running.labelA === null ? '사주풀이' : `${running.labelA} 사주풀이`;
+    case 'private':
+      return `${called(running.labelA)} × ${called(running.labelB)} 궁합풀이`;
+    case 'match':
+      return running.labelA === null ? '인연 궁합' : `${running.labelA} 님과의 인연 궁합`;
+  }
+}
+
+/** 사주풀이를 지금 만드는 중인 저장한 사람들 — 홈의 타일 · 저장한 사람 카드가 내 사주 카드와 같은 규칙을 따른다 */
+export const makingPeopleOf = (running: readonly Pick<RunningReading, 'target'>[]): ReadonlySet<string> =>
+  new Set(running.flatMap((one) => (one.target.kind === 'person' ? [one.target.personId] : [])));
+
+/** 내 사주풀이를 지금 만드는 중인가 — 카드의 단추와 빈 표지가 이 값으로 갈린다 */
+export const makingSelf = (running: readonly Pick<RunningReading, 'target'>[]): boolean =>
+  running.some((one) => one.target.kind === 'self');

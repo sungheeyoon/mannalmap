@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { seoulDateOf } from './seoul-date';
+import { readingDate, seoulDateOf } from './seoul-date';
 
 describe('서울 날짜', () => {
   it('UTC 14:59:59 는 그날, 15:00 은 서울의 다음 날이다', () => {
@@ -26,5 +26,13 @@ describe('서울 날짜', () => {
       }
     }
     expect(wrong).toEqual([]);
+  });
+});
+
+/* 웹의 보관함 · 운영 설문과 앱의 홈이 이 한 벌로 적는다(G-168) */
+describe('풀이 목록의 날짜', () => {
+  it('날짜만, 서울 기준으로 적는다 — UTC 15시 뒤는 서울의 다음 날이다', () => {
+    expect(readingDate('2026-09-25T16:30:00Z')).toBe('2026년 9월 26일');
+    expect(readingDate('2026-09-25T14:59:59Z')).toBe('2026년 9월 25일');
   });
 });

@@ -28,9 +28,8 @@ export { isShareable, shareTargetArgs } from '@/src/lib/reading/target';
  *
  * ## 왜 `src/lib/reading` 이 아닌가
  *
- * 저기는 DB 도 네트워크도 모르는 순수한 절반이다(`policy.ts` 가 그 규율을 적어 뒀다).
- * 여기 있는 것은 **RPC 인자 이름**과 **앱 주소**이고, 둘 다 바깥 세계의 계약이다.
- * `ReadingKind` 는 저기 그대로 두고, 그 낱말이 **무엇을 가리키는가**만 여기서 푼다.
+ * 여기 남은 것은 **읽기 RPC 인자 이름**과 **무를 곳**(`revalidatePath`)이고, 둘 다 웹만 쓴다. 누르면 가는 주소는
+ * 앱도 같은 값을 들어야 해 `src/lib/reading/target.ts` 로 옮겼다(G-168).
  *
  * 쓰는 모듈(`pipeline.ts`)에서 꺼내 오는 것이 요점이다 — 읽기·화면 여덟이 그리로
  * import 하고 있었고, 그러면 화면 하나가 만드는 쪽 모듈에 매인다.
@@ -62,25 +61,6 @@ export function readingTargetArgs(target: ReadingTarget): ReadingTargetArgs {
     p_person_b: target.kind === 'private' ? target.personB : null,
     p_match_id: target.kind === 'match' ? target.matchId : null,
   };
-}
-
-/**
- * 누르면 가는 곳 — **그 풀이의 화면**이다.
- *
- * 한 사람의 명식과 풀이가 갈라졌으므로 자기·저장한 사람은 풀이 전용 주소로 간다
- * (ADR 0055). 궁합은 이미 결과 화면이 독립되어 있어 그 주소를 그대로 쓴다.
- */
-export function readingHrefOf(target: ReadingTarget): string {
-  switch (target.kind) {
-    case 'self':
-      return '/me/readings/self';
-    case 'person':
-      return `/me/readings/${target.personId}`;
-    case 'private':
-      return `/me/compat?a=${target.personA}&b=${target.personB}`;
-    case 'match':
-      return `/me/match/${target.matchId}`;
-  }
 }
 
 /**
