@@ -147,7 +147,7 @@ SHA 는 `git log -1 <SHA>` 로 무엇인지 본다. 날을 넘겨 이어 받은 
 3. **운영자가 승인하면** CI 를 거쳐 머지한다(최신 main 위에서 `--auto` — 바이패스 모드 세션은 아래 바이패스 줄). 그다음 `docs/ops/runbook/deploy.md` 「묶음 배포」를 밟는다.
    운영 배포는 운영자의 「배포」 답을 받은 뒤다(`docs/agents/delegation/permissions.md` 「권한 등급」 등급 3).
 4. **머지와 배포 기록(#770 댓글) 뒤에는 머지된 PR 의 워크트리와 로컬 가지를 저절로 걷는다.** 묻지 않는다.
-   `npm run sweep:merged` 로 미리보기를 보고 `npm run sweep:merged -- --apply` 로 걷는다(아래 「라운드 끝 정리」). herdr 로 돌릴 때는
+   `npm run sweep:merged` 로 미리보기를 보고 `npm run sweep:merged -- --apply` 로 걷는다(아래 「라운드 끝 정리」). herdr 로 돌릴 때는(바이패스가 아닌 herdr 세션)
    미리보기를 모아 운영자에게 묻고 지운다(운영자 지시 2026-11-09, `docs/agents/delegation/herdr.md` 「저장소 규약과 다른 자리」).
 
 그대로인 것. 문서 PR 은 열자마자 `--auto` 다(ADR 0121, `docs/agents/delegation/notes.md` 「세션 기록」). 정해진 문구 한 줄은 바로 낸다
@@ -156,8 +156,9 @@ SHA 는 `git log -1 <SHA>` 로 무엇인지 본다. 날을 넘겨 이어 받은 
 **바이패스 줄 — 운영자가 바이패스 모드로 돌리는 세션에서는 코드 PR 머지 승인을 묻지 않는다**(운영자 지시 2026-11-19 「바이패스모드라 안물어봐도돼」,
 ADR 0258) — 결정 점검표에 걸린 PR 의 독립 검토와 CI 초록 뒤 조율자가 머지한다. 화면 · 흐름 PR 의 아티팩트 보고는 그대로 내되 머지를 막고 기다리지
 않는다. 운영 배포(권한 등급 3)는 이 말로 바뀌지 않는다 — 「배포」 답 뒤. 이 말이 없앤 것은 머지 승인뿐이다 — 결정 점검표의 물음(정책 · 비용 같은
-내용)에 운영자가 아직 답하지 않은 PR 은 그 답도 뒤다(위 「조율자 세션」). 무인 라운드(`docs/agents/delegation/unattended.md`)와 herdr 흐름
-(`docs/agents/delegation/herdr.md`)의 머지는 제 문서대로 둔다 — 그 둘에도 닿는지는 운영자에게 확인 전이다.
+내용)에 운영자가 아직 답하지 않은 PR 은 그 답도 뒤다(위 「조율자 세션」). 이 말은 바이패스 모드로 도는 모든 세션 — 무인 라운드
+(`docs/agents/delegation/unattended.md`) · herdr Lead 포함 — 에 닿고, 머지된 PR 의 제 워크트리 · 가지 정리도 묻지 않는다(남이 띄운 것은 건드리지 않는다,
+ADR 0259). herdr 7.5 「묻고 지운다」는 바이패스가 아닌 herdr 세션에만 남는다(`docs/agents/delegation/herdr.md` 「저장소 규약과 다른 자리」).
 
 이 흐름 전의 글과 어긋났던 자리는 ADR 0229 「이 결정 전의 글과 어긋났던 자리」가 든다.
 

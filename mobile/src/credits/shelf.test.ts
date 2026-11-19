@@ -58,12 +58,39 @@ describe('Play 가격의 글자', () => {
     expect(shownPrice(krw('KRW 59,000'))).toBe('59,000원');
   });
 
-  it('Play 가격이 상수와 달라도 Play 값을 말한다', () => {
-    expect(pay(new Map([['reading_credits_1', krw('₩5,500')]]), '')).toEqual({ label: '5,500원', productId: 'reading_credits_1' });
+  it('기기 언어의 숫자도 값으로 읽고, 0 뿐인 소수 자리는 같은 값이다', () => {
+    expect(shownPrice(krw('٤٬٩٠٠ ₩'))).toBe('4,900원');
+    expect(shownPrice(krw('₩4,900.00'))).toBe('4,900원');
+    expect(shelfOf(new Map([['reading_credits_1', krw('٤٬٩٠٠ ₩')], ['reading_credits_3', krw('₩12,900.00')]])).map((item) => item.credits)).toEqual([1, 3]);
+    expect(shelfOf(new Map([['reading_credits_1', krw('₩4,900.50')]]))).toEqual([]);
   });
 
   it('다른 통화이거나 숫자가 없으면 Play 글자 그대로다', () => {
     expect(shownPrice({ display: '$3.99', currency: 'USD' })).toBe('$3.99');
     expect(shownPrice({ display: '무료', currency: 'KRW' })).toBe('무료');
+  });
+});
+
+/**
+ * **Play 금액이 묶음 가격과 다른 묶음은 진열에 안 선다**(G-166, ADR 0259) — 약관 · 환불정책 · 장부가 묶음 가격을 적으므로 다른 값으로 팔지 않는다.
+ * 같은지 모르는 것(다른 통화 · 숫자 없음)도 뺀다.
+ */
+describe('Play 가격이 묶음 가격과 다를 때', () => {
+  const with1 = (play: PlayPrice) => new Map([...ALL, ['reading_credits_1', play]]);
+
+  it('다른 묶음만 빠지고 나머지는 선다 — 고른 것이 빠지면 첫 줄', () => {
+    expect(shelfOf(with1(krw('₩5,500'))).map((item) => item.credits)).toEqual([3, 5, 20]);
+    expect(pay(with1(krw('₩5,500')), 'reading_credits_1')).toEqual({ label: '12,900원', productId: 'reading_credits_3' });
+  });
+
+  it('다른 통화 · 숫자 없는 글자도 뺀다', () => {
+    expect(shelfOf(with1({ display: '$3.99', currency: 'USD' })).map((item) => item.credits)).toEqual([3, 5, 20]);
+    expect(shelfOf(with1(krw('무료'))).map((item) => item.credits)).toEqual([3, 5, 20]);
+  });
+
+  it('모두 다르면 진열이 빈다', () => {
+    const raised = new Map([...ALL].map(([id, play]) => [id, krw(`${play.display}0`)]));
+    expect(shelfOf(raised)).toEqual([]);
+    expect(pay(raised, '')).toBeNull();
   });
 });
