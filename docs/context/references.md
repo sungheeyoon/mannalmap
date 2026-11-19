@@ -67,7 +67,7 @@
 | 넥슨 | 넥슨캐시 제10조 「잔액에서 10%의 환불수수료를 공제」 — 이름 「환불수수료」의 근거 | [약관](https://member.nexon.com/policy/policywrapper.aspx?date=20251016&policytype=32) | 2026-10-20 | — | credits-09 · ADR 0192 |
 | 네이버웹툰 | 「취소 수수료」(환불금액의 10% 공제) | [도움말](https://help.naver.com/service/5635/contents/19306?lang=ko&osType=ANDROID) | 2026-10-20 | — | credits-09 · ADR 0192 |
 | 리디 | 이용약관 제22조 「잔액 환급 비율(90%)」 | [약관](https://policy.ridi.com/legal/terms/) | 2026-10-20 | — | ADR 0192 |
-| 리디 | 이용약관 v5.0 제28조 「리디캐시는 … 회원 탈퇴 시 소멸됩니다.」 · 제5조 「… 유효기간 임박, 소멸 등에 관한 안내」 | [판 목록](https://policy.ridi.com/legal/terms) | 링크 확인 전 · 2026-10-17 | — | ADR 0191 · G-25 기록 |
+| 리디 | 이용약관 제28조 「리디캐시는 … 회원 탈퇴 시 소멸됩니다.」 · 제29조 「리디포인트는 … 회원 탈퇴 시 소멸됩니다.」 · 제5조 「… 유효기간 임박, 소멸 등에 관한 안내」(v5.0 에서 읽었고 v5.1 에도 같다) | [약관](https://policy.ridi.com/legal/terms/) | 2026-10-17 · 2026-11-19 | A | ADR 0191 · G-25 기록 |
 | 카카오비즈니스 | 「무상캐시와 유상캐시가 모두 있는 경우, 무상캐시가 우선 소진됩니다.」 | [가이드](https://kakaobusiness.gitbook.io/main/ad/searchad/keywordad/run/payment) | 2026-10-17 | — | ADR 0191 |
 | 당근페이 | 이용약관 제17조 「구매자는 판매자의 안심결제 거래 수락 이전 안심결제 거래를 취소할 수 있습니다.」 | [약관](https://terms.daangnpay.com/service) | 2026-10-26 | — | all-06 |
 | 카카오페이 | 이용약관 「해당 거래를 취소할 수 있습니다」 | [약관](https://www.kakaopay.com/terms/service) | 2026-10-26 | — | all-06 |
@@ -202,14 +202,14 @@
 | 맞나만나 | 「누가 무엇을 보나요」 표(줄마다 공개 범위와 시점) · 「결정은 언제나 내가 해요」 · 「사진·실명·직장 이름은 없어요」 | [웹](https://matnamana.com) | 2026-11-02 | A | 11-02 노트 §5 |
 | 맞나만나 | 예시 화면 단추 「질문하고 결정하기」 · 「질문 없이 수락하기」 · 「이번엔 괜찮아요」 · 거절은 「…이유는 알리지 않아요.」 | [웹](https://matnamana.com) | 2026-11-02 | A | 11-02 노트 §6 · matching-15 |
 | 미러 | 「어느 한쪽이라도 원치 않으면 연결되지 않으니 부담 갖지 않아도 돼요.」 · 리포트는 두 사람만 봄 | [App Store](https://apps.apple.com/kr/app/id6790402423) · [웹](https://mirror-apps.com) | 2026-11-02 | A′ · A | 11-02 노트 §5 · matching-15 |
-| 미러 | 두 사람 모두 「더 알아볼래요」를 눌러야 「실제 대화방이 열려요」 · 「일부 프리미엄 기능에는 인앱 재화가 사용돼요」 | [웹](https://mirror-apps.com) | 2026-11-02 | A · A′(G-130) | 11-02 노트 §6 · G-130 기록 |
+| 미러 | 두 사람 모두 「더 알아볼래요」를 눌러야 「실제 대화방이 열려요」 · 「일부 프리미엄 기능에는 인앱 재화가 사용돼요」 | [웹](https://mirror-apps.com) | 2026-11-02 · 2026-11-19 | A | 11-02 노트 §6 · G-130 기록 |
 | 미러 | 「만 19세 이상 성인만 이용할 수 있으며, 가입 시 휴대전화 본인확인으로 성인 여부를 확인합니다」 | [웹](https://mirror-apps.com/) | 2026-11-02 | — | matching-15 · matching-16 |
 | 미리 소개팅 | 「…본인 사진 등록이 필수」(개발사 답변) · PASS + 셀카 · 「내 연락처에 있는 사람을 … 서로 노출되지 않아요!」 | [App Store](https://apps.apple.com/kr/app/id1483004283) | 2026-11-02 | A′ · B | 11-02 노트 §5 |
-| 미리 소개팅 | 「…무료로 소개되는 프로필 카드」 · 「매칭되어도 제대로 대화가 안되면 환불」 · 「대화가 일찍 끊겨도 100% 환불」 | [App Store](https://apps.apple.com/kr/app/id1483004283) | 2026-11-02 | B · A′(G-130) | 11-02 노트 §6 · matching-15 · G-130 기록 |
+| 미리 소개팅 | 「…무료로 소개되는 프로필 카드」 · 「매칭되어도 제대로 대화가 안되면 환불」 · 「대화가 일찍 끊겨도 100% 환불」 | [App Store](https://apps.apple.com/kr/app/id1483004283) | 2026-11-02 · 2026-11-19 | B | 11-02 노트 §6 · matching-15 · G-130 기록 |
 | 윌유 | 「60개 이상의 질문」 · 「스토리 카드」 · 「평균 1일 이내 검토」 · 「매일 4번, 당신과 가장 어울릴 상대를 추천」 | [App Store](https://apps.apple.com/kr/app/id1644080758) | 2026-11-02 | B | 11-02 노트 §5 · §6 |
 | 아만다 | 「아만다는 누구나 바로 만날 수 있는 곳이 아닙니다」 · 심사 「3점컷」 · 「약속을 잡고, 연락처를 교환하고, 공식 만남」 | [App Store](https://apps.apple.com/kr/app/id906675357) | 2026-11-02 | B | 11-02 노트 §5 · §6 |
 | 아만다 | 신고 「신고가 접수되면 빠르게 확인하고 조치」 · 인앱 「리본」 · 후기 「서로 선택하면 리본쓰고 대화」 | [App Store](https://apps.apple.com/kr/app/id906675357) | 2026-11-02 | A′(후기는 이용자 말) | G-130 기록 |
-| 글램 | 「가입 심사: 검증된 상대만 소개」 · 「무제한 소개팅」 · 「관심사가 맞는 인연이 먼저 대화를 걸어와요.」 · 「매일 추천」 | [App Store](https://apps.apple.com/kr/app/id1058232900) | 2026-11-02 | B · A′(G-130) | 11-02 노트 §5 · §6 · G-130 기록 |
+| 글램 | 「가입 심사: 검증된 상대만 소개」 · 「무제한 소개팅」 · 「관심사가 맞는 인연이 먼저 대화를 걸어와요.」 · 「매일 추천」 | [App Store](https://apps.apple.com/kr/app/id1058232900) | 2026-11-02 · 2026-11-19 | B | 11-02 노트 §5 · §6 · G-130 기록 |
 | 글램 | 「…대화 메시지를 최대 180일(약 6개월)간 보관」(제20조⑦) · 이용 신청(제4조) · 신고 후속 조치(제21조②) | [약관](https://privacy.glam.am/terms_of_service) | 2026-11-02 | A′ | 11-02 노트 §5 · §6 · G-130 기록 |
 | 정오의 데이트 | 「…회원가입을 승인해드립니다.」(대기 시간 없음) · 「…대화창 나가기를 하게 되면 복구 및 재연결은 어렵습니다.」 | [FAQ](https://noondate.com/v2/support/faq) | 2026-11-02 | A′ | 11-02 노트 §5 · §6 · G-130 기록 |
 | 위피 | 외부 메신저 · 송금 유도 피해 후기에 개발사가 「신고하기」 · 안전 가이드 · 메일로 안내 | [App Store](https://apps.apple.com/kr/app/id1261209014) | 2026-11-02 | A′ | 11-02 노트 §6 |
@@ -319,7 +319,7 @@
 | 서비스 | 무엇 | 출처 | 확인 | 수준 | 쓴 자리 |
 | --- | --- | --- | --- | --- | --- |
 | 카카오 로그인 디자인 가이드 | 「카카오 로그인」 · `#FEE500` · 글자 85% · 모서리 12px · OS 기본 서체 · 심볼 없이 못 만든다 | [디자인 가이드](https://developers.kakao.com/docs/ko/kakaologin/design-guide) | 2026-11-05 · 2026-11-06 | — | public-07 · public-12 · settings-15 · ADR 0224 · ADR 0228 |
-| 카카오싱크 디자인 가이드 | 표준 단추 「카카오로 시작하기」 | [디자인 가이드](https://developers.kakao.com/docs/ko/kakaosync/design-guide) | 2026-11-12 | — | first-07 |
+| 카카오싱크 디자인 가이드 | 표준 단추 「카카오로 시작하기」 | [디자인 가이드](https://developers.kakao.com/docs/ko/kakaosync/design-guide) | 2026-11-12 | — | first-08 |
 | Google 브랜딩 안내 (해외) | 「…1px inside stroke #747775 …」 · G 「can't change the size or color」 | [브랜딩 안내](https://developers.google.com/identity/branding-guidelines) | 2026-11-05 | — | public-10 · ADR 0228 |
 | Apple HIG (해외) | 「Adjust the corner radius …」 · 「Prefer the system font」 · 최소 높이 30pt | [HIG](https://developer.apple.com/design/human-interface-guidelines/sign-in-with-apple) | 2026-11-05 | — | ADR 0228 |
 | Apple HIG (해외) | Toggles · Alerts(설명은 「값이 있을 때만」, 둘이면 나란히 · 취소가 앞) · 서체 수를 줄여라 | 링크 없음 | 2026-10-24 · 2026-10-25 · 2026-10-28 | — | ADR 0109 · ADR 0205 |
