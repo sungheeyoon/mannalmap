@@ -27,7 +27,7 @@ PR 틀(`.github/pull_request_template.md`)의 칸이다. 칸 이름은 이 표�
    운영자가 따로 승인해 보낸 운영 코드가 기준인 경우는 `docs/agents/delegation/coordinator.md` 「조율자 세션」의 「사실과 의도」를 따른다. 어느 쪽이 맞는지
    가를 수 없을 때만 묻고, 물을 때는 걸린 화면이나 단추를 보이며 묻는다.
 
-**코드 PR 은 열고 운영자 검토를 기다린다(ADR 0229).** 머지 · 배포 · 정리의 차례는 `docs/agents/delegation/coordinator.md` 「출시 흐름」이 든다.
+**코드 PR 은 열고 운영자 검토를 기다린다(ADR 0229 — 운영자가 바이패스 모드로 돌리는 세션은 조율자가 머지한다, ADR 0258).** 머지 · 배포 · 정리의 차례는 `docs/agents/delegation/coordinator.md` 「출시 흐름」이 든다.
 문서 PR 은 열자마자 `--auto` 다.
 
 **전후 그림은 저장소에 커밋하지 않는다(운영자 지시 2026-10-10 「필요없잖아」).** 에이전트는 같은 로컬 상태에서 찍은 전후를
