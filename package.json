@@ -73,6 +73,7 @@
     "eslint-config-next": "16.4.6",
     "eslint-import-resolver-typescript": "^3.10.1",
     "eslint-plugin-import": "^2.32.0",
+    "sharp": "^0.35.5",
     "supabase": "^2.115.0",
     "tailwindcss": "^4",
     "typescript": "^5",

@@ -5,7 +5,7 @@
  * 화면이고, `/signup` 은 가입 전에만 선다. 그래서 훑기의 단위는 경로가 아니라 **상태**다.
  */
 
-import { cookiesFor, localStack, onlyTheseTwo, participate, plantReading, seed } from './ui-seed.mjs';
+import { cookiesFor, localStack, onlyTheseTwo, participate, plantReading, seed, seedTag } from './ui-seed.mjs';
 
 export const STATES = {
   /** 구글 로그인만 하고 **가입은 안 끝낸** 사람 — `/signup` 관문이 서는 유일한 자리 */
@@ -97,7 +97,8 @@ async function pairThem(asker, receiver) {
  */
 export async function build(state) {
   const local = localStack();
-  const tag = `${Date.now()}`.slice(-6);
+  /* `UI_SEED_TAG` 를 주면 결정적이다 — 전후 그림을 화소로 견줄 때(`seedTag` 머리말) */
+  const tag = seedTag();
 
   if (state === 'raw') {
     const one = await seed(local, { selfPerson: false, skipSignup: true }, tag);
