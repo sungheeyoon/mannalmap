@@ -83,6 +83,24 @@ describe('앱 재확인 화면의 탈퇴 신청', () => {
 });
 
 /**
+ * **도움말이 부르는 공유 단추는 그 화면에 있는 단추다.** 웹 글 끝의 단추는 「공유 링크 복사」, 앱의 단추는 시스템 공유창을 여는
+ * 「공유하기」다(대장 home-13). 두 화면이 한 답(`HELP_GROUPS`)을 읽으므로 앱의 답은 `inApp` 이 든다. 단추 이름은 두 단추 파일에서 읽는다.
+ */
+describe('도움말의 공유 답', () => {
+  it('웹 · 앱의 답은 저마다 제 공유 단추의 이름을 부른다', async () => {
+    const { HELP_GROUPS } = await import('../src/lib/brand/guide');
+    const share = HELP_GROUPS.flatMap((group) => group.items).find((item) => item.id === 'share');
+    const labelOf = (file: string) => /^const IDLE = '([^']+)';$/m.exec(read(file))?.[1];
+    const web = labelOf('app/me/reading/share-button.tsx');
+    const app = labelOf('mobile/src/reading/share-button.tsx');
+    expect(web).toBeDefined();
+    expect(app).toBeDefined();
+    expect(share?.a.join(' ')).toContain(`「${web}」`);
+    expect((share?.inApp ?? share?.a)?.join(' ')).toContain(`「${app}」`);
+  });
+});
+
+/**
  * **앱 도움말에 빈 묶음이 서지 않는다.** 앱은 웹의 물음 하나(`without-sign-in`, ADR 0213)를 빼는데, 「시작하기」는 그 물음 하나뿐이라
  * 제목과 빈 판만 남았다(2026-11-06 에뮬레이터 점검). 빼는 물음 때문에 비는 묶음이 있으면 화면이 묶음째 걷어야 한다.
  */

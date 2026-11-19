@@ -149,16 +149,16 @@ describe('부속 정보는 값으로 말한다', () => {
     answering({ data: [], error: null });
     expect(await readUnreadNotifications(await supabaseOnServer())).toEqual({ ok: true, value: 0 });
 
-    /* 요청이 왔다는 소식은 인연 탭이 센다 — 종의 수에서 빠진다(ADR 0130) */
+    /* 대화가 왔다는 소식도 종이 센다 — 읽은 소식만 빠진다(ADR 0215) */
     answering({
       data: [
-        { kind: 'request_received', read_at: null },
-        { kind: 'reading_failed', read_at: null },
-        { kind: 'request_accepted', read_at: '2026-09-29T00:00:00Z' },
+        { kind: 'request_received', match_id: 'm1', read_at: null },
+        { kind: 'reading_failed', match_id: null, read_at: null },
+        { kind: 'request_accepted', match_id: 'm1', read_at: '2026-09-29T00:00:00Z' },
       ],
       error: null,
     });
-    expect(await readUnreadNotifications(await supabaseOnServer())).toEqual({ ok: true, value: 1 });
+    expect(await readUnreadNotifications(await supabaseOnServer())).toEqual({ ok: true, value: 2 });
 
     answering(BROKEN);
     expect((await readUnreadNotifications(await supabaseOnServer())).ok).toBe(false);
