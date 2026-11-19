@@ -4,7 +4,7 @@
  * #1149 는 「결정 여부: 있음」인데 `docs/` 파일이 0 이었다. 잰다(주석 `<!-- -->` 은 걷고):
  *
  * 1. **「## 문서」 칸이 있다**
- * 2. **그 칸에 「결정 여부:」 줄이 있고 값이 「없음」이나 「있음」으로 시작한다**
+ * 2. **그 칸에 「결정 여부:」 줄이 있고 그 줄의 값이 「없음」이나 「있음」으로 시작한다** — PR 틀은 값을 비워 둔다. 틀을 그대로 둔 본문은 붉다
  * 3. **`feat` · `fix` 가 `CODE_DIRS`(`app/` · `src/` · `supabase/` · `mobile/src/`)를 고치고 `docs/` 를 안 고쳤으면** 그 칸에 「문서 없음 — <까닭>」이 있다
  * 4. **「결정 여부: 있음」인데 바뀐 파일에 `docs/adr/` 가 없으면** 그 줄이 까닭을 든다 — 이미 있는 결정(`ADR NNNN`), 화면 문구(ADR 0196 — ADR 이 아니라
  *    사후 확인), 「ADR 없음 — <까닭>」 중 하나
@@ -52,7 +52,8 @@ const reasonAfter = (text, label) => {
 export function bodyProblems({ title, body, files }) {
   const section = docsSection(cleaned(body));
   if (section === null) return ['PR 본문에 「## 문서」 칸이 없다 — PR 틀(`.github/pull_request_template.md`)의 칸을 그대로 둔다'];
-  const decision = /^\s*(?:[-*]\s*)?결정 여부\s*[:：]\s*(.*)$/m.exec(section);
+  // 한 줄 안에서만 읽는다 — `\s*` 는 줄바꿈도 먹어, 값을 비운 줄이 다음 줄의 글자(「문서 없음 — …」 · 「있음」)를 값으로 집어 와 초록이었다
+  const decision = /^[ \t]*(?:[-*][ \t]*)?결정 여부[ \t]*[:：][ \t]*(.*)$/m.exec(section);
   if (decision === null) return ['「## 문서」 칸에 「결정 여부:」 줄이 없다 — 「결정 여부: 없음」이나 「결정 여부: 있음 — <점검표의 줄 · ADR · 운영자 답>」'];
   const value = decision[1].trim();
   const problems = [];

@@ -38,6 +38,12 @@ describe('PR 본문의 「문서」 칸 (ADR 0257)', () => {
     expect(bodyProblems({ title: 'docs: x', body: bodyWith('<!-- 결정 여부: 없음 -->'), files: ['docs/x.md'] })[0]).toContain('「결정 여부:」 줄이 없다');
     expect(bodyProblems({ title: 'docs: x', body: bodyWith('결정 여부: 모름'), files: ['docs/x.md'] })).toEqual(['「결정 여부:」의 값은 「없음」이나 「있음」으로 시작한다 — 지금은 「모름」']);
     expect(bodyProblems({ title: 'docs: x', body: bodyWith('결정 여부:'), files: ['docs/x.md'] })[0]).toContain('(빈 값)');
+    // 값을 비운 줄은 다음 줄의 글자를 값으로 집어 오지 않는다 — `\s*` 가 줄바꿈을 먹던 동안은 아래 셋이 초록이었다(독립 검토 2026-11-19)
+    for (const next of ['있음 — ADR 0257', '없음', '문서 없음 — 까닭이 있다', '- 없음']) {
+      const problems = bodyProblems({ title: 'docs: x', body: bodyWith(`결정 여부:\n\n${next}`), files: ['docs/x.md'] });
+      expect(problems, next).toEqual(['「결정 여부:」의 값은 「없음」이나 「있음」으로 시작한다 — 지금은 「(빈 값)」']);
+    }
+    expect(bodyProblems({ title: 'docs: x', body: bodyWith('결정 여부: <!-- 안내 -->\n\n없음'), files: ['docs/x.md'] })[0]).toContain('(빈 값)');
     // 「결정 여부」 줄이 「문서」 칸 밖에만 있으면 없는 것이다
     const outside = bodyWith('역할 문서의 칸을 옮겼다').replace('## 잰 값', '결정 여부: 없음\n\n## 잰 값');
     expect(bodyProblems({ title: 'docs: x', body: outside, files: ['docs/x.md'] })[0]).toContain('「결정 여부:」 줄이 없다');
@@ -74,10 +80,14 @@ describe('PR 본문의 「문서」 칸 (ADR 0257)', () => {
     expect(bodyProblems({ title: 'fix(x): 한 줄', body: null, files: null })[0]).toContain('「## 문서」 칸이 없다');
   });
 
-  it('PR 틀 그대로면 칸 · 줄은 맞고, 코드를 고친 fix 는 「문서 없음 — 까닭」을 요구받는다 — 틀이 그 줄과 판정을 말한다', () => {
-    expect(bodyProblems({ title: 'docs: 한 줄', body: template, files: ['docs/x.md'] })).toEqual([]);
-    expect(bodyProblems({ title: 'fix(x): 한 줄', body: template, files: app })).toHaveLength(1);
-    expect(template).toMatch(/^결정 여부: 없음 <!--/m);
+  it('PR 틀 그대로면 붉다 — 「결정 여부」의 값을 비워 두었다(「문서 칸이 비면 빨갛게」). 틀이 그 줄과 판정을 말한다', () => {
+    expect(bodyProblems({ title: 'docs: 한 줄', body: template, files: ['docs/x.md'] })).toEqual(['「결정 여부:」의 값은 「없음」이나 「있음」으로 시작한다 — 지금은 「(빈 값)」']);
+    expect(bodyProblems({ title: 'fix(x): 한 줄', body: template, files: app })).toHaveLength(2);
+    // 값만 채우면 칸 · 줄은 맞다 — 코드를 고친 fix 는 그래도 「문서 없음 — 까닭」을 요구받는다
+    const filled = template.replace(/^결정 여부: /m, '결정 여부: 없음 ');
+    expect(bodyProblems({ title: 'docs: 한 줄', body: filled, files: ['docs/x.md'] })).toEqual([]);
+    expect(bodyProblems({ title: 'fix(x): 한 줄', body: filled, files: app })).toHaveLength(1);
+    expect(template).toMatch(/^결정 여부: <!--/m);
     expect(template).toContain('문서 없음 — <까닭>');
     expect(template).toContain('scripts/pr-body.mjs');
     // 「잰 값」 주석은 화면 · 흐름의 비교 자리를 든다
