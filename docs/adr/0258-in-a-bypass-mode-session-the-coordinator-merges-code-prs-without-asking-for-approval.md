@@ -1,24 +1,26 @@
 # 운영자가 바이패스 모드로 돌리는 세션에서는 코드 PR 의 머지 승인을 묻지 않는다
 
 > **운영자 지시 2026-11-19**(조율자가 옮김) — 조율자가 「검토가 끝나면 승인을 여쭙겠습니다」라고 하자 운영자가 「바이패스모드라 안물어봐도돼」라고
-> 답했다. 결정 점검표의 「검증 · 배포의 문턱」(머지가 무엇을 기다리나)에 걸린다 — 운영자가 이미 답한 결정이라 그 말을 옮겨 적는다.
+> 답했다. 결정 점검표의 「검증 · 배포의 문턱」에 걸린다 — 그 줄의 「배포가 무엇을 기다리나」처럼 머지가 무엇을 기다리나를 바꾼다. 운영자가 이미
+> 답한 결정이라 그 말을 옮겨 적는다.
 >
 > 이 결정이 대체하는 것 — ADR 0229 (일부: 「정한 것」 1 의 1 「머지하지 않고 운영자 검토를 기다린다」와 3 「운영자가 승인하면 CI 와 머지」 가운데, 운영자가 바이패스 모드로 돌리는 세션의 코드 PR 머지)
 
 ## 정한 것
 
 1. **운영자가 바이패스 모드로 돌리는 세션에서는 코드 PR 머지 승인을 묻지 않는다.** 결정 점검표(`docs/agents/delegation/decisions.md`)에 걸린 PR 의
-   독립 검토와 CI 초록 뒤 조율자가 머지한다. 결정 점검표에 걸리지 않은 코드 PR 은 전처럼 독립 검토가 의무가 아니라(`docs/agents/delegation/coordinator.md`
-   「조율자 세션」의 「위험에 따라 두 번째 검토」) CI 초록 뒤 조율자가 머지한다. 원본 문장은 `docs/agents/delegation/coordinator.md` 「출시 흐름」이다.
+   독립 검토와 CI 초록 뒤 조율자가 머지한다 — 그 PR 의 결정 물음(정책 · 비용 같은 내용)에 운영자가 아직 답하지 않았으면 그 답도 뒤다. 이 말이 걷은 것은
+   머지 승인이다. 결정 점검표에 걸리지 않은 코드 PR 은 전처럼 독립 검토가 의무가 아니라(`docs/agents/delegation/coordinator.md` 「조율자 세션」의
+   「위험에 따라 두 번째 검토」) CI 초록 뒤 조율자가 머지한다. 원본 문장은 `docs/agents/delegation/coordinator.md` 「출시 흐름」이다.
    바이패스 모드는 Claude Code 의 권한 모드 `bypassPermissions`(`--dangerously-skip-permissions`)다.
 2. **화면 · 흐름 PR 의 아티팩트 보고는 그대로 낸다** — 실제 그림 · 잰 값 · 무엇을 왜 바꿨나(「출시 흐름」 2). 머지를 막고 운영자의 답을 기다리지 않는다.
 3. **이 말로 바뀌지 않는 것.**
-   - 운영 배포(권한 등급 3)는 「배포」 답 뒤다(`docs/agents/delegation/permissions.md` 「권한 등급」). 도구의 `ask` 도 바이패스 모드에서 그대로 묻는다.
+   - 운영 배포(권한 등급 3)는 「배포」 답 뒤다(`docs/agents/delegation/permissions.md` 「권한 등급」).
    - 에이전트는 코드 PR 을 머지하지 않고 보고에 싣는다 — 머지하는 것은 조율자다.
-   - 결정 점검표에 걸린 PR 의 결정 물음(정책 · 비용 같은 내용을 표로 묻는 일)은 이 말이 다루지 않았다 — 전처럼 PR 이 열린 그 차례에 묻는다.
+   - 결정 점검표에 걸린 PR 의 결정 물음(정책 · 비용 같은 내용을 표로 묻는 일)은 이 말이 다루지 않았다 — 전처럼 PR 이 열린 그 차례에 묻고, 머지는 그 답 뒤다.
    - 문서 PR 은 열자마자 `--auto` 다(ADR 0121).
-   - 이 말은 사람과 말하는 조율자 세션에서 나왔다. 무인 라운드(`docs/agents/delegation/unattended.md` 「무인 라운드」)와 herdr 흐름(#1180 의
-     `docs/agents/delegation/herdr.md`)의 머지는 제 문서대로다.
+4. **범위 — 해석이다.** 이 말은 사람과 말하는 조율자 세션에서 나왔다. 무인 라운드(`docs/agents/delegation/unattended.md` 「무인 라운드」)와 herdr 흐름
+   (`docs/agents/delegation/herdr.md`)에도 닿는지는 운영자가 말하지 않았다 — 운영자에게 확인하기 전까지 그 둘의 머지는 제 문서대로 둔다.
 
 ## 까닭
 
@@ -34,9 +36,10 @@
 
 ## 이 결정 전의 글과 어긋나는 자리 (2026-11-19)
 
-이 PR 이 맞춘 자리 — `docs/agents/delegation/coordinator.md` 「조율자 세션」의 첫 두 줄 · 「출시 흐름」 1 과 바이패스 줄, `docs/agents/delegation/done.md`
-「끝났다는 것」의 코드 PR 줄, `docs/agents/delegation/permissions.md` 「권한 등급」 등급 2, `docs/roles/coordinator.md` 「이 저장소의 방식」의 출시 흐름 줄.
+이 PR 이 맞춘 자리 — `docs/agents/delegation/coordinator.md` 「조율자 세션」의 첫 두 줄 · 브리프의 「내보내기」 칸 · 화면 세션의 보고 줄 · 「출시 흐름」
+1 · 3 과 바이패스 줄, `docs/agents/delegation/done.md` 「끝났다는 것」의 코드 PR 줄, `docs/agents/delegation/permissions.md` 「권한 등급」 등급 2,
+`docs/agents/delegation.md` 색인의 조율자 줄, `docs/roles/coordinator.md` 「이 저장소의 방식」의 출시 흐름 줄.
 
 같은 날 나란히 도는 세션이 고치는 파일이라 이 PR 이 손대지 않은 자리 — `docs/agents/delegation/decisions.md` 「결정 점검표」의 화면 문구 줄(「코드 PR 의
 머지가 운영자 검토 뒤인 것은 그대로다」) · `docs/agents/code-rules/screen-copy.md` 「화면 문구」(「다른 코드 PR 처럼 운영자 검토 뒤다」) ·
-`docs/roles/ui.md` 「하지 않는 것 · 묻는 것」(「코드 PR 은 운영자 검토 뒤 머지」) · `docs/agents/delegation.md` 색인의 조율자 줄. 그 파일을 고치는 다음 PR 이 이 ADR 을 가리키게 한다.
+`docs/roles/ui.md` 「하지 않는 것 · 묻는 것」(「코드 PR 은 운영자 검토 뒤 머지」). 그 파일을 고치는 다음 PR 이 이 ADR 을 가리키게 한다.
