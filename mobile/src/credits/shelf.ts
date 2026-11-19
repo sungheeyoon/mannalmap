@@ -14,10 +14,27 @@ export type PlayPrice = { readonly display: string; readonly currency: string };
 /** 진열의 한 줄 — `price` 는 화면이 그대로 그리는 금액 글자 */
 export type ShelfItem = { readonly productId: string; readonly credits: number; readonly price: string; readonly discount: number };
 
-/** Play 금액의 원 — 원화이고 숫자가 있을 때만. 그 밖은 `null`(묶음 가격과 같은지 모른다) */
+/** 유니코드 숫자 하나의 값 — 아랍어 기기의 「٤」도 4 다. 같은 블록의 숫자는 0 부터 열 자가 이어 선다 */
+const digitValue = (char: string): number => {
+  const code = char.codePointAt(0) ?? 0;
+  for (let zero = code; zero > code - 10; zero -= 1)
+    if (!/\p{Nd}/u.test(String.fromCodePoint(zero - 1))) return code - zero;
+  return 0;
+};
+
+/**
+ * Play 금액의 원 — 원화이고 숫자가 있을 때만. 그 밖은 `null`(묶음 가격과 같은지 모른다). 숫자는 기기 언어의 숫자(`\p{Nd}`)를 값으로 읽는다 —
+ * ASCII 만 읽으면 아랍어 기기에서 정상 묶음이 다 빠진다. 끝의 소수 자리가 0 뿐이면(「₩4,900.00」) 버리고, 0 이 아니면 같은 값이 아니다.
+ */
 const playWon = (play: PlayPrice): number | null => {
-  const digits = play.display.replace(/\D/g, '');
-  return play.currency === 'KRW' && digits !== '' ? Number(digits) : null;
+  if (play.currency !== 'KRW') return null;
+  const groups = play.display.match(/\p{Nd}+/gu);
+  if (groups === null) return null;
+  const last = groups.at(-1) ?? '';
+  const decimals = groups.length > 1 && /\p{Nd}[.,٫]\p{Nd}{1,2}\D*$/u.test(play.display) && [...last].length <= 2;
+  if (decimals && [...last].some((char) => digitValue(char) !== 0)) return null;
+  const whole = decimals ? groups.slice(0, -1) : groups;
+  return [...whole.join('')].reduce((sum, char) => sum * 10 + digitValue(char), 0);
 };
 
 /**

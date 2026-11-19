@@ -32,8 +32,11 @@
 
 ## 받아들인 것
 
-- 운영자는 콘솔 가격이 어긋났을 때 앱이 그 묶음을 조용히 뺀다는 것을 앱에서 그 묶음이 안 보이는 것으로만 안다. 앱에는 운영자에게 닿는 기록 길(오류 수집 ·
-  서버 로그 문)이 없고, 서버는 Play 의 가격을 읽지 않는다(`purchases.products.get` 은 가격을 주지 않는다). 그래서 남은 것으로 G-166 에 둔다 — 콘솔 가격을
-  바꾸는 런북 줄(`docs/ops/runbook/credits.md` 「Google Play 결제」)이 이 규칙을 말한다.
+- 운영자는 콘솔 가격이 어긋났을 때 앱이 그 묶음을 조용히 뺀다는 것을 앱에서 그 묶음이 안 보이는 것으로만 안다. **지금 붙일 길이 없다 — 재료는 있다.**
+  앱에는 운영자에게 닿는 기록 길(오류 수집 · 서버 로그 문)이 없고, 서버의 구매 확인(`purchases.products.get`)은 가격을 주지 않는다. 재료는 운영 알림
+  `public.notify_ops` · Play 서비스 계정으로 날마다 도는 크론(`app/api/cron/store-consume`) · Android Publisher API 의 상품 목록(`monetization.onetimeproducts`)과
+  주문마다 가격을 주는 `orders.get`(그 계정 권한으로 읽히는지 확인 전)이다 — G-166 의 남은 것과 [기록](../product/gaps/records/g-166.md). 콘솔 가격을 바꾸는
+  런북 줄(`docs/ops/runbook/credits.md` 「Google Play 결제」)이 이 규칙을 말한다.
+- 서버 쪽 가드는 없다 — 장부의 주문 금액은 늘 `reading_bundle_price` 이고, 이 규칙 전의 앱 빌드는 가드 없이 Play 가 준 금액으로 판다.
 - 구매 칸의 상태 회귀는 기기 확인 전에는 잡히지 않는다.
 - 바이패스 모드의 무인 라운드 · herdr 세션에서도 결정 PR 은 운영자가 보기 전에 main 에 든다 — 운영 배포는 따로 「배포」 답을 받으므로 이용자에게는 닿지 않는다.

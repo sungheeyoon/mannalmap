@@ -58,6 +58,13 @@ describe('Play 가격의 글자', () => {
     expect(shownPrice(krw('KRW 59,000'))).toBe('59,000원');
   });
 
+  it('기기 언어의 숫자도 값으로 읽고, 0 뿐인 소수 자리는 같은 값이다', () => {
+    expect(shownPrice(krw('٤٬٩٠٠ ₩'))).toBe('4,900원');
+    expect(shownPrice(krw('₩4,900.00'))).toBe('4,900원');
+    expect(shelfOf(new Map([['reading_credits_1', krw('٤٬٩٠٠ ₩')], ['reading_credits_3', krw('₩12,900.00')]])).map((item) => item.credits)).toEqual([1, 3]);
+    expect(shelfOf(new Map([['reading_credits_1', krw('₩4,900.50')]]))).toEqual([]);
+  });
+
   it('다른 통화이거나 숫자가 없으면 Play 글자 그대로다', () => {
     expect(shownPrice({ display: '$3.99', currency: 'USD' })).toBe('$3.99');
     expect(shownPrice({ display: '무료', currency: 'KRW' })).toBe('무료');
