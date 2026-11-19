@@ -19,15 +19,16 @@ PRD · 간극 대장 · changelog · 용어집 · 노트 · 역할 문서를 코
 - [결정 점검표](../agents/delegation/decisions.md) — 문서를 코드에 맞추다 정책이 바뀌면 결정
 - [조율자 세션](../agents/delegation/coordinator.md) — 사실과 의도 · 버그 · 문서 노후 · 결정 미반영 가르기
 - [나란히 맡길 때](../agents/delegation/parallel.md) — 중앙 문서는 제 줄만 · 머지는 하나씩 · `union`
-- [린트가 잠근 것 · 시험이 잠근 것](../agents/code-rules/locks.md#린트가-잠근-것--시험이-잠근-것) — 입구 문서의 경로를 재는 시험. 역할 문서의 절 · 링크는 ADR 0145, 읽기량은 붉지 않는 보고(ADR 0177)
+- [린트가 잠근 것 · 시험이 잠근 것](../agents/code-rules/locks.md#린트가-잠근-것--시험이-잠근-것) — 입구 · 역할 문서의 경로 · 절 · 링크를 재는 시험
 - [Writing an ADR](../agents/domain.md#writing-an-adr) — 색인 줄과 후속 결정 줄
+- [읽기량 예상치는 보고다](../agents/delegation/done.md#읽기량-예상치는-보고다) — 문서를 고치거나 줄일 때 보는 잣대 열
 
 ## 하지 않는 것 · 묻는 것
 
-- `보류` 줄을 다시 권하거나 앞당기지 않는다 — 조건이 오면 운영자가 꺼낸다([조율자 세션](../agents/delegation/coordinator.md))
-- 이미 있는 기록을 고치는 두 PR 을 나란히 두지 않는다 — 상반된 문장이 둘 다 남는다([나란히 맡길 때](../agents/delegation/parallel.md))
-- 노트를 요구사항처럼 쓰지 않는다 — 규약이 된 것은 원본으로 옮긴다([세션 기록](../agents/delegation/notes.md))
-- `docs/product/prd-archive.md` 에서 무엇을 만들지 읽지 않는다([원본](../start.md#원본--무엇이-무엇을-답하나))
+- `보류` 줄은 조건이 올 때까지 그대로 둔다 — 운영자가 꺼낸다([조율자 세션](../agents/delegation/coordinator.md))
+- 이미 있는 기록을 고치는 PR 은 한 번에 하나 — 나란히 두면 상반된 문장이 둘 다 남는다([나란히 맡길 때](../agents/delegation/parallel.md))
+- 노트에는 사정만 — 규약이 된 것은 원본으로 옮긴다([세션 기록](../agents/delegation/notes.md))
+- 무엇을 만들지는 `docs/prd.md` 에서 읽는다 — `docs/product/prd-archive.md` 는 요구사항이 아니다([원본](../start.md#원본--무엇이-무엇을-답하나))
 
 ## 끝날 때 고치는 것
 
@@ -43,9 +44,9 @@ PRD · 간극 대장 · changelog · 용어집 · 노트 · 역할 문서를 코
 
 - 경로가 옮겨지거나 닫은 `G-nn` 의 기록 파일을 지우면 → [경로가 옮겨지면](../agents/delegation/notes.md#경로가-옮겨지면--고치는-것과-두는-것) — 고칠 문서와 그날의 기록으로 둘 것(ADR 0090)
 - 새 노트를 쓰거나 코드가 이렇게 된 사정을 거슬러 가면 → [노트의 차례](../notes/README.md)
-- 역할 문서를 고치면 → [읽기량의 셈](../../scripts/read-budget.mjs) 머리말 — 무엇을 세나(백틱 파일 · 링크 · 「절」)와 안 세나(백틱 디렉터리 · 이 칸). `npm run read-budget -- <역할>` 은 파일 표만 찍고, 역할마다 합계(예상치)는 인자 없이(`npm run read-budget`) 나온다 — 보고이고 문턱은 없다(ADR 0177)
+- 역할 문서를 고치면 → [읽기량의 셈](../../scripts/read-budget.mjs) 머리말 — 무엇을 세나와 안 세나. 문턱 없는 보고다(ADR 0177)
 - 법률 근거(조문 원문 · 링크 · 확인 날짜 · 코드 줄)를 적으면 → [법률 근거의 자리](../legal/README.md#법률-근거의-자리--근거-문서와-간극-기록) — 간극 기록에는 경과와 가리킴만
 - 운영자가 밟는 행정 절차(예: 통신판매업 신고)의 상태를 적으면 → [비어 있는 것](../legal/README.md#비어-있는-것--검토와-따로-채운다) — 그 절차가 채울 빈칸 곁에 둔다(#516)
 - 워크트리에서 시험(`npx vitest run scripts/`)을 돌리려는데 `node_modules` 가 없으면 → [로컬 환경의 함정](../agents/delegation/local-env.md#로컬-환경의-함정) — 메인의 것을 심볼릭 링크로
 - 문서에 새 글을 쓰거나 말버릇 규칙을 고치면 → [이 뜻으로 쓰지 않는 말](../context/copy.md) — PR 전에 그 표의 낱말로 자기 diff 를 grep 하고, 내부 뜻으로 쓴 줄은 대신 쓸 말로 바꾼다
-- 결정(ADR)이 든 문서 PR 을 내면 → [결정 점검표](../agents/delegation/decisions.md) — 「검증 · 배포의 문턱」 줄에 걸리면 독립 검토가 끝나기 전에 `--auto` 를 걸지 않는다. 결정 PR 과 나머지 문서는 PR 을 나눠도 된다(2026-11-19 #1180 · #1181)
+- 결정(ADR)이 든 문서 PR 을 내면 → [결정 점검표](../agents/delegation/decisions.md) — 「검증 · 배포의 문턱」 줄에 걸리면 독립 검토가 끝나기 전에 `--auto` 를 걸지 않는다. 결정 PR 과 나머지 문서는 PR 을 나눠도 된다

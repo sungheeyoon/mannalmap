@@ -10,12 +10,12 @@
 | 공유 자원 | 무엇이 한 벌인가 | 나란히 돌리려면 |
 | --- | --- | --- |
 | **로컬 스택** | Supabase 컨테이너 · dev 서버 포트 · 흐름 검사 포트 | 워크트리마다 `npm run stack:slot -- --auto`(ADR 0096). 자리를 안 받은 두 워크트리는 **순차**다 |
-| **기계 메모리** | WSL · 노트북의 메모리 하나 — `next build` 와 e2e 셋이 겹치면 스왑까지 찬다(2026-10-08) | `npm run build` · `npm run test:e2e*` · `npm run test:flow` · `npm run smoke:deploy` 는 `scripts/heavy.mjs` 가 기계 전체에서 하나씩 들인다. `npx playwright` · `npx next build` 를 바로 부르면 이 잠금을 안 지난다 |
+| **기계 메모리** | WSL · 노트북의 메모리 하나 — `next build` 와 e2e 셋이 겹치면 스왑까지 찬다 | `npm run build` · `npm run test:e2e*` · `npm run test:flow` · `npm run smoke:deploy` 는 `scripts/heavy.mjs` 가 기계 전체에서 하나씩 들인다. `npx playwright` · `npx next build` 를 바로 부르면 이 잠금을 안 지난다 |
 | **원격 DB** | 운영 DB 하나 — `npm run db:push` · `npm run db:remote` | 격리가 없다. 잠금이 한 번에 하나로 세우지만, 마이그레이션이 드는 두 이슈는 **순차**다 — 번호 순서가 곧 적용 순서다 |
 | **마이그레이션 사슬** | `supabase/migrations/` 의 시각 순서 · `src/lib/db/database.generated.ts` | 한 에이전트가 넓히기 → 앱 → 좁히기를 끝까지 쥔다(ADR 0071). 두 사슬은 **순차** |
-| **중앙 문서** | `docs/product/gaps.md` · `docs/product/prd-changelog.md` · `docs/prd.md` · `docs/product/prd/` · `docs/agents/delegation.md` · `docs/agents/delegation/` · `GLOSSARY.md` · `docs/context/` | 각 PR 은 **제가 바꾼 줄만** 고친다. 나란히 돌려도 되지만 **머지는 하나씩** — 하나가 들면 같은 자리를 고친 뒤 PR 이 충돌(`DIRTY`)이 되고, 충돌한 PR 에는 CI 가 돌지 않는다(`docs/agents/delegation/coordinator.md` 「조율자 세션」의 「CI 기다림」 줄). strict 는 껐다(2026-10-12) — `BEHIND` 로는 막히지 않는다. changelog 는 끝에 덧붙이므로 늘 같은 자리에서 부딪혀 `merge=union` 을 걸었다(`.gitattributes`). **union 은 끝에 덧붙이는 PR 에만 믿는다** — 이미 있는 기록을 고치는 두 PR 은 상반된 문장이 조용히 둘 다 남으므로 **순차**(#155) |
-| **ADR 번호** | `docs/adr/` 의 다음 번호 — 번호의 빈틈은 재지 않는다(ADR 0254) | 나란히 써도 되고 **머지는 번호 순이 아니어도 된다** — 뒤 번호가 먼저 들면 빈 번호는 앞 PR 이 들 때 찬다. **조율자는 나란히 내는 브리프마다 다른 번호를 미리 나눠 준다** — 넷에게 같은 「다음 번호」를 알려 셋이 같은 번호를 썼다(2026-10-23 #809 · #811 · #804). 열린 PR 끼리의 겹침은 아래 줄의 검사가, 같은 트리 안의 같은 번호 둘은 `scripts/code-rules.test.ts` 가 잰다 |
-| **그 밖의 공유 번호** | 간극 대장의 `G-nn` · 문구 대장의 절 번호(같은 무리 안의 `settings-16` 등) · 마이그레이션 시각 | ADR 번호처럼 **조율자가 브리프에서 미리 나눠 준다**. 겹치면 늦게 연 PR 의 `gate` 가 겹친 PR 과 다음 빈 번호를 들고 붉다 — `scripts/shared-numbers.mjs`(ADR 0238, ADR 번호도 같다). 그 번호로 바꿔 다시 민다. **열린 PR 이 같은 번호를 먼저 잡았으면 뒤에 연 PR 이 다음 번호를 쓴다** — 번호의 빈틈은 어느 것도 재지 않으니 머지는 번호 순이 아니어도 된다(ADR 번호 ADR 0254 · 문구 대장 절 번호 ADR 0260. `G-nn` 은 처음부터 빈틈 시험이 없다). 가지를 맞출 때 강제 푸시는 막혀 있으니 `git merge origin/main` 으로 한다(2026-11-09) |
+| **중앙 문서** | `docs/product/gaps.md` · `docs/product/prd-changelog.md` · `docs/prd.md` · `docs/product/prd/` · `docs/agents/delegation.md` · `docs/agents/delegation/` · `GLOSSARY.md` · `docs/context/` | 각 PR 은 **제가 바꾼 줄만** 고친다. 나란히 돌려도 되지만 **머지는 하나씩** — 하나가 들면 같은 자리를 고친 뒤 PR 이 충돌(`DIRTY`)이 되고, 충돌한 PR 에는 CI 가 돌지 않는다(`docs/agents/delegation/coordinator.md` 「조율자 세션」의 「CI 기다림」 줄). strict 는 꺼져 있다 — `BEHIND` 로는 막히지 않는다. changelog 는 끝에 덧붙이므로 늘 같은 자리에서 부딪혀 `merge=union` 을 걸었다(`.gitattributes`). **union 은 끝에 덧붙이는 PR 에만 믿는다** — 이미 있는 기록을 고치는 두 PR 은 상반된 문장이 조용히 둘 다 남으므로 **순차**(#155) |
+| **ADR 번호** | `docs/adr/` 의 다음 번호 — 번호의 빈틈은 재지 않는다(ADR 0254) | 나란히 써도 되고 **머지는 번호 순이 아니어도 된다** — 뒤 번호가 먼저 들면 빈 번호는 앞 PR 이 들 때 찬다. **조율자는 나란히 내는 브리프마다 다른 번호를 미리 나눠 준다** — 같은 「다음 번호」를 알리면 같은 번호를 쓴다. 열린 PR 끼리의 겹침은 아래 줄의 검사가, 같은 트리 안의 같은 번호 둘은 `scripts/code-rules.test.ts` 가 잰다 |
+| **그 밖의 공유 번호** | 간극 대장의 `G-nn` · 문구 대장의 절 번호(같은 무리 안의 `settings-16` 등) · 마이그레이션 시각 | ADR 번호처럼 **조율자가 브리프에서 미리 나눠 준다**. 겹치면 늦게 연 PR 의 `gate` 가 겹친 PR 과 다음 빈 번호를 들고 붉다 — `scripts/shared-numbers.mjs`(ADR 0238, ADR 번호도 같다). 그 번호로 바꿔 다시 민다. **열린 PR 이 같은 번호를 먼저 잡았으면 뒤에 연 PR 이 다음 번호를 쓴다** — 번호의 빈틈은 어느 것도 재지 않으니 머지는 번호 순이 아니어도 된다(ADR 번호 ADR 0254 · 문구 대장 절 번호 ADR 0260. `G-nn` 은 처음부터 빈틈 시험이 없다). 가지를 맞출 때 강제 푸시는 막혀 있으니 `git merge origin/main` 으로 한다 |
 | **잠금 시험** | `scripts/code-rules.test.ts` · `scripts/layers.test.ts` · `eslint.config.mjs` | 같은 파일을 두 PR 이 고치면 **순차** |
 | **CI** | `.github/workflows/verify.yml` · `scripts/ci-plan.mjs` | **순차** |
 | **e2e 기반** | `e2e/session.ts` · `playwright.config.ts` | 한 에이전트가 쥔다. spec 파일은 나눠도 된다 |
@@ -26,23 +26,16 @@
 **한 에이전트는 하나의 충돌 영역을 끝까지 쥔다.** 「이슈 1~10 은 A, 11~20 은 B」처럼 번호로 가르지 않는다 —
 번호는 공유 자원을 모른다. 영역(마이그레이션 사슬 하나, CI, e2e 기반)으로 가르고, 영역 안의 이슈는 차례로 한다.
 
-**공용 부품 · 판정이 바뀌는 일은 그 PR 을 먼저 넣고, 화면 PR 은 그 뒤에 나눈다 — 부딪힘을 피하려고 공유를 포기하지 않는다.** 2026-10-31
-운영자가 앱의 카드 디자인이 화면마다 조금씩 다르고 공통 관리를 잊었다고 짚었다 — 조율자의 브리프가 충돌을 피하려고 「공용 파일을 고치지 말고 새
-파일에 지어라」고 해 카드가 26 파일에 손으로 쓰였다. 앱 부품은 `mobile/src/ui/` 한 벌이고 값은 웹과 한 원본이다.
+**공용 부품 · 판정이 바뀌는 일은 그 PR 을 먼저 넣고, 화면 PR 은 그 뒤에 나눈다 — 부딪힘을 피하려고 공유를 포기하지 않는다**(운영자 2026-10-31).
+「공용 파일을 고치지 말고 새 파일에 지어라」는 브리프가 앱 카드를 26 파일에 손으로 쓰게 했다. 앱 부품은 `mobile/src/ui/` 한 벌이고 값은 웹과 한 원본이다.
 
 **부하 측정(CPU 를 일부러 거는 재기)은 다른 에이전트와 나란히 돌리지 않는다** — 재기 전에 나란히 도는 일을 보고 차례를 잡고, 끝난 에이전트가 남긴
-대기 명령 · 시험 잔여 프로세스는 라운드 중에 찾아 끈다(`docs/agents/delegation/coordinator.md` 「라운드 끝 정리」). 2026-11-02 부하 측정이 경합
-수정과 겹쳐 부하가 50 이 됐고, 끝난 에이전트의 대기 명령이 여덟 시간 남아 운영자가 「47분째, 6시간째」 왜 오래 걸리는지 물었다.
-**조율자는 머지 순서와 충돌 해결만 쥔다.** 중앙 문서를 대신 고치지 않는다 — 코드 PR 과 그 뜻이 갈라진다.
+대기 명령 · 시험 잔여 프로세스는 라운드 중에 찾아 끈다(`docs/agents/delegation/coordinator.md` 「라운드 끝 정리」).
+**조율자는 머지 순서와 충돌 해결만 쥔다.** 중앙 문서의 줄은 그 PR 이 고친다 — 조율자가 대신 고치면 코드 PR 과 뜻이 갈라진다.
 충돌이면 가지에서 `git merge origin/main` 으로 푼다(`union` 은
 로컬 병합에서만 걸린다). **main 을 합친 뒤 changelog 의 diff 를 본다** — `union` 은 양쪽 줄을 다 남기므로, 같은 PR 이 고친 자기 줄의
-옛 판도 새 판 곁에 남는다(2026-10-10 #586 · #589 가 옛 판을 하나씩 남겼다).
+옛 판도 새 판 곁에 남는다.
 
-**간극 대장을 줄마다 파일로 가르지 않는다(2026-09-23 에 잼).** 대장은 표의 줄이라 서로 다른 G 를 고친 두 PR 은
+**간극 대장은 한 표로 둔다.** 대장은 표의 줄이라 서로 다른 G 를 고친 두 PR 은
 git 이 줄 단위로 합친다 — 부딪히는 것은 끝에 덧붙이는 changelog 였고, 그것은 `union` 이 푼다. 가르면
 `code-rules.test.ts` 의 § 검사와 상태 검사를 파일 여럿에 옮겨야 한다.
-
-**후보 문장을 믿지 말고 먼저 잰다.** 구조 후보 라운드에서 **연속 다섯 건**의 이슈 문장이 반쯤
-틀렸다(#88 — 원인이 아예 다르거나, 수는 맞는데 가리키는 곳이 틀리거나, 다섯 주장 중 하나만 맞거나).
-이슈가 적은 원인은 가설이다. 작업의 첫 걸음은 그 문장을 재어서 다시 쓰는 것이고, 잰 값은 PR
-본문과 ADR 에 남긴다.

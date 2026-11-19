@@ -9,6 +9,9 @@
  * 4. **「결정 여부: 있음」인데 바뀐 파일에 `docs/adr/` 가 없으면** 그 줄이 까닭을 든다 — 이미 있는 결정(`ADR NNNN`), 화면 문구(ADR 0196 — ADR 이 아니라
  *    사후 확인), 「ADR 없음 — <까닭>」 중 하나
  *
+ * 봇이 연 PR(작성자가 `dependabot[bot]` 꼴)은 재지 않는다 — 본문을 봇이 쓰고 PR 틀을 안 따른다. 제목의 type 은 `feat!:` · `fix(x)!:` 처럼
+ * 깨는 변경의 `!` 가 붙어도 읽는다.
+ *
  * `verify` 의 `gate` 가 PR 에서 부른다 — 차선이 다 돈 뒤라 이것이 붉어도 다른 결과는 보인다. 본문과 제목은 **실행 때의 것을 API 로** 읽는다 —
  * 본문을 고친 뒤 `gate` job 만 다시 돌리면 된다(이벤트의 본문은 처음 것이다). API 를 못 읽으면 이벤트의 본문으로 재고, 바뀐 파일을 못 읽으면
  * 1 · 2 만 재고 경고한다.
@@ -20,6 +23,12 @@ export const CODE_DIRS = ['app/', 'src/', 'supabase/', 'mobile/src/'];
 
 /** 그 줄을 요구하는 PR 의 type — 기능과 고침이다. `refactor` · `test` · `chore` · `ci` · `ui` · `perf` · `docs` 는 칸 · 결정 여부만 잰다 */
 export const DOC_TYPES = ['feat', 'fix'];
+
+/** 봇이 연 PR 인가 — GitHub 앱의 계정은 `이름[bot]` 이고 `type` 이 `Bot` 이다 */
+export const isBot = (author) => /\[bot\]$/.test(author?.login ?? '') || author?.type === 'Bot';
+
+/** 제목의 type — `type:` · `type(scope):` · 깨는 변경의 `type!:` · `type(scope)!:`. 꼴이 아니면 빈 글자 */
+export const typeOf = (title) => /^([a-z]+)(?:\([^)]*\))?!?:/.exec(title ?? '')?.[1] ?? '';
 
 /** 주석을 걷고 줄바꿈을 맞춘 본문 */
 const cleaned = (body) => String(body ?? '').replace(/\r\n?/g, '\n').replace(/<!--[\s\S]*?-->/g, '');
@@ -44,12 +53,13 @@ const reasonAfter = (text, label) => {
 };
 
 /**
- * 본문의 문제 — 없으면 빈 배열. `files` 가 `null` 이면(못 읽음) 바뀐 파일로 재는 3 · 4 는 건너뛴다.
+ * 본문의 문제 — 없으면 빈 배열. `files` 가 `null` 이면(못 읽음) 바뀐 파일로 재는 3 · 4 는 건너뛴다. 봇이 연 PR 은 빈 배열이다.
  *
- * @param {{ title: string, body: string | null, files: readonly string[] | null }} pr
+ * @param {{ title: string, body: string | null, files: readonly string[] | null, author?: { login?: string, type?: string } | null }} pr
  * @returns {string[]}
  */
-export function bodyProblems({ title, body, files }) {
+export function bodyProblems({ title, body, files, author = null }) {
+  if (isBot(author)) return [];
   const section = docsSection(cleaned(body));
   if (section === null) return ['PR 본문에 「## 문서」 칸이 없다 — PR 틀(`.github/pull_request_template.md`)의 칸을 그대로 둔다'];
   // 한 줄 안에서만 읽는다 — `\s*` 는 줄바꿈도 먹어, 값을 비운 줄이 다음 줄의 글자(「문서 없음 — …」 · 「있음」)를 값으로 집어 와 초록이었다
@@ -60,7 +70,7 @@ export function bodyProblems({ title, body, files }) {
   if (!/^(?:\*\*)?(?:없음|있음)/.test(value)) problems.push(`「결정 여부:」의 값은 「없음」이나 「있음」으로 시작한다 — 지금은 「${value || '(빈 값)'}」`);
   if (files === null) return problems;
 
-  const type = /^([a-z]+)[(:]/.exec(title ?? '')?.[1] ?? '';
+  const type = typeOf(title);
   const touchesCode = files.some((file) => CODE_DIRS.some((dir) => file.startsWith(dir)));
   const touchesDocs = files.some((file) => file.startsWith('docs/'));
   if (DOC_TYPES.includes(type) && touchesCode && !touchesDocs && !reasonAfter(section, '문서 없음')) {
@@ -105,12 +115,14 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
   let title = process.env.PR_TITLE ?? '';
   let body = process.env.PR_BODY ?? '';
   let files = null;
+  let author = null;
   if (Number.isInteger(number) && number > 0 && repository !== '' && token !== '') {
     const api = github(repository, token);
     try {
       const pull = await api.pull(number);
       title = pull.title ?? title;
       body = pull.body ?? '';
+      author = pull.user ?? null;
     } catch (error) {
       console.log(`::warning::지금의 PR 본문을 못 읽어 이벤트의 본문으로 잰다: ${error instanceof Error ? error.message : String(error)}`);
     }
@@ -122,7 +134,11 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
   } else {
     console.log('::warning::PR_NUMBER · GITHUB_REPOSITORY · GH_TOKEN 이 없어 이벤트의 본문으로 칸 · 줄만 잰다');
   }
-  const problems = bodyProblems({ title, body, files });
+  if (isBot(author)) {
+    console.log(`봇(${author.login})이 연 PR 이라 본문을 재지 않는다`);
+    process.exit(0);
+  }
+  const problems = bodyProblems({ title, body, files, author });
   for (const problem of problems) console.error(`::error::${problem} (ADR 0257, docs/agents/delegation/done.md 「끝났다는 것」)`);
   if (problems.length > 0) {
     console.error('본문을 고친 뒤 이 gate job 만 다시 돌린다 — gh run rerun <run id> --job <gate job id>');
