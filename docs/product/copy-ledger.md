@@ -443,8 +443,8 @@ DB 에 남긴 「번」은 풀이권의 수가 아니다 — 가입 코드의 �
 
 all-10 이 웹 출생 정보 폼에 넣은 세 줄을 앱의 같은 폼에도 세운다. 글자는 all-10 그대로이고, 상수 하나(`src/lib/input/copy.ts` 의
 `HOUR_UNKNOWN_HINT` · `ADVANCED_SETTINGS`, ADR 0159 의 `COPY_FILES`)를 웹 `app/birth-digits.tsx` · `app/birth-form.tsx` 와 앱이 함께
-부른다. 앱에서 이 폼을 쓰는 자리는 사람 추가 · 출생 정보 수정 · 궁합 직접 입력(`mobile/src/people/birth-fields.tsx`)과, 같은 칸을 따로
-그리는 앱 첫 화면(`mobile/src/app/index.tsx`)이다. 출생 시각 단추 「직접 입력 / 모름」은 그대로다.
+부른다. 앱에서 이 폼을 쓰는 자리는 첫 화면 · 사람 추가 · 출생 정보 수정 · 궁합 직접 입력이고, 칸은 모두 한 부품
+(`mobile/src/people/birth-fields.tsx`)이 그린다(G-168). 출생 시각 단추 「직접 입력 / 모름」은 그대로다.
 
 | 자리 | 이전 | 확정 |
 | --- | --- | --- |
@@ -496,8 +496,8 @@ all-10 이 웹 출생 정보 폼에 넣은 세 줄을 앱의 같은 폼에도 �
 
 비공개 테스터가 「저는 경기도에서 태어났는데요?」라고 했다 — 선택지가 도시 열 곳뿐이었다. 세종과 도 여덟(경기 · 강원 · 충북 · 충남 · 전북 ·
 전남 · 경북 · 경남)을 더하고, 칸 바로 아래에 모를 때 고를 곳과 이 값을 어디에 쓰는지를 적는다. 값 · 이름 · 차례의 원본은
-`src/lib/saju/timeCorrection/longitude.ts` 의 `CITY_LONGITUDES` 하나이고(대표 지점 · 경도 · 출처는 그 머리말), 웹 폼 `app/birth-form.tsx` 와 앱 폼 둘
-(`mobile/src/people/birth-fields.tsx` · `mobile/src/app/index.tsx`)이 `src/lib/input/query.ts` 의 `BIRTH_CITY_OPTIONS` 로 같은 목록을 읽는다. **칸 아래 안내 두 줄은
+`src/lib/saju/timeCorrection/longitude.ts` 의 `CITY_LONGITUDES` 하나이고(대표 지점 · 경도 · 출처는 그 머리말), 웹 폼 `app/birth-form.tsx` 와 앱 폼
+(`mobile/src/people/birth-fields.tsx` — 첫 화면도 이것을 쓴다)이 `src/lib/input/query.ts` 의 `BIRTH_CITY_OPTIONS` 로 같은 목록을 읽는다. **칸 아래 안내 두 줄은
 같은 날 운영자 결정으로 걷었다(2026-11-12, all-21)** — 상수 `BIRTH_CITY_NOTE` 도 지웠고 목록의 이름은 그대로다. 「서울 · 경기」처럼 묶은 이름은 사례가 없어 쓰지 않는다. 있던 열 곳의 글자와 값은 그대로다.
 
 | 자리 | 전 | 후 | 출처 |

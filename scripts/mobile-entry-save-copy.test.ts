@@ -136,7 +136,8 @@ describe('로그인 시점과 목적지 (ADR 0213)', () => {
     expect(entry).not.toContain('supabase');
     const submit = entry.slice(entry.indexOf('const submit'), entry.indexOf('return (', entry.indexOf('const submit')));
     /* 판정은 기기 안의 문단 오류다 — 계산이 거절하는 날짜까지 든다(`birthSectionErrors` 가 `calculateChart` 를 부른다, ADR 0252) */
-    expect(entry).toContain('birthSectionErrors(query');
+    expect(entry).toContain('useSectionErrors(form.errors)');
+    expect(read('mobile/src/people/birth-fields.tsx')).toContain('birthSectionErrors(query');
     expect(submit).toContain('sections.press()');
     expect(submit).toContain('router.push(chartPath(query)');
     for (const file of readdirSync(join(import.meta.dirname, '../mobile/src/chart'))) {
