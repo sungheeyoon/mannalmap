@@ -462,6 +462,8 @@ npm audit --omit=dev --audit-level=high ; echo $?   # 0 이어야 한다
    `npm run build` 와 e2e 로 본다 — `next` 가 그런 자리다(`1e1f6c8` 은 16.3.1 → 16.3.6).
 2. **잠금 파일이 맞는지 `npm ci` 로 본다.** `npm audit fix` 가 `@emnapi/*` 를 `package-lock.json` 과 어긋난 채 두었고,
    `npm install` 한 번이 다시 맞췄다. CI 의 차선은 `npm ci` 로 깐다(`.github/workflows/verify.yml`).
+   **잠금 파일의 차이가 올린 묶음만인지 `git diff package-lock.json` 으로 본다** — `npm install <패키지>@<판>`(npm 11)이 상관없는 줄(맨 위 `@emnapi/*` 같은
+   선택 의존성 · `peer` / `dev` 표식)까지 바꿨다. 올린 묶음 밖의 줄은 되돌리고 `rm -rf node_modules && npm ci` 가 지나는지 본다(#1203).
 3. **PR 은 `fix(deps): ...`** 로 낸다. 잠금 파일이 바뀌므로 그 PR 에서 `audit` 이 다시 돌아 0 을 잰다.
 4. **고친 판이 아직 없으면** 막을 자리를 본다 — 그 경로를 우리가 부르나(`npm audit` 의 advisory 본문). 안 부르면
    간극 대장 G-23 ① 에 패키지 · advisory · 까닭 · 다시 볼 날을 적고, 그동안 바깥 검사의 이슈(`ci-outside-red`)가 들고 있다 — main 은 붉지 않고, 같은

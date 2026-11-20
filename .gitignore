@@ -31,6 +31,8 @@
 
 # misc
 .DS_Store
+# 에이전트가 워크트리 안에 쓰는 임시 파일(.pr-body.tmp.md 같은 커밋 · PR 본문 · 스크립트) — 남으면 정리(sweep:merged)가 그 워크트리를 건너뛰었다(G-173)
+/.*.tmp.*
 *.pem
 
 # debug

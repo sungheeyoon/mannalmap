@@ -40,6 +40,7 @@
     "mobile:native": "node scripts/mobile-native.mjs",
     "merge:sim": "node scripts/merge-sim.mjs",
     "sweep:merged": "node scripts/sweep-merged.mjs",
+    "pr:check": "node scripts/pr-check.mjs",
     "sweep:docker": "node scripts/sweep-docker.mjs",
     "read-budget": "node scripts/read-budget.mjs",
     "skills:check": "node scripts/skills-check.mjs",
