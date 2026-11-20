@@ -2253,6 +2253,20 @@ describe('운영 주소는 한 자리 (docs/ops/runbook/domain.md, ADR 0152)', (
   });
 });
 
+describe('아티팩트 주소는 저장소에 적지 않는다 (docs/agents/delegation/done.md 「끝났다는 것」, G-173)', () => {
+  /** 운영자가 확인 뒤 지우면 죽는 링크 — 「아티팩트(YYYY-MM-DD 지움)」 표기는 주소가 아니라 통과한다 */
+  const ARTIFACT_LINK = /claude\.ai\/(code\/)?artifact\//;
+  const TEXT = /\.(ts|tsx|mts|mjs|js|json|md|sql|ya?ml|toml|txt|css|sh)$/;
+
+  it('추적하는 글자 파일 어디에도 아티팩트 주소가 없다', () => {
+    const tracked = execFileSync('git', ['ls-files'], { cwd: ROOT, encoding: 'utf8' })
+      .split('\n')
+      .filter((rel) => TEXT.test(rel) && rel !== 'package-lock.json' && existsSync(join(ROOT, rel)));
+    expect(tracked.length).toBeGreaterThan(500);
+    expect(tracked.filter((rel) => ARTIFACT_LINK.test(readFileSync(join(ROOT, rel), 'utf8')))).toEqual([]);
+  });
+});
+
 describe('공개 저장소의 개인정보 (docs/agents/delegation/working.md, ADR 0152)', () => {
   /** 사람을 가리키는 꼴 — 아파트 동 · 호, 휴대폰 번호, 주민등록번호 */
   const PERSONAL = [/\d+동 \d+호/, /\b01[016789]-?\d{3,4}-?\d{4}\b/, /\b\d{6}-[1-4]\d{6}\b/];

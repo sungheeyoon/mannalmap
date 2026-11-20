@@ -3,7 +3,8 @@
  *
  * 무엇을 보고 어떻게 판단하나는 `docs/agents/delegation/coordinator.md` 「세션을 열 때」 · 「인계」가 원본이다. 이 스크립트는 그 가운데
  * 기계가 읽을 수 있는 것만 한 장으로 모은다 — `origin/main` 과 로컬 `main` · main 의 마지막 `verify` 실행 · 열린 `ci-main-red` ·
- * #770 의 가장 최근 배포 기록에 적힌 운영 SHA(ADR 0240 「정한 것」 3) · 열린 PR 과 `mergeStateStatus` · 워크트리 · `sweep:merged` 미리보기.
+ * #770 의 가장 최근 배포 기록에 적힌 운영 SHA(ADR 0240 「정한 것」 3) · 열린 PR 과 `mergeStateStatus` · 워크트리 · `sweep:merged` 미리보기 ·
+ * `npm audit` 의 `next` 권고 · Docker 켜짐 · 마지막 라운드 노트 뒤 머지된 PR 수.
  * 사람만 아는 칸(대화로 받은 결정 · 콘솔 상태 · 남긴 것의 까닭)은 찍지 않는다 — 인계 글에서 손으로 더한다.
  *
  * **밖에는 아무것도 쓰지 않는다.** `gh` 는 읽기만 하고, git 은 `fetch` 로 원격 추적 가지만 갱신하고, `sweep:merged` 는 미리보기로만
@@ -158,6 +159,45 @@ export function sweepSummaryOf(output) {
   return { head: lines[at], items, reasons };
 }
 
+/**
+ * `npm audit --json` 에서 `next` 의 권고 한 줄 — `next.config.ts` 가 Next 의 에이전트 업그레이드 안내를 꺼서(#1203) 이 줄이 대신 알린다.
+ * CI 의 감사 문턱(high)에 안 걸리는 moderate 권고도 여기서 보인다.
+ *
+ * @param {{ vulnerabilities?: Record<string, { severity: string, via: (string | { title?: string })[], fixAvailable?: boolean | { name: string, version: string } }> }} audit
+ */
+export function nextAdvisoryLineOf(audit) {
+  const next = audit.vulnerabilities?.next;
+  if (!next) return '권고 없음';
+  const own = next.via.filter((via) => typeof via === 'object').length;
+  const through = next.via.filter((via) => typeof via === 'string');
+  const count = [own > 0 ? `권고 ${own}` : null, through.length > 0 ? `딸린 꾸러미 ${through.join(' · ')}` : null].filter(Boolean).join(' · ');
+  const fix = typeof next.fixAvailable === 'object' ? ` — 고친 판 \`${next.fixAvailable.name}@${next.fixAvailable.version}\`` : '';
+  return `**${next.severity}** ${count}${fix} — 올리는 길은 \`docs/ops/runbook/security.md\` 「운영 의존성 취약점」`;
+}
+
+/**
+ * Docker 한 줄 — 로컬 스택(`db:start` · e2e · 화면 그림)이 기대는 엔진이다. 화면 라운드 한가운데서 꺼진 것을 알던 자리를 세션을 열 때로 당긴다(G-173).
+ *
+ * @param {{ running: boolean, missing?: boolean }} docker
+ */
+export function dockerLineOf({ running, missing = false }) {
+  if (running) return '켜짐';
+  if (missing) return '`docker` 명령이 없다 — 로컬 스택 대신 CI 에 기댄다(`docs/agents/delegation/local-env.md` 「로컬 환경의 함정」)';
+  return '**꺼짐** — 로컬 스택 · e2e · 화면 그림 전에 Docker Desktop 을 켠다';
+}
+
+/**
+ * 마지막 라운드 노트 뒤 머지된 PR — main 은 squash 머지라 커밋 하나가 PR 하나다. 라운드를 닫으며 노트를 빠뜨린 것을 다음 세션이 안다(G-173).
+ *
+ * @param {{ file: string, date: string, since: number } | null} note
+ */
+export function noteLineOf(note) {
+  if (note === null) return '`docs/notes/` 에 날짜 노트가 없다';
+  const where = `\`${note.file}\`(${note.date})`;
+  if (note.since === 0) return `${where} — 그 뒤 머지된 PR 없음`;
+  return `${where} 뒤 머지된 PR ${note.since} — 라운드를 닫았으면 노트를 남긴다(\`docs/agents/delegation/notes.md\` 「세션 기록」)`;
+}
+
 /** ISO 시각을 서울 시각 `YYYY-MM-DD HH:MM` 으로 */
 export function seoulOf(iso) {
   const at = new Date(Date.parse(iso) + 9 * 60 * 60 * 1000).toISOString();
@@ -170,9 +210,9 @@ const capped = (lines, limit) => (lines.length > limit ? [...lines.slice(0, limi
 /**
  * 한 장 — 갈래마다 `{ value }` 아니면 `{ error }` 를 받는다. 못 읽은 갈래는 그 줄에 「못 읽었다」만 찍는다.
  *
- * @param {{ now: string, home: string, main: any, verify: any, red: any, pulls: any, trees: any, deploy: any, sweep: any }} facts
+ * @param {{ now: string, home: string, main: any, verify: any, red: any, pulls: any, trees: any, deploy: any, sweep: any, audit: any, docker: any, note: any }} facts
  */
-export function sheetOf({ now, home, main, verify, red, pulls, trees, deploy, sweep }) {
+export function sheetOf({ now, home, main, verify, red, pulls, trees, deploy, sweep, audit, docker, note }) {
   const failed = (fact) => `못 읽었다 — ${fact.error}`;
   const head = main.value?.head ?? '';
   const out = [
@@ -207,6 +247,11 @@ export function sheetOf({ now, home, main, verify, red, pulls, trees, deploy, sw
     else if (commit && since === 0) out.push('  - `origin/main` 이 운영과 같다');
     else if (commit) out.push(`  - 그 뒤 \`origin/main\` 에 머지된 커밋 ${since} — 앱이 바뀌었나는 \`node scripts/deploy-range.mjs --from ${sha.slice(0, 8)}\``);
   }
+
+  out.push(`- **next 권고**(\`npm audit\`) — ${audit.error ? `못 쟀다 — ${audit.error}` : nextAdvisoryLineOf(audit.value)}`);
+
+  out.push(`- **Docker** — ${docker.error ? failed(docker) : dockerLineOf(docker.value)}`);
+  out.push(`- **라운드 노트** — ${note.error ? failed(note) : noteLineOf(note.value)}`);
 
   if (pulls.error) out.push(`- **열린 PR** — ${failed(pulls)}`);
   else {
@@ -267,19 +312,50 @@ async function deployFacts() {
   return { ...found, commit: { subject, date }, since };
 }
 
+/** 권고가 있으면 `npm audit` 이 0 이 아닌 값으로 끝난다 — 그때도 표준 출력의 JSON 을 읽는다 */
+async function auditFacts() {
+  const output = await exec('npm', ['audit', '--json'], { cwd: ROOT, encoding: 'utf8', maxBuffer: 1 << 26 }).then(
+    (result) => result.stdout,
+    (error) => error.stdout ?? '',
+  );
+  const audit = JSON.parse(output);
+  if (audit.error) throw new Error(audit.error.summary ?? 'npm audit 이 실패했다');
+  return audit;
+}
+
+/** 엔진이 답하면 켜짐 — 명령이 없으면(ENOENT) 없음, 답이 없으면 꺼짐 */
+async function dockerFacts() {
+  return exec('docker', ['info', '--format', '{{.ServerVersion}}'], { timeout: 5000 }).then(
+    () => ({ running: true }),
+    (error) => ({ running: false, missing: error?.code === 'ENOENT' }),
+  );
+}
+
+async function noteFacts() {
+  const out = await run('git', ['log', '-1', '--diff-filter=A', '--name-only', '--format=%H%x09%cs', 'origin/main', '--', 'docs/notes/20*.md']);
+  if (out === '') return null;
+  const [header, ...names] = out.split('\n').filter(Boolean);
+  const [sha, date] = header.split('\t');
+  const since = Number(await run('git', ['rev-list', '--count', `${sha}..origin/main`]));
+  return { file: names.sort().at(-1), date, since };
+}
+
 async function main() {
   // 못 받아도 있는 원격 추적 가지로 찍는다 — 그 실패는 아래 줄들이 낡은 값으로 드러낸다
   await settle(run('git', ['fetch', '--quiet', 'origin']));
   const trees = await settle(run('git', ['worktree', 'list', '--porcelain']).then(parseWorktrees));
-  const [main, verify, red, pulls, deploy, sweep] = await Promise.all([
+  const [main, verify, red, pulls, deploy, sweep, audit, docker, note] = await Promise.all([
     trees.error ? Promise.resolve({ error: trees.error }) : settle(mainFacts(trees.value)),
     settle(verifyFacts()),
     settle(json('gh', ['issue', 'list', '--label', 'ci-main-red', '--state', 'open', '--json', 'number,title,createdAt'])),
     settle(json('gh', ['pr', 'list', '--state', 'open', '--limit', '100', '--json', 'number,title,headRefName,mergeStateStatus,isDraft,autoMergeRequest'])),
     settle(deployFacts()),
     settle(run(process.execPath, [join(ROOT, 'scripts/sweep-merged.mjs')]).then(sweepSummaryOf)),
+    settle(auditFacts()),
+    settle(dockerFacts()),
+    settle(noteFacts()),
   ]);
-  console.log(sheetOf({ now: new Date().toISOString(), home: homedir(), main, verify, red, pulls, trees, deploy, sweep }));
+  console.log(sheetOf({ now: new Date().toISOString(), home: homedir(), main, verify, red, pulls, trees, deploy, sweep, audit, docker, note }));
 }
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) await main();

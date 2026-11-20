@@ -4,7 +4,10 @@ import {
   deployShaOf,
   homeMasked,
   lastDeployOf,
+  dockerLineOf,
   localMainOf,
+  nextAdvisoryLineOf,
+  noteLineOf,
   pullLineOf,
   seoulOf,
   sheetOf,
@@ -126,6 +129,9 @@ describe('session-status — 세션을 열 때 · 인계할 때 찍는 한 장',
       trees: { value: [tree, agentTree] },
       deploy: { value: { sha: OLD, url: 'https://x/c', createdAt: '2026-11-17T11:29:26Z', title: 't', commit: { subject: 'docs(ops): x', date: '2026-11-17' }, since: 9 } },
       sweep: { value: { head: '걷을 것 1 — 워크트리 1 · 가지 0', items: ['워크트리 /home/u/repo/.claude/worktrees/agent-y (x) — MERGED #1'], reasons: '열린 PR 1' } },
+      audit: { error: 'request to https://registry.npmjs.org failed' },
+      docker: { value: { running: false } },
+      note: { value: { file: 'docs/notes/2026-11-20-a.md', date: '2026-11-20', since: 3 } },
     });
     expect(sheet).toContain('## 세션 상태 — 2026-11-19 16:00(서울)');
     expect(sheet).toContain('- **main** — 못 읽었다 — git 이 없다');
@@ -135,7 +141,33 @@ describe('session-status — 세션을 열 때 · 인계할 때 찍는 한 장',
     expect(sheet).toContain('그 뒤 `origin/main` 에 머지된 커밋 9');
     expect(sheet).toContain('`~/repo/.claude/worktrees/agent-x` detached `1da9819e` — 잠김(에이전트)');
     expect(sheet).toContain('워크트리 ~/repo/.claude/worktrees/agent-y');
+    expect(sheet).toContain('- **next 권고**(`npm audit`) — 못 쟀다 — request to');
+    expect(sheet).toContain('- **Docker** — **꺼짐**');
+    expect(sheet).toContain('- **라운드 노트** — `docs/notes/2026-11-20-a.md`(2026-11-20) 뒤 머지된 PR 3');
     expect(sheet).not.toContain('/home/u/');
+  });
+
+  it('Docker 는 켜짐 · 꺼짐 · 명령 없음을, 라운드 노트는 그 뒤 머지된 PR 수를 찍는다', () => {
+    expect(dockerLineOf({ running: true })).toBe('켜짐');
+    expect(dockerLineOf({ running: false })).toContain('**꺼짐**');
+    expect(dockerLineOf({ running: false, missing: true })).toContain('`docker` 명령이 없다');
+    expect(noteLineOf(null)).toContain('날짜 노트가 없다');
+    expect(noteLineOf({ file: 'docs/notes/2026-11-20-a.md', date: '2026-11-20', since: 0 })).toBe('`docs/notes/2026-11-20-a.md`(2026-11-20) — 그 뒤 머지된 PR 없음');
+    expect(noteLineOf({ file: 'docs/notes/2026-11-20-a.md', date: '2026-11-20', since: 11 })).toContain('뒤 머지된 PR 11 — 라운드를 닫았으면');
+  });
+
+  it('next 권고는 제 권고 수 · 딸린 꾸러미 · 심각도 · 고친 판을 한 줄로 찍고, 없으면 「권고 없음」이다', () => {
+    expect(nextAdvisoryLineOf({ vulnerabilities: {} })).toBe('권고 없음');
+    expect(nextAdvisoryLineOf({})).toBe('권고 없음');
+    const line = nextAdvisoryLineOf({
+      vulnerabilities: {
+        next: { severity: 'moderate', via: [{ title: 'a' }, { title: 'b' }, 'postcss'], fixAvailable: { name: 'next', version: '16.4.7' } },
+      },
+    });
+    expect(line).toBe('**moderate** 권고 2 · 딸린 꾸러미 postcss — 고친 판 `next@16.4.7` — 올리는 길은 `docs/ops/runbook/security.md` 「운영 의존성 취약점」');
+    expect(nextAdvisoryLineOf({ vulnerabilities: { next: { severity: 'high', via: [{ title: 'a' }], fixAvailable: false } } })).toBe(
+      '**high** 권고 1 — 올리는 길은 `docs/ops/runbook/security.md` 「운영 의존성 취약점」',
+    );
   });
 
   it('제목 · 시각 · 경로를 사람이 읽는 꼴로 줄인다', () => {
