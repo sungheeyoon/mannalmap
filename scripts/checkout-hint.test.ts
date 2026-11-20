@@ -92,6 +92,14 @@ describe('checkout-hint — 메인 체크아웃에 쓸 때 한 줄을 일러 준
     expect(commitDirsOf('git log | head', ROOT)).toEqual([]);
   });
 
+  it('펼 수 없는 `cd` · `-C` 뒤의 commit 은 들지 않는다 — 다음의 절대 경로 `cd` 에서 다시 따라간다', () => {
+    expect(commitDirsOf('cd $WT; git commit -m x', ROOT)).toEqual([]);
+    expect(commitDirsOf('cd "$(git rev-parse --show-toplevel)" && git commit -m x', ROOT)).toEqual([]);
+    expect(commitDirsOf('git -C $WT commit -m x', ROOT)).toEqual([]);
+    expect(commitDirsOf('cd $WT; cd docs; git commit -m x', ROOT)).toEqual([]);
+    expect(commitDirsOf(`cd $WT; cd ${ROOT}/docs; git commit -m x`, ROOT)).toEqual([`${ROOT}/docs`]);
+  });
+
   it('다른 도구 · 빈 입력은 지난다', () => {
     expect(touchesMainCheckout({ tool_name: 'Read', tool_input: { file_path: `${ROOT}/docs/start.md` }, cwd: ROOT }, ROOT)).toBe(false);
     expect(touchesMainCheckout({ tool_name: 'Edit', tool_input: {}, cwd: ROOT }, ROOT)).toBe(false);

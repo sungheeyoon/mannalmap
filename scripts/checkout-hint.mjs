@@ -5,7 +5,8 @@
  * 않아 걸릴 때마다 같은 한 줄이다.
  *
  * - Edit · Write · NotebookEdit: 고칠 파일이 이 저장소의 메인 체크아웃 안이면. 새 파일은 가장 가까운 있는 조상 폴더로 가른다
- * - Bash: `git commit` 이 메인 체크아웃에서 돌면 — 앞의 `cd <곳>` 과 `git -C <곳>` 을 따라간다
+ * - Bash: `git commit` 이 메인 체크아웃에서 돌면 — 앞의 `cd <곳>` 과 `git -C <곳>` 을 따라간다. 펼 수 없는 곳(`cd $WT` · `cd "$(…)"`)
+ *   뒤의 commit 은 어디서 도는지 모르니 조용히 지난다 — 그 자리를 cwd 아래의 없는 폴더로 읽어 메인 체크아웃이라고 헛경고했다(G-173)
  * - 연결된 워크트리(어디에 섰든) · 저장소 밖 · 다른 저장소 · git 이 실패한 자리는 아무것도 안 찍는다
  *
  * 메인 체크아웃인지는 경로가 아니라 git 이 답한다 — 메인 체크아웃은 `--git-dir` 이 `--git-common-dir` 과 같고, 연결된
@@ -70,14 +71,28 @@ const expand = (path, base) => {
   return isAbsolute(home) ? resolve(home) : resolve(base, home);
 };
 
-/** 명령이 `git commit` 을 도는 디렉터리들 — 앞의 `cd` 와 `git -C` 를 따라간다 */
+/**
+ * `cd` · `git -C` 를 따라간 곳 — 셸이 실행 때 펼치는 경로(변수 · 명령 치환)면 null. 모르는 곳(null)에서 이어지는 상대 경로도 null 이다
+ *
+ * @param {string} path
+ * @param {string | null} base
+ */
+const follow = (path, base) => {
+  if (/[$`]/.test(path)) return null;
+  if (base !== null) return expand(path, base);
+  const unquoted = path.replace(/^(['"])(.*)\1$/, '$2');
+  return isAbsolute(unquoted) || unquoted === '~' || unquoted.startsWith('~/') ? expand(path, '/') : null;
+};
+
+/** 명령이 `git commit` 을 도는 디렉터리들 — 앞의 `cd` 와 `git -C` 를 따라간다. 펼 수 없는 곳의 commit 은 들지 않는다 */
 export function commitDirsOf(command, cwd) {
   const dirs = [];
+  /** @type {string | null} 펼 수 없는 `cd` 뒤에는 null */
   let here = cwd;
   for (const raw of command.split(/&&|\|\||[;|\n]/)) {
     const words = raw.trim().split(/\s+/).filter(Boolean);
     if (words[0] === 'cd' && words[1]) {
-      here = expand(words[1], here);
+      here = follow(words[1], here);
       continue;
     }
     while (words.length > 0 && /^[A-Za-z_][A-Za-z0-9_]*=/.test(words[0])) words.shift();
@@ -86,7 +101,7 @@ export function commitDirsOf(command, cwd) {
     let index = 1;
     while (index < words.length && words[index].startsWith('-')) {
       if (words[index] === '-C' && words[index + 1]) {
-        dir = expand(words[index + 1], dir);
+        dir = follow(words[index + 1], dir);
         index += 2;
       } else if (words[index] === '-c' && words[index + 1]) {
         index += 2;
@@ -94,7 +109,7 @@ export function commitDirsOf(command, cwd) {
         index += 1;
       }
     }
-    if (words[index] === 'commit') dirs.push(dir);
+    if (words[index] === 'commit' && dir !== null) dirs.push(dir);
   }
   return dirs;
 }
