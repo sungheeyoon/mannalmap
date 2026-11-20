@@ -4914,7 +4914,10 @@ export type Database = {
         Args: { p_differs: string[]; p_unknown: string[] }
         Returns: number
       }
-      report_store_prices_unread: { Args: { p_status: number }; Returns: boolean }
+      report_store_prices_unread: {
+        Args: { p_status: number }
+        Returns: boolean
+      }
       report_user: {
         Args: { p_detail?: string; p_reason: string; p_user_id: string }
         Returns: boolean
