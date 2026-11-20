@@ -22,6 +22,17 @@ export const storeProductCredits = (productId: string): number | null =>
   STORE_PRODUCTS.find((product) => product.productId === productId)?.credits ?? null;
 
 /**
+ * **Play 가 받을 원화 금액이 그 상품의 묶음 가격과 같은가** — 앱의 진열(`mobile/src/credits/shelf.ts` 의 `shelfOf`)과 서버의 가격 대조
+ * (`app/api/cron/store-prices`)가 같은 판정을 쓴다(G-166, ADR 0259 · ADR 0262). `won` 은 원 단위 정수이고, 원화가 아니거나 숫자를 못 읽어
+ * 모르면 `null` 이다 — 그것은 「같다」가 아니라 「모른다」다(fail-closed). 목록에 없는 상품도 「모른다」.
+ */
+export const storePriceVerdict = (productId: string, won: number | null): 'same' | 'differs' | 'unknown' => {
+  const product = STORE_PRODUCTS.find((candidate) => candidate.productId === productId);
+  if (product === undefined || won === null) return 'unknown';
+  return won === product.price ? 'same' : 'differs';
+};
+
+/**
  * 앱의 구매 문(`/api/mobile/credits/purchase`)이 돌려주는 답 — 앱은 이 갈래로 화면의 줄을 고른다. 못 닿은 것은 문의 거절
  * (`unavailable`)로 따로 온다.
  */

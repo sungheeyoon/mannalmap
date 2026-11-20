@@ -4173,6 +4173,10 @@ export type Database = {
         Args: { p_detail: string; p_kind: string }
         Returns: boolean
       }
+      notify_ops_weekly: {
+        Args: { p_detail: string; p_kind: string }
+        Returns: boolean
+      }
       open_reading_jobs: {
         Args: never
         Returns: {
@@ -4906,6 +4910,14 @@ export type Database = {
         Args: { p_digest: string; p_kind: string; p_route: string }
         Returns: boolean
       }
+      report_store_prices: {
+        Args: { p_differs: string[]; p_unknown: string[] }
+        Returns: number
+      }
+      report_store_prices_unread: {
+        Args: { p_status: number }
+        Returns: boolean
+      }
       report_user: {
         Args: { p_detail?: string; p_reason: string; p_user_id: string }
         Returns: boolean
@@ -5185,6 +5197,7 @@ export type Database = {
         Returns: string
       }
       store_product_credits: { Args: { p_product_id: string }; Returns: number }
+      store_products_in_order: { Args: { p_ids: string[] }; Returns: string }
       store_purchase_is_restricted: {
         Args: { p_user_id: string }
         Returns: boolean

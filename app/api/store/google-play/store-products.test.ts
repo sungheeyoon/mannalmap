@@ -3,7 +3,7 @@ import { resolve } from 'node:path';
 
 import { describe, expect, it } from 'vitest';
 
-import { PLAY_PACKAGE_NAME, STORE_PRODUCTS, storeProductCredits } from '@/src/lib/reading/store-products';
+import { PLAY_PACKAGE_NAME, STORE_PRODUCTS, storePriceVerdict, storeProductCredits } from '@/src/lib/reading/store-products';
 
 const ROOT = resolve(__dirname, '../../../..');
 const DEFINITION = 'function public.store_product_credits(p_product_id';
@@ -37,5 +37,15 @@ describe('스토어 상품 — DB 와 상수', () => {
   it('패키지 이름은 앱의 android.package 와 같다', () => {
     const app = JSON.parse(readFileSync(resolve(ROOT, 'mobile/app.json'), 'utf8')) as { expo: { android: { package: string } } };
     expect(app.expo.android.package).toBe(PLAY_PACKAGE_NAME);
+  });
+});
+
+/** 앱의 진열과 서버의 가격 대조가 함께 쓰는 판정 — 모르면 「같다」가 아니다(G-166, ADR 0259 · ADR 0262) */
+describe('Play 가격과 묶음 가격의 같음', () => {
+  it('같으면 same, 다르면 differs, 원을 모르거나 없는 상품이면 unknown', () => {
+    expect(storePriceVerdict('reading_credits_3', 12900)).toBe('same');
+    expect(storePriceVerdict('reading_credits_3', 12000)).toBe('differs');
+    expect(storePriceVerdict('reading_credits_3', null)).toBe('unknown');
+    expect(storePriceVerdict('reading_credits_2', 4900)).toBe('unknown');
   });
 });

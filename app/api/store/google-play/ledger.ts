@@ -8,13 +8,17 @@ import type { Ledger } from './settle';
 /**
  * **스토어 결제의 장부 문 — 열쇠를 드는 자리 하나**(ADR 0230).
  *
- * 부르는 문은 여섯뿐이다 — 지급 · 소비 · 무효 · 살 수 있나(`20270113090000`) · 다시 소비할 목록 · 못 끝낸 소비(`20270119090000`, ADR 0253). 여섯 다
- * 서버 열쇠에만 열렸다. 사람 id 는 이 모듈이 짓지 않는다 — 앱의 문은 세션의 사람을, 통지는 Google 이 돌려준 계정 표지를 넘긴다.
+ * 부르는 문은 여덟뿐이다 — 지급 · 소비 · 무효 · 살 수 있나(`20270113090000`) · 다시 소비할 목록 · 못 끝낸 소비(`20270119090000`, ADR 0253) ·
+ * 가격 대조의 알림 둘(`20270120090000`, ADR 0262). 여덟 다 서버 열쇠에만 열렸다. 사람 id 는 이 모듈이 짓지 않는다 — 앱의 문은 세션의 사람을, 통지는 Google 이 돌려준 계정 표지를 넘긴다.
  * 오류는 코드만 기록에 남기고 `null`(소비는 `false`)로 말한다. 지급 문의 `22023`(남의 토큰 · 없는 상품 — 다시 보내도 같다)만은
  * 못 닿은 것과 갈라 `foreign` 으로 말한다 — 「다시 시도」로 돌지 않게(ADR 0253).
  */
 export function storeLedger(what: string): Ledger & {
   refusal(userId: string): Promise<'open' | 'restricted' | 'inactive' | null>;
+  /** 가격 대조의 결과를 알린다 — 같은 내용은 7일에 한 번(DB 가 거른다). @returns 보낸 알림 수, 못 닿았으면 `null` */
+  reportPrices(check: { differs: readonly string[]; unknown: readonly string[] }): Promise<number | null>;
+  /** 상품 목록을 못 읽었다고 알린다 — HTTP 답(못 닿음은 `null`)마다 7일에 한 번. @returns 적었나, 못 닿았으면 `null` */
+  reportPricesUnread(status: number | null): Promise<boolean | null>;
 } {
   const keyed = keyedClient(what);
 
@@ -115,6 +119,24 @@ export function storeLedger(what: string): Ledger & {
         return null;
       }
       return data === 'open' || data === 'restricted' || data === 'inactive' ? data : null;
+    },
+
+    async reportPrices({ differs, unknown }) {
+      const { data, error } = await keyed.rpc('report_store_prices', { p_differs: [...differs], p_unknown: [...unknown] });
+      if (error !== null || typeof data !== 'number') {
+        console.error('store ledger: prices', error?.code ?? 'no count');
+        return null;
+      }
+      return data;
+    },
+
+    async reportPricesUnread(status) {
+      const { data, error } = await keyed.rpc('report_store_prices_unread', rpcArgs<'report_store_prices_unread'>({ p_status: status }));
+      if (error !== null) {
+        console.error('store ledger: prices unread', error.code);
+        return null;
+      }
+      return data === true;
     },
   };
 }

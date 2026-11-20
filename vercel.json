@@ -28,6 +28,10 @@
     {
       "path": "/api/cron/store-consume",
       "schedule": "7 21 * * *"
+    },
+    {
+      "path": "/api/cron/store-prices",
+      "schedule": "37 21 * * *"
     }
   ]
 }
