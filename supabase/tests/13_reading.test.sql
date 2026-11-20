@@ -1028,6 +1028,9 @@ select is(
      * 로그인한 사람이 부를 수 있으면 알림함을 채울 수 있다(`77_ops_alerts`).
      */
     'report_request_error',
+    /** Play 콘솔 가격 대조의 알림 둘 — 상품 id 넷 · HTTP 답만 받고 같은 내용은 7일에 한 번(`20270120090000`, ADR 0262 · `99_store_price_check`) */
+    'report_store_prices',
+    'report_store_prices_unread',
     'reserve_taste',
     /** 제출 전에 멈춘 일감을 복구기가 다시 집는 문(ADR 0210) */
     'retake_stalled_reading_job',

@@ -131,7 +131,7 @@ end;
 $$;
 
 revoke execute on function public.notify_ops_weekly(text, text) from public, anon, authenticated, service_role;
-revoke execute on function public.store_products_in_order(text[]) from public, anon, authenticated;
+revoke execute on function public.store_products_in_order(text[]) from public, anon, authenticated, service_role;
 revoke execute on function public.report_store_prices(text[], text[]) from public, anon, authenticated;
 revoke execute on function public.report_store_prices_unread(integer) from public, anon, authenticated;
 grant execute on function public.report_store_prices(text[], text[]) to service_role;
