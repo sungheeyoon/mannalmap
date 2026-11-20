@@ -7,7 +7,7 @@
 사람과 말하는 세션은 무엇을 보고하거나 묻기 전에 아래를 확인한다. 지난 세션의 인계 글 · 메모 · 기억은 확인 전의 가설이다 — 인계 글에 적힌
 SHA 는 `git log -1 <SHA>` 로 무엇인지 본다. 날을 넘겨 이어 받은 세션도 같다(사정: `docs/notes/2026-11-19-agent-audit-round.md`).
 
-**`node scripts/session-status.mjs` 가 아래 1 ~ 3 과 main 의 CI 실패 · 워크트리 · 정리 미리보기를 한 장으로 찍는다** — `git fetch` 밖에는
+**`node scripts/session-status.mjs` 가 아래 1 ~ 3 과 main 의 CI 실패 · `next` 의 `npm audit` 권고 · 워크트리 · 정리 미리보기를 한 장으로 찍는다** — `git fetch` 밖에는
 아무것도 쓰지 않는다. 판단은 그 한 장을 보고 아래 줄대로 한다.
 
 **main 의 CI 실패가 먼저다.** 열린 `ci-main-red` 이슈(`gh issue list --label ci-main-red`)가 있으면 보고 · 새 일보다 그것을 먼저 고친다

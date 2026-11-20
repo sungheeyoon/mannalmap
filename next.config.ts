@@ -65,6 +65,12 @@ const nextConfig: NextConfig = {
   distDir: process.env.NEXT_DIST_DIR ?? '.next',
 
   /**
+   * **에이전트가 돌린 `next dev` · `next build` 를 세우는 업그레이드 안내를 끈다**(#1203 — 운영자 결정 2026-11-20). 안내만 끄고
+   * 판을 올리지는 않는다. 권고는 세션을 열 때 `scripts/session-status.mjs` 의 「next 권고」 줄이 찍는다.
+   */
+  experimental: { agentUpgrade: false },
+
+  /**
    * 주소가 밖으로 새어 나가지 않게 한다.
    *
    * 입력은 이제 `#` 뒤에 실리고(`app/hash-query.ts`) fragment 는 `Referer` 에 애초에
