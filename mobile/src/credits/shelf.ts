@@ -1,5 +1,5 @@
 import { discountAgainstSingles, won } from '@reading/bundle';
-import { STORE_PRODUCTS } from '@reading/store-products';
+import { STORE_PRODUCTS, storePriceVerdict } from '@reading/store-products';
 
 /**
  * **풀이권 진열 — Play 가 조회해 준 상품 가운데 Play 금액이 묶음 가격과 같은 것만**(ADR 0230 · ADR 0259). 화면(`store-section.tsx`)과 떨어진 순수 함수라 시험이 닿는다.
@@ -49,14 +49,14 @@ export const shownPrice = (play: PlayPrice): string => {
 
 /**
  * Play 가 조회해 준 상품만 앱의 차례(장수 오름)로 세운다. **Play 금액이 묶음 가격표(앱 상수)와 다른 묶음은 뺀다**(G-166, ADR 0259) —
- * 약관 · 환불정책 · 장부가 그 표의 값을 적으므로 다른 값으로 팔면 고지와 결제가 갈린다. 원화가 아니거나 숫자가 없어 같은지 모르는 것도 뺀다.
+ * 같음 판정은 서버의 가격 대조와 한 벌이다(`storePriceVerdict`). 약관 · 환불정책 · 장부가 그 표의 값을 적으므로 다른 값으로 팔면 고지와 결제가 갈린다. 원화가 아니거나 숫자가 없어 같은지 모르는 것도 뺀다.
  * 모두 빠지면 진열이 비어 화면은 판매가 닫힌 때의 한 줄이다(`store-section.tsx`). 할인율은 그 표 기준이다 — Play 가격은 그 표와 같은 값으로
  * 건다(운영자 결정 2026-11-06, `store-products.ts`).
  */
 export const shelfOf = (prices: ReadonlyMap<string, PlayPrice>): ShelfItem[] =>
   STORE_PRODUCTS.flatMap((product) => {
     const play = prices.get(product.productId);
-    return play === undefined || playWon(play) !== product.price
+    return play === undefined || storePriceVerdict(product.productId, playWon(play)) !== 'same'
       ? []
       : [{ productId: product.productId, credits: product.credits, price: shownPrice(play), discount: discountAgainstSingles(product.credits, product.price) }];
   });

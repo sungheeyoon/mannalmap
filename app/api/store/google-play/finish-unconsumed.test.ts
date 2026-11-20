@@ -72,6 +72,7 @@ function world() {
     }),
     refundAndRevoke: vi.fn(async (): Promise<PlayAnswer<null>> => ({ ok: true, value: null })),
     listVoided: vi.fn(),
+    listOneTimeProducts: vi.fn(),
   } satisfies PlayApi;
 
   const ledger = {

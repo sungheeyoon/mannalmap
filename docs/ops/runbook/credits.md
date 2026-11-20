@@ -344,11 +344,14 @@ update retention.reading_payment set hold_reason = null, held_at = null where or
    | `reading_credits_5` | 풀이권 5장 | 19,900원 |
    | `reading_credits_20` | 풀이권 20장 | 59,000원 |
 
-   **가격은 이 표(코드의 `READING_BUNDLES`) 그대로 건다 — 다르면 앱이 그 묶음을 진열에서 뺀다**(G-166, ADR 0259 — 약관 · 환불정책 · 장부가 이 값을 적는다). 콘솔 가격만 바꾸면 그 묶음이 앱에서 사라질 뿐 알림은 오지 않는다 — 가격을 바꾸려면 코드 · 약관을 먼저 바꾼다.
+   **가격은 이 표(코드의 `READING_BUNDLES`) 그대로 건다 — 다르면 앱이 그 묶음을 진열에서 뺀다**(G-166, ADR 0259 — 약관 · 환불정책 · 장부가 이 값을 적는다). 콘솔 가격만 바꾸면 그 묶음이 앱에서 사라지고,
+   **다음 가격 대조(`/api/cron/store-prices`, 매일 21:37 UTC)가 운영 알림 `store-price-differs` 를 보낸다**(ADR 0262 — 아래 「가격 대조 알림」). 가격을 바꾸려면 코드 · 약관을 먼저 바꾼다.
 
    소비형이다 — 서버가 소비한다. **multi-quantity(한 번에 여럿 사기)는 켜지 않는다** — 서버는 수량 1 만 지급하고, 2 이상이면 지급 · 소비하지 않아 Google 이 사흘 뒤 돌려준다(ADR 0253). **판매 국가는 대한민국만 고른다**(ADR 0230 — 장부 · 고지가 원화 전제). 상품의 가격 · 국가와 앱의 국가/지역(Production → Countries / regions) 둘 다
 3. **결제 검증용 서비스 계정** — Google Cloud → IAM & Admin → Service Accounts → 새 계정 → Keys → JSON. 같은 프로젝트에서 **Google Play Android Developer API** 를 켠다.
-   Play Console → Users and permissions → Invite → 그 이메일 → 이 앱에 **View financial data, orders, and cancellation survey responses** · **Manage orders and subscriptions** 둘만.
+   Play Console → Users and permissions → Invite → 그 이메일 → 이 앱에 **View financial data, orders, and cancellation survey responses** · **Manage orders and subscriptions** 둘과,
+   가격 대조(ADR 0262)가 상품 목록을 읽을 **View app information (read-only)**(「앱 정보 보기(읽기 전용)」). 「앱 정보 관리」(가격 · 상품 수정)는 주지 않는다.
+   지금 계정에는 이 셋과 「앱 품질 정보 보기(읽기 전용)」가 이 앱 하나에만 켜져 있다(조율자 확인 2026-11-20).
    키를 Vercel 의 `GOOGLE_PLAY_SERVICE_ACCOUNT_JSON` 에 — **운영자**
 4. **RTDN** — Google Cloud → Pub/Sub → 주제 만들기(예 `play-billing`). 주제의 권한에 `google-play-developer-notifications@system.gserviceaccount.com` 을 **Pub/Sub Publisher** 로.
    **푸시 구독**을 만든다 — 끝점 `https://<도메인>/api/store/google-play`, **인증 사용**(서비스 계정 하나를 고르고 audience 를 끝점과 같은 주소로). Pub/Sub 서비스 에이전트
@@ -467,6 +470,19 @@ SQL
 - **`store-consume-overdue` 의 「Google 이 취소 · 환불로 확인 N건」** — 크론이 다시 물어 「구매」가 아니라는 답을 받았는데 무효가 아직 안 적혔다. Run 할 것은 없다. 본다:
   무효 대조 크론(`/api/cron/store-voided`)의 응답 · 로그(`store-voided <건수>`)와 위 「스토어 환불 집계」 질의에 그 무효가 적혔나, Play Console → Order management 의 그 주문.
   무효가 적히면 그 줄은 셈에서 빠진다. 무효가 하루 넘게 안 오면 무효 대조(통지 · 목록)가 멈춘 것이다 — 이 문단 앞의 `play notification` · `store-voided` 줄로 본다.
+
+**가격 대조 알림 (G-166, ADR 0262).** 크론 `/api/cron/store-prices`(매일 21:37 UTC)가 상품 목록(`monetization.onetimeproducts.list`)의 대한민국 가격을 앱 진열과 같은 판정
+(`storePriceVerdict`)으로 묶음 가격과 견준다. 고치지 않고 알리기만 한다 — DB 문 `report_store_prices` · `report_store_prices_unread`(`20270120090000`)가 `notify_ops` 로 보내고,
+**같은 내용은 7일에 한 번**이다(어긋난 상품이 바뀌면 그날 바로). 알림이 왔으면 앱은 그 묶음을 이미 진열에서 뺐다 — 이용자가 다른 값으로 사지는 않는다.
+
+- **`store-price-differs:<상품들>`** — 콘솔의 대한민국 가격이 묶음 가격과 다르다. Play Console → Monetize with Play → One-time products → 그 상품 → 구매 옵션의 대한민국 가격을
+  위 상품 표의 값으로 되돌린다(가격을 바꾸려던 것이면 코드 · 약관 · 장부 가격을 먼저 바꾼다). 다음 날 대조가 조용하면 끝이다 — 바로 보려면 Cron Jobs 에서 **Run**(응답 `differs: []`).
+- **`store-price-unknown:<상품들>`** — 같은지 모른다: 상품이 없거나, 판매 중(Active)인 구매 옵션이 없거나, 대한민국에서 안 팔거나, 원화가 아니다. 콘솔에서 그 상품의 상태 · 국가 · 통화를 본다.
+- **`store-price-unread:<답>`** — 목록을 못 읽었다. `401` · `403` 이면 결제 검증 서비스 계정의 권한(위 3 의 「앱 정보 보기(읽기 전용)」)과 키, `none` 이면 시간 초과 · 토큰을 못 받음,
+  `429` 면 할당량. 그동안 대조가 서지 않는다 — 앱 진열의 가드는 그대로다.
+
+크론 응답은 200(같음 · 알림 보냄) · 502(목록 못 읽음 — 알림 보냄) · 503(열쇠 · DB) · `{ configured: false }`(키 없음)이다. **`20270120090000` 의 `db push` 와 그 뒤 배포 전에는
+크론이 없거나 알림 문이 없어 503 이다** — 차례는 `deploy.md` 「규약 넷」(마이그레이션 먼저).
 
 Pub/Sub 구독의 「Unacked messages」가 쌓이면 문이 503 을 주고 있다는 뜻이다. 차지백 검토 요청(`refund review`)은 받기만 한다 — 답하지 않는다(ADR 0230).
 

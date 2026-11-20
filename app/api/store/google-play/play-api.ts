@@ -19,6 +19,8 @@ import { PLAY_PACKAGE_NAME } from '@/src/lib/reading/store-products';
  * - `orders.refund`(`revoke=true`) — 지급하지 않을 구매(제한된 계정)는 3일을 기다리지 말고 돌려준다(Google 「Never call … consume on
  *   rejected purchases」). 금액은 못 고른다 — 전액이다. 일부 환불은 Play Console 에서만 된다
  * - `purchases.voidedpurchases.list` — 무효가 된 구매(30일까지). 통지를 놓친 날의 대조
+ * - `monetization.onetimeproducts.list` — 일회성 상품과 구매 옵션 · 지역별 가격. 콘솔 가격과 묶음 가격의 대조(G-166, ADR 0262).
+ *   그 계정의 위 두 권한으로 읽히는지는 확인 전이다 — 못 읽으면(401 · 403) 대조 크론이 「못 읽음」으로 알린다
  */
 
 /** 끝의 `/` 까지 — 아래 경로는 앞 `/` 없이 잇는다 */
@@ -102,6 +104,15 @@ export function refundTypeOf(voided: PlayVoided): 1 | 2 {
   return voided.voidedQuantity !== null && voided.voidedQuantity > 0 ? 2 : 1;
 }
 
+/**
+ * 일회성 상품 하나의 대한민국 가격 — **판매 중(`ACTIVE`)인 구매(`buyOption`) 옵션이 대한민국에서 살 수 있게(`AVAILABLE`) 건 가격들**, 원 단위.
+ * 원화가 아니거나 금액을 못 읽은 가격은 `null` 이다. 칸의 뜻은 `OneTimeProduct` · `Money` 문서 그대로다
+ * (https://developers.google.com/android-publisher/api-ref/rest/v3/monetization.onetimeproducts · https://developers.google.com/android-publisher/api-ref/rest/v3/Money,
+ * ADR 0262): 가격은 `{ currencyCode, units(int64 글자), nanos }`, 옵션의 `state` 는 `DRAFT` · `ACTIVE` · `INACTIVE` · `INACTIVE_PUBLISHED`,
+ * 지역의 `availability` 는 `AVAILABLE` · `NO_LONGER_AVAILABLE` · `AVAILABLE_IF_RELEASED` · `AVAILABLE_FOR_OFFERS_ONLY`.
+ */
+export type PlayOneTimeProduct = { readonly productId: string; readonly koreanWon: readonly (number | null)[] };
+
 export type PlayAnswer<T> = { readonly ok: true; readonly value: T } | { readonly ok: false; readonly status: number | null };
 
 export type PlayApi = {
@@ -109,6 +120,7 @@ export type PlayApi = {
   consume(productId: string, purchaseToken: string): Promise<PlayAnswer<null>>;
   refundAndRevoke(orderId: string): Promise<PlayAnswer<null>>;
   listVoided(startMillis: number): Promise<PlayAnswer<readonly PlayVoided[]>>;
+  listOneTimeProducts(): Promise<PlayAnswer<readonly PlayOneTimeProduct[]>>;
 };
 
 /**
@@ -150,6 +162,33 @@ export function voidedOf(body: Record<string, unknown>): PlayVoided | null {
     voidedReason: numberOf(body.voidedReason),
     voidedQuantity: numberOf(body.voidedQuantity),
   };
+}
+
+const recordOf = (value: unknown): Record<string, unknown> | null =>
+  typeof value === 'object' && value !== null && !Array.isArray(value) ? (value as Record<string, unknown>) : null;
+const listOf = (value: unknown): readonly unknown[] => (Array.isArray(value) ? value : []);
+
+/** `Money` 의 원 — 원화이고 `units` 가 0 이상의 정수 글자, `nanos` 가 없거나 0 일 때만. 그 밖은 `null`(모른다) */
+export function wonOfMoney(money: unknown): number | null {
+  const price = recordOf(money);
+  if (price === null || price.currencyCode !== 'KRW') return null;
+  const units = numberOf(price.units);
+  const nanos = price.nanos === undefined || price.nanos === null ? 0 : numberOf(price.nanos);
+  return units !== null && units >= 0 && nanos === 0 ? units : null;
+}
+
+export function oneTimeProductOf(body: Record<string, unknown>): PlayOneTimeProduct | null {
+  const productId = textOf(body.productId);
+  if (productId === null) return null;
+  const koreanWon = listOf(body.purchaseOptions).flatMap((raw) => {
+    const option = recordOf(raw);
+    if (option === null || option.state !== 'ACTIVE' || recordOf(option.buyOption) === null) return [];
+    return listOf(option.regionalPricingAndAvailabilityConfigs).flatMap((rawConfig) => {
+      const config = recordOf(rawConfig);
+      return config !== null && config.regionCode === 'KR' && config.availability === 'AVAILABLE' ? [wonOfMoney(config.price)] : [];
+    });
+  });
+  return { productId, koreanWon };
 }
 
 /**
@@ -235,6 +274,25 @@ export function playApi(
         }
         const next = answer.value.tokenPagination;
         page = typeof next === 'object' && next !== null ? textOf((next as Record<string, unknown>).nextPageToken) : null;
+        if (page === null) break;
+      }
+      return { ok: true, value: found };
+    },
+    async listOneTimeProducts() {
+      const found: PlayOneTimeProduct[] = [];
+      let page: string | null = null;
+      /* 상품은 넷이다 — 한 쪽(최대 1000)에 다 든다. 끝없는 고리를 막으려 다섯 쪽에서 멈춘다 */
+      for (let turn = 0; turn < 5; turn += 1) {
+        const query = new URLSearchParams({ pageSize: '1000' });
+        if (page !== null) query.set('pageToken', page);
+        const answer = await call(`oneTimeProducts?${query.toString()}`, 'GET');
+        if (!answer.ok) return answer;
+        for (const row of listOf(answer.value.oneTimeProducts)) {
+          const product = recordOf(row);
+          const parsed = product === null ? null : oneTimeProductOf(product);
+          if (parsed !== null) found.push(parsed);
+        }
+        page = textOf(answer.value.nextPageToken);
         if (page === null) break;
       }
       return { ok: true, value: found };
