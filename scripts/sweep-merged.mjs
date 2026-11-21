@@ -272,7 +272,8 @@ function main() {
 
   run('git', ['fetch', '--prune', '--quiet']);
   const pulls = JSON.parse(run('gh', ['pr', 'list', '--state', 'all', '--limit', '5000', '--json', 'number,state,headRefName,headRefOid']));
-  const containers = new Set((tryRun('docker', ['ps', '--format', '{{.Names}}']) ?? '').split('\n').filter(Boolean));
+  // 엔진이 답하지 않으면 `docker ps` 가 30초 넘게 매달린다. 세션 상태의 Docker 줄처럼 5초에서 끊는다
+  const containers = new Set((tryRun('docker', ['ps', '--format', '{{.Names}}'], { timeout: 5000 }) ?? '').split('\n').filter(Boolean));
   const cwds = processCwds();
   const upstreams = new Map(
     run('git', ['for-each-ref', '--format=%(refname:short)\t%(upstream:lstrip=3)\t%(objectname)', 'refs/heads'])
