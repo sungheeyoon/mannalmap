@@ -6,8 +6,9 @@
 --
 -- ## 무엇을 내나 — 줄 넷
 --
--- - `signup` — 가입하면 받는 무료 풀이권. 장부 줄이 없다(몫은 정책이다, `reading_credit_shares` 의 무료 칸 — ADR 0227). 수는 그 칸과
---   같은 셈(`greatest(정책, 지킨 몫)`), 시각은 가입을 마친 때(`signed_up_at`). 가입을 안 마친 계정에는 안 선다
+-- - `signup` — 가입하면 받는 무료 풀이권. 장부 줄이 없다(몫은 정책이다 — ADR 0227). 수는 몫 셋을 내는 함수
+--   (`reading_credit_shares`)의 무료 칸 그대로 — 상수를 직접 읽지 않는다(`25_reading_credit_grant` 의 1). 시각은 가입을 마친 때(`signed_up_at`).
+--   가입을 안 마친 계정에는 안 선다
 -- - `grant` · `revoke` — 운영자의 무상 지급 · 회수(`reading_credit_grant_entry`, ADR 0187). 갈래(`reason`)만 내고 **운영자의 메모 · 누가
 --   했는지 · 관련 신고는 내지 않는다** — 소식(`credits_granted`)이 이미 보내는 값과 같다(대장 matching 의 소식 줄)
 -- - `use` — 확정된 쓰임(`state = 'confirmed'`). 예약 · 반환은 차감이 아니라 안 선다(운영자 이력 문과 같은 선). 무엇을 풀었는지는
@@ -39,7 +40,7 @@ set search_path = ''
 as $$
   with me as (
     select u.id, u.self_person_id, u.signed_up_at,
-           greatest(public.reading_credit_limit(), coalesce(u.kept_free_credits, 0)) as free_credits
+           (select s.free_credits from public.reading_credit_shares(u.id) s) as free_credits
     from public.app_user u
     where u.id = (select auth.uid())
   )

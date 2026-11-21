@@ -51,15 +51,15 @@ select
 
 -- 끝난 시도는 제 쓰임을 스스로 확정해 적는다(`reading_run_books_a_credit`) — 확정 시각은 끝난 때
 insert into public.reading_run (id, user_id, kind, person_a, person_b, idempotency_key, status, finished_at)
-select r.self_run, f.me, 'self', r.self_person, null, 'history-self-0001', 'succeeded', timestamptz '2026-11-02 05:25+00' from runs r, folks f
+select r.self_run, f.me, 'self', r.self_person, null::uuid, 'history-self-0001', 'succeeded', timestamptz '2026-11-02 05:25+00' from runs r, folks f
 union all
-select r.mom_run, f.me, 'person', s.mom, null, 'history-mom-0001', 'succeeded', timestamptz '2026-11-06 10:08+00' from runs r, folks f, saved s
+select r.mom_run, f.me, 'person', s.mom, null::uuid, 'history-mom-0001', 'succeeded', timestamptz '2026-11-06 10:08+00' from runs r, folks f, saved s
 union all
 select r.pair_run, f.me, 'private', r.self_person, s.mom, 'history-pair-0001', 'succeeded', timestamptz '2026-11-09 04:30+00' from runs r, folks f, saved s;
 
 insert into public.reading_credit_use (user_id, share, source, run_id, request_id, state, reserved_at, confirmed_at, released_at)
 -- 인연 요청이 쓴 것 — 요청은 지워져 비었다
-select f.me, 'grant', 'request', null, null, 'confirmed', timestamptz '2026-11-10 01:00+00', timestamptz '2026-11-10 01:00+00', null from folks f
+select f.me, 'grant', 'request', null::uuid, null::uuid, 'confirmed', timestamptz '2026-11-10 01:00+00', timestamptz '2026-11-10 01:00+00', null::timestamptz from folks f
 -- 저장한 사람을 지워 시도가 함께 지워진 쓰임
 union all
 select f.me, 'grant', 'run', null, null, 'confirmed', timestamptz '2026-11-11 01:00+00', timestamptz '2026-11-11 01:00+00', null from folks f
