@@ -202,7 +202,20 @@ cd mobile && taskset -c 0-7 nice -n 19 npx eas-cli@latest build --local --profil
 2. **CPU · 메모리를 묶는다** — 묶지 않으면 Gradle · clang 이 16코어를 다 써서 Windows 터미널이 멈추고 재부팅했다. `taskset -c 0-7` · `nice` · Gradle 일꾼 넷. 그래도 C++ 컴파일 때 가용 메모리가 1GB 아래 · 스왑 4GB 까지 갔다 — 다른 무거운 일과 겹치지 않는다.
 3. **ABI 는 둘(arm64 · armv7)** — x86 둘을 빼 컴파일을 줄였다. Play 는 「지원 기기 · 전화 2대 줄어듦」 경고 하나를 띄운다(에뮬레이터 · 일부 크롬북 몫). 출시 판에 x86 을 넣을지는 그때 정한다.
 
-빌드 시간은 받는 것을 빼고 약 25분이었다. **계정 칸이 차기 전까지 모든 제출이 `eas submit` 에서 Play 에 막힌다** — 로컬 · 클라우드 빌드가 같다. `HTTP 403: To comply with Korean law, developers in Korea must provide additional information on the Account Details page` (계정 세부정보의 한국 칸 — 대표전화 · 신고기관, `play-console.md` 차례 2 — 상태는 같은 문서 「지금 어디까지 왔나」). 그 칸이 차기 전에는 AAB 를 콘솔 「새 버전 만들기」에 파일로 올린다.
+빌드 시간은 받는 것을 빼고 약 25분이었다.
+
+**맥에서 굽는 법**(2026-11-21 versionCode 11 — Apple Silicon 12코어 · 18GB). 맥에는 JDK 도 Android SDK 도 없었다(`/usr/libexec/java_home` 이 「Unable to locate a Java Runtime」). 관리자 권한 없이 깔았다 — JDK 는 `brew install openjdk@17`(keg-only, 시스템 `java` 를 안 바꾼다), SDK 는 Google 의 `commandlinetools-mac-*_latest.zip` 을 `~/opt/android-sdk/cmdline-tools/latest` 에 풀고 위와 같은 `sdkmanager` 셋. 맥에는 `taskset` 이 없고 `/tmp` 가 tmpfs 가 아니라 함정 1 · 2 의 묶음은 빼도 된다 — `nice` 와 Gradle 일꾼 여섯으로 다른 일과 함께 돌았다. Gradle 은 7분, 전체는 약 10분이었다.
+
+```bash
+export EAS_LOCAL_BUILD_WORKINGDIR=$HOME/opt/eas-work JAVA_HOME=/opt/homebrew/opt/openjdk@17/libexec/openjdk.jdk/Contents/Home ANDROID_HOME=$HOME/opt/android-sdk ANDROID_SDK_ROOT=$HOME/opt/android-sdk
+export PATH=$JAVA_HOME/bin:$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools:$PATH
+export GRADLE_OPTS="-Dorg.gradle.workers.max=6 -Dorg.gradle.daemon=false" ORG_GRADLE_PROJECT_reactNativeArchitectures=arm64-v8a,armeabi-v7a
+cd mobile && nice -n 10 npx eas-cli@latest build --local --profile production --platform android --non-interactive --output ~/opt/build-logs/mannalmap-<versionCode>.aab
+```
+
+로컬 빌드는 첫머리에 `expo-doctor` 를 돌고 실패해도 이어 굽는다 — 2026-11-21 에는 expo 패치 판 15개가 새로 나와 「1 check failed」였다(빌드는 섰다). 위 「버전」의 「20/20 이어야 한다」는 그 판을 올리는 PR 의 몫이다.
+
+**계정 칸이 차기 전까지 모든 제출이 `eas submit` 에서 Play 에 막힌다** — 로컬 · 클라우드 빌드가 같다. `HTTP 403: To comply with Korean law, developers in Korea must provide additional information on the Account Details page` (계정 세부정보의 한국 칸 — 대표전화 · 신고기관, `play-console.md` 차례 2 — 상태는 같은 문서 「지금 어디까지 왔나」). 그 칸이 차기 전에는 AAB 를 콘솔 「새 버전 만들기」에 파일로 올린다.
 
 ### 스토어에 올리기 전에 네이티브에서 본다
 
