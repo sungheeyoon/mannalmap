@@ -10,16 +10,22 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 
 ## 일은 `docs/start.md` 에서 연다
 
-손대기 전에 **`docs/start.md` 에서 역할을 고르고 그 역할 문서(`docs/roles/`)를 끝까지 읽는다**(ADR 0140).
+`docs/start.md` 에서 역할을 고르고, 그 역할 문서(`docs/roles/`)의 멈출 자리와 「먼저 읽는 것」을 본 뒤 손댄다. 나머지는 일이 닿을 때 연다.
 
-## 무엇을 맡기고 무엇을 묻는가는 `docs/agents/delegation.md` 가
+## 멈출 선
 
-맡길 이슈 · 권한 등급(무엇을 묻나) · PR 의 칸 · 일하는 법 · 로컬 환경의 함정은 **`docs/agents/delegation.md`** 의 색인이 가리키는
-주제별 파일이 답한다(ADR 0090). 권한 표(`docs/agents/delegation/permissions.md` 「권한 등급」)는 `.claude/settings.json` 과 같은 목록이다 —
-그 파일은 Claude Code 만 읽으니 다른 에이전트에게는 표가 전부다. 배포 순서는 `docs/ops/runbook/deploy.md` 「배포」.
-**새 기억은 저장소에 적는다** — 남은 일은 `docs/product/gaps.md`, 결정은 ADR, 규약은 `docs/agents/delegation/` · 역할 문서(`docs/roles/`),
-절차는 `docs/ops/runbook/`, 사정만 `docs/notes/`(요구사항 아님, 원본 `docs/agents/delegation/notes.md` 「세션 기록」).
-**herdr(`hc`) 터미널에서 돌거나 띄우면** `docs/agents/delegation/herdr.md` 를 따른다.
+- 운영 배포(Production)는 운영자가 「배포」라고 답한 뒤에만 — `docs/agents/delegation/permissions.md` 「권한 등급」 · `docs/ops/runbook/deploy.md` 「배포」
+- 실호출(토큰을 쓰는 모델 부름)은 하지 않는다 — 명령을 적어 운영자에게 넘긴다(`docs/agents/delegation/permissions.md` 「권한 등급」)
+- 운영 개인정보를 읽는 SQL 을 보내지 않는다 — 질의를 써서 건넨다(`docs/ops/runbook/access.md` 「개인정보는 화면으로만」)
+- main 은 PR 로만 든다 — 관리자도(`docs/agents/delegation/permissions.md` 「권한 등급」)
+- force push 하지 않는다 — PR 가지는 main 을 merge 해 올린다(`docs/agents/delegation/permissions.md` 「권한 등급」)
+
+권한 표는 `.claude/settings.json` 과 같은 목록이다 — 그 파일은 Claude Code 만 읽으니 다른 에이전트에게는 표가 전부다.
+herdr(`hc`) 터미널에서 돌거나 띄우면 `docs/agents/delegation/herdr.md` 를 따른다.
+
+## 새 기억은 저장소에 적는다
+
+남은 일은 `docs/product/gaps.md`, 결정은 ADR, 규약은 `docs/agents/delegation/` · `docs/roles/`, 절차는 `docs/ops/runbook/`, 사정만 `docs/notes/`.
 
 ## Agent skills
 

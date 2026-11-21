@@ -22,7 +22,7 @@ import { dirname, isAbsolute, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 export const REMINDER =
-  '메인 체크아웃에 쓰려 한다 — 먼저 그 일의 역할 문서(docs/start.md 「역할 고르기」)를 읽고 워크트리에서 한다(docs/agents/delegation/coordinator.md 「조율자 세션」).';
+  '메인 체크아웃에 쓰려 한다 — 워크트리에서 한다. 역할은 docs/start.md 「역할 고르기」, 까닭은 docs/agents/delegation/coordinator.md 「조율자 세션」.';
 
 const isDirectory = (path) => {
   try {

@@ -5,48 +5,36 @@ PRD · 간극 대장 · changelog · 용어집 · 노트 · 역할 문서를 코
 ## 먼저 읽는 것
 
 - `docs/start.md` 「원본 — 무엇이 무엇을 답하나」 — 한 사실은 한 자리에 산다
-- `docs/product/gaps.md` 머리말 — 상태 다섯 · 띠 넷 · `보류` 의 뜻
-- `docs/agents/delegation/notes.md` 「세션 기록 — `docs/notes/`」
-- `docs/agents/code-rules/comments.md` 「주석과 ADR 참조」 — `ADR NNNN` 표기
-- `docs/agents/domain.md` — 용어집과 ADR 을 대하는 법
 
 ## 이 저장소의 방식
 
-규칙은 아래 원본에만 있다 — 여기는 어디를 열지만 말한다(ADR 0145).
-
-- [원본 — 무엇이 무엇을 답하나](../start.md#원본--무엇이-무엇을-답하나) — 한 사실의 자리 · 어긋나면 어느 쪽이 맞나
-- [일하는 법](../agents/delegation/working.md) — 재는 법 · 값을 적는 자리는 하나다
-- [결정 점검표](../agents/delegation/decisions.md) — 문서를 코드에 맞추다 정책이 바뀌면 결정
-- [조율자 세션](../agents/delegation/coordinator.md) — 사실과 의도 · 버그 · 문서 노후 · 결정 미반영 가르기
-- [나란히 맡길 때](../agents/delegation/parallel.md) — 중앙 문서는 제 줄만 · 머지는 하나씩 · `union`
-- [린트가 잠근 것 · 시험이 잠근 것](../agents/code-rules/locks.md#린트가-잠근-것--시험이-잠근-것) — 입구 · 역할 문서의 경로 · 절 · 링크를 재는 시험
+- [결정 점검표](../agents/delegation/decisions.md#결정-점검표--무엇이-바뀌면-결정인가-2026-09-28) — 문서를 코드에 맞추다 정책이 바뀌면 결정
+- [주석과 ADR 참조](../agents/code-rules/comments.md#주석과-adr-참조) — `ADR NNNN` 표기
 - [Writing an ADR](../agents/domain.md#writing-an-adr) — 색인 줄과 후속 결정 줄
-- [읽기량 예상치는 보고다](../agents/delegation/done.md#읽기량-예상치는-보고다) — 문서를 고치거나 줄일 때 보는 잣대 열
 
 ## 하지 않는 것 · 묻는 것
 
-- `보류` 줄은 조건이 올 때까지 그대로 둔다 — 운영자가 꺼낸다([조율자 세션](../agents/delegation/coordinator.md))
 - 이미 있는 기록을 고치는 PR 은 한 번에 하나 — 나란히 두면 상반된 문장이 둘 다 남는다([나란히 맡길 때](../agents/delegation/parallel.md))
 - 노트에는 사정만 — 규약이 된 것은 원본으로 옮긴다([세션 기록](../agents/delegation/notes.md))
-- 무엇을 만들지는 `docs/prd.md` 에서 읽는다 — `docs/product/prd-archive.md` 는 요구사항이 아니다([원본](../start.md#원본--무엇이-무엇을-답하나))
+- 결정(ADR)이 든 문서 PR 이 「검증 · 배포의 문턱」 줄에 걸리면 독립 검토가 끝나기 전에 `--auto` 를 걸지 않는다([결정 점검표](../agents/delegation/decisions.md))
 
 ## 끝날 때 고치는 것
 
-- [ ] [끝났다는 것](../agents/delegation/done.md) — PR 칸 여섯과 「문서」 칸의 결정 여부
-- [ ] 새 노트 → `docs/notes/` 의 차례(README)에 한 줄. 닫은 `G-nn` → 줄을 지우고 PRD 개정 기록 끝에 날짜와 함께 한 줄 (개정 기록은 끝에 쓰기만 하고 열지 않는다) — 꼴은 [끝났다는 것](../agents/delegation/done.md) 「문서」 칸
-- [ ] 고친 `G-nn` 의 기록 파일(`docs/product/gaps/records/`)도 — 경과는 기록에, 칸은 지금 상태만. 줄을 닫으면 그 파일을 지운다(대장 머리말)
-- [ ] 닫는 줄의 기록에 근거(사례 · 조문)가 있으면 지우기 전에 `docs/legal/` 근거 문서의 절로 옮기고 가리킴을 고친다([법률 근거의 자리](../legal/README.md#법률-근거의-자리--근거-문서와-간극-기록))
-- [ ] 원본의 절 이름을 바꿨으면 → 그 절을 가리키던 역할 문서도. PR 전에 `npx vitest run scripts/` — 절 · 앵커, 대장 메모 칸 길이와 기록 파일의 짝, 노트 차례, 없는 ADR 번호를 잰다
+- [ ] [끝났다는 것](../agents/delegation/done.md#끝났다는-것--pr-이-드는-칸) — PR 칸과 「문서」 칸의 꼴
+- [ ] 새 노트 → `docs/notes/` 의 차례(README)에 한 줄
+- [ ] 닫은 `G-nn` → 대장 줄과 그 기록 파일(`docs/product/gaps/records/`)을 지우고 PRD 개정 기록 끝에 한 줄. 기록의 근거(사례 · 조문)는 지우기 전에 `docs/legal/` 근거 문서로
+- [ ] 원본의 절 이름을 바꿨으면 그 절을 가리키던 역할 문서도 — PR 전에 `npx vitest run scripts/`
 
 ## 닿을 때 여는 것
 
 손대기 전에 다 읽지 않는다 — 일이 그 자리에 닿을 때 연다(ADR 0147).
 
-- 경로가 옮겨지거나 닫은 `G-nn` 의 기록 파일을 지우면 → [경로가 옮겨지면](../agents/delegation/notes.md#경로가-옮겨지면--고치는-것과-두는-것) — 고칠 문서와 그날의 기록으로 둘 것(ADR 0090)
-- 새 노트를 쓰거나 코드가 이렇게 된 사정을 거슬러 가면 → [노트의 차례](../notes/README.md)
-- 역할 문서를 고치면 → [읽기량의 셈](../../scripts/read-budget.mjs) 머리말 — 무엇을 세나와 안 세나. 문턱 없는 보고다(ADR 0177)
-- 법률 근거(조문 원문 · 링크 · 확인 날짜 · 코드 줄)를 적으면 → [법률 근거의 자리](../legal/README.md#법률-근거의-자리--근거-문서와-간극-기록) — 간극 기록에는 경과와 가리킴만
-- 운영자가 밟는 행정 절차(예: 통신판매업 신고)의 상태를 적으면 → [비어 있는 것](../legal/README.md#비어-있는-것--검토와-따로-채운다) — 그 절차가 채울 빈칸 곁에 둔다(#516)
-- 워크트리에서 시험(`npx vitest run scripts/`)을 돌리려는데 `node_modules` 가 없으면 → [로컬 환경의 함정](../agents/delegation/local-env.md#로컬-환경의-함정) — 메인의 것을 심볼릭 링크로
-- 문서에 새 글을 쓰거나 말버릇 규칙을 고치면 → [이 뜻으로 쓰지 않는 말](../context/copy.md) — PR 전에 그 표의 낱말로 자기 diff 를 grep 하고, 내부 뜻으로 쓴 줄은 대신 쓸 말로 바꾼다
-- 결정(ADR)이 든 문서 PR 을 내면 → [결정 점검표](../agents/delegation/decisions.md) — 「검증 · 배포의 문턱」 줄에 걸리면 독립 검토가 끝나기 전에 `--auto` 를 걸지 않는다. 결정 PR 과 나머지 문서는 PR 을 나눠도 된다
+- 간극 대장의 줄을 고치면 → [간극 대장](../product/gaps.md) 머리말 — 상태 다섯 · 띠 넷 · `보류` 의 뜻 · 기록 파일과의 짝
+- 문서와 코드가 어긋나면 → [조율자 세션](../agents/delegation/coordinator.md#조율자-세션--사람-하나--백그라운드-에이전트-여럿-2026-09-2324-에-잼) — 버그 · 문서 노후 · 결정 미반영 가르기
+- 경로가 옮겨지거나 기록 파일을 지우면 → [경로가 옮겨지면](../agents/delegation/notes.md#경로가-옮겨지면--고치는-것과-두는-것)
+- 새 노트를 쓰거나 코드의 사정을 거슬러 가면 → [노트의 차례](../notes/README.md)
+- 역할 문서를 고치면 → [읽기량 예상치는 보고다](../agents/delegation/done.md#읽기량-예상치는-보고다) · [읽기량의 셈](../../scripts/read-budget.mjs) 머리말
+- 법률 근거(조문 · 링크 · 확인 날짜)를 적으면 → [법률 근거의 자리](../legal/README.md#법률-근거의-자리--근거-문서와-간극-기록) — 간극 기록에는 경과와 가리킴만
+- 운영자가 밟는 행정 절차의 상태를 적으면 → [비어 있는 것](../legal/README.md#비어-있는-것--검토와-따로-채운다) — 그 절차가 채울 빈칸 곁에
+- 워크트리에 `node_modules` 가 없으면 → [로컬 환경의 함정](../agents/delegation/local-env.md#로컬-환경의-함정) — 메인의 것을 심볼릭 링크로
+- 문서에 새 글을 쓰면 → [이 뜻으로 쓰지 않는 말](../context/copy.md) — PR 전에 그 표의 낱말로 자기 diff 를 grep 한다

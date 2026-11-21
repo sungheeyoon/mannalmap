@@ -1,21 +1,16 @@
 # 입구 — 무엇을 하려는가
 
-이 저장소에서 일을 여는 사람(에이전트든 사람이든)은 **여기서 역할 하나를 고르고, 그 역할 문서를 끝까지 읽은 뒤에
-손을 댄다.** 역할 문서는 한 화면이고 칸이 넷이다 — 「먼저 읽는 것」 · 「이 저장소의 방식」 · 「하지 않는 것 · 묻는 것」 ·
-「끝날 때 고치는 것」. 맨 뒤의 「닿을 때 여는 것」은 손대기 전에 읽지 않고, 일이 그 줄의 자리에 닿을 때 연다(ADR 0147). 역할 문서는 **원본으로 가는 길잡이(Router)다** — 규칙을 줄여 다시 말하지 않고 원본의 절을 링크로 가리키며,
-멈출 자리(「하지 않는 것 · 묻는 것」)만 짧게 들고 줄마다 출처를 단다(ADR 0140·0145). 규칙이 바뀌면 원본을 고치고, 역할
-문서는 가리키는 절이 옮겨졌을 때만 고친다. 가리킨 절 · 링크가 실제로 있는지와 역할 문서가 「닿을 때 여는 것」 앞까지 한 화면(8,000 바이트) 안인지는 `scripts/code-rules.test.ts` 가 잰다 — 「닿을 때 여는 것」은 세지 않는다(ADR 0254). 역할마다 읽기량 예상치는 `npm run read-budget` 이 찍는 보고다(ADR 0177).
+역할 하나를 고르고, 그 역할 문서의 멈출 자리(「하지 않는 것 · 묻는 것」)와 「먼저 읽는 것」만 먼저 본다 — 나머지 칸은
+일이 그 자리에 닿을 때 연다. 역할 문서는 원본의 절을 가리키는 길잡이라, 규칙이 바뀌면 원본을 고치고 역할 문서는 가리킨 절이
+옮겨졌을 때만 고친다(ADR 0145). 가리킴과 한 화면(8,000 바이트)은 `scripts/code-rules.test.ts` 가, 읽기량은 `npm run read-budget` 이 잰다.
 
 ## 모두가 먼저 보는 것
 
-1. **붉은 main** — `gh issue list --label ci-main-red` 가 비어 있지 않으면 그것부터(`docs/agents/delegation/working.md` 「시작하기 전에」)
-2. **나란히 도는 세션** — `git worktree list`. 작업 가지는 워크트리로 연다(`docs/agents/delegation/working.md` 「일하는 법」).
-   `npm run sweep:merged` 미리보기에 걷을 것이 있으면 먼저 걷는다(`docs/agents/delegation/coordinator.md` 「라운드 끝 정리」)
-3. **지금 단계** — `grep -n '(지금)' docs/product/prd/roadmap.md`. 그 단계에서 무엇을 묻지 않고 밟나는 `docs/agents/delegation/permissions.md` 「권한 등급」 이 든다 — 프로덕션 배포와 실호출은 그 표에 따로 선 줄이다(ADR 0093)
-4. **보류 줄** — `grep -n '| 보류 |' docs/product/gaps.md`. 그 줄은 조건이 올 때까지 권하지도 묻지도 않는다
-5. **로컬 환경** — 새 워크트리에서 무엇을 돌리기 전에, 또는 명령이 막히면 그때 `docs/agents/delegation/local-env.md` 「로컬 환경의 함정」 을 연다(ADR 0147)
-6. **전역 스킬** — `npm run skills:check`. 규약이 이름으로 부르는 스킬(`/retro` 등) 가운데 이 홈에 없는 것과 까는 명령을 찍는다 — 까는 것은
-   운영자다(`docs/agents/delegation/local-env.md` 「전역 스킬」)
+1. `node scripts/session-status.mjs` — 붉은 main · 워크트리 · 열린 PR · 정리 미리보기를 한 장에 찍는다. 붉은 main 이 있으면
+   그것부터(`docs/agents/delegation/working.md` 「시작하기 전에」). 작업 가지는 워크트리로 연다
+2. 지금 단계 — `grep -n '(지금)' docs/product/prd/roadmap.md`. 단계마다 무엇을 묻나는 `docs/agents/delegation/permissions.md` 「권한 등급」
+3. 보류 줄 — `grep -n '| 보류 |' docs/product/gaps.md`. 조건이 올 때까지 권하지도 묻지도 않는다
+4. 명령이 막히면 → `docs/agents/delegation/local-env.md` 「로컬 환경의 함정」. 규약이 부르는 스킬이 없으면 `npm run skills:check`(까는 것은 운영자)
 
 ## 역할 고르기
 
@@ -25,46 +20,42 @@
 | 기능이나 흐름을 더하거나 동작을 바꾼다 | `docs/roles/feature.md` | `feature` |
 | 표 · 함수 · 정책(마이그레이션) · pgTAP 을 고친다 | `docs/roles/db.md` | `db` |
 | 풀이 글 · 프롬프트 · 문장 층 · 만세력 엔진을 고친다 | `docs/roles/reading.md` | `reading` |
-| 배포 · 운영 DB 확인 · 크론 · 운영 절차를 밟는다 — CI 워크플로 · 의존성 감사(`audit` 실패) · 앱 빌드 · 스토어 제출도 | `docs/roles/ops.md` | `ops` |
+| 배포 · 운영 DB 확인 · 크론 · 운영 절차 · CI 워크플로 · 의존성 감사 · 앱 빌드 · 스토어 제출 | `docs/roles/ops.md` | `ops` |
 | 읽기만 하는 검토 · 감사 · 두 번째 의견 | `docs/roles/reviewer.md` | `reviewer` |
 | 문서 · 대장 · 세션 기록을 맞춘다 | `docs/roles/docs.md` | `docs` |
 | 사람과 말하며 위의 에이전트 여럿을 맡긴다 | `docs/roles/coordinator.md` | — (사람과 말하는 세션 자신) |
 
-**일이 둘에 걸치면 둘 다 읽는다** — 기능이 새 표를 들이면 `feature` 와 `db`. 그래도 **한 에이전트는 한 충돌 영역을 끝까지
-쥔다**(`docs/agents/delegation/parallel.md` 「나란히 맡길 때」). 에이전트 정의(`.claude/agents/`)는 역할 문서를 읽으라는 한 줄뿐이다 —
-그 파일은 Claude Code 만 읽고, 다른 에이전트에게는 이 표가 전부다. 대화가 저장소 일로 넘어가도 이 표에서
-연다 — 직접 할지 맡길지는 `docs/agents/delegation/coordinator.md` 「조율자 세션」.
+일이 둘에 걸치면 둘 다 읽되, 한 에이전트는 한 충돌 영역을 끝까지 쥔다(`docs/agents/delegation/parallel.md` 「나란히 맡길 때」).
+`.claude/agents/` 의 정의는 Claude Code 만 읽는다 — 다른 에이전트에게는 이 표가 전부다.
 
 ## 원본 — 무엇이 무엇을 답하나
 
 | 물음 | 원본 | 어긋나면 |
 | --- | --- | --- |
-| 제품이 지금 무엇을 하나 | `docs/prd.md` | PRD 가 맞다 — 다만 먼저 버그 · 문서 노후 · 결정 미반영 중 무엇인지 가른다 |
+| 제품이 지금 무엇을 하나 | `docs/prd.md` | PRD — 먼저 버그 · 문서 노후 · 결정 미반영 중 무엇인지 가른다 |
 | 아직 없는 것 · 안 정한 것 · 보류 | `docs/product/gaps.md` | — |
 | 언제 무엇이 바뀌었나 | `docs/product/prd-changelog.md` | — |
 | 낱말 · 화면 문구 규칙 | `GLOSSARY.md` | — |
-| 왜 이렇게 정했나 | `docs/adr/README.md`(영역마다 지금 유효한 ADR) → `docs/adr/` | 다시 열려면 그 근거가 왜 더는 안 서는지 적는다(`docs/agents/domain.md`) |
-| 코드가 어디에 살고 무엇을 불러도 되나 | `docs/architecture.md` | `scripts/layers.test.ts` · `eslint.config.mjs` 가 맞다 |
-| 코드를 어떻게 적나 | `CODING_STANDARDS.md` | `scripts/code-rules.test.ts` · 린트가 맞다 |
-| 무엇을 돌리나 | `docs/agents/test-map.md` | `scripts/ci-plan.mjs` 가 맞다 |
-| 이미 정한 화면 문구 | `docs/product/copy-ledger.md`(규칙 · 무리 색인) → `docs/product/copy-ledger/` 의 그 화면 무리 | 없으면 실사례를 출처와 함께 넣고 나중에 확인받는다(`docs/agents/code-rules/screen-copy.md` 「화면 문구」) |
-| 모르는 글자 · 배치 · 흐름 · 한도 · 정책을 무엇에 기대어 정하나 | `docs/agents/code-rules/references.md`(찾는 차례 · 확인 수준) → `docs/context/references.md`(다시 쓰는 모음) | 지어내지 않는다 — 한국 서비스 실사례가 없으면 「실사례 없음」과 가장 가까운 것(ADR 0255) |
+| 왜 이렇게 정했나 | `docs/adr/README.md` → `docs/adr/` | 다시 열려면 근거가 왜 더는 안 서는지 적는다(`docs/agents/domain.md`) |
+| 코드가 어디에 살고 무엇을 불러도 되나 | `docs/architecture.md` | `scripts/layers.test.ts` · `eslint.config.mjs` |
+| 코드를 어떻게 적나 | `CODING_STANDARDS.md` | `scripts/code-rules.test.ts` · 린트 |
+| 무엇을 돌리나 | `docs/agents/test-map.md` | `scripts/ci-plan.mjs` |
+| 이미 정한 화면 문구 | `docs/product/copy-ledger.md` → `docs/product/copy-ledger/` | 없으면 실사례를 출처와 함께 넣고 나중에 확인받는다(`docs/agents/code-rules/screen-copy.md` 「화면 문구」) |
+| 글자 · 배치 · 흐름 · 한도 · 정책을 무엇에 기대나 | `docs/agents/code-rules/references.md` → `docs/context/references.md` | 지어내지 않는다 — 사례가 없으면 「실사례 없음」과 가장 가까운 것 |
 | 맡기는 법 · 권한 · 병렬 · PR 의 칸 | `docs/agents/delegation.md` | 권한 표는 `.claude/settings.json` 과 시험이 견준다 |
 | 운영에서 무엇을 어떤 차례로 | `docs/ops/runbook.md` | — |
-| 앱 빌드 · 트랙 · Play 콘솔 차례가 지금 어디인가 | `docs/ops/runbook/mobile-release.md` 「지금 나간 빌드」 · `docs/ops/runbook/play-console.md` 「지금 어디까지 왔나」 | 간극 대장 · 다른 런북 · #770 은 값을 다시 적지 않고 이 두 절을 가리킨다(ADR 0256) |
-| 운영 주소 · 도메인 | `docs/ops/runbook/domain.md` 맨 위 | 주석 · 다른 문서는 주소를 적지 않고 여기를 가리킨다 — `scripts/code-rules.test.ts` 가 잰다 |
+| 앱 빌드 · 트랙 · Play 콘솔이 지금 어디인가 | `docs/ops/runbook/mobile-release.md` 「지금 나간 빌드」 · `docs/ops/runbook/play-console.md` 「지금 어디까지 왔나」 | 다른 문서는 값을 다시 적지 않고 이 두 절을 가리킨다 |
+| 운영 주소 · 도메인 | `docs/ops/runbook/domain.md` 맨 위 | 다른 곳은 주소를 적지 않고 가리킨다 — 시험이 잰다 |
 | 풀이 문장이 무엇까지 말하나 | `docs/text/` | — |
 | 법무 · 변호사 검토 | `docs/legal/README.md` | — |
 | 코드가 왜 이 모양이 됐나(사정) | `docs/notes/README.md` | 요구사항도 규칙도 아니다 — 코드가 맞다 |
 
-`docs/product/prd-archive.md` 는 요구사항이 아니다. 코드 주석의 US 번호가 가리키는 곳으로만 남았다.
+`docs/product/prd-archive.md` 는 요구사항이 아니다 — 코드 주석의 US 번호가 가리키는 곳으로만 남았다.
 
 ## 선순환 — 일이 문서로 돌아오는 길
 
-1. **읽고 시작한다** — 역할 문서 → 그 문서의 「먼저 읽는 것」. 이슈 · 메모의 문장은 가설이라 먼저 잰다
-2. **끝날 때 문서를 고친다** — 역할 문서의 넷째 칸을 PR 의 「문서」 칸에 옮겨 적는다(`docs/agents/delegation/done.md` 「끝났다는 것」).
-   코드 · 문서 · 정책은 같은 차례에 맞춘다. 끝난 상태가 이슈 댓글이나 대화에만 있으면 끝나지 않은 것이다(같은 절)
-3. **헤맨 자리는 보고에 한 줄** — 역할 문서에 없어서 찾아다닌 것, 가리킨 절이 틀렸던 것. 조율자가 라운드 끝에 `/retro` 로
-   거둔다(`docs/roles/coordinator.md`, ADR 0146)
-4. **사정은 노트에** — 라운드의 기록은 `docs/notes/` 에 날짜와 함께. 같은 라운드를 이어 가거나 코드가 이렇게 된 사정을
-   추적할 때 관련 노트를 읽는다 — 노트는 요구사항도 규칙도 아니다
+1. 역할 문서의 멈출 자리와 「먼저 읽는 것」에서 시작한다
+2. 끝날 때 역할 문서의 「끝날 때 고치는 것」을 PR 의 「문서」 칸에 옮겨 적는다(`docs/agents/delegation/done.md` 「끝났다는 것」) —
+   끝난 상태가 이슈 댓글이나 대화에만 있으면 끝나지 않은 것이다
+3. 역할 문서에 없어 헤맨 것 · 틀린 절은 보고에 한 줄 — 조율자가 라운드 끝에 `/retro` 로 거둔다
+4. 사정은 `docs/notes/` 에 날짜와 함께 — 요구사항도 규칙도 아니다

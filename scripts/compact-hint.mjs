@@ -13,7 +13,7 @@
 import { fileURLToPath } from 'node:url';
 
 export const REMINDER =
-  '대화가 압축됐다 — 다음 일 전에 docs/start.md 에서 역할을 고르고 그 역할 문서를 다시 끝까지 읽은 뒤 `node scripts/session-status.mjs` 로 지금을 잰다(요약은 확인 전의 가설이다). 운영자에게 하는 말은 쉬운 한국어로 짧게 한다(docs/agents/delegation/coordinator.md 「조율자 세션」).';
+  '대화가 압축됐다 — 다음 일 전에 docs/start.md 에서 역할을 고르고 그 역할 문서의 멈출 자리와 「먼저 읽는 것」을 다시 본 뒤 `node scripts/session-status.mjs` 로 지금을 잰다(요약은 가설이다). 운영자에게는 쉬운 한국어로 짧게 말한다.';
 
 export const responseOf = () => ({
   hookSpecificOutput: { hookEventName: 'SessionStart', additionalContext: REMINDER },
