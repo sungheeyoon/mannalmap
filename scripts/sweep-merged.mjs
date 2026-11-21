@@ -6,8 +6,8 @@
  * 걷는 차례는 `docs/agents/delegation/coordinator.md` 「출시 흐름」 4 · 「라운드 끝 정리」(ADR 0229).
  *
  * 걷는 것은 PR 이 MERGED · CLOSED 이고 push 안 된 커밋 · 더러운 변경(스테이징 · 추적 안 된 파일 포함)이 없는 것뿐이다.
- * 메인 체크아웃 · `main` 가지 · 잠긴 워크트리 · 열린 PR · PR 이 없는 가지 · detached 워크트리 · 로컬 스택이 떠 있거나
- * 그 안에서 프로세스가 도는 워크트리는 건너뛰고 까닭을 찍는다. 판정은 아래 순수 함수(`planSweep`)이고 git · gh · docker · ps 는 `main` 에서만 부른다.
+ * 메인 체크아웃 · `main` 가지 · 잠긴 워크트리 · 열린 PR · PR 이 없는 가지 · detached 워크트리 · 로컬 스택이 떠 있거나 Docker 가 고장이라
+ * 떠 있는지 모르거나(꺼졌거나 없으면 떠 있는 스택이 없다고 본다) 그 안에서 프로세스가 도는 워크트리는 건너뛰고 까닭을 찍는다. 판정은 아래 순수 함수(`planSweep`)이고 git · gh · docker · ps 는 `main` 에서만 부른다.
  *
  * 그 밖에 걷는 셋(2026-11-07 조율자 실측에 남은 것):
  * - **PR 없는 격리 가지** — 에이전트 워크트리의 시작 가지 `worktree-agent-…` 는 에이전트가 다른 이름으로 PR 을 내 PR 이 없다.
@@ -22,7 +22,7 @@
  * `--apply` 도 `git worktree remove` 에 `--force` 를 붙이지 않는다 — 판정 뒤에 생긴 변경이 있으면 git 이 거절한다. 가지는
  * 스쿼시 머지라 `git branch -D` 다. 원격 가지는 건드리지 않는다(GitHub 가 머지 때 지운다).
  */
-import { execFileSync } from 'node:child_process';
+import { execFileSync, spawnSync } from 'node:child_process';
 import { existsSync, readFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -41,6 +41,7 @@ export const SKIP = {
   dirty: '더러운 변경',
   unpushed: 'push 안 된 커밋',
   stack: '로컬 스택이 떠 있다',
+  stackUnknown: '로컬 스택이 떠 있는지 모른다(Docker 고장)',
   held: '남는 워크트리가 쥐고 있다',
 };
 
@@ -80,10 +81,11 @@ const skip = ({ kind, reason }) => ({ sweep: false, kind, reason });
 
 /**
  * 워크트리 하나 — 순수 함수다. `lockOwner` 는 잠겼을 때 잠근 쪽(`lockOwnerOf`): `gone` 끝난 에이전트 · `live` 세션이 살아 있는 에이전트 ·
- * `other` 에이전트 잠금이 아니다(없으면 `other` 로 본다). `busy` 는 그 폴더 안에 cwd 를 둔 프로세스가 있는가.
+ * `other` 에이전트 잠금이 아니다(없으면 `other` 로 본다). `busy` 는 그 폴더 안에 cwd 를 둔 프로세스가 있는가. `stackUp` 이 null 이면
+ * Docker 가 고장이라 그 워크트리의 스택이 떠 있는지 모른다 — 떠 있을 수 있으니 걷지 않는다.
  *
  * @param {{ path: string, isMain: boolean, isCurrent: boolean, locked: boolean, lockOwner?: 'gone' | 'live' | 'other',
- *   prunable?: boolean, branch: string | null, dirty: boolean, stackUp: boolean, busy?: boolean, unpushed: number,
+ *   prunable?: boolean, branch: string | null, dirty: boolean, stackUp: boolean | null, busy?: boolean, unpushed: number,
  *   aheadOfMain?: number, pr: { number: number, state: string } | null }} tree
  */
 export function judgeWorktree(tree) {
@@ -115,6 +117,7 @@ function judgeContent(tree, { detachedInMain }) {
   if (tree.dirty) return skip({ kind: 'dirty', reason: SKIP.dirty });
   if (tree.unpushed > 0) return skip({ kind: 'unpushed', reason: `${SKIP.unpushed} ${tree.unpushed}개` });
   if (tree.stackUp) return skip({ kind: 'stack', reason: `${SKIP.stack} — 거기서 npm run db:stop` });
+  if (tree.stackUp === null) return skip({ kind: 'stackUnknown', reason: `${SKIP.stackUnknown} — 운영자가 Docker Desktop 을 껐다 켠 뒤 다시 부른다` });
   if (tree.busy) return skip({ kind: 'busy', reason: SKIP.busy });
   if (tree.branch === null) return { sweep: true, kind: 'sweep', reason: 'detached — 머리가 origin/main 에 들었다' };
   return done(tree.pr);
@@ -201,6 +204,48 @@ export function reportOf({ worktrees, branches }, { apply = false } = {}) {
   ].join('\n');
 }
 
+/**
+ * `docker info --format '{{.ServerVersion}}'` 의 결과를 가른다. 엔진이 500 을 내도 명령은 0 으로 끝나고 stdout 이 빈다 — 판본이 찍혀야 켜짐이다.
+ * 소켓에 닿지 못했다는 말(「Cannot connect to the Docker daemon」, CLI 29 는 「failed to connect to the docker API」)만 꺼짐이고, 그 밖의
+ * 실패 · 빈 답은 고장이다.
+ *
+ * @param {{ stdout?: string, stderr?: string, code?: string | number }} result
+ * @returns {{ running: boolean, missing?: boolean, broken?: string }}
+ */
+export function dockerStateOf({ stdout = '', stderr = '', code }) {
+  if (code === 'ENOENT') return { running: false, missing: true };
+  if (stdout.trim() !== '') return { running: true };
+  if (/Cannot connect to the Docker daemon|Is the docker daemon running|failed to connect to the docker API/i.test(stderr)) return { running: false };
+  const first = stderr.trim().split('\n')[0] ?? '';
+  return { running: false, broken: first === '' ? '5초 안에 답이 없다' : first.slice(0, 80) };
+}
+
+/**
+ * 떠 있는 컨테이너 이름들 — Docker 가 꺼졌거나 없으면 빈 목록이다(떠 있는 스택이 없다). 고장이거나, 켜졌는데 목록을 못 읽었으면
+ * null 이다 — 떠 있는지 모른다.
+ *
+ * @param {{ running: boolean, missing?: boolean, broken?: string }} engine `dockerStateOf` 의 결과
+ * @param {string | null} names `docker ps --format '{{.Names}}'` 의 출력, 못 읽었으면 null
+ * @returns {Set<string> | null}
+ */
+export function containersOf(engine, names) {
+  if (!engine.running) return engine.broken ? null : new Set();
+  return names === null ? null : new Set(names.split('\n').filter(Boolean));
+}
+
+/**
+ * 그 워크트리의 로컬 스택이 떠 있나 — 스택 이름의 DB 컨테이너로 가른다. 이름이 없으면 메인 체크아웃의 기본 스택(`saju`)을 쓰는
+ * 워크트리라 제 스택이 없다. 목록을 모르면(null) 이름이 있는 워크트리는 null 이다.
+ *
+ * @param {string | null | undefined} id
+ * @param {Set<string> | null} containers
+ * @returns {boolean | null}
+ */
+export function stackUpOf(id, containers) {
+  if (!id) return false;
+  return containers === null ? null : containers.has(`supabase_db_${id}`);
+}
+
 // ── 밖 — git · gh · docker ──────────────────────────────────────────────────────────
 
 const run = (cmd, args, options = {}) => execFileSync(cmd, args, { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'], ...options }).trim();
@@ -233,11 +278,25 @@ export function parseWorktrees(porcelain) {
     });
 }
 
-/** 그 워크트리의 로컬 스택이 떠 있나 — `supabase/.env.local` 의 스택 이름(없으면 `saju`)으로 DB 컨테이너를 찾는다(`scripts/stack-slot.mjs`) */
+/** 엔진이 답하지 않으면 `docker` 가 30초 넘게 매달린다 — 세션 상태의 Docker 줄처럼 5초에서 끊는다 */
+const DOCKER_WAIT = { timeout: 5000 };
+
+/** 끝난 꼴과 상관없이 stdout · stderr · code 를 다 들고 온다 — 엔진이 500 을 내도 0 으로 끝나니 세션 상태처럼 성공 때의 stderr 도 넘긴다 */
+const probe = (cmd, args, options) => {
+  const { stdout, stderr, error } = spawnSync(cmd, args, { encoding: 'utf8', ...options });
+  return { stdout: stdout ?? '', stderr: stderr ?? '', code: error?.code };
+};
+
+const runningContainers = () => {
+  const engine = dockerStateOf(probe('docker', ['info', '--format', '{{.ServerVersion}}'], DOCKER_WAIT));
+  return containersOf(engine, engine.running ? tryRun('docker', ['ps', '--format', '{{.Names}}'], DOCKER_WAIT) : null);
+};
+
+/** 그 워크트리의 스택 이름은 `supabase/.env.local` 의 `SAJU_STACK_ID` 다(`scripts/stack-slot.mjs`) */
 const stackUpIn = (path, containers) => {
   const file = join(path, 'supabase/.env.local');
   const id = existsSync(file) ? /^SAJU_STACK_ID=(.+)$/m.exec(readFileSync(file, 'utf8'))?.[1]?.trim() : null;
-  return id ? containers.has(`supabase_db_${id}`) : false;
+  return stackUpOf(id, containers);
 };
 
 /** 원격 어디에도 없고 PR 의 머리에도 없는 커밋 수 — 스쿼시 머지 뒤 원격 가지가 지워져도 PR 의 머리 커밋으로 잰다 */
@@ -272,8 +331,7 @@ function main() {
 
   run('git', ['fetch', '--prune', '--quiet']);
   const pulls = JSON.parse(run('gh', ['pr', 'list', '--state', 'all', '--limit', '5000', '--json', 'number,state,headRefName,headRefOid']));
-  // 엔진이 답하지 않으면 `docker ps` 가 30초 넘게 매달린다. 세션 상태의 Docker 줄처럼 5초에서 끊는다
-  const containers = new Set((tryRun('docker', ['ps', '--format', '{{.Names}}'], { timeout: 5000 }) ?? '').split('\n').filter(Boolean));
+  const containers = runningContainers();
   const cwds = processCwds();
   const upstreams = new Map(
     run('git', ['for-each-ref', '--format=%(refname:short)\t%(upstream:lstrip=3)\t%(objectname)', 'refs/heads'])
