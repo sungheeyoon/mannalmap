@@ -44,7 +44,7 @@
 
 - 잠긴 자리와 볼 자리를 가르려면 → [무엇이 잠겨 있나](../architecture.md#무엇이-잠겨-있나--그리고-무엇이-아닌가) — 잠기지 않은 자리가 볼 곳이다
 - 머지 전 PR 의 코드를 넓게 읽거나 판정 함수를 그 PR 의 코드로 돌리려면 → [일하는 법](../agents/delegation/working.md#일하는-법--세션마다-다시-배우던-것) — `git fetch origin pull/<N>/head:pr-<N>` 뒤 `git archive -o <스크래치>/x.tar pr-<N>` · `tar -xf`. 그 사본에서는 `git ls-files` 잠금이 늘 붉다 — 판정이 아니다
-- 셸 명령이 `cannot be shown …` 으로 거절되면 → [로컬 환경의 함정](../agents/delegation/local-env.md#로컬-환경의-함정) — 워크트리 격리가 막는 명령과 돌아가는 길
+- 셸 명령이 `cannot be shown …` · `… too complex to verify …` 로 거절되면 → [로컬 환경의 함정](../agents/delegation/local-env.md#로컬-환경의-함정) — 워크트리 격리가 막는 명령과 돌아가는 길
 - 감사에서 최근 커밋의 파일 목록이 필요하면 → [로컬 환경의 함정](../agents/delegation/local-env.md#로컬-환경의-함정) — 커밋마다 `git show --stat <SHA>`, 보고 끝에 마지막으로 본 SHA
 - 발견의 꼴 예시나 규모(몇 건 · 몇 %)를 적는 법이 필요하면 → [감사 노트의 팀](../notes/2026-09-28-overnight-audit.md#팀--감사읽기만)
 - 프런트 관점에서 흐름 · 문구를 한국 서비스 사례와 견주려면 → [한국 서비스 사례 표](../notes/2026-11-02-korean-app-flow-references.md) — 요구사항이 아니라 재료다
