@@ -102,7 +102,7 @@ export function verifyLineOf(run, head) {
   const where = run.headSha === head ? `${sha}(지금 머리)` : `${sha} — 지금 머리 \`${head.slice(0, 8)}\` 의 실행은 아직 없다 ·`;
   if (run.status !== 'completed') return `${where} 도는 중(${run.status}) — ${run.url}`;
   if (run.conclusion !== 'success') return `${where} **${run.conclusion}** — ${run.url}`;
-  const scope = run.everything ? '모든 차선이 돈 성공' : '성공이지만 정책 차선만 돈 실행 — e2e 실패가 고쳐졌는지 모른다';
+  const scope = run.everything ? '모든 차선이 돈 성공' : '성공이지만 정책 차선만 돈 실행 — e2e 는 이 머리에서 아직 안 돌았다. 다 돌리려면 `gh workflow run verify.yml --ref main`(손으로 켠 실행은 모든 차선을 돈다)';
   return `${where} ${scope} — ${run.url}`;
 }
 
@@ -177,13 +177,30 @@ export function nextAdvisoryLineOf(audit) {
 
 /**
  * Docker 한 줄 — 로컬 스택(`db:start` · e2e · 화면 그림)이 기대는 엔진이다. 화면 라운드 한가운데서 꺼진 것을 알던 자리를 세션을 열 때로 당긴다(G-173).
+ * 고장은 꺼짐과 따로 찍는다 — 2026-11-21 Docker Desktop 이 떠 있는데 엔진이 500 을 내 「꺼짐」으로 읽혔고, 에이전트는 남이 쓰는 줄 알고 손대지 않았다.
  *
- * @param {{ running: boolean, missing?: boolean }} docker
+ * @param {{ running: boolean, missing?: boolean, broken?: string }} docker
  */
-export function dockerLineOf({ running, missing = false }) {
+export function dockerLineOf({ running, missing = false, broken }) {
   if (running) return '켜짐';
   if (missing) return '`docker` 명령이 없다 — 로컬 스택 대신 CI 에 기댄다(`docs/agents/delegation/local-env.md` 「로컬 환경의 함정」)';
+  if (broken) return `**고장** — Docker Desktop 은 떠 있는데 엔진이 답하지 못한다(${broken}). 운영자가 Docker Desktop 을 껐다 켠다 — 에이전트는 로컬 스택 대신 CI 에 기댄다`;
   return '**꺼짐** — 로컬 스택 · e2e · 화면 그림 전에 Docker Desktop 을 켠다';
+}
+
+/**
+ * `docker info --format '{{.ServerVersion}}'` 의 결과를 가른다. 엔진이 500 을 내도 명령은 0 으로 끝나고 stdout 이 빈다 — 판본이 찍혀야 켜짐이다.
+ * 소켓이 없다는 말(「Cannot connect to the Docker daemon」)만 꺼짐이고, 그 밖의 실패 · 빈 답은 고장이다.
+ *
+ * @param {{ stdout?: string, stderr?: string, code?: string | number }} result
+ * @returns {{ running: boolean, missing?: boolean, broken?: string }}
+ */
+export function dockerStateOf({ stdout = '', stderr = '', code }) {
+  if (code === 'ENOENT') return { running: false, missing: true };
+  if (stdout.trim() !== '') return { running: true };
+  if (/Cannot connect to the Docker daemon|Is the docker daemon running/i.test(stderr)) return { running: false };
+  const first = stderr.trim().split('\n')[0] ?? '';
+  return { running: false, broken: first === '' ? '5초 안에 답이 없다' : first.slice(0, 80) };
 }
 
 /**
@@ -323,11 +340,11 @@ async function auditFacts() {
   return audit;
 }
 
-/** 엔진이 답하면 켜짐 — 명령이 없으면(ENOENT) 없음, 답이 없으면 꺼짐 */
+/** 가르는 것은 `dockerStateOf` 다 — 실패도 stdout · stderr 를 들고 온다 */
 async function dockerFacts() {
   return exec('docker', ['info', '--format', '{{.ServerVersion}}'], { timeout: 5000 }).then(
-    () => ({ running: true }),
-    (error) => ({ running: false, missing: error?.code === 'ENOENT' }),
+    ({ stdout, stderr }) => dockerStateOf({ stdout, stderr }),
+    (error) => dockerStateOf({ stdout: error?.stdout, stderr: error?.stderr ?? (error?.killed ? '' : String(error?.message ?? '')), code: error?.code }),
   );
 }
 

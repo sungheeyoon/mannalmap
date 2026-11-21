@@ -48,3 +48,4 @@
 - 접속기록(`audit.operator_access`)의 칸을 바꾸면 → [반출](../ops/runbook/security.md#반출--매일-s3-한-번에-하나-결과는-db-에) — 묶음 `version` · 검증 허용 목록이 따라 바뀐다
 - PR 제목을 쓰면 → [커밋과 PR](../agents/code-rules/locks.md#커밋과-pr) — type 목록(`scripts/pr-title.mjs` 의 `TYPES`)에 `db` 가 없다. 마이그레이션 PR 도 그 목록의 type 을 쓴다
 - `reading_bundle.refunded_credits` 를 바꾸면 → [그 두 함수의 최신 마이그레이션](../../supabase/migrations/) — 운영자 환불 금액 산식(`operator_hold_reading_refund` · `operator_reading_refund_basis`)의 입력이라 값이 바뀌면 환불 금액이 바뀐다. 두 함수를 함께 고치고 pgTAP 으로 금액을 확인한다
+- 풀이권 장부(`reading_credit_use` · `reading_credit_grant_entry`)를 읽는 문이나 그 줄을 만드는 pgTAP 을 쓰면 → [책이 사용을 적는 마이그레이션](../../supabase/migrations/20261011090000_the_bought_credit_is_booked_by_the_bundle.sql) — `reading_run` 을 넣으면 트리거 `reading_run_books_a_credit` 가 사용 줄을 스스로 적는다. 시험이 사용 줄을 따로 넣으면 두 번 센다

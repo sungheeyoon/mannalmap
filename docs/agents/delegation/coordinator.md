@@ -58,6 +58,7 @@ SHA 는 `git log -1 <SHA>` 로 무엇인지 본다. 날을 넘겨 이어 받은 
   없다고 적었다가 나중에 하나 더 띄우면 앞 세션에 `SendMessage` 로 알린다.
   화면 문구: 대장 경로(`docs/product/copy-ledger.md`)와 규칙(`docs/agents/code-rules/screen-copy.md` 「화면 문구」)을 가리킨다 —
   승인된 시안의 글자를 한 자도 바꾸지 않고 쓴 것만 확정이다(`docs/agents/delegation/decisions.md` 「결정 점검표」, ADR 0255).
+  화면 시안: 방식은 `docs/agents/delegation/working.md` 「화면은 시안 먼저」를 절 이름으로 가리키고, 커밋 · 그림 자리 · 로컬 스택을 기억으로 적지 않는다(2026-11-21 — 적었다가 그 절과 어긋났다).
 - **브리프는 문제와 끝 조건을 주고 해결책을 정하지 않는다.** 「링크 한 줄 추가」처럼 고칠 모양을 적으면 에이전트는
   구조를 보지 않고 증상만 고친다. 정책이나 새 흐름인데 한국 서비스의 실사례가 없으면 「가장 가까운 것」을 만들지 말고,
   구조와 선택지를 보고하게 한다 — 차례는 `docs/agents/delegation/decisions.md` 「정책 · 흐름의 빈틈」(사정: `docs/notes/2026-11-07-launch-round.md`).
