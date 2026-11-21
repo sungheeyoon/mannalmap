@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { ctimeOf, judgeBranch, judgeWorktree, lockOwnerOf, parseWorktrees, planSweep, prFor, reportOf } from './sweep-merged.mjs';
+import { containersOf, ctimeOf, judgeBranch, judgeWorktree, lockOwnerOf, parseWorktrees, planSweep, prFor, reportOf, stackUpOf } from './sweep-merged.mjs';
 
 const merged = { number: 10, state: 'MERGED', headRefName: 'feat/a', headRefOid: 'a1' };
 const closed = { number: 11, state: 'CLOSED', headRefName: 'feat/b', headRefOid: 'b1' };
@@ -48,6 +48,27 @@ describe('sweep:merged — 스쿼시 머지된 가지는 PR 상태로 판정한�
     expect(judgeWorktree(tree({ unpushed: 2 }))).toMatchObject({ sweep: false, kind: 'unpushed', reason: 'push 안 된 커밋 2개' });
     expect(judgeWorktree(tree({ stackUp: true })).kind).toBe('stack');
     expect(judgeBranch({ name: 'feat/a', heldBy: null, unpushed: 1, pr: merged }).kind).toBe('unpushed');
+  });
+
+  it('Docker 가 고장이라 로컬 스택이 떠 있는지 모르면(stackUp null) 머지된 PR 이어도 건너뛴다', () => {
+    expect(judgeWorktree(tree({ stackUp: null }))).toMatchObject({ sweep: false, kind: 'stackUnknown' });
+  });
+
+  it('Docker 가 켜졌으면 목록대로, 꺼졌거나 없으면 빈 목록이고, 고장이거나 켜졌는데 목록을 못 읽으면 모른다(null)', () => {
+    expect(containersOf({ running: true }, 'supabase_db_a\nweb')).toEqual(new Set(['supabase_db_a', 'web']));
+    expect(containersOf({ running: false }, null)).toEqual(new Set());
+    expect(containersOf({ running: false, missing: true }, null)).toEqual(new Set());
+    expect(containersOf({ running: false, broken: '5초 안에 답이 없다' }, null)).toBeNull();
+    expect(containersOf({ running: true }, null)).toBeNull();
+  });
+
+  it('스택 이름이 있는 워크트리만 Docker 를 본다 — 목록을 모르면 모른다(null), 이름이 없으면 늘 떠 있지 않다', () => {
+    const up = new Set(['supabase_db_a']);
+    expect(stackUpOf('a', up)).toBe(true);
+    expect(stackUpOf('b', up)).toBe(false);
+    expect(stackUpOf('a', null)).toBeNull();
+    expect(stackUpOf(null, null)).toBe(false);
+    expect(stackUpOf(undefined, up)).toBe(false);
   });
 
   it('그 안에서 프로세스(끝난 세션이 남긴 dev 서버 · Metro)가 돌면 머지된 PR 이어도 건너뛴다', () => {

@@ -5,7 +5,6 @@ import {
   homeMasked,
   lastDeployOf,
   dockerLineOf,
-  dockerStateOf,
   localMainOf,
   nextAdvisoryLineOf,
   noteLineOf,
@@ -17,7 +16,7 @@ import {
   verifyLineOf,
   worktreeLineOf,
 } from './session-status.mjs';
-import { reportOf as sweepReportOf } from './sweep-merged.mjs';
+import { dockerStateOf, reportOf as sweepReportOf } from './sweep-merged.mjs';
 
 const HEAD = '1da9819ec4f77d00a8323bfec30a4f85b6c26bf4';
 const OLD = 'f8450ea2b1c3d4e5f60718293a4b5c6d7e8f9012';
@@ -86,6 +85,8 @@ describe('session-status — 세션을 열 때 · 인계할 때 찍는 한 장',
     const fiveHundred = 'request returned 500 Internal Server Error for API route and version http://x/v1.52/info, check if the server supports the requested API version\n';
     expect(dockerStateOf({ stdout: '\n', stderr: fiveHundred })).toEqual({ running: false, broken: fiveHundred.slice(0, 80) });
     expect(dockerStateOf({ stderr: 'Cannot connect to the Docker daemon at unix:///x/docker.sock. Is the docker daemon running?' })).toEqual({ running: false });
+    const noSocket = 'failed to connect to the docker API at unix:///x/docker.sock; check if the path is correct and if the daemon is running: dial unix /x/docker.sock: connect: no such file or directory';
+    expect(dockerStateOf({ stderr: noSocket })).toEqual({ running: false });
     expect(dockerStateOf({ stderr: '' })).toEqual({ running: false, broken: '5초 안에 답이 없다' });
     expect(dockerStateOf({ code: 'ENOENT' })).toEqual({ running: false, missing: true });
   });

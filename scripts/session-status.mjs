@@ -20,7 +20,7 @@ import { fileURLToPath } from 'node:url';
 import { promisify } from 'node:util';
 
 import { measuredEverything } from './main-red.mjs';
-import { parseWorktrees } from './sweep-merged.mjs';
+import { dockerStateOf, parseWorktrees } from './sweep-merged.mjs';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 
@@ -186,21 +186,6 @@ export function dockerLineOf({ running, missing = false, broken }) {
   if (missing) return '`docker` 명령이 없다 — 로컬 스택 대신 CI 에 기댄다(`docs/agents/delegation/local-env.md` 「로컬 환경의 함정」)';
   if (broken) return `**고장** — Docker Desktop 은 떠 있는데 엔진이 답하지 못한다(${broken}). 운영자가 Docker Desktop 을 껐다 켠다 — 에이전트는 로컬 스택 대신 CI 에 기댄다`;
   return '**꺼짐** — 로컬 스택 · e2e · 화면 그림 전에 Docker Desktop 을 켠다';
-}
-
-/**
- * `docker info --format '{{.ServerVersion}}'` 의 결과를 가른다. 엔진이 500 을 내도 명령은 0 으로 끝나고 stdout 이 빈다 — 판본이 찍혀야 켜짐이다.
- * 소켓이 없다는 말(「Cannot connect to the Docker daemon」)만 꺼짐이고, 그 밖의 실패 · 빈 답은 고장이다.
- *
- * @param {{ stdout?: string, stderr?: string, code?: string | number }} result
- * @returns {{ running: boolean, missing?: boolean, broken?: string }}
- */
-export function dockerStateOf({ stdout = '', stderr = '', code }) {
-  if (code === 'ENOENT') return { running: false, missing: true };
-  if (stdout.trim() !== '') return { running: true };
-  if (/Cannot connect to the Docker daemon|Is the docker daemon running/i.test(stderr)) return { running: false };
-  const first = stderr.trim().split('\n')[0] ?? '';
-  return { running: false, broken: first === '' ? '5초 안에 답이 없다' : first.slice(0, 80) };
 }
 
 /**
