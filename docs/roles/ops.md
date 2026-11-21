@@ -2,22 +2,19 @@
 
 운영 DB 와 Vercel 에 닿는 일이다. CI 워크플로 · 의존성 감사 · 앱 빌드 · 스토어 제출도 이 역할이다. 대개 조율자가 라운드 끝에 겸한다.
 
+## 지킬 것
+
+- 등급 3 을 밟으면 본 값을 #770 · 접속기록에 적는다([권한 등급](../agents/delegation/permissions.md#권한-등급--무엇을-해도-되고-무엇은-묻는가))
+- 묶음 배포의 끝 상태는 [묶음 배포](../ops/runbook/deploy.md#묶음-배포--최신-main-을-production-으로-한-번) 5 의 자리에 적는다
+- 원격 질의는 개인을 가리키지 않는 것만 `npm run db:remote -- --purpose` 로 보낸다([개인정보는 화면으로만](../ops/runbook/access.md#개인정보는-화면으로만--원격-sql-의-경계-adr-0105))
+- `supabase config push` · Vercel 변수 삭제 · main 가지 삭제는 운영자에게 넘긴다([권한 등급](../agents/delegation/permissions.md))
+- `app/api/**` 에 자격을 묻지 않는 문(상태 문 · 감시 문)을 더하면 결정이다([결정 점검표](../agents/delegation/decisions.md))
+- 운영 주소는 `docs/ops/runbook/domain.md` 맨 위만 글자로 든다 — 다른 곳은 가리킨다([운영 주소의 자리](../ops/runbook/domain.md))
+
 ## 먼저 읽는 것
 
 - `docs/ops/runbook/deploy.md` 「배포」 — 머지는 배포가 아니다 · 묶음 배포 · 앱과 DB 는 따로 간다
 - `docs/ops/runbook/access.md` 「어디서 실행하나」 — 접속값 · 비밀 · 개인정보의 경계
-
-## 이 저장소의 방식
-
-- [권한 등급](../agents/delegation/permissions.md#권한-등급--무엇을-해도-되고-무엇은-묻는가) — 등급 3 을 밟은 뒤 적을 값 · 공식 운영의 잠금
-- [묶음 배포](../ops/runbook/deploy.md#묶음-배포--최신-main-을-production-으로-한-번) — 끝 상태를 적는 자리(5)
-- [개인정보는 화면으로만](../ops/runbook/access.md#개인정보는-화면으로만--원격-sql-의-경계-adr-0105) — 원격 질의의 경계와 `db:remote` 의 목적
-
-## 하지 않는 것 · 묻는 것
-
-- `supabase config push` · Vercel 변수 삭제 · main 가지 삭제는 운영자에게 넘긴다([권한 등급](../agents/delegation/permissions.md))
-- `app/api/**` 에 자격을 묻지 않는 문(상태 문 · 감시 문)을 더하면 결정이다([결정 점검표](../agents/delegation/decisions.md))
-- 운영 주소는 `docs/ops/runbook/domain.md` 맨 위만 글자로 든다 — 다른 곳은 가리킨다([운영 주소의 자리](../ops/runbook/domain.md))
 
 ## 끝날 때 고치는 것
 

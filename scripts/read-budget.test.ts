@@ -47,26 +47,26 @@ describe('읽기량 — 절을 가리키면 그 절만 센다 (ADR 0147)', () =>
     repo({ '먼저 읽는 것': '- `docs/source.md` 「가 절」' });
     expect(sourceBytes(readBudgetOf('x', root))).toBe(AT(SOURCE, '## 가 절'));
 
-    repo({ '먼저 읽는 것': '- `docs/source.md` 「가 절」', '끝날 때 고치는 것': '- [ ] 그 뒤 → `docs/source.md`' });
+    repo({ '먼저 읽는 것': '- `docs/source.md` 「가 절」\n- 그 뒤 → `docs/source.md`' });
     expect(sourceBytes(readBudgetOf('x', root))).toBe(Buffer.byteLength(SOURCE));
   });
 
   it('링크의 앵커도 절이고, 같은 절을 두 번 가리켜도 한 번 센다', () => {
-    repo({ '먼저 읽는 것': '- `docs/source.md` 「나 절」', '이 저장소의 방식': '- [나](../source.md#나-절) — 같은 절' });
+    repo({ '먼저 읽는 것': '- `docs/source.md` 「나 절」\n- [나](../source.md#나-절) — 같은 절' });
     expect(sourceBytes(readBudgetOf('x', root))).toBe(AT(SOURCE, '## 나 절'));
   });
 
   it('없는 절을 가리키면 셈이 멈춘다 — 0 바이트로 초록이 되지 않게', () => {
     repo({ '먼저 읽는 것': '- `docs/source.md` 「없는 절」' });
     expect(() => readBudgetOf('x', root)).toThrow(/없는 절/);
-    repo({ '이 저장소의 방식': '- [없음](../source.md#없는-절) — 앵커' });
+    repo({ '먼저 읽는 것': '- [없음](../source.md#없는-절) — 앵커' });
     expect(() => readBudgetOf('x', root)).toThrow(/없는-절/);
   });
 });
 
 describe('읽기량 — 「닿을 때 여는 것」은 세지 않는다 (ADR 0147)', () => {
   it('같은 줄이 세는 칸에 있으면 세고, 「닿을 때 여는 것」에 있으면 역할 문서의 바이트만 는다', () => {
-    repo({ '이 저장소의 방식': '- [다른 원본](../other.md) — 통째로' });
+    repo({ '먼저 읽는 것': '- [다른 원본](../other.md) — 통째로' });
     const counted = readBudgetOf('x', root);
     expect(counted.fixed.map((one) => one.file)).toContain('docs/other.md');
 
@@ -74,6 +74,13 @@ describe('읽기량 — 「닿을 때 여는 것」은 세지 않는다 (ADR 014
     const onDemand = readBudgetOf('x', root);
     expect(onDemand.fixed.map((one) => one.file)).toEqual(['docs/roles/x.md']);
     expect(onDemand.total).toBe(own());
+  });
+});
+
+describe('읽기량 — 손대기 전에 읽는 칸은 「먼저 읽는 것」 하나다 (ADR 0264)', () => {
+  it('「지킬 것」의 출처 링크와 「끝날 때 고치는 것」의 자리는 세지 않는다', () => {
+    repo({ '지킬 것': '- 그 규칙을 지킨다([다른 원본](../other.md))', '끝날 때 고치는 것': '- [ ] 그 뒤 → `docs/source.md`' });
+    expect(readBudgetOf('x', root).fixed.map((one) => one.file)).toEqual(['docs/roles/x.md']);
   });
 });
 

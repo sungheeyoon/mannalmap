@@ -2,22 +2,19 @@
 
 `supabase/migrations/` 와 `supabase/tests/` 를 고치는 일이다. 앱이 그 함수를 부르게 하는 쪽은 `docs/roles/feature.md` 다.
 
+## 지킬 것
+
+- DB 를 부르는 자리는 문이다 — 문이 실패를 말하는 셋은 [문 — DB 를 부르는 자리](../architecture.md#문--db-를-부르는-자리)
+- 로컬 차례는 `db:reset` → `test:db` → `db:types` …([무엇을 고쳤으면 무엇을 돌리나](../agents/test-map/what-to-run.md#무엇을-고쳤으면-무엇을-돌리나))
+- 마이그레이션 파일 이름은 [이름](../agents/code-rules/names.md#이름)의 꼴을 따른다
+- `supabase config push` 는 운영자에게 넘긴다 — 원격의 구글 설정을 지운다([권한 등급](../agents/delegation/permissions.md))
+- 남은 원격 잠금을 만나면 멈추고 걷는 법을 보고에 적는다([일하는 법](../agents/delegation/working.md))
+- RLS · grant · 보존 기간 · 실패 때 여닫음이 바뀌면 결정이다 — ADR 을 쓰고 보고에 올린다([결정 점검표](../agents/delegation/decisions.md))
+
 ## 먼저 읽는 것
 
 - `docs/agents/delegation/permissions.md` 「권한 등급」 — `db push` 의 차례 · 마이그레이션이 든 PR 의 예외
 - `docs/ops/runbook/deploy.md` 「규약 넷」 — 마이그레이션이 먼저 · 넓히기 → 앱 → 좁히기
-
-## 이 저장소의 방식
-
-- [문 — DB 를 부르는 자리](../architecture.md#문--db-를-부르는-자리) — 문이 실패를 말하는 셋
-- [무엇을 고쳤으면 무엇을 돌리나](../agents/test-map/what-to-run.md#무엇을-고쳤으면-무엇을-돌리나) — 로컬 차례(`db:reset` → `test:db` → `db:types` …)
-- [이름](../agents/code-rules/names.md#이름) — 마이그레이션 파일 이름
-
-## 하지 않는 것 · 묻는 것
-
-- `supabase config push` 는 운영자에게 넘긴다 — 원격의 구글 설정을 지운다([권한 등급](../agents/delegation/permissions.md))
-- 남은 원격 잠금을 만나면 멈추고 걷는 법을 보고에 적는다([일하는 법](../agents/delegation/working.md))
-- RLS · grant · 보존 기간 · 실패 때 여닫음이 바뀌면 결정이다 — ADR 을 쓰고 보고에 올린다([결정 점검표](../agents/delegation/decisions.md))
 
 ## 끝날 때 고치는 것
 

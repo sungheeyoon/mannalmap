@@ -2,23 +2,19 @@
 
 문 · 액션 · 도메인 lib 를 더하거나 동작을 바꾸는 일이다. 표를 건드리면 `docs/roles/db.md`, 화면을 그리면 `docs/roles/ui.md` 도 본다.
 
-## 먼저 읽는 것
+## 지킬 것
 
-- 그 기능의 PRD 절 — [PRD 영역 파일](../product/prd/) 가운데 하나(색인 `docs/prd.md`). 무엇을 만드는가의 원본
-- `docs/architecture.md` 「층 넷」 · 「새 것을 놓을 때」
-
-## 이 저장소의 방식
-
-- [실패를 말하는 법](../agents/code-rules/failures.md#실패를-말하는-법) · [주석과 ADR 참조](../agents/code-rules/comments.md#주석과-adr-참조)
-- [무엇을 고쳤으면 무엇을 돌리나](../agents/test-map/what-to-run.md#무엇을-고쳤으면-무엇을-돌리나) — 로컬 최소와 예외
-- [결정 점검표](../agents/delegation/decisions.md#결정-점검표--무엇이-바뀌면-결정인가-2026-09-28) — 무엇이 바뀌면 머지하지 않고 묻나
-
-## 하지 않는 것 · 묻는 것
-
+- 실패는 [실패를 말하는 법](../agents/code-rules/failures.md#실패를-말하는-법)대로 말한다
+- 커밋 전 로컬에서 돌릴 최소와 예외는 [무엇을 고쳤으면 무엇을 돌리나](../agents/test-map/what-to-run.md#무엇을-고쳤으면-무엇을-돌리나)
 - 결정 점검표에 걸리면 머지하지 않고 보고에 올린다 — 문구 말고는 ADR 을 같은 PR 에, 문구는 운영자 사후 확인([결정 점검표](../agents/delegation/decisions.md))
 - `app/api/**` 에 자격을 묻지 않는 문은 더하기 전에 보고에 올린다([결정 점검표](../agents/delegation/decisions.md))
 - 코드 주석의 출처는 `G-nn` 이나 ADR 이다 — PRD 절 번호는 옮겨지고, 날짜는 주석에 적지 않는다([주석과 ADR 참조](../agents/code-rules/comments.md#주석과-adr-참조))
 - 새 글자 · 배치 · 흐름은 레퍼런스와 함께 — 정책 · 새 흐름인데 사례가 없으면 구조와 선택지를 보고에([정책 · 흐름의 빈틈](../agents/delegation/decisions.md#정책--흐름의-빈틈--묻기-전에-찾는-차례))
+
+## 먼저 읽는 것
+
+- 그 기능의 PRD 절 — [PRD 영역 파일](../product/prd/) 가운데 하나(색인 `docs/prd.md`). 무엇을 만드는가의 원본
+- `docs/architecture.md` 「층 넷」 · 「새 것을 놓을 때」
 
 ## 끝날 때 고치는 것
 

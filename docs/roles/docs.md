@@ -2,21 +2,18 @@
 
 PRD · 간극 대장 · changelog · 용어집 · 노트 · 역할 문서를 코드와 결정에 맞추는 일이다.
 
-## 먼저 읽는 것
+## 지킬 것
 
-- `docs/start.md` 「원본 — 무엇이 무엇을 답하나」 — 한 사실은 한 자리에 산다
-
-## 이 저장소의 방식
-
-- [결정 점검표](../agents/delegation/decisions.md#결정-점검표--무엇이-바뀌면-결정인가-2026-09-28) — 문서를 코드에 맞추다 정책이 바뀌면 결정
-- [주석과 ADR 참조](../agents/code-rules/comments.md#주석과-adr-참조) — `ADR NNNN` 표기
-- [Writing an ADR](../agents/domain.md#writing-an-adr) — 색인 줄과 후속 결정 줄
-
-## 하지 않는 것 · 묻는 것
-
+- 문서를 코드에 맞추다 정책이 바뀌면 결정이다([결정 점검표](../agents/delegation/decisions.md#결정-점검표--무엇이-바뀌면-결정인가))
+- ADR 은 `ADR NNNN` 으로 적는다([주석과 ADR 참조](../agents/code-rules/comments.md#주석과-adr-참조))
+- 새 ADR 은 색인에 줄을 더하고, 대체한 옛 ADR 머리에 후속 결정 줄을 단다([Writing an ADR](../agents/domain.md#writing-an-adr))
 - 이미 있는 기록을 고치는 PR 은 한 번에 하나 — 나란히 두면 상반된 문장이 둘 다 남는다([나란히 맡길 때](../agents/delegation/parallel.md))
 - 노트에는 사정만 — 규약이 된 것은 원본으로 옮긴다([세션 기록](../agents/delegation/notes.md))
 - 결정(ADR)이 든 문서 PR 이 「검증 · 배포의 문턱」 줄에 걸리면 독립 검토가 끝나기 전에 `--auto` 를 걸지 않는다([결정 점검표](../agents/delegation/decisions.md))
+
+## 먼저 읽는 것
+
+- `docs/start.md` 「원본 — 무엇이 무엇을 답하나」 — 한 사실은 한 자리에 산다
 
 ## 끝날 때 고치는 것
 
@@ -30,7 +27,7 @@ PRD · 간극 대장 · changelog · 용어집 · 노트 · 역할 문서를 코
 손대기 전에 다 읽지 않는다 — 일이 그 자리에 닿을 때 연다(ADR 0147).
 
 - 간극 대장의 줄을 고치면 → [간극 대장](../product/gaps.md) 머리말 — 상태 다섯 · 띠 넷 · `보류` 의 뜻 · 기록 파일과의 짝
-- 문서와 코드가 어긋나면 → [조율자 세션](../agents/delegation/coordinator.md#조율자-세션--사람-하나--백그라운드-에이전트-여럿-2026-09-2324-에-잼) — 버그 · 문서 노후 · 결정 미반영 가르기
+- 문서와 코드가 어긋나면 → [조율자 세션](../agents/delegation/coordinator.md#조율자-세션--사람-하나--백그라운드-에이전트-여럿) — 버그 · 문서 노후 · 결정 미반영 가르기
 - 경로가 옮겨지거나 기록 파일을 지우면 → [경로가 옮겨지면](../agents/delegation/notes.md#경로가-옮겨지면--고치는-것과-두는-것)
 - 새 노트를 쓰거나 코드의 사정을 거슬러 가면 → [노트의 차례](../notes/README.md)
 - 역할 문서를 고치면 → [읽기량 예상치는 보고다](../agents/delegation/done.md#읽기량-예상치는-보고다) · [읽기량의 셈](../../scripts/read-budget.mjs) 머리말

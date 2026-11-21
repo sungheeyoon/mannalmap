@@ -2,6 +2,17 @@
 
 조율자가 두 번째 의견을 모을 때 띄우는 역할이다. 관점 하나(아래 목록에서)를 받고, 고치지 않고 보고한다.
 
+## 지킬 것
+
+- 발견마다 확인한 흔적(`파일:줄` · 실행 결과)을 붙이고, 결함 · 결정 · 문서 노후로 가른다([조율자 세션](../agents/delegation/coordinator.md#조율자-세션--사람-하나--백그라운드-에이전트-여럿))
+- 발견이 결정인지는 [결정 점검표](../agents/delegation/decisions.md#결정-점검표--무엇이-바뀌면-결정인가)로 가른다
+- 남의 워크트리 · 가지는 건드리지 않는다([라운드 끝 정리](../agents/delegation/coordinator.md#라운드-끝-정리))
+- 고치지 않는다 — 등급 0 이다. 고치는 에이전트가 코드에서 다시 잰다([권한 등급](../agents/delegation/permissions.md))
+- 찾기 · 검토는 지금 운영에 열린 기능만 — 닫힌 기능(지금은 인연)의 발견은 「보류」로 권한다([조율자 세션](../agents/delegation/coordinator.md))
+- 보고는 메시지로 한다 — 하네스가 `.md` 보고 파일을 막을 수 있다([조율자 세션](../agents/delegation/coordinator.md))
+- 기준은 fetch 한 `origin/main` 의 `파일:줄`이다 — 메인 체크아웃은 뒤처질 수 있다([조율자 세션](../agents/delegation/coordinator.md))
+- PR 의 코드는 `git archive` 로 풀어 읽는다 — 남의 워크트리에서 `git checkout` 하면 그 세션의 가지가 바뀐다([라운드 끝 정리](../agents/delegation/coordinator.md#라운드-끝-정리))
+
 ## 먼저 읽는 것
 
 - 하나를 고른다 — 받은 관점의 원본
@@ -21,20 +32,6 @@
   - 사용자 약속 · 게시 문구 · 법적 절차 — `docs/legal/README.md` · `docs/legal/terms-grounds.md` · 약관 원본(`src/lib/brand/`)
   - 리팩터의 동작 보존 — PR 의 diff 와 그 자리를 재는 시험(`docs/agents/test-map.md`) — 같은 입력에 같은 결과인지, 시험이 옛 동작을 실제로 잡는지
   - 남은 일 흔적 · 죽은 코드 — `docs/agents/delegation/working.md` 「일하는 법」(죽은 코드는 셋으로 가른다) · `docs/product/gaps.md` — knip 은 설정이 없어 낸 이름을 grep 으로 다시 잰다
-
-## 이 저장소의 방식
-
-- [조율자 세션](../agents/delegation/coordinator.md#조율자-세션--사람-하나--백그라운드-에이전트-여럿-2026-09-2324-에-잼) — 확인한 흔적(`파일:줄` · 실행 결과)을 붙인다 · 결함 · 결정 · 문서 노후 가르기
-- [결정 점검표](../agents/delegation/decisions.md#결정-점검표--무엇이-바뀌면-결정인가-2026-09-28) — 발견이 결정인지
-- [라운드 끝 정리](../agents/delegation/coordinator.md#라운드-끝-정리) — 남의 워크트리 · 가지는 건드리지 않는다
-
-## 하지 않는 것 · 묻는 것
-
-- 고치지 않는다 — 등급 0 이다. 고치는 에이전트가 코드에서 다시 잰다([권한 등급](../agents/delegation/permissions.md))
-- 찾기 · 검토는 지금 운영에 열린 기능만 — 닫힌 기능(지금은 인연)의 발견은 「보류」로 권한다([조율자 세션](../agents/delegation/coordinator.md))
-- 보고는 메시지로 한다 — 하네스가 `.md` 보고 파일을 막을 수 있다([조율자 세션](../agents/delegation/coordinator.md))
-- 기준은 fetch 한 `origin/main` 의 `파일:줄`이다 — 메인 체크아웃은 뒤처질 수 있다([조율자 세션](../agents/delegation/coordinator.md))
-- PR 의 코드는 `git archive` 로 풀어 읽는다 — 남의 워크트리에서 `git checkout` 하면 그 세션의 가지가 바뀐다([라운드 끝 정리](../agents/delegation/coordinator.md#라운드-끝-정리))
 
 ## 끝날 때 고치는 것
 

@@ -10,7 +10,7 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 
 ## 일은 `docs/start.md` 에서 연다
 
-`docs/start.md` 에서 역할을 고르고, 그 역할 문서(`docs/roles/`)의 멈출 자리와 「먼저 읽는 것」을 본 뒤 손댄다. 나머지는 일이 닿을 때 연다.
+`docs/start.md` 에서 역할을 고르고, 그 역할 문서(`docs/roles/`)의 「지킬 것」과 「먼저 읽는 것」을 본 뒤 손댄다. 나머지는 일이 닿을 때 연다.
 
 ## 멈출 선
 

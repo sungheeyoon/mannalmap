@@ -2,6 +2,17 @@
 
 `app/**/*.tsx` 와 `app/ui/` 를 고치는 일이다. 새 동작이 붙으면 `docs/roles/feature.md` 도 본다.
 
+## 지킬 것
+
+- 화면은 시안 → 운영자 승인 → 구현이다 — 대장 · 한국 레퍼런스로 시작하고, 보이기 전에 스스로 견준다([화면은 시안 먼저](../agents/delegation/working.md#화면은-시안-먼저))
+- 같은 사실은 문구 상수 하나로 쓴다 — 대장에 없는 문구를 넣는 법은 [화면 문구](../agents/code-rules/screen-copy.md#화면-문구)
+- 버튼 글자는 동사로 갈린다 — 그 밖의 모든 화면 규칙은 [화면 규칙](../product/prd/screens.md)
+- 화면은 그리기만 하고 DB 를 부르지 않는다([새 것을 놓을 때](../architecture.md#새-것을-놓을-때))
+- 코드 PR 은 운영자 검토 뒤 머지([출시 흐름](../agents/delegation/coordinator.md)). 화면 흐름 · 메뉴 구조는 결정, 새 문구는 사후 확인이나 권한 · 보존 · 요금 · 환불에 걸리면 결정이다([결정 점검표](../agents/delegation/decisions.md))
+- dev 서버는 제 자리에 띄운다 — 남이 띄운 서버(3000)는 죽이기 전에 묻는다. 그 서버를 재사용한 e2e 는 운영 DB 를 본다([로컬 환경의 함정](../agents/delegation/local-env.md))
+- 운영 배포 · 운영 smoke 는 운영 역할에 넘긴다([운영 역할](ops.md))
+- 새 글자 · 배치 · 흐름은 레퍼런스와 함께 — 대장에 없으면 한국 사례를 출처와 함께, 없으면 「실사례 없음」과 가장 가까운 것([레퍼런스](../agents/code-rules/references.md#레퍼런스))
+
 ## 먼저 읽는 것
 
 - `docs/product/copy-ledger.md` 「무리 색인」 · 「01 규칙」 — 문구는 대장에서 먼저 찾는다
@@ -14,20 +25,6 @@
   - 설정 · 프로필 · 설문 — `docs/product/prd/screens/settings.md`
   - 결제 · 풀이권 — `docs/product/prd/screens/credits.md`
   - 운영 화면 · 작업대 — `docs/product/prd/screens/ops.md`
-
-## 이 저장소의 방식
-
-- [시안 먼저](../agents/delegation/working.md#화면은-시안-먼저) — 대장 · 한국 레퍼런스로 시작해 화면만 꾸며 찍고, 보이기 전에 스스로 견준다
-- [화면 문구](../agents/code-rules/screen-copy.md#화면-문구) — 대장에 없는 문구를 넣는 법 · 같은 사실은 상수 하나
-- [화면 규칙](../product/prd/screens.md) — 모든 화면의 규칙 · 버튼은 동사로 갈린다
-- [새 것을 놓을 때](../architecture.md#새-것을-놓을-때) — 화면은 그리기만 하고 DB 를 부르지 않는다
-
-## 하지 않는 것 · 묻는 것
-
-- 코드 PR 은 운영자 검토 뒤 머지([출시 흐름](../agents/delegation/coordinator.md)). 화면 흐름 · 메뉴 구조는 결정, 새 문구는 사후 확인이나 권한 · 보존 · 요금 · 환불에 걸리면 결정이다([결정 점검표](../agents/delegation/decisions.md))
-- dev 서버는 제 자리에 띄운다 — 남이 띄운 서버(3000)는 죽이기 전에 묻는다. 그 서버를 재사용한 e2e 는 운영 DB 를 본다([로컬 환경의 함정](../agents/delegation/local-env.md))
-- 운영 배포 · 운영 smoke 는 운영 역할에 넘긴다([운영 역할](ops.md))
-- 새 글자 · 배치 · 흐름은 레퍼런스와 함께 — 대장에 없으면 한국 사례를 출처와 함께, 없으면 「실사례 없음」과 가장 가까운 것([레퍼런스](../agents/code-rules/references.md#레퍼런스))
 
 ## 끝날 때 고치는 것
 

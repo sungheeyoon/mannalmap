@@ -69,6 +69,6 @@ PR 에 적어 운영자에게 건네고, 묶음 배포 뒤에는 Vercel 의 Read
 
 ## 훅 — 압축 뒤에 일러 준다
 
-`hooks.SessionStart`(matcher `compact`)가 `scripts/compact-hint.mjs` 를 돈다 — 압축 직후 한 번, 역할 문서의 멈출 자리와 「먼저 읽는 것」을 다시 보고 `node scripts/session-status.mjs` 로
+`hooks.SessionStart`(matcher `compact`)가 `scripts/compact-hint.mjs` 를 돈다 — 압축 직후 한 번, 역할 문서의 「지킬 것」과 「먼저 읽는 것」을 다시 보고 `node scripts/session-status.mjs` 로
 지금을 재며 운영자에게는 쉬운 한국어로 말하라는 한 줄을 건넨다. 묻지도 막지도 않는다. Claude Code 만 돈다 — 다른 에이전트에게는
 `docs/agents/delegation/coordinator.md` 「세션을 열 때」 · 「조율자 세션」의 문장이 전부다.
