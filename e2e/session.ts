@@ -218,6 +218,29 @@ export function answerReading(runId: string, email: string, said: string): void 
 }
 
 /**
+ * 결제가 승인된 주문 하나를 세운다 — 돌려주는 것은 주문 번호(`rdo_…`)와 거래 번호.
+ *
+ * 판매 스위치(`reading_sale_is_open`)는 이 실행의 다른 시험이 「판매 준비 중」으로 재므로 켜지 않는다. 주문을 여는 문이
+ * 넣는 그 줄을 `postgres` 로 넣고, 승인은 결제 알림이 부르는 그 문(`approve_reading_order`)으로 한다 — 묶음까지 선다.
+ * 여기서 재려는 것은 운영 주문 화면이 그 주문을 세우는가다(G-116).
+ */
+export function buyReadings(email: string, credits = 3): { orderNumber: string; paymentId: string } {
+  const orderNumber = sql(`insert into public.reading_order
+         (id, user_id, bundle_credits, amount, provider, provider_order_id, idempotency_key)
+       select g.id, u.id, ${credits}, public.reading_bundle_price(${credits}), 'dev',
+              'rdo_' || replace(g.id::text, '-', ''), 'e2e-' || g.id::text
+       from auth.users u, (select gen_random_uuid() as id) g
+       where u.email = '${email}'
+       returning provider_order_id`);
+  const paymentId = `e2e-pay-${orderNumber.slice(-12)}`;
+  const amount = sql(`select amount from public.reading_order where provider_order_id = '${orderNumber}'`);
+  const outcome = sql(`select outcome from public.approve_reading_order(
+         (select id from public.reading_order where provider_order_id = '${orderNumber}'), '${paymentId}', ${amount})`);
+  if (outcome !== 'applied') throw new Error(`주문을 승인하지 못했습니다 — ${outcome}`);
+  return { orderNumber, paymentId };
+}
+
+/**
  * 저장 자리 한도 — **검사가 수를 손으로 적지 않게.**
  *
  * `person_limit()` 은 모든 역할에 닫혀 있지만 이 문은 `postgres` 로 돈다. 화면이 말하는
