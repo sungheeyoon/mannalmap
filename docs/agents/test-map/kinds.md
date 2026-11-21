@@ -4,64 +4,41 @@
 
 ## 시험은 넷이고, 층마다 닿는 것이 다르다
 
-| 시험 | 명령 | 무엇을 재나 | 필요한 것 | 수 |
-| --- | --- | --- | --- | --- |
-| **단위**(vitest) | `npm test` | 순수 함수 — 엔진 · 도메인 lib · `app/**/*.ts` 의 판단 · `scripts/` 의 검사 도구 자신 | 없음 | `npm test` 의 끝 줄 — 실호출 백필 파일은 통째로 건너뛴다 |
-| **pgTAP** | `npm run test:db` | 표 · 함수 · 정책이 **역할을 갈아입고** 실제로 막는가, 함수와 표의 모양(ADR 0084) | Docker + `npm run db:start` | `npm run test:db` 의 끝 줄 — 전부 고정 plan(2026-09-26, `no_plan` 둘을 수로 잠갔다 — 단언이 조용히 빠지면 plan 이 붉힌다) |
-| **흐름**(`scripts/check-*.mjs`) | `npm run test:flow` | 가입 → 저장 → 요청 · 수락 → 풀이 · 공유를 **실제 스택에 대고**, 모델만 빼고 | Docker + `db:start`. 제 안에서 Next 서버를 띄운다(`check-db-races` · `check-push-race` 는 안 띄우고 psql 둘 · 셋으로 DB 의 두 세션 경합을 일으킨다) | `scripts/check-*.mjs` 한 벌마다 — `npm run test:flow` 가 찍는다 |
-| **e2e**(Playwright) | `npm run test:e2e` / `test:e2e:authed` | 화면 — 비로그인 · 로그인 · 둘이 있어야 성립하는 흐름 · 가입 관문 | 익명은 없음(CI 의 껍데기 접속값으로 돈다). 로그인 뒤는 Docker + `db:start` | `npx playwright test --list` — 익명 · 로그인은 기기 둘에서, 관문은 한 번 돈다 |
+| 시험 | 명령 | 무엇을 시험하나 | 필요한 것 |
+| --- | --- | --- | --- |
+| **단위**(vitest) | `npm test` | 순수 함수 — 엔진 · 도메인 lib · `app/**/*.ts` 의 판단 · `scripts/` 의 검사 도구 | 없음 |
+| **pgTAP** | `npm run test:db` | 표 · 함수 · 정책이 역할을 갈아입고 실제로 막는가, 함수와 표의 모양. plan 은 전부 고정 수다 — 단언이 빠지면 실패한다 | Docker + `npm run db:start` |
+| **흐름**(`scripts/check-*.mjs`) | `npm run test:flow` | 가입 → 저장 → 요청 · 수락 → 풀이 · 공유를 실제 스택에 대고, 모델만 빼고 | Docker + `db:start`. 제 안에서 Next 서버를 띄운다(`check-db-races` · `check-push-race` 는 psql 세션 여럿으로 경합만 일으킨다) |
+| **e2e**(Playwright) | `npm run test:e2e` / `test:e2e:authed` | 화면 — 비로그인 · 로그인 · 둘이 있어야 성립하는 흐름 · 가입 관문 | 익명은 없음(CI 는 껍데기 접속값으로 돈다). 로그인 뒤는 Docker + `db:start` |
 
-**vitest 는 `.tsx` 를 불러올 수는 있어도 그리지는 못한다** — `vitest.config.mts` 의 include 가 `src/**` · `app/**` ·
-`scripts/**` · `mobile/src/**` 의 `*.test.ts` 이고(시험 파일은 `.ts` 뿐이다), 환경은 `node` 다. 앱의 문(`mobile/src`)은 클라이언트를 인자로 받아
-가짜 클라이언트로 돌고(`mobile/src/doors.test.ts`, ADR 0243), 앱의 별칭은 그 config 의 `mobileAliases` 가 푼다 — react-native 를 들이는 화면 · 훅은 못 돈다. jsdom 을 안 들였다(`<dialog>` 때문, ADR 0080).
-그래서 `.ts` 시험이 `.tsx` 모듈을 import 해 닿는 것은 둘이다.
+vitest 는 `.tsx` 를 불러올 수는 있어도 그리지 못한다 — 시험 파일은 `.ts` 뿐이고 환경은 `node` 다. jsdom 은 안 들였다(`<dialog>`, ADR 0080).
+앱(`mobile/src`)도 react-native 를 들이는 화면 · 훅은 못 돈다. 그래서 `.ts` 시험이 화면에 닿는 길은 둘이다.
 
-- **`.tsx` 가 내보내는 순수 함수** — `isNavigationActive`(`app/site-header.test.ts`) · `app/birth-form.test.ts` ·
-  `app/me/matching/deck-state.test.ts` · `app/me/reading/panel.test.ts`
-- **서버 페이지 함수를 부르고 그 약속만 본다** — DB 를 가짜로 대고 `await Page()` 가 서는가, 못 읽은 결과에서
-  던지는가(ADR 0078). `app/compat/page.test.ts` · `app/me/matching/page.test.ts` · `app/me/people/page.test.ts` ·
-  `app/me/profile/page.test.ts`(#228). 돌려받은 JSX 를 그리거나 읽지는 않는다
+- `.tsx` 가 내보내는 순수 함수(예: `app/site-header.test.ts`)
+- 서버 페이지 함수를 가짜 DB 로 부르고 렌더 함수가 끝나는가 · 못 읽은 결과에서 던지는가만 본다(예: `app/compat/page.test.ts`) — 돌려받은 JSX 는 안 읽는다
 
-**그리기 · 누름 · 클라이언트 상태는 여전히 e2e 만 잰다.** 그래서 화면의 판단은 `.ts`(또는 `.tsx` 의 내보낸 순수
-함수)로 내리고 화면은 그리기만 한다 — 그래야 단위 시험이 닿는다.
+그리기 · 누름 · 클라이언트 상태는 e2e 만 시험한다. 그러니 화면의 판단은 `.ts`(또는 `.tsx` 의 내보낸 순수 함수)로 내리고 화면은 그리기만 한다.
 
 ## 층 × 시험
 
 | 층 | 자리 | 단위 | pgTAP | 흐름 | e2e |
 | --- | --- | --- | --- | --- | --- |
-| 엔진 | `src/lib/saju/` | 골든 스냅샷(건수는 스냅샷 머리가 찍는다) · 외부 대조(억부 37 · 종격 41) · 모집단 3000 · 절기 · 음력 왕복 | | | 명식 화면(`saju.spec.ts`) |
-| 도메인 lib | `src/lib/{input,reading,discovery,matching,consent,people,profile,account,survey,chat,presence,push}` | 프롬프트 조립 · 검사 · 점수 · 동의 · 관문(실호출 백필 둘은 통째로 건너뛴다) | | | |
-| 문 · 액션 | `app/**/*.ts` | 서버 페이지 함수 넷을 부르는 `page.test.ts` 도 여기 든다(실호출 하나는 건너뛴다) — 어댑터 · 파이프라인 · 오류 번역 · 주소 코덱 · 장부(`*.boundary.test.ts`) · 크론 두 주소의 `CRON_SECRET` 자격(`app/api/cron/*/route.test.ts` — 주소를 두드려 403 과 열쇠를 안 꺼냈는가를 본다) | 문이 부르는 함수 전부 | **여기가 본거지** — 문·액션·라우트를 주소로 두드린다 | 로그인 뒤 화면이 지나간다 |
-| 화면 | `app/**/*.tsx` | 그리기는 없음 — 내보낸 순수 함수와 서버 페이지 함수의 약속만(위) | | 서버 HTML 만 — `check-reading` 이 「수정 전」 풀이의 딱지 · 표지 색 · 주 단추를 읽는다 | **여기서 누른다.** 누르는 자리 44px · 초점 테두리 한 겹 · 바탕 빛이 되풀이되지 않음은 `e2e/target.ts` 로 잰다(#229 — `saju.spec.ts` · `signed-in.spec.ts` · `match.spec.ts`. 상자 높이만 재던 `boundingBox()` 는 2026-10-22 에 이것으로 옮겼다) |
+| 엔진 | `src/lib/saju/` | 골든 스냅샷 · 외부 대조 · 모집단 · 절기 · 음력 왕복 | | | 명식 화면(`saju.spec.ts`) |
+| 도메인 lib | `src/lib/` 의 엔진 밖 | 프롬프트 조립 · 검사 · 점수 · 동의 · 관문 | | | |
+| API · 액션 | `app/**/*.ts` | 어댑터 · 파이프라인 · 오류 번역 · 장부(`*.boundary.test.ts`) · 크론 자격 · 서버 페이지 함수(`page.test.ts`) | API 가 부르는 함수 전부 | **본거지** — 주소로 두드린다 | 로그인 뒤 화면이 지나간다 |
+| 화면 | `app/**/*.tsx` | 내보낸 순수 함수와 서버 페이지 함수의 약속만 | | 서버 HTML 만(`check-reading`) | **여기서 누른다.** 누르는 넓이 · 초점 테두리 · 바탕 이음매는 `e2e/target.ts` 로 확인한다 |
 | 관문 | `proxy.ts` · `src/lib/consent` | `gate.test.ts` · `notice.test.ts` | `20_notice` | | `notice.spec.ts` |
-| DB | `supabase/migrations/` | | `supabase/tests/` · 모양 잠금 넷(`33_function_shape`) | 위 | |
-| 검사 도구 | `scripts/` · `eslint.config.mjs` | `ci-plan` · `run-checks` · `layers` · `code-rules` · `card-score-sql`(카드 점수의 TS ↔ SQL 이 같은 표를 읽는다) · `worktree-stack` · `secret-env`(비밀의 갈래 · `server-only` 잠금 · runbook 절, G-23 ⑧) · `vercel-ignore`(Preview 를 건너뛸지 — 0 이 건너뜀) · `copy-contracts` · `main-red` · `stack-slot` · `remote-lock` · `db-remote` · `audit-verify` · `brand-share-images`(미리보기 그림의 이름 · 탭 그림의 판) · `merge-sim`(인자와 요약 문장만 — git 은 안 부른다) · `checkout-hint`(메인 체크아웃에 쓸 때 일러 주는 훅) · `shared-numbers`(열린 PR 끼리 공유 번호가 겹치는가 — 가짜 PR 목록, ADR 0238) | | | |
+| DB | `supabase/migrations/` | | `supabase/tests/` · 모양 잠금(`33_function_shape`) | 위 | |
+| 검사 도구 | `scripts/` · `eslint.config.mjs` | 도구마다 옆의 `*.test.ts` | | | |
 
 ## 시험 하나의 시간 — 로컬 5초
 
-시험 하나의 상한은 로컬 5초 · CI 30초다(`vitest.config.mts` 의 `testTimeout`). 로컬 5초는 달아나는 시험을 잡으려고 일부러 좁다 —
-넓히지 않는다. 모집단을 도는 시험은 제 파일에 `POPULATION_TIMEOUT_MS` 를 두고 `it` 의 셋째 인자로 든다(예:
-`src/lib/saju/daeun/daeun.test.ts`). 시간은 `npx vitest run <파일> --reporter=verbose` 가 시험마다 ms 로 찍고, 많으면
-`--reporter=json --outputFile=<파일>` 의 `testResults[].assertionResults[].duration` 을 정렬한다. 늘리기 전에 시험이 안 읽는
-것을 짓지 않는지 본다(#509 는 18.9초 → 1.2초).
+시험 하나의 상한은 로컬 5초 · CI 30초다(`vitest.config.mts` 의 `testTimeout`). 로컬 5초는 달아나는 시험을 잡으려고 좁다 — 넓히지 않는다.
+모집단을 도는 시험은 제 파일에 `POPULATION_TIMEOUT_MS` 를 두고 `it` 의 셋째 인자로 넘긴다(예: `src/lib/saju/daeun/daeun.test.ts`). 늘리기 전에
+시험이 안 읽는 것을 짓지 않는지 본다. 시간은 `npx vitest run <파일> --reporter=verbose` 가 시험마다 찍는다.
 
-**로컬 일꾼은 넷까지다**(`vitest.config.mts` 의 `maxWorkers`, GitHub 러너만 vitest 기본 — `CI=1` 로 30초 한도를 빌리는 `merge:sim` 도 넷이다). 기본(코어 − 1)은 이 기계(8코어 16스레드)에서 열다섯이고,
-그때 무거운 시험은 혼자일 때의 3~4배가 걸려 위 상한에 닿았다. 2026-11-16 에 `node scripts/heavy.mjs npx vitest run` 으로 잰 값(다른 에이전트의
-실행이 있어 load 5~22):
+로컬 일꾼은 넷까지다(`vitest.config.mts` 의 `maxWorkers`) — 워크트리 여럿이 나란히 시험을 돌리면 기본값(코어 − 1)에서 무거운 시험이 상한에 닿았다.
+`--maxWorkers=<n>` 이 덮는다.
 
-| 조건 | 횟수 | 벽시계 | `calibration` 파일(훅 포함) | 서울 날짜 전수 | `layers` 입구 시험 | 결과 |
-| --- | --- | --- | --- | --- | --- | --- |
-| 그 파일 혼자 | 3 | — | 7.1초 | 1.4~1.9초 | 1.2초 | 초록 |
-| 전체 · 기본 15 | 3 | 88~98초 | 26.7~28.0초 | 3.7~5.3초 | 3.5~4.3초 | 하나 붉음(서울 날짜 5.3초) |
-| 전체 · 8 | 3 | 78초 | 16.5~17.4초 | 2.6초 | 2.2~2.4초 | 초록 |
-| 전체 · 4 | 2 | 94~95초 | 10.8~11.0초 | 1.9초 | 1.3~1.6초 | 초록 |
-| 전체 둘을 함께 · 기본 15 | 1(둘) | 153초 | 53.5초 | 10.6~11.2초 | 7.4~8.3초 | 둘 다 붉음 — 시험 열셋 · 훅 둘 |
-| 전체 둘을 함께 · 4 | 1(둘) | 138초 | 16.8~17.0초 | 2.5초 | 2.4~2.5초 | 초록 |
-| 고친 뒤 전체(config 넷 · `layers` 나무 한 번) | 3 | 89~97초 | 10.2~10.5초 | 1.8~1.9초 | 0.6~0.7초 | 초록 |
-| 고친 뒤 전체 둘을 함께 | 1(둘) | 138초 | 18.2~19.9초 | 2.8~2.9초 | 0.8~0.9초 | 초록 |
-
-혼자 돌릴 때는 8 이 가장 빠르지만 워크트리 여럿이 나란히 시험을 돌리는 것이 보통이라 넷으로 둔다. `--maxWorkers=<n>` 이 덮는다.
-
-**훅이 시간 초과면 그 안의 시험은 붉지 않고 건너뛰어진다.** 끝 줄의 `Tests` 는 「N failed」를 덜 세고 `skipped` 가 는다 — 위의 함께
-돌린 기본 실행은 `Tests 13 failed | 73 skipped` 였고 평소 `skipped` 는 실호출 백필의 15다. 붉음은 `Test Files … failed` 줄 · `Failed Suites`
-머리 · 종료 코드가 든다. Vitest 가 이렇게 센다 — 시험을 나눠 고치지 않고, 끝 줄을 읽을 때 `Test Files` 와 `skipped` 수를 함께 본다.
+**훅이 시간 초과면 그 안의 시험은 실패로 안 세어지고 건너뛰어진다** — 끝 줄의 `Tests` 는 failed 를 덜 세고 `skipped` 가 는다. 끝 줄을 읽을 때 `Test Files … failed` 와
+`skipped` 수를 함께 본다(평소 `skipped` 는 잠긴 백필 시험의 것뿐이다).
