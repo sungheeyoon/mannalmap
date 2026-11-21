@@ -2,6 +2,7 @@ import { INPUT_EDIT_CHANGE_CONFIRM } from '@/src/lib/consent';
 import { endsWithBatchim } from '@/src/lib/saju/text/batchim';
 import {
   answerReading,
+  buyReadings,
   expect,
   leavePersonSlots,
   makeOperator,
@@ -4359,5 +4360,110 @@ test.describe('풀이권 화면', () => {
     await expect(page.getByText('결제 내역이 없어요.')).toBeVisible();
     const refund = page.getByRole('region', { name: '환불 신청' });
     await expect(refund.getByRole('link', { name: '환불정책 보기' })).toHaveAttribute('href', '/refund');
+  });
+});
+
+/**
+ * **운영 화면 셋은 운영자에게만, 2단계 인증 뒤에만 선다** (G-116).
+ *
+ * 설문 요약 · 신고 열람대와 같은 경계다 — 운영자가 아닌 계정에게도, 운영자여도 aal2 가 아닌 세션에게도 이 주소는 404 다(ADR 0209).
+ * 그 뒤에는 운영자가 실제로 그 화면에서 보는 칸이 서는지만 잰다 — 무엇을 세는지 · 환불 금액의 셈은 pgTAP 과 단위가 든다.
+ * 시험마다 새 계정이다 — `passSecondFactor` 는 인증 앱을 등록한 적이 없는 계정이어야 한다.
+ */
+test.describe('운영 화면', () => {
+  test('오늘의 숫자는 운영자에게만 서고, 오늘과 이번 주의 다섯 수를 세운다', async ({ page, signedIn }) => {
+    expect((await page.goto('/ops/today'))?.status()).toBe(404);
+    await expect(page.getByRole('heading', { name: '오늘의 숫자' })).toHaveCount(0);
+
+    makeOperator(signedIn.email);
+    expect((await page.goto('/ops/today'))?.status()).toBe(404);
+    await passSecondFactor(page, '/ops/today');
+
+    await expect(page.getByRole('heading', { level: 1, name: '오늘의 숫자' })).toBeVisible();
+    for (const span of [/^오늘 /, /^이번 주 /]) {
+      const section = page.locator('section').filter({ has: page.getByRole('heading', { level: 2, name: span }) });
+      await expect(section).toHaveCount(1);
+      for (const label of ['가입', '풀이', '주문', '매출', '환불']) {
+        await expect(section.locator('dt').getByText(label, { exact: true })).toBeVisible();
+      }
+    }
+  });
+
+  test('회원 화면은 운영자에게만 서고, 닉네임으로 찾은 회원의 계정 · 풀이권 · 이력 · 처분 칸을 세운다', async ({
+    page,
+    signedIn,
+    openAs,
+  }) => {
+    const member = await openAs({ selfPerson: true });
+    const { orderNumber } = buyReadings(member.account.email);
+    const searched = `/ops/members?q=${encodeURIComponent(member.account.nickname)}`;
+
+    expect((await page.goto(searched))?.status()).toBe(404);
+    await expect(page.getByText(member.account.nickname)).toHaveCount(0);
+
+    makeOperator(signedIn.email);
+    expect((await page.goto(searched))?.status()).toBe(404);
+    await passSecondFactor(page, '/ops/members');
+
+    await expect(page.getByRole('heading', { level: 1, name: '회원' })).toBeVisible();
+    await page.getByLabel('닉네임 또는 계정 id').fill(member.account.nickname);
+    await page.getByRole('button', { name: '찾기' }).click();
+    await expect(page).toHaveURL(/\/ops\/members\?q=/);
+
+    const account = page.getByRole('region', { name: '계정' });
+    await expect(account.getByText(member.account.nickname, { exact: true })).toBeVisible();
+    await expect(account.getByText('사용 가능한 풀이권')).toBeVisible();
+    for (const title of ['풀이권 출처', '풀이권 이력', '처분 이력']) {
+      await expect(page.getByRole('heading', { level: 2, name: new RegExp(`^${title}`) })).toBeVisible();
+    }
+    await expect(page.getByText('현재 신고와 계정에 적힌 처분이 없습니다.')).toBeVisible();
+
+    /* 산 주문의 번호가 주문 화면으로 가는 길이다 — 금액은 거기서만 선다 */
+    await page.getByRole('list', { name: '주문' }).getByRole('link', { name: orderNumber }).click();
+    await expect(page).toHaveURL(new RegExp(`/ops/orders\\?order=${orderNumber}$`));
+    await expect(page.getByRole('region', { name: '찾은 주문' })).toBeVisible();
+  });
+
+  test('주문 화면은 운영자에게만 서고, 주문 번호로 찾은 주문의 결제 · 풀이권 · 환불 칸을 세운다', async ({
+    page,
+    signedIn,
+    openAs,
+  }) => {
+    const buyer = await openAs({ selfPerson: true });
+    const { orderNumber, paymentId } = buyReadings(buyer.account.email, 3);
+    const searched = `/ops/orders?order=${orderNumber}`;
+
+    expect((await page.goto(searched))?.status()).toBe(404);
+    await expect(page.getByText(orderNumber)).toHaveCount(0);
+
+    makeOperator(signedIn.email);
+    expect((await page.goto(searched))?.status()).toBe(404);
+    await passSecondFactor(page, '/ops/orders');
+
+    await expect(page.getByRole('heading', { level: 1, name: '주문' })).toBeVisible();
+    const number = page.getByLabel('주문 번호');
+    const find = page.getByRole('button', { name: '찾기' });
+
+    await number.fill('rdo_123');
+    await find.click();
+    await expect(page.getByText('주문 번호는 rdo_ 로 시작하는 36자입니다.')).toBeVisible();
+
+    await number.fill(`rdo_${'0'.repeat(32)}`);
+    await find.click();
+    await expect(page.getByText('이 번호의 주문이 없습니다.')).toBeVisible();
+
+    await number.fill(orderNumber);
+    await find.click();
+    const found = page.getByRole('region', { name: '찾은 주문' });
+    await expect(found.getByText('풀이권 3장 · 12,900원')).toBeVisible();
+    await expect(found.getByText('결제됨', { exact: true })).toBeVisible();
+    await expect(found.getByText(orderNumber, { exact: true })).toBeVisible();
+    await expect(found.getByText(new RegExp(`^회원 ${buyer.account.nickname} · `))).toBeVisible();
+
+    const value = (title: string) => found.locator(`dt:text-is("${title}") + dd`);
+    await expect(value('거래 번호')).toHaveText(paymentId);
+    await expect(value('환불 금액')).toHaveText('0원');
+    await expect(value('풀이권')).toHaveText('구매 3 · 사용 0 · 사용 중 0 · 환불 0 · 잔여 3');
+    await expect(found.getByRole('button', { name: '환불 준비' })).toBeVisible();
   });
 });
