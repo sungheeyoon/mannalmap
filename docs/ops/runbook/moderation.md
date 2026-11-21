@@ -431,13 +431,13 @@ where r.closed_at < now() - public.chat_retention();
 크론이 든 첫 배포 뒤 서울 시각으로 그다음 05:27~06:26 이 지나면 한 번 본다.
 
 1. 위 건수 SQL 이 **0** 인가. 0 이 아니어도 `가장_오래_닫힌_날` 이 딱 90일 전 날이면 크론 뒤에 막 기한을 넘긴 말이다 — 다음 날 지워진다. 그보다 오래된 날이면 크론이 안 돈 것이다 — 아래 「실패는 어떻게 드러나나」
-2. Vercel → Settings → Cron Jobs 에 `/api/cron/chat-purge` 가 있고, View Logs 에서 응답이 200 인가. Hobby 로그는 한 시간뿐이라 실행 직후가 아니면 안 보일 수 있다 — 그때는 1 이 판정이다
+2. Vercel → 프로젝트의 Schedules → Cron Jobs 탭에 `/api/cron/chat-purge` 가 있고, View Logs 에서 응답이 200 인가. Hobby 로그는 한 시간뿐이라 실행 직후가 아니면 안 보일 수 있다 — 그때는 1 이 판정이다
 3. 배포 전 건수 · 다음 날 건수 · 응답 코드를 #770 에 **수만** 적는다. 파기 수의 영구 기록은 만들지 않는다(ADR 0217)
 
 #### 실패는 어떻게 드러나나
 
 - **`chat-purge-overdue`**(`ops_alert`, 하루 한 줄) — pg_cron `chat-purge-watch`(매일 06:57 UTC)가 보존 기간을 **이틀 넘게** 지난 말을 찾았다. 크론의 실패 · 비밀 어긋남 · 등록 안 됨 · 시간 초과가 모두 이 한 줄로 온다. 실행 표는 없다.
-- 그 알림이 오면 차례로 본다 — Vercel 대시보드 → Settings → Cron Jobs 에 `/api/cron/chat-purge` 가 있나 · 응답 코드(403 이면 `CRON_SECRET`, 503 이면 열쇠, 500 이면 Vercel 로그의 `chat-purge failed <코드>` — `57014` 는 8초 초과) · `select has_function_privilege('service_role', 'public.purge_closed_chat_messages()', 'execute');` 가 참인가. **Hobby 의 런타임 로그는 한 시간뿐이다.**
+- 그 알림이 오면 차례로 본다 — Vercel 대시보드 → Schedules → Cron Jobs 탭에 `/api/cron/chat-purge` 가 있나 · 응답 코드(403 이면 `CRON_SECRET`, 503 이면 열쇠, 500 이면 Vercel 로그의 `chat-purge failed <코드>` — `57014` 는 8초 초과) · `select has_function_privilege('service_role', 'public.purge_closed_chat_messages()', 'execute');` 가 참인가. **Hobby 의 런타임 로그는 한 시간뿐이다.**
 - 로그에는 지운 날의 `chat-purge deleted <수>` 와 오류 코드만 남는다.
 
 #### 파기를 멈춘다 — 수사기관의 보존 요청 같은 때

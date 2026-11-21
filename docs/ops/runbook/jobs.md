@@ -82,6 +82,9 @@ Vercel Cron 은 일곱이다(`vercel.json`) — 복구기의 하루 청소(`/api
 ADR 0105), 사진 청소의 예비(`/api/cron/photo-sweep`, 하루 한 번 — 매시 실행은 pg_cron 이 깨운다, ADR 0204), 닫힌 방의 메시지 파기(`/api/cron/chat-purge`, ADR 0217 — `chat-purge-watch` 가 남은 말을 본다), Google Play 무효 대조(`/api/cron/store-voided`, 매일 20:57 UTC, ADR 0230 — 서비스 계정 키가 없으면 `{ configured: false }` 로 끝난다, `docs/ops/runbook/credits.md` 「Google Play 결제」), 소비가 안 된 Google Play 지급의 다시 소비(`/api/cron/store-consume`, 매일 21:07 UTC, ADR 0253 — 못 끝낸 줄이 있으면 500, `store-consume-watch` 가 남은 지급을 본다, 같은 런북), Play 콘솔 가격과 묶음 가격의 대조(`/api/cron/store-prices`, 매일 21:37 UTC, ADR 0262 — 다르거나 못 읽으면 알림 문이 7일에 한 번 알린다, 같은 런북 「가격 대조 알림」). 일곱은 `cron-watch` 가 못 본다 —
 반출은 pg_cron 의 `audit-export-watch` 가 매일 본다(시도나 성공이 이틀 넘게 없으면 알린다), 사진 청소는 `photo-sweep-watch` 가 본다(끝까지 돈
 실행이 세 시간 넘게 없으면 — 어느 쪽이 깨웠든).
+**Vercel 대시보드는 이 일곱을 「Legacy」라 띄운다** — Cron Jobs 는 Schedules 로 옮겨 갈 옛 기능이다. 멈추는 날은 없고(2026-11-21 공식 문서) 아직 옮기지 않았다 —
+까닭 · 옮길 때의 걸음 · 옮긴 뒤 달라지는 것(대시보드 자리 · `vercel crons run` · Hobby 시각 폭 · 달마다 실행 한도)은 `docs/product/gaps.md` 의 G-174.
+그때까지 일곱은 대시보드의 Schedules → **Cron Jobs 탭**에 있다.
 **`failed` 가 한 줄이라도 있으면 그 잡은 지금 안 도는 것이다.**
 
 ### 바깥 감시 — 앱이 통째로 죽거나 DB 가 알림을 못 쓸 때 (G-118)
