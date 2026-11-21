@@ -48,4 +48,4 @@
 병렬 라운드의 머지 직전 `npm run merge:sim` 은 `docs/agents/delegation/coordinator.md` 「조율자 세션」.
 
 dev 서버 포트는 워크트리마다 다르다(`npm run stack:slot`, `docs/agents/delegation/parallel.md`). 로그인 e2e 와 흐름 검사는 제 서버를 띄운다 —
-그 포트에 남의 dev 서버가 떠 있으면 재사용해 옛 코드를 시험한다. 먼저 `lsof -i :<포트>` 로 보고 죽인다.
+그 포트에 남의 dev 서버가 떠 있으면 재사용해 옛 코드를 시험한다. 먼저 `lsof -i :<포트>` 로 본다 — 내가 띄운 것이면 끄고, 남이 띄운 것이면 죽이기 전에 묻는다(`docs/agents/delegation/permissions.md` 「권한 등급」).

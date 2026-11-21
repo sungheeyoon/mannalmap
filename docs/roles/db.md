@@ -9,7 +9,7 @@
 - 마이그레이션 파일 이름은 [이름](../agents/code-rules/names.md#이름)의 꼴을 따른다
 - `supabase config push` 는 안 한다 — 원격의 구글 설정을 지운다([권한 등급](../agents/delegation/permissions.md))
 - 남은 원격 잠금을 만나면 멈추고 걷는 법을 보고에 적는다([일하는 법](../agents/delegation/working.md))
-- RLS · grant · 보존 기간 · 실패 때 여닫음이 바뀌면 결정이다 — ADR 을 쓰고 보고에 올린다([결정 점검표](../agents/delegation/decisions.md))
+- RLS · grant · 실패 때 여닫음 · 데이터의 보존 · 삭제 · 보관 기간이 바뀌면 결정이다 — ADR 을 쓰고 보고에 올린다([결정 점검표](../agents/delegation/decisions.md))
 
 ## 먼저 읽는 것
 
