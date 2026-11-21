@@ -1,13 +1,21 @@
 import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { useCallback, useState } from 'react';
-import { ScrollView, StyleSheet, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 
 import { SUPPORT_EMAIL } from '@brand';
 import { businessInfoFrom } from '@brand/business';
 import { refundRequestLine } from '@brand/refund';
-import { won } from '@reading/bundle';
+import {
+  BUY_HISTORY_EMPTY,
+  HISTORY_TABS,
+  HISTORY_TITLE,
+  USE_HISTORY_EMPTY,
+  purchaseLines,
+  usageLines,
+  type HistoryLine,
+  type HistoryTab,
+} from '@reading/credit-history';
 import { CREDITS_AVAILABLE_LABEL, CREDITS_SCREEN_LEAD } from '@reading/notes';
-import type { PaidOrder } from '@reading/paid-order';
 import { purchaseReturnOf } from '@reading/store-purchase';
 
 import type { Client } from '@/auth/client';
@@ -18,27 +26,22 @@ import { LinkRow, SettingsGroup, settingsText } from '@/settings/parts';
 import { FailureLine } from '@/ui/failure-line';
 import { LoadingDots } from '@/ui/loading';
 import { TextButton } from '@/ui/parts';
-import { COLOR, FONT, RADIUS, TYPE } from '@/ui/tokens';
+import { COLOR, FONT, TYPE } from '@/ui/tokens';
 import { settled } from '@/ui/settled';
 import { TopBar } from '@/ui/top-bar';
-import { Card, Paper } from '@/ui/surfaces';
+import { CardFrame, Paper, Tile } from '@/ui/surfaces';
 
-import { readReadingCredits, readReadingOrders } from './remaining';
+import { readCreditHistory, readReadingCredits, readReadingOrders } from './remaining';
 import { storeAvailable } from './store';
 import { StoreSection } from './store-section';
 import { WordText } from '@/ui/word-text';
-import { ORDER_NUMBER_ASK, PAYMENTS_EMPTY } from '@account/words';
+import { ORDER_NUMBER_ASK } from '@account/words';
 
 type Read<T> = { ok: true; value: T } | { ok: false; message: string };
 
 async function readAvailable(client: Client): Promise<Read<number | null>> {
   const credits = await readReadingCredits(client);
   return credits.ok ? { ok: true, value: credits.value?.available ?? null } : { ok: false, message: credits.reason };
-}
-
-async function readOrders(client: Client): Promise<Read<readonly PaidOrder[]>> {
-  const orders = await readReadingOrders(client);
-  return orders.ok ? orders : { ok: false, message: orders.reason };
 }
 
 /**
@@ -99,65 +102,117 @@ export function CreditsScreen() {
   );
 }
 
-/** 결제 내역 — 웹 `history-view.tsx` 와 같다: 산 묶음 카드들과 환불 신청 절. 화면 안에서 취소하는 단추는 없다(ADR 0174) */
+type History = {
+  readonly available: number | null;
+  readonly purchases: readonly HistoryLine[];
+  readonly uses: readonly HistoryLine[];
+};
+
+/** 결제 내역의 셋을 함께 읽는다 — 주문 · 이력은 본체(하나라도 못 읽으면 실패 줄), 보유 수는 부속(못 읽으면 그 줄만 생략) */
+async function readHistory(client: Client): Promise<Read<History>> {
+  const [orders, history, credits] = await Promise.all([readReadingOrders(client), readCreditHistory(client), readReadingCredits(client)]);
+  if (!orders.ok) return { ok: false, message: orders.reason };
+  if (!history.ok) return { ok: false, message: history.reason };
+  return {
+    ok: true,
+    value: {
+      available: credits.ok ? (credits.value?.available ?? null) : null,
+      purchases: purchaseLines(orders.value, history.value),
+      uses: usageLines(history.value),
+    },
+  };
+}
+
+/**
+ * 결제 내역 — 웹 `history-view.tsx` 와 같다: 보유 수 한 줄 · 「구매 내역 / 사용 내역」 두 탭 · 환불 신청 절(ADR 0174 · 0263, 운영자 승인
+ * 시안 B). 줄은 웹과 같은 `purchaseLines` · `usageLines` 가 짓는다. 화면 안에서 취소하는 단추는 없다(ADR 0174)
+ */
 export function CreditsHistoryScreen() {
   const client = useClient();
-  const [read, setRead] = useState<Read<readonly PaidOrder[]> | null>(null);
+  const [read, setRead] = useState<Read<History> | null>(null);
+  const [tab, setTab] = useState<HistoryTab>('buy');
   const load = useCallback(() => {
-    void settled(readOrders(client), 'my_reading_orders', () => ({ ok: false, message: UNREACHABLE }) as const).then(setRead);
+    void settled(readHistory(client), 'my_reading_credit_history', () => ({ ok: false, message: UNREACHABLE }) as const).then(setRead);
   }, [client]);
   useFocusEffect(load);
 
+  const lines = read?.ok ? (tab === 'buy' ? read.value.purchases : read.value.uses) : [];
   return (
     <View style={styles.screen}>
-      <TopBar title="결제 내역" fallback="/me/credits" />
+      <TopBar title={HISTORY_TITLE} fallback="/me/credits" />
       <ScrollView contentContainerStyle={[styles.content, read === null && styles.waiting]}>
         {read === null && <LoadingDots />}
         {read !== null &&
           (!read.ok ? (
             <FailureLine onRetry={load}>{read.message}</FailureLine>
-          ) : read.value.length === 0 ? (
-            <WordText style={settingsText.meta}>{PAYMENTS_EMPTY}</WordText>
           ) : (
-            read.value.map((order) => <OrderCard key={order.orderNumber} order={order} />)
+            <>
+              {read.value.available !== null && (
+                <WordText style={settingsText.meta}>
+                  {CREDITS_AVAILABLE_LABEL} <WordText style={styles.held}>{read.value.available}장</WordText>
+                </WordText>
+              )}
+              <View style={styles.history}>
+                <View accessibilityRole="tablist" style={styles.tabs}>
+                  {HISTORY_TABS.map((one) => {
+                    const selected = tab === one.id;
+                    return (
+                      <Pressable
+                        key={one.id}
+                        accessibilityRole="tab"
+                        accessibilityState={{ selected }}
+                        onPress={() => setTab(one.id)}
+                        style={[styles.tab, selected && styles.tabOn]}
+                      >
+                        <WordText style={[styles.tabText, selected && styles.tabTextOn]}>{one.label}</WordText>
+                      </Pressable>
+                    );
+                  })}
+                </View>
+                {lines.length === 0 ? (
+                  <WordText style={[settingsText.meta, styles.empty]}>{tab === 'buy' ? BUY_HISTORY_EMPTY : USE_HISTORY_EMPTY}</WordText>
+                ) : (
+                  <CardFrame>
+                    {lines.map((line, i) => (
+                      <HistoryRow key={line.key} line={line} first={i === 0} />
+                    ))}
+                  </CardFrame>
+                )}
+              </View>
+            </>
           ))}
-        <Card style={styles.refund}>
-          <WordText style={styles.name} accessibilityRole="header">
+        <Tile tone={COLOR.surfaceSoft} style={styles.refund}>
+          <WordText style={styles.refundTitle} accessibilityRole="header">
             환불 신청
           </WordText>
           {/* 사업자 정보 가운데 이메일만 공개 상수다 — 이 줄이 쓰는 값은 그것뿐이다 */}
-          <WordText style={settingsText.body}>{refundRequestLine(businessInfoFrom({ email: SUPPORT_EMAIL }))}</WordText>
-          <WordText style={settingsText.body}>{ORDER_NUMBER_ASK}</WordText>
+          <WordText style={styles.refundText}>{refundRequestLine(businessInfoFrom({ email: SUPPORT_EMAIL }))}</WordText>
+          <WordText style={styles.refundText}>{ORDER_NUMBER_ASK}</WordText>
           {legalPagesOpen && <TextButton label="환불정책 보기" onPress={() => openLegalPage('/refund')} />}
-        </Card>
+        </Tile>
       </ScrollView>
     </View>
   );
 }
 
-function OrderCard({ order }: { order: PaidOrder }) {
-  const rows: (readonly [string, string])[] = [
-    ['주문 번호', order.orderNumber],
-    ['결제 금액', won(order.amount)],
-    ...(order.refundedAmount > 0 ? [['환불 금액', won(order.refundedAmount)] as const] : []),
-    ['결제 시각', order.paidAt],
-    ['남은 풀이권', `${order.remaining}장`],
-  ];
+/** 한 줄 — 위 왼쪽 이름 · 위 오른쪽 값, 그 아래 덧붙임, 맨 아래 왼쪽 시각 · 오른쪽 상태(환불 · 회수는 빨강). 웹 `history-view.tsx` 의 `Row` */
+function HistoryRow({ line, first }: { line: HistoryLine; first: boolean }) {
   return (
-    <Card style={styles.order}>
-      <View style={styles.orderHead}>
-        <WordText style={styles.name}>{order.product}</WordText>
-        <WordText style={styles.tag}>{order.status}</WordText>
+    <View style={[styles.row, !first && styles.rowRule]}>
+      <View style={styles.rowLine}>
+        <WordText style={styles.rowTitle}>{line.title}</WordText>
+        <WordText style={[styles.rowValue, line.struck && styles.struck]}>{line.value}</WordText>
       </View>
-      {rows.map(([label, value]) => (
-        <View key={label} style={styles.orderRow}>
-          <WordText style={styles.orderLabel}>{label}</WordText>
-          <WordText selectable style={styles.orderValue}>
-            {value}
-          </WordText>
-        </View>
+      {line.notes.map((note) => (
+        <WordText key={note} selectable style={styles.caption}>
+          {note}
+        </WordText>
       ))}
-    </Card>
+      <View style={styles.rowLine}>
+        <WordText style={styles.caption}>{line.when}</WordText>
+        {line.status !== null && <WordText style={[styles.status, line.danger && styles.danger]}>{line.status}</WordText>}
+      </View>
+    </View>
   );
 }
 
@@ -170,12 +225,24 @@ const styles = StyleSheet.create({
   number: { fontSize: TYPE.figure, lineHeight: 48, fontFamily: FONT.bold, color: COLOR.foreground },
   unit: { fontSize: TYPE.lead, fontFamily: FONT.bold },
   bleed: { marginHorizontal: -16 },
-  refund: { gap: 8 },
-  order: { gap: 12 },
-  orderHead: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 8 },
-  name: { fontSize: TYPE.lead, lineHeight: 24, fontFamily: FONT.bold, color: COLOR.foreground },
-  tag: { overflow: 'hidden', paddingHorizontal: 8, paddingVertical: 2, borderRadius: RADIUS.pill, backgroundColor: COLOR.cream, fontSize: TYPE.fine, fontFamily: FONT.bold, color: COLOR.creamInk },
-  orderRow: { flexDirection: 'row', gap: 16 },
-  orderLabel: { width: 84, flexShrink: 0, fontSize: TYPE.body, lineHeight: 24, fontFamily: FONT.medium, color: COLOR.secondary },
-  orderValue: { flex: 1, minWidth: 0, fontSize: TYPE.body, lineHeight: 24, fontFamily: FONT.medium, color: COLOR.foreground },
+  held: { fontFamily: FONT.bold, color: COLOR.foreground, fontVariant: ['tabular-nums'] },
+  history: { gap: 16 },
+  tabs: { flexDirection: 'row', borderBottomWidth: 1, borderBottomColor: COLOR.border },
+  tab: { flex: 1, alignItems: 'center', minHeight: 44, justifyContent: 'flex-end', paddingBottom: 10, marginBottom: -1, borderBottomWidth: 2, borderBottomColor: 'transparent' },
+  tabOn: { borderBottomColor: COLOR.foreground },
+  tabText: { fontSize: TYPE.body, lineHeight: 22, fontFamily: FONT.bold, color: COLOR.muted },
+  tabTextOn: { color: COLOR.foreground },
+  empty: { paddingVertical: 24, textAlign: 'center' },
+  row: { gap: 4, paddingHorizontal: 16, paddingVertical: 14 },
+  rowRule: { borderTopWidth: 1, borderTopColor: COLOR.border },
+  rowLine: { flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between', gap: 12 },
+  rowTitle: { flexShrink: 1, fontSize: TYPE.body, lineHeight: 22, fontFamily: FONT.bold, color: COLOR.foreground },
+  rowValue: { flexShrink: 0, fontSize: TYPE.body, lineHeight: 22, fontFamily: FONT.bold, color: COLOR.foreground, fontVariant: ['tabular-nums'] },
+  struck: { color: COLOR.muted, textDecorationLine: 'line-through' },
+  caption: { fontSize: TYPE.fine, lineHeight: 16, fontFamily: FONT.medium, color: COLOR.muted, fontVariant: ['tabular-nums'] },
+  status: { flexShrink: 0, fontSize: TYPE.fine, lineHeight: 16, fontFamily: FONT.bold, color: COLOR.secondary },
+  danger: { color: COLOR.danger },
+  refund: { gap: 6, paddingHorizontal: 20 },
+  refundTitle: { fontSize: TYPE.body, lineHeight: 22, fontFamily: FONT.bold, color: COLOR.foreground },
+  refundText: { fontSize: TYPE.small, lineHeight: 24, fontFamily: FONT.medium, color: COLOR.secondary },
 });

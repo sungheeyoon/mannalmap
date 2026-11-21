@@ -28,6 +28,7 @@ const { NOT_A_DB_OBJECT } = codeRules;
 /** 웹과 같은 옮기기를 쓰는 RPC → 앱에서 그것을 부르는 유일한 문 */
 const ONE_DOOR: Readonly<Record<string, string>> = {
   my_suspension: 'mobile/src/auth/suspension.ts',
+  my_reading_credit_history: 'mobile/src/credits/remaining.ts',
   my_reading_credits: 'mobile/src/credits/remaining.ts',
   my_reading_orders: 'mobile/src/credits/remaining.ts',
   current_beta_schedule: 'mobile/src/auth/schedule.ts',
