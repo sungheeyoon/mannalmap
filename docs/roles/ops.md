@@ -7,7 +7,7 @@
 - 등급 3 을 밟으면 본 값을 #770 · 접속기록에 적는다([권한 등급](../agents/delegation/permissions.md#권한-등급--무엇을-해도-되고-무엇은-묻는가))
 - 묶음 배포의 끝 상태는 [묶음 배포](../ops/runbook/deploy.md#묶음-배포--최신-main-을-production-으로-한-번) 5 의 자리에 적는다
 - 원격 질의는 개인을 가리키지 않는 것만 `npm run db:remote -- --purpose` 로 보낸다([개인정보는 화면으로만](../ops/runbook/access.md#개인정보는-화면으로만--원격-sql-의-경계-adr-0105))
-- `supabase config push` · Vercel 변수 삭제 · main 가지 삭제는 운영자에게 넘긴다([권한 등급](../agents/delegation/permissions.md))
+- `supabase config push` · Vercel 변수 삭제 · main 가지 삭제는 안 한다 — 되돌릴 수 없다([권한 등급](../agents/delegation/permissions.md))
 - `app/api/**` 에 자격을 묻지 않는 문(상태 문 · 감시 문)을 더하면 결정이다([결정 점검표](../agents/delegation/decisions.md))
 - 운영 주소는 `docs/ops/runbook/domain.md` 맨 위만 글자로 든다 — 다른 곳은 가리킨다([운영 주소의 자리](../ops/runbook/domain.md))
 
