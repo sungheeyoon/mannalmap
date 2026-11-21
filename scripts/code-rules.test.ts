@@ -1874,6 +1874,26 @@ describe('역할 문서 (docs/start.md · docs/roles/, ADR 0140)', () => {
 // -----------------------------------------------------------------------------
 // 코드 규칙 (CODING_STANDARDS.md 색인 → docs/agents/code-rules/, ADR 0086)
 // -----------------------------------------------------------------------------
+// 규약 문서의 총량 (ADR 0264)
+// -----------------------------------------------------------------------------
+
+describe('규약 문서의 총량 (ADR 0264)', () => {
+  /** 모든 에이전트가 싣거나 손대기 전에 고르는 규약 — 제품 문서(PRD · 대장 · 런북 · ADR · 노트)는 세지 않는다 */
+  const HARNESS = ['AGENTS.md', 'CLAUDE.md', 'CODING_STANDARDS.md', 'docs/start.md', 'docs/roles', 'docs/agents', '.claude/agents'];
+  /** 332,816 에서 203,349 로 줄인 뒤 약 8% 위다. 올리려면 ADR 로 까닭을 적는다 */
+  const CEILING = 220_000;
+
+  it('규약 문서의 합은 천장 안이다 — 넘으면 한 줄을 더하기 전에 효과 없는 줄을 지운다', () => {
+    const files = execFileSync('git', ['ls-files', '--', ...HARNESS], { cwd: ROOT, encoding: 'utf8' })
+      .split('\n')
+      .filter((rel) => rel && existsSync(join(ROOT, rel)));
+    expect(files.length).toBeGreaterThan(40);
+    const bytes = files.reduce((sum, rel) => sum + readFileSync(join(ROOT, rel)).length, 0);
+    expect(bytes, `규약 문서 ${files.length}개의 합`).toBeLessThanOrEqual(CEILING);
+  });
+});
+
+// -----------------------------------------------------------------------------
 
 describe('코드 규칙 (CODING_STANDARDS.md 색인 → docs/agents/code-rules/, ADR 0086)', () => {
   const INDEX = 'CODING_STANDARDS.md';

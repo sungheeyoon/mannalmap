@@ -25,6 +25,7 @@
 | `gh pr merge --auto` 가 `BLOCKED` | gate 가 아직 안 끝났다 — 실패가 아니다. `UNSTABLE` 도 도는 중일 수 있다 | `gh pr checks <n>` 으로 본다 |
 | `mergeStateStatus` 가 `BEHIND` | 가지가 최신 main 을 안 품었을 뿐이다 — 보호 규칙의 strict 는 껐다 | 할 것이 없다. 안 들면 `BLOCKED` · `DIRTY`(충돌 — 가지에서 main 을 merge)를 본다 |
 | `db:start` · `supabase status` 가 Docker 에 못 닿는다 · `docker` 가 없다 | Docker Desktop 이 꺼졌거나 명령이 샌드박스 안에서 돈다 | 샌드박스 밖에서 다시, 꺼졌으면 사람에게 켜 달라고 한다. 켤 수 없으면 생성 타입(`src/lib/db/database.generated.ts`)은 손으로 고치고 CI 의 `test:db` · `db:types` diff 에 기대며 PR 에 「로컬에서 못 돌렸다 — CI 가 덮었다」를 적는다 |
+| (WSL) `docker version` 이 「could not be found in this WSL 2 distro」이고 `/usr/bin/docker` 링크의 대상(`/mnt/wsl/docker-desktop/`)이 없다 | Docker Desktop 엔진이 꺼져 있다 — 설치가 없는 것이 아니다. Windows 쪽 `docker.exe version` 이 `dockerDesktopLinuxEngine` 파이프를 못 찾는다고 답하면 이 줄이다 | 사람이 Docker Desktop 을 켠다. 위 줄(CI 에 기대기)로 넘어가지 않는다 |
 | 메인에서 쓰던 로컬 DB 가 갑자기 비었다 | 다른 에이전트의 `db:reset` 이 메인 스택을 겨눴다 | `db:reset` 앞에 `npm run stack:slot -- --auto` 를 밟고 대상 `SAJU_STACK_ID` 가 제 것인지 본다 |
 | `supabase test db <파일>` 이 헬퍼 함수가 없다고 선다 · 그 뒤 psql 에서 `plan()` 이 없다 | 파일 하나만 주면 `00_helpers.sql` 이 안 실린다 · 그 명령이 끝에 pgTAP 확장을 지운다 | `supabase/tests/00_helpers.sql` 을 앞에 함께 준다 · `create extension if not exists pgtap` |
 | `db query` 가 `cannot insert multiple commands` · `db diff --linked` 가 비밀번호를 묻는다 | prepared statement 라 `begin; … rollback;` 을 못 받는다 · 다른 인증 경로다 | 트랜잭션은 `docker exec -i supabase_db_<SAJU_STACK_ID> psql -U postgres -d postgres` · 양쪽에 같은 질의를 돌려 손으로 견준다 |
@@ -33,6 +34,7 @@
 | `npx playwright test e2e/match.spec.ts` 만 붉다 | 그 spec 은 직렬이어야 한다 | `npm run test:e2e:match` |
 | `scripts/ui-seed.mjs` 가 멈추거나 그림이 「테스트가 끝났어요」를 찍는다 · 「가입을 못 끝냈습니다」(`app_user_nickname_is_unique`) | 로컬 일정 줄이 지난 날짜다(종료일은 오늘에서 센다) · 기본 닉네임이 꼬리표 끝 네 자리라 같은 스택의 앞 시드와 겹친다 | `node scripts/ui-seed.mjs` 로 일정 줄을 다시 세운다(날짜를 손으로 고치지 않는다) · `nickname` 이나 꼬리표를 바꾼다 — 스택은 지우지 않는다 |
 | `npm run build` 가 `… leaves the filesystem root` 로 선다 | `.claude/worktrees/` 아래 워크트리에서 났다 — 원인은 확인 전 | CI `core` 차선의 빌드를 보거나 저장소 밖 워크트리(`~/saju-wt/<이름>`)에서 빌드하고 걷는다 |
+| (WSL) dev 서버가 OOM 으로 죽고 도구 출력이 `ENOSPC` 로 멈춘다 | WSL 의 `/tmp` 는 3.9GB tmpfs(메모리)다 — 워크트리마다 `node_modules`(약 760MB)를 복사하면 찬다 | 워크트리는 홈 디스크(저장소 밖이면 `~/saju-wt/<이름>`)에 두고, 끝나면 `git worktree remove` 로 걷는다 |
 | Production 배포만 `Error` 이고 나머지 검사는 초록이다 | `next build` 만 잡는 것이 있다 — `app/` 아래 `icon` · `apple-icon` · `opengraph-image` · `sitemap` · `robots` · `manifest` 파일은 메타데이터 라우트라 기본 내보내기가 없으면 선다 | 그 이름의 파일을 고쳤으면 CI 빌드가 초록인지 본다. 공용 아이콘은 `app/ui/icons.tsx` |
 | `.env.development.local` 의 값이 `"[SENSITIVE]"` 다 | Vercel 이 Secret 은 안 내려 준다 — 그대로 두면 있는 값으로 세어져 401 | 주석 처리하면 오류가 이름을 대 준다 |
 | 프로덕션 확인에 계정이 필요하다 | 기존 계정은 실제 사용자다 | `SUPABASE_SECRET_KEY` 로 `auth.admin.createUser({ email_confirm: true })` — 주소는 `@example.com`, 전용 코드로 `complete_signup`. 끝나면 `forget_user` 로 지우고 코드도 지운다 |
@@ -41,7 +43,7 @@
 | `pkill -f <글자>` 뒤 제 셸이나 남의 가짜 서버 · Metro 가 죽는다 | 글자가 제 명령줄과 나란히 도는 에이전트의 프로세스에도 맞는다 | 띄울 때 받은 PID 나 제 포트의 PID 로만 끈다. 포트도 저마다 잡는다(`FAKE_PORT` · `--port`) |
 | `eas build --local` 이 Java · Android SDK 를 못 찾는다 | 이 맥의 JDK · SDK 는 `~/opt` 에 있다 | `docs/ops/runbook/mobile-release.md` 「무료 빌드 횟수가 떨어지면 — 이 PC 에서 굽는다(2026-11-19)」 끝의 맥 문단 — 깔았으면 `export` 줄만 |
 | (ego-browser) Play 콘솔 · 운영 대시보드에 로그인이 안 돼 있거나 다른 계정이 뜬다 | 프로필이 둘이다 — 기본은 운영자 개인 계정, `Profile 2` 는 개발자 계정(`gapjagilab`) | Play 콘솔은 `Profile 2`. 다른 콘솔도 어느 계정 것인지 보고 고른다 |
-| (ego-browser) 내려받은 파일이 안 보인다 · Cloud Shell 에 글자가 안 들어간다 · Play 콘솔 드롭다운이 안 열린다 | 다운로드는 ego 상태 폴더의 `downloads/<GUID>` 에 GUID 이름으로 떨어진다 · Cloud Shell(xterm)은 `insertText` 를 안 받는다 · 드롭다운이 마우스를 놓친다 | GUID 폴더에서 찾고, 키 파일이면 쓴 뒤 사본까지 지운다 · `keyboard.type` · 키보드나 좌표 클릭. 키는 Cloud 콘솔 UI 에서 만든다 |
+| (ego-browser) 내려받은 파일이 안 보인다 · Cloud Shell 에 글자가 안 들어간다 · Play 콘솔 드롭다운이 안 열린다 | 다운로드는 (Windows) `C:\Users\<사용자>\.ego-browser\state\downloads\<GUID>` 에 GUID 이름으로 떨어진다 · Cloud Shell(xterm)은 `insertText` 를 안 받는다 · 드롭다운이 마우스를 놓친다 | GUID 폴더에서 찾고, 키 파일이면 쓴 뒤 사본까지 지운다 · `keyboard.type` · 키보드나 좌표 클릭. 키는 Cloud 콘솔 UI 에서 만든다 |
 
 ## 앱을 웹 번들로 재기
 
@@ -63,7 +65,7 @@
 
 안드로이드 에뮬레이터의 Expo Go 에 가짜 서버를 물려 라우트를 전수로 잰다. 도구는 `mobile/scripts/measure/` 다. 실제 DB · 구글 로그인 · iOS 는 못 잰다 — PR 의 「안 돌린 것」에 적는다. 그림은 저장소 밖(`MEASURE_DIR`)에 둔다.
 
-1. 에뮬레이터를 띄우고 SDK 와 맞는 Expo Go 를 깐다 — `adb install -r -g <apk>`. API 37 은 `adb shell pm grant host.exp.exponent android.permission.ACCESS_LOCAL_NETWORK` 도.
+1. 에뮬레이터를 띄우고 SDK 와 맞는 Expo Go 를 깐다 — `adb install -r -g <apk>`(WSL 은 `adb.exe` 에 Windows 경로의 apk). API 37 은 `adb shell pm grant host.exp.exponent android.permission.ACCESS_LOCAL_NETWORK` 도.
 2. `adb reverse tcp:8081 tcp:8081` · `adb reverse tcp:18999 tcp:18999`.
 3. `mobile/.env.local` 을 가짜로 — `EXPO_PUBLIC_SUPABASE_URL` · `EXPO_PUBLIC_SITE_URL` 은 `http://localhost:18999`, 키는 아무 글자. **운영 값을 넣지 않는다.**
 4. `node mobile/scripts/measure/fake-server.mjs` — 상태는 `curl 'localhost:18999/__set?m=<상태>'`(`reset` · `empty` · `unsigned` · `closed` · `suspended` · `warning` · `no-credits` · `no-self` · `match-shut` · `no-readings`, 망은 `down` · `broken` · `slow` · `up`, 화면 하나만은 `screens-down` · `screens-slow`).
@@ -71,7 +73,7 @@
 6. `mobile/scripts/measure/dev-seed.tsx.txt` 를 `mobile/src/app/dev-seed.tsx` 로 잠시 복사하고 `python3 mobile/scripts/measure/device.py link /dev-seed`. **복사본과 `.env.local` 은 끝나면 지운다 — 커밋하지 않는다.** 있는 동안 `scripts/` 시험 넷(`code-rules` 의 `!` 지문 · `mobile-back` · `mobile-supabase-env` · `mobile-word-text`)이 붉다.
 7. `python3 mobile/scripts/measure/sweep.py me=/me chat=/me/chat …` 가 그림 · 글자 · 로그를 모은다. 누르는 흐름은 `device.py` 의 `tap` · `input` · `type` · `key` 로 스크립트 파일에 적는다.
 
-환경값은 `ADB` · `MEASURE_DIR` · `FAKE_PORT` · `METRO_PORT`. 나란히 쓰면 포트를 저마다 잡고 기기는 잠금으로 차례를 지킨다. 개발 번들의 홈은 수십 초 걸리니 글자를 기다린다. 가짜 서버 기록에 `!! 없는 rpc` 가 찍히면 그 답을 `fake-server.mjs` 에 더한다.
+환경값은 `ADB`(WSL 은 Windows SDK 의 `adb.exe` 전체 경로) · `MEASURE_DIR` · `FAKE_PORT` · `METRO_PORT`. 나란히 쓰면 포트를 저마다 잡고 기기는 잠금으로 차례를 지킨다. 개발 번들의 홈은 수십 초 걸리니 글자를 기다린다. 가짜 서버 기록에 `!! 없는 rpc` 가 찍히면 그 답을 `fake-server.mjs` 에 더한다.
 
 | 증상 | 원인 | 하는 일 |
 | --- | --- | --- |
@@ -84,7 +86,8 @@
 | 풀이권 구매 · 결제 완료 창을 재야 한다 | Expo Go 에는 Play 결제 모듈이 없다 | 가짜 서버가 `/api/mobile/credits/purchase` 를 답한다. 재는 동안만 `mobile/src/credits/store.ts` 의 가격 · 결제창을 `__DEV__` 가짜로 바꾼다 — 실제 결제는 못 잰다 |
 | `texts` · `tap` 이 앞 화면 글자를 낸다 | idle 이 안 되는 화면(궁합 고르기)은 `uiautomator dump` 가 실패해 빈 목록으로 보인다 · 글자가 전환보다 늦게 바뀐다 | 그 화면은 `shot` 으로 본다(빈 본문은 PNG 가 작다). 전환 뒤 몇 초 기다리고 읽는다 |
 | `input text` 가 메뉴를 띄우거나 앱을 다시 읽는다 | 초점이 없으면 글자가 RN 단축키로 먹는다 | `device.py input` 으로 초점을 준 뒤 `type`. 한글은 못 넣는다 |
-| `adb` 가 결과 없이 멈춘다 | adb 데몬이 멈췄다 | `adb kill-server` 뒤 다시. 부를 때 시간 제한을 두고 나란히 부르지 않는다 |
+| `adb` 가 결과 없이 멈춘다 | adb 데몬이 멈췄다(WSL 은 Windows 쪽 `adb.exe` 프로세스가 쌓여서) | `adb kill-server` 뒤 다시. 부를 때 시간 제한을 두고 나란히 부르지 않는다. WSL 에서 kill-server 도 멈추면 `taskkill.exe /IM adb.exe /F` |
+| WSL 의 `expo start` 가 adb 를 못 찾는다 | expo 는 `ANDROID_HOME/platform-tools/adb` 를 찾는데 Windows SDK 에는 `adb.exe` 뿐이다 | 저장소 밖 폴더에 `platform-tools/adb` → Windows 의 `adb.exe` symlink 를 두고 그 폴더를 `ANDROID_HOME` 으로 준다 |
 
 ## 워크트리에서 전후 그림 찍기
 

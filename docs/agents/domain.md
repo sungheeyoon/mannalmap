@@ -9,7 +9,8 @@ exploring, planning, testing, or changing the codebase.
   document (`docs/roles/`) points to, and open another only when the work meets a word it defines.
 - Decisions: `docs/adr/` — read the ones that cover the area you touch.
 
-If a document does not exist, proceed without suggesting that it be created pre-emptively.
+If a document does not exist, proceed without suggesting that it be created pre-emptively. Domain
+documentation should grow only when a term or decision is actually resolved.
 
 ## Use the glossary vocabulary
 
