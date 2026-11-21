@@ -7,9 +7,9 @@
 - 실패는 [실패를 말하는 법](../agents/code-rules/failures.md#실패를-말하는-법)대로 말한다
 - 커밋 전 로컬에서 돌릴 최소와 예외는 [무엇을 고쳤으면 무엇을 돌리나](../agents/test-map/what-to-run.md#무엇을-고쳤으면-무엇을-돌리나)
 - 결정 점검표에 걸리면 머지하지 않고 보고에 올린다 — 문구 말고는 ADR 을 같은 PR 에, 문구는 운영자 사후 확인([결정 점검표](../agents/delegation/decisions.md))
-- `app/api/**` 에 자격을 묻지 않는 문은 더하기 전에 보고에 올린다([결정 점검표](../agents/delegation/decisions.md))
-- 코드 주석의 출처는 `G-nn` 이나 ADR 이다 — PRD 절 번호는 옮겨지고, 날짜는 주석에 적지 않는다([주석과 ADR 참조](../agents/code-rules/comments.md#주석과-adr-참조))
-- 새 글자 · 배치 · 흐름은 레퍼런스와 함께 — 정책 · 새 흐름인데 사례가 없으면 구조와 선택지를 보고에([정책 · 흐름의 빈틈](../agents/delegation/decisions.md#정책--흐름의-빈틈--묻기-전에-찾는-차례))
+- `app/api/**` 의 라우트는 관문을 안 지나 저마다 자격을 묻는다 — 자격을 묻지 않는 새 라우트는 결정이다([결정 점검표](../agents/delegation/decisions.md))
+- 코드 주석의 근거는 지금 유효한 ADR 하나, 미결은 `G-nn` 줄이나 이슈(`#67`)다 — 날짜는 적지 않고, 예외는 밖의 문서를 확인한 날(`확인 YYYY-MM-DD`) 하나다([주석과 ADR 참조](../agents/code-rules/comments.md#주석과-adr-참조))
+- 새 글자 · 배치 · 흐름은 레퍼런스와 함께 — 정책 · 새 흐름인데 사례가 없으면 가장 가까운 것을 짓지 않고 구조와 선택지를 보고하고 `G-nn` 줄로 올린다([정책 · 흐름의 빈틈](../agents/delegation/decisions.md#정책--흐름의-빈틈--묻기-전에-찾는-차례))
 
 ## 먼저 읽는 것
 
