@@ -363,7 +363,7 @@ update retention.reading_payment set hold_reason = null, held_at = null where or
 6. **배포** — 「배포」 답 뒤(`deploy.md`). 그 뒤 Monetization setup 의 **Send test message** → Vercel 로그에 `play notification: refused` · `not configured` 가 없다(문은 204).
    다시 소비 크론은 나눠 들어간다 — **DB PR 머지 승인 → `20270119090000` 의 `db push` · 확인 → DB PR 머지(squash) → 코드 PR 을 main 으로 update-branch 하고 CI 초록을 다시 본다
    (main 보호가 strict 가 아니라 쌓였던 PR 은 squash 뒤 main 위에서 다시 잰다) → 코드 PR 머지 승인 → 머지 → 배포**(`docs/agents/delegation/permissions.md`
-   「예외 — 마이그레이션이 든 PR」, 크론이 그 문을 부른다). Vercel → Settings → Cron Jobs 에 `/api/cron/store-consume` 가 서고, **Run** 한 번의
+   「예외 — 마이그레이션이 든 PR」, 크론이 그 문을 부른다). Vercel → 프로젝트의 Schedules → Cron Jobs 탭에 `/api/cron/store-consume` 가 서고, **Run** 한 번의
    응답이 200 · `{"consumed":0,…}`(키 전이면 `{"configured":false}`)인지 본다 — **운영자**
 7. **라이선스 테스터** — Play Console → Settings → License testing 에 시험할 구글 계정. 시험 구매는 돈이 안 오가고 장부에 `is_test` 로 선다. Play 프로모션 코드로 받은 구매(`purchaseType = 1`)는 금액 0 의 주문으로 서고(`is_promo`) 매출 · 환불 금액에 안 든다(ADR 0230 추기)
 
@@ -460,7 +460,7 @@ SQL
 
 - **`store-consume-urgent`**(「소비를 못 끝냈고 가장 이른 기한까지 36시간이 안 남았거나 넘겼다」 — 앱 · 통지 · 크론이 못 끝낸 순간) · **`store-consume-overdue` 의
   「가장 이른 기한 36시간 안 N건」 · 「가장 이른 기한 지남(실제 기한 미확인, 다시 소비 계속) N건」** · **「다시 소비할 줄 N건」이 100 을 넘음** — 다시 소비한다.
-  Vercel → Cron Jobs 에 `/api/cron/store-consume` 가 있나 → **Run** → 응답(403 이면 `CRON_SECRET`, 503 이면 열쇠 · DB, 500 이면 답의 `failed` · `gone` · `waiting` — Google 이
+  Vercel → Schedules → Cron Jobs 탭에 `/api/cron/store-consume` 가 있나 → **Run** → 응답(403 이면 `CRON_SECRET`, 503 이면 열쇠 · DB, 500 이면 답의 `failed` · `gone` · `waiting` — Google 이
   401 · 403 이면 결제 검증 서비스 계정의 권한 · 키, 429 면 할당량) → 위 소비 대조 질의의 두 칸이 줄었나. 적체면 여러 번 Run 한다(한 번에 100 줄, 차례가 돈다). Run 이
   그 줄을 「취소확인」으로 옮기면 Google 이 끝났다고 답한 것이다 — 아래 셋째 줄로 간다. 지급 3일이 지나면 크론이 그 줄을 더 받지 않는다 — 둘째 줄로 간다.
 - **`store-consume-overdue` 의 「실제 기한 지남(지급 뒤 3일, Google 확인 없음) N건」** — 실제 기한(지급 뒤 3일 안)이 확실히 지났고 Google 이 무엇을 했는지는 우리가 모른다.
