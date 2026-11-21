@@ -4340,8 +4340,8 @@ test.describe('누름 하나는 요청 하나다', () => {
 
 /**
  * **풀이권 화면 둘을 주소로 연다**(G-116) — 상품 · 결제 내역. 전에는 회원 머리의 풀이권 메뉴 링크로만 닿아 그 주소를 직접
- * 여는 시험이 없었다. 웹에는 결제 단추가 없고(ADR 0212) 시험 계정은 산 적이 없으므로, 여기서 서는 것은 판매 준비 줄 · 빈 내역의
- * 자리다.
+ * 여는 시험이 없었다. 웹에는 결제 단추가 없고(ADR 0212) 시험 계정은 산 적이 없으므로, 여기서 서는 것은 판매 준비 줄과
+ * 결제 내역의 두 탭이다.
  */
 test.describe('풀이권 화면', () => {
   test('상품 화면은 묶음을 세우고 결제 단추 대신 판매 준비 중이라 말한다', async ({ page, signedIn }) => {
@@ -4353,11 +4353,19 @@ test.describe('풀이권 화면', () => {
     await expect(page.getByRole('button', { name: /결제하기$/ })).toHaveCount(0);
   });
 
-  test('결제 내역은 산 것이 없으면 비었다고 말하고 환불 신청 길을 보인다', async ({ page, signedIn }) => {
+  test('결제 내역은 보유 수 · 구매 내역 / 사용 내역 두 탭 · 환불 신청 길을 보인다 (ADR 0263)', async ({ page, signedIn }) => {
     expect(signedIn.label).not.toBe('');
     await page.goto('/me/credits/history');
     await expect(page.getByRole('heading', { level: 1, name: '결제 내역' })).toBeVisible();
-    await expect(page.getByText('결제 내역이 없어요.')).toBeVisible();
+    await expect(page.getByText(/^보유 풀이권 \d+장$/)).toBeVisible();
+    const tabs = page.getByRole('tablist', { name: '결제 내역' });
+    await expect(tabs.getByRole('tab', { name: '구매 내역' })).toHaveAttribute('aria-selected', 'true');
+    // 산 적이 없어도 구매 탭에는 가입하면 받는 무료 풀이권 한 줄이 선다
+    await expect(page.getByRole('tabpanel').getByText('가입하면 받는 풀이권')).toBeVisible();
+    await tabs.getByRole('tab', { name: '사용 내역' }).click();
+    await expect(tabs.getByRole('tab', { name: '사용 내역' })).toHaveAttribute('aria-selected', 'true');
+    await expect(page).toHaveURL(/[?&]tab=use$/);
+    await expect(page.getByRole('tabpanel').getByText('가입하면 받는 풀이권')).toHaveCount(0);
     const refund = page.getByRole('region', { name: '환불 신청' });
     await expect(refund.getByRole('link', { name: '환불정책 보기' })).toHaveAttribute('href', '/refund');
   });

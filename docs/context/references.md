@@ -85,6 +85,11 @@
 | 넥슨 · 코그 · 엔씨 | 마이너스(넥슨 바람의나라: 연) · 대체 재화 회수(코그) · 보너스 함께 뺌(엔씨) · 악용은 이용 전체 제한(넥슨 등) | 링크 없음 | 2026-11-06 | — | ADR 0230 |
 | 네이버웹툰 | 쿠키가 iOS 120원, 안드로이드 100원 → 120원(2022-05-30) — 2022 보도, 검색 요약 | [디지털데일리](https://www.ddaily.co.kr/page/view/2022053117191404680) · [지디넷](https://zdnet.co.kr/view/?no=20220523181929) | 날짜 없음 | — | G-128 기록 |
 | 웨이브 · 티빙 · 플로 | 앱 이용권을 15% 안팎 올렸다 — 2022 보도, 검색 요약 | [이코노미스트](https://economist.co.kr/article/view/ecn202206140051) | 날짜 없음 | — | G-128 기록 |
+| 카카오페이지 | 캐시 내역 — 탭 「충전내역 / 사용내역」, 줄은 위 왼쪽 이름 · 위 오른쪽 값 · 아래 시각 · 상태, 빈 상태 「캐시 충전내역이 없습니다.」, 취소 · 환불은 빨강 | [웹](https://page.kakao.com/history/cash/) | 2026-11-21 | B′ | credits-18 · credits-19 · ADR 0263 |
+| 카카오페이지 | 이용권 내역 — 위 왼쪽 이름 · 위 오른쪽 값 · 아래 시각의 줄 | [웹](https://page.kakao.com/history/ticket/) | 2026-11-21 | B′ | ADR 0263 |
+| 포스텔러 | 「내 포스 내역」 — 잔액 한 줄 아래 「충전 내역 / 사용 내역」 탭 | [웹](https://www.forceteller.com/force/history) | 2026-11-21 | B′ | credits-18 · ADR 0263 |
+| 밀리의서재 | 결제 내역의 상태 「환불 완료」 | [웹](https://www.millie.co.kr/v3/order/history) | 2026-11-21 | B′ | ADR 0263 |
+| 토스 TDS | 목록의 보조 정보 · 상태를 오른쪽에 맞춘다 | [문서](https://tossmini-docs.toss.im/tds-mobile/llms-full.txt) | 2026-11-21 | A | credits-18 · ADR 0263 |
 
 ### 확인 창 · 시트 · 스낵바
 

@@ -13,14 +13,14 @@ const ROW = {
 };
 
 describe('결제 내역 한 줄 (G-21, ADR 0174)', () => {
-  it('주문 번호 · 상품 · 금액 · 상태 · 남은 회차를 화면의 말로 옮긴다', () => {
+  it('주문 번호 · 상품 · 금액 · 상태를 화면의 말로 옮긴다', () => {
     expect(paidOrderOf(ROW)).toMatchObject({
       orderNumber: 'rdo_0f1e2d3c4b5a49688776655443322110',
       product: '풀이권 3장',
       amount: 12900,
       refundedAmount: 4300,
       status: '부분 환불',
-      remaining: 2,
+      paidAt: '2026-10-12T05:03:00+00:00',
     });
   });
 
@@ -28,14 +28,13 @@ describe('결제 내역 한 줄 (G-21, ADR 0174)', () => {
     expect(paidOrderOf(ROW)).not.toHaveProperty('validUntil');
   });
 
-  it('결제 시각은 한국 시간이다', () => {
-    expect(paidOrderOf(ROW).paidAt).toContain('2026. 10. 12.');
-    expect(paidOrderOf(ROW).paidAt).toContain('2:03');
+  it('묶음마다 남은 회차는 줄에 없다 — 보유 수는 화면 머리가 든다 (ADR 0263)', () => {
+    expect(paidOrderOf(ROW)).not.toHaveProperty('remaining');
   });
 
   it('승인 · 전액 환불도 제 이름으로 읽힌다', () => {
     expect(paidOrderOf({ ...ROW, status: 'approved', refunded_amount: 0 }).status).toBe('결제 완료');
-    expect(paidOrderOf({ ...ROW, status: 'refunded', refunded_amount: 12900, remaining: 0 }).status).toBe('전액 환불');
+    expect(paidOrderOf({ ...ROW, status: 'refunded', refunded_amount: 12900 }).status).toBe('전액 환불');
   });
 
   it('묶음이 선 셋이 아닌 상태는 결제 완료로 읽는다 — 이 문에는 묶음이 선 주문만 온다', () => {

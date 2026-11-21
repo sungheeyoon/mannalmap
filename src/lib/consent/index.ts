@@ -10,6 +10,7 @@ export * from './counts';
 import { ELEMENT_KO } from '../saju';
 import { knownElementsOf } from '../discovery';
 import type { ReadingKind } from '../reading';
+import { CREDIT_REASON_TEXT } from '../reading/credit-history';
 
 /**
  * 요청 · 동의 · Match 가 사람에게 하는 **말**.
@@ -163,15 +164,6 @@ type NotificationEvent = {
   readonly tappable?: boolean;
   /** 풀이권 소식(`credits_granted` · `credits_revoked`)의 수량과 갈래. 앱이 DB 보다 먼저 나가면 없다 */
   readonly credits?: { readonly count: number | null; readonly reason: string | null };
-};
-
-/** 무상 풀이권 소식이 이용자에게 말하는 갈래 — DB 의 `reading_credit_grant_entry.reason` 과 같은 값 */
-const CREDIT_REASON_TEXT: Readonly<Record<string, string>> = {
-  outage: '장애 보상',
-  operator: '운영 지급',
-  mistake: '잘못 지급',
-  duplicate: '중복 지급',
-  other: '기타',
 };
 
 /**

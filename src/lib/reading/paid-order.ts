@@ -1,6 +1,5 @@
 import { bundleOrderName } from './bundle';
 import { orderIsPaid, orderStatusOf, type PaidOrderStatus } from './order-status';
-import { when } from './when';
 
 /** `my_reading_orders` 의 한 줄 가운데 화면이 쓰는 칸 — 문의 생성 타입은 부르는 쪽이 들고, 칸이 어긋나면 그쪽 컴파일이 짚는다 */
 type Row = {
@@ -10,10 +9,12 @@ type Row = {
   readonly refunded_amount: number;
   readonly status: string;
   readonly paid_at: string;
-  readonly remaining: number;
 };
 
-/** 결제 내역 한 줄 — 웹과 앱의 화면이 그대로 그린다. 유효기간 칸은 없다 — 산 몫은 무기한이다(ADR 0212) */
+/**
+ * 산 묶음 하나 — 결제 내역의 구매 탭이 줄로 옮긴다(`credit-history.ts`). 유효기간 칸은 없다 — 산 몫은 무기한이다(ADR 0212).
+ * 묶음마다 남은 회차는 두 탭이 되며 줄에서 뺐다(ADR 0263) — 문은 여전히 내고, 보유 수는 화면 머리의 한 줄이 든다.
+ */
 export type PaidOrder = {
   /** 환불을 신청할 때 알려 주는 번호 — 가맹점 주문 번호(`rdo_…`) */
   readonly orderNumber: string;
@@ -21,8 +22,8 @@ export type PaidOrder = {
   readonly amount: number;
   readonly refundedAmount: number;
   readonly status: '결제 완료' | '부분 환불' | '전액 환불';
+  /** 결제 시각(ISO) — 줄의 시각 글자와 차례는 `credit-history.ts` 가 짓는다 */
   readonly paidAt: string;
-  readonly remaining: number;
 };
 
 const STATUS: Record<PaidOrderStatus, PaidOrder['status']> = {
@@ -48,7 +49,6 @@ export function paidOrderOf(row: Row): PaidOrder {
     amount: row.amount,
     refundedAmount: row.refunded_amount,
     status: paidStatusOf(row.status),
-    paidAt: when(row.paid_at),
-    remaining: Math.max(0, row.remaining),
+    paidAt: row.paid_at,
   };
 }

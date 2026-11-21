@@ -4003,6 +4003,20 @@ export type Database = {
           prompt_version: string
         }[]
       }
+      my_reading_credit_history: {
+        Args: never
+        Returns: {
+          at: string
+          credits: number
+          kind: string
+          person_a_is_self_person: boolean
+          person_a_label: string
+          person_b_is_self_person: boolean
+          person_b_label: string
+          reading_kind: string
+          reason: string
+        }[]
+      }
       my_reading_credits: {
         Args: never
         Returns: {

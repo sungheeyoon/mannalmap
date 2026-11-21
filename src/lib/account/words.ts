@@ -36,8 +36,6 @@ export const FOCUS_SAVED = '위치를 저장했어요';
 
 export const SURVEY_FAILED = '설문을 불러오지 못했어요.';
 
-export const PAYMENTS_EMPTY = '결제 내역이 없어요.';
-
 export const ORDER_NUMBER_ASK = '주문 번호를 함께 알려 주세요.';
 
 export const LEARN_MORE = '자세히 알아보기';

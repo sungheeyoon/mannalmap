@@ -23,6 +23,8 @@
 -- 2026-11-08 에 정지된 사람도 부르는 소개 비우기 문(`clear_my_intro`, `20270117090000`, ADR 0244)이 더했다 — 인자가 없고 제 소개만 비운다.
 -- 같은 날 「인터뷰 요청 받기」를 걷으며 `set_contact_consent` 를 `20270118090000` 이 걷었다(ADR 0245 추기). `complete_signup` 의 `p_contact` 는
 -- 옛 웹 · 앱 때문에 기본값을 들고 남았다 — 서명은 그대로다(G-160 이 걷는다).
+-- 2026-11-21 에 결제 내역의 구매 · 사용 두 탭이 읽는 풀이권 이력 문(`my_reading_credit_history`, `20270121090000`, ADR 0263)이 더했다 —
+-- 인자가 없고 부른 사람 제 줄만 낸다.
 begin;
 select plan(1);
 
@@ -77,6 +79,7 @@ select set_eq(
            ('my_photos()'),
            ('my_reading(p_kind text, p_person_a uuid, p_person_b uuid, p_match_id uuid)'),
            ('my_reading_artifacts(p_kind text, p_person_a uuid, p_person_b uuid, p_match_id uuid)'),
+           ('my_reading_credit_history()'),
            ('my_reading_credits()'),
            ('my_reading_order(p_order_id uuid)'),
            ('my_reading_orders()'),

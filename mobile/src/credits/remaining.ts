@@ -1,3 +1,4 @@
+import type { Database } from '@db';
 import { userFacingDbMessage } from '@db-error';
 import { readingCreditsOf, type ReadingCredits } from '@reading/credits';
 import { paidOrderOf, type PaidOrder } from '@reading/paid-order';
@@ -15,9 +16,19 @@ export async function readReadingCredits(client: Client): Promise<Read<ReadingCr
   return { ok: true, value: readingCreditsOf(data) };
 }
 
-/** 결제한 묶음 — 풀이권 화면의 내역. 줄은 웹과 같은 `paidOrderOf` 가 옮긴다 */
+/** 결제한 묶음 — 결제 내역의 구매 탭. 줄은 웹과 같은 `paidOrderOf` 가 옮긴다 */
 export async function readReadingOrders(client: Client): Promise<Read<readonly PaidOrder[]>> {
   const { data, error } = await client.rpc('my_reading_orders');
   if (error !== null) return { ok: false, reason: userFacingDbMessage(error, 'my_reading_orders') };
   return { ok: true, value: (data ?? []).map(paidOrderOf) };
+}
+
+/** 풀이권 이력의 한 줄 — 줄을 화면의 말로 옮기는 것은 웹과 같은 `purchaseLines` · `usageLines`(`@reading/credit-history`)다 */
+export type CreditHistoryRow = Database['public']['Functions']['my_reading_credit_history']['Returns'][number];
+
+/** 받은 무료 풀이권과 풀이에 쓴 풀이권 — 결제 내역의 두 탭(ADR 0263). 웹의 문(`app/me/credits/history/orders.ts`)과 같은 함수를 부른다 */
+export async function readCreditHistory(client: Client): Promise<Read<readonly CreditHistoryRow[]>> {
+  const { data, error } = await client.rpc('my_reading_credit_history');
+  if (error !== null) return { ok: false, reason: userFacingDbMessage(error, 'my_reading_credit_history') };
+  return { ok: true, value: data ?? [] };
 }
