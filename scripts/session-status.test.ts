@@ -5,6 +5,7 @@ import {
   homeMasked,
   lastDeployOf,
   dockerLineOf,
+  dockerStateOf,
   localMainOf,
   nextAdvisoryLineOf,
   noteLineOf,
@@ -80,10 +81,20 @@ describe('session-status — 세션을 열 때 · 인계할 때 찍는 한 장',
     expect(localMainOf({ ahead: 1, behind: 2, checkout: clean })).toContain('갈라졌다');
   });
 
+  it('Docker 는 판본이 찍혀야 켜짐이고, 0 으로 끝난 500 은 고장, 소켓이 없으면 꺼짐이다', () => {
+    expect(dockerStateOf({ stdout: '29.1.2\n' })).toEqual({ running: true });
+    const fiveHundred = 'request returned 500 Internal Server Error for API route and version http://x/v1.52/info, check if the server supports the requested API version\n';
+    expect(dockerStateOf({ stdout: '\n', stderr: fiveHundred })).toEqual({ running: false, broken: fiveHundred.slice(0, 80) });
+    expect(dockerStateOf({ stderr: 'Cannot connect to the Docker daemon at unix:///x/docker.sock. Is the docker daemon running?' })).toEqual({ running: false });
+    expect(dockerStateOf({ stderr: '' })).toEqual({ running: false, broken: '5초 안에 답이 없다' });
+    expect(dockerStateOf({ code: 'ENOENT' })).toEqual({ running: false, missing: true });
+  });
+
   it('verify 는 지금 머리의 실행이 끝나 모든 차선이 돈 성공일 때만 「모든 차선이 돈 성공」이다', () => {
     const run = { headSha: HEAD, status: 'completed', conclusion: 'success', url: 'https://x/run', everything: true };
     expect(verifyLineOf(run, HEAD)).toContain('(지금 머리) 모든 차선이 돈 성공');
     expect(verifyLineOf({ ...run, everything: false }, HEAD)).toContain('정책 차선만 돈 실행');
+    expect(verifyLineOf({ ...run, everything: false }, HEAD)).toContain('gh workflow run verify.yml --ref main');
     expect(verifyLineOf({ ...run, status: 'in_progress', conclusion: null, everything: null }, HEAD)).toContain('도는 중');
     expect(verifyLineOf({ ...run, conclusion: 'failure' }, HEAD)).toContain('**failure**');
     expect(verifyLineOf({ ...run, headSha: OLD }, HEAD)).toContain('지금 머리 `1da9819e` 의 실행은 아직 없다');
@@ -151,6 +162,7 @@ describe('session-status — 세션을 열 때 · 인계할 때 찍는 한 장',
     expect(dockerLineOf({ running: true })).toBe('켜짐');
     expect(dockerLineOf({ running: false })).toContain('**꺼짐**');
     expect(dockerLineOf({ running: false, missing: true })).toContain('`docker` 명령이 없다');
+    expect(dockerLineOf({ running: false, broken: 'request returned 500' })).toContain('**고장**');
     expect(noteLineOf(null)).toContain('날짜 노트가 없다');
     expect(noteLineOf({ file: 'docs/notes/2026-11-20-a.md', date: '2026-11-20', since: 0 })).toBe('`docs/notes/2026-11-20-a.md`(2026-11-20) — 그 뒤 머지된 PR 없음');
     expect(noteLineOf({ file: 'docs/notes/2026-11-20-a.md', date: '2026-11-20', since: 11 })).toContain('뒤 머지된 PR 11 — 라운드를 닫았으면');
