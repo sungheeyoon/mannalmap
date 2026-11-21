@@ -1,19 +1,13 @@
 # Issue tracker: GitHub
 
-Issues and PRDs for this repository live as GitHub Issues. Use the `gh` CLI for all operations.
+Issues and PRDs live as GitHub Issues. Use the `gh` CLI.
 
 ## Conventions
 
 - Create issues with `gh issue create --title "..." --body-file <file>`.
-- Read an issue body with `gh issue view <number>` (or `--json body -q .body`), and its comments with
-  `gh issue view <number> --comments` — `--comments` prints the comments without the body (2026-10-18).
-- List issues with `gh issue list`, including labels and comments when the task needs them.
-- Comment with `gh issue comment <number> --body "..."`.
-- Apply or remove labels with `gh issue edit <number> --add-label "..."` and
-  `gh issue edit <number> --remove-label "..."`.
-- Close an issue with `gh issue close <number> --comment "..."`.
-
-Infer the repository from `git remote -v`; `gh` does this automatically inside the clone.
+- Read an issue with `gh issue view <number>` (or `--json body -q .body`); `--comments` prints the comments without the body.
+- List, comment, label and close with `gh issue list` · `gh issue comment` · `gh issue edit --add-label/--remove-label` ·
+  `gh issue close --comment`.
 
 ## Skill routing
 

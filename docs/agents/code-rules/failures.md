@@ -4,7 +4,10 @@
 
 ## 실패를 말하는 법
 
-**문(DB 를 읽는 `.ts`)은 셋으로 가른다**(ADR 0078, `docs/architecture.md`).
+**한 가지를 지킨다: `error.message` 를 사용자에게 그대로 내지 않는다** — 우리가 쓴 한국어 거절만 옮기고 나머지는 `console.error` 로 기록에.
+`app/db-error.boundary.test.ts` 가 웹 · 앱의 오류 원문을 집는 파일을 잡는다. 앱에는 운영의 Next 같은 덮개가 없어 던진 문장이 그대로 화면에 보인다.
+
+**문(DB 를 읽는 `.ts`)은 셋으로 가른다**(ADR 0078).
 
 | 무엇 | 어떻게 | 어디서 |
 | --- | --- | --- |
@@ -12,50 +15,30 @@
 | 없어도 본체가 서는 **부속 정보** | `SkippableRead` 로 값을 낸다(`read` / `unread`) — 화면이 그 자리만 비운다 | 같은 곳 |
 | 문은 성공했고 자료가 없음 | `null` · `[]` · `0` | |
 
-**서버 액션은 값으로 낸다** — `{ ok: false, message: userFacingDbMessage(error, '문 이름') }`.
-폼이 그 문장을 세운다. **던지는 문을 부르면 그 부름 하나를 `try` 로 받아**
-`{ ok: false, message: answerOfThrown(thrown, '자리') }` 로 낸다 — 액션이 던지면 운영의 Next 가 문장을
-영어 안내로 바꾼다. `answerOfThrown` 은 `DbFailure`(`dbFailure` 가 지은 우리말)만 옮기고 나머지는 기록에
-보낸 뒤 일반 문장을 세운다. `app/actions.boundary.test.ts` 가 받지 않은 부름을 센다.
+`if (error) return null` 은 「DB 실패」와 「없음」을 한 값으로 합친다 — 탈출구 시험이 잡는다(`docs/agents/code-rules/escapes.md`).
 
-**클라이언트가 액션을 부르는 자리는 `actionAnswer(부름)` 을 지난다**(`app/ui/action-answer.ts`, ADR 0164) — 값으로 답하는 액션도 부름 자체는
-던질 수 있다(망 · 배포 직후 액션 id 불일치 · 받지 않은 예외). 받지 않으면 오류 경계로 올라가 입력이 사라진다. 래퍼는 던진 것을
-`{ ok: false, message, unreached: true }` 로 접고 `redirect()` 의 이동 표지는 다시 던진다. 「답을 못 받았다(서버에서 섰는지 모른다)」는 그 표지로 가른다(`isUnreached`) —
-문장을 견주지 않는다. 이미 제 문장으로 받는 `try … catch` · `.catch(…)` 는 그대로다.
-`app/action-calls.boundary.test.ts` 가 `'use client'` 파일의 부름을 세고, 아직 안 받는 자리는 목록으로 줄어들기만 한다. **화면 안에서 한 칸을
-못 읽은 줄**과 폼의 실패 줄은 `FailureLine`(`app/ui/failure-line.tsx` — 붉은 줄 · `role="alert"` · 읽기 실패면 「다시 시도하기」 · 세션이 끝난 문장이면
-「다시 로그인」)이다. 부품 밖의 `role="alert"` 는 `app/failure-lines.boundary.test.ts` 의 목록뿐이다.
+**서버 액션은 값으로 낸다** — `{ ok: false, message: userFacingDbMessage(error, '문 이름') }`. 던지는 문을 부르면 그 부름을 `try` 로 받아
+`answerOfThrown(thrown, '자리')` 로 낸다 — 액션이 던지면 운영의 Next 가 문장을 영어 안내로 바꾼다. 받지 않은 부름은 `app/actions.boundary.test.ts` 가 잡는다.
 
-넷 다 한 가지를 지킨다: **`error.message` 를 사용자에게 그대로 내지 않는다.** 우리가 쓴 한국어
-거절만 옮기고 나머지는 `console.error` 로 기록에 보낸다 — `app/db-error.boundary.test.ts` 가
-웹(`src/` · `app/`)과 앱(`mobile/src`)의 모든 파일을 훑는다(#67). 잡은 것의 `.message` 는 `catch` 절 · `.catch` · `.then` 의 실패 쪽 어디서
-잡았든 센다. 앱에는 운영의 Next 같은 덮개가 없어 던진 문장이 그대로 화면에 선다 — 던지는 문은 `throw dbFailure(…)`, 받는 자리는 `answerOfThrown` 이다. `if (error) return null` 은 「DB 실패」와 「없음」을 한 값으로 합치므로
-새로 쓰지 않는다. 남은 하나는 지문으로 잠겨 있다. `error` 를 꺼내지도 않는 자리는 이제 없다 — 예산 0 이다.
+**클라이언트의 액션 부름은 `actionAnswer(부름)` 을 지난다**(`app/ui/action-answer.ts`) — 값으로 답하는 액션도 부름 자체는 던질 수 있고(망 · 배포 직후
+액션 id 불일치), 받지 않으면 오류 경계로 올라가 입력이 사라진다. 「답을 못 받았다(서버에서 섰는지 모른다)」는 `isUnreached` 로 가른다 — 문장을
+견주지 않는다. 잡는 것은 `app/action-calls.boundary.test.ts`. 한 칸을 못 읽은 줄과 폼의 실패 줄은 `FailureLine`(`app/ui/failure-line.tsx`)이고,
+부품 밖의 `role="alert"` 는 `app/failure-lines.boundary.test.ts` 가 잡는다.
 
-**엔진과 도메인 lib** 은 DB 를 모르므로 다르다 — 사용자가 고칠 수 있는 것은 **값**으로
-(`hour: null` · `unresolved` · `candidate`), 고칠 수 없는 것은 **예외**로(`InvalidSajuInputError`).
-`docs/context/chart.md` 「입력」 항목이 그 경계다.
+**엔진과 도메인 lib** 은 DB 를 모른다 — 사용자가 고칠 수 있는 것은 값으로(`hour: null` · `unresolved` · `candidate`), 고칠 수 없는 것은
+예외로(`InvalidSajuInputError`). 경계는 `docs/context/chart.md` 「입력」.
 
-**`console`** — 앱(`src/` · `app/`)에 `console.log` · `console.info` 는 없다. `console.error` 는 답을 안 바꾸고 **기록에만**
-남기는 자리뿐이다. 수는 적지 않는다 — `grep -rn 'console\.error' app src --include=*.ts --include=*.tsx`(시험 파일 제외)가 찍는다. 갈래는 일곱이다 — ① 못 옮긴 DB 오류의 원문(`app/db-error.ts` 한 곳), 그리고 장부 문이 코드만 남기는 DB 실패(`app/api/store/google-play/ledger.ts`).
-② 답에 안 싣는 거절 까닭 — webhook 의 서명 거절(G-23 ⑧). ③ 운영자 거절 기록을 못 적은 것(`app/ops/denial.ts`) · 환불 확보를 못 푼 까닭(`app/ops/orders`). ④ 크론 · 반출의 실패 —
-접속기록 반출(ADR 0105) · 사진 쓸기 · 닫힌 방 파기 · 스토어 무효 대조 · 스토어 다시 소비(`store-consume`, ADR 0253) · 풀이 크론. ⑤ **뒤에서 받치는 쓰기를 못 한 것** — 복구기 · 만료가 닫을 일감을
-못 닫음(응답 뒤 `after` 에서 풀이를 못 떠나보낸 것 포함), 오행 요약 · 발견 참여 갱신 실패, webhook 처리 표시, 활동을 못 적음(`app/auth/signed-in.ts` · `app/api/mobile/session.ts`, ADR 0118),
-로그인 전 사주 문단의 귀속 · 닫기. ⑥ **설정이 비어 문을 닫은 것** — 열쇠 없음 · `not configured` · `misconfigured` · 키가 없다(카카오 · 애플 · Play · 사진 저장소 · 로그인 전 문단의 비밀).
-⑦ **밖의 서비스가 거절하거나 닿지 않은 것** — 카카오 토큰 · 연결 끊기, 애플 연결 끊기, Google Play API(소비 · 거절한 구매의 환불), 사진 저장소(S3), 상태 점검(`app/api/health`),
-세션 봉투(`src/lib/account/sealed-session.ts`). ⑤ 는 결과를 버리는 쓰기의 대신이다(`docs/agents/code-rules/escapes.md` 의 탈출구 표). 새 자리는 이 일곱 중 하나여야 한다.
-PortOne 결제 알림을 반영하지 않은 까닭(옛 ②)은 그 문과 함께 걷었다(2026-11-05).
-**`console.warn`** 은 실패가 아니라 **지나간 일의 기록**이다 — 줄 열 · 파일 여섯(같은 날, 같은 grep): 크론이 지운 · 적은 수(`chat-purge deleted` · `store-voided` · `store-consume`)와
-Play 통지 · 구매 문 · 장부 문이 받지 않거나 넘긴 까닭(`play notification: refused` · `unreadable` · `ignored` · `voided` · `purchase`, `store purchase: account marker differs`, `store ledger: grant refused` — 남의 토큰, ADR 0253).
-런북은 이 글자로 로그를 찾는다(`docs/ops/runbook/credits.md` 「통지 · 크론이 이상하면」). 찍어 보는 자리는 `scripts/` 와, 사람이 읽으려고
-돌리는 `*.live.test.ts` 다.
+**`console`** — `console.log` · `console.info` 는 린트(`no-console`)가 잡는다. `console.error` 는 답을 안 바꾸고 기록에만 남기는 자리이고,
+새 자리는 일곱 갈래 중 하나여야 한다 — ① 못 옮긴 DB 오류의 원문 ② 답에 안 싣는 거절 까닭(webhook 서명 거절) ③ 운영자 거절 기록 · 환불 확보를
+못 푼 것 ④ 크론 · 반출의 실패 ⑤ 뒤에서 받치는 쓰기를 못 한 것(복구기 · 만료 · 요약 갱신 · 활동 기록 — 결과를 버리는 쓰기의 대신)
+⑥ 설정이 비어 문을 닫은 것(열쇠 · 키 없음) ⑦ 밖의 서비스가 거절하거나 닿지 않은 것. 지금 자리는 `grep -rn 'console\.error' app src` 가 찍는다.
+`console.warn` 은 실패가 아니라 지나간 일의 기록이다(크론이 지운 수, Play 통지 · 구매 문이 넘긴 까닭). `docs/ops/runbook/credits.md` 가 그 글자로
+로그를 찾으니 바꾸면 런북도 고친다.
 
-**화면이 서버보다 먼저 서는 누름**(낙관적 갱신 — 덱의 지나치기, ADR 0115 「2026-10-08 덧」)은 실패하면 누르기 전 상태로 돌아가야 한다.
-시험은 「누름 → 실패 되돌림」이 누르기 전 상태와 **같은가**를 목록의 경계에서 잰다 — 빈 목록과 꽉 찬 목록. 넣으면서 자르는 목록은
-꽉 찼을 때 밀려난 줄이 있고, 실패한 한 줄만 빼면 그 줄이 사라진다(#539, `app/me/matching/deck-state.test.ts`).
-**채팅의 보내기는 갈래가 다르다**(ADR 0155 「2026-10-11 덧」) — 되돌리지 않고 **실패한 말을 제자리에 남긴다**(카카오톡의 방식). 곁에
-실패 단추가 서고 사람이 다시 보내거나 지운다. 다시 보내기는 같은 전송 id 로 가서 서버가 두 번 남기지 않는다. 액션의 예외 ·
-떠난 말의 시한(15초)도 그 말 하나의 실패로 받는다 — 트랜지션 안에서 던져 오류 경계로 올라가면 화면 전체가 바뀌고 쓴 글을 잃는다.
-**지우기는 서버가 분명히 거절한 실패에만 선다** — 답을 못 받은 실패(시한 · 망)는 서버에 남았을 수 있어 다시 보내기만 선다.
-시험은 `src/lib/chat/room/pending.test.ts`(제자리 · id 짝짓기 · 지우기의 경계) · `send-line.test.ts`(한 번에 하나 · 시한은
-떠난 말에만)와 `e2e/chat.spec.ts`(끊긴 전송 · 느린 전송)다.
+**화면이 서버보다 먼저 서는 누름**(낙관적 갱신)은 실패하면 누르기 전 상태로 돌아가야 한다. 시험은 되돌린 상태가 누르기 전과 같은가를
+빈 목록과 꽉 찬 목록에서 확인한다 — 넣으면서 자르는 목록은 꽉 찼을 때 밀려난 줄이 있어, 실패한 한 줄만 빼면 그 줄이 사라진다(`app/me/matching/deck-state.test.ts`).
+
+**채팅의 보내기는 되돌리지 않고 실패한 말을 제자리에 남긴다**(ADR 0155) — 곁에 실패 단추가 보이고 사람이 다시 보내거나 지운다. 다시 보내기는
+같은 전송 id 로 가서 서버가 두 번 남기지 않는다. 액션의 예외 · 시한(15초)도 그 말 하나의 실패로 받는다 — 트랜지션 안에서 던지면 화면 전체가 바뀌고
+쓴 글을 잃는다. 지우기는 서버가 분명히 거절한 실패에만 보인다 — 답을 못 받은 실패는 서버에 남았을 수 있어 다시 보내기만. 시험은
+`src/lib/chat/room/pending.test.ts` · `send-line.test.ts` · `e2e/chat.spec.ts`.

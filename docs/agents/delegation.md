@@ -1,29 +1,23 @@
 # 위임 규약
 
-이 문서는 **에이전트에게 일을 맡길 때 무엇이 오가는가** 하나만 답한다 — 어떤 이슈가 맡길 만한가,
-무엇을 해도 되고 무엇은 사람에게 묻는가, 끝났다는 것이 무슨 뜻인가, 그리고 세션마다 새로 배우던
-것이 어디에 적혀 있는가. 어디에 놓는가는 `docs/architecture.md`, 어떻게 적는가는
-`CODING_STANDARDS.md`, 무엇을 돌리는가는 `docs/agents/test-map.md` 가 답한다. **일을 여는 입구는
-`docs/start.md` 다** — 역할을 고르고 그 역할 문서(`docs/roles/`)가 이 규약의 어느 절을 읽을지 가리킨다(ADR 0140).
-
-이 규약을 저장소에 둔 까닭과 그날 측정한 값은 ADR 0090 에 있다. 권한 등급의 표와
-`.claude/settings.json` 이 같은 목록인지, 이슈 틀과 PR 틀의 칸이 이 규약에 있는지는
-`scripts/code-rules.test.ts` 가 든다 — 어긋나면 **시험이 맞다.** 문서를 고친다.
+에이전트에게 일을 맡길 때 무엇이 오가는가 — 맡길 이슈 · 사람에게 묻는 것 · 끝났다는 것 · 세션마다 되풀이해 배운 것.
+일은 `docs/start.md` 에서 연다. 권한 표와 `.claude/settings.json`, 이슈 틀 · PR 틀의 칸은 `scripts/code-rules.test.ts` 가
+견준다 — 어긋나면 시험이 맞고 문서를 고친다.
 
 ## 차례
 
-이 파일은 색인이다 — 규칙 문장은 아래 파일 하나에만 산다. 필요한 절만 연다.
+이 파일은 색인이다 — 규칙은 아래 파일 하나에만 산다. 필요한 절만 연다.
 
 | 파일 | 절 | 무엇을 드나 |
 | --- | --- | --- |
-| `docs/agents/delegation/working.md` | 「시작하기 전에」 · 「일하는 법」 · 「화면은 시안 먼저」 | 붉은 main 이 먼저 · 재는 법 · 사용자와 · 저장소와(워크트리 여는 순서 · 원격 DB 명령) · 화면은 시안 → 승인 → 구현 — 대장 · 한국 레퍼런스로 시작 · 보여 드리기 전 스스로 견주기 |
+| `docs/agents/delegation/working.md` | 「시작하기 전에」 · 「일하는 법」 · 「화면은 시안 먼저」 | 실패한 main 이 먼저 · 워크트리 · 원격 DB 명령 · 화면은 시안 → 승인 → 구현 |
 | `docs/agents/delegation/issues.md` | 「맡길 이슈」 | `ready-for-agent` 이슈의 칸 아홉 — 이슈 틀과 같은 표 |
-| `docs/agents/delegation/decisions.md` | 「결정 점검표」 | 무엇이 바뀌면 결정인가(일곱 — 화면 흐름 · 메뉴 구조 포함) · 승인 시안의 글자는 확정 · 안 정한 것은 간극 대장에만 · 반대쪽 상태까지 걷기 · 정책 · 흐름의 빈틈 |
+| `docs/agents/delegation/decisions.md` | 「결정 점검표」 | 무엇이 바뀌면 결정인가(일곱) · 문구의 확정 · 정책 · 흐름의 빈틈 |
 | `docs/agents/delegation/parallel.md` | 「나란히 맡길 때」 | 공유 자원 표 · 「병렬 가능」의 조건 · 충돌 영역 |
-| `docs/agents/delegation/coordinator.md` | 「세션을 열 때」 · 「조율자 세션」 · 「출시 흐름」 · 「인계」 · 「자주 하는 실수」 · 「라운드 끝 정리」 | 세션을 열 때 확인할 것과 상태 한 장(`scripts/session-status.mjs`) · 사람 하나 · 백그라운드 에이전트 여럿 — 브리프 · 묻는 곳 · 예상 시간 · 쉬운 말 · 머지는 배포가 아니다 · 코드 PR 은 운영자 검토 뒤 머지(ADR 0229 — 바이패스 모드 세션은 조율자가, ADR 0258) · 인계의 체크 · 되풀이한 실수 · 라운드 끝에 걷을 것 |
-| `docs/agents/delegation/herdr.md` | 「herdr 로 돌릴 때」 · 「흐름」 · 「Lead 규칙」 · 「저장소 규약과 다른 자리」 | herdr(`hc`)로 Codex 찾기 → 운영자 확인 → Claude 워커 → Codex 리뷰를 돌리는 흐름 1 ~ 8 · 저장소 밖 틀 · 스크립트의 자리 · 메모리 · 무거운 일 · 터미널 · 리뷰어 · 말 · `Agent` 도구 규약과 다른 네 자리 |
+| `docs/agents/delegation/coordinator.md` | 「세션을 열 때」 · 「조율자 세션」 · 「출시 흐름」 · 「인계」 · 「자주 하는 실수」 · 「라운드 끝 정리」 | 상태 한 장(`scripts/session-status.mjs`) · 맡길지와 브리프 · 묻는 곳 · 머지와 배포의 차례 · 인계 · 라운드 끝 정리 |
+| `docs/agents/delegation/herdr.md` | 「herdr 로 돌릴 때」 · 「흐름」 · 「Lead 규칙」 · 「저장소 규약과 다른 자리」 | herdr(`hc`)로 Codex · Claude 워커를 돌릴 때 |
 | `docs/agents/delegation/unattended.md` | 「무인 라운드」 | 운영자가 자는 동안 — 권한 봉투 · 자동으로 고쳐도 되는 경계 · 아침 보고 |
-| `docs/agents/delegation/permissions.md` | 「권한 등급」 · 「훅 — 메인 체크아웃」 · 「훅 — 압축 뒤」 | 등급 0~4 표(`.claude/settings.json` 과 같은 목록) · 공식 운영에 들어가면 켜는 잠금 · 운영 개인정보 · main 은 PR 로만 · 마이그레이션 PR 의 예외 · 메인 체크아웃에서 이르는 훅 · 압축 뒤에 이르는 훅 |
-| `docs/agents/delegation/done.md` | 「끝났다는 것」 · 「읽기량 예상치는 보고다」 | PR 틀의 칸 여섯 · 전후 그림 · 커밋과 PR 제목 · 읽기량에 걸린 붉음 둘 |
-| `docs/agents/delegation/local-env.md` | 「로컬 환경의 함정」 · 「앱을 웹 번들로 재기」 · 「앱을 네이티브로 재기」 · 「워크트리에서 전후 그림 찍기」 · 「전역 스킬」 | 증상 · 원인 · 하는 일 표 · 앱을 기기 없이 재는 차례 · 에뮬레이터와 가짜 서버로 앱을 전수로 재는 차례 · 에이전트 워크트리에서 화면 전후 그림을 찍는 차례 · 문서가 이름으로 부르는 스킬의 출처와 까는 명령 |
-| `docs/agents/delegation/notes.md` | 「세션 기록」 · 「경로가 옮겨지면」 | `docs/notes/` 에 무엇을 적고 무엇은 번호로만 가리키나 · 경로가 옮겨지면 고칠 문서와 그날의 기록으로 둘 것 |
+| `docs/agents/delegation/permissions.md` | 「권한 등급」 · 「훅 — 메인 체크아웃」 · 「훅 — 압축 뒤」 | 등급 0~4 표(`.claude/settings.json` 과 같은 목록) · main 은 PR 로만 · 훅 |
+| `docs/agents/delegation/done.md` | 「끝났다는 것」 · 「읽기량 예상치는 보고다」 | PR 틀의 칸 여섯 · 전후 그림 · 커밋과 PR 제목 · 문서를 줄이는 잣대 |
+| `docs/agents/delegation/local-env.md` | 「로컬 환경의 함정」 · 「앱을 웹 번들로 재기」 · 「앱을 네이티브로 재기」 · 「워크트리에서 전후 그림 찍기」 · 「전역 스킬」 | 증상 · 원인 · 하는 일 표 · 앱 시험 · 전후 그림 · 전역 스킬 |
+| `docs/agents/delegation/notes.md` | 「세션 기록」 · 「경로가 옮겨지면」 | `docs/notes/` 에 무엇을 적나 · 회고를 어디에 놓나 · 경로가 옮겨지면 고칠 문서와 둘 기록 |

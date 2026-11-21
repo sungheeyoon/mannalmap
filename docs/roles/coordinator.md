@@ -1,47 +1,36 @@
 # 역할 — 조율자 (사람과 말하며 여럿을 맡긴다)
 
-사람과 말하는 세션이다. 직접 고치지 않고 역할을 가진 에이전트에게 맡기고, 머지 순서와 사람에게 묻는 일을 쥔다. 일이 하나면 그 역할로 바꿔 한다([조율자 세션](../agents/delegation/coordinator.md)).
+사람과 말하는 세션이다. 1 ~ 3 파일짜리 일은 그 역할로 직접 하고, 병렬 · 격리가 필요한 일은 역할을 가진 에이전트에게 맡긴다. 머지 순서와 사람에게 묻는 일을 쥔다.
+
+## 지킬 것
+
+- 코드 PR 은 운영자 검토 뒤 머지한다 — 바이패스 세션은 독립 검토와 CI 초록 뒤 조율자가. 화면은 아티팩트로 보이고 배포 뒤 정리한다([출시 흐름](../agents/delegation/coordinator.md#출시-흐름--운영자-검토--머지--배포--정리-adr-0229))
+- 충돌 영역 하나에 에이전트 하나 — 공유 자원을 쥐는 일은 순차로 맡긴다([나란히 맡길 때](../agents/delegation/parallel.md#나란히-맡길-때--공유-자원과-병렬의-조건))
+- 결정 점검표에 걸린 것은 머지 전에 운영자에게 표로 묻는다([결정 점검표](../agents/delegation/decisions.md#결정-점검표--무엇이-바뀌면-결정인가))
+- 코드 PR 의 중앙 문서 줄은 그 PR 이 고친다([나란히 맡길 때](../agents/delegation/parallel.md))
+- `보류` 줄과 미룬 결정은 조건이 올 때까지 다시 권하지 않는다([조율자 세션](../agents/delegation/coordinator.md))
+- 저장소 전역을 건드리는 정리는 다른 PR 이 다 든 뒤 순차로 돌린다([병렬 라운드 노트](../notes/2026-09-30-parallel-round.md))
 
 ## 먼저 읽는 것
 
-- `docs/agents/delegation/coordinator.md` 「세션을 열 때」 — 보고 · 질문 전에 `node scripts/session-status.mjs` 한 장(main 의 CI 실패 · origin/main · Production SHA · 열린 PR)과 #770 을 확인한다
-- `docs/agents/delegation/coordinator.md` 「조율자 세션」 · `docs/agents/delegation/unattended.md` 「무인 라운드」 — 이 역할의 규약 전부
-- `docs/agents/delegation/parallel.md` 「나란히 맡길 때」 — 무엇이 병렬이고 무엇이 순차인가
-- `docs/agents/delegation/decisions.md` 「결정 점검표 — 무엇이 바뀌면 결정인가」 · `docs/agents/delegation/permissions.md` 「권한 등급」
-- `docs/product/gaps.md` — 특히 `보류` 줄
-- `docs/notes/README.md` 「최근」 — 지난 라운드가 어디서 끝났나
-- `gh issue list` — 열린 이슈와 운영자 할 일 이슈
-
-## 이 저장소의 방식
-
-규칙은 아래 원본에만 있다 — 여기는 어디를 열지만 말한다(ADR 0145).
-
-- [출시 흐름](../agents/delegation/coordinator.md#출시-흐름--운영자-검토--머지--배포--정리-adr-0229) — 코드 PR 은 운영자 검토 뒤 머지(바이패스 모드 세션은 조율자가 — ADR 0258) · 화면은 아티팩트 보고 · 배포 뒤 정리
-- [자주 하는 실수](../agents/delegation/coordinator.md#자주-하는-실수--한-줄과-고치는-법-2026-11-06) — 맨 위는 코드 · 문서 · 정책이 따로 노는 것
-- [조율자 세션](../agents/delegation/coordinator.md) — 맡기는 법 · 브리프의 칸 · 사람에게 묻는 곳 · 보고를 확인해 전하기 · 머지 시뮬레이션
-- [무인 라운드](../agents/delegation/unattended.md) — 권한 봉투 · 묶음(파동)으로 들이기 · 아침 보고의 칸
-- [나란히 맡길 때](../agents/delegation/parallel.md) — 공유 자원 · 「병렬 가능」의 조건 · 충돌 영역 하나에 에이전트 하나
-- [결정 점검표](../agents/delegation/decisions.md) — 머지 전에 운영자에게 표로 물을 것
-- [역할 고르기](../start.md#역할-고르기) — 브리프의 「역할」 칸
-- [묶음 배포](../ops/runbook/deploy.md#묶음-배포--최신-main-을-production-으로-한-번) — 라운드 끝의 배포 한 번
-
-## 하지 않는 것 · 묻는 것
-
-- 코드 PR 의 중앙 문서 줄은 그 PR 이 고친다 — [나란히 맡길 때](../agents/delegation/parallel.md)
-- `보류` 줄과 미룬 결정은 조건이 올 때까지 그대로 둔다 — [조율자 세션](../agents/delegation/coordinator.md)
-- 저장소 전역을 건드리는 정리는 다른 PR 이 다 든 뒤 순차로 돌린다([병렬 라운드 노트](../notes/2026-09-30-parallel-round.md))
+- `docs/agents/delegation/coordinator.md` 「세션을 열 때」 · 「조율자 세션」 — 이 역할의 규약
 
 ## 끝날 때 고치는 것
 
-- [ ] [인계 — 세션을 끝낼 때 남기는 것](../agents/delegation/coordinator.md#인계--세션을-끝낼-때-남기는-것-2026-11-06)의 체크를 채우고 #770 에 인계 댓글 — `node scripts/session-status.mjs` 의 출력에 사람 칸만 손으로
-- [ ] [세션 기록](../agents/delegation/notes.md)의 기준대로 라운드 노트와 `docs/notes/README.md` 「최근」 한 줄, PR `--auto`
-- [ ] 세션을 비우기 전에 `/retro` — 운영자만 부르는 스킬이라(`disable-model-invocation`) 운영자에게 청하거나 그 `SKILL.md` 의 절차를 따른다([전역 스킬](../agents/delegation/local-env.md#전역-스킬--저장소가-이름으로-부르는-것)). 입력은 보고의 「헤맨 것 · 틀린 절」, 놓는 자리는 길잡이 → `docs/roles/`(AGENTS.md · CLAUDE.md 아님) · 기계로 잡을 실수 → `eslint.config.mjs` · `scripts/` 의 시험 · 판단 → `docs/agents/code-rules/`(색인 CODING_STANDARDS.md). 같은 노트 PR — [선순환](../start.md#선순환--일이-문서로-돌아오는-길) 3
-- [ ] 운영자만 할 수 있는 일 → 운영자 할 일 이슈. 워크트리 · 가지 · 스택 · 내가 띄운 셸과 에이전트 · 그림은 [라운드 끝 정리](../agents/delegation/coordinator.md#라운드-끝-정리)대로
+- [ ] [인계](../agents/delegation/coordinator.md#인계--세션을-끝낼-때-남기는-것)
+- [ ] [세션 기록](../agents/delegation/notes.md#세션-기록--docsnotes)
+- [ ] 같은 자리에서 두 번 헤맸으면 `/retro` — [세션 기록](../agents/delegation/notes.md#세션-기록--docsnotes)의 차례 · [전역 스킬](../agents/delegation/local-env.md#전역-스킬--저장소가-이름으로-부르는-것)
+- [ ] [라운드 끝 정리](../agents/delegation/coordinator.md#라운드-끝-정리)
 
 ## 닿을 때 여는 것
 
 손대기 전에 다 읽지 않는다 — 일이 그 자리에 닿을 때 연다(ADR 0147).
 
+- 브리프를 쓰거나 보고를 전하기 전에 → [자주 하는 실수](../agents/delegation/coordinator.md#자주-하는-실수--한-줄과-고치는-법)
+- 브리프의 「역할」 칸을 채우면 → [역할 고르기](../start.md#역할-고르기)
+- 무인(밤) 라운드를 돌리면 → [무인 라운드](../agents/delegation/unattended.md) — 권한 봉투 · 파동 · 아침 보고의 칸
+- 라운드 끝에 배포하면 → [묶음 배포](../ops/runbook/deploy.md#묶음-배포--최신-main-을-production-으로-한-번)
+- 무엇을 묻지 않고 밟나 망설이면 → [권한 등급](../agents/delegation/permissions.md)
 - 두 번째 의견 · 감사를 모으면 → [검토 역할](reviewer.md) — 관점마다 하나
-- herdr(`hc`)로 Codex 찾기 · Claude 워커 · Codex 리뷰를 돌리면 → [herdr 로 돌릴 때](../agents/delegation/herdr.md) — 흐름 1 ~ 8 · Lead 규칙 · 이 규약과 다른 네 자리
-- 브리프가 어느 역할이 무엇을 읽는지(「모든 에이전트의 길 밖」 등) 단정하기 전에 → [읽기량의 셈](../../scripts/read-budget.mjs) — 무엇을 세나와 안 세나. 문턱 없는 보고다(ADR 0177)
+- herdr(`hc`)로 워커 · 리뷰를 돌리면 → [herdr 로 돌릴 때](../agents/delegation/herdr.md)
+- 브리프가 어느 역할이 무엇을 읽는지 단정하기 전에 → [읽기량의 셈](../../scripts/read-budget.mjs)

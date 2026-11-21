@@ -1634,9 +1634,10 @@ describe('역할 문서 (docs/start.md · docs/roles/, ADR 0140)', () => {
     .map((name) => name.replace(/\.md$/, ''));
   /** 사람과 말하는 세션 자신이라 에이전트 정의가 없는 역할 */
   const WITHOUT_AGENT = ['coordinator'];
-  const COLUMNS = ['먼저 읽는 것', '이 저장소의 방식', '하지 않는 것 · 묻는 것', '끝날 때 고치는 것'];
+  /** 칸 셋(ADR 0264) — 「지킬 것」은 규칙을 한 줄씩 직접 적고 줄마다 출처를 단다. 「닿을 때 여는 것」은 있으면 맨 뒤 */
+  const COLUMNS = ['지킬 것', '먼저 읽는 것', '끝날 때 고치는 것'];
   /**
-   * 한 화면 — 넘으면 원본으로 옮길 것을 옮겨 적고 있다는 뜻이다. 손대기 전에 읽는 머리와 칸 넷만 잰다 — 「닿을 때 여는 것」은
+   * 한 화면 — 넘으면 원본으로 옮길 것을 옮겨 적고 있다는 뜻이다. 손대기 전에 읽는 머리와 칸 셋만 잰다 — 「닿을 때 여는 것」은
    * 그때 여는 칸이라 세지 않는다(ADR 0254). 그 칸의 줄 꼴과 가리킨 자리는 아래 시험이 그대로 든다
    */
   const MAX_BYTES = 8000;
@@ -1665,7 +1666,7 @@ describe('역할 문서 (docs/start.md · docs/roles/, ADR 0140)', () => {
     expect([...new Set(listed)].sort()).toEqual([...roles].sort());
   });
 
-  it('역할 문서마다 칸 넷이 그 차례로 있고(「닿을 때 여는 것」은 있으면 맨 뒤) 칸 넷까지가 한 화면 안이다', () => {
+  it('역할 문서마다 칸 셋이 그 차례로 있고(「닿을 때 여는 것」은 있으면 맨 뒤) 칸 셋까지가 한 화면 안이다', () => {
     let trimmed = 0;
     for (const role of roles) {
       const text = readFileSync(join(ROLES_DIR, `${role}.md`), 'utf8');
@@ -1774,26 +1775,19 @@ describe('역할 문서 (docs/start.md · docs/roles/, ADR 0140)', () => {
   });
 
   /**
-   * 역할 문서는 길잡이(Router)다 — 규칙을 다시 말하지 않고 원본을 가리킨다(ADR 0145, ADR 0140 의 「한 줄로 줄인 길잡이」를 대체).
-   * 「이 저장소의 방식」의 줄은 원본 링크로 시작하는 한 줄이고(그 원본이 무엇을 드는지 몇 낱말), 요약 문장의 `(원본: …)` 꼬리는
-   * 없다. 「하지 않는 것 · 묻는 것」은 짧은 인라인 목록으로 두되 줄마다 출처 링크가 있다.
+   * 「지킬 것」은 그 역할의 규칙을 한 줄씩 직접 적는다 — 손대기 전에 보는 칸이라 원본까지 가지 않아도 규칙이 보여야 한다(ADR 0264,
+   * ADR 0145 의 「규칙을 다시 말하지 않는다」를 대체). 줄마다 출처 링크를 달아, 원본의 규칙을 바꾸는 PR 이 이 줄을 찾게 한다.
    */
-  it('「이 저장소의 방식」은 원본 링크로 시작하는 한 줄씩이고, 「하지 않는 것 · 묻는 것」의 줄마다 출처 링크가 있다', () => {
+  it('「지킬 것」의 줄마다 출처 링크가 있다', () => {
     const wrong: string[] = [];
     let seen = 0;
     for (const role of roles) {
       const text = readFileSync(join(ROLES_DIR, `${role}.md`), 'utf8');
-      const router = bulletsOf(sectionOf(text, '이 저장소의 방식'));
-      expect(router.length, role).toBeGreaterThan(2);
-      for (const bullet of router) {
+      const rules = bulletsOf(sectionOf(text, '지킬 것'));
+      expect(rules.length, role).toBeGreaterThan(1);
+      for (const bullet of rules) {
         seen += 1;
-        if (!/^- \[[^\]]+\]\([^)]+\)/.test(bullet) || bullet.includes('\n') || bullet.includes('(원본:')) {
-          wrong.push(`${role} 「이 저장소의 방식」: ${bullet.split('\n')[0].slice(0, 40)}`);
-        }
-      }
-      for (const bullet of bulletsOf(sectionOf(text, '하지 않는 것 · 묻는 것'))) {
-        seen += 1;
-        if (linksOf(bullet).length === 0) wrong.push(`${role} 「하지 않는 것」: ${bullet.slice(0, 40)}`);
+        if (linksOf(bullet).length === 0) wrong.push(`${role} 「지킬 것」: ${bullet.slice(0, 40)}`);
       }
       // 「닿을 때 여는 것」은 세지 않는 칸이라 줄마다 언제인지가 먼저 선다 — `- <언제> → [원본](경로)` 한 줄 (ADR 0147)
       for (const bullet of sectionIn(text, ON_DEMAND_SECTION) === null ? [] : bulletsOf(sectionOf(text, ON_DEMAND_SECTION))) {
