@@ -301,7 +301,7 @@ credits-14 의 덧이었다 — 그 꼴이 풀이권을 쓰는 모든 확인의 
 ## credits-18 확정 문구 — 결제 내역의 두 탭, 시안 B (운영자 승인 2026-11-21 「그래도 해 그럼」 — 보유 한 줄 포함, ADR 0263)
 
 `/me/credits/history`(웹 `app/me/credits/history/history-view.tsx` · 앱 `mobile/src/credits/credits.tsx`). 승인한 시안 B(가지 `worktree-agent-aecdab02f65fb4cdb`
-커밋 `40c6a846` 의 `draft.tsx`, 그림 `docs/notes/shots/2026-11-21-payment-history/B-tabs-*.jpg`)의 글자를 한 자도 바꾸지 않고 썼다(ADR 0255). 상수는
+커밋 `40c6a846` 의 `draft.tsx` — 가지와 그림은 라운드 끝에 걷었다)의 글자를 한 자도 바꾸지 않고 썼다(ADR 0255). 상수는
 `src/lib/reading/credit-history.ts`. credits-02 의 카드 칸(주문 번호 · 결제 금액 · 환불 금액 · 결제 시각 · 남은 회차)과 빈 상태 「결제 내역이 없어요.」를 대체한다 —
 환불 신청 절의 글자는 credits-02 그대로다. 줄의 꼴은 카카오페이지 「캐시 내역」(<https://page.kakao.com/history/cash/>)이다.
 
@@ -315,11 +315,11 @@ credits-14 의 덧이었다 — 그 꼴이 풀이권을 쓰는 모든 확인의 
 | 사용 탭 — 한 줄(`usageTitleOf`) | (없음) | 사주풀이 · {이름} · 궁합풀이 · {이름}와 {이름} — 나는 「나」 · 1장 / 시각 |
 | 환불 신청 절 | 흰 카드 | 같은 글자, 옅은 상자 |
 
-## credits-19 확인 전 — 결제 내역의 빈 탭 · 시안에 없던 줄 (2026-11-21, ADR 0263)
+## credits-19 확정 문구 — 결제 내역의 빈 탭 · 시안에 없던 줄 (운영자 승인 2026-11-21 「확인했어 머지해」, ADR 0263 · #1219)
 
-credits-18 과 같은 화면. 시안 B 의 꾸민 데이터에 없던 자리라 운영자가 본 글자가 아니다. 상수는 `src/lib/reading/credit-history.ts`.
+credits-18 과 같은 화면. 시안 B 의 꾸민 데이터에 없던 자리라 #1219 의 그림 · 표로 따로 보였고, 운영자가 머지 전에 확인했다. 배포(`e40b95be`) 뒤 운영 화면도 운영자가 봤다. 상수는 `src/lib/reading/credit-history.ts`.
 
-| 자리 | 이전 | 넣은 글자 | 출처 |
+| 자리 | 이전 | 확정 | 출처 |
 | --- | --- | --- | --- |
 | 구매 탭이 비었을 때(`BUY_HISTORY_EMPTY`) | 결제 내역이 없어요. | 구매 내역이 없어요. | 카카오페이지 「캐시 내역」 충전내역 탭의 「캐시 충전내역이 없습니다.」(<https://page.kakao.com/history/cash/>)를 탭 이름과 해요체(credits-02 의 「결제 내역이 없어요.」)로 · 2026-11-21 확인 |
 | 사용 탭이 비었을 때(`USE_HISTORY_EMPTY`) | (없음) | 사용 내역이 없어요. | 카카오페이지 「캐시 내역」 사용내역 탭의 빈 상태(<https://page.kakao.com/history/cash/>) — 위 줄과 같은 꼴 · 2026-11-21 확인 |
