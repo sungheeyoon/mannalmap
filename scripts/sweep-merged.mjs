@@ -23,8 +23,8 @@
  * 스쿼시 머지라 `git branch -D` 다. 원격 가지는 건드리지 않는다(GitHub 가 머지 때 지운다).
  */
 import { execFileSync, spawnSync } from 'node:child_process';
-import { existsSync, readFileSync } from 'node:fs';
-import { join, resolve } from 'node:path';
+import { existsSync, lstatSync, readFileSync } from 'node:fs';
+import { delimiter, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 /** 건너뛰는 까닭 — 요약에서 이것으로 센다 */
@@ -207,13 +207,14 @@ export function reportOf({ worktrees, branches }, { apply = false } = {}) {
 /**
  * `docker info --format '{{.ServerVersion}}'` 의 결과를 가른다. 엔진이 500 을 내도 명령은 0 으로 끝나고 stdout 이 빈다 — 판본이 찍혀야 켜짐이다.
  * 소켓에 닿지 못했다는 말(「Cannot connect to the Docker daemon」, CLI 29 는 「failed to connect to the docker API」)만 꺼짐이고, 그 밖의
- * 실패 · 빈 답은 고장이다.
+ * 실패 · 빈 답은 고장이다. `docker` 를 못 찾으면(ENOENT) 없음인데, PATH 의 `docker` 가 가리키는 곳이 없는 링크면(`dangling`) 꺼짐이다 —
+ * WSL 에서 Docker Desktop 이 꺼지면 `/usr/bin/docker` 의 대상(`/mnt/wsl/docker-desktop/…`)이 사라져 그렇게 된다. 설치는 있다.
  *
- * @param {{ stdout?: string, stderr?: string, code?: string | number }} result
+ * @param {{ stdout?: string, stderr?: string, code?: string | number, dangling?: boolean }} result
  * @returns {{ running: boolean, missing?: boolean, broken?: string }}
  */
-export function dockerStateOf({ stdout = '', stderr = '', code }) {
-  if (code === 'ENOENT') return { running: false, missing: true };
+export function dockerStateOf({ stdout = '', stderr = '', code, dangling = false }) {
+  if (code === 'ENOENT') return dangling ? { running: false } : { running: false, missing: true };
   if (stdout.trim() !== '') return { running: true };
   if (/Cannot connect to the Docker daemon|Is the docker daemon running|failed to connect to the docker API/i.test(stderr)) return { running: false };
   const first = stderr.trim().split('\n')[0] ?? '';
@@ -281,10 +282,34 @@ export function parseWorktrees(porcelain) {
 /** 엔진이 답하지 않으면 `docker` 가 30초 넘게 매달린다 — 세션 상태의 Docker 줄처럼 5초에서 끊는다 */
 const DOCKER_WAIT = { timeout: 5000 };
 
-/** 끝난 꼴과 상관없이 stdout · stderr · code 를 다 들고 온다 — 엔진이 500 을 내도 0 으로 끝나니 세션 상태처럼 성공 때의 stderr 도 넘긴다 */
+/**
+ * PATH 의 어느 칸에 `name` 이 링크로 있는데 가리키는 곳이 없나 — 그 명령을 부르면 ENOENT 라 설치가 없는 것과 얼굴이 같다.
+ * WSL 의 `/usr/bin/docker` 가 Docker Desktop 이 꺼지면 이렇다(`docs/agents/delegation/local-env.md` 「로컬 환경의 함정」).
+ *
+ * @param {string} name
+ * @param {string} [pathValue] `PATH` 의 값
+ */
+export function danglingOnPath(name, pathValue = process.env.PATH ?? '') {
+  return pathValue
+    .split(delimiter)
+    .filter(Boolean)
+    .some((dir) => {
+      const file = join(dir, name);
+      try {
+        return lstatSync(file).isSymbolicLink() && !existsSync(file);
+      } catch {
+        return false;
+      }
+    });
+}
+
+/**
+ * 끝난 꼴과 상관없이 stdout · stderr · code 를 다 들고 온다 — 엔진이 500 을 내도 0 으로 끝나니 세션 상태처럼 성공 때의 stderr 도 넘긴다.
+ * 못 찾았으면(ENOENT) 끊긴 링크라서인지도 든다 — 걷는 것은 꺼짐이든 없음이든 같지만(`containersOf`) 상태는 세션 상태와 같게 가른다
+ */
 const probe = (cmd, args, options) => {
   const { stdout, stderr, error } = spawnSync(cmd, args, { encoding: 'utf8', ...options });
-  return { stdout: stdout ?? '', stderr: stderr ?? '', code: error?.code };
+  return { stdout: stdout ?? '', stderr: stderr ?? '', code: error?.code, dangling: error?.code === 'ENOENT' && danglingOnPath(cmd) };
 };
 
 const runningContainers = () => {

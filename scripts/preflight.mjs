@@ -27,18 +27,24 @@ const ROOT_PIECES = ['node_modules/.bin/next', 'node_modules/.bin/supabase', 'no
 const MOBILE_PIECES = ['mobile/node_modules/expo/package.json', 'mobile/node_modules/.bin/expo-modules-autolinking', 'mobile/node_modules/react-native/package.json'];
 
 /**
+ * 폴더를 복사하는 명령 — `platform`(`process.platform`)이 맥이면 cp 의 `-c` 로 APFS 복제를 해 자리를 안 먹는다. WSL 의 우분투는 GNU cp 라
+ * `-c` 가 없어(`invalid option`) `--reflink=auto` 다 — ext4 는 복제가 없어 통째 복사한다(`node_modules` 약 760MB · 4초, 2026-10-10 #604).
+ */
+const copyCommandOf = (platform, from, to) => (platform === 'darwin' ? `cp -Rc ${from} ${to}` : `cp -a --reflink=auto ${from} ${to}`);
+
+/**
  * 없는 것의 줄 — 다 있으면 빈 배열. 순수하다: 파일 · 프로세스는 `probe` 가 본다.
  *
  * @param {string} root 저장소 뿌리
  * @param {string[]} needs `NEEDS` 가운데 고른 것
- * @param {{ exists: (path: string) => boolean, isSymlink: (path: string) => boolean, isWorktree: () => boolean, mainCheckout: () => string | null, stackUp: () => boolean }} probe
+ * @param {{ exists: (path: string) => boolean, isSymlink: (path: string) => boolean, isWorktree: () => boolean, mainCheckout: () => string | null, stackUp: () => boolean, platform: () => string }} probe
  * @returns {string[]}
  */
 export function missingPieces(root, needs, probe) {
   for (const need of needs) if (!NEEDS.includes(need)) throw new Error(`모르는 갖출 것: ${need}`);
   const lines = [];
   const main = probe.isWorktree() ? probe.mainCheckout() : null;
-  const copyFromMain = (dir) => (main ? `cp -Rc ${join(main, dir)} ${dir}` : null);
+  const copyFromMain = (dir) => (main ? copyCommandOf(probe.platform(), join(main, dir), dir) : null);
   const rootModules = join(root, 'node_modules');
   let rootReady = true;
 
@@ -108,6 +114,7 @@ export function probeOf(root) {
         return false;
       }
     },
+    platform: () => process.platform,
   };
 }
 

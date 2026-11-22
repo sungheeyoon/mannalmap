@@ -10,13 +10,14 @@ import { missingPieces } from './preflight.mjs';
 
 type Probe = Parameters<typeof missingPieces>[2];
 
-/** 있는 파일 목록으로 짓는 `probe` — 나머지 성질은 덮어쓴다 */
+/** 있는 파일 목록으로 짓는 `probe` — 나머지 성질은 덮어쓴다. 기계는 맥이다(우분투는 그 시험이 덮어쓴다) */
 const probeWith = (present: string[], overrides: Partial<Probe> = {}): Probe => ({
   exists: (path) => present.some((one) => path.endsWith(one)),
   isSymlink: () => false,
   isWorktree: () => true,
   mainCheckout: () => '/main',
   stackUp: () => true,
+  platform: () => 'darwin',
   ...overrides,
 });
 
@@ -37,6 +38,16 @@ describe('검사 앞에 갖출 것', () => {
   it('뿌리 node_modules 가 심볼릭 링크면 복사하라고 한다', () => {
     expect(missingPieces('/wt', ['root-modules'], probeWith(ROOT, { isSymlink: () => true }))).toEqual([
       '뿌리 node_modules 가 심볼릭 링크다 — 흐름 검사가 짓는 Next 가 거절한다 → rm node_modules && cp -Rc /main/node_modules node_modules',
+    ]);
+  });
+
+  it('WSL 의 우분투에서는 GNU cp 라 -c 대신 --reflink=auto 로 복사하라고 한다 — GNU cp 에는 -c 가 없어 그대로 붙이면 선다', () => {
+    const linux = { platform: () => 'linux' };
+    expect(missingPieces('/wt', ['root-modules'], probeWith([], linux))).toEqual([
+      '뿌리 node_modules 에 .bin/next · .bin/supabase · @supabase/supabase-js/package.json · @supabase/ssr/package.json 가 없다 → 뿌리에서 cp -a --reflink=auto /main/node_modules node_modules 또는 npm ci',
+    ]);
+    expect(missingPieces('/wt', ['root-modules'], probeWith(ROOT, { ...linux, isSymlink: () => true }))).toEqual([
+      '뿌리 node_modules 가 심볼릭 링크다 — 흐름 검사가 짓는 Next 가 거절한다 → rm node_modules && cp -a --reflink=auto /main/node_modules node_modules',
     ]);
   });
 
