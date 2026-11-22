@@ -25,7 +25,8 @@
 
 **운영 개인정보 — 에이전트는 예외 없이 직접 조회하지 않는다(ADR 0105).** 이메일 · 닉네임과 계정의 짝 · 메시지 본문 · 출생정보 · 풀이를 운영 DB 에서 읽는
 SQL 을 보내지 않는다 — 질의를 써 주고 사람이 검토해 break-glass 로 돈다(`docs/ops/runbook/access.md` 「개인정보는 화면으로만」). 보내도 되는 원격 질의는 개인을
-가리키지 않는 것(건수 · 집계 · `migration list` · 크론 · advisor · 설정 한 칸)뿐이고, 그것도 `npm run db:remote -- --purpose "<목적>" "<sql>"` 로만 보낸다.
+가리키지 않는 것(건수 · 집계 · `migration list` · 크론 · advisor · 설정 한 칸)뿐이고, 그 SQL 은 `npm run db:remote -- --purpose "<목적>" "<sql>"` 로만 보낸다
+(`migration list` · advisor 는 SQL 이 아니라 런북의 CLI 명령이다 — `docs/ops/runbook/deploy.md` 「배포」 · `docs/ops/runbook/security.md` 「보안 점검」).
 설정은 SQL 의 내용을 못 가르니 이 경계는 이 문장이 든다.
 
 **`gh pr merge --auto` 는 등급 2 다** — gate 가 필수 검사라 초록까지 기다린다. strict 는 꺼서 나란히 든 두 PR 이 합쳐서야 깨질 수 있고, 그것은 main 의 전체
