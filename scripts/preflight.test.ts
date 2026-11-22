@@ -35,6 +35,16 @@ describe('검사 앞에 갖출 것', () => {
     ]);
   });
 
+  it('뿌리 node_modules 가 패키지 없는 껍데기(.vite 만 든 폴더 따위)면 먼저 지우고 복사하라고 한다 — 있는 폴더에 cp 하면 그 안에 node_modules/node_modules 로 한 겹 더 들어간다', () => {
+    const shell = ['node_modules'];
+    expect(missingPieces('/wt', ['root-modules'], probeWith(shell))).toEqual([
+      '뿌리 node_modules 에 .bin/next · .bin/supabase · @supabase/supabase-js/package.json · @supabase/ssr/package.json 가 없다 → 뿌리에서 rm -rf node_modules && cp -Rc /main/node_modules node_modules 또는 npm ci',
+    ]);
+    expect(missingPieces('/wt', ['root-modules'], probeWith(shell, { platform: () => 'linux' }))).toEqual([
+      '뿌리 node_modules 에 .bin/next · .bin/supabase · @supabase/supabase-js/package.json · @supabase/ssr/package.json 가 없다 → 뿌리에서 rm -rf node_modules && cp -a --reflink=auto /main/node_modules node_modules 또는 npm ci',
+    ]);
+  });
+
   it('뿌리 node_modules 가 심볼릭 링크면 복사하라고 한다', () => {
     expect(missingPieces('/wt', ['root-modules'], probeWith(ROOT, { isSymlink: () => true }))).toEqual([
       '뿌리 node_modules 가 심볼릭 링크다 — 흐름 검사가 짓는 Next 가 거절한다 → rm node_modules && cp -Rc /main/node_modules node_modules',

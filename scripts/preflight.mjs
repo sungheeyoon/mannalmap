@@ -56,7 +56,9 @@ export function missingPieces(root, needs, probe) {
       const absent = ROOT_PIECES.filter((piece) => !probe.exists(join(root, piece)));
       if (absent.length > 0) {
         rootReady = false;
-        const fix = [main ? `${copyFromMain('node_modules')}` : null, 'npm ci'].filter(Boolean).join(' 또는 ');
+        // 폴더는 있는데 패키지가 없으면(껍데기) 그 위의 cp 가 안에 `node_modules/node_modules` 를 한 겹 더 짓는다 — 먼저 지운다
+        const copy = copyFromMain('node_modules');
+        const fix = [copy && probe.exists(rootModules) ? `rm -rf node_modules && ${copy}` : copy, 'npm ci'].filter(Boolean).join(' 또는 ');
         lines.push(`뿌리 node_modules 에 ${absent.map((piece) => piece.replace('node_modules/', '')).join(' · ')} 가 없다 → 뿌리에서 ${fix}`);
       }
     }
