@@ -1,4 +1,9 @@
-import { describe, expect, it } from 'vitest';
+import { spawnSync } from 'node:child_process';
+import { mkdirSync, mkdtempSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { delimiter, join } from 'node:path';
+
+import { afterEach, describe, expect, it } from 'vitest';
 
 import {
   deployShaOf,
@@ -16,7 +21,7 @@ import {
   verifyLineOf,
   worktreeLineOf,
 } from './session-status.mjs';
-import { dockerStateOf, reportOf as sweepReportOf } from './sweep-merged.mjs';
+import { danglingOnPath, dockerStateOf, reportOf as sweepReportOf } from './sweep-merged.mjs';
 
 const HEAD = '1da9819ec4f77d00a8323bfec30a4f85b6c26bf4';
 const OLD = 'f8450ea2b1c3d4e5f60718293a4b5c6d7e8f9012';
@@ -89,6 +94,14 @@ describe('session-status — 세션을 열 때 · 인계할 때 찍는 한 장',
     expect(dockerStateOf({ stderr: noSocket })).toEqual({ running: false });
     expect(dockerStateOf({ stderr: '' })).toEqual({ running: false, broken: '5초 안에 답이 없다' });
     expect(dockerStateOf({ code: 'ENOENT' })).toEqual({ running: false, missing: true });
+  });
+
+  it('`docker` 를 못 찾아도(ENOENT) PATH 의 `docker` 가 끊긴 링크면 없음이 아니라 꺼짐이다 — WSL 에서 Docker Desktop 이 꺼진 꼴이다', () => {
+    expect(dockerStateOf({ code: 'ENOENT', dangling: true })).toEqual({ running: false });
+    expect(dockerLineOf(dockerStateOf({ code: 'ENOENT', dangling: true }))).toBe(dockerLineOf({ running: false }));
+    expect(dockerLineOf(dockerStateOf({ code: 'ENOENT' }))).toBe(
+      '`docker` 명령이 없다 — 로컬 스택 대신 CI 에 기댄다(`docs/agents/delegation/local-env.md` 「로컬 환경의 함정」)',
+    );
   });
 
   it('verify 는 지금 머리의 실행이 끝나 모든 차선이 돈 성공일 때만 「모든 차선이 돈 성공」이다', () => {
@@ -193,5 +206,42 @@ describe('session-status — 세션을 열 때 · 인계할 때 찍는 한 장',
     expect(worktreeLineOf({ path: '/srv/repo', head: HEAD, branch: 'feat/x', locked: true, lockReason: 'manual', prunable: true, isMain: false }, '/home/u')).toBe(
       '`/srv/repo` `feat/x` — 잠김 · 폴더 없음',
     );
+  });
+});
+
+describe('PATH 의 `docker` 가 가리키는 곳이 없는 링크면', () => {
+  let dir = '';
+  afterEach(() => {
+    if (dir) rmSync(dir, { recursive: true, force: true });
+    dir = '';
+  });
+
+  it('부르면 ENOENT 라 설치가 없는 것과 얼굴이 같지만 세션 상태는 꺼짐을 찍는다', () => {
+    // WSL 의 `/usr/bin/docker` → `/mnt/wsl/docker-desktop/…` 꼴 — 대상은 이 시험이 만들지 않는 자리라 어느 기계에서도 없다
+    dir = mkdtempSync(join(tmpdir(), 'docker-link-'));
+    const empty = join(dir, 'empty');
+    const bin = join(dir, 'bin');
+    mkdirSync(empty);
+    mkdirSync(bin);
+    symlinkSync(join(dir, 'docker-desktop/cli-tools/usr/bin/docker'), join(bin, 'docker'));
+    const path = [empty, bin].join(delimiter);
+    const { error } = spawnSync('docker', ['info', '--format', '{{.ServerVersion}}'], { env: { ...process.env, PATH: path } });
+    const code = (error as NodeJS.ErrnoException | undefined)?.code;
+    expect(code).toBe('ENOENT');
+    expect(danglingOnPath('docker', path)).toBe(true);
+    expect(dockerLineOf(dockerStateOf({ code, dangling: danglingOnPath('docker', path) }))).toBe(dockerLineOf({ running: false }));
+  });
+
+  it('PATH 에 `docker` 가 없거나 링크가 살아 있으면 끊긴 링크가 아니다', () => {
+    dir = mkdtempSync(join(tmpdir(), 'docker-link-'));
+    const empty = join(dir, 'empty');
+    const live = join(dir, 'live');
+    mkdirSync(empty);
+    mkdirSync(live);
+    writeFileSync(join(dir, 'docker-real'), '');
+    symlinkSync(join(dir, 'docker-real'), join(live, 'docker'));
+    expect(danglingOnPath('docker', empty)).toBe(false);
+    expect(danglingOnPath('docker', live)).toBe(false);
+    expect(danglingOnPath('docker', ['', empty, live].join(delimiter))).toBe(false);
   });
 });

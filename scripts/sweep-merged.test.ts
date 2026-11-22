@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { containersOf, ctimeOf, judgeBranch, judgeWorktree, lockOwnerOf, parseWorktrees, planSweep, prFor, reportOf, stackUpOf } from './sweep-merged.mjs';
+import { containersOf, ctimeOf, dockerStateOf, judgeBranch, judgeWorktree, lockOwnerOf, parseWorktrees, planSweep, prFor, reportOf, stackUpOf } from './sweep-merged.mjs';
 
 const merged = { number: 10, state: 'MERGED', headRefName: 'feat/a', headRefOid: 'a1' };
 const closed = { number: 11, state: 'CLOSED', headRefName: 'feat/b', headRefOid: 'b1' };
@@ -58,6 +58,9 @@ describe('sweep:merged — 스쿼시 머지된 가지는 PR 상태로 판정한�
     expect(containersOf({ running: true }, 'supabase_db_a\nweb')).toEqual(new Set(['supabase_db_a', 'web']));
     expect(containersOf({ running: false }, null)).toEqual(new Set());
     expect(containersOf({ running: false, missing: true }, null)).toEqual(new Set());
+    // WSL 에서 Docker Desktop 이 꺼져 `docker` 가 끊긴 링크인 꼴(꺼짐)도 정말 없는 꼴(없음)도 빈 목록이다 — 걷는 것은 기계마다 같다
+    expect(containersOf(dockerStateOf({ code: 'ENOENT', dangling: true }), null)).toEqual(new Set());
+    expect(containersOf(dockerStateOf({ code: 'ENOENT' }), null)).toEqual(new Set());
     expect(containersOf({ running: false, broken: '5초 안에 답이 없다' }, null)).toBeNull();
     expect(containersOf({ running: true }, null)).toBeNull();
   });

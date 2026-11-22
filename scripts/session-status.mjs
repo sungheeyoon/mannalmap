@@ -20,7 +20,7 @@ import { fileURLToPath } from 'node:url';
 import { promisify } from 'node:util';
 
 import { measuredEverything } from './main-red.mjs';
-import { dockerStateOf, parseWorktrees } from './sweep-merged.mjs';
+import { danglingOnPath, dockerStateOf, parseWorktrees } from './sweep-merged.mjs';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 
@@ -325,11 +325,17 @@ async function auditFacts() {
   return audit;
 }
 
-/** 가르는 것은 `dockerStateOf` 다 — 실패도 stdout · stderr 를 들고 온다 */
+/** 가르는 것은 `dockerStateOf` 다 — 실패도 stdout · stderr 를 들고 오고, 못 찾았으면(ENOENT) 끊긴 링크라서인지 본다 */
 async function dockerFacts() {
   return exec('docker', ['info', '--format', '{{.ServerVersion}}'], { timeout: 5000 }).then(
     ({ stdout, stderr }) => dockerStateOf({ stdout, stderr }),
-    (error) => dockerStateOf({ stdout: error?.stdout, stderr: error?.stderr ?? (error?.killed ? '' : String(error?.message ?? '')), code: error?.code }),
+    (error) =>
+      dockerStateOf({
+        stdout: error?.stdout,
+        stderr: error?.stderr ?? (error?.killed ? '' : String(error?.message ?? '')),
+        code: error?.code,
+        dangling: error?.code === 'ENOENT' && danglingOnPath('docker'),
+      }),
   );
 }
 
