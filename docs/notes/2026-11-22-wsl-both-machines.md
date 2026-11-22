@@ -1,4 +1,4 @@
-# 맥 · WSL 두 기계 맞추기 (2026-11-22 낮)
+# 맥 · WSL 두 기계 맞추기 · 풀이권 환불의 「자격 삭제」 (2026-11-22)
 
 **요구사항도 규칙도 아니다** — 이 세션에 무엇을 왜 했나의 사정이다. 앞 라운드는 `docs/notes/2026-11-21-g166-and-build-11-round.md` 다.
 고친 것의 원본은 `docs/agents/delegation/local-env.md` 「로컬 환경의 함정」과 `docs/agents/delegation/coordinator.md` 「조율자 세션 — 사람 하나 · 백그라운드 에이전트 여럿」이다.
@@ -13,9 +13,16 @@
    세션 상태가 「명령이 없다 — CI 에 기댄다」 대신 「꺼짐」을 찍는다. 정리 도구의 걷기 판정은 그대로다.
 4. **껍데기 `node_modules`**(#1231) — 패키지 없는 폴더 위에 복사하라던 안내가 `node_modules/node_modules` 를 지었다. 먼저 지우게 했다.
 5. 실제 WSL 에서는 하나도 안 돌렸다 — 이 맥의 Docker 엔진이 답하지 않아 우분투 컨테이너도 못 띄웠다. 확인 두 걸음은 #1230 의 PR 본문 끝에 있다.
+6. **풀이권 89 → 86 이 안 됐다**(운영자 「86장되어야되는데적용이안된듯」) — 11-21 의 콘솔 전액 환불이 주문 환불 화면의 「이용 자격 취소 · 자격 삭제」(기본 꺼짐)를
+   끈 채라 Google 이 구매를 무효로 치지 않았다. 런북을 고치고(#1233), 운영자 지시로 조율자가 ego-browser 에서 남은 3장을 운영 화면 주문 환불로 걷고(89 → 86)
+   「자격 삭제」를 켠 1장 시험 주문 환불로 다시 재 2초 만에 통지로 걷히는 것을 봤다(86 → 85, #1234 · #937).
+7. **이용자가 Google 에 직접 청한 환불** — 우리 쪽 처리는 같은 길이라 실결제로 미리 재지 않고 출시 뒤 첫 건에서 본다(운영자, #1235 · G-23 기록 ⑥).
+8. **일정 verify 의 `check-live-channel` 붉음** — 흔들림이다(끝까지 돈 flow 1172번 가운데 처음, reviewer 에이전트 조사). 시험의 약점은 G-177(#1235).
 
 ## 헤맨 것 → 놓은 자리
 
 - 로컬 도구 스크립트(`session-status` · `sweep-merged` · `preflight`)를 고치는 일에 맞는 역할이 표에 없어 ops 로 맡겼는데, ops 의 「먼저 읽는 것」(배포 · 접속)은 그 일에 닿지 않았다 → `docs/start.md` 「역할 고르기」
 - 시험에서 `spawnSync` 에 `env: { PATH }` 만 주면 Next 의 타입이 `NODE_ENV` 를 요구해 `typecheck` 가 붉다 — `{ ...process.env, PATH }` 로 피했다 → `scripts/session-status.test.ts`
 - 두 기계를 쓴다는 것이 노트(`docs/notes/2026-11-08-docs-diet.md`)에만 있어, 문서를 줄인 #1222 에서 리눅스 줄이 빠지고 표 머리가 맥 한 대가 됐다 → `docs/agents/delegation/local-env.md` 「로컬 환경의 함정」
+- Play Console 주문 기록에 회수 줄이 없는 것을 「자격 삭제를 안 켰다」의 근거로 썼다 — 켜고 환불해도 기록은 「This order was refunded」 한 줄이라 거기서는 알 수 없다 → `docs/ops/runbook/credits.md` 「Google Play 결제 — 확인 · 한 번 지급 · 소비, 스토어 환불의 회수 (G-21 · G-126, ADR 0230)」
+- 런북의 운영자 환불 2 가 「항목 회수(revoke)는 고르지 않는다」라 해, 전액 환불이 Google 의 무효 통지로 확정된다는 3 과 어긋나 있었다 → `docs/ops/runbook/credits.md` 「Google Play 결제 — 확인 · 한 번 지급 · 소비, 스토어 환불의 회수 (G-21 · G-126, ADR 0230)」 · #1233
