@@ -147,20 +147,25 @@ try {
     const joined = await join(a.client, `user:${b.id}`, { isPrivate: false });
     let sent = 'not sent';
     if (joined.state === 'SUBSCRIBED') {
-      sent = await joined.channel.send({ type: 'broadcast', event: 'changed', payload: forged });
+      sent = await joined.channel.send({ type: 'broadcast', event: 'changed', payload: { ...forged, via: 'socket' } });
     }
     const outsider = createClient(API, status.ANON_KEY, { auth: { persistSession: false } });
     const viaRest = await outsider.channel(`user:${b.id}`, { config: { private: false } })
-      .httpSend('changed', forged)
+      .httpSend('changed', { ...forged, via: 'rest' })
       .then(() => 'ok', (thrown) => String(thrown?.message ?? thrown));
 
     await new Promise((resolve) => setTimeout(resolve, 1500));
     const landed = heard.slice(before).filter((one) => one.tab === 'b' && one.forged);
     check('공개 채널 · REST 로 남의 주제에 보낸 changed 는 그 사람의 비공개 구독에 안 닿는다', landed.length === 0,
       `공개 구독 ${answered(joined)} · 보냄 ${sent} · REST ${viaRest} · 닿음 ${landed.length}`);
-    // 로컬은 공개 채널을 연다(운영은 「Allow public access」를 끈다 — runbook 「웹 푸시를 켠다」 4). 열려 있으면 대조군이 받는다
-    check('대조군 — 같은 이름의 공개 채널은 따로 받는다(보낸 것이 나갔다)', joined.state !== 'SUBSCRIBED' || overheard.length > 0,
-      `공개로 들은 것 ${overheard.length} · 대조군 구독 ${answered(listening)}`);
+    /**
+     * 위 검사가 아무것도 안 보낸 채 통과하지 않게 — 두 공개 구독이 서고, 소켓 · REST 두 길로 보낸 것을 대조군이 다 받아야 한다.
+     * 이 검사는 로컬 스택에서만 돌고 로컬은 공개 채널을 연다(운영은 「Allow public access」를 끈다 — runbook 「웹 푸시를 켠다」 4, ADR 0155)
+     */
+    const heardVia = [...new Set(overheard.map((one) => one.via))].sort();
+    check('대조군 — 같은 이름의 공개 채널은 소켓 · REST 로 보낸 것을 둘 다 받는다(보낸 것이 정말 나갔다)',
+      listening.state === 'SUBSCRIBED' && joined.state === 'SUBSCRIBED' && heardVia.includes('socket') && heardVia.includes('rest'),
+      `대조군 구독 ${answered(listening)} · 공개 구독 ${answered(joined)} · 보냄 ${sent} · REST ${viaRest} · 들은 길 ${JSON.stringify(heardVia)}`);
     await bystander.removeAllChannels();
     await a.client.removeChannel(joined.channel);
     await outsider.removeAllChannels();
