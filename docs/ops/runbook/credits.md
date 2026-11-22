@@ -383,7 +383,7 @@ update retention.reading_payment set hold_reason = null, held_at = null where or
 | 1 | 테스터 계정으로 3장을 산다 | 화면에 「결제가 완료됐어요 · 풀이권 3장이 추가됐어요.」, 보유 수 +3, `store_purchase` 1줄 · `consumed_at` 이 선다, Play Console 주문이 소비됨(3일 안 승인 — 소비가 승인을 겸한다) |
 | 2 | 결제창에서 결제한 직후 앱을 강제 종료 → 다시 연다 | 지급이 한 번만 선다(통지가 먼저 세웠으면 화면은 조용하고 보유 수만 늘었다) |
 | 3 | 같은 통지를 다시 보낸다(Pub/Sub 구독의 메시지 다시 보내기, 또는 같은 토큰으로 앱 문을 두 번) | `store_purchase` · 주문이 늘지 않는다, 답이 재시도 |
-| 4 | 안 쓴 구매를 Play Console 에서 **전액 환불** | 통지 뒤 그 묶음의 장수가 모두 걷힌다, 환불 줄 사유 `store`, `store_purchase_void` 1줄 |
+| 4 | 안 쓴 구매를 Play Console 에서 **전액 환불** — 주문 환불 화면의 「이용 자격 취소」에서 「자격 삭제」를 켠다(아래 운영자 환불 2) | 통지 뒤 그 묶음의 장수가 모두 걷힌다, 환불 줄 사유 `store`, `store_purchase_void` 1줄 |
 | 5 | 3장 중 1장을 쓰고 전액 환불 | 2장만 걷히고 쓴 1장은 그대로, 보유 수가 음수가 아니다. 다른 묶음을 함께 가진 계정이면 모자란 1장이 늦게 산 묶음에서 걷히고, 산 몫이 없으면 2장에서 멈춘다(바닥 0) |
 | 6 | 산 계정을 탈퇴시킨 뒤 전액 환불 | 무효 결과 `departed`, `retention.reading_refund_after_leave` 에 사유 `store` 1줄 |
 | 7 | 지급이 안 선 구매(서버 키를 비운 Preview 등)를 소비하지 않은 채 둔다 | 3일 뒤 Google 이 돌려주고 무효가 4 처럼 적힌다 — 날짜가 걸려 따로 적는다 |
@@ -395,9 +395,13 @@ update retention.reading_payment set hold_reason = null, held_at = null where or
 
 1. `/ops/orders` 에서 주문 번호(`rdo_…`)로 찾아 확보 — 판의 거래 번호가 Google 주문 번호(`GPA.…`)다
 2. Play Console → Order management → 그 주문 → Refund. **남은 결제액보다 적으면 일부 환불**(금액 — 위 확인 9 의 세전 여부), 남은 결제액 전부면 **전액 환불**(콘솔은 결제액 이상의 일부 환불을 안 받는다).
-   항목 회수(revoke)는 고르지 않는다 — 걷는 것은 우리 장부다
-3. 확정 — **일부 환불**은 콘솔이 환불 번호를 주지 않으므로 `<GPA 주문 번호>:<환불한 시각 YYYYMMDDHHmm>` 를 적는다. **전액 환불**은 Google 의 무효 통지가 오면
-   `void_store_purchase` 가 그 확보로 스스로 확정한다(확보 금액 = 남은 결제액일 때, 환불 번호 `gpv:<GPA 주문 번호>`) — 판이 확정됐는지만 본다. 통지 전에 확정해도 된다
+   **전액 환불이면 「이용 자격 취소」의 「자격 삭제」를 켠다** — 기본은 꺼져 있고, 끈 채 환불하면 Google 이 그 구매를 무효로 치지 않아 통지도 아침 대조(`store-voided`)도
+   그 건을 못 본다(「If a developer refunds a purchase without setting the revoke option, the order will not be returned by the API」 — <https://developers.google.com/android-publisher/voided-purchases>).
+   **일부 환불이면 켜지 않는다** — 켜면 Google 이 그 구매 전체를 무효로 쳐서(`orders.refund` 의 `revoke`: 「access to the subscription or in-app item will be terminated immediately」)
+   장부가 그 결제가 준 장수를 다 걷는다
+3. 확정 — **일부 환불**은 콘솔이 환불 번호를 주지 않으므로 `<GPA 주문 번호>:<환불한 시각 YYYYMMDDHHmm>` 를 적는다. **전액 환불**은 2 에서 「자격 삭제」를 켰으면 Google 의 무효 통지가 오고
+   `void_store_purchase` 가 그 확보로 스스로 확정한다(확보 금액 = 남은 결제액일 때, 환불 번호 `gpv:<GPA 주문 번호>`) — 판이 확정됐는지만 본다. 통지 전에 확정해도 된다.
+   「자격 삭제」를 끈 채 이미 환불했으면 통지가 오지 않는다 — 일부 환불처럼 `<GPA 주문 번호>:<환불한 시각 YYYYMMDDHHmm>` 를 적어 손으로 확정한다
 
 **Google 이 먼저 전액을 돌려준 결제** — 걷은 것은 그때 안 쓴 풀이권, 장부의 환불 금액은 Google 이 돌려준 돈(남은 결제액 전부), 우리 셈이었다면의 몫은
 `store_purchase_void.share_amount` 다(ADR 0230 의 4 — 회수는 「그 결제가 준 장수만큼 남은 유료 풀이권에서」다, 추기 A). 이용자에게 차이를 청구하지 않는다. 진행 중인 확보가 있었는데 금액이 달랐으면 확보는 「google play: the store refunded the payment on its own」 사유로 풀린다.
