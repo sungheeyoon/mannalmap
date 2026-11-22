@@ -398,7 +398,7 @@ update retention.reading_payment set hold_reason = null, held_at = null where or
    **전액 환불이면 「이용 자격 취소」의 「자격 삭제」를 켠다** — 기본은 꺼져 있고, 끈 채 환불하면 Google 이 그 구매를 무효로 치지 않아 통지도 아침 대조(`store-voided`)도
    그 건을 못 본다(「If a developer refunds a purchase without setting the revoke option, the order will not be returned by the API」 — <https://developers.google.com/android-publisher/voided-purchases>).
    **일부 환불이면 켜지 않는다** — 켜면 Google 이 그 구매 전체를 무효로 쳐서(`orders.refund` 의 `revoke`: 「access to the subscription or in-app item will be terminated immediately」)
-   장부가 그 결제가 준 장수를 다 걷는다
+   장부가 그 결제가 준 장수를 다 걷는다. 콘솔의 주문 기록은 켜도 꺼도 「This order was refunded」 한 줄이다 — 켰는지는 몇 초 뒤 장부의 무효 줄로 본다
 3. 확정 — **일부 환불**은 콘솔이 환불 번호를 주지 않으므로 `<GPA 주문 번호>:<환불한 시각 YYYYMMDDHHmm>` 를 적는다. **전액 환불**은 2 에서 「자격 삭제」를 켰으면 Google 의 무효 통지가 오고
    `void_store_purchase` 가 그 확보로 스스로 확정한다(확보 금액 = 남은 결제액일 때, 환불 번호 `gpv:<GPA 주문 번호>`) — 판이 확정됐는지만 본다. 통지 전에 확정해도 된다.
    「자격 삭제」를 끈 채 이미 환불했으면 통지가 오지 않는다 — 일부 환불처럼 `<GPA 주문 번호>:<환불한 시각 YYYYMMDDHHmm>` 를 적어 손으로 확정한다
