@@ -178,14 +178,15 @@ export function nextAdvisoryLineOf(audit) {
 /**
  * Docker 한 줄 — 로컬 스택(`db:start` · e2e · 화면 그림)이 기대는 엔진이다. 화면 라운드 한가운데서 꺼진 것을 알던 자리를 세션을 열 때로 당긴다(G-173).
  * 고장은 꺼짐과 따로 찍는다 — 2026-11-21 Docker Desktop 이 떠 있는데 엔진이 500 을 내 「꺼짐」으로 읽혔고, 에이전트는 남이 쓰는 줄 알고 손대지 않았다.
+ * 켜고 다시 켜는 것은 에이전트가 명령으로 한다(`docs/agents/delegation/local-env.md` 「로컬 환경의 함정」).
  *
  * @param {{ running: boolean, missing?: boolean, broken?: string }} docker
  */
 export function dockerLineOf({ running, missing = false, broken }) {
   if (running) return '켜짐';
   if (missing) return '`docker` 명령이 없다 — 로컬 스택 대신 CI 에 기댄다(`docs/agents/delegation/local-env.md` 「로컬 환경의 함정」)';
-  if (broken) return `**고장** — Docker Desktop 은 떠 있는데 엔진이 답하지 못한다(${broken}). 운영자가 Docker Desktop 을 껐다 켠다 — 에이전트는 로컬 스택 대신 CI 에 기댄다`;
-  return '**꺼짐** — 로컬 스택 · e2e · 화면 그림 전에 Docker Desktop 을 켠다';
+  if (broken) return `**고장** — Docker Desktop 은 떠 있는데 엔진이 답하지 못한다(${broken}). 에이전트가 \`docker desktop restart\` 로 다시 켠다(맥) — 그래도 안 서면 로컬 스택 대신 CI 에 기댄다`;
+  return '**꺼짐** — 로컬 스택 · e2e · 화면 그림 전에 에이전트가 `docker desktop start` 로 켠다(맥)';
 }
 
 /**
