@@ -8,7 +8,7 @@
 - 같은 사실은 문구 상수 하나로 쓴다 — 대장에 없는 문구를 넣는 법은 [화면 문구](../agents/code-rules/screen-copy.md#화면-문구)
 - 버튼 글자는 동사로 갈린다 — 그 밖의 모든 화면 규칙은 [화면 규칙](../product/prd/screens.md)
 - 화면은 그리기만 하고 DB 를 부르지 않는다([새 것을 놓을 때](../architecture.md#새-것을-놓을-때))
-- 코드 PR 은 운영자 검토 뒤 머지([출시 흐름](../agents/delegation/coordinator.md)). 화면 흐름 · 메뉴 구조는 결정, 새 문구는 사후 확인이나 권한 · 보존 · 삭제 · 비용 · 요금 · 환불에 걸리면 결정이다([결정 점검표](../agents/delegation/decisions.md))
+- 코드 PR 은 운영자 검토 뒤 머지([출시 흐름](../agents/delegation/coordinator.md)). 화면 흐름 · 메뉴 구조는 결정, 새 문구는 사후 확인이나 권한 · 보존 · 삭제 · 비용 · 요금 · 환불에 걸리거나 이용자에게 새로 약속하면 결정이다([결정 점검표](../agents/delegation/decisions.md))
 - dev 서버는 제 자리에 띄운다 — 남이 띄운 서버(3000)는 죽이기 전에 묻는다. 그 서버를 재사용한 e2e 는 운영 DB 를 본다([로컬 환경의 함정](../agents/delegation/local-env.md))
 - 운영 배포 · 운영 smoke 는 운영 역할에 넘긴다 — 라운드 끝의 묶음 배포 한 번을 조율자가 밟는다([권한 등급](../agents/delegation/permissions.md#권한-등급--무엇을-해도-되고-무엇은-묻는가))
 - 새 글자 · 배치 · 흐름은 레퍼런스와 함께 — 대장에 없으면 한국 사례를 출처와 함께, 없으면 「실사례 없음」과 가장 가까운 사례. 정책이나 새 흐름인데 사례가 없으면 짓지 않고 구조와 선택지를 보고한다([레퍼런스](../agents/code-rules/references.md#레퍼런스))
