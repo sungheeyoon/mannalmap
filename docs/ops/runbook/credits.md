@@ -393,7 +393,7 @@ update retention.reading_payment set hold_reason = null, held_at = null where or
 
 **운영자 환불(이용자가 우리에게 청한 것) — 세 걸음 그대로, 콘솔이 Play Console 이다.** 금액은 DB 의 셈(ADR 0148 · 0192)이다.
 
-1. `/ops/orders` 에서 주문 번호(`rdo_…`)로 찾아 확보 — 판의 거래 번호가 Google 주문 번호(`GPA.…`)다
+1. `/ops/orders` 에서 주문 번호(`rdo_…`)로 찾아 확보 — 판의 거래 번호가 Google 주문 번호(`GPA.…`)다. 찾기 칸은 `rdo_` 만 받는다 — `GPA.…` 만 알면 `/ops/members` 에서 그 회원을 찾아 주문 목록의 `rdo_` 로 간다
 2. Play Console → Order management → 그 주문 → Refund. **남은 결제액보다 적으면 일부 환불** — 금액 칸은 「환불 금액(세금 제외)」인데 우리 상품은 대한민국 세금이 0원이라 확보 금액을 그대로 넣는다(2026-11-22 확인 9). 누르기 전에 「환불 금액(세금 포함)」이 확보 금액과 같은지 보고, 다르면 멈추고 조율자에게, 남은 결제액 전부면 **전액 환불**(콘솔은 결제액 이상의 일부 환불을 안 받는다).
    **전액 환불이면 「이용 자격 취소」의 「자격 삭제」를 켠다** — 기본은 꺼져 있고, 끈 채 환불하면 Google 이 그 구매를 무효로 치지 않아 통지도 아침 대조(`store-voided`)도
    그 건을 못 본다(「If a developer refunds a purchase without setting the revoke option, the order will not be returned by the API」 — <https://developers.google.com/android-publisher/voided-purchases>).
