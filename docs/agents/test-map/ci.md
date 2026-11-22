@@ -29,7 +29,8 @@
 
 - 실패한 job 의 기록은 `gh run view <run id> --log-failed`. 빈 출력이거나 아직 도는 run(`--log` 가 빈다)이면 job 기록을 API 로 연다 —
   `gh api --allow-escape-sequences "repos/{owner}/{repo}/actions/jobs/<job id>/logs"`(job id 는 `gh run view <run id> --json jobs`). 제어 문자 때문에
-  그 플래그 없이는 거절된다 — 파일로 받아 `sed 's/\x1b\[[0-9;]*[A-Za-z]//g'` 로 걸러 읽는다.
+  그 플래그 없이는 거절되는 판이 있고, 그 플래그를 모르는 판(gh 2.92 — `unknown flag`, 2026-11-22 맥)도 있다 — 모른다고 하면 빼고 부른다. 어느 쪽이든 파일로 받아 `sed 's/\x1b\[[0-9;]*[A-Za-z]//g'` 로 걸러 읽는다.
 - `gh run list` 는 `--limit` 을 안 주면 최근 20 개만 낸다 — 세거나 찾을 때 넉넉히 주고 `--workflow verify` · `--branch` 로 좁힌다.
+  `--limit` 을 크게 줘도 한 번에 1000 개까지다 — 더 세려면 `--created` 로 기간을 나눈다.
 - e2e 가 실패하면 `test-results/` 가 artifact 로 올라온다(7일) — 익명은 `anon-test-results`, 로그인은 `authed-test-results-<차선>`(콜론은 `-`).
   `gh run download <run id> -n <이름>` 뒤 `npx playwright show-trace <…>/trace.zip`. `playwright-report/` 는 없다.
