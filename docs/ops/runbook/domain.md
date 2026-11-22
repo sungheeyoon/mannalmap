@@ -6,7 +6,7 @@
 
 **새 도메인은 `mannalmap.com` 이다**(2026-10-07, 서비스 이름 「만날지도」 — ADR 0149). 아래 표의 `<새 도메인>` 은 `mannalmap.com` 이다.
 **운영 주소는 `https://mannalmap.com` 이다**(운영자, 2026-10-08) — 저장소에서 운영 주소를 적는 자리는 이 줄 하나다. `www.mannalmap.com` 은 맨 도메인으로 308 이고 인증서가 섰다. 이 줄의 꼴을 `scripts/deploy-smoke.mjs` 가 읽는다 — 꼴을 바꾸면 그 시험(`scripts/deploy-smoke.test.ts`)이 붉어진다.
-옛 별칭 `saju-snowy.vercel.app` 은 아직 넘김 없이 같은 화면을 200 으로 낸다 — 8 이 남았다.
+옛 별칭 `saju-snowy.vercel.app` 은 2026-11-22 부터 같은 경로의 운영 주소로 308 넘긴다(아래 「확인 기록」 8) — 지우지 않는다, 이미 보낸 공유 링크가 그 주소를 든다.
 
 ### 확인 기록 — 도메인 걸음의 상태는 여기 한 곳이다
 
@@ -22,7 +22,7 @@ OAuth 되돌아옴 · 복구기 주소 · OpenAI 웹훅 · 옛 주소 넘김이 
 | 5 | 했다 | 2026-11-22 20:05 KST `db:remote` — 아래 5 의 한 줄로 호스트를 옛 별칭에서 운영 도메인으로 바꿨다. 그 뒤 2분 동안 `net._http_response` 2번 모두 200 | — |
 | 6 | 했다 | 2026-11-22 조율자가 운영자 지시로 브라우저에서 봤다 — 프로젝트 Settings → Webhooks 의 endpoint 가 옛 별칭이었다. 「Edit webhook」으로 주소만 운영 도메인의 `/api/openai/webhook` 으로 고쳤다 — 같은 endpoint 라 서명 비밀이 그대로여서 Vercel 값 · 재배포가 없다 | 다음 풀이 하나가 끝날 때 Vercel 요청 기록에 운영 도메인의 `POST /api/openai/webhook` 200 — 조율자 |
 | 7 | 했다 | 2026-11-17 — Pub/Sub 푸시 구독 `play-billing-push` 의 끝점 · audience 를 새 도메인의 `/api/store/google-play` 로 만들었고, 그날 배포 뒤 Play Console 「테스트 알림 보내기」가 204 였다(`docs/ops/runbook/credits.md` 「Google Play 결제」의 「운영의 실제 값」, #770 그날의 배포 댓글, ADR 0230) | 도메인을 다시 옮기면 아래 표의 7 |
-| 8 | 안 했다 | 2026-10-23 `curl` — 옛 별칭 `/` 200 | 5 · 6 은 2026-11-22 에 새 도메인으로 섰다 — 6 의 도착을 본 뒤. 넘기면 옛 주소로 로그인해 있던 사람은 다시 로그인한다(아래 「모두가 한 번 다시 로그인한다」 — 알릴지는 운영자) |
+| 8 | 했다 | 2026-11-22 운영자 「옛주소는 버리자」 — Vercel Domains 에서 옛 별칭을 운영 도메인으로 308(같은 경로). `curl -sI` 로 `/` · `/share/x` 가 308 · `location` 이 운영 주소의 같은 경로. 넘기기 전 한 시간 동안 옛 별칭으로 온 요청은 0 이었다 | 3 의 옛 Redirect URLs 를 걷는다 — Supabase 대시보드에서(그 대시보드는 조율자 브라우저에 로그인돼 있지 않다) |
 | 9 | 했다 | `deploy.md` 는 주소 대신 이 문서를 가리킨다(ADR 0152) | — |
 | 10 | 해당 없음 | 2026-10-23 `db:remote` — Vault `push_dispatch_url` 이 없다(웹 푸시는 G-71 보류) | 켜는 날 새 도메인으로 넣는다(`docs/ops/runbook/push.md`) |
 | 11 | 해당 없음 | 2026-10-23 — Vault `photo_sweep_url` 은 `20261229090000` 이 처음 쓰는 이름이고 사진 저장소가 꺼져 있다(G-120) | 켜는 날 새 도메인으로 넣는다(`docs/ops/runbook/photo-store.md` 「사진 저장소로 바꾼다」 6) |
