@@ -372,7 +372,7 @@ update retention.reading_payment set hold_reason = null, held_at = null where or
 - **상품 넷**(2): 위 표 그대로, 모두 활성. 구매 옵션 id `buy`(구입, 「이전 버전과의 호환성」), **대한민국만**(다른 나라는 「사용할 수 없음」), 여러 개 구매 꺼짐, 분류 「디지털 콘텐츠」, 세금 카테고리 「디지털 앱 판매」. 콘솔의 대한민국 세금 칸은 「VAT 없음」 — 넣은 가격이 이용자가 내는 값이다. 20장(59,000원)에는 「KRW 57,000 초과 가격은 다중 수량 결제가 불가능」 안내가 선다(어차피 끔). 이름 「풀이권 N장」, 설명 「사주풀이 · 궁합풀이를 받을 때 쓰는 풀이권 N장이에요. 구매한 풀이권은 기한 없이 쓸 수 있어요.」(문구 확인 전)
 - **Cloud 프로젝트**: 구글 로그인이 든 운영자 개인 계정의 「My First Project」(id `project-274ffaa2-8d30-41bc-b32` · 번호 `278971727146`, `play-console.md` 「읽은 지문」 아래). 결제 계정은 무료 체험이 끝나 가서 **정식으로 올렸다**(Pub/Sub 은 결제 계정이 있어야 돈다, 체험 크레딧은 남는다). Play Developer API · Pub/Sub API 를 켰다
 - **서비스 계정 셋**: `eas-submit@…`(EAS 제출 — 2026-11-18, `play-console.md` 「EAS 제출 잇기」, 재무 권한 없음) · `play-billing@…`(결제 검증 — Play Console 사용자로 초대, 이 앱에 앱 정보 보기 · 재무 데이터 보기 · 주문 및 구독 관리) · `play-rtdn-push@…`(푸시 인증만, 키 없음, Pub/Sub 서비스 에이전트에 Token Creator)
-- **Pub/Sub**: 주제 `play-billing`(Publisher = `google-play-developer-notifications@system.gserviceaccount.com`) · 푸시 구독 `play-billing-push` — 끝점과 audience 모두 `https://<도메인>/api/store/google-play`(도메인은 `domain.md` 맨 위의 운영 주소 — www 붙은 쪽은 308 이라 쓰지 않는다, 같은 문서 표 7). Play Console RTDN 은 켰고 주제 `projects/project-274ffaa2-8d30-41bc-b32/topics/play-billing`, 「정기 결제, 무효화된 구매, 모든 일회성 제품」
+- **Pub/Sub**: 주제 `play-billing`(Publisher = `google-play-developer-notifications@system.gserviceaccount.com`) · 푸시 구독 `play-billing-push` — 끝점과 audience 모두 `https://<도메인>/api/store/google-play`(도메인은 `domain.md` 맨 위의 운영 주소 — www 붙은 쪽은 308 이라 쓰지 않는다, 같은 문서 표 7). Play Console RTDN 은 켰고 주제 `projects/project-274ffaa2-8d30-41bc-b32/topics/play-billing`, 「정기 결제, 무효화된 구매, 모든 일회성 제품」 구독은 **만료 없음** · **확인된 메시지 7일 보관**이다(2026-11-22 — 기본값 「31일 동안 활동이 없으면 만료」는 판매가 뜸할 때 구독을 지워 통지를 끊는다. 보관은 같은 통지를 다시 보내는 확인 3 · 「메시지 재생」용)
 - **Vercel Production 세 값**: 위 표대로 넣었다(`GOOGLE_PLAY_SERVICE_ACCOUNT_JSON` 은 sensitive) — 값을 바꾸면 다시 배포해야 읽힌다
 - **키를 다시 만들 때 — 조직 정책이 막는다.** 프로젝트가 조직(`68743236293`, 운영자 계정이 조직 관리자) 아래라 새 조직의 기본 정책 `iam.disableServiceAccountKeyCreation` 이 키 만들기를 막는다. 그날은 운영자 결정으로 **이 프로젝트에서만 잠깐 풀고 → 키 하나 → 되돌렸다**: 운영자 계정에 `roles/orgpolicy.policyAdmin` 을 조직에서 주고 → 프로젝트에 `enforce: false` 재정의 → 몇 분 뒤 Cloud 콘솔 IAM → 서비스 계정 → `play-billing` → 키 → 키 추가 → JSON(Cloud Shell 의 `cloudshell download` 는 에이전트 브라우저에서 파일이 안 받아졌다) → `gcloud org-policies delete iam.disableServiceAccountKeyCreation --project=<프로젝트 id>`(번호가 아니라 id) → 역할을 걷는다. 지금 살아 있는 키는 하나(`605ebe06…`), 키 파일 사본은 남기지 않았다. 새면 `secret-leak.md` 의 줄, 그때 같은 차례로 새 키를 만들고 옛 키를 지운다
 
@@ -382,19 +382,19 @@ update retention.reading_payment set hold_reason = null, held_at = null where or
 | --- | --- | --- |
 | 1 | 테스터 계정으로 3장을 산다 | 화면에 「결제가 완료됐어요 · 풀이권 3장이 추가됐어요.」, 보유 수 +3, `store_purchase` 1줄 · `consumed_at` 이 선다, Play Console 주문이 소비됨(3일 안 승인 — 소비가 승인을 겸한다) |
 | 2 | 결제창에서 결제한 직후 앱을 강제 종료 → 다시 연다 | 지급이 한 번만 선다(통지가 먼저 세웠으면 화면은 조용하고 보유 수만 늘었다) |
-| 3 | 같은 통지를 다시 보낸다(Pub/Sub 구독의 메시지 다시 보내기, 또는 같은 토큰으로 앱 문을 두 번) | `store_purchase` · 주문이 늘지 않는다, 답이 재시도 |
+| 3 | 같은 통지를 다시 보낸다 — Play Console 주문 세부정보의 「구매 토큰 복사」 → Cloud 콘솔 주제 `play-billing` 의 「메시지 게시」에 그 토큰의 `oneTimeProductNotification`(`notificationType` 1 · `sku`) 본문, 또는 구독의 「메시지 재생」(확인된 메시지 7일 보관) | `store_purchase` · 주문이 늘지 않는다, 답이 재시도 |
 | 4 | 안 쓴 구매를 Play Console 에서 **전액 환불** — 주문 환불 화면의 「이용 자격 취소」에서 「자격 삭제」를 켠다(아래 운영자 환불 2) | 통지 뒤 그 묶음의 장수가 모두 걷힌다, 환불 줄 사유 `store`, `store_purchase_void` 1줄 |
 | 5 | 3장 중 1장을 쓰고 전액 환불 | 2장만 걷히고 쓴 1장은 그대로, 보유 수가 음수가 아니다. 다른 묶음을 함께 가진 계정이면 모자란 1장이 늦게 산 묶음에서 걷히고, 산 몫이 없으면 2장에서 멈춘다(바닥 0) |
 | 6 | 산 계정을 탈퇴시킨 뒤 전액 환불 | 무효 결과 `departed`, `retention.reading_refund_after_leave` 에 사유 `store` 1줄 |
 | 7 | 지급이 안 선 구매(서버 키를 비운 Preview 등)를 소비하지 않은 채 둔다 | 3일 뒤 Google 이 돌려주고 무효가 4 처럼 적힌다 — 날짜가 걸려 따로 적는다 |
 | 8 | 구매 제한을 건 계정으로 결제를 시도 | 앱에 「지금은 풀이권을 구매할 수 없어요.」, 결제창이 안 열린다 |
-| 9 | 운영자 환불 — 확보(예: 3장 묶음에서 1장 · 청약철회) → Play Console 에서 **일부 환불** → 확정 | 콘솔의 일부 환불 칸이 **세전 금액**인지 본다 — 세전이면 확보 금액 ÷ 1.1 을 넣고, 이용자에게 돌아간 금액이 확보 금액과 같은지 Play 주문의 환불 내역으로 본다. 다르면 멈추고 조율자에게. 본 결과로 운영자 환불 2 의 금액 넣는 법을 고정한다 |
+| 9 | 운영자 환불 — 확보(예: 3장 묶음에서 1장 · 청약철회) → Play Console 에서 **일부 환불** → 확정 | 콘솔의 일부 환불 칸이 **세전 금액**인지 본다 — 2026-11-22: 칸은 「환불 금액(세금 제외)」이고 우리 주문의 세금이 0원이라 확보 금액 그대로가 「세금 포함」과 같았다. 세금이 붙은 주문이면 확보 금액 ÷ 1.1 을 넣고, 이용자에게 돌아간 금액이 확보 금액과 같은지 Play 주문의 환불 내역으로 본다. 다르면 멈추고 조율자에게. 본 결과로 운영자 환불 2 의 금액 넣는 법을 고정한다 |
 | 10 | 첫 구매 뒤 Vercel 로그 | Google 의 원 응답에 `purchaseState` 가 실렸는지 — 로그에 `store purchase: unreadable purchase state` · `quantity is not one` 이 0 줄이다(있으면 지급이 안 선 결제다 — 멈추고 조율자에게, ADR 0253). `store purchase: no purchase time` 도 0 줄이다(있으면 그 구매의 기한을 지급 시각으로 늦게 잡는다 — 조율자에게) |
 
 **운영자 환불(이용자가 우리에게 청한 것) — 세 걸음 그대로, 콘솔이 Play Console 이다.** 금액은 DB 의 셈(ADR 0148 · 0192)이다.
 
 1. `/ops/orders` 에서 주문 번호(`rdo_…`)로 찾아 확보 — 판의 거래 번호가 Google 주문 번호(`GPA.…`)다
-2. Play Console → Order management → 그 주문 → Refund. **남은 결제액보다 적으면 일부 환불**(금액 — 위 확인 9 의 세전 여부), 남은 결제액 전부면 **전액 환불**(콘솔은 결제액 이상의 일부 환불을 안 받는다).
+2. Play Console → Order management → 그 주문 → Refund. **남은 결제액보다 적으면 일부 환불** — 금액 칸은 「환불 금액(세금 제외)」인데 우리 상품은 대한민국 세금이 0원이라 확보 금액을 그대로 넣는다(2026-11-22 확인 9). 누르기 전에 「환불 금액(세금 포함)」이 확보 금액과 같은지 보고, 다르면 멈추고 조율자에게, 남은 결제액 전부면 **전액 환불**(콘솔은 결제액 이상의 일부 환불을 안 받는다).
    **전액 환불이면 「이용 자격 취소」의 「자격 삭제」를 켠다** — 기본은 꺼져 있고, 끈 채 환불하면 Google 이 그 구매를 무효로 치지 않아 통지도 아침 대조(`store-voided`)도
    그 건을 못 본다(「If a developer refunds a purchase without setting the revoke option, the order will not be returned by the API」 — <https://developers.google.com/android-publisher/voided-purchases>).
    **일부 환불이면 켜지 않는다** — 켜면 Google 이 그 구매 전체를 무효로 쳐서(`orders.refund` 의 `revoke`: 「access to the subscription or in-app item will be terminated immediately」)
