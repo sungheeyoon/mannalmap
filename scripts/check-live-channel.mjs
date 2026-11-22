@@ -35,18 +35,29 @@ const signedIn = async (email) => {
   return { client, id: data.session.user.id };
 };
 
-/** 채널을 열고 처음 선 상태를 기다린다 — SUBSCRIBED · CHANNEL_ERROR · TIMED_OUT */
-const join = (client, topic, onChanged = () => {}) => new Promise((resolve) => {
-  const channel = client.channel(topic, { config: { private: true } })
+/** 확정 답을 기다리는 끝 — 서버가 접속에 20초쯤 답하지 않은 날이 있었다(G-177) */
+const ANSWER_MS = 30000;
+
+/**
+ * 채널을 열고 확정 답(SUBSCRIBED · CHANNEL_ERROR)과 걸린 ms 를 낸다. TIMED_OUT 은 클라이언트가 다시 붙는 중이라 기다림을 잇는다 —
+ * 무응답을 거절과 같은 붉음으로 세지 않는다(G-177)
+ */
+const join = (client, topic, { isPrivate = true, onChanged = () => {} } = {}) => new Promise((resolve) => {
+  const started = performance.now();
+  const ms = () => Math.round(performance.now() - started);
+  const channel = client.channel(topic, { config: { private: isPrivate } })
     .on('broadcast', { event: 'changed' }, (message) => onChanged(message.payload));
-  const timer = setTimeout(() => resolve({ channel, state: 'NO_ANSWER' }), 10000);
+  const timer = setTimeout(() => resolve({ channel, state: 'NO_ANSWER', ms: ms() }), ANSWER_MS);
   channel.subscribe((state, error) => {
-    if (state === 'SUBSCRIBED' || state === 'CHANNEL_ERROR' || state === 'TIMED_OUT') {
+    if (state === 'SUBSCRIBED' || state === 'CHANNEL_ERROR') {
       clearTimeout(timer);
-      resolve({ channel, state, error: error?.message });
+      resolve({ channel, state, error: error?.message, ms: ms() });
     }
   });
 });
+
+/** 검사 줄의 덧 — 답과 걸린 시간 */
+const answered = (joined) => `${joined.error ?? joined.state} · ${joined.ms}ms`;
 
 const a = await signedIn(mail.a);
 const b = await signedIn(mail.b);
@@ -62,19 +73,21 @@ let waiting = null;
 
 try {
   // ── 1. 제 주제는 서고, 남의 주제는 거절된다 ─────────────────────────────────
-  const mine = await join(a.client, `user:${a.id}`, (payload) => {
-    heard.push(payload);
-    if (waiting && payload.area === 'chat' && payload.seq !== null) waiting({ payload, at: performance.now() });
+  const mine = await join(a.client, `user:${a.id}`, {
+    onChanged: (payload) => {
+      heard.push(payload);
+      if (waiting && payload.area === 'chat' && payload.seq !== null) waiting({ payload, at: performance.now() });
+    },
   });
-  check('제 주제(user:<나>)의 비공개 채널이 SUBSCRIBED 로 선다', mine.state === 'SUBSCRIBED', mine.error ?? mine.state);
+  check('제 주제(user:<나>)의 비공개 채널이 SUBSCRIBED 로 선다', mine.state === 'SUBSCRIBED', answered(mine));
 
   const theirs = await join(a.client, `user:${b.id}`);
-  check('남의 주제(user:<상대>)는 거절된다', theirs.state === 'CHANNEL_ERROR', theirs.error ?? theirs.state);
+  check('남의 주제(user:<상대>)는 거절된다', theirs.state === 'CHANNEL_ERROR', answered(theirs));
   await a.client.removeChannel(theirs.channel);
 
   const outsider = createClient(API, status.ANON_KEY, { auth: { persistSession: false } });
   const anonymous = await join(outsider, `user:${a.id}`);
-  check('로그인 없이는 누구의 주제도 못 듣는다', anonymous.state === 'CHANNEL_ERROR', anonymous.error ?? anonymous.state);
+  check('로그인 없이는 누구의 주제도 못 듣는다', anonymous.state === 'CHANNEL_ERROR', answered(anonymous));
   await outsider.removeAllChannels();
 
   // ── 2. 상대가 보내면 2초 안에 changed 가 온다 ────────────────────────────────
@@ -110,8 +123,8 @@ try {
 
   // ── 3. 읽음은 다른 탭에 — 읽은 사람 자신의 주제로 ────────────────────────────
   const before = heard.length;
-  const readerTab = await join(b.client, `user:${b.id}`, (payload) => heard.push({ ...payload, tab: 'b' }));
-  check('상대도 제 주제를 연다', readerTab.state === 'SUBSCRIBED', readerTab.error ?? readerTab.state);
+  const readerTab = await join(b.client, `user:${b.id}`, { onChanged: (payload) => heard.push({ ...payload, tab: 'b' }) });
+  check('상대도 제 주제를 연다', readerTab.state === 'SUBSCRIBED', answered(readerTab));
   await a.client.rpc('mark_chat_read', { p_match_id: matchId, p_up_to_seq: Number.MAX_SAFE_INTEGER });
   await new Promise((resolve) => setTimeout(resolve, 1500));
   const after = heard.slice(before);
@@ -129,27 +142,9 @@ try {
     // 대조군 — 같은 이름의 공개 채널을 듣는 쪽은 받는다(보낸 것이 정말 나갔다)
     const bystander = createClient(API, status.ANON_KEY, { auth: { persistSession: false } });
     const overheard = [];
-    await new Promise((resolve) => {
-      const timer = setTimeout(resolve, 10000);
-      bystander.channel(`user:${b.id}`, { config: { private: false } })
-        .on('broadcast', { event: 'changed' }, (message) => overheard.push(message.payload))
-        .subscribe((state) => {
-          if (state !== 'SUBSCRIBED') return;
-          clearTimeout(timer);
-          resolve();
-        });
-    });
+    const listening = await join(bystander, `user:${b.id}`, { isPrivate: false, onChanged: (payload) => overheard.push(payload) });
 
-    const joined = await new Promise((resolve) => {
-      const channel = a.client.channel(`user:${b.id}`, { config: { private: false } });
-      const timer = setTimeout(() => resolve({ channel, state: 'NO_ANSWER' }), 10000);
-      channel.subscribe((state) => {
-        if (state === 'SUBSCRIBED' || state === 'CHANNEL_ERROR' || state === 'TIMED_OUT') {
-          clearTimeout(timer);
-          resolve({ channel, state });
-        }
-      });
-    });
+    const joined = await join(a.client, `user:${b.id}`, { isPrivate: false });
     let sent = 'not sent';
     if (joined.state === 'SUBSCRIBED') {
       sent = await joined.channel.send({ type: 'broadcast', event: 'changed', payload: forged });
@@ -162,10 +157,10 @@ try {
     await new Promise((resolve) => setTimeout(resolve, 1500));
     const landed = heard.slice(before).filter((one) => one.tab === 'b' && one.forged);
     check('공개 채널 · REST 로 남의 주제에 보낸 changed 는 그 사람의 비공개 구독에 안 닿는다', landed.length === 0,
-      `공개 구독 ${joined.state} · 보냄 ${sent} · REST ${viaRest} · 닿음 ${landed.length}`);
+      `공개 구독 ${answered(joined)} · 보냄 ${sent} · REST ${viaRest} · 닿음 ${landed.length}`);
     // 로컬은 공개 채널을 연다(운영은 「Allow public access」를 끈다 — runbook 「웹 푸시를 켠다」 4). 열려 있으면 대조군이 받는다
     check('대조군 — 같은 이름의 공개 채널은 따로 받는다(보낸 것이 나갔다)', joined.state !== 'SUBSCRIBED' || overheard.length > 0,
-      `공개로 들은 것 ${overheard.length}`);
+      `공개로 들은 것 ${overheard.length} · 대조군 구독 ${answered(listening)}`);
     await bystander.removeAllChannels();
     await a.client.removeChannel(joined.channel);
     await outsider.removeAllChannels();
