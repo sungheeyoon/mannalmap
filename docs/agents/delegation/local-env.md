@@ -4,7 +4,7 @@
 
 ## 로컬 환경의 함정
 
-접속값과 운영 절차는 `docs/ops/runbook.md`, 시험 명령은 `docs/agents/test-map.md` 다. 여기는 그 둘에 없는 함정만 — 이 맥 한 대 기준이다.
+접속값과 운영 절차는 `docs/ops/runbook.md`, 시험 명령은 `docs/agents/test-map.md` 다. 여기는 그 둘에 없는 함정만 — 맥과 WSL(우분투) 두 기계에서 쓰고, 한 기계의 줄은 그 기계를 밝힌다(「(WSL)」 · 「맥에서만」).
 
 | 증상 | 원인 | 하는 일 |
 | --- | --- | --- |
@@ -15,7 +15,7 @@
 | `npm run typecheck` 가 `.next/dev/types/validator.ts` 에서 지워진 페이지를 못 찾는다 | 옛 dev 서버의 생성 타입 캐시다 | 그 체크아웃의 dev 서버가 꺼졌으면 `rm -rf .next/dev/types` |
 | `npx tsc --noEmit` 이 `LayoutProps` 를 못 찾는다 | `next typegen` 이 먼저 돌아야 한다 | `npm run typecheck` |
 | localhost dev 서버만 탭 이동이 아주 느리다 | 메인 폴더 안의 워크트리(`.claude/worktrees/`)마다 든 `node_modules` 를 메인의 dev 서버가 함께 감시한다 | 머지된 워크트리를 걷고 dev 서버를 다시 띄운다(`docs/agents/delegation/coordinator.md` 「끝난 워크트리를 걷는다」) |
-| 워크트리에서 vitest 가 `server-only` 를 못 찾는다 · dev 서버가 `node_modules` 를 거절한다 | 워크트리에는 `node_modules` 가 없다. 있어도 `.vite` 만 든 껍데기일 수 있다. 심볼릭 링크는 Turbopack 이 거절한다 | 단위 · 타입 · 린트만이면 `ln -s <메인>/node_modules .`. dev 서버 · 흐름 · e2e 면 `cp -Rc <메인>/node_modules .`(APFS 복제). 껍데기면 지우고 그렇게 한다 |
+| 워크트리에서 vitest 가 `server-only` 를 못 찾는다 · dev 서버가 `node_modules` 를 거절한다 | 워크트리에는 `node_modules` 가 없다. 있어도 `.vite` 만 든 껍데기일 수 있다. 심볼릭 링크는 Turbopack 이 거절한다 | 단위 · 타입 · 린트만이면 `ln -s <메인>/node_modules .`. dev 서버 · 흐름 · e2e 면 복사한다 — 맥 `cp -Rc <메인>/node_modules .`(APFS 복제), WSL `cp -a --reflink=auto <메인>/node_modules .`(ext4 는 통째 — 약 760MB). 껍데기면 지우고 그렇게 한다 |
 | 앱 워크트리에서 `tsc` · `expo lint` 가 `expo-iap` 같은 패키지를 못 찾는다 | 메인의 `mobile/node_modules` 링크가 낡았다 | 앱을 고치는 워크트리는 `mobile` 에서 `npm ci` 로 제 것을 깐다 — 링크하지 않는다 |
 | 앱 워크트리에 뿌리 `node_modules` 가 없다 | `mobile/` 의 Metro · `tsc` 는 메인의 것을 위로 찾아 돌지만 `scripts/` 시험은 못 돈다 | 뿌리에도 링크하거나 `npm ci` |
 | 워크트리에서 `db:remote` · `migration list` · `db push` 가 `LegacyProjectNotLinkedError` | 원격 연결(project-ref)은 `supabase/` 아래 무시되는 `.temp` 폴더에 있어 새 워크트리에 없다 | 메인의 그 `.temp` 의 `project-ref` 가 운영 프로젝트인지 본 뒤 `cp -a` 로 폴더째 복사한다 |
@@ -41,7 +41,7 @@
 | `/ops` 의 그림이 2단계 인증에서 멈춘다 | `/ops` 는 2단계 인증 뒤에 열린다 | `e2e/second-factor.ts` 의 `passSecondFactor` 로 지난 뒤 찍는다 |
 | 맥에서만 `scripts/aws-wizard.test.ts` 가 붉다 · 마법사가 「bash 4.4 이상」을 찾는다 | macOS 의 `/bin/bash` 는 3.2 다 | PATH 에서 `/opt/homebrew/bin` 의 bash 가 먼저 오게 한다 |
 | `pkill -f <글자>` 뒤 제 셸이나 남의 가짜 서버 · Metro 가 죽는다 | 글자가 제 명령줄과 나란히 도는 에이전트의 프로세스에도 맞는다 | 띄울 때 받은 PID 나 제 포트의 PID 로만 끈다. 포트도 저마다 잡는다(`FAKE_PORT` · `--port`) |
-| `eas build --local` 이 Java · Android SDK 를 못 찾는다 | 이 맥의 JDK · SDK 는 `~/opt` 에 있다 | `docs/ops/runbook/mobile-release.md` 「무료 빌드 횟수가 떨어지면 — 이 PC 에서 굽는다(2026-11-19)」 끝의 맥 문단 — 깔았으면 `export` 줄만 |
+| `eas build --local` 이 Java · Android SDK 를 못 찾는다 | 셸이 그 기계의 JDK · SDK 자리를 모른다 — 두 기계 다 깔려 있다 | `docs/ops/runbook/mobile-release.md` 「무료 빌드 횟수가 떨어지면 — 이 PC 에서 굽는다(2026-11-19)」 — WSL 은 그 절 첫 `export` 줄, 맥은 끝의 「맥에서 굽는 법」 문단. 깔았으면 `export` 줄만 |
 | (ego-browser) Play 콘솔 · 운영 대시보드에 로그인이 안 돼 있거나 다른 계정이 뜬다 | 프로필이 둘이다 — 기본은 운영자 개인 계정, `Profile 2` 는 개발자 계정(`gapjagilab`) | Play 콘솔은 `Profile 2`. 다른 콘솔도 어느 계정 것인지 보고 고른다 |
 | (ego-browser) 내려받은 파일이 안 보인다 · Cloud Shell 에 글자가 안 들어간다 · Play 콘솔 드롭다운이 안 열린다 | 다운로드는 (Windows) `C:\Users\<사용자>\.ego-browser\state\downloads\<GUID>` 에 GUID 이름으로 떨어진다 · Cloud Shell(xterm)은 `insertText` 를 안 받는다 · 드롭다운이 마우스를 놓친다 | GUID 폴더에서 찾고, 키 파일이면 쓴 뒤 사본까지 지운다 · `keyboard.type` · 키보드나 좌표 클릭. 키는 Cloud 콘솔 UI 에서 만든다 |
 
@@ -94,7 +94,7 @@
 화면 PR 의 전후 그림(`docs/agents/delegation/done.md` 「끝났다는 것」)을 에이전트 워크트리에서 찍는 차례다. 도구의 사정은 `docs/notes/ui-walk-and-gallery.md`.
 
 1. 제 로컬 DB 를 세운다 — `npm run stack:slot -- --auto` 뒤 `npm run db:start`. 자리 없이 띄우면 남의 스택을 밟는다.
-2. 진짜 `node_modules` 를 복사한다(`cp -Rc`) — 링크는 Turbopack 이 거절한다.
+2. 진짜 `node_modules` 를 복사한다(맥 `cp -Rc` · WSL `cp -a --reflink=auto`) — 링크는 Turbopack 이 거절한다.
 3. 화면 서버는 `npm run dev:local`(`scripts/ui-dev.mjs`) — 로컬 스택에 붙고 모델 열쇠를 비운 채 3100 에 뜬다.
 4. `UI_ONLY=<id,id> node scripts/ui-shots.mjs <폴더>` 로 고친 화면만 찍는다(id 는 그 파일의 `PLAN`, 폭은 `UI_SIZES=desktop,mobile,wide`). 고치기 전 그림은 같은 자리에서 main 으로 먼저 찍는다. 로딩 뼈대는 `skeleton-*` id 로 — `next dev` 로는 안 선다. 상태를 바꾸는 무리는 `PLAN` 의 `fresh` 로 폭마다 새로 짓는다. 실패한 그림이 있으면 도구가 목록을 찍고 1 로 끝난다.
 5. `aria-disabled` 단추는 Playwright 에서 `force: true` 로 누른다 — 「누른 뒤에 까닭을 말하는」 화면을 찍으려면.
