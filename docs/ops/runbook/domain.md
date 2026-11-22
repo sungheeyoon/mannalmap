@@ -18,11 +18,11 @@ OAuth 되돌아옴 · 복구기 주소 · OpenAI 웹훅 · 옛 주소 넘김이 
 | 1 | 했다 | 2026-10-23 `curl` — 맨 도메인 `/` 200 · `www` 308 → 맨 도메인 | — |
 | 2 | 했다 | 2026-10-23 `curl` — `og:image` 가 새 도메인의 `/brand/…` | — |
 | 3 | 했다 | 2026-10-08 운영자 — Site URL 을 새 주소로, Redirect URLs 에 새 도메인의 `/**` 를 더함, 새 주소에서 구글 로그인 → `/me` | 옛 주소의 Redirect URLs 셋은 8 뒤에 걷는다. 지금 남아 있는지는 **확인 전**(대시보드를 안 봤다) |
-| 4 | **확인 전** | 저장소에서 못 잰다 | 운영자 — Google Cloud Console → OAuth consent screen 의 승인된 도메인 · 앱 홈 · 처리방침 링크가 새 도메인인지 본다(#770 B) |
-| 5 | **안 했다** | 2026-10-23 `db:remote` — Vault `reading_recovery_url` 의 호스트가 **옛 별칭**이다(호스트만 읽었다 — 비밀이 아닌 공개 주소). 지난 한 시간 복구기 부름 60번이 모두 200 — 옛 별칭이 200 이라 지금은 돈다 | 8 **전에** 아래 5 의 한 줄. 운영 SQL 이라 에이전트가 묻지 않고 수행하고 값을 적는다(2026-11-07 부터 — ADR 0093 「배포만 묻는다」)(`docs/agents/delegation/permissions.md` 「권한 등급」) |
-| 6 | **확인 전** | 저장소에서 못 잰다 — 결과가 웹훅으로 왔는지 복구기로 왔는지 DB 에 남지 않는다 | 운영자 — platform.openai.com → Settings → Webhooks 의 endpoint 호스트가 새 도메인인지 본다(#770 B). 옛 별칭이면 아래 6 |
+| 4 | 했다 | 2026-11-11 조율자가 운영자 지시로 고쳤다(`docs/ops/runbook/play-console.md` 「그 프로젝트의 Google 인증 플랫폼」). 2026-11-22 조율자가 브라우저로 다시 봤다 — Google 인증 플랫폼 → 브랜딩의 앱 홈 · 처리방침 · 약관 링크가 운영 주소이고 승인된 도메인에 운영 도메인이 있다 | — |
+| 5 | 했다 | 2026-11-22 20:05 KST `db:remote` — 아래 5 의 한 줄로 호스트를 옛 별칭에서 운영 도메인으로 바꿨다. 그 뒤 2분 동안 `net._http_response` 2번 모두 200 | — |
+| 6 | 했다 | 2026-11-22 조율자가 운영자 지시로 브라우저에서 봤다 — 프로젝트 Settings → Webhooks 의 endpoint 가 옛 별칭이었다. 「Edit webhook」으로 주소만 운영 도메인의 `/api/openai/webhook` 으로 고쳤다 — 같은 endpoint 라 서명 비밀이 그대로여서 Vercel 값 · 재배포가 없다 | 다음 풀이 하나가 끝날 때 Vercel 요청 기록에 운영 도메인의 `POST /api/openai/webhook` 200 — 조율자 |
 | 7 | 했다 | 2026-11-17 — Pub/Sub 푸시 구독 `play-billing-push` 의 끝점 · audience 를 새 도메인의 `/api/store/google-play` 로 만들었고, 그날 배포 뒤 Play Console 「테스트 알림 보내기」가 204 였다(`docs/ops/runbook/credits.md` 「Google Play 결제」의 「운영의 실제 값」, #770 그날의 배포 댓글, ADR 0230) | 도메인을 다시 옮기면 아래 표의 7 |
-| 8 | 안 했다 | 2026-10-23 `curl` — 옛 별칭 `/` 200 | 5 · 6 이 새 도메인으로 선 뒤 |
+| 8 | 안 했다 | 2026-10-23 `curl` — 옛 별칭 `/` 200 | 5 · 6 은 2026-11-22 에 새 도메인으로 섰다 — 6 의 도착을 본 뒤. 넘기면 옛 주소로 로그인해 있던 사람은 다시 로그인한다(아래 「모두가 한 번 다시 로그인한다」 — 알릴지는 운영자) |
 | 9 | 했다 | `deploy.md` 는 주소 대신 이 문서를 가리킨다(ADR 0152) | — |
 | 10 | 해당 없음 | 2026-10-23 `db:remote` — Vault `push_dispatch_url` 이 없다(웹 푸시는 G-71 보류) | 켜는 날 새 도메인으로 넣는다(`docs/ops/runbook/push.md`) |
 | 11 | 해당 없음 | 2026-10-23 — Vault `photo_sweep_url` 은 `20261229090000` 이 처음 쓰는 이름이고 사진 저장소가 꺼져 있다(G-120) | 켜는 날 새 도메인으로 넣는다(`docs/ops/runbook/photo-store.md` 「사진 저장소로 바꾼다」 6) |
