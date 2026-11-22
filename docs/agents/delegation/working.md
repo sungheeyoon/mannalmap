@@ -47,7 +47,7 @@
 
   ```bash
   git worktree add ../saju-<일> -b <가지> origin/main
-  cp -Rc node_modules ../saju-<일>/        # 링크로 족한 때는 local-env.md 「로컬 환경의 함정」
+  cp -Rc node_modules ../saju-<일>/        # 맥. WSL 은 cp -a --reflink=auto · 링크로 족한 때는 local-env.md 「로컬 환경의 함정」
   cd ../saju-<일> && npm run stack:slot -- --auto
   npm run db:start
   ```
