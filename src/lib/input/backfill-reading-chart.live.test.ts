@@ -18,7 +18,7 @@ import { storedChartOf, type StoredInput } from './stored';
  * 원격은 **세 값이 다 있어야** 간다(같은 파일의 규율을 그대로 쓴다).
  *
  *   BACKFILL_READING_CHART=1 BACKFILL_TARGET=remote \
- *   BACKFILL_CONFIRM_PROJECT_REF=<ref> npx vitest run src/lib/input/backfill-reading-chart.live.test.ts
+ *   BACKFILL_CONFIRM_PROJECT_REF=<ref> node scripts/remote-lock.mjs npx vitest run src/lib/input/backfill-reading-chart.live.test.ts
  *
  * ## 마이그레이션이 못 채운 나머지가 여기 온다
  *

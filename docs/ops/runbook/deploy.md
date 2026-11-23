@@ -20,9 +20,11 @@ Production 은 늘 빌드하고, 기준을 못 찾거나 git 이 실패하면 �
 마이그레이션은 따로 올린다.
 
 ```bash
-npx supabase migration list   # remote 칸이 빈 줄이 밀린 것이다 — 먼저 본다
-npm run db:push               # 밀린 것 전부를 원격에 적용한다 — 잠금 하나를 잡고 돈다(ADR 0096)
+node scripts/remote-lock.mjs npx supabase migration list --linked   # remote 칸이 빈 줄이 밀린 것이다 — 먼저 본다
+npm run db:push                                                     # 밀린 것 전부를 원격에 적용한다(ADR 0096)
 ```
+
+둘 다 기계 전체의 잠금 안에서 돈다 — 원격 DB 에 닿는 길은 `docs/agents/delegation/working.md` 「일하는 법」의 한 줄이 원본이다(읽기 전용 확인도 잠금을 거친다).
 
 **에이전트 워크트리에서는 `npm run db:push` 를 부르지 않는다** — 속의 `npx supabase` 가 새 CLI(3.x)를 받아 로컬을 대상으로 잡는다.
 메인의 CLI 를 잠금에 바로 준다: `node scripts/remote-lock.mjs <메인 체크아웃>/node_modules/.bin/supabase db push --linked --dry-run` 으로

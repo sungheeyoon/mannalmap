@@ -7,7 +7,7 @@
 - 프롬프트 본문 · 엔진 판본 파일을 고쳤으면 [무엇을 고쳤으면 무엇을 돌리나](../agents/test-map/what-to-run.md#무엇을-고쳤으면-무엇을-돌리나)의 그 줄을 돈다
 - 모델은 풀이 폴더의 `model.ts` 한 곳에서만 부른다([그 밖의 자리](../architecture.md#그-밖의-자리))
 - 프롬프트 실험은 보류다 — 모델의 버릇은 받는 쪽을 넓혀 푼다. 다시 열지는 운영자가 정한다([로드맵 §7.0](../product/prd/roadmap.md) · ADR 0139)
-- 실호출 · 백필(`READING_LIVE` · `BACKFILL_*`)은 명령을 「사람이 할 걸음」에 적어 넘긴다 — 실호출은 토큰이 나가고, 원격 백필은 출생정보를 읽어 운영 표에 쓴다([권한 등급](../agents/delegation/permissions.md))
+- 실호출 · 백필(`READING_LIVE` · `BACKFILL_*`)은 명령을 「사람이 할 걸음」에 적어 넘긴다 — 실호출은 토큰이 나가고, 원격 백필은 출생정보를 읽어 운영 표에 쓴다([권한 등급](../agents/delegation/permissions.md)). 원격 백필 명령은 잠금으로 감싼다([일하는 법](../agents/delegation/working.md#일하는-법--세션마다-다시-배우던-것))
 - 동의 밖 판정 이름(신강 · 용신 · 대운 …)을 풀이 본문에 들이는 변경은 결정이다([금지어](../agents/code-rules/banned-words.md#금지어))
 - 풀이 문장은 검증 수준보다 세게 말하지 않는다([강도 사다리](../text/claim-policy.md#강도-사다리))
 
