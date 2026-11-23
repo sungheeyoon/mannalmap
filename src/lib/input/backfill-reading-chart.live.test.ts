@@ -3,6 +3,7 @@ import { readFileSync } from 'node:fs';
 
 import { describe, expect, it } from 'vitest';
 
+import { BACKFILL_PURPOSE_PREFIX, jsonRowsOf, loggedSender } from '@/scripts/db-remote.mjs';
 import { loadLocalEnv, worktreeStack } from '@/src/lib/local-env';
 import { CHART_ENGINE_VERSION, chartSnapshotOf } from '@/src/lib/saju';
 
@@ -40,6 +41,12 @@ import { storedChartOf, type StoredInput } from './stored';
  * 결정인데 그 옆에 같은 문을 새로 열 수는 없다. `set_person_chart` 같은 영구 문을
  * 하나 더 만들지 않는 것이 요점이다 — 이 일은 한 번 돌고 끝난다.
  *
+ * ## 원격 SQL 은 접속기록을 거친다 (G-179 · ADR 0105)
+ *
+ * 원격 갈래의 읽기 · 쓰기는 `scripts/db-remote.mjs` 의 `loggedSender` 로 보낸다 — `npm run db:remote` 와 같은 길이다.
+ * **문장마다** 보내기 전에 목적(`PURPOSE`) · sha256 을 `audit.operator_access` 에 적고, 적지 못하면 그 문장을 안
+ * 보내고, 끝난 뒤 결과를 한 줄 더 적는다. 끝에 「보낸 문장 = 결과까지 적힌 문장」을 단언한다.
+ *
  * ## 원문도 비밀값도 기록에 안 남는다
  *
  * 찍는 것은 개수와 불투명 id 뿐이다. 생년월일시·출생지·부를 이름은 한 번도 안 찍고,
@@ -55,6 +62,15 @@ const CONFIRM = 'BACKFILL_CONFIRM_PROJECT_REF';
 
 /** 이름은 계산에 안 들어간다. 진짜 라벨을 읽지 않으려고 자리표를 쓴다 */
 const PLACEHOLDER = '(백필)';
+
+/**
+ * 접속기록의 목적 — 반출되는 말이라 이용자 자료를 싣지 않는다. 한 번 돌림의 문장이 다 이 목적을 든다.
+ * `backfill:` 로 연다 — runbook 「개인정보는 화면으로만」 표의 「기계 읽기(백필)」 갈래(운영자 결정)
+ */
+const PURPOSE = `${BACKFILL_PURPOSE_PREFIX} Match · Reading 여덟 글자를 엔진 판 ${CHART_ENGINE_VERSION} 으로 (backfill-reading-chart)`;
+
+/** 원격 갈래의 손 — 원격일 때만 만든다(로컬은 접속기록이 없다) */
+const remote = TARGET === 'remote' && on ? loggedSender({ purpose: PURPOSE }) : null;
 
 type Row = Record<string, string>;
 
@@ -76,15 +92,18 @@ const localSql = (statement: string): string =>
 const localRows = (statement: string): Row[] =>
   rowsOf(JSON.parse(localSql(`select coalesce(json_agg(src), '[]'::json) from (${statement}) src`)));
 
-const remoteSql = (statement: string): string =>
-  execFileSync(
-    'npx',
-    ['supabase', 'db', 'query', '--linked', '--output-format', 'json', statement],
-    { encoding: 'utf8' },
-  );
+/** 원격 — 문장마다 접속기록을 먼저 적는다(`loggedSender`, 머리 주석 「원격 SQL 은 접속기록을 거친다」) */
+const remoteSql = (statement: string): string => {
+  if (remote === null) throw new Error('원격 갈래가 아닌데 원격 SQL 을 보내려 했다.');
+  return remote.send(statement);
+};
 
-const remoteRows = (statement: string): Row[] =>
-  rowsOf((JSON.parse(remoteSql(statement)) as { rows?: unknown }).rows);
+/** 봉투(`{ rows }`)든 맨 배열이든 집는다 — 사람의 셸이면 맨 배열이 온다(`jsonRowsOf`). 못 집으면 0줄로 뭉개지 않는다 */
+const remoteRows = (statement: string): Row[] => {
+  const rows = jsonRowsOf(remoteSql(statement));
+  if (rows === null) throw new Error('원격 SQL 의 출력에서 줄을 못 읽었다.');
+  return rowsOf(rows);
+};
 
 const read = (statement: string): Row[] =>
   TARGET === 'remote' ? remoteRows(statement) : localRows(statement);
@@ -293,6 +312,9 @@ describe.skipIf(!on)('Match·Reading 여덟 글자 백필', () => {
       `   └ 채움         : ${readingsFilled}`,
       `최종 실패         : ${failed.length}`,
       ...failed.map((one) => `   ✗ ${one.id} — ${one.why}`),
+      ...(remote === null ? [] : [
+        `접속기록          : 보낸 문장 ${remote.tally.sent} · 결과까지 적힘 ${remote.tally.logged}`,
+      ]),
       '──────────────────────────────────────────────',
       '',
     ].join('\n'));
@@ -304,5 +326,11 @@ describe.skipIf(!on)('Match·Reading 여덟 글자 백필', () => {
     expect(failed).toEqual([]);
     expect(after.matchesEmpty).toBe(0);
     expect(after.readingsEmpty).toBe(0);
+
+    /* 원격이면 보낸 문장마다 목적 · 해시와 결과가 접속기록에 남았다(G-179) */
+    if (remote !== null) {
+      expect(remote.tally.sent).toBeGreaterThan(0);
+      expect(remote.tally.logged).toBe(remote.tally.sent);
+    }
   });
 });

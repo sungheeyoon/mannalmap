@@ -22,12 +22,13 @@ docker exec -i supabase_db_saju psql -U postgres -c "<문장>"   # 워크트리�
 ### 개인정보는 화면으로만 — 원격 SQL 의 경계 (ADR 0105)
 
 **이용자 개인정보(이메일 · 닉네임과 사람의 짝 · 메시지 본문 · 출생정보 · 풀이)를 읽는 것은 `/ops/**` 화면으로만 한다.**
-화면의 문은 읽을 때마다 접속기록(`audit.operator_access`)에 한 줄을 적는다. 이 절차서의 SQL 은 셋으로 갈린다.
+화면의 문은 읽을 때마다 접속기록(`audit.operator_access`)에 한 줄을 적는다. 이 절차서의 SQL 은 넷으로 갈린다.
 
 | 갈래 | 무엇 | 누가 · 어떻게 |
 | --- | --- | --- |
 | **보통** | 개인을 가리키지 않는 것 — 건수 · 집계 · 마이그레이션 상태 · 크론 · 설정 한 칸 | 사람이든 에이전트든 `npm run db:remote -- --purpose "<목적>" "<sql>"`. 목적과 SQL 의 sha256 이 접속기록에 남는다 |
 | **운영자만 — 검토 기록** | 신고 id 로 적는 검토 기록(`review_report` — 이용 정지를 고르면 그 계정도 함께 정지한다) | **운영자가** 화면에서 읽고 판단한 뒤 `npm run db:remote -- --purpose "<목적>" "<sql>"` 로 보낸다(ADR 0107). 에이전트는 보내지 않는다 — 판단을 받아 질의를 써서 건넨다 |
+| **운영자만 — 기계 읽기(백필)** | 엔진 판이 바뀐 뒤 출생정보를 SQL 로 읽어 여덟 글자를 다시 세는 원격 백필 두 시험(`src/lib/input/backfill-*.live.test.ts`) — 읽은 값을 사람에게 보이지 않고 계산에만 쓴다(찍는 것은 개수 · 불투명 id) | **운영자가** `node scripts/remote-lock.mjs npx vitest run <백필 파일>` 로 돌린다(ADR 0265). 문장마다 목적 · 해시 · 결과가 남고 목적은 **`backfill:`** 로 연다 — 시험이 확인한다. 에이전트는 돌리지 않는다. 같은 SQL 로 값을 사람이 보면 이 갈래가 아니라 break-glass 다 |
 | **break-glass** | 이메일 · 닉네임과 계정의 짝 · 메시지 본문 · 출생정보를 **SQL 로** 읽는 것 — 아래 「break-glass」 | **사람만.** 장애 · 수사기관의 적법한 요청처럼 화면으로 못 하는 때에만, 밖의 대장에 먼저 적고 |
 
 **에이전트는 운영 개인정보를 예외 없이 직접 조회하지 않는다**(`docs/agents/delegation/permissions.md` 등급 3). 필요하면 질의를 써서
@@ -47,7 +48,7 @@ docker exec -i supabase_db_saju psql -U postgres -c "<문장>"   # 워크트리�
    접속기록에 남아 대장과 이어진다. **대장과 접속기록은 따로 선다** — 보통 질의의 CLI 기록(목적 · SQL 해시 · 실행자 ·
    시각 · 성공/실패)은 「무엇을 보냈나」만 들고, 대장의 다섯 칸(대상 · 사유 · 결과 · 실행자 · 시각)은 「누구 것을 왜 봤고
    어디에 썼나」를 든다. break-glass 는 **둘 다** 있어야 한 건이다 — 접속기록만 있고 대장이 없으면 그것이 이상 신호다
-   (월 점검의 1 에서 `break-glass:` 목적의 줄을 대장과 맞춘다)
+   (월 점검의 1 에서 `break-glass:` 목적의 줄을 대장과 맞춘다. `backfill:` 목적의 줄은 대장이 없다 — 운영자가 백필을 돌린 날 · 실행자와 맞춘다, `docs/ops/runbook/security.md` 「월 점검」의 1-2)
 4. 결과를 저장소 · 이슈 · 채팅에 붙이지 않는다
 
 ### 접속값은 넣는 손이 하나다
@@ -82,7 +83,10 @@ docker exec -i supabase_db_saju psql -U postgres -c "<문장>"   # 워크트리�
   `npx supabase db query --linked`, 기계 전체에서 한 번에 하나, ADR 0096 · 0105). 목적 없이는 안 돈다. 출력을 스크립트가
   읽어야 하면 `--json` 을 붙인다 — 본 질의도 `--output-format json` 으로 받는다(봉투든 맨 배열이든, #431). 적는 함수(`audit.note_cli_query`)가
   원격에 없으면 SQL 을 안 보낸다 — 그 함수를 올리는 `db push` 앞의 확인만 `node scripts/remote-lock.mjs npx supabase db query --linked "<sql>"`
-  로 직접 보냈다(2026-09-24 한 번, 함수 정의의 md5). Management API 로 붙고
+  로 직접 보냈다(2026-09-24 한 번, 함수 정의의 md5). 원격 백필 두 시험(`src/lib/input/backfill-*.live.test.ts`)도 같은 길을 탄다 —
+  `db-remote.mjs` 의 `loggedSender` 가 **문장마다** 목적(파일마다 정해진 말) · 해시를 먼저 적고 결과를 한 줄 더 적으며, 시험이 끝에
+  「보낸 문장 수 = 결과까지 적힌 수」를 단언한다. 한 번 돌림의 줄은 같은 목적으로 묶어 찾는다 — 위 표의 「기계 읽기(백필)」이고 목적은 `backfill:` 로 연다.
+  Management API 로 붙고
   `postgres` 로 돌므로 비밀번호도 `psql` 도 필요 없다. 다만 `postgres` 라 「비운영자 당사자에게
   무엇이 보이나」는 못 잰다 — 역할별 조회는 대시보드 SQL Editor(마지막 문장의 결과만 준다 — 역할을
   바꿔 가며 잰 줄은 임시 표에 모아 끝에서 한 번에 낸다)나 `SUPABASE_SECRET_KEY` 가 필요하고, 익명
