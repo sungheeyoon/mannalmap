@@ -150,7 +150,7 @@ select (select count(*) from public.profile_photo) as photo_rows,
    `last_finished_at` 이 방금(그 시각의 33분 남짓)이고 `wake_status` 가 `succeeded` 다. 아니면 아래 「청소가 멈췄을 때 · 못 지운 줄이 쌓일 때」
 
 **되돌리기** — 5 뒤에 문제가 나면 스위치를 `paused` 로(올리기만 멈추고 열람은 그대로). `db` 로 돌리면 새 장이 다시 DB 에 산다 —
-이미 저장소에 사는 장은 저장소에서 계속 열린다. 저장소 값을 걷는 것은 아래 「끄는 길」이다.
+이미 저장소에 사는 장은 저장소에서 계속 열린다. 저장소 값을 지우는 것은 아래 「끄는 길」이다.
 
 **끄는 길 — 끄기 전에 지울 줄을 비운다.** 끄면 청소기도 멈춘다(「설정 안 됨」) — 그 사이 탈퇴 · 지운 장의 객체가 저장소에 남는다. 그래서
 ① 스위치를 `db` 나 `paused` 로, ② 아래 「청소가 멈췄을 때 · 못 지운 줄이 쌓일 때」의 1 에서 `waiting` 이 0 인지 보고(그 절 4 의 손
@@ -310,16 +310,16 @@ DB 의 열쇠 줄마다 두 벌의 머리(`HeadObject`)를 본다 — 있나 · 
 청소는 저장소를 훑지 않는다(ADR 0202 「고르지 않은 것」, `scripts/photo-verify.mjs` 는 열쇠 줄만 잰다).
 
 **파기가 객체를 지우는 길** — `forget_user` → `auth.users` 삭제 → `app_user` → `profile_photo` cascade → 트리거 `profile_photo_object_left` 가 열쇠를
-지울 줄에 넣는다 → 매시 33분 청소가 `card` · `large` 를 지우고 줄을 걷는다. 올리던 중이면 표(`photo_upload_ticket`, 계정 FK 없음)가 남아 있다가 한 시간 뒤 지울 줄로 간다.
+지울 줄에 넣는다 → 매시 33분 청소가 `card` · `large` 를 지우고 줄을 지운다. 올리던 중이면 표(`photo_upload_ticket`, 계정 FK 없음)가 남아 있다가 한 시간 뒤 지울 줄로 간다.
 
 **그래도 남을 수 있는 길:**
 
 | 길 | 왜 안 보이나 | 무엇으로 드러나나 |
 | --- | --- | --- |
-| 버킷의 버전 관리가 켜진 적이 있다 | `DeleteObjects` 가 지우개 표식만 세우고 성공을 답해 줄이 걷힌다. 이전 판이 남는다 — 처리방침의 「이전 판을 남기지 않아」가 틀린다 | `versioning` · `markers` · `versions` |
-| `PHOTO_STORE_BUCKET` 을 바꾼 적이 있다 | 새 버킷에 없는 객체를 지우는 것은 성공이라 줄이 걷힌다. 옛 버킷에 남는다 | 옛 버킷에 같은 점검을 돌린다 |
+| 버킷의 버전 관리가 켜진 적이 있다 | `DeleteObjects` 가 지우개 표식만 세우고 성공을 답해 줄이 지워진다. 이전 판이 남는다 — 처리방침의 「이전 판을 남기지 않아」가 틀린다 | `versioning` · `markers` · `versions` |
+| `PHOTO_STORE_BUCKET` 을 바꾼 적이 있다 | 새 버킷에 없는 객체를 지우는 것은 성공이라 줄이 지워진다. 옛 버킷에 남는다 | 옛 버킷에 같은 점검을 돌린다 |
 | 올리기가 두 벌 중 하나를 먼저 실패했다 | 다른 한 벌이 쓰는 중에 표를 지울 줄로 넘기고(`storePhoto` 의 `Promise.all`), 그 짧은 틈에 청소가 돌면 뒤늦은 쓰기가 장부 밖에 선다 | `objects` · `uploads` — 한 벌만 남은 고아는 `objects` 가 홀수일 수 있다 |
-| DB 를 앞 시점으로 되돌렸다 · 손으로 지울 줄을 걷었다 · 손으로 올렸다 | 어느 줄도 안 가리킨다 | `objects` · `other` |
+| DB 를 앞 시점으로 되돌렸다 · 손으로 지울 줄을 뺐다 · 손으로 올렸다 | 어느 줄도 안 가리킨다 | `objects` · `other` |
 
 늦어지는 길(처분 지연 · 청소 멈춤)은 잔류가 아니라 지연이고 지울 줄에 보인다 — 아래 「청소가 멈췄을 때 · 못 지운 줄이 쌓일 때」.
 
@@ -438,7 +438,7 @@ select (select count(*) from public.profile_photo where object_key is not null) 
    aws s3 rm "s3://<사진 버킷>/<열쇠>/large" --profile saju-photo-admin
    ```
 
-   지운 열쇠의 줄을 걷는다 — `select public.photo_trash_settle(array['<열쇠>', …], null, null);`(지운 것을 걷기만 한다 — 알림은 안 낸다).
+   지운 열쇠의 줄을 정리한다 — `select public.photo_trash_settle(array['<열쇠>', …], null, null);`(지운 것을 정리하기만 한다 — 알림은 안 낸다).
    목록은 `select object_key from public.photo_object_trash where queued_at < now() - interval '12 hours' order by queued_at;` — 이 질의도
    사람이 돈다. 기한을 넘긴 객체가 있었으면 그 수와 시각을 그날 노트(`docs/notes/`)에 계정 id 없이 적는다
 

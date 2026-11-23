@@ -1,13 +1,13 @@
 # 운영 절차 — 대화와 상세 궁합 (ADR 0215 · 0221, #962)
 
-색인은 `docs/ops/runbook.md` 다. 흐름은 하나다 — 옛 흐름(궁합 요청 때 예약 · 수락 · 거절)과 스위치는 걷혔다(ADR 0221). 정책은 PRD §6.6.
+색인은 `docs/ops/runbook.md` 다. 흐름은 하나다 — 옛 흐름(궁합 요청 때 예약 · 수락 · 거절)과 스위치는 없어졌다(ADR 0221). 정책은 PRD §6.6.
 
 ## 배포 순서
 
 **DB 먼저 → 웹 → 앱 새 빌드 · 스토어 심사다**(`docs/ops/runbook/deploy.md` 규약 넷의 2). 새 웹 · 앱은 옛 흐름 · 스위치를 지운 DB 의 문을 부른다.
 DB · 웹은 2026-11-04 에 나갔다(`bb26acd9`, #770). 앱에는 OTA 가 없다 — `mobile/` 에 `expo-updates` · `runtimeVersion` 이 없어(#932 「OTA 없음」) 앱이 바뀌는 길은 새 빌드 · 스토어 심사뿐이다. OTA 를 쓰려면 첫 스토어 빌드에 `expo-updates` 가 들어 있어야 하고, 둘지는 조율자가 따로 정한다.
 
-1. **DB** — `npx supabase migration list` 로 밀린 줄을 본다. 2026-11-04 에 운영에 안 오른 것은 넷이다 — `20270107090000` → `20270107100000` → `20270108154600` → `20270109090000`(옛 흐름 · 스위치를 걷는 판).
+1. **DB** — `npx supabase migration list` 로 밀린 줄을 본다. 2026-11-04 에 운영에 안 오른 것은 넷이다 — `20270107090000` → `20270107100000` → `20270108154600` → `20270109090000`(옛 흐름 · 스위치를 없애는 판).
    **올리기 전에 옛 궁합 요청을 센다** — 0 이어야 한다(개인을 가리키지 않는 집계).
 
    ```sql
@@ -21,7 +21,7 @@ DB · 웹은 2026-11-04 에 나갔다(`bb26acd9`, #770). 앱에는 OTA 가 없�
 
 **거꾸로면 닫힌다** — 새 코드가 옛 DB 를 만나면 없는 문 · 인자를 불러 `PGRST202` 로 실패한다. 줄 · 예약 · 돈은 안 움직이지만 그 창 동안 인연 요청 · 상세 궁합 제출이 안 된다.
 
-**임시 호환 셋** — 새 빌드 전에 깔린 앱이 대화를 열 수 있게 남긴다: `request_match` 의 `p_expected_kind`, `my_match_detail_state.detail_open`(늘 참), `match_talk_open()`(늘 참). **제거 조건은 같다** — 운영 웹이 `20270109090000` 뒤의 판으로 나가고, 옛 빌드가 다 사라진 것(스토어에 새 빌드가 서고 옛 빌드를 쓰는 계정이 없음)을 확인한 뒤 후속 마이그레이션으로 걷는다.
+**임시 호환 셋** — 새 빌드 전에 깔린 앱이 대화를 열 수 있게 남긴다: `request_match` 의 `p_expected_kind`, `my_match_detail_state.detail_open`(늘 참), `match_talk_open()`(늘 참). **제거 조건은 같다** — 운영 웹이 `20270109090000` 뒤의 판으로 나가고, 옛 빌드가 다 사라진 것(스토어에 새 빌드가 서고 옛 빌드를 쓰는 계정이 없음)을 확인한 뒤 후속 마이그레이션으로 지운다.
 
 **올린 뒤 확인** — 발행 키(로그인 없음)로 새 코드가 부르는 모양 그대로(인자까지) `request_match` 를 부른다: `PGRST202` 면 아직 안 올랐거나 스키마 캐시가 낡았고, `42501` 이면 문을 찾은 것이다. 끝나면 두 시험 계정으로 웹과 실기기에서 대화 · 첫 말 · 답 · 상세 요청 · 누름 · 완성 · 실패를 밟고 #770 에 줄을 더한다.
 
@@ -57,7 +57,7 @@ DB · 웹은 2026-11-04 에 나갔다(`bb26acd9`, #770). 앱에는 OTA 가 없�
 
 **끝난 대화의 신고:** `my_ended_talks()` → `match_id` · `partner_user_id` · `partner_nickname` · `closed_at`, `my_ended_talk_messages(p_match_id)` → `message_id` · `mine` · `body` · `created_at`. 자기 방 · 보존 90일 안 · 읽기 전용. 사진 · 소개 · 끝난 까닭이 없다. 신고는 지금 `report_user` · `report_chat_message` 다.
 
-**제출 문:** 인연 궁합은 늘 상세 궁합이라 제출이 종류를 묻지 않는다 — `reading_run_request_kind` 와 `match_run_awaiting_send.request_kind` 는 걷혔다. 보내기 직전 `prepare_reading_job` 은 범위 · 방 · 동의를 다시 재고, 끝났으면 `false` 와 함께 시도를 `consent-ended` 실패로 닫는다.
+**제출 문:** 인연 궁합은 늘 상세 궁합이라 제출이 종류를 묻지 않는다 — `reading_run_request_kind` 와 `match_run_awaiting_send.request_kind` 는 없어졌다. 보내기 직전 `prepare_reading_job` 은 범위 · 방 · 동의를 다시 재고, 끝났으면 `false` 와 함께 시도를 `consent-ended` 실패로 닫는다.
 
 **글자:** `my_match_scope.my_chart` · `partner_chart` 와 `my_readings` 의 일간은 null 이다 — 어느 흐름도 글자를 사용자에게 돌려주지 않는다(ADR 0221).
 
@@ -65,7 +65,7 @@ DB · 웹은 2026-11-04 에 나갔다(`bb26acd9`, #770). 앱에는 OTA 가 없�
 
 **거절 단추는 없다** — 답 전 대화에도 상세 요청에도. 대화의 `p_accept=false` 는 `22023` 이다. 상세의 `p_accept=false` 는 어느 화면에도 없는 직접 호출이고 `cancelled` 로 끝나 다시 청할 수 있다.
 
-**걷힌 것**(`20270109090000`): `match_talk_switch` 표 · `match_talk_is_open` · `match_is_on_the_old_way` · `match_request_ttl` · `reading_run_request_kind` · `match_run_awaiting_send.request_kind` · `MK001` · 상세의 「꺼짐」 `55000`.
+**지워진 것**(`20270109090000`): `match_talk_switch` 표 · `match_talk_is_open` · `match_is_on_the_old_way` · `match_request_ttl` · `reading_run_request_kind` · `match_run_awaiting_send.request_kind` · `MK001` · 상세의 「꺼짐」 `55000`.
 
 ## 상세 궁합 실호출
 

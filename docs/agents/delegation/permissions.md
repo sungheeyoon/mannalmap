@@ -15,7 +15,7 @@
 | --- | --- | --- | --- |
 | **0 읽는다** | 저장소 · 로컬 스택 · CI 로그 · 이슈를 읽는다. herdr 의 리뷰어 Codex 는 코드만 읽는다(`docs/agents/delegation/herdr.md` 「저장소 규약과 다른 자리」) | `git log` · `npm test` · `gh run view` · 로컬 DB 질의 | 없음 |
 | **1 로컬에서 고친다** | 작업 가지에서 고치고 시험을 돈다. 로컬 스택은 마음껏 되돌린다 | `npm run db:reset` · `npm run test:e2e:authed` | 없음 |
-| **1 로컬에서 고친다 — 묻지 않게 허용** | 머지 · 닫힌 PR 의 워크트리 · 로컬 가지를 걷는다. 기본은 미리보기, `--apply` 도 push 안 된 커밋 · 더러운 변경이 없는 것만 걷는다(`docs/agents/delegation/coordinator.md` 「라운드 끝 정리」) | `npm run sweep:merged` · `npm run sweep:merged -- --apply` | 허용 `Bash(npm run sweep:merged:*)` |
+| **1 로컬에서 고친다 — 묻지 않게 허용** | 머지 · 닫힌 PR 의 워크트리 · 로컬 가지를 지운다. 기본은 미리보기, `--apply` 도 push 안 된 커밋 · 더러운 변경이 없는 것만 지운다(`docs/agents/delegation/coordinator.md` 「라운드 끝 정리」) | `npm run sweep:merged` · `npm run sweep:merged -- --apply` | 허용 `Bash(npm run sweep:merged:*)` |
 | **1 로컬에서 고친다 — 지울 때마다 사람이 본다** | 로컬 스택 볼륨을 지운다 — 데이터를 영구히 없앤다. 기본은 진단, `--apply` 는 이름을 댄 볼륨 가운데 아무도 쥐지 않은 것만 | `npm run sweep:docker` · `npm run sweep:docker -- --apply <볼륨>` | 사람 — allow 에 넣지 않는다 |
 | **2 밖으로 낸다 — 되돌릴 수 있게** | 가지를 밀고 PR 을 열고 이슈에 적는다. `--auto` 머지는 일반 문서 PR 은 열자마자, 코드 PR 은 운영자 검토 뒤 — 바이패스 모드 세션은 결정 PR 의 독립 검토와 CI 초록 뒤. 「검증 · 배포의 문턱」 PR 과 마이그레이션 PR 의 예외는 `docs/agents/delegation/coordinator.md` 「출시 흐름」. main 에 직접 미는 길은 없다 | `git push -u origin <가지>` · `gh pr create` · `gh pr merge --auto --squash` | 없음 — 단 아래 등급 3 의 예외 |
 | **3 사람이 답한 뒤에 — 운영 배포** | **프로덕션 배포는 운영자가 「배포」라고 답한 뒤다** — 머지는 배포가 아니다(ADR 0110). 라운드 끝의 묶음 배포 한 번을 조율자가 밟는다(`docs/ops/runbook/deploy.md` 「묶음 배포」) | `vercel deploy --prod` · Create Deployment | 사람 — 도구는 `Bash(vercel --prod:*)` · `Bash(npx vercel --prod:*)` · `Bash(vercel deploy:*)` · `Bash(npx vercel deploy:*)` |
@@ -55,7 +55,7 @@ PR 에 적어 운영자에게 건네고, 묶음 배포 뒤에는 Vercel 의 Read
 이 목록을 견주고, 이 목록이 프로덕션 배포 넷을 들고 `deny` 와 겹치지 않는지 잰다.
 
 1. 아래 목록을 `.claude/settings.json` 의 `ask` 와 등급 3 의 잠금 칸에 옮긴다
-2. `.claude/settings.local.json` 의 넓은 `allow`(`Bash(vercel *)` 같은 것)를 걷는다 — 그것이 `ask` 를 이긴다
+2. `.claude/settings.local.json` 의 넓은 `allow`(`Bash(vercel *)` 같은 것)를 지운다 — 그것이 `ask` 를 이긴다
 3. `vercel deploy --help` 처럼 해 없는 명령으로 창이 뜨는지 잰다
 
 - `Bash(vercel --prod:*)`

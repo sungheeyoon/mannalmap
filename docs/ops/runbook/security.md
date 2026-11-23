@@ -140,7 +140,7 @@ G-25 ③ 이 운영자의 개인정보처리시스템 접속기록을 **1년 이
 **줄이 선 날** — 지난 기록을 읽을 때 그 전에는 없는 줄이다: 설문 문의 앱 거절 2026-10-01 · 주문 문의 앱 거절 2026-10-16 ·
 운영자 쓰기의 `refused` 2026-10-17(`20261219090000`) · 액션이 문을 부르기 전에 거른 `denied` 2026-10-18.
 
-**기록이 추가만 되는 것** — 모든 역할(소유자 `postgres` 포함)에서 `update` · `delete` · `truncate` 를 걷었고 트리거가 한
+**기록이 추가만 되는 것** — 모든 역할(소유자 `postgres` 포함)에서 `update` · `delete` · `truncate` 를 회수했고 트리거가 한
 번 더 막는다. 소유자는 트리거를 끌 수 있다 — DB 안에서는 그 이상 못 지키고, 그래서 **밖의 사본(Object Lock)이 지워지지
 않는 기록**이다. 월 점검의 「반출이 이어지는가」가 끊긴 자리를 드러낸다.
 
@@ -454,7 +454,7 @@ Cron 실행 기록과 환경변수를 본다. 처리 결과를 점검 기록에 
 
 - **PR 의 `audit` 차선** — 뿌리는 `npm audit --omit=dev --audit-level=high`, 앱은 `node scripts/audit-app.mjs`. **감사의 답을 바꾸는 파일**(뿌리 · `mobile/` 의
   `package.json` · `package-lock.json` 과 `mobile/audit-exceptions.json` — `scripts/ci-plan.mjs` 의 `DEPENDENCY_LISTS`)을 바꾼 PR 에서 머지를 막는다. 붉으면
-  그 PR 이 들인 high 이거나 그 PR 이 걷을 낡은 예외다.
+  그 PR 이 들인 high 이거나 그 PR 이 지울 낡은 예외다.
 - **하루 한 번의 바깥 검사** — `.github/workflows/outside.yml`(05:30 KST · 손 실행)이 같은 판정과 앱의 Maven 좌표 조회를 돌고, 알릴 것이 있으면 이슈 하나
   (`ci-outside-red`)에 적는다(`scripts/outside-red.mjs`). **main 은 붉지 않고 새 작업 · 묶음 배포를 막지 않는다** — 코드가 그대로인데 바깥(새 advisory · 철회 ·
   저장소의 429)이 바뀌어 main 이 붉던 것을 뺐다(#1165 · #1170). 그 이슈의 「붉음」은 아래 1 ~ 4, 「걷어도 된다」는 5 다. Maven 좌표를 하나도 못 찾았거나 답을 하나도 못 받았으면 맑은 것이 아니라 「붉음」이다. 판정이 같으면(바깥의 오류 문구만 달라도) 댓글을 더 안 달고, 맑으면 닫힌다.
@@ -482,11 +482,11 @@ npm audit --omit=dev --audit-level=high ; echo $?   # 0 이어야 한다
    판정이면 그 이슈에 날마다 댓글이 쌓이지 않는다. 그 패키지를 바꾸는 PR 은 `audit` 에 막히니 같은 메이저 안에서 고친 판을 먼저 찾는다.
    `--audit-level` 을 critical 로 올리거나 차선을 끄지 않는다.
 5. **앱(`mobile/`)은 `node scripts/audit-app.mjs` 가 같은 문턱으로 잰다.** 앱 번들에 안 실리는 빌드 도구의 high 이고 같은 메이저에 고친 판이 없을 때만
-   운영자에게 물어 `mobile/audit-exceptions.json` 에 한 줄(GHSA id · 패키지 · 사유 · 걷을 조건 · 결정)을 더한다. 감사에 더는 안 나오는 줄은 「낡은 예외」다 —
-   바깥 검사의 이슈에 「걷어도 된다」로 적히고(붉음이 아니다), 의존성 목록을 바꾼 PR 의 `audit` 에서는 붉다. 묻지 않고 걷는다 — 고친 판이 들었거나 의존성이
+   운영자에게 물어 `mobile/audit-exceptions.json` 에 한 줄(GHSA id · 패키지 · 사유 · 지울 조건 · 결정)을 더한다. 감사에 더는 안 나오는 줄은 「낡은 예외」다 —
+   바깥 검사의 이슈에 「걷어도 된다」로 적히고(붉음이 아니다), 의존성 목록을 바꾼 PR 의 `audit` 에서는 붉다. 묻지 않고 지운다 — 고친 판이 들었거나 의존성이
    바뀌었거나 advisory 가 철회된 것이다. 철회는 `gh api /advisories/<GHSA id>` 의 `withdrawn_at` 이 적는다(2026-11-19 — picomatch 예외 `GHSA-fc5q-39xc-vjpf` 가
    머지 1시간 27분 뒤 철회로 낡았다, #1170). 예외 파일만 바꾼 PR 도 `audit` 이 돈다 — 그 파일이 감사의 답을 바꾸는 목록에 든다(2026-11-19, ADR 0257. 그 전에는
-   `full-ci` 라벨을 달아야 돌았다). Expo SDK 를 올리는 PR 은 예외를 다 걷고 다시 잰다(ADR 0104 추기 2026-11-06).
+   `full-ci` 라벨을 달아야 돌았다). Expo SDK 를 올리는 PR 은 예외를 다 지우고 다시 잰다(ADR 0104 추기 2026-11-06).
 
 **개발 의존성은 CI 가 안 막는다** — 운영에 안 실린다(G-23 ⑫). Dependabot 경고와 `npm audit`(전체)로 보고 위와 같은 절차로 손으로 정리한다. 2026-11-18 에 선
 것은 뿌리의 `vite` high `GHSA-587h-7wmj-h5pm`(vitest 를 거쳐 든다) 같은 개발 의존성 경고다 — 바깥 검사의 이슈에는 안 선다.
