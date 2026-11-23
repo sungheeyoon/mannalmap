@@ -99,7 +99,7 @@ returns integer language sql immutable set search_path = '' as $$ select 1 $$;
      r record;
      after integer;
    begin
-     -- 회수면 'revoke', 3 → 걷을 수, 갈래 'mistake' · 'duplicate' · 'other', 관련 신고 인자는 null
+     -- 회수면 'revoke', 3 → 회수할 수, 갈래 'mistake' · 'duplicate' · 'other', 관련 신고 인자는 null
      select * into r from public.book_reading_credit_grant(
        '<운영자 UUID>', who, 'grant', 3, 'outage', '<메모 — break-glass 대장 번호>', '<2 의 요청 번호>', null);
      after := coalesce((select g.extra from public.reading_credit_grant g where g.user_id = who), 0);
@@ -130,10 +130,10 @@ npm run db:remote -- --purpose "무상 지급 장부와 예외 몫의 대조" \
 
 ### 산 풀이권 — 주문 · 묶음 · 쓰임 · 환불 (G-21 ⑤ ④, ADR 0106)
 
-**PG 는 하지 않는다 — 판매는 스토어 인앱결제이고 산 몫은 만료되지 않는다(ADR 0212).** PortOne 결제창 · 결제 알림 · 취소 조회 코드는 걷었다(ADR 0212 추기). 장부 · 환불 세 걸음은 제공자에 중립이라 그대로 쓰고, 이 절의 「결제한 곳의 콘솔」은 **Play Console → Order management** 다(Google Play 결제, ADR 0230 — 아래 「Google Play 결제」). 산 몫에 유효기간이 없다는 것은 `notice-v17` 의 약관 제12조②(2026-11-07 게시)가 든다.
+**PG 는 하지 않는다 — 판매는 스토어 인앱결제이고 산 몫은 만료되지 않는다(ADR 0212).** PortOne 결제창 · 결제 알림 · 취소 조회 코드는 지웠다(ADR 0212 추기). 장부 · 환불 세 걸음은 제공자에 중립이라 그대로 쓰고, 이 절의 「결제한 곳의 콘솔」은 **Play Console → Order management** 다(Google Play 결제, ADR 0230 — 아래 「Google Play 결제」). 산 몫에 유효기간이 없다는 것은 `notice-v17` 의 약관 제12조②(2026-11-07 게시)가 든다.
 
 **판매는 닫혀 있다**(`reading_sale_is_open()` = false) — 주문이 0건이다. 장부만 먼저 섰다. 잔액은 여전히 센다 — 한도가
-`무료 + 예외 + Σ(묶음의 산 수 − 걷은 수)` 로 한 칸 늘었을 뿐이고, 쓰임 장부(`reading_credit_use`)는 **환불 셈의 입력**이다.
+`무료 + 예외 + Σ(묶음의 산 수 − 회수한 수)` 로 한 칸 늘었을 뿐이고, 쓰임 장부(`reading_credit_use`)는 **환불 셈의 입력**이다.
 쓴 순서는 무료 → 예외 → 산 때가 이른 묶음이고, 자리를 잡는 순간 트리거가 정한다. 이 순서는 몫의 출처 순이다(G-111 R-9,
 ADR 0191 — 운영 판단). 몫에는 유효기간이 없다 — 산 몫(ADR 0212)도 무료 · 예외 몫(ADR 0235)도. 그래서 소멸일 순 · 「유효기간 임박」
 안내(옛 ADR 0173 의 5년 · 1년 위에서 정했던 것)는 할 일이 아니다. 탈퇴하면 무료 · 예외 몫이 소멸하는 것은 그대로다. 지운 대상의 시도가 셈에서 빠져
@@ -147,9 +147,9 @@ ADR 0191 — 운영 판단). 몫에는 유효기간이 없다 — 산 몫(ADR 02
 npm run db:remote -- --purpose "풀이권 주문 상태별 집계" \
   "select status, count(*) as 주문, sum(amount) as 금액, sum(refunded_amount) as 환불, (select count(*) from public.store_purchase s join public.reading_order t on t.id = s.order_id where (s.is_test or s.is_promo) and t.status = o.status) as 시험_프로모션_뺌 from public.reading_order o where not exists (select 1 from public.store_purchase s where s.order_id = o.id and (s.is_test or s.is_promo)) group by status order by status"
 
-# 묶음 전체의 산 수 · 걷은 수 · 쓴 수 · 예약 중 수
+# 묶음 전체의 산 수 · 회수한 수 · 쓴 수 · 예약 중 수
 npm run db:remote -- --purpose "풀이권 묶음 쓰임 집계" \
-  "select sum(b.credits) as 산것, sum(b.refunded_credits) as 걷은것, count(u.id) filter (where u.state = 'confirmed') as 쓴것, count(u.id) filter (where u.state = 'reserved') as 예약중 from public.reading_bundle b left join public.reading_credit_use u on u.bundle_id = b.id"
+  "select sum(b.credits) as 산것, sum(b.refunded_credits) as 회수한것, count(u.id) filter (where u.state = 'confirmed') as 쓴것, count(u.id) filter (where u.state = 'reserved') as 예약중 from public.reading_bundle b left join public.reading_credit_use u on u.bundle_id = b.id"
 
 # 몫별 쓰임 — 무료 · 예외 · 묶음 · 몫 밖 × 예약 · 확정 · 풀림
 npm run db:remote -- --purpose "풀이권 몫별 쓰임 집계" \
@@ -164,9 +164,9 @@ npm run db:remote -- --purpose "풀이권 장부와 셈의 대조" \
 0 이 아니면 트리거가 빠진 자리가 있다 — 계정을 찾지 말고(개인정보) 같은 질의를 `share` · `source` 별로 쪼개 어느 길인지 본다.
 
 **환불 — 주문 화면 `/ops/orders` (G-110 ②, ADR 0184).** 운영 머리의 「주문」에서 주문 번호(`rdo_…`)로 찾는다. 금액의 기준은
-**결제액 × 걷을 안 쓴 유료 회차 ÷ 그 묶음의 산 회차**다(ADR 0148 · 약관 초안 제16조②). **청약철회 기간(약관 제15조① — 계약내용을 받은
+**결제액 × 환불할 안 쓴 유료 회차 ÷ 그 묶음의 산 회차**다(ADR 0148 · 약관 초안 제16조②). **청약철회 기간(약관 제15조① — 계약내용을 받은
 날부터 7일)이 지난 뒤의 단순 변심 환불은 그 금액에서 10% 를 환불수수료로 공제한다**(제16조③, ADR 0192). 같은 묶음을 나눠 돌려주면 누적으로 셈한다 —
-`⌊결제액 × 지금까지 걷은 회차 합 ÷ 산 회차⌋ − ⌊결제액 × 환불수수료를 공제한 회차 합 ÷ (산 회차 × 10)⌋` 에서 이미 돌려준 금액을 뺀다.
+`⌊결제액 × 지금까지 환불한 회차 합 ÷ 산 회차⌋ − ⌊결제액 × 환불수수료를 공제한 회차 합 ÷ (산 회차 × 10)⌋` 에서 이미 돌려준 금액을 뺀다.
 **DB 가 이 셈을 한다** — 사람이 셈하지 않는다.
 
 **사유가 환불수수료를 가른다 — 청약철회 기간(7일)은 사람이 본다.** DB 는 날짜를 세지 않는다(기점인 계약내용 전자우편이 아직 없다, G-21).
@@ -196,7 +196,7 @@ npm run db:remote -- --purpose "환불수수료 셈 전 진행 중인 unused 확
 
 세 걸음이다.
 
-1. **준비** — 걷을 회차 · 사유를 고르고 「환불 준비」 → 확인창의 대상(주문 번호 · 닉네임 · 계정 앞자리) · 회차 · 금액을 보고 「N장 · …원 환불 준비」. 창에 보인 금액이 지금 셈과 다르면 DB 가 거절한다. 그 회차가 잠겨 이용자가 못 쓰고(한도에서 빠진다), 금액이 정해져 「환불 진행
+1. **준비** — 환불할 회차 · 사유를 고르고 「환불 준비」 → 확인창의 대상(주문 번호 · 닉네임 · 계정 앞자리) · 회차 · 금액을 보고 「N장 · …원 환불 준비」. 창에 보인 금액이 지금 셈과 다르면 DB 가 거절한다. 그 회차가 잠겨 이용자가 못 쓰고(한도에서 빠진다), 금액이 정해져 「환불 진행
    중」 판이 선다(`operator_hold_reading_refund`, 접속기록 `credits.refund_hold`). 주문 하나에 진행 중인 것은 하나다
 2. **결제한 곳의 콘솔에서 그 판의 「취소할 금액」을 취소한다** — 판의 결제 번호 · 거래 번호로 결제를 찾는다. 화면은 결제 취소를 부르지 않는다
 3. **확정** — 콘솔이 준 취소 번호를 적고 「장부에 확정」(`operator_book_reading_refund`, `credits.refund_book`). 같은 번호로 다시 눌러도
@@ -244,7 +244,7 @@ commit;
 떠난 사람의 결제는 `booked_refund` 에 떠난 뒤의 환불 합(`retention.reading_refund_after_leave`)도 더해야 한다 — 화면의 판이 그 합을 쓴다.
 
 화면이 못 하는 것 둘만 아래 SQL 차례로 한다 — **쓴 회차까지 돌려주는 경우**(생성 실패 · 계약과 다른 제공, `failure`)와 **금액이 산식과
-다른 경우**(중복결제 일부 등). 이 길도 진행 중인 환불이 잠근 회차는 걷지 못한다. 정상 제공한 회차는 단순 변심으로 돌려주지 않는다.
+다른 경우**(중복결제 일부 등). 이 길도 진행 중인 환불이 잠근 회차는 회수하지 못한다. 정상 제공한 회차는 단순 변심으로 돌려주지 않는다.
 SQL 차례의 금액은 사람이 넣는다 — 이 길로 `unused` 를 적으면 그 회차가 다음 화면 셈의 공제 회차에 들므로, 금액도 위 식(환불수수료를 공제한
 누적)으로 셈해 넣는다. 공제가 없는 경우는 `unused` 로 적지 않는다.
 
@@ -253,29 +253,29 @@ SQL 차례의 금액은 사람이 넣는다 — 이 길로 `unused` 를 적으�
 1. 요청을 받는다 — 주문 번호(`rdo_…`)나 결제한 곳의 거래 번호로 주문을 가리키게 한다. 이메일로 주문을 찾지 않는다. 그 계정이 산 회차 ·
    쓴 회차는 `/ops/members` 에서 닉네임이나 계정 id 로 본다(ADR 0185)
 2. **환불 셈의 입력을 읽는다** — `operator_reading_refund_basis(<주문 id>)` 가 그 계정의 주문 전부를 묶음별로 낸다(산 수 ·
-   걷은 수 · 쓴 수 · 예약 중 수 · 안 쓴 수 · 결제 금액 · 환불한 금액 · 결제 시각). 운영자만 부르고 읽을 때마다 접속기록에
+   회수한 수 · 쓴 수 · 예약 중 수 · 안 쓴 수 · 결제 금액 · 환불한 금액 · 결제 시각). 운영자만 부르고 읽을 때마다 접속기록에
    남는다. 같은 값을 `/ops/orders` 가 보인다
 3. **예약 중인 몫은 풀릴 때까지 기다린다** — 안 쓴 것이 아니다(G-21 ③). 무료 · 예외 · 몫 밖은 어떤 경우에도 돌려주지 않는다
 4. **결제한 곳의 콘솔에서 먼저 환불한다** — 돈이 나간 뒤에 적는다. 적은 뒤 결제한 곳이 거절하면 장부가 거짓말을 한다
 5. **사람이 적는다** — 주문 하나를 가리키는 쓰기라 break-glass 대장에 먼저 적고, `refund_reading_order` 를 서버 열쇠
    (`service_role`) 나 운영 SQL(`postgres`)로 부른다. 사유는 분류 하나(`withdrawal` 청약철회 · `unused` 안 쓴 몫 ·
    `duplicate` 중복결제 · `failure` 미제공 · `other`)이고 자유 글을 받지 않는다. 같은 환불 번호로 두 번 불러도 한 번만 적힌다.
-   안 쓴 것보다 많이 걷으려 하면 거절된다
+   안 쓴 것보다 많이 회수하려 하면 거절된다
 
 **실행 전 확인** — 영향받는 주문 · 회원(계정 앞 8자) · 금액을 먼저 select 로 보고, 트랜잭션 안에서 부른 뒤 결과를 select 로 본다.
 맞으면 commit, 아니면 rollback. 사유는 분류 하나로 남고 실행자는 break-glass 대장과 환불 번호로 잇는다 — 이 함수는 실행자 칸이 없다.
 
 ```sql
 -- 실행 전 확인 — 대상 주문 · 회원 · 금액 · 진행 중인 확보(있으면 이 환불은 거절된다)
--- 걷은 회차는 둘로 본다 — 돈을 돌려주고 걷은 것(금액 셈의 입력)과 다른 결제의 스토어 환불이 돈 없이 걷어 간 것(ADR 0230 추기 A)
+-- 회수한 회차는 둘로 본다 — 돈을 돌려주고 회수한 것(금액 셈의 입력)과 다른 결제의 스토어 환불이 돈 없이 회수해 간 것(ADR 0230 추기 A)
 select o.provider_order_id, left(o.user_id::text, 8) as owner_ref, o.status, o.amount, o.refunded_amount,
-       b.credits, b.refunded_credits - public.reading_bundle_taken_by_store(b.id) as 돈으로_걷은, public.reading_bundle_taken_by_store(b.id) as 스토어_환불로_걷힘,
+       b.credits, b.refunded_credits - public.reading_bundle_taken_by_store(b.id) as 환불로_회수, public.reading_bundle_taken_by_store(b.id) as 스토어_환불_회수,
        exists (select 1 from public.reading_refund_hold h where h.order_id = o.id and h.state = 'held') as hold_open
 from public.reading_order o join public.reading_bundle b on b.order_id = o.id
 where o.id = '<order-id>';
 
 begin;
--- break-glass 대장 번호를 목적에 — 금액(원) · 걷을 회차 · 사유 · 환불 번호
+-- break-glass 대장 번호를 목적에 — 금액(원) · 환불할 회차 · 사유 · 환불 번호
 select public.refund_reading_order('<order-id>', <amount>, <credits>, 'unused', '<pg-refund-id>');
 -- 결과 확인 — refunded_amount 가 <amount> 만큼, refunded_credits 가 <credits> 만큼 늘었으면 commit, 아니면 rollback
 select o.status, o.refunded_amount, b.refunded_credits
@@ -293,7 +293,7 @@ commit;
 `retention.purge_expired_payments()` 가 두 표에서 `keep_until`(앞은 마지막 승인 · 환불, 뒤는 마지막 거절 알림 + 5년)이 지난 줄을
 함께 지운다. **탈퇴 뒤에 확정한 환불**(진행 중인 확보가 탈퇴를 넘어 남았던 것)은 고칠 수 없는 `retention.reading_payment` 대신
 `retention.reading_refund_after_leave` 에 한 줄로 남고(확보 번호 · 주문 · 계정 내부 번호 · 가맹점 주문 번호 · 금액 · 회차 · 사유 · 취소
-번호, ADR 0184), 같은 크론이 환불 + 5년 뒤 지운다. 탈퇴 뒤 닫힌 확보 줄도 그 크론이 걷는다. 분쟁이나 수사기관의 요청이 걸리면 보류를 건다 — 신고 기록의 보류(`docs/ops/runbook/erasure.md` 「떠난 사람의 신고 기록」)와 같은 모양이다.
+번호, ADR 0184), 같은 크론이 환불 + 5년 뒤 지운다. 탈퇴 뒤 닫힌 확보 줄도 그 크론이 지운다. 분쟁이나 수사기관의 요청이 걸리면 보류를 건다 — 신고 기록의 보류(`docs/ops/runbook/erasure.md` 「떠난 사람의 신고 기록」)와 같은 모양이다.
 
 ```sql
 -- 몇 줄 · 가장 이른 파기 예정 — 개인을 가리키지 않는다
@@ -358,7 +358,7 @@ update retention.reading_payment set hold_reason = null, held_at = null where or
    (`service-<프로젝트 번호>@gcp-sa-pubsub.iam.gserviceaccount.com`)에 그 서비스 계정의 **Service Account Token Creator** 를 준다. Play Console → Monetize with Play → Monetization setup →
    Real-time developer notifications 에 주제 `projects/<프로젝트 id>/topics/play-billing`, 받을 것은 **「Get all notifications for subscriptions and one-time products」**(팔렸다 통지까지 —
    「… and all voided purchases」 만 고르면 결제 중 앱이 꺼진 구매를 통지로 못 줍는다). audience · 서비스 계정 이메일을 Vercel 의 둘에 — **운영자**
-5. **`db push` — 했다(2026-11-07).** `20270113090000` · `20270114090000`(걷는 장수 · 시험 · 프로모션 구매) · `20270114100000`(구매 제한 기록 1년 — `notice-v17` 게시 02:37 KST 뒤 02:55, ADR 0098)이
+5. **`db push` — 했다(2026-11-07).** `20270113090000` · `20270114090000`(회수하는 장수 · 시험 · 프로모션 구매) · `20270114100000`(구매 제한 기록 1년 — `notice-v17` 게시 02:37 KST 뒤 02:55, ADR 0098)이
    모두 운영 DB 에 있다. 그날은 `npm run db:remote -- --purpose "스토어 구매 표 확인" "select count(*) from public.store_purchase"` 가 0 인지만 본다
 6. **배포** — 「배포」 답 뒤(`deploy.md`). 그 뒤 Monetization setup 의 **Send test message** → Vercel 로그에 `play notification: refused` · `not configured` 가 없다(문은 204).
    다시 소비 크론은 나눠 들어간다 — **DB PR 머지 승인 → `20270119090000` 의 `db push` · 확인 → DB PR 머지(squash) → 코드 PR 을 main 으로 update-branch 하고 CI 초록을 다시 본다
@@ -374,7 +374,7 @@ update retention.reading_payment set hold_reason = null, held_at = null where or
 - **서비스 계정 셋**: `eas-submit@…`(EAS 제출 — 2026-11-18, `play-console.md` 「EAS 제출 잇기」, 재무 권한 없음) · `play-billing@…`(결제 검증 — Play Console 사용자로 초대, 이 앱에 앱 정보 보기 · 재무 데이터 보기 · 주문 및 구독 관리) · `play-rtdn-push@…`(푸시 인증만, 키 없음, Pub/Sub 서비스 에이전트에 Token Creator)
 - **Pub/Sub**: 주제 `play-billing`(Publisher = `google-play-developer-notifications@system.gserviceaccount.com`) · 푸시 구독 `play-billing-push` — 끝점과 audience 모두 `https://<도메인>/api/store/google-play`(도메인은 `domain.md` 맨 위의 운영 주소 — www 붙은 쪽은 308 이라 쓰지 않는다, 같은 문서 표 7). Play Console RTDN 은 켰고 주제 `projects/project-274ffaa2-8d30-41bc-b32/topics/play-billing`, 「정기 결제, 무효화된 구매, 모든 일회성 제품」 구독은 **만료 없음** · **확인된 메시지 7일 보관**이다(2026-11-22 — 기본값 「31일 동안 활동이 없으면 만료」는 판매가 뜸할 때 구독을 지워 통지를 끊는다. 보관은 같은 통지를 다시 보내는 확인 3 · 「메시지 재생」용)
 - **Vercel Production 세 값**: 위 표대로 넣었다(`GOOGLE_PLAY_SERVICE_ACCOUNT_JSON` 은 sensitive) — 값을 바꾸면 다시 배포해야 읽힌다
-- **키를 다시 만들 때 — 조직 정책이 막는다.** 프로젝트가 조직(`68743236293`, 운영자 계정이 조직 관리자) 아래라 새 조직의 기본 정책 `iam.disableServiceAccountKeyCreation` 이 키 만들기를 막는다. 그날은 운영자 결정으로 **이 프로젝트에서만 잠깐 풀고 → 키 하나 → 되돌렸다**: 운영자 계정에 `roles/orgpolicy.policyAdmin` 을 조직에서 주고 → 프로젝트에 `enforce: false` 재정의 → 몇 분 뒤 Cloud 콘솔 IAM → 서비스 계정 → `play-billing` → 키 → 키 추가 → JSON(Cloud Shell 의 `cloudshell download` 는 에이전트 브라우저에서 파일이 안 받아졌다) → `gcloud org-policies delete iam.disableServiceAccountKeyCreation --project=<프로젝트 id>`(번호가 아니라 id) → 역할을 걷는다. 지금 살아 있는 키는 하나(`605ebe06…`), 키 파일 사본은 남기지 않았다. 새면 `secret-leak.md` 의 줄, 그때 같은 차례로 새 키를 만들고 옛 키를 지운다
+- **키를 다시 만들 때 — 조직 정책이 막는다.** 프로젝트가 조직(`68743236293`, 운영자 계정이 조직 관리자) 아래라 새 조직의 기본 정책 `iam.disableServiceAccountKeyCreation` 이 키 만들기를 막는다. 그날은 운영자 결정으로 **이 프로젝트에서만 잠깐 풀고 → 키 하나 → 되돌렸다**: 운영자 계정에 `roles/orgpolicy.policyAdmin` 을 조직에서 주고 → 프로젝트에 `enforce: false` 재정의 → 몇 분 뒤 Cloud 콘솔 IAM → 서비스 계정 → `play-billing` → 키 → 키 추가 → JSON(Cloud Shell 의 `cloudshell download` 는 에이전트 브라우저에서 파일이 안 받아졌다) → `gcloud org-policies delete iam.disableServiceAccountKeyCreation --project=<프로젝트 id>`(번호가 아니라 id) → 역할을 회수한다. 지금 살아 있는 키는 하나(`605ebe06…`), 키 파일 사본은 남기지 않았다. 새면 `secret-leak.md` 의 줄, 그때 같은 차례로 새 키를 만들고 옛 키를 지운다
 
 **샌드박스 확인 — 그날 밟고 값을 #937 에 적는다**(#937 「끝났다고 말할 조건」). 장부는 개인을 안 가리키는 질의로 본다(아래).
 
@@ -383,8 +383,8 @@ update retention.reading_payment set hold_reason = null, held_at = null where or
 | 1 | 테스터 계정으로 3장을 산다 | 화면에 「결제가 완료됐어요 · 풀이권 3장이 추가됐어요.」, 보유 수 +3, `store_purchase` 1줄 · `consumed_at` 이 선다, Play Console 주문이 소비됨(3일 안 승인 — 소비가 승인을 겸한다) |
 | 2 | 결제창에서 결제한 직후 앱을 강제 종료 → 다시 연다 | 지급이 한 번만 선다(통지가 먼저 세웠으면 화면은 조용하고 보유 수만 늘었다) |
 | 3 | 같은 통지를 다시 보낸다 — Play Console 주문 세부정보의 「구매 토큰 복사」 → Cloud 콘솔 주제 `play-billing` 의 「메시지 게시」에 그 토큰의 `oneTimeProductNotification`(`notificationType` 1 · `sku`) 본문, 또는 구독의 「메시지 재생」(확인된 메시지 7일 보관) | `store_purchase` · 주문이 늘지 않는다, 답이 재시도 |
-| 4 | 안 쓴 구매를 Play Console 에서 **전액 환불** — 주문 환불 화면의 「이용 자격 취소」에서 「자격 삭제」를 켠다(아래 운영자 환불 2) | 통지 뒤 그 묶음의 장수가 모두 걷힌다, 환불 줄 사유 `store`, `store_purchase_void` 1줄 |
-| 5 | 3장 중 1장을 쓰고 전액 환불 | 2장만 걷히고 쓴 1장은 그대로, 보유 수가 음수가 아니다. 다른 묶음을 함께 가진 계정이면 모자란 1장이 늦게 산 묶음에서 걷히고, 산 몫이 없으면 2장에서 멈춘다(바닥 0) |
+| 4 | 안 쓴 구매를 Play Console 에서 **전액 환불** — 주문 환불 화면의 「이용 자격 취소」에서 「자격 삭제」를 켠다(아래 운영자 환불 2) | 통지 뒤 그 묶음의 장수가 모두 회수된다, 환불 줄 사유 `store`, `store_purchase_void` 1줄 |
+| 5 | 3장 중 1장을 쓰고 전액 환불 | 2장만 회수되고 쓴 1장은 그대로, 보유 수가 음수가 아니다. 다른 묶음을 함께 가진 계정이면 모자란 1장이 늦게 산 묶음에서 회수되고, 산 몫이 없으면 2장에서 멈춘다(바닥 0) |
 | 6 | 산 계정을 탈퇴시킨 뒤 전액 환불 — **처분이 끝난 뒤에** 환불한다. `departed` 는 결제가 보관(`retention.reading_payment`)으로 옮겨진 뒤에만 나온다(`supabase/migrations/20270114090000_a_store_refund_takes_back_what_the_payment_gave.sql`) — 크론 `account-disposal` 이 탈퇴 신청 하루 뒤의 매시 23분에 처분한다. 그 전에 환불하면 아직 회원의 결제라 4 · 5 처럼 회수된다 | 무효 결과 `departed`, `retention.reading_refund_after_leave` 에 사유 `store` 1줄 |
 | 7 | 지급이 안 선 구매(서버 키를 비운 Preview 등)를 소비하지 않은 채 둔다 | 3일 뒤 Google 이 돌려주고 무효가 4 처럼 적힌다 — 날짜가 걸려 따로 적는다 |
 | 8 | 구매 제한을 건 계정으로 결제를 시도 | 앱에 「지금은 풀이권을 구매할 수 없어요.」, 결제창이 안 열린다 |
@@ -398,18 +398,18 @@ update retention.reading_payment set hold_reason = null, held_at = null where or
    **전액 환불이면 「이용 자격 취소」의 「자격 삭제」를 켠다** — 기본은 꺼져 있고, 끈 채 환불하면 Google 이 그 구매를 무효로 치지 않아 통지도 아침 대조(`store-voided`)도
    그 건을 못 본다(「If a developer refunds a purchase without setting the revoke option, the order will not be returned by the API」 — <https://developers.google.com/android-publisher/voided-purchases>).
    **일부 환불이면 켜지 않는다** — 켜면 Google 이 그 구매 전체를 무효로 쳐서(`orders.refund` 의 `revoke`: 「access to the subscription or in-app item will be terminated immediately」)
-   장부가 그 결제가 준 장수를 다 걷는다. 콘솔의 주문 기록은 켜도 꺼도 「This order was refunded」 한 줄이다 — 켰는지는 몇 초 뒤 장부의 무효 줄로 본다
+   장부가 그 결제가 준 장수를 다 회수한다. 콘솔의 주문 기록은 켜도 꺼도 「This order was refunded」 한 줄이다 — 켰는지는 몇 초 뒤 장부의 무효 줄로 본다
 3. 확정 — **일부 환불**은 콘솔이 환불 번호를 주지 않으므로 `<GPA 주문 번호>:<환불한 시각 YYYYMMDDHHmm>` 를 적는다. **전액 환불**은 2 에서 「자격 삭제」를 켰으면 Google 의 무효 통지가 오고
    `void_store_purchase` 가 그 확보로 스스로 확정한다(확보 금액 = 남은 결제액일 때, 환불 번호 `gpv:<GPA 주문 번호>`) — 판이 확정됐는지만 본다. 통지 전에 확정해도 된다.
    「자격 삭제」를 끈 채 이미 환불했으면 통지가 오지 않는다 — 일부 환불처럼 `<GPA 주문 번호>:<환불한 시각 YYYYMMDDHHmm>` 를 적어 손으로 확정한다
 
-**Google 이 먼저 전액을 돌려준 결제** — 걷은 것은 그때 안 쓴 풀이권, 장부의 환불 금액은 Google 이 돌려준 돈(남은 결제액 전부), 우리 셈이었다면의 몫은
+**Google 이 먼저 전액을 돌려준 결제** — 회수한 것은 그때 안 쓴 풀이권, 장부의 환불 금액은 Google 이 돌려준 돈(남은 결제액 전부), 우리 셈이었다면의 몫은
 `store_purchase_void.share_amount` 다(ADR 0230 의 4 — 회수는 「그 결제가 준 장수만큼 남은 유료 풀이권에서」다, 추기 A). 이용자에게 차이를 청구하지 않는다. 진행 중인 확보가 있었는데 금액이 달랐으면 확보는 「google play: the store refunded the payment on its own」 사유로 풀린다.
 
 ```bash
-# 스토어가 돌려준 결제 — 날짜별 건수 · 돌려준 돈 · 우리 셈의 몫 · 걷은 장수 · 못 걷은 장수(개인을 가리키지 않는다). 시험 · 프로모션 구매의 무효는 뺀다(매출과 같은 기준)
+# 스토어가 돌려준 결제 — 날짜별 건수 · 돌려준 돈 · 우리 셈의 몫 · 회수한 장수 · 회수하지 못한 장수(개인을 가리키지 않는다). 시험 · 프로모션 구매의 무효는 뺀다(매출과 같은 기준)
 npm run db:remote -- --purpose "스토어 환불 집계" \
-  "select date_trunc('day', v.recorded_at)::date as 날, count(*), sum(v.refunded_amount) as 돌려준돈, sum(v.share_amount) as 우리셈, sum(v.credits_revoked) as 걷은장수, sum(v.credits_kept) as 못걷은장수 from public.store_purchase_void v join public.store_purchase s on s.id = v.purchase_id where not s.is_test and not s.is_promo group by 1 order by 1 desc limit 30"
+  "select date_trunc('day', v.recorded_at)::date as 날, count(*), sum(v.refunded_amount) as 돌려준돈, sum(v.share_amount) as 우리셈, sum(v.credits_revoked) as 회수한장수, sum(v.credits_kept) as 못회수한장수 from public.store_purchase_void v join public.store_purchase s on s.id = v.purchase_id where not s.is_test and not s.is_promo group by 1 order by 1 desc limit 30"
 
 # 지급 · 소비 — 소비가 안 적힌 지급(무효는 뺀다)을 넷으로. 「넉넉함」은 크론이 아직 안 돌았거나 한 번 실패했다. 「가장이른기한36시간안」 · 「가장이른기한지남」(지급 3일 안 —
 # 실제 기한 미확인, 끝난 것이 아니다)은 크론을 손으로 Run 하고 로그를 본다. 「실제기한지남」(지급 3일 넘음, Google 확인 없음)은 Run 이 아니라 Play Console 주문 · 무효 목록을 본다.
@@ -423,7 +423,7 @@ npm run db:remote -- --purpose "스토어 구매 소비 대조" \
 ```bash
 # 스토어 환불이 여러 번인 계정 — 계정 앞 8자와 수만. 닉네임 · 주문은 /ops/members?q=<계정 id> 의 화면으로 본다(개인정보는 화면으로만)
 npm run db:remote -- --purpose "스토어 환불 반복 계정" \
-  "select left(user_id::text, 8) as 계정, count(*) as 환불, sum(credits_kept) as 못걷은장수, max(recorded_at) as 마지막 from public.store_purchase_void group by user_id having count(*) >= 2 order by 2 desc limit 50"
+  "select left(user_id::text, 8) as 계정, count(*) as 환불, sum(credits_kept) as 못회수한장수, max(recorded_at) as 마지막 from public.store_purchase_void group by user_id having count(*) >= 2 order by 2 desc limit 50"
 ```
 
 **구매 제한 걸기 · 풀기 — break-glass**(회원 화면 단추는 반복 악용이 실제로 보인 뒤에 세운다 — ADR 0230). 무상 지급과 같은 꼴이다 — 대장에 먼저 적고,
@@ -470,7 +470,7 @@ SQL
 - **`store-consume-overdue` 의 「실제 기한 지남(지급 뒤 3일, Google 확인 없음) N건」** — 실제 기한(지급 뒤 3일 안)이 확실히 지났고 Google 이 무엇을 했는지는 우리가 모른다.
   **Run 이 아니다**(크론 목록에 없다). 「환불됐다」고 단정하지 않는다. 본다: Play Console → Order management 의 그 주문(소비됨 · 환불됨 · 승인 전), 무효 대조 크론의 응답 ·
   로그와 「스토어 환불 집계」. 환불됐으면 무효가 적힐 차례이고, 소비됨이면 우리 기록만 빠진 것이다 — 손실은 없다. 승인 전인데 환불도 안 됐으면 조율자에게 — 지급한
-  풀이권은 섰는데 결제가 돌아갈 수 있다(쓴 몫은 걷지 않는다, ADR 0230). 지급 7일이 지나면 감시가 더 세지 않는다.
+  풀이권은 섰는데 결제가 돌아갈 수 있다(쓴 몫은 회수하지 않는다, ADR 0230). 지급 7일이 지나면 감시가 더 세지 않는다.
 - **`store-consume-overdue` 의 「Google 이 취소 · 환불로 확인 N건」** — 크론이 다시 물어 「구매」가 아니라는 답을 받았는데 무효가 아직 안 적혔다. Run 할 것은 없다. 본다:
   무효 대조 크론(`/api/cron/store-voided`)의 응답 · 로그(`store-voided <건수>`)와 위 「스토어 환불 집계」 질의에 그 무효가 적혔나, Play Console → Order management 의 그 주문.
   무효가 적히면 그 줄은 셈에서 빠진다. 무효가 하루 넘게 안 오면 무효 대조(통지 · 목록)가 멈춘 것이다 — 이 문단 앞의 `play notification` · `store-voided` 줄로 본다.
@@ -493,21 +493,21 @@ Pub/Sub 구독의 「Unacked messages」가 쌓이면 문이 503 을 주고 있�
 #### 결제 알림 · 결제 이상 알림 (G-23 ⑥ · G-110 ④)
 
 **위 「Google Play 결제」가 이 자리다** — 통지 문(`/api/store/google-play`) · 무효 대조 크론 · 로그 줄과 그때 할 일은 그 절의 「통지 · 크론이 이상하면」.
-PortOne 결제 알림 문(`/api/portone/webhook`)과 그 콘솔 걸음은 걷었다(ADR 0212 추기). DB 의 `report_payment_trouble` 은 남았지만
+PortOne 결제 알림 문(`/api/portone/webhook`)과 그 콘솔 걸음은 지웠다(ADR 0212 추기). DB 의 `report_payment_trouble` 은 남았지만
 Google Play 의 문은 부르지 않는다 — 못 닿은 통지는 503 으로 Pub/Sub 이 다시 보내고, 놓친 무효는 대조 크론이 줍는다(ADR 0230).
 떠난 사람의 결제 기록은 위 「떠난 사람의 결제 기록」 그대로다 — 스토어가 돌려준 떠난 사람의 결제는 `retention.reading_refund_after_leave` 에 사유 `store` 로 선다.
 
 #### 심사 계정 — 카드사 심사 때만 결제창이 선다 (G-21, ADR 0171)
 
-**쓰지 않는다 — PG 를 하지 않아 카드사 심사가 없다(ADR 0212).** 웹의 결제 단추와 `PORTONE_*` 는 걷었다 — 표에 넣어도
+**쓰지 않는다 — PG 를 하지 않아 카드사 심사가 없다(ADR 0212).** 웹의 결제 단추와 `PORTONE_*` 는 지웠다 — 표에 넣어도
 웹에서 결제할 길은 없고, 주문 문(`open_reading_order`)과 풀이권 창의 「풀이권 구매」 단추만 그 계정에게 열린다. 표는 Google Play 결제에 쓰지 않는다 —
 스토어 구매는 판매 스위치 · 이 표를 지나지 않는다(ADR 0230). 걷는 것은 따로다. 아래는 표를 다루는 걸음만 남긴다.
 
-1. **계정을 만든다** — 심사 담당이 구글로 로그인하고 가입(닉네임 · 안내 확인)을 마친다. 테스트 코드는 걷었다(ADR 0225)
+1. **계정을 만든다** — 심사 담당이 구글로 로그인하고 가입(닉네임 · 안내 확인)을 마친다. 테스트 코드는 지웠다(ADR 0225)
 2. **넣는다 — break-glass**(이메일로 계정을 찾는다, `docs/ops/runbook/access.md`). 대장에 먼저 적고 운영 SQL Editor 에서:
 
 ```sql
--- 메모에 누구 · 왜 · 언제를 — 걷을 때 이 메모로 찾는다
+-- 메모에 누구 · 왜 · 언제를 — 지울 때 이 메모로 찾는다
 insert into public.reading_sale_reviewer (user_id, note)
 select id, '<카드사> 심사 <YYYY-MM>' from auth.users where email = '<심사 계정 이메일>';
 ```
@@ -518,7 +518,7 @@ select id, '<카드사> 심사 <YYYY-MM>' from auth.users where email = '<심사
 npm run db:remote -- --purpose "심사 계정 수" "select count(*), min(added_at) from public.reading_sale_reviewer"
 ```
 
-4. **심사가 끝나면 걷는다** — 걷지 않으면 그 계정은 판매가 닫힌 동안에도 계속 산다. 심사 결제로 선 묶음은 결제한 곳의 콘솔에서 돌려준 뒤 위
+4. **심사가 끝나면 지운다** — 지우지 않으면 그 계정은 판매가 닫힌 동안에도 계속 산다. 심사 결제로 선 묶음은 결제한 곳의 콘솔에서 돌려준 뒤 위
    「수동 환불」 차례로 적는다(사유 `other`)
 
 ```sql

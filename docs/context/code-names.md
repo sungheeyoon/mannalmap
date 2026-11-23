@@ -110,7 +110,7 @@
 | 사용 이력 | `reading_credit_use` · `operator_reading_refund_basis` | 표 · 함수 |
 | 환불 | `reading_order_refund` · `refund_reading_order` · `refundOwed` | 표 · 함수 · `src/lib/reading` |
 | 스토어 구매(Google Play) | `store_purchase`(시험 `is_test` · 0원 프로모션 `is_promo`) · `grant_store_purchase` · `note_store_purchase_consumed` · `store_product_credits` · `STORE_PRODUCTS` · `settlePurchase` · `playApi` · `storeLedger` | 표 · 함수 · `app/api/store/google-play/` · `src/lib/reading/store-products.ts` (ADR 0230) |
-| 스토어 환불(스토어가 돌려준 결제) | `store_purchase_void` · `void_store_purchase` · `revoke_released_credit_of_voided_purchase` · 환불 사유 `store` · `settleVoided` · 다른 묶음에서 걷은 것 `store_purchase_void_take` · `reading_bundle_taken_by_store` · 목록의 일부 환불 `refundTypeOf` | 표 · 함수 (ADR 0230) |
+| 스토어 환불(스토어가 돌려준 결제) | `store_purchase_void` · `void_store_purchase` · `revoke_released_credit_of_voided_purchase` · 환불 사유 `store` · `settleVoided` · 다른 묶음에서 회수한 것 `store_purchase_void_take` · `reading_bundle_taken_by_store` · 목록의 일부 환불 `refundTypeOf` | 표 · 함수 (ADR 0230) |
 | 구매 제한 | `store_purchase_restriction` · `set_store_purchase_restriction` · `store_purchase_is_restricted` · `store_purchase_refusal` | 표 · 함수 — 운영 SQL 만 건다 (ADR 0230) |
 | 구매 제한 기록(탈퇴 뒤 1년) | `retention.store_purchase_restriction` · `retention.store_restriction_period` · `carry_store_restriction_on_signup` · 크론 `store-restriction-retention-purge` | 표 · 함수 — 처리방침 게시 뒤에만 올린다 (ADR 0230 추기 B) |
 | 환불 진행 중(확보) | `reading_refund_hold` · `operator_hold_reading_refund` · `operator_book_reading_refund` · `operator_release_reading_refund` · `operator_reading_refund_hold` · `release_reading_refund_by_hand` · `retention.reading_refund_after_leave` · `holdRefund` · `bookRefund` · `releaseRefund` · `RefundHold` · `cancellationCheck` · `preparePlan` | 표 · 함수 · `app/ops/orders/` |
@@ -118,7 +118,7 @@
 | 결제 내역 | `my_reading_orders` · `myPaidOrders` · `PaidOrder` · `my_reading_credit_history` · `myCreditHistory` · `purchaseLines` · `usageLines` · `HistoryLine` · `refundRequestLine` · `checkoutRefundLine`(결제 화면 유의사항) | 함수 · `app/me/credits/history/orders.ts` · `src/lib/reading`(`credit-history.ts`) · `src/lib/brand` |
 | Person 한도 | `person_limit` · `my_person_slots` · `PersonSlots` | 함수 · `src/lib/people` |
 | 운영 베타 | `beta_schedule` · `BetaDates` | 표 · `src/lib/consent` |
-| 테스트 코드(걷음, ADR 0225 — 운영 베타의 기록) | `signup_code` · `valid_on` · `max_uses` · `app_user.signup_code` | 표 · 칸 |
+| 테스트 코드(삭제, ADR 0225 — 운영 베타의 기록) | `signup_code` · `valid_on` · `max_uses` · `app_user.signup_code` | 표 · 칸 |
 | 가입 완료 | `signed_up_at` · `complete_signup` | `app_user` 칸 · 함수 |
 | 앱 내 알림 | `notification` · `NotificationKind` · `my_notifications` | 표 · `src/lib/consent` · 함수 |
 | 만드는 중인 풀이 | `my_running_readings` · `RunningReading` · `runningReadings` | 함수 · `app/me/home/running.ts` |
@@ -137,5 +137,5 @@
 | --- | --- | --- | --- |
 | 사유값 `unreadable-revision` | 저장된 입력을 못 읽었다 | `fail_reading_job` 의 `p_failure_code` 로 적히는 값 · `app/me/reading/pipeline.ts` | 그대로 둔다 — DB 에 이미 적힌 값이라 바꾸면 옛 행과 새 행이 갈린다. 화면에 안 나간다(2026-09-23 결정) |
 | `metaphor` · `metaphorLength` | 한 줄 요약 | `reading` · `reading_share` 칸 · RPC 다섯 · 구조화 출력 필드 · `READING_POLICY` | 그대로 둔다 — 구조화 출력의 키는 프롬프트의 일부라 바꾸면 프롬프트를 바꾸는 일이고(실호출이 들고, 배포 순간 돌던 생성은 옛 키로 돌아온다), 칸 이름은 RPC 의 반환 열 · 인자라 바꾸면 떠 있는 옛 앱이 깨진다. 비유를 접은 뒤에도(ADR 0056) 이름만 남았다(2026-09-23 결정). 2026-10-26 에 한 줄 비유로 돌아와(ADR 0207) 이름이 다시 뜻과 맞는다 |
-| `refresh_discovery_snapshot_for` · `snapshot_id` | 후보 목록 | 함수 · `discovery_candidate_slot` 칸 | 그대로 둔다 — 표 둘은 2026-09-23 에 `discovery_candidate` · `discovery_candidate_slot` 으로 옮겼다. 닫힌 문 하나와 칸은 표를 따라 읽히고 뜻은 안 갈린다(2026-09-23 결정). 앱이 부르던 `my_discovery_snapshot` · `refresh_discovery_snapshot` 은 새로고침 단추가 걷힌 뒤(ADR 0115) 좁히기로 지웠다(G-61, `20261029090000`) |
+| `refresh_discovery_snapshot_for` · `snapshot_id` | 후보 목록 | 함수 · `discovery_candidate_slot` 칸 | 그대로 둔다 — 표 둘은 2026-09-23 에 `discovery_candidate` · `discovery_candidate_slot` 으로 옮겼다. 닫힌 문 하나와 칸은 표를 따라 읽히고 뜻은 안 갈린다(2026-09-23 결정). 앱이 부르던 `my_discovery_snapshot` · `refresh_discovery_snapshot` 은 새로고침 단추가 빠진 뒤(ADR 0115) 좁히기로 지웠다(G-61, `20261029090000`) |
 | `requestAccountDeletion` · `request_account_deletion` · `deletion_requested` · `DELETION_NOTE` | 탈퇴 대기 | 액션 · 함수 · `app_user.status` 값 · `src/lib/account` | 식별자는 그대로 둔다 — DB 값을 바꾸면 마이그레이션이고 뜻은 안 갈린다. 화면 문구는 2026-09-23 에 옮겼다(카드 「탈퇴」 · 버튼은 2026-09-28 부터 「탈퇴 신청하기」) |

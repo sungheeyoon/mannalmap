@@ -49,7 +49,7 @@ returning required, changed_at;
 select public.confirm_adult_check('<그 계정의 id>');
 ```
 
-표시를 걷는 것:
+표시를 지우는 것:
 
 ```sql
 delete from public.adult_check where user_id = '<그 계정의 id>';

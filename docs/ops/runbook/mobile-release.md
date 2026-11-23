@@ -300,7 +300,7 @@ iOS 앱의 애플 로그인(ADR 0219)은 코드만 main 에 있고 **운영자�
 
 ## 심사 계정
 
-로그인이 있는 앱은 심사에 데모 계정 정보를 주고 백엔드를 켜 둔다([Apple 2.1(a)](https://developer.apple.com/app-store/review/guidelines/)). Google 도 로그인으로 막힌 앱은 들어갈 정보를 다 달라고 한다([Google 「Prepare your app for review」](https://support.google.com/googleplay/android-developer/answer/9859455) 「Sign-in details」). **심사자는 로그인 뒤 닉네임 · 안내 확인으로 가입을 지난다 — 테스트 코드는 걷었다(ADR 0225).**
+로그인이 있는 앱은 심사에 데모 계정 정보를 주고 백엔드를 켜 둔다([Apple 2.1(a)](https://developer.apple.com/app-store/review/guidelines/)). Google 도 로그인으로 막힌 앱은 들어갈 정보를 다 달라고 한다([Google 「Prepare your app for review」](https://support.google.com/googleplay/android-developer/answer/9859455) 「Sign-in details」). **심사자는 로그인 뒤 닉네임 · 안내 확인으로 가입을 지난다 — 테스트 코드는 지웠다(ADR 0225).**
 
 제출 전에:
 

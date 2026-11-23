@@ -91,8 +91,8 @@ npm run db:push                                                     # 밀린 것
    **Promote 할 앞 배포는 지금 운영 DB 에서 서야 한다** — 좁히기(「규약 넷」의 3)가 지운 문을 부르는 앱은 그 자리가 실패한다.
    2026-10-11 G-96 좁히기(`20261204090000`) 뒤로 `ca4b1924`(#624 · #627 이 든 묶음 배포) 앞의 앱은 채팅 보내기가 실패한다(`PGRST202`) —
    이 바닥이 G-77 좁히기(`20261127090000`)의 `41a91368`(#526, 채팅 읽음)보다 뒤라 그것을 덮는다
-6. **정리한다** — 5 를 적은 뒤 이 묶음에 든 PR 의 워크트리와 로컬 가지를 묻지 않고 걷는다(`docs/agents/delegation/coordinator.md` 「출시 흐름」 4).
-   `npm run sweep:merged` 로 미리보기를 보고 `npm run sweep:merged -- --apply` 로 걷는다 — 스쿼시 머지라 PR 상태로 판정한다(그 문서의 「라운드 끝 정리」)
+6. **정리한다** — 5 를 적은 뒤 이 묶음에 든 PR 의 워크트리와 로컬 가지를 묻지 않고 정리한다(`docs/agents/delegation/coordinator.md` 「출시 흐름」 4).
+   `npm run sweep:merged` 로 미리보기를 보고 `npm run sweep:merged -- --apply` 로 정리한다 — 스쿼시 머지라 PR 상태로 판정한다(그 문서의 「라운드 끝 정리」)
 
 `/api/cron/chat-purge` 가 처음 든 배포면 **다음 날** `docs/ops/runbook/moderation.md` 「첫 파기를 확인한다 — 배포 다음 날」을 밟는다 — 같은 건수 SQL · Cron Jobs 응답, 값은 #770 에 수만.
 
@@ -134,7 +134,7 @@ npm run db:push                                                     # 밀린 것
 `grep -inE "create (or replace )?function public\.<이름>" supabase/migrations/*.sql` 의 맨 끝 줄(`-i` 없이는 대문자로 쓴 정의를 놓친다), 살아 있는 DB 에서는 `select pg_get_functiondef('public.<이름>'::regproc)`(겹쳐 쓴 함수는 인자까지 적는다).
 
 **운영에 오른 마이그레이션 파일은 고치지 않는다** — `db push` 는 이미 적용된 버전을 다시 돌리지 않는다. 고칠 것은 새
-마이그레이션으로 낸다(2026-10-23 — #810 이 연 사진 문 넷을 `20261227120000` 이 걷었다).
+마이그레이션으로 낸다(2026-10-23 — #810 이 연 사진 문 넷을 `20261227120000` 이 지웠다).
 
 ### CSP 가 화면을 막을 때 — **보고만 하는 정책으로 되돌린다** (G-23 ②)
 

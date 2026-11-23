@@ -57,7 +57,7 @@
 # EAS 의 키 — Android → production(또는 해당 프로필) → Keystore 의 SHA1 Fingerprint
 npx eas-cli@latest credentials -p android
 # Play 의 키 — Play Console → Protected with Play → Play Store protection → Manage Play app signing → App signing key 의 SHA-1(옛 이름: 설정 → 앱 무결성)
-# 콜론을 걷고 Base64 로 — 28자이고 = 로 끝난다
+# 콜론을 빼고 Base64 로 — 28자이고 = 로 끝난다
 echo '<SHA-1, 콜론 든 꼴 그대로>' | tr -d ':' | xxd -r -p | openssl base64
 ```
 
