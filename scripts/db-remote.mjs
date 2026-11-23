@@ -26,6 +26,12 @@
  * `--output-format json` 으로 부른다. 없으면 지금처럼 사람이 읽는 출력 그대로다(사람의 셸이면 표). 접속기록에 적는 것과
  * 결과를 적는 것은 이 옵션과 상관없이 같은 길이다(#431).
  *
+ * ## 다른 스크립트가 같은 길을 탈 때 — `sendLogged` · `loggedSender`
+ *
+ * 원격 백필 두 시험(`src/lib/input/backfill-*.live.test.ts`)도 SQL 을 이 파일의 `loggedSender` 로 보낸다(G-179) — 적고,
+ * 적었을 때만 보내고, 결과를 적는 차례가 이 명령과 한 벌이다. 한 번 돌림에 문장이 여럿이면 **문장마다 한 줄**이다
+ * (목적은 같고 해시가 문장마다 다르다). 잠금은 부르는 쪽이 `remote-lock.mjs` 로 감싼다.
+ *
  * 개인정보를 읽는 SQL 은 이 명령으로 보내지 않는다 — 그것은 break-glass 이고 사람만 한다(`docs/ops/runbook/access.md` 「break-glass」).
  * 이 기록은 그것을 막지 못한다. 목적과 해시가 남아 **뒤에 물을 수 있게** 할 뿐이다.
  */
@@ -61,10 +67,17 @@ export function parseArgs(argv) {
 
   if (purpose === null) return { ok: false, message: `목적이 없다 — ${USAGE}` };
   const trimmed = purpose.trim();
-  if (trimmed.length < 4 || trimmed.length > 200) return { ok: false, message: '목적은 4~200자다' };
-  if (trimmed.includes('@')) return { ok: false, message: '목적에 이메일을 적지 않는다 — 목적도 반출된다' };
+  const problem = purposeProblemOf(trimmed);
+  if (problem !== null) return { ok: false, message: problem };
   if (rest.length !== 1 || rest[0].trim() === '') return { ok: false, message: `SQL 은 하나다 — ${USAGE}` };
   return { ok: true, purpose: trimmed, sql: rest[0], json };
+}
+
+/** 목적의 규칙 — 4~200자, `@`(이메일) 없이. 맞으면 null, 아니면 까닭 */
+export function purposeProblemOf(purpose) {
+  if (purpose.length < 4 || purpose.length > 200) return '목적은 4~200자다';
+  if (purpose.includes('@')) return '목적에 이메일을 적지 않는다 — 목적도 반출된다';
+  return null;
 }
 
 export const sqlHashOf = (sql) => createHash('sha256').update(sql, 'utf8').digest('hex');
@@ -143,8 +156,75 @@ function gitUserName() {
 export const queryArgsOf = (sql, { json }) =>
   ['supabase', 'db', 'query', '--linked', ...(json ? ['--output-format', 'json'] : []), sql];
 
-const supabase = (sql, stdio, { json = false } = {}) =>
-  spawnSync('npx', queryArgsOf(sql, { json }), { stdio, encoding: 'utf8' });
+/**
+ * `db query --linked` 하나를 부르는 손의 모양. 시험은 이 자리에 가짜를 넣는다.
+ *
+ * @typedef {(sql: string, options?: { json?: boolean, stdin?: 'ignore' | 'inherit' }) =>
+ *   { status: number | null, signal: string | null, stdout: string, stderr: string }} Runner
+ */
+
+/** `db query --linked` 를 부른다 — 출력을 받아 돌려준다 @type {Runner} */
+export const runSupabase = (sql, { json = false, stdin = 'ignore' } = {}) =>
+  spawnSync('npx', queryArgsOf(sql, { json }), { stdio: [stdin, 'pipe', 'pipe'], encoding: 'utf8' });
+
+/** 지금 이 셸의 실행자 — git 이름, 없으면 OS 사용자, 에이전트 세션이면 `(agent)` */
+export const currentActor = (env = process.env) =>
+  actorOf({ gitName: gitUserName(), osName: userInfo().username, env });
+
+/**
+ * **SQL 하나를 접속기록을 거쳐 보낸다** — 먼저 목적 · 해시를 적고, 적었을 때만 보내고, 끝난 뒤 결과를 적는다.
+ * `npm run db:remote` 와 원격 백필 두 시험(G-179)이 이 한 길을 탄다.
+ *
+ * @param {{ sql: string, purpose: string, actor: string, json?: boolean, stdin?: 'ignore' | 'inherit',
+ *           run?: Runner, onNoted?: (noted: { sha256: string }) => void }} input
+ *        `onNoted` — 적은 뒤 · 보내기 전에 부른다(사람에게 「적었다」를 먼저 알리는 자리)
+ * @returns 적지 못했으면 `{ noted: false, failure }`(SQL 은 안 나갔다). 적었으면 `{ noted: true, ran, sha256, accessId,
+ *          errorClass, resultNoted }` — `accessId` 를 못 읽었거나 결과 호출이 실패하면 `resultNoted` 가 false 다.
+ */
+export function sendLogged({ sql, purpose, actor, json = false, stdin = 'ignore', run = runSupabase, onNoted }) {
+  const problem = purposeProblemOf(purpose);
+  if (problem !== null) throw new Error(problem);
+
+  const sha256 = sqlHashOf(sql);
+  const noted = run(noteSqlOf({ actor, purpose, sha256 }), { json: true });
+  if (noted.status !== 0) return { noted: false, failure: noted, sha256 };
+  const accessId = accessIdOf(noted.stdout ?? '');
+  onNoted?.({ sha256 });
+
+  const ran = run(sql, { json, stdin });
+  const errorClass = errorClassOf({ status: ran.status, signal: ran.signal, output: `${ran.stdout}${ran.stderr}` });
+
+  let resultNoted = false;
+  if (accessId !== null) {
+    const told = run(resultSqlOf({ id: accessId, errorClass }), { json: true });
+    resultNoted = told.status === 0;
+  }
+  return { noted: true, ran, sha256, accessId, errorClass, resultNoted };
+}
+
+/**
+ * 한 번 돌리는 동안 여러 SQL 을 보내는 쪽(원격 백필)의 손 — **문장마다** `sendLogged` 를 탄다.
+ *
+ * 돌려주는 `send` 는 본 질의의 stdout 을 낸다. 적지 못했거나 SQL 이 실패하면 던진다 — 앞의 `execFileSync` 와 같다.
+ * `tally` 는 보낸 문장 · 결과까지 적힌 문장의 수다. 둘이 같아야 접속기록이 그 실행을 다 덮은 것이다.
+ *
+ * @param {{ purpose: string, actor?: string, run?: Runner }} input
+ */
+export function loggedSender({ purpose, actor = currentActor(), run = runSupabase }) {
+  const problem = purposeProblemOf(purpose);
+  if (problem !== null) throw new Error(problem);
+
+  const tally = { sent: 0, logged: 0 };
+  const send = (sql) => {
+    const out = sendLogged({ sql, purpose, actor, json: true, run });
+    if (!out.noted) throw new Error('접속기록에 적지 못해 SQL 을 보내지 않았다.');
+    tally.sent += 1;
+    if (out.resultNoted) tally.logged += 1;
+    if (out.errorClass !== null) throw new Error(`원격 SQL 이 실패했다 — 분류 ${out.errorClass}`);
+    return out.ran.stdout ?? '';
+  };
+  return { send, tally };
+}
 
 function main() {
   const parsed = parseArgs(process.argv.slice(2));
@@ -153,36 +233,27 @@ function main() {
     process.exit(2);
   }
 
-  const actor = actorOf({ gitName: gitUserName(), osName: userInfo().username, env: process.env });
-  const sha256 = sqlHashOf(parsed.sql);
-
-  const noted = supabase(noteSqlOf({ actor, purpose: parsed.purpose, sha256 }), ['ignore', 'pipe', 'pipe'], {
-    json: true,
+  const actor = currentActor();
+  const out = sendLogged({
+    sql: parsed.sql, purpose: parsed.purpose, actor, json: parsed.json, stdin: 'inherit',
+    onNoted: ({ sha256 }) =>
+      console.error(`접속기록에 적었다 — 목적 「${parsed.purpose}」 · sha256 ${sha256.slice(0, 12)}… · ${actor}`),
   });
-  if (noted.status !== 0) {
+  if (!out.noted) {
     console.error('접속기록에 적지 못해 SQL 을 보내지 않았다.');
     // JSON 을 요청하면 CLI 의 오류는 stdout 에 JSON 으로 온다 — stderr 에는 「Connecting…」뿐이라 둘 다 낸다
-    console.error(`${noted.stderr ?? ''}${noted.stdout ?? ''}`.trim());
-    process.exit(noted.status ?? 1);
+    console.error(`${out.failure.stderr ?? ''}${out.failure.stdout ?? ''}`.trim());
+    process.exit(out.failure.status ?? 1);
   }
-  console.error(`접속기록에 적었다 — 목적 「${parsed.purpose}」 · sha256 ${sha256.slice(0, 12)}… · ${actor}`);
-
-  const accessId = accessIdOf(noted.stdout ?? '');
 
   // 결과를 가르려면 출력을 봐야 한다 — 받아서 그대로 다시 낸다
-  const ran = supabase(parsed.sql, ['inherit', 'pipe', 'pipe'], { json: parsed.json });
-  if (ran.stdout) process.stdout.write(ran.stdout);
-  if (ran.stderr) process.stderr.write(ran.stderr);
+  if (out.ran.stdout) process.stdout.write(out.ran.stdout);
+  if (out.ran.stderr) process.stderr.write(out.ran.stderr);
 
-  const errorClass = errorClassOf({ status: ran.status, signal: ran.signal, output: `${ran.stdout}${ran.stderr}` });
-  if (accessId === null) {
-    console.error('경고: 적은 줄의 번호를 못 읽어 결과를 적지 않았다.');
-  } else {
-    const told = supabase(resultSqlOf({ id: accessId, errorClass }), ['ignore', 'pipe', 'pipe'], { json: true });
-    if (told.status !== 0) console.error('경고: 접속기록에 결과를 적지 못했다 — SQL 은 이미 나갔다.');
-    else console.error(`접속기록에 결과를 적었다 — ${errorClass === null ? '성공' : `실패(${errorClass})`}`);
-  }
-  process.exit(ran.status ?? 1);
+  if (out.accessId === null) console.error('경고: 적은 줄의 번호를 못 읽어 결과를 적지 않았다.');
+  else if (!out.resultNoted) console.error('경고: 접속기록에 결과를 적지 못했다 — SQL 은 이미 나갔다.');
+  else console.error(`접속기록에 결과를 적었다 — ${out.errorClass === null ? '성공' : `실패(${out.errorClass})`}`);
+  process.exit(out.ran.status ?? 1);
 }
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) main();

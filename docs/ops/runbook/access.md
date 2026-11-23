@@ -82,7 +82,9 @@ docker exec -i supabase_db_saju psql -U postgres -c "<문장>"   # 워크트리�
   `npx supabase db query --linked`, 기계 전체에서 한 번에 하나, ADR 0096 · 0105). 목적 없이는 안 돈다. 출력을 스크립트가
   읽어야 하면 `--json` 을 붙인다 — 본 질의도 `--output-format json` 으로 받는다(봉투든 맨 배열이든, #431). 적는 함수(`audit.note_cli_query`)가
   원격에 없으면 SQL 을 안 보낸다 — 그 함수를 올리는 `db push` 앞의 확인만 `node scripts/remote-lock.mjs npx supabase db query --linked "<sql>"`
-  로 직접 보냈다(2026-09-24 한 번, 함수 정의의 md5). Management API 로 붙고
+  로 직접 보냈다(2026-09-24 한 번, 함수 정의의 md5). 원격 백필 두 시험(`src/lib/input/backfill-*.live.test.ts`)도 같은 길을 탄다 —
+  `db-remote.mjs` 의 `loggedSender` 가 **문장마다** 목적(파일마다 정해진 말) · 해시를 먼저 적고 결과를 한 줄 더 적으며, 시험이 끝에
+  「보낸 문장 수 = 결과까지 적힌 수」를 단언한다. 한 번 돌림의 줄은 같은 목적으로 묶어 찾는다. Management API 로 붙고
   `postgres` 로 돌므로 비밀번호도 `psql` 도 필요 없다. 다만 `postgres` 라 「비운영자 당사자에게
   무엇이 보이나」는 못 잰다 — 역할별 조회는 대시보드 SQL Editor(마지막 문장의 결과만 준다 — 역할을
   바꿔 가며 잰 줄은 임시 표에 모아 끝에서 한 번에 낸다)나 `SUPABASE_SECRET_KEY` 가 필요하고, 익명
