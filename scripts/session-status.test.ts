@@ -104,15 +104,13 @@ describe('session-status — 세션을 열 때 · 인계할 때 찍는 한 장',
     );
   });
 
-  it('Docker 를 켜는 길은 기계마다 다르다 — 맥은 에이전트가 docker desktop 명령으로, WSL 은 사람이 Windows 쪽에서 켠다', () => {
+  it('Docker 를 켜는 길은 기계마다 다르다 — 맥은 에이전트가 docker desktop 명령으로, WSL 은 에이전트가 Windows 쪽 docker.exe 로 켠다', () => {
     expect(dockerLineOf({ running: false }, 'darwin')).toContain('`docker desktop start`');
     expect(dockerLineOf({ running: false, broken: 'request returned 500' }, 'darwin')).toContain('`docker desktop restart`');
     const wslOff = dockerLineOf(dockerStateOf({ code: 'ENOENT', dangling: true }), 'linux');
-    expect(wslOff).toContain('Windows 쪽 Docker Desktop');
-    expect(wslOff).not.toContain('docker desktop');
+    expect(wslOff).toContain('`docker.exe desktop start`');
     const wslBroken = dockerLineOf({ running: false, broken: 'request returned 500' }, 'linux');
-    expect(wslBroken).toContain('Windows 쪽 Docker Desktop');
-    expect(wslBroken).not.toContain('docker desktop');
+    expect(wslBroken).toContain('`docker.exe desktop restart`');
   });
 
   it('verify 는 지금 머리의 실행이 끝나 모든 차선이 돈 성공일 때만 「모든 차선이 돈 성공」이다', () => {
