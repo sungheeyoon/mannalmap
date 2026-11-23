@@ -9,7 +9,7 @@ PRD · 간극 대장 · changelog · 용어집 · 노트 · 역할 문서를 코
 - 새 ADR 은 색인에 줄을 더하고 머리에 「이 결정이 대체하는 것 — ADR NNNN」을 적는다. 대체당한 ADR 머리에는 `> 후속 결정: ADR NNNN — …` 을 달아 색인에서 지우고, 일부만이면 `> 후속 결정(일부): …` 로 달고 색인에 둔다([Writing an ADR](../agents/domain.md#writing-an-adr))
 - 이미 있는 기록을 고치는 PR 은 한 번에 하나 — 나란히 두면 상반된 문장이 둘 다 남는다([나란히 맡길 때](../agents/delegation/parallel.md))
 - 노트에는 사정만 — 규약이 된 것은 원본으로 옮긴다([세션 기록](../agents/delegation/notes.md))
-- 결정(ADR)이 든 문서 PR 이 「검증 · 배포의 문턱」 줄에 걸리면 독립 검토가 끝나기 전에 `--auto` 를 걸지 않는다([결정 점검표](../agents/delegation/decisions.md))
+- 일반 문서 PR 은 열자마자 `--auto` 다 — 문서만이어도 CI 검증 · 배포 조건을 바꾸면 독립 검토 뒤, 마이그레이션이 들면 `db push` 와 확인 뒤, 둘 다면 둘 다([출시 흐름](../agents/delegation/coordinator.md#출시-흐름--운영자-검토--머지--배포--정리-adr-0229))
 
 ## 먼저 읽는 것
 
