@@ -118,11 +118,10 @@ export function scheduleBeta(endsOn: string | null): void {
     그 값이면 아무것도 안 한다.
   */
   sql(`insert into public.beta_schedule
-         (ends_on, note, operator_name, operator_officer, operator_contact)
-       select '${endsOn}', '검사', '만세력 운영자', '검사 담당', 'ops@example.com'
+         (ends_on, note)
+       select '${endsOn}', '검사'
        where coalesce((select s.ends_on from public.current_beta_schedule() s),
-                      '1900-01-01') <> '${endsOn}'
-          or (select s.operator_contact from public.current_beta_schedule() s) is null`);
+                      '1900-01-01') <> '${endsOn}'`);
 }
 
 /**

@@ -236,7 +236,7 @@ try {
   check('이름이 비었는지 묻는다', available.data === true, shapeOf(available));
   const schedule = await a.client.rpc('current_beta_schedule');
   check('일정을 읽는다 — 앱이 읽는 칸이 다 있다',
-    schedule.error === null && hasColumns(schedule.data[0], ['schedule_id', 'ends_on', 'purge_by', 'purge_within_days', 'operator_name', 'operator_officer', 'operator_contact', 'notice_ack_floor']).length === 0,
+    schedule.error === null && hasColumns(schedule.data[0], ['schedule_id', 'ends_on', 'purge_by', 'purge_within_days', 'notice_ack_floor']).length === 0,
     shapeOf(schedule));
 
   const signup = await a.client.rpc('complete_signup', { p_code: null, p_nickname: `벗${tag}`, p_version: NOTICE_VERSION, p_schedule_id: schedule.data[0].schedule_id, p_improvement: true });
@@ -745,8 +745,8 @@ try {
   }
 
   /* ---------- 일정 줄의 종료일이 지난 뒤 — 서비스는 끝나지 않는다(ADR 0234). 새 줄이라 다시 확인할 뿐이다 ---------- */
-  const endedId = sql(`insert into public.beta_schedule (ends_on, note, operator_name, operator_officer, operator_contact)
-    values ((now() at time zone 'Asia/Seoul')::date - 3, '앱 검사 — 끝남', '만세력 운영자', '검사 담당', 'ops@example.com') returning id`);
+  const endedId = sql(`insert into public.beta_schedule (ends_on, note)
+    values ((now() at time zone 'Asia/Seoul')::date - 3, '앱 검사 — 끝남') returning id`);
   try {
     await readAll(c.client, '베타 종료');
     for (const [method, path, json] of doors) {

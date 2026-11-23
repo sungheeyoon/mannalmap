@@ -40,7 +40,7 @@ $$;
  *
  * 표는 쌓으므로 지우지 않는다. 마이그레이션이 넣은 운영의 첫 줄(고정 종료일)이 지금 줄로
  * 남아 있어도 그 위에 시험의 줄이 선다 — 파일마다 트랜잭션이 되돌아가므로 밖에는 안 남는다.
- * 이미 그 날짜이고 운영자 정보가 있으면 아무것도 안 한다. 그래야 한 파일에서 여러 번
+ * 이미 그 날짜면 아무것도 안 한다. 그래야 한 파일에서 여러 번
  * 불러도 계정들이 같은 줄을 본다.
  *
  * `e2e/session.ts` · `scripts/notice.mjs` 의 `scheduleBeta` 와 같은 규칙이다.
@@ -52,11 +52,10 @@ security definer
 as $$
 begin
   insert into public.beta_schedule
-    (ends_on, note, operator_name, operator_officer, operator_contact)
-  select tests.beta_ends_on(), '시험', '만세력 운영자', '시험 담당', 'ops@example.com'
+    (ends_on, note)
+  select tests.beta_ends_on(), '시험'
   where coalesce((select s.ends_on from public.current_beta_schedule() s), '1900-01-01')
-          <> tests.beta_ends_on()
-     or (select s.operator_contact from public.current_beta_schedule() s) is null;
+          <> tests.beta_ends_on();
 
   return (select s.schedule_id from public.current_beta_schedule() s);
 end;

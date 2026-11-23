@@ -9,7 +9,7 @@
 -- 3. **거절해도 서비스는 그대로다.** 닫히는 것은 설문 하나뿐이다.
 -- 4. **철회가 곧 지움이다.** 안내 화면에서 거절한 경우에도 같다.
 begin;
-select plan(40);
+select plan(41);
 
 create or replace function pg_temp.acting(uid uuid)
 returns void language plpgsql as $$
@@ -231,8 +231,8 @@ select pg_temp.acting((select kim from fresh));
  * 받아 주면 그 사람은 11월에 지운다는 안내를 보고 확인했는데 기록은 이듬해가 된다.
  */
 reset role;
-insert into public.beta_schedule (ends_on, note, operator_name, operator_officer, operator_contact)
-values (tests.beta_ends_on(3), '연장', '운영자', '담당', 'ops@example.com');
+insert into public.beta_schedule (ends_on, note)
+values (tests.beta_ends_on(3), '연장');
 set local role authenticated;
 select pg_temp.acting((select kim from fresh));
 
@@ -273,14 +273,14 @@ set local role authenticated;
  * 그때의 결정이 이 함수와 앱의 `SERVICE_ENDED_ON` 을 함께 고친다.
  */
 reset role;
-insert into public.beta_schedule (ends_on, note, operator_name, operator_officer, operator_contact)
-values (current_date + 2, '모레 끝난다', '운영자', '담당', 'ops@example.com');
+insert into public.beta_schedule (ends_on, note)
+values (current_date + 2, '모레 끝난다');
 select is(public.beta_is_over(), false, '종료일 전에는 안 끝났다');  -- 밖의 역할에는 닫힌 함수다(G-23 ⑪) — 판정만 잰다
 set local role authenticated;
 
 reset role;
-insert into public.beta_schedule (ends_on, note, operator_name, operator_officer, operator_contact)
-values (current_date - 2, '그저께 끝났다', '운영자', '담당', 'ops@example.com');
+insert into public.beta_schedule (ends_on, note)
+values (current_date - 2, '그저께 끝났다');
 set local role authenticated;
 select pg_temp.acting((select kim from fresh));
 
@@ -302,8 +302,8 @@ select pg_temp.acting((select kim from fresh));
 
 /** 미뤄도 같다 */
 reset role;
-insert into public.beta_schedule (ends_on, note, operator_name, operator_officer, operator_contact)
-values ('2099-12-31', '연장', '운영자', '담당', 'ops@example.com');
+insert into public.beta_schedule (ends_on, note)
+values ('2099-12-31', '연장');
 set local role authenticated;
 select pg_temp.acting((select kim from fresh));
 
@@ -311,18 +311,34 @@ reset role;  -- 밖의 역할에는 닫힌 함수다(G-23 ⑪) — 판정만 잰
 select is(public.beta_is_over(), false, '날짜를 미뤄도 열려 있다');
 set local role authenticated;
 
-/** 공백은 「있다」가 아니다 — 빈 문자열이 든 안내는 화면에 아무것도 안 적히는 자리를 만든다 */
-reset role;
-select throws_ok(
-  $$insert into public.beta_schedule
-      (ends_on, operator_name, operator_officer, operator_contact)
-    values ('2027-01-01', '  ', '담당', 'ops@example.com')$$,
-  '23514', null, '공백 운영자 정보는 안 들어간다');
+-- ── 일정 줄은 날짜만 든다 (ADR 0232, G-140, `20270122090000`) ─────────────────
 
-select throws_ok(
-  $$insert into public.beta_schedule (ends_on, operator_name)
-    values ('2027-01-01', '운영자')$$,
-  '23514', null, '셋 중 하나만 넣을 수 없다');
+/**
+ * **처리방침의 운영자는 줄이 아니라 상수 `PRIVACY_OPERATOR` 다.** 줄이 운영자 칸을 들던 동안은 가입 문이 지금 줄의 연락처가 비면
+ * 거절해서, 운영자가 날짜를 옮길 때마다 아무도 안 읽는 세 칸을 옮겨 적어야 했다. 칸이 다시 서면 그 걸음이 돌아온다.
+ */
+reset role;
+select is(
+  (select count(*)::int from information_schema.columns
+    where table_schema = 'public' and table_name = 'beta_schedule' and column_name like 'operator\_%'),
+  0,
+  '일정 줄에 운영자 칸이 없다');
+
+select is(
+  pg_get_function_result('public.current_beta_schedule()'::regprocedure),
+  'TABLE(schedule_id bigint, ends_on date, purge_by date, purge_within_days integer, notice_ack_floor text)',
+  '일정의 문은 날짜와 재확인 기준만 낸다');
+
+insert into public.beta_schedule (ends_on, note)
+values ('2099-12-30', '날짜만');
+set local role authenticated;
+select pg_temp.acting((select kim from fresh));
+
+select lives_ok(
+  $$select public.complete_signup(null, null, 'notice-v103',
+      (select s.schedule_id from public.current_beta_schedule() s), false, false)$$,
+  '날짜만 든 줄로 가입 문을 지난다');
+reset role;
 
 -- ── 재확인 기준은 서버가 든다 (ADR 0237, `20270116090000`) ─────────────────
 
