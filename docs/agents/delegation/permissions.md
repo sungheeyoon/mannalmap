@@ -17,7 +17,7 @@
 | **1 로컬에서 고친다** | 작업 가지에서 고치고 시험을 돈다. 로컬 스택은 마음껏 되돌린다 | `npm run db:reset` · `npm run test:e2e:authed` | 없음 |
 | **1 로컬에서 고친다 — 묻지 않게 허용** | 머지 · 닫힌 PR 의 워크트리 · 로컬 가지를 걷는다. 기본은 미리보기, `--apply` 도 push 안 된 커밋 · 더러운 변경이 없는 것만 걷는다(`docs/agents/delegation/coordinator.md` 「라운드 끝 정리」) | `npm run sweep:merged` · `npm run sweep:merged -- --apply` | 허용 `Bash(npm run sweep:merged:*)` |
 | **1 로컬에서 고친다 — 지울 때마다 사람이 본다** | 로컬 스택 볼륨을 지운다 — 데이터를 영구히 없앤다. 기본은 진단, `--apply` 는 이름을 댄 볼륨 가운데 아무도 쥐지 않은 것만 | `npm run sweep:docker` · `npm run sweep:docker -- --apply <볼륨>` | 사람 — allow 에 넣지 않는다 |
-| **2 밖으로 낸다 — 되돌릴 수 있게** | 가지를 밀고 PR 을 열고 이슈에 적는다. `--auto` 머지는 문서 PR 은 열자마자, 코드 PR 은 운영자 검토 뒤 — 바이패스 모드 세션은 결정 PR 의 독립 검토와 CI 초록 뒤(`docs/agents/delegation/coordinator.md` 「출시 흐름」). main 에 직접 미는 길은 없다 | `git push -u origin <가지>` · `gh pr create` · `gh pr merge --auto --squash` | 없음 — 단 아래 등급 3 의 예외 |
+| **2 밖으로 낸다 — 되돌릴 수 있게** | 가지를 밀고 PR 을 열고 이슈에 적는다. `--auto` 머지는 일반 문서 PR 은 열자마자, 코드 PR 은 운영자 검토 뒤 — 바이패스 모드 세션은 결정 PR 의 독립 검토와 CI 초록 뒤. 「검증 · 배포의 문턱」 PR 과 마이그레이션 PR 의 예외는 `docs/agents/delegation/coordinator.md` 「출시 흐름」. main 에 직접 미는 길은 없다 | `git push -u origin <가지>` · `gh pr create` · `gh pr merge --auto --squash` | 없음 — 단 아래 등급 3 의 예외 |
 | **3 사람이 답한 뒤에 — 운영 배포** | **프로덕션 배포는 운영자가 「배포」라고 답한 뒤다** — 머지는 배포가 아니다(ADR 0110). 라운드 끝의 묶음 배포 한 번을 조율자가 밟는다(`docs/ops/runbook/deploy.md` 「묶음 배포」) | `vercel deploy --prod` · Create Deployment | 사람 — 도구는 `Bash(vercel --prod:*)` · `Bash(npx vercel --prod:*)` · `Bash(vercel deploy:*)` · `Bash(npx vercel deploy:*)` |
 | **3 묻지 않고 하고 값을 적는다** | 운영 DB 마이그레이션 · 임의 SQL, Vercel 변수, 원격 가지 삭제, `--auto` 없는 즉시 머지, 프로덕션 확인이 든 걸음. **토큰이 나가는 실호출은 에이전트가 하지 않는다** — 운영자가 돌린다(`docs/agents/delegation/unattended.md` 「권한 봉투」). 원격 백필(`BACKFILL_*` + `BACKFILL_TARGET=remote`)도 운영자가 돌린다 — 토큰은 안 나가지만 운영 DB 의 출생정보를 읽는다(ADR 0105) | `db push` · `db query --linked` · `db:remote` · `vercel env` · `gh pr merge` · 원격 가지 삭제 · `READING_LIVE=1`(운영자만) | 없음. `--auto` 와 실호출은 이 문장이 정한다 |
 | **3 사람이 답한 뒤에 — 도구 밖** | 남이 띄운 dev 서버는 죽이기 전에 묻는다. **운영 개인정보는 직접 조회하지 않는다**(아래) — 질의를 써서 건네고 사람이 검토해 돈다 | dev 서버 · 운영 개인정보 조회 | 사람 |
@@ -38,7 +38,7 @@ SQL 을 보내지 않는다 — 질의를 써 주고 사람이 검토해 break-g
 `--auto` 없는 즉시 머지가 등급 3 인 까닭은 검사를 안 지난 코드를 다음 묶음 배포가 그대로 싣기 때문이다. 규칙이 인자를 못 가르니 `gh pr merge` 를 `ask` 에 두면
 `--auto` 까지 묻는다 — 그래서 도구가 아니라 이 문장이 정한다.
 
-**예외 — 마이그레이션이 든 PR 은 `--auto` 도 등급 3 이다.** 다음 묶음 배포가 DB 보다 먼저 나가지 않게, 그런 PR 은 `db push` 와 확인이 끝난 뒤에만 머지를 건다
+**예외 — 마이그레이션이 든 PR 은 `--auto` 도 등급 3 이다**(때는 `docs/agents/delegation/coordinator.md` 「출시 흐름」). 다음 묶음 배포가 DB 보다 먼저 나가지 않게, 그런 PR 은 `db push` 와 확인이 끝난 뒤에만 머지를 건다
 (`docs/ops/runbook/deploy.md` 「배포」 규약 넷 · 「묶음 배포」 0). 앱이 새 함수를 부르면 넓히는 마이그레이션 PR 과 앱 PR 로 나눈다 — 앞 PR 이 먼저 들고 `db push`
 를 지난다. 있는 함수의 반환 칸만 느는 확장은 한 PR 에 두고 `db push` 와 확인 뒤 머지한다. 이 예외는 시험이 안 잰다.
 
