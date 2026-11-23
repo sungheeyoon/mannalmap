@@ -71,7 +71,7 @@ export function SiteFooter({ business }: { business: BusinessInfo }) {
 
 /**
  * 사업자 정보 한 묶음 — 값이 있는 줄만 선다. 공정위 사업자정보 공개 페이지 링크는 사업자등록번호 곁에, 번호가 없으면 끝에 선다.
- * 하나도 없으면 아무것도 그리지 않는다.
+ * 하나도 없으면 아무것도 그리지 않는다. 링크는 글줄 안이라 높이를 못 키우고, 누를 자리만 위아래로 넓혀 44px 를 넘긴다(G-165).
  */
 function BusinessLines({ business, className = '' }: { business: BusinessInfo; className?: string }) {
   const lines = businessInfoLines(business);
@@ -80,7 +80,7 @@ function BusinessLines({ business, className = '' }: { business: BusinessInfo; c
       href={business.disclosureUrl}
       target="_blank"
       rel="noopener noreferrer"
-      className="font-semibold text-secondary underline underline-offset-2 hover:text-foreground"
+      className="relative font-semibold text-secondary underline underline-offset-2 after:absolute after:inset-x-0 after:-inset-y-3.5 hover:text-foreground"
     >
       {BUSINESS_DISCLOSURE_LINK}
     </a>
