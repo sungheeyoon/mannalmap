@@ -19,7 +19,7 @@ import { storedChartOf, type StoredInput } from './stored';
  * ## 원격은 **세 값이 다 있어야** 간다
  *
  *   BACKFILL_CHART=1 BACKFILL_TARGET=remote \
- *   BACKFILL_CONFIRM_PROJECT_REF=<ref> npx vitest run src/lib/input/backfill-chart.live.test.ts
+ *   BACKFILL_CONFIRM_PROJECT_REF=<ref> node scripts/remote-lock.mjs npx vitest run src/lib/input/backfill-chart.live.test.ts
  *
  * 기본값은 로컬이다 — **원격은 적어야만 간다.** 그리고 적었어도 세 자리가 같은 프로젝트를
  * 가리키는지 먼저 보고, 하나라도 어긋나면 **읽기도 쓰기도 하기 전에** 멈춘다

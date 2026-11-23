@@ -8,7 +8,7 @@
 - 로컬 차례는 `db:reset` → `test:db` → `db:types` …([무엇을 고쳤으면 무엇을 돌리나](../agents/test-map/what-to-run.md#무엇을-고쳤으면-무엇을-돌리나))
 - 마이그레이션 파일 이름은 [이름](../agents/code-rules/names.md#이름)의 꼴을 따른다
 - `supabase config push` 는 안 한다 — 원격의 구글 설정을 지운다([권한 등급](../agents/delegation/permissions.md))
-- 남은 원격 잠금을 만나면 멈추고 걷는 법을 보고에 적는다([일하는 법](../agents/delegation/working.md))
+- 원격 DB 에는 기계 전체의 잠금을 거쳐서만 닿는다 — SQL 은 `db:remote`, push · 읽기 전용 확인도 잠금 안에서. 남은 잠금을 만나면 멈추고 지우는 법을 보고에 적는다([일하는 법](../agents/delegation/working.md#일하는-법--세션마다-다시-배우던-것))
 - RLS · grant · 실패 때 여닫음 · 데이터의 보존 · 삭제 · 보관 기간이 바뀌면 결정이다 — ADR 을 쓰고 보고에 올린다([결정 점검표](../agents/delegation/decisions.md))
 
 ## 먼저 읽는 것

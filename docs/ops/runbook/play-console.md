@@ -71,7 +71,7 @@
 | 앱 서명 키(양자 대비 묶음 셋째) | `21:54:E2:E3:08:7E:7A:FD:62:8C:8F:41:4C:F1:C0:C8:2D:57:31:88` | `IVTi4wh+ev1ijI9BTPHAyC1XMYg=` |
 | 업로드 키(EAS 의 키, 그대로 둔다) | `73:F0:D4:F4:E8:CC:A7:72:6E:AB:E4:A7:8C:83:46:A4:40:32:12:CD` | — |
 
-Google OAuth 클라이언트가 든 Cloud 프로젝트는 개발자 계정(`gapjagilab`)의 것이 아니다 — 운영자 개인 계정의 **「My First Project」**(프로젝트 번호 `278971727146`)다. 이름이 기본값이라 헷갈리지만 웹 클라이언트 `saju-web`(앱의 `EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID` · Supabase 구글 공급자의 Client ID 와 같은 값)과 EAS 키의 `mannalmap-android-dev` 가 여기 있다(2026-11-11 확인).
+Google OAuth 클라이언트가 든 Cloud 프로젝트는 개발자 계정(`gapjagilab`)의 것이 아니다 — 운영자 개인 계정의 **「My First Project」**(프로젝트 번호 `278971727146`)다. 이름이 기본값이라 헷갈리지만 웹 클라이언트 `saju-web`(앱의 `EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID` · Supabase 구글 공급자의 Client ID 와 같은 값)과 EAS 키의 `mannalmap-android-dev` 가 여기 있다(2026-11-11 확인). 2026-11-23 에 다시 봤다 — Supabase 구글 공급자의 Client ID 는 그 웹 클라이언트 하나뿐이고 EAS `production` 의 `EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID` 와 같다.
 
 **그 프로젝트의 Google 인증 플랫폼(2026-11-11, 운영자 지시로 고쳤다)**: 게시 상태를 「테스트 중」(테스트 사용자 0명)에서 **「프로덕션 단계」**로 올렸다 — 테스터가 구글 로그인에서 막히지 않게. 브랜딩은 앱 이름 `saju` → 「만날지도」, 홈페이지는 운영 주소(`docs/ops/runbook/domain.md` 맨 위) · 개인정보처리방침 `/privacy` · 약관 `/terms`, 승인된 도메인에 그 운영 도메인을 더했다. 로고는 올리지 않았다 — 올리면 Google 인증 심사가 든다.
 
