@@ -25,6 +25,7 @@ export const KINDS = {
 const ADR_FILE = /^docs\/adr\/(\d{4})-[^/]+\.md$/;
 const MIGRATION_FILE = /^supabase\/migrations\/(\d{14})_[^/]+\.sql$/;
 const GAPS = 'docs/product/gaps.md';
+const CHANGELOG_ARCHIVE = 'docs/product/prd-changelog/archive';
 const COPY_FILE = /^docs\/product\/copy-ledger(?:\.md|\/[a-z-]+\.md)$/;
 const GAP_ROW = /^\| (G-\d+) \|/;
 const COPY_HEADING = /^## ([a-z]+-\d{2}) /;
@@ -89,7 +90,7 @@ export function numbersAdded(files) {
 
 /**
  * 작업 트리(CI 에서는 PR 을 main 에 합친 커밋)가 이미 쓴 번호 — 다음 빈 번호의 바닥이다. 간극 대장은 닫힌 줄을 지우므로
- * 표만 보면 닫은 번호를 다시 내준다 — 대장 · 기록 파일 · changelog 에 선 `G-nn` 을 다 센다.
+ * 표만 보면 닫은 번호를 다시 내준다 — 대장 · 기록 파일 · changelog(분기 보관함까지)에 선 `G-nn` 을 다 센다.
  *
  * @param {string} root
  * @returns {{ kind: keyof typeof KINDS, key: string }[]}
@@ -106,7 +107,9 @@ export function numbersOnTree(root) {
     const key = MIGRATION_FILE.exec(`supabase/migrations/${name}`)?.[1];
     if (key !== undefined) taken.push({ kind: 'migration', key });
   }
-  const gapText = [text(GAPS), text('docs/product/prd-changelog.md'), names('docs/product/gaps/records').join(' ').toUpperCase()].join('\n');
+  // 지난 분기의 개정 기록은 보관함으로 옮긴다(ADR 0240) — 닫은 번호가 거기에만 남으므로 보관함도 센다
+  const changelogs = ['docs/product/prd-changelog.md', ...names(CHANGELOG_ARCHIVE).map((name) => `${CHANGELOG_ARCHIVE}/${name}`)];
+  const gapText = [text(GAPS), ...changelogs.map(text), names('docs/product/gaps/records').join(' ').toUpperCase()].join('\n');
   for (const match of gapText.matchAll(/\bG-(\d+)\b/g)) taken.push({ kind: 'gap', key: `G-${match[1]}` });
   for (const file of ['docs/product/copy-ledger.md', ...names('docs/product/copy-ledger').map((name) => `docs/product/copy-ledger/${name}`)]) {
     for (const match of text(file).matchAll(/^## ([a-z]+-\d{2}) /gm)) taken.push({ kind: 'copy', key: match[1] });

@@ -5,14 +5,14 @@ import type { Element } from '../../constants';
  *
  * 방향별 필요 보완(ADR 0112)은 주는 쪽 원국의 **자리**만 날것으로 내고, 어느 자리가 「센가」 · 몇 개가
  * 있어야 하나 · 계절과 맞아야 하나를 고르지 않았다. 그 판단은 우리가 짓지 않고 외부 자료에서 읽는다 —
- * 이 배열이 그 자료다. 2026-09-25 에 모았다(`docs/notes/2026-09-25-research-yongsin-complement.md`).
+ * 이 배열이 그 자료다. 2026-09-25 에 모았다(`docs/notes/archive/2026-Q3/2026-09-25-research-yongsin-complement.md`).
  *
  * **정답표가 아니다.** 한 쌍의 풀이는 한 사람의 관법이고, 같은 사람이 같은 글 안에서 용신을 두 번 다르게
  * 적기도 한다(`caveats` 에 적었다). 시험은 엔진과 맞추는 채점이 아니라 **관찰**을 잠근다 — 전문가의 판정과
  * 주는 쪽 자리(`ProviderPresence`)가 어떻게 겹치는가.
  *
  * 모은 것은 34 쌍이고 계통은 둘이다(31 쌍은 첫 조사, 3 쌍은 같은 날 CN-2 보충 —
- * `docs/notes/2026-09-25-research-cn-yongsin-supply.md`).
+ * `docs/notes/archive/2026-Q3/2026-09-25-research-cn-yongsin-supply.md`).
  * - 중국 현대 상담 글 31 쌍 — 剑桥易学文化 13 · 华人易 10 · 一德老师 2 · 刘老师 2 · 史老师 1 · 三生石 1 ·
  *   蒲云星命 1 · 吉言网 1.
  *   상담 의뢰에 답한 글이라 두 사람의 사주가 다 있고 방향마다 판정이 선다.
@@ -1800,7 +1800,7 @@ export const COMPAT_EXTERNAL_CASES: readonly ExternalCompatCase[] = [
     caveats: ['명식은 원문의 시 · 일 · 월 · 연 순 세로쓰기를 연 · 월 · 일 · 시로 옮겼다.'],
   },
   // ─── 2026-09-25 보충(CN-2) — 새 글쓴이 둘 · 기존 글쓴이의 다른 글 하나 ──────────────────
-  // `docs/notes/2026-09-25-research-cn-yongsin-supply.md`. 출처의 생년월일 · 상담 사연은 옮기지 않았다.
+  // `docs/notes/archive/2026-Q3/2026-09-25-research-cn-yongsin-supply.md`. 출처의 생년월일 · 상담 사연은 옮기지 않았다.
   {
     id: 'puyun-sohu-224270400',
     lineage: 'chinese-modern-consult',

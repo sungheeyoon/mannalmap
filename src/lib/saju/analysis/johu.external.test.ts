@@ -19,7 +19,7 @@ import { pillarNamed } from '@/src/lib/saju/constants/pillarNamed';
  * 조후 외부 대조 — **관찰만 한다.** 엔진 규칙을 이 자료에 맞추지 않는다(ADR 0111 「정한 것」 5).
  *
  * 세 저자의 서열 판단이 서로 다르다. 2026-09-25 CN-1 조사가 현대 중국 사례 열둘(`modern-chinese`)을
- * 더했다(`docs/notes/2026-09-25-research-cn-johu.md`) — 아래 잠긴 수가 44 건에서 56 건으로 바뀐 까닭이다.
+ * 더했다(`docs/notes/archive/2026-Q3/2026-09-25-research-cn-johu.md`) — 아래 잠긴 수가 44 건에서 56 건으로 바뀐 까닭이다.
  * 수는 「지금 엔진이 저자들의 말과 어디서 만나고 갈리는가」를
  * 고정해, 뒤에 급함 · 서열 규칙을 넣을 때 무엇이 움직였는지 보이게 하려는 것이다.
  */
@@ -366,7 +366,7 @@ describe('조후 외부 대조 데이터셋', () => {
     };
     expect(Object.fromEntries(RANKED.map((verdict) => [verdict, tally(verdict)]))).toEqual({
       // CN-1 전 5/18 · 1/3 이었다. 현대 중국 우선 넷 중 셋이 억부와 같은 오행이다 — 현대 저자들은
-      // 조후와 억부가 겹치는 명식을 골라 싣는 경향이 있다(`docs/notes/2026-09-25-research-cn-johu.md` 3).
+      // 조후와 억부가 겹치는 명식을 골라 싣는 경향이 있다(`docs/notes/archive/2026-Q3/2026-09-25-research-cn-johu.md` 3).
       // 월지 ×2 · 60:30:10(ADR 0114) 전 8/22 — `dtsm-jilbyeong-jeonghae` 의 억부 1순위가 水 → 火 로 옮겨
       // 저자의 용신(水)에서 멀어졌다.
       'johu-first': [7, 22],

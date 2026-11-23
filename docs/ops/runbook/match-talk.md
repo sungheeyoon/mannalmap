@@ -93,7 +93,7 @@ READING_DETAIL_LIVE=1 READING_DETAIL_REPEAT=3 npx vitest run app/me/reading/call
 
 **호출 수:** 표본 4 × 3 = **12콜**, 차례로 부른다. 모델 `gpt-5.6-luna`(`app/me/reading/generation.ts`). SDK 가 지나가는 실패(408 · 409 · 429 · 5xx · 망)만 콜마다 2번 더 보내므로 **요청 상한은 36번**이다. 콜 하나는 재시도까지 240초 안이라 최악 48분이고, 시험 한도는 60분이다.
 
-**토큰 · 비용 — 추정이다.** 상세 판으로 잰 적이 없다. 옛 인연 궁합 실측(2026-09-15, 콜당 약 16,000~18,000 토큰, `docs/notes/match-input-experiment-2026-09-15.md`)을 12콜에 대면 약 19~22만 토큰이다. 입출력 몫을 모르므로 전부 입력 ~ 전부 출력으로 약 $0.04~$0.26 다(단가는 `docs/ops/runbook/ai.md` 「비용 — 토큰 × 공식 단가」, 2026-11-02 공식 페이지에서 다시 봤다). 재시도 몫은 안 든다. 실제 값은 `summary.json` 의 `usage`, 청구의 원본은 OpenAI 대시보드다.
+**토큰 · 비용 — 추정이다.** 상세 판으로 잰 적이 없다. 옛 인연 궁합 실측(2026-09-15, 콜당 약 16,000~18,000 토큰, `docs/notes/archive/2026-Q3/match-input-experiment-2026-09-15.md`)을 12콜에 대면 약 19~22만 토큰이다. 입출력 몫을 모르므로 전부 입력 ~ 전부 출력으로 약 $0.04~$0.26 다(단가는 `docs/ops/runbook/ai.md` 「비용 — 토큰 × 공식 단가」, 2026-11-02 공식 페이지에서 다시 봤다). 재시도 몫은 안 든다. 실제 값은 `summary.json` 의 `usage`, 청구의 원본은 OpenAI 대시보드다.
 
 **결과:** `.reading-live/detail-<부른 시각>/` — git 무시 자리다. 가장 새 폴더는 `ls -td .reading-live/detail-2* | head -1`.
 

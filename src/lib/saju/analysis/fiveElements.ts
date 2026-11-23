@@ -48,7 +48,7 @@ export type ElementWeights = {
    *
    * `sixty-thirty-ten` 은 일수를 버리고 역할로만 나눈다 — 정기 60 · 중기 30 · 여기 10, 중기가 없는
    * 두 글자 지지(子 · 卯 · 酉)는 정기 100 이다. 중국어권 점수 체계(李洪成 계열)의 몫을 옮긴 **후보 값**
-   * 이다(`docs/notes/2026-09-25-research-cn-strength-scoring.md`). 그 체계는 午 丁70 己30 · 亥 壬70 甲30
+   * 이다(`docs/notes/archive/2026-Q3/2026-09-25-research-cn-strength-scoring.md`). 그 체계는 午 丁70 己30 · 亥 壬70 甲30
    * 으로 여기를 빼는데 여기서는 두 지지도 60:30:10 으로 둔다 — 역할 하나의 규칙으로 두려고 고른 것이다.
    *
    * 기본은 `sixty-thirty-ten` 이다(ADR 0114). 사령 일수는 월률분야 — 월지의 개념이지 다른 자리에 쓰는

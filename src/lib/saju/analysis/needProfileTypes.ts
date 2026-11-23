@@ -28,7 +28,7 @@ export type GradeOrUnresolved = Grade | 'unresolved';
 /**
  * 오행 하나가 원국의 어디에 앉았는가. **일간 자신은 세지 않는다.**
  *
- * 측정(`docs/notes/2026-09-25-need-profile-baseline.md` 3)에서 출처는 고른 오행이 천간에
+ * 측정(`docs/notes/archive/2026-Q3/2026-09-25-need-profile-baseline.md` 3)에서 출처는 고른 오행이 천간에
  * 드러난 것을 20건 중 16건 골랐고 엔진은 11건이었다 — 문턱 없이 세는 사실이라 먼저 든다.
  */
 export type ElementSeat =
