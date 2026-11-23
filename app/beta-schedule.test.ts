@@ -27,9 +27,6 @@ const ROW = {
   ends_on: '2026-10-31',
   purge_by: '2026-11-30',
   purge_within_days: 30,
-  operator_name: '만세력 운영자',
-  operator_officer: '홍길동',
-  operator_contact: 'ops@example.com',
   notice_ack_floor: 'notice-v18',
 };
 
@@ -55,11 +52,9 @@ describe('지금 일정 읽기', () => {
     expect(await currentSchedule(answering(null).client)).toEqual(NONE);
   });
 
-  it('줄의 운영자 칸은 안 읽는다 — 비어도 처리방침의 운영자는 상수다 (ADR 0232)', async () => {
-    for (const row of [{ ...ROW, operator_contact: null }, { ...ROW, operator_officer: '' }, { ...ROW, operator_name: undefined }]) {
-      const answer = await currentSchedule(answering([row]).client);
-      expect(answer.ok && answer.value?.operator).toEqual(PRIVACY_OPERATOR);
-    }
+  it('처리방침의 운영자는 줄이 아니라 상수다 — 줄은 날짜만 든다 (ADR 0232, G-140)', async () => {
+    const answer = await currentSchedule(answering([ROW]).client);
+    expect(answer.ok && answer.value?.operator).toEqual(PRIVACY_OPERATOR);
   });
 
   it('다 찬 줄은 도메인의 말로 옮겨 낸다 — 첫 줄만 본다', async () => {

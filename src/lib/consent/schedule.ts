@@ -77,7 +77,7 @@ export function scheduleOf(row: ScheduleRow): BetaSchedule | null | typeof NOTIC
   };
 }
 
-/** `current_beta_schedule` 이 내주는 칸 가운데 읽는 다섯 — 칸 이름은 생성 타입과 같아야 문이 넘길 수 있다. 줄의 `operator_*` 칸은 안 읽는다 */
+/** `current_beta_schedule` 이 내주는 칸 가운데 읽는 다섯 — 칸 이름은 생성 타입과 같아야 문이 넘길 수 있다. 줄에는 운영자 칸이 없다(G-140) */
 type ScheduleDbRow = {
   readonly schedule_id: number;
   readonly ends_on: string;

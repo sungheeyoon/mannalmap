@@ -15,22 +15,17 @@
 > 닉네임은 다시 안 묻는다.
 
 **넣는 것은 날짜 하나다.** 처리방침의 「개인정보처리자 · 보호책임자 · 연락처」는 코드 상수 `PRIVACY_OPERATOR`
-(`src/lib/brand/business.ts`, ADR 0232)이고 화면은 줄의 `operator_*` 칸을 읽지 않는다. 다만 **가입 문(DB)은 아직 지금 줄의
-`operator_contact` 가 비면 거절한다** — 아래 SQL 은 앞 줄의 세 칸을 그대로 옮겨 적으므로 다시 칠 것이 없다. 칸을 걷는 것은 뒤의
-마이그레이션 몫이다(ADR 0232). 처리자 · 연락처를 바꾸려면 상수를 고치는 PR 이다(처리방침 판본 `NOTICE_VERSION` 도 함께 올린다).
+(`src/lib/brand/business.ts`, ADR 0232)이고 일정 줄에는 운영자 칸이 없다(`20270122090000`, G-140 — 2026-11-23). 처리자 · 연락처를
+바꾸려면 상수를 고치는 PR 이다(처리방침 판본 `NOTICE_VERSION` 도 함께 올린다).
+**이 SQL 은 `20270122090000` 이 원격에 오른 뒤의 것이다** — 오르기 전의 운영 DB 는 지금 줄의 `operator_contact` 가 비면 가입을 거절하므로,
+그때는 이 파일의 앞 판(`git log -p docs/ops/runbook/signup.md`)처럼 앞 줄의 세 칸을 옮겨 적는다. 원격이 어디까지 올랐나는 #770 의 가장 최근
+배포 · `db push` 댓글이다.
 
 ```sql
 -- 정한다. <YYYY-MM-DD> 를 날짜로 바꾼다 — 2026-11-07 부터 이 날은 가입 · 이용을 닫지 않는다(ADR 0234, 옛 내부 빌드만 견준다).
--- 파기 기한은 종료일과 여유에서 나므로 따로 적지 않는다. 운영자 세 칸은 앞 줄에서 옮긴다(화면은 안 읽는다).
-insert into public.beta_schedule (
-  ends_on, purge_within_days, note,
-  operator_name, operator_officer, operator_contact)
-select
-  '<YYYY-MM-DD>', 30, '고정 종료일 — 초대 시점과 무관하다',
-  s.operator_name, s.operator_officer, s.operator_contact
-from public.beta_schedule s
-order by s.id desc
-limit 1;
+-- 파기 기한은 종료일과 여유에서 나므로 따로 적지 않는다.
+insert into public.beta_schedule (ends_on, purge_within_days, note)
+values ('<YYYY-MM-DD>', 30, '고정 종료일 — 초대 시점과 무관하다');
 
 -- 지금 값과 이력
 select * from public.current_beta_schedule();
