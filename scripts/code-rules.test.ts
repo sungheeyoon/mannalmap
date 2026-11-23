@@ -2074,6 +2074,9 @@ describe('위임 규약 (docs/agents/delegation.md 색인 → docs/agents/delega
     expect(files.filter((name) => !readme.includes(`| \`${name}\` |`))).toEqual([]);
     const listed = [...readme.matchAll(/^\| `([a-z0-9-]+\.md)` \|/gm)].map((match) => match[1]);
     expect(listed.filter((name) => !existsSync(join(dir, name)))).toEqual([]);
+    // 분기 보관함은 폴더 한 줄씩만 포함한다 — 그 안의 파일은 세지 않는다(ADR 0240)
+    const archives = existsSync(join(dir, 'archive')) ? readdirSync(join(dir, 'archive')) : [];
+    expect(archives.filter((name) => !/^\d{4}-Q[1-4]$/.test(name) || !readme.includes(`| \`archive/${name}/\` |`))).toEqual([]);
   });
 
   /**

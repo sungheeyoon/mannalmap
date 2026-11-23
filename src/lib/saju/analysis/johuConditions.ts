@@ -9,7 +9,7 @@ import type { Branch, Element, Stem } from '../constants';
  * `force-threshold`, 「원국에 따라 참작」 · 「조건을 본다」는 `unspecified` 로 적기만 하고
  * 판정은 `johuJudgement.ts` 가 `not-evaluated` 로 남긴다.
  *
- * 2026-09-25 에 손으로 가른 분류(`docs/notes/2026-09-25-need-profile-baseline.md` 4)와 견준
+ * 2026-09-25 에 손으로 가른 분류(`docs/notes/archive/2026-Q3/2026-09-25-need-profile-baseline.md` 4)와 견준
  * 수는 `johuConditions.test.ts` 가 든다. 칸 단위로 조건 없음 44 · 이미 가진 사실로 정해짐 24 ·
  * 국까지 쓰면 정해짐 8 · 세력 문턱 34 · 적히지 않음 10 이다 — 측정 노트는 43 · 24 · 8 · 34 · 11
  * 이었다. 「戊巳 · 辛巳 · 壬巳 · 辛丑」처럼 목록 안의 글자를 「참작한다」고만 한 칸 넷을 여기서는

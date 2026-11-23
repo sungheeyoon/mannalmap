@@ -12,7 +12,7 @@ import type { Grade, NeedProfile } from './needProfileTypes';
  * **등급도 점수도 없다.** 무엇을 「닿았다」고 볼지(일간도 치는가 · 지장간도 치는가)를 아직 안 골랐다.
  * 무작위 3000쌍(6000 방향)에서 억부 1순위 오행이 주는 쪽 어딘가(지장간 포함)에 있는 방향이 95.9%,
  * 받는 쪽의 가장 무거운 오행이 있는 방향이 96.7% 다
- * (`docs/notes/2026-09-25-need-complement-distribution.md`). 「있는가」 하나로 가르면 거의 모든 쌍이
+ * (`docs/notes/archive/2026-Q3/2026-09-25-need-complement-distribution.md`). 「있는가」 하나로 가르면 거의 모든 쌍이
  * 같은 칸에 든다. 그래서
  *
  * - 자리는 **날것으로** 든다 — 일간인가, 다른 천간 어디, 지지 본기 어디, 본기 아닌 지장간 어디.

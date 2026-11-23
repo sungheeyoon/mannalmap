@@ -91,7 +91,7 @@
 
 ## 워크트리에서 전후 그림 찍기
 
-화면 PR 의 전후 그림(`docs/agents/delegation/done.md` 「끝났다는 것」)을 에이전트 워크트리에서 찍는 차례다. 도구의 사정은 `docs/notes/ui-walk-and-gallery.md`.
+화면 PR 의 전후 그림(`docs/agents/delegation/done.md` 「끝났다는 것」)을 에이전트 워크트리에서 찍는 차례다. 도구의 사정은 `docs/notes/archive/2026-Q3/ui-walk-and-gallery.md`.
 
 1. 제 로컬 DB 를 세운다 — `npm run stack:slot -- --auto` 뒤 `npm run db:start`. 자리 없이 띄우면 남의 스택을 밟는다.
 2. 진짜 `node_modules` 를 복사한다(맥 `cp -Rc` · WSL `cp -a --reflink=auto`) — 링크는 Turbopack 이 거절한다.

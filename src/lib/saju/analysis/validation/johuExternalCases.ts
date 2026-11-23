@@ -3,8 +3,8 @@ import type { Element, Stem } from '../../constants';
 /**
  * 자료의 계통 — `eokbuExternalCases.ts` 와 같은 뜻이다. 호스트 이름으로 세지 않는다.
  * 현대 한국 자료는 조후 판정을 적은 **공개 명식**을 찾지 못해 이 데이터셋에 없다(급함 기준만
- * `docs/notes/2026-09-25-research-johu.md` 에 적었다). 현대 중국 자료는
- * `docs/notes/2026-09-25-research-cn-johu.md` 가 더했다 — 대만 · 소프트웨어 계통은 급함 기준만 찾고
+ * `docs/notes/archive/2026-Q3/2026-09-25-research-johu.md` 에 적었다). 현대 중국 자료는
+ * `docs/notes/archive/2026-Q3/2026-09-25-research-cn-johu.md` 가 더했다 — 대만 · 소프트웨어 계통은 급함 기준만 찾고
  * 조후 판정을 적은 공개 명식은 못 찾았다(HeiGe-SuanMing 의 「조후 우선」 명식은 虛構 생시이고
  * 시주가 오자둔에 안 맞아 싣지 않았다).
  */
@@ -15,7 +15,7 @@ type JohuLineage =
   | 'republican-chinese'
   /**
    * 현대 중국(대륙) — 朱祖夏 《八字与用神》(책, 공신력 A) · 謝咏 · 中天易 張永紅 블로그 · 算準網 글(B).
-   * 공신력 등급은 `docs/notes/2026-09-25-research-cn-johu.md` 1 이 든다.
+   * 공신력 등급은 `docs/notes/archive/2026-Q3/2026-09-25-research-cn-johu.md` 1 이 든다.
    */
   | 'modern-chinese';
 

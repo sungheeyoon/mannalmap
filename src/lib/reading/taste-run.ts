@@ -191,7 +191,7 @@ export type TasteRunOutput = {
 };
 
 /**
- * 시키는 값과 막는 값을 가른다(`docs/notes/verification-discipline.md`, 2026-09-07 — 지시에 없는 상한이 글을 통째로
+ * 시키는 값과 막는 값을 가른다(`docs/notes/archive/2026-Q3/verification-discipline.md`, 2026-09-07 — 지시에 없는 상한이 글을 통째로
  * 떨어뜨렸다). 프롬프트가 `target` 을 읽어 꽂고, 검사는 `min` · `max` 만 막는다. 운영자가 정한 계약은 300~500자 ·
  * 2~4문단이다. 막는 값 250 · 600 은 **재지 않은 첫 값**이다 — 운영자의 손 견본이 280자라 300 으로 막으면 그 견본이 떨어진다.
  */

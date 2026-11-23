@@ -263,7 +263,7 @@ v6 의 「초대받은 분만 쓰는 비공개 베타」를 걷는다)
 
 - 출생정보로 계산한 사주팔자와 필요한 기운 요약을 예측 궁합 점수 산출에 이용합니다. 수락 전 상대에게는 점수와 제한된 설명만
   보이며 사주팔자 글자는 공개하지 않습니다. (고침 — 점수가 `v2-beta` 로 바뀌며 입력이 늘었다: 일주 관계 · 필요한 기운 요약,
-  ADR 0113. 문구는 운영자 확정 표 #10b, `docs/notes/2026-09-25-compat-score-direction.md` 「화면 문구」)
+  ADR 0113. 문구는 운영자 확정 표 #10b, `docs/notes/archive/2026-Q3/2026-09-25-compat-score-direction.md` 「화면 문구」)
 - 그 밖의 줄은 v6 그대로다(`DISCOVERY_DISCLOSURE` 와 `MATCH_PILLARS_DISCLOSURE` 를 읽는다). v6 화면(`notice-v6`)의
   `DISCOVERY_DISCLOSURE` 는 아직 「오행의 보완과 두 사람의 균형을 합친 예측 궁합 점수」라 적고 있다 — 표 #9 로 고치는 것은
   화면 쪽 일이고, 이 절은 v8 에서 그 새 말과 맞춘다.

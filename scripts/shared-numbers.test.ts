@@ -65,6 +65,13 @@ describe('공유 번호 — 늦게 연 PR 이 겹침을 알린다 (ADR 0238)', (
     expect(text).toContain('마이그레이션 시각 20270117090000 은 먼저 연 #1061(PR 1061) 이 이미 잡았다 — 다음 빈 번호는 20270118090000');
   });
 
+  it('분기 보관함으로 옮긴 개정 기록의 닫힌 G 도 센다 — 보관함을 빼면 닫은 번호를 다시 내준다 (ADR 0240)', () => {
+    const root = tree();
+    mkdirSync(join(root, 'docs/product/prd-changelog/archive'), { recursive: true });
+    writeFileSync(join(root, 'docs/product/prd-changelog/archive/2026-Q3.md'), '- G-160 을 닫았다\n');
+    expect(numbersOnTree(root)).toContainEqual({ kind: 'gap', key: 'G-160' });
+  });
+
   it('다음 빈 번호는 뒤에 연 PR 이 잡은 번호도 건너뛴다', async () => {
     const answer = await run(1061, { 1060: [adr('0238')], 1061: [adr('0238')], 1070: [adr('0239')] });
     expect(answer.lines.join('\n')).toContain('다음 빈 번호는 0240');

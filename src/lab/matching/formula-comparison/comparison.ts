@@ -40,7 +40,7 @@ import { collisionRate, mean, quantile, sd, spearman, topOverlap } from './stats
  * - `balance` — `discovery-v1` 의 합산 균형 그대로
  * - `countComplement` — `discovery-v1` 의 20% 미만 부족분 보완 그대로
  *
- * 수와 결과는 `docs/notes/2026-09-25-compat-formula-comparison.md`.
+ * 수와 결과는 `docs/notes/archive/2026-Q3/2026-09-25-compat-formula-comparison.md`.
  */
 
 type AxisKey = 'dayPillar' | 'need' | 'balance' | 'countComplement';

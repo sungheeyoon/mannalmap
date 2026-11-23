@@ -194,7 +194,7 @@ describe('방향', () => {
 describe('무작위 3000쌍 (시드 20260821, 6000 명식을 둘씩 짝)', () => {
   /**
    * 등급을 매길 때 볼 분포를 잠근다 — 움직이면 규칙이나 엔진이 바뀐 것이다. 수의 뜻은
-   * `docs/notes/2026-09-25-need-complement-distribution.md`.
+   * `docs/notes/archive/2026-Q3/2026-09-25-need-complement-distribution.md`.
    */
   it(
     '세 기준의 관계 분포 · 억부 1순위의 가장 센 자리 · 방향이 갈리는 쌍의 수가 잠긴 값이다',

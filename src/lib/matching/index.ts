@@ -94,7 +94,7 @@ const clamp = (value: number): number => Math.max(0, Math.min(100, Math.round(va
 const elementList = (elements: readonly Element[]): string =>
   elements.map((element) => `${ELEMENT_KO[element]}(${element})`).join('·');
 
-/** 축의 이름과 설명 — 운영자 확정 문구(2026-09-25, `docs/notes/2026-09-25-compat-score-direction.md`) */
+/** 축의 이름과 설명 — 운영자 확정 문구(2026-09-25, `docs/notes/archive/2026-Q3/2026-09-25-compat-score-direction.md`) */
 const DIMENSION_TEXT: Record<MatchDimensionKey, { label: string; description: string }> = {
   dayPillar: {
     label: '생활의 맞물림',

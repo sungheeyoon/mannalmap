@@ -34,7 +34,7 @@ macOS 키체인에 둔 것, 문서에 적지 않는다). **로컬 스택의 `--l
 **남긴 것과 까닭.**
 
 - **0028 둘 · 0029 예순여덟은 앱이 부르라고 연 문이다.** 이 저장소의 쓰기와 읽기는 `security definer` RPC 가
-  들고(`docs/notes/rpc-and-exposure-rules.md`), 각 문은 `auth.uid()` 나 그것을 묻는 범위 함수(`reading_scope` · `is_operator` ·
+  들고(`docs/notes/archive/2026-Q3/rpc-and-exposure-rules.md`), 각 문은 `auth.uid()` 나 그것을 묻는 범위 함수(`reading_scope` · `is_operator` ·
   `visible_notifications` · `may_see_photo`)로 좁힌다 — 2026-09-24 에 `auth.uid()` 를 직접 안 묻는 열여섯의
   몸을 열어 범위 함수 · 운영자 검사 · 상수 · 공유 토큰임을 봤다.
   advisor 문서도 「일부러 연 문이면 그 대상에 대해 무시해도 된다」고 적는다(lint 0029 의 세 번째 길). 대상별로

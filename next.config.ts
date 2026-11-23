@@ -25,7 +25,7 @@ const supabaseSocket = supabaseUrl.replace(/^http(s?):\/\//, 'ws$1://');
  * **아직 강제하지 않는 것 — `script-src` 의 `'unsafe-inline'`.** 그것을 빼려면 Next 가 페이지에
  * 심는 인라인 스크립트마다 nonce 가 필요하고, nonce 를 쓰면 지금 미리 만들어 두는 화면이 요청마다
  * 다시 그려진다. 본인인증 도메인과 함께 정한다 — 잰 값은 G-23 ② 와
- * `docs/notes/csp-nonce-2026-09-23.md`. `style-src` 의 `'unsafe-inline'` 도 같은 결정을 기다린다.
+ * `docs/notes/archive/2026-Q3/csp-nonce-2026-09-23.md`. `style-src` 의 `'unsafe-inline'` 도 같은 결정을 기다린다.
  *
  * `frame-ancestors` 는 `Report-Only` 에서 무시돼 따로 한 줄로 강제하던 것을 이 정책 하나에 합쳤다.
  * 어긴 자리를 받는 `report-uri` 는 두지 않았다 — 받을 서버가 곧 누구나 쓸 수 있는 공개 POST 가 되고,
