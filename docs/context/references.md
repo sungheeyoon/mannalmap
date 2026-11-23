@@ -277,6 +277,7 @@
 | 토스 TDS | 색 체계 개편 「하나의 소스를 바라보게」 · 토큰에서 플랫폼별 코드를 자동으로 짓는다 | [toss.tech](https://toss.tech/article/tds-color-system-update) | 2026-10-31 | — | ADR 0109 |
 | 토스 | 자체 서체 하나로 앱 전체 통일 | 링크 없음 | 2026-10-28 | — | ADR 0109 |
 | 토스 · 쿠팡 | 라이팅 원칙 — 해요체 기본의 참고 | 링크 없음 | 2026-09-29 | — | ADR 0135 |
+| 당근 SEED | `Checkbox` — 줄은 `align-items: flex-start`, 상자 위 여백 `--checkmark-margin-top: calc((줄 칸 - 상자) / 2)`(「수직 위치 보정」, `TODO: use 1lh`) — 여러 줄 글에서 상자는 첫 줄 가운데 | [checkbox.ts](https://github.com/daangn/seed-design/blob/dev/packages/qvism-preset/src/recipes/checkbox.ts) | 2026-11-23 | A | `checkBoxTop`(`src/lib/design/parts.ts`) · 앱 `CheckRow` · 웹 가입 · 설문 상자 |
 | Material 3 · Android (해외) | 판 머리에 제목 없음 · Switch · Snackbar · Dialogs(나란히, 오른쪽 정렬) · Android 설정 패턴 | 링크 없음 | 2026-10-24 · 2026-10-25 | — | ADR 0109 · ADR 0205 |
 
 ### 한도 숫자 (사진 크기 · 용량 · 기간 · 글자 수)
