@@ -1,6 +1,8 @@
 /*
   출생 정보 입력폼의 **칸 모양** — 이 폼을 쓰는 화면 전부가 이 한 벌이다(`BirthFields`, ADR 0132 덧).
-  색 · 초점 · 오류는 앱 토큰(`globals.css`)만 쓴다 — 새 hex 없음.
+  색 · 초점 · 오류는 앱 토큰(`globals.css`)만 쓴다 — 새 hex 없음. 글자 크기 · 모서리는 디자인 토큰을 `--theme()` 로, 움직임은
+  `--motion-quick` 으로 부른다(G-165) — 글자 · 모서리 토큰은 `@theme inline` 이라 `:root` 변수로 안 서서 `@reference` 로 값을 받는다.
+  여백 · 칸 높이(아래 `.form` 의 변수)는 토큰에 단이 없어 이 폼의 치수로 둔다.
 
   치수 한 벌:
   - 칸 높이 44px — 이름 · 숫자 · 고르는 칸 · 펼치는 칸(출생지 · 자시 · 시간 기준) · 세운 · 고급 설정. 48px 에 판 · 칸마다
@@ -19,6 +21,8 @@
   폭의 상한은 43rem 이다 — 가운데 기둥(`COLUMN`, 46rem)에 선 카드의 안쪽(양쪽 1.5rem)이라 내 사주 등록의 종이와 사람 상세의
   카드는 꽉 차고(42rem 인 첫 화면 · `/saju` 는 그보다 좁아 그대로 꽉 찬다), 그보다 넓은 판(궁합 · 넓은 단 60rem)에서는 칸이 화면 양 끝으로 퍼지지 않는다(ADR 0161).
 */
+@reference "./globals.css";
+
 .form {
   --pad: 24px;
   --rail: 72px;
@@ -29,7 +33,7 @@
   --digit-pad: 12px;
   --unit-room: 34px;
   --unit-right: 14px;
-  --unit-size: 15px;
+  --unit-size: --theme(--text-body);
   display: flex;
   width: 100%;
   max-width: 43rem;
@@ -46,7 +50,7 @@
 /* ── 판 — 크림 종이 위에서만 그린다 ── */
 .panel {
   padding: var(--pad);
-  border-radius: 20px;
+  border-radius: --theme(--radius-card);
   background: var(--surface);
 }
 
@@ -76,7 +80,7 @@
   display: block;
   margin: 0 0 8px;
   padding: 0;
-  font-size: 13px;
+  font-size: --theme(--text-small);
   font-weight: 600;
   line-height: 18px;
   color: var(--text-secondary);
@@ -96,13 +100,13 @@
   height: var(--control);
   padding: 0 14px;
   border: 1px solid var(--border-strong);
-  border-radius: 12px;
+  border-radius: --theme(--radius-cell);
   background: var(--surface);
   color: var(--foreground);
   text-align: center;
-  font-size: 17px;
+  font-size: --theme(--text-lead);
   line-height: 1.5;
-  transition: border-color 150ms, box-shadow 150ms;
+  transition: border-color var(--motion-quick), box-shadow var(--motion-quick);
 }
 .name input::placeholder {
   color: var(--text-muted);
@@ -128,13 +132,13 @@
   padding: 0 8px;
   /* 테두리 자리는 남긴다 — 고르면 테두리만 서고 글자가 1px 도 안 밀린다 */
   border: 1px solid transparent;
-  border-radius: 12px;
+  border-radius: --theme(--radius-cell);
   background: var(--surface-sunken);
   color: var(--text-secondary);
-  font-size: 15px;
+  font-size: --theme(--text-body);
   white-space: nowrap;
   cursor: pointer;
-  transition: background 150ms, border-color 150ms, box-shadow 150ms;
+  transition: background var(--motion-quick), border-color var(--motion-quick), box-shadow var(--motion-quick);
 }
 .option input {
   position: absolute;
@@ -167,7 +171,7 @@
 /* 고른 선택지의 덧말(「몰라도 괜찮아요, 여섯 글자로 봐요」) */
 .choiceHint {
   margin-top: 8px;
-  font-size: 12px;
+  font-size: --theme(--text-fine);
   line-height: 16px;
   color: var(--text-secondary);
 }
@@ -200,19 +204,19 @@
   height: var(--control);
   padding: 0 var(--unit-room) 0 var(--digit-pad);
   border: 1px solid var(--border-strong);
-  border-radius: 12px;
+  border-radius: --theme(--radius-cell);
   background: var(--surface);
   color: var(--foreground);
   text-align: center;
-  font-size: 17px;
+  font-size: --theme(--text-lead);
   line-height: 1.5;
   font-variant-numeric: tabular-nums;
-  transition: border-color 150ms, box-shadow 150ms;
+  transition: border-color var(--motion-quick), box-shadow var(--motion-quick);
 }
 .digit input::placeholder {
   color: var(--text-muted);
   text-align: center;
-  font-size: 14px;
+  font-size: --theme(--text-note);
   line-height: calc(1.25 / 0.875);
 }
 .unit {
@@ -264,7 +268,7 @@
 }
 /* 「24시간」은 이름표의 덧말이라 한 단계 가볍다 */
 .labelHint {
-  font-size: 12px;
+  font-size: --theme(--text-fine);
   font-weight: 400;
   line-height: 16px;
   color: var(--text-muted);
@@ -300,11 +304,11 @@
   gap: 8px;
   padding: 0 12px 0 14px;
   border: 1px solid var(--border-strong);
-  border-radius: 12px;
+  border-radius: --theme(--radius-cell);
   background: var(--surface);
   color: var(--foreground);
-  font-size: 15px;
-  transition: border-color 150ms, box-shadow 150ms;
+  font-size: --theme(--text-body);
+  transition: border-color var(--motion-quick), box-shadow var(--motion-quick);
 }
 .selectValue {
   min-width: 0;
@@ -322,13 +326,13 @@
   flex-shrink: 0;
   stroke-width: 2.6;
   color: var(--text-muted);
-  transition: rotate 150ms, transform 150ms;
+  transition: rotate var(--motion-quick), transform var(--motion-quick);
 }
 .menu {
   margin: 6px 0 0 calc(var(--rail) + var(--rail-gap));
   overflow: hidden;
   border: 1px solid var(--border-strong);
-  border-radius: 12px;
+  border-radius: --theme(--radius-cell);
   background: var(--surface);
 }
 /* 선택지 이름 아래에 덧말(경계 23:00 · 경도 보정만)이 선다 — 390 에서 옆에 두면 덧말이 두 줄로 꺾였다 */
@@ -342,7 +346,7 @@
   padding: 6px 12px 6px 14px;
   border-top: 1px solid var(--border);
   color: var(--foreground);
-  font-size: 15px;
+  font-size: --theme(--text-body);
   cursor: pointer;
 }
 .menuItem:first-child {
@@ -366,7 +370,7 @@
 }
 .menuHint {
   grid-column: 1;
-  font-size: 13px;
+  font-size: --theme(--text-small);
   line-height: 18px;
   color: var(--text-secondary);
 }
@@ -391,18 +395,18 @@
   gap: 8px;
   padding: 0 12px 0 14px;
   border: 1px solid var(--border-strong);
-  border-radius: 12px;
+  border-radius: --theme(--radius-cell);
   background: var(--surface);
   text-align: left;
   cursor: pointer;
-  transition: border-color 150ms, box-shadow 150ms;
+  transition: border-color var(--motion-quick), box-shadow var(--motion-quick);
 }
 .disclosure[aria-expanded='true'] {
   border-color: var(--cream-ink);
 }
 .disclosureLabel {
   flex-shrink: 0;
-  font-size: 15px;
+  font-size: --theme(--text-body);
   color: var(--foreground);
 }
 .disclosureSummary {
@@ -412,7 +416,7 @@
   text-overflow: ellipsis;
   white-space: nowrap;
   text-align: right;
-  font-size: 13px;
+  font-size: --theme(--text-small);
   color: var(--text-secondary);
 }
 .advancedBody {
@@ -431,12 +435,12 @@
   height: var(--control);
   padding: 0 14px;
   border: 1px solid var(--border-strong);
-  border-radius: 12px;
+  border-radius: --theme(--radius-cell);
   background: var(--surface);
   color: var(--foreground);
-  font-size: 17px;
+  font-size: --theme(--text-lead);
   font-variant-numeric: tabular-nums;
-  transition: border-color 150ms, box-shadow 150ms;
+  transition: border-color var(--motion-quick), box-shadow var(--motion-quick);
 }
 
 /* ── 손을 올림 ── */
@@ -502,7 +506,7 @@
 
 /* 묶음 밑의 한 줄(음력 → 양력 변환) — 판이 있으면 판 안 이름표와 같은 선에서 시작한다 */
 .converted {
-  font-size: 12px;
+  font-size: --theme(--text-fine);
   line-height: 16px;
 }
 .panel + .converted {
@@ -517,11 +521,11 @@
     --digit-pad: 8px;
     --unit-room: 28px;
     --unit-right: 10px;
-    --unit-size: 14px;
+    --unit-size: --theme(--text-note);
   }
   .option {
     padding-inline: 6px;
-    font-size: 14px;
+    font-size: --theme(--text-note);
   }
 }
 @media (max-width: 380px) {
@@ -529,10 +533,10 @@
     --digit-pad: 6px;
     --unit-room: 24px;
     --unit-right: 8px;
-    --unit-size: 13px;
+    --unit-size: --theme(--text-small);
   }
   .digit input {
-    font-size: 16px;
+    font-size: --theme(--text-field);
   }
 }
 

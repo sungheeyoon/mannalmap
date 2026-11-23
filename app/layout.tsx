@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from 'next';
 
 import { SERVICE_NAME, SERVICE_TAGLINE, SERVICE_TITLE_TEMPLATE } from '@/src/lib/brand';
 import { BUSINESS_INFO } from '@/src/lib/brand/business';
+import { COLOR, COLOR_DARK } from '@/src/lib/design/tokens.generated';
 
 import { LiveUpdates } from './live/live-updates';
 import { PushOwnerCheck } from './me/push/push-owner';
@@ -69,11 +70,17 @@ export const metadata: Metadata = {
  * `globals.css` 의 `.app-shell` 이 양옆 값을 빼서 비킨다. 폭 · 배율은 Next 의 기본값과 같다.
  * 배율은 잠그지 않는다(`maximum-scale` · `user-scalable` 없음) — 핀치 확대를 막는다. iOS 가 입력 칸 초점에 확대하는 것은
  * 칸의 글자를 16px 이상으로 두어 막는다(`app/ui/fields.test.ts`).
+ * 브라우저 테두리 색(`themeColor`)은 화면의 바탕과 같다 — 어두운 판에서는 어두운 바탕이다. 매니페스트(`app/manifest.ts`)는 한 색뿐이라
+ * 밝은 바탕만 들고, 이 두 줄이 그 위에 선다.
  */
 export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
   viewportFit: 'cover',
+  themeColor: [
+    { media: '(prefers-color-scheme: light)', color: COLOR.background },
+    { media: '(prefers-color-scheme: dark)', color: COLOR_DARK.background },
+  ],
   /* 자판이 레이아웃을 줄이는 것(`interactiveWidget`)은 대화방에만 건다(`app/me/chat/[matchId]/page.tsx`) — 하단 독이 자판 위로 따라 오르지 않게 */
 };
 
