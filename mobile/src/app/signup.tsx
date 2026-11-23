@@ -244,6 +244,7 @@ function SignupForm({ form, onDone }: { form: Extract<SignupState, { kind: 'form
       {/* 만 14세 이상 — 필수 확인(ADR 0231), 웹과 같은 자리 */}
       <View ref={sections.anchor('age')}>
         <CheckRow
+          firstLine={styles.checkLabel}
           checked={fourteen}
           onToggle={(next) => {
             setFourteen(next);
@@ -258,6 +259,7 @@ function SignupForm({ form, onDone }: { form: Extract<SignupState, { kind: 'form
 
       <View ref={sections.anchor('ack')}>
         <CheckRow
+          firstLine={styles.checkLabel}
           checked={acknowledged}
           onToggle={(next) => {
             setAcknowledged(next);
@@ -278,6 +280,7 @@ function SignupForm({ form, onDone }: { form: Extract<SignupState, { kind: 'form
       {OPTIONAL_CONSENTS.map((one) => (
         <CheckRow
           key={one.key}
+          firstLine={styles.checkLabel}
           checked={chosen[one.key] === true}
           onToggle={(next) => setChosen((current) => ({ ...current, [one.key]: next }))}
         >

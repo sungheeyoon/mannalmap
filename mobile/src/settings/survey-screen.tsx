@@ -319,7 +319,7 @@ function Picks<T extends string>({
       {note !== undefined && <WordText style={styles.small}>{note}</WordText>}
       <View style={styles.options}>
         {options.map((option) => (
-          <CheckRow key={option} disabled={disabled} checked={picked.includes(option)} onToggle={() => onPick(afterPicking(picked, option, sole))}>
+          <CheckRow key={option} firstLine={styles.choice} disabled={disabled} checked={picked.includes(option)} onToggle={() => onPick(afterPicking(picked, option, sole))}>
             <WordText style={styles.choice}>{label[option]}</WordText>
           </CheckRow>
         ))}

@@ -199,6 +199,7 @@ export function StoreSection({ onBought, returnTo }: { onBought: () => Promise<n
 
       <CheckRow
         checked={agreed}
+        firstLine={settingsText.body}
         refused={agreeMissing && !agreed}
         onToggle={(next) => {
           setAgreed(next);
