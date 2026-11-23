@@ -365,7 +365,7 @@ update retention.reading_payment set hold_reason = null, held_at = null where or
    (main 보호가 strict 가 아니라 쌓였던 PR 은 squash 뒤 main 위에서 다시 잰다) → 코드 PR 머지 승인 → 머지 → 배포**(`docs/agents/delegation/permissions.md`
    「예외 — 마이그레이션이 든 PR」, 크론이 그 문을 부른다). Vercel → 프로젝트의 Schedules → Cron Jobs 탭에 `/api/cron/store-consume` 가 서고, **Run** 한 번의
    응답이 200 · `{"consumed":0,…}`(키 전이면 `{"configured":false}`)인지 본다 — **운영자**
-7. **라이선스 테스터** — Play Console → Settings → License testing 에 시험할 구글 계정. 시험 구매는 돈이 안 오가고 장부에 `is_test` 로 선다. Play 프로모션 코드로 받은 구매(`purchaseType = 1`)는 금액 0 의 주문으로 서고(`is_promo`) 매출 · 환불 금액에 안 든다(ADR 0230 추기)
+7. **라이선스 테스터** — Play Console → Settings → License testing 에 시험할 구글 계정. **허락은 앱에 로그인한 계정이 아니라 기기 Play 스토어의 구글 계정으로 정해진다** — 앱 계정이 카카오여도 Play 스토어 계정이 테스터면 시험 카드가 뜬다(2026-11-23 샌드박스 5). 시험 구매는 돈이 안 오가고 장부에 `is_test` 로 선다. Play 프로모션 코드로 받은 구매(`purchaseType = 1`)는 금액 0 의 주문으로 서고(`is_promo`) 매출 · 환불 금액에 안 든다(ADR 0230 추기)
 
 **운영의 실제 값(2026-11-17 — 운영자 지시로 조율자가 운영자 브라우저 · Cloud Shell 에서 만들었다).** 1 ~ 4 · 6 이 섰다 — 배포 `f8450ea2`(2026-11-17 20:25 KST) 뒤 Send test message 가 통지 문에 204, `store-consume` Run 이 200. 7(라이선스 테스터)은 2026-11-19 에 섰다 — 계정 관리 → 라이선스 테스트에서 이메일 목록 `operator`(운영자 계정 하나, 내부 테스트와 같은 목록)를 체크해 저장, 응답 `RESPOND_NORMALLY`. 샌드박스 확인이 남았다.
 
@@ -385,7 +385,7 @@ update retention.reading_payment set hold_reason = null, held_at = null where or
 | 3 | 같은 통지를 다시 보낸다 — Play Console 주문 세부정보의 「구매 토큰 복사」 → Cloud 콘솔 주제 `play-billing` 의 「메시지 게시」에 그 토큰의 `oneTimeProductNotification`(`notificationType` 1 · `sku`) 본문, 또는 구독의 「메시지 재생」(확인된 메시지 7일 보관) | `store_purchase` · 주문이 늘지 않는다, 답이 재시도 |
 | 4 | 안 쓴 구매를 Play Console 에서 **전액 환불** — 주문 환불 화면의 「이용 자격 취소」에서 「자격 삭제」를 켠다(아래 운영자 환불 2) | 통지 뒤 그 묶음의 장수가 모두 걷힌다, 환불 줄 사유 `store`, `store_purchase_void` 1줄 |
 | 5 | 3장 중 1장을 쓰고 전액 환불 | 2장만 걷히고 쓴 1장은 그대로, 보유 수가 음수가 아니다. 다른 묶음을 함께 가진 계정이면 모자란 1장이 늦게 산 묶음에서 걷히고, 산 몫이 없으면 2장에서 멈춘다(바닥 0) |
-| 6 | 산 계정을 탈퇴시킨 뒤 전액 환불 | 무효 결과 `departed`, `retention.reading_refund_after_leave` 에 사유 `store` 1줄 |
+| 6 | 산 계정을 탈퇴시킨 뒤 전액 환불 — **처분이 끝난 뒤에** 환불한다. `departed` 는 결제가 보관(`retention.reading_payment`)으로 옮겨진 뒤에만 나온다(`supabase/migrations/20270114090000_a_store_refund_takes_back_what_the_payment_gave.sql`) — 크론 `account-disposal` 이 탈퇴 신청 하루 뒤의 매시 23분에 처분한다. 그 전에 환불하면 아직 회원의 결제라 4 · 5 처럼 회수된다 | 무효 결과 `departed`, `retention.reading_refund_after_leave` 에 사유 `store` 1줄 |
 | 7 | 지급이 안 선 구매(서버 키를 비운 Preview 등)를 소비하지 않은 채 둔다 | 3일 뒤 Google 이 돌려주고 무효가 4 처럼 적힌다 — 날짜가 걸려 따로 적는다 |
 | 8 | 구매 제한을 건 계정으로 결제를 시도 | 앱에 「지금은 풀이권을 구매할 수 없어요.」, 결제창이 안 열린다 |
 | 9 | 운영자 환불 — 확보(예: 3장 묶음에서 1장 · 청약철회) → Play Console 에서 **일부 환불** → 확정 | 콘솔의 일부 환불 칸이 **세전 금액**인지 본다 — 2026-11-22: 칸은 「환불 금액(세금 제외)」이고 우리 주문의 세금이 0원이라 확보 금액 그대로가 「세금 포함」과 같았다. 세금이 붙은 주문이면 확보 금액 ÷ 1.1 을 넣고, 이용자에게 돌아간 금액이 확보 금액과 같은지 Play 주문의 환불 내역으로 본다. 다르면 멈추고 조율자에게. 본 결과로 운영자 환불 2 의 금액 넣는 법을 고정한다 |

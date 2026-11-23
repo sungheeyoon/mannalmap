@@ -20,7 +20,7 @@ OAuth 되돌아옴 · 복구기 주소 · OpenAI 웹훅 · 옛 주소 넘김이 
 | 3 | 했다 | 2026-10-08 운영자 — Site URL 을 새 주소로, Redirect URLs 에 새 도메인의 `/**` 를 더함, 새 주소에서 구글 로그인 → `/me` | 옛 주소의 Redirect URLs 셋은 8 뒤에 걷는다. 지금 남아 있는지는 **확인 전**(대시보드를 안 봤다) |
 | 4 | 했다 | 2026-11-11 조율자가 운영자 지시로 고쳤다(`docs/ops/runbook/play-console.md` 「그 프로젝트의 Google 인증 플랫폼」). 2026-11-22 조율자가 브라우저로 다시 봤다 — Google 인증 플랫폼 → 브랜딩의 앱 홈 · 처리방침 · 약관 링크가 운영 주소이고 승인된 도메인에 운영 도메인이 있다 | — |
 | 5 | 했다 | 2026-11-22 20:05 KST `db:remote` — 아래 5 의 한 줄로 호스트를 옛 별칭에서 운영 도메인으로 바꿨다. 그 뒤 2분 동안 `net._http_response` 2번 모두 200 | — |
-| 6 | 했다 | 2026-11-22 조율자가 운영자 지시로 브라우저에서 봤다 — 프로젝트 Settings → Webhooks 의 endpoint 가 옛 별칭이었다. 「Edit webhook」으로 주소만 운영 도메인의 `/api/openai/webhook` 으로 고쳤다 — 같은 endpoint 라 서명 비밀이 그대로여서 Vercel 값 · 재배포가 없다 | 다음 풀이 하나가 끝날 때 Vercel 요청 기록에 운영 도메인의 `POST /api/openai/webhook` 200 — 조율자 |
+| 6 | 했다 | 2026-11-22 조율자가 운영자 지시로 브라우저에서 봤다 — 프로젝트 Settings → Webhooks 의 endpoint 가 옛 별칭이었다. 「Edit webhook」으로 주소만 운영 도메인의 `/api/openai/webhook` 으로 고쳤다 — 같은 endpoint 라 서명 비밀이 그대로여서 Vercel 값 · 재배포가 없다. 2026-11-23 첫 도착 — 앱 풀이 뒤 Vercel 요청 기록에 운영 도메인의 `POST /api/openai/webhook` 204(04:58:19 UTC). 204 가 이 경로의 성공 응답이다(`app/api/openai/webhook/route.ts`) | — |
 | 7 | 했다 | 2026-11-17 — Pub/Sub 푸시 구독 `play-billing-push` 의 끝점 · audience 를 새 도메인의 `/api/store/google-play` 로 만들었고, 그날 배포 뒤 Play Console 「테스트 알림 보내기」가 204 였다(`docs/ops/runbook/credits.md` 「Google Play 결제」의 「운영의 실제 값」, #770 그날의 배포 댓글, ADR 0230) | 도메인을 다시 옮기면 아래 표의 7 |
 | 8 | 했다 | 2026-11-22 운영자 「옛주소는 버리자」 — Vercel Domains 에서 옛 별칭을 운영 도메인으로 308(같은 경로). `curl -sI` 로 `/` · `/share/x` 가 308 · `location` 이 운영 주소의 같은 경로. 넘기기 전 한 시간 동안 옛 별칭으로 온 요청은 0 이었다 | 3 의 옛 Redirect URLs 를 걷는다 — Supabase 대시보드에서(그 대시보드는 조율자 브라우저에 로그인돼 있지 않다) |
 | 9 | 했다 | `deploy.md` 는 주소 대신 이 문서를 가리킨다(ADR 0152) | — |
