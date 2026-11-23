@@ -11,7 +11,7 @@ import { join, resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 
 import {
-  accessIdOf, actorOf, errorClassOf, jsonRowsOf, loggedSender, noteSqlOf, parseArgs, queryArgsOf, resultSqlOf,
+  BACKFILL_PURPOSE_PREFIX, accessIdOf, actorOf, errorClassOf, jsonRowsOf, loggedSender, noteSqlOf, parseArgs, queryArgsOf, resultSqlOf,
   sendLogged, sqlHashOf,
 } from './db-remote.mjs';
 
@@ -252,6 +252,23 @@ describe('접속기록을 거쳐 보내는 길', () => {
       expect(text, file).toMatch(/import \{[^}]*\bloggedSender\b[^}]*\} from '@\/scripts\/db-remote\.mjs'/);
       expect(text, file).toMatch(/^\s*return remote\.send\(statement\);|^\s*const rows = jsonRowsOf\(remote\.send\(statement\)\);/m);
       expect(text, file).toMatch(/^\s*expect\(remote\.tally\.logged\)\.toBe\(remote\.tally\.sent\);/m);
+    }
+  });
+
+  /**
+   * **백필의 목적은 `backfill:` 로 연다** — runbook 「개인정보는 화면으로만」 표의 넷째 갈래 「기계 읽기(백필)」(운영자 결정).
+   * 월 점검이 이 앞머리로 백필의 줄을 가른다 — 앞머리가 빠지면 출생정보를 읽은 줄이 보통 질의처럼 보인다.
+   */
+  it('원격 백필 두 시험의 목적은 기계 읽기 갈래의 앞머리 `backfill:` 로 열리고, 그 목적으로 보낸다', () => {
+    const root = resolve(__dirname, '..');
+    expect(BACKFILL_PURPOSE_PREFIX).toBe('backfill:');
+    expect(readFileSync(join(root, 'docs/ops/runbook/access.md'), 'utf8')).toContain('목적은 **`backfill:`** 로 연다');
+
+    for (const file of ['src/lib/input/backfill-chart.live.test.ts', 'src/lib/input/backfill-reading-chart.live.test.ts']) {
+      const text = readFileSync(join(root, file), 'utf8');
+      expect(text, file).toMatch(/^const PURPOSE = `\$\{BACKFILL_PURPOSE_PREFIX\} [^`@]+`;$/m);
+      expect(text, file).toMatch(/\bloggedSender\(\{ purpose: PURPOSE \}\)/);
+      expect(text.match(/\bloggedSender\(/g), file).toHaveLength(1);
     }
   });
 });

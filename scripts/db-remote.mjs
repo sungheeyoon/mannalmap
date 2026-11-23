@@ -30,8 +30,9 @@
  *
  * 원격 백필 두 시험(`src/lib/input/backfill-*.live.test.ts`)도 SQL 을 이 파일의 `loggedSender` 로 보낸다(G-179) — 적고,
  * 적었을 때만 보내고, 결과를 적는 차례가 이 명령과 한 벌이다. 한 번 돌림에 문장이 여럿이면 **문장마다 한 줄**이다
- * (목적은 같고 해시가 문장마다 다르다). 잠금은 부르는 쪽이 `remote-lock.mjs` 로 감싼다. 백필은 출생정보를 읽는다 —
- * 아래 문장의 어느 갈래인지는 G-180 이다.
+ * (목적은 같고 해시가 문장마다 다르다). 잠금은 부르는 쪽이 `remote-lock.mjs` 로 감싼다. 백필은 출생정보를 읽지만 값을
+ * 사람에게 보이지 않는 기계 읽기라 아래 break-glass 가 아니라 runbook 표의 「기계 읽기(백필)」 갈래다 — 목적은
+ * `BACKFILL_PURPOSE_PREFIX` 로 연다.
  *
  * 개인정보를 읽는 SQL 은 이 명령으로 보내지 않는다 — 그것은 break-glass 이고 사람만 한다(`docs/ops/runbook/access.md` 「break-glass」).
  * 이 기록은 그것을 막지 못한다. 목적과 해시가 남아 **뒤에 물을 수 있게** 할 뿐이다.
@@ -73,6 +74,9 @@ export function parseArgs(argv) {
   if (rest.length !== 1 || rest[0].trim() === '') return { ok: false, message: `SQL 은 하나다 — ${USAGE}` };
   return { ok: true, purpose: trimmed, sql: rest[0], json };
 }
+
+/** 원격 백필(기계 읽기 갈래)의 목적 앞머리 — `break-glass:` 와 같은 꼴. 월 점검이 이것으로 백필의 줄을 가른다 */
+export const BACKFILL_PURPOSE_PREFIX = 'backfill:';
 
 /** 목적의 규칙 — 4~200자, `@`(이메일) 없이. 맞으면 null, 아니면 까닭 */
 export function purposeProblemOf(purpose) {

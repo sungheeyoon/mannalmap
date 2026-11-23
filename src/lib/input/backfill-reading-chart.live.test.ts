@@ -3,7 +3,7 @@ import { readFileSync } from 'node:fs';
 
 import { describe, expect, it } from 'vitest';
 
-import { jsonRowsOf, loggedSender } from '@/scripts/db-remote.mjs';
+import { BACKFILL_PURPOSE_PREFIX, jsonRowsOf, loggedSender } from '@/scripts/db-remote.mjs';
 import { loadLocalEnv, worktreeStack } from '@/src/lib/local-env';
 import { CHART_ENGINE_VERSION, chartSnapshotOf } from '@/src/lib/saju';
 
@@ -63,8 +63,11 @@ const CONFIRM = 'BACKFILL_CONFIRM_PROJECT_REF';
 /** 이름은 계산에 안 들어간다. 진짜 라벨을 읽지 않으려고 자리표를 쓴다 */
 const PLACEHOLDER = '(백필)';
 
-/** 접속기록의 목적 — 반출되는 말이라 이용자 자료를 싣지 않는다. 한 번 돌림의 문장이 다 이 목적을 든다 */
-const PURPOSE = `원격 백필 — Match · Reading 여덟 글자를 엔진 판 ${CHART_ENGINE_VERSION} 으로 (backfill-reading-chart)`;
+/**
+ * 접속기록의 목적 — 반출되는 말이라 이용자 자료를 싣지 않는다. 한 번 돌림의 문장이 다 이 목적을 든다.
+ * `backfill:` 로 연다 — runbook 「개인정보는 화면으로만」 표의 「기계 읽기(백필)」 갈래(운영자 결정)
+ */
+const PURPOSE = `${BACKFILL_PURPOSE_PREFIX} Match · Reading 여덟 글자를 엔진 판 ${CHART_ENGINE_VERSION} 으로 (backfill-reading-chart)`;
 
 /** 원격 갈래의 손 — 원격일 때만 만든다(로컬은 접속기록이 없다) */
 const remote = TARGET === 'remote' && on ? loggedSender({ purpose: PURPOSE }) : null;
