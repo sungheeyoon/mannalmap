@@ -29,9 +29,6 @@ const SCHEDULE = [{
   ends_on: '2099-12-01',
   purge_by: '2099-12-31',
   purge_within_days: 30,
-  operator_name: '운영자',
-  operator_officer: '담당',
-  operator_contact: 'a@b.c',
   notice_ack_floor: 'notice-v18',
 }];
 const SIGNED_UP = { signed_up_at: '2026-01-01', notice_version: 'unset', notice_schedule_id: 7 };

@@ -238,8 +238,8 @@ select is(
 
 /** 운영자가 일정을 옮겼다 — 그래도 이미 답한 줄의 `schedule_id` 는 그 자리에 있다 */
 set local role postgres;
-insert into public.beta_schedule (ends_on, note, operator_name, operator_officer, operator_contact)
-values (tests.beta_ends_on(3), '시험 — 미룬다', '만세력 운영자', '시험 담당', 'ops@example.com');
+insert into public.beta_schedule (ends_on, note)
+values (tests.beta_ends_on(3), '시험 — 미룬다');
 set local role authenticated;
 
 select lives_ok(

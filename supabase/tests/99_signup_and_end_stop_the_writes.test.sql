@@ -8,8 +8,8 @@ begin;
 select plan(17);
 
 /** 열린 베타를 이 파일이 세운다 — 일정은 늘 가장 늦게 적은 줄이 이긴다(`current_beta_schedule`) */
-insert into public.beta_schedule (ends_on, note, operator_name, operator_officer, operator_contact)
-values ((now() at time zone 'Asia/Seoul')::date + 30, '열린 베타', '만세력 운영자', '시험 담당', 'ops@example.com');
+insert into public.beta_schedule (ends_on, note)
+values ((now() at time zone 'Asia/Seoul')::date + 30, '열린 베타');
 
 create temporary table who (joined uuid, fresh uuid, person_id uuid);
 grant select on who to authenticated, service_role;
@@ -73,8 +73,8 @@ select is((select count(*)::int from public.profile_photo where user_id = (selec
 
 -- ── 3. 종료일 뒤 ────────────────────────────────────────────────────────────
 
-insert into public.beta_schedule (ends_on, note, operator_name, operator_officer, operator_contact)
-values ((now() at time zone 'Asia/Seoul')::date - 1, '종료일이 지난 줄', '만세력 운영자', '시험 담당', 'ops@example.com');
+insert into public.beta_schedule (ends_on, note)
+values ((now() at time zone 'Asia/Seoul')::date - 1, '종료일이 지난 줄');
 
 create temporary table before_end as
 select

@@ -2,7 +2,7 @@ import Link from 'next/link';
 
 import { HELP_GROUPS } from '@/src/lib/brand/guide';
 
-import { BUTTON_SECONDARY } from '../ui/buttons';
+import { BUTTON_SECONDARY, BUTTON_TERTIARY_FACE } from '../ui/buttons';
 import { Icon } from '../ui/icons';
 import { OpenHashed } from './open-hashed';
 import { CARD, COLUMN, DISCLOSURE_SUMMARY_FACE, TYPE_SECTION, TYPE_TITLE } from '../ui/surfaces';
@@ -70,7 +70,7 @@ export default function HelpPage() {
                       </p>
                     ))}
                     {item.link && (
-                      <Link href={item.link.href} className="w-fit text-small font-semibold leading-5 text-foreground hover:opacity-70">
+                      <Link href={item.link.href} className={`${BUTTON_TERTIARY_FACE} -mx-1 w-fit text-small font-semibold text-foreground`}>
                         {item.link.label} →
                       </Link>
                     )}

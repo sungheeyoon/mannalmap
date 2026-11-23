@@ -268,9 +268,6 @@ export type Database = {
           ends_on: string
           id: number
           note: string | null
-          operator_contact: string | null
-          operator_name: string | null
-          operator_officer: string | null
           purge_within_days: number
           set_at: string
         }
@@ -278,9 +275,6 @@ export type Database = {
           ends_on: string
           id?: never
           note?: string | null
-          operator_contact?: string | null
-          operator_name?: string | null
-          operator_officer?: string | null
           purge_within_days?: number
           set_at?: string
         }
@@ -288,9 +282,6 @@ export type Database = {
           ends_on?: string
           id?: never
           note?: string | null
-          operator_contact?: string | null
-          operator_name?: string | null
-          operator_officer?: string | null
           purge_within_days?: number
           set_at?: string
         }
@@ -3443,9 +3434,6 @@ export type Database = {
         Returns: {
           ends_on: string
           notice_ack_floor: string
-          operator_contact: string
-          operator_name: string
-          operator_officer: string
           purge_by: string
           purge_within_days: number
           schedule_id: number

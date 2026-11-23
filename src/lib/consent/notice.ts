@@ -2,9 +2,9 @@ import { DISCOVERY_DISCLOSURE } from '../discovery';
 import { ACTIVITY_PRIVACY_LINE } from '../presence';
 
 /**
- * 처리 안내 — **운영자 줄 하나가 있어야 선다.**
+ * 처리 안내 — **일정 줄 하나가 있어야 선다.**
  *
- * 개인정보처리자 · 보호책임자 · 연락처는 표의 한 줄이 든다(`current_beta_schedule`). 그 줄이 없으면 안내가 완성되지 않는다 —
+ * 개인정보처리자 · 보호책임자 · 연락처는 상수 `PRIVACY_OPERATOR`(ADR 0232)이고, 일정 줄(`current_beta_schedule`)은 날짜만 든다(G-140). 그 줄이 없으면 안내가 완성되지 않는다 —
  * 비어 있는 것을 비어 있는 채로 두는 대신 **말할 수 없는 상태**로 만들어 두는 것이 요점이다.
  *
  * 그 줄의 종료일은 이제 안내에 서지 않는다(`notice-v17`, ADR 0225 추기 2026-11-06 · ADR 0234) — 산 풀이권은 기한이 없는데 모든 계정의

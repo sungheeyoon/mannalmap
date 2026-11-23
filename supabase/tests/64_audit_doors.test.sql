@@ -29,8 +29,8 @@ $$;
  * **열린 베타를 이 파일이 세운다** — 종료일을 오늘(서울)에서 세어 둔다. 손잡이가 적는 고정 날짜가 지나도 1 · 2 가
  * 「베타가 끝났다」로 엉뚱하게 붉지 않게. 일정은 늘 가장 늦게 적은 줄이 이긴다(`current_beta_schedule`).
  */
-insert into public.beta_schedule (ends_on, note, operator_name, operator_officer, operator_contact)
-values ((now() at time zone 'Asia/Seoul')::date + 30, '열린 베타', '만세력 운영자', '시험 담당', 'ops@example.com');
+insert into public.beta_schedule (ends_on, note)
+values ((now() at time zone 'Asia/Seoul')::date + 30, '열린 베타');
 
 create temporary table who as
 select tests.signup('kim-audit@example.com') as kim,
@@ -161,14 +161,14 @@ reset role;
  * 일정은 늘 가장 늦게 적은 줄이 이긴다(`current_beta_schedule`). 줄을 더해 종료일을 바꾸고, 파일 끝의
  * `rollback` 이 되돌린다. 전에는 서울의 그날 끝까지가 종료였다 — `20270114095000` 부터 `beta_is_over()` 는 시간대와 무관하게 늘 거짓이다.
  */
-insert into public.beta_schedule (ends_on, note, operator_name, operator_officer, operator_contact)
-values ((now() at time zone 'Asia/Seoul')::date - 1, '어제 끝났다', '만세력 운영자', '시험 담당', 'ops@example.com');
+insert into public.beta_schedule (ends_on, note)
+values ((now() at time zone 'Asia/Seoul')::date - 1, '어제 끝났다');
 
 set local timezone to 'Etc/GMT+12';
 select ok(not public.beta_is_over(), '서울로 어제가 종료일이어도 끝나지 않는다 — 세션 시간대가 UTC-12 라도');
 
-insert into public.beta_schedule (ends_on, note, operator_name, operator_officer, operator_contact)
-values ((now() at time zone 'Asia/Seoul')::date, '오늘 끝난다', '만세력 운영자', '시험 담당', 'ops@example.com');
+insert into public.beta_schedule (ends_on, note)
+values ((now() at time zone 'Asia/Seoul')::date, '오늘 끝난다');
 
 set local timezone to 'Etc/GMT-14';
 select ok(not public.beta_is_over(), '서울로 오늘이 종료일이어도 끝나지 않는다 — 세션 시간대가 UTC+14 라도');

@@ -12,8 +12,8 @@ begin;
 select plan(17);
 
 /** 열린 베타를 이 파일이 세운다 — 일정은 늘 가장 늦게 적은 줄이 이긴다(`current_beta_schedule`) */
-insert into public.beta_schedule (ends_on, note, operator_name, operator_officer, operator_contact)
-values ((now() at time zone 'Asia/Seoul')::date + 30, '열린 베타', '만세력 운영자', '시험 담당', 'ops@example.com');
+insert into public.beta_schedule (ends_on, note)
+values ((now() at time zone 'Asia/Seoul')::date + 30, '열린 베타');
 
 create temporary table who (uid uuid, person_id uuid);
 grant select on who to authenticated, service_role;
@@ -51,8 +51,8 @@ select ok(tests.set_discovery_participation(true, pg_temp.summary(), tests.need(
 
 -- ── 2. 종료일 뒤 ────────────────────────────────────────────────────────────
 
-insert into public.beta_schedule (ends_on, note, operator_name, operator_officer, operator_contact)
-values ((now() at time zone 'Asia/Seoul')::date - 1, '종료일이 지난 줄', '만세력 운영자', '시험 담당', 'ops@example.com');
+insert into public.beta_schedule (ends_on, note)
+values ((now() at time zone 'Asia/Seoul')::date - 1, '종료일이 지난 줄');
 
 select ok(not public.beta_is_over(), '서울로 어제가 종료일이어도 끝나지 않는다');
 

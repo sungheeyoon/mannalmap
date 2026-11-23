@@ -100,7 +100,7 @@ export function HistoryView({
                 aria-selected={selected}
                 aria-controls="history-panel"
                 onClick={() => choose(one.id)}
-                className={`-mb-px flex-1 border-b-2 pb-2.5 text-center text-body font-semibold ${
+                className={`-mb-px min-h-11 flex-1 border-b-2 text-center text-body font-semibold ${
                   selected ? 'border-foreground text-foreground' : 'border-transparent text-muted'
                 }`}
               >

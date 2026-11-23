@@ -300,8 +300,8 @@ const accessRow = (actor, outcome = 'allowed') => `
       values ('00000000-0000-0000-0000-000000000000', gen_random_uuid(), 'authenticated', 'authenticated',
               'race-deck-${label}-${stamp}@example.com', now(), now()) returning id`);
     sql(`do $$ begin
-      insert into public.beta_schedule (ends_on, note, operator_name, operator_officer, operator_contact)
-      select (now() at time zone 'Asia/Seoul')::date + 30, '경합 검사', '만세력 운영자', '시험 담당', 'ops@example.com'
+      insert into public.beta_schedule (ends_on, note)
+      select (now() at time zone 'Asia/Seoul')::date + 30, '경합 검사'
       where not exists (select 1 from public.beta_schedule);
       update public.app_user set notice_version = 'race-check',
         notice_schedule_id = (select s.schedule_id from public.current_beta_schedule() s),
@@ -427,8 +427,8 @@ const accessRow = (actor, outcome = 'allowed') => `
             'race-photo-switch-${Date.now()}@example.com', now(), now()) returning id`);
   /* 사진의 문은 가입을 묻는다(`20270104090000`) */
   sql(`update public.app_user set nickname = '경합${String(Date.now()).slice(-4)}', signed_up_at = now() where id = '${uid}'`);
-  sql(`insert into public.beta_schedule (ends_on, note, operator_name, operator_officer, operator_contact)
-    select (now() at time zone 'Asia/Seoul')::date + 30, '경합 검사', '만세력 운영자', '시험 담당', 'ops@example.com'
+  sql(`insert into public.beta_schedule (ends_on, note)
+    select (now() at time zone 'Asia/Seoul')::date + 30, '경합 검사'
     where not exists (select 1 from public.beta_schedule)`);
   const modeBefore = sql(`select mode from public.photo_upload_switch`);
   const upload = (at, tail = '') => session(at, `begin; ${asUser(uid)}
