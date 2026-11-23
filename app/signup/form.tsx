@@ -30,6 +30,7 @@ import {
 import { checkNickname } from '../nickname';
 import { BUTTON_PRIMARY, BUTTON_SECONDARY_SMALL_FACE } from '../ui/buttons';
 import { completeSignup } from './actions';
+import { checkBoxTop } from '@/src/lib/design/parts';
 import { actionAnswer } from '../ui/action-answer';
 import { FIELD as FIELD_BASE } from '../ui/fields';
 import { FAILURE_TEXT, FailureLine } from '../ui/failure-line';
@@ -37,6 +38,13 @@ import { INVALID_RING, SectionErrorLine, useSectionErrors } from '../ui/section-
 
 /** 입력 칸 — 프로필 화면과 같은 칸(`app/ui/fields.ts`)에, 거절된 칸은 테가 붉다(2px, ADR 0252) */
 const FIELD = `${FIELD_BASE} ${INVALID_RING}`;
+
+/**
+ * 확인 상자 옆 글의 첫 줄 — 14px · 줄 높이 20px(`leading-5`). 상자는 그 줄의 가운데에 선다(`checkBoxTop`, 앱 `CheckRow` 와 같은 식).
+ * 글이 두 줄이 되어도 상자는 첫 줄에 남는다.
+ */
+const CHECK_LABEL = 'block text-sm font-semibold leading-5';
+const CHECK_TOP = { marginTop: checkBoxTop(20) };
 
 /**
  * 확인 상자 한 줄 — 줄 전체가 누를 자리이고, 고르면 먹색 테와 크림 면이 선다(상자도 그대로 남는다). 초점 테는 전역 초점 테두리와
@@ -260,9 +268,10 @@ export function SignupForm({
             setFourteen(event.target.checked);
             sections.edit('age');
           }}
-          className="mt-0.5 size-5 shrink-0 accent-[var(--accent)]"
+          style={CHECK_TOP}
+          className="size-5 shrink-0 accent-[var(--accent)]"
         />
-        <span className="block text-sm font-semibold">{SIGNUP_AGE_LABEL}</span>
+        <span className={CHECK_LABEL}>{SIGNUP_AGE_LABEL}</span>
       </label>
       <SectionErrorLine id="signup-age-line" message={sections.shown.age} className="-mt-4" />
 
@@ -276,10 +285,11 @@ export function SignupForm({
             setAcknowledged(event.target.checked);
             sections.edit('ack');
           }}
-          className="mt-0.5 size-5 shrink-0 accent-[var(--accent)]"
+          style={CHECK_TOP}
+          className="size-5 shrink-0 accent-[var(--accent)]"
         />
         <span>
-          <span className="block text-sm font-semibold">{NOTICE_ACK_LABEL}</span>
+          <span className={CHECK_LABEL}>{NOTICE_ACK_LABEL}</span>
           <span className="mt-1 block text-sm leading-6 text-secondary">{NOTICE_ACK_NOTE}</span>
         </span>
       </label>
@@ -302,10 +312,11 @@ export function SignupForm({
               onChange={(event) =>
                 setChosen((current) => ({ ...current, [one.key]: event.target.checked }))
               }
-              className="mt-0.5 size-5 shrink-0 accent-[var(--accent)]"
+              style={CHECK_TOP}
+              className="size-5 shrink-0 accent-[var(--accent)]"
             />
             <span>
-              <span className="block text-sm font-semibold">{one.label}</span>
+              <span className={CHECK_LABEL}>{one.label}</span>
               <span className="mt-1 block text-sm leading-6 text-secondary">{one.detail}</span>
               {/* 끄면 어떻게 되는지는 **켜기 전에도** 읽힌다 — 세 화면이 같은 줄을 쓴다 */}
               <span className="mt-1 block text-small leading-5 text-muted">{one.erasure}</span>

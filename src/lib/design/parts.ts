@@ -68,3 +68,15 @@ export const BUTTON_PRESSED_SCALE = 0.97;
 export const TEXT_STYLE = {
   TYPE_TITLE: { fontSize: TEXT.title, lineHeight: 35, color: COLOR.foreground },
 } as const;
+
+/** 확인 상자 한 변 — 앱 `CheckRow`, 웹 `size-5` */
+export const CHECK_BOX = 20;
+
+/**
+ * **확인 상자의 위 여백 — 상자를 글 첫 줄의 가운데에 맞춘다.** 줄 칸(줄 높이)과 상자의 차이 절반이다. 웹 CSS 와 안드로이드
+ * (`CustomLineHeightSpan`) 모두 행간을 글자 위아래에 반씩 나누므로 줄 칸의 가운데가 곧 글자의 가운데다 — 부산단디명조 15px · 줄 높이 24 의
+ * 한글 잉크는 줄 칸의 4.5 ~ 19.5px 에 선다.
+ * 글이 두 줄이 되어도 상자는 첫 줄에 남는다 — 두 줄 덩어리의 가운데가 아니다(당근 SEED `Checkbox` 의 `--checkmark-margin-top`,
+ * `docs/context/references.md`). 앱은 `CheckRow` 의 `firstLine`, 웹은 가입 · 설문의 `<input type="checkbox">` 가 부른다.
+ */
+export const checkBoxTop = (lineHeight: number): number => (lineHeight - CHECK_BOX) / 2;

@@ -12,7 +12,7 @@ import {
 } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 
-import { FIELD } from '@design';
+import { CHECK_BOX, FIELD, checkBoxTop } from '@design';
 import { digitOutOfRange } from '@input/entry';
 
 import { Button } from './buttons';
@@ -70,7 +70,8 @@ export function Field({
 
 /** 확인 상자 한 줄 — 줄 전체가 누를 자리이고, 고르면 먹색 테와 크림 면이 선다. 기본값은 꺼짐이다(`app/signup/form.tsx`) */
 /** 잠겨도(`disabled`) 고른 줄은 흐리지 않는다 — 무엇을 골랐는지가 보내는 동안에도 읽힌다 */
-export function CheckRow({ checked, onToggle, refused = false, disabled = false, children }: { checked: boolean; onToggle: (next: boolean) => void; refused?: boolean; disabled?: boolean; children: ReactNode }) {
+/** 상자는 글 첫 줄의 가운데에 선다 — `firstLine` 은 첫 글의 스타일이다(그 줄 높이로 위 여백을 낸다, `checkBoxTop`) */
+export function CheckRow({ checked, onToggle, refused = false, disabled = false, firstLine, children }: { checked: boolean; onToggle: (next: boolean) => void; refused?: boolean; disabled?: boolean; firstLine: { lineHeight: number }; children: ReactNode }) {
   return (
     <Pressable
       accessibilityRole="checkbox"
@@ -79,7 +80,7 @@ export function CheckRow({ checked, onToggle, refused = false, disabled = false,
       onPress={() => onToggle(!checked)}
       style={[styles.check, checked && styles.checkOn, refused && styles.wrong, disabled && !checked && styles.off]}
     >
-      <View style={[styles.checkBox, checked && styles.checkBoxOn]}>
+      <View style={[styles.checkBox, { marginTop: checkBoxTop(firstLine.lineHeight) }, checked && styles.checkBoxOn]}>
         {checked && (
           <Svg width={14} height={14} viewBox="0 0 14 14">
             <Path d="M2.5 7.5 L5.5 10.5 L11.5 3.5" fill="none" stroke={COLOR.onAccent} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
@@ -334,7 +335,7 @@ const styles = StyleSheet.create({
   hint: { fontFamily: FONT.medium, fontSize: TYPE.fine, color: COLOR.muted, marginTop: 2 },
   check: { flexDirection: 'row', gap: 12, padding: 16, borderRadius: RADIUS.cell, borderWidth: 1, borderColor: COLOR.border, backgroundColor: COLOR.surface },
   checkOn: { borderColor: COLOR.foreground, backgroundColor: COLOR.cream },
-  checkBox: { width: 20, height: 20, marginTop: 1, alignItems: 'center', justifyContent: 'center', borderRadius: 4, borderWidth: 1, borderColor: COLOR.borderStrong, backgroundColor: COLOR.surface },
+  checkBox: { width: CHECK_BOX, height: CHECK_BOX, alignItems: 'center', justifyContent: 'center', borderRadius: 4, borderWidth: 1, borderColor: COLOR.borderStrong, backgroundColor: COLOR.surface },
   checkBoxOn: { borderColor: COLOR.accent, backgroundColor: COLOR.accent },
   checkBody: { flex: 1, gap: 4 },
   textButton: { alignItems: 'flex-start' },

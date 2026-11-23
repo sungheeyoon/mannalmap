@@ -24,7 +24,7 @@
 | **4 안 한다** | 되돌릴 수 없는 것. 어느 가지에도 force push(PR 가지는 main 을 merge 해 올린다), `supabase config push`(원격의 구글 설정을 지운다), main 가지 삭제, Vercel 변수 삭제, 비밀 값 커밋 | | `Bash(git push --force:*)` · `Bash(git push -f:*)` · `Bash(git push --force-with-lease:*)` · `Bash(git push * --force*)` · `Bash(git push * -f*)` · `Bash(git push * +*)` · `Bash(npx supabase config push:*)` · `Bash(supabase config push:*)` · `Bash(./node_modules/.bin/supabase config push:*)` · `Bash(git push origin :main)` · `Bash(git push origin --delete main)` · `Bash(vercel env rm:*)` · `Bash(npx vercel env rm:*)` |
 
 **운영 개인정보 — 에이전트는 예외 없이 직접 조회하지 않는다(ADR 0105).** 이메일 · 닉네임과 계정의 짝 · 메시지 본문 · 출생정보 · 풀이를 운영 DB 에서 읽는
-SQL 을 보내지 않는다 — 질의를 써 주고 사람이 검토해 break-glass 로 돈다(`docs/ops/runbook/access.md` 「개인정보는 화면으로만」). 보내도 되는 원격 질의는 개인을
+SQL 을 보내지 않는다 — 질의를 써 주고 사람이 검토해 break-glass 로(또는 runbook 표의 기계 읽기로, ADR 0265) 돈다(`docs/ops/runbook/access.md` 「개인정보는 화면으로만」). 보내도 되는 원격 질의는 개인을
 가리키지 않는 것(건수 · 집계 · `migration list` · 크론 · advisor · 설정 한 칸)뿐이고, 그 SQL 은 `npm run db:remote -- --purpose "<목적>" "<sql>"` 로만 보낸다
 (`migration list` · advisor 는 SQL 이 아니라 런북의 CLI 명령이다 — `docs/ops/runbook/deploy.md` 「배포」 · `docs/ops/runbook/security.md` 「보안 점검」).
 설정은 SQL 의 내용을 못 가르니 이 경계는 이 문장이 든다.

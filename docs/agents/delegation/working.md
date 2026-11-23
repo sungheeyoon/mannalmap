@@ -56,7 +56,7 @@
 - **원격 DB 에는 기계 전체의 잠금(`scripts/remote-lock.mjs`)을 거쳐서만 닿는다** — SQL 은 `npm run db:remote -- --purpose "<목적>" "<sql>"`(목적과
   SQL 해시가 보내기 전에 접속기록에 남는다, ADR 0105), 메인 체크아웃의 push 는 `npm run db:push`, 읽기 전용 확인(`migration list` · `db push --dry-run`)과
   워크트리의 push 는 `node scripts/remote-lock.mjs <메인>/node_modules/.bin/supabase <명령> --linked`, 원격 백필은 운영자가
-  `node scripts/remote-lock.mjs npx vitest run <백필 파일>` 로 감싸 돌린다(접속기록은 아직 못 거친다 — G-179). 잠금 없이 부른 `npx supabase` 는
+  `node scripts/remote-lock.mjs npx vitest run <백필 파일>` 로 감싸 돌린다(백필의 SQL 도 문장마다 `db:remote` 와 같은 길로 접속기록에 남는다). 잠금 없이 부른 `npx supabase` 는
   잠금을 지나친다. 남은 잠금은 스스로 지우지 않는다 — 지우는 법을 말하고 멈춘다.
 - 커밋 전 `git diff` · 뒤 `git status` 의 `??` 를 본다 — 로컬 타입체크는 디스크를 보니 추적 안 된 모듈을 부르는 커밋이 CI 에서만 깨진다.
 - 코드 주석의 근거는 지금 유효한 ADR 하나, 미결은 `G-nn` 줄이나 이슈(`#67`)다 — 날짜는 적지 않고, 예외는 밖의 문서를 확인한 날(`확인 YYYY-MM-DD`)

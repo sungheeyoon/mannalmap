@@ -38,6 +38,7 @@ import {
 
 import { BUTTON_PRIMARY, BUTTON_SECONDARY } from '../../ui/buttons';
 import { saveServiceSurvey } from './actions';
+import { checkBoxTop } from '@/src/lib/design/parts';
 import type { MySurvey, SurveyContext } from './read';
 import { FLAT_CARD_FACE, TYPE_SECTION } from '../../ui/surfaces';
 import { actionAnswer } from '../../ui/action-answer';
@@ -67,12 +68,16 @@ const PANEL = `flex flex-col gap-3 ${FLAT_CARD_FACE} p-5 sm:p-6`;
 /** 문항의 물음 — 본문보다 확실히 크고 굵게. 긴 문장이라 둥근 서체 대신 시스템 서체다 */
 const ASK = 'block text-lead font-bold leading-7 text-foreground';
 
+/** 고르는 줄의 상자 위 여백 — 줄 높이 24px(`leading-6`)의 첫 줄 가운데 */
+const CHOICE_BOX_TOP = { marginTop: checkBoxTop(24) };
+
 /**
  * 고르는 줄 — 줄 전체가 누를 자리(48px)이고, 고르면 먹색 테와 크림 면이 선다. 상자 자체도 남아
- * 있어 고른 것이 색만으로 말해지지 않는다.
+ * 있어 고른 것이 색만으로 말해지지 않는다. 상자는 글 첫 줄의 가운데에 선다(`checkBoxTop`) — 위아래 여백은
+ * 한 줄일 때 48px 을 채우는 값(테 2px 와 한 줄 `1lh` 를 뺀 절반)이라, 두 줄이 되어도 상자는 첫 줄에 남는다.
  */
 const CHOICE =
-  'flex min-h-12 cursor-pointer items-center gap-3 rounded-cell border border-border bg-surface px-4 py-2.5 text-body leading-6 hover:border-border-strong has-checked:border-foreground has-checked:bg-cream has-focus-visible:outline has-focus-visible:outline-3 has-focus-visible:outline-offset-2 has-focus-visible:outline-[color-mix(in_srgb,var(--accent)_55%,transparent)] has-disabled:cursor-default has-disabled:hover:border-border [&:has(:disabled:not(:checked))]:opacity-55';
+  'flex min-h-12 cursor-pointer items-start gap-3 rounded-cell border border-border bg-surface px-4 py-[calc((3rem_-_2px_-_1lh)/2)] text-body leading-6 hover:border-border-strong has-checked:border-foreground has-checked:bg-cream has-focus-visible:outline has-focus-visible:outline-3 has-focus-visible:outline-offset-2 has-focus-visible:outline-[color-mix(in_srgb,var(--accent)_55%,transparent)] has-disabled:cursor-default has-disabled:hover:border-border [&:has(:disabled:not(:checked))]:opacity-55';
 
 export function SurveyForm({ context, given }: { context: SurveyContext; given: MySurvey | null }) {
   const [answers, setAnswers] = useState<SurveyAnswers>(given?.answers ?? EMPTY_ANSWERS);
@@ -285,7 +290,8 @@ export function SurveyForm({ context, given }: { context: SurveyContext; given: 
                         const now = subject === 'solo' ? answers.priceSolo : answers.pricePair;
                         if (now === option) pick(subject === 'solo' ? 'priceSolo' : 'pricePair', null);
                       }}
-                      className="size-5 shrink-0 accent-[var(--accent)]"
+                      style={CHOICE_BOX_TOP}
+              className="size-5 shrink-0 accent-[var(--accent)]"
                     />
                     <span>{PRICE_LABEL[option]}</span>
                   </label>
@@ -415,6 +421,7 @@ function Picks<T extends string>({
               type="checkbox"
               checked={picked.includes(option)}
               onChange={() => onPick(afterPicking(picked, option, sole))}
+              style={CHOICE_BOX_TOP}
               className="size-5 shrink-0 accent-[var(--accent)]"
             />
             <span>{label[option]}</span>
