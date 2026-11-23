@@ -108,7 +108,7 @@ export function numbersOnTree(root) {
     if (key !== undefined) taken.push({ kind: 'migration', key });
   }
   // 지난 분기의 개정 기록은 보관함으로 옮긴다(ADR 0240) — 닫은 번호가 거기에만 남으므로 보관함도 센다
-  const changelogs = ['docs/product/prd-changelog.md', ...names(CHANGELOG_ARCHIVE).map((name) => `${CHANGELOG_ARCHIVE}/${name}`)];
+  const changelogs = ['docs/product/prd-changelog.md', ...names(CHANGELOG_ARCHIVE).filter((name) => name.endsWith('.md')).map((name) => `${CHANGELOG_ARCHIVE}/${name}`)];
   const gapText = [text(GAPS), ...changelogs.map(text), names('docs/product/gaps/records').join(' ').toUpperCase()].join('\n');
   for (const match of gapText.matchAll(/\bG-(\d+)\b/g)) taken.push({ kind: 'gap', key: `G-${match[1]}` });
   for (const file of ['docs/product/copy-ledger.md', ...names('docs/product/copy-ledger').map((name) => `docs/product/copy-ledger/${name}`)]) {
