@@ -157,7 +157,7 @@ describe('접속기록을 거쳐 보내는 길', () => {
     };
     return { run, calls };
   };
-  const purpose = '원격 백필 — 시험';
+  const purpose = 'backfill: 시험';
 
   it('목적 · 해시를 먼저 적고, 그다음 본 질의, 끝으로 결과 — 원문은 기록 호출에 안 실린다', () => {
     const { run, calls } = fake();
@@ -186,6 +186,15 @@ describe('접속기록을 거쳐 보내는 길', () => {
     const { run, calls } = fake();
     expect(() => sendLogged({ sql: SQL, purpose: '짧음', actor: 'a', run })).toThrow();
     expect(() => loggedSender({ purpose: 'a@b.c 의 확인', actor: 'a', run })).toThrow();
+    expect(calls).toEqual([]);
+  });
+
+  it('`backfill:` 앞머리는 백필의 손만 쓴다 — db:remote 는 거절하고, loggedSender 는 앞머리 없이 안 돈다(ADR 0265)', () => {
+    expect(parseArgs(['--purpose', 'backfill: 손으로 흉내', SQL])).toMatchObject({ ok: false });
+    expect(parseArgs(['--purpose', '  backfill:앞 공백', SQL])).toMatchObject({ ok: false });
+    expect(parseArgs(['--purpose', '백필 결과 건수 (backfill: 아님)', SQL])).toMatchObject({ ok: true });
+    const { run, calls } = fake();
+    expect(() => loggedSender({ purpose: '원격 백필 — 앞머리 없음', actor: 'a', run })).toThrow(/backfill:/);
     expect(calls).toEqual([]);
   });
 
@@ -262,10 +271,12 @@ describe('접속기록을 거쳐 보내는 길', () => {
   it('원격 백필 두 시험의 목적은 기계 읽기 갈래의 앞머리 `backfill:` 로 열리고, 그 목적으로 보낸다', () => {
     const root = resolve(__dirname, '..');
     expect(BACKFILL_PURPOSE_PREFIX).toBe('backfill:');
+    expect(BACKFILL_PURPOSE_PREFIX).toMatch(/^[a-z-]+:$/);
     expect(readFileSync(join(root, 'docs/ops/runbook/access.md'), 'utf8')).toContain('목적은 **`backfill:`** 로 연다');
 
     for (const file of ['src/lib/input/backfill-chart.live.test.ts', 'src/lib/input/backfill-reading-chart.live.test.ts']) {
       const text = readFileSync(join(root, file), 'utf8');
+      expect(text, file).toMatch(/import \{[^}]*\bBACKFILL_PURPOSE_PREFIX\b[^}]*\} from '@\/scripts\/db-remote\.mjs'/);
       expect(text, file).toMatch(/^const PURPOSE = `\$\{BACKFILL_PURPOSE_PREFIX\} [^`@]+`;$/m);
       expect(text, file).toMatch(/\bloggedSender\(\{ purpose: PURPOSE \}\)/);
       expect(text.match(/\bloggedSender\(/g), file).toHaveLength(1);

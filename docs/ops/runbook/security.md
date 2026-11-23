@@ -377,7 +377,8 @@ CLI 질의 가운데 결과 줄(`cli.result`)이 없는 `cli.query` 는 중간�
 3건(2026-09-25 13:53:58Z ~ 2026-10-02 10:29:54Z)이고, 끊긴 실행의 증거가 아니다. 지난 결과 줄은 소급해 만들지 않는다.
 질의는 전부 **보통 질의**다(id · 수 · 시각뿐, 이메일과
 본문이 없다). `npm run db:remote -- --purpose "접속기록 월 점검 <YYYY-MM>" "<sql>"` 로 부른다. 결과는 저장소 밖 점검 기록에
-날짜 · 본 사람 · 이상 여부 · 조치를 한 줄씩 적는다.
+날짜 · 본 사람 · 이상 여부 · 조치를 한 줄씩 적는다. **원격 백필을 돌린 날에는** 운영자가 같은 점검 기록에 날짜 · 실행자 · 엔진 판을
+한 줄 적는다 — 아래 1-2 의 `backfill:` 줄을 그 줄과 맞춘다(ADR 0265). `break-glass:` 줄은 밖의 대장과 맞춘다(`docs/ops/runbook/access.md` 「break-glass」).
 
 ```sql
 -- 1. 누가 얼마나 — 운영자 id(또는 CLI 실행자)별 지난달 동작 수와 성공/거절
@@ -386,6 +387,17 @@ from audit.operator_access
 where at >= date_trunc('month', now() at time zone 'Asia/Seoul') - interval '1 month'
   and at <  date_trunc('month', now() at time zone 'Asia/Seoul')
 group by 1, 2, 3, 4 order by 5 desc;
+
+-- 1-2. 출생정보 · 개인정보를 SQL 로 읽은 줄 — break-glass(대장과) · 원격 백필(점검 기록의 백필 날 · 실행자와) 맞춘다(ADR 0265).
+--      목적은 사람이 적은 말이라 개인정보가 없다(`@` 는 거절된다). 결과 줄이 없는 백필 줄은 중간에 끊긴 실행이다
+select split_part(purpose, ':', 1) as 갈래, actor_name as 실행자, (at at time zone 'Asia/Seoul')::date as 서울_날짜,
+       purpose, count(*) as 문장, min(at) as 처음, max(at) as 마지막
+from audit.operator_access
+where action = 'cli.query'
+  and (purpose like 'break-glass:%' or purpose like 'backfill:%')
+  and at >= date_trunc('month', now() at time zone 'Asia/Seoul') - interval '1 month'
+  and at <  date_trunc('month', now() at time zone 'Asia/Seoul')
+group by 1, 2, 3, 4 order by 6;
 
 -- 2. 대량 열람 — 한 사람이 한 시간에 상세 · 스냅샷을 서른 건 넘게 연 때
 select coalesce(actor_user_id::text, actor_name) as 누구, date_trunc('hour', at) as 시각,

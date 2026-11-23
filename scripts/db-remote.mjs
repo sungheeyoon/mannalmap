@@ -71,11 +71,17 @@ export function parseArgs(argv) {
   const trimmed = purpose.trim();
   const problem = purposeProblemOf(trimmed);
   if (problem !== null) return { ok: false, message: problem };
+  if (trimmed.startsWith(BACKFILL_PURPOSE_PREFIX)) {
+    return { ok: false, message: `「${BACKFILL_PURPOSE_PREFIX}」 목적은 원격 백필 두 시험만 쓴다(ADR 0265) — 다른 목적을 적는다` };
+  }
   if (rest.length !== 1 || rest[0].trim() === '') return { ok: false, message: `SQL 은 하나다 — ${USAGE}` };
   return { ok: true, purpose: trimmed, sql: rest[0], json };
 }
 
-/** 원격 백필(기계 읽기 갈래)의 목적 앞머리 — `break-glass:` 와 같은 꼴. 월 점검이 이것으로 백필의 줄을 가른다 */
+/**
+ * 원격 백필(기계 읽기 갈래, ADR 0265)의 목적 앞머리 — `break-glass:` 와 같은 꼴. 월 점검이 이것으로 백필의 줄을 가른다.
+ * 이 앞머리는 `loggedSender` 만 쓴다 — `db:remote`(`parseArgs`)는 거절하고, `loggedSender` 는 이것 없이는 안 돈다.
+ */
 export const BACKFILL_PURPOSE_PREFIX = 'backfill:';
 
 /** 목적의 규칙 — 4~200자, `@`(이메일) 없이. 맞으면 null, 아니면 까닭 */
@@ -208,7 +214,7 @@ export function sendLogged({ sql, purpose, actor, json = false, stdin = 'ignore'
 }
 
 /**
- * 한 번 돌리는 동안 여러 SQL 을 보내는 쪽(원격 백필)의 손 — **문장마다** `sendLogged` 를 탄다.
+ * 한 번 돌리는 동안 여러 SQL 을 보내는 쪽(원격 백필)의 손 — **문장마다** `sendLogged` 를 탄다. 목적은 `backfill:` 로 연다.
  *
  * 돌려주는 `send` 는 본 질의의 stdout 을 낸다. 적지 못했거나 SQL 이 실패하면 던진다 — 앞의 `execFileSync` 와 같다.
  * `tally` 는 보낸 문장 · 결과까지 적힌 문장의 수다. 둘이 같아야 접속기록이 그 실행을 다 덮은 것이다.
@@ -218,6 +224,9 @@ export function sendLogged({ sql, purpose, actor, json = false, stdin = 'ignore'
 export function loggedSender({ purpose, actor = currentActor(), run = runSupabase }) {
   const problem = purposeProblemOf(purpose);
   if (problem !== null) throw new Error(problem);
+  if (!purpose.startsWith(BACKFILL_PURPOSE_PREFIX)) {
+    throw new Error(`원격 백필의 목적은 「${BACKFILL_PURPOSE_PREFIX}」 로 연다(ADR 0265)`);
+  }
 
   const tally = { sent: 0, logged: 0 };
   const send = (sql) => {
