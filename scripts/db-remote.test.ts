@@ -236,17 +236,22 @@ describe('접속기록을 거쳐 보내는 길', () => {
     });
   });
 
-  it('원격에 SQL 을 보내는 손은 이 파일 하나다 — 원격 백필 두 시험도 이 길을 탄다(G-179)', () => {
+  it('`--linked` 를 코드로 든 파일은 이 파일과 그 시험뿐이다 — 원격 백필 두 시험도 이 길을 탄다(G-179)', () => {
     const root = resolve(__dirname, '..');
-    /* `--linked` 를 글자값(작은 · 큰따옴표)으로 든 파일 — 주석의 `db query --linked` 는 안 센다 */
-    const direct = execFileSync('git', ['grep', '-lE', '[\'"]--linked[\'"]', '--', '*.ts', '*.tsx', '*.mjs', '*.js', '*.cjs'],
+    /* `--linked` 가 든 줄 가운데 주석 줄(`*` · `//` 로 여는 줄)은 뺀다 — 글자값 · 템플릿 · 한 문자열 안 · `--linked=` 모두 센다 */
+    const hits = execFileSync('git', ['grep', '-nE', '-e', '--linked([^a-z_-]|$)', '--', '*.ts', '*.tsx', '*.mjs', '*.js', '*.cjs', '*.sh', '*.json', '*.yml'],
       { cwd: root, encoding: 'utf8' }).trim().split('\n').filter(Boolean);
-    expect(direct.sort()).toEqual(['scripts/db-remote.mjs', 'scripts/db-remote.test.ts']);
+    const direct = [...new Set(hits
+      .map((hit) => /^([^:]+):\d+:(.*)$/.exec(hit)!)
+      .filter(([, , line]) => !/^\s*(\*|\/\/|\/\*)/.test(line))
+      .map(([, file]) => file))].sort();
+    expect(direct).toEqual(['scripts/db-remote.mjs', 'scripts/db-remote.test.ts']);
 
     for (const file of ['src/lib/input/backfill-chart.live.test.ts', 'src/lib/input/backfill-reading-chart.live.test.ts']) {
       const text = readFileSync(join(root, file), 'utf8');
       expect(text, file).toMatch(/import \{[^}]*\bloggedSender\b[^}]*\} from '@\/scripts\/db-remote\.mjs'/);
-      expect(text, file).toContain('expect(remote.tally.logged).toBe(remote.tally.sent)');
+      expect(text, file).toMatch(/^\s*return remote\.send\(statement\);|^\s*const rows = jsonRowsOf\(remote\.send\(statement\)\);/m);
+      expect(text, file).toMatch(/^\s*expect\(remote\.tally\.logged\)\.toBe\(remote\.tally\.sent\);/m);
     }
   });
 });
