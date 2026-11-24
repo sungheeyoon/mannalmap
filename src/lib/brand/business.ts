@@ -84,7 +84,7 @@ export const BUSINESS: { readonly [K in Exclude<BusinessKey, 'email'>]: string }
  * 통신판매업 신고증의 신고기관 — 운영자가 알려주면 넣는다. 화면의 줄이 아니라 Google Play 「개발자 연락처」(사업자등록번호 · 통신판매업
  * 신고번호와 함께)에 적는 값이다
  */
-export const MAIL_ORDER_AUTHORITY = '';
+export const MAIL_ORDER_AUTHORITY = '인천광역시 부평구청';
 
 /**
  * 처리방침의 「개인정보처리자 · 보호책임자 · 연락처」 — 웹 `/privacy` 와 앱의 처리방침이 같은 값을 읽는다(ADR 0232). 베타 일정 줄의
