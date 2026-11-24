@@ -77,13 +77,23 @@ select status, count(*) from public.push_delivery group by status;
 
 | # | 무엇 | 어디서 | 넣는 자리 · 이름 |
 | --- | --- | --- | --- |
-| 1 | Firebase 프로젝트를 만든다(Google Analytics 는 켜지 않아도 된다). Firebase 약관 · Data Processing and Security Terms 를 받아들인다 | <https://console.firebase.google.com> | — |
-| 2 | 그 프로젝트에 **안드로이드 앱**을 등록한다 — 패키지 이름 `com.mannalmap.app`(`mobile/app.json`) | 프로젝트 설정 → 일반 → 앱 추가 | — |
-| 3 | `google-services.json` 을 받는다 | 2 의 끝 화면 · 프로젝트 설정 → 일반 | **EAS 파일 환경값** `GOOGLE_SERVICES_JSON`(`production` · `preview`, 공개 범위 Secret) — Expo 대시보드의 환경 변수에서 파일로 올린다(「a secret file variable that is not readable outside of Expo servers」, <https://docs.expo.dev/eas/environment-variables/manage/> 「Secrets and file variables」, 2026-11-07 확인). 받은 파일은 올린 뒤 지운다. `mobile/app.config.js` 가 이 값이 있을 때만 `android.googleServicesFile` 을 넣고 알림을 켠다 |
-| 4 | **서비스 계정 키(JSON)** 를 만든다 — Firebase 의 기본 서비스 계정(`firebase-adminsdk-…`)이나 「Firebase Cloud Messaging API Admin」 역할만 준 새 계정. Play 결제 키(`GOOGLE_PLAY_SERVICE_ACCOUNT_JSON`)와 따로다 | 프로젝트 설정 → 서비스 계정 → 새 비공개 키 생성 | **Vercel Production** 환경 변수 `FCM_SERVICE_ACCOUNT_JSON` — JSON 한 덩이 그대로(줄바꿈이 `\n` 글자여도 된다). 새면 `docs/ops/runbook/secret-leak.md` 「비밀이 새면」의 그 줄 |
-| 5 | FCM HTTP v1 API 가 켜져 있는지 본다(새 프로젝트는 기본으로 켜져 있다) | Google Cloud 콘솔 → API 및 서비스 → 「Firebase Cloud Messaging API」 | — |
-| 6 | 4 를 넣은 뒤 웹을 다시 배포한다(`docs/ops/runbook/deploy.md` 「배포」) | Vercel | — |
-| 7 | 3 을 넣은 뒤 **새 앱 빌드**를 낸다 — OTA 가 없다(ADR 0221 덧) | `docs/ops/runbook/mobile-release.md` 「빌드와 제출」 | — |
+| 1 | **끝(2026-11-24)** — Firebase 프로젝트를 만든다(Google Analytics 는 켜지 않아도 된다). Firebase 약관 · Data Processing and Security Terms 를 받아들인다 | <https://console.firebase.google.com> | — |
+| 2 | **끝(2026-11-24)** — 그 프로젝트에 **안드로이드 앱**을 등록한다 — 패키지 이름 `com.mannalmap.app`(`mobile/app.json`) | 프로젝트 설정 → 일반 → 앱 추가 | — |
+| 3 | **끝(2026-11-24)** — `google-services.json` 을 받는다 | 2 의 끝 화면 · 프로젝트 설정 → 일반 | **EAS 파일 환경값** `GOOGLE_SERVICES_JSON`(`production` · `preview`, 공개 범위 Secret) — Expo 대시보드의 환경 변수에서 파일로 올린다(「a secret file variable that is not readable outside of Expo servers」, <https://docs.expo.dev/eas/environment-variables/manage/> 「Secrets and file variables」, 2026-11-07 확인). 받은 파일은 올린 뒤 지운다. `mobile/app.config.js` 가 이 값이 있을 때만 `android.googleServicesFile` 을 넣고 알림을 켠다. **Secret 은 EAS 의 빌드 기계에서만 읽혀 `--local` 빌드에는 안 든다**(`mobile-release.md` 「무료 빌드 횟수가 떨어지면」) |
+| 4 | **끝(2026-11-24)** — **서비스 계정 키(JSON)** 를 만든다 — Firebase 의 기본 서비스 계정(`firebase-adminsdk-…`)이나 「Firebase Cloud Messaging API Admin」 역할만 준 새 계정. Play 결제 키(`GOOGLE_PLAY_SERVICE_ACCOUNT_JSON`)와 따로다. 조직 정책이 키 만들기를 막으면 `docs/ops/runbook/credits.md` 「운영의 실제 값」의 「키를 다시 만들 때」 차례 | 프로젝트 설정 → 서비스 계정 → 새 비공개 키 생성 | **Vercel Production** 환경 변수 `FCM_SERVICE_ACCOUNT_JSON` — JSON 한 덩이 그대로(줄바꿈이 `\n` 글자여도 된다). 새면 `docs/ops/runbook/secret-leak.md` 「비밀이 새면」의 그 줄 |
+| 5 | **끝(2026-11-24)** — FCM HTTP v1 API 가 켜져 있는지 본다(새 프로젝트는 기본으로 켜져 있다) | Google Cloud 콘솔 → API 및 서비스 → 「Firebase Cloud Messaging API」 | — |
+| 6 | **끝(2026-11-24)** — 4 를 넣은 뒤 웹을 다시 배포한다(`docs/ops/runbook/deploy.md` 「배포」) | Vercel | — |
+| 7 | **남았다** — 3 을 넣은 뒤 **새 앱 빌드**를 낸다 — OTA 가 없다(ADR 0221 덧). 2026-11-24 는 EAS 의 이달 무료 Android 빌드가 다 써 클라우드 빌드가 서지 않았다(12-01 에 풀린다). 로컬 빌드로는 3 이 안 든다 | `docs/ops/runbook/mobile-release.md` 「빌드와 제출」 | — |
+
+**운영의 실제 값(2026-11-24 — 운영자 지시로 조율자가 운영자 브라우저 · Cloud Shell 에서 만들었다).** 1 ~ 6 이 섰다 — 웹 재배포 `ccfa3e10`(2026-11-24 21:36 KST, #770 그날 댓글). 7(새 빌드)과 실기기 확인(아래 「앱 푸시의 확인」, #770 D)이 남았다.
+
+- **Firebase 프로젝트**: 새로 만들지 않고 기존 Cloud 프로젝트 「My First Project」(id `project-274ffaa2-8d30-41bc-b32` · 번호 `278971727146`, 운영자 개인 계정 — 구글 로그인 · Play 결제가 든 그 프로젝트, `credits.md` 「운영의 실제 값」)에 Firebase 를 붙였다. 요금제 Blaze(그 Cloud 프로젝트의 결제 계정을 같이 쓴다), Google 애널리틱스 끔
+- **Firebase 프로젝트는 절대 삭제하지 않는다**(운영자 결정 2026-11-24). Firebase 를 붙이는 것은 되돌릴 수 없고, **Firebase 프로젝트를 지우면 그 Cloud 프로젝트가 함께 지워진다** — 구글 로그인 OAuth 클라이언트 · Play 결제 Pub/Sub(`play-billing` · `play-billing-push`) · 서비스 계정들(`eas-submit@` · `play-billing@` · `play-rtdn-push@` · `fcm-sender@`)이 다 간다. 알림을 끄려면 프로젝트가 아니라 Vercel 의 `FCM_SERVICE_ACCOUNT_JSON` 을 비우거나 그 키를 지운다
+- **안드로이드 앱**: `com.mannalmap.app`, 닉네임 「만날지도 Android」, SHA 지문은 넣지 않았다(FCM 에는 안 든다)
+- **`GOOGLE_SERVICES_JSON`**: EAS 파일 환경값, `preview` · `production`, 공개 범위 Secret — EAS CLI 로 파일 형(`--type file`)으로 올리고(2026-11-24 21:04 KST) 받은 파일은 지웠다
+- **서비스 계정**: 전용 `fcm-sender@…`, 역할은 `roles/firebasecloudmessaging.admin`(Firebase Cloud Messaging API Admin) 하나. 사용자 관리 키는 하나(id 앞 8자 `3626eb79`), 키 파일 사본은 남기지 않았다. 키는 `credits.md` 「키를 다시 만들 때」 차례로 만들었다 — 조직 정책 `iam.disableServiceAccountKeyCreation` 을 이 프로젝트에서만 풀고 → 키 → 재정의 삭제(유효 정책 enforce True 확인) → `roles/orgpolicy.policyAdmin` 회수
+- **`FCM_SERVICE_ACCOUNT_JSON`**: Vercel Production, sensitive(2026-11-24 21:33 KST) — 값을 바꾸면 다시 배포해야 읽힌다
+- **FCM API**(`fcm.googleapis.com`): 켜져 있음을 봤다. `notice-v18` 은 운영에 게시돼 있다(2026-11-24 배포 확인)
 
 ### 앱 푸시의 확인
 
