@@ -108,7 +108,7 @@ select is(
 select throws_ok(
   format($$select * from public.operator_hold_reading_refund(%L, 3, 'withdrawal', 12900, gen_random_uuid())$$,
          (select order_id from ord where label = 'three')),
-  '22023', '걷을 수 있는 회차는 2장입니다.', '쓴 회차는 잠그지 못한다 — 안 쓴 것은 둘이다');
+  '22023', '환불할 수 있는 잔여 풀이권은 2장입니다.', '쓴 회차는 잠그지 못한다 — 안 쓴 것은 둘이다');
 select throws_ok(
   format($$select * from public.operator_hold_reading_refund(%L, 1, 'withdrawal', 5000, gen_random_uuid())$$,
          (select order_id from ord where label = 'pending')),
