@@ -35,6 +35,8 @@ select model, prompt_version, count(*), max(created_at) as 마지막
 from public.reading_run group by 1, 2 order by 4 desc;
 ```
 
+**`model-timeout` 은 복구 크론의 8분 기한이다**(ADR 0020) — 풀이는 OpenAI background 응답 하나이고, 맡긴 요청의 300초 `after()` 는 진행 표시(몇 번째 단락)만 한다. 300초에 그 함수가 끊기면 앱의 단락 표시가 멈추지만 생성은 provider 쪽에서 계속되고, 완성은 webhook 이나 1분마다의 크론이 거둔다. 8분 안에 못 거두면 크론이 「만드는 데 너무 오래 걸렸습니다」로 닫고 풀이권을 돌려주며, 그 뒤 도착한 완성본은 버린다. 2026-11-25 한 건이 그랬다 — 응답이 약 14분 반 걸렸고 같은 시간대 다른 시도도 235초로 평소(60~110초)보다 길었다. provider 가 느린 날의 일이다.
+
 **여기서는 호출 수만 센다.** 쓴 토큰과 하루 상한은 아래 「AI 비용 한도」가 들고, 금액은
 provider 쪽에 있다.
 
