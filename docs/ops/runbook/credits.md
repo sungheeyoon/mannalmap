@@ -175,8 +175,8 @@ npm run db:remote -- --purpose "풀이권 장부와 셈의 대조" \
 | 경우 | 사유 | 환불수수료 |
 | --- | --- | --- |
 | 청약철회 기간 안의 요청 · 기점을 확인할 수 없는 요청 | 청약철회(기간 내) `withdrawal` | 없음 |
-| 청약철회 기간이 지난 뒤의 단순 변심 요청(탈퇴 전) | 미사용분 환불(청약철회 기간 경과 후 · 10% 공제) `unused` | 10% |
-| 자진 탈퇴 뒤의 청구 | 주문이 지워져 이 화면으로 확보하지 못한다 — 길이 아직 없다(G-21, [기록](../../product/gaps/records/g-21.md) 「판매를 열 때 남은 것」). 금액 규칙은 위 줄과 같다 | 10% |
+| 청약철회 기간이 지난 뒤의 단순 변심 요청(탈퇴 전) | 미사용분 환불(청약철회 기간 경과 후 · 10% 공제) `unused` — **지금은 고르지 않는다**: 받은 날을 확인할 길이 없어(ADR 0268) 위 줄 `withdrawal` 로 간다. 판에는 선택지가 남아 있고 고르면 DB 가 10% 를 뺀다 | 10%(지금은 쓰지 않음) |
+| 자진 탈퇴 뒤의 청구 | 주문이 지워져 이 화면으로 확보하지 못한다 — 길이 아직 없다(G-21, [기록](../../product/gaps/records/g-21.md) 「판매를 열 때 남은 것」). 금액 규칙은 위 두 줄과 같다 — 지금은 공제 없음(ADR 0268) | 없음(ADR 0268 동안) |
 | 중복 결제 | `duplicate` | 없음 |
 | 생성 실패 · 계약과 다른 제공 | 미제공(장애) `failure` — 쓴 회차까지면 아래 SQL 차례 | 없음 |
 | 심사 결제 · 회사의 이용 정지 · 해지 · 서비스 종료 | 그 밖 `other` | 없음 |
@@ -386,7 +386,7 @@ update retention.reading_payment set hold_reason = null, held_at = null where or
 | 4 | 안 쓴 구매를 Play Console 에서 **전액 환불** — 주문 환불 화면의 「이용 자격 취소」에서 「자격 삭제」를 켠다(아래 운영자 환불 2) | 통지 뒤 그 묶음의 장수가 모두 회수된다, 환불 줄 사유 `store`, `store_purchase_void` 1줄 |
 | 5 | 3장 중 1장을 쓰고 전액 환불 | 2장만 회수되고 쓴 1장은 그대로, 보유 수가 음수가 아니다. 다른 묶음을 함께 가진 계정이면 모자란 1장이 늦게 산 묶음에서 회수되고, 산 몫이 없으면 2장에서 멈춘다(바닥 0) |
 | 6 | 산 계정을 탈퇴시킨 뒤 전액 환불 — **처분이 끝난 뒤에** 환불한다. `departed` 는 결제가 보관(`retention.reading_payment`)으로 옮겨진 뒤에만 나온다(`supabase/migrations/20270114090000_a_store_refund_takes_back_what_the_payment_gave.sql`) — 크론 `account-disposal` 이 탈퇴 신청 하루 뒤의 매시 23분에 처분한다. 그 전에 환불하면 아직 회원의 결제라 4 · 5 처럼 회수된다 | 무효 결과 `departed`, `retention.reading_refund_after_leave` 에 사유 `store` 1줄 — `departed` 는 로그에도 `store_purchase_void` 에도 안 남으므로 그 보관 줄(`provider_refund_id` 가 `gpv:` 로 시작)로 본다. 처분은 `account_disposal.disposed_at` 으로 먼저 본다(2026-11-24 통과) |
-| 7 | 지급이 안 선 구매(서버 키를 비운 Preview 등)를 소비하지 않은 채 둔다 | **라이선스 테스터는 3분 뒤** Google 이 환불한다(일반 구매는 3일 — [Google 결제 테스트](https://developer.android.com/google/play/billing/test) 「Test consumable products」) — Play Console 주문이 환불됨 · 취소 메일. 우리 쪽은 `store_purchase` 가 없으므로 지급 · 회수가 없다 — 무효 통지가 오면 결과는 `unknown` 이고 `store_purchase_void` 는 늘지 않는다(통지가 오는지는 문서에 없다). 날짜를 기다리지 않고 그날 한다 |
+| 7 | 지급이 안 선 구매를 소비하지 않은 채 둔다 — **결제 검증 키(서버 환경값)가 없는 격리 서버**에 시험 앱을 물려 산다. `preview` 빌드도 운영 서버를 보므로 그대로는 안 된다. 운영 서버가 그 주문의 Play 구매 통지를 받아 지급 · 소비하지 않게 하는 조건도 먼저 세운다 | **라이선스 테스터는 미승인 3분 뒤** Google 이 환불한다(일반 구매는 3일 — [Google 결제 테스트](https://developer.android.com/google/play/billing/test) 「Test consumable products」) — Play Console 주문이 환불됨 · 취소 메일. 우리 쪽은 `store_purchase` 가 없으므로 지급 · 회수가 없다 — 무효 통지가 오면 결과는 `unknown` 이고 `store_purchase_void` 는 늘지 않는다(통지가 오는지는 문서에 없다). 날짜를 기다리지 않고 그날 한다 |
 | 8 | 구매 제한을 건 계정으로 결제를 시도 | 앱에 「지금은 풀이권을 구매할 수 없어요.」, 결제창이 안 열린다 |
 | 9 | 운영자 환불 — 확보(예: 3장 묶음에서 1장 · 청약철회) → Play Console 에서 **일부 환불** → 확정 | 콘솔의 일부 환불 칸이 **세전 금액**인지 본다 — 2026-11-22: 칸은 「환불 금액(세금 제외)」이고 우리 주문의 세금이 0원이라 확보 금액 그대로가 「세금 포함」과 같았다. 세금이 붙은 주문이면 확보 금액 ÷ 1.1 을 넣고, 이용자에게 돌아간 금액이 확보 금액과 같은지 Play 주문의 환불 내역으로 본다. 다르면 멈추고 조율자에게. 본 결과로 운영자 환불 2 의 금액 넣는 법을 고정한다 |
 | 10 | 첫 구매 뒤 Vercel 로그 | Google 의 원 응답에 `purchaseState` 가 실렸는지 — 로그에 `store purchase: unreadable purchase state` · `quantity is not one` 이 0 줄이다(있으면 지급이 안 선 결제다 — 멈추고 조율자에게, ADR 0253). `store purchase: no purchase time` 도 0 줄이다(있으면 그 구매의 기한을 지급 시각으로 늦게 잡는다 — 조율자에게) |
