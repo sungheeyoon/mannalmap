@@ -202,9 +202,11 @@ cd mobile && taskset -c 0-7 nice -n 19 npx eas-cli@latest build --local --profil
 2. **CPU · 메모리를 묶는다** — 묶지 않으면 Gradle · clang 이 16코어를 다 써서 Windows 터미널이 멈추고 재부팅했다. `taskset -c 0-7` · `nice` · Gradle 일꾼 넷. 그래도 C++ 컴파일 때 가용 메모리가 1GB 아래 · 스왑 4GB 까지 갔다 — 다른 무거운 일과 겹치지 않는다.
 3. **ABI 는 둘(arm64 · armv7)** — x86 둘을 빼 컴파일을 줄였다. Play 는 「지원 기기 · 전화 2대 줄어듦」 경고 하나를 띄운다(에뮬레이터 · 일부 크롬북 몫). 출시 판에 x86 을 넣을지는 그때 정한다. **그래서 x86_64 에뮬레이터는 이 빌드를 Play 에서 못 받는다** — 2026-11-23 Play 는 에뮬레이터(API 37 x86_64)에 내부 테스트 11 대신 비공개 테스트 6(EAS 빌드, x86 포함)만 줬다. 에뮬레이터로 새 빌드를 재려면 x86_64 를 넣어 굽거나 실기기로 본다.
 
-빌드 시간은 받는 것을 빼고 약 25분이었다.
+빌드 시간은 받는 것을 빼고 약 25분이었다(2026-11-24 versionCode 13 은 약 12분).
 
-**공개 범위 Secret 인 EAS 환경값은 로컬 빌드에 안 든다** — CLI 가 읽는 것은 「Plain text」 · 「Sensitive」 뿐이고(빌드 첫머리의 `Environment variables with visibility "Plain text" and "Sensitive" loaded …` 줄에 이름이 없다), Secret 은 EAS 의 빌드 기계에서만 읽힌다. 그래서 `GOOGLE_SERVICES_JSON`(앱 푸시, `push.md`)이 든 빌드는 클라우드로 굽는다 — 로컬로 구우면 `app.config.js` 가 알림을 끈 채 빌드가 선다. 또 **한도에 막혀 서지 않은 클라우드 빌드도 원격 versionCode 를 하나 올린다**(2026-11-24 11 → 12, 아래 표) — 다음 빌드는 13 이다.
+**앱 푸시 값(`GOOGLE_SERVICES_JSON`)을 넣어 구울 때**(2026-11-24 versionCode 13) — Firebase 콘솔(프로젝트 설정 → 일반 → 「google-services.json 다운로드」)에서 파일을 다시 받아 저장소 밖(`~/opt/secrets/`)에 두고, 위 마지막 명령 앞에 `GOOGLE_SERVICES_JSON=<그 파일의 절대 경로>` 를 더한다. 빌드 뒤 파일은 지운다.
+
+**공개 범위 Secret 인 EAS 환경값은 로컬 빌드에 안 든다** — CLI 가 읽는 것은 「Plain text」 · 「Sensitive」 뿐이고(빌드 첫머리의 `Environment variables with visibility "Plain text" and "Sensitive" loaded …` 줄에 이름이 없다), Secret 은 EAS 의 빌드 기계에서만 읽힌다. 그래서 `GOOGLE_SERVICES_JSON`(앱 푸시, `push.md`)을 그대로 두고 로컬로 구우면 `app.config.js` 가 알림을 끈 채 빌드가 선다 — 위 「앱 푸시 값을 넣어 구울 때」처럼 파일 경로를 명령 앞에 준다. eas-cli 가 「not checked in … won't be uploaded to the builder」 경고를 내지만 로컬 빌드에는 포함된다. 포함됐는지는 로그의 `"readingPush": true` · `Task :app:processReleaseGoogleServices`, AAB 의 `base/assets/app.config` 에 `"readingPush":true` 와 `resources.pb` 에 `google_app_id` · `gcm_defaultSenderId` 가 있는지로 확인한다(2026-11-24). 또 **한도에 막혀 서지 않은 클라우드 빌드도 원격 versionCode 를 하나 올린다**(2026-11-24 11 → 12, 아래 표) — 그래서 다음 빌드가 13 이 됐다.
 
 **맥에서 굽는 법**(2026-11-21 versionCode 11 — Apple Silicon 12코어 · 18GB). 맥에는 JDK 도 Android SDK 도 없었다(`/usr/libexec/java_home` 이 「Unable to locate a Java Runtime」). 관리자 권한 없이 깔았다 — JDK 는 `brew install openjdk@17`(keg-only, 시스템 `java` 를 안 바꾼다), SDK 는 Google 의 `commandlinetools-mac-*_latest.zip` 을 `~/opt/android-sdk/cmdline-tools/latest` 에 풀고 위와 같은 `sdkmanager` 셋. 맥에는 `taskset` 이 없고 `/tmp` 가 tmpfs 가 아니라 함정 1 · 2 의 묶음은 빼도 된다 — `nice` 와 Gradle 일꾼 여섯으로 다른 일과 함께 돌았다. Gradle 은 7분, 전체는 약 10분이었다.
 
@@ -235,12 +237,12 @@ cd mobile && nice -n 10 npx eas-cli@latest build --local --profile production --
 
 **앱 빌드와 트랙의 지금 상태는 이 절 하나가 원본이다**(ADR 0256) — 간극 대장 · 다른 런북 · #770 은 값을 다시 적지 않고 이 절을 가리킨다. 빌드를 굽거나
 트랙에 올린 날 이 절을 고치고, 그 일로 끝 조건이 찬 간극 대장의 G 줄도 같은 PR 에서 고친다. 콘솔의 차례(계정 · 상품 · 테스터 · 14일)는
-`docs/ops/runbook/play-console.md` 「지금 어디까지 왔나」다. 빌드마다의 링크 · 서명 대조는 #770 의 그날 댓글이다. 지금까지의 빌드(11 까지)는 모두 FCM 값(G-150 — 값은 2026-11-24 에 넣었다) ·
-대표전화 · 신고기관(`play-console.md` 차례 1 · 3) 없이 구웠다.
+`docs/ops/runbook/play-console.md` 「지금 어디까지 왔나」다. 빌드마다의 링크 · 서명 대조는 #770 의 그날 댓글이다. 지금까지의 빌드는 모두 대표전화 · 신고기관(`play-console.md` 차례 1 · 3) 없이 구웠고, 11 까지는 FCM 값(G-150)도 없었다 — 13 이
+FCM 값이 든 첫 빌드다.
 
 | 트랙 | 지금 버전 | 올린 날 |
 | --- | --- | --- |
-| Play 내부 테스트 | `11 (1.0.0)` — 아래 표 첫 줄. 테스터 목록은 `play-console.md` 「지금 어디까지 왔나」 | 2026-11-21 |
+| Play 내부 테스트 | `13 (1.0.0)` — 아래 표 첫 줄. 테스터 목록은 `play-console.md` 「지금 어디까지 왔나」 | 2026-11-24 |
 | Play 비공개 테스트 - Alpha | `6 (1.0.0)` | 2026-11-14 |
 | Play 프로덕션 | 없다 — 비공개 테스트 14일 뒤 신청(`play-console.md` 「지금 어디까지 왔나」 13 · 14) | — |
 | EAS 내부 배포(`preview` APK) | `477348f4` — 만료 2026-11-23. 2026-11-02 의 옛 APK 는 앱 안에서 12-01 부터 닫힌다(G-62) | 2026-11-09 |
@@ -248,7 +250,8 @@ cd mobile && nice -n 10 npx eas-cli@latest build --local --profile production --
 
 | versionCode | 빌드 · 커밋 | 날짜 | 올린 곳 | 포함된 것 |
 | --- | --- | --- | --- | --- |
-| 12 | — | 2026-11-24 | 없다 — EAS 클라우드 `production` 이 이달 무료 빌드를 다 써 서지 않고(「This account has used its Android builds from the Free plan this month」) 원격 번호만 올린 빈 번호다. FCM 값이 든 첫 빌드는 12-01 뒤 클라우드로 굽는다(위 「무료 빌드 횟수가 떨어지면」의 Secret 함정) | — |
+| 13 | WSL 로컬 `production`(위 「무료 빌드 횟수가 떨어지면」 명령에 `GOOGLE_SERVICES_JSON` 파일 경로를 더해) · `712066cc` — AAB sha256 `9d048338edc179f97946a2918f6590aabb5d943b18c1eede08c939947e5842d6` · 49,603,960 B · ABI arm64-v8a · armeabi-v7a · 업로드 키 서명 | 2026-11-24 22:06(서울, 게시) | Play 내부 테스트 — 콘솔 「새 버전 만들기」 → `input[accept=".aab"]` 에 파일 → 「다음」 → 「저장 및 출시」 → 확인 창의 「저장 및 출시」(두 번째 단추 — 첫 단추만 누르면 임시 출시로 남는다). 「내부 테스터에게 제공됨」, 출시 노트 없음, 지원 기기 수 변화 없음 | 앱 푸시(FCM, G-150) — 풀이 완성 알림이 켜진 첫 빌드, 실기기 확인은 남았다(`push.md` 「앱 푸시의 확인」). 11 뒤(`c88407b1..`)의 앱 쪽 — 결제 내역 두 탭(#1219) · 가입 문의 일정 줄(#1261) · 확인 상자의 자리(#1262) |
+| 12 | — | 2026-11-24 | 없다 — EAS 클라우드 `production` 이 이달 무료 빌드를 다 써 서지 않고(「This account has used its Android builds from the Free plan this month」) 원격 번호만 올린 빈 번호다 | — |
 | 11 | 맥 로컬 `production`(위 「무료 빌드 횟수가 떨어지면」 끝의 맥 문단) · `c88407b1` — AAB sha256 `9d5510ad6b63372f0ce6fbe60f373d1925ad20f7eb8ed668ca3f4ab8a0622fbf` · 49,600,546 B · ABI arm64-v8a · armeabi-v7a · 업로드 키 서명 | 2026-11-21 13:28 | Play 내부 테스트 — 콘솔에 AAB 파일로 「저장 및 출시」(「내부 테스터에게 제공됨」). 미리보기에 오류 · 경고 없음, 지원 기기 변화 0. 출시 노트 「내부 테스트 빌드 11 — 화면 문구 정리, 풀이권 상점 안정성 개선, 로그인 코드 손질.」 | 10 뒤(`c61303aa..`)의 앱 쪽 — 도움말 공유 답 · 종 딱지 셈(#1176) · 앱 로그인 코드의 불러오기 꼴(#1177) · Play 가격이 묶음 가격과 다른 묶음을 진열에서 뺌(#1188) · 웹 · 앱 한 벌로 모은 판단 · 출생 입력 · 화면 글자(#1196 · #1197 · #1200). #1174 · #1195 · #1209 는 앱에서 보이는 것이 같다 |
 | 10 | 로컬 `production`(위 「무료 빌드 횟수가 떨어지면」) · `c61303aa` | 2026-11-19 | Play 내부 테스트 — 콘솔에 AAB 파일로(`eas submit` 은 403) | 6 뒤의 앱 쪽 — 입력 오류 줄(#1153) · 화면 제목 · 짧은 단추(#1155) · 결제 안내 창 · 미지급 다시 보내기(#1167) · 딱지 · 「⋯」 아이콘 · 누를 자리 48(#1168). #1157 · #1159 는 동작이 같다 |
 | 9 · 8 · 7 | — | 2026-11-19 | 없다 — 실패 · 중단한 빌드가 원격 번호만 올린 빈 번호다 | — |
