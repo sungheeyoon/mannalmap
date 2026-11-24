@@ -53,6 +53,8 @@ describe('session-status — 세션을 열 때 · 인계할 때 찍는 한 장',
     expect(deployShaOf('## 묶음 배포 2026-11-09 — `23770375`')).toBe('23770375');
     // 제목과 확인한 값이 다르면 확인한 값이다 — 제목은 올리기 전에 적은 것일 수 있다
     expect(deployShaOf('## 배포 — `1111111`\n- `meta.gitCommitSha` = `2222222`')).toBe('2222222');
+    // 「배포 SHA」 줄도 그 이름이다 — 2026-11-24 의 두 기록이 이 꼴이었고 그 앞의 `e40b95be` 를 운영으로 읽었다
+    expect(deployShaOf('**재배포 — 앱 푸시의 서버 키를 싣는다**\n- 배포 SHA `ccfa3e10`(main 머리) · `vercel api` 의 `meta.gitCommitSha` 일치')).toBe('ccfa3e10');
   });
 
   it('배포 기록이 아닌 댓글은 SHA 가 있어도 운영 SHA 가 아니다 — 머지 · 확인 · 마이그레이션 시각', () => {
