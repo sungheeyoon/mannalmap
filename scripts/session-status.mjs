@@ -42,7 +42,7 @@ export function titleOf(body) {
 /**
  * 배포 기록 댓글 하나의 운영 SHA — 제목(첫 줄)에 「배포」가 없거나 SHA 가 없으면 null.
  *
- * 기록의 꼴이 댓글마다 다르다. 그래서 확인된 값부터 본다 — 배포의 `meta.gitCommitSha`(「묶음 배포」 2 가 대조하는 값) → 「Production SHA」 줄 →
+ * 기록의 꼴이 댓글마다 다르다. 그래서 확인된 값부터 본다 — 배포의 `meta.gitCommitSha`(「묶음 배포」 2 가 대조하는 값) → 「Production SHA」 · 「배포 SHA」 줄 →
  * 제목의 SHA. 한 댓글에 배포가 둘이면 뒤의 것이 나중 배포다.
  *
  * @param {string} body
@@ -52,7 +52,7 @@ export function deployShaOf(body) {
   if (!titleOf(body).includes('배포')) return null;
   const confirmed = lastMatch(body, new RegExp(`meta\\.gitCommitSha\`?\\s*=\\s*\`(${HEX})\``, 'g'));
   if (confirmed) return confirmed;
-  const named = lastMatch(body, new RegExp(`Production SHA\\s*\`(${HEX})\``, 'gi'));
+  const named = lastMatch(body, new RegExp(`(?:Production|배포) SHA\\s*\`(${HEX})\``, 'gi'));
   if (named) return named;
   return [...firstLineOf(body).matchAll(new RegExp(`\`(${HEX})\``, 'g'))].map((match) => match[1]).find((token) => !MIGRATION_STAMP.test(token)) ?? null;
 }
