@@ -83,9 +83,9 @@ select status, count(*) from public.push_delivery group by status;
 | 4 | **끝(2026-11-24)** — **서비스 계정 키(JSON)** 를 만든다 — Firebase 의 기본 서비스 계정(`firebase-adminsdk-…`)이나 「Firebase Cloud Messaging API Admin」 역할만 준 새 계정. Play 결제 키(`GOOGLE_PLAY_SERVICE_ACCOUNT_JSON`)와 따로다. 조직 정책이 키 만들기를 막으면 `docs/ops/runbook/credits.md` 「운영의 실제 값」의 「키를 다시 만들 때」 차례 | 프로젝트 설정 → 서비스 계정 → 새 비공개 키 생성 | **Vercel Production** 환경 변수 `FCM_SERVICE_ACCOUNT_JSON` — JSON 한 덩이 그대로(줄바꿈이 `\n` 글자여도 된다). 새면 `docs/ops/runbook/secret-leak.md` 「비밀이 새면」의 그 줄 |
 | 5 | **끝(2026-11-24)** — FCM HTTP v1 API 가 켜져 있는지 본다(새 프로젝트는 기본으로 켜져 있다) | Google Cloud 콘솔 → API 및 서비스 → 「Firebase Cloud Messaging API」 | — |
 | 6 | **끝(2026-11-24)** — 4 를 넣은 뒤 웹을 다시 배포한다(`docs/ops/runbook/deploy.md` 「배포」) | Vercel | — |
-| 7 | **빌드는 냈다(2026-11-24) — 실기기 확인이 남았다** — 3 을 넣은 뒤 **새 앱 빌드**를 낸다 — OTA 가 없다(ADR 0221 덧). 2026-11-24 는 EAS 의 이달 무료 Android 빌드가 다 써, Firebase 콘솔에서 받은 파일로 WSL 에서 로컬로 구워(versionCode 13) Play 내부 테스트에 냈다. 확인은 아래 「앱 푸시의 확인」 | `docs/ops/runbook/mobile-release.md` 「지금 나간 빌드」 | — |
+| 7 | **끝(2026-11-25) — 빌드를 냈고 운영에서 알림이 섰다** — 3 을 넣은 뒤 **새 앱 빌드**를 낸다 — OTA 가 없다(ADR 0221 덧). 2026-11-24 는 EAS 의 이달 무료 Android 빌드가 다 써, Firebase 콘솔에서 받은 파일로 WSL 에서 로컬로 구워(versionCode 13) Play 내부 테스트에 냈다. 확인은 아래 「앱 푸시의 확인」 끝의 2026-11-25 줄 | `docs/ops/runbook/mobile-release.md` 「지금 나간 빌드」 | — |
 
-**운영의 실제 값(2026-11-24 — 운영자 지시로 조율자가 운영자 브라우저 · Cloud Shell 에서 만들었다).** 1 ~ 6 이 섰다 — 웹 재배포 `ccfa3e10`(2026-11-24 21:36 KST, #770 그날 댓글). 7 의 새 빌드는 versionCode 13 으로 같은 날 Play 내부 테스트에 냈고(`mobile-release.md` 「지금 나간 빌드」), 실기기 확인(아래 「앱 푸시의 확인」, #770 D)이 남았다.
+**운영의 실제 값(2026-11-24 — 운영자 지시로 조율자가 운영자 브라우저 · Cloud Shell 에서 만들었다).** 1 ~ 6 이 섰다 — 웹 재배포 `ccfa3e10`(2026-11-24 21:36 KST, #770 그날 댓글). 7 의 새 빌드는 versionCode 13 으로 같은 날 Play 내부 테스트에 냈고(`mobile-release.md` 「지금 나간 빌드」), 2026-11-25 에뮬레이터에서 알림이 섰다(아래 「앱 푸시의 확인」 끝).
 
 - **Firebase 프로젝트**: 새로 만들지 않고 기존 Cloud 프로젝트 「My First Project」(id `project-274ffaa2-8d30-41bc-b32` · 번호 `278971727146`, 운영자 개인 계정 — 구글 로그인 · Play 결제가 든 그 프로젝트, `credits.md` 「운영의 실제 값」)에 Firebase 를 붙였다. 요금제 Blaze(그 Cloud 프로젝트의 결제 계정을 같이 쓴다), Google 애널리틱스 끔
 - **Firebase 프로젝트는 절대 삭제하지 않는다**(운영자 결정 2026-11-24). Firebase 를 붙이는 것은 되돌릴 수 없고, **Firebase 프로젝트를 지우면 그 Cloud 프로젝트가 함께 지워진다** — 구글 로그인 OAuth 클라이언트 · Play 결제 Pub/Sub(`play-billing` · `play-billing-push`) · 서비스 계정들(`eas-submit@` · `play-billing@` · `play-rtdn-push@` · `fcm-sender@`)이 다 간다. 알림을 끄려면 프로젝트가 아니라 Vercel 의 `FCM_SERVICE_ACCOUNT_JSON` 을 비우거나 그 키를 지운다
@@ -114,4 +114,6 @@ select count(*) from public.app_push_token;
 4. 설정 → 알림 → 「풀이 완성 알림」을 끈다 → 위 SQL 의 수가 하나 준다. 다시 풀이를 맡겨도 알림이 안 선다.
 5. 다른 기기 · 새 설치에서 권한 창에 「허용 안함」 → 풀이는 그대로 되고 알림만 없다. 설정 줄은 꺼짐이다.
 6. Vercel 로그에 `ready-push:` 줄이 이어지면 — `ready-push: token 4xx` 는 서비스 계정 · 범위, `ready-push: send 403 failed` 는 다른 Firebase 프로젝트의 앱(`SENDER_ID_MISMATCH`)이다. 토큰은 지우지 않으니 값을 고치면 다음 풀이부터 간다.
+
+**2026-11-25 운영 확인(에뮬레이터, 운영자 지시).** 1 ~ 4 가 섰다 — 권한 창 → 토큰 1 → 「풀이가 완성됐어요」(이름 · 내용 없음) → 누르면 그 풀이 → 끄면 토큰 0. 5 는 재지 않았다. **x86_64 에뮬레이터는 Play 의 빌드를 못 연다** — 로컬 빌드는 ARM 둘만 넣어 `libreactnative.so` 를 못 찾고 시작하자 꺼진다(`mobile-release.md` 「무료 빌드 횟수가 떨어지면」 3). 그래서 같은 소스를 `ORG_GRADLE_PROJECT_reactNativeArchitectures=x86_64` · `--profile preview`(APK, 운영과 같은 서버 · 업로드 키 서명) · `GOOGLE_SERVICES_JSON` 으로 로컬에서 구워(약 11분) Play 판을 지우고 깔았다 — 카카오 키 해시에 업로드 키가 있어 카카오 로그인이 됐다. 앱 쪽 로그는 남지 않고, 알림이 안 서면 먼저 풀이가 끝났는지(실패면 화면에 「풀이를 끝까지 만들지 못했어요」) 본다 — 알림은 완성에만 간다.
 
