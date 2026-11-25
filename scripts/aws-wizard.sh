@@ -668,7 +668,7 @@ else
     REMAINING+=("Stage 12 — last_outcome 이 succeeded 가 아니다(runbook 「마법사가 멈췄을 때」의 분류 표)")
   else
     count=$(aws --profile "$VERIFY_PROFILE" --region "$REGION" s3api list-objects-v2 --bucket "$bucket" \
-      --prefix "${EXPORT_PREFIX}/" --query KeyCount --output text)
+      --prefix "${EXPORT_PREFIX}/" --query "length(Contents || \`[]\`)" --output text)
     if [[ ! "$count" =~ ^[0-9]+$ || "$count" -lt 1 ]]; then
       warn "버킷에 ${EXPORT_PREFIX}/ 객체가 없다"
       REMAINING+=("Stage 12 — 객체가 없다")
