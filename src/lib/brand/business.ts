@@ -73,8 +73,8 @@ export const BUSINESS: { readonly [K in Exclude<BusinessKey, 'email'>]: string }
   representative: '성희윤',
   registrationNumber: '482-14-02944',
   address: '인천광역시 부평구 부개로 11, 505동 1601호 (부개동, 부개5단지 주공아파트)',
-  /** Play 개인 개발자 계정을 만드는 날 발급 — 운영자가 알려주면 넣는다(ADR 0246) */
-  phone: '',
+  /** 운영자 휴대폰 — Play 공개 개발자 전화와 같은 번호다(ADR 0246). 바꾸면 웹은 배포로, 앱은 새 AAB 로 나간다 */
+  phone: '010-4131-2898',
   mailOrderNumber: '제2026-인천부평-1748호',
   hostingProvider: 'Vercel Inc.',
   disclosureUrl: 'https://www.ftc.go.kr/bizCommPop.do?wrkr_no=4821402944',

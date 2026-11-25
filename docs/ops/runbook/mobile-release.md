@@ -121,7 +121,7 @@ npx eas-cli@latest env:list production --format short
 | `EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID` · `_URL_SCHEME` | 없다 — Google iOS 클라이언트가 먼저다 | **iOS 빌드 전에 `production` 에 넣는다** — `app.config.js` 가 이 값으로 URL 스킴을 세운다 |
 | `EXPO_PUBLIC_KAKAO_NATIVE_APP_KEY` | 있다 — `production` · `preview`(2026-11-05, #770). 이 값이 포함된 첫 빌드는 안드로이드 `preview` `63d07224`(2026-11-07)이고, 그 뒤의 `production` 빌드도 같은 값으로 굽는다(아래 「지금 나간 빌드」). iOS 빌드는 아직 없다(`docs/ops/runbook/kakao-login.md` 「카카오 로그인을 켜는 차례」 10) | 카카오 단추가 안 서고 `app.config.js` 가 카카오 플러그인을 뺀다. 넣으면 **새 빌드**가 든다 — URL 스킴이 빌드에 박힌다 |
 | `GOOGLE_SERVICES_JSON`(**파일** 환경값, ADR 0236) | 있다 — `production` · `preview`, 공개 범위 Secret(2026-11-24, `docs/ops/runbook/push.md` 「운영의 실제 값」). **Secret 은 로컬 빌드에 안 들어온다** — 로컬로 구울 때는 파일 경로를 따로 준다(아래 「무료 빌드 횟수가 떨어지면」) | 풀이 완성 알림이 꺼진다 — 권한을 안 묻고 설정의 알림 줄이 안 선다. 풀이는 그대로. 넣으면 **새 빌드**가 든다 — `google-services.json` 이 빌드에 든다 |
-| 사업자 정보 | 환경값이 아니다 — 웹과 같은 상수 `BUSINESS`(`src/lib/brand/business.ts`)가 번들에 든다(ADR 0232). EAS 에 남은 `EXPO_PUBLIC_BUSINESS_*` 여덟은 아무도 안 읽는다 — 지운다(#770 B) | 상수의 빈 칸(대표전화)만 줄이 안 선다 |
+| 사업자 정보 | 환경값이 아니다 — 웹과 같은 상수 `BUSINESS`(`src/lib/brand/business.ts`)가 번들에 든다(ADR 0232). EAS 에 남은 `EXPO_PUBLIC_BUSINESS_*` 여덟은 아무도 안 읽는다 — 지운다(#770 B) | 상수의 빈 칸은 줄이 안 선다 — 대표전화는 2026-11-26 에 찼고 그 뒤 굽는 AAB 부터 선다(`play-console.md` 차례 3) |
 
 **`preview` 빌드는 운영 DB 에 쓴다. `development` 빌드가 어디를 보는지는 Metro 를 띄운 자리의 `mobile/.env.local` 이 정한다** — 운영 값이면 운영 DB 다. 시험 계정의 규칙은 `docs/agents/delegation/local-env.md` 「로컬 환경의 함정」 그대로다.
 
