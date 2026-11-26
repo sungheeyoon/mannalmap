@@ -193,7 +193,6 @@ flowchart LR
 | --- | --- | --- |
 | **등급 0~4** | 되돌릴 수 있는지로 나눈 권한 단계. 0 읽기 · 1 로컬 수정 · 2 밖으로 내되 되돌릴 수 있게 · 3 사람이 답한 뒤 · 4 안 함 | [권한 등급](agents/delegation/permissions.md) |
 | **등급 3 을 밟고 값을 적는다** | 등급 3 의 일을 한 뒤 본 결과를 기록한다는 뜻. 어느 것을 묻고 어느 것을 묻지 않나는 원본이 정해요 | [ADR 0093](adr/0093-tier-three-locks-turn-on-at-official-operation.md) |
-| **공식 운영에 들어가면 켜는 잠금** | 공개 출시에 맞춰 켠 확인 목록 — 도구 설정의 `ask` 와 같은 목록이에요 | [권한 등급](agents/delegation/permissions.md) |
 | **운영 베타** | 첫 단계. 테스트 코드로 초대받은 사람이 쓰던 단계예요 | [`docs/product/prd/roadmap.md` §7.0](product/prd/roadmap.md) |
 | **(지금)** | 출시 단계 표에서 현재 단계를 가리키는 표시. CI 와 권한 시험이 이 표시를 읽어요 | [`docs/product/prd/roadmap.md` §7.0](product/prd/roadmap.md) |
 | **채팅 안전 베타 · 공개 출시** | 운영 베타 다음 단계들. 공개 출시는 테스트 코드 없이 누구나 가입하는 단계예요. 지금 단계는 그 표의 「(지금)」 | [`docs/product/prd/roadmap.md` §7.0](product/prd/roadmap.md) |

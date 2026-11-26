@@ -1859,13 +1859,12 @@ describe('위임 규약 (docs/agents/delegation.md 색인 → docs/agents/delega
   });
 
   /** 출시 단계의 표와 PRD 읽기는 `scripts/release-stage.mjs` 한 곳이다 — CI 계획도 같은 것을 읽는다 (ADR 0093 · 0097) */
-  const TIER_THREE_LOCKED: Record<string, boolean> = LAUNCHED;
   const stagesOfPrd = () => stagesOf(readFileSync(join(ROOT, STAGE_FILE), 'utf8'));
 
-  it('PRD §7.0 의 단계는 전부 잠금 여부가 정해져 있다 — 모르는 단계는 잠금을 켜라고도 끄라고도 안 한다', () => {
+  it('PRD §7.0 의 단계는 전부 공개 뒤 규율(CI 계획)이 정해져 있다 — 모르는 단계는 켜라고도 끄라고도 안 한다', () => {
     const names = stagesOfPrd().map((stage) => stage.name);
     expect(names.length).toBeGreaterThan(2);
-    expect(names.filter((name) => !(name in TIER_THREE_LOCKED)), '단계 표에 더한다').toEqual([]);
+    expect(names.filter((name) => !(name in LAUNCHED)), '단계 표에 더한다').toEqual([]);
   });
 
   /**
