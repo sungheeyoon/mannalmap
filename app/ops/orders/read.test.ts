@@ -8,7 +8,7 @@ const row = (over: Partial<RpcRow<'operator_reading_refund_basis'>> = {}): RpcRo
   order_id: '0f1e2d3c-4b5a-4968-8776-655443322110',
   asked: true,
   status: 'approved',
-  provider: 'portone',
+  provider: 'google_play',
   provider_order_id: 'rdo_0f1e2d3c4b5a49688776655443322110',
   provider_payment_id: 'tx-1',
   amount: 59000,
