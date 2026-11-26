@@ -81,7 +81,7 @@ export default async function SignInPage({
         {unlocks.map(({ icon, text }) => (
           <li key={text} className="flex items-center gap-3 text-body leading-6 text-foreground">
             <span className="grid size-9 shrink-0 place-items-center rounded-full bg-surface text-cream-ink shadow-card">
-              <Icon name={icon} className="size-[18px]" />
+              <Icon name={icon} className="size-4.5" />
             </span>
             {text}
           </li>

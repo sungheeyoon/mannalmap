@@ -6,7 +6,7 @@ import type { PurchaseReturn } from '@reading/store-purchase';
 
 import { ConfirmDialog } from '@/ui/confirm-dialog';
 import { Icon } from '@/ui/icons';
-import { COLOR, FONT, RADIUS, TYPE } from '@/ui/tokens';
+import { COLOR, FONT, RADIUS, TYPE, TYPE_BODY } from '@/ui/tokens';
 import { WordText } from '@/ui/word-text';
 
 /**
@@ -59,7 +59,7 @@ export function PurchaseDone({
 
 const styles = StyleSheet.create({
   lead: { width: 44, height: 44, borderRadius: RADIUS.pill, alignItems: 'center', justifyContent: 'center', backgroundColor: COLOR.cream },
-  line: { fontFamily: FONT.medium, fontSize: TYPE.body, lineHeight: 24, color: COLOR.secondary },
+  line: { ...TYPE_BODY, color: COLOR.secondary },
   row: { flexDirection: 'row', justifyContent: 'space-between', gap: 16 },
   count: { fontFamily: FONT.bold, fontSize: TYPE.body, color: COLOR.foreground },
 });

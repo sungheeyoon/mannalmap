@@ -11,7 +11,7 @@ import { Button } from '@/ui/buttons';
 import { Icon } from '@/ui/icons';
 import { settled, settledWhileLive } from '@/ui/settled';
 import { CardFrame } from '@/ui/surfaces';
-import { COLOR, FONT, RADIUS, TYPE } from '@/ui/tokens';
+import { COLOR, FONT, RADIUS, TYPE, TYPE_META } from '@/ui/tokens';
 import { WordText } from '@/ui/word-text';
 
 /**
@@ -62,6 +62,6 @@ const styles = StyleSheet.create({
   mark: { width: 40, height: 40, borderRadius: RADIUS.pill, alignItems: 'center', justifyContent: 'center', backgroundColor: COLOR.surfaceSunken },
   body: { flex: 1, minWidth: 0 },
   name: { fontFamily: FONT.bold, fontSize: TYPE.body, color: COLOR.foreground },
-  second: { fontFamily: FONT.medium, fontSize: TYPE.small, lineHeight: 20, color: COLOR.secondary },
+  second: { ...TYPE_META },
   failure: { paddingHorizontal: 16, paddingBottom: 12, fontFamily: FONT.medium, fontSize: TYPE.small, color: COLOR.danger },
 });

@@ -12,7 +12,7 @@ import { Icon } from '@/ui/icons';
 import { Photo } from '@/ui/photo';
 import { ConfirmDialog, DialogText } from '@/ui/confirm-dialog';
 import { DetailSheet } from '@/ui/sheet';
-import { alpha, COLOR, ELEMENT_TONE, FIXED, FONT, RADIUS, TYPE } from '@/ui/tokens';
+import { alpha, COLOR, ELEMENT_TONE, FIXED, FONT, RADIUS, TYPE, TYPE_META } from '@/ui/tokens';
 import { KEEP_VIEW } from '@/ui/keep-view';
 import { Tile } from '@/ui/surfaces';
 
@@ -320,7 +320,7 @@ const styles = StyleSheet.create({
   bar: { height: 3, borderRadius: RADIUS.pill, backgroundColor: COLOR.photoLine },
   barOn: { backgroundColor: COLOR.onPhoto },
   body: { fontFamily: FONT.medium, fontSize: TYPE.note, lineHeight: 24, color: COLOR.secondary },
-  small: { fontFamily: FONT.medium, fontSize: TYPE.small, lineHeight: 20, color: COLOR.secondary },
+  small: { ...TYPE_META },
   label: { fontFamily: FONT.bold, fontSize: TYPE.small, color: COLOR.secondary },
   reasonBox: { flexDirection: 'row' },
   failure: { fontFamily: FONT.medium, fontSize: TYPE.small, lineHeight: 19, color: COLOR.danger },

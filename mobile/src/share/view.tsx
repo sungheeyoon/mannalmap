@@ -12,7 +12,7 @@ import { Icon } from '@/ui/icons';
 import { Logo } from '@/ui/logo';
 import { ScoreGauge } from '@/ui/score-gauge';
 import { PrimaryButton, SecondaryButton } from '@/ui/parts';
-import { COLOR, ELEMENT_TONE, FONT, RADIUS, TYPE, TYPE_TITLE } from '@/ui/tokens';
+import { COLOR, ELEMENT_TONE, FONT, RADIUS, TYPE, TYPE_META, TYPE_SECTION, TYPE_TITLE } from '@/ui/tokens';
 import { settled } from '@/ui/settled';
 import { TopBar } from '@/ui/top-bar';
 import { Card, Paper, Tile } from '@/ui/surfaces';
@@ -20,6 +20,7 @@ import { Card, Paper, Tile } from '@/ui/surfaces';
 import { Mark } from './marks';
 import { readShared, type ShareRead } from './read';
 import { useStart } from './start';
+import { Heading } from '@/ui/heading';
 import { WordText } from '@/ui/word-text';
 import { SCREEN_FAILED_TITLE, SEE_MY_SAJU_FREE, SHARE_GONE_ASK, SHARE_GONE_BODY, SHARE_GONE_INVITE, SHARE_GONE_TITLE, SHARE_SIGN_IN_START, TRY_AGAIN_LATER } from '@brand/words';
 
@@ -111,9 +112,9 @@ function OpenScreen({ shared, expect }: { shared: SharedReading; expect: ShareKi
         {/* 다 읽은 자리에서 묻는다 — 이 화면의 유일한 시작 단추다. 가입에 코드가 든다는 줄은 걷었다(ADR 0225) */}
         <Paper style={styles.invitation}>
           <BrandCircle size={56} mark={36} />
-          <WordText accessibilityRole="header" style={styles.section}>
+          <Heading style={styles.section}>
             {invitation.heading}
-          </WordText>
+          </Heading>
           <WordText style={styles.note}>{invitation.note}</WordText>
           {failure !== null && <WordText style={styles.failure}>{failure}</WordText>}
           <PrimaryButton label={SHARE_SIGN_IN_START} onPress={start} disabled={going} />
@@ -156,9 +157,9 @@ function Notice({ title, lines, children }: { title: string; lines: readonly str
       <ScrollView contentContainerStyle={styles.noticeRoom}>
         <Paper style={styles.notice}>
           <BrandCircle size={64} mark={40} />
-          <WordText accessibilityRole="header" style={styles.title}>
+          <Heading level="title" style={styles.title}>
             {title}
-          </WordText>
+          </Heading>
           <View>
             {lines.map((line) => (
               <WordText key={line} style={styles.noticeLine}>
@@ -194,9 +195,9 @@ const styles = StyleSheet.create({
   pairCover: { alignItems: 'center', gap: 16, paddingHorizontal: 20, paddingVertical: 28 },
   pairScore: { alignItems: 'center', gap: 6 },
   pairLabel: { fontSize: TYPE.small, fontFamily: FONT.bold, color: COLOR.secondary },
-  pairMetaphor: { fontSize: TYPE.heading, lineHeight: 29, fontFamily: FONT.bold, color: COLOR.foreground, textAlign: 'center' },
+  pairMetaphor: { ...TYPE_SECTION, textAlign: 'center' },
   metaphor: { flexDirection: 'row', gap: 12, paddingHorizontal: 20, paddingVertical: 28 },
-  metaphorText: { flex: 1, fontSize: TYPE.heading, lineHeight: 29, fontFamily: FONT.medium, color: COLOR.foreground },
+  metaphorText: { ...TYPE_SECTION, flex: 1, fontFamily: FONT.medium },
   score: { alignItems: 'center', margin: 12, paddingHorizontal: 20, paddingVertical: 16 },
   scoreLabel: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   scoreName: { fontSize: TYPE.small, fontFamily: FONT.bold, color: ELEMENT_TONE.火.ink },
@@ -206,11 +207,11 @@ const styles = StyleSheet.create({
   article: { overflow: 'hidden' },
   invitation: { gap: 12, paddingHorizontal: 20, paddingVertical: 28 },
   circle: { alignItems: 'center', justifyContent: 'center', borderRadius: RADIUS.pill, backgroundColor: COLOR.surface },
-  section: { fontSize: TYPE.heading, lineHeight: 29, fontFamily: FONT.bold, color: COLOR.foreground },
+  section: { ...TYPE_SECTION },
   note: { fontSize: TYPE.body, lineHeight: 26, fontFamily: FONT.medium, color: COLOR.secondary },
   /* 두 문장이 제 줄에서 시작한다(운영자 2026-10-03) — 390px 에서 한 문장이 한 줄에 들어가는 크기다 */
   noticeLine: { fontSize: TYPE.note, lineHeight: 24, fontFamily: FONT.medium, color: COLOR.secondary },
-  fine: { fontSize: TYPE.small, lineHeight: 20, fontFamily: FONT.medium, color: COLOR.secondary },
+  fine: { ...TYPE_META },
   failure: { fontSize: TYPE.small, lineHeight: 19, fontFamily: FONT.medium, color: COLOR.danger },
   noticeRoom: { flexGrow: 1, justifyContent: 'center', padding: 16 },
   notice: { gap: 16 },

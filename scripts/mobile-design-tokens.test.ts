@@ -44,6 +44,8 @@ function styleOf(classes: string): Record<string, unknown> {
     else if (name.startsWith('text-') && SIZES[name.slice(5)] !== undefined) style.fontSize = SIZES[name.slice(5)];
     else if (number('leading') !== undefined) style.lineHeight = number('leading');
     else if (/^leading-\[[\d.]+rem\]$/.test(name)) style.lineHeight = Number(name.slice('leading-['.length, -'rem]'.length)) * 16;
+    // 배수(`leading-[1.45]`)는 같은 상수의 글자 크기에 곱한다 — 구역 제목 20 × 1.45 = 29
+    else if (/^leading-\[[\d.]+\]$/.test(name)) style.lineHeightRatio = Number(name.slice('leading-['.length, -1));
     else if (number('p') !== undefined) style.padding = number('p');
     else if (number('px') !== undefined) style.paddingHorizontal = number('px');
     else if (number('py') !== undefined) style.paddingVertical = number('py');
@@ -53,6 +55,10 @@ function styleOf(classes: string): Record<string, unknown> {
     else if (number('size') !== undefined) Object.assign(style, { width: number('size'), height: number('size') });
     else if (name.startsWith('shadow-') && elevation[name.slice(7)] !== undefined) style.boxShadow = elevation[name.slice(7)];
     else if (name === 'overflow-hidden') style.overflow = 'hidden';
+  }
+  if (typeof style.lineHeightRatio === 'number') {
+    style.lineHeight = Math.round(Number(style.fontSize) * style.lineHeightRatio);
+    delete style.lineHeightRatio;
   }
   return style;
 }

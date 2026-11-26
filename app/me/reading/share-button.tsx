@@ -238,7 +238,7 @@ export function ShareReadingButton({
         disabled={phase === 'working'}
         className={`${BUTTON_SECONDARY_FACE} w-full px-3 sm:px-5`}
       >
-        <Icon name="link" className="size-[18px]" />
+        <Icon name="link" className="size-4.5" />
         {/*
           **안 보이는 한 벌이 폭을 잡는다.** 두 글자를 같은 칸에 겹쳐 놓고 아래 것을
           숨기면, 칸의 너비는 늘 평소의 말이 정하고 위의 글자만 갈린다.

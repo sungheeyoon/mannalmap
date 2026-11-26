@@ -10,7 +10,7 @@ import { ReadingScrollView } from '@/reading/contents';
 import { ReadFailure, ReadingPanel, useReadingView } from '@/reading/panel';
 import { LoadingDots } from '@/ui/loading';
 import { TopBar } from '@/ui/top-bar';
-import { COLOR, FONT, TYPE } from '@/ui/tokens';
+import { COLOR, FONT, TYPE, TYPE_BODY } from '@/ui/tokens';
 import { Card } from '@/ui/surfaces';
 import { WordText } from '@/ui/word-text';
 
@@ -64,5 +64,5 @@ const styles = StyleSheet.create({
   waiting: { flexGrow: 1, paddingBottom: 16 },
   eyebrow: { fontFamily: FONT.bold, fontSize: TYPE.small, color: COLOR.secondary },
   noticeTitle: { fontFamily: FONT.bold, fontSize: TYPE.lead, color: COLOR.foreground },
-  line: { marginTop: 4, fontFamily: FONT.medium, fontSize: TYPE.body, lineHeight: 24, color: COLOR.secondary },
+  line: { ...TYPE_BODY, marginTop: 4, color: COLOR.secondary },
 });

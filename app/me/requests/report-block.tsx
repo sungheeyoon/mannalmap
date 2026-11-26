@@ -32,9 +32,9 @@ import { FailureLine } from '../../ui/failure-line';
  * 근거를 붙일 수 있고, 그것도 고르지 않아도 된다(C1).
  */
 
-/** 신고 칸 — 초점 테는 전역 초점 테두리와 같은 섞음(accent 55%, `globals.css`) */
+/** 신고 칸 — 초점 테는 한 벌(`focus-ring`, `globals.css`)이다 */
 const FIELD =
-  'rounded-cell bg-surface px-3 text-field text-foreground ring-1 ring-border outline-none focus:ring-2 focus:ring-[color-mix(in_srgb,var(--accent)_55%,transparent)]';
+  'rounded-cell bg-surface px-3 text-field text-foreground ring-1 ring-border outline-none focus:focus-ring';
 
 /** 「⋯」를 읽는 이름 — 신고 · 차단만 든 판 */
 const REPORT_BLOCK_MENU_LABEL = '신고 · 차단';
@@ -96,7 +96,7 @@ export function ReportBlockMenu({
                 onMyProfile();
               }}
             >
-              <Icon name="people" className="size-[18px]" />
+              <Icon name="people" className="size-4.5" />
               {MY_PROFILE_LABEL}
             </button>
             <span aria-hidden="true" className="mx-3 my-1 h-px bg-border" />
@@ -110,7 +110,7 @@ export function ReportBlockMenu({
             onReport();
           }}
         >
-          <Icon name="flag" className="size-[18px]" />
+          <Icon name="flag" className="size-4.5" />
           신고
         </button>
         {canBlock && (
@@ -122,7 +122,7 @@ export function ReportBlockMenu({
               onBlock();
             }}
           >
-            <Icon name="block" className="size-[18px]" />
+            <Icon name="block" className="size-4.5" />
             차단
           </button>
         )}
@@ -135,7 +135,7 @@ export function ReportBlockMenu({
               onWithdraw();
             }}
           >
-            <Icon name="close" className="size-[18px]" />
+            <Icon name="close" className="size-4.5" />
             {TALK_WITHDRAW_LABEL}
           </button>
         )}
@@ -381,11 +381,11 @@ export function ReportDialog({
       <div key={round} className="flex flex-col gap-3">
         <div className="flex items-start justify-between gap-3">
           <h2 id={titleId} className="flex items-center gap-2 pt-2.5 text-body font-bold text-foreground">
-            <Icon name="flag" className="size-[18px] text-danger" />
+            <Icon name="flag" className="size-4.5 text-danger" />
             {nickname}님 신고
           </h2>
           <button type="button" aria-label={reported ? '닫기' : '작성 그만두기'} onClick={close} className={ICON_BUTTON}>
-            <Icon name="close" className="size-[18px]" />
+            <Icon name="close" className="size-4.5" />
           </button>
         </div>
         {/* 접수 문장의 자리는 늘 있다 — 보낸 그때 글만 들어와 읽힌다 */}

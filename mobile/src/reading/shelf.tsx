@@ -7,7 +7,7 @@ import { Pressable, StyleSheet, View } from 'react-native';
 
 import { EmptySlot } from '@/ui/surfaces';
 import { ElementSymbol } from '@/ui/element-symbol';
-import { COLOR, ELEMENT_TONE, FONT, RADIUS, TYPE } from '@/ui/tokens';
+import { COLOR, ELEMENT_TONE, FONT, RADIUS, TYPE, TYPE_META } from '@/ui/tokens';
 
 import { CoverFace } from './result';
 import { FlowBand } from './waiting';
@@ -127,7 +127,7 @@ const styles = StyleSheet.create({
   rowText: { flex: 1, minWidth: 0, gap: 4 },
   rowHead: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   rowTitle: { flexShrink: 1, fontFamily: FONT.bold, fontSize: TYPE.body, color: COLOR.foreground },
-  rowNote: { fontFamily: FONT.medium, fontSize: TYPE.small, lineHeight: 20, color: COLOR.secondary },
+  rowNote: { ...TYPE_META },
   rowDate: { fontFamily: FONT.medium, fontSize: TYPE.fine, color: COLOR.muted },
   stale: { paddingHorizontal: 6, paddingVertical: 1, overflow: 'hidden', borderRadius: RADIUS.pill, backgroundColor: COLOR.warningWash, fontFamily: FONT.bold, fontSize: TYPE.fine, color: ELEMENT_TONE.土.ink },
   kindTag: { fontFamily: FONT.bold, fontSize: TYPE.fine, color: COLOR.secondary },

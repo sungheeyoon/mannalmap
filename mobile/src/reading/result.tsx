@@ -11,11 +11,12 @@ import { Paper, Tile } from '@/ui/surfaces';
 import { ElementSymbol } from '@/ui/element-symbol';
 import { ScoreGauge } from '@/ui/score-gauge';
 import { StemSymbol } from '@/ui/stem-symbol';
-import { COLOR, CONTROL, ELEMENT_TONE, FONT, RADIUS, TYPE } from '@/ui/tokens';
+import { COLOR, CONTROL, ELEMENT_TONE, FONT, RADIUS, TYPE, TYPE_META, TYPE_NAME, TYPE_SECTION } from '@/ui/tokens';
 
 import { Markdown } from './markdown';
 import { ReadingContents, headingsOf } from './contents';
 import type { ReadingTarget } from './api';
+import { Heading } from '@/ui/heading';
 import { WordText } from '@/ui/word-text';
 import { READING_PAIR_TITLE } from '@reading/words';
 import { AiBadge } from '@/ui/ai-badge';
@@ -133,7 +134,7 @@ export function Result({
       {target.kind === 'match' && (
         <View>
           <WordText style={styles.coverTitle}>{READING_PAIR_TITLE}</WordText>
-          <WordText style={styles.bodyHead}>궁합풀이 결과</WordText>
+          <Heading style={styles.bodyHead}>궁합풀이 결과</Heading>
         </View>
       )}
 
@@ -236,10 +237,10 @@ const styles = StyleSheet.create({
   pairStack: { alignItems: 'center', rowGap: 4 },
   pairPerson: { flexDirection: 'row', alignItems: 'center', gap: 6, flexShrink: 1 },
   pairCircle: { width: 32, height: 32, alignItems: 'center', justifyContent: 'center', borderRadius: RADIUS.pill },
-  pairName: { flexShrink: 1, fontFamily: FONT.bold, fontSize: TYPE.lead, lineHeight: 24, color: COLOR.foreground },
+  pairName: { ...TYPE_NAME, flexShrink: 1 },
   pairTimes: { fontFamily: FONT.bold, fontSize: TYPE.small, color: COLOR.secondary },
   pairScore: { alignItems: 'center', gap: 6, marginTop: 4 },
-  pairMetaphor: { fontFamily: FONT.bold, fontSize: TYPE.heading, lineHeight: 29, color: COLOR.foreground, textAlign: 'center' },
+  pairMetaphor: { ...TYPE_SECTION, textAlign: 'center' },
   pairMeta: { alignItems: 'center' },
   grow: { flex: 1, minWidth: 0 },
   cover: { overflow: 'hidden', paddingHorizontal: 24, paddingTop: 28, paddingBottom: 24 },
@@ -250,7 +251,7 @@ const styles = StyleSheet.create({
   caption: { flexDirection: 'row', alignItems: 'flex-end', gap: 16, marginTop: 32, paddingTop: 16, borderTopWidth: 1, borderTopColor: COLOR.border },
   metaRow: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 8 },
   metaRowCenter: { justifyContent: 'center' },
-  meta: { fontFamily: FONT.medium, fontSize: TYPE.small, lineHeight: 20, color: COLOR.secondary },
+  meta: { ...TYPE_META },
   score: { alignItems: 'flex-end' },
   scoreLabel: { fontFamily: FONT.bold, fontSize: TYPE.small, color: COLOR.secondary },
   scoreValue: { fontFamily: FONT.bold, fontSize: TYPE.figure, color: COLOR.foreground },

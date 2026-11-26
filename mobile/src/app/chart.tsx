@@ -21,7 +21,7 @@ import { SelfCard } from '@/home/self-card';
 import { PillarStrip } from '@/people/parts';
 import { SavePersonForReading } from '@/reading/save-self';
 import { TopBar } from '@/ui/top-bar';
-import { COLOR, FONT, TYPE } from '@/ui/tokens';
+import { COLOR, FONT, TYPE, TYPE_BODY } from '@/ui/tokens';
 import { CardFrame } from '@/ui/surfaces';
 import { WordText } from '@/ui/word-text';
 
@@ -94,7 +94,7 @@ const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: COLOR.background },
   content: { padding: 16, gap: 12 },
   failure: { fontFamily: FONT.medium, fontSize: TYPE.small, color: COLOR.danger },
-  firstLine: { fontFamily: FONT.bold, fontSize: TYPE.body, lineHeight: 24, color: COLOR.foreground, marginHorizontal: 4 },
+  firstLine: { ...TYPE_BODY, fontFamily: FONT.bold, marginHorizontal: 4 },
   tableHead: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', minHeight: 52, paddingHorizontal: 16 },
   tableTitle: { fontFamily: FONT.bold, fontSize: TYPE.body, color: COLOR.foreground },
 });

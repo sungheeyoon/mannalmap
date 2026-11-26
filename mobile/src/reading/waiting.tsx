@@ -6,7 +6,7 @@ import { Animated, StyleSheet, View } from 'react-native';
 import { LoadingOrbit } from '@/ui/loading';
 import { EASE, MOTION, useReducedMotion } from '@/ui/motion';
 import { Paper, Tile } from '@/ui/surfaces';
-import { COLOR, ELEMENT_TONE, FONT, RADIUS, TYPE } from '@/ui/tokens';
+import { COLOR, ELEMENT_TONE, FONT, RADIUS, TYPE, TYPE_META } from '@/ui/tokens';
 import { WordText } from '@/ui/word-text';
 import { READING_WAITING_LEAD, READING_WAITING_NOTE } from '@reading/words';
 
@@ -78,7 +78,7 @@ const styles = StyleSheet.create({
   head: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   headText: { flex: 1, minWidth: 0 },
   title: { fontFamily: FONT.bold, fontSize: TYPE.lead, color: COLOR.foreground },
-  note: { marginTop: 2, fontFamily: FONT.medium, fontSize: TYPE.small, lineHeight: 20, color: COLOR.creamInk },
+  note: { ...TYPE_META, marginTop: 2, color: COLOR.creamInk },
   band: { height: 8, borderRadius: RADIUS.pill, backgroundColor: COLOR.track, overflow: 'hidden' },
   bandFlow: { position: 'absolute', top: 0, bottom: 0, width: '40%', borderRadius: RADIUS.pill, backgroundColor: COLOR.creamInk },
   rows: { gap: 8 },

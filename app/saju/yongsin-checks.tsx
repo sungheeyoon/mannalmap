@@ -110,7 +110,7 @@ export function TonggwanFacts({ tonggwan }: { tonggwan: Saju['analysis']['tonggw
           사실
         </span>
         <span className="text-xs text-muted">가장 팽팽한 대치</span>
-        <span className="glyph text-lg font-medium">
+        <span className="glyph text-lead font-medium">
           {tightest.controller} → {tightest.controlled}
         </span>
         <span className="text-sm text-secondary">
@@ -160,7 +160,7 @@ export function FollowingCandidacyNote({ saju }: { saju: Saju }) {
           시험
         </span>
         <span className="text-xs text-muted">종격</span>
-        <span className="text-lg font-medium">
+        <span className="text-lead font-medium">
           {FOLLOWING_PATTERN_STATUS_KO[following.verdict]}
         </span>
         <span className="text-sm text-secondary">

@@ -193,7 +193,7 @@ export function SelfCard({
           className="relative grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:items-center"
         >
           <Link href={withFromMe('/me/readings/self')} className={`${BUTTON_PRIMARY_FACE} whitespace-nowrap px-3 sm:min-w-52 sm:px-5`}>
-            <Icon name={reading === null ? 'spark' : 'reading'} className="size-[18px] max-[379px]:hidden" />
+            <Icon name={reading === null ? 'spark' : 'reading'} className="size-4.5 max-[379px]:hidden" />
             {reading !== null ? '사주풀이 보기' : making ? SELF_READING_MAKING : '사주풀이 받기'}
           </Link>
           {/*

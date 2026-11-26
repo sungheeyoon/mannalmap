@@ -32,7 +32,7 @@ export function DetailDoor({ expanded, onToggle }: { expanded: boolean; onToggle
       data-detail-door
       className={`${BUTTON_SECONDARY_SMALL_FACE} min-h-11 shrink-0 px-3`}
     >
-      <Icon name="taiji" className="size-[18px]" />
+      <Icon name="taiji" className="size-4.5" />
       {DETAIL_DOOR_LABEL}
     </button>
   );

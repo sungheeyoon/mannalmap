@@ -21,7 +21,7 @@ import { Button } from '@/ui/buttons';
 import { Icon } from '@/ui/icons';
 import { Card } from '@/ui/surfaces';
 import { PrimaryButton, SecondaryButton, TextButton } from '@/ui/parts';
-import { COLOR, ELEMENT_TONE, FONT, RADIUS, TYPE } from '@/ui/tokens';
+import { COLOR, ELEMENT_TONE, FONT, RADIUS, TYPE, TYPE_META } from '@/ui/tokens';
 
 import { saveSelfPerson } from './chart-writes';
 import { WordText } from '@/ui/word-text';
@@ -285,5 +285,5 @@ const styles = StyleSheet.create({
   title: { fontFamily: FONT.bold, fontSize: TYPE.field, color: COLOR.foreground },
   line: { fontFamily: FONT.medium, fontSize: TYPE.note, lineHeight: 22, color: COLOR.secondary },
   fine: { fontFamily: FONT.medium, fontSize: TYPE.fine, lineHeight: 18, color: COLOR.muted },
-  failure: { fontFamily: FONT.medium, fontSize: TYPE.small, lineHeight: 20, color: COLOR.danger },
+  failure: { ...TYPE_META, color: COLOR.danger },
 });

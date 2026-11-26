@@ -282,7 +282,7 @@ export function CompatPicker({ people }: { people: Choosable[] }) {
                 aria-disabled={!chosen || undefined}
                 className={`${BUTTON_PRIMARY} w-full`}
               >
-                <Icon name="taiji" className="size-[18px]" />
+                <Icon name="taiji" className="size-4.5" />
                 {opening ? '여는 중…' : '궁합 보기'}
               </button>
             ) : undefined

@@ -44,12 +44,12 @@ export function StrengthMeter({ saju }: { saju: Saju }) {
       <View style={styles.scores}>
         <View style={styles.score}>
           <T size="xs" tone="muted">일간을 돕는 힘</T>
-          <T size="lg" bold num>{strength.supportScore.toFixed(2)}</T>
+          <T size="lead" bold num>{strength.supportScore.toFixed(2)}</T>
           <T size="xs" tone="secondary">비겁·인성</T>
         </View>
         <View style={styles.score}>
           <T size="xs" tone="muted">일간을 소모하는 힘</T>
-          <T size="lg" bold num>{strength.opposeScore.toFixed(2)}</T>
+          <T size="lead" bold num>{strength.opposeScore.toFixed(2)}</T>
           <T size="xs" tone="secondary">식상·재성·관성</T>
         </View>
       </View>

@@ -14,10 +14,11 @@ import { BlankBook, BookRow, MakingRow, SHELF_CHIPS, SHELF_TITLE, type ShelfChip
 import { EmptyState } from '@/ui/empty-state';
 import { goTab } from '@/ui/go-tab';
 import { LoadingDots } from '@/ui/loading';
-import { COLOR, FONT, RADIUS, reach, TYPE } from '@/ui/tokens';
+import { COLOR, FONT, RADIUS, reach, TYPE, TYPE_BODY, TYPE_META } from '@/ui/tokens';
 import { settled } from '@/ui/settled';
 import { TopBar } from '@/ui/top-bar';
 import { Card } from '@/ui/surfaces';
+import { Heading } from '@/ui/heading';
 import { WordText } from '@/ui/word-text';
 import { SHELF_COMPAT_NOTE, SHELF_EMPTY, SHELF_HOME_NOTE, SHELF_MATCH_NOTE, SHELF_PAIR_NOTE, SHELF_SINGLE_NOTE } from '@reading/words';
 import { PERSON_SEARCH_EMPTY } from '@people/words';
@@ -226,9 +227,9 @@ function ShelfBody({
 function Group({ title, note, children }: { title: string; note: string; children: React.ReactNode }) {
   return (
     <View style={styles.group}>
-      <WordText accessibilityRole="header" style={styles.groupTitle}>
+      <Heading style={styles.groupTitle}>
         {title}
-      </WordText>
+      </Heading>
       <WordText style={styles.groupNote}>{note}</WordText>
       {children}
     </View>
@@ -245,7 +246,7 @@ const styles = StyleSheet.create({
   waiting: { flexGrow: 1, paddingBottom: 16 },
   body: { gap: 24 },
   noticeTitle: { fontFamily: FONT.bold, fontSize: TYPE.lead, color: COLOR.foreground },
-  line: { fontFamily: FONT.medium, fontSize: TYPE.body, lineHeight: 24, color: COLOR.secondary },
+  line: { ...TYPE_BODY, color: COLOR.secondary },
   chipRow: { marginVertical: -CHIP_REACH },
   chips: { gap: 8 },
   chipHit: { paddingVertical: CHIP_REACH },
@@ -258,5 +259,5 @@ const styles = StyleSheet.create({
   makingHead: { marginBottom: 4, fontFamily: FONT.bold, fontSize: TYPE.small, color: COLOR.secondary },
   group: { gap: 2 },
   groupTitle: { fontFamily: FONT.bold, fontSize: TYPE.heading, color: COLOR.foreground },
-  groupNote: { marginBottom: 8, fontFamily: FONT.medium, fontSize: TYPE.small, lineHeight: 20, color: COLOR.secondary },
+  groupNote: { ...TYPE_META, marginBottom: 8 },
 });

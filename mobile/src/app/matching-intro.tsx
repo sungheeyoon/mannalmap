@@ -12,7 +12,7 @@ import { useMatchOpen } from '@/matching/opening';
 import { ElementSymbol } from '@/ui/element-symbol';
 import { PrimaryButton } from '@/ui/parts';
 import { CardFrame, Tile } from '@/ui/surfaces';
-import { COLOR, ELEMENT_TONE, FONT, RADIUS, TYPE } from '@/ui/tokens';
+import { COLOR, ELEMENT_TONE, FONT, RADIUS, TYPE, TYPE_BODY } from '@/ui/tokens';
 import { WordText } from '@/ui/word-text';
 
 const SUPPLIES: readonly Element[] = ['金', '水'];
@@ -100,7 +100,7 @@ const styles = StyleSheet.create({
   stepLine: { borderTopWidth: 1, borderTopColor: COLOR.border },
   number: { width: 26, height: 26, alignItems: 'center', justifyContent: 'center', borderRadius: RADIUS.pill, backgroundColor: COLOR.surfaceSunken },
   numberText: { fontFamily: FONT.bold, fontSize: TYPE.small, color: COLOR.foreground },
-  stepTitle: { fontFamily: FONT.bold, fontSize: TYPE.body, lineHeight: 24, color: COLOR.foreground },
+  stepTitle: { ...TYPE_BODY, fontFamily: FONT.bold },
   stepBody: { fontFamily: FONT.medium, fontSize: TYPE.note, lineHeight: 22, color: COLOR.secondary },
   notes: { gap: 4, marginHorizontal: 4 },
   line: { fontFamily: FONT.medium, fontSize: TYPE.small, lineHeight: 19, color: COLOR.secondary },

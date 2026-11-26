@@ -50,7 +50,7 @@ export function LandingGuide({ matchOpen }: { matchOpen: boolean }) {
             className={`flex gap-4 ${FLAT_CARD_FACE} p-5 sm:p-6`}
           >
             <span className={`grid size-11 shrink-0 place-items-center rounded-cell ${TONES[feature.icon] ?? TONE_DEFAULT}`}>
-              <Icon name={feature.icon} className="size-[22px]" />
+              <Icon name={feature.icon} className="size-5.5" />
             </span>
             <div className="min-w-0">
               <h3 className={TYPE_NAME}>{feature.title}</h3>

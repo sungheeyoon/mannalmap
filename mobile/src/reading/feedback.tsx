@@ -24,7 +24,7 @@ import { SectionErrorLine, useSectionErrors } from '@/ui/section-error';
 import { FoldIcon } from '@/ui/icons';
 import { Card, Paper, Tile } from '@/ui/surfaces';
 import { PrimaryButton, TextButton } from '@/ui/parts';
-import { COLOR, CONTROL, FONT, RADIUS, TYPE } from '@/ui/tokens';
+import { COLOR, CONTROL, FONT, RADIUS, TYPE, TYPE_BODY, TYPE_META } from '@/ui/tokens';
 
 import type { ReadingTarget } from './api';
 import { leaveFeedback } from './feedback-writes';
@@ -264,7 +264,7 @@ function Chip({
 
 const styles = StyleSheet.create({
   thanks: { gap: 4, paddingHorizontal: 20, paddingVertical: 12 },
-  thanksText: { fontFamily: FONT.medium, fontSize: TYPE.body, lineHeight: 24, color: COLOR.creamInk },
+  thanksText: { ...TYPE_BODY, color: COLOR.creamInk },
   head: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 20, paddingVertical: 16 },
   headWords: { flex: 1, minWidth: 0, gap: 4 },
   headTitle: { fontFamily: FONT.bold, fontSize: TYPE.lead, color: COLOR.foreground },
@@ -273,7 +273,7 @@ const styles = StyleSheet.create({
   /* 눈금 칸은 카드 안쪽 여백을 비집고 나와(카드 가장자리에서 8) 제 여백도 8 — 다섯 단추(44 × 5 + 간격 8 × 4 = 252)가 360 폭에서도 줄지 않는다 */
   scale: { gap: 10, marginHorizontal: -12, paddingHorizontal: 8 },
   legend: { fontFamily: FONT.bold, fontSize: TYPE.body, lineHeight: 22, color: COLOR.foreground },
-  small: { fontFamily: FONT.medium, fontSize: TYPE.small, lineHeight: 20, color: COLOR.secondary },
+  small: { ...TYPE_META },
   chips: { flexDirection: 'row', gap: 8 },
   chipsWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   /* 같은 너비로 나눈다. `minWidth: 0` 을 두면 칩의 최소 너비(44)를 덮어 눈금 단추가 360 에서 36 까지 줄었다.
@@ -288,7 +288,7 @@ const styles = StyleSheet.create({
   end: { fontFamily: FONT.medium, fontSize: TYPE.fine, color: COLOR.secondary },
   comment: { minHeight: 88, paddingHorizontal: 14, paddingVertical: 10, borderRadius: RADIUS.cell, borderWidth: 1, borderColor: COLOR.border, backgroundColor: COLOR.surface, fontFamily: FONT.medium, fontSize: TYPE.field, lineHeight: 24, color: COLOR.foreground, textAlignVertical: 'top' },
   count: { textAlign: 'right', fontFamily: FONT.medium, fontSize: TYPE.fine, color: COLOR.secondary },
-  warn: { fontFamily: FONT.medium, fontSize: TYPE.small, lineHeight: 20, color: COLOR.danger },
+  warn: { ...TYPE_META, color: COLOR.danger },
   frame: { padding: 0, overflow: 'hidden' },
   off: { opacity: BUTTON_OFF_OPACITY },
 });

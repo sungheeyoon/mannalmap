@@ -170,7 +170,7 @@ function SendFailedMenu({ onRetry, onDrop }: { onRetry: (() => void) | null; onD
         aria-label={SEND_FAILED_LABEL}
         className="grid size-11 cursor-pointer list-none place-items-center rounded-full text-danger hover:bg-surface-soft active:scale-95 [&::-webkit-details-marker]:hidden"
       >
-        <Icon name="alert" className="size-[22px]" />
+        <Icon name="alert" className="size-5.5" />
       </summary>
       <div className={`${MENU_PANEL} absolute bottom-12 right-0 z-20 flex w-40 flex-col p-1.5`}>
         {onRetry !== null && (
@@ -182,7 +182,7 @@ function SendFailedMenu({ onRetry, onDrop }: { onRetry: (() => void) | null; onD
               onRetry();
             }}
           >
-            <Icon name="send" className="size-[18px]" />
+            <Icon name="send" className="size-4.5" />
             {SEND_RETRY_LABEL}
           </button>
         )}
@@ -195,7 +195,7 @@ function SendFailedMenu({ onRetry, onDrop }: { onRetry: (() => void) | null; onD
               onDrop();
             }}
           >
-            <Icon name="close" className="size-[18px]" />
+            <Icon name="close" className="size-4.5" />
             {SEND_DROP_LABEL}
           </button>
         )}

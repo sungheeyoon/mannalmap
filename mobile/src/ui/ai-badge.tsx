@@ -14,7 +14,7 @@ export function AiBadge({ onCream = false }: { onCream?: boolean }) {
 
 const styles = StyleSheet.create({
   badge: {
-    alignSelf: 'flex-start',
+    alignSelf: 'center',
     overflow: 'hidden',
     paddingHorizontal: 10,
     paddingVertical: 3,

@@ -86,7 +86,7 @@ export function Composer({
       }}
     >
       {/* 둥근 알약 하나 — 칸과 보내기가 한 몸이라 엄지가 닿는 자리에 둘이 함께 선다 */}
-      <div className={`flex items-end gap-2 ${SOFT_CARD_FACE} p-1.5 pl-4 ring-1 ring-border focus-within:ring-2 focus-within:ring-[color-mix(in_srgb,var(--accent)_55%,transparent)]`}>
+      <div className={`flex items-end gap-2 ${SOFT_CARD_FACE} p-1.5 pl-4 ring-1 ring-border focus-within:focus-ring`}>
         <label className="flex min-w-0 flex-1">
           <span className="sr-only">메시지</span>
           <textarea
@@ -110,7 +110,7 @@ export function Composer({
           aria-label={CHAT_SEND_LABEL}
           className="inline-flex min-h-11 min-w-11 shrink-0 items-center justify-center gap-1.5 rounded-full bg-accent px-3 text-body font-semibold text-on-accent hover:bg-accent-strong active:scale-95 disabled:opacity-55 sm:px-4"
         >
-          <Icon name="send" className="size-[18px]" />
+          <Icon name="send" className="size-4.5" />
           <span aria-hidden="true" className="hidden sm:inline">
             {CHAT_SEND_LABEL}
           </span>

@@ -207,7 +207,7 @@ export function SiteHeader() {
                               active ? 'bg-accent text-on-accent' : 'text-secondary hover:bg-surface-soft hover:text-foreground'
                             }`}
                           >
-                            <Icon name={tab.icon} className="hidden size-[18px] lg:block" />
+                            <Icon name={tab.icon} className="hidden size-4.5 lg:block" />
                             {tab.label}
                             <UnreadBadge count={tabBadges[tab.href] ?? 0} words={BADGE_WORDS[tab.href]} />
                           </Link>
