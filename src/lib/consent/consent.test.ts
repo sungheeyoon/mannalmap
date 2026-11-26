@@ -127,7 +127,7 @@ describe('알림은 여섯 사건을 말한다', () => {
    */
   it('성립 소식은 채팅방이 열렸다고 말한다', () => {
     expect(notificationText({ kind: 'request_accepted', nickname: '지영', readingKind: null }))
-      .toBe('지영 님과 채팅방이 열렸어요');
+      .toBe('지영님과 채팅방이 열렸어요');
     expect(notificationText({ kind: 'request_accepted', nickname: null, readingKind: null }))
       .toBe('채팅방이 열렸어요');
   });
@@ -232,9 +232,9 @@ describe('완성 소식은 무엇이 다 됐는지 말한다', () => {
 
   /** 인연 궁합 상대의 소식은 시도를 안 가리킨다(`readingKind` 없음) — 확정 문구 그대로다 */
   it('상세 궁합의 소식은 두 사람이 같은 문장이다', () => {
-    expect(ready(null, [null, null], '지영')).toBe('지영 님과의 상세 궁합이 완성됐어요');
+    expect(ready(null, [null, null], '지영')).toBe('지영님과의 상세 궁합이 완성됐어요');
     expect(ready(null)).toBe('상세 궁합이 완성됐어요');
-    expect(ready('match', [null, null], '지영')).toBe('지영 님과의 상세 궁합이 완성됐어요');
+    expect(ready('match', [null, null], '지영')).toBe('지영님과의 상세 궁합이 완성됐어요');
   });
 
   /** 흐름 검사(`scripts/check-reading.mjs`)는 「상세 궁합이 완성됐어요」로 연 쪽에 안 섰는지 잰다 — 셋이 그 글자를 들면 안 된다 */

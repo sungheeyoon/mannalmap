@@ -16,7 +16,7 @@ describe('만드는 중인 풀이의 이름', () => {
     expect(runningName(one({ kind: 'self' }))).toBe('내 사주풀이');
     expect(runningName(one({ kind: 'person', personId: 'p' }, '엄마'))).toBe('엄마 사주풀이');
     expect(runningName(one({ kind: 'private', personA: 'a', personB: 'b' }, '엄마', '아빠'))).toBe('엄마 × 아빠 궁합풀이');
-    expect(runningName(one({ kind: 'match', matchId: 'm' }, '지영'))).toBe('지영 님과의 인연 궁합');
+    expect(runningName(one({ kind: 'match', matchId: 'm' }, '지영'))).toBe('지영님과의 인연 궁합');
   });
 
   it('이름이 없으면 사람을 지어 부르지 않는다 — 두 사람 궁합만 「이름 없음」이다', () => {

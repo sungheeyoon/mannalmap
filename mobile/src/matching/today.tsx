@@ -220,7 +220,7 @@ export function CardSheet({
 /** 대화 시작 창 — 풀이권이 안 든다. 첫 말 한 건의 제한을 누르기 전에 읽는다 */
 export function TalkConfirm({ card, open, onClose, onConfirm, busy }: { card: DeckCard; open: boolean; onClose: () => void; onConfirm: () => void; busy: boolean }) {
   return (
-    <ConfirmDialog open={open} onClose={onClose} title={`${card.nickname} ${TALK_START_TITLE}`} confirmLabel={TALK_START_LABEL} onConfirm={onConfirm} busy={busy}>
+    <ConfirmDialog open={open} onClose={onClose} title={`${card.nickname}${TALK_START_TITLE}`} confirmLabel={TALK_START_LABEL} onConfirm={onConfirm} busy={busy}>
       <DialogText>{TALK_START_NOTE}</DialogText>
       <DialogText>{CHAT_USES_NO_CREDIT}</DialogText>
     </ConfirmDialog>

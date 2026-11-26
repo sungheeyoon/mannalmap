@@ -112,10 +112,10 @@ export async function MatchScreen({
           }}
           menu={<ReportBlock userId={result.partnerUserId} nickname={result.partnerNickname} />}
         />
-        {/* 제목 하나가 두 줄을 든다 — 보조기기에는 「{닉네임} 님 궁합 결과」 한 이름으로 읽힌다 */}
+        {/* 제목 하나가 두 줄을 든다 — 보조기기에는 「{닉네임}님 궁합 결과」 한 이름으로 읽힌다 */}
         <Title className="min-w-0 flex-1">
           <span className={`${TYPE_NAME} block break-words`}>
-            {result.partnerNickname} 님
+            {result.partnerNickname}님
           </span>{' '}
           <span className={`${TYPE_META} block`}>궁합 결과</span>
         </Title>
@@ -172,7 +172,7 @@ function Result({ result, myNickname }: { result: SharedResult; myNickname: stri
       */}
       <ReadingSection
         target={{ kind: 'match', matchId: result.matchId }}
-        heading={`${result.partnerNickname} 님과의 궁합풀이`}
+        heading={`${result.partnerNickname}님과의 궁합풀이`}
         headingHidden
         automatic
         bare

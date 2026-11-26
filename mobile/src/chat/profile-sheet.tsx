@@ -14,7 +14,7 @@ import { WordText } from '@/ui/word-text';
 
 
 /** 시트 · 머리 단추의 보조기기 이름 — 웹의 `partnerSheetName` 과 같다 */
-export const partnerSheetName = (nickname: string): string => `${nickname} 님 자세히`;
+export const partnerSheetName = (nickname: string): string => `${nickname}님 자세히`;
 
 /**
  * 상대 · 내 프로필 시트 — 방의 스크롤 자리와 쓰던 글이 그대로 남는다(ADR 0155 덧). 몸은 사진 칸(세로 4:5) → 궁합 한 줄 → 소개다. 사진은 옆으로 넘긴다.

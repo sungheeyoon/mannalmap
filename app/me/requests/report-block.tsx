@@ -285,7 +285,7 @@ export function BlockDialog({
         setFailure(null);
         onClose();
       }}
-      title={`${nickname} 님을 차단할까요?`}
+      title={`${nickname}님을 차단할까요?`}
       confirmLabel={working ? '차단하는 중…' : '차단하기'}
       onConfirm={block}
       danger
@@ -382,7 +382,7 @@ export function ReportDialog({
         <div className="flex items-start justify-between gap-3">
           <h2 id={titleId} className="flex items-center gap-2 pt-2.5 text-body font-bold text-foreground">
             <Icon name="flag" className="size-[18px] text-danger" />
-            {nickname} 님 신고
+            {nickname}님 신고
           </h2>
           <button type="button" aria-label={reported ? '닫기' : '작성 그만두기'} onClick={close} className={ICON_BUTTON}>
             <Icon name="close" className="size-[18px]" />

@@ -198,7 +198,7 @@ export function MatchingExperience({
         >
           {/* 그 사람 한 장 — 폰은 남는 높이를 다 쓰고, 넓은 화면은 4:5 */}
           <article
-            aria-label={`${profile.nickname} 님`}
+            aria-label={`${profile.nickname}님`}
             aria-busy={!!exit || working}
             className="flex min-h-0 w-full min-w-0 flex-1 flex-col gap-3 lg:flex-none lg:gap-4"
           >

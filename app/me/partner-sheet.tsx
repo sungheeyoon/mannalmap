@@ -52,7 +52,7 @@ export function usePartnerSheet() {
 export type PartnerSheetControl = ReturnType<typeof usePartnerSheet>;
 
 /** 시트 · 머리 단추의 보조기기 이름 — 오늘의 인연 · 지나친 인연 시트와 같은 이름이다(문구 대장 43) */
-export const partnerSheetName = (nickname: string): string => `${nickname} 님 자세히`;
+export const partnerSheetName = (nickname: string): string => `${nickname}님 자세히`;
 
 /** 소개 구역의 이름 — 프로필 화면의 같은 칸 이름(「소개 (선택)」, `app/me/profile/form.tsx`)과 한 낱말이다 */
 const INTRO_HEADING = '소개';

@@ -622,9 +622,9 @@ try {
      */
     const told = (text) => text.includes('상세 궁합이 완성됐어요');
     const inbox = plain(await body('/me/requests', cookie.b));
-    check('상대의 알림함에 준비 완료가 뜬다', told(inbox) && inbox.includes(`${NAME.a} 님과의 상세 궁합이 완성됐어요`));
+    check('상대의 알림함에 준비 완료가 뜬다', told(inbox) && inbox.includes(`${NAME.a}님과의 상세 궁합이 완성됐어요`));
     const mineInbox = plain(await body('/me/requests', cookie.a));
-    check('연 사람의 알림함에도 준비 완료가 뜬다', mineInbox.includes(`${NAME.b} 님과의 상세 궁합이 완성됐어요`));
+    check('연 사람의 알림함에도 준비 완료가 뜬다', mineInbox.includes(`${NAME.b}님과의 상세 궁합이 완성됐어요`));
   }
 
   // ── 4-1. 만든 글은 한 목록에 선다 ────────────────────────────────────────
@@ -651,7 +651,7 @@ try {
     check('목록에 두 사람 궁합 줄이 선다',
       shown.includes('엄마') && shown.includes(NAME.a) && shown.includes('궁합'));
     /** 인연 궁합의 이름은 상대의 **공개 별명**이다 — `local_label` 이 아니다 */
-    check('목록에 인연 궁합 줄이 선다', shown.includes(`${NAME.b} 님과의 궁합풀이`));
+    check('목록에 인연 궁합 줄이 선다', shown.includes(`${NAME.b}님과의 궁합풀이`));
 
     check('궁합 줄에 점수가 함께 선다', shown.includes('71') && shown.includes('64'));
 

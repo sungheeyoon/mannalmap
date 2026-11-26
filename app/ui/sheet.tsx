@@ -32,7 +32,7 @@ export function DetailSheet({
   sheet: RefObject<HTMLDialogElement | null>;
   /** 시트 머리의 제목 */
   nickname: string;
-  /** 보조기기가 읽는 시트 이름 — 없으면 「○○ 님 자세히」. 점수 설명 시트(`app/me/matching/matching-experience.tsx`)가 제 이름을 준다 */
+  /** 보조기기가 읽는 시트 이름 — 없으면 「○○님 자세히」. 점수 설명 시트(`app/me/matching/matching-experience.tsx`)가 제 이름을 준다 */
   label?: string;
   /** 머리의 닫기(X) 왼쪽에 서는 것 — 오늘의 인연은 신고 · 차단 「⋯」를 둔다 */
   menu?: ReactNode;
@@ -53,7 +53,7 @@ export function DetailSheet({
   return (
     <dialog
       ref={sheet}
-      aria-label={label ?? `${nickname} 님 자세히`}
+      aria-label={label ?? `${nickname}님 자세히`}
       onClick={(event) => { if (event.target === event.currentTarget) close(); }}
       onCancel={(event) => { event.preventDefault(); close(); }}
       onClose={onClose}

@@ -235,7 +235,7 @@ export function notificationOf(row: NotificationRow): InboxNotification[] {
       {
         notificationId: row.notification_id,
         kind,
-        text: who === '' ? '대화가 시작됐어요' : `${who} 님이 대화를 시작했어요`,
+        text: who === '' ? '대화가 시작됐어요' : `${who}님이 대화를 시작했어요`,
         href: `/me/chat/${row.match_id}`,
         createdAt: row.created_at,
         unread: row.read_at === null,

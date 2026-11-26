@@ -81,7 +81,7 @@ export function runningName(running: Pick<RunningReading, 'target' | 'labelA' | 
     case 'private':
       return `${called(running.labelA)} × ${called(running.labelB)} 궁합풀이`;
     case 'match':
-      return running.labelA === null ? '인연 궁합' : `${running.labelA} 님과의 인연 궁합`;
+      return running.labelA === null ? '인연 궁합' : `${running.labelA}님과의 인연 궁합`;
   }
 }
 

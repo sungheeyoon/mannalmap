@@ -185,7 +185,7 @@ function NoSelf({ nickname, onSaved }: { nickname: string; onSaved: () => void }
       <View style={styles.paperHead}>
         <WordText accessibilityRole="header" style={styles.paperTitle}>내 사주 등록</WordText>
         <WordText style={styles.paperDetail}>
-          <WordText style={styles.strong}>{nickname}</WordText> 님의 출생 정보를 입력해 주세요.
+          <WordText style={styles.strong}>{nickname}</WordText>님의 출생 정보를 입력해 주세요.
         </WordText>
       </View>
       <BirthFields form={form} showName={false} errors={sections} />

@@ -115,7 +115,7 @@ export async function shelfViewFor(client: Client): Promise<ShelfView> {
       .filter((match) => !madeMatchIds.has(match.matchId))
       .map((match) => ({
         href: `/me/match/${match.matchId}`,
-        name: `${match.nickname} 님과의 궁합풀이`,
+        name: `${match.nickname}님과의 궁합풀이`,
         shelf: 'match' as const,
         names: [match.nickname],
       })),

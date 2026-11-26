@@ -13,7 +13,7 @@ import type { RoomCompat } from './room-compat';
  */
 export type RoomView = {
   readonly matchId: string;
-  /** `{닉네임} 님` · 떠났으면 「탈퇴한 사용자」 */
+  /** `{닉네임}님` · 떠났으면 「탈퇴한 사용자」 */
   readonly heading: string;
   readonly name: string;
   /** 상대가 떠났으면 `null` — 사진도 신고도 차단도 걸 사람이 없다(ADR 0094) */

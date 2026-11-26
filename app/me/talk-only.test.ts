@@ -33,7 +33,7 @@ describe('덱과 소식의 글자', () => {
 
   it('대화를 연 소식은 대화 문장 · 그 방이다', () => {
     const talk = notificationOf(row)[0];
-    expect(talk?.text).toBe('지영 님이 대화를 시작했어요');
+    expect(talk?.text).toBe('지영님이 대화를 시작했어요');
     expect(talk?.href).toBe('/me/chat/m1');
   });
 

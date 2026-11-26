@@ -12,7 +12,7 @@ export type SameChartQuestion = { readonly label: string; readonly answer: (same
 export function SameChartAsk({ question, busy }: { question: SameChartQuestion; busy: boolean }) {
   return (
     <CardFrame accessibilityLabel={SAME_CHART_TITLE} style={styles.box}>
-      <WordText style={styles.title}>저장된 {question.label} 님과 같은 사람인가요?</WordText>
+      <WordText style={styles.title}>저장된 {question.label}님과 같은 사람인가요?</WordText>
       <WordText style={styles.body}>{SAME_CHART_BODY}</WordText>
       <PrimaryButton label={SAME_CHART_YES} disabled={busy} onPress={() => question.answer(true)} />
       <SecondaryButton label={SAME_CHART_NO} disabled={busy} onPress={() => question.answer(false)} />

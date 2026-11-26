@@ -356,7 +356,7 @@ export function RemoveConfirm({
     <ConfirmDialog
       open
       onClose={onCancel}
-      /* 「어머니 님」은 이름표에 존칭이 겹친다 — 이름표 그대로에 조사만(운영자 2026-10-26, 토스 TDS 「삭제할까요?」) */
+      /* 「어머니님」은 이름표에 존칭이 겹친다 — 이름표 그대로에 조사만(운영자 2026-10-26, 토스 TDS 「삭제할까요?」) */
       title={`${label}${endsWithBatchim(label) ? '을' : '를'} 삭제할까요?`}
       confirmLabel={removing ? '삭제하는 중…' : '삭제'}
       onConfirm={remove}

@@ -49,7 +49,7 @@ export function BlockDialog({ userId, nickname, onClose, onBlocked }: { userId: 
     <ConfirmDialog
       open
       danger
-      title={`${nickname} 님을 차단할까요?`}
+      title={`${nickname}님을 차단할까요?`}
       irreversible={BLOCK_FINAL_NOTE}
       confirmLabel={working ? '차단하는 중…' : '차단하기'}
       busy={working}
@@ -107,7 +107,7 @@ export function ReportDialog({
         <View style={styles.head}>
           <Icon name="flag" color={COLOR.danger} size={18} />
           <WordText accessibilityRole="header" style={styles.headTitle}>
-            {nickname} 님 신고
+            {nickname}님 신고
           </WordText>
           <Pressable accessibilityRole="button" accessibilityLabel={reported ? '닫기' : '작성 그만두기'} onPress={onClose} style={styles.close}>
             <Icon name="close" color={COLOR.foreground} size={18} />

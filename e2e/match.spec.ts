@@ -245,7 +245,7 @@ test.describe('대화로 열리는 흐름', () => {
     await expect(card.getByText('1990-05-15')).toHaveCount(0);
 
     await asker.page.getByRole('button', { name: TALK_START_LABEL, exact: true }).click();
-    const confirmTalk = asker.page.getByRole('dialog', { name: `받는${tag} ${TALK_START_TITLE}` });
+    const confirmTalk = asker.page.getByRole('dialog', { name: `받는${tag}${TALK_START_TITLE}` });
     await expect(confirmTalk).toContainText(TALK_START_NOTE);
     /* 대화는 풀이권을 안 쓴다 — 창이 풀이권을 말하지 않는다 */
     await expect(confirmTalk).not.toContainText('풀이권');
@@ -311,7 +311,7 @@ test.describe('대화로 열리는 흐름', () => {
     ] as const) {
       await person.page.goto(`/me/match/${matchId}`);
       const main = person.page.getByRole('main');
-      await expect(main.getByRole('heading', { name: `${partner} 님 궁합 결과`, exact: true })).toBeVisible();
+      await expect(main.getByRole('heading', { name: `${partner}님 궁합 결과`, exact: true })).toBeVisible();
       await expect(person.page.getByRole('group', { name: /의 네 기둥$/ })).toHaveCount(0);
       await expect(person.page.getByRole('button', { name: '궁합풀이 받기' })).toHaveCount(0);
       await expect(person.page.getByText('1990-05-15')).toHaveCount(0);
@@ -353,7 +353,7 @@ test.describe('대화로 열리는 흐름', () => {
     await expect(detailCardOf(receiver).getByRole('button', { name: DETAIL_ACTION_CONSENT })).toHaveCount(0);
     await expect(receiver.page.getByPlaceholder(CHAT_INPUT_PLACEHOLDER)).toBeVisible();
     await receiver.page.goto('/me/requests');
-    await expect(receiver.page.getByText(`가${tag} 님과의 요청이 출생 정보가 바뀌어 무효가 됐어요`)).toBeVisible();
+    await expect(receiver.page.getByText(`가${tag}님과의 요청이 출생 정보가 바뀌어 무효가 됐어요`)).toBeVisible();
   });
 
   /**
@@ -558,7 +558,7 @@ test.describe('대화로 열리는 흐름', () => {
     await reach(receiver, '차단');
     await receiver.page.keyboard.press('Enter');
     /* 묻는 창의 첫 초점은 「취소」다 — 차단하기는 탭으로 닿는다(ADR 0166) */
-    await expect(receiver.page.getByRole('dialog', { name: `가${tag} 님을 차단할까요?` }).getByRole('button', { name: '취소' })).toBeFocused();
+    await expect(receiver.page.getByRole('dialog', { name: `가${tag}님을 차단할까요?` }).getByRole('button', { name: '취소' })).toBeFocused();
     await reach(receiver, '차단하기');
   });
 
@@ -574,7 +574,7 @@ test.describe('대화로 열리는 흐름', () => {
     await receiver.page.goto(`/me/chat/${matchId}`);
     await roomMenuOf(receiver).click();
     await receiver.page.getByRole('button', { name: '차단', exact: true }).click();
-    await receiver.page.getByRole('dialog', { name: `가${tag} 님을 차단할까요?` }).getByRole('button', { name: '차단하기' }).click();
+    await receiver.page.getByRole('dialog', { name: `가${tag}님을 차단할까요?` }).getByRole('button', { name: '차단하기' }).click();
     await expect(receiver.page.getByPlaceholder(CHAT_INPUT_PLACEHOLDER)).toHaveCount(0);
 
     // 막는 것은 한쪽이 아니다 — 보낸 쪽의 후보 목록에서도 사라진다(제재는 양방향).
@@ -745,7 +745,7 @@ test.describe('보관함 복원 회귀', () => {
     await asker.page.getByRole('button', { name: /지나친 인연/ }).click();
     const panel = asker.page.getByRole('region', { name: /지나친 인연/ });
     await panel.getByRole('listitem').filter({ hasText: `나${tag}` }).getByRole('button').click(); // 타일은 보기만 연다 — 복원은 시트 안이다
-    await asker.page.getByRole('dialog', { name: `나${tag} 님 자세히` }).getByRole('button', { name: '다시 만나보기' }).click();
+    await asker.page.getByRole('dialog', { name: `나${tag}님 자세히` }).getByRole('button', { name: '다시 만나보기' }).click();
     await expect(panel).not.toBeVisible();
     await expect(asker.page.getByRole('heading', { name: `나${tag}` })).toBeVisible();
     expect((await asker.api.rpc('my_passed_connections')).data).toEqual([]);
@@ -1000,7 +1000,7 @@ test.describe('사진 여러 장을 넘겨 보는 카드', () => {
   async function showCandidate(person: Person, nickname: string): Promise<Locator> {
     await person.page.goto('/me/matching');
     await passUntilShown(person.page, person.page.getByRole('heading', { name: nickname }));
-    return person.page.getByRole('article', { name: `${nickname} 님` });
+    return person.page.getByRole('article', { name: `${nickname}님` });
   }
 
   /** 빨강 · 초록 · 파랑 한 점 — 장마다 바이트가 달라야 넘긴 것이 보인다 */
