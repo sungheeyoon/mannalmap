@@ -54,6 +54,10 @@ npm run db:push                                                     # 밀린 것
    **`notice-v17`(ADR 0234)의 첫 시행일 — 채웠다(2026-11-07).** `TERMS_EFFECTIVE_DATE`(`src/lib/brand/terms.ts`) · `REFUND_EFFECTIVE_DATE`(`src/lib/brand/refund.ts`)는
    게시일(운영자 답 2026-11-07)이고, 그날 02:37 KST 배포(#1050 `9e5ba00f`, smoke 다섯 화면 통과)로 `/terms` 에 시행일 2026-11-07 이 보인다. 앞으로의 개정은 약관 제4조②대로 시행 7일 전(불리하면 30일 전) 공지다
    **개정 시행일 `TERMS_REVISED_ON` · `REFUND_REVISED_ON`(ADR 0235 — 무료 · 예외 풀이권 무기한)은 배포일 2026-11-07 로 채웠다**(#1060 의 가지에 조율자가 더한 커밋, 그날의 묶음 배포가 올린다). 앞으로 개정 시행일을 비운 채 운영에 올리면 바뀐 글이 앞 시행일의 글로 읽힌다. 이번은 공지 받을 이용자가 없어 공지 없이 배포일 시행이다 — 다음 개정부터는 약관 제4조② 의 공지 뒤다(G-149)
+   **2026-12 개정(ADR 0274 — 약관 제16조③ · 제18조 · 제23조② · 제25조① · 제30조②, 환불정책 공제 예외, 처리방침 `notice-v20`)은 시행일 2026-12-04 다.**
+   공지는 세 글 머리의 「개정 안내」이고 **이 묶음 배포가 곧 공지 게시다** — 배포가 2026-11-27 보다 늦으면 올리기 전에 `TERMS_REVISED_ON` ·
+   `REFUND_REVISED_ON` · `PRIVACY_REVISION_NOTE` 의 날을 배포일 + 7일 이상으로 함께 옮기는 커밋을 그 PR 에 더한다(`scripts/legal-revision.test.ts` 가 세 자리를 견준다).
+   smoke 의 `/terms` · `/refund` · `/privacy` 에서 「개정 안내」 · 「2026-12-04 시행 개정」이 보여야 한다. 메일 공지는 없다(G-149)
 1. **0 의 `head` 를 Production 으로 올린다.** 그 SHA 의 워크트리(아래)에서 `vercel deploy --prod`, 아니면
    Vercel → Deployments → 「Create Deployment」에 그 SHA 를 넣는다. Production 은 `ignoreCommand` 가 건너뛰지 않는다. 빈 커밋을
    밀어 깨우지 않는다 — Git 배포는 꺼져 있어 아무 일도 안 일어난다

@@ -148,7 +148,7 @@ describe.each([
 describe('사업자 정보 묶음의 자리', () => {
   it('약관 제3조는 값이 있는 줄만 든다', () => {
     const terms = termsFor(businessInfoFrom({ tradeName: '시험상호', phone: '070-0000-1234' }), SITE);
-    const article3 = terms.parts[0].sections.find((section) => section.title.startsWith('제3조'));
+    const article3 = terms.parts.flatMap((part) => part.sections).find((section) => section.title.startsWith('제3조'));
     expect(article3?.blocks).toContainEqual({ kind: 'bullets', items: ['상호: 시험상호', '대표전화: 070-0000-1234'] });
   });
 
@@ -200,6 +200,58 @@ describe('무료 · 예외 풀이권의 기한 — 없다 (ADR 0235)', () => {
     expect(refundPolicyFor(businessInfoFrom(FULL)).effectiveDate).toBe(REFUND_REVISED_ON ?? REFUND_EFFECTIVE_DATE);
     expect(TERMS_REVISED_ON).toBe(REFUND_REVISED_ON);
     const revisedLine = terms.filter((text) => text.startsWith('개정 약관'));
-    expect(revisedLine).toEqual(TERMS_REVISED_ON ? [`개정 약관(제13조⑥ · 제14조④)은 ${TERMS_REVISED_ON}부터 시행합니다.`] : []);
+    expect(revisedLine).toEqual([
+      '개정 약관(제13조⑥ · 제14조④)은 2026-11-07부터 시행합니다.',
+      ...(TERMS_REVISED_ON ? [`개정 약관(제16조③ · 제18조 · 제23조② · 제25조① · 제30조②)은 ${TERMS_REVISED_ON}부터 시행합니다.`] : []),
+    ]);
+  });
+});
+
+/**
+ * ADR 0274 — 근거 문서(`docs/legal/terms-grounds.md` 「변호사 물음을 갈음한 근거 — 약관」)의 권고를 옮긴 다섯 조항과 그 공지.
+ * 이용자에게 불리하지 않은 변경이라 시행 7일 전 공지(제4조②)다 — 공지는 약관 · 환불정책 머리의 「개정 안내」다.
+ */
+describe('2026-12 개정 — 다섯 조항과 개정 안내 (ADR 0274)', () => {
+  const termsDoc = termsFor(businessInfoFrom(FULL), SITE);
+  const terms = textsOf(termsDoc);
+  const refund = textsOf(refundPolicyFor(businessInfoFrom(FULL)));
+
+  it('제25조①은 풀이 글의 권리를 회사에 두지 않고 이용 범위로 정하며 계산 방법을 들지 않는다', () => {
+    expect(terms).toContain('회사가 만든 화면 · 문구의 권리는 회사에 있습니다. 풀이 글은 이 약관이 정한 범위(개인적으로 보기 · 링크로 보내기)에서만 쓸 수 있으며, 영리 목적으로 다시 팔거나 배포할 수 없습니다.');
+    const article25 = termsDoc.parts.flatMap((part) => part.sections).find((section) => section.title.startsWith('제25조'));
+    expect(JSON.stringify(article25)).not.toMatch(/계산 방법|풀이 글 · 화면 · 계산 방법에 대한 권리/);
+  });
+
+  it('약관 변경을 거절한 해지(제4조③)는 환불수수료를 빼지 않는다 — 약관 · 환불정책이 같은 말을 한다', () => {
+    expect(terms.some((text) => text.includes('이용 정지·해지로 환불하거나 제4조제3항에 따라 이용계약을 해지하는 경우에는 환불수수료를 공제하지 않습니다.'))).toBe(true);
+    expect(refund).toContain('풀이 생성 실패, 서비스 종료, 이용 정지·해지로 환불하거나, 약관이 바뀌는 것을 거절하고 이용계약을 해지하는 경우에는 환불수수료를 공제하지 않아요.');
+  });
+
+  it('미성년자의 취소는 쓴 몫까지 돌려주고 위약금 · 환불수수료 · 모자란 금액 청구가 없다', () => {
+    const article18 = terms.findLast((text) => text.startsWith('미성년자가 법정대리인의 동의 없이'));
+    expect(article18).toContain('이미 쓴 풀이권 몫까지 모두 돌려드리고');
+    expect(article18).toContain('위약금이나 환불수수료를 받지 않으며, 제16조의2제1항의 금액도 청구하지 않습니다');
+    expect(article18).toContain('취소는 이메일(help@example.com)로 알립니다');
+  });
+
+  it('이용 제한의 통지는 전자우편 또는 서비스 안 알림이고, 조정기관에 한국저작권위원회가 든다', () => {
+    expect(terms.some((text) => text.startsWith('회사는 조치를 하면 그 사실과 사유를 곧바로 계정의 전자우편 또는 서비스 안 알림(제10조)으로 알리고'))).toBe(true);
+    expect(terms.some((text) => text.includes('「저작권법」에 따른 한국저작권위원회, 「콘텐츠산업진흥법」에 따른 콘텐츠분쟁조정위원회'))).toBe(true);
+  });
+
+  it('개정 안내는 시행일 · 이유 · 대비표(이전 · 이후) · 거절의 길을 들고, 본문은 대비표의 「이후」와 같다', () => {
+    expect(TERMS_REVISED_ON).not.toBeNull();
+    const notice = termsDoc.parts[0];
+    expect(notice.title).toBe('개정 안내');
+    const blocks = notice.sections[0].blocks;
+    const compare = blocks.find((block) => block.kind === 'table');
+    expect(compare?.kind === 'table' ? compare.table.rows.map((row) => row[0]) : []).toEqual(['제16조③', '제18조', '제23조②', '제25조①', '제30조②']);
+    for (const row of compare?.kind === 'table' ? compare.table.rows : []) {
+      expect(row[1]).not.toBe(row[2]);
+      expect(terms.filter((text) => text === row[2]).length).toBeGreaterThanOrEqual(2);
+    }
+    expect(terms.some((text) => text.includes(`${TERMS_REVISED_ON}부터 시행합니다`))).toBe(true);
+    expect(terms.some((text) => text.startsWith('시행일 전날까지') && text.includes('위약금을 받지 않습니다(제4조③)'))).toBe(true);
+    expect(refund.some((text) => text.startsWith(`이 환불정책은 ${REFUND_REVISED_ON}부터 아래처럼 바뀌어요`))).toBe(true);
   });
 });

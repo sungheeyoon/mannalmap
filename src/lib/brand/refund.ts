@@ -17,10 +17,16 @@ import { type LegalDocument, type LegalSection, bullets, para, table } from './l
 export const REFUND_EFFECTIVE_DATE: string | null = '2026-11-07';
 
 /**
- * 개정 시행일 — 「한눈에」의 무료 풀이권 줄을 고친 판(ADR 0235). 약관 개정(`TERMS_REVISED_ON`)과 같은 날 — 배포일이다.
+ * 마지막 개정 시행일 — 「얼마를 돌려받나요」의 공제 예외에 약관 변경을 거절한 해지(약관 제4조③)를 더한 판(ADR 0274). 약관 개정(`TERMS_REVISED_ON`)과
+ * 같은 날이고 같은 공지(시행 7일 전, 이 글의 「개정 안내」)다. 앞 판(ADR 0235 — 무료 풀이권 줄)은 첫 시행일에 함께 시행했다.
  * **비어 있는 채 운영에 올리지 않는다.** 지어낸 날을 넣지 않는다
  */
-export const REFUND_REVISED_ON: string | null = '2026-11-07';
+export const REFUND_REVISED_ON: string | null = '2026-12-04';
+
+/** 공제 예외 줄 — 본문과 「개정 안내」가 같은 글자를 쓴다(ADR 0274) */
+const FEE_EXCEPTION_BEFORE = '풀이 생성 실패, 서비스 종료, 이용 정지·해지로 환불하는 경우에는 환불수수료를 공제하지 않아요.';
+const FEE_EXCEPTION_AFTER =
+  '풀이 생성 실패, 서비스 종료, 이용 정지·해지로 환불하거나, 약관이 바뀌는 것을 거절하고 이용계약을 해지하는 경우에는 환불수수료를 공제하지 않아요.';
 
 export function refundPolicyFor(info: BusinessInfo): LegalDocument {
   const seller = businessInfoLines(info).map((line) => `${line.label} ${line.value}`);
@@ -35,6 +41,19 @@ export function refundPolicyFor(info: BusinessInfo): LegalDocument {
       {
         title: null,
         sections: [
+          ...(REFUND_REVISED_ON
+            ? [
+                {
+                  title: '개정 안내',
+                  blocks: [
+                    para(
+                      `이 환불정책은 ${REFUND_REVISED_ON}부터 아래처럼 바뀌어요. 이용약관 제16조③ 이 바뀐 것을 옮겼어요. 이용약관의 다른 바뀐 조항은 이용약관 머리의 「개정 안내」에 있어요.`,
+                    ),
+                    { kind: 'table', table: table(['자리', '이전', '이후'], ['얼마를 돌려받나요', FEE_EXCEPTION_BEFORE, FEE_EXCEPTION_AFTER]) },
+                  ],
+                } satisfies LegalSection,
+              ]
+            : []),
           {
             title: '한눈에',
             blocks: [
@@ -55,7 +74,7 @@ export function refundPolicyFor(info: BusinessInfo): LegalDocument {
               para(
                 '실제 결제한 금액을 구매한 유료 풀이권 수로 나눈 뒤, 환불할 장수를 곱해요. 사용한 풀이권을 낱장 가격으로 다시 계산하지 않아요. 청약철회 기간이 지난 뒤 단순 변심으로 환불하면, 이렇게 계산한 금액의 10%를 환불수수료로 공제해요.',
               ),
-              para('풀이 생성 실패, 서비스 종료, 이용 정지·해지로 환불하는 경우에는 환불수수료를 공제하지 않아요.'),
+              para(FEE_EXCEPTION_AFTER),
               {
                 kind: 'table',
                 table: table(

@@ -3,6 +3,17 @@
  */
 export const PRIVACY_INTRO = '이 서비스가 개인정보를 어떻게 다루는지 적었습니다.';
 export const PRIVACY_OPTIONAL_TITLE = '선택 항목';
+
+/** 선택 항목의 근거 호 — 동의(개인정보 보호법 제15조 ① 1, 제22조 ③ 의 구분, ADR 0274) */
+export const PRIVACY_OPTIONAL_BASIS = '선택 항목은 동의하신 경우에만 처리합니다(개인정보 보호법 제15조 제1항 제1호).';
+
+/**
+ * 처리방침 머리의 개정 안내 — 끝줄(`PRIVACY_CHANGE_NOTE`)이 약속한 「시행 7일 전부터 서비스 안에서」의 자리다(`notice-v20`, ADR 0274).
+ * 이용자에게 불리하지 않은 보완이라 7일이다. 날은 약관 · 환불정책의 개정 시행일(`TERMS_REVISED_ON`)과 같다 — 함께 공지하고 함께 시행한다.
+ * 다음 판에서 그 판의 줄로 바꾼다.
+ */
+export const PRIVACY_REVISION_NOTE =
+  '2026-12-04 시행 개정 — 동의 없이 처리하는 정보마다의 법적 근거, 국외 이전의 법적 근거, 맡겨서 처리하는 회사의 법인 이름, 운영자 화면의 2단계 인증을 더 적었습니다. 받는 정보와 쓰는 목적, 보관 기간, 국외로 나가는 것은 바뀌지 않습니다.';
 export const PRIVACY_RIGHTS_TITLE = '확인하고 고치고 지우는 방법';
 
 export const PRIVACY_RIGHTS_LINES = [
