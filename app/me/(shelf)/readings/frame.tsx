@@ -358,7 +358,7 @@ function ShelfHead({
             {PLACEHOLDER}
           </label>
           <div className="relative w-full">
-            <Icon name="search" className="pointer-events-none absolute left-4 top-1/2 size-[18px] -translate-y-1/2 text-secondary" />
+            <Icon name="search" className="pointer-events-none absolute left-4 top-1/2 size-4.5 -translate-y-1/2 text-secondary" />
             <input
               id={`${base}-find`}
               type="search"

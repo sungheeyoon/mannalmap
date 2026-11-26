@@ -8,8 +8,9 @@ import { CONTACT_LABEL } from '@/info/copy';
 import { InfoScreen } from '@/info/frame';
 import { Icon } from '@/ui/icons';
 import { SecondaryButton } from '@/ui/parts';
-import { COLOR, FONT, RADIUS, TYPE } from '@/ui/tokens';
+import { COLOR, FONT, RADIUS, TYPE, TYPE_BODY, TYPE_SECTION } from '@/ui/tokens';
 import { Card } from '@/ui/surfaces';
+import { Heading } from '@/ui/heading';
 import { WordText } from '@/ui/word-text';
 import { FAQ_LEAD, FAQ_TITLE } from '@brand/words';
 
@@ -84,7 +85,7 @@ export default function HelpScreen() {
 
       {GROUPS.map((group) => (
         <View key={group.title} style={styles.group} onLayout={(event) => place(`group:${group.title}`, event.nativeEvent.layout.y)}>
-          <WordText style={styles.groupTitle}>{group.title}</WordText>
+          <Heading style={styles.groupTitle}>{group.title}</Heading>
           <View onLayout={(event) => place(`panel:${group.title}`, event.nativeEvent.layout.y)}>
             <Card style={styles.panel}>
               {group.items.map((item, index) => {
@@ -146,11 +147,11 @@ const styles = StyleSheet.create({
   chip: { minHeight: 44, justifyContent: 'center', paddingHorizontal: 16, borderRadius: RADIUS.pill, borderWidth: 1, borderColor: COLOR.border, backgroundColor: COLOR.surface },
   chipText: { fontFamily: FONT.bold, fontSize: TYPE.note, color: COLOR.foreground },
   group: { gap: 12 },
-  groupTitle: { fontFamily: FONT.bold, fontSize: TYPE.heading, lineHeight: 28, color: COLOR.foreground },
+  groupTitle: { ...TYPE_SECTION },
   panel: { paddingVertical: 4 },
   divided: { borderTopWidth: 1, borderTopColor: COLOR.border },
   question: { minHeight: 52, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12, paddingVertical: 8 },
-  questionText: { flex: 1, fontFamily: FONT.bold, fontSize: TYPE.body, lineHeight: 24, color: COLOR.foreground },
+  questionText: { ...TYPE_BODY, flex: 1, fontFamily: FONT.bold },
   chevronOpen: { transform: [{ rotate: '90deg' }] },
   answers: { gap: 8, paddingBottom: 12 },
   answer: { fontFamily: FONT.medium, fontSize: TYPE.body, lineHeight: 26, color: COLOR.secondary },

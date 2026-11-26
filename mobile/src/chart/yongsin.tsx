@@ -54,7 +54,7 @@ function Johu({ johu }: { johu: Saju['analysis']['johu'] }) {
       <View style={shared.wrapBaseline}>
         <FactTag>참고표</FactTag>
         <T size="xs" tone="muted">조후 후보 천간</T>
-        <T size="lg" glyph>{(johu.halfStems ?? johu.stems).join(' · ')}</T>
+        <T size="lead" glyph>{(johu.halfStems ?? johu.stems).join(' · ')}</T>
         <T size="xs" tone="secondary">
           {johu.dayMaster}일간 · {johu.monthBranch}월
           {johu.half && (
@@ -81,7 +81,7 @@ function Eokbu({ eokbu, agreement }: { eokbu: Saju['analysis']['eokbu']; agreeme
       <View style={shared.wrapBaseline}>
         <FactTag>시험</FactTag>
         <T size="xs" tone="muted">억부 관점의 후보</T>
-        <T size="lg" glyph>{eokbu.suggestedElement}</T>
+        <T size="lead" glyph>{eokbu.suggestedElement}</T>
         <T bold>{ELEMENT_KO[eokbu.suggestedElement]}</T>
         <T tone="secondary">{ELEMENT_ROLE_KO[eokbu.role]}</T>
         {!eokbu.presentInChart && <T size="xs" tone="muted">여덟 글자에 없는 오행</T>}
@@ -129,7 +129,7 @@ function Tonggwan({ tonggwan }: { tonggwan: Saju['analysis']['tonggwan'] }) {
       <View style={shared.wrapBaseline}>
         <FactTag>사실</FactTag>
         <T size="xs" tone="muted">가장 팽팽한 대치</T>
-        <T size="lg" glyph>{tightest.controller} → {tightest.controlled}</T>
+        <T size="lead" glyph>{tightest.controller} → {tightest.controlled}</T>
         <T tone="secondary" num>
           {ELEMENT_KO[tightest.controller]} {percent1(tightest.shares.controller)} ↔ {ELEMENT_KO[tightest.controlled]} {percent1(tightest.shares.controlled)}
         </T>
@@ -149,7 +149,7 @@ function Following({ saju }: { saju: Saju }) {
       <View style={shared.wrapBaseline}>
         <FactTag>시험</FactTag>
         <T size="xs" tone="muted">종격</T>
-        <T size="lg">{FOLLOWING_PATTERN_STATUS_KO[following.verdict]}</T>
+        <T size="lead">{FOLLOWING_PATTERN_STATUS_KO[following.verdict]}</T>
         <T tone="secondary">
           내 편 기운(비겁·인성) 비율 <T tone="secondary" num>{percent1(following.selfShare)}</T>
           <T tone="muted"> (밖으로 종 ≤{percentOfRatio(dominance.outwardMaxSelfShare)} · 안으로 종 ≥{percentOfRatio(dominance.inwardMinSelfShare)})</T>

@@ -23,7 +23,7 @@ import { useMatchOpen } from '@/matching/opening';
 import { Icon } from '@/ui/icons';
 import { NoticeLine, NoticeScreen } from '@/ui/notice-screen';
 import { SecondaryButton, TextButton } from '@/ui/parts';
-import { COLOR, FONT, RADIUS, TYPE } from '@/ui/tokens';
+import { COLOR, RADIUS, TYPE_BODY } from '@/ui/tokens';
 import { goBack } from '@/ui/top-bar';
 import { WordText } from '@/ui/word-text';
 import { SIGN_IN_LEAD } from '@account/words';
@@ -119,6 +119,6 @@ const styles = StyleSheet.create({
   unlocks: { gap: 10 },
   unlock: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   unlockIcon: { width: 36, height: 36, alignItems: 'center', justifyContent: 'center', borderRadius: RADIUS.pill, backgroundColor: COLOR.surface },
-  unlockText: { flex: 1, fontFamily: FONT.medium, fontSize: TYPE.body, lineHeight: 24, color: COLOR.foreground },
+  unlockText: { ...TYPE_BODY, flex: 1 },
   exit: { alignSelf: 'flex-start' },
 });

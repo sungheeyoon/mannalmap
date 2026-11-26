@@ -9,7 +9,7 @@ import { legalPagesOpen, openLegalPage } from '@/info/legal-web';
 import { LinkRow } from '@/settings/parts';
 import { TextButton } from '@/ui/parts';
 import { Card, CardFrame } from '@/ui/surfaces';
-import { COLOR, FONT, TYPE } from '@/ui/tokens';
+import { FONT, TYPE_BODY, TYPE_META } from '@/ui/tokens';
 import { WordText } from '@/ui/word-text';
 
 /**
@@ -52,8 +52,8 @@ export default function PoliciesScreen() {
 
 const styles = StyleSheet.create({
   card: { gap: 12 },
-  head: { fontFamily: FONT.bold, fontSize: TYPE.body, lineHeight: 24, color: COLOR.foreground },
-  label: { fontFamily: FONT.medium, fontSize: TYPE.small, lineHeight: 20, color: COLOR.secondary },
-  value: { fontFamily: FONT.medium, fontSize: TYPE.body, lineHeight: 24, color: COLOR.foreground },
+  head: { ...TYPE_BODY, fontFamily: FONT.bold },
+  label: { ...TYPE_META },
+  value: { ...TYPE_BODY },
   disclosure: { alignSelf: 'flex-start' },
 });

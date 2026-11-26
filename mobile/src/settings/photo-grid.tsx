@@ -1,3 +1,4 @@
+import { BUTTON_OFF_OPACITY } from '@design';
 import { Image } from 'expo-image';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { PanResponder, Pressable, StyleSheet, View } from 'react-native';
@@ -528,7 +529,7 @@ const styles = StyleSheet.create({
   target: { borderWidth: 4, borderColor: COLOR.accent },
   empty: { alignItems: 'center', justifyContent: 'center', gap: 8, borderWidth: 2, borderStyle: 'dashed', borderColor: COLOR.borderStrong },
   resting: { borderColor: COLOR.border },
-  off: { opacity: 0.6 },
+  off: { opacity: BUTTON_OFF_OPACITY },
   plus: { width: 32, height: 32, borderRadius: RADIUS.pill, alignItems: 'center', justifyContent: 'center' },
   plusBig: { width: 48, height: 48, borderRadius: RADIUS.pill },
   plusNext: { backgroundColor: COLOR.accent },

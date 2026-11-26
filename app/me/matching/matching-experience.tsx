@@ -310,7 +310,7 @@ function ViewButton({ on, onClick, icon, label, count }: { on: boolean; onClick:
         on ? 'bg-accent text-on-accent' : 'text-secondary hover:bg-surface-soft hover:text-foreground'
       }`}
     >
-      <Icon name={icon} className="size-[18px]" />
+      <Icon name={icon} className="size-4.5" />
       {label}
       <span
         className={`grid h-5 min-w-5 place-items-center rounded-full px-1.5 text-tag font-bold tabular-nums ${

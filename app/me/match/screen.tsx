@@ -122,7 +122,7 @@ export async function MatchScreen({
         <div className="flex shrink-0 items-center gap-1">
           {toRoom !== null && (
             <Link href={toRoom} className={`${BUTTON_SECONDARY_SMALL} shrink-0`}>
-              <Icon name="chat" className="size-[18px]" />
+              <Icon name="chat" className="size-4.5" />
               {CHAT_TAB_LABEL}
             </Link>
           )}
@@ -135,7 +135,7 @@ export async function MatchScreen({
         <section className={EMPTY_SLOT}>
           <p className="text-body leading-7 text-secondary">{DETAIL_NOT_YET}</p>
           <Link href={`/me/chat/${matchId}`} className={`${BUTTON_SECONDARY_SMALL} mt-3`}>
-            <Icon name="chat" className="size-[18px]" />
+            <Icon name="chat" className="size-4.5" />
             {CHAT_TAB_LABEL}
           </Link>
         </section>

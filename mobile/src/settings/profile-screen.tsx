@@ -12,7 +12,7 @@ import { checkNickname } from '@/auth/signup';
 import { FailureLine } from '@/ui/failure-line';
 import { LoadingDots } from '@/ui/loading';
 import { Field, PrimaryButton } from '@/ui/parts';
-import { COLOR, FONT, RADIUS, TYPE } from '@/ui/tokens';
+import { COLOR, FONT, RADIUS, TYPE, TYPE_META } from '@/ui/tokens';
 import { TopBar } from '@/ui/top-bar';
 import { CardFrame } from '@/ui/surfaces';
 import { useLeaveGuard } from '@/ui/leave-guard';
@@ -260,7 +260,7 @@ const styles = StyleSheet.create({
   note: { minHeight: 20, fontSize: TYPE.note, lineHeight: 20, fontFamily: FONT.medium, color: COLOR.secondary },
   wrong: { color: COLOR.danger },
   area: { minHeight: 96, paddingHorizontal: 14, paddingVertical: 12, borderRadius: RADIUS.cell, borderWidth: 1, borderColor: COLOR.borderStrong, backgroundColor: COLOR.surface, fontFamily: FONT.medium, fontSize: TYPE.field, lineHeight: 24, color: COLOR.foreground, textAlignVertical: 'top' },
-  count: { alignSelf: 'flex-end', fontSize: TYPE.small, lineHeight: 20, fontFamily: FONT.medium, color: COLOR.secondary },
+  count: { ...TYPE_META, alignSelf: 'flex-end' },
   action: { gap: 8, paddingTop: 20, borderTopWidth: 1, borderTopColor: COLOR.border },
   quiet: { opacity: 0.55 },
 });

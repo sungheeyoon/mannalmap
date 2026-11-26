@@ -35,7 +35,7 @@ import { FailureLine } from '@/ui/failure-line';
 import { LoadingDots } from '@/ui/loading';
 import { CheckRow, PrimaryButton, TextButton } from '@/ui/parts';
 import { Card } from '@/ui/surfaces';
-import { COLOR, FONT, RADIUS, TYPE } from '@/ui/tokens';
+import { COLOR, FONT, RADIUS, TYPE, TYPE_BODY, TYPE_NAME } from '@/ui/tokens';
 
 import {
   listenStorePurchases,
@@ -263,11 +263,11 @@ const styles = StyleSheet.create({
   rowOn: { borderColor: COLOR.accent, borderWidth: 2 },
   rowBody: { flex: 1, gap: 2 },
   nameLine: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 8 },
-  name: { fontSize: TYPE.lead, lineHeight: 24, fontFamily: FONT.bold, color: COLOR.foreground },
+  name: { ...TYPE_NAME },
   mark: { overflow: 'hidden', paddingHorizontal: 8, paddingVertical: 2, borderRadius: RADIUS.pill, backgroundColor: COLOR.cream, fontSize: TYPE.fine, fontFamily: FONT.bold, color: COLOR.creamInk },
   price: { fontSize: TYPE.body, fontFamily: FONT.bold, color: COLOR.foreground },
   wrong: { fontSize: TYPE.small, fontFamily: FONT.medium, color: COLOR.danger },
   notes: { gap: 6, marginTop: 4 },
-  dialogLine: { fontFamily: FONT.medium, fontSize: TYPE.body, lineHeight: 24, color: COLOR.secondary },
+  dialogLine: { ...TYPE_BODY, color: COLOR.secondary },
   note: { fontSize: TYPE.fine, lineHeight: 18, fontFamily: FONT.medium, color: COLOR.secondary },
 });

@@ -16,6 +16,7 @@ import { LoadingDots } from '@/ui/loading';
 import { COLOR, FONT, RADIUS, TYPE } from '@/ui/tokens';
 import { TopBar } from '@/ui/top-bar';
 import { CardFrame } from '@/ui/surfaces';
+import { Heading } from '@/ui/heading';
 import { WordText } from '@/ui/word-text';
 
 type Loaded = { books: Read<readonly MatchBook[]>; matches: Read<readonly InboxMatch[]> };
@@ -71,7 +72,7 @@ export default function MatchHistoryScreen() {
         {(!books.ok || shelf.length > 0) && (
           <View style={styles.section}>
             <View style={styles.sectionHead}>
-              <WordText style={styles.sectionTitle}>인연 궁합</WordText>
+              <Heading style={styles.sectionTitle}>인연 궁합</Heading>
               {books.ok && <WordText style={styles.chip}>{shelf.length}</WordText>}
             </View>
             {books.ok ? (

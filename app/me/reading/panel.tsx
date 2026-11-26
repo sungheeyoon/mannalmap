@@ -203,7 +203,7 @@ export function ReadingPanel({
             : 'w-full shrink-0 px-5 sm:w-auto'
       }`}
     >
-      <Icon name="spark" className="size-[18px]" />
+      <Icon name="spark" className="size-4.5" />
       {chrome.makeLabel}
     </button>
   );

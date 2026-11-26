@@ -7,7 +7,7 @@ import { router, useGlobalSearchParams, usePathname } from 'expo-router';
 import { StyleSheet, View } from 'react-native';
 
 import { ConfirmDialog } from '@/ui/confirm-dialog';
-import { COLOR, FONT, TYPE } from '@/ui/tokens';
+import { COLOR, FONT, TYPE_BODY } from '@/ui/tokens';
 import { WordText } from '@/ui/word-text';
 
 /**
@@ -67,7 +67,7 @@ export function useBuyCredits() {
 }
 
 const styles = StyleSheet.create({
-  cost: { fontFamily: FONT.bold, fontSize: TYPE.body, lineHeight: 24, color: COLOR.foreground },
-  line: { fontFamily: FONT.medium, fontSize: TYPE.body, lineHeight: 24, color: COLOR.secondary },
-  danger: { fontFamily: FONT.bold, fontSize: TYPE.body, lineHeight: 24, color: COLOR.danger },
+  cost: { ...TYPE_BODY, fontFamily: FONT.bold },
+  line: { ...TYPE_BODY, color: COLOR.secondary },
+  danger: { ...TYPE_BODY, fontFamily: FONT.bold, color: COLOR.danger },
 });

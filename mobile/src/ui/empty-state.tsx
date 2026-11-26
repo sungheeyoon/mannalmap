@@ -3,7 +3,8 @@ import { StyleSheet, View } from 'react-native';
 
 import { Button } from './buttons';
 import { Icon, type IconName } from './icons';
-import { COLOR, FONT, RADIUS, TYPE } from './tokens';
+import { COLOR, RADIUS, TYPE_BODY, TYPE_SECTION } from './tokens';
+import { Heading } from './heading';
 import { WordText } from './word-text';
 
 /** 빈 상태 한 벌 — 웹 `app/ui/empty-state.tsx`. 그림 · 제목 · 한 줄 · 단추 하나가 가운데에 선다 */
@@ -30,7 +31,7 @@ export function EmptyState({
           </View>
         )}
       </View>
-      <WordText accessibilityRole="header" style={styles.title}>{title}</WordText>
+      <Heading style={styles.title}>{title}</Heading>
       {children !== undefined && <WordText style={styles.body}>{children}</WordText>}
       {action !== undefined && <Button variant="primary-small" label={action.label} onPress={action.onPress} style={styles.action} />}
     </View>
@@ -41,7 +42,7 @@ const styles = StyleSheet.create({
   wrap: { alignItems: 'center', paddingHorizontal: 16, paddingVertical: 48 },
   art: { marginBottom: 16 },
   mark: { width: 64, height: 64, alignItems: 'center', justifyContent: 'center', borderRadius: RADIUS.pill, backgroundColor: COLOR.surfaceSunken },
-  title: { fontFamily: FONT.bold, fontSize: TYPE.heading, lineHeight: 29, color: COLOR.foreground, textAlign: 'center' },
-  body: { maxWidth: 384, marginTop: 6, fontFamily: FONT.medium, fontSize: TYPE.body, lineHeight: 24, color: COLOR.secondary, textAlign: 'center' },
+  title: { ...TYPE_SECTION, textAlign: 'center' },
+  body: { ...TYPE_BODY, maxWidth: 384, marginTop: 6, color: COLOR.secondary, textAlign: 'center' },
   action: { marginTop: 24 },
 });

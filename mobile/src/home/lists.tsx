@@ -12,10 +12,11 @@ import { READING_CONTINUE_NOTE, SELF_READING_MAKING } from '@web-home/making';
 import { ElementSymbol } from '@/ui/element-symbol';
 import { Icon } from '@/ui/icons';
 import { StemSymbol } from '@/ui/stem-symbol';
-import { COLOR, ELEMENT_TONE, FONT, RADIUS, TYPE } from '@/ui/tokens';
+import { COLOR, ELEMENT_TONE, FONT, RADIUS, TYPE, TYPE_BODY, TYPE_META } from '@/ui/tokens';
 import { CardFrame } from '@/ui/surfaces';
 
 import type { HomePerson, ReadingRow, RunningLine } from './read';
+import { Heading } from '@/ui/heading';
 import { WordText } from '@/ui/word-text';
 import { PEOPLE_LEAD, SAVED_PEOPLE_MANAGE } from '@people/words';
 
@@ -45,7 +46,7 @@ function SectionHead({ title, count, link }: { title: string; count: string | nu
   return (
     <View style={styles.head}>
       <View style={styles.headTitle}>
-        <WordText style={styles.title}>{title}</WordText>
+        <Heading style={styles.title}>{title}</Heading>
         {count !== null && <WordText style={styles.count}>{count}</WordText>}
       </View>
       {link !== undefined && (
@@ -216,14 +217,14 @@ const styles = StyleSheet.create({
   line: { flexDirection: 'row', alignItems: 'baseline', gap: 8 },
   grow: { flex: 1 },
   name: { fontFamily: FONT.bold, fontSize: TYPE.body, color: COLOR.foreground },
-  second: { fontFamily: FONT.medium, fontSize: TYPE.small, lineHeight: 20, color: COLOR.secondary },
+  second: { ...TYPE_META },
   stale: { fontFamily: FONT.medium, fontSize: TYPE.fine, color: COLOR.creamInk },
   date: { fontFamily: FONT.medium, fontSize: TYPE.fine, color: COLOR.muted },
   value: { width: 64, flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-end', gap: 4 },
   valueText: { fontFamily: FONT.bold, fontSize: TYPE.body, color: COLOR.foreground },
   more: { minHeight: 48, alignItems: 'center', justifyContent: 'center', borderTopWidth: 1, borderTopColor: COLOR.border },
   moreText: { fontFamily: FONT.medium, fontSize: TYPE.small, color: COLOR.secondary },
-  empty: { flex: 1, fontFamily: FONT.medium, fontSize: TYPE.body, lineHeight: 24, color: COLOR.secondary },
+  empty: { ...TYPE_BODY, flex: 1, color: COLOR.secondary },
   full: { fontFamily: FONT.medium, fontSize: TYPE.small, color: COLOR.secondary },
   other: { paddingVertical: 4 },
 });

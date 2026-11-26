@@ -1,7 +1,7 @@
 import { StyleSheet } from 'react-native';
 
 import { PrimaryButton, SecondaryButton } from '@/ui/parts';
-import { COLOR, FONT, TYPE } from '@/ui/tokens';
+import { COLOR, FONT, TYPE_BODY, TYPE_META } from '@/ui/tokens';
 import { CardFrame } from '@/ui/surfaces';
 import { WordText } from '@/ui/word-text';
 import { SAME_CHART_BODY, SAME_CHART_NO, SAME_CHART_TITLE, SAME_CHART_YES } from '@people/words';
@@ -22,6 +22,6 @@ export function SameChartAsk({ question, busy }: { question: SameChartQuestion; 
 
 const styles = StyleSheet.create({
   box: { gap: 12, padding: 16, borderColor: COLOR.warningLine, backgroundColor: COLOR.warningWash },
-  title: { fontSize: TYPE.body, lineHeight: 24, fontFamily: FONT.bold, color: COLOR.foreground },
-  body: { fontSize: TYPE.small, lineHeight: 20, fontFamily: FONT.medium, color: COLOR.secondary },
+  title: { ...TYPE_BODY, fontFamily: FONT.bold },
+  body: { ...TYPE_META },
 });

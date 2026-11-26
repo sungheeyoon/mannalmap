@@ -5,7 +5,7 @@ import Svg, { Path } from 'react-native-svg';
 import type { Rich as RichParts, RichPart } from '@saju-view/notes';
 
 import { Card as CardFace } from '@/ui/surfaces';
-import { COLOR, CONTROL, FONT, RADIUS, TYPE } from '@/ui/tokens';
+import { COLOR, CONTROL, FONT, RADIUS, TYPE, TYPE_META, TYPE_NAME, TYPE_SECTION } from '@/ui/tokens';
 import { KEEP_VIEW } from '@/ui/keep-view';
 import { WordText } from '@/ui/word-text';
 
@@ -14,13 +14,12 @@ const GLYPH_FONT = Platform.select({ ios: 'System', android: 'sans-serif', defau
 
 const SIZE = {
   xs: { fontSize: TYPE.fine, lineHeight: 18 },
-  small: { fontSize: TYPE.small, lineHeight: 20 },
+  small: { ...TYPE_META },
   sm: { fontSize: TYPE.note, lineHeight: 21 },
   base: { fontSize: TYPE.field, lineHeight: 24 },
-  lead: { fontSize: TYPE.lead, lineHeight: 24 },
-  lg: { fontSize: 18, lineHeight: 26 },
-  heading: { fontSize: TYPE.heading, lineHeight: 29 },
-  big: { fontSize: 30, lineHeight: 36 },
+  lead: { ...TYPE_NAME },
+  heading: { ...TYPE_SECTION },
+  big: { fontSize: TYPE.display, lineHeight: 36 },
 } as const;
 
 const TONE = { foreground: COLOR.foreground, secondary: COLOR.secondary, muted: COLOR.muted } as const;
