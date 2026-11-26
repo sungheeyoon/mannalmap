@@ -36,7 +36,7 @@ import { settled } from '@/ui/settled';
 import { StemSymbol } from '@/ui/stem-symbol';
 import { CardFrame, Tile } from '@/ui/surfaces';
 import { TopBar } from '@/ui/top-bar';
-import { alpha, COLOR, ELEMENT_TONE, FONT, RADIUS, TYPE } from '@/ui/tokens';
+import { alpha, COLOR, ELEMENT_TONE, FONT, RADIUS, TYPE, TYPE_META } from '@/ui/tokens';
 import { WordText } from '@/ui/word-text';
 import { unreachedLoad, type Loaded } from '@/answer';
 
@@ -325,7 +325,7 @@ const styles = StyleSheet.create({
   making: { minHeight: 64, flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 20 },
   invite: { gap: 6, padding: 20 },
   inviteTitle: { fontFamily: FONT.bold, fontSize: TYPE.lead, lineHeight: 27, color: COLOR.onAccent },
-  inviteTopics: { fontFamily: FONT.medium, fontSize: TYPE.small, lineHeight: 20, color: alpha(COLOR.onAccent, 0.75) },
+  inviteTopics: { ...TYPE_META, color: alpha(COLOR.onAccent, 0.75) },
   inviteFoot: { flexDirection: 'row', justifyContent: 'flex-end', marginTop: 10 },
   row: { minHeight: 64, flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 16, paddingVertical: 12, borderTopWidth: 1, borderTopColor: COLOR.border, marginTop: -1 },
   rowBody: { flex: 1, minWidth: 0 },

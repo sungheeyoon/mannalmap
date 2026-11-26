@@ -197,7 +197,7 @@ function IntroBody({ labelledBy, roomy, children }: { labelledBy: string; roomy:
     <div
       ref={box}
       {...(overflows ? { tabIndex: 0, 'aria-labelledby': labelledBy } : {})}
-      className={`${roomy ? 'min-h-[4.8rem]' : ''} rounded-cell outline-none focus-visible:ring-4 focus-visible:ring-[color-mix(in_srgb,var(--accent)_55%,transparent)] lg:min-h-0 lg:flex-1 lg:overflow-y-auto lg:overscroll-contain scrollbar-quiet lg:after:pointer-events-none lg:after:sticky lg:after:bottom-0 lg:after:block lg:after:h-8 lg:after:bg-gradient-to-t lg:after:from-background lg:after:to-transparent lg:after:content-['']`}
+      className={`${roomy ? 'min-h-[4.8rem]' : ''} rounded-cell outline-none focus-visible:focus-ring lg:min-h-0 lg:flex-1 lg:overflow-y-auto lg:overscroll-contain scrollbar-quiet lg:after:pointer-events-none lg:after:sticky lg:after:bottom-0 lg:after:block lg:after:h-8 lg:after:bg-gradient-to-t lg:after:from-background lg:after:to-transparent lg:after:content-['']`}
     >
       {children}
     </div>

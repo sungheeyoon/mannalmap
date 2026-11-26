@@ -148,7 +148,7 @@ function FocusFrame({
       onPointerMove={onPointerMove}
       onPointerUp={end}
       onPointerCancel={end}
-      className={`relative shrink-0 cursor-grab touch-none select-none overflow-hidden bg-surface-sunken bg-cover bg-no-repeat outline-none ring-1 ring-border active:cursor-grabbing focus-visible:ring-4 focus-visible:ring-[color-mix(in_srgb,var(--accent)_55%,transparent)] ${className}`}
+      className={`relative shrink-0 cursor-grab touch-none select-none overflow-hidden bg-surface-sunken bg-cover bg-no-repeat outline-none ring-1 ring-border active:cursor-grabbing focus-visible:focus-ring ${className}`}
       style={{ backgroundImage: `url(${src})`, backgroundPosition: focusPosition(focus) }}
     />
   );

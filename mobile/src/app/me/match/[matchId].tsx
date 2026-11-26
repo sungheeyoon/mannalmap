@@ -16,6 +16,7 @@ import { PrimaryButton } from '@/ui/parts';
 import { TopBar, goBack } from '@/ui/top-bar';
 import { COLOR, FONT, RADIUS, TYPE, TYPE_TITLE } from '@/ui/tokens';
 import { CardFrame, EmptySlot } from '@/ui/surfaces';
+import { Heading } from '@/ui/heading';
 import { WordText } from '@/ui/word-text';
 
 /** 만드는 동안 상태 문을 다시 묻는 간격 — 글이 서면 풀이 칸으로 바뀐다 */
@@ -83,9 +84,9 @@ export default function MatchScreen() {
       <View style={styles.screen}>
         <TopBar fallback={fallback} />
         <View style={styles.notFound}>
-          <WordText style={styles.title} accessibilityRole="header">
+          <Heading level="title" style={styles.title}>
             찾을 수 없어요
-          </WordText>
+          </Heading>
           <View>
             <WordText style={styles.line}>주소에 적힌 인연 궁합을 찾지 못했어요.</WordText>
             <WordText style={styles.line}>인연 탭에서 다시 열어 주세요.</WordText>

@@ -68,12 +68,12 @@ export function StrengthMeter({ saju }: { saju: Saju }) {
       <div className="mt-4 grid grid-cols-2 gap-2 text-sm">
         <div className="rounded-cell border border-border px-3 py-2.5">
           <p className="text-xs text-muted">일간을 돕는 힘</p>
-          <p className="mt-0.5 text-lg font-semibold tabular-nums">{strength.supportScore.toFixed(2)}</p>
+          <p className="mt-0.5 text-lead font-semibold tabular-nums">{strength.supportScore.toFixed(2)}</p>
           <p className="text-xs text-secondary">비겁·인성</p>
         </div>
         <div className="rounded-cell border border-border px-3 py-2.5">
           <p className="text-xs text-muted">일간을 소모하는 힘</p>
-          <p className="mt-0.5 text-lg font-semibold tabular-nums">{strength.opposeScore.toFixed(2)}</p>
+          <p className="mt-0.5 text-lead font-semibold tabular-nums">{strength.opposeScore.toFixed(2)}</p>
           <p className="text-xs text-secondary">식상·재성·관성</p>
         </div>
       </div>

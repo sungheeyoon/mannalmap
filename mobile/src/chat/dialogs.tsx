@@ -10,7 +10,7 @@ import { Icon } from '@/ui/icons';
 import { Scrim } from '@/ui/scrim';
 import { ConfirmDialog, DialogText } from '@/ui/confirm-dialog';
 import { DialogPanel } from '@/ui/surfaces';
-import { COLOR, CONTROL, FONT, RADIUS, TYPE } from '@/ui/tokens';
+import { COLOR, CONTROL, FONT, RADIUS, TYPE, TYPE_META } from '@/ui/tokens';
 import { KEEP_VIEW } from '@/ui/keep-view';
 
 import type { Done } from '@/answer';
@@ -186,7 +186,7 @@ const styles = StyleSheet.create({
   dialog: { width: '100%', maxHeight: '85%', padding: 0, backgroundColor: COLOR.background },
   body: { gap: 12, padding: 24 },
   line: { fontSize: TYPE.note, lineHeight: 22, fontFamily: FONT.medium, color: COLOR.secondary },
-  note: { fontSize: TYPE.small, lineHeight: 20, fontFamily: FONT.medium, color: COLOR.secondary },
+  note: { ...TYPE_META },
   failure: { fontSize: TYPE.small, lineHeight: 19, fontFamily: FONT.medium, color: COLOR.danger },
   head: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   headTitle: { flex: 1, fontSize: TYPE.body, fontFamily: FONT.bold, color: COLOR.foreground },

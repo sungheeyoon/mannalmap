@@ -363,6 +363,20 @@ button, a, summary {
     outline-offset: 3px;
   }
 }
+/*
+  **제 테두리를 따로 두르는 칸의 초점 테 — 한 벌**(ADR 0274). 위 기본값과 같은 두께 · 섞음이고, 화면은 변형만 붙여 부른다 —
+  `focus-visible:focus-ring` · `peer-focus-visible:focus-ring` · `has-focus-visible:focus-ring` · `focus-within:focus-ring` ·
+  `focus-visible:after:focus-ring`. 칸 안쪽에 두를 때(사람 타일)는 `focus-ring-inset`. 두께를 `ring-2` · `ring-4` 로 따로 적거나
+  섞음을 다시 적지 않는다(잠금 `app/ui/focus-ring.test.ts`).
+*/
+@utility focus-ring {
+  outline: 3px solid color-mix(in srgb, var(--accent) 55%, transparent);
+  outline-offset: 2px;
+}
+@utility focus-ring-inset {
+  outline: 3px solid color-mix(in srgb, var(--accent) 55%, transparent);
+  outline-offset: -3px;
+}
 ::selection { background: var(--accent-soft); }
 
 .glyph {

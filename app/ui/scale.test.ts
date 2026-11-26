@@ -33,6 +33,20 @@ const OUTSIDE_SCALE: { at: string; value: string; n?: number; why: string }[] = 
   { at: 'app/ui/logo.tsx', value: '1.3rem', why: '로고의 이름 — 브랜드 그림과 함께 정한다(ADR 0149)' },
 ];
 
+/**
+ * **Tailwind 기본 크기 중 단 밖 허용 목록**(ADR 0274) — 운영 화면 · 검산 화면은 이용자 화면과 따로 정한다(2026-11-26 G-183 에서 이용자 화면의
+ * `text-lg` 를 `text-lead` 로 옮겼다). 지운 자리는 여기서도 지운다.
+ */
+const DEFAULT_OUTSIDE_SCALE: { at: string; value: string; n?: number }[] = [
+  { at: 'app/ops/reports/[reportId]/page.tsx', value: 'text-lg' },
+  { at: 'app/ops/survey/page.tsx', value: 'text-lg' },
+  { at: 'app/ops/survey/page.tsx', value: 'text-2xl' },
+  { at: 'app/ops/today/today-view.tsx', value: 'text-2xl' },
+  { at: 'app/ops/orders/refund-form.tsx', value: 'text-2xl' },
+  { at: 'app/me/reading/inspect/page.tsx', value: 'text-2xl' },
+  { at: 'app/ops/members/page.tsx', value: 'text-4xl' },
+];
+
 /** 글자 크기인 임의값 — `text-[var(--ink)]` 같은 색은 뺀다 */
 const isSize = (value: string): boolean => /^(?:length:)?(?:\d|\.|min\(|max\(|clamp\(|calc\()/.test(value);
 
@@ -101,6 +115,19 @@ describe('글자 크기 · 모서리의 단', () => {
     });
     const allowed = OUTSIDE_SCALE.flatMap(({ at, value, n = 1 }) => Array.from({ length: n }, () => `${at} — ${value}`));
     expect(found.sort()).toEqual(allowed.sort());
+  });
+
+  it('Tailwind 기본 크기 중 단 밖의 것(`text-lg` 18 · `text-2xl` 24 …)을 쓰지 않는다 — 허용 목록뿐이다(ADR 0274)', () => {
+    const found = sources().flatMap((path) =>
+      [...code(path).matchAll(/(?<![\w-])text-(lg|2xl|[4-9]xl)(?![\w-])/g)].map((match) => `${path} — text-${match[1]}`),
+    );
+    const allowed = DEFAULT_OUTSIDE_SCALE.flatMap(({ at, value, n = 1 }) => Array.from({ length: n }, () => `${at} — ${value}`));
+    expect(found.sort()).toEqual(allowed.sort());
+  });
+
+  it('크기(`size-`)를 px 임의값으로 적지 않는다 — `size-[18px]` 은 `size-4.5` 다(ADR 0274)', () => {
+    const found = sources().flatMap((path) => [...code(path).matchAll(/(?<![\w-])size-\[[\d.]+px\]/g)].map((match) => `${path} — ${match[0]}`));
+    expect(found).toEqual([]);
   });
 
   it('토큰 이름이 색 이름과 겹치지 않는다 — `text-secondary` 는 색이라 크기 토큰이 같은 이름이면 둘 중 하나가 진다', () => {

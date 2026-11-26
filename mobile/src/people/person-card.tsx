@@ -8,7 +8,7 @@ import { READING_CONTINUE_NOTE, SELF_READING_MAKING } from '@web-home/making';
 import { CALENDAR_KO, GENDER_KO, STEM_INFO } from '@saju';
 
 import { ElementSymbol } from '@/ui/element-symbol';
-import { alpha, COLOR, CONTROL, ELEMENT_TONE, FONT, RADIUS, TYPE } from '@/ui/tokens';
+import { alpha, COLOR, CONTROL, ELEMENT_TONE, FONT, RADIUS, TYPE, TYPE_META } from '@/ui/tokens';
 
 import type { MyReading, PersonRow } from './data';
 import { EditInputForm } from './edit-input';
@@ -170,9 +170,9 @@ const styles = StyleSheet.create({
   watermark: { position: 'absolute', right: -24, bottom: -24 },
   head: { minHeight: CONTROL, justifyContent: 'center', paddingRight: 52 },
   unknown: { width: 32, height: 32, alignItems: 'center', justifyContent: 'center', borderRadius: RADIUS.pill, backgroundColor: alpha(COLOR.surface, 0.72) },
-  note: { paddingHorizontal: 12, paddingVertical: 8, borderRadius: RADIUS.cell, backgroundColor: alpha(COLOR.surface, 0.6), fontSize: TYPE.small, lineHeight: 20, fontFamily: FONT.medium, color: COLOR.foreground },
+  note: { ...TYPE_META, paddingHorizontal: 12, paddingVertical: 8, borderRadius: RADIUS.cell, backgroundColor: alpha(COLOR.surface, 0.6), color: COLOR.foreground },
   noteName: { fontSize: TYPE.fine, fontFamily: FONT.bold },
-  oneLine: { minHeight: 40, fontSize: TYPE.small, lineHeight: 20, fontFamily: FONT.medium, color: COLOR.foreground },
+  oneLine: { ...TYPE_META, minHeight: 40, color: COLOR.foreground },
   stale: { fontSize: TYPE.fine, fontFamily: FONT.bold, color: COLOR.secondary },
   buttons: { flexDirection: 'row', gap: 8, paddingTop: 4 },
   grow: { flex: 1 },

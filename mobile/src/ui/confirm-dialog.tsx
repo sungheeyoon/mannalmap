@@ -4,7 +4,7 @@ import { ScrollView, StyleSheet, View } from 'react-native';
 import { Button } from './buttons';
 import { Scrim } from './scrim';
 import { DialogPanel } from './surfaces';
-import { COLOR, FONT, TYPE } from './tokens';
+import { COLOR, FONT, TYPE_BODY, TYPE_META, TYPE_NAME } from './tokens';
 import { WordText } from './word-text';
 
 /** 어느 단추든 글자가 이만큼을 넘으면 위아래로 선다 — 웹 `app/ui/confirm-dialog.tsx` 의 `autoActions` */
@@ -87,12 +87,12 @@ const styles = StyleSheet.create({
   panel: { width: '100%', maxWidth: 416, maxHeight: '85%', gap: 24 },
   scroll: { flexGrow: 0 },
   body: { gap: 8 },
-  title: { fontSize: TYPE.lead, lineHeight: 24, fontFamily: FONT.bold, color: COLOR.foreground },
-  text: { fontSize: TYPE.body, lineHeight: 24, fontFamily: FONT.medium, color: COLOR.secondary },
-  small: { fontSize: TYPE.small, lineHeight: 20, fontFamily: FONT.medium, color: COLOR.secondary },
+  title: { ...TYPE_NAME },
+  text: { ...TYPE_BODY, color: COLOR.secondary },
+  small: { ...TYPE_META },
   strong: { fontFamily: FONT.bold, color: COLOR.foreground },
-  irreversible: { fontSize: TYPE.body, lineHeight: 24, fontFamily: FONT.medium, color: COLOR.foreground },
-  failure: { marginTop: 4, fontSize: TYPE.small, lineHeight: 20, fontFamily: FONT.medium, color: COLOR.danger },
+  irreversible: { ...TYPE_BODY },
+  failure: { ...TYPE_META, marginTop: 4, color: COLOR.danger },
   actions: { gap: 8 },
   actionsRow: { flexDirection: 'row', gap: 8 },
   half: { flexGrow: 1, flexBasis: 0, minWidth: 0 },

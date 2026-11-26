@@ -22,7 +22,7 @@ import { legalPagesOpen, openLegalPage } from '@/info/legal-web';
 import { openWebAccount, webAccountOpen } from '@/release/floor';
 import { FailureLine } from '@/ui/failure-line';
 import { LoadingDots } from '@/ui/loading';
-import { COLOR, FONT, RADIUS, TYPE } from '@/ui/tokens';
+import { COLOR, FONT, RADIUS, TYPE, TYPE_META } from '@/ui/tokens';
 import { settled } from '@/ui/settled';
 import { TopBar } from '@/ui/top-bar';
 
@@ -204,5 +204,5 @@ const styles = StyleSheet.create({
   notice: { paddingHorizontal: 16 },
   face: { width: 56, height: 56, borderRadius: RADIUS.pill, alignItems: 'center', justifyContent: 'center', backgroundColor: COLOR.cream },
   initial: { fontSize: TYPE.heading, fontFamily: FONT.bold, color: COLOR.creamInk },
-  email: { paddingHorizontal: 24, paddingVertical: 12, fontSize: TYPE.small, lineHeight: 20, fontFamily: FONT.medium, color: COLOR.secondary },
+  email: { ...TYPE_META, paddingHorizontal: 24, paddingVertical: 12 },
 });

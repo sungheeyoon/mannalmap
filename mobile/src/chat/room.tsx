@@ -40,7 +40,7 @@ import { readAlready, readsNow } from '@chat/room/thread';
 import { activityText, type ActivityBand } from '@presence';
 
 import { Icon } from '@/ui/icons';
-import { COLOR, CONTROL, ELEMENT_TONE, FONT, RADIUS, TYPE } from '@/ui/tokens';
+import { COLOR, CONTROL, ELEMENT_TONE, FONT, RADIUS, TYPE, TYPE_BODY, TYPE_META, TYPE_NAME } from '@/ui/tokens';
 
 import { Avatar } from './avatar';
 import { DetailPanelView } from './detail-panel';
@@ -547,7 +547,7 @@ const styles = StyleSheet.create({
   who: { flex: 1, minWidth: 0, flexDirection: 'row', alignItems: 'center', gap: 8 },
   whoWords: { flex: 1, minWidth: 0 },
   nameLine: { flexDirection: 'row', alignItems: 'center', gap: 2, minWidth: 0 },
-  heading: { flexShrink: 1, fontSize: TYPE.lead, lineHeight: 24, fontFamily: FONT.bold, color: COLOR.foreground },
+  heading: { ...TYPE_NAME, flexShrink: 1 },
   activity: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   activityText: { fontSize: TYPE.fine, fontFamily: FONT.medium, color: COLOR.secondary },
   dot: { width: 8, height: 8, borderRadius: RADIUS.pill },
@@ -610,8 +610,8 @@ const styles = StyleSheet.create({
   startPlain: { alignItems: 'center', gap: 12, paddingTop: 16, paddingBottom: 8 },
   startName: { fontSize: TYPE.lead, fontFamily: FONT.bold, color: COLOR.foreground },
   hello: { maxWidth: 384, gap: 4, alignItems: 'center' },
-  helloTitle: { fontSize: TYPE.body, lineHeight: 24, fontFamily: FONT.bold, color: COLOR.foreground, textAlign: 'center' },
-  helloNote: { fontSize: TYPE.small, lineHeight: 20, fontFamily: FONT.medium, color: COLOR.secondary, textAlign: 'center' },
+  helloTitle: { ...TYPE_BODY, fontFamily: FONT.bold, textAlign: 'center' },
+  helloNote: { ...TYPE_META, textAlign: 'center' },
   edit: { minHeight: CONTROL, alignItems: 'center', justifyContent: 'center', borderRadius: RADIUS.pill, borderWidth: 1, borderColor: COLOR.borderStrong },
   editText: { fontSize: TYPE.note, fontFamily: FONT.bold, color: COLOR.foreground },
 });

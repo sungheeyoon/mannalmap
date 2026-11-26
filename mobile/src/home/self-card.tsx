@@ -14,11 +14,12 @@ import { Button } from '@/ui/buttons';
 import { ElementSymbol } from '@/ui/element-symbol';
 import { Icon } from '@/ui/icons';
 import { StemSymbol } from '@/ui/stem-symbol';
-import { alpha, COLOR, ELEMENT_TONE, FONT, RADIUS, TYPE } from '@/ui/tokens';
+import { alpha, COLOR, ELEMENT_TONE, FONT, RADIUS, TYPE, TYPE_SECTION } from '@/ui/tokens';
 import { Tile } from '@/ui/surfaces';
 
 import type { SelfCardData } from './read';
 import { SelfProfile } from './self-profile';
+import { Heading } from '@/ui/heading';
 import { WordText } from '@/ui/word-text';
 import { BIRTH_EDIT } from '@people/words';
 
@@ -69,7 +70,7 @@ export function SelfCard({
         <View style={styles.who}>
           {/* 일간 딱지는 이름 옆이다 — 오른쪽 위는 「⋯」가 든다. 긴 이름은 제 폭 안에서 접히고 딱지는 첫 줄 곁에 그대로 선다 */}
           <View style={[styles.nameRow, manageable && styles.menuRoom]}>
-            {card.label !== '' && <WordText style={styles.name}>{card.label}</WordText>}
+            {card.label !== '' && <Heading style={styles.name}>{card.label}</Heading>}
             <DayMasterChip stem={saju.pillars.dayMaster} />
           </View>
           <WordText style={styles.birth}>
@@ -140,7 +141,7 @@ const styles = StyleSheet.create({
   nameRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 8 },
   /** 「⋯」(44px, 카드 끝에서 12)가 카드 안쪽 여백(16)을 넘어 들어온 40 과 틈 8 */
   menuRoom: { paddingRight: 48 },
-  name: { flexShrink: 1, fontFamily: FONT.bold, fontSize: TYPE.heading, lineHeight: 28, color: COLOR.foreground },
+  name: { ...TYPE_SECTION, flexShrink: 1 },
   birth: { marginTop: 2, fontFamily: FONT.medium, fontSize: TYPE.fine, color: COLOR.secondary },
   metaphor: { fontFamily: FONT.medium, fontSize: TYPE.lead, lineHeight: 26, color: COLOR.foreground, paddingHorizontal: 14, paddingVertical: 10, borderRadius: RADIUS.cell, backgroundColor: alpha(COLOR.surface, 0.55) },
   elements: { flexDirection: 'row' },

@@ -11,8 +11,9 @@ import { goHome } from '@/info/go-home';
 import { Icon } from '@/ui/icons';
 import { Logo } from '@/ui/logo';
 import { PrimaryButton, SecondaryButton } from '@/ui/parts';
-import { COLOR, FONT, RADIUS, TYPE, TYPE_TITLE } from '@/ui/tokens';
+import { COLOR, FONT, RADIUS, TYPE, TYPE_BODY, TYPE_META, TYPE_NAME, TYPE_SECTION, TYPE_TITLE } from '@/ui/tokens';
 import { Card, CardFrame, Paper } from '@/ui/surfaces';
+import { Heading } from '@/ui/heading';
 import { WordText } from '@/ui/word-text';
 import { FAQ_TITLE, SEE_MY_SAJU_FREE, WHAT_YOU_CAN_DO } from '@brand/words';
 
@@ -27,12 +28,12 @@ export default function AboutScreen() {
       <Paper style={styles.head}>
         <Logo size={44} />
         <WordText style={styles.meta}>{SERVICE_TAGLINE}</WordText>
-        <WordText style={styles.title}>{SERVICE_NAME_TOPIC} 이런 곳이에요</WordText>
+        <Heading level="title" style={styles.title}>{SERVICE_NAME_TOPIC} 이런 곳이에요</Heading>
         <WordText style={styles.lead}>{`${ABOUT_LEAD[0]} ${matchOpen ? ABOUT_LEAD[1] : ABOUT_LEAD_WHILE_SHUT}`}</WordText>
       </Paper>
 
       <View style={styles.section}>
-        <WordText style={styles.sectionTitle}>{WHAT_YOU_CAN_DO}</WordText>
+        <Heading style={styles.sectionTitle}>{WHAT_YOU_CAN_DO}</Heading>
         {SERVICE_FEATURES.map((feature) => {
           const { body, note } = featureText(feature, matchOpen);
           return (
@@ -50,7 +51,7 @@ export default function AboutScreen() {
       </View>
 
       <View style={styles.section}>
-        <WordText style={styles.sectionTitle}>시작하는 차례</WordText>
+        <Heading style={styles.sectionTitle}>시작하는 차례</Heading>
         <View style={styles.steps}>
           {ABOUT_STEPS.map((step, index) => (
             <CardFrame key={step.title} style={styles.step}>
@@ -76,21 +77,21 @@ export default function AboutScreen() {
 
 const styles = StyleSheet.create({
   head: { gap: 12 },
-  meta: { fontFamily: FONT.medium, fontSize: TYPE.small, lineHeight: 20, color: COLOR.secondary },
+  meta: { ...TYPE_META },
   title: { ...TYPE_TITLE },
   lead: { fontFamily: FONT.medium, fontSize: TYPE.body, lineHeight: 26, color: COLOR.creamInk },
   section: { gap: 16 },
-  sectionTitle: { fontFamily: FONT.bold, fontSize: TYPE.heading, lineHeight: 28, color: COLOR.foreground },
+  sectionTitle: { ...TYPE_SECTION },
   feature: { gap: 8 },
   iconBadge: { width: 40, height: 40, alignItems: 'center', justifyContent: 'center', borderRadius: RADIUS.pill, backgroundColor: COLOR.surfaceSoft },
-  name: { fontFamily: FONT.bold, fontSize: TYPE.lead, lineHeight: 24, color: COLOR.foreground },
-  body: { fontFamily: FONT.medium, fontSize: TYPE.body, lineHeight: 24, color: COLOR.secondary },
+  name: { ...TYPE_NAME },
+  body: { ...TYPE_BODY, color: COLOR.secondary },
   steps: { gap: 8 },
   step: { flexDirection: 'row', gap: 16, padding: 16 },
   stepNumber: { width: 32, height: 32, alignItems: 'center', justifyContent: 'center', borderRadius: RADIUS.pill, backgroundColor: COLOR.accent },
   stepNumberText: { fontFamily: FONT.bold, fontSize: TYPE.note, color: COLOR.onAccent },
   stepBody: { flex: 1, gap: 2 },
-  stepTitle: { fontFamily: FONT.bold, fontSize: TYPE.body, lineHeight: 24, color: COLOR.foreground },
+  stepTitle: { ...TYPE_BODY, fontFamily: FONT.bold },
   stepText: { fontFamily: FONT.medium, fontSize: TYPE.note, lineHeight: 24, color: COLOR.secondary },
   actions: { gap: 8 },
 });

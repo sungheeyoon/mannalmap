@@ -15,6 +15,7 @@ import { StemSymbol } from '@/ui/stem-symbol';
 import { Icon } from '@/ui/icons';
 import { alpha, COLOR, ELEMENT_TONE, FONT, RADIUS as CORNER, TYPE } from '@/ui/tokens';
 import { CardFrame, Paper } from '@/ui/surfaces';
+import { Heading } from '@/ui/heading';
 import { WordText } from '@/ui/word-text';
 import { MAP_EMPTY_HINT, MAP_OTHERS_COMPAT, MAP_PAIR_UNSEEN, MAP_PEOPLE_COMPAT, MAP_TAP_HINT } from '@people/words';
 
@@ -110,7 +111,7 @@ export function RelationMap({ model, canAdd }: { model: MapModel; canAdd: boolea
   return (
     <Paper accessibilityLabel="관계 지도" style={styles.panel}>
       <View style={styles.head}>
-        <WordText accessibilityRole="header" style={styles.title}>관계 지도</WordText>
+        <Heading style={styles.title}>관계 지도</Heading>
         {!empty && (
           <WordText style={styles.count}>
             저장한 사람 <WordText style={styles.countStrong}>{model.people.length}</WordText>명
@@ -396,7 +397,7 @@ const styles = StyleSheet.create({
   layer: { position: 'absolute', left: 0, top: 0, right: 0, bottom: 0, overflow: 'visible' },
   me: { position: 'absolute', zIndex: 5, alignItems: 'center', justifyContent: 'center', borderWidth: 3, borderColor: COLOR.surface },
   meTag: { position: 'absolute', bottom: -6, paddingHorizontal: 6, borderRadius: CORNER.pill },
-  meTagText: { fontFamily: FONT.bold, fontSize: 11, lineHeight: 16 },
+  meTagText: { fontFamily: FONT.bold, fontSize: TYPE.tag, lineHeight: 16 },
   seat: { position: 'absolute' },
   seatFace: { flex: 1, alignItems: 'center', justifyContent: 'center', borderWidth: 2, borderColor: COLOR.surface },
   seatUnread: { borderWidth: 2, borderStyle: 'dashed', borderColor: COLOR.borderStrong, backgroundColor: COLOR.surface },
@@ -423,7 +424,7 @@ const styles = StyleSheet.create({
   cardName: { fontFamily: FONT.bold, fontSize: TYPE.body, color: COLOR.foreground },
   cardPicture: { fontFamily: FONT.medium, fontSize: TYPE.fine, color: COLOR.secondary },
   cardScore: { alignItems: 'flex-end' },
-  cardScoreHead: { fontFamily: FONT.bold, fontSize: 11, color: COLOR.secondary },
+  cardScoreHead: { fontFamily: FONT.bold, fontSize: TYPE.tag, color: COLOR.secondary },
   cardScoreValue: { fontFamily: FONT.bold, fontSize: TYPE.heading },
   cardScoreUnit: { fontFamily: FONT.medium, fontSize: TYPE.fine, color: COLOR.secondary },
   cardClose: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center' },

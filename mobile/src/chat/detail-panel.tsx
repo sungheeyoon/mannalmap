@@ -11,7 +11,7 @@ import { useClient } from '@/auth/connected';
 import { cancelRequest, respondToRequest } from '@/matching/doors';
 import { ConfirmDialog, DialogText } from '@/ui/confirm-dialog';
 import { requestDetail } from '@/matching/talk-doors';
-import { COLOR, CONTROL, FONT, RADIUS, TYPE } from '@/ui/tokens';
+import { COLOR, CONTROL, FONT, RADIUS, TYPE, TYPE_META } from '@/ui/tokens';
 import { WordText } from '@/ui/word-text';
 
 /**
@@ -117,7 +117,7 @@ const styles = StyleSheet.create({
   panel: { gap: 6, paddingHorizontal: 16, paddingVertical: 12, backgroundColor: COLOR.surfaceSoft, borderBottomWidth: 1, borderBottomColor: COLOR.border },
   titleRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   title: { flex: 1, fontFamily: FONT.bold, fontSize: TYPE.note, lineHeight: 20, color: COLOR.foreground },
-  line: { fontFamily: FONT.medium, fontSize: TYPE.small, lineHeight: 20, color: COLOR.secondary },
+  line: { ...TYPE_META },
   failure: { fontFamily: FONT.medium, fontSize: TYPE.small, lineHeight: 19, color: COLOR.danger },
   action: { minHeight: CONTROL, marginTop: 4, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 16, borderRadius: RADIUS.pill, backgroundColor: COLOR.accent },
   actionText: { fontFamily: FONT.bold, fontSize: TYPE.note, color: COLOR.onAccent },

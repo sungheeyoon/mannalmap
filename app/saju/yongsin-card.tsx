@@ -82,7 +82,7 @@ function JohuNote({ johu }: { johu: Saju['analysis']['johu'] }) {
           참고표
         </span>
         <span className="text-xs text-muted">조후 후보 천간</span>
-        <span className="glyph text-lg font-medium">
+        <span className="glyph text-lead font-medium">
           {(johu.halfStems ?? johu.stems).join(' · ')}
         </span>
         <span className="text-xs text-secondary">
@@ -135,7 +135,7 @@ function EokbuNote({
           시험
         </span>
         <span className="text-xs text-muted">억부 관점의 후보</span>
-        <span className="glyph text-lg font-medium">{eokbu.suggestedElement}</span>
+        <span className="glyph text-lead font-medium">{eokbu.suggestedElement}</span>
         <span className="text-sm font-medium">{ELEMENT_KO[eokbu.suggestedElement]}</span>
         <span className="text-sm text-secondary">{ELEMENT_ROLE_KO[eokbu.role]}</span>
         {!eokbu.presentInChart && (

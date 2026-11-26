@@ -46,11 +46,11 @@ const CHECK_LABEL = 'block text-sm font-semibold leading-5';
 const CHECK_TOP = { marginTop: checkBoxTop(20) };
 
 /**
- * 확인 상자 한 줄 — 줄 전체가 누를 자리이고, 고르면 먹색 테와 크림 면이 선다(상자도 그대로 남는다). 초점 테는 전역 초점 테두리와
- * 같은 섞음(accent 55%, `globals.css`)이다 — `accent-soft` 는 크림 바탕에서 거의 안 보였다
+ * 확인 상자 한 줄 — 줄 전체가 누를 자리이고, 고르면 먹색 테와 크림 면이 선다(상자도 그대로 남는다). 초점 테는 한 벌(`focus-ring`,
+ * `globals.css`)이다 — `accent-soft` 는 크림 바탕에서 거의 안 보였다
  */
 const BOX =
-  'flex cursor-pointer gap-3 rounded-cell border border-border bg-surface p-4 hover:border-border-strong has-checked:border-foreground has-checked:bg-cream has-[[aria-invalid=true]]:border-danger has-[[aria-invalid=true]]:shadow-[0_0_0_1px_var(--danger)] has-[:focus-visible]:outline has-[:focus-visible]:outline-3 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-[color-mix(in_srgb,var(--accent)_55%,transparent)]';
+  'flex cursor-pointer gap-3 rounded-cell border border-border bg-surface p-4 hover:border-border-strong has-checked:border-foreground has-checked:bg-cream has-[[aria-invalid=true]]:border-danger has-[[aria-invalid=true]]:shadow-[0_0_0_1px_var(--danger)] has-[:focus-visible]:focus-ring';
 
 const LABEL = 'text-body font-semibold';
 
