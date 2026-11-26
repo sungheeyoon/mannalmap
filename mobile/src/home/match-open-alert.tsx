@@ -9,7 +9,7 @@ import { NOT_READY } from '@/auth/signup';
 import { readMatchOpenAlert, setMatchOpenAlert, useMatchOpen } from '@/matching/opening';
 import { Button } from '@/ui/buttons';
 import { Icon } from '@/ui/icons';
-import { settled } from '@/ui/settled';
+import { settled, settledWhileLive } from '@/ui/settled';
 import { CardFrame } from '@/ui/surfaces';
 import { COLOR, FONT, RADIUS, TYPE } from '@/ui/tokens';
 import { WordText } from '@/ui/word-text';
@@ -25,15 +25,7 @@ export function MatchOpenAlert() {
   const [saving, setSaving] = useState(false);
   const [failure, setFailure] = useState<string | null>(null);
 
-  useEffect(() => {
-    let live = true;
-    void settled(readMatchOpenAlert(client), 'my_match_open_alert', () => null).then((answer) => {
-      if (live) setAsked(answer);
-    });
-    return () => {
-      live = false;
-    };
-  }, [client]);
+  useEffect(() => settledWhileLive(readMatchOpenAlert(client), 'my_match_open_alert', () => null, setAsked), [client]);
 
   if (!matchOpenAlertStands(open) || asked === null) return null;
 

@@ -20,7 +20,7 @@ import { ElementSymbol } from '@/ui/element-symbol';
 import { Choices, Field, PrimaryButton } from '@/ui/parts';
 import { COLOR, CONTROL, FONT, RADIUS, TYPE } from '@/ui/tokens';
 import { CardFrame } from '@/ui/surfaces';
-import { settled } from '@/ui/settled';
+import { settledWhileLive } from '@/ui/settled';
 
 import { openPair, readPairRelation, type Choosable, type PairAnswers, type PairSide } from './data';
 import { WordText } from '@/ui/word-text';
@@ -93,15 +93,10 @@ export function CompatPicker({ people, pickA, pickB, typeB = false }: { people: 
   /* 적어 둔 답을 칸에 세운다 — 못 읽었으면 칸을 안 건드린다. 「못 읽었다」를 「모른다」로 세우지 않는다 */
   useEffect(() => {
     if (pairKey === '') return;
-    let alive = true;
     const [first, second] = pairKey.split('|');
-    void settled(readPairRelation(client, first, second), 'pair_relation_of', () => ({ ok: false }) as const).then((stored) => {
-      if (!alive || !stored.ok || answered.current === pairKey) return;
-      setRelation(stored.relation);
+    return settledWhileLive(readPairRelation(client, first, second), 'pair_relation_of', () => ({ ok: false }) as const, (stored) => {
+      if (stored.ok && answered.current !== pairKey) setRelation(stored.relation);
     });
-    return () => {
-      alive = false;
-    };
   }, [client, pairKey]);
 
   const setSlot = (side: CompatSide, next: Slot) => {

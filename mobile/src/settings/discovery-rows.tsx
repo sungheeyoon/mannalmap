@@ -7,7 +7,7 @@ import { PARTICIPATION_LABEL, participationHelp } from '@matching/opening';
 
 import { useClient } from '@/auth/connected';
 import { saveFailureOf, setParticipation } from '@/reading/chart-writes';
-import { followRefusal } from '@/reading/panel';
+import { followRefusal } from '@/reading/follow-refusal';
 import { FailureLine } from '@/ui/failure-line';
 import { COLOR, FONT, RADIUS, TYPE } from '@/ui/tokens';
 import { KEEP_VIEW } from '@/ui/keep-view';

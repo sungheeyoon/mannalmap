@@ -16,7 +16,7 @@ import { SelfCard } from '@/home/self-card';
 import { BirthFields, useBirthForm } from '@/people/birth-fields';
 import { SectionScrollView, useSectionErrors } from '@/ui/section-error';
 import { openParticipation, saveFailureOf, saveSelfPerson } from '@/reading/chart-writes';
-import { followRefusal } from '@/reading/panel';
+import { followRefusal } from '@/reading/follow-refusal';
 import { ElementSymbol } from '@/ui/element-symbol';
 import { LoadingDots } from '@/ui/loading';
 import { PrimaryButton, SecondaryButton } from '@/ui/parts';

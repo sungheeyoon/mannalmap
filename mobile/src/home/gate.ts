@@ -6,8 +6,8 @@ import { GATE_ACCOUNT_COLUMNS, gateAccountOf, gateFor, NOTICE_UNREAD, type GateA
 import { supabase, type Client } from '@/auth/client';
 import { forgetChoiceOnSessionEnd } from '@/push/device';
 import { readSchedule } from '@/auth/schedule';
-import { UNREACHABLE } from '@/auth/signup';
 import { settled } from '@/ui/settled';
+import { UNREACHABLE } from '@/answer';
 
 export type Gate =
   | { kind: 'checking' }

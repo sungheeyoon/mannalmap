@@ -10,7 +10,7 @@ import type { Client } from '@/auth/client';
 import { NOT_READY } from '@/auth/signup';
 import type { DoorAnswer } from '@/reading/api';
 import { saveFailureOf } from '@/reading/chart-writes';
-import { followRefusal } from '@/reading/panel';
+import { followRefusal } from '@/reading/follow-refusal';
 import { addStoredPhoto, readPhotoUploadMode, replaceStoredPhoto, type BakedVariants } from '@/reading/photo-writes';
 import { SITE_URL } from '@/site';
 

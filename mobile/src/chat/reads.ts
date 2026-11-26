@@ -11,7 +11,7 @@ import { focusOf, focusesOf, leadFocusOf, type PhotoFocus } from '@profile';
 
 import type { Client } from '@/auth/client';
 import { readAccount } from '@/auth/account';
-import type { Done } from '@/answer';
+import type { Done, Unread } from '@/answer';
 import { readDetail } from '@/matching/talk-doors';
 import { settled } from '@/ui/settled';
 
@@ -77,8 +77,6 @@ const roomOf = (row: RoomRow): ChatRoom | null => {
   };
 };
 
-/** 화면이 없는 까닭 — 로그인이 없다 · 못 읽었다 */
-export type Unread = { readonly kind: 'signed-out' } | { readonly kind: 'failed'; readonly message: string };
 
 export const currentUserId = async (client: Client): Promise<string | null> => {
   const { data } = await client.auth.getSession();
