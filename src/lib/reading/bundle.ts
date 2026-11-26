@@ -51,7 +51,7 @@ export const bundleMark = (credits: number): '추천' | '최대 할인' | null =
 export const bundleOrderName = (credits: number): string => `풀이권 ${credits}장`;
 
 /**
- * 가맹점 주문 번호(`rdo_` + 하이픈 뺀 주문 id)에서 주문 id 를 되짚는다 — `open_reading_order` 가 그렇게 짓는다(`20261011090000`).
+ * 가맹점 주문 번호(`rdo_` + 하이픈 뺀 주문 id)에서 주문 id 를 되짚는다 — 주문을 세우는 `grant_store_purchase` 가 그렇게 짓는다.
  * 운영자가 붙여 넣는 글자라 앞뒤 빈칸과 대문자는 받는다. 그 모양이 아니면 `null` 이다.
  */
 export function readingOrderIdOf(orderNumber: string): string | null {
@@ -62,7 +62,7 @@ export function readingOrderIdOf(orderNumber: string): string | null {
 
 /**
  * **위약금을 떼는 환불 사유** — 청약철회 기간(약관 제15조① — 계약내용을 받은 날부터 7일)이 지난 뒤의 「안 쓴 몫 환불」(`unused`) 하나다(ADR 0192). 7일 안의
- * 청약철회(`withdrawal`) · 중복 결제 · 미제공 · 그 밖(심사 결제 · 정지 · 해지 · 서비스 종료)은 떼지 않는다. 7일 안인지는 운영자가
+ * 청약철회(`withdrawal`) · 중복 결제 · 미제공 · 그 밖(정지 · 해지 · 서비스 종료)은 떼지 않는다. 7일 안인지는 운영자가
  * 사유를 고르며 가린다 — 이 함수도 DB 도 날짜를 세지 않는다. DB 의 `operator_hold_reading_refund` 가 같은 갈래를 쓴다.
  */
 export const isPenalizedRefund = (reason: string): boolean => reason === 'unused';
