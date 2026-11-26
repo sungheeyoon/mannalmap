@@ -35,8 +35,6 @@
 
 ## 닿을 때 여는 것
 
-손대기 전에 다 읽지 않는다 — 일이 그 자리에 닿을 때 연다(ADR 0147).
-
 - 화면 글자를 하나라도 바꾸거나 새로 쓰면 → [고칠 화면의 대장 무리 파일](../product/copy-ledger/) — 있으면 그 문구를 쓴다. 옛 글자를 `e2e/` 에서 grep 해 스펙도 고친다
 - 말투 · 표기를 정하면 → [화면 문구 규칙](../context/copy.md) — 해요체
 - 색 · 모서리 · 글자 크기 · 그림자 값을 고치면 → [ADR 0109](../adr/0109-the-product-wears-one-soft-look-under-the-name-jeomjeom.md) — `src/lib/design/tokens.json` 을 고치고 `node scripts/design-tokens.mjs`

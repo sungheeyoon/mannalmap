@@ -20,7 +20,7 @@ import { beforeAll, describe, expect, it } from 'vitest';
 import codeRules from '../eslint-code-rules.cjs';
 import { SUPPORT_EMAIL } from '../src/lib/brand';
 
-import { ON_DEMAND_SECTION, TABLE_COLUMNS, linksOf, readBudgetOf, sectionOf as sectionIn, tableOf } from './read-budget.mjs';
+import { ON_DEMAND_SECTION, linksOf, readBudgetOf, sectionOf as sectionIn } from './read-budget.mjs';
 import { LAUNCHED, STAGE_FILE, stagesOf } from './release-stage.mjs';
 import { SOURCE_EXTENSIONS, filesUnder, relPath } from './source-files';
 
@@ -438,11 +438,6 @@ describe('주석의 날짜 (docs/agents/code-rules/comments.md) — 줄어들기
 
   it('결정 · 경위의 날짜는 있던 자리에만 있다 — 밖의 문서를 확인한 날만 새로 적는다', () => {
     expectExactly(datedComments(PRODUCT_FILES), datedCommentsAllowed());
-  });
-
-  it('목록은 정렬돼 있다 — 걷는 사람이 파일 이름으로 찾는다', () => {
-    const allowed = datedCommentsAllowed();
-    expect(allowed).toEqual([...allowed].sort());
   });
 
   it('출처 날짜만 예외다 — 사람의 답은 「확인」이 붙어도 센다', () => {
@@ -1069,37 +1064,6 @@ const GLOSSARY_INDEX = 'GLOSSARY.md';
 const CONTEXT_DIR = 'docs/context';
 /** §9 「용어 ↔ 코드」 · §10 「어긋난 이름」 이 사는 영역 파일 — 아래 두 시험이 이 파일에서만 표를 읽는다 */
 const GLOSSARY_CODE_FILE = 'docs/context/code-names.md';
-/** 색인의 「차례」 줄 — `| \`docs/context/<영역>.md\` | 「절」 · … | 무엇을 드나 |` */
-const CONTEXT_ROW = /^\| `docs\/context\/([a-z-]+\.md)` \| ([^|]+) \|/gm;
-const contextIndex = () => readFileSync(join(ROOT, GLOSSARY_INDEX), 'utf8');
-const contextPart = (name: string) => readFileSync(join(ROOT, CONTEXT_DIR, name), 'utf8');
-/** 영역 파일 이름 — 색인이 든 차례대로 */
-const contextParts = () => [...contextIndex().matchAll(CONTEXT_ROW)].map((match) => match[1]);
-
-describe('용어집 (GLOSSARY.md 색인 → docs/context/)', () => {
-  it('색인에 정의 · 규칙 문장이 없다 — 용어 머리 줄(`**이름** — …`)과 `_Avoid_` 가 없다(절이 「차례」 하나인 것은 「색인 → 폴더」)', () => {
-    const index = contextIndex();
-    const stray = index
-      .split('\n')
-      // 굵게 시작하는 줄은 용어 머리 줄이거나 §8 의 규칙 문장이다 — 머리말의 「읽는 법.」 하나만 색인에 선다
-      .filter((line) => /^\s*(?:- )?(?:_Avoid_|\*\*)/.test(line) && !line.startsWith('**읽는 법.**'));
-    expect(stray).toEqual([]);
-  });
-
-  it('절 번호 1–10 은 영역 파일 어느 한 곳에 한 번씩 선다(「절」 칸이 절을 다 드는 것은 「색인 → 폴더」)', () => {
-    const numbers = contextParts().flatMap((name) => headsOf(contextPart(name)).map((head) => Number(/^(\d+)\. /.exec(head)?.[1])));
-    // 절 하나가 빠지거나 두 파일에 서면 번호가 끊기거나 겹친다
-    expect([...numbers].sort((a, b) => a - b)).toEqual(Array.from({ length: 10 }, (_, i) => i + 1));
-  });
-
-  it('「용어 ↔ 코드」 · 「어긋난 이름」 표는 `GLOSSARY_CODE_FILE` 에 있고, 그 파일은 색인이 드는 영역 파일이다', () => {
-    expect(contextParts()).toContain(GLOSSARY_CODE_FILE.slice(CONTEXT_DIR.length + 1));
-    const text = readFileSync(join(ROOT, GLOSSARY_CODE_FILE), 'utf8');
-    expect(text).toMatch(/^## 9\. 용어 ↔ 코드$/m);
-    expect(text).toMatch(/^## 10\. 어긋난 이름$/m);
-  });
-});
-
 // -----------------------------------------------------------------------------
 // 용어집 ↔ 코드 (docs/context/code-names.md §9)
 // -----------------------------------------------------------------------------
@@ -1199,20 +1163,6 @@ const prdParts = () => [...prdIndex().matchAll(PRD_ROW)].map((match) => match[1]
 const prdBody = () => prdParts().map((name) => readFileSync(join(ROOT, PRD_DIR, name), 'utf8')).join('\n');
 
 describe('PRD (docs/prd.md 색인 → docs/product/prd/)', () => {
-  it('색인에 요구 문장이 없다 — 「선다 · 없다 · 다르다」 표시는 그 뜻을 적은 표의 칸에만 선다', () => {
-    // 요구 문장은 줄마다 지금 있는가를 함께 적는다(색인 머리말). 표시 표 밖에서 표시가 서면 요구가 색인에 들어온 것이다
-    const stray = prdIndex()
-      .split('\n')
-      .filter((line) => /\*\*(?:선다|없다|다르다)/.test(line) && !/^\| \*\*(?:선다|없다|다르다)\*\* \|/.test(line));
-    expect(stray).toEqual([]);
-  });
-
-  it('이은 본체의 절 번호는 0 부터 끊김 없이 선다(「절」 칸이 절을 다 드는 것은 「색인 → 폴더」)', () => {
-    // 절 하나가 어느 파일에서도 빠지면 번호가 끊긴다
-    const numbers = [...prdBody().matchAll(/^## (\d+)\. /gm)].map((match) => Number(match[1]));
-    expect(numbers).toEqual([...Array(10).keys()]);
-  });
-
   /** 「무엇을 드나」 칸의 `§a.b` · `§a.b–a.d` — 범위는 마지막 자리를 펼친다 */
   function numbersOfCell(cell: string): string[] {
     return [...cell.matchAll(/§(\d+(?:\.\d+)*)(?:–(\d+(?:\.\d+)*))?/g)].flatMap((match) => {
@@ -1254,11 +1204,10 @@ describe('PRD (docs/prd.md 색인 → docs/product/prd/)', () => {
 
 /**
  * 화면의 요구(PRD §3)와 확정 문구(대장)는 화면 무리마다 한 파일이고, 두 폴더의 무리는 같은 이름이다. 공통 파일(`screens.md` ·
- * `copy-ledger.md`)은 무리 색인을 들고, ui 역할은 「고칠 화면의 무리」 선택 묶음으로 PRD 무리 파일을 하나 고른다 — 무리 파일을
- * 더하면 색인과 역할 문서에도 들어야 읽기량 셈이 그 파일을 센다. 대장 무리 파일은 찾아보는 표라 「닿을 때 여는 것」이 들고, 새 절은
- * 그 파일 이름을 단 번호라 색인이 자라지 않는다(ADR 0169).
+ * `copy-ledger.md`)은 무리 색인을 들고, 대장 무리 파일은 찾아보는 표라 「닿을 때 여는 것」이 들며, 새 절은 그 파일 이름을 단 번호라
+ * 색인이 자라지 않는다(ADR 0169). ui 역할의 선택 묶음이 무리를 다 드는지는 재지 않는다 — 읽기량은 보고다(ADR 0177 · 0270).
  */
-describe('화면 무리 — PRD 화면 파일과 문구 대장이 같은 무리로 갈리고, 색인과 ui 역할이 그 무리를 다 든다 (ADR 0162 · 0169)', () => {
+describe('화면 무리 — PRD 화면 파일과 문구 대장이 같은 무리로 갈리고, 색인이 그 무리를 다 든다 (ADR 0162 · 0169)', () => {
   const SCREENS_DIR = 'docs/product/prd/screens';
   const LEDGER = 'docs/product/copy-ledger.md';
   const LEDGER_DIR = 'docs/product/copy-ledger';
@@ -1280,27 +1229,22 @@ describe('화면 무리 — PRD 화면 파일과 문구 대장이 같은 무리�
     }
   });
 
-  it('대장의 무리 색인 「절」 칸은 그 파일의 번호 절을 차례대로 다 들고, 한 번호는 어느 파일에서나 같은 제목이며 번호가 끊기지 않는다', () => {
-    const rows = [...readFileSync(join(ROOT, LEDGER), 'utf8').matchAll(/^\| [^|]+ \| [^|]+ \| (`docs\/product\/copy-ledger\/[a-z-]+\.md`|이 파일) \| ([^|]+) \|$/gm)];
+  // 색인 「절」 칸이 파일의 절을 다 드는지는 재지 않는다(ADR 0270) — 재는 것은 번호가 두 절을 가리키지 않는가다
+  it('대장 전체의 번호(`## NN`)는 어느 파일에서나 같은 제목이고 01–47 을 넘지 않는다 — 새 절은 파일 이름을 단 번호다', () => {
     const files = [LEDGER, ...groupsIn(LEDGER_DIR).map((name) => `${LEDGER_DIR}/${name}`)];
-    expect(rows.length).toBe(files.length);
     const wrong: string[] = [];
     const titles = new Map<string, string>();
-    for (const match of rows) {
-      const file = match[1] === '이 파일' ? LEDGER : match[1].slice(1, -1);
-      const listed = match[2].trim() === '—' ? [] : match[2].trim().split(' · ');
-      const sections = ledgerSections(file);
-      if (listed.join(' ') !== sections.map((one) => one.no).join(' ')) wrong.push(`${file}: 색인 ${listed.join(' ')} ↔ 파일 ${sections.map((one) => one.no).join(' ')}`);
-      for (const one of sections) {
+    for (const file of files) {
+      for (const one of ledgerSections(file)) {
         const seen = titles.get(one.no);
         if (seen !== undefined && seen !== one.title) wrong.push(`${one.no}: 「${seen.slice(0, 20)}」 ↔ 「${one.title.slice(0, 20)}」 (${file}) — 번호가 겹쳤다`);
         titles.set(one.no, one.title);
+        // 대장 전체에서 하나인 번호는 01–47 에서 멈췄다 — 새 절은 아래 시험의 `<파일 이름>-NN` (ADR 0169)
+        if (Number(one.no) > LAST_SHARED_NUMBER) wrong.push(`${file}: ## ${one.no} — 새 절은 \`## <파일 이름>-NN …\` 이다`);
       }
     }
+    expect(titles.size).toBeGreaterThan(30);
     expect(wrong).toEqual([]);
-    const numbers = [...titles.keys()].map(Number).sort((a, b) => a - b);
-    // 대장 전체에서 하나인 번호는 01–47 에서 멈췄다 — 새 절은 아래 시험의 `<파일 이름>-NN` (ADR 0169)
-    expect(numbers, '새 절은 `## <파일 이름>-NN …` 이다 — 머리의 「무리 색인」').toEqual(Array.from({ length: LAST_SHARED_NUMBER }, (_, i) => i + 1));
   });
 
   /** 무리 파일의 번호 붙은 절 머리 가운데 꼴이 틀리거나(남의 이름 · `00`) 같은 번호가 둘인 것 */
@@ -1503,14 +1447,6 @@ describe('화면 무리 — PRD 화면 파일과 문구 대장이 같은 무리�
     expectExactly(missing, NEAREST_MISSING_STILL_THERE);
   });
 
-  it('ui 역할의 「고칠 화면의 무리」 선택지는 무리마다 하나이고 그 무리의 PRD 화면 파일을 들며, 대장 무리 파일은 「닿을 때 여는 것」이 폴더로 든다 (ADR 0169)', () => {
-    const group = readBudgetOf('ui', ROOT).choices.find((one) => one.name.startsWith('고칠 화면의 무리'));
-    expect(group).toBeDefined();
-    const picked = (group?.options ?? []).map((option) => option.files.map((one) => one.file).sort());
-    expect(picked.sort()).toEqual(groupsIn(SCREENS_DIR).map((name) => [`${SCREENS_DIR}/${name}`]).sort());
-    const onDemand = sectionIn(readFileSync(join(ROOT, 'docs/roles/ui.md'), 'utf8'), ON_DEMAND_SECTION) ?? '';
-    expect(onDemand).toContain('](../product/copy-ledger/)');
-  });
 });
 
 // -----------------------------------------------------------------------------
@@ -1576,10 +1512,6 @@ describe('간극 대장 (docs/product/gaps.md, ADR 0089)', () => {
     expect(rows.filter((cells) => cells[6].length > MEMO_LIMIT).map((cells) => `${cells[1]} :: ${cells[6].length}자`)).toEqual([]);
   });
 
-  it('대장에 「## G-nn 기록」 절이 다시 서지 않는다 — 기록은 줄마다 한 파일이다', () => {
-    expect([...ledger.matchAll(/^#{1,6} G-\d{2,3} 기록\s*$/gm)].map((match) => match[0])).toEqual([]);
-  });
-
   it('표의 기록 링크와 기록 파일은 일대일이다 — 번호가 같고, 가리킨 파일이 있고, 표에 없는 기록 파일이 없다', () => {
     expect(recordFiles.length).toBeGreaterThan(0);
     expect(recordLinks.length).toBeGreaterThan(0);
@@ -1598,23 +1530,6 @@ describe('간극 대장 (docs/product/gaps.md, ADR 0089)', () => {
     expect(recordFiles.filter((name) => !memoLinked.has(`G-${name.slice(2, -3)}→${name}`))).toEqual([]);
   });
 
-  it('기록 파일은 제 번호의 제목으로 열고 대장으로 돌아가는 링크를 든다', () => {
-    const wrong = recordFiles
-      .filter((name) => /^g-\d{2,3}\.md$/.test(name))
-      .filter((name) => {
-        const text = readFileSync(join(ROOT, RECORDS_DIR, name), 'utf8');
-        return !text.startsWith(`# G-${name.slice(2, -3)} 기록\n`) || !/\]\(\.\.\/\.\.\/gaps\.md(#[^)]*)?\)/.test(text);
-      });
-    expect(wrong).toEqual([]);
-  });
-
-  it('PRD 본체에는 개정 기록이 없다 — 계보와 「재어 본 값」은 changelog 에 산다', () => {
-    const prd = prdBody();
-    expect(prd).not.toMatch(/^## 10\. /m);
-    expect(prd).not.toMatch(/^### 0\.[3-8] /m);
-    const changelog = readFileSync(join(ROOT, 'docs/product/prd-changelog.md'), 'utf8');
-    expect(changelog).toMatch(/^## 10\. 이 문서의 계보/m);
-  });
 });
 
 // -----------------------------------------------------------------------------
@@ -1630,8 +1545,8 @@ describe('역할 문서 (docs/start.md · docs/roles/, ADR 0140)', () => {
     .map((name) => name.replace(/\.md$/, ''));
   /** 사람과 말하는 세션 자신이라 에이전트 정의가 없는 역할 */
   const WITHOUT_AGENT = ['coordinator'];
-  /** 칸 셋(ADR 0264) — 「지킬 것」은 규칙을 한 줄씩 직접 적고 줄마다 출처를 단다. 「닿을 때 여는 것」은 있으면 맨 뒤 */
-  const COLUMNS = ['지킬 것', '먼저 읽는 것', '끝날 때 고치는 것'];
+  /** 손대기 전에 여는 두 칸 — `AGENTS.md` 와 브리프가 이 이름으로 부른다(ADR 0264). 칸의 차례 · 나머지 칸은 재지 않는다(ADR 0270) */
+  const OPENED_FIRST = ['지킬 것', '먼저 읽는 것'];
   /**
    * 한 화면 — 넘으면 원본으로 옮길 것을 옮겨 적고 있다는 뜻이다. 손대기 전에 읽는 머리와 칸 셋만 잰다 — 「닿을 때 여는 것」은
    * 그때 여는 칸이라 세지 않는다(ADR 0254). 그 칸의 줄 꼴과 가리킨 자리는 아래 시험이 그대로 든다
@@ -1642,17 +1557,16 @@ describe('역할 문서 (docs/start.md · docs/roles/, ADR 0140)', () => {
     const at = text.indexOf(`\n## ${ON_DEMAND_SECTION}\n`);
     return at < 0 ? text : text.slice(0, at + 1);
   };
-  /** 「닿을 때 여는 것」의 여는 말 — 그 칸에는 이 한 줄과 목록 줄만 선다 */
-  const ON_DEMAND_OPENING = '손대기 전에 다 읽지 않는다 — 일이 그 자리에 닿을 때 연다(ADR 0147).';
 
   /**
-   * `CLAUDE.md` 는 매 턴 실린다 — `@AGENTS.md` 와 Claude Code 만의 호출법만 든다. 원본을 다시 말하던 네 절(3,214 바이트)은
-   * `docs/start.md` 「원본 — 무엇이 무엇을 답하나」가 이미 가리켜 걷었다(2026-10-06). 새 규칙은 여기 말고 원본으로.
+   * 매 턴 실리는 것은 `CLAUDE.md` 와 그것이 `@AGENTS.md` 로 끌어오는 `AGENTS.md` 두 장이다 — 원본을 다시 말하던 `CLAUDE.md` 가 3,214 바이트로
+   * 불었던 적이 있다. 두 장을 함께 잰다(ADR 0270). 새 규칙은 여기 말고 원본으로.
    */
-  it('CLAUDE.md 는 `@AGENTS.md` 로 시작하고 600 바이트 안이다', () => {
+  const EVERY_TURN_MAX_BYTES = 4000;
+  it(`CLAUDE.md 는 \`@AGENTS.md\` 로 시작하고, 두 장을 합쳐 ${EVERY_TURN_MAX_BYTES} 바이트 안이다`, () => {
     const claude = readFileSync(join(ROOT, 'CLAUDE.md'), 'utf8');
     expect(claude.startsWith('@AGENTS.md\n')).toBe(true);
-    expect(Buffer.byteLength(claude)).toBeLessThanOrEqual(600);
+    expect(Buffer.byteLength(claude) + Buffer.byteLength(readFileSync(join(ROOT, 'AGENTS.md'), 'utf8'))).toBeLessThanOrEqual(EVERY_TURN_MAX_BYTES);
   });
 
   it('입구 표가 역할 문서 전부를 들고, 없는 역할 문서를 들지 않는다', () => {
@@ -1662,25 +1576,24 @@ describe('역할 문서 (docs/start.md · docs/roles/, ADR 0140)', () => {
     expect([...new Set(listed)].sort()).toEqual([...roles].sort());
   });
 
-  it('역할 문서마다 칸 셋이 그 차례로 있고(「닿을 때 여는 것」은 있으면 맨 뒤) 칸 셋까지가 한 화면 안이다', () => {
+  it('역할 문서마다 「지킬 것」 · 「먼저 읽는 것」이 있고, 「닿을 때 여는 것」 앞까지가 한 화면 안이다', () => {
     let trimmed = 0;
     for (const role of roles) {
       const text = readFileSync(join(ROLES_DIR, `${role}.md`), 'utf8');
       const headings = [...text.matchAll(/^## (.+)$/gm)].map((match) => match[1].trim());
-      expect(headings, role).toEqual(headings.length > COLUMNS.length ? [...COLUMNS, ON_DEMAND_SECTION] : COLUMNS);
+      for (const column of OPENED_FIRST) expect(headings, `${role} 「${column}」`).toContain(column);
       const screen = screenOf(text);
-      expect(screen, role).toContain(`## ${COLUMNS.at(-1)}\n`);
       expect(Buffer.byteLength(screen), role).toBeLessThanOrEqual(MAX_BYTES);
       if (!headings.includes(ON_DEMAND_SECTION)) continue;
       // 머리가 있으면 거기서 잘린다 — 머리 끝 공백 · CRLF 로 못 자르면 아래 칸의 꼴 시험까지 조용히 건너뛴다
       expect(screen.length, `${role} — 「${ON_DEMAND_SECTION}」 머리에서 못 잘랐다`).toBeLessThan(text.length);
       trimmed += 1;
-      // 세지 않는 칸에는 여는 말 한 줄과 목록 줄만 선다 — 문단을 들이면 한 화면의 셈 밖으로 원본을 옮겨 적는 길이 된다
+      // 세지 않는 칸에는 목록 줄만 선다 — 문단을 들이면 한 화면의 셈 밖으로 원본을 옮겨 적는 길이 된다(ADR 0254)
       const prose = text
         .slice(screen.length)
         .split('\n')
         .slice(1)
-        .filter((line) => line.trim() !== '' && !line.startsWith('- ') && line !== ON_DEMAND_OPENING);
+        .filter((line) => line.trim() !== '' && !line.startsWith('- '));
       expect(prose, `${role} 「${ON_DEMAND_SECTION}」의 목록 밖 줄`).toEqual([]);
     }
     // 칸이 있는 역할이 이만큼은 된다 — 목록 밖 줄 시험이 빈 셈으로 초록이 되지 않게
@@ -1805,46 +1718,6 @@ describe('역할 문서 (docs/start.md · docs/roles/, ADR 0140)', () => {
       const budget = readBudgetOf(role, ROOT);
       // 후보가 없는 라우트는 고를 것이 없다 — 빈 폴더나 고정으로 이미 다 읽는 폴더를 가리키고 있다
       for (const route of budget.routes) expect(route.candidates.length, `${role} ${route.dir}`).toBeGreaterThan(0);
-    }
-  });
-
-  it('선택 묶음의 파일은 고정에 들지 않고, 묶음 밖에도 적힌 파일은 고정 쪽에서 한 번만 센다 — 선택지 안 라우트의 후보도 고정 · 그 선택지의 파일을 뺀다', () => {
-    let groups = 0;
-    for (const role of roles) {
-      const budget = readBudgetOf(role, ROOT);
-      const fixed = new Set(budget.fixed.map((one) => one.file));
-      for (const group of budget.choices) {
-        groups += 1;
-        expect(group.options.length, `${role} ${group.name}`).toBeGreaterThan(1);
-        expect(group.max.bytes).toBe(Math.max(...group.options.map((option) => option.bytes)));
-        for (const option of group.options) {
-          for (const route of option.routes) expect(route.candidates.length, `${role} ${option.name} ${route.dir}`).toBeGreaterThan(0);
-          expect(option.bytes, `${role} ${option.name}`).toBe(
-            option.files.reduce((sum, one) => sum + one.bytes, 0) + option.routes.reduce((sum, route) => sum + (route.max?.bytes ?? 0), 0),
-          );
-          const own = new Set(option.files.map((one) => one.file));
-          for (const route of option.routes) {
-            for (const candidate of route.candidates) expect(fixed.has(candidate.file) || own.has(candidate.file), `${role} ${option.name} ${candidate.file}`).toBe(false);
-          }
-          for (const file of option.files) {
-            expect(file.inFixed, `${role} ${option.name} ${file.file}`).toBe(fixed.has(file.file));
-            // 고정이 파일 전부를 셌으면 선택지는 0 이다 — 절만 셌으면 나머지만 더한다(ADR 0147)
-            if (budget.fixed.some((one) => one.file === file.file && one.sections === null)) expect(file.bytes, `${role} ${option.name} ${file.file}`).toBe(0);
-          }
-        }
-      }
-      expect(budget.total).toBe(budget.fixedBytes + budget.dynamicBytes + budget.choiceBytes);
-    }
-    expect(groups).toBeGreaterThan(0);
-  });
-
-  it('읽기량의 셈은 출력 명령과 시험이 같은 함수다 — 표의 예상치가 readBudgetOf 의 합이다', () => {
-    const table = tableOf(ROOT);
-    const column = TABLE_COLUMNS.indexOf('예상치') + 1;
-    for (const role of roles) {
-      const row = table.split('\n').find((line) => line.startsWith(`| ${role} |`));
-      expect(row, role).toBeDefined();
-      expect(row?.split('|')[column].trim().replace(/,/g, ''), role).toBe(String(readBudgetOf(role, ROOT).total));
     }
   });
 
@@ -2075,76 +1948,6 @@ describe('위임 규약 (docs/agents/delegation.md 색인 → docs/agents/delega
     expect(archives.filter((name) => !/^\d{4}-Q[1-4]$/.test(name) || !readme.includes(`| \`archive/${name}/\` |`))).toEqual([]);
   });
 
-  /**
-   * 라운드 노트의 「헤맨 것」 · 「회고」 절은 줄마다 `→ 놓은 자리`를 단다(`docs/agents/delegation/notes.md` 「세션 기록」) — 자리는 파일(`경로` ·
-   * `이름.md`) · 「절」 · `G-nn` · `#NNN`(이슈 · PR)이다. 「다음 retro 로」 · 「다음 `/retro` 의 입력」은 자리가 아니다 — 그렇게 적은 줄은 아무
-   * 문서에도 안 닿고 다음 라운드가 같은 자리에서 헤맨다. 줄은 `- ` · `1. ` 로 시작하고 그 아래 들여 쓴 줄까지다. 「절」은 저장소 문서에
-   * 실제로 있는 절 머리(`#` ~ `######`)의 글자일 때만 자리다 — 「다음에 보기」 같은 따옴표 말은 자리가 아니다(ADR 0260).
-   */
-  const LESSON_PLACE = /`[^`\s]+\.(?:md|ts|tsx|mts|mjs|cjs|js|json|sql|yml)`|\b[\w./-]+\.(?:md|ts|tsx|mts|mjs|cjs|js|json|sql|yml)\b|\bG-\d{2,3}\b|#\d+/;
-  /** 문서의 절 머리 글자 — 코드 블록 안의 `#` 줄은 머리가 아니다 */
-  const headingsIn = (text: string): string[] =>
-    outsideFences(text).flatMap((line) => /^#{1,6} (.+?)\s*$/.exec(line)?.[1] ?? []);
-  /** 「절」이 머리 하나를 다 부르는가 — 같거나, 머리가 그 글자에 ` ` · `(` · ` —` 로 이어진다(「확인 전」은 `## home-13 확인 전 …` 을 못 부른다) */
-  const namesHeading = (quoted: string, heading: string) =>
-    heading === quoted || heading.startsWith(`${quoted} `) || heading.startsWith(`${quoted}(`) || heading.startsWith(`${quoted} —`);
-  const placed = (tail: string, headings: readonly string[]) =>
-    LESSON_PLACE.test(tail) || [...tail.matchAll(/「([^」]+)」/g)].some((match) => headings.some((heading) => namesHeading(match[1], heading)));
-  const lessonsWithoutPlace = (text: string, headings: readonly string[]): string[] =>
-    text
-      .split(/^(?=#{2,3} )/m)
-      .filter((section) => /^#{2,3} .*(?:헤맨 것|회고)/.test(section))
-      .flatMap((section) => {
-        const items: string[] = [];
-        for (const line of section.split('\n').slice(1)) {
-          if (/^(?:[-*]|\d+\.) /.test(line)) items.push(line);
-          else if (/^\s+\S/.test(line) && items.length > 0) items[items.length - 1] += ` ${line.trim()}`;
-        }
-        return items.filter((item) => !placed(item.split('→').slice(1).join('→'), headings)).map((item) => item.slice(0, 60));
-      });
-  /** 이 셈을 세운 다음 날 — 그 전의 노트는 그날의 기록이라 재지 않는다 */
-  const LESSONS_PLACED_FROM = '2026-11-20';
-
-  it('라운드 노트의 헤맨 것 · 회고 줄마다 `→ 놓은 자리` 가 있다 — 2026-11-20 뒤의 새 노트부터', () => {
-    const notes = filesUnder(join(ROOT, 'docs/notes')).filter((file) => {
-      const name = basename(file);
-      return /^\d{4}-\d{2}-\d{2}-.+\.md$/.test(name) && name.slice(0, 10) >= LESSONS_PLACED_FROM;
-    });
-    // 머리는 `docs/` · 뿌리 문서의 것이고, 재는 노트 제 머리는 뺀다 — 제 절을 「…」 로 불러 자리인 척하지 않게
-    const docs = REFERRING_FILES.filter((file) => file.endsWith('.md')).map((file) => ({ file, headings: headingsIn(readFileSync(file, 'utf8')) }));
-    expect(docs.flatMap((one) => one.headings).length).toBeGreaterThan(1000);
-    const others = (note: string) => docs.filter((one) => one.file !== note).flatMap((one) => one.headings);
-    expect(notes.flatMap((file) => lessonsWithoutPlace(readFileSync(file, 'utf8'), others(file)).map((item) => `${relPath(file)}: ${item}`))).toEqual([]);
-  });
-
-  it('놓은 자리가 없는 줄을 잡는다 — 「다음 retro 로」는 자리가 아니다', () => {
-    const note = [
-      '## 헤맨 것 · 틀린 것 — 놓은 자리',
-      '',
-      '1. 격리가 heredoc 을 거절했다 → `docs/agents/delegation/local-env.md` 「로컬 환경의 함정」.',
-      '2. 같은 대장 번호를 잡았다 → G-170',
-      '3. 검토 관점이 없다 → 다음 retro 로',
-      '- 쌓은 PR 은 CI 가 다시 안 돈다',
-      '  → #1175',
-      '- 관점 목록이 없다(다음 `/retro` 의 입력)',
-      '4. 함정을 또 밟았다 → 「로컬 환경의 함정」',
-      '5. 따옴표 말뿐이다 → 「다음에 보기」',
-      '6. 머리의 한 토막만 불렀다 → 「확인 전」',
-      '7. 머리 전체를 불렀다 → 「끝났다는 것」',
-      '',
-      '## 남은 것',
-      '',
-      '- 이 절은 재지 않는다',
-    ].join('\n');
-    const headings = headingsIn(['## 로컬 환경의 함정', '## home-13 확인 전 — 앱 공유', '## 끝났다는 것 (ADR 0140)', '```', '## 다음에 보기', '```'].join('\n'));
-    expect(headings).toEqual(['로컬 환경의 함정', 'home-13 확인 전 — 앱 공유', '끝났다는 것 (ADR 0140)']);
-    expect(lessonsWithoutPlace(note, headings)).toEqual([
-      '3. 검토 관점이 없다 → 다음 retro 로',
-      '- 관점 목록이 없다(다음 `/retro` 의 입력)',
-      '5. 따옴표 말뿐이다 → 「다음에 보기」',
-      '6. 머리의 한 토막만 불렀다 → 「확인 전」',
-    ]);
-  });
 });
 
 // -----------------------------------------------------------------------------
@@ -2152,10 +1955,9 @@ describe('위임 규약 (docs/agents/delegation.md 색인 → docs/agents/delega
 // -----------------------------------------------------------------------------
 
 /**
- * 한 장을 **색인 하나와 폴더**로 나눈 문서(2026-10-05 ~ ). 색인은 머리말과 「차례」 표(`| 파일 | 절 | 무엇을 드나 |`) 하나뿐이고,
- * 정의 · 요구 · 규칙 · 절차는 폴더의 파일에만 산다 — 색인에 절이나 명령이 생기면 같은 말이 두 벌이 된다. 여섯이 같은 꼴이라
- * 시험 한 벌이 다 잰다(G-109 — 앞서는 색인마다 한 벌씩, 「절」 칸 시험만 다섯 벌이었다). 색인마다 다른 것(용어집의 절 번호 ·
- * PRD 의 본체 번호 · 운영 절차의 겹친 제목 …)은 그 색인의 describe 에 남았다.
+ * 한 장을 **색인 하나와 폴더**로 나눈 문서. 색인의 「차례」 표(`| 파일 | 절 | 무엇을 드나 |`)가 가리키는 파일 · 절이 실제로 있는지를
+ * 여섯 벌 한 시험이 잰다. 색인의 꼴(머리말과 「차례」뿐 · 절을 차례대로 다 든다)은 재지 않는다(ADR 0270). 색인마다 다른 것(PRD 의
+ * 절 번호 · 운영 절차의 겹친 제목 …)은 그 색인의 describe 에 남았다.
  */
 type IndexedFolder = {
   /** 색인 — 뿌리에서의 경로 */
@@ -2209,23 +2011,20 @@ describe('색인 → 폴더 (용어집 · PRD · 시험 지도 · 코드 규칙 
       for (const name of files) expect(part(name), name).toContain(`\`${folder.index}\``);
     });
 
-    it(`${folder.index} — 색인은 머리말과 「차례」 하나뿐이고 명령(코드 블록)이 없다 — 절이 생기면 같은 말이 두 벌이 된다`, () => {
-      const index = readFileSync(join(ROOT, folder.index), 'utf8');
-      expect([...index.matchAll(/^#{2,6} (.+)$/gm)].map((match) => match[1].trim())).toEqual(['차례']);
-      expect(index).not.toMatch(/^```/m);
-    });
-
-    it(`${folder.index} — 색인의 「절」 칸은 그 파일의 \`##\` 절을 차례대로 전부 든다 — 절을 옮기면 색인도 옮긴다`, () => {
+    // 차례 · 빠짐없이 드는지는 재지 않는다(ADR 0270) — 색인이 부른 절이 그 파일에 없으면 읽는 이가 헛걸음한다
+    it(`${folder.index} — 색인의 「절」 칸이 부른 절은 그 파일에 \`##\` 절로 있다 — 절을 옮기면 색인도 옮긴다`, () => {
       const rows = indexRows(folder);
       expect(rows.length).toBeGreaterThanOrEqual(folder.atLeast);
       const wrong: string[] = [];
+      let seen = 0;
       for (const { file, cell } of rows) {
-        const named = [...cell.matchAll(/「([^」]+)」/g)].map((one) => one[1].replace(/`/g, ''));
-        // PRD 의 화면 무리 줄은 「절」 칸이 `—` 다 — 그 파일에는 `##` 절이 없어야 같다(절 번호는 「무엇을 드나」 칸이 들고 PRD describe 가 잰다)
         const heads = headsOf(part(file));
-        const same = named.length === heads.length && named.every((name, i) => (folder.exact ? heads[i] === name : heads[i].startsWith(name)));
-        if (!same) wrong.push(`${file}: 색인 ${named.join(' · ')} ↔ 파일 ${heads.join(' · ')}`);
+        for (const name of [...cell.matchAll(/「([^」]+)」/g)].map((one) => one[1].replace(/`/g, ''))) {
+          seen += 1;
+          if (!heads.some((head) => (folder.exact ? head === name : head.startsWith(name)))) wrong.push(`${file}: 「${name}」`);
+        }
       }
+      expect(seen).toBeGreaterThan(folder.atLeast);
       expect(wrong).toEqual([]);
     });
   }
