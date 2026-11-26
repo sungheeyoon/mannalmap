@@ -1,6 +1,7 @@
 import type { Locator } from '@playwright/test';
 
-import { expect, forgetBoards, onlyTheseParticipate, optIn, sql, test, type Person } from './session';
+import { expect, forgetBoards, onlyTheseParticipate, optIn, test, type Person } from './session';
+import { sql } from '../scripts/checks.mjs';
 
 import { INPUT_EDIT_CHANGE_CONFIRM } from '@/src/lib/consent';
 import { CHAT_INPUT_PLACEHOLDER, CHAT_SEND_LABEL } from '@/src/lib/chat/copy';

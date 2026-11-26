@@ -1,5 +1,5 @@
 import { readdirSync, statSync } from 'node:fs';
-import { extname, join } from 'node:path';
+import { extname, join, relative, sep } from 'node:path';
 
 /**
  * **scripts 쪽 시험이 저장소를 훑는 자리** — 층 · 코드 규칙 · CI 계획 · 비밀 시험이 저마다 적던 재귀 탐색을 한 벌로 모았다(G-109).
@@ -21,3 +21,6 @@ export function filesUnder(root: string): string[] {
 /** `root` 아래의 소스 파일 — `SOURCE_EXTENSIONS` 이고 선언 파일(`.d.ts`)이 아닌 것 */
 export const sourceFilesUnder = (root: string): string[] =>
   filesUnder(root).filter((file) => SOURCE_EXTENSIONS.includes(extname(file)) && !file.endsWith('.d.ts'));
+
+/** 저장소 뿌리에서 센 경로를 `/` 로 — 시험이 목록 · 허용 표와 견주는 꼴이다 */
+export const relPath = (file: string): string => relative(join(import.meta.dirname, '..'), file).split(sep).join('/');

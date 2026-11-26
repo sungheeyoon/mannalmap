@@ -1,7 +1,9 @@
-import { readdirSync, readFileSync, statSync } from 'node:fs';
+import { readFileSync } from 'node:fs';
 import { join, relative } from 'node:path';
 
 import { describe, expect, it } from 'vitest';
+
+import { filesUnder } from './source-files';
 
 /**
  * **앱의 글자는 `WordText` 로 선다**(ADR 0250). RN `Text` 를 화면이 바로 쓰면 안드로이드가 한글을 낱말 가운데서 끊는다(「돌려드렸 / 어요」).
@@ -19,14 +21,6 @@ const RAW_TEXT_EXCEPTIONS: readonly { file: string; why: string }[] = [
   { file: 'app/dev-parts.tsx', why: '개발 빌드에서만 서는 부품 견줌' },
 ];
 
-function walk(dir: string): string[] {
-  return readdirSync(dir).flatMap((name) => {
-    const path = join(dir, name);
-    if (statSync(path).isDirectory()) return walk(path);
-    return /\.tsx?$/.test(name) ? [path] : [];
-  });
-}
-
 /** `react-native` 에서 `Text` 를 들여오는가 — 여러 줄 · 별칭(`Text as Label`)도 걸린다. `TextInput` · `TextStyle` 은 아니다 */
 export function importsRawText(source: string): boolean {
   return [...source.matchAll(/import\s*\{([^}]*)\}\s*from\s*'react-native'/g)].some(([, names]) =>
@@ -34,7 +28,7 @@ export function importsRawText(source: string): boolean {
   );
 }
 
-const files = walk(SRC).map((path) => ({ file: relative(SRC, path).split('\\').join('/'), text: readFileSync(path, 'utf8') }));
+const files = filesUnder(SRC).filter((path) => /\.tsx?$/.test(path)).map((path) => ({ file: relative(SRC, path).split('\\').join('/'), text: readFileSync(path, 'utf8') }));
 
 describe('앱의 글자는 어절 단위로 꺾인다', () => {
   it('화면 파일을 실제로 읽었다', () => {

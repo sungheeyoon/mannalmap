@@ -6,10 +6,10 @@ import {
   makeOperator,
   onlyTheseParticipate,
   optIn,
-  sql,
   test,
   type Person,
 } from './session';
+import { sql } from '../scripts/checks.mjs';
 
 import { CHAT_POLICY, LEFT_ROOM_TEXT, LEFT_USER_LABEL, RATE_LIMITED_TEXT, closedRoomText } from '@/src/lib/chat';
 import {

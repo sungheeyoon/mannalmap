@@ -16,16 +16,15 @@
  * 있는가**다.
  */
 import { createClient } from '@supabase/supabase-js';
-import { execFileSync } from 'node:child_process';
 
 import { startCheckServer } from './next-server.mjs';
-import { passNotice, chartArgs } from './notice.mjs';
-import { createChecks, fetchWhole, keyedRpc } from './checks.mjs';
+import { signedUpSelf, chartArgs } from './notice.mjs';
+import { createChecks, localStatus, anonClient, pageReader } from './checks.mjs';
 import { worktreeStack } from '../src/lib/local-env.ts';
 import { SERVICE_NAME, SERVICE_TAGLINE } from '../src/lib/brand/index.ts';
 import { COMPAT_SCORE_LABEL } from '../src/lib/reading/copy.ts';
 
-const status = JSON.parse(execFileSync('npx', ['supabase', 'status', '-o', 'json'], { encoding: 'utf8' }));
+const status = localStatus();
 const API = status.API_URL;
 const PORT = Number(process.env.CHECK_PORT ?? worktreeStack().checkPort + 6);
 
@@ -85,7 +84,6 @@ const jpegSize = (bytes) => {
 process.env.VERCEL_ENV = 'production';
 process.env.VERCEL_PROJECT_PRODUCTION_URL = HOST;
 
-const anon = () => createClient(API, status.ANON_KEY, { auth: { persistSession: false } });
 const keyed = () => createClient(API, status.SERVICE_ROLE_KEY, { auth: { persistSession: false } });
 
 const { check, finish } = createChecks('check-share');
@@ -113,15 +111,7 @@ const PROMPT = `검사용 프롬프트 본문 ${tag} — 이 글자는 사용자
 const EVIDENCE = `{"charts":{"검사근거":"${tag}"}}`;
 
 const person = async (email, label) => {
-  const client = anon();
-  await client.auth.signUp({ email, password });
-  await passNotice(client);
-  await keyedRpc(client, 'create_self_person', {
-    p_local_label: label, p_calendar: 'solar',
-    p_original_date: '1990-05-15', p_solar_date: '1990-05-15', p_birth_time: '14:30',
-    p_gender: 'female', p_city: '서울', p_late_night_rule: 'jo', p_time_basis: 'localMean',
-    ...chartArgs(label),
-  });
+  const client = await signedUpSelf(email, password, label, { date: '1990-05-15', city: '서울', gender: 'female' });
   await client.rpc('save_my_profile', { p_nickname: label, p_intro: null });
   return client;
 };
@@ -191,7 +181,7 @@ check('한 줄 요약을 바꿔 넣어도 안 난다', Boolean(otherMetaphor.err
 
 // ── 표는 브라우저에게 안 열린다 ────────────────────────────────────────────
 
-const table = await anon().from('reading_share').select('token').limit(1);
+const table = await anonClient().from('reading_share').select('token').limit(1);
 check('공유본 표는 브라우저가 직접 못 읽는다', Boolean(table.error), table.error?.message ?? '읽혔다');
 
 const asMine = await a.from('reading_share').select('token').limit(1);
@@ -199,7 +189,7 @@ check('내 것이라도 표로는 안 읽힌다', Boolean(asMine.error), asMine.
 
 // ── 로그인 없는 문 ─────────────────────────────────────────────────────────
 
-const open = await anon().rpc('shared_reading', { p_token: token });
+const open = await anonClient().rpc('shared_reading', { p_token: token });
 const row = (open.data ?? [])[0];
 check('로그인하지 않은 역할이 공유본을 읽는다', !open.error && row !== undefined,
   open.error?.message ?? '');
@@ -228,7 +218,7 @@ const { base: BASE, stop } = await startCheckServer({
 });
 
 /** **쿠키를 한 줄도 안 보낸다** — 링크를 받은 사람이 그렇기 때문이다 */
-const get = (path) => fetchWhole(`${BASE}${path}`, { redirect: 'manual' });
+const { get } = pageReader(BASE);
 
 const page = await get(`/share/readings/${token}`);
 const html = await page.text();

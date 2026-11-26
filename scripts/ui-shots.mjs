@@ -22,7 +22,8 @@ import { chromium } from '@playwright/test';
 
 import { UI_FAKE_KAKAO_KEY, startCheckServer } from './next-server.mjs';
 import { build } from './ui-states.mjs';
-import { localStack, sql } from './ui-seed.mjs';
+import { localStack } from './ui-seed.mjs';
+import { sql } from './checks.mjs';
 
 const out = process.argv[2] ?? 'ui-shots';
 const port = process.env.UI_PORT ?? '3100';

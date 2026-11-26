@@ -3,7 +3,8 @@ import type { BrowserContext, Page } from '@playwright/test';
 import { SERVICE_NAME } from '@/src/lib/brand';
 import { pushPayloadFor } from '@/src/lib/push';
 
-import { expect, sql, test } from './session';
+import { expect, test } from './session';
+import { sql } from '../scripts/checks.mjs';
 
 /**
  * **설정의 「새 메시지 알림」 줄** — 켜고 끄고, 계정이 바뀌면 꺼진 것으로 보인다(ADR 0156).

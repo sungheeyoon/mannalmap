@@ -1,8 +1,6 @@
-import { createClient } from '@supabase/supabase-js';
-import { execFileSync } from 'node:child_process';
 
 import { passNotice } from './notice.mjs';
-import { createChecks, sql } from './checks.mjs';
+import { createChecks, sql, anonClient } from './checks.mjs';
 
 /**
  * 계정마다 비공개 채널 — **실제 소켓을 붙여** 정책과 지연을 잰다(ADR 0155).
@@ -12,9 +10,6 @@ import { createChecks, sql } from './checks.mjs';
  *
  * 로컬 스택에 realtime 이 떠 있어야 한다(`npm run db:start`). Next 서버는 안 띄운다 — 문과 소켓만 두드린다.
  */
-
-const status = JSON.parse(execFileSync('npx', ['supabase', 'status', '-o', 'json'], { encoding: 'utf8' }));
-const API = status.API_URL;
 
 const { check, finish } = createChecks('check-live-channel');
 
@@ -27,7 +22,7 @@ const password = `pw-${stamp}-Aa1!`;
 const mail = { a: `live-a-${stamp}@example.com`, b: `live-b-${stamp}@example.com` };
 
 const signedIn = async (email) => {
-  const client = createClient(API, status.ANON_KEY, { auth: { persistSession: false } });
+  const client = anonClient();
   await client.auth.signUp({ email, password });
   await passNotice(client);
   const { data } = await client.auth.getSession();
@@ -85,7 +80,7 @@ try {
   check('남의 주제(user:<상대>)는 거절된다', theirs.state === 'CHANNEL_ERROR', answered(theirs));
   await a.client.removeChannel(theirs.channel);
 
-  const outsider = createClient(API, status.ANON_KEY, { auth: { persistSession: false } });
+  const outsider = anonClient();
   const anonymous = await join(outsider, `user:${a.id}`);
   check('로그인 없이는 누구의 주제도 못 듣는다', anonymous.state === 'CHANNEL_ERROR', answered(anonymous));
   await outsider.removeAllChannels();
@@ -140,7 +135,7 @@ try {
     const before = heard.length;
 
     // 대조군 — 같은 이름의 공개 채널을 듣는 쪽은 받는다(보낸 것이 정말 나갔다)
-    const bystander = createClient(API, status.ANON_KEY, { auth: { persistSession: false } });
+    const bystander = anonClient();
     const overheard = [];
     const listening = await join(bystander, `user:${b.id}`, { isPrivate: false, onChanged: (payload) => overheard.push(payload) });
 
@@ -149,7 +144,7 @@ try {
     if (joined.state === 'SUBSCRIBED') {
       sent = await joined.channel.send({ type: 'broadcast', event: 'changed', payload: { ...forged, via: 'socket' } });
     }
-    const outsider = createClient(API, status.ANON_KEY, { auth: { persistSession: false } });
+    const outsider = anonClient();
     const viaRest = await outsider.channel(`user:${b.id}`, { config: { private: false } })
       .httpSend('changed', { ...forged, via: 'rest' })
       .then(() => 'ok', (thrown) => String(thrown?.message ?? thrown));

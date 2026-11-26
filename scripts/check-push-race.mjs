@@ -15,30 +15,10 @@
  *
  * 남는 것 — 두 계정 · 매칭 · 구독은 끝에 지운다(방 · 메시지 · 배달 줄이 FK 를 따라간다).
  */
-import { spawn } from 'node:child_process';
 
-import { createChecks, sql } from './checks.mjs';
-import { worktreeStack } from '../src/lib/local-env.ts';
+import { createChecks, sql, psqlSession as session } from './checks.mjs';
 
 const { check, finish } = createChecks('check-push-race');
-const container = worktreeStack().dbContainer;
-
-/** psql 한 세션 — `at` 밀리초 뒤에 시작해 SQL 을 끝까지 돌리고, 걸린 시간과 출력을 낸다 */
-const session = (at, statements) =>
-  new Promise((resolve) => {
-    setTimeout(() => {
-      const started = Date.now();
-      const child = spawn('docker', [
-        'exec', '-i', container, 'psql', '-U', 'postgres', '-tAq', '-v', 'ON_ERROR_STOP=1',
-      ]);
-      let out = '';
-      let err = '';
-      child.stdout.on('data', (chunk) => { out += chunk; });
-      child.stderr.on('data', (chunk) => { err += chunk; });
-      child.on('close', (code) => resolve({ code, out, err, ms: Date.now() - started }));
-      child.stdin.end(statements);
-    }, at);
-  });
 
 const stamp = Date.now();
 const newUser = (who) => sql(`insert into auth.users (instance_id, id, aud, role, email, created_at, updated_at)

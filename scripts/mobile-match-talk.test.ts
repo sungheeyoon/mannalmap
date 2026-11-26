@@ -1,15 +1,14 @@
-import { readdirSync, readFileSync } from 'node:fs';
+import { readdirSync } from 'node:fs';
 import { join } from 'node:path';
 
 import { describe, expect, it } from 'vitest';
+
+import { ROOT, read, withoutComments } from './copy-text';
 
 /**
  * **앱의 인연 흐름은 하나다**(운영자 2026-11-04) — 카드 → 첫 말 → 답하면 대화 → 원하면 상세 궁합. 앱은 스위치를 묻지 않고, 옛 흐름(요청 때 예약 · 수락 · 거절 · 여덟 글자)의 코드가 없다.
  * 덱의 움직임은 `mobile-deck-talk.test.ts`, 화면의 전후는 가짜 서버 그림으로 잰다(`docs/agents/delegation/local-env.md` 「앱을 웹 번들로 재기」).
  */
-const ROOT = join(import.meta.dirname, '..');
-const read = (file: string) => readFileSync(join(ROOT, file), 'utf8');
-const withoutComments = (text: string) => text.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '');
 
 const appSources = readdirSync(join(ROOT, 'mobile/src'), { recursive: true, encoding: 'utf8' })
   .filter((name) => /\.tsx?$/.test(name))

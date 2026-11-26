@@ -11,15 +11,8 @@
  *
  * 로컬 스택에 대고 돈다(`npm run db:start`). 원격은 건드리지 않는다.
  */
-import { createClient } from '@supabase/supabase-js';
-import { execFileSync } from 'node:child_process';
 import { NOTICE_VERSION, passNotice, scheduleBeta, chartArgs } from './notice.mjs';
-import { createChecks, keyedRpc } from './checks.mjs';
-
-const status = JSON.parse(execFileSync('npx', ['supabase', 'status', '-o', 'json'], { encoding: 'utf8' }));
-const API = status.API_URL;
-
-const anon = () => createClient(API, status.ANON_KEY, { auth: { persistSession: false } });
+import { createChecks, keyedRpc, anonClient } from './checks.mjs';
 
 const { check, finish } = createChecks('check-onboarding');
 
@@ -34,7 +27,7 @@ const scheduleId = async (client) =>
 scheduleBeta();
 
 // ── 2. 구글 로그인만으로 계정 행이 생긴다 ─────────────────────────────────────
-const client = anon();
+const client = anonClient();
 {
   const { data, error } = await client.auth.signUp({ email: tester, password });
   check('명단 없이도 로그인은 된다', error === null && data.user !== null,
@@ -148,7 +141,7 @@ let nickname;
 }
 
 // ── 6. 남에게는 안 보인다 ─────────────────────────────────────────────────────
-const other = anon();
+const other = anonClient();
 {
   const otherEmail = `other-${stamp}@example.com`;
   await other.auth.signUp({ email: otherEmail, password });

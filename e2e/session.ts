@@ -9,12 +9,16 @@ import { hydrationFixture, waitForHydrationOnNavigation } from './hydrated';
 
 import { NOTICE_VERSION } from '@/src/lib/consent';
 import { NEED_SUMMARY_RULE } from '@/src/lib/discovery/need-summary';
-import { worktreeStack } from '@/src/lib/local-env';
 import { chartOf } from '@/src/lib/input/chart';
 import { DEFAULT_QUERY, type Query } from '@/src/lib/input/query';
 import { CHART_ENGINE_VERSION, chartSnapshotOf } from '@/src/lib/saju';
 
 import { checkEndsOn } from '../scripts/beta-dates.mjs';
+/*
+ * 운영자가 SQL 로 하는 일 — `service_role` 에도 안 열린 표를 넣고, **저장된 행을 그대로 읽는다**(흐름 검사와 같은 한 벌).
+ * 뒤엣것 때문에 시험도 직접 부른다: 앱이 쓴 값이 엔진이 낸 값과 같은지 견주려면 화면이 아니라 **행**을 봐야 한다(ADR 0071 「재는 자리」).
+ */
+import { sql } from '../scripts/checks.mjs';
 
 /**
  * 로그인한 사람의 화면을 **진짜 브라우저로** 재는 자리.
@@ -76,18 +80,6 @@ async function keyedRpc(client: SupabaseClient, name: string, args: Record<strin
   }
   return keyedOnce.rpc(name, { p_user_id: userId, ...versions, ...args });
 }
-
-/**
- * 운영자가 SQL 로 하는 일 — `service_role` 에도 안 열린 표를 넣고, **저장된 행을 그대로
- * 읽는다.** 뒤엣것 때문에 밖으로 연다: 앱이 쓴 값이 엔진이 낸 값과 같은지 견주려면
- * 화면이 아니라 **행**을 봐야 한다(ADR 0071 「재는 자리」).
- */
-export const sql = (statement: string) =>
-  execFileSync(
-    'docker',
-    ['exec', '-i', worktreeStack().dbContainer, 'psql', '-U', 'postgres', '-tAq', '-c', statement],
-    { encoding: 'utf8' },
-  ).trim();
 
 /**
  * 지난 실행이 남긴 참여자를 **이 사람의 후보 목록에서 치운다.**
