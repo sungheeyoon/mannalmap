@@ -58,7 +58,7 @@ export function ActionSheet({
       key={choice.label}
       type="button"
       onClick={() => choose(choice)}
-      className={`flex min-h-14 w-full items-center gap-3 rounded-cell px-4 text-left text-lead font-semibold hover:bg-surface-sunken focus-visible:outline-none focus-visible:focus-ring ${
+      className={`flex min-h-14 w-full items-center gap-3 rounded-cell px-4 text-left text-lead font-semibold hover:bg-surface-sunken focus-visible:focus-ring ${
         choice.tone === 'danger' ? 'text-danger' : 'text-foreground'
       }`}
     >

@@ -34,6 +34,10 @@
 - **감사 밖의 단 밖 크기 일곱은 허용 목록에 그대로 둔다** — 운영 화면 여섯(`text-lg` 둘 · `text-2xl` 셋 · `text-4xl` 하나)과 검산 화면(`/me/reading/inspect`)의
   h1 하나(`text-2xl`)다. 이용자가 보지 않는 화면이라 시안에 올리지 않았고, 값을 고르는 일은 운영 화면을 다시 볼 때 한다. 그때까지 `app/ui/scale.test.ts` 의
   `DEFAULT_OUTSIDE_SCALE` 가 늘지 않게 센다.
+- **줄 높이를 적지 않던 구역 제목 여섯에 29 가 새로 선다** — 제목 부품의 바탕이 `TYPE_SECTION` 이라서다. 운영자가 고른 「구역 제목 29」의 방향이라 그대로 둔다.
+  `mobile/src/reading/result.tsx` 의 「궁합풀이 결과」(`bodyHead`) · `mobile/src/home/lists.tsx` 의 묶음 머리(`title`) · `mobile/src/compat/relation-map.tsx` 의 「관계 지도」(`title`) ·
+  `mobile/src/chat/ended-talks.tsx` 의 `title` · `mobile/src/app/me/matching/history.tsx` 의 `sectionTitle` · `mobile/src/app/me/readings/index.tsx` 의 `groupTitle`.
+  웹 번들(390)로 잰 열린 셋에서 「궁합풀이 결과」 · 「관계 지도」는 2px 짧아졌고 홈 묶음 머리는 화소가 같다(줄이 단추와 한 줄에 서서)
 - `mobile/src/ui/section-error.tsx` 의 글자 짝은 약속 표(`src/lib/design/contract.ts` 의 `values`)가 웹 클래스와 글자 그대로 견주어 손 짝으로 남겼다.
 - 14px(`TYPE.note`) 글은 웹에 짝 모양이 없어 세지 않는다.
 - 초점 테의 간격은 한 벌(2px)이 전역 기본값(3px, `button` · `a` 의 맨 초점)과 1px 다르다 — 시안 그림 그대로 옮겼다.
