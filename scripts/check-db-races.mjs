@@ -33,32 +33,12 @@
  * 8 은 만든 세션 · artifact · 한도 사건을 지우고, 전체 하루 줄을 처음 값으로, 낮춘 상한을 2,000 으로 되돌리고, 그날의 맛보기
  * 예산 알림 줄을 지운다 — 갈래별 수(`reserve:*`)는 남는다.
  */
-import { spawn } from 'node:child_process';
 import { createHash, randomUUID } from 'node:crypto';
 
-import { createChecks, sql } from './checks.mjs';
+import { createChecks, sql, psqlSession as session } from './checks.mjs';
 import { scheduleBeta } from './notice.mjs';
-import { worktreeStack } from '../src/lib/local-env.ts';
 
 const { check, finish } = createChecks('check-db-races');
-const container = worktreeStack().dbContainer;
-
-/** psql 한 세션 — `at` 밀리초 뒤에 시작해 SQL 을 끝까지 돌리고, 걸린 시간과 출력을 낸다 */
-const session = (at, statements) =>
-  new Promise((resolve) => {
-    setTimeout(() => {
-      const started = Date.now();
-      const child = spawn('docker', [
-        'exec', '-i', container, 'psql', '-U', 'postgres', '-tAq', '-v', 'ON_ERROR_STOP=1',
-      ]);
-      let out = '';
-      let err = '';
-      child.stdout.on('data', (chunk) => { out += chunk; });
-      child.stderr.on('data', (chunk) => { err += chunk; });
-      child.on('close', (code) => resolve({ code, out, err, ms: Date.now() - started }));
-      child.stdin.end(statements);
-    }, at);
-  });
 
 /** 출력에서 `이름=값` 한 줄을 집는다 — 세션이 찍는 표지 */
 const marked = (result, name) => new RegExp(`^${name}=(.*)$`, 'm').exec(result.out)?.[1] ?? null;

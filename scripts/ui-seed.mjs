@@ -8,7 +8,6 @@
  * `.env.development.local` 은 프로덕션을 가리키므로 이 파일은 그 값을 한 번도 안 읽는다.
  */
 
-import { execFileSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
@@ -17,9 +16,8 @@ import { createClient } from '@supabase/supabase-js';
 import { createServerClient } from '@supabase/ssr';
 
 import { checkEndsOn } from './beta-dates.mjs';
-import { keyedRpc } from './checks.mjs';
+import { keyedRpc, localStatus, sql } from './checks.mjs';
 import { clearMachineRunsFromToday, chartArgs } from './notice.mjs';
-import { worktreeStack } from '../src/lib/local-env.ts';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const root = join(here, '..');
@@ -38,17 +36,7 @@ function noticeVersion() {
 }
 
 export function localStack() {
-  let status;
-  try {
-    status = JSON.parse(
-      execFileSync('npx', ['supabase', 'status', '-o', 'json'], {
-        encoding: 'utf8',
-        stdio: ['ignore', 'pipe', 'ignore'],
-      }),
-    );
-  } catch {
-    throw new Error('로컬 Supabase 가 안 떠 있습니다 — `npm run db:start` 뒤에 다시 도세요.');
-  }
+  const status = localStatus();
   return {
     api: status.API_URL,
     anonKey: status.ANON_KEY,
@@ -58,13 +46,6 @@ export function localStack() {
   };
 }
 
-/** 운영자 자리 — 베타 일정은 `service_role` 에도 안 열려 있다 */
-export const sql = (statement) =>
-  execFileSync(
-    'docker',
-    ['exec', '-i', worktreeStack().dbContainer, 'psql', '-U', 'postgres', '-tAq', '-c', statement],
-    { encoding: 'utf8' },
-  ).trim();
 
 
 /**

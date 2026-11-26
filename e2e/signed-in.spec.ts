@@ -7,9 +7,9 @@ import {
   leavePersonSlots,
   makeOperator,
   personLimit,
-  sql,
   test,
 } from './session';
+import { sql } from '../scripts/checks.mjs';
 
 import { MY_PROFILE_EDIT_LABEL } from '@/src/lib/chat/copy';
 import { COMPAT_SCORE_LABEL } from '@/src/lib/reading/copy';

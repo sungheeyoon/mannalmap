@@ -1,12 +1,12 @@
 import { readFileSync } from 'node:fs';
-import { join, relative, sep } from 'node:path';
+import { join } from 'node:path';
 
 import ts from 'typescript';
 import { describe, expect, it } from 'vitest';
 
 import codeRules from '../eslint-code-rules.cjs';
 
-import { sourceFilesUnder } from './source-files';
+import { relPath, sourceFilesUnder } from './source-files';
 
 /**
  * **앱의 화면은 DB 를 부르지 않는다 — 문이 부른다**(ADR 0211 「읽기는 웹의 어댑터를 한 벌로」, G-143).
@@ -69,7 +69,6 @@ export function dbCallsIn(file: string, text: string): Call[] {
   return out;
 }
 
-const relPath = (file: string) => relative(ROOT, file).split(sep).join('/');
 const isScreen = (rel: string) => rel.startsWith('mobile/src/app/') || rel.endsWith('.tsx');
 
 const FILES = sourceFilesUnder(MOBILE_SRC)

@@ -13,20 +13,16 @@
  * 원격은 건드리지 않는다 — 접속값을 로컬로 넘겨서 띄우므로 `.env.*` 의 원격 값은
  * 덮인다(`@next/env` 는 이미 있는 환경변수를 덮어쓰지 않는다).
  */
-import { createClient } from '@supabase/supabase-js';
 import { createServerClient } from '@supabase/ssr';
-import { execFileSync } from 'node:child_process';
 
 import { startCheckServer } from './next-server.mjs';
 import { passNotice, chartArgs } from './notice.mjs';
-import { createChecks, fetchWhole, keyedRpc } from './checks.mjs';
+import { createChecks, fetchWhole, keyedRpc, localStatus, anonClient } from './checks.mjs';
 import { worktreeStack } from '../src/lib/local-env.ts';
 
-const status = JSON.parse(execFileSync('npx', ['supabase', 'status', '-o', 'json'], { encoding: 'utf8' }));
+const status = localStatus();
 const API = status.API_URL;
 const PORT = Number(process.env.CHECK_PORT ?? worktreeStack().checkPort + 0);
-
-const anon = () => createClient(API, status.ANON_KEY, { auth: { persistSession: false } });
 
 const { check, finish } = createChecks('check-managed');
 
@@ -54,10 +50,10 @@ const birth = {
 
 // ── 1. 두 계정을 세운다 ───────────────────────────────────────────────────────
 
-const client = anon();
+const client = anonClient();
 await client.auth.signUp({ email: mine, password });
 
-const other = anon();
+const other = anonClient();
 await other.auth.signUp({ email: theirs, password });
 
 // ── 2. 나와 가족 둘을 등록한다 ────────────────────────────────────────────────

@@ -3,7 +3,8 @@
  *
  * 리포터가 일곱 벌로 복사돼 있었다 — 바이트까지 같았다(md5 `0815851d…`). `sql()` 은 네 벌.
  * 같은 것이 일곱 자리에 있으면 고칠 일이 생겼을 때 여섯 자리가 안 고쳐지고, 그 여섯은
- * **안 고쳐진 줄도 모르는 채로** 돈다.
+ * **안 고쳐진 줄도 모르는 채로** 돈다. 검사마다 다시 적던 준비(접속값 · 로그인 전 client · 화면 열기 · psql 세션)도 여기 한 벌이고,
+ * 가입을 마친 사람 하나를 세우는 손은 `notice.mjs` 의 `signedUpSelf` 다. e2e(`e2e/session.ts`)도 `sql()` 은 이 한 벌을 부른다.
  *
  * ## 끝내는 일이 여기 있는 까닭
  *
@@ -13,7 +14,8 @@
  * 그러면 출력과 뒷정리가 끝날 기회가 남는다.
  */
 import { createServerClient } from '@supabase/ssr';
-import { execFileSync } from 'node:child_process';
+import { createClient } from '@supabase/supabase-js';
+import { execFileSync, spawn } from 'node:child_process';
 import { writeFileSync } from 'node:fs';
 import { worktreeStack } from '../src/lib/local-env.ts';
 
@@ -53,10 +55,62 @@ export function createChecks(name) {
   return { check, finish };
 }
 
-/** 운영자만 읽는 표를 SQL 로 본다 — 앱이 아니라 그게 그 표의 유일한 읽는 길이다 */
+/**
+ * 운영자만 읽는 표를 SQL 로 본다 — 앱이 아니라 그게 그 표의 유일한 읽는 길이다. e2e(`e2e/session.ts` 와 스펙)도 이 한 벌을 부른다.
+ *
+ * @param {string} statement
+ * @returns {string}
+ */
 export const sql = (statement) =>
   execFileSync('docker', ['exec', '-i', worktreeStack().dbContainer, 'psql', '-U', 'postgres', '-tAq', '-c', statement],
     { encoding: 'utf8' }).trim();
+
+/**
+ * psql 한 세션 — `at` 밀리초 뒤에 시작해 SQL 을 끝까지 돌리고, 걸린 시간과 출력을 낸다.
+ *
+ * 경합 검사(`check-db-races` · `check-push-race`)가 세션 여럿을 겹쳐 띄울 때 쓴다 — 한 줄짜리 `sql()` 은 끝날 때까지 막는다.
+ */
+export const psqlSession = (at, statements) =>
+  new Promise((resolve) => {
+    setTimeout(() => {
+      const started = Date.now();
+      const child = spawn('docker', [
+        'exec', '-i', worktreeStack().dbContainer, 'psql', '-U', 'postgres', '-tAq', '-v', 'ON_ERROR_STOP=1',
+      ]);
+      let out = '';
+      let err = '';
+      child.stdout.on('data', (chunk) => { out += chunk; });
+      child.stderr.on('data', (chunk) => { err += chunk; });
+      child.on('close', (code) => resolve({ code, out, err, ms: Date.now() - started }));
+      child.stdin.end(statements);
+    }, at);
+  });
+
+/**
+ * 로컬 스택의 접속값(`supabase status -o json`) — 한 프로세스에 한 번만 읽는다.
+ *
+ * 붙지 않은 서비스 목록은 stderr 로 흐른다 — 검사 출력에 섞일 것이 아니라 버린다.
+ */
+let statusOnce = null;
+export function localStatus() {
+  if (statusOnce !== null) return statusOnce;
+  try {
+    statusOnce = JSON.parse(execFileSync('npx', ['supabase', 'status', '-o', 'json'], {
+      encoding: 'utf8',
+      stdio: ['ignore', 'pipe', 'ignore'],
+    }));
+  } catch {
+    throw new Error('로컬 Supabase 가 안 떠 있습니다 — `npm run db:start` 뒤에 다시 도세요.');
+  }
+  return statusOnce;
+}
+
+/** 로그인 전 브라우저와 같은 자리의 client — 세션은 메모리에만 둔다. `auth` 로 옵션을 더한다 */
+export const anonClient = (auth = {}) =>
+  createClient(localStatus().API_URL, localStatus().ANON_KEY, { auth: { persistSession: false, ...auth } });
+
+/** 이메일로 계정 id 를 읽는다 */
+export const userIdOf = (email) => sql(`select id from auth.users where email = '${email}'`);
 
 /**
  * 매칭 풀에 서는 데 드는 **필요한 기운 요약** 한 벌(ADR 0113) — 셈 이름은 지금 DB 의 이름을 읽는다.
@@ -116,6 +170,15 @@ export async function fetchWhole(url, init) {
   return new Response(empty ? null : body, { status: response.status, statusText: response.statusText, headers: response.headers });
 }
 
+/** 검사 서버의 화면을 연다 — `jar` 가 있으면 그 세션 쿠키를 싣는다. 넘김은 따라가지 않는다 */
+export function pageReader(base) {
+  const get = (path, jar) => fetchWhole(`${base}${path}`, { headers: jar ? { cookie: jar } : {}, redirect: 'manual' });
+  return { get, body: async (path, jar) => (await get(path, jar)).text() };
+}
+
+/** React 가 글자 사이에 끼우는 빈 주석(`<!-- -->`)을 걷는다 — 화면에 보이는 글로 견주려고 */
+export const plain = (html) => html.replace(/<!--\s*-->/g, '');
+
 /**
  * 풀에 오르는 값을 쓰는 문 넷을 **그 사람으로** 부른다 — 앱의 열쇠 모듈이 하는 일을 흐름 검사가 흉내 낸다(G-64, ADR 0136).
  *
@@ -128,8 +191,7 @@ export async function fetchWhole(url, init) {
 let keyedOnce = null;
 export async function keyedRpc(client, name, args) {
   if (keyedOnce === null) {
-    const { createClient } = await import('@supabase/supabase-js');
-    const status = JSON.parse(execFileSync('npx', ['supabase', 'status', '-o', 'json'], { encoding: 'utf8' }));
+    const status = localStatus();
     keyedOnce = createClient(status.API_URL, status.SECRET_KEY ?? status.SERVICE_ROLE_KEY, {
       auth: { persistSession: false, autoRefreshToken: false },
     });

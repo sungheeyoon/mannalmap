@@ -4,8 +4,8 @@ import {
   test,
   scheduleBeta,
   scheduledEndsOn,
-  sql,
 } from './session';
+import { sql } from '../scripts/checks.mjs';
 
 import {
   NOTICE_ACK_LABEL,

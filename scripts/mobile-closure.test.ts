@@ -1,4 +1,4 @@
-import { mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, statSync, writeFileSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import { builtinModules } from 'node:module';
 import { tmpdir } from 'node:os';
 import { dirname, join, relative, resolve, sep } from 'node:path';
@@ -7,6 +7,8 @@ import ts from 'typescript';
 import { describe, expect, it } from 'vitest';
 
 import { reachesMobile } from './ci-plan.mjs';
+import { withoutComments } from './copy-text';
+import { filesUnder } from './source-files';
 
 /**
  * **앱이 닿는 코드는 앱 번들에서 풀린다.**
@@ -44,16 +46,7 @@ const isFile = (path: string) => {
 };
 const fileAt = (base: string) => EXTENSIONS.map((ending) => base + ending).find(isFile) ?? null;
 
-const filesUnder = (dir: string): string[] =>
-  readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
-    const path = join(dir, entry.name);
-    return entry.isDirectory() ? filesUnder(path) : [path];
-  });
-
 const isCode = (file: string) => /\.tsx?$/.test(file) && !/\.test\.tsx?$/.test(file);
-
-const withoutComments = (text: string) =>
-  text.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '');
 
 /** 앱의 alias 를 tsc 처럼 푼다 — 딱 맞는 이름이 먼저, 그다음 가장 긴 접두사 */
 function aliasResolver(paths: Record<string, string[]>, mobile: string) {

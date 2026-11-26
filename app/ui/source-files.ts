@@ -21,10 +21,8 @@ export const asPosix = (path: string, from: string = process.cwd()): string => r
  * **디자인 체계의 단** — `app/globals.css` 의 `@theme inline` 안에 적힌 글자 크기(`--text-*`) · 모서리(`--radius-*`) 토큰.
  * 이름 → 적힌 값(`13px` · `1.75rem`). 잠금(`scale.test.ts`)과 입력 칸 시험(`fields.test.ts`)이 함께 읽는다.
  */
-export function scaleTokens(css: string = readFileSync(join(process.cwd(), 'app/globals.css'), 'utf8')): {
-  text: Record<string, string>;
-  radius: Record<string, string>;
-} {
+export function scaleTokens(): { text: Record<string, string>; radius: Record<string, string> } {
+  const css = readFileSync(join(process.cwd(), 'app/globals.css'), 'utf8');
   const theme = /@theme inline\s*\{([\s\S]*?)\n\}/.exec(css)?.[1] ?? '';
   const pick = (prefix: string): Record<string, string> =>
     Object.fromEntries(

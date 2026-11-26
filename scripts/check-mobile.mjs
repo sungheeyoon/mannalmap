@@ -12,7 +12,6 @@
  *
  * 모델은 안 부른다 — 열쇠를 비우고 주소도 닫힌 포트로 돌린다. 저장소(S3)는 로컬에 없어 재지 않는다.
  */
-import { execFileSync } from 'node:child_process';
 import { createHmac, randomUUID } from 'node:crypto';
 import { readFileSync, readdirSync, statSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
@@ -26,10 +25,10 @@ stopIfMissing('check-mobile', fileURLToPath(new URL('..', import.meta.url)), ['r
 const { createClient } = await import('@supabase/supabase-js');
 const { startCheckServer } = await import('./next-server.mjs');
 const { passNotice, clearMachineRunsFromToday, scheduleBeta, chartArgs, NOTICE_VERSION } = await import('./notice.mjs');
-const { createChecks, sql } = await import('./checks.mjs');
+const { createChecks, sql, localStatus, anonClient } = await import('./checks.mjs');
 const { worktreeStack } = await import('../src/lib/local-env.ts');
 
-const status = JSON.parse(execFileSync('npx', ['supabase', 'status', '-o', 'json'], { encoding: 'utf8' }));
+const status = localStatus();
 const API = status.API_URL;
 const PORT = Number(process.env.CHECK_PORT ?? worktreeStack().checkPort + 9);
 
@@ -60,7 +59,7 @@ const appClient = (storage = memoryStorage()) =>
   createClient(API, status.PUBLISHABLE_KEY ?? status.ANON_KEY, {
     auth: { storage, persistSession: true, autoRefreshToken: false, detectSessionInUrl: false },
   });
-const anon = () => createClient(API, status.ANON_KEY, { auth: { persistSession: false, autoRefreshToken: false } });
+const anon = () => anonClient({ autoRefreshToken: false });
 
 const newAccount = async (label) => {
   const storage = memoryStorage();

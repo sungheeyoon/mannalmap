@@ -9,10 +9,9 @@
  * 한 자를 두 언어에 적어야 하는 자리라 **원본에서 읽어 온다** — 모양이 바뀌면 여기서
  * 그 자리에 멈춘다.
  */
-import { execFileSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
-import { worktreeStack } from '../src/lib/local-env.ts';
 import { checkEndsOn } from './beta-dates.mjs';
+import { anonClient, keyedRpc, sql } from './checks.mjs';
 
 const source = readFileSync(new URL('../src/lib/consent/notice.ts', import.meta.url), 'utf8');
 
@@ -76,10 +75,6 @@ export const chartArgs = (seed = '', hasHour = true) => ({
   p_chart_engine_version: CHECK_CHART_ENGINE,
 });
 
-const psql = (statement) =>
-  execFileSync('docker', ['exec', '-i', worktreeStack().dbContainer, 'psql', '-U', 'postgres', '-tAq',
-    '-c', statement], { encoding: 'utf8' });
-
 /**
  * 도구가 만든 시도를 **오늘에서 비켜 둔다.**
  *
@@ -105,7 +100,7 @@ const MACHINE_MODELS = ['gpt-e2e', 'gpt-ui-walk', 'gpt-5.6-luna', 'x'];
  */
 export function clearMachineRunsFromToday() {
   const tags = MACHINE_MODELS.map((one) => `'${one}'`).join(', ');
-  psql(`update public.reading_run r
+  sql(`update public.reading_run r
           set created_at = r.created_at - interval '1 day'
         where r.created_at >= (date_trunc('day', now() at time zone 'Asia/Seoul')
                                at time zone 'Asia/Seoul')
@@ -122,9 +117,9 @@ export function clearMachineRunsFromToday() {
  */
 export function scheduleBeta(endsOn = checkEndsOn()) {
   /* 검사의 DB 는 인연이 열린 쪽이다 — 운영의 기본값(닫힘)은 pgTAP `99_match_waits_closed` 와 `check-mobile` 의 닫힘 절이 잰다(ADR 0222) */
-  psql('update public.match_open_switch set open = true, changed_at = now() where not open');
+  sql('update public.match_open_switch set open = true, changed_at = now() where not open');
   // **지우고 넣지 않는다** — 이미 그 값이면 아무것도 안 한다(`e2e/session.ts` 와 같은 까닭).
-  psql(`insert into public.beta_schedule
+  sql(`insert into public.beta_schedule
              (ends_on, note)
            select '${endsOn}', '검사'
            where coalesce((select s.ends_on from public.current_beta_schedule() s),
@@ -166,5 +161,23 @@ export async function passNotice(client, nickname) {
 async function keepBetaFreeCredits(client) {
   const { data, error } = await client.auth.getUser();
   if (error || !data.user) throw new Error(`가입한 계정을 못 읽었습니다 — ${error?.message ?? '없음'}`);
-  psql(`update public.app_user set kept_free_credits = public.beta_free_credits() where id = '${data.user.id}'`);
+  sql(`update public.app_user set kept_free_credits = public.beta_free_credits() where id = '${data.user.id}'`);
+}
+
+/**
+ * **막 가입을 마친 사람** 하나 — 가입 → 고지 동의 → 내 사람 저장(오후 2시 반 · 양력 · 조자시 · 지방시)까지.
+ *
+ * `birth` 는 `{ date, city, gender }` 다. 여덟 글자는 이름에서 짓는다(`chartArgs(label)`).
+ */
+export async function signedUpSelf(email, password, label, { date, city, gender }) {
+  const client = anonClient();
+  await client.auth.signUp({ email, password });
+  await passNotice(client);
+  await keyedRpc(client, 'create_self_person', {
+    p_local_label: label, p_calendar: 'solar',
+    p_original_date: date, p_solar_date: date, p_birth_time: '14:30',
+    p_gender: gender, p_city: city, p_late_night_rule: 'jo', p_time_basis: 'localMean',
+    ...chartArgs(label),
+  });
+  return client;
 }
