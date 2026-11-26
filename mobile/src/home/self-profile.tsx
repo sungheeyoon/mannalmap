@@ -11,7 +11,7 @@ import { Icon } from '@/ui/icons';
 import { SecondaryButton } from '@/ui/parts';
 import { Photo } from '@/ui/photo';
 import { StemSymbol } from '@/ui/stem-symbol';
-import { COLOR, FONT, RADIUS, TYPE } from '@/ui/tokens';
+import { COLOR, CONTROL, FONT, RADIUS, TYPE } from '@/ui/tokens';
 
 import type { SelfFace } from './read';
 import { WordText } from '@/ui/word-text';
@@ -72,6 +72,6 @@ export function SelfProfile({ face, stem }: { face: SelfFace; stem: Stem }) {
 const styles = StyleSheet.create({
   circle: { width: 56, height: 56, borderRadius: RADIUS.pill, overflow: 'hidden', alignItems: 'center', justifyContent: 'center', backgroundColor: COLOR.surface },
   addPhoto: { position: 'absolute', bottom: 12, alignSelf: 'center' },
-  emptyIntro: { minHeight: 44, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8 },
+  emptyIntro: { minHeight: CONTROL, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8 },
   emptyIntroText: { flex: 1, fontFamily: FONT.medium, fontSize: TYPE.body, color: COLOR.muted },
 });

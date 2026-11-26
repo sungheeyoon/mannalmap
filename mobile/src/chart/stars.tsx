@@ -28,20 +28,20 @@ export function StarTable({ saju }: { saju: Saju }) {
               <Cell key={key} accessibilityLabel={`${label}에 걸린 신살`} style={[styles.column, key === 'day' && styles.columnDay]}>
                 <View style={styles.columnHead}>
                   <T bold>{label}</T>
-                  <T size="xs" tone="secondary">{found.length}개</T>
+                  <T size="caption" tone="secondary">{found.length}개</T>
                 </View>
                 {found.length === 0 ? (
-                  <T size="small" tone="secondary" style={styles.none}>걸린 항목 없음</T>
+                  <T size="meta" tone="secondary" style={styles.none}>걸린 항목 없음</T>
                 ) : (
                   <View style={styles.hits}>
                     {found.map(({ star, hit }) => (
                       <View key={`${star.id}:${hit.target}:${hit.char}`} style={styles.hit}>
                         <T bold>{star.ko}</T>
-                        <T size="xs" tone="secondary">
-                          {HIT_POSITION_KO[hit.position][hit.target]} <T size="xs" tone="secondary" glyph>{hit.char}</T>
+                        <T size="caption" tone="secondary">
+                          {HIT_POSITION_KO[hit.position][hit.target]} <T size="caption" tone="secondary" glyph>{hit.char}</T>
                           {star.basis && (
                             <>
-                              {' · '}{star.basis.label} <T size="xs" tone="secondary" glyph>{star.basis.char}</T>
+                              {' · '}{star.basis.label} <T size="caption" tone="secondary" glyph>{star.basis.char}</T>
                             </>
                           )}
                         </T>
@@ -56,23 +56,23 @@ export function StarTable({ saju }: { saju: Saju }) {
       )}
 
       {!saju.meta.hourKnown && (
-        <T size="xs" tone="muted" style={styles.hourNote}>시주를 몰라 시주에 걸린 신살은 빠져 있습니다.</T>
+        <T size="caption" tone="muted" style={styles.hourNote}>시주를 몰라 시주에 걸린 신살은 빠져 있습니다.</T>
       )}
 
       <Disclosure title="전통 분류와 산출 기준" style={styles.disclosure}>
         <View style={styles.natures}>
           {starNamesByNature(saju).map(({ nature, ko, named }) => (
             <View key={nature} style={styles.nature}>
-              <T size="xs" tone="muted">{ko}</T>
-              <T size="xs" tone="secondary" style={styles.flex}>{named}</T>
+              <T size="caption" tone="muted">{ko}</T>
+              <T size="caption" tone="secondary" style={styles.flex}>{named}</T>
             </View>
           ))}
         </View>
-        <T size="xs" tone="secondary" style={styles.para}>{STAR_NATURE_NOTE}</T>
+        <T size="caption" tone="secondary" style={styles.para}>{STAR_NATURE_NOTE}</T>
         {missingSpirits.length > 0 && (
           <View style={styles.missing}>
             {missingSpirits.map((note) => (
-              <T key={note} size="xs" tone="secondary">{note}</T>
+              <T key={note} size="caption" tone="secondary">{note}</T>
             ))}
           </View>
         )}

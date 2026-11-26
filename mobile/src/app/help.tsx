@@ -8,7 +8,7 @@ import { CONTACT_LABEL } from '@/info/copy';
 import { InfoScreen } from '@/info/frame';
 import { Icon } from '@/ui/icons';
 import { SecondaryButton } from '@/ui/parts';
-import { COLOR, FONT, RADIUS, TYPE, TYPE_BODY, TYPE_SECTION } from '@/ui/tokens';
+import { COLOR, CONTROL, FONT, RADIUS, TYPE, TYPE_BODY, TYPE_SECTION } from '@/ui/tokens';
 import { Card } from '@/ui/surfaces';
 import { Heading } from '@/ui/heading';
 import { WordText } from '@/ui/word-text';
@@ -144,7 +144,7 @@ export default function HelpScreen() {
 const styles = StyleSheet.create({
   head: { gap: 8 },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  chip: { minHeight: 44, justifyContent: 'center', paddingHorizontal: 16, borderRadius: RADIUS.pill, borderWidth: 1, borderColor: COLOR.border, backgroundColor: COLOR.surface },
+  chip: { minHeight: CONTROL, justifyContent: 'center', paddingHorizontal: 16, borderRadius: RADIUS.pill, borderWidth: 1, borderColor: COLOR.border, backgroundColor: COLOR.surface },
   chipText: { fontFamily: FONT.bold, fontSize: TYPE.note, color: COLOR.foreground },
   group: { gap: 12 },
   groupTitle: { ...TYPE_SECTION },
@@ -155,6 +155,6 @@ const styles = StyleSheet.create({
   chevronOpen: { transform: [{ rotate: '90deg' }] },
   answers: { gap: 8, paddingBottom: 12 },
   answer: { fontFamily: FONT.medium, fontSize: TYPE.body, lineHeight: 26, color: COLOR.secondary },
-  link: { alignSelf: 'flex-start', minHeight: 44, justifyContent: 'center' },
+  link: { alignSelf: 'flex-start', minHeight: CONTROL, justifyContent: 'center' },
   linkText: { fontFamily: FONT.bold, fontSize: TYPE.small, color: COLOR.foreground },
 });

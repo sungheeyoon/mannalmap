@@ -21,7 +21,7 @@ import { Button } from '@/ui/buttons';
 import { Icon } from '@/ui/icons';
 import { Card } from '@/ui/surfaces';
 import { PrimaryButton, SecondaryButton, TextButton } from '@/ui/parts';
-import { COLOR, ELEMENT_TONE, FONT, RADIUS, TYPE, TYPE_META } from '@/ui/tokens';
+import { COLOR, CONTROL, ELEMENT_TONE, FONT, RADIUS, TYPE, TYPE_META } from '@/ui/tokens';
 
 import { saveSelfPerson } from './chart-writes';
 import { WordText } from '@/ui/word-text';
@@ -270,7 +270,7 @@ function SelfConfirm({ query, want, name, onSomeoneElse }: { query: Query; want:
 const OFFER_TONE = ELEMENT_TONE['木'];
 
 const styles = StyleSheet.create({
-  intro: { minHeight: 44, flexDirection: 'row', alignItems: 'center', gap: 4, marginHorizontal: 4 },
+  intro: { minHeight: CONTROL, flexDirection: 'row', alignItems: 'center', gap: 4, marginHorizontal: 4 },
   introText: { fontFamily: FONT.bold, fontSize: TYPE.body, color: COLOR.secondary },
   card: { gap: 12 },
   head: { gap: 4 },

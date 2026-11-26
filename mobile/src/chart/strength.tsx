@@ -17,15 +17,15 @@ export function StrengthMeter({ saju }: { saju: Saju }) {
   return (
     <Fold title="신강 · 신약" meta={verdict} note="보조세력과 득령·득지·득세를 함께 봅니다">
       <View style={styles.summary}>
-        <T size="xs" tone="muted">현재 판정</T>
+        <T size="caption" tone="muted">현재 판정</T>
         <View style={[shared.wrapBaseline, styles.verdict]}>
-          <T size="big" bold>{verdict}</T>
+          <T size="display" bold>{verdict}</T>
           <T tone="secondary">세 기준 중 {strength.metCount}개 충족</T>
         </View>
         <View style={[shared.wrapBaseline, styles.ratio]}>
-          <T size="big" bold num>{percent.toFixed(1)}</T>
+          <T size="display" bold num>{percent.toFixed(1)}</T>
           <T>%</T>
-          <T size="xs" tone="muted">보조세력</T>
+          <T size="caption" tone="muted">보조세력</T>
         </View>
       </View>
 
@@ -35,28 +35,28 @@ export function StrengthMeter({ saju }: { saju: Saju }) {
           <View aria-hidden style={[styles.mark, { left: `${STRENGTH_THRESHOLD}%` }]} />
         </View>
         <View style={styles.scale}>
-          <T size="xs" tone="muted">소모 우세</T>
-          <T size="xs" tone="muted">신강 기준 {STRENGTH_THRESHOLD}%</T>
-          <T size="xs" tone="muted">보조 우세</T>
+          <T size="caption" tone="muted">소모 우세</T>
+          <T size="caption" tone="muted">신강 기준 {STRENGTH_THRESHOLD}%</T>
+          <T size="caption" tone="muted">보조 우세</T>
         </View>
       </View>
 
       <View style={styles.scores}>
         <View style={styles.score}>
-          <T size="xs" tone="muted">일간을 돕는 힘</T>
-          <T size="lead" bold num>{strength.supportScore.toFixed(2)}</T>
-          <T size="xs" tone="secondary">비겁·인성</T>
+          <T size="caption" tone="muted">일간을 돕는 힘</T>
+          <T size="name" bold num>{strength.supportScore.toFixed(2)}</T>
+          <T size="caption" tone="secondary">비겁·인성</T>
         </View>
         <View style={styles.score}>
-          <T size="xs" tone="muted">일간을 소모하는 힘</T>
-          <T size="lead" bold num>{strength.opposeScore.toFixed(2)}</T>
-          <T size="xs" tone="secondary">식상·재성·관성</T>
+          <T size="caption" tone="muted">일간을 소모하는 힘</T>
+          <T size="name" bold num>{strength.opposeScore.toFixed(2)}</T>
+          <T size="caption" tone="secondary">식상·재성·관성</T>
         </View>
       </View>
 
       <View style={styles.basis}>
         <T bold>판정 근거</T>
-        <T size="xs" tone="muted">득령 · 득지 · 득세</T>
+        <T size="caption" tone="muted">득령 · 득지 · 득세</T>
       </View>
       <View style={styles.criteria}>
         {strength.criteria.map((criterion) => (
@@ -64,15 +64,15 @@ export function StrengthMeter({ saju }: { saju: Saju }) {
             <View style={styles.criterionHead}>
               <T bold>{criterion.label}</T>
               <View style={[styles.pill, criterion.met && styles.pillMet]}>
-                <T size="xs" tone="muted" color={criterion.met ? COLOR.background : undefined}>{criterion.met ? '충족' : '미충족'}</T>
+                <T size="caption" tone="muted" color={criterion.met ? COLOR.background : undefined}>{criterion.met ? '충족' : '미충족'}</T>
               </View>
             </View>
-            <T size="xs" tone="secondary" style={styles.detail}>{criterion.detail}</T>
+            <T size="caption" tone="secondary" style={styles.detail}>{criterion.detail}</T>
           </View>
         ))}
       </View>
 
-      <T size="xs" tone="muted" style={styles.overlap}>{STRENGTH_OVERLAP_NOTE}</T>
+      <T size="caption" tone="muted" style={styles.overlap}>{STRENGTH_OVERLAP_NOTE}</T>
 
       <RootingNote saju={saju} />
     </Fold>
@@ -86,7 +86,7 @@ function RootingNote({ saju }: { saju: Saju }) {
     <Disclosure title="뿌리와 투출 자세히 보기" style={styles.rooting}>
       <View style={shared.wrapBaseline}>
         <FactTag>사실</FactTag>
-        <T size="xs" tone="muted">일간 {dayMaster.stem}의 뿌리</T>
+        <T size="caption" tone="muted">일간 {dayMaster.stem}의 뿌리</T>
         {dayMaster.rooted ? (
           <>
             <T tone="secondary">{rootsLine(saju)}</T>
@@ -97,9 +97,9 @@ function RootingNote({ saju }: { saju: Saju }) {
         )}
       </View>
       {emergences.length > 0 && (
-        <T size="xs" tone="secondary" style={styles.emergences}>투출 {emergencesLine(saju)}</T>
+        <T size="caption" tone="secondary" style={styles.emergences}>투출 {emergencesLine(saju)}</T>
       )}
-      <T size="xs" tone="muted" style={styles.rootingNote}>{ROOTING_NOTE}</T>
+      <T size="caption" tone="muted" style={styles.rootingNote}>{ROOTING_NOTE}</T>
     </Disclosure>
   );
 }

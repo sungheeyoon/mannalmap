@@ -11,7 +11,7 @@ import { markNotificationsRead, readInbox, type Read } from '@/matching/doors';
 import { Icon, type IconName } from '@/ui/icons';
 import { EmptyState } from '@/ui/empty-state';
 import { LoadingDots } from '@/ui/loading';
-import { COLOR, FONT, RADIUS, TYPE, TYPE_BODY } from '@/ui/tokens';
+import { COLOR, CONTROL, FONT, RADIUS, TYPE, TYPE_BODY } from '@/ui/tokens';
 import { TopBar } from '@/ui/top-bar';
 import { CardFrame } from '@/ui/surfaces';
 import { WordText } from '@/ui/word-text';
@@ -129,7 +129,7 @@ const styles = StyleSheet.create({
   content: { flexGrow: 1, gap: 24, padding: 16 },
   flex: { flex: 1, minWidth: 0, gap: 2 },
   failure: { fontFamily: FONT.medium, fontSize: TYPE.small, lineHeight: 19, color: COLOR.danger },
-  retry: { minHeight: 44, justifyContent: 'center', alignSelf: 'flex-start' },
+  retry: { minHeight: CONTROL, justifyContent: 'center', alignSelf: 'flex-start' },
   retryText: { fontFamily: FONT.bold, fontSize: TYPE.note, color: COLOR.foreground },
   row: { flexDirection: 'row', alignItems: 'flex-start', gap: 12, paddingHorizontal: 16, paddingVertical: 14 },
   rowLine: { borderTopWidth: 1, borderTopColor: COLOR.border },

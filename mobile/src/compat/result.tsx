@@ -239,11 +239,11 @@ function Between({ compat, names }: { compat: Compatibility; names: Record<Compa
   return (
     <View style={styles.between}>
       <View style={styles.part}>
-        <T size="lead" bold>{COMPAT_BETWEEN}</T>
+        <T size="name" bold>{COMPAT_BETWEEN}</T>
         <T tone="secondary">{relations.length === 0 ? '걸리는 것이 없습니다' : `${relations.length}개`}</T>
         {dayToDay.length > 0 && (
           <View style={styles.dayToDay}>
-            <T size="xs" tone="muted">{DAY_TO_DAY_NOTE}</T>
+            <T size="caption" tone="muted">{DAY_TO_DAY_NOTE}</T>
             {dayToDay.map((relation) => (
               <T key={relation.id}>
                 <T glyph>{relation.participants.map((one) => one.char).join(' ')}</T> {relation.ko}
@@ -258,7 +258,7 @@ function Between({ compat, names }: { compat: Compatibility; names: Record<Compa
                 <View style={styles.tableRow}>
                   {['종류', '글자', '이름', '누구의 어느 자리'].map((head, index) => (
                     <View key={head} style={COLUMN[index]}>
-                      <T size="xs" tone="muted">{head}</T>
+                      <T size="caption" tone="muted">{head}</T>
                     </View>
                   ))}
                 </View>
@@ -268,7 +268,7 @@ function Between({ compat, names }: { compat: Compatibility; names: Record<Compa
                     <View style={COLUMN[1]}><T glyph>{relation.participants.map((one) => one.char).join(' ')}</T></View>
                     <View style={COLUMN[2]}><T>{relation.ko}</T></View>
                     <View style={COLUMN[3]}>
-                      <T size="xs" tone="secondary">
+                      <T size="caption" tone="secondary">
                         {relation.participants
                           .map((one) => {
                             const side = compatSideOf(one.chartId);
@@ -293,19 +293,19 @@ function Between({ compat, names }: { compat: Compatibility; names: Record<Compa
           </Ruled>
         )}
         <Ruled>
-          <T size="xs" tone="muted">{BETWEEN_RELATIONS_NOTE}</T>
+          <T size="caption" tone="muted">{BETWEEN_RELATIONS_NOTE}</T>
         </Ruled>
       </View>
 
       <View style={styles.part}>
-        <T size="lead" bold>두 사람 사이에 대해 말할 수 있는 것</T>
+        <T size="name" bold>두 사람 사이에 대해 말할 수 있는 것</T>
         <UtteranceList utterances={said(utterances, (topic) => !TOPICS_THE_TABLE_HOLDS.includes(topic))} />
         <Ruled>
           <Rich parts={CLAIM_STRENGTH_LEGEND} />
           <>
-            <T size="xs" tone="muted">십성은 일간끼리만 본 값이라 양쪽이 서로 다를 수 있고, 육친(누가 누구의 무엇인가) 으로 단정하지 않습니다. 오행은 있고 없음만 셉니다 — 부족을 채우는 쪽이 좋다는 읽기와 용신에 맞아야 한다는 읽기가 갈려서 좋고 나쁨으로 환산하지 않습니다.</T>
-            <T size="xs" tone="muted">
-              억부 부합은 <T size="xs" bold>각자의 억부 판정을 그대로 물려받은 값</T>입니다. 억부는 용신을 잡는 네 길 중 하나일 뿐이라 확정 용신이 아니고, {'‘'}상대가 내 용신을 갖고 있다{'’'}로 읽으면 안 됩니다.
+            <T size="caption" tone="muted">십성은 일간끼리만 본 값이라 양쪽이 서로 다를 수 있고, 육친(누가 누구의 무엇인가) 으로 단정하지 않습니다. 오행은 있고 없음만 셉니다 — 부족을 채우는 쪽이 좋다는 읽기와 용신에 맞아야 한다는 읽기가 갈려서 좋고 나쁨으로 환산하지 않습니다.</T>
+            <T size="caption" tone="muted">
+              억부 부합은 <T size="caption" bold>각자의 억부 판정을 그대로 물려받은 값</T>입니다. 억부는 용신을 잡는 네 길 중 하나일 뿐이라 확정 용신이 아니고, {'‘'}상대가 내 용신을 갖고 있다{'’'}로 읽으면 안 됩니다.
             </T>
           </>
         </Ruled>
@@ -313,7 +313,7 @@ function Between({ compat, names }: { compat: Compatibility; names: Record<Compa
 
       {warnings.length > 0 && (
         <View style={styles.part}>
-          <T size="lead" bold>주의</T>
+          <T size="name" bold>주의</T>
           {warnings.map((warning) => (
             <T key={warning.kind} tone="secondary">{warning.text}</T>
           ))}

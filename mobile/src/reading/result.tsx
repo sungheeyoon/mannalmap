@@ -21,6 +21,8 @@ import { WordText } from '@/ui/word-text';
 import { READING_PAIR_TITLE } from '@reading/words';
 
 const softOf = (element: Element | null | undefined) => (element ? ELEMENT_TONE[element].soft : COLOR.noneSoft);
+/** 표지 글자의 색 — 첫 사람의 오행 먹색, 모르면 빈 오행(웹 `elementScope(firstTone)` 의 `--ink`) */
+const inkOf = (element: Element | null | undefined) => (element ? ELEMENT_TONE[element].ink : COLOR.none);
 
 /** 표지의 면 — 한 사람은 제 색 한 면, 두 사람은 두 색이 비스듬히 만난다(`app/me/reading/essay.ts` 의 `coverFace`) */
 export function CoverFace({ tones }: { tones: readonly (Element | null)[] | undefined }) {
@@ -89,7 +91,7 @@ export function Result({
           {metaphor !== null ? (
             <>
               {coverAction !== undefined && <View style={styles.coverAction}>{coverAction}</View>}
-              <WordText aria-hidden style={styles.quote}>
+              <WordText aria-hidden style={[styles.quote, { color: inkOf(tones?.[0]) }]}>
                 “
               </WordText>
               <WordText style={styles.metaphor}>{metaphor}</WordText>
@@ -240,7 +242,8 @@ const styles = StyleSheet.create({
   grow: { flex: 1, minWidth: 0 },
   cover: { overflow: 'hidden', paddingHorizontal: 24, paddingTop: 28, paddingBottom: 24 },
   coverAction: { position: 'absolute', top: 12, right: 12, zIndex: 1 },
-  quote: { height: 40, fontFamily: FONT.bold, fontSize: 64, lineHeight: 72, color: COLOR.foreground, opacity: 0.7 },
+  /* 웹 표지의 따옴표(`text-[5rem] leading-none h-10 opacity-70`, `app/me/reading/reading-result.tsx`)와 같은 크기 · 자리다. 색은 첫 사람의 오행(`inkOf`) */
+  quote: { height: 40, fontFamily: FONT.bold, fontSize: 80, lineHeight: 80, opacity: 0.7 },
   metaphor: { marginTop: 8, fontFamily: FONT.bold, fontSize: TYPE.title, lineHeight: 36, color: COLOR.foreground },
   coverTitle: { fontFamily: FONT.bold, fontSize: TYPE.small, color: COLOR.secondary },
   caption: { flexDirection: 'row', alignItems: 'flex-end', gap: 16, marginTop: 32, paddingTop: 16, borderTopWidth: 1, borderTopColor: COLOR.border },

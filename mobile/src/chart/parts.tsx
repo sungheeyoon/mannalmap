@@ -1,32 +1,43 @@
 import { useState, type ReactNode } from 'react';
 import { Platform, Pressable, StyleSheet, View, type StyleProp, type TextStyle, type ViewStyle } from 'react-native';
-import Svg, { Path } from 'react-native-svg';
 
 import type { Rich as RichParts, RichPart } from '@saju-view/notes';
 
-import { Card as CardFace } from '@/ui/surfaces';
-import { COLOR, CONTROL, FONT, RADIUS, TYPE, TYPE_META, TYPE_NAME, TYPE_SECTION } from '@/ui/tokens';
+import { FoldIcon } from '@/ui/icons';
+import { Card } from '@/ui/surfaces';
+import { COLOR, CONTROL, FONT, RADIUS, TYPE, TYPE_CAPTION, TYPE_META, TYPE_NAME, TYPE_SECTION } from '@/ui/tokens';
 import { KEEP_VIEW } from '@/ui/keep-view';
 import { WordText } from '@/ui/word-text';
 
 /** 한자 — 부산단디명조에 없어 기기 서체다(웹의 `.glyph`) */
 const GLYPH_FONT = Platform.select({ ios: 'System', android: 'sans-serif', default: 'system-ui' });
 
+/**
+ * **이 화면의 글자는 디자인 체계의 글자 단만 고른다**(ADR 0274) — 이름은 그 단의 이름이고, 값은 웹 명식 화면(`app/saju/*`)의 클래스 짝이다.
+ * 여섯 벌(`TYPE_*`)에 있는 것은 그대로 펴고, 여섯 벌 밖의 셋(14 · 16 · 30px)은 웹 Tailwind 단의 줄 높이를 따른다 — 14 · 16px 는 웹에도 짝 모양이 없다.
+ */
 const SIZE = {
-  xs: { fontSize: TYPE.fine, lineHeight: 18 },
-  small: { ...TYPE_META },
-  sm: { fontSize: TYPE.note, lineHeight: 21 },
-  base: { fontSize: TYPE.field, lineHeight: 24 },
-  lead: { ...TYPE_NAME },
-  heading: { ...TYPE_SECTION },
-  big: { fontSize: TYPE.display, lineHeight: 36 },
+  /** 웹 `text-xs`(12 · 16) */
+  caption: TYPE_CAPTION,
+  /** 웹 `text-small leading-5`(13 · 20) */
+  meta: TYPE_META,
+  /** 웹 `text-sm`(14 · 20) — 펼침 줄(`DISCLOSURE_SUMMARY`) · 표 안의 글 */
+  note: { fontSize: TYPE.note, lineHeight: 20 },
+  /** 웹 `text-base`(16 · 24) */
+  field: { fontSize: TYPE.field, lineHeight: 24 },
+  /** 웹 `TYPE_NAME` · `text-lead` */
+  name: TYPE_NAME,
+  /** 웹 `TYPE_SECTION` */
+  section: TYPE_SECTION,
+  /** 웹 `text-3xl`(30 · 36) — 신강 · 신약의 판정과 비율 */
+  display: { fontSize: TYPE.display, lineHeight: 36 },
 } as const;
 
 const TONE = { foreground: COLOR.foreground, secondary: COLOR.secondary, muted: COLOR.muted } as const;
 
-/** 이 화면의 글자 한 벌 — 크기 · 색 · 굵기만 고른다 */
+/** 이 화면의 글자 한 벌 — 글자 단(`SIZE`) · 색 · 굵기만 고른다 */
 export function T({
-  size = 'sm',
+  size = 'note',
   tone = 'foreground',
   color,
   bold = false,
@@ -70,7 +81,7 @@ function Part({ part }: { part: RichPart }) {
 }
 
 /** 웹과 함께 쓰는 문단을 그린다 — 글자는 `src/lib/saju/view/notes.ts` 가 든다 */
-export function Rich({ parts, size = 'xs', tone = 'muted', style }: { parts: RichParts; size?: keyof typeof SIZE; tone?: keyof typeof TONE; style?: StyleProp<TextStyle> }) {
+export function Rich({ parts, size = 'caption', tone = 'muted', style }: { parts: RichParts; size?: keyof typeof SIZE; tone?: keyof typeof TONE; style?: StyleProp<TextStyle> }) {
   return (
     <T size={size} tone={tone} style={style}>
       {parts.map((part, index) => (
@@ -80,40 +91,33 @@ export function Rich({ parts, size = 'xs', tone = 'muted', style }: { parts: Ric
   );
 }
 
-/** 웹 `CARD` — 흰 판 · 가는 테 */
-export function Card({ style, children }: { style?: StyleProp<ViewStyle>; children: ReactNode }) {
-  return <CardFace style={[styles.card, style]}>{children}</CardFace>;
-}
-
-export function Chevron({ open, size = 16, closedDeg = 90 }: { open: boolean; size?: number; closedDeg?: number }) {
-  return (
-    <View aria-hidden style={{ transform: [{ rotate: `${open ? (closedDeg === 0 ? 90 : closedDeg + 180) : closedDeg}deg` }] }}>
-      <Svg width={size} height={size} viewBox="0 0 24 24">
-        <Path d="m9 5.5 6.5 6.5L9 18.5" fill="none" stroke={COLOR.secondary} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-      </Svg>
-    </View>
-  );
+/**
+ * 펼침 표시 — 그림은 아이콘 한 벌의 `chevron`(`ui/icons.tsx` 의 `FoldIcon`)이다. 닫히면 아래, 열리면 위. 굵기 2 · 보조 글자색은 이 화면이
+ * 손으로 그리던 꺾쇠와 같은 값이라 모양이 그대로다
+ */
+export function Chevron({ open }: { open: boolean }) {
+  return <FoldIcon open={open} color={COLOR.secondary} strokeWidth={2} />;
 }
 
 /** 분석 표 한 장 — 접힌 채 서고, 머리에 제목 · 값 · 한 줄 설명이 선다(웹 `fold.tsx`) */
 export function Fold({ title, meta, note, children }: { title: ReactNode; meta?: string; note?: string; children: ReactNode }) {
   const [open, setOpen] = useState(false);
   return (
-    <CardFace style={[styles.card, styles.foldCard]}>
+    <Card style={styles.foldCard}>
       <Pressable accessibilityRole="button" accessibilityState={{ expanded: open }} onPress={() => setOpen(!open)} style={styles.foldHead}>
         <View style={styles.foldText}>
           <View style={styles.wrapBaseline}>
-            <T size="lead" bold>{title}</T>
-            {meta !== undefined && <T size="sm" tone="secondary" bold>{meta}</T>}
+            <T size="name" bold>{title}</T>
+            {meta !== undefined && <T size="note" tone="secondary" bold>{meta}</T>}
           </View>
-          {note !== undefined && <T size="small" tone="secondary">{note}</T>}
+          {note !== undefined && <T size="meta" tone="secondary">{note}</T>}
         </View>
         <View style={styles.foldIcon}>
           <Chevron open={open} />
         </View>
       </Pressable>
       {open && <View style={styles.foldBody}>{children}</View>}
-    </CardFace>
+    </Card>
   );
 }
 
@@ -123,7 +127,7 @@ export function Disclosure({ title, style, children }: { title: string; style?: 
   return (
     <View style={[styles.disclosure, style]}>
       <Pressable accessibilityRole="button" accessibilityState={{ expanded: open }} onPress={() => setOpen(!open)} style={styles.disclosureHead}>
-        <T size="sm" style={styles.flex}>{title}</T>
+        <T size="note" style={styles.flex}>{title}</T>
         <Chevron open={open} />
       </Pressable>
       {open && <View style={styles.disclosureBody}>{children}</View>}
@@ -150,7 +154,7 @@ export function Tabs({ tabs, initial, label, small = false }: { tabs: readonly T
               onPress={() => setView(tab.key)}
               {...KEEP_VIEW} style={[styles.tab, selected && styles.tabChosen]}
             >
-              <T size={small ? 'small' : 'sm'} tone={selected ? 'foreground' : 'secondary'} bold>
+              <T size={small ? 'meta' : 'note'} tone={selected ? 'foreground' : 'secondary'} bold>
                 {tab.label}
               </T>
             </Pressable>
@@ -190,7 +194,7 @@ export function CardTabs({
 export function FactTag({ children }: { children: string }) {
   return (
     <View style={styles.factTag}>
-      <T size="xs" tone="muted">{children}</T>
+      <T size="caption" tone="muted">{children}</T>
     </View>
   );
 }
@@ -202,7 +206,7 @@ export function Ruled({ style, children }: { style?: StyleProp<ViewStyle>; child
 
 export function ScrollHint() {
   return (
-    <T size="xs" tone="muted" style={styles.scrollHint}>
+    <T size="caption" tone="muted" style={styles.scrollHint}>
       ← 좌우로 넘겨 전체 보기 →
     </T>
   );
@@ -212,7 +216,6 @@ const styles = StyleSheet.create({
   flex: { flex: 1 },
   num: { fontVariant: ['tabular-nums'] },
   strong: { fontFamily: FONT.bold },
-  card: { },
   foldCard: { padding: 0 },
   foldHead: { minHeight: 64, flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 20, paddingVertical: 16 },
   foldText: { flex: 1, gap: 2 },
