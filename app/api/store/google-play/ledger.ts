@@ -47,7 +47,10 @@ export function storeLedger(what: string): Ledger & {
         return null;
       }
       const outcome = row.outcome;
-      if (outcome !== 'granted' && outcome !== 'replayed' && outcome !== 'restricted' && outcome !== 'inactive') return null;
+      if (outcome !== 'granted' && outcome !== 'replayed' && outcome !== 'restricted' && outcome !== 'inactive') {
+        console.error('store ledger: grant outcome', outcome);
+        return null;
+      }
       return { outcome, credits: row.credits };
     },
 
@@ -118,7 +121,9 @@ export function storeLedger(what: string): Ledger & {
         console.error('store ledger: refusal', error.code);
         return null;
       }
-      return data === 'open' || data === 'restricted' || data === 'inactive' ? data : null;
+      if (data === 'open' || data === 'restricted' || data === 'inactive') return data;
+      console.error('store ledger: refusal answer', data);
+      return null;
     },
 
     async reportPrices({ differs, unknown }) {

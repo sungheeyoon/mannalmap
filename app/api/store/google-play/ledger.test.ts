@@ -57,6 +57,12 @@ describe('지급', () => {
       expect(await storeLedger('시험').grant(GRANT), JSON.stringify(answer)).toBeNull();
     }
   });
+
+  it('모르는 결과는 기록에 남긴다 — 다시 시도로만 말하면 아무 데도 안 남는다', async () => {
+    rpc.mockResolvedValue({ data: [{ outcome: 'surprise', order_id: null, credits: 3 }], error: null });
+    expect(await storeLedger('시험').grant(GRANT)).toBeNull();
+    expect(console.error).toHaveBeenCalledWith('store ledger: grant outcome', 'surprise');
+  });
 });
 
 describe('소비를 적기', () => {
@@ -141,10 +147,11 @@ describe('무효 · 살 수 있나', () => {
     expect(await ledger.void(input)).toBeNull();
   });
 
-  it('살 수 있나는 정한 셋만, 그 밖은 null', async () => {
+  it('살 수 있나는 정한 셋만, 그 밖은 기록에 남기고 null', async () => {
     rpc.mockResolvedValueOnce({ data: 'restricted', error: null }).mockResolvedValueOnce({ data: 'weird', error: null });
     const ledger = storeLedger('시험');
     expect(await ledger.refusal('u-1')).toBe('restricted');
     expect(await ledger.refusal('u-1')).toBeNull();
+    expect(console.error).toHaveBeenCalledWith('store ledger: refusal answer', 'weird');
   });
 });

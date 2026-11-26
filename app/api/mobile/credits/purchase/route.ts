@@ -23,12 +23,16 @@ export async function GET(request: Request): Promise<Response> {
   const session = await mobileSession(request, { touches: true });
   if (!session.ok) return session.response;
 
-  let open;
+  let ledger: ReturnType<typeof storeLedger>;
   try {
-    open = await storeLedger('스토어 구매 판정').refusal(session.userId);
+    ledger = storeLedger('스토어 구매 판정');
   } catch {
-    open = null;
+    console.error('store purchase: not configured');
+    return refusal(503, { refused: 'unavailable', message: UNREACHABLE_NOTE });
   }
+
+  /* 못 읽은 것은 장부 문이 기록에 남긴다(`store ledger: refusal …`) */
+  const open = await ledger.refusal(session.userId);
   if (open === null) return refusal(503, { refused: 'unavailable', message: UNREACHABLE_NOTE });
   return Response.json({ open } satisfies StorePurchaseOpen);
 }

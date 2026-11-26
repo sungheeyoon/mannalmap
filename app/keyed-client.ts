@@ -8,16 +8,12 @@ import type { Database } from '@/src/lib/db';
  * **열쇠를 드는 유일한 자리.**
  *
  * 이 저장소는 사용자 경로에 `service_role` 을 쓰지 않는다(ADR 0003·0006). 열쇠는 사용자
- * JWT 에 닫아 둔 문을 부를 때만 든다 — 부르는 곳은 열한 파일이다(2026-10-08 에 잰 값):
- * 풀이 제출(`app/me/reading/pipeline.ts` 둘) · 결과 회수(`app/me/reading/collect.ts`) ·
- * 서버 오류 알림(`app/request-error.ts`, `instrumentation.ts` 가 부른다) ·
- * 결과 복구 크론(`app/api/cron/reading/route.ts`) · 접속기록 반출 크론
- * (`app/api/cron/audit-export/route.ts`) · 닫힌 방의 메시지 파기 크론(`app/api/cron/chat-purge/route.ts`, ADR 0217) · 웹 푸시 배달 문(`app/api/push/dispatch/route.ts`, ADR 0156) · OpenAI webhook
- * (`app/api/openai/webhook/route.ts`), 그리고 **사용자 경로의 제한된 예외 하나** —
- * 풀에 오르는 요약과 내 사람의 여덟 글자를 쓰는 문 넷(`app/me/keyed-chart-writes.ts`, G-64 · ADR 0136), 그리고 로그인 전
- * 사주 문단의 문 일곱(로그인 전 쪽 넷 `app/taste/keyed-taste.ts` · 가입한 회원 쪽 셋 `app/taste/keyed-taste-claims.ts`, ADR 0143 —
+ * JWT 에 닫아 둔 문을 부를 때만 든다 — 부르는 파일은 `eslint.config.mjs` 의 `KEY_HOLDERS` 가 이름으로 든다(수는 그 목록이 답한다).
+ * 대부분은 사용자가 없는 자리다 — 풀이 제출 · 결과 회수 · 서버 오류 알림 · 크론 · webhook · 웹 푸시 배달 · 스토어 결제의 장부 문.
+ * **사용자 경로의 제한된 예외**도 있다 — 풀에 오르는 요약과 내 사람의 여덟 글자를 쓰는 문(`app/me/keyed-chart-writes.ts`, G-64 ·
+ * ADR 0136), 그리고 로그인 전 사주 문단의 문(`app/taste/keyed-taste.ts` · `app/taste/keyed-taste-claims.ts`, ADR 0143 —
  * 방문자는 로그인 전이고, 지문 · HMAC 은 서버만 짓는다).
- * 그 목록은 `eslint.config.mjs` 의 `KEY_HOLDERS` 와 `scripts/layers.test.ts` 가 함께 든다 — 새 자리는 둘을 고친다.
+ * 그 목록은 `scripts/layers.test.ts` 도 함께 든다 — 새 자리는 둘을 고친다.
  *
  * **구멍의 모양은 DB 가 정한다.** 열쇠가 부를 수 있는 public 함수는 이름으로 고정되어
  * 있고, 그 목록을 드는 것은 pgTAP 이다(`supabase/tests/13_reading.test.sql` 의 권한 시험).

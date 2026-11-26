@@ -30,12 +30,20 @@ type Enrollment =
   | { readonly ok: true; readonly qrCode: string; readonly secret: string }
   | Answer;
 
-/** Auth 가 코드를 거절한 까닭 넷 — 틀린 코드 · 지난 확인 · 요소 없음은 다시 넣으면 된다 */
+/** Auth 가 코드를 거절한 까닭 셋 — 틀린 코드 · 지난 확인 · 거절된 확인은 새 코드를 다시 넣으면 된다 */
 const RETRYABLE = new Set(['mfa_verification_failed', 'mfa_challenge_expired', 'mfa_verification_rejected']);
 
+/**
+ * 요소 없음(`mfa_factor_not_found`)은 다시 넣어도 같다 — 목록을 읽은 뒤 그 요소가 걷혔다(다른 창의 새 등록). 목록에 없을 때와 같은 답이다.
+ * 갈래 이름은 `@supabase/auth-js` 의 `ErrorCode` 다.
+ */
 const refusal = (error: AuthError, fallback: string): Answer => ({
   ok: false,
-  message: RETRYABLE.has(error.code ?? '') ? SECOND_FACTOR_COPY.wrongCode : fallback,
+  message: RETRYABLE.has(error.code ?? '')
+    ? SECOND_FACTOR_COPY.wrongCode
+    : error.code === 'mfa_factor_not_found'
+      ? SECOND_FACTOR_COPY.noFactor
+      : fallback,
 });
 
 /**

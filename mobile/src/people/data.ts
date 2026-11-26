@@ -15,7 +15,7 @@ import { readAccount } from '@/auth/account';
 import type { Done } from '@/answer';
 import { readRunningReadings } from '@/reading/running';
 import { readMyReadings } from '@/reading/my-readings';
-import { PERSON_SAVE_UNKNOWN } from '@people/words';
+import { PERSON_PICK_AGAIN, PERSON_SAVE_UNKNOWN } from '@people/words';
 
 export type { SameChart };
 
@@ -232,14 +232,19 @@ export async function addPerson(client: Client, query: Query, note: string, even
   return { ok: true, personId: data };
 }
 
-/** 메모만 고친다 — 정책이 내 엣지만 열어 준다 */
+/**
+ * 메모만 고친다 — 정책이 내 엣지만 열어 준다. 정책은 못 고치는 행을 오류 없이 거르므로(이용 중이 아닌 계정 · 이미 뺀 사람)
+ * 0행은 고친 것이 아니다 — 웹의 `updateNote`(`app/me/actions.ts`)와 같은 답이다
+ */
 export async function updateNote(client: Client, personId: string, note: string): Promise<Done> {
-  const { error } = await client.from('user_person_access').update({ note: noteOrNull(note) }).eq('person_id', personId);
-  return error !== null ? { ok: false, message: userFacingDbMessage(error, 'user_person_access.update') } : { ok: true };
+  const { data, error } = await client.from('user_person_access').update({ note: noteOrNull(note) }).eq('person_id', personId).select('person_id');
+  if (error !== null) return { ok: false, message: userFacingDbMessage(error, 'user_person_access.update') };
+  return data.length === 0 ? { ok: false, message: PERSON_PICK_AGAIN } : { ok: true };
 }
 
-/** 목록에서 뺀다 — 지우는 것은 엣지이지 Person 이 아니다. 나는 정책이 안 뺀다 */
+/** 목록에서 뺀다 — 지우는 것은 엣지이지 Person 이 아니다. 나는 정책이 안 뺀다 — 걸러진 0행은 뺀 것이 아니다 */
 export async function removeFromList(client: Client, personId: string): Promise<Done> {
-  const { error } = await client.from('user_person_access').delete().eq('person_id', personId);
-  return error !== null ? { ok: false, message: userFacingDbMessage(error, 'user_person_access.delete') } : { ok: true };
+  const { data, error } = await client.from('user_person_access').delete().eq('person_id', personId).select('person_id');
+  if (error !== null) return { ok: false, message: userFacingDbMessage(error, 'user_person_access.delete') };
+  return data.length === 0 ? { ok: false, message: PERSON_PICK_AGAIN } : { ok: true };
 }
