@@ -258,7 +258,7 @@ export const CREDITS_AVAILABLE_LABEL = '보유 풀이권';
 
 /**
  * 결제 화면의 동의 체크 · 결제 단추 · 유의사항 — 리디 꼴(운영자 승인 2026-10-12, ADR 0175 · 대장 credits-03 · credits-09). 웹은 결제 단추를
- * 걷었고(ADR 0212) 앱의 Google Play 결제 화면이 같은 글자를 쓴다(ADR 0230). 유의사항 둘째 줄은 사업자 이메일로 짓는 `checkoutRefundLine`
+ * 걷었고(ADR 0212) 앱의 Google Play 결제 화면이 같은 글자를 쓴다(ADR 0230). 유의사항은 다섯 줄이고 둘째 줄은 사업자 이메일로 짓는 `checkoutRefundLine`
  * (`src/lib/brand/refund.ts`)이다. 옛 다섯째 줄(유효기간 5년)은 산 몫이 무기한이 되어(ADR 0212) 지웠다 — 약관 · 환불정책도 「유효기간이 없다」다(ADR 0234).
  */
 export const CHECKOUT_AGREE_LABEL = '상품, 가격, 할인 정보, 유의 사항 등을 확인하였으며 구매에 동의합니다. (필수)';
@@ -269,6 +269,12 @@ export const CHECKOUT_REFUND_NOTE =
 export const CHECKOUT_PROVIDED_NOTE =
   '정상적으로 제공된 풀이는 단순 변심으로 환불되지 않습니다. 풀이가 제공되지 않거나 표시·광고 또는 계약 내용과 다르게 제공된 경우에는 관계 법령에 따라 재제공 또는 환불을 요청할 수 있습니다.';
 export const CHECKOUT_FREE_FIRST_NOTE = '구매 전 무료 풀이권으로 풀이 한 편을 먼저 받아 볼 수 있습니다.';
+/**
+ * 유의사항 다섯째 줄 — 미성년자의 취소 고지(전자상거래법 제13조③, ADR 0276 · 대장 credits-21). 약관 제18조 첫 문장과 같은 글자다 —
+ * 약관 제18조(`src/lib/brand/terms.ts` 의 `minorAfter`)도 이 상수로 시작한다. 늘 참인 말이지만 법정 고지라 선다.
+ */
+export const CHECKOUT_MINOR_NOTE =
+  '미성년자가 법정대리인의 동의 없이 결제한 경우 미성년자 본인이나 법정대리인이 그 결제를 취소할 수 있습니다.';
 
 /**
  * Google Play 결제의 결과 줄(ADR 0230) — 성공 두 줄은 결제 뒤 화면의 확정 문구(대장 credits-01, 단위는 all-02 의 「장」)이고, 나머지는

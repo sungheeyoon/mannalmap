@@ -10,6 +10,7 @@ import {
   CHECKOUT_AGREE_LABEL,
   CHECKOUT_AGREE_MISSING,
   CHECKOUT_FREE_FIRST_NOTE,
+  CHECKOUT_MINOR_NOTE,
   CHECKOUT_PROVIDED_NOTE,
   CHECKOUT_REFUND_NOTE,
   PURCHASE_FAILED_NOTE,
@@ -219,7 +220,7 @@ export function StoreSection({ onBought, returnTo }: { onBought: () => Promise<n
       )}
 
       <View accessibilityLabel="유의사항" style={styles.notes}>
-        {[CHECKOUT_REFUND_NOTE, checkoutRefundLine(businessInfoFrom({ email: SUPPORT_EMAIL })), CHECKOUT_PROVIDED_NOTE, CHECKOUT_FREE_FIRST_NOTE].map(
+        {[CHECKOUT_REFUND_NOTE, checkoutRefundLine(businessInfoFrom({ email: SUPPORT_EMAIL })), CHECKOUT_PROVIDED_NOTE, CHECKOUT_FREE_FIRST_NOTE, CHECKOUT_MINOR_NOTE].map(
           (line) => (
             <WordText key={line} style={styles.note}>
               {'• '}

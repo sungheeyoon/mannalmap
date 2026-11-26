@@ -8,6 +8,7 @@ import { ELEMENTS, STEM_INFO, type Element, type Stem } from '@/src/lib/saju';
 import { elementScope } from '../../ui/element-tone';
 import { ElementSymbol } from '../../ui/element-symbol';
 import { FaceSymbol, StemSymbol } from '../../ui/stem-symbol';
+import { AiBadge } from '../../ui/ai-badge';
 import { Icon } from '../../ui/icons';
 import { ScoreGauge } from '../../ui/score-gauge';
 import { PAPER_FACE, TYPE_SECTION, WARNING_CARD_FACE } from '../../ui/surfaces';
@@ -77,8 +78,13 @@ export function Result({
   const single = tones !== undefined && tones.length === 1;
   const firstTone = tones?.[0] ?? null;
 
-  const meta = (
+  /*
+    **머리 줄 첫 자리에 「AI 풀이」 딱지가 선다**(ADR 0276) — 생성형 인공지능의 결과물 표시(인공지능기본법 제31조② · 약관 제6조③).
+    크림 판(궁합 표지 · 색을 모르는 표지) 위에서는 흰 바탕 + 테다
+  */
+  const meta = (onCream: boolean) => (
     <>
+      <AiBadge onCream={onCream} />
       {isMock && (
         <span className="rounded-full bg-warning-wash px-2.5 py-1 text-tag font-semibold text-warning">
           예시 결과
@@ -105,7 +111,7 @@ export function Result({
           score={reading.score}
           metaphor={metaphor}
           discovery={discovery}
-          meta={meta}
+          meta={meta(true)}
           share={canShare ? <ShareReadingButton target={target} look="icon" /> : null}
         />
       ) : reading.score !== null || metaphor !== null ? (
@@ -162,7 +168,7 @@ export function Result({
             </p>
           )}
           <figcaption className="relative mt-8 flex flex-wrap items-end justify-between gap-x-6 gap-y-4 border-t border-[color-mix(in_srgb,var(--foreground)_12%,transparent)] pt-4">
-            <span className="flex flex-wrap items-center gap-x-2.5 gap-y-1.5 text-small text-secondary">{meta}</span>
+            <span className="flex flex-wrap items-center gap-x-2.5 gap-y-1.5 text-small text-secondary">{meta(face === null)}</span>
             {reading.score !== null && (
               <span className="flex flex-col items-end">
                 <span className="text-small font-semibold text-secondary">{COMPAT_SCORE_LABEL}</span>
@@ -175,7 +181,7 @@ export function Result({
           </figcaption>
         </figure>
       ) : (
-        <p className="flex flex-wrap items-center gap-x-2.5 gap-y-1.5 text-small text-secondary">{meta}</p>
+        <p className="flex flex-wrap items-center gap-x-2.5 gap-y-1.5 text-small text-secondary">{meta(false)}</p>
       )}
       {/*
         **늘 참인 사실은 여기 안 적는다.** 여기 서는 것은 **실제로 갈리는** 한 줄뿐이다 — 지금과 다른

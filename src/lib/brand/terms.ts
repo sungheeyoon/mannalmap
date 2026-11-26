@@ -1,5 +1,6 @@
 import { SERVICE_NAME } from '.';
 import { won } from '../reading/bundle';
+import { CHECKOUT_MINOR_NOTE } from '../reading/notes';
 import { bundlePrice, bundlePriceRows, exactDiscounts, refundOf } from './bundle-prices';
 import { type BusinessInfo, businessInfoLines, contactPlace } from './business';
 import { type LegalDocument, bullets, numbered, para, table } from './legal-text';
@@ -71,7 +72,7 @@ const FEE_AFTER =
 const MINOR_BEFORE =
   '미성년자가 법정대리인의 동의 없이 결제한 경우 미성년자 본인이나 법정대리인이 그 결제를 취소할 수 있습니다. 인연 찾기 · 대화방은 만 19세 이상만 이용할 수 있습니다(제19조의2).';
 const minorAfter = (contact: string): string =>
-  `미성년자가 법정대리인의 동의 없이 결제한 경우 미성년자 본인이나 법정대리인이 그 결제를 취소할 수 있습니다. 취소하려면 ${contact}로 알려 주십시오. 취소하면 회사는 그 결제로 받은 금액을 이미 쓴 풀이권 몫까지 모두 돌려드리고, 위약금이나 환불수수료를 받지 않으며, 제16조의2제1항의 금액도 청구하지 않습니다. 그 결제로 받은 풀이권 가운데 남은 것은 회수합니다. 인연 찾기 · 대화방은 만 19세 이상만 이용할 수 있습니다(제19조의2).`;
+  `${CHECKOUT_MINOR_NOTE} 취소하려면 ${contact}로 알려 주십시오. 취소하면 회사는 그 결제로 받은 금액을 이미 쓴 풀이권 몫까지 모두 돌려드리고, 위약금이나 환불수수료를 받지 않으며, 제16조의2제1항의 금액도 청구하지 않습니다. 그 결제로 받은 풀이권 가운데 남은 것은 회수합니다. 인연 찾기 · 대화방은 만 19세 이상만 이용할 수 있습니다(제19조의2).`;
 const SANCTION_NOTICE_BEFORE =
   '회사는 조치를 하면 그 사실과 사유를 곧바로 계정의 전자우편으로 알리고, 이용 정지에는 7일 이상, 이용계약 해지에는 30일 이상 소명할 기회를 줍니다. 급박한 위험이나 다른 이용자의 피해가 계속되는 경우에는 먼저 조치하고 뒤에 소명을 받습니다.';
 const SANCTION_NOTICE_AFTER =
