@@ -21,7 +21,7 @@ import { askOnFirstReading } from '@/push/device';
 import { newRequestKey, startReading, type ReadingTarget } from '@/reading/api';
 import { storeAvailable } from '@/credits/store';
 import { useBuyCredits } from '@/reading/dialogs';
-import { followRefusal } from '@/reading/panel';
+import { followRefusal } from '@/reading/follow-refusal';
 import { Button } from '@/ui/buttons';
 import { ElementSymbol } from '@/ui/element-symbol';
 import { FailureLine } from '@/ui/failure-line';
@@ -31,9 +31,9 @@ import { StemSymbol } from '@/ui/stem-symbol';
 import { settled } from '@/ui/settled';
 import { WordText } from '@/ui/word-text';
 import { COLOR, CONTROL, ELEMENT_TONE, FONT, RADIUS, TYPE } from '@/ui/tokens';
-import { UNREACHABLE } from '@/auth/signup';
 
 import { go } from './parts';
+import { UNREACHABLE, unreachedDoor, unreachedLoad } from '@/answer';
 
 /*
   **저장한 사람 화면의 누름 둘 — 그 자리의 시트에서 끝난다**(운영자 승인 2026-11-13, ADR 0249 · 웹 `app/me/people/[personId]/person-sheets.tsx`).
@@ -46,7 +46,7 @@ type Started = { kind: 'opened' } | { kind: 'out-of-credits' } | { kind: 'failed
 
 /** 시도를 연다 — 풀이 화면의 누름(`use-reading-panel.ts`)과 같은 갈래로 답을 가른다. 열었으면 다 되면 알려 줄지 처음 묻는다(ADR 0236) */
 async function start(client: ReturnType<typeof useClient>, target: ReadingTarget): Promise<Started> {
-  const answer = await settled(startReading(client, target, newRequestKey()), 'startReading', () => ({ ok: false, refused: { refused: 'unavailable', message: UNREACHABLE } }) as const);
+  const answer = await settled(startReading(client, target, newRequestKey()), 'startReading', unreachedDoor);
   if (!answer.ok) {
     if (answer.refused.refused === 'unavailable') return { kind: 'failed', message: answer.refused.message };
     followRefusal(answer.refused);
@@ -201,7 +201,7 @@ export function useCompatAdd({
   /** 고를 사람을 읽는다 — 다시 열 때(`resume`)는 그 목록에서 상대를 찾는다. 못 읽었으면 `null` */
   const load = async (): Promise<readonly Partner[] | null> => {
     setLoadFailure(null);
-    const read = await settled(readPicker(client), 'readPicker', () => ({ kind: 'failed', message: UNREACHABLE }) as const);
+    const read = await settled(readPicker(client), 'readPicker', unreachedLoad);
     if (read.kind === 'ok') {
       const next = read.value.people.filter((one) => one.personId !== person.personId).map((one) => ({ ...one, seenHref: seen.get(one.personId) ?? null }));
       setPartners(next);

@@ -26,7 +26,7 @@ import { supabase } from '@/auth/client';
 import { arriveAt } from '@/auth/arrive';
 import { MatchingSteps } from '@/auth/matching-steps';
 import { signOut } from '@/auth/sign-in';
-import { checkNickname, completeSignup, NOT_READY, readSignup, UNREACHABLE, type SignupState } from '@/auth/signup';
+import { checkNickname, completeSignup, NOT_READY, readSignup, type SignupState } from '@/auth/signup';
 import { RequestDeletion } from '@/settings/leaving';
 import { legalPagesOpen, openLegalPage } from '@/info/legal-web';
 import { AccountNotice } from '@/settings/parts';
@@ -36,11 +36,12 @@ import { FailureLine } from '@/ui/failure-line';
 import { SectionErrorLine, SectionScrollView, useSectionErrors } from '@/ui/section-error';
 import { CheckRow, Field, FieldLabel, PrimaryButton, SecondaryButton, TextButton } from '@/ui/parts';
 import { COLOR, FONT, TYPE, TYPE_TITLE } from '@/ui/tokens';
-import { settled } from '@/ui/settled';
+import { settledWhileLive } from '@/ui/settled';
 import { goBack } from '@/ui/top-bar';
 import { Card, CardFrame, Paper, Tile } from '@/ui/surfaces';
 import { WordText } from '@/ui/word-text';
 import { SIGN_OUT_FAILED } from '@account/words';
+import { unreachedLoad } from '@/answer';
 
 
 /**
@@ -74,15 +75,7 @@ function Signup() {
 
   /* 탈퇴를 신청하면 다시 읽는다 — 폼 대신 탈퇴 대기 안내가 선다 */
   const [reads, setReads] = useState(0);
-  useEffect(() => {
-    let live = true;
-    void settled(readSignup(client), 'readSignup', () => ({ kind: 'failed', message: UNREACHABLE }) as const).then((next) => {
-      if (live) setState(next);
-    });
-    return () => {
-      live = false;
-    };
-  }, [client, reads]);
+  useEffect(() => settledWhileLive(readSignup(client), 'readSignup', unreachedLoad, setState), [client, reads]);
 
   useEffect(() => {
     if (state?.kind === 'done') finish();

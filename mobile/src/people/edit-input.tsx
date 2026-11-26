@@ -6,7 +6,7 @@ import type { Query } from '@input/query';
 
 import { useClient } from '@/auth/connected';
 import { editPersonInput, saveFailureOf } from '@/reading/chart-writes';
-import { followRefusal } from '@/reading/panel';
+import { followRefusal } from '@/reading/follow-refusal';
 import { FailureLine } from '@/ui/failure-line';
 import { useSectionErrors } from '@/ui/section-error';
 import { PrimaryButton, TextButton } from '@/ui/parts';

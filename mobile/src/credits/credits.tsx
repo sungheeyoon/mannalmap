@@ -20,7 +20,6 @@ import { purchaseReturnOf } from '@reading/store-purchase';
 
 import type { Client } from '@/auth/client';
 import { useClient } from '@/auth/connected';
-import { UNREACHABLE } from '@/auth/signup';
 import { legalPagesOpen, openLegalPage } from '@/info/legal-web';
 import { LinkRow, SettingsGroup, settingsText } from '@/settings/parts';
 import { FailureLine } from '@/ui/failure-line';
@@ -36,12 +35,11 @@ import { storeAvailable } from './store';
 import { StoreSection } from './store-section';
 import { WordText } from '@/ui/word-text';
 import { ORDER_NUMBER_ASK } from '@account/words';
-
-type Read<T> = { ok: true; value: T } | { ok: false; message: string };
+import { unreachedRead, type Read } from '@/answer';
 
 async function readAvailable(client: Client): Promise<Read<number | null>> {
   const credits = await readReadingCredits(client);
-  return credits.ok ? { ok: true, value: credits.value?.available ?? null } : { ok: false, message: credits.reason };
+  return credits.ok ? { ok: true, value: credits.value?.available ?? null } : { ok: false, reason: credits.reason };
 }
 
 /**
@@ -54,7 +52,7 @@ export function CreditsScreen() {
   const returnTo = purchaseReturnOf(params.back, params.noun);
   /** 보유 수를 다시 읽는다 — 결제 완료 창이 그 값을 기다려 같은 수를 보인다. @returns 새 보유 수, 못 읽었으면 `null` */
   const reload = useCallback(async (): Promise<number | null> => {
-    const next = await settled(readAvailable(client), 'my_reading_credits', () => ({ ok: false, message: UNREACHABLE }) as const);
+    const next = await settled(readAvailable(client), 'my_reading_credits', unreachedRead);
     setRead(next);
     return next.ok ? next.value : null;
   }, [client]);
@@ -87,7 +85,7 @@ export function CreditsScreen() {
                 </Paper>
               )
             ) : (
-              <FailureLine onRetry={load}>{read.message}</FailureLine>
+              <FailureLine onRetry={load}>{read.reason}</FailureLine>
             )}
             {storeAvailable && <StoreSection onBought={reload} returnTo={returnTo} />}
             <View style={styles.bleed}>
@@ -111,8 +109,8 @@ type History = {
 /** 결제 내역의 셋을 함께 읽는다 — 주문 · 이력은 본체(하나라도 못 읽으면 실패 줄), 보유 수는 부속(못 읽으면 그 줄만 생략) */
 async function readHistory(client: Client): Promise<Read<History>> {
   const [orders, history, credits] = await Promise.all([readReadingOrders(client), readCreditHistory(client), readReadingCredits(client)]);
-  if (!orders.ok) return { ok: false, message: orders.reason };
-  if (!history.ok) return { ok: false, message: history.reason };
+  if (!orders.ok) return { ok: false, reason: orders.reason };
+  if (!history.ok) return { ok: false, reason: history.reason };
   return {
     ok: true,
     value: {
@@ -132,7 +130,7 @@ export function CreditsHistoryScreen() {
   const [read, setRead] = useState<Read<History> | null>(null);
   const [tab, setTab] = useState<HistoryTab>('buy');
   const load = useCallback(() => {
-    void settled(readHistory(client), 'my_reading_credit_history', () => ({ ok: false, message: UNREACHABLE }) as const).then(setRead);
+    void settled(readHistory(client), 'my_reading_credit_history', unreachedRead).then(setRead);
   }, [client]);
   useFocusEffect(load);
 
@@ -144,7 +142,7 @@ export function CreditsHistoryScreen() {
         {read === null && <LoadingDots />}
         {read !== null &&
           (!read.ok ? (
-            <FailureLine onRetry={load}>{read.message}</FailureLine>
+            <FailureLine onRetry={load}>{read.reason}</FailureLine>
           ) : (
             <>
               {read.value.available !== null && (

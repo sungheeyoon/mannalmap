@@ -8,19 +8,20 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useClient } from '@/auth/connected';
 import { useMatchOpen } from '@/matching/opening';
 import { readShelf, type DoorRefusal, type ShelfView } from '@/reading/api';
-import { followRefusal, ReadFailure } from '@/reading/panel';
+import { followRefusal } from '@/reading/follow-refusal';
+import { ReadFailure } from '@/reading/panel';
 import { BlankBook, BookRow, MakingRow, SHELF_CHIPS, SHELF_TITLE, type ShelfChip } from '@/reading/shelf';
 import { EmptyState } from '@/ui/empty-state';
 import { goTab } from '@/ui/go-tab';
 import { LoadingDots } from '@/ui/loading';
 import { COLOR, FONT, RADIUS, reach, TYPE } from '@/ui/tokens';
 import { settled } from '@/ui/settled';
-import { UNREACHABLE } from '@/auth/signup';
 import { TopBar } from '@/ui/top-bar';
 import { Card } from '@/ui/surfaces';
 import { WordText } from '@/ui/word-text';
 import { SHELF_COMPAT_NOTE, SHELF_EMPTY, SHELF_HOME_NOTE, SHELF_MATCH_NOTE, SHELF_PAIR_NOTE, SHELF_SINGLE_NOTE } from '@reading/words';
 import { PERSON_SEARCH_EMPTY } from '@people/words';
+import { unreachedDoor } from '@/answer';
 
 type Shelf = Extract<ShelfView, { view: 'shelf' }>;
 
@@ -36,7 +37,7 @@ export default function ReadingsScreen() {
   const [typed, setTyped] = useState('');
 
   const load = useCallback(() => {
-    void settled(readShelf(client), 'readShelf', () => ({ ok: false, refused: { refused: 'unavailable', message: UNREACHABLE } }) as const).then((read) => {
+    void settled(readShelf(client), 'readShelf', unreachedDoor).then((read) => {
       if (read.ok) setAnswer({ view: read.value });
       else {
         followRefusal(read.refused);

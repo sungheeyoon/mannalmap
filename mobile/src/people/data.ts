@@ -12,7 +12,7 @@ import { makingPeopleOf } from '@reading/running';
 
 import type { Client } from '@/auth/client';
 import { readAccount } from '@/auth/account';
-import type { Done } from '@/answer';
+import type { Done, Loaded } from '@/answer';
 import { readRunningReadings } from '@/reading/running';
 import { readMyReadings } from '@/reading/my-readings';
 import { PERSON_PICK_AGAIN, PERSON_SAVE_UNKNOWN } from '@people/words';
@@ -40,12 +40,10 @@ export type MyReading = {
   readonly dayMasterB: Stem | null;
 };
 
-export type Read<T> = { kind: 'ok'; value: T } | { kind: 'signed-out' } | { kind: 'failed'; message: string };
-
 const failed = (message: string) => ({ kind: 'failed', message }) as const;
 
 /** 세션이 없으면 읽지 않는다 — 웹의 `redirectToSignIn` 자리다. 정책이 빈 목록으로 답해 「저장한 사람이 없다」로 서지 않게 */
-export async function signedIn(client: Client): Promise<Read<true>> {
+export async function signedIn(client: Client): Promise<Loaded<true>> {
   const { data } = await client.auth.getSession();
   return data.session === null ? { kind: 'signed-out' } : { kind: 'ok', value: true };
 }
@@ -123,7 +121,7 @@ export type PeopleList = {
 };
 
 /** 저장한 사람 화면이 읽는 것 — 차례와 갈래는 `app/me/people/page.tsx` 와 같다 */
-export async function readPeopleList(client: Client): Promise<Read<PeopleList>> {
+export async function readPeopleList(client: Client): Promise<Loaded<PeopleList>> {
   const session = await signedIn(client);
   if (session.kind !== 'ok') return session;
 
@@ -158,7 +156,7 @@ export type PersonDetail = {
 };
 
 /** 사람 하나 — 없는 사람과 못 보는 사람이 같은 답이다(`app/me/payload.ts`) */
-export async function readPersonDetail(client: Client, personId: string): Promise<Read<PersonDetail>> {
+export async function readPersonDetail(client: Client, personId: string): Promise<Loaded<PersonDetail>> {
   const session = await signedIn(client);
   if (session.kind !== 'ok') return session;
 
