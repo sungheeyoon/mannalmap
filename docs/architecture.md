@@ -32,7 +32,6 @@
 | `input` | `saju` · `local-env` |
 | `matching` | `consent` · `db` · `discovery` · `presence` · `profile` · `reading` · `saju`(인연 탭의 행 옮김과 덱을 웹 · 앱이 함께 쓴다, G-123) |
 | `people` | `input`(궁합 한 칸의 문단 오류가 출생 정보 판정을 잇는다, ADR 0252) |
-| `push` | `uuid`(id 의 모양 하나, `src/lib/uuid.ts`) |
 | `reading` | `discovery` · `input`(의견의 문단 오류 틀) · `people` · `saju` · `uuid` |
 
 **`src/lib/db` 는 타입만 낸다.** 생성된 `Database` 와 `rpcArgs` 다(ADR 0078). 호출은 없다.

@@ -12,8 +12,6 @@
  * 제 안에서 세운다(`public/sw.js`).
  */
 
-import { UUID } from '../uuid';
-
 /**
  * 푸시 서비스가 기기에 못 닿은 채로 들고 있을 시간 — **1시간**.
  *
@@ -53,6 +51,9 @@ export type SendResult = Extract<SettleResult, 'sent' | 'gone' | 'retry'>;
 
 /** 서비스 워커가 받는 값 전부 */
 export type PushPayload = { url: string; tag: string };
+
+/** `src/lib/uuid.ts` 의 `UUID` 와 같은 식 — 이 파일은 흐름 검사(`scripts/check-push.mjs`)를 node 가 직접 읽어 확장자 없는 import 를 못 풀므로 import 없는 잎으로 둔다 */
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 /**
  * 방 하나의 페이로드. 주소는 우리 안의 상대 경로라 서비스 워커가 다른 출처를 열 길이 없다.
