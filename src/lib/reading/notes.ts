@@ -271,7 +271,7 @@ export const CHECKOUT_PROVIDED_NOTE =
 export const CHECKOUT_FREE_FIRST_NOTE = '구매 전 무료 풀이권으로 풀이 한 편을 먼저 받아 볼 수 있습니다.';
 /**
  * 유의사항 다섯째 줄 — 미성년자의 취소 고지(전자상거래법 제13조③, ADR 0276 · 대장 credits-21). 약관 제18조 첫 문장과 같은 글자다 —
- * 약관도 이 상수를 부른다. 늘 참인 말이지만 법정 고지라 선다.
+ * 약관은 아직 이 상수를 부르지 않고 글자를 따로 들어서, 같은지는 `src/lib/brand/minor-notice.test.ts` 가 잰다. 늘 참인 말이지만 법정 고지라 선다.
  */
 export const CHECKOUT_MINOR_NOTE =
   '미성년자가 법정대리인의 동의 없이 결제한 경우 미성년자 본인이나 법정대리인이 그 결제를 취소할 수 있습니다.';
