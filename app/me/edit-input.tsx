@@ -7,7 +7,7 @@ import { INPUT_EDIT_CHANGE_CONFIRM } from '@/src/lib/consent';
 import { BirthFields } from '../birth-form';
 import type { Query } from '@/src/lib/input/query';
 import { birthSectionErrors } from '@/src/lib/input/section-errors';
-import { samePillarInput } from '@/src/lib/input/edit';
+import { editInputPress, editInputView } from '@/src/lib/people/edit-form';
 import { editPersonInput } from './actions';
 import { actionAnswer } from '../ui/action-answer';
 import { BUTTON_PRIMARY, BUTTON_TERTIARY } from '../ui/buttons';
@@ -15,7 +15,7 @@ import { ConfirmDialog } from '../ui/confirm-dialog';
 import { CARD_FACE, TYPE_META, TYPE_NAME } from '../ui/surfaces';
 import { FailureLine } from '../ui/failure-line';
 import { useSectionErrors } from '../ui/section-error';
-import { NAME_ONLY_CHANGED, NOTHING_CHANGED, SAVE_CHANGES, SELF_NAME_NOTE } from '@/src/lib/people/words';
+import { SELF_NAME_NOTE } from '@/src/lib/people/words';
 
 /**
  * 저장된 출생 정보를 고치는 폼 — **여는 자리를 밖에서 정한다.** 익명 화면과 **같은 폼**(`BirthFields`)을 쓴다.
@@ -62,13 +62,9 @@ export function EditInputForm({
   /* 빈 칸 · 틀린 칸은 누른 뒤 그 문단 아래에서 말한다(ADR 0252) — 「바뀐 것이 없어요」는 칸의 오류가 아니라 곁의 말이다 */
   const errors = birthSectionErrors(query, { name: editableName });
   const sections = useSectionErrors(errors, fields);
-  const missing = errors.length > 0;
-  const nameChanged = editableName && query.name.trim() !== current.name.trim();
-  const pillarsSame = samePillarInput(current, query);
-  /** 저장할 것이 없다 — 빈 칸이 있거나 아무것도 안 바뀌었다. 단추는 가라앉되 누름을 받는다 */
-  const unchanged = pillarsSame && !nameChanged;
-  const blocked = missing || unchanged;
-  const warn = tried && blocked;
+  const view = editInputView(current, query, { editableName, missing: errors.length > 0, tried, saving });
+  /** 곁의 말이 단추를 설명하는 때 — 바뀐 것이 없는데 누른 뒤 */
+  const noteWarns = view.note?.warns === true;
 
   /**
    * **단추를 잠그지 않는다**(운영자 결정 2026-10-18 G-97 ④, ADR 0160 의 3) — 저장할 것이 없으면 누른 그때 곁의 말을 경고 색으로
@@ -76,11 +72,9 @@ export function EditInputForm({
    */
   const press = () => {
     if (!sections.press()) return;
-    if (unchanged) {
-      setTried(true);
-      return;
-    }
-    if (confirmsRequests && !pillarsSame) setConfirming(true);
+    const next = editInputPress(view, confirmsRequests);
+    if (next === 'warn') setTried(true);
+    else if (next === 'confirm') setConfirming(true);
     else save();
   };
 
@@ -116,15 +110,13 @@ export function EditInputForm({
         무엇이 일어날지 누르기 전에 말한다. 이름은 여덟 글자를 바꾸지 않으므로
         저장된 입력을 안 바꾸는데, 그걸 안 말해 주면 「고쳤는데 그대로다」로 보인다.
       */}
-      {pillarsSame && (nameChanged || warn) && (
+      {view.note !== null && (
         <p
-          id={unchanged && !missing ? noteId : undefined}
-          role={warn && unchanged && !missing ? 'alert' : undefined}
-          className={warn && unchanged && !missing ? WARN_NOTE : TYPE_META}
+          id={view.unchanged && !view.missing ? noteId : undefined}
+          role={noteWarns ? 'alert' : undefined}
+          className={noteWarns ? WARN_NOTE : TYPE_META}
         >
-          {nameChanged
-            ? NAME_ONLY_CHANGED
-            : NOTHING_CHANGED}
+          {view.note.text}
         </p>
       )}
 
@@ -138,11 +130,11 @@ export function EditInputForm({
             */
             onClick={press}
             disabled={saving}
-            aria-disabled={blocked || undefined}
-            aria-describedby={warn && unchanged && !missing ? noteId : undefined}
+            aria-disabled={view.blocked || undefined}
+            aria-describedby={noteWarns ? noteId : undefined}
             className={BUTTON_PRIMARY}
           >
-            {saving ? '저장하는 중…' : pillarsSame && nameChanged ? '이름 저장' : SAVE_CHANGES}
+            {view.saveLabel}
           </button>
           <button type="button" onClick={onCancel} disabled={saving} className={BUTTON_TERTIARY}>
             작성 그만두기

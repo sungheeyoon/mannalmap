@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { INPUT_EDIT_CHANGE_CONFIRM } from '@consent/index';
-import { samePillarInput } from '@input/edit';
 import type { Query } from '@input/query';
 
 import { useClient } from '@/auth/connected';
@@ -17,7 +16,8 @@ import { Card } from '@/ui/surfaces';
 import { BirthFields, useBirthForm } from './birth-fields';
 import { Sheet, styles as shared } from './parts';
 import { WordText } from '@/ui/word-text';
-import { NAME_ONLY_CHANGED, NOTHING_CHANGED, SAVE_CHANGES, SELF_NAME_NOTE } from '@people/words';
+import { editInputPress, editInputView } from '@people/edit-form';
+import { SELF_NAME_NOTE } from '@people/words';
 
 /**
  * 저장된 출생 정보를 고치는 폼 — 웹의 `app/me/edit-input.tsx` 와 같은 판정 · 글자다. 여덟 글자는 서버가 이 입력에서 센다(ADR 0211).
@@ -50,13 +50,9 @@ export function EditInputForm({
 
   const { query } = form;
   /* 빈 칸 · 틀린 칸은 누른 뒤 그 문단 아래에서 말한다(ADR 0252) — 「바뀐 것이 없어요」는 칸의 오류가 아니라 곁의 말이다 */
-  const sections = useSectionErrors(editableName ? form.errorsWithName : form.errors);
-  const missing = (editableName ? form.errorsWithName : form.errors).length > 0;
-  const nameChanged = editableName && query.name.trim() !== current.name.trim();
-  const pillarsSame = samePillarInput(current, query);
-  const unchanged = pillarsSame && !nameChanged;
-  const blocked = missing || unchanged;
-  const warn = tried && blocked;
+  const errors = editableName ? form.errorsWithName : form.errors;
+  const sections = useSectionErrors(errors);
+  const view = editInputView(current, query, { editableName, missing: errors.length > 0, tried, saving });
 
   const save = async () => {
     setConfirming(false);
@@ -74,11 +70,9 @@ export function EditInputForm({
 
   const press = () => {
     if (!sections.press()) return;
-    if (unchanged) {
-      setTried(true);
-      return;
-    }
-    if (confirmsRequests && !pillarsSame) setConfirming(true);
+    const next = editInputPress(view, confirmsRequests);
+    if (next === 'warn') setTried(true);
+    else if (next === 'confirm') setConfirming(true);
     else void save();
   };
 
@@ -97,14 +91,10 @@ export function EditInputForm({
 
       <BirthFields form={form} showName={editableName} errors={sections} />
 
-      {pillarsSame && (nameChanged || warn) && (
-        <WordText style={warn && unchanged && !missing ? styles.warn : shared.meta}>
-          {nameChanged ? NAME_ONLY_CHANGED : NOTHING_CHANGED}
-        </WordText>
-      )}
+      {view.note !== null && <WordText style={view.note.warns ? styles.warn : shared.meta}>{view.note.text}</WordText>}
 
       <View style={styles.actions}>
-        <PrimaryButton label={saving ? '저장하는 중…' : pillarsSame && nameChanged ? '이름 저장' : SAVE_CHANGES} onPress={press} busy={saving} />
+        <PrimaryButton label={view.saveLabel} onPress={press} busy={saving} />
         <TextButton label="작성 그만두기" onPress={onCancel} disabled={saving} />
       </View>
 

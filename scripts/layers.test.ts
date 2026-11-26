@@ -31,6 +31,7 @@ const ALLOWED_LIB_EDGES = new Set([
   'consent → discovery',
   'consent → input',
   'consent → presence',
+  'consent → profile',
   'consent → reading',
   'consent → saju',
   'discovery → saju',

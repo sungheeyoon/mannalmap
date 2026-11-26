@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useRef, useState, useTransition } from 'react';
+import { useReducer, useRef, useState, useTransition } from 'react';
 
 import {
   NOTICE_ACK_LABEL,
@@ -16,16 +16,15 @@ import {
   SIGNUP_NOTICE_USE,
   signupSectionErrors,
   type SignupChoices,
-  type SignupField,
 } from '@/src/lib/consent';
 import {
-  NICKNAME_AVAILABLE_NOTE,
-  NICKNAME_MAX,
-  NICKNAME_MIN,
-  NICKNAME_TAKEN_NOTE,
-  missingNickname,
-  nicknameKey,
-} from '@/src/lib/profile';
+  SIGNUP_NICKNAME_START,
+  signupCheckPress,
+  signupNicknameGap,
+  signupNicknameReducer,
+  signupNicknameView,
+} from '@/src/lib/consent/signup-form';
+import { NICKNAME_MAX, NICKNAME_MIN } from '@/src/lib/profile';
 
 import { checkNickname } from '../nickname';
 import { BUTTON_PRIMARY, BUTTON_SECONDARY_SMALL_FACE } from '../ui/buttons';
@@ -87,20 +86,17 @@ export function SignupForm({
   version: string;
   scheduleId: number;
 }) {
-  const [nickname, setNickname] = useState('');
   const [fourteen, setFourteen] = useState(false);
   const [acknowledged, setAcknowledged] = useState(false);
   const [chosen, setChosen] = useState<SignupChoices>(SIGNUP_CHOICES_OFF);
-  /** 서버의 거절 — 어느 칸의 것인지 알면 그 칸 곁에, 모르면 단추 곁에 선다(`refusedField`) */
-  const [failure, setFailure] = useState<{ message: string; field: SignupField | null } | null>(null);
+  /**
+   * 닉네임 칸 · 확인한 답 · 서버의 거절 — 앱과 같은 reducer 다(`signupNicknameReducer`). 거절은 어느 칸의 것인지 알면 그 칸 곁에,
+   * 모르면 단추 곁에 선다(`refusedField`). 확인한 답은 그 이름에만 매인다 — 칸이 바뀌면 답이 이 이름을 안 가리킨다
+   */
+  const [name, dispatch] = useReducer(signupNicknameReducer, SIGNUP_NICKNAME_START);
+  const { nickname } = name;
   const [working, startWorking] = useTransition();
-
-  /** 마지막으로 확인한 이름과 그 답 — 칸이 바뀌면 답이 이 이름을 안 가리키므로 지운다 */
-  const [checked, setChecked] = useState<{ key: string; available: boolean } | null>(null);
   const [checking, startChecking] = useTransition();
-
-  const missing = needsName ? missingNickname(nickname) : null;
-  const answer = checked?.key === nicknameKey(nickname) ? checked : null;
 
   /*
     **단추를 잠그지 않고, 누르면 거절한다** — 내 사주 등록(`app/saju-calculator.tsx`)과 같은 방식이다. 잠근 단추 옆에
@@ -109,15 +105,12 @@ export function SignupForm({
   */
   const form = useRef<HTMLFormElement>(null);
   const nicknameField = useRef<HTMLInputElement>(null);
-  const sections = useSectionErrors(signupSectionErrors({ nicknameGap: missing, fourteen, acknowledged }), form);
-  /** 「중복 확인」을 눌렀는데 닉네임이 규칙에 안 맞았나 — 그 말이 닉네임 문단 아래에 선다(누른 뒤의 줄과 같은 자리 · 같은 말) */
-  const [checkTried, setCheckTried] = useState(false);
-  const refusedHere = (field: SignupField) => failure !== null && failure.field === field;
-  const nicknameLine = sections.shown.nickname ?? (checkTried ? missing : null);
+  const sections = useSectionErrors(signupSectionErrors({ nicknameGap: signupNicknameGap(name, needsName), fourteen, acknowledged }), form);
+  const view = signupNicknameView(name, needsName, sections.shown.nickname);
   const invalid = (field: 'nickname' | 'age' | 'ack') =>
-    sections.shown[field] !== undefined || (field === 'nickname' && nicknameLine !== null)
+    sections.shown[field] !== undefined || (field === 'nickname' && view.line !== null)
       ? { 'aria-invalid': true, 'aria-describedby': `signup-${field}-line` }
-      : field === 'nickname' && refusedHere(field)
+      : field === 'nickname' && view.refused !== null
         ? { 'aria-invalid': true, 'aria-describedby': `signup-${field}-refused` }
         : {};
 
@@ -126,22 +119,21 @@ export function SignupForm({
    * (`docs/context/copy.md` §8 「거절은 누른 뒤에 말한다」, ADR 0160). 잠가 두면 왜 안 눌리는지를 묻게 된다.
    */
   const check = () => {
-    if (missing !== null) {
-      setCheckTried(true);
+    if (signupCheckPress(name, needsName) === 'rule') {
+      dispatch({ type: 'check-refused' });
       nicknameField.current?.focus();
       return;
     }
-    setCheckTried(false);
-    setFailure(null);
+    dispatch({ type: 'check-asked' });
     startChecking(async () => {
       const result = await actionAnswer(checkNickname(nickname));
-      if (result.ok) setChecked({ key: nicknameKey(nickname), available: result.available });
-      else setFailure({ message: result.message, field: 'nickname' });
+      if (result.ok) dispatch({ type: 'check-answered', nickname, available: result.available });
+      else dispatch({ type: 'check-failed', message: result.message });
     });
   };
 
   const send = () => {
-    setFailure(null);
+    dispatch({ type: 'send' });
     if (!sections.press()) return;
     startWorking(async () => {
       /*
@@ -160,7 +152,7 @@ export function SignupForm({
       );
 
       const field = 'field' in failed ? failed.field : null;
-      setFailure({ message: failed.message, field });
+      dispatch({ type: 'refused', failure: { message: failed.message, field } });
       if (field !== null) nicknameField.current?.focus();
     });
   };
@@ -193,10 +185,8 @@ export function SignupForm({
               type="text"
               value={nickname}
               onChange={(event) => {
-                setNickname(event.target.value.slice(0, NICKNAME_MAX));
+                dispatch({ type: 'typed', text: event.target.value });
                 sections.edit('nickname');
-                setCheckTried(false);
-                if (failure?.field === 'nickname') setFailure(null);
               }}
               maxLength={NICKNAME_MAX}
               /* 닉네임은 낱말이 아니다 — 자판이 고치거나 첫 글자를 키우거나 밑줄을 긋지 않게 */
@@ -210,7 +200,7 @@ export function SignupForm({
               type="button"
               onClick={check}
               disabled={checking}
-              aria-disabled={missing !== null || undefined}
+              aria-disabled={view.gap !== null || undefined}
               className={`${BUTTON_SECONDARY_SMALL_FACE} min-h-12 shrink-0 px-4`}
             >
               {checking ? SIGNUP_LABEL.checking : SIGNUP_LABEL.check}
@@ -223,14 +213,14 @@ export function SignupForm({
           */}
           <p
             role="status"
-            className={`text-sm empty:hidden ${answer === null || answer.available ? 'text-secondary' : 'text-danger'}`}
+            className={`text-sm empty:hidden ${view.answer === null || view.answer.available ? 'text-secondary' : 'text-danger'}`}
           >
-            {answer === null ? '' : answer.available ? NICKNAME_AVAILABLE_NOTE : NICKNAME_TAKEN_NOTE}
+            {view.answer?.note ?? ''}
           </p>
-          <SectionErrorLine id="signup-nickname-line" message={nicknameLine} className="mt-0.5" />
-          {refusedHere('nickname') && (
+          <SectionErrorLine id="signup-nickname-line" message={view.line} className="mt-0.5" />
+          {view.refused !== null && (
             <p id="signup-nickname-refused" role="alert" className={`${FAILURE_TEXT} font-medium`}>
-              {failure?.message}
+              {view.refused}
             </p>
           )}
 
@@ -326,9 +316,7 @@ export function SignupForm({
       </fieldset>
 
       {/* 칸을 모르는 거절(안내가 바뀜 · 테스트가 끝남 등)만 여기 — 칸의 거절은 그 칸 아래에 선다 */}
-      {failure !== null && failure.field === null && (
-        <FailureLine>{failure.message}</FailureLine>
-      )}
+      {view.failure !== null && <FailureLine>{view.failure}</FailureLine>}
 
       <div className="border-t border-border pt-5">
         {/* 폰에서는 단추가 폭을 채운다. 칸의 오류는 그 문단 아래에 선다(ADR 0252) — 칸을 모르는 서버 거절은 위 `FailureLine` 이다 */}
