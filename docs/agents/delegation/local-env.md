@@ -16,6 +16,7 @@
 | `npx tsc --noEmit` 이 `LayoutProps` 를 못 찾는다 | `next typegen` 이 먼저 돌아야 한다 | `npm run typecheck` |
 | localhost dev 서버만 탭 이동이 아주 느리다 | 메인 폴더 안의 워크트리(`.claude/worktrees/`)마다 든 `node_modules` 를 메인의 dev 서버가 함께 감시한다 | 머지된 워크트리를 정리하고 dev 서버를 다시 띄운다(`docs/agents/delegation/coordinator.md` 「라운드 끝 정리」) |
 | 워크트리에서 vitest 가 `server-only` 를 못 찾는다 · dev 서버가 `node_modules` 를 거절한다 | 워크트리에는 `node_modules` 가 없다. 있어도 `.vite` 만 든 껍데기일 수 있다. 심볼릭 링크는 Turbopack 이 거절한다 | 단위 · 타입 · 린트만이면 `ln -s <메인>/node_modules .`. dev 서버 · 흐름 · e2e 면 복사한다 — 맥 `cp -Rc <메인>/node_modules .`(APFS 복제), WSL `cp -a --reflink=auto <메인>/node_modules .`(ext4 는 통째 — 약 760MB). 껍데기면 지우고 그렇게 한다 |
+| 워크트리에 `node_modules/next/dist/docs/`(`AGENTS.md`)가 없다 · `npx vitest list` 가 패키지를 받으려 하거나 실패한다 | 같은 까닭 — 워크트리에는 `node_modules` 가 없다 | 읽기만이면 메인 체크아웃의 것을 읽는다 — `<메인>/node_modules/next/dist/docs/`. 시험 이름을 보거나 돌리려면 위 줄처럼 `ln -s <메인>/node_modules .` 뒤 `npx vitest list` |
 | 앱 워크트리에서 `tsc` · `expo lint` 가 `expo-iap` 같은 패키지를 못 찾는다 | 메인의 `mobile/node_modules` 링크가 낡았다 | 앱을 고치는 워크트리는 `mobile` 에서 `npm ci` 로 제 것을 깐다 — 링크하지 않는다 |
 | 앱 워크트리에 뿌리 `node_modules` 가 없다 | `mobile/` 의 Metro · `tsc` 는 메인의 것을 위로 찾아 돌지만 `scripts/` 시험은 못 돈다 | 뿌리에도 링크하거나 `npm ci` |
 | 워크트리에서 `db:remote` · `migration list` · `db push` 가 `LegacyProjectNotLinkedError` | 원격 연결(project-ref)은 `supabase/` 아래 무시되는 `.temp` 폴더에 있어 새 워크트리에 없다 | 메인의 그 `.temp` 의 `project-ref` 가 운영 프로젝트인지 본 뒤 `cp -a` 로 폴더째 복사한다 |

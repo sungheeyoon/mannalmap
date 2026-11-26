@@ -129,7 +129,7 @@ flowchart LR
 | **G-nn (예: G-62)** | 간극 대장의 줄 번호 | [`docs/product/gaps.md`](product/gaps.md) |
 | **정했다 · 미정 · 어긋남 · 보류 · 결정 대기** | 간극 대장의 상태 다섯 — 할 일로 정함 · 무엇을 할지 안 정함 · 코드와 문서가 다름 · 운영자가 미룸 · 운영자 답이 필요함 | [`docs/product/gaps.md`](product/gaps.md) 머리말 |
 | **보류** | 운영자가 미룬 것 | [`docs/product/gaps.md`](product/gaps.md) 머리말 |
-| **띠** | 간극 대장의 묶음 — 「언제 닫나」로 나눠요(운영 베타 · 채팅 안전 베타 · 공개 출시 · 정비) | [`docs/product/gaps.md`](product/gaps.md) 머리말 |
+| **띠** | 간극 대장의 묶음 — 「언제 닫나」로 나눠요(운영 베타에서 남은 것 · 인연을 열 때 · 공개 출시 · 정비) | [`docs/product/gaps.md`](product/gaps.md) 머리말 |
 | **기록 파일 (`gaps/records/g-nn.md`)** | 간극 대장 한 줄의 긴 증거 · 경과를 담은 파일 | [`docs/product/gaps.md`](product/gaps.md) 머리말 |
 | **changelog · 개정 기록** | 날짜별로 무엇이 참이 됐는지의 기록. 끝에 덧붙이기만 해요 | [`docs/product/prd-changelog.md`](product/prd-changelog.md) |
 | **ADR NNNN** | 결정 기록(Architecture Decision Record) 번호. 왜 이렇게 정했는지를 담아요 | [`docs/adr/README.md`](adr/README.md) |
