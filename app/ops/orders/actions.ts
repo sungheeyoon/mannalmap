@@ -21,6 +21,9 @@ import { cancellationCheck, RELEASE_CANCELLED_NOTE, RELEASE_UNKNOWN_NOTE } from 
  * 어느 누름이든 주문 화면의 진행 상태가 바뀌므로 그 화면을 다시 그린다(`refund-moved`).
  */
 
+/** 확보의 답이 비었다 — 운영자에게만 보이는 줄(ADR 0103 의 `/ops` 예외) */
+const HOLD_UNKNOWN_NOTE = '환불 준비 결과를 받지 못했습니다. 화면에서 진행 중인 환불을 확인해 주세요.';
+
 type Answer<T = null> = { readonly ok: true; readonly value: T } | { readonly ok: false; readonly message: string };
 
 type Supabase = Awaited<ReturnType<typeof supabaseOnServer>>;
@@ -66,8 +69,16 @@ export async function holdRefund(input: PrepareRequest): Promise<Answer<{ readon
   );
   if (error) return refused(supabase, error, 'credits.refund_hold', 'operator_hold_reading_refund', { orderId: input.orderId });
 
+  /* 문은 확보 한 줄을 낸다 — 0행을 0원 확보로 읽으면 없는 확보를 됐다고 말한다. 섰는지 모르니 화면은 다시 읽는다 */
+  const held = data?.[0];
+  if (held === undefined) {
+    console.error('operator_hold_reading_refund', 'no row');
+    refresh('refund-moved');
+    return { ok: false, message: HOLD_UNKNOWN_NOTE };
+  }
+
   refresh('refund-moved');
-  return { ok: true, value: { amount: data?.[0]?.amount ?? 0 } };
+  return { ok: true, value: { amount: held.amount } };
 }
 
 /**

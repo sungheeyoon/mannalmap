@@ -50,6 +50,14 @@ describe('살 수 있나', () => {
     expect((await GET(new Request('http://localhost/api/mobile/credits/purchase'))).status).toBe(503);
   });
 
+  it('열쇠가 없으면 503 이고 기록에 남긴다 — POST 와 같은 줄', async () => {
+    store.storeLedger.mockImplementation(() => {
+      throw new Error('no key');
+    });
+    expect((await GET(new Request('http://localhost/api/mobile/credits/purchase'))).status).toBe(503);
+    expect(console.error).toHaveBeenCalledWith('store purchase: not configured');
+  });
+
   it('세션이 없으면 세션의 거절 그대로', async () => {
     session.mobileSession.mockResolvedValue({ ok: false, response: new Response(null, { status: 401 }) });
     expect((await GET(new Request('http://localhost/api/mobile/credits/purchase'))).status).toBe(401);

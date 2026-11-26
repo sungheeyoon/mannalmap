@@ -51,6 +51,16 @@ describe('RTDN 통지 문', () => {
     expect(ledger.void).not.toHaveBeenCalled();
   });
 
+  /* 서명 거절은 답에 까닭을 안 싣는 거절이라 오류 기록이다(failures.md 「console」 ②) — 런북은 이 글자로 찾는다 */
+  it('서명 거절 · 키 못 받음은 오류 기록에 남는다', async () => {
+    auth.verifyPushToken.mockResolvedValue({ ok: false, why: 'audience' });
+    await push({ testNotification: {} });
+    expect(console.error).toHaveBeenCalledWith('play notification: refused', 'audience');
+    auth.verifyPushToken.mockRejectedValue(new Error('certs'));
+    await push({ testNotification: {} });
+    expect(console.error).toHaveBeenCalledWith('play notification: keys unavailable');
+  });
+
   it('시험 통지는 204', async () => {
     expect((await push({ testNotification: { version: '1.0' } })).status).toBe(204);
   });

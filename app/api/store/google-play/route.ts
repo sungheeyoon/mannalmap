@@ -29,10 +29,12 @@ export async function POST(request: Request): Promise<Response> {
   try {
     verdict = await verifyPushToken(request.headers.get('authorization'), expected);
   } catch {
+    console.error('play notification: keys unavailable');
     return new Response('keys unavailable', { status: 503 });
   }
+  /* 서명 거절은 답에 까닭을 안 싣는다 — 기록에만(`docs/agents/code-rules/failures.md` 「console」 ②) */
   if (!verdict.ok) {
-    console.warn('play notification: refused', verdict.why);
+    console.error('play notification: refused', verdict.why);
     return new Response('forbidden', { status: 403 });
   }
 
@@ -57,6 +59,7 @@ export async function POST(request: Request): Promise<Response> {
   try {
     ledger = storeLedger('Google Play 통지');
   } catch {
+    console.error('play notification: not configured');
     return new Response('not configured', { status: 503 });
   }
 

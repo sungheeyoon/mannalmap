@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import type { Client } from '@/auth/client';
 import { readAccount } from '@/auth/account';
 import { blockUser, reportUser } from '@/chat/reads';
-import { readEdges, readInputs, readPeopleList } from '@/people/data';
+import { readEdges, readInputs, readPeopleList, removeFromList, updateNote } from '@/people/data';
 
 /**
  * **앱의 문 — 가짜 클라이언트로 행동을 잰다**(ADR 0243). 문은 연결된 클라이언트를 인자로 받으므로 모듈을 바꿔 끼우지 않고 표 하나로 답을 정한다.
@@ -151,5 +151,23 @@ describe('차단 · 신고 — 인연 카드와 대화가 한 문을 쓴다', ()
     const done = await blockUser(throwing, 'u2');
     expect(done.ok).toBe(false);
     expect(!done.ok && done.message).not.toContain('network down');
+  });
+});
+
+/**
+ * **정책이 오류 없이 거른 0행은 「됐다」가 아니다** — 이용 중이 아닌 계정 · selfPerson · 이미 뺀 사람은 RLS 가 행을 안 보여 주고
+ * 오류도 안 낸다(`20260825080000_suspended_accounts_lose_access.sql` 「내 라벨만 고친다」 · 「자기 자신은 목록에서 지울 수 없다」).
+ */
+describe('메모 고치기 · 목록에서 빼기', () => {
+  it('바뀐 행이 있으면 됐다', async () => {
+    const { client } = fakeClient({ user_person_access: ok([{ person_id: 'p1' }]) });
+    expect(await updateNote(client, 'p1', '메모')).toEqual({ ok: true });
+    expect(await removeFromList(client, 'p1')).toEqual({ ok: true });
+  });
+
+  it('바뀐 행이 0이면 실패로 답한다', async () => {
+    const { client } = fakeClient({ user_person_access: ok([]) });
+    expect(await updateNote(client, 'p1', '메모')).toEqual({ ok: false, message: '목록에서 다시 골라 주세요.' });
+    expect(await removeFromList(client, 'p1')).toEqual({ ok: false, message: '목록에서 다시 골라 주세요.' });
   });
 });

@@ -455,7 +455,7 @@ SQL
 남는 것 · 이어지는 때 · 잘못 이어졌을 때는 `docs/ops/runbook/erasure.md` 「구매 제한 기록」.
 
 **통지 · 크론이 이상하면.** Vercel 로그의 `play notification: refused <까닭>`(403 — audience · 서비스 계정이 Vercel 값과 다르다), `not configured`(503 — 셋 중 하나가 비었다),
-`store ledger: <문> <코드>`(DB), `store ledger: grant refused 22023`(남의 토큰 — 끝난 답, 앱 · 통지는 200), `store purchase: consume failed <상태>`(소비 실패 — 그날 크론이 다시 소비한다),
+`store ledger: <문> <코드>`(DB), `store ledger: grant refused 22023`(남의 토큰 — 끝난 답, 앱 · 통지는 200), `store ledger: grant outcome <값>` · `refusal answer <값>`(DB 함수가 앱이 모르는 답을 냈다 — 503 으로 다시 시도가 돈다. 배포와 마이그레이션의 판이 어긋났는지 본다), `play notification: keys unavailable`(Google 의 공개 키를 못 받았다 — 503, Pub/Sub 이 다시 보낸다), `store purchase: consume failed <상태>`(소비 실패 — 그날 크론이 다시 소비한다),
 `store purchase: no purchase time`(Google 이 구매 시각을 안 줬다 — 지급은 섰고 장부가 지급 시각으로 메워 기한을 늦게 잡을 수 있다, ADR 0253 1-1), `store purchase: unreadable purchase state` · `quantity is not one <수>`(Google 의 답이 문서 밖 — 지급 · 소비하지 않았다. 수량이면 Play Console 의 multi-quantity 가 켜졌는지 보고, 그 주문은 콘솔에서 먼저 환불해도 된다),
 `store-voided <건수>`(대조가 새로 적은 무효), `store-consume {…}`(다시 소비한 수 — 못 끝낸 것(`failed` · `gone` · `left` · 상한 밖 `waiting`)이 있으면 크론이 500), `store-consume: overdue <수>`(기한까지 36시간이 안 남은 줄을 못 끝냈다 — 위 소비 대조 질의와 로그의 `consume failed` 상태를 본다).
 
