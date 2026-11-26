@@ -179,7 +179,7 @@ npm run db:remote -- --purpose "풀이권 장부와 셈의 대조" \
 | 자진 탈퇴 뒤의 청구 | 주문이 지워져 이 화면으로 확보하지 못한다 — 길이 아직 없다(G-21, [기록](../../product/gaps/records/g-21.md) 「판매를 열 때 남은 것」). 금액 규칙은 위 두 줄과 같다 — 지금은 공제 없음(ADR 0268) | 없음(ADR 0268 동안) |
 | 중복 결제 | `duplicate` | 없음 |
 | 생성 실패 · 계약과 다른 제공 | 미제공(장애) `failure` — 쓴 회차까지면 아래 SQL 차례 | 없음 |
-| 심사 결제 · 회사의 이용 정지 · 해지 · 서비스 종료 | 그 밖 `other` | 없음 |
+| 회사의 이용 정지 · 해지 · 서비스 종료 | 그 밖 `other` | 없음 |
 
 기간 안인지 애매하면 환불수수료가 없는 쪽(청약철회)으로 고른다 — 이용자에게 더 가는 쪽이다.
 
@@ -496,31 +496,3 @@ Pub/Sub 구독의 「Unacked messages」가 쌓이면 문이 503 을 주고 있�
 PortOne 결제 알림 문(`/api/portone/webhook`)과 그 콘솔 걸음은 지웠다(ADR 0212 추기). DB 의 `report_payment_trouble` 은 남았지만
 Google Play 의 문은 부르지 않는다 — 못 닿은 통지는 503 으로 Pub/Sub 이 다시 보내고, 놓친 무효는 대조 크론이 줍는다(ADR 0230).
 떠난 사람의 결제 기록은 위 「떠난 사람의 결제 기록」 그대로다 — 스토어가 돌려준 떠난 사람의 결제는 `retention.reading_refund_after_leave` 에 사유 `store` 로 선다.
-
-#### 심사 계정 — 카드사 심사 때만 결제창이 선다 (G-21, ADR 0171)
-
-**쓰지 않는다 — PG 를 하지 않아 카드사 심사가 없다(ADR 0212).** 웹의 결제 단추와 `PORTONE_*` 는 지웠다 — 표에 넣어도
-웹에서 결제할 길은 없고, 주문 문(`open_reading_order`)과 풀이권 창의 「풀이권 구매」 단추만 그 계정에게 열린다. 표는 Google Play 결제에 쓰지 않는다 —
-스토어 구매는 판매 스위치 · 이 표를 지나지 않는다(ADR 0230). 걷는 것은 따로다. 아래는 표를 다루는 걸음만 남긴다.
-
-1. **계정을 만든다** — 심사 담당이 구글로 로그인하고 가입(닉네임 · 안내 확인)을 마친다. 테스트 코드는 지웠다(ADR 0225)
-2. **넣는다 — break-glass**(이메일로 계정을 찾는다, `docs/ops/runbook/access.md`). 대장에 먼저 적고 운영 SQL Editor 에서:
-
-```sql
--- 메모에 누구 · 왜 · 언제를 — 지울 때 이 메모로 찾는다
-insert into public.reading_sale_reviewer (user_id, note)
-select id, '<카드사> 심사 <YYYY-MM>' from auth.users where email = '<심사 계정 이메일>';
-```
-
-3. **본다** — 몇 계정이 들었는지는 개인을 안 가리킨다:
-
-```bash
-npm run db:remote -- --purpose "심사 계정 수" "select count(*), min(added_at) from public.reading_sale_reviewer"
-```
-
-4. **심사가 끝나면 지운다** — 지우지 않으면 그 계정은 판매가 닫힌 동안에도 계속 산다. 심사 결제로 선 묶음은 결제한 곳의 콘솔에서 돌려준 뒤 위
-   「수동 환불」 차례로 적는다(사유 `other`)
-
-```sql
-delete from public.reading_sale_reviewer where note = '<카드사> 심사 <YYYY-MM>';
-```

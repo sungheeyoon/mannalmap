@@ -211,8 +211,8 @@ export function answerReading(runId: string, email: string, said: string): void 
 /**
  * 결제가 승인된 주문 하나를 세운다 — 돌려주는 것은 주문 번호(`rdo_…`)와 거래 번호.
  *
- * 판매 스위치(`reading_sale_is_open`)는 이 실행의 다른 시험이 「판매 준비 중」으로 재므로 켜지 않는다. 주문을 여는 문이
- * 넣는 그 줄을 `postgres` 로 넣고, 승인은 결제 알림이 부르는 그 문(`approve_reading_order`)으로 한다 — 묶음까지 선다.
+ * 스토어 구매(`grant_store_purchase`)가 넣는 꼴의 주문 줄을 `postgres` 로 넣고, 승인은 그 문이 부르는 `approve_reading_order` 로
+ * 한다 — 묶음까지 선다.
  * 여기서 재려는 것은 운영 주문 화면이 그 주문을 세우는가다(G-116).
  */
 export function buyReadings(email: string, credits = 3): { orderNumber: string; paymentId: string } {
