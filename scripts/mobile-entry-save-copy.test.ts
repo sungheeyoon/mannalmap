@@ -350,7 +350,6 @@ describe('약관 셋은 웹의 현행 판을 연다', () => {
  * **앱은 Android 에서만 Google Play 로 판다**(ADR 0230). 풀이권을 쓰는 확인은 모든 자리가 한 꼴이고(`creditAskShape`, ADR 0251), 0장이면
  * Android 에서 판매가 열린 꼴 「풀이권 구매」 · 「취소」 — 「풀이권 구매」는 지금 화면 · 이름 · 다시 열 표시(`?ask=…`)를 싣고 `/me/credits` 로 간다.
  * iOS 는 아직 팔지 않아 닫힌 꼴(한 줄과 「확인」)이다. 따로 뜨던 부족 창은 걷었다(운영자 2026-11-13).
- * 판매가 열렸는지를 묻는 웹의 문(`my_reading_sale_is_open`)은 앱이 부르지 않는다 — 앱의 판매는 그 스위치가 아니라 Play 와 서버의 판정(`store_purchase_refusal`)이다.
  */
 describe('앱은 Android 에서만 Google Play 로 판다 (ADR 0230)', () => {
   it('판매 여부는 플랫폼 하나가 가른다 — Android 만', () => {
@@ -374,10 +373,8 @@ describe('앱은 Android 에서만 Google Play 로 판다 (ADR 0230)', () => {
     expect(read('mobile/src/credits/credits.tsx')).toContain('{storeAvailable && <StoreSection');
   });
 
-  it('웹의 판매 스위치 문은 앱이 부르지 않는다 · 인연 쪽에는 구매 단추가 없다', () => {
-    expect(read('mobile/src/reading/api.ts')).not.toContain('my_reading_sale_is_open');
+  it('인연 쪽에는 구매 단추가 없다', () => {
     expect(read('mobile/src/matching/today.tsx')).not.toContain('BUY_CREDITS_LABEL');
-    expect(read('mobile/src/matching/doors.ts')).not.toContain('my_reading_sale_is_open');
   });
 });
 

@@ -6,7 +6,7 @@ import { isBlocked } from '@account/index';
 import { findStatus, findsInList, pickable } from '@people/pick';
 
 import { useClient } from '@/auth/connected';
-import { readPeopleList, type MyReading, type PeopleList, type Read } from '@/people/data';
+import { readPeopleList, type MyReading, type PeopleList } from '@/people/data';
 import { AddPerson } from '@/people/manage';
 import { AccountNotice, LoadingFrame, ScreenFrame, styles as shared } from '@/people/parts';
 import { FailureLine } from '@/ui/failure-line';
@@ -16,16 +16,16 @@ import { EmptyState } from '@/ui/empty-state';
 import { Field, SecondaryButton } from '@/ui/parts';
 import { useLatestReads } from '@/ui/latest-reads';
 import { settled } from '@/ui/settled';
-import { UNREACHABLE } from '@/auth/signup';
 import { TopBar } from '@/ui/top-bar';
 import { WordText } from '@/ui/word-text';
 import { PEOPLE_EMPTY_BODY, PEOPLE_EMPTY_TITLE, PEOPLE_LEAD, PERSON_SEARCH_EMPTY } from '@people/words';
+import { unreachedLoad, type Loaded } from '@/answer';
 
 /** 저장한 사람 — 가족 · 친구를 관리하는 자리. 나는 여기 없다(`app/me/people/page.tsx`) */
 export default function PeopleScreen() {
   const client = useClient();
   const params = useLocalSearchParams<{ add?: string }>();
-  const [read, setRead] = useState<Read<PeopleList> | null>(null);
+  const [read, setRead] = useState<Loaded<PeopleList> | null>(null);
   const [typed, setTyped] = useState('');
 
   /* 복귀와 사람 추가 뒤의 다시 읽기가 겹친다 — 늦게 온 옛 응답은 버린다 */
@@ -33,7 +33,7 @@ export default function PeopleScreen() {
 
   const load = useCallback(() => {
     const asked = reads.ask();
-    void settled(readPeopleList(client), 'readPeopleList', () => ({ kind: 'failed', message: UNREACHABLE }) as const).then((next) => {
+    void settled(readPeopleList(client), 'readPeopleList', unreachedLoad).then((next) => {
       if (!reads.fresh(asked)) return;
       if (next.kind === 'signed-out') router.replace('/');
       /* 선 화면을 다시 읽다 못 읽으면 가진 것을 그대로 둔다 — 다음에 돌아올 때 메운다(채팅 목록과 같다). 둔 응답은 그렸다고 적지 않는다 */

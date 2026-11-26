@@ -6,7 +6,6 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { useClient } from '@/auth/connected';
 import { listenLive } from '@/chat/live';
-import { UNREACHABLE } from '@/auth/signup';
 import { AccountNotice, NoRoom } from '@/chat/notices';
 import { FailureLine } from '@/ui/failure-line';
 import { settled } from '@/ui/settled';
@@ -15,6 +14,7 @@ import { ChatRoomView } from '@/chat/room';
 import { LoadingDots } from '@/ui/loading';
 import { TopBar } from '@/ui/top-bar';
 import { COLOR } from '@/ui/tokens';
+import { unreachedLoad } from '@/answer';
 
 /** 한 물결의 변경을 묶어 다시 읽는 간격 — 웹의 `REDRAW_AFTER_MS` 와 같다 */
 const REREAD_AFTER_MS = 400;
@@ -30,7 +30,7 @@ export default function ChatRoomScreen() {
   const live = useRef(true);
 
   const load = useCallback(async () => {
-    const next = await settled(readRoomScreen(client, matchId), 'readRoomScreen', () => ({ kind: 'failed', message: UNREACHABLE }) as const);
+    const next = await settled(readRoomScreen(client, matchId), 'readRoomScreen', unreachedLoad);
     if (!live.current) return;
     if (next.kind === 'signed-out') router.replace('/');
     /* 선 화면을 다시 읽다 실패하면 가진 것을 그대로 둔다 — 다음 다시 대조가 메운다 */

@@ -12,7 +12,7 @@ export const REFUND_REASONS = [
   { value: 'unused', label: '미사용분 환불(청약철회 기간 경과 후 · 10% 공제)' },
   { value: 'duplicate', label: '중복 결제' },
   { value: 'failure', label: '미제공(장애)' },
-  { value: 'other', label: '그 밖(심사 결제 · 정지 · 서비스 종료 등)' },
+  { value: 'other', label: '그 밖(정지 · 서비스 종료 등)' },
 ] as const;
 
 export type RefundReason = (typeof REFUND_REASONS)[number]['value'];

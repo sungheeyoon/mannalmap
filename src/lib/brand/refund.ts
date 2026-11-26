@@ -17,13 +17,13 @@ import { type LegalDocument, type LegalSection, bullets, para, table } from './l
 export const REFUND_EFFECTIVE_DATE: string | null = '2026-11-07';
 
 /**
- * 마지막 개정 시행일 — 「얼마를 돌려받나요」의 공제 예외에 약관 변경을 거절한 해지(약관 제4조③)를 더한 판(ADR 0274). 약관 개정(`TERMS_REVISED_ON`)과
+ * 마지막 개정 시행일 — 「얼마를 돌려받나요」의 공제 예외에 약관 변경을 거절한 해지(약관 제4조③)를 더한 판(ADR 0275). 약관 개정(`TERMS_REVISED_ON`)과
  * 같은 날이고 같은 공지(시행 7일 전, 이 글의 「개정 안내」)다. 앞 판(ADR 0235 — 무료 풀이권 줄)은 첫 시행일에 함께 시행했다.
  * **비어 있는 채 운영에 올리지 않는다.** 지어낸 날을 넣지 않는다
  */
 export const REFUND_REVISED_ON: string | null = '2026-12-04';
 
-/** 공제 예외 줄 — 본문과 「개정 안내」가 같은 글자를 쓴다(ADR 0274) */
+/** 공제 예외 줄 — 본문과 「개정 안내」가 같은 글자를 쓴다(ADR 0275) */
 const FEE_EXCEPTION_BEFORE = '풀이 생성 실패, 서비스 종료, 이용 정지·해지로 환불하는 경우에는 환불수수료를 공제하지 않아요.';
 const FEE_EXCEPTION_AFTER =
   '풀이 생성 실패, 서비스 종료, 이용 정지·해지로 환불하거나, 약관이 바뀌는 것을 거절하고 이용계약을 해지하는 경우에는 환불수수료를 공제하지 않아요.';

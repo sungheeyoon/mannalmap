@@ -1,21 +1,12 @@
 'use client';
 
-import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { useEffect, useRef, type ReactNode } from 'react';
 
-import {
-  BUY_CREDITS_LABEL,
-  CREDITS_AVAILABLE_LABEL,
-  CREDITS_SCREEN_LEAD,
-  SALE_CLOSED_NOTE,
-} from '@/src/lib/reading/notes';
+import { CREDITS_AVAILABLE_LABEL, CREDITS_SCREEN_LEAD, SALE_CLOSED_NOTE } from '@/src/lib/reading/notes';
 
-import { BUTTON_PRIMARY } from '../../ui/buttons';
 import { MENU_PANEL, TYPE_META } from '../../ui/surfaces';
 import { useDetailsMenu } from '../../ui/details-menu';
-import { saleIsOpenNow } from './asked-on-press';
-import { CREDITS_PATH, saleShapeOf } from './buy-path';
 
 /**
  * 상단 풀이권은 설정처럼 펼친다 — 잔액 · 사용처 · 구매 길(B안, 운영자 2026-10-12).
@@ -24,6 +15,8 @@ import { CREDITS_PATH, saleShapeOf } from './buy-path';
  * 머리글 아래 같은 높이(62px)에 선다. 폰에서는 이 칸이 화면 오른쪽 끝이 아니라(종 · 톱니가 오른쪽에 있다) 단추 밑에 붙이면 판이 화면 왼쪽
  * 밖으로 나간다 — 그래서 화면에 붙여(`fixed`) 설정 판과 같은 오른쪽 끝(16px)에 세운다. 안쪽 여백은 설정 판의 글자 들여쓰기(판 8px + 줄
  * 12px)와 같은 20px 다. 글자는 앱의 단(`TYPE_META` 13px · 본문 15px · 큰 수는 홈의 수와 같은 2rem 굵게)이다.
+ *
+ * **구매 길은 늘 판매가 닫힌 줄이다** — 웹은 풀이권을 팔지 않는다(ADR 0212). 열 때 판매를 묻던 문과 「풀이권 구매」 링크는 걷었다(ADR 0272).
  */
 export function CreditsMenu({ available, label, children, className }: {
   available: number;
@@ -33,8 +26,6 @@ export function CreditsMenu({ available, label, children, className }: {
 }) {
   const pathname = usePathname();
   const { menu, close } = useDetailsMenu();
-  const [shape, setShape] = useState<'open' | 'closed' | null>(null);
-  const request = useRef(0);
   const shownAt = useRef(pathname);
 
   useEffect(() => {
@@ -43,23 +34,8 @@ export function CreditsMenu({ available, label, children, className }: {
     close();
   }, [pathname, close]);
 
-  useEffect(() => () => { request.current += 1; }, []);
-
-  const checkSale = async () => {
-    const turn = ++request.current;
-    if (!menu.current?.open) return;
-    setShape(null);
-    let next: 'open' | 'closed' = 'open';
-    try {
-      next = saleShapeOf(await saleIsOpenNow());
-    } catch {
-      // 못 물었으면 열린 꼴이다(`buy-path.ts`).
-    }
-    if (turn === request.current && menu.current?.open) setShape(next);
-  };
-
   return (
-    <details ref={menu} onToggle={() => { void checkSale(); }} className="relative shrink-0">
+    <details ref={menu} className="relative shrink-0">
       <summary aria-label={label} className={`${className} list-none [&::-webkit-details-marker]:hidden`}>
         {children}
       </summary>
@@ -71,17 +47,7 @@ export function CreditsMenu({ available, label, children, className }: {
         </p>
         <p className="mt-4 text-body leading-6 text-secondary">{CREDITS_SCREEN_LEAD[0]}</p>
         <p className={`mt-1 ${TYPE_META}`}>{CREDITS_SCREEN_LEAD[1]}</p>
-        {shape === 'closed' ? (
-          <p className="mt-4 border-t border-border pt-4 text-body leading-6 text-secondary">{SALE_CLOSED_NOTE}</p>
-        ) : shape === 'open' ? (
-          <Link href={CREDITS_PATH} onClick={close} className={`mt-5 w-full ${BUTTON_PRIMARY}`}>{BUY_CREDITS_LABEL}</Link>
-        ) : (
-          /*
-            판매를 묻는 동안 — 잠그지 않는다(`disabled` 는 초점을 빼서 낭독기가 단추를 건너뛴다, ADR 0160). 「풀이권 구매」로 읽히고
-            「흐리게 · 바쁨」이 함께 들리며, 눌러도 아무 일이 없다. 답이 오면 이 자리가 링크나 판매 준비 줄로 바뀐다
-          */
-          <button type="button" aria-disabled="true" aria-busy="true" className={`mt-5 w-full ${BUTTON_PRIMARY}`}>{BUY_CREDITS_LABEL}</button>
-        )}
+        <p className="mt-4 border-t border-border pt-4 text-body leading-6 text-secondary">{SALE_CLOSED_NOTE}</p>
       </div>
     </details>
   );

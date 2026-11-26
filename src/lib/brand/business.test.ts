@@ -208,10 +208,10 @@ describe('무료 · 예외 풀이권의 기한 — 없다 (ADR 0235)', () => {
 });
 
 /**
- * ADR 0274 — 근거 문서(`docs/legal/terms-grounds.md` 「변호사 물음을 갈음한 근거 — 약관」)의 권고를 옮긴 다섯 조항과 그 공지.
+ * ADR 0275 — 근거 문서(`docs/legal/terms-grounds.md` 「변호사 물음을 갈음한 근거 — 약관」)의 권고를 옮긴 다섯 조항과 그 공지.
  * 이용자에게 불리하지 않은 변경이라 시행 7일 전 공지(제4조②)다 — 공지는 약관 · 환불정책 머리의 「개정 안내」다.
  */
-describe('2026-12 개정 — 다섯 조항과 개정 안내 (ADR 0274)', () => {
+describe('2026-12 개정 — 다섯 조항과 개정 안내 (ADR 0275)', () => {
   const termsDoc = termsFor(businessInfoFrom(FULL), SITE);
   const terms = textsOf(termsDoc);
   const refund = textsOf(refundPolicyFor(businessInfoFrom(FULL)));

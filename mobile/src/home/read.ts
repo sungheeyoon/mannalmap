@@ -12,11 +12,11 @@ import { isFirstVisit } from '@web-home/first-visit';
 
 import type { Client } from '@/auth/client';
 import { readAccount } from '@/auth/account';
-import { UNREACHABLE } from '@/auth/signup';
 import { readRunningReadings } from '@/reading/running';
 import { readMyReadings } from '@/reading/my-readings';
 import { readEdges, readInputs } from '@/people/data';
 import { SELF_CHART_FAILED } from '@reading/words';
+import { UNREACHABLE } from '@/answer';
 
 export type ReadingRow = {
   kind: string;

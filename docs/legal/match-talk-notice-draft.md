@@ -57,7 +57,7 @@ ADR 0095 의 기준은 「처리 항목 · 목적 · 보유기간 · 국외 이�
 
 **함께 고친 화면 상수** — 옛 요청 카드가 읽던 `MATCH_ACCEPT_OPENS` · `MATCH_ACCEPT_HIDDEN` · `MATCH_ACCEPT_HEAD` 는 옛 카드와 함께 지웠다. 처리방침은 위 줄(`MATCH_DETAIL_DISCLOSURE`)을 쓴다.
 
-`notice.ts:319` 의 ①3 문장은 그대로 두되 상세 궁합의 근거는 `[변호사 검토 필요]` 다(`privacy-grounds.md` 「변호사가 볼 칸」).
+`notice.ts:319` 의 ①3 문장은 그대로 두되 상세 궁합의 근거는 `privacy-grounds.md` 「변호사 물음을 갈음한 근거 — 처리방침」 B-10 이다(인연을 열 때의 조건, ADR 0273).
 
 ## 약관 — `src/lib/brand/terms.ts`
 

@@ -11,7 +11,6 @@ import { useClient } from '@/auth/connected';
 import { Avatar } from '@/chat/avatar';
 import { EmptyChat } from '@/chat/empty';
 import { listenLive } from '@/chat/live';
-import { UNREACHABLE } from '@/auth/signup';
 import { AccountNotice } from '@/chat/notices';
 import { FailureLine } from '@/ui/failure-line';
 import { useLatestReads } from '@/ui/latest-reads';
@@ -22,6 +21,7 @@ import { LoadingDots } from '@/ui/loading';
 import { COLOR, FONT, RADIUS, TYPE, TYPE_TITLE } from '@/ui/tokens';
 import { KEEP_VIEW } from '@/ui/keep-view';
 import { WordText } from '@/ui/word-text';
+import { unreachedLoad } from '@/answer';
 
 /** 한 물결의 변경을 묶어 다시 읽는 간격 — 웹의 `REDRAW_AFTER_MS` 와 같다 */
 const REREAD_AFTER_MS = 400;
@@ -47,7 +47,7 @@ export default function ChatRoomsScreen() {
 
   const load = useCallback(async () => {
     const asked = reads.ask();
-    const next = await settled(readRoomListScreen(client), 'readRoomListScreen', () => ({ kind: 'failed', message: UNREACHABLE }) as const);
+    const next = await settled(readRoomListScreen(client), 'readRoomListScreen', unreachedLoad);
     if (!live.current || !reads.fresh(asked)) return;
     if (next.kind === 'signed-out') router.replace('/');
     /* 선 화면을 다시 읽다 실패하면 가진 것을 그대로 둔다 — 다음 다시 대조가 메운다. 둔 응답은 그렸다고 적지 않는다 */

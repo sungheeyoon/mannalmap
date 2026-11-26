@@ -13,11 +13,10 @@ import {
   feedbackSectionErrors,
   type FeedbackQuestion,
   type FeedbackScore,
-  type FeltLength,
-  type IssueTag,
   type ReadingAnswer,
 } from '@reading/feedback';
-import { useState, type ReactNode } from 'react';
+import { feedbackFormOf, feedbackFormReducer, feedbackToSend, feedbackView } from '@reading/feedback-form';
+import { useReducer, useState, type ReactNode } from 'react';
 import { Pressable, StyleSheet, TextInput, View } from 'react-native';
 
 import { useClient } from '@/auth/connected';
@@ -39,53 +38,36 @@ import { FEEDBACK_FAILED, FEEDBACK_LENGTH_QUESTION, FEEDBACK_MISSING_QUESTION, F
  */
 export function ReadingFeedback({ target, runId, given }: { target: ReadingTarget; runId: string; given: ReadingAnswer | null }) {
   const client = useClient();
-  const [answer, setAnswer] = useState(given);
-  const [open, setOpen] = useState(given === null);
-  const [unfolded, setUnfolded] = useState(false);
-  const [usefulness, setUsefulness] = useState<FeedbackScore | null>(given?.usefulness ?? null);
-  const [fit, setFit] = useState<FeedbackScore | null>(given?.perceivedFit ?? null);
-  const [feltLength, setFeltLength] = useState<FeltLength | null>(given?.feltLength ?? null);
-  const [tags, setTags] = useState<IssueTag[]>([...(given?.issueTags ?? [])]);
-  const [comment, setComment] = useState(given?.comment ?? '');
+  /* 상태와 갈래는 웹과 같은 `feedbackFormReducer` 한 벌이다 */
+  const [state, dispatch] = useReducer(feedbackFormReducer, given, feedbackFormOf);
+  const { usefulness, fit, feltLength, tags, comment } = state.draft;
   const [failure, setFailure] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const questions = feedbackQuestions(target.kind);
   const sections = useSectionErrors(feedbackSectionErrors({ usefulness, fit, feltLength }));
+  const { thanked, foldable, shown } = feedbackView(state, given);
 
-  if (answer !== null && !open) {
+  if (thanked) {
     return (
       <Paper style={styles.thanks}>
         <WordText style={styles.thanksText}>{FEEDBACK_THANKS}</WordText>
-        <TextButton label="답 고치기" onPress={() => setOpen(true)} />
+        <TextButton label="답 고치기" onPress={() => dispatch({ type: 'reopen' })} />
       </Paper>
     );
   }
 
   /* 다 고르기 전에 누르면 안 고른 질문마다 그 아래에서 말한다(ADR 0252) */
-
   const send = async () => {
-    if (!sections.press() || usefulness === null || fit === null || feltLength === null) return;
+    const sent = feedbackToSend(state.draft);
+    if (!sections.press() || sent === null) return;
     setFailure(null);
     setSaving(true);
-    const sent: ReadingAnswer = {
-      usefulness,
-      perceivedFit: fit,
-      feltLength,
-      issueTags: tags,
-      comment: comment.trim() === '' ? null : comment.trim(),
-    };
     const result = await leaveFeedback(client, runId, sent);
     setSaving(false);
-    if (result.ok) {
-      setAnswer(sent);
-      setOpen(false);
-    } else {
-      setFailure(result.message);
-    }
+    if (result.ok) dispatch({ type: 'sent', answer: sent });
+    else setFailure(result.message);
   };
 
-  const foldable = given === null && answer === null;
-  const shown = foldable ? unfolded : true;
   const head = (
     <View style={styles.headWords}>
       <WordText style={styles.headTitle}>{FEEDBACK_QUESTION}</WordText>
@@ -96,7 +78,7 @@ export function ReadingFeedback({ target, runId, given }: { target: ReadingTarge
   return (
     <Card style={styles.frame}>
       {foldable ? (
-        <Pressable accessibilityRole="button" accessibilityState={{ expanded: shown, disabled: saving }} disabled={saving} onPress={() => setUnfolded(!shown)} style={styles.head}>
+        <Pressable accessibilityRole="button" accessibilityState={{ expanded: shown, disabled: saving }} disabled={saving} onPress={() => dispatch({ type: 'fold', shown })} style={styles.head}>
           {head}
           <FoldIcon open={shown} size={20} color={COLOR.secondary} strokeWidth={1.8} />
         </Pressable>
@@ -112,7 +94,7 @@ export function ReadingFeedback({ target, runId, given }: { target: ReadingTarge
               question={questions.usefulness}
               value={usefulness}
               onChange={(next) => {
-                setUsefulness(next);
+                dispatch({ type: 'usefulness', score: next });
                 sections.edit('usefulness');
               }}
               disabled={saving}
@@ -124,7 +106,7 @@ export function ReadingFeedback({ target, runId, given }: { target: ReadingTarge
               question={questions.perceivedFit}
               value={fit}
               onChange={(next) => {
-                setFit(next);
+                dispatch({ type: 'fit', score: next });
                 sections.edit('fit');
               }}
               disabled={saving}
@@ -144,7 +126,7 @@ export function ReadingFeedback({ target, runId, given }: { target: ReadingTarge
                   picked={feltLength === choice}
                   wrong={sections.shown.length !== undefined}
                   onPick={() => {
-                    setFeltLength(choice);
+                    dispatch({ type: 'length', choice });
                     sections.edit('length');
                   }}
                 >
@@ -166,7 +148,7 @@ export function ReadingFeedback({ target, runId, given }: { target: ReadingTarge
                   role="checkbox"
                   disabled={saving}
                   picked={tags.includes(tag)}
-                  onPick={() => setTags((now) => (now.includes(tag) ? now.filter((one) => one !== tag) : [...now, tag]))}
+                  onPick={() => dispatch({ type: 'tag', tag })}
                 >
                   {ISSUE_TAG_LABEL[tag]}
                 </Chip>
@@ -182,7 +164,7 @@ export function ReadingFeedback({ target, runId, given }: { target: ReadingTarge
               numberOfLines={3}
               value={comment}
               maxLength={FEEDBACK_COMMENT.limit}
-              onChangeText={(next) => setComment(next.slice(0, FEEDBACK_COMMENT.limit))}
+              onChangeText={(text) => dispatch({ type: 'comment', text })}
               accessibilityLabel={FEEDBACK_COMMENT.label}
               editable={!saving}
               accessibilityState={{ disabled: saving }}
