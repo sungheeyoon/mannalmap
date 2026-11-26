@@ -13,7 +13,7 @@ import {
   playStoreUrl,
   shouldOfferApp,
 } from './app-link';
-import { SHARE_ROOTS } from './path';
+import { SHARE_ROOTS } from '@/src/lib/reading/share-path';
 
 const ROOT = resolve(__dirname, '../..');
 

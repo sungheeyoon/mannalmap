@@ -1,5 +1,7 @@
 import { endsWithBatchim } from '../saju/text/batchim';
 
+import { seoulWallClock } from './seoul-date';
+
 /**
  * **저장한 사람 화면의 말** — 머리 · 사주풀이 칸 · 궁합 칸 · 시트 둘(운영자 승인 시안 2026-11-13 「0 · 0-1 A」, ADR 0249).
  * 웹(`app/me/people/[personId]/`)과 앱(`mobile/src/app/me/people/[personId].tsx`)이 이 한 벌을 부른다.
@@ -74,13 +76,11 @@ export const PARTNER_TYPED_LABEL = '직접 입력';
 export const relationAskTitle = (a: string, b: string): string => `${clip(a, PAIR_NAME_MAX)} · ${clipTopic(b, PAIR_NAME_MAX)}${breakAfter(a, PAIR_NAME_MAX, b)}어떤 사이예요?`;
 export const COMPAT_ASK_CONFIRM = '궁합 보기';
 
-const SEOUL_OFFSET_MS = 9 * 60 * 60 * 1000;
-
 /**
- * 「11월 13일」 — **시간대는 한국이다**(`app/me/reading/line.ts` 의 `readingDate` 와 같은 규율). 한국은 서머타임이 없어 9시간을 더해
+ * 「11월 13일」 — **시간대는 한국이다**(`seoul-date.ts` 의 `readingDate` 와 같은 규율). 서울의 벽시계(`seoulWallClock`)를
  * UTC 로 읽는다 — 앱의 엔진(Hermes)에 `Intl` 시간대가 늘 있다고 기대지 않는다.
  */
 export function monthDayOf(iso: string): string {
-  const seoul = new Date(new Date(iso).getTime() + SEOUL_OFFSET_MS);
+  const seoul = seoulWallClock(new Date(iso));
   return `${seoul.getUTCMonth() + 1}월 ${seoul.getUTCDate()}일`;
 }

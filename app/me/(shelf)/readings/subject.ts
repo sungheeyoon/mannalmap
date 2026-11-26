@@ -2,7 +2,7 @@ import { storedChartOf } from '@/src/lib/input/stored';
 import { STEM_INFO, type Element } from '@/src/lib/saju';
 
 import type { supabaseOnServer } from '../../../auth/server-client';
-import { UUID } from '../../../uuid';
+import { UUID } from '@/src/lib/uuid';
 import { myEdge } from '../../home/circle';
 import { storedInputsOf } from '../../person-input';
 

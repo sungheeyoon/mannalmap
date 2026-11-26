@@ -16,7 +16,7 @@ import { PartnerFace } from '../partner-sheet';
 import { ReadingSection } from '../reading/section';
 import { readAccount } from '../account';
 import { backOf, placeOf } from '../../came-from';
-import { UUID } from '../../uuid';
+import { UUID } from '@/src/lib/uuid';
 import { matchDetailForViewer } from '../chat/[matchId]/room-detail';
 import { matchResultForViewer, type SharedResult } from './result';
 

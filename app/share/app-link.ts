@@ -1,6 +1,5 @@
 import { PLAY_PACKAGE_NAME } from '@/src/lib/reading/store-products';
-
-import { sharePath, type ShareKind } from './path';
+import { sharePath, type ShareKind } from '@/src/lib/reading/share-path';
 
 /**
  * **공유본에서 앱으로 가는 길** — 안드로이드 폰에서 받은 링크를 열면 「앱에서 볼까요?」 시트가 서고(`app-sheet.tsx`), 그 단추가 여기서

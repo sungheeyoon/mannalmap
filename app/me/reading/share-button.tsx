@@ -5,10 +5,10 @@ import { useEffect, useRef, useState } from 'react';
 import { BUTTON_SECONDARY_FACE, ICON_BUTTON } from '../../ui/buttons';
 import { Icon } from '../../ui/icons';
 import { shareMyReading } from './share';
-import type { ReadingTarget } from './target';
 import { FailureLine } from '../../ui/failure-line';
 import { MENU_PANEL } from '../../ui/surfaces';
 import { SHARE_NOT_ISSUED } from '@/src/lib/reading/words';
+import type { ReadingTarget } from '@/src/lib/reading/target';
 
 /**
  * 내 사주풀이를 **링크로 보낸다** — 누르면 주소가 클립보드에 들어간다.

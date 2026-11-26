@@ -1,8 +1,8 @@
 import { supabaseInBrowser } from '../../auth/browser-client';
 import type { SkippableRead } from '../../db-error';
-import { outOfCredits } from './buy-path';
 import { readReadingCredits } from './remaining';
 import { mySaleIsOpen } from './sale';
+import { outOfCredits } from '@/src/lib/reading/panel-chrome';
 
 /**
  * **누를 때 브라우저에서 묻는 둘** — 머리글 펼침 메뉴(`credits-menu.tsx`)와 인연의 궁합 요청 단추(`matching-experience.tsx`)가 쓴다.

@@ -17,7 +17,7 @@ import { useGate } from '@/home/gate';
 import { useAdultCheckGuard } from '@/matching/adult-check';
 import { useMatchClosedGuard, useMatchOpen } from '@/matching/opening';
 import { tabsWhileShut } from '@matching/opening';
-import { TAB_GROUP, appHeadStands, dockStands } from '@app-shell';
+import { TAB_GROUP, appHeadStands, dockStands, pathWithin } from '@app-shell';
 import { WarningNotice } from '@/home/warning-notice';
 import { goTab, useTabHost } from '@/ui/go-tab';
 import { Icon } from '@/ui/icons';
@@ -38,13 +38,11 @@ const TABS = [
   { href: '/me/chat', label: '채팅', icon: 'chat' },
 ] as const;
 
-const within = (pathname: string, base: string) => pathname === base || pathname.startsWith(`${base}/`);
-
 /** 웹의 `isNavigationActive` — 저장한 사람과 보관함 목록은 홈 탭의 길이다 */
 function isActive(pathname: string, href: string): boolean {
-  if (href === '/me') return pathname === '/me' || within(pathname, '/me/people') || pathname === '/me/readings';
+  if (href === '/me') return pathname === '/me' || pathWithin(pathname, '/me/people') || pathname === '/me/readings';
   if (href === '/me/compat') return pathname === '/me/compat';
-  return within(pathname, href);
+  return pathWithin(pathname, href);
 }
 
 /**

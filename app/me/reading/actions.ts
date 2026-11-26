@@ -4,7 +4,7 @@ import { FEEDBACK_UNEXPECTED_NOTE, type LastRun } from '@/src/lib/reading';
 
 import type { ReadingStart } from './pipeline';
 import { beginReading } from './press';
-import { readingPathsOf, type ReadingTarget } from './target';
+import { readingPathsOf } from './target';
 import { lastReadingRun } from './current';
 import { refreshPaths } from '../../refresh';
 import type { SaveResult } from '../../save-result';
@@ -12,6 +12,7 @@ import { supabaseOnServer } from '../../auth/server-client';
 import { userFacingDbMessage } from '../../db-error';
 import { rpcArgs } from '@/src/lib/db';
 import { forgetTasteClaim } from '../../taste/taste-visitor';
+import type { ReadingTarget } from '@/src/lib/reading/target';
 
 /**
  * **사용자가 누른 그 순간에만 도는 문.**

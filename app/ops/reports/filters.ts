@@ -1,5 +1,5 @@
 import { REPORT_REASONS, warningRefOf, type ReportReason } from '@/src/lib/account';
-import { UUID } from '../../uuid';
+import { UUID } from '@/src/lib/uuid';
 import { EVIDENCE_LABEL, REVIEW_LABEL, WARNING_LABEL, reasonLabel } from './labels';
 
 /**

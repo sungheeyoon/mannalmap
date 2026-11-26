@@ -27,10 +27,10 @@ import { Icon } from '../../ui/icons';
 import { CARD_FACE, FLAT_CARD_FACE, PAPER_FACE, SOFT_CARD_FACE, TYPE_NAME } from '../../ui/surfaces';
 
 import { submitReadingFeedback } from './actions';
-import type { ReadingTarget } from './target';
 import { FailureLine } from '../../ui/failure-line';
 import { SectionErrorLine, invalidProps, useSectionErrors } from '../../ui/section-error';
 import { FEEDBACK_FAILED, FEEDBACK_LENGTH_QUESTION, FEEDBACK_MISSING_QUESTION, FEEDBACK_MULTI, FEEDBACK_QUESTION } from '@/src/lib/reading/words';
+import type { ReadingTarget } from '@/src/lib/reading/target';
 
 /**
  * 읽고 나서 답하는 자리 — **글 바로 아래**다.

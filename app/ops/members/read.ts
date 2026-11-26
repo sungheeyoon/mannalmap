@@ -17,8 +17,6 @@ import { deniedAmong, type Denied } from '../denial';
  * 생성 타입은 반환 칸을 전부 `null` 이 아닌 것으로 적는다(`returns table` 의 한계) — 닉네임 칸은 실제로 빈다.
  */
 
-export { DENIED } from '../denial';
-
 /** DB 가 받는 찾는 말의 길이 — 넘으면 `22023` 이라 묻기 전에 거른다 */
 export const QUERY_MAX = 64;
 

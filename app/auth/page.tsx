@@ -1,13 +1,12 @@
 import { redirect } from 'next/navigation';
 
 import { SERVICE_NAME } from '@/src/lib/brand';
-import { SIGN_IN_UNLOCKS } from '@/src/lib/brand/guide';
+import { SIGN_IN_UNLOCKS, SIGNED_OUT_EXIT, SIGNED_OUT_REACH } from '@/src/lib/brand/guide';
 import { SIGN_IN_BUTTON } from '@/src/lib/account/sign-in-buttons';
 
 import { BUTTON_TERTIARY } from '../ui/buttons';
 import { Icon } from '../ui/icons';
 import { NoticeScreen } from '../ui/notice-screen';
-import { SIGNED_OUT_EXIT, SIGNED_OUT_REACH } from '../service-features';
 import { kakaoSignInReady } from './kakao/config';
 import { KakaoSignInButton } from './kakao-sign-in-button';
 import { SignInButton } from './sign-in-button';

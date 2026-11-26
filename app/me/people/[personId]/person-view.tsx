@@ -20,9 +20,9 @@ import { elementScope } from '../../../ui/element-tone';
 import { Icon } from '../../../ui/icons';
 import { StemSymbol } from '../../../ui/stem-symbol';
 import { CARD_FRAME, COLUMN, TILE_FACE, TYPE_SECTION, TYPE_TITLE } from '../../../ui/surfaces';
-import type { ReadingTarget } from '../../reading/target';
 import { DayMasterChip, PillarStrip } from '../chart-bits';
 import { CompatAdd, ReadingInvite, type Partner } from './person-sheets';
+import type { ReadingTarget } from '@/src/lib/reading/target';
 
 /** 궁합 칸의 한 줄 — 상대 이름(내 자리는 닉네임) · 두 사람의 일간 · 점수 · 비유 · 그 궁합으로 가는 주소 */
 export type PersonPair = {

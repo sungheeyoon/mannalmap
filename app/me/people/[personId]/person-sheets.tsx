@@ -30,7 +30,7 @@ import { closeSheet, DetailSheet, openSheet } from '../../../ui/sheet';
 import { StemSymbol } from '../../../ui/stem-symbol';
 import { openPairScreen, pairRelationFor } from '../../compat/actions';
 import { generateReading } from '../../reading/actions';
-import type { ReadingTarget } from '../../reading/target';
+import type { ReadingTarget } from '@/src/lib/reading/target';
 
 /*
   **저장한 사람 화면의 누름 둘 — 그 자리의 시트에서 끝난다**(운영자 승인 2026-11-13, ADR 0249). 「사주풀이 받기」는 같은 단추가 있는

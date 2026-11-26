@@ -12,8 +12,6 @@ import { asPosix, filesUnder } from './ui/source-files';
 
 const KEPT: Readonly<Record<string, { count: number; why: string }>> = {
   'app/error-screen.tsx': { count: 1, why: '화면 전체의 오류 경계 — 화면 안의 줄이 아니다' },
-  /* 주 단추 바로 아래의 오류 한 줄 — 칸과 상관없는 까닭만(칸의 오류는 문단 아래 `SectionErrorLine`, ADR 0252) */
-  'app/ui/form-error.tsx': { count: 1, why: '폼 오류 한 줄 — 단추가 aria-describedby 로 가리킨다' },
   'app/saju-calculator.tsx': {
     count: 1,
     why: '계산이 거절한 입력을 결과 자리에 세우는 카드(고칠 입력을 말한다)',

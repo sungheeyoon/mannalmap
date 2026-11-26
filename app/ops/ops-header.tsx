@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
+import { pathWithin } from '@/src/lib/app-shell';
 import { SERVICE_NAME } from '@/src/lib/brand';
 
 import { Logo } from '../ui/logo';
@@ -39,7 +40,7 @@ export function OpsHeader() {
         <nav aria-label="운영 메뉴" className="min-w-0">
           <ul className="flex items-center gap-1">
             {OPERATOR_LINKS.map((link) => {
-              const active = pathname === link.href || pathname.startsWith(`${link.href}/`);
+              const active = pathWithin(pathname, link.href);
               return (
                 <li key={link.href}>
                   <Link

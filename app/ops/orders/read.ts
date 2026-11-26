@@ -19,8 +19,6 @@ import type { Owner } from './refund-confirm';
  * 여기서 한 번 `null` 로 받아 옮긴다.
  */
 
-export { DENIED } from '../denial';
-
 export type OrderLine = {
   readonly orderId: string;
   /** 가맹점 주문 번호(`rdo_…`) — 산 사람이 환불을 신청하며 알려 주는 번호 */

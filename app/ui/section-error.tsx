@@ -8,7 +8,7 @@ import { reducedMotion } from './motion';
 
 /**
  * **문단 아래 오류 한 줄** — 칸 몇 줄의 묶음(문단) 마지막 줄 아래 · 왼쪽 정렬 · 붉은 작은 굵은 글씨(ADR 0252, 앱은
- * `mobile/src/ui/section-error.tsx`). 글자 모양은 단추 아래 줄(`FormError`)과 같다 — 자리만 문단 아래다.
+ * `mobile/src/ui/section-error.tsx`).
  *
  * 말이 없으면 안 선다 — 빈 자리를 잡아 두지 않는다(카드가 늘 길어지지 않게). 문단 마지막 줄과 8 띄운다(`mt-2`). 줄 사이가 이미
  * 8 인 판(출생 정보 폼의 격자)은 `className` 으로 그 띄움을 걷는다. `id` 를 그 문단의 칸이 `aria-describedby` 로 가리킨다.

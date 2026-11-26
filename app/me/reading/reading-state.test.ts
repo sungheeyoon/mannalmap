@@ -4,6 +4,7 @@ import { type CurrentReading, type LastRun, READING_ALREADY_RUNNING_NOTE, READIN
 
 import { TASTE_LINK_FAILED } from '@/src/lib/reading/taste-visit';
 
+import { previewReading } from './reading-state';
 import {
   afterAsking,
   afterPress,
@@ -12,11 +13,10 @@ import {
   asksOnArrival,
   offersPlainReading,
   initialFlow,
-  previewReading,
   readingFlow,
   READING_MOCK_NOTE,
   type ReadingFlow,
-} from './reading-state';
+} from '@/src/lib/reading/reading-flow';
 
 const preview: CurrentReading = {
   id: 'development-preview',

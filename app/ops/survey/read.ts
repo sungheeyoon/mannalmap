@@ -19,8 +19,6 @@ import { deniedAmong, type Denied } from '../denial';
  * 아래에서 `deniedAmong` 이 머리 문의 이름(`survey.overview`) 한 줄로. 기록에는 설문 답 · 글이 안 들어간다.
  */
 
-export { DENIED } from '../denial';
-
 export type SurveyOverview = {
   /** 들어온 답 */
   readonly answers: number;

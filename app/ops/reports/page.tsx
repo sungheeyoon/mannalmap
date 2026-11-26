@@ -20,10 +20,11 @@ import {
 } from './labels';
 import { FilterPanel } from './filter-panel';
 import { openByReported } from './same-account';
-import { DENIED, operatorReports, type ReportRow } from './read';
+import { operatorReports, type ReportRow } from './read';
 import { CARD } from '../../ui/surfaces';
 import { FailureLine } from '../../ui/failure-line';
 import { backTo, secondFactorGate } from '../second-factor';
+import { DENIED } from '../denial';
 
 export const metadata = {
   title: '신고',

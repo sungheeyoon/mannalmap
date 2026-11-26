@@ -1,8 +1,7 @@
 import type { Metadata } from 'next';
 
 import { SERVICE_NAME, SERVICE_TAGLINE } from '@/src/lib/brand';
-
-import type { ShareKind } from './path';
+import type { ShareKind } from '@/src/lib/reading/share-path';
 
 /** 그림 속 글자는 셋 다 로고 · 이름 · 소개 한 줄이다(G-58 ㉢) — 대체 글도 그것을 말한다 */
 const ALT = `${SERVICE_NAME} — ${SERVICE_TAGLINE}`;

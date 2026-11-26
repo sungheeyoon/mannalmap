@@ -15,8 +15,6 @@ import { deniedAmong, type Denied } from '../denial';
  * (`today.figures`)을 적고, 거절은 아래 `deniedAmong` 이 같은 이름으로 적는다.
  */
 
-export { DENIED } from '../denial';
-
 export type Period = 'today' | 'week';
 
 export type Figures = {

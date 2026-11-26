@@ -14,7 +14,6 @@ import { signedInUser } from '../../auth/signed-in';
 import { redirectToSignIn } from '../../auth/sign-in-redirect';
 import { readingDate } from '@/src/lib/reading/seoul-date';
 import {
-  DENIED,
   operatorSurvey,
   type CommentRow,
   type ServiceCount,
@@ -27,6 +26,7 @@ import {
 import { CARD } from '../../ui/surfaces';
 import { FailureLine } from '../../ui/failure-line';
 import { secondFactorGate } from '../second-factor';
+import { DENIED } from '../denial';
 
 export const metadata = {
   title: '설문 요약',

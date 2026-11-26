@@ -1,7 +1,7 @@
 import type { Element } from '@/src/lib/saju';
 
-import { ELEMENT_ANGLE, SPARE_ANGLES, round2 } from '../../ui/orbit';
 import { supplyOf, type DeckCard } from '@/src/lib/matching/deck-card';
+import { ELEMENT_ANGLE, SPARE_ANGLES, round2 } from '@/src/lib/saju/view/orbit';
 
 /*
   **「내 궤도로 다가오는 인연」이 누구를 어디에 세우는가** — 지도(`orbit-map.tsx`)의 판단을 그림에서 떼어 냈다. 그림은

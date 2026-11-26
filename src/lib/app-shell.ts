@@ -3,6 +3,9 @@
 /** 탭의 첫 화면 넷 — 앱 머리는 여기에만 선다. 그 아래 화면의 맨 위 줄은 `ui/top-bar.tsx` 다 */
 const TAB_FIRST = new Set(['/me', '/me/compat', '/me/matching', '/me/chat']);
 
+/** `base` 그 자리이거나 그 아래인가 — `/me/peoplex` 는 `/me/people` 아래가 아니다. 웹 머리글 · 앱 탭 · 운영 메뉴 · 갱신 갈래가 함께 쓴다 */
+export const pathWithin = (pathname: string, base: string): boolean => pathname === base || pathname.startsWith(`${base}/`);
+
 const trimmed = (pathname: string) => (pathname.length > 1 ? pathname.replace(/\/+$/, '') : pathname);
 
 /** `/me/compat` 은 한 주소가 두 걸음을 든다 — `a` · `b` 가 실리면 고르기의 아래 화면인 결과다 */

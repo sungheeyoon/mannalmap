@@ -5,7 +5,7 @@ import { rpcArgs } from '@/src/lib/db';
 import { supabaseOnServer } from '../../auth/server-client';
 import { userFacingDbMessage } from '../../db-error';
 import { refresh } from '../../refresh';
-import { UUID } from '../../uuid';
+import { UUID } from '@/src/lib/uuid';
 import { noteWriteRefusal } from '../denial';
 import { writeWithoutSecondFactor } from '../second-factor';
 import { GRANT_MAX, NOTE_MAX, isGrantReason, type GrantRequest } from './credit-grant';

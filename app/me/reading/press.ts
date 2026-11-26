@@ -9,7 +9,7 @@ import { linkTasteReadingRun, tasteContinuationOfRun, type TasteLinkAnswer } fro
 import { claimedTaste } from '../../taste/taste-carry';
 import { forgetTasteClaim } from '../../taste/taste-visitor';
 import { openAndSend, type LinkedRun, type ReadingStart } from './pipeline';
-import type { ReadingTarget } from './target';
+import type { ReadingTarget } from '@/src/lib/reading/target';
 
 /**
  * **웹의 누름** — 쿠키가 있는 자리에서만 되는 일을 든다: 쿠키의 사람과, 그 쿠키의 귀속 표로 맛보기를 잇는 일(ADR 0143).

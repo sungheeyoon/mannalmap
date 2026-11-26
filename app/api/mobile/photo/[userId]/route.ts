@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 
-import { UUID } from '@/app/uuid';
+import { UUID } from '@/src/lib/uuid';
 import { photoPositionOf, photoResponse, photoVariantOf } from '@/app/me/photo/photo-response';
 
 import { photoClientOf } from '../../session';

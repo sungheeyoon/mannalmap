@@ -9,27 +9,28 @@ import { generateReading, markReadingReadyRead, readingRunState, skipTasteCarry 
 import { progressSoFar } from '@/src/lib/reading/outline';
 import { panelChrome } from '@/src/lib/reading/panel-chrome';
 import { watchRun, type PageVisibility } from '@/src/lib/reading/watch-run';
-import { markAndAnnounce, newsKeyOf, readNewsWhenSeen } from './news-read';
+import { markAndAnnounce, readNewsWhenSeen } from './news-read';
 import { announceNotificationsUnreadMoved } from '../requests/unread-signal';
 import { skipCarriedTaste, takeTasteArrival } from '../../taste/carried-taste';
+import { previewReading } from './reading-state';
+import type { TasteCarryView } from '../../taste/taste-carry';
+import { announceCreditsMoved } from '../credits/credits-signal';
+import type { ReadingCredits } from '@/src/lib/reading/credits';
 import {
+  newsKeyOf,
   afterAsking,
   afterPress,
   answerOf,
   asksOnArrival,
   offersPlainReading,
   initialFlow,
-  previewReading,
   readingFlow,
   type FlowDecision,
   type PressOutcome,
   type ReadingEvent,
   type RunAnswer,
-} from './reading-state';
-import type { ReadingTarget } from './target';
-import type { TasteCarryView } from '../../taste/taste-carry';
-import { announceCreditsMoved } from '../credits/credits-signal';
-import type { ReadingCredits } from '@/src/lib/reading/credits';
+} from '@/src/lib/reading/reading-flow';
+import type { ReadingTarget } from '@/src/lib/reading/target';
 
 /** 이 탭이 보이는가 — 지켜보는 고리(`watchRun`)가 숨긴 탭에서 쉬게 */
 const documentVisibility: PageVisibility = {
@@ -243,7 +244,6 @@ export function useReadingPanel({
    * 한다 — 그 셋을 손으로 다시 만들면 세 자리가 더 생긴다.
    */
   const [asking, setAsking] = useState(false);
-
 
   const confirmGenerate = () => {
     setAsking(false);

@@ -3,7 +3,7 @@ import { balanceLabelOf } from '@/src/lib/discovery';
 import { suppliedText } from '@/src/lib/consent';
 
 import { supabaseOnServer } from '../../auth/server-client';
-import { UUID } from '../../uuid';
+import { UUID } from '@/src/lib/uuid';
 import { dbFailure, recordDbFailure } from '../../db-error';
 import { photosFromFocus } from '../candidates';
 

@@ -17,7 +17,7 @@ import { callModel } from '../me/reading/model';
 import { selfTasteFingerprint } from './taste-carry';
 import { claimTasteWith, serveTaste, viewTaste } from './taste-run';
 import { browserHmacNow, forgetTasteClaim, markTasteClaimed, tasteSecrets, tasteVisitor } from './taste-visitor';
-import { LOWERCASE_UUID } from '../uuid';
+import { LOWERCASE_UUID } from '@/src/lib/uuid';
 
 /**
  * **첫 화면(`/`)의 누름 — 로그인 전 사주 문단을 받고, 가입한 뒤 그 문단을 내 것으로 붙인다**(ADR 0143).

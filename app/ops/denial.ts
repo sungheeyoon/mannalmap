@@ -1,7 +1,7 @@
 import { rpcArgs } from '@/src/lib/db';
 
 import type { supabaseOnServer } from '../auth/server-client';
-import { UUID } from '../uuid';
+import { UUID } from '@/src/lib/uuid';
 
 /**
  * 운영자 화면의 문이 받은 거절을 접속기록에 적는다 (G-23 ⑩ · ADR 0105).

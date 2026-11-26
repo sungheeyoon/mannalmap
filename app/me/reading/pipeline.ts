@@ -10,12 +10,13 @@ import { NoKeyError, keyedClient } from '../../keyed-client';
 import { failReadingJob } from './fail-job';
 import { GENERATION } from './generation';
 import { submitFrozen, type FrozenJob } from './submit';
-import { readingTargetArgs, type ReadingTarget } from './target';
+import { readingTargetArgs } from './target';
 import { reportRequestError } from '../../request-error';
 import type { TasteRunCarry } from '@/src/lib/reading/continuation';
 import { TASTE_WRONG_RUN_ALERT } from '@/src/lib/reading/taste-visit';
 import { rpcArgs, type Database } from '@/src/lib/db';
 import { refusedForCredits, type OutOfCreditsRefusal } from '../credits/refusal';
+import type { ReadingTarget } from '@/src/lib/reading/target';
 
 /**
  * **결과 생성 요청** — 사용자가 눌렀을 때만 도는 길.

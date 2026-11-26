@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
-import { outOfCredits, saleShapeOf } from './buy-path';
+import { saleShapeOf } from './buy-path';
+import { outOfCredits } from '@/src/lib/reading/panel-chrome';
 
 describe('saleShapeOf', () => {
   it('판매가 닫힌 계정의 풀이권 창은 한 줄과 「확인」이다', () => {
