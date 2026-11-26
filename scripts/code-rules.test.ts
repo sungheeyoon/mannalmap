@@ -1839,22 +1839,13 @@ describe('위임 규약 (docs/agents/delegation.md 색인 → docs/agents/delega
       .flatMap((cells) => [...cells[4].matchAll(/`(Bash\([^`]+\))`/g)].map((match) => match[1]));
   }
 
-  /** 「공식 운영에 들어가면 켜는 잠금」 절의 `Bash(…)` 규칙 — 공식 운영 뒤 `ask` 와 같은 목록 (ADR 0093) */
-  function deferredAskRules(): string[] {
-    const start = permissions.indexOf('\n### 공식 운영에 들어가면 켜는 잠금');
-    expect(start).toBeGreaterThan(-1);
-    const end = permissions.indexOf('\n## ', start + 1);
-    return [...permissions.slice(start, end === -1 ? undefined : end).matchAll(/^- `(Bash\([^`]+\))`$/gm)].map((match) => match[1]);
-  }
-
-  it('권한 표의 등급 3 은 settings 의 ask 와, 등급 4 는 deny 와 정확히 같은 목록이다', () => {
-    const ask = lockedRulesOfTier('3');
+  it('권한 표의 등급 4 는 settings 의 deny 와 정확히 같은 목록이고, ask 는 비어 있다 (ADR 0271)', () => {
     const deny = lockedRulesOfTier('4');
     expect(deny.length).toBeGreaterThan(5);
-    expect([...ask].sort()).toEqual([...(settings.permissions?.ask ?? [])].sort());
     expect([...deny].sort()).toEqual([...(settings.permissions?.deny ?? [])].sort());
-    // 같은 규칙이 두 등급에 서 있으면 어느 쪽이 이기는지 도구가 정한다 — 문서가 그것을 안 든다
-    expect(ask.filter((rule) => deny.includes(rule))).toEqual([]);
+    // `ask` 는 바이패스 모드에서도 창을 띄운다 — 바이패스 세션은 배포도 묻지 않는다(ADR 0271)
+    expect(settings.permissions?.ask ?? []).toEqual([]);
+    expect(lockedRulesOfTier('3')).toEqual([]);
   });
 
   it('권한 표에 「허용」으로 적은 규칙은 settings 의 allow 와 정확히 같은 목록이다', () => {
@@ -1875,27 +1866,6 @@ describe('위임 규약 (docs/agents/delegation.md 색인 → docs/agents/delega
     const names = stagesOfPrd().map((stage) => stage.name);
     expect(names.length).toBeGreaterThan(2);
     expect(names.filter((name) => !(name in TIER_THREE_LOCKED)), '단계 표에 더한다').toEqual([]);
-  });
-
-  it('등급 3 의 잠금은 공개 출시에 켠다 — 그 전에는 ask 가 비어 있고, 그 뒤에는 켤 목록과 같다 (ADR 0093)', () => {
-    const deferred = deferredAskRules();
-    const deny = lockedRulesOfTier('4');
-    const ask = settings.permissions?.ask ?? [];
-    // 2026-11-07 운영자 결정으로 프로덕션 배포 넷만 남겼다 — 배포를 빼면 실패한다 (ADR 0093 「배포만 묻는다」)
-    expect(deferred).toEqual(expect.arrayContaining([
-      'Bash(vercel --prod:*)', 'Bash(npx vercel --prod:*)', 'Bash(vercel deploy:*)', 'Bash(npx vercel deploy:*)',
-    ]));
-    expect(deferred.filter((rule) => deny.includes(rule))).toEqual([]);
-
-    const stages = stagesOfPrd().filter((stage) => stage.current).map((stage) => stage.name);
-    expect(stages, 'PRD §7.0 표의 「(지금)」은 하나다').toHaveLength(1);
-    expect(stages[0] in TIER_THREE_LOCKED, `${stages[0]} 은 모르는 단계다 — 단계 표에 더한다`).toBe(true);
-    if (TIER_THREE_LOCKED[stages[0]]) {
-      expect([...ask].sort(), 'docs/agents/delegation/permissions.md 「공식 운영에 들어가면 켜는 잠금」의 걸음을 밟는다').toEqual([...deferred].sort());
-    } else {
-      // #134 는 켤 목록 전부를 ask 와 등급 3 칸에 함께 넣어 초록이었다 — 단계를 안 옮기고는 못 켠다
-      expect(ask, `지금은 ${stages[0]}다 — 등급 3 은 공개 출시 전까지 묻지 않는다`).toEqual([]);
-    }
   });
 
   /**
