@@ -1229,7 +1229,24 @@ describe('화면 무리 — PRD 화면 파일과 문구 대장이 같은 무리�
     }
   });
 
-  // 색인 「절」 칸이 파일의 절을 다 드는지는 재지 않는다(ADR 0270) — 재는 것은 번호가 두 절을 가리키지 않는가다
+  // 색인 「절」 칸의 차례 · 빠짐없음은 재지 않는다(ADR 0270) — 재는 것은 색인이 부른 번호가 그 파일에 있는가와 번호가 두 절을 가리키지 않는가다
+  it('대장 색인 「절」 칸이 부른 번호는 그 파일에 `## NN` 으로 있다', () => {
+    const rows = [...readFileSync(join(ROOT, LEDGER), 'utf8').matchAll(/^\| [^|]+ \| [^|]+ \| (`docs\/product\/copy-ledger\/[a-z-]+\.md`|이 파일) \| ([^|]+) \|$/gm)];
+    expect(rows.length).toBe(1 + groupsIn(LEDGER_DIR).length);
+    const wrong: string[] = [];
+    let seen = 0;
+    for (const match of rows) {
+      const file = match[1] === '이 파일' ? LEDGER : match[1].slice(1, -1);
+      const inFile = new Set(ledgerSections(file).map((one) => one.no));
+      for (const no of match[2].trim() === '—' ? [] : match[2].trim().split(' · ')) {
+        seen += 1;
+        if (!inFile.has(no)) wrong.push(`${file}: 색인이 부른 ${no} 이 파일에 없다`);
+      }
+    }
+    expect(seen).toBeGreaterThan(30);
+    expect(wrong).toEqual([]);
+  });
+
   it('대장 전체의 번호(`## NN`)는 어느 파일에서나 같은 제목이고 01–47 을 넘지 않는다 — 새 절은 파일 이름을 단 번호다', () => {
     const files = [LEDGER, ...groupsIn(LEDGER_DIR).map((name) => `${LEDGER_DIR}/${name}`)];
     const wrong: string[] = [];
@@ -1530,6 +1547,12 @@ describe('간극 대장 (docs/product/gaps.md, ADR 0089)', () => {
     expect(recordFiles.filter((name) => !memoLinked.has(`G-${name.slice(2, -3)}→${name}`))).toEqual([]);
   });
 
+  // 첫 줄의 꼴은 재지 않는다(ADR 0270) — 기록에서 대장으로 돌아가는 길만 잰다
+  it('기록 파일은 대장으로 돌아가는 링크를 든다', () => {
+    const wrong = recordFiles.filter((name) => !/\]\(\.\.\/\.\.\/gaps\.md(#[^)]*)?\)/.test(readFileSync(join(ROOT, RECORDS_DIR, name), 'utf8')));
+    expect(recordFiles.length).toBeGreaterThan(0);
+    expect(wrong).toEqual([]);
+  });
 });
 
 // -----------------------------------------------------------------------------
@@ -1545,8 +1568,8 @@ describe('역할 문서 (docs/start.md · docs/roles/, ADR 0140)', () => {
     .map((name) => name.replace(/\.md$/, ''));
   /** 사람과 말하는 세션 자신이라 에이전트 정의가 없는 역할 */
   const WITHOUT_AGENT = ['coordinator'];
-  /** 손대기 전에 여는 두 칸 — `AGENTS.md` 와 브리프가 이 이름으로 부른다(ADR 0264). 칸의 차례 · 나머지 칸은 재지 않는다(ADR 0270) */
-  const OPENED_FIRST = ['지킬 것', '먼저 읽는 것'];
+  /** 이름으로 부르는 칸 셋 — `AGENTS.md` · 브리프 · `docs/start.md` · `done.md` · `scripts/pr-body.mjs` 가 이 이름을 쓴다(ADR 0264). 칸의 차례는 재지 않는다(ADR 0270) */
+  const NAMED_COLUMNS = ['지킬 것', '먼저 읽는 것', '끝날 때 고치는 것'];
   /**
    * 한 화면 — 넘으면 원본으로 옮길 것을 옮겨 적고 있다는 뜻이다. 손대기 전에 읽는 머리와 칸 셋만 잰다 — 「닿을 때 여는 것」은
    * 그때 여는 칸이라 세지 않는다(ADR 0254). 그 칸의 줄 꼴과 가리킨 자리는 아래 시험이 그대로 든다
@@ -1576,12 +1599,12 @@ describe('역할 문서 (docs/start.md · docs/roles/, ADR 0140)', () => {
     expect([...new Set(listed)].sort()).toEqual([...roles].sort());
   });
 
-  it('역할 문서마다 「지킬 것」 · 「먼저 읽는 것」이 있고, 「닿을 때 여는 것」 앞까지가 한 화면 안이다', () => {
+  it('역할 문서마다 칸 셋(「지킬 것」 · 「먼저 읽는 것」 · 「끝날 때 고치는 것」)이 있고, 「닿을 때 여는 것」 앞까지가 한 화면 안이다', () => {
     let trimmed = 0;
     for (const role of roles) {
       const text = readFileSync(join(ROLES_DIR, `${role}.md`), 'utf8');
       const headings = [...text.matchAll(/^## (.+)$/gm)].map((match) => match[1].trim());
-      for (const column of OPENED_FIRST) expect(headings, `${role} 「${column}」`).toContain(column);
+      for (const column of NAMED_COLUMNS) expect(headings, `${role} 「${column}」`).toContain(column);
       const screen = screenOf(text);
       expect(Buffer.byteLength(screen), role).toBeLessThanOrEqual(MAX_BYTES);
       if (!headings.includes(ON_DEMAND_SECTION)) continue;
