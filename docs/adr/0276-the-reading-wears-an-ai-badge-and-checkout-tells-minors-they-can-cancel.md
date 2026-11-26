@@ -17,7 +17,7 @@
    - 글이 없는 상태(만드는 중 · 실패 · 빈 화면)에는 서지 않는다 — 표시할 결과물이 없다.
 2. **모델 글 안의 「AI」 · 「인공지능」은 여전히 막는다**(`taste-run.ts` 의 `AI_WORD`). 표시는 글이 아니라 화면 틀이 든다.
 3. **결제 유의사항의 다섯째 줄이 미성년자의 취소 고지다**(전자상거래법 제13조③) — 웹 `app/me/credits/checkout.tsx` · 앱 `mobile/src/credits/store-section.tsx`.
-   글자는 약관 제18조의 첫 문장과 같은 `CHECKOUT_MINOR_NOTE`(`src/lib/reading/notes.ts`)이다. 약관이 그 상수를 부르게 잇는 것은 약관 파일을 고치는 #1300 뒤이고, 그때까지 `src/lib/brand/minor-notice.test.ts` 가 글자가 같은지 잰다.
+   글자는 약관 제18조의 첫 문장과 같은 `CHECKOUT_MINOR_NOTE`(`src/lib/reading/notes.ts`)이고, 약관 제18조(`src/lib/brand/terms.ts` 의 `minorAfter`)도 그 상수로 시작한다 — `src/lib/brand/minor-notice.test.ts` 가 잰다.
 4. **두 줄은 늘 참인 문장이지만 선다** — 「8. 화면 문구 규칙」의 「늘 참인 문장은 적지 않는다」의 예외다. 법이 표시 · 고지를 요구한다.
 
 ## 까닭
