@@ -52,7 +52,8 @@ PR 에 적어 운영자에게 건네고, 묶음 배포 뒤에는 Vercel 의 Read
 ## 훅 — 메인 체크아웃에서 일러 준다
 
 `hooks.PreToolUse` 가 `scripts/checkout-hint.mjs` 를 돈다 — 메인 체크아웃의 파일을 고치거나 거기서 `git commit` 하면 역할 문서와 워크트리를 이르는 한 줄을
-건넨다. 묻지도 막지도 않는다. Claude Code 만 돈다 — 다른 에이전트에게는 `docs/agents/delegation/coordinator.md` 「조율자 세션」의 문장이 전부다.
+건넨다. 연결된 워크트리에서 노드 도구(`npx` · `npm` · `vitest` · `tsc` · `next` · `eslint` · `playwright` · `expo`)를 부르는데 그 자리(앱 폴더면 `mobile/`)에
+`node_modules/.bin` 이 없으면 `docs/agents/delegation/local-env.md` 「로컬 환경의 함정」의 링크 · 복사 한 줄도 건넨다. 묻지도 막지도 않는다. Claude Code 만 돈다 — 다른 에이전트에게는 `docs/agents/delegation/coordinator.md` 「조율자 세션」의 문장이 전부다.
 
 ## 훅 — 압축 뒤에 일러 준다
 
