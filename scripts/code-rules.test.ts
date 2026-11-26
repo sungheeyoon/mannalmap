@@ -2278,7 +2278,9 @@ describe('공개 저장소의 개인정보 (docs/agents/delegation/working.md, A
       const raw = readFileSync(join(ROOT, rel), 'utf8');
       const isBusiness = rel === BUSINESS_CONSTANTS;
       if (isBusiness) expect(raw, '대표전화 줄이 사업자 정보 상수에 있다').toMatch(BUSINESS_PHONE_LINE);
-      const text = isBusiness ? raw.replace(BUSINESS_PHONE_LINE, '') : raw;
+      // 대표전화 줄에서도 휴대폰 꼴만 비킨다 — 같은 줄의 주민번호 꼴은 그대로 잡는다(ADR 0269)
+      const mobile = new RegExp(PERSONAL[1].source, 'g');
+      const text = isBusiness ? raw.replace(BUSINESS_PHONE_LINE, (line) => line.replace(mobile, '')) : raw;
       return PERSONAL.filter((pattern) => pattern.test(text) && !(isBusiness && pattern === PERSONAL[0])).map(
         (pattern) => `${rel} ${pattern}`,
       );
