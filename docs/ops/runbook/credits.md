@@ -132,7 +132,7 @@ npm run db:remote -- --purpose "무상 지급 장부와 예외 몫의 대조" \
 
 **PG 는 하지 않는다 — 판매는 스토어 인앱결제이고 산 몫은 만료되지 않는다(ADR 0212).** PortOne 결제창 · 결제 알림 · 취소 조회 코드는 지웠다(ADR 0212 추기). 장부 · 환불 세 걸음은 제공자에 중립이라 그대로 쓰고, 이 절의 「결제한 곳의 콘솔」은 **Play Console → Order management** 다(Google Play 결제, ADR 0230 — 아래 「Google Play 결제」). 산 몫에 유효기간이 없다는 것은 `notice-v17` 의 약관 제12조②(2026-11-07 게시)가 든다.
 
-**판매는 닫혀 있다**(`reading_sale_is_open()` = false) — 주문이 0건이다. 장부만 먼저 섰다. 잔액은 여전히 센다 — 한도가
+**주문은 서버의 스토어 구매(`grant_store_purchase`)만 세운다** — 웹에는 주문을 여는 문도 판매 스위치도 없다(ADR 0272, `20270124090000`). 잔액은 센다 — 한도가
 `무료 + 예외 + Σ(묶음의 산 수 − 회수한 수)` 로 한 칸 늘었을 뿐이고, 쓰임 장부(`reading_credit_use`)는 **환불 셈의 입력**이다.
 쓴 순서는 무료 → 예외 → 산 때가 이른 묶음이고, 자리를 잡는 순간 트리거가 정한다. 이 순서는 몫의 출처 순이다(G-111 R-9,
 ADR 0191 — 운영 판단). 몫에는 유효기간이 없다 — 산 몫(ADR 0212)도 무료 · 예외 몫(ADR 0235)도. 그래서 소멸일 순 · 「유효기간 임박」
@@ -276,7 +276,7 @@ where o.id = '<order-id>';
 
 begin;
 -- break-glass 대장 번호를 목적에 — 금액(원) · 환불할 회차 · 사유 · 환불 번호
-select public.refund_reading_order('<order-id>', <amount>, <credits>, 'unused', '<pg-refund-id>');
+select public.refund_reading_order('<order-id>', <amount>, <credits>, 'unused', '<refund-id>');
 -- 결과 확인 — refunded_amount 가 <amount> 만큼, refunded_credits 가 <credits> 만큼 늘었으면 commit, 아니면 rollback
 select o.status, o.refunded_amount, b.refunded_credits
 from public.reading_order o join public.reading_bundle b on b.order_id = o.id
@@ -493,6 +493,6 @@ Pub/Sub 구독의 「Unacked messages」가 쌓이면 문이 503 을 주고 있�
 #### 결제 알림 · 결제 이상 알림 (G-23 ⑥ · G-110 ④)
 
 **위 「Google Play 결제」가 이 자리다** — 통지 문(`/api/store/google-play`) · 무효 대조 크론 · 로그 줄과 그때 할 일은 그 절의 「통지 · 크론이 이상하면」.
-PortOne 결제 알림 문(`/api/portone/webhook`)과 그 콘솔 걸음은 지웠다(ADR 0212 추기). DB 의 `report_payment_trouble` 은 남았지만
-Google Play 의 문은 부르지 않는다 — 못 닿은 통지는 503 으로 Pub/Sub 이 다시 보내고, 놓친 무효는 대조 크론이 줍는다(ADR 0230).
+PortOne 결제 알림 문(`/api/portone/webhook`)과 그 콘솔 걸음은 지웠다(ADR 0212 추기). 그 문만 부르던 결제 이상 알림(`report_payment_trouble`)과
+결제 전 취소(`cancel_reading_order`)도 DB 에서 걷었다(ADR 0272) — 못 닿은 통지는 503 으로 Pub/Sub 이 다시 보내고, 놓친 무효는 대조 크론이 줍는다(ADR 0230).
 떠난 사람의 결제 기록은 위 「떠난 사람의 결제 기록」 그대로다 — 스토어가 돌려준 떠난 사람의 결제는 `retention.reading_refund_after_leave` 에 사유 `store` 로 선다.

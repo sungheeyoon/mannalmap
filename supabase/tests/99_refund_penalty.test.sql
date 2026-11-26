@@ -40,17 +40,15 @@ select
 grant select on folks to authenticated, service_role;
 
 insert into public.operator (user_id, note) values ((select op from folks), '시험 — 위약금 환불');
-insert into public.reading_sale_reviewer (user_id, note) values ((select buyer from folks), '시험 — 위약금 환불');
-
 set local role authenticated;
 select pg_temp.acting((select buyer from folks));
 
 create temporary table ord (label text, order_id uuid);
 grant select, insert on ord to authenticated, service_role;
-insert into ord select 'whole', order_id from public.open_reading_order(20, 'portone', 'penalty-whole-0001');
-insert into ord select 'split', order_id from public.open_reading_order(20, 'portone', 'penalty-split-0001');
-insert into ord select 'mixed', order_id from public.open_reading_order(20, 'portone', 'penalty-mixed-0001');
-insert into ord select 'odd', order_id from public.open_reading_order(3, 'portone', 'penalty-odd-00001');
+insert into ord select 'whole', order_id from tests.open_order(20, 'dev', 'penalty-whole-0001');
+insert into ord select 'split', order_id from tests.open_order(20, 'dev', 'penalty-split-0001');
+insert into ord select 'mixed', order_id from tests.open_order(20, 'dev', 'penalty-mixed-0001');
+insert into ord select 'odd', order_id from tests.open_order(3, 'dev', 'penalty-odd-00001');
 
 -- 버림을 보려고 3장 묶음의 결제액을 10,001원으로 둔다 — 파는 가격은 모두 장수로 나누어떨어진다. 소유자 권한으로 트리거를 잠깐 끈다
 reset role;

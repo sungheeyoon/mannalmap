@@ -9,7 +9,7 @@
 --
 -- 문의 `where` 에서 부른 사람 조건을 빼면 4 가, 확정 쓰임을 안 세면 3 이 붉다.
 begin;
-select plan(13);
+select plan(12);
 
 create or replace function pg_temp.acting(uid uuid)
 returns void language plpgsql as $$
@@ -24,18 +24,14 @@ select
   tests.signup('history-other@example.com') as other;
 grant select on folks to authenticated, service_role;
 
--- 판매는 닫혀 있다 — 심사 계정으로 넣어 주문을 연다(ADR 0171)
-insert into public.reading_sale_reviewer (user_id, note)
-values ((select buyer from folks), '시험 — 결제 내역');
-
 set local role authenticated;
 select pg_temp.acting((select buyer from folks));
 
 create temporary table ord (label text, order_id uuid, provider_order_id text);
 grant select, insert on ord to authenticated, service_role;
-insert into ord select 'one', order_id, provider_order_id from public.open_reading_order(1, 'portone', 'history-one-0001');
-insert into ord select 'three', order_id, provider_order_id from public.open_reading_order(3, 'portone', 'history-three-0001');
-insert into ord select 'five', order_id, provider_order_id from public.open_reading_order(5, 'portone', 'history-five-0001');
+insert into ord select 'one', order_id, provider_order_id from tests.open_order(1, 'dev', 'history-one-0001');
+insert into ord select 'three', order_id, provider_order_id from tests.open_order(3, 'dev', 'history-three-0001');
+insert into ord select 'five', order_id, provider_order_id from tests.open_order(5, 'dev', 'history-five-0001');
 
 set local role service_role;
 select is(
@@ -77,12 +73,7 @@ select is(
 select is(
   (select h.provider_order_id from public.my_reading_orders() h where h.bundle_credits = 1),
   (select provider_order_id from ord where label = 'one'),
-  '주문 번호는 결제창 · PG 가 아는 가맹점 주문 번호(rdo_…)다');
--- 웹훅(`app/api/portone/webhook/settle.ts` 의 `orderIdOf`)이 이 모양을 거꾸로 풀어 주문 id 를 찾는다 — 모양을 바꾸면 여기가 붉다
-select is(
-  (select count(*)::int from ord where provider_order_id <> 'rdo_' || replace(order_id::text, '-', '')),
-  0,
-  '주문 번호는 rdo_ 와 주문 id 의 하이픈 뺀 소문자 32자다 — 웹훅이 거꾸로 푼다');
+  '주문 번호는 장부의 가맹점 주문 번호(rdo_…)다');
 select ok(
   (select bool_and(h.paid_at is not null) from public.my_reading_orders() h),
   '결제 시각이 선다');
