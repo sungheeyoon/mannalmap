@@ -201,7 +201,12 @@ export function missingModulesOf(input) {
   return null;
 }
 
-/** PreToolUse 의 답 — 권한 결정 없이 일러 줄 줄만. 안 걸리면 아무것도 안 찍는다 */
+/**
+ * PreToolUse 의 답 — 권한 결정 없이 일러 줄 줄만. 안 걸리면 아무것도 안 찍는다
+ *
+ * @param {boolean} touches 메인 체크아웃에 쓰는 호출인가
+ * @param {string | null} [modules] 워크트리에 `node_modules` 가 없을 때의 한 줄(`missingModulesOf`)
+ */
 export function responseOf(touches, modules = null) {
   const lines = [touches ? REMINDER : null, modules].filter((line) => typeof line === 'string' && line !== '');
   return lines.length > 0
