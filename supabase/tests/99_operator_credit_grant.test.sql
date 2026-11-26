@@ -52,12 +52,11 @@ $$;
 grant execute on function pg_temp.extra(uuid) to authenticated;
 
 -- 산 묶음 하나(3장) — 4 에서 회수가 유료 잔액을 안 건드리는지 본다
-insert into public.reading_sale_reviewer (user_id, note) values ((select member from folks), '시험 — 무상 지급');
 set local role authenticated;
 select pg_temp.acting((select member from folks));
 create temporary table ord (order_id uuid);
 grant select, insert on ord to authenticated, service_role;
-insert into ord select order_id from public.open_reading_order(3, 'portone', 'grant-bundle-0001');
+insert into ord select order_id from tests.open_order(3, 'dev', 'grant-bundle-0001');
 set local role service_role;
 select public.approve_reading_order((select order_id from ord), 'tx-grant-1', 12900, 'whk-grant-1');
 reset role;

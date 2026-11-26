@@ -374,6 +374,41 @@ $$;
 -- 종료일(`tests.beta_ends_on`)과 같은 까닭이다. 닫힌 동안은 `99_match_waits_closed` 가 스스로 닫아 잰다.
 update public.match_open_switch set open = true, changed_at = now() where not open;
 
+/**
+ * 대기 주문 하나 — **부른 사람(`auth.uid()`)의 것으로.** 돌려주는 것은 주문 id · 가맹점 주문 번호(`rdo_…`) · 금액(가격표).
+ *
+ * 운영에서 주문을 세우는 것은 서버의 스토어 구매(`grant_store_purchase`) 하나다(ADR 0272) — 그 문은 지급까지 한 번에 하고 Play 의
+ * 토큰을 받는다. 시험이 재려는 것은 대개 그 뒤(승인 · 환불 · 셈)라 대기 주문만 세우고 승인은 `approve_reading_order` 로 따로 부른다.
+ * 꼴은 `grant_store_purchase` 가 넣는 줄과 같다. 같은 열쇠면 같은 주문이다.
+ */
+create or replace function tests.open_order(p_bundle_credits integer, p_provider text, p_idempotency_key text)
+returns table (order_id uuid, provider_order_id text, amount integer)
+language plpgsql
+volatile
+security definer
+as $$
+#variable_conflict use_column
+declare
+  actor uuid := (select auth.uid());
+  opened public.reading_order;
+begin
+  insert into public.reading_order (
+    id, user_id, bundle_credits, amount, provider, provider_order_id, idempotency_key)
+  select g.id, actor, p_bundle_credits, public.reading_bundle_price(p_bundle_credits), p_provider,
+         'rdo_' || replace(g.id::text, '-', ''), p_idempotency_key
+  from (select gen_random_uuid() as id) g
+  on conflict (user_id, idempotency_key) do nothing
+  returning * into opened;
+
+  if not found then
+    select * into opened from public.reading_order o
+    where o.user_id = actor and o.idempotency_key = p_idempotency_key;
+  end if;
+
+  return query select opened.id, opened.provider_order_id, opened.amount;
+end;
+$$;
+
 -- 시험은 역할을 `authenticated` 로 바꾼 채로 이 손잡이들을 부른다.
 grant usage on schema tests to authenticated;
 grant execute on all functions in schema tests to authenticated;

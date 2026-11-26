@@ -42,14 +42,12 @@ grant execute on function pg_temp.lines(uuid) to authenticated, service_role, an
 
 -- ── 준비 — 산 묶음 둘(1회 · 3회, 3회에서 하나를 돌려줌), 쓴 것 · 죽은 예약 · 무료 쓰임 ───────
 
-insert into public.reading_sale_reviewer (user_id, note) values ((select member from folks), '시험 — 회원 찾기');
-
 set local role authenticated;
 select pg_temp.acting((select member from folks));
 create temporary table ord (label text, order_id uuid);
 grant select, insert on ord to authenticated, service_role;
-insert into ord select 'one', order_id from public.open_reading_order(1, 'portone', 'member-one-0001');
-insert into ord select 'three', order_id from public.open_reading_order(3, 'portone', 'member-three-0001');
+insert into ord select 'one', order_id from tests.open_order(1, 'dev', 'member-one-0001');
+insert into ord select 'three', order_id from tests.open_order(3, 'dev', 'member-three-0001');
 
 set local role service_role;
 select public.approve_reading_order((select order_id from ord where label = 'one'), 'tx-member-1', 4900, 'whk-member-1');

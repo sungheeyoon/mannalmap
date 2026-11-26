@@ -7,7 +7,7 @@
  *
  *   1. **반출이 늦게 커밋된 줄을 건너뛰지 않는다** — 낮은 번호를 받고 커밋이 늦은 줄이 있는 동안 반출은 그
  *      커밋을 기다리고, 기다린 뒤 두 줄을 함께 가져간다. 번호는 문장 트리거가 자물쇠를 쥔 **뒤에** 받는다
- *   2. **같은 열쇠로 동시에 연 주문은 하나다** — 뒤 세션이 `unique_violation` 대신 같은 주문을 받는다
+ *   2. **같은 토큰으로 동시에 온 스토어 구매는 하나다** — 뒤 세션이 `unique_violation` 대신 앞의 주문을 재시도로 받는다(`grant_store_purchase`)
  *   3. **거절 기록 한 시간 서른 줄은 동시에 불러도 서른이다**
  *   4. **두 반출 실행이 나란히 시작하면 하나만 돈다** — 뒤는 「도는 중」(`20261014090000`)
  *   5. **CLI 질의 하나의 결과는 두 세션이 나란히 적어도 한 줄이다** — 같은 결과면 뒤는 앞 줄의 번호를, 다른 결과면
@@ -27,7 +27,7 @@
  *      순으로 트랜잭션 자물쇠를 잡고 전체 하루 줄은 `for update` 로 잡는다
  *
  * 남는 것 — 접속기록 표는 추가만 되므로 이 검사가 적은 줄(무작위 actor, 1 · 3 · CLI 질의와 결과, 5)과 반출 시도
- * 둘(4, 「설정 없음」으로 끝낸다)은 로컬 DB 에 남는다. 주문을 연 계정은 끝에 지운다. 판매 스위치는 2 동안만 켜고 `finally` 에서 끈다.
+ * 둘(4, 「설정 없음」으로 끝낸다)은 로컬 DB 에 남는다. 2 의 계정은 끝에 지운다 — 그 결제는 떠난 사람의 결제 기록(`retention.reading_payment`)으로 로컬 DB 에 남는다.
  * 6 의 계정과 신고는 끝에 지우고, 안내번호 대장의 두 줄은 남는다 — 한 번 쓴 번호는 다시 안 쓰는 것이 그 대장의 뜻이다.
  * 7 의 두 계정은 끝에 지운다(덱 · 노출 기록이 FK 를 따라간다). 일정이 하나도 없던 DB 면 7 이 세운 일정 한 줄은 남는다.
  * 8 은 만든 세션 · artifact · 한도 사건을 지우고, 전체 하루 줄을 처음 값으로, 낮춘 상한을 2,000 으로 되돌리고, 그날의 맛보기
@@ -99,11 +99,11 @@ const accessRow = (actor, outcome = 'allowed') => `
   check('쓰는 세션은 반출이 끝날 때까지 섰다', writer.ms >= 1000, `${writer.ms}ms`);
 }
 
-// ── 2. 같은 열쇠의 주문 둘 ──────────────────────────────────────────────────────
+// ── 2. 같은 토큰의 스토어 구매 둘 ───────────────────────────────────────────────
 
 {
   /*
-    **일정을 스스로 세운다.** 주문을 여는 문은 활성 계정만 받고, 종료일이 지난 일정 아래서는
+    **일정을 스스로 세운다.** 지급 문은 활성 계정에게만 지급하고, 종료일이 지난 일정 아래서는
     아무도 활성이 아니다. 운영의 종료일(마이그레이션이 넣은 줄)에 기대면 그날이 지나는 순간
     이 경합과 상관없는 자리에서 넘어진다 — 다른 흐름 검사와 같은 손잡이를 쓴다.
   */
@@ -111,29 +111,27 @@ const accessRow = (actor, outcome = 'allowed') => `
   const buyer = sql(`insert into auth.users (instance_id, id, aud, role, email, created_at, updated_at)
     values ('00000000-0000-0000-0000-000000000000', gen_random_uuid(), 'authenticated', 'authenticated',
             'race-${Date.now()}@example.com', now(), now()) returning id`);
-  const open = (at, tail = '') =>
-    session(at, `begin; ${asUser(buyer)}
-      select 'ORDER=' || order_id from public.open_reading_order(3, 'dev', 'race-order-key-0001');
+  const token = `race-token-${Date.now()}`;
+  const grant = (at, tail = '') =>
+    session(at, `begin; set local role service_role;
+      select 'GRANT=' || outcome || ':' || order_id from public.grant_store_purchase(
+        '${buyer}', 'google_play', 'reading_credits_3', '${token}', 'GPA.race-0001', now(), true);
       ${tail} commit;`);
 
-  sql(`create or replace function public.reading_sale_is_open()
-       returns boolean language sql immutable set search_path = '' as $$ select true $$`);
   try {
-    const [first, second] = await Promise.all([open(0, 'select pg_sleep(2);'), open(600)]);
+    const [first, second] = await Promise.all([grant(0, 'select pg_sleep(2);'), grant(600)]);
+    const [firstOutcome, firstOrder] = (marked(first, 'GRANT') ?? '').split(':');
+    const [secondOutcome, secondOrder] = (marked(second, 'GRANT') ?? '').split(':');
 
-    check('앞 주문은 열린다', first.code === 0 && marked(first, 'ORDER') !== null, first.err.trim());
-    check('같은 열쇠로 동시에 연 뒤 세션도 넘어지지 않는다 — unique_violation 이 아니다',
-      second.code === 0, second.err.trim());
-    check('둘은 같은 주문을 받는다', marked(first, 'ORDER') === marked(second, 'ORDER'),
-      `${marked(first, 'ORDER')} · ${marked(second, 'ORDER')}`);
+    check('앞 구매는 지급된다', first.code === 0 && firstOutcome === 'granted', first.err.trim() || marked(first, 'GRANT'));
+    check('같은 토큰으로 동시에 온 뒤 세션도 넘어지지 않고 재시도로 읽힌다 — unique_violation 이 아니다',
+      second.code === 0 && secondOutcome === 'replayed', second.err.trim() || marked(second, 'GRANT'));
+    check('둘은 같은 주문을 받는다', firstOrder !== undefined && firstOrder === secondOrder, `${firstOrder} · ${secondOrder}`);
     check('주문은 하나다',
       sql(`select count(*) from public.reading_order where user_id = '${buyer}'`) === '1');
   } finally {
-    sql(`create or replace function public.reading_sale_is_open()
-         returns boolean language sql immutable set search_path = '' as $$ select false $$`);
     sql(`delete from auth.users where id = '${buyer}'`);
   }
-  check('판매 스위치는 다시 꺼졌다', sql('select public.reading_sale_is_open()') === 'f');
 }
 
 // ── 3. 거절 기록의 한도 ─────────────────────────────────────────────────────────

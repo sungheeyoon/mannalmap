@@ -14,7 +14,7 @@
 -- `set_person_listed` 는 막았다(`20261110090000`). 옛 사진 문 `set_my_photo` 는 `20261115090000` 이 걷었다. 열린 둘은 아래 목록에 `OK` 로 적는다 — 누가 닫으면 붉어진다.
 -- 2026-11-08 에 지우기만 하는 둘(`remove_my_photo` · `clear_my_intro`)을 열었다(ADR 0244) — 처리방침의 「프로필 화면에서 삭제」가 정지된 사람에게도 참이도록.
 begin;
-select plan(60);
+select plan(59);
 
 create or replace function pg_temp.summary(i integer)
 returns jsonb
@@ -194,8 +194,6 @@ from (values
                             '42501 new row violates row-level security policy for table "pair_relation"', 'invoker — 정책이 막는다'),
   ('start_reading_run',     $$select * from public.start_reading_run('self', 'susp-run-0002')$$,
                             '23514 결과를 만들 수 있는 대상이 아닙니다.', '풀이의 범위가 활성 계정만 낸다'),
-  ('open_reading_order',    $$select * from public.open_reading_order(10, 'portone', 'susp-order-0001')$$,
-                            '55000 reading_order: the sale is closed', '판매가 닫힌 판정이 먼저 선다 — 판매가 열리면 정지 판정(42501)이 선다'),
 
   -- 막히지 않되 아무것도 안 쓴다
   ('mark_notifications_read', $$select public.mark_notifications_read()$$, 'OK', '보이는 알림(`visible_notifications`)이 활성 계정만 낸다 — 0 을 고친다'),

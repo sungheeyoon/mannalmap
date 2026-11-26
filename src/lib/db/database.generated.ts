@@ -2164,32 +2164,6 @@ export type Database = {
           },
         ]
       }
-      reading_sale_reviewer: {
-        Row: {
-          added_at: string
-          note: string
-          user_id: string
-        }
-        Insert: {
-          added_at?: string
-          note: string
-          user_id: string
-        }
-        Update: {
-          added_at?: string
-          note?: string
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "reading_sale_reviewer_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: true
-            referencedRelation: "app_user"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       reading_share: {
         Row: {
           body: string
@@ -3252,10 +3226,6 @@ export type Database = {
         }[]
       }
       cancel_match_request: { Args: { p_request_id: string }; Returns: string }
-      cancel_reading_order: {
-        Args: { p_order_id: string; p_reason: string }
-        Returns: string
-      }
       change_account_status: {
         Args: {
           p_actor: string
@@ -4015,14 +3985,6 @@ export type Database = {
           used: number
         }[]
       }
-      my_reading_order: {
-        Args: { p_order_id: string }
-        Returns: {
-          amount: number
-          bundle_credits: number
-          status: string
-        }[]
-      }
       my_reading_orders: {
         Args: never
         Returns: {
@@ -4035,7 +3997,6 @@ export type Database = {
           status: string
         }[]
       }
-      my_reading_sale_is_open: { Args: never; Returns: boolean }
       my_readings: {
         Args: never
         Returns: {
@@ -4187,18 +4148,6 @@ export type Database = {
           resendable: boolean
           response_id: string
           run_id: string
-        }[]
-      }
-      open_reading_order: {
-        Args: {
-          p_bundle_credits: number
-          p_idempotency_key: string
-          p_provider: string
-        }
-        Returns: {
-          amount: number
-          order_id: string
-          provider_order_id: string
         }[]
       }
       operator_audit_export_status: {
@@ -4791,8 +4740,6 @@ export type Database = {
         }[]
       }
       reading_run_timeout: { Args: never; Returns: string }
-      reading_sale_is_open: { Args: never; Returns: boolean }
-      reading_sale_is_open_for: { Args: { p_user: string }; Returns: boolean }
       reading_scope: {
         Args: {
           p_kind: string
@@ -4904,10 +4851,6 @@ export type Database = {
         Returns: boolean
       }
       report_is_overdue: { Args: { p_created_at: string }; Returns: boolean }
-      report_payment_trouble: {
-        Args: { p_kind: string; p_payment_id: string; p_reason: string }
-        Returns: boolean
-      }
       report_request_error: {
         Args: { p_digest: string; p_kind: string; p_route: string }
         Returns: boolean
