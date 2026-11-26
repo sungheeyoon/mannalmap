@@ -42,10 +42,12 @@ export const TERMS_EFFECTIVE_DATE: string | null = '2026-11-07';
 export const TERMS_REVISED_ON: string | null = '2026-12-04';
 
 /**
- * 같은 판에서 **불리한 변경**으로 가른 두 조항(제4조② · 제23조② — 전자우편을 보낼 수 없으면 서비스 안 알림으로 갈음한다)의 시행일. 제4조② 의
- * 30일 전 공지라 **공지가 서는 묶음 배포일 + 30일 이상**이다 — 배포가 늦으면 `TERMS_REVISED_ON` 과 함께 옮긴다(ADR 0275)
+ * 같은 판에서 **불리한 변경**으로 가른 조항의 시행일 — 제4조② · 제23조②(전자우편을 보낼 수 없으면 서비스 안 알림으로 갈음한다, ADR 0275),
+ * 제6조③(만들어진 풀이에 표시한다는 약속을 거두고 생성 사실만 알린다, ADR 0277), 제18조② · ③(미성년자가 취소할 수 없는 경우, ADR 0278). 제4조② 의 「시행일 30일 전부터」 공지라 **공지가 서는 묶음 배포일부터 민법식
+ * (제157조 · 제159조)으로 거꾸로 세어 30일이 차야 한다** — 12-27 시행이면 11-26 까지 공지해야 해서 11-27 게시로는 하루 모자라 12-29 로 옮겼다(ADR 0277).
+ * 11-26 공지로 12-27 이라 알린 제4조② · 제23조② 도 함께 늦어진다 — 불리한 변경을 늦추는 것이다. 배포가 늦으면 `TERMS_REVISED_ON` 과 함께 옮긴다
  */
-export const TERMS_REVISED_LATER_ON = '2026-12-27';
+export const TERMS_REVISED_LATER_ON = '2026-12-29';
 
 /**
  * 개정의 차례 — 부칙이 판마다 한 줄씩 든다. 앞 판(ADR 0235)은 공지 받을 이용자가 없어(운영자 확인 2026-11-07) 공지 없이 배포일에 시행했다.
@@ -55,8 +57,8 @@ const TERMS_REVISIONS: readonly { readonly articles: string; readonly on: string
   { articles: '제13조⑥ · 제14조④', on: '2026-11-07' },
   ...(TERMS_REVISED_ON
     ? [
-        { articles: '제10조 · 제16조③ · 제18조 · 제25조① · 제30조②', on: TERMS_REVISED_ON },
-        { articles: '제4조② · 제23조②', on: TERMS_REVISED_LATER_ON },
+        { articles: '제10조 · 제16조③ · 제18조① · 제25조① · 제30조②', on: TERMS_REVISED_ON },
+        { articles: '제4조② · 제6조③ · 제18조② · 제18조③ · 제23조②', on: TERMS_REVISED_LATER_ON },
       ]
     : []),
 ];
@@ -89,6 +91,26 @@ const RIGHTS_BEFORE =
   '풀이 글 · 화면 · 계산 방법에 대한 권리는 회사에 있습니다. 이용자는 자기 풀이를 개인적으로 보고 링크로 보낼 수 있으며, 영리 목적으로 다시 팔거나 배포할 수 없습니다.';
 const RIGHTS_AFTER =
   '회사가 만든 화면 · 문구의 권리는 회사에 있습니다. 풀이 글은 이 약관이 정한 범위(개인적으로 보기 · 링크로 보내기)에서만 쓸 수 있으며, 영리 목적으로 다시 팔거나 배포할 수 없습니다.';
+/*
+  ADR 0278 — 미성년자가 취소할 수 없는 경우와 그 판단(운영자 결정, 카카오페이지 유료약관 제6조 꼴). 취소를 좁히는 변경이라 불리한 쪽(30일 전 공지)이다.
+  제18조① 은 ADR 0275 의 글(`minorAfter`) 그대로이고 결제 유의사항(`CHECKOUT_MINOR_NOTE`)으로 시작한다. 근거는 `docs/legal/terms-grounds.md` 「미성년자의 결제 취소」.
+*/
+const MINOR_EXCEPTIONS_LEAD = '다음 어느 하나에 해당하면 제1항의 취소를 할 수 없습니다.';
+const MINOR_EXCEPTIONS: readonly string[] = [
+  '법정대리인이 그 결제에 동의한 경우(명시적으로 동의하지 않았더라도 동의한 것으로 볼 수 있는 경우를 포함합니다)',
+  '법정대리인이 범위를 정하여 처분을 허락한 재산(용돈 등)으로 그 범위 안에서 결제한 경우',
+  '성년자의 계정이나 개인정보를 도용하거나, 성년자의 결제수단을 그 사람의 동의 없이 써서 결제한 경우',
+  '속임수를 써서 회사가 성년자로 믿게 하거나 법정대리인의 동의가 있는 것으로 믿게 한 경우',
+];
+const MINOR_JUDGEMENT =
+  '회사는 결제 기록 · 결제수단의 명의 등으로 제1항 · 제2항에 해당하는지 판단하며, 미성년자 또는 법정대리인임을 증명하는 서류를 요청할 수 있습니다. 제2항에 해당하면 이미 쓴 풀이권 몫은 취소하지 않고, 남은 풀이권은 제15조 · 제16조에 따라 환불합니다.';
+
+/*
+  ADR 0277 — 화면의 「AI 풀이」 딱지를 걷어(운영자 결정) 결과물 표시의 약속을 거두고 생성 사실의 고지만 남긴다. 화면 표시를 덜 하는
+  변경이라 불리한 쪽(30일 전 공지)이다. 근거는 `docs/legal/terms-grounds.md` 「생성형 인공지능의 고지 · 표시」.
+*/
+const AI_NOTICE_BEFORE = '회사는 풀이 글을 생성형 인공지능으로 만든다는 사실을 이용 전에 알리고, 만들어진 풀이에 그 사실을 표시합니다.';
+const AI_NOTICE_AFTER = '풀이 글은 생성형 인공지능이 만듭니다. 회사는 이 사실을 이용 전에 이 약관으로 알립니다.';
 const DISPUTE_BEFORE =
   '협의로 해결되지 않으면 회사 또는 이용자는 「콘텐츠산업진흥법」에 따른 콘텐츠분쟁조정위원회, 「소비자기본법」에 따른 소비자분쟁조정위원회, 「전자문서 및 전자거래 기본법」에 따른 전자문서 · 전자거래분쟁조정위원회 등에 조정을 신청할 수 있습니다.';
 const DISPUTE_AFTER =
@@ -118,19 +140,22 @@ export function termsFor(info: BusinessInfo, site: string): LegalDocument {
                   title: `${TERMS_REVISED_ON} · ${TERMS_REVISED_LATER_ON} 시행 개정`,
                   blocks: [
                     para(
-                      '이 약관의 일곱 조항을 고칩니다. 인공지능이 쓴 풀이 글의 권리를 법의 해석에 맞추고, 약관 변경을 거절한 해지와 미성년자의 결제 취소 때 돌려받는 것을 분명히 하고, 조정을 신청할 수 있는 곳에 한국저작권위원회를 더하고, 전자우편이 없거나 보낼 수 없는 계정에는 서비스 안 알림으로 알리도록 통지 방법을 정하려는 것입니다.',
+                      '이 약관의 여덟 조항을 고칩니다. 인공지능이 쓴 풀이 글의 권리를 법의 해석에 맞추고, 약관 변경을 거절한 해지와 미성년자의 결제 취소 때 돌려받는 것을 분명히 하고, 미성년자가 결제를 취소할 수 없는 경우와 그 판단 방법을 정하고, 조정을 신청할 수 있는 곳에 한국저작권위원회를 더하고, 전자우편이 없거나 보낼 수 없는 계정에는 서비스 안 알림으로 알리도록 통지 방법을 정하고, 풀이 글을 생성형 인공지능이 만든다는 사실을 약관으로 알리고 풀이 화면에는 따로 표시하지 않으려는 것입니다.',
                     ),
                     para(
-                      `제10조 · 제16조③ · 제18조 · 제25조① · 제30조②는 ${TERMS_REVISED_ON}부터 시행합니다. 제4조② · 제23조②는 전자우편을 보낼 수 없을 때 서비스 안 알림으로 갈음하는 것이어서 이용자에게 불리할 수 있는 변경으로 보고 ${TERMS_REVISED_LATER_ON}부터 시행합니다(시행 30일 전 공지).`,
+                      `제10조 · 제16조③ · 제18조① · 제25조① · 제30조②는 ${TERMS_REVISED_ON}부터 시행합니다. 제4조② · 제23조②는 전자우편을 보낼 수 없을 때 서비스 안 알림으로 갈음하는 것이고, 제6조③은 풀이 화면에 인공지능이 만든 글이라는 표시를 따로 하지 않는 것이며, 제18조② · ③은 미성년자가 결제를 취소할 수 없는 경우를 정하는 것이어서 이용자에게 불리할 수 있는 변경으로 보고 ${TERMS_REVISED_LATER_ON}부터 시행합니다(시행 30일 전 공지).`,
                     ),
                     {
                       kind: 'table' as const,
                       table: table(
                         ['조항', '이전', '이후', '시행일'],
                         ['제4조②', AMEND_NOTICE_BEFORE, AMEND_NOTICE_AFTER, TERMS_REVISED_LATER_ON],
+                        ['제6조③', AI_NOTICE_BEFORE, AI_NOTICE_AFTER, TERMS_REVISED_LATER_ON],
                         ['제10조', PERSONAL_NOTICE_BEFORE, PERSONAL_NOTICE_AFTER, TERMS_REVISED_ON],
                         ['제16조③', FEE_BEFORE, FEE_AFTER, TERMS_REVISED_ON],
-                        ['제18조', MINOR_BEFORE, minorAfter(contact), TERMS_REVISED_ON],
+                        ['제18조①', MINOR_BEFORE, minorAfter(contact), TERMS_REVISED_ON],
+                        ['제18조②', '(신설)', `${MINOR_EXCEPTIONS_LEAD} ${MINOR_EXCEPTIONS.join(' / ')}`, TERMS_REVISED_LATER_ON],
+                        ['제18조③', '(신설)', MINOR_JUDGEMENT, TERMS_REVISED_LATER_ON],
                         ['제23조②', SANCTION_NOTICE_BEFORE, SANCTION_NOTICE_AFTER, TERMS_REVISED_LATER_ON],
                         ['제25조①', RIGHTS_BEFORE, RIGHTS_AFTER, TERMS_REVISED_ON],
                         ['제30조②', DISPUTE_BEFORE, DISPUTE_AFTER, TERMS_REVISED_ON],
@@ -225,7 +250,7 @@ export function termsFor(info: BusinessInfo, site: string): LegalDocument {
                   ],
                 },
                 '사주풀이와 궁합풀이는 명리 이론에 따른 계산 결과를 인공지능이 글로 옮긴 오락 · 참고용 콘텐츠입니다. 과학적 사실이나 미래에 대한 보증이 아니며, 건강 · 법률 · 투자 · 진로 · 혼인 등 중요한 결정의 근거가 될 수 없습니다.',
-                '회사는 풀이 글을 생성형 인공지능으로 만든다는 사실을 이용 전에 알리고, 만들어진 풀이에 그 사실을 표시합니다.',
+                AI_NOTICE_AFTER,
                 '풀이 글은 같은 입력으로 다시 만들어도 문장이 달라질 수 있습니다. 명식과 점수는 같은 입력에서 같게 계산됩니다.',
               ),
             ],
@@ -404,9 +429,7 @@ export function termsFor(info: BusinessInfo, site: string): LegalDocument {
           },
           {
             title: '제18조(미성년자)',
-            blocks: [
-              para(minorAfter(contact)),
-            ],
+            blocks: [numbered(minorAfter(contact), { text: MINOR_EXCEPTIONS_LEAD, bullets: MINOR_EXCEPTIONS }, MINOR_JUDGEMENT)],
           },
         ],
       },

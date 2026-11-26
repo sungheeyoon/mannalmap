@@ -256,8 +256,8 @@
 | 헬로우봇 | 「사주를 처음 접하는 사람도 이해하기 쉽게 풀이」 · 「200개 이상 사주, 타로 평생 무료 제공」 | [App Store](https://apps.apple.com/kr/app/id1294957719) | 2026-11-02 | B | 11-02 노트 §2 |
 | 점신 | 용어 설명 「세운(世運): 해마다 바뀌는 간지가 …」 · 「지지 속에 숨은 천간의 힘」 · 궁위 표 「일주 — 나 자신 …」 | [웹](https://www.jeomsin.co.kr/) | 2026-11-07 | — | first-05 · compat-01 |
 | Apple 지원 (해외) | 문서 끝 「도움이 되었습니까?」 한 줄 — 접힌 풀이 의견의 가장 가까운 사례 | [지원](https://support.apple.com/ko-kr/105071) | 2026-10-26 | — | home-08 |
-| 네이버 검색 | 생성형 답의 머리 표시 「AI 브리핑」(아이콘 + 글자) · 펼친 끝 「AI 답변으로 정확하지 않은 정보가 포함될 수 있어요.」 — 390 · 1280 둘 다 머리 왼쪽 | [검색](https://m.search.naver.com/search.naver?query=%EC%82%AC%EC%A3%BC%20%EC%98%A4%ED%96%89%EC%9D%B4%EB%9E%80) | 2026-11-26 | A | home-20 · first-09 · ADR 0276 |
-| 줌 검색 | 생성형 답의 머리 딱지 「AI 1초 요약」 · 끝 「AI 답변으로 부정확한 정보가 포함될 수 있습니다.」 | [검색](https://m.search.zum.com/search.zum?query=%EC%82%AC%EC%A3%BC%20%EC%98%A4%ED%96%89) | 2026-11-26 | A | home-20 · first-09 · ADR 0276 |
+| 네이버 검색 | 생성형 답의 머리 표시 「AI 브리핑」(아이콘 + 글자) · 펼친 끝 「AI 답변으로 정확하지 않은 정보가 포함될 수 있어요.」 — 390 · 1280 둘 다 머리 왼쪽 | [검색](https://m.search.naver.com/search.naver?query=%EC%82%AC%EC%A3%BC%20%EC%98%A4%ED%96%89%EC%9D%B4%EB%9E%80) | 2026-11-26 | A | home-20 · first-09 · ADR 0276(딱지는 걷었다 — ADR 0277) |
+| 줌 검색 | 생성형 답의 머리 딱지 「AI 1초 요약」 · 끝 「AI 답변으로 부정확한 정보가 포함될 수 있습니다.」 | [검색](https://m.search.zum.com/search.zum?query=%EC%82%AC%EC%A3%BC%20%EC%98%A4%ED%96%89) | 2026-11-26 | A | home-20 · first-09 · ADR 0276(딱지는 걷었다 — ADR 0277) |
 | 헬로우봇 | 「AI가 생성한 이미지는 1년간 유효하니 미리 다운받아주세요.」 — 화면은 못 봤다 | [문구 파일](https://hellobot.co/assets/i18n/ko.json) | 2026-11-26 | B′ | home-20 |
 
 ### 호칭 · 표기

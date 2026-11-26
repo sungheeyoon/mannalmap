@@ -17,7 +17,6 @@ import { tasteDraftOf } from './taste-draft';
 import { SignInCarrying } from '../sign-in-carrying';
 import motion from './taste.module.css';
 import { BUTTON_PRIMARY_WOOD, BUTTON_TERTIARY_FACE } from '../ui/buttons';
-import { AiBadge } from '../ui/ai-badge';
 import { Icon } from '../ui/icons';
 import { reducedMotion } from '../ui/motion';
 import { CARD, FLAT_CARD_FACE, TYPE_META, TYPE_NAME } from '../ui/surfaces';
@@ -276,10 +275,6 @@ function FirstSection({ first, preview, onRetry }: { first: TasteFirstSection; p
     const paragraphs = paragraphsOf(preview);
     return (
       <div className="mt-2 flex flex-col gap-3">
-        {/* 글 위에 「AI 풀이」 딱지(ADR 0276) — 글 안의 「AI」는 검사가 막고(`taste-run.ts`), 표시는 화면 틀이 든다 */}
-        <span className={`${motion.rise} self-start`}>
-          <AiBadge />
-        </span>
         {paragraphs.map((paragraph, at) => (
           <p key={at} className={`${motion.rise} text-body leading-7 text-foreground`} style={{ animationDelay: `${at * RISE_STEP_S}s` }}>
             {paragraph}
