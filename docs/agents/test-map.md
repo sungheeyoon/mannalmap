@@ -10,7 +10,7 @@ plan job 의 step summary 가 찍는다.
 
 | 파일 | 절 | 무엇을 드나 |
 | --- | --- | --- |
-| `docs/agents/test-map/kinds.md` | 「시험은 넷이고, 층마다 닿는 것이 다르다」 · 「층 × 시험」 · 「시험 하나의 시간」 | 시험 넷의 명령과 필요한 것 · vitest 가 `.tsx` 를 못 그리는 것 · 층마다 무엇을 시험하나 · 로컬 5초 · 훅 시간 초과가 `skipped` 로 세어지는 것 |
+| `docs/agents/test-map/kinds.md` | 「시험은 넷이고, 층마다 닿는 것이 다르다」 · 「층 × 시험」 · 「시험 하나의 시간」 · 「e2e 의 다시 돌리기」 | 시험 넷의 명령과 필요한 것 · vitest 가 `.tsx` 를 못 그리는 것 · 층마다 무엇을 시험하나 · 로컬 5초 · 훅 시간 초과가 `skipped` 로 세어지는 것 · CI 의 e2e 재시도와 흔들림 수가 서는 자리 |
 | `docs/agents/test-map/what-to-run.md` | 「무엇을 고쳤으면 무엇을 돌리나」 | 로컬 최소와 예외 넷 · 고친 자리 → 명령 표 · dev 서버 포트 |
 | `docs/agents/test-map/live.md` | 「잠긴 시험 넷 — `*.live.test.ts`」 | 실호출 · 백필 시험과 켜는 값 · 운영 접속값을 읽는 파일 |
 | `docs/agents/test-map/ci.md` | 「CI」 | 계획을 미리 보는 명령 · `gate` 가 더 확인하는 것 · 라벨 · 바깥 검사 · 실패한 job 의 기록과 artifact 읽기 |

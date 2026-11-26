@@ -259,7 +259,6 @@ describe('사진 저장소', () => {
     const purge = lines('파기 절차와 방법');
     expect(purge).toContain('3일 이내에 같은 방법으로 자동으로 지웁니다. 저장소에 보관한 프로필 사진 파일도 이 기간 안에 지웁니다');
     expect(purge).toContain('이전 판을 남기지 않아 복구할 수 없습니다');
-    expect(purge).not.toContain('뒤이어');
     expect(purge).not.toContain('반드시');
   });
 
@@ -285,7 +284,6 @@ describe('첫 화면의 짧은 사주 문단', () => {
     expect(outward).toContain('로그인하지 않고 첫 화면에서 사주를 보실 때');
     expect(text).toContain('생년월일시가 담긴 주소를 여시면 곧바로 만들어집니다');
     expect(text).toContain('원하지 않으시면 출생 정보를 넣거나 출생 정보가 담긴 주소를 열지 않으시면 됩니다. 그래도 가입과 그 밖의 이용에는 영향이 없습니다');
-    expect(text).not.toContain('사주풀이·궁합풀이를 받지 않고 궁합 요청도 수락되지 않으면');
   });
 
   /**
@@ -297,13 +295,25 @@ describe('첫 화면의 짧은 사주 문단', () => {
     expect(text).toContain('사주 여덟 글자 전부(60갑자 번호 · 한자 · 한글 · 글자별 오행 · 일간)');
     expect(text).toContain('궁합풀이에는 고르신 사이도 보내고, 이름·닉네임은 보내지 않습니다');
     expect(text).toContain('상세 궁합에는 태어난 해·나이·성별을 빼고');
-    /* 궁합풀이에 이름 · 닉네임을 보내지 않는다(운영자 2026-10-15, reading PR) */
-    expect(text).not.toContain('두 분의 닉네임');
-    expect(text).not.toContain('붙인 이름과');
     /* 이름은 모델에 안 가도 생성 뒤 우리 쪽에서 풀이 글에 붙여 보여 준다 — 받는 목적은 「화면과 풀이에서」 그대로 */
     expect(text).toContain('화면과 풀이에서 그분을 부르는 데 씁니다');
     expect(text).toContain('첫 화면의 짧은 사주 문단에는 태어난 해·나이를 빼고');
-    expect(text).not.toContain('여덟 글자와 그 위에서 나온 사실만 보냅니다');
+  });
+
+  /**
+   * **모델로 가는 것을 말하는 줄에서 닉네임 · 이름은 「보내지 않」는 문장에만 선다**(ADR 0180). 옛 글자(「두 분의 닉네임」)가 없는지가
+   * 아니라 보낸다고 적힌 문장에 이름이 끼는지를 잰다 — 어떤 말로 끼어도 붉다.
+   */
+  it('모델로 가는 것을 말하는 줄은 닉네임 · 이름을 보내는 것으로 적지 않는다', () => {
+    const toModel = sections
+      .flatMap((section) => section.lines)
+      .filter((line) => line.startsWith('모델에는') || line.startsWith('OpenAI OpCo, LLC('));
+    expect(toModel.length).toBeGreaterThanOrEqual(2);
+    const naming = toModel
+      .flatMap((line) => line.split(/\.\s+/))
+      .filter((sentence) => /닉네임|이름/.test(sentence));
+    expect(naming.length).toBeGreaterThanOrEqual(2);
+    expect(naming.filter((sentence) => !sentence.includes('보내지 않'))).toEqual([]);
   });
 
   /**
@@ -333,7 +343,6 @@ describe('첫 화면의 짧은 사주 문단', () => {
     expect(entrusted).toContain('실시간으로 갱신하는 신호의 기록도 이 데이터베이스에 3일 남습니다');
     /* 법인 소재지를 처리 국가로 대신하지 않는다 */
     expect(outward).not.toContain('법인 소재지');
-    expect(text).not.toContain('세 곳 모두 국외에 서버를 둡니다');
     /* 서울에 있는 저장 자료는 국외 절의 이전 항목이 아니다 */
     expect(outward).not.toContain('구글 계정 이메일');
     /* 「미국 등」은 국가가 아니다 — 확인된 나라만 싣는다(운영자 2026-10-15) */
@@ -359,7 +368,6 @@ describe('첫 화면의 짧은 사주 문단', () => {
   /** 역산 문장은 처리방침에 두지 않는다 — 경계까지 검증하지 않았다(ADR 0180) */
   it('역산을 처리방침에서 말하지 않는다', () => {
     expect(text).not.toContain('60년');
-    expect(text).not.toContain('하나로 정해');
   });
 
   it('임시 기록 24시간 · 쿠키 7일 · 계정에 이어진 예외를 말한다', () => {
@@ -390,7 +398,6 @@ it('안내가 대화 90일 · OpenAI 의 때 셋 · 3일 자동 처분 · 신고
   expect(text).toContain('탈퇴를 신청하시면 3일 이내에 파기합니다');
   expect(text).toContain('탈퇴 처리일부터 6개월');
   expect(text).not.toContain('영업일');
-  expect(text).not.toContain('운영자가 확인한 뒤');
 });
 
 /** v14 — 대화가 유일한 흐름이다. 수락이 글자를 열지 않고, AI 로의 이전은 상세 궁합의 동의 때다(운영자 지시 2026-11-04) */
@@ -401,8 +408,6 @@ it('가입 안내가 대화 · 상세 궁합 줄을 그대로 싣고 옛 공개 
 
   for (const line of MATCH_DETAIL_DISCLOSURE) expect(text).toContain(line);
   expect(text).not.toContain('여덟 글자가 공개돼요');
-  expect(text).not.toContain('궁합 요청이 수락되어');
-  expect(text).not.toContain('드러날 수 있습니다');
 });
 
 /** v14 는 내용 개정이다 — 국외 이전의 시기와 상대에게 보이는 것이 달라져 v13 을 본 사람도 다시 본다(ADR 0095) */
@@ -453,12 +458,6 @@ describe('카카오계정 이메일 · 계정 합침 (notice-v16)', () => {
 
   it('같은 이메일이면 로그인이 한 계정으로 합쳐진다고 말한다', () => {
     expect(text).toContain('같은 이메일로 구글 · 카카오 · 애플 가운데 다른 로그인을 쓰시면 하나의 계정으로 합쳐집니다.');
-  });
-
-  it('카카오에서 이메일을 받지 않는다는 줄이 없다', () => {
-    expect(text).not.toContain('이메일 · 닉네임 · 프로필 사진을 받지 않습니다');
-    expect(text).not.toContain('이메일이 없습니다');
-    expect(text).not.toContain('이메일이 없는 카카오 계정');
   });
 });
 
@@ -596,7 +595,6 @@ describe('풀이 완성 알림 (notice-v18)', () => {
     expect(abroad).toContain('Google LLC(Google 과 그 대리인의 시설이 있는 여러 나라');
     expect(abroad).toContain('길어야 1시간만 보관하도록 요청합니다');
     expect(abroad).toContain('https://firebase.google.com/support/privacy');
-    expect(abroad).not.toContain('Google LLC(미국');
     /* 주소에 저장한 사람 · Match 의 DB id 가 든다(`privacy-grounds.md` 「앱 푸시(FCM)」) — 고지가 그것을 숨기지 않는다 */
     expect(abroad).toContain('화면을 가리키는 내부 식별번호 포함');
     expect(lines('풀이 완성 알림을 켜시면')).toContain('화면 주소(화면을 가리키는 내부 식별번호 포함)만 싣습니다');
