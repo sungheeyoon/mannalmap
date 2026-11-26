@@ -4,13 +4,13 @@
 
 ## 권한 등급 — 무엇을 해도 되고 무엇은 묻는가
 
-등급은 **되돌릴 수 있는가**로 갈린다. 잠금 칸의 규칙은 `.claude/settings.json` 의 `ask` · `deny` 와, 「허용」으로 적은 규칙은 `allow` 와 같은 목록이다 —
-시험이 견준다. 그 설정은 Claude Code 만 읽으니 다른 에이전트에게는 이 표가 전부다. `ask` 는 bypass 모드에서도 묻는다.
+등급은 **되돌릴 수 있는가**로 갈린다. 잠금 칸의 규칙은 `.claude/settings.json` 의 `deny` 와, 「허용」으로 적은 규칙은 `allow` 와 같은 목록이다 —
+시험이 견준다. 그 설정은 Claude Code 만 읽으니 다른 에이전트에게는 이 표가 전부다. `ask` 는 bypass 모드에서도 창을 띄우므로 두지 않는다(ADR 0271).
 
-등급 3 에서 도구가 묻는 것은 프로덕션 배포 넷뿐이다(ADR 0093 「배포만 묻는다」). `db push` · 운영 SQL · Vercel 변수 · 원격 가지 삭제 · `gh pr merge` 는
+**바이패스 모드 세션(`bypassPermissions`)은 운영자에게 권한을 묻지 않는다** — 코드 PR 머지(ADR 0258)와 운영 배포(ADR 0271)까지 묻지 않고 밟고
+본 값을 #770 에 적는다. 배포는 조율자가 라운드 끝에 한 번이고, 맡은 에이전트는 올리지 않는다. 그 밖의 세션에서 등급 3 에 묻는 것은 운영 배포뿐이다(ADR 0093 「배포만 묻는다」). `db push` · 운영 SQL · Vercel 변수 · 원격 가지 삭제 · `gh pr merge` 는
 묻지 않고 하되 **본 값을 #770 · 접속기록에 적는다**. 단 Claude Code 의 auto mode 세션에서는 Vercel 변수 · 프로젝트 · 도메인을 바꾸기 전에
-운영자에게 묻는다 — 운영자의 사용자 설정(`autoMode.soft_deny`)이 막는다. 지금 단계는 `docs/product/prd/roadmap.md` §7.0 표의 「(지금)」 한 곳이고, 시험은 그 단계가 공개 출시 전이면
-`ask` 가 비었는지, 뒤면 「공식 운영에 들어가면 켜는 잠금」 목록과 같은지 잰다.
+운영자에게 묻는다 — 운영자의 사용자 설정(`autoMode.soft_deny`)이 그것과 프로덕션 배포를 막는다(무인 라운드도 auto mode 면 같다). 등급 4 와 「안 한다」는 묻는 것이 아니라 막는 것이라 바이패스에서도 그대로다.
 
 | 등급 | 무엇 | 예 | 잠금 |
 | --- | --- | --- | --- |
@@ -19,7 +19,7 @@
 | **1 로컬에서 고친다 — 묻지 않게 허용** | 머지 · 닫힌 PR 의 워크트리 · 로컬 가지를 지운다. 기본은 미리보기, `--apply` 도 push 안 된 커밋 · 더러운 변경이 없는 것만 지운다(`docs/agents/delegation/coordinator.md` 「라운드 끝 정리」) | `npm run sweep:merged` · `npm run sweep:merged -- --apply` | 허용 `Bash(npm run sweep:merged:*)` |
 | **1 로컬에서 고친다 — 지울 때마다 사람이 본다** | 로컬 스택 볼륨을 지운다 — 데이터를 영구히 없앤다. 기본은 진단, `--apply` 는 이름을 댄 볼륨 가운데 아무도 쥐지 않은 것만 | `npm run sweep:docker` · `npm run sweep:docker -- --apply <볼륨>` | 사람 — allow 에 넣지 않는다 |
 | **2 밖으로 낸다 — 되돌릴 수 있게** | 가지를 밀고 PR 을 열고 이슈에 적는다. `--auto` 머지는 일반 문서 PR 은 열자마자, 코드 PR 은 운영자 검토 뒤 — 바이패스 모드 세션은 결정 PR 의 독립 검토와 CI 초록 뒤. 「검증 · 배포의 문턱」 PR 과 마이그레이션 PR 의 예외는 `docs/agents/delegation/coordinator.md` 「출시 흐름」. main 에 직접 미는 길은 없다 | `git push -u origin <가지>` · `gh pr create` · `gh pr merge --auto --squash` | 없음 — 단 아래 등급 3 의 예외 |
-| **3 사람이 답한 뒤에 — 운영 배포** | **프로덕션 배포는 운영자가 「배포」라고 답한 뒤다** — 머지는 배포가 아니다(ADR 0110). 라운드 끝의 묶음 배포 한 번을 조율자가 밟는다(`docs/ops/runbook/deploy.md` 「묶음 배포」) | `vercel deploy --prod` · Create Deployment | 사람 — 도구는 `Bash(vercel --prod:*)` · `Bash(npx vercel --prod:*)` · `Bash(vercel deploy:*)` · `Bash(npx vercel deploy:*)` |
+| **3 운영 배포** | **바이패스 모드 세션은 묻지 않고 올리고, 그 밖의 세션은 운영자가 「배포」라고 답한 뒤다**(ADR 0271) — 머지는 배포가 아니다(ADR 0110). 라운드 끝의 묶음 배포 한 번을 조율자가 밟는다(`docs/ops/runbook/deploy.md` 「묶음 배포」) | `vercel deploy --prod` · Create Deployment | 없음 — 이 문장이 정한다 |
 | **3 묻지 않고 하고 값을 적는다** | 운영 DB 마이그레이션 · 임의 SQL, Vercel 변수, 원격 가지 삭제, `--auto` 없는 즉시 머지, 프로덕션 확인이 든 걸음. **토큰이 나가는 실호출은 에이전트가 하지 않는다** — 운영자가 돌린다(`docs/agents/delegation/unattended.md` 「권한 봉투」). 원격 백필(`BACKFILL_*` + `BACKFILL_TARGET=remote`)도 운영자가 돌린다 — 토큰은 안 나가지만 운영 DB 의 출생정보를 읽는다(ADR 0105) | `db push` · `db query --linked` · `db:remote` · `vercel env` · `gh pr merge` · 원격 가지 삭제 · `READING_LIVE=1`(운영자만) | 없음. `--auto` 와 실호출은 이 문장이 정한다 |
 | **3 사람이 답한 뒤에 — 도구 밖** | 남이 띄운 dev 서버는 죽이기 전에 묻는다. **운영 개인정보는 직접 조회하지 않는다**(아래) — 질의를 써서 건네고 사람이 검토해 돈다 | dev 서버 · 운영 개인정보 조회 | 사람 |
 | **4 안 한다** | 되돌릴 수 없는 것. 어느 가지에도 force push(PR 가지는 main 을 merge 해 올린다), `supabase config push`(원격의 구글 설정을 지운다), main 가지 삭제, Vercel 변수 삭제, 비밀 값 커밋 | | `Bash(git push --force:*)` · `Bash(git push -f:*)` · `Bash(git push --force-with-lease:*)` · `Bash(git push * --force*)` · `Bash(git push * -f*)` · `Bash(git push * +*)` · `Bash(npx supabase config push:*)` · `Bash(supabase config push:*)` · `Bash(./node_modules/.bin/supabase config push:*)` · `Bash(git push origin :main)` · `Bash(git push origin --delete main)` · `Bash(vercel env rm:*)` · `Bash(npx vercel env rm:*)` |
@@ -46,23 +46,8 @@ SQL 을 보내지 않는다 — 질의를 써 주고 사람이 검토해 break-g
 **등급 3 을 밟고 나면 무엇을 봤는지 값으로 적는다** — `db push` 뒤에는 `migration list` 의 remote 칸과 PostgREST 캐시, 실호출이 필요하면 볼 값(판본 · 검사 결과)을
 PR 에 적어 운영자에게 건네고, 묶음 배포 뒤에는 Vercel 의 Ready 와 배포 SHA = main HEAD.
 
-**잠그지 않은 것.** 설정은 규약을 도구가 아는 데까지 옮긴 것이지 담이 아니다. ① 사용자의 `.claude/settings.local.json` 의 넓은 `allow` 가 프로젝트의 `ask` 를
-이긴다. ② `deny` 는 글자를 견줄 뿐이라 `cd x && git push --force-with-lease` · `git -C`/`-c` 가 낀 push · 묶은 깃발(`-uf`) · 따옴표 속 `'+ref'` · 별칭 · 변수 ·
+**잠그지 않은 것.** 설정은 규약을 도구가 아는 데까지 옮긴 것이지 담이 아니다. ⓪ 바이패스가 아닌 세션의 배포는 이 문장만 막는다 — `.claude/settings.local.json` 에 `vercel` 의 allow(「다시 묻지 않기」가 남기는 줄)를 두지 않는다. ① `deny` 는 글자를 견줄 뿐이라 `cd x && git push --force-with-lease` · `git -C`/`-c` 가 낀 push · 묶은 깃발(`-uf`) · 따옴표 속 `'+ref'` · 별칭 · 변수 ·
 `gh api` 는 못 잡는다 — 그 꼴은 이 문장이 막는다. 가지를 main 위로 옮길 때는 rebase 대신 main 을 merge 한다.
-
-### 공식 운영에 들어가면 켜는 잠금 (ADR 0093)
-
-§7.0 의 「(지금)」을 공개 출시로 옮기는 날의 걸음이다 — 이미 옮겼다. 2 · 3 은 사람의 로컬 설정이라 운영자가 한다. 목록은 지우지 않는다 — 시험이 `ask` 와
-이 목록을 견주고, 이 목록이 프로덕션 배포 넷을 들고 `deny` 와 겹치지 않는지 잰다.
-
-1. 아래 목록을 `.claude/settings.json` 의 `ask` 와 등급 3 의 잠금 칸에 옮긴다
-2. `.claude/settings.local.json` 의 넓은 `allow`(`Bash(vercel *)` 같은 것)를 지운다 — 그것이 `ask` 를 이긴다
-3. `vercel deploy --help` 처럼 해 없는 명령으로 창이 뜨는지 잰다
-
-- `Bash(vercel --prod:*)`
-- `Bash(npx vercel --prod:*)`
-- `Bash(vercel deploy:*)`
-- `Bash(npx vercel deploy:*)`
 
 ## 훅 — 메인 체크아웃에서 일러 준다
 

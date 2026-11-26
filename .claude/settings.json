@@ -3,12 +3,6 @@
     "allow": [
       "Bash(npm run sweep:merged:*)"
     ],
-    "ask": [
-      "Bash(vercel --prod:*)",
-      "Bash(npx vercel --prod:*)",
-      "Bash(vercel deploy:*)",
-      "Bash(npx vercel deploy:*)"
-    ],
     "deny": [
       "Bash(git push --force:*)",
       "Bash(git push -f:*)",
