@@ -1,3 +1,4 @@
+import { isUnder, sameSitePath } from '@/src/lib/same-site-path';
 
 /**
  * **상품 화면의 ← 가 돌아갈 곳 — 풀이권 창을 연 화면**(운영자 결정 2026-10-29, ADR 0171 「덧」).
@@ -17,20 +18,11 @@ const PLACES = [
   { path: '/me/matching', name: '인연' },
 ] as const;
 
-/** 주소의 `back` 한 값 — 배열은 첫 값, 표 밖이면 `null` */
+/** 주소의 `back` 한 값 — 배열은 첫 값, 표 밖이면 `null`. 같은 사이트 경로인가는 `sameSitePath` 한 벌이 가른다 */
 export function returnToOf(value: string | readonly string[] | null | undefined): ReturnTo | null {
-  const candidate = typeof value === 'string' ? value : value?.[0];
-  if (!candidate?.startsWith('/') || candidate.startsWith('//') || candidate.includes('\\')) return null;
-
-  let parsed: URL;
-  try {
-    parsed = new URL(candidate, 'https://local.invalid');
-  } catch {
-    return null;
-  }
-  if (parsed.origin !== 'https://local.invalid') return null;
-
-  const place = PLACES.find(({ path }) => parsed.pathname === path || parsed.pathname.startsWith(`${path}/`));
+  const parsed = sameSitePath(value);
+  if (parsed === null) return null;
+  const place = PLACES.find(({ path }) => isUnder(parsed.pathname, path));
   return place ? { href: `${parsed.pathname}${parsed.search}`, name: place.name } : null;
 }
 

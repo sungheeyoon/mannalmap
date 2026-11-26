@@ -15,6 +15,7 @@ import {
   purchaseAddedNote,
   purchaseResumeLabel,
 } from './notes';
+import { allowedBy, sameSitePath, type PathPolicy } from '../same-site-path';
 import { resumesAsk } from './resume-ask';
 import { STORE_PRODUCTS, type StorePurchaseAnswer } from './store-products';
 
@@ -45,12 +46,17 @@ const RETURN_LABELS: Readonly<Record<string, string>> = {
 
 export type PurchaseReturn = { readonly href: string; readonly label: string };
 
+/** 결제 완료 창이 돌려보낼 수 있는 곳 — 앱 안(`/me/` 아래)이고 상품 화면 자신은 아니다. 판정은 풀린 경로에 댄다(`sameSitePath`) */
+const PURCHASE_RETURN_POLICY: PathPolicy = { under: ['/me/'], notUnder: ['/me/credits'] };
+
 export function purchaseReturnOf(back: unknown, noun: unknown): PurchaseReturn | null {
   if (typeof back !== 'string' || typeof noun !== 'string') return null;
-  if (!back.startsWith('/me/') || back.startsWith('/me/credits') || back.includes('//') || back.includes('\\')) return null;
+  const parsed = sameSitePath(back);
+  if (parsed === null || !allowedBy(parsed.pathname, PURCHASE_RETURN_POLICY)) return null;
   const label = RETURN_LABELS[noun];
   if (label === undefined) return null;
-  return { href: back, label: noun !== '인연 궁합' && resumesAsk(back) ? purchaseResumeLabel(noun) : label };
+  const href = `${parsed.pathname}${parsed.search}${parsed.hash}`;
+  return { href, label: noun !== '인연 궁합' && resumesAsk(href) ? purchaseResumeLabel(noun) : label };
 }
 
 export type StorePurchaseNotice =
