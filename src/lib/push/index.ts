@@ -52,6 +52,7 @@ export type SendResult = Extract<SettleResult, 'sent' | 'gone' | 'retry'>;
 /** 서비스 워커가 받는 값 전부 */
 export type PushPayload = { url: string; tag: string };
 
+/** `src/lib/uuid.ts` 의 `UUID` 와 같은 식 — 이 파일은 흐름 검사(`scripts/check-push.mjs`)를 node 가 직접 읽어 확장자 없는 import 를 못 풀므로 import 없는 잎으로 둔다 */
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 /**

@@ -11,9 +11,6 @@ import type { PageVisibility } from '@/src/lib/reading/watch-run';
  * DOM 을 모른다 — 보이는가는 `visibility` 가, 부르는 것은 `mark` 가 든다. 그래서 손으로 든 값으로 그대로 잰다(`news-read.test.ts`).
  */
 
-/* 글의 열쇠는 기다림의 판단과 함께 쓴다(ADR 0211) */
-export { newsKeyOf } from '@/src/lib/reading/reading-flow';
-
 /**
  * 탭이 보이면 `send` 를 **한 번** 부른다 — 지금 보이면 곧바로, 숨어 있으면 처음 보일 때. 돌려준 함수가 기다리기를 걷는다.
  */

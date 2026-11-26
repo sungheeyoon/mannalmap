@@ -19,7 +19,6 @@ import {
   type Side,
 } from '../labels';
 import {
-  DENIED,
   operatorReport,
   operatorReports,
   reportParties,
@@ -35,6 +34,7 @@ import { ReviewPanel } from './review-panel';
 import { CARD, SOFT_CARD_FACE, WARNING_CARD_FACE } from '../../../ui/surfaces';
 import { FailureLine } from '../../../ui/failure-line';
 import { secondFactorGate } from '../../second-factor';
+import { DENIED } from '../../denial';
 
 export const metadata = {
   title: '신고 내용',

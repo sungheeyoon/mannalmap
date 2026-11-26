@@ -32,7 +32,7 @@ import type { Reserved, TasteFinish } from './keyed-taste';
 import type { TasteClaim } from './keyed-taste-claims';
 import type { ModelCall } from '../me/reading/generator';
 import type { Visitor } from './taste-visitor';
-import { LOWERCASE_UUID } from '../uuid';
+import { LOWERCASE_UUID } from '@/src/lib/uuid';
 
 /**
  * **로그인 전 사주 문단 한 번** — 받은 입력에서 근거와 지문을 서버가 짓고, 예약하고, 필요하면 모델을 부르고, 결과를

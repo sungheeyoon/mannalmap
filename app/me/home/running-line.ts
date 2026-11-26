@@ -11,8 +11,6 @@ import { runningName, type RunningReading } from '@/src/lib/reading/running';
  * 다르게 말한다. 퍼센트는 없다 — 끝을 모르는 일에 비율을 세우면 그건 꾸며 낸 진행이다.
  */
 
-export { READING_PREPARING } from '@/src/lib/reading/running-stage';
-
 /** 지금 어디쯤인가 — 앱과 같은 판정이다(`runningStageOf`) */
 export const runningStage = (running: Pick<RunningReading, 'target' | 'progress'>): string =>
   runningStageOf(running.target.kind, running.progress);

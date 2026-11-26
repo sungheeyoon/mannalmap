@@ -10,7 +10,7 @@ import { BUTTON_PRIMARY } from '../ui/buttons';
 import { closeSheet, openSheet } from '../ui/sheet';
 import { SHEET_FACE, TYPE_SECTION } from '../ui/surfaces';
 import { APP_SHEET_DISMISSED_KEY, appOpenHref, shouldOfferApp } from './app-link';
-import type { ShareKind } from './path';
+import type { ShareKind } from '@/src/lib/reading/share-path';
 
 /**
  * 제목 · 한 줄 · [앱에서 보기]는 운영자가 불러 준 그대로다(2026-11-13). 「웹으로 계속하기」는 굿닥의 글자다(대장 public-18 확인 전).
@@ -21,7 +21,6 @@ const SHEET_COPY = {
   open: '앱에서 보기',
   stay: '웹으로 계속하기',
 } as const;
-
 
 /**
  * **「앱에서 볼까요?」 시트** — 안드로이드 폰에서 공유 링크를 열면 글 위에 어두운 면과 함께 아래에서 올라온다(운영자 승인 2026-11-13, ADR 0247).

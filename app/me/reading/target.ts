@@ -1,10 +1,4 @@
-/* 낱말이 무엇을 가리키는가의 타입은 앱도 들어 `src/lib/reading/target.ts` 에 산다(ADR 0211) */
 import type { ReadingTarget } from '@/src/lib/reading/target';
-
-export type { ReadingTarget };
-
-/* 공유의 갈래는 앱도 들어 같은 파일에 산다 */
-export { isShareable, shareTargetArgs } from '@/src/lib/reading/target';
 
 /**
  * **kind 가 무엇을 뜻하는지 푸는 자리 — 하나다.**

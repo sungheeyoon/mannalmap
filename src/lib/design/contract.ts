@@ -109,13 +109,6 @@ export const PARTS: readonly PartContract[] = [
     props: ['signIn'],
   },
   {
-    name: 'FormError',
-    web: { file: 'app/ui/form-error.tsx', symbols: ['FormError'] },
-    app: { file: 'mobile/src/ui/form-error.tsx', symbol: 'FormError' },
-    props: ['show'],
-    values: { ...ERROR_LINE, 'mt-2': 'marginTop: 8' },
-  },
-  {
     name: 'SectionErrorLine',
     web: { file: 'app/ui/section-error.tsx', symbols: ['SectionErrorLine'] },
     app: { file: 'mobile/src/ui/section-error.tsx', symbol: 'SectionErrorLine' },

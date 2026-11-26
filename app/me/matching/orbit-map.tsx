@@ -6,7 +6,7 @@ import { ELEMENTS, ELEMENT_PICTURE_KO, type Element } from '@/src/lib/saju';
 
 import { elementScope } from '../../ui/element-tone';
 import { ElementSymbol } from '../../ui/element-symbol';
-import { DotsMark, ORBIT_GLOW, ORBIT_LABEL_PAD, ORBIT_NAME_TAG, ORBIT_RING, ThreadMark, round2 } from '../../ui/orbit';
+import { DotsMark, ORBIT_GLOW, ORBIT_LABEL_PAD, ORBIT_NAME_TAG, ORBIT_RING, ThreadMark } from '../../ui/orbit';
 import { StemSymbol } from '../../ui/stem-symbol';
 import { CandidatePhoto } from './candidate-photo';
 import { elementOf, supplyOf, type DeckCard } from '@/src/lib/matching/deck-card';
@@ -27,6 +27,7 @@ import {
   type Ring,
   type Shape,
 } from './orbit-seats';
+import { round2 } from '@/src/lib/saju/view/orbit';
 
 export type { MapStatus } from './orbit-seats';
 

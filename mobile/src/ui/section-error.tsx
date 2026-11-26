@@ -10,7 +10,6 @@ import { WordText } from './word-text';
  * **문단 아래 오류 한 줄** — 웹 `app/ui/section-error.tsx` 와 같은 규칙이다(ADR 0252).
  *
  * 문단(칸 몇 줄의 묶음) 마지막 줄 아래 · 왼쪽 정렬 · 작은 굵은 붉은 글씨 · 8 띄움. 말이 없으면 안 선다 — 빈 자리를 잡아 두지 않는다.
- * 글자 모양은 단추 아래 줄(`FormError`)과 같다 — 자리만 문단 아래다.
  */
 export function SectionErrorLine({ message, gap = 0 }: { message: string | null | undefined; gap?: number }) {
   if (message == null) return null;

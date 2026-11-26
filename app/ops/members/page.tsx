@@ -2,11 +2,13 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import type { ReactNode } from 'react';
 
+import { UUID } from '@/src/lib/uuid';
+
 import { supabaseOnServer } from '../../auth/server-client';
 import { signedInUser } from '../../auth/signed-in';
 import { redirectToSignIn } from '../../auth/sign-in-redirect';
 import { NO_NICKNAME, WARNING_LABEL, accountStatusLabel, evidenceTime } from '../reports/labels';
-import { DENIED, QUERY_MAX, operatorMember, queryOf, type CreditSource, type Member } from './read';
+import { QUERY_MAX, operatorMember, queryOf, type CreditSource, type Member } from './read';
 import { memberSanctions, type MemberSanctions } from './sanctions';
 import {
   UNRECORDED,
@@ -35,6 +37,7 @@ import { CARD } from '../../ui/surfaces';
 import { CopyValue } from '../copy-value';
 import { FailureLine } from '../../ui/failure-line';
 import { backTo, secondFactorGate } from '../second-factor';
+import { DENIED } from '../denial';
 
 export const metadata = {
   title: '회원',
@@ -256,7 +259,7 @@ function Credits({
 /** 신고 화면에서 넘어온 신고 id — 모양이 틀리면 버린다(DB 가 그 회원의 신고인지 다시 잰다) */
 const reportIdOf = (value: string | string[] | undefined): string | null => {
   const text = (Array.isArray(value) ? value[0] : value)?.trim() ?? '';
-  return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(text) ? text.toLowerCase() : null;
+  return UUID.test(text) ? text.toLowerCase() : null;
 };
 
 const historyHref = (userId: string, filter: HistoryFilter, before: HistoryCursor | null = null): string => {

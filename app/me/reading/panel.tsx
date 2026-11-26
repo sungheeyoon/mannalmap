@@ -17,12 +17,12 @@ import { ReadingFeedback } from './feedback';
 import { ShareReadingButton } from './share-button';
 import { READING_COLUMN } from './markdown';
 import { readingOutline } from '@/src/lib/reading/outline';
-import type { ReadingTarget } from './target';
 import type { TasteCarryView } from '../../taste/taste-carry';
 import { CarryCard } from './carry-card';
 import { LoadingState } from './reading-waiting';
 import { Result, type CoverPerson } from './reading-result';
 import { useReadingPanel } from './use-reading-panel';
+import type { ReadingTarget } from '@/src/lib/reading/target';
 
 export function ReadingPanel({
   target,

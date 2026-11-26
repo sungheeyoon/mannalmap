@@ -9,7 +9,7 @@ import { HOUR_UNKNOWN_CHOICE, type DatePart, type Query } from './query';
  * 아래에 모아 쓸 수밖에 없다 — 그래서 판정이 **문단 이름이 붙은 목록**을 내고, 화면(웹 `app/ui/section-error.tsx` · 앱
  * `mobile/src/ui/section-error.tsx`)은 그리기만 한다. 목록의 차례는 화면의 차례(위에서 아래)다.
  *
- * 칸과 상관없는 거절(저장 실패 · 연결 · 풀이권 0장)은 여기 들지 않는다 — 그것은 단추 아래 줄(`FormError` · `FailureLine`)이다.
+ * 칸과 상관없는 거절(저장 실패 · 연결 · 풀이권 0장)은 여기 들지 않는다 — 그것은 단추 근처의 실패 줄(`FailureLine`)이다.
  */
 export type SectionError<S extends string> = { readonly section: S; readonly message: string };
 

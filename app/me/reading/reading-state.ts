@@ -1,10 +1,8 @@
 import type { CurrentReading } from '@/src/lib/reading';
 import { isScored } from '@/src/lib/reading/policy';
+import type { ReadingTarget } from '@/src/lib/reading/target';
 
-import type { ReadingTarget } from './target';
-
-/* 누름과 기다림의 판단은 웹과 앱이 함께 쓴다(ADR 0211). 여기 남는 것은 웹의 개발 기계만 세우는 예시 글이다 */
-export * from '@/src/lib/reading/reading-flow';
+/* 누름과 기다림의 판단은 웹과 앱이 함께 쓴다(`src/lib/reading/reading-flow.ts`, ADR 0211). 여기 남는 것은 웹의 개발 기계만 세우는 예시 글이다 */
 
 /**
  * **연결을 못 쓸 때 대신 세우는 글.**

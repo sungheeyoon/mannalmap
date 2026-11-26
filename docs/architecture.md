@@ -10,7 +10,7 @@
 | 층 | 자리 | 아는 것 | 모르는 것 |
 | --- | --- | --- | --- |
 | **엔진** | `src/lib/saju/` | 자기 자신뿐 | 다른 lib · app · React/Next · supabase · 실행 환경(`node:*`) |
-| **도메인 lib** | `src/lib/{input,reading,discovery,matching,consent,people,profile,account,survey,chat,live,presence,push,brand,db,design,home}/` · `src/lib/app-shell.ts` | 엔진, 서로(아래 표) | app · React/Next · supabase 런타임 · 모델 SDK · 실행 환경 |
+| **도메인 lib** | `src/lib/{input,reading,discovery,matching,consent,people,profile,account,survey,chat,live,presence,push,brand,db,design,home}/` · `src/lib/app-shell.ts` · `src/lib/uuid.ts` | 엔진, 서로(아래 표) | app · React/Next · supabase 런타임 · 모델 SDK · 실행 환경 |
 | **문과 액션** | `app/**/*.ts` | 도메인 lib, 엔진, supabase 클라이언트 다섯 | — |
 | **화면** | `app/**/*.tsx` | 문과 액션, 도메인 lib 의 타입·순수 함수 | **DB 호출**(`.rpc()`·`.from()`) |
 
@@ -32,7 +32,7 @@
 | `input` | `saju` · `local-env` |
 | `matching` | `consent` · `db` · `discovery` · `presence` · `profile` · `reading` · `saju`(인연 탭의 행 옮김과 덱을 웹 · 앱이 함께 쓴다, G-123) |
 | `people` | `input`(궁합 한 칸의 문단 오류가 출생 정보 판정을 잇는다, ADR 0252) |
-| `reading` | `discovery` · `input`(의견의 문단 오류 틀) · `people` · `saju` |
+| `reading` | `discovery` · `input`(의견의 문단 오류 틀) · `people` · `saju` · `uuid` |
 
 **`src/lib/db` 는 타입만 낸다.** 생성된 `Database` 와 `rpcArgs` 다(ADR 0078). 호출은 없다.
 

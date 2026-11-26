@@ -1,14 +1,13 @@
 'use server';
 
-import { sharePath, type ShareKind } from '../../share/path';
 import { supabaseOnServer } from '../../auth/server-client';
 import type { CurrentReading } from '@/src/lib/reading';
 import { currentReading } from './current';
-import { isShareable, shareTargetArgs, type ReadingTarget } from './target';
 import { answerOfThrown, userFacingDbMessage } from '../../db-error';
 import { rpcArgs } from '@/src/lib/db';
 import { SHARE_NOTHING_YET, SHARE_NOT_ISSUED, SHARE_PAIR_BLOCKED } from '@/src/lib/reading/words';
-
+import { sharePath, type ShareKind } from '@/src/lib/reading/share-path';
+import { isShareable, shareTargetArgs, type ReadingTarget } from '@/src/lib/reading/target';
 
 /**
  * 풀이를 공유본으로 내놓고 **주소를 받는다.**

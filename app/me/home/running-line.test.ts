@@ -3,12 +3,9 @@ import { describe, expect, it } from 'vitest';
 import { selfSectionTitlesOf } from '@/src/lib/reading';
 
 import { SELF_READING_MAKING } from '@/src/lib/home/making';
-import {
-  READING_PREPARING,
-  runningHref,
-  runningStage,
-} from './running-line';
+import { runningHref, runningStage } from './running-line';
 import { makingPeopleOf, makingSelf, runningName, type RunningReading } from '@/src/lib/reading/running';
+import { READING_PREPARING } from '@/src/lib/reading/running-stage';
 
 const fresh = { jobStatus: 'frozen', sectionsBegun: 0, bodyWritten: false } as const;
 

@@ -2,10 +2,10 @@ import Link from 'next/link';
 
 import { BUTTON_PRIMARY, BUTTON_SECONDARY } from '../../ui/buttons';
 import { NoticeScreen } from '../../ui/notice-screen';
-import { SIGNED_OUT_EXIT, SIGNED_OUT_REACH } from '../../service-features';
 import { visitorExitOf, withReturnPath } from '@/src/lib/consent';
 import { HomeLink } from '../../home-link';
 import { SIGN_IN_DENIED_BODY, SIGN_IN_DENIED_TITLE } from '@/src/lib/account/words';
+import { SIGNED_OUT_EXIT, SIGNED_OUT_REACH } from '@/src/lib/brand/guide';
 
 /**
  * 로그인이 끝나지 못한 자리.

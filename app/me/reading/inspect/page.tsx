@@ -11,13 +11,13 @@ import {
 import { supabaseOnServer } from '../../../auth/server-client';
 import { signedInUser } from '../../../auth/signed-in';
 import { redirectToSignIn } from '../../../auth/sign-in-redirect';
-import { UUID } from '../../../uuid';
+import { UUID } from '@/src/lib/uuid';
 import { CopyText } from '../copy-text';
 import { readingArtifacts, currentReading, lastReadingRun, readingGroundingOf } from '../current';
-import type { ReadingTarget } from '../target';
 import { selfReadingPreview, type PreviewResult } from '../preview';
 import { CARD } from '../../../ui/surfaces';
 import { inspectOpen } from './open';
+import type { ReadingTarget } from '@/src/lib/reading/target';
 
 export const metadata = {
   title: '해석 내부 보기',
@@ -290,7 +290,6 @@ function Pre({ text }: { text: string }) {
     </pre>
   );
 }
-
 
 /** 주소로 들어온 값이라 모양부터 본다 — 틀린 것은 「고르지 않은 것」과 같다 */
 function targetFrom(params: {

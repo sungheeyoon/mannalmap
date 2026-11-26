@@ -10,8 +10,9 @@ import { FailureLine } from '../../ui/failure-line';
 import { FIELD } from '../../ui/fields';
 import { CARD } from '../../ui/surfaces';
 import { Asked, Departed, Others } from './order-view';
-import { DENIED, NO_ORDER, refundBasis } from './read';
+import { NO_ORDER, refundBasis } from './read';
 import { backTo, secondFactorGate } from '../second-factor';
+import { DENIED } from '../denial';
 
 export const metadata = {
   title: '주문',

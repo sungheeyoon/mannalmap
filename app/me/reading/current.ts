@@ -11,10 +11,11 @@ import { readingBody, readingGrounding } from '@/src/lib/reading/display';
 import { readingEntriesOf, readingsNeedMatchViewer, stemOf, type MatchViewer } from '@/src/lib/reading/entry';
 
 import { supabaseOnServer } from '../../auth/server-client';
-import { readingTargetArgs, type ReadingTarget } from './target';
+import { readingTargetArgs } from './target';
 import { rpcArgs, type Database } from '@/src/lib/db';
 import { dbFailure, read, recordDbFailure, unread, type SkippableRead } from '../../db-error';
 import { readAccount } from '../account';
+import type { ReadingTarget } from '@/src/lib/reading/target';
 
 /**
  * **현재 결과가 브라우저로 내려가는 문.**

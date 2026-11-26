@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { usePathname, useSearchParams } from 'next/navigation';
 import { Suspense, useEffect, useRef, useState, type ReactNode } from 'react';
 
+import { pathWithin } from '@/src/lib/app-shell';
 import { SIGN_OUT_PENDING } from '@/src/lib/account/copy';
 import { SERVICE_NAME } from '@/src/lib/brand';
 import { CHAT_TAB_LABEL, UNREAD_WORDS } from '@/src/lib/chat';
@@ -57,12 +58,7 @@ const MEMBER_TABS = [
 
 /** 운영 화면인가 — `/ops` 와 그 아래 */
 export function isOperatorPath(pathname: string): boolean {
-  return within(pathname, '/ops');
-}
-
-/** `base` 그 자리이거나 그 아래인가 — `/me/peoplex` 는 `/me/people` 아래가 아니다 */
-function within(pathname: string, base: string): boolean {
-  return pathname === base || pathname.startsWith(`${base}/`);
+  return pathWithin(pathname, '/ops');
 }
 
 /**
@@ -80,10 +76,10 @@ export function isNavigationActive(pathname: string, href: string, from: string 
   const result = resultKindOf(pathname);
   if (result !== null) return lightOf(result, placeOf({ from }, pathname).from) === href;
   if (href === '/me') {
-    return pathname === '/me' || within(pathname, '/me/people') || pathname === '/me/readings' || pathname === SAJU_PATH;
+    return pathname === '/me' || pathWithin(pathname, '/me/people') || pathname === '/me/readings' || pathname === SAJU_PATH;
   }
   if (href === '/compat') return pathname === '/compat';
-  return within(pathname, href);
+  return pathWithin(pathname, href);
 }
 
 /**

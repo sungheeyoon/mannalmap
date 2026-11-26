@@ -1,8 +1,9 @@
 import { describe, expect, it, vi } from 'vitest';
 
 import type { ReadingNewsRead } from './actions';
-import { markAndAnnounce, newsKeyOf, readNewsWhenSeen } from './news-read';
+import { markAndAnnounce, readNewsWhenSeen } from './news-read';
 import type { PageVisibility } from '@/src/lib/reading/watch-run';
+import { newsKeyOf } from '@/src/lib/reading/reading-flow';
 
 /** 손으로 드는 탭 — 숨김을 바꾸고 바뀜을 알린다 */
 function fakeTab(hidden: boolean) {

@@ -48,6 +48,7 @@ const ALLOWED_LIB_EDGES = new Set([
   'reading → input',
   'reading → people',
   'reading → saju',
+  'reading → uuid',
 ]);
 
 /**
@@ -158,7 +159,8 @@ const EDGES = SOURCE_FILES.flatMap(edgesOf);
 const under = (path: string | null, dir: string) => path !== null && (path === dir || path.startsWith(`${dir}/`));
 const libModuleOf = (path: string | null) => {
   if (!under(path, 'src/lib')) return null;
-  return path!.slice('src/lib/'.length).split('/')[0].replace(/\.(m|c)?ts$/, '');
+  // 뿌리에 사는 잎 파일(`uuid.ts`)의 옆 시험은 그 파일과 같은 모듈이다
+  return path!.slice('src/lib/'.length).split('/')[0].replace(/(\.test)?\.(m|c)?ts$/, '');
 };
 /**
  * **실험 · 평가 자리(`src/lab`)** — 앱이 부르지 않고 시험 · 잠긴 실호출 · e2e 만 쓰는 코드(ADR 0179). 밖으로는 도메인 lib 과
@@ -732,5 +734,23 @@ describe('로그인 전 사주 문단의 입구 (ADR 0143)', () => {
   it('폴더에 주소가 없다 — `page` · `route` · `layout` 이 안 선다', () => {
     const entries = readdirSync(join(ROOT, TASTE)).filter((name) => /^(page|route|layout|default|template)\.(t|j)sx?$/.test(name));
     expect(entries).toEqual([]);
+  });
+});
+
+/**
+ * **웹 안에서 다시 내보내지 않는다**(`docs/architecture.md` 「새 것을 놓을 때」 — 옮기면 부르는 쪽이 새 자리를 바로 부른다).
+ * `app` 의 `export … from` 은 `index.ts` 밖에서 0 이다. 아래 목록은 아직 남은 자리이고 **줄어들기만 한다** — 인연(G-135)이 닫힌 동안
+ * 그 파일은 두고, 풀이권 거절(`app/me/credits/refusal.ts`)은 제 자리로 옮기는 일이 따로 있다.
+ */
+const REEXPORTS_STILL_THERE = new Set(['app/me/credits/refusal.ts', 'app/me/matching/history.ts', 'app/me/matching/orbit-map.tsx']);
+
+describe('웹 안의 다시 내보내기', () => {
+  it('index.ts 밖에서 `export … from` 을 쓰는 app 파일은 남은 목록 그대로다', () => {
+    const found = SOURCE_FILES.filter((file) => {
+      const rel = relPath(file);
+      if (!under(rel, 'app') || /\/index\.[a-z]+$/.test(rel)) return false;
+      return parse(file).statements.some((node) => ts.isExportDeclaration(node) && node.moduleSpecifier !== undefined);
+    }).map(relPath);
+    expect(found.sort()).toEqual([...REEXPORTS_STILL_THERE].sort());
   });
 });

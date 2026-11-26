@@ -1,3 +1,4 @@
+import { pathWithin } from '@/src/lib/app-shell';
 import { AREAS, type Area } from '@/src/lib/live/changes';
 
 import { CHAT_UNREAD_MOVED } from '../me/chat/unread-signal';
@@ -35,8 +36,6 @@ export const ALL_SIGNALS: readonly string[] = [
   READING_CREDITS_MOVED,
 ];
 
-const within = (pathname: string, base: string): boolean => pathname === base || pathname.startsWith(`${base}/`);
-
 /**
  * 갈래가 바뀌었을 때 **서버가 그리는 지금 화면을 다시 그려야 하나.**
  *
@@ -50,18 +49,18 @@ const within = (pathname: string, base: string): boolean => pathname === base ||
 export function redrawsOn(area: Area, pathname: string): boolean {
   switch (area) {
     case 'chat':
-      return within(pathname, '/me/chat');
+      return pathWithin(pathname, '/me/chat');
     case 'requests':
       return (
         pathname === '/me' ||
-        within(pathname, '/me/matching') ||
-        within(pathname, '/me/requests') ||
-        within(pathname, '/me/match') ||
-        within(pathname, '/me/readings') ||
-        within(pathname, '/me/chat')
+        pathWithin(pathname, '/me/matching') ||
+        pathWithin(pathname, '/me/requests') ||
+        pathWithin(pathname, '/me/match') ||
+        pathWithin(pathname, '/me/readings') ||
+        pathWithin(pathname, '/me/chat')
       );
     case 'notifications':
-      return pathname === '/me' || within(pathname, '/me/requests');
+      return pathname === '/me' || pathWithin(pathname, '/me/requests');
     case 'credits':
       return false;
   }

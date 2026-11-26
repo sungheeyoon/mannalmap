@@ -3,9 +3,10 @@ import { notFound } from 'next/navigation';
 import { supabaseOnServer } from '../../auth/server-client';
 import { signedInUser } from '../../auth/signed-in';
 import { redirectToSignIn } from '../../auth/sign-in-redirect';
-import { DENIED, operatorTodayFigures } from './read';
+import { operatorTodayFigures } from './read';
 import { TodayView } from './today-view';
 import { secondFactorGate } from '../second-factor';
+import { DENIED } from '../denial';
 
 export const metadata = {
   title: '오늘의 숫자',

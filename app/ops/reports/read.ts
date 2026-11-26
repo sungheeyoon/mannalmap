@@ -21,8 +21,6 @@ import { chosenOnce, type SnapshotMessage } from './snapshot';
  * 말 · 검토 시각 · 스냅샷 칸은 실제로 비므로 여기서 한 번 `null` 로 받아 옮긴다.
  */
 
-export { DENIED } from '../denial';
-
 export type Account = {
   readonly userId: string;
   readonly nickname: string | null;

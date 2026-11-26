@@ -3,6 +3,7 @@ import { endsWithBatchim } from '../saju/text/batchim';
 import { won } from './bundle';
 import type { PaidOrder } from './paid-order';
 import { PARTNER_SELF_LABEL } from './person-screen';
+import { seoulWallClock } from './seoul-date';
 
 /**
  * **결제 내역의 두 탭** — 「구매 내역 / 사용 내역」(운영자 승인 시안 B, ADR 0263). 웹(`app/me/credits/history/`)과
@@ -68,15 +69,14 @@ const SIGNUP_CREDIT_NOTE = '가입하면 받는 풀이권';
 const FREE_VALUE = '무료';
 const REVOKED_VALUE = '회수';
 
-const SEOUL_OFFSET_MS = 9 * 60 * 60 * 1000;
 const two = (n: number) => String(n).padStart(2, '0');
 
 /**
- * 「2026.11.18 20:03」 — **시간대는 한국이다**. 9시간을 더해 UTC 로 읽는다(`person-screen.ts` 의 `monthDayOf` 와 같은 규율 — 앱의 엔진에
+ * 「2026.11.18 20:03」 — **시간대는 한국이다**. 서울의 벽시계(`seoulWallClock`)를 UTC 로 읽는다(`person-screen.ts` 의 `monthDayOf` 와 같은 규율 — 앱의 엔진에
  * `Intl` 시간대가 늘 있다고 기대지 않는다).
  */
 export function historyStampOf(iso: string): string {
-  const d = new Date(new Date(iso).getTime() + SEOUL_OFFSET_MS);
+  const d = seoulWallClock(new Date(iso));
   return `${d.getUTCFullYear()}.${two(d.getUTCMonth() + 1)}.${two(d.getUTCDate())} ${two(d.getUTCHours())}:${two(d.getUTCMinutes())}`;
 }
 
@@ -123,7 +123,7 @@ export function purchaseLines(orders: readonly PaidOrder[], history: readonly Hi
   return lines.sort((a, b) => time(b.at) - time(a.at)).map(({ at: _at, ...line }) => line);
 }
 
-const nameOf = (label: string | null, isSelf: boolean): string | null => (isSelf ? PARTNER_SELF_LABEL : label);
+const nameOf = (label: string | null, selfPerson: boolean): string | null => (selfPerson ? PARTNER_SELF_LABEL : label);
 
 /**
  * 「사주풀이 · 엄마」 · 「궁합풀이 · 나와 엄마」 — 이름은 내가 그 사람을 부르는 이름이고 나는 「나」다. 인연의 상대는 문이 이름을 안 내므로

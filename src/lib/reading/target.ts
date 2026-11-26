@@ -1,3 +1,5 @@
+import { UUID } from '../uuid';
+
 import type { ReadingKind } from './policy';
 
 /**
@@ -23,8 +25,7 @@ const _kindsAgree = (kind: ReadingTarget['kind']): ReadingKind => kind;
 void _kindsAgree;
 
 /** id 의 모양 — DB 가 uuid 로 거절하면 그 거절이 오류로 선다. 모양이 틀린 것은 문 앞에서 「대상이 아니다」다 */
-const ID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-const isId = (value: unknown): value is string => typeof value === 'string' && ID.test(value);
+const isId = (value: unknown): value is string => typeof value === 'string' && UUID.test(value);
 
 /**
  * 누르면 가는 곳 — **그 풀이의 화면**이다. 웹과 앱이 같은 주소를 쓴다(G-168).

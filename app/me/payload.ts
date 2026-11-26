@@ -4,7 +4,7 @@ import { supabaseOnServer } from '../auth/server-client';
 import { storedChartOf } from '@/src/lib/input/stored';
 import { myEdge } from './home/circle';
 import { storedInputOf } from './person-input';
-import { UUID } from '../uuid';
+import { UUID } from '@/src/lib/uuid';
 
 /**
  * **저장된 한 사람이 브라우저로 내려가는 유일한 문.**

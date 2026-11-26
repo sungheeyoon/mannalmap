@@ -11,9 +11,9 @@ import { Logo } from '../ui/logo';
 import { ScoreGauge } from '../ui/score-gauge';
 import { CARD_FACE, COLUMN_READING, PAPER_FACE, TILE_FACE, TYPE_SECTION, TYPE_TITLE } from '../ui/surfaces';
 import { AppSheet } from './app-sheet';
-import type { ShareKind } from './path';
 import { sharedReadingOf } from './read';
 import { SHARE_SIGN_IN_START } from '@/src/lib/brand/words';
+import type { ShareKind } from '@/src/lib/reading/share-path';
 
 /**
  * 받은 사람이 보는 화면 — **세 주소가 같은 이것을 쓴다.**

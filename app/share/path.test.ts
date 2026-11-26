@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
-import { SHARE_ROOTS, isSharePath, sharePath } from './path';
+import { isSharePath } from './path';
+import { SHARE_ROOTS, sharePath } from '@/src/lib/reading/share-path';
 
 describe('공유본 주소', () => {
   it('갈래마다 주소가 다르고 토큰이 마지막 칸이다', () => {

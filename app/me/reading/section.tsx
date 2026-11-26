@@ -9,9 +9,9 @@ import { readReadingCredits } from '../credits/remaining';
 import { currentReading, improvementConsented, lastReadingRun } from './current';
 import { ReadingPanel } from './panel';
 import type { CoverPerson } from './reading-result';
-import type { ReadingTarget } from './target';
 import type { TasteCarryView } from '../../taste/taste-carry';
 import { CARD } from '../../ui/surfaces';
+import type { ReadingTarget } from '@/src/lib/reading/target';
 
 /**
  * 현재 결과가 서는 칸 — **자기 풀이와 공유 궁합이 같은 것을 쓴다.**

@@ -17,9 +17,9 @@ import { discoveryLeadOf } from './discovery-lead';
 import { Markdown, READING_COLUMN } from './markdown';
 import { PairNames } from './pair-names';
 import { ShareReadingButton } from './share-button';
-import type { ReadingTarget } from './target';
 import { when } from '@/src/lib/reading/when';
 import { READING_PAIR_TITLE } from '@/src/lib/reading/words';
+import type { ReadingTarget } from '@/src/lib/reading/target';
 
 /** 궁합풀이 표지의 한 사람 — 이름과 일간(동그라미의 그림 · 오행 soft 색). 화면이 보이는 차례 그대로 준다 */
 export type CoverPerson = { readonly name: string; readonly stem: Stem | null };

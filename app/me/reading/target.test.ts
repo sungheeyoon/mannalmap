@@ -2,14 +2,8 @@ import { describe, expect, it } from 'vitest';
 
 import { READING_KINDS, type ReadingKind } from '@/src/lib/reading';
 
-import {
-  isShareable,
-  readingPathsOf,
-  readingTargetArgs,
-  shareTargetArgs,
-  type ReadingTarget,
-} from './target';
-import { readingHrefOf } from '@/src/lib/reading/target';
+import { readingPathsOf, readingTargetArgs } from './target';
+import { readingHrefOf, isShareable, shareTargetArgs, type ReadingTarget } from '@/src/lib/reading/target';
 
 /**
  * **네 갈래를 푸는 자리가 하나인가.**
