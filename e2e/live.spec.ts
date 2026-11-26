@@ -1,7 +1,8 @@
 import { createClient } from '@supabase/supabase-js';
 import type { Page } from '@playwright/test';
 
-import { expect, forgetBoards, onlyTheseParticipate, optIn, sql, test, type Person } from './session';
+import { expect, forgetBoards, onlyTheseParticipate, optIn, test, type Person } from './session';
+import { sql } from '../scripts/checks.mjs';
 
 import { closedRoomText } from '@/src/lib/chat';
 import { CHAT_EMPTY_TITLE, CHAT_INPUT_PLACEHOLDER, CHAT_SEND_LABEL, NEW_MESSAGES_LABEL, OLDER_MESSAGES_LABEL } from '@/src/lib/chat/copy';

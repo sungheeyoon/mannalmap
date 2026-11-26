@@ -1,7 +1,9 @@
-import { readFileSync, readdirSync } from 'node:fs';
+import { readdirSync } from 'node:fs';
 import { join } from 'node:path';
 
 import { describe, expect, it } from 'vitest';
+
+import { ROOT, codeText, koreanChunks, read } from './copy-text';
 
 /**
  * **앱 껍데기 · 홈의 짧은 말은 웹의 글자 그대로다** — 웹에서 글자를 고치면 이 시험이 앱 쪽 옛 글자를 이름으로 댄다.
@@ -9,16 +11,7 @@ import { describe, expect, it } from 'vitest';
  * 웹 쪽 목록(`WEB`)은 웹이 글자를 적는 자리만 든다. 웹 · 앱이 함께 부르는 원본(`src/lib/<영역>/words.ts` · `src/lib/reading/running.ts` 등, G-168)에 산
  * 글자는 앱 파일에 글자로 남지 않으니 이 시험이 잴 것이 없다 — 그 원본을 목록에 넣으면 「앱이 웹 글자를 베꼈나」가 아니라 「원본에 있나」를 재게 된다.
  */
-const ROOT = join(import.meta.dirname, '..');
-const read = (path: string) => readFileSync(join(ROOT, path), 'utf8');
-
-const withoutComments = (text: string) =>
-  text.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '').replace(/\{\/\*[\s\S]*?\*\/\}/g, '');
-
-const koreanChunks = (text: string) =>
-  [...withoutComments(text).matchAll(/[가-힣][^'"`{}<>\n$]*/g)].map((match) => match[0].trim());
-
-const WEB = [
+const WEB = codeText([
   'app/site-header.tsx',
   'app/me/(home)/page.tsx',
   'app/me/onboarding.tsx',
@@ -37,10 +30,7 @@ const WEB = [
   'src/lib/chat/index.ts',
   'src/lib/survey/index.ts',
   'app/me/requests/manage.tsx',
-]
-  .map(read)
-  .join('\n')
-  .replace(/\s+/g, ' ')
+])
   /* 웹은 이 읽는 이름을 두 상수로 잇는다(`${SHELF_TITLE} ${SEE_ALL}`) */
   .concat(' 풀이 보관함 모두 보기');
 

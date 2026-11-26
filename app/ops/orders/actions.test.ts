@@ -92,3 +92,19 @@ describe('환불 누름의 거절 기록', () => {
     expect(notes()).toEqual([{ fn: 'note_operator_denial', args: { p_action: 'credits.refund_status' } }]);
   });
 });
+
+/** **확보의 답이 비면 0원 확보가 아니다** — 문은 확보 한 줄을 내므로, 0행은 섰는지 모르는 실패다 */
+describe('환불 확보의 답', () => {
+  const HOLD_INPUT = { orderId: ORDER, credits: 1, reason: 'other', expectedAmount: 3300, requestId: HOLD } as const;
+
+  it('확보 한 줄이면 그 금액으로 답한다', async () => {
+    answers.set('operator_hold_reading_refund', { data: [{ hold_id: HOLD, credits: 1, amount: 3300 }], error: null });
+    expect(await holdRefund(HOLD_INPUT)).toEqual({ ok: true, value: { amount: 3300 } });
+  });
+
+  it('0행이면 실패로 답한다', async () => {
+    answers.set('operator_hold_reading_refund', { data: [], error: null });
+    const answer = await holdRefund(HOLD_INPUT);
+    expect(answer.ok).toBe(false);
+  });
+});

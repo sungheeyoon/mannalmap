@@ -1,7 +1,9 @@
-import { readFileSync, readdirSync } from 'node:fs';
+import { readdirSync } from 'node:fs';
 import { join } from 'node:path';
 
 import { describe, expect, it } from 'vitest';
+
+import { ROOT, flat, koreanChunks, read, withoutComments } from './copy-text';
 
 /**
  * **앱 인연 화면의 짧은 말은 웹의 글자 그대로다.**
@@ -11,22 +13,10 @@ import { describe, expect, it } from 'vitest';
  *
  * **고지 문장은 상수 그대로다** — 차단 · 신고의 글자를 앱이 손으로 적지 않는 것도 여기서 잰다(사용자 약속이다).
  */
-const ROOT = join(import.meta.dirname, '..');
-
-const read = (file: string) => readFileSync(join(ROOT, file), 'utf8');
 const sourcesIn = (dir: string, ending: RegExp) =>
   readdirSync(join(ROOT, dir), { recursive: true, encoding: 'utf8' })
     .filter((name) => ending.test(name))
     .map((name) => ({ name: `${dir}/${name}`, text: read(`${dir}/${name}`) }));
-
-const withoutComments = (text: string) =>
-  text.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '').replace(/\{\/\*[\s\S]*?\*\/\}/g, '');
-
-const flat = (text: string) => text.replace(/\s+/g, ' ');
-
-/** 한글로 시작해 따옴표 · 중괄호 · 꺾쇠 · 줄바꿈 앞까지 — 글자 조각 하나 */
-const koreanChunks = (text: string) =>
-  [...withoutComments(text).matchAll(/[가-힣][^'"`{}<>\n]*/g)].map((match) => match[0].trim());
 
 const web = flat(
   [
@@ -40,7 +30,7 @@ const web = flat(
       text: read(file),
     })),
   ]
-    .map((source) => source.text)
+    .map((source) => withoutComments(source.text))
     .join('\n'),
 );
 

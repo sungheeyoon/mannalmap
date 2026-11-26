@@ -70,8 +70,12 @@ export default defineConfig({
   testDir: './e2e',
   fullyParallel: true,
   forbidOnly: Boolean(process.env.CI),
+  /**
+   * **CI 는 두 번까지 다시 돌리고, 다시 돌아 통과한 수를 job 요약에 센다**(`playwright.flaky-reporter.ts`). 다시 돌리기는 공유 러너의 흔들림을
+   * 붉은불로 만들지 않으려는 것이고, 그 대가로 흔들림이 초록 밑에 숨는다 — 숨은 수를 차선마다 세워 둔다.
+   */
   retries: process.env.CI ? 2 : 0,
-  reporter: process.env.CI ? 'github' : 'list',
+  reporter: process.env.CI ? [['github'], ['./playwright.flaky-reporter.ts']] : 'list',
   /**
    * **CI 는 느리다.** 기본 5초는 이 기계에서 넉넉하지만 공유 러너에서는 첫 그리기가
    * 그보다 오래 걸려, 고장이 아닌 것이 빨간불이 됐다. 기다리는 시간을 늘리는 것은

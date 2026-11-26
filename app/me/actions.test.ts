@@ -5,8 +5,16 @@ import { DEFAULT_QUERY, type Query } from '@/src/lib/input/query';
 import { dbFailure } from '../db-error';
 
 const rpc = vi.fn();
+/** 표의 사슬(`update · delete → eq → select`)이 끝에서 내는 답 */
+let edgeAnswer: { data: unknown; error: unknown } = { data: [], error: null };
+const edgeChain = (): unknown => ({
+  update: edgeChain,
+  delete: edgeChain,
+  eq: edgeChain,
+  select: async () => edgeAnswer,
+});
 vi.mock('../auth/server-client', () => ({
-  supabaseOnServer: async () => ({ rpc }),
+  supabaseOnServer: async () => ({ rpc, from: edgeChain }),
 }));
 
 vi.mock('next/cache', () => ({ revalidatePath: () => {} }));
@@ -17,7 +25,7 @@ vi.mock('./same-chart', () => ({
   sameChartInMyList: (...args: unknown[]) => sameChart(...args),
 }));
 
-const { addManagedPerson, savePersonForReading } = await import('./actions');
+const { addManagedPerson, removeFromList, savePersonForReading, updateNote } = await import('./actions');
 
 /**
  * **서버 액션은 던지지 않고 값으로 답한다**(ADR 0078).
@@ -65,5 +73,24 @@ describe.each([
       message: '요청을 처리하지 못했어요. 잠시 뒤 다시 시도해 주세요.',
     });
     expect(saved()).toEqual([]);
+  });
+});
+
+/**
+ * **정책이 오류 없이 거른 0행은 「됐다」가 아니다** — 이용 중이 아닌 계정 · selfPerson · 이미 뺀 사람은 RLS 가 행을 안 보여 주고
+ * 오류도 안 낸다(`20260825080000_suspended_accounts_lose_access.sql` 「내 라벨만 고친다」 · 「자기 자신은 목록에서 지울 수 없다」).
+ */
+describe.each([
+  ['updateNote', () => updateNote('p-1', '메모')],
+  ['removeFromList', () => removeFromList('p-1')],
+])('%s', (_, write) => {
+  it('바뀐 행이 있으면 됐다', async () => {
+    edgeAnswer = { data: [{ person_id: 'p-1' }], error: null };
+    await expect(write()).resolves.toEqual({ ok: true });
+  });
+
+  it('바뀐 행이 0이면 실패로 답한다', async () => {
+    edgeAnswer = { data: [], error: null };
+    await expect(write()).resolves.toEqual({ ok: false, message: '목록에서 다시 골라 주세요.' });
   });
 });

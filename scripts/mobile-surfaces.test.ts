@@ -1,9 +1,11 @@
-import { readdirSync, readFileSync, statSync } from 'node:fs';
+import { readFileSync } from 'node:fs';
 import { join, relative } from 'node:path';
 
 import { describe, expect, it } from 'vitest';
 
 import { SURFACE_EXCEPTIONS } from '../src/lib/design/contract';
+
+import { filesUnder } from './source-files';
 
 /**
  * **앱의 면은 `mobile/src/ui/` 의 부품으로만 선다**(ADR 0109 추기 2026-10-31). 운영자가 「카드가 화면마다 살짝씩 다르다」고 짚었다 — 면을 손으로 쓰는 길을
@@ -16,14 +18,6 @@ import { SURFACE_EXCEPTIONS } from '../src/lib/design/contract';
  */
 const ROOT = join(__dirname, '..');
 const SRC = join(ROOT, 'mobile', 'src');
-
-function walk(dir: string): string[] {
-  return readdirSync(dir).flatMap((name) => {
-    const path = join(dir, name);
-    if (statSync(path).isDirectory()) return walk(path);
-    return /\.tsx?$/.test(name) ? [path] : [];
-  });
-}
 
 /** 면을 손으로 쓰는 글자 — 표기가 달라도(별칭 · 값 · 네 귀퉁이) 걸린다 */
 const HAND_MADE: readonly { what: string; pattern: RegExp }[] = [
@@ -45,7 +39,7 @@ function handMadeIn(text: string): { what: string; found: string }[] {
   return HAND_MADE.flatMap(({ what, pattern }) => [...code.matchAll(pattern)].map((match) => ({ what, found: match[0] })));
 }
 
-const files = walk(SRC)
+const files = filesUnder(SRC).filter((path) => /\.tsx?$/.test(path))
   .filter((path) => !relative(SRC, path).startsWith('ui/'))
   .map((path) => ({ file: relative(ROOT, path), text: readFileSync(path, 'utf8') }));
 

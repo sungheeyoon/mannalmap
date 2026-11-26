@@ -1,12 +1,10 @@
-import { createClient } from '@supabase/supabase-js';
-import { execFileSync } from 'node:child_process';
 import { randomBytes } from 'node:crypto';
 
 import webpush from 'web-push';
 
 import { startCheckServer } from './next-server.mjs';
-import { passNotice, chartArgs } from './notice.mjs';
-import { createChecks, sql, testNeed, keyedRpc, shapeOnlySummary, fetchWhole, sessionCookie } from './checks.mjs';
+import { signedUpSelf } from './notice.mjs';
+import { createChecks, sql, testNeed, keyedRpc, shapeOnlySummary, fetchWhole, sessionCookie, localStatus, userIdOf, pageReader } from './checks.mjs';
 import { startFakePushService } from './fake-push-service.mjs';
 import { localDispatchUrl, setLocalPushExtraHosts, setLocalPushVault } from './push-local.mjs';
 import { PUSH_TTL_SECONDS, pushPayloadFor, pushTopicFor } from '../src/lib/push/index.ts';
@@ -25,11 +23,9 @@ import { worktreeStack } from '../src/lib/local-env.ts';
  * 같은 방에 셋이 연달아 와도 대기 줄은 하나 · 받는 사람이 이미 읽었으면 안 감 · 배달 문의 자격.
  */
 
-const status = JSON.parse(execFileSync('npx', ['supabase', 'status', '-o', 'json'], { encoding: 'utf8' }));
+const status = localStatus();
 const API = status.API_URL;
 const PORT = Number(process.env.CHECK_PORT ?? worktreeStack().checkPort + 11);
-
-const anon = () => createClient(API, status.ANON_KEY, { auth: { persistSession: false } });
 
 const { check, finish } = createChecks('check-push');
 
@@ -38,24 +34,10 @@ const tag = String(stamp).slice(-4);
 const nicknames = { a: `민푸${tag}`, b: `지푸${tag}` };
 const password = `pw-${stamp}-Aa1!`;
 const mail = { a: `push-a-${stamp}@example.com`, b: `push-b-${stamp}@example.com` };
-const userId = (email) => sql(`select id from auth.users where email = '${email}'`);
-
-const person = async (email, label, birth) => {
-  const client = anon();
-  await client.auth.signUp({ email, password });
-  await passNotice(client);
-  await keyedRpc(client, 'create_self_person', {
-    p_local_label: label, p_calendar: 'solar',
-    p_original_date: birth.date, p_solar_date: birth.date, p_birth_time: '14:30',
-    p_gender: birth.gender, p_city: birth.city, p_late_night_rule: 'jo', p_time_basis: 'localMean',
-    ...chartArgs(label),
-  });
-  return client;
-};
 
 // ── 무대: 두 사람 · 한 방 ────────────────────────────────────────────────────
-const a = await person(mail.a, '민수', { date: '1990-05-15', city: '서울', gender: 'male' });
-const b = await person(mail.b, '지영', { date: '1992-03-03', city: '부산', gender: 'female' });
+const a = await signedUpSelf(mail.a, password, '민수', { date: '1990-05-15', city: '서울', gender: 'male' });
+const b = await signedUpSelf(mail.b, password, '지영', { date: '1992-03-03', city: '부산', gender: 'female' });
 for (const [client, nickname] of [[a, nicknames.a], [b, nicknames.b]]) {
   await client.rpc('save_my_profile', { p_nickname: nickname, p_intro: null });
   await keyedRpc(client, 'set_discovery_participation', { p_on: true, p_summary: shapeOnlySummary, p_need: testNeed() });
@@ -141,12 +123,12 @@ try {
   // ── 방을 세운다 ─────────────────────────────────────────────────────────────
   // `check-chat.mjs` 와 같은 길 — 홈을 열어 풀에 들고, 후보를 다시 짓는다
   const cookie = { a: await sessionCookie(status, mail.a, password), b: await sessionCookie(status, mail.b, password) };
-  const get = (path, jar) => fetchWhole(`${BASE}${path}`, { headers: { cookie: jar }, redirect: 'manual' });
+  const { get } = pageReader(BASE);
   await get('/me', cookie.a);
   await get('/me', cookie.b);
   sql(`delete from public.discovery_candidate s using auth.users u where u.id = s.user_id and u.email = '${mail.a}'`);
   await get('/me/matching', cookie.a);
-  const asked = await a.rpc('request_match', { p_candidate_user_id: userId(mail.b) });
+  const asked = await a.rpc('request_match', { p_candidate_user_id: userIdOf(mail.b) });
   const accepted = await b.rpc('respond_to_match_request', { p_request_id: asked.data, p_accept: true });
   check('대화를 열고 답해 두 사람의 방이 선다', accepted.data === 'accepted', accepted.error?.message ?? '');
   const { data: rooms } = await a.rpc('my_chat_rooms');

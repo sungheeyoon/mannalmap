@@ -1,8 +1,10 @@
-import { readFileSync, readdirSync } from 'node:fs';
+import { readFileSync } from 'node:fs';
 import { join, relative } from 'node:path';
 
 import ts from 'typescript';
 import { describe, expect, it } from 'vitest';
+
+import { filesUnder } from './source-files';
 
 /**
  * **앱의 `.then(` 은 거절을 받는다.** 받지 않으면 읽기가 던진 날 첫 답을 기다리는 화면이 빈 채로 멈춘다 — 관문은 그 뒤의 앱 전체를 멈춘다.
@@ -12,12 +14,6 @@ const ROOT = join(import.meta.dirname, '..');
 
 /** 안에서 스스로 받아 던지지 않는 읽기 — 받아 주는 코드가 그 함수 안에 있다 */
 const NEVER_REJECTS = new Set(['readGate', 'readAdultCheck']);
-
-const filesUnder = (dir: string): string[] =>
-  readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
-    const path = join(dir, entry.name);
-    return entry.isDirectory() ? filesUnder(path) : [path];
-  });
 
 const callNamed = (node: ts.Node, name: string): node is ts.CallExpression & { expression: ts.PropertyAccessExpression } =>
   ts.isCallExpression(node) && ts.isPropertyAccessExpression(node.expression) && node.expression.name.text === name;

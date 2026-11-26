@@ -14,14 +14,14 @@
  */
 import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs';
 import { builtinModules } from 'node:module';
-import { dirname, join, relative, resolve, sep } from 'node:path';
+import { dirname, join, resolve } from 'node:path';
 
 import ts from 'typescript';
 import { describe, expect, it } from 'vitest';
 
 import codeRules from '../eslint-code-rules.cjs';
 
-import { SOURCE_EXTENSIONS, sourceFilesUnder } from './source-files';
+import { SOURCE_EXTENSIONS, relPath, sourceFilesUnder } from './source-files';
 
 const ROOT = resolve(__dirname, '..');
 
@@ -76,7 +76,6 @@ const SOURCE_FILES = [
   join(ROOT, 'proxy.ts'),
 ];
 
-const relPath = (file: string) => relative(ROOT, file).split(sep).join('/');
 
 /**
  * 파일마다 한 번만 읽고 짓는다 — 시험이 도는 동안 디스크는 안 바뀌고, 나무를 고치는 시험은 없다(`scripts/code-rules.test.ts` 와 같은 꼴).

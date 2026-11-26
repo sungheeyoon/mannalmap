@@ -22,10 +22,9 @@ import { SUPPORT_EMAIL } from '../src/lib/brand';
 
 import { ON_DEMAND_SECTION, TABLE_COLUMNS, linksOf, readBudgetOf, sectionOf as sectionIn, tableOf } from './read-budget.mjs';
 import { LAUNCHED, STAGE_FILE, stagesOf } from './release-stage.mjs';
-import { SOURCE_EXTENSIONS, filesUnder } from './source-files';
+import { SOURCE_EXTENSIONS, filesUnder, relPath } from './source-files';
 
 const ROOT = resolve(__dirname, '..');
-const relPath = (file: string) => relative(ROOT, file).split(sep).join('/');
 
 const ALL_FILES = ['src', 'app', 'scripts', 'e2e'].flatMap((dir) => filesUnder(join(ROOT, dir)));
 const SOURCE_FILES = [

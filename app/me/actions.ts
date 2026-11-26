@@ -14,7 +14,7 @@ import {
 } from '@/src/lib/input/edit';
 import { answerOfThrown, userFacingDbMessage } from '../db-error';
 import { rpcArgs } from '@/src/lib/db';
-import { PERSON_SAVE_UNKNOWN } from '@/src/lib/people/words';
+import { PERSON_PICK_AGAIN, PERSON_SAVE_UNKNOWN } from '@/src/lib/people/words';
 
 /**
  * 저장한 사람 하나 — **id 를 함께 낸다.**
@@ -132,12 +132,15 @@ export async function updateNote(personId: string, note: string): Promise<SaveRe
   const supabase = await supabaseOnServer();
 
   // 정책이 자기 행만 열어 주므로 `user_id` 를 적지 않는다.
-  const { error } = await supabase
+  const { data, error } = await supabase
     .from('user_person_access')
     .update({ note: noteOrNull(note) })
-    .eq('person_id', personId);
+    .eq('person_id', personId)
+    .select('person_id');
 
   if (error) return { ok: false, message: userFacingDbMessage(error, 'user_person_access.update') };
+  /* 정책은 못 고치는 행을 오류 없이 거른다(이용 중이 아닌 계정 · 이미 뺀 사람) — 0행은 고친 것이 아니다 */
+  if (data.length === 0) return { ok: false, message: PERSON_PICK_AGAIN };
 
   refresh('person-list-changed');
   return { ok: true };
@@ -153,8 +156,10 @@ export async function updateNote(personId: string, note: string): Promise<SaveRe
 export async function removeFromList(personId: string): Promise<SaveResult> {
   const supabase = await supabaseOnServer();
 
-  const { error } = await supabase.from('user_person_access').delete().eq('person_id', personId);
+  const { data, error } = await supabase.from('user_person_access').delete().eq('person_id', personId).select('person_id');
   if (error) return { ok: false, message: userFacingDbMessage(error, 'user_person_access.delete') };
+  /* 정책은 못 빼는 행을 오류 없이 거른다(이용 중이 아닌 계정 · selfPerson · 이미 뺀 사람) — 0행은 뺀 것이 아니다 */
+  if (data.length === 0) return { ok: false, message: PERSON_PICK_AGAIN };
 
   refresh('person-list-changed');
   return { ok: true };

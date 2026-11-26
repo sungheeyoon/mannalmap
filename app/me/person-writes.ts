@@ -34,13 +34,6 @@ export async function editPersonInputAs(writer: ChartWriter, personId: string, q
   const refused = refusalOf(query);
   if (refused !== null) return { ok: false, message: refused };
 
-  // 정책이 자기 행만 열어 주므로 `user_id` 를 적지 않는다.
-  const { error: labelError } = await writer.client
-    .from('user_person_access')
-    .update({ local_label: query.name.trim() })
-    .eq('person_id', personId);
-  if (labelError) return { ok: false, message: userFacingDbMessage(labelError, 'user_person_access.label') };
-
   /**
    * 입력을 덮어쓰고, 내 사람이면 **매칭 풀에 내놓은 오행 요약도 따라간다** — 둘 다 열쇠 모듈이 한다(G-64, ADR 0136).
    *
@@ -48,8 +41,20 @@ export async function editPersonInputAs(writer: ChartWriter, personId: string, q
    * 참여 중이라고 알고 있는데 아무에게도 안 보이게 된다. 「내 사주인가」는 앱이 안 묻는다 — `ensure_discovery_participation`
    * 이 `uuid` 로 견준다(문자열 비교는 대소문자를 가려, 대문자 id 에서 요약 갱신이 조용히 빠졌었다).
    * 참여가 기본으로 켜진 뒤로 그 호출은 참여를 열기도 한다. 끈 사람은 그대로 쉰다(`opted_out_at`).
+   *
+   * **입력이 먼저다** — 거절(정지 · 못 고치는 사람 · 맞지 않는 입력)은 `edit_person_input` 이 내고, 이름은 그 문을 지난 뒤에 고친다.
+   * 차례가 거꾸로면 거절된 수정이 이름만 바꿔 놓는다. 두 쓰기는 한 거래가 아니다 — 이름 쓰기가 못 닿으면 입력만 바뀐 채 실패로 답하고,
+   * 같은 수정을 다시 보내면 입력은 「바뀐 것 없음」으로 지나고 이름만 고쳐진다.
    */
   const { error } = await editPersonInput(writer, personId, query);
   if (error) return { ok: false, message: userFacingDbMessage(error, 'edit_person_input') };
+
+  // 정책이 자기 행만 열어 주므로 `user_id` 를 적지 않는다.
+  const { error: labelError } = await writer.client
+    .from('user_person_access')
+    .update({ local_label: query.name.trim() })
+    .eq('person_id', personId);
+  if (labelError) return { ok: false, message: userFacingDbMessage(labelError, 'user_person_access.label') };
+
   return { ok: true };
 }

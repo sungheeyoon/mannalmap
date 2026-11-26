@@ -24,22 +24,19 @@
  *    걷은 「더보기」(`more_clicked`)는 서버 액션이 받지 않는다(G-85)
  * 9. **회원은 맛보기로 안 간다** — 로그인한 요청은 예약도 세션도 없이 닫힌다
  */
-import { createClient } from '@supabase/supabase-js';
-import { execFileSync } from 'node:child_process';
 import { randomUUID } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 
 import { startCheckServer } from './next-server.mjs';
 import { passNotice, chartArgs } from './notice.mjs';
-import { createChecks, sql, keyedRpc, sessionCookie } from './checks.mjs';
+import { createChecks, sql, keyedRpc, sessionCookie, localStatus, anonClient } from './checks.mjs';
 import { TASTE_CLOCK_COLUMNS, rawLeaks, tasteRowsSql } from './taste-raw.mjs';
 import { worktreeStack } from '../src/lib/local-env.ts';
 
-const status = JSON.parse(execFileSync('npx', ['supabase', 'status', '-o', 'json'], { encoding: 'utf8' }));
+const status = localStatus();
 const API = status.API_URL;
 const PORT = Number(process.env.CHECK_PORT ?? worktreeStack().checkPort + 5);
 
-const anon = () => createClient(API, status.ANON_KEY, { auth: { persistSession: false } });
 const { check, finish } = createChecks('check-taste');
 
 const stamp = Date.now();
@@ -235,7 +232,7 @@ try {
   const password = `pw-${stamp}-Aa1!`;
   const member = async (who) => {
     const email = `taste-${who}-${stamp}@example.com`;
-    const client = anon();
+    const client = anonClient();
     await client.auth.signUp({ email, password });
     await passNotice(client);
     return { client, email, id: (await client.auth.getUser()).data.user.id, session: await sessionCookie(status, email, password) };

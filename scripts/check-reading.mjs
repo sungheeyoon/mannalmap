@@ -16,11 +16,10 @@
  *    없을 수 있다(ADR 0016). 그 줄이 어디를 다시 눌러야 하는지까지 들어야 한다.
  */
 import { createClient } from '@supabase/supabase-js';
-import { execFileSync } from 'node:child_process';
 
 import { startCheckServer } from './next-server.mjs';
-import { passNotice, chartArgs } from './notice.mjs';
-import { createChecks, sql, testNeed, fetchWhole, keyedRpc, sessionCookie } from './checks.mjs';
+import { signedUpSelf, chartArgs } from './notice.mjs';
+import { createChecks, sql, testNeed, keyedRpc, sessionCookie, localStatus, pageReader, plain } from './checks.mjs';
 /**
  * **문구를 손으로 안 적는다** — 제품이 쓰는 그 상수를 그대로 든다.
  *
@@ -34,11 +33,9 @@ import { READING_REPLACES_NOTE, READING_STALE_NOTE } from '../src/lib/reading/no
 import { COMPAT_SCORE_LABEL } from '../src/lib/reading/copy.ts';
 import { worktreeStack } from '../src/lib/local-env.ts';
 
-const status = JSON.parse(execFileSync('npx', ['supabase', 'status', '-o', 'json'], { encoding: 'utf8' }));
+const status = localStatus();
 const API = status.API_URL;
 const PORT = Number(process.env.CHECK_PORT ?? worktreeStack().checkPort + 4);
-
-const anon = () => createClient(API, status.ANON_KEY, { auth: { persistSession: false } });
 
 /**
  * 열쇠를 든 client — **서버가 저장할 때 쓰는 그 문**이다(ADR 0013).
@@ -69,15 +66,7 @@ const hideOthers = () => {
 };
 
 const person = async (email, label, birth) => {
-  const client = anon();
-  await client.auth.signUp({ email, password });
-  await passNotice(client);
-  await keyedRpc(client, 'create_self_person', {
-    p_local_label: label, p_calendar: 'solar',
-    p_original_date: birth.date, p_solar_date: birth.date, p_birth_time: '14:30',
-    p_gender: birth.gender, p_city: birth.city, p_late_night_rule: 'jo', p_time_basis: 'localMean',
-    ...chartArgs(label),
-  });
+  const client = await signedUpSelf(email, password, label, birth);
   await client.rpc('save_my_profile', { p_nickname: label, p_intro: null });
   await keyedRpc(client, 'set_discovery_participation', {
     p_on: true,
@@ -93,7 +82,6 @@ const person = async (email, label, birth) => {
 
 const a = await person(mail.a, NAME.a, BIRTH.a);
 const b = await person(mail.b, NAME.b, BIRTH.b);
-hideOthers();
 hideOthers();
 
 /** 비공개 궁합의 대상 — 내가 등록한 사람 */
@@ -113,9 +101,7 @@ const { base: BASE, stop } = await startCheckServer({
   secretKey: status.SERVICE_ROLE_KEY,
 });
 
-const get = (path, jar) => fetchWhole(`${BASE}${path}`, { headers: jar ? { cookie: jar } : {}, redirect: 'manual' });
-const body = async (path, jar) => (await get(path, jar)).text();
-const plain = (html) => html.replace(/<!--\s*-->/g, '');
+const { get, body } = pageReader(BASE);
 
 /** 모델이 냈다고 치는 글 — 검사 문장이 걸리지 않게 간지도 날짜도 넣지 않는다 */
 const OUTPUT = {
