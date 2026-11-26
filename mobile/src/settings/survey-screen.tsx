@@ -39,7 +39,6 @@ import {
 } from '@survey';
 
 import { useClient } from '@/auth/connected';
-import { UNREACHABLE } from '@/auth/signup';
 import { FailureLine } from '@/ui/failure-line';
 import { useLeaveGuard } from '@/ui/leave-guard';
 import { LoadingDots } from '@/ui/loading';
@@ -54,6 +53,7 @@ import { setOptionalConsent } from './settings';
 import { loadSurvey, saveSurvey, type Loaded } from './survey';
 import { WordText } from '@/ui/word-text';
 import { SURVEY_CONSENT_NEEDED, SURVEY_CONSENT_NOTE, SURVEY_CONSENT_OPEN, SURVEY_DRAFT_SAVING, SURVEY_FAILED, SURVEY_RETRY_NOTE } from '@account/words';
+import { unreachedDone } from '@/answer';
 
 /** 서비스 설문 — 웹 `app/me/survey/` 와 같다. 어느 문항이 서는지는 DB 가 답한다(`service_survey_context`) */
 export function SurveyScreen() {
@@ -148,7 +148,7 @@ function SurveyForm({ context, given }: { context: SurveyContext; given: MySurve
   const [saver] = useState(() =>
     draftSaver<SurveyAnswers>({
       initial: given?.answers ?? EMPTY_ANSWERS,
-      save: async (value) => (await settled(saveSurvey(client, value, false), 'survey draft', () => ({ ok: false, message: UNREACHABLE }) as const)).ok,
+      save: async (value) => (await settled(saveSurvey(client, value, false), 'survey draft', unreachedDone)).ok,
       onState: (state, left) => {
         setDraft(state);
         setUnsaved(left);
@@ -184,7 +184,7 @@ function SurveyForm({ context, given }: { context: SurveyContext; given: MySurve
     setSending(true);
     const value = withoutHidden(answers, shown);
     /* 제출도 초안과 같은 줄에 선다 — 떠난 초안이 닿은 뒤에 떠나고, 그 사이 기다리던 초안은 걷힌다 */
-    const result = await saver.submit(value, (answers) => settled(saveSurvey(client, answers, true), 'survey submit', () => ({ ok: false, message: UNREACHABLE }) as const));
+    const result = await saver.submit(value, (answers) => settled(saveSurvey(client, answers, true), 'survey submit', unreachedDone));
     setSending(false);
     if (!result.ok) {
       setFailure(result.message);

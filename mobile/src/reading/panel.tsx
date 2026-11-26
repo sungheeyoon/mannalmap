@@ -12,25 +12,20 @@ import { useClient } from '@/auth/connected';
 import { Card, CardFrame, Tile } from '@/ui/surfaces';
 import { PrimaryButton, SecondaryButton, TextButton } from '@/ui/parts';
 import { COLOR, FONT, TYPE } from '@/ui/tokens';
-import { settled } from '@/ui/settled';
-import { UNREACHABLE } from '@/auth/signup';
+import { latestCalls, settled } from '@/ui/settled';
 
 import { readReadingView, type DoorRefusal, type ReadingTarget, type ReadingView } from './api';
 import { storeAvailable } from '@/credits/store';
 
 import { ConfirmMake, useBuyCredits } from './dialogs';
+import { followRefusal } from './follow-refusal';
 import { ReadingFeedback } from './feedback';
 import { Result, type CoverPerson } from './result';
 import { ShareReadingButton, ShareReadingIcon, useReadingShare } from './share-button';
 import { useReadingPanel, type ShownView } from './use-reading-panel';
 import { LoadingState } from './waiting';
 import { WordText } from '@/ui/word-text';
-
-/** 문이 자격으로 거절한 때의 길 — 웹의 관문이 보내는 곳과 같다. 다시 시도할 수 있는 거절만 칸에 남는다 */
-export function followRefusal(refused: DoorRefusal): void {
-  if (refused.refused === 'sign-in') router.replace('/');
-  else if (refused.refused === 'signup' || refused.refused === 'closed') router.replace('/signup');
-}
+import { unreachedDoor } from '@/answer';
 
 /** 못 읽은 칸 — 웹의 `FailureLine` 처럼 까닭 한 줄과 다시 시도 */
 export function ReadFailure({ refused, onRetry }: { refused: DoorRefusal; onRetry: () => void }) {
@@ -57,29 +52,26 @@ export function useReadingView(target: ReadingTarget) {
   const query = JSON.stringify(target);
 
   /* 가장 최근의 읽기 표 — 늦은 응답이 새 대상의 칸에 서면 궁합은 다른 두 사람의 풀이가 보인다. 「다시 시도하기」의 읽기도 같은 표로 잰다 */
-  const latest = useRef(0);
+  const [latest] = useState(latestCalls);
 
   const load = useCallback(() => {
-    latest.current += 1;
-    const mine = latest.current;
+    const mine = latest.take();
     setAnswer(null);
-    void settled(readReadingView(client, JSON.parse(query) as ReadingTarget), 'readReadingView', () => ({ ok: false, refused: { refused: 'unavailable', message: UNREACHABLE } }) as const).then((read) => {
-      if (mine !== latest.current) return;
+    void settled(readReadingView(client, JSON.parse(query) as ReadingTarget), 'readReadingView', unreachedDoor).then((read) => {
+      if (!mine()) return;
       if (read.ok) setAnswer({ view: read.value });
       else {
         followRefusal(read.refused);
         setAnswer({ refused: read.refused });
       }
     });
-  }, [client, query]);
+  }, [client, query, latest]);
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect -- load 는 효과 안에서 동기로 칸을 비운다 - 대상이 바뀌면 옛 풀이가 한 번도 안 그려지게 하는 일이다
     load();
-    return () => {
-      latest.current += 1;
-    };
-  }, [load]);
+    return latest.drop;
+  }, [load, latest]);
   return { answer, reload: load };
 }
 

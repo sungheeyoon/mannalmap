@@ -5,7 +5,7 @@ import { userFacingDbMessage } from '@db-error';
 import { MATCH_CLOSED_HOME, matchClosedDetours } from '@matching/opening';
 
 import { supabase, type Client } from '@/auth/client';
-import { settled } from '@/ui/settled';
+import { settledWhileLive } from '@/ui/settled';
 
 /**
  * **인연이 열려 있는가**(ADR 0222) — 웹의 `app/match-opening.ts` 와 같은 문이다. 못 읽으면 `null` 이다.
@@ -40,13 +40,7 @@ export function useMatchOpen(): boolean | null {
     /* 로그인 전 첫 화면도 부르는 껍데기의 손이다 — 주소 · 공개 키가 없는 빌드는 모르는 채(`null`)로 둔다(ADR 0243) */
     const client = supabase;
     if (client === null) return;
-    let live = true;
-    void settled(readMatchOpen(client), 'match_is_open', () => null).then((answer) => {
-      if (live) setOpen(answer);
-    });
-    return () => {
-      live = false;
-    };
+    return settledWhileLive(readMatchOpen(client), 'match_is_open', () => null, setOpen);
   }, []);
   return open;
 }

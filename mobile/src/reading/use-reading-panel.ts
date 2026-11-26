@@ -19,7 +19,7 @@ import { AppState } from 'react-native';
 import { improvementConsented, markReadingRead, newRequestKey, readReadingRun, readReadingView, startReading, type DoorRefusal, type ReadingTarget, type ReadingView } from './api';
 import { useClient } from '@/auth/connected';
 import { askOnFirstReading } from '@/push/device';
-import { settled } from '@/ui/settled';
+import { settledWhileLive } from '@/ui/settled';
 
 export type ShownView = Extract<ReadingView, { view: 'reading' }>;
 
@@ -64,15 +64,7 @@ export function useReadingPanel({
 
   /* 못 읽었으면 동의를 주장하지 않는다(ADR 0078) — 설문이 안 설 뿐이다 */
   const [consented, setConsented] = useState(false);
-  useEffect(() => {
-    let live = true;
-    void settled(improvementConsented(client), 'improvementConsented', () => false).then((yes) => {
-      if (live) setConsented(yes);
-    });
-    return () => {
-      live = false;
-    };
-  }, [client]);
+  useEffect(() => settledWhileLive(improvementConsented(client), 'improvementConsented', () => false, setConsented), [client]);
 
   const { phase, failure } = flow;
   const reading = view.reading;

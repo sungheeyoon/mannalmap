@@ -1,5 +1,5 @@
 import { router, useLocalSearchParams } from 'expo-router';
-import { useEffect, useRef, useState, type ComponentRef } from 'react';
+import { useEffect, useReducer, useRef, useState, type ComponentRef } from 'react';
 import { KeyboardAvoidingView, ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -17,16 +17,16 @@ import {
   SIGNUP_NOTICE_USE,
   signupSectionErrors,
   type SignupChoices,
-  type SignupField,
 } from '@consent/signup';
-import { NICKNAME_AVAILABLE_NOTE, NICKNAME_MAX, NICKNAME_MIN, NICKNAME_TAKEN_NOTE, missingNickname, nicknameKey } from '@profile';
+import { SIGNUP_NICKNAME_START, signupCheckPress, signupNicknameGap, signupNicknameReducer, signupNicknameView } from '@consent/signup-form';
+import { NICKNAME_MAX, NICKNAME_MIN } from '@profile';
 
 import { ConnectedClient, useClient } from '@/auth/connected';
 import { supabase } from '@/auth/client';
 import { arriveAt } from '@/auth/arrive';
 import { MatchingSteps } from '@/auth/matching-steps';
 import { signOut } from '@/auth/sign-in';
-import { checkNickname, completeSignup, NOT_READY, readSignup, UNREACHABLE, type SignupState } from '@/auth/signup';
+import { checkNickname, completeSignup, NOT_READY, readSignup, type SignupState } from '@/auth/signup';
 import { RequestDeletion } from '@/settings/leaving';
 import { legalPagesOpen, openLegalPage } from '@/info/legal-web';
 import { AccountNotice } from '@/settings/parts';
@@ -36,11 +36,12 @@ import { FailureLine } from '@/ui/failure-line';
 import { SectionErrorLine, SectionScrollView, useSectionErrors } from '@/ui/section-error';
 import { CheckRow, Field, FieldLabel, PrimaryButton, SecondaryButton, TextButton } from '@/ui/parts';
 import { COLOR, FONT, TYPE, TYPE_TITLE } from '@/ui/tokens';
-import { settled } from '@/ui/settled';
+import { settledWhileLive } from '@/ui/settled';
 import { goBack } from '@/ui/top-bar';
 import { Card, CardFrame, Paper, Tile } from '@/ui/surfaces';
 import { WordText } from '@/ui/word-text';
 import { SIGN_OUT_FAILED } from '@account/words';
+import { unreachedLoad } from '@/answer';
 
 
 /**
@@ -74,15 +75,7 @@ function Signup() {
 
   /* 탈퇴를 신청하면 다시 읽는다 — 폼 대신 탈퇴 대기 안내가 선다 */
   const [reads, setReads] = useState(0);
-  useEffect(() => {
-    let live = true;
-    void settled(readSignup(client), 'readSignup', () => ({ kind: 'failed', message: UNREACHABLE }) as const).then((next) => {
-      if (live) setState(next);
-    });
-    return () => {
-      live = false;
-    };
-  }, [client, reads]);
+  useEffect(() => settledWhileLive(readSignup(client), 'readSignup', unreachedLoad, setState), [client, reads]);
 
   useEffect(() => {
     if (state?.kind === 'done') finish();
@@ -141,44 +134,38 @@ function Signup() {
 function SignupForm({ form, onDone }: { form: Extract<SignupState, { kind: 'form' }>; onDone: () => void }) {
   const client = useClient();
   const { needsName, again, scheduleId } = form;
-  const [nickname, setNickname] = useState('');
   const [fourteen, setFourteen] = useState(false);
   const [acknowledged, setAcknowledged] = useState(false);
   const [chosen, setChosen] = useState<SignupChoices>(SIGNUP_CHOICES_OFF);
-  const [failure, setFailure] = useState<{ message: string; field: SignupField | null } | null>(null);
+  /* 닉네임 칸 · 확인한 답 · 서버의 거절은 웹과 같은 reducer 다(`signupNicknameReducer`) */
+  const [name, dispatch] = useReducer(signupNicknameReducer, SIGNUP_NICKNAME_START);
+  const { nickname } = name;
   const [working, setWorking] = useState(false);
-  const [checked, setChecked] = useState<{ key: string; available: boolean } | null>(null);
   const [checking, setChecking] = useState(false);
-  const [checkTried, setCheckTried] = useState(false);
   const nicknameField = useRef<ComponentRef<typeof TextInput>>(null);
 
-  const missing = needsName ? missingNickname(nickname) : null;
-  const answer = checked?.key === nicknameKey(nickname) ? checked : null;
   /* 단추를 잠그지 않고, 누르면 걸린 문단마다 그 아래에서 말한다 — 웹과 같다(ADR 0252) */
-  const sections = useSectionErrors(signupSectionErrors({ nicknameGap: missing, fourteen, acknowledged }));
-  /** 닉네임 문단의 줄 — 누른 뒤의 줄, 아니면 「중복 확인」을 눌렀는데 규칙에 안 맞은 말(같은 자리 · 같은 말) */
-  const nicknameLine = sections.shown.nickname ?? (checkTried ? missing : null);
-  const refusedHere = (field: SignupField) => failure?.field === field;
+  const sections = useSectionErrors(signupSectionErrors({ nicknameGap: signupNicknameGap(name, needsName), fourteen, acknowledged }));
+  const view = signupNicknameView(name, needsName, sections.shown.nickname);
   /* 칸은 닉네임 하나다 — 테스트 코드 칸은 걷었다(ADR 0225) */
   const focusName = () => nicknameField.current?.focus();
 
   const check = async () => {
-    if (missing !== null) {
-      setCheckTried(true);
+    if (signupCheckPress(name, needsName) === 'rule') {
+      dispatch({ type: 'check-refused' });
       nicknameField.current?.focus();
       return;
     }
-    setCheckTried(false);
-    setFailure(null);
+    dispatch({ type: 'check-asked' });
     setChecking(true);
     const result = await checkNickname(client, nickname);
     setChecking(false);
-    if (result.ok) setChecked({ key: nicknameKey(nickname), available: result.available });
-    else setFailure({ message: result.message, field: 'nickname' });
+    if (result.ok) dispatch({ type: 'check-answered', nickname, available: result.available });
+    else dispatch({ type: 'check-failed', message: result.message });
   };
 
   const send = async () => {
-    setFailure(null);
+    dispatch({ type: 'send' });
     if (!sections.press()) return;
     setWorking(true);
     const result = await completeSignup(client, {
@@ -191,7 +178,7 @@ function SignupForm({ form, onDone }: { form: Extract<SignupState, { kind: 'form
       onDone();
       return;
     }
-    setFailure({ message: result.message, field: result.field });
+    dispatch({ type: 'refused', failure: { message: result.message, field: result.field } });
     if (result.field !== null) focusName();
   };
 
@@ -209,24 +196,18 @@ function SignupForm({ form, onDone }: { form: Extract<SignupState, { kind: 'form
                 maxLength={NICKNAME_MAX}
                 autoCapitalize="none"
                 placeholder={`${NICKNAME_MIN}~${NICKNAME_MAX}자`}
-                refused={nicknameLine !== null || refusedHere('nickname')}
+                refused={view.line !== null || view.refused !== null}
                 onChange={(typed) => {
-                  setNickname(typed);
+                  dispatch({ type: 'typed', text: typed });
                   sections.edit('nickname');
-                  setCheckTried(false);
-                  if (failure?.field === 'nickname') setFailure(null);
                 }}
               />
             </View>
             <SecondaryButton label={checking ? SIGNUP_LABEL.checking : SIGNUP_LABEL.check} onPress={check} disabled={checking} />
           </View>
-          {answer !== null && (
-            <WordText style={answer.available ? styles.note : styles.failure}>
-              {answer.available ? NICKNAME_AVAILABLE_NOTE : NICKNAME_TAKEN_NOTE}
-            </WordText>
-          )}
-          <SectionErrorLine message={nicknameLine} gap={6} />
-          {refusedHere('nickname') && <WordText style={styles.failure}>{failure?.message}</WordText>}
+          {view.answer !== null && <WordText style={view.answer.available ? styles.note : styles.failure}>{view.answer.note}</WordText>}
+          <SectionErrorLine message={view.line} gap={6} />
+          {view.refused !== null && <WordText style={styles.failure}>{view.refused}</WordText>}
           <WordText style={styles.fine}>{SIGNUP_LABEL.nicknameNote}</WordText>
         </View>
       )}
@@ -291,7 +272,7 @@ function SignupForm({ form, onDone }: { form: Extract<SignupState, { kind: 'form
       ))}
 
       <View style={styles.action}>
-        {failure !== null && failure.field === null && <WordText style={styles.failure}>{failure.message}</WordText>}
+        {view.failure !== null && <WordText style={styles.failure}>{view.failure}</WordText>}
         <PrimaryButton
           label={working ? SIGNUP_LABEL.signingUp : again ? SIGNUP_LABEL.confirm : SIGNUP_LABEL.signUp}
           onPress={send}

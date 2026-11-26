@@ -4,8 +4,16 @@ import { useRouter } from 'next/navigation';
 import { Fragment, useEffect, useId, useRef, useState, useTransition } from 'react';
 
 import type { Relation } from '@/src/lib/people';
-import { dropUnlisted, seatSectionErrors, type SeatSection } from '@/src/lib/people/pick';
-import { prefixed, sideOf as sectionsOf } from '@/src/lib/input/section-errors';
+import {
+  dropUnlisted,
+  pairKeyOf,
+  pairOpenNext,
+  pairSeatErrors,
+  relationToSend,
+  seatChangeClearsPick,
+  type SeatSection,
+} from '@/src/lib/people/pick';
+import { sideOf as sectionsOf } from '@/src/lib/input/section-errors';
 import {
   DEFAULT_QUERY,
   mergeSearchParams,
@@ -145,23 +153,17 @@ export function CompatPicker({ people }: { people: Choosable[] }) {
   const [question, setQuestion] = useState<SameChartQuestion | null>(null);
   const [failure, setFailure] = useState<string | null>(null);
   const [opening, startOpening] = useTransition();
-  const sameTwice =
-    slots.a.from === 'saved' && slots.b.from === 'saved' && slots.a.personId !== '' && slots.a.personId === slots.b.personId;
   /**
    * **비어 있다는 말은 누른 뒤에만, 그 칸의 문단 아래에 선다**(ADR 0252 — 전에는 단추 아래 한 줄이었다). 막 연 화면이 「두 번째 사람을
    * 골라 주세요」로 서면 아직 아무것도 안 한 사람을 나무란다. 두 칸의 걸린 문단이 다 함께 서고, 같은 사람 둘은 둘째 칸의 고르는 칸 아래다.
+   * 갈래는 앱과 같은 `pairSeatErrors` 다.
    */
-  const errors = SIDES.flatMap((side) =>
-    prefixed(side, seatSectionErrors(slots[side], { people, who: SIDE_PERSON[side], sameAsOther: side === 'b' && sameTwice })),
-  );
+  const errors = pairSeatErrors(slots, { people, who: SIDE_PERSON });
   const sections = useSectionErrors(errors, root);
   const chosen = errors.length === 0;
 
   /** 차례를 안 타는 쌍 이름 — 첫째·둘째를 바꿔 골라도 같은 쌍이다(DB 와 같은 규율) */
-  const pairKey =
-    slots.a.from === 'saved' && slots.b.from === 'saved' && chosen && !sameTwice
-      ? [slots.a.personId, slots.b.personId].sort().join('|')
-      : '';
+  const pairKey = pairKeyOf(slots, chosen);
 
   /**
    * **적어 둔 답을 칸에 세운다.** 화면이 저장 상태를 그대로 보여 주면 그 화면을 눌러도
@@ -172,45 +174,35 @@ export function CompatPicker({ people }: { people: Choosable[] }) {
   const setSlot = (side: CompatSide, next: Slot) => {
     setFailure(null);
     /* 방식을 바꾸거나 사람을 고르면 그 칸의 고르는 칸 줄이 걷힌다 — 출생 정보 칸의 줄은 폼이 제 문단마다 걷는다 */
-    if (next.from === 'saved' || slots[side].from !== next.from) sections.edit(`${side}.pick`);
+    if (seatChangeClearsPick(slots[side], next)) sections.edit(`${side}.pick`);
     setSlots((now) => ({ ...dropUnlisted(now, people), [side]: next }));
   };
 
   const open = async (answers: PairAnswers): Promise<SaveOutcome> => {
     const opened = await actionAnswer(
-      openPairScreen(
-        sideOf(slots.a),
-        sideOf(slots.b),
-        answered.current === pairKey || pairKey === '' ? relation : undefined,
-        answers,
-      ),
+      openPairScreen(sideOf(slots.a), sideOf(slots.b), relationToSend(relation, answered.current, pairKey), answers),
       (message) => ({ ok: false, kind: 'failed', message }) as const,
     );
+    const next = pairOpenNext(opened, answers);
 
-    if (opened.ok) {
+    if (next.kind === 'go') {
       /* 뒤로 왔을 때 고른 것이 그대로 서 있게 — 주소가 이 화면의 상태다 */
       shown.current = paramsOf(slots);
       writeParams(shown.current, 'replace');
-      router.push(`/me/compat?a=${opened.personA}&b=${opened.personB}`);
+      router.push(`/me/compat?a=${next.personA}&b=${next.personB}`);
       return { done: true };
     }
 
-    if (opened.kind === 'failed') {
+    if (next.kind === 'failed') {
       /*
         **한 사람의 입력이 거절됐으면 그 칸으로 데려간다.** 화면이 누르기 전에 거의 다 잡지만 서버만 아는 거절(주소로 들어온
         모르는 출생지 등)이 남는다 — 알림은 단추 아래 서고, 폰에서 그 칸은 한 화면 위다.
       */
-      if (opened.side !== undefined) bringTo(opened.side);
-      return { failed: opened.message };
+      if (next.side !== undefined) bringTo(next.side);
+      return { failed: next.message };
     }
 
-    return {
-      ask: {
-        label: opened.same.label,
-        answer: (sameperson) =>
-          open({ ...answers, [opened.side]: sameperson ? opened.same.personId : null }),
-      },
-    };
+    return { ask: { label: next.label, answer: (sameperson) => open(next.answer(sameperson)) } };
   };
 
   const settle = (outcome: SaveOutcome) => settleSaveOutcome(outcome, setFailure, setQuestion);
