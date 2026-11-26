@@ -21,9 +21,6 @@ select
 grant select on folks to authenticated, service_role, anon;
 
 insert into public.operator (user_id, note) values ((select operator from folks), '시험 — 오늘의 숫자');
--- 판매는 닫혀 있다 — 심사 계정으로 주문을 연다(ADR 0171)
-insert into public.reading_sale_reviewer (user_id, note) values ((select buyer from folks), '시험 — 오늘의 숫자');
-
 create or replace function pg_temp.acting(uid uuid)
 returns void language plpgsql as $$
 begin
@@ -92,9 +89,9 @@ set local role authenticated;
 select pg_temp.acting((select buyer from folks));
 create temporary table ord (label text, order_id uuid);
 grant select, insert on ord to authenticated, service_role;
-insert into ord select 'one', order_id from public.open_reading_order(1, 'portone', 'figures-one-0001');
-insert into ord select 'three', order_id from public.open_reading_order(3, 'portone', 'figures-three-0001');
-insert into ord select 'waiting', order_id from public.open_reading_order(5, 'portone', 'figures-five-0001');
+insert into ord select 'one', order_id from tests.open_order(1, 'dev', 'figures-one-0001');
+insert into ord select 'three', order_id from tests.open_order(3, 'dev', 'figures-three-0001');
+insert into ord select 'waiting', order_id from tests.open_order(5, 'dev', 'figures-five-0001');
 
 reset role;
 create temporary table paid as

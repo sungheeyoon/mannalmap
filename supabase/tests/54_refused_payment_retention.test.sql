@@ -56,28 +56,23 @@ begin
 end;
 $$;
 
-/** 판매를 연다 — 이 트랜잭션 안에서만 */
-create or replace function public.reading_sale_is_open()
-returns boolean language sql immutable set search_path = '' as $$ select true $$;
-
 set local role authenticated;
 select pg_temp.acting((select leaver from folks));
 create temporary table ords as
-select 'refused' as name, o.* from public.open_reading_order(3, 'dev', 'rp-order-refused') o
+select 'refused' as name, o.* from tests.open_order(3, 'dev', 'rp-order-refused') o
 union all
-select 'quiet', o.* from public.open_reading_order(1, 'dev', 'rp-order-quiet') o
+select 'quiet', o.* from tests.open_order(1, 'dev', 'rp-order-quiet') o
 union all
-select 'bought', o.* from public.open_reading_order(1, 'dev', 'rp-order-bought') o;
+select 'bought', o.* from tests.open_order(1, 'dev', 'rp-order-bought') o;
 grant select on ords to authenticated, service_role;
 
 create or replace function pg_temp.ord(n text)
 returns uuid language sql as $$ select order_id from ords where name = n $$;
 
--- 거절 둘 뒤 결제 실패로 닫힌 주문 · 알림 없는 대기 주문 · 거절 뒤 승인된 주문
+-- 거절 둘만 받은 주문 · 알림 없는 대기 주문 · 거절 뒤 승인된 주문
 set local role service_role;
 select * from public.approve_reading_order(pg_temp.ord('refused'), 'rp-pay-r', 4900, 'rp-evt-r1');
 select * from public.approve_reading_order(pg_temp.ord('refused'), 'rp-pay-r', 100, 'rp-evt-r2');
-select public.cancel_reading_order(pg_temp.ord('refused'), 'failed');
 select * from public.approve_reading_order(pg_temp.ord('bought'), 'rp-pay-b', 100, 'rp-evt-b1');
 select * from public.approve_reading_order(pg_temp.ord('bought'), 'rp-pay-b', 4900, 'rp-evt-b2');
 

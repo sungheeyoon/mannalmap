@@ -34,18 +34,14 @@ grant select on folks to authenticated, service_role;
 
 insert into public.operator (user_id, note) values ((select op from folks), '시험 — 주문 화면에서 환불을 적는 사람');
 
--- 판매는 닫혀 있다 — 심사 계정으로 넣어 주문을 연다(ADR 0171)
-insert into public.reading_sale_reviewer (user_id, note)
-values ((select buyer from folks), '시험 — 운영자 환불');
-
 set local role authenticated;
 select pg_temp.acting((select buyer from folks));
 
 create temporary table ord (label text, order_id uuid);
 grant select, insert on ord to authenticated, service_role;
-insert into ord select 'three', order_id from public.open_reading_order(3, 'portone', 'refund-three-0001');
-insert into ord select 'one', order_id from public.open_reading_order(1, 'portone', 'refund-one-00001');
-insert into ord select 'pending', order_id from public.open_reading_order(5, 'portone', 'refund-five-0001');
+insert into ord select 'three', order_id from tests.open_order(3, 'dev', 'refund-three-0001');
+insert into ord select 'one', order_id from tests.open_order(1, 'dev', 'refund-one-00001');
+insert into ord select 'pending', order_id from tests.open_order(5, 'dev', 'refund-five-0001');
 
 set local role service_role;
 select is(
@@ -211,7 +207,7 @@ from public.operator_hold_reading_refund((select order_id from ord where label =
 select is((select n from seen where label = 'hold-b'), 4300, '하나를 다시 준비한다 — 12,900 × 1 ÷ 3 = 4,300원');
 select throws_ok(
   format($$select public.operator_book_reading_refund(%L, '  ')$$, (select id from seen where label = 'hold-b')),
-  '22023', 'PG 취소 번호를 적어 주세요.', 'PG 취소 번호 없이는 확정하지 않는다');
+  '22023', '취소 번호를 적어 주세요.', '취소 번호 없이는 확정하지 않는다');
 select is(
   public.operator_book_reading_refund((select id from seen where label = 'hold-b'), 'pg-cancel-1'),
   'partially_refunded',
@@ -222,7 +218,7 @@ select is(
   '같은 취소 번호로 다시 눌러도 한 번만 적힌다');
 select throws_ok(
   format($$select public.operator_book_reading_refund(%L, 'pg-cancel-9')$$, (select id from seen where label = 'hold-b')),
-  '22023', '이 환불은 다른 PG 취소 번호로 이미 적혔습니다.', '확정된 확보에 다른 취소 번호는 거절한다');
+  '22023', '이 환불은 다른 취소 번호로 이미 적혔습니다.', '확정된 확보에 다른 취소 번호는 거절한다');
 select throws_ok(
   format($$select public.operator_release_reading_refund(%L)$$, (select id from seen where label = 'hold-b')),
   '55000', '이미 장부에 적힌 환불입니다.', '확정된 확보는 풀지 못한다');
@@ -234,7 +230,7 @@ from public.operator_hold_reading_refund((select order_id from ord where label =
 select is((select n from seen where label = 'hold-c'), 4300, '나눠 돌려주면 누적으로 셈한다 — 둘째도 4,300원');
 select throws_ok(
   format($$select public.operator_book_reading_refund(%L, 'pg-cancel-1')$$, (select id from seen where label = 'hold-c')),
-  '22023', '이 PG 취소 번호는 이 주문의 다른 환불에 이미 적혔습니다.', '앞 환불의 취소 번호로 다른 확보를 확정하지 못한다');
+  '22023', '이 취소 번호는 이 주문의 다른 환불에 이미 적혔습니다.', '앞 환불의 취소 번호로 다른 확보를 확정하지 못한다');
 select is(
   public.operator_book_reading_refund((select id from seen where label = 'hold-c'), 'pg-cancel-2'),
   'partially_refunded',
@@ -279,25 +275,23 @@ select throws_ok(
   format($$select public.release_reading_refund_by_hand(%L, '봤음')$$, (select id from seen where label = 'hold-one')),
   '22023', null, '손으로 풀 때는 무엇을 확인했는지 적어야 한다');
 select lives_ok(
-  format($$select public.release_reading_refund_by_hand(%L, 'PortOne 콘솔 확인 - 확보 뒤 취소 없음')$$,
+  format($$select public.release_reading_refund_by_hand(%L, 'Play Console 확인 - 확보 뒤 취소 없음')$$,
          (select id from seen where label = 'hold-one')),
   '콘솔을 본 사유를 남기고 서버 열쇠로 푼다');
 
 reset role;
 select is(
   (select release_note from public.reading_refund_hold where id = (select id from seen where label = 'hold-one')),
-  'by hand: PortOne 콘솔 확인 - 확보 뒤 취소 없음',
+  'by hand: Play Console 확인 - 확보 뒤 취소 없음',
   '손으로 푼 사유가 확보 줄에 남는다');
 
 -- ── 8. 산 사람이 떠나도 진행 중인 확보는 남고 확정된다 ─────────────────────────
 
 create temporary table leaving as select tests.signup('refund-leaver@example.com') as leaver;
 grant select on leaving to authenticated, service_role;
-insert into public.reading_sale_reviewer (user_id, note) values ((select leaver from leaving), '시험 — 떠나는 사람');
-
 set local role authenticated;
 select pg_temp.acting((select leaver from leaving));
-insert into ord select 'leaver', order_id from public.open_reading_order(3, 'portone', 'refund-leave-0001');
+insert into ord select 'leaver', order_id from tests.open_order(3, 'dev', 'refund-leave-0001');
 
 set local role service_role;
 select is(
@@ -370,7 +364,7 @@ select is(
   '확보 줄이 걷힌 뒤의 재시도도 떠난 뒤의 환불 표로 알아본다');
 select throws_ok(
   format($$select public.operator_book_reading_refund(%L, 'pg-leave-9')$$, (select id from seen where label = 'hold-l')),
-  '22023', '이 환불은 다른 PG 취소 번호로 이미 적혔습니다.', '걷힌 뒤에도 다른 취소 번호는 거절한다');
+  '22023', '이 환불은 다른 취소 번호로 이미 적혔습니다.', '걷힌 뒤에도 다른 취소 번호는 거절한다');
 
 select * from finish();
 rollback;

@@ -3,9 +3,8 @@
 -- 여기서 재는 것 일곱.
 --
 -- 1. **지금 동작이 그대로다.** 산 몫이 없는 계정은 한도 · 잔액이 전과 같다 — 이 DB 의 모든 계정에 대고 잰다.
--- 2. **몫을 만드는 길은 서버의 문뿐이다.** 판매는 닫혀 있고, 로그인한 사람은 표에도 승인 문에도 못 닿는다.
---    같은 열쇠를 다른 묶음에 쓰면 거절하고, 금액이 다른 알림은 **던지지 않고 거절을 돌려주며 남는다**
---    (`20261013090000`). 두 세션이 같은 열쇠로 나란히 여는 경우는 여기서 못 만든다 — `scripts/check-db-races.mjs`
+-- 2. **몫을 만드는 길은 서버의 문뿐이다.** 주문을 여는 문이 없고(ADR 0272), 로그인한 사람은 표에도 승인 문에도 못 닿는다.
+--    금액이 다른 알림은 **던지지 않고 거절을 돌려주며 남는다**(`20261013090000`). 주문은 시험 손잡이(`tests.open_order`)가 세운다
 -- 3. **쓴 순서.** 무료 → 예외 → 오래된 묶음. 예약 → 확정 · 풀림, 상세의 누름은 그 요청의 예약을 이어 받는다.
 --    대화는 풀이권을 안 잡고 상세 궁합을 청할 때 잡는다(대화가 유일한 흐름, `20270109090000`).
 -- 4. **환불은 안 쓴 것만.** 예약 중인 것은 풀릴 때까지 안 쓴 것이 아니다. 운영자의 읽기는 적힌다.
@@ -14,7 +13,7 @@
 -- 7. **무료 · 유료가 함께 있으면** 무료 → 예외 → 먼저 산 묶음. 풀린 무료 · 예외 자리가 묶음보다 먼저 돌아오고,
 --    상세 궁합의 청함도 같은 순서이며, 무료를 쓰는 동안 묶음의 환불 셈은 안 준다(운영자 요구 2026-10-16).
 begin;
-select plan(77);
+select plan(74);
 
 /**
  * **이 파일은 무료 몫을 재지 않는다** — 다섯 장으로 짜인 셈이다. 정책을 베타의 몫으로 올려 둔다(트랜잭션이 되돌린다).
@@ -175,9 +174,9 @@ set local role authenticated;
 select pg_temp.acting((select kim from folks));
 
 select throws_ok(
-  $$select * from public.open_reading_order(3, 'dev', 'ledger-order-0001')$$,
-  '55000', 'reading_order: the sale is closed',
-  '판매가 닫혀 있으면 주문도 안 열린다 — 공개 출시의 스위치는 꺼져 있다');
+  format($$insert into public.reading_order (user_id, bundle_credits, amount, provider, provider_order_id, idempotency_key)
+           values (%L, 3, 12900, 'dev', 'rdo_x', 'ledger-self-0001')$$, (select kim from folks)),
+  '42501', null, '로그인한 사람이 주문을 스스로 넣지 못한다 — 주문은 서버의 스토어 구매만 세운다(ADR 0272)');
 
 select throws_ok($$select 1 from public.reading_order$$, '42501', null, '주문 표는 밖에서 못 읽는다');
 select throws_ok($$select 1 from public.reading_credit_use$$, '42501', null, '사용 이력도 밖에서 못 읽는다');
@@ -192,10 +191,8 @@ select throws_ok(
   $$select * from public.operator_reading_refund_basis(gen_random_uuid())$$,
   '42501', '운영자만 읽는 자리입니다.', '운영자가 아니면 환불 셈을 못 읽는다');
 
-set local role anon;
-select throws_ok(
-  $$select * from public.open_reading_order(3, 'dev', 'ledger-order-0001')$$,
-  '42501', null, '로그인 안 한 사람은 주문 문도 못 부른다');
+select hasnt_function('public', 'open_reading_order', array['integer', 'text', 'text'],
+  '로그인한 사람이 주문을 여는 문은 없다(ADR 0272)');
 
 set local role service_role;
 select throws_ok(
@@ -226,30 +223,14 @@ select is(
   array['free:confirmed', 'free:confirmed', 'free:confirmed', 'free:confirmed'],
   '처음 넷은 무료 몫에서 확정된다');
 
-/** 판매를 연다 — 이 트랜잭션 안에서만. 공개 출시의 스위치를 흉내 낸다 */
-create or replace function public.reading_sale_is_open()
-returns boolean language sql immutable set search_path = '' as $$ select true $$;
-
 set local role authenticated;
 select pg_temp.acting((select kim from folks));
 
 create temporary table ord as
-select * from public.open_reading_order(3, 'dev', 'ledger-order-0001');
+select * from tests.open_order(3, 'dev', 'ledger-order-0001');
 grant select on ord to authenticated, service_role;
 
 select is((select amount from ord), 12900, '주문 금액은 가격표에서 온다 — 부르는 쪽이 대지 않는다');
-select is(
-  (select order_id from public.open_reading_order(3, 'dev', 'ledger-order-0001')),
-  (select order_id from ord),
-  '같은 열쇠로 다시 누르면 같은 주문이다');
-select throws_ok(
-  $$select * from public.open_reading_order(5, 'dev', 'ledger-order-0001')$$,
-  '22023', 'reading_order: the idempotency key belongs to another order',
-  '같은 열쇠로 다른 묶음을 누르면 옛 주문을 돌려주지 않고 거절한다');
-select throws_ok(
-  $$select * from public.open_reading_order(3, 'other', 'ledger-order-0001')$$,
-  '22023', 'reading_order: the idempotency key belongs to another order',
-  '같은 열쇠로 다른 제공자도 거절한다');
 select is(
   (select credit_limit from public.my_reading_credits()),
   tests.reading_credit_limit() + 1,
@@ -577,8 +558,8 @@ set local role authenticated;
 select pg_temp.acting((select jung from pair));
 update pair set me = public.create_managed_person('동생', null, 'solar', '1994-04-04', '1994-04-04', '09:30',
   'male', '수원', 'jo', 'localMean', tests.chart(), 'chart-for-tests');
-update pair set early_order = (select order_id from public.open_reading_order(3, 'dev', 'ledger-order-0101')),
-                late_order = (select order_id from public.open_reading_order(3, 'dev', 'ledger-order-0102'));
+update pair set early_order = (select order_id from tests.open_order(3, 'dev', 'ledger-order-0101')),
+                late_order = (select order_id from tests.open_order(3, 'dev', 'ledger-order-0102'));
 
 set local role service_role;
 select public.approve_reading_order((select early_order from pair), 'dev-pay-0101', 12900, 'dev-evt-0101');
