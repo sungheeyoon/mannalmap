@@ -17,7 +17,7 @@
 
 - 하나를 고른다 — 받은 관점의 원본
   - 코드 규칙 — `CODING_STANDARDS.md` 의 차례에서 [그 주제 파일](../agents/code-rules/) · 앱 린트 `mobile/eslint.config.js`
-  - 아키텍트 — `docs/architecture.md` · 앱 쪽 잠금 `scripts/mobile-closure.test.ts` · `scripts/mobile-screen-db.test.ts`
+  - 아키텍트 — `docs/architecture.md` · 앱 쪽 잠금 `scripts/mobile-closure.test.ts` · `scripts/mobile-screen-db.test.ts` · 웹 · 앱이 두 벌로 둔 자리와 그 까닭 `docs/product/gaps/records/g-172.md`
   - 시험 — `docs/agents/test-map.md` 의 차례에서 [그 주제 파일](../agents/test-map/) · ADR 0079(부재 단언은 반증할 수 있어야 한다)
   - 보안 — `docs/ops/runbook/security.md` 「보안 점검」 · `docs/ops/runbook/access.md` 「개인정보는 화면으로만」 · `app/ops/denial.ts` · ADR 0191 · ADR 0209 · ADR 0230 · `docs/ops/runbook/credits.md` 「Google Play 결제 — 확인 · 한 번 지급 · 소비, 스토어 환불의 회수」 · ADR 0184 · ADR 0192
   - DB — `docs/ops/runbook/deploy.md` 「규약 넷 — 앱과 DB 는 따로 간다」 · ADR 0084
