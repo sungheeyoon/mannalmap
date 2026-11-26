@@ -1,109 +1,46 @@
-import type { ReactNode } from 'react';
+import { ICON_FRAME, ICON_SHAPES, type IconName, type IconPaint, type IconShape } from '@design';
 import { View } from 'react-native';
 import Svg, { Circle, Path, Rect } from 'react-native-svg';
 
 import { COLOR } from './tokens';
 
-export type IconName = 'home' | 'people' | 'chat' | 'bell' | 'gear' | 'chevron' | 'plus' | 'taiji' | 'search' | 'ticket' | 'undo' | 'close' | 'arrow' | 'flag' | 'exchange' | 'spark' | 'reading' | 'alert' | 'more' | 'manage' | 'block' | 'send' | 'lock' | 'check' | 'share';
+export type { IconName };
 
-/** 웹의 `app/ui/icons.tsx` 와 같은 24 격자 · 같은 경로 값이다. 이름은 곁의 글자나 단추의 이름이 든다 */
-const shapes = (color: string): Record<IconName, ReactNode> => ({
-  home: <Path d="M4 11 12 4.5l8 6.5v8.5a1 1 0 0 1-1 1h-4.5v-6h-5v6H5a1 1 0 0 1-1-1Z" />,
-  people: (
-    <>
-      <Circle cx="9" cy="8.5" r="3.2" />
-      <Path d="M3.5 19.5c.5-3.4 2.4-5.2 5.5-5.2s5 1.8 5.5 5.2M15.5 6a3 3 0 0 1 0 5.6M16.5 14.4c2.5.3 3.8 2 4.1 4.6" />
-    </>
-  ),
-  chat: <Path d="M5.5 5h13a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H11l-4.5 3.5V17h-1a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2Z" />,
-  bell: (
-    <>
-      <Path d="M6.2 10a5.8 5.8 0 0 1 11.6 0c0 5.6 2 6.8 2 7.5H4.2c0-.7 2-1.9 2-7.5Z" />
-      <Path d="M10 20.5a2.2 2.2 0 0 0 4 0" />
-    </>
-  ),
-  gear: (
-    <>
-      {/* 톱니는 Lucide `settings`(lucide-static 0.460.0, ISC — https://lucide.dev/license)의 경로 그대로다. 옛 그림은 이가 뾰족하고 잘려 보였다(2026-11-05) */}
-      <Path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2Z" />
-      <Circle cx="12" cy="12" r="3" />
-    </>
-  ),
-  reading: <Path d="M12 6.5C10.2 5 7.6 4.5 4 4.8v13.4c3.6-.3 6.2.2 8 1.8 1.8-1.6 4.4-2.1 8-1.8V4.8c-3.6-.3-6.2.2-8 1.7Zm0 0V20" />,
-  spark: <Path d="M12 3.5 13.9 10l6.6 2-6.6 2L12 20.5 10.1 14l-6.6-2 6.6-2Z" />,
-  chevron: <Path d="m9 5.5 6.5 6.5L9 18.5" />,
-  plus: <Path d="M12 5v14M5 12h14" />,
-  taiji: (
-    <>
-      <Circle cx="12" cy="12" r="9" />
-      <Path d="M12 3a9 9 0 0 1 0 18 4.5 4.5 0 0 1 0-9 4.5 4.5 0 0 0 0-9ZM13.4 16.5a1.4 1.4 0 1 0-2.8 0 1.4 1.4 0 1 0 2.8 0Z" fill={color} fillRule="evenodd" stroke="none" />
-      <Circle cx="12" cy="7.5" r="1.4" fill={color} stroke="none" />
-    </>
-  ),
-  search: (
-    <>
-      <Circle cx="10.5" cy="10.5" r="6" />
-      <Path d="m15 15 5 5" />
-    </>
-  ),
-  ticket: (
-    <>
-      <Path d="M4 7.5A1.5 1.5 0 0 1 5.5 6h13A1.5 1.5 0 0 1 20 7.5V10a2 2 0 0 0 0 4v2.5a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 4 16.5V14a2 2 0 0 0 0-4Z" />
-      <Path d="M14.5 6.5v11" strokeDasharray="1.6 2" />
-    </>
-  ),
-  undo: (
-    <>
-      <Path d="M9 14 4.5 9.5 9 5" />
-      <Path d="M4.5 9.5H14a5.5 5.5 0 0 1 0 11h-3" />
-    </>
-  ),
-  close: <Path d="M6 6l12 12M18 6 6 18" />,
-  check: <Path d="M5 12.4 10 17l9-10" />,
-  send: <Path d="M12 19.5V5m-6 6 6-6 6 6" />,
-  lock: (
-    <>
-      <Rect x="5" y="10.5" width="14" height="9.5" rx="2.5" />
-      <Path d="M8.5 10.5V8a3.5 3.5 0 0 1 7 0v2.5" />
-    </>
-  ),
-  /* 공유는 Lucide `share`(lucide-static 0.460.0, ISC — https://lucide.dev/license)의 경로 그대로다 — 위 화살표 + 상자. 앱에만 있다: 웹은 공유창을 안 연다(ADR 0063) */
-  share: <Path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8M16 6l-4-4-4 4M12 2v13" />,
-  arrow: <Path d="M5 12h13m-5-5.5L18.5 12 13 17.5" />,
-  flag: <Path d="M5.5 21V4.5m0 0c4-2 7 2 13 0v9c-6 2-9-2-13 0" />,
-  exchange: <Path d="M5 8.5h13.5M15 5l3.5 3.5L15 12M19 15.5H5.5M9 12l-3.5 3.5L9 19" />,
-  alert: (
-    <>
-      <Path d="M12 3.8 21 19.5H3Z" />
-      <Path d="M12 10v4.2M12 17v.1" />
-    </>
-  ),
-  more: (
-    <>
-      <Circle cx={6} cy={12} r={1.2} fill={color} stroke="none" />
-      <Circle cx={12} cy={12} r={1.2} fill={color} stroke="none" />
-      <Circle cx={18} cy={12} r={1.2} fill={color} stroke="none" />
-    </>
-  ),
-  /** 연필과 점 둘 — 「고칠 것들이 여기 있다」. 웹 `app/ui/icons.tsx` 의 `manage` 와 같은 길이다 */
-  manage: (
-    <>
-      <Path d="M4 16.2 14.1 6.1a1.9 1.9 0 0 1 2.7 2.7L6.7 18.9l-3.2.5Z" />
-      <Path d="M20 15.5h.01M20 19h.01" strokeWidth={2.4} />
-    </>
-  ),
-  block: (
-    <>
-      <Circle cx={12} cy={12} r={8.5} />
-      <Path d="m6 6 12 12" />
-    </>
-  ),
-});
+/**
+ * **선 아이콘 한 벌** — 그림 자료는 `src/lib/design/icons.ts` 하나이고 웹 `app/ui/icons.tsx` 도 같은 자료로 그린다(ADR 0280). 24 격자 ·
+ * 같은 경로 값이다. 화면은 `<Svg>` 로 그림을 다시 세우지 않고 이것을 부른다. 이름은 곁의 글자나 단추의 이름이 든다.
+ * 태극의 밝은 반(`light`)은 앱에서 늘 비친다 — 웹의 `--taiji-light` 를 주는 자리(첫 화면 입구의 `TaijiMark`)가 앱에는 없다.
+ */
+const paintOf = (paint: IconPaint | undefined, color: string): string | undefined => (paint === undefined ? undefined : paint === 'ink' ? color : 'none');
 
-export function Icon({ name, size = 24, color = COLOR.foreground, strokeWidth = 1.8 }: { name: IconName; size?: number; color?: string; strokeWidth?: number }) {
+function Shape({ shape, color }: { shape: IconShape; color: string }) {
+  const fill = paintOf(shape.fill, color);
+  const stroke = paintOf(shape.stroke, color);
+  switch (shape.kind) {
+    case 'path':
+      return <Path d={shape.d} fill={fill} fillRule={shape.fillRule} stroke={stroke} strokeWidth={shape.strokeWidth} strokeDasharray={shape.strokeDasharray} />;
+    case 'circle':
+      return <Circle cx={shape.cx} cy={shape.cy} r={shape.r} fill={fill} stroke={stroke} />;
+    case 'rect':
+      return <Rect x={shape.x} y={shape.y} width={shape.width} height={shape.height} rx={shape.rx} fill={fill} stroke={stroke} />;
+  }
+}
+
+export function Icon({ name, size = 24, color = COLOR.foreground, strokeWidth = ICON_FRAME.strokeWidth }: { name: IconName; size?: number; color?: string; strokeWidth?: number }) {
   return (
-    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round">
-      {shapes(color)[name]}
+    <Svg
+      width={size}
+      height={size}
+      viewBox={ICON_FRAME.viewBox}
+      fill="none"
+      stroke={color}
+      strokeWidth={strokeWidth}
+      strokeLinecap={ICON_FRAME.strokeLinecap}
+      strokeLinejoin={ICON_FRAME.strokeLinejoin}
+    >
+      {ICON_SHAPES[name].map((shape, at) => (
+        <Shape key={at} shape={shape} color={color} />
+      ))}
     </Svg>
   );
 }

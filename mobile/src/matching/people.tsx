@@ -12,7 +12,7 @@ import { Icon } from '@/ui/icons';
 import { Photo } from '@/ui/photo';
 import { ConfirmDialog, DialogText } from '@/ui/confirm-dialog';
 import { DetailSheet } from '@/ui/sheet';
-import { alpha, COLOR, ELEMENT_TONE, FIXED, FONT, RADIUS, TYPE, TYPE_META } from '@/ui/tokens';
+import { COLOR, ELEMENT_TONE, FONT, RADIUS, TYPE, TYPE_META } from '@/ui/tokens';
 import { KEEP_VIEW } from '@/ui/keep-view';
 import { Tile } from '@/ui/surfaces';
 
@@ -331,7 +331,8 @@ const styles = StyleSheet.create({
   reportQuietText: { fontFamily: FONT.bold, fontSize: TYPE.note, color: COLOR.danger },
   off: { opacity: 0.55 },
   more: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center', borderRadius: RADIUS.pill },
-  moreOnPhoto: { backgroundColor: alpha(FIXED.black, 0.42) },
+  /** 사진 위의 동그란 단추 — 웹 `ICON_BUTTON_ON_PHOTO_FACE` 의 `bg-photo-face`(검정 50%) */
+  moreOnPhoto: { backgroundColor: COLOR.photoFace },
   menuRow: { flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: 44 },
   menuText: { fontFamily: FONT.bold, fontSize: TYPE.body, color: COLOR.foreground },
   dangerText: { color: COLOR.danger },

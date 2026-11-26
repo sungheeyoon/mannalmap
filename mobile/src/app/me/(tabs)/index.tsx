@@ -14,6 +14,7 @@ import { homeUnreachable, readHome, readRunning, type Home } from '@/home/read';
 import { MatchOpenAlert } from '@/home/match-open-alert';
 import { SelfCard } from '@/home/self-card';
 import { BirthFields, useBirthForm } from '@/people/birth-fields';
+import { FailureLine } from '@/ui/failure-line';
 import { SectionScrollView, useSectionErrors } from '@/ui/section-error';
 import { openParticipation, saveFailureOf, saveSelfPerson } from '@/reading/chart-writes';
 import { followRefusal } from '@/reading/follow-refusal';
@@ -191,7 +192,7 @@ function NoSelf({ nickname, onSaved }: { nickname: string; onSaved: () => void }
       </View>
       <BirthFields form={form} showName={false} errors={sections} />
       <PrimaryButton label={saving ? '저장하는 중…' : SAVE_AS_SELF} onPress={() => void save()} disabled={saving} />
-      {failure !== null && <WordText accessibilityRole="alert" style={styles.failureText}>저장하지 못했어요. {failure}</WordText>}
+      {failure !== null && <FailureLine>저장하지 못했어요. {failure}</FailureLine>}
     </Paper>
   );
 }

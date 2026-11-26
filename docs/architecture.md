@@ -96,8 +96,8 @@
 - **부르는 것** — `src/lib/` 의 순수 로직과 웹의 한 파일 — DB 거절을 옮기는 `app/db-error.ts`(`@db-error`) — 만 별칭으로 부른다
   (`mobile/tsconfig.json` · `mobile/metro.config.js`). `app/` 에서 닿는 파일이 그 하나뿐인지는 `scripts/mobile-closure.test.ts` 가 확인한다.
 - **웹과 함께 쓰는 것** — 명식 결과의 판단 · 문단은 `src/lib/saju/view`, 가입의 판정 · 글자는 `src/lib/consent/signup.ts`, 다시 로그인 줄은
-  `src/lib/account/sign-in-again.ts`, 채팅의 합치기 · 보내기 줄 · 묶음은 `src/lib/chat/room`, 채널의 재접속 규칙은 `src/lib/live`, 디자인 값은
-  `src/lib/design`(`@design`), 안내 화면의 글은 `src/lib/brand`(`guide`), 사업자 값은 `BUSINESS_INFO`(`src/lib/brand/business.ts`, ADR 0232)다.
+  `src/lib/account/sign-in-again.ts`, 채팅의 합치기 · 보내기 줄 · 묶음은 `src/lib/chat/room`, 채널의 재접속 규칙은 `src/lib/live`, 디자인 값과 선 아이콘의 그림 자료는
+  `src/lib/design`(`@design`, ADR 0280), 안내 화면의 글은 `src/lib/brand`(`guide`), 사업자 값은 `BUSINESS_INFO`(`src/lib/brand/business.ts`, ADR 0232)다.
   칸 이름 같은 짧은 말은 `scripts/mobile-chart-copy.test.ts` · `scripts/mobile-info-copy.test.ts` 가 웹 글자와 견준다. 약관 셋은 그리지 않고
   웹의 현행 판을 앱 안 브라우저로 연다(`mobile/src/info/legal-web.ts`, ADR 0172).
 - **DB 읽기 — 옮기기는 한 벌, 부르는 문은 양쪽에 하나씩**(ADR 0211 추기 2026-11-08) — 정지 · 풀이권 · 베타 일정 · 글 목록 · 만드는 중인 풀이 ·

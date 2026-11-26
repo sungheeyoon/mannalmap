@@ -17,6 +17,8 @@ export const SURFACE = {
   ROW_CARD: { borderRadius: RADIUS.card, borderWidth: 1, borderColor: COLOR.border, backgroundColor: COLOR.surface, paddingHorizontal: 16, paddingVertical: 12 },
   ROW_LINE: { borderRadius: RADIUS.cell, borderTopWidth: 1, borderBottomWidth: 1, borderColor: COLOR.border, paddingHorizontal: 8, paddingVertical: 16 },
   EMPTY_SLOT: { borderRadius: RADIUS.card, borderWidth: 2, borderStyle: 'dashed', borderColor: COLOR.borderStrong, padding: 24 },
+  /** 테 없는 흰 카드의 면 — 고르기 판의 줄 묶음(`ActionSheet`). 여백은 쓰는 자리가 붙인다 */
+  PLAIN_CARD_FACE: { borderRadius: RADIUS.card, backgroundColor: COLOR.surface },
   DIALOG: { borderRadius: RADIUS.card, borderWidth: 1, borderColor: COLOR.border, backgroundColor: COLOR.surface, padding: 24, boxShadow: ELEVATION.float },
 } as const;
 

@@ -2,14 +2,15 @@ import { Image } from 'expo-image';
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { Modal, PanResponder, Platform, Pressable, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import Svg, { Circle, Path } from 'react-native-svg';
 
 import { PHOTO_LOAD_FAILED_NOTE } from '@profile';
 
 import { useClient } from '@/auth/connected';
+import { ActionSheet, type ActionChoice } from '@/ui/action-sheet';
 import { FailureLine } from '@/ui/failure-line';
+import { Icon } from '@/ui/icons';
 import { LoadingDots } from '@/ui/loading';
-import { Card, MenuPanel, SheetPanel } from '@/ui/surfaces';
+import { Card } from '@/ui/surfaces';
 import { COLOR, FONT, RADIUS, TYPE } from '@/ui/tokens';
 import { settled } from '@/ui/settled';
 
@@ -19,10 +20,9 @@ import { WordText } from '@/ui/word-text';
 export const PHOTO_MENU_LABEL = '사진 메뉴';
 const SWIPE_PX = 48;
 
-export type PhotoChoice = { label: string; tone?: 'danger'; run: () => void };
-
 /**
  * 사진 크게 보기 — 웹 `photo-viewer.tsx` 와 같은 꼴: 검은 전체 화면 · 왼쪽 위 × · 가운데 「2 / 3」 · 오른쪽 위 「⋯」, 좌우로 쓸어넘긴다.
+ * 「⋯」가 여는 판은 웹과 같은 고르기 판(`ActionSheet`)이고, 이미 뜬 이 화면 안에 깐다(`within`).
  * 판에서 고르면 보기를 **먼저 닫고** 그 일을 한다 — iOS 는 닫히는 창 위에 다음 창을 못 띄워 닫힌 뒤(`onDismiss`)에 한다.
  */
 export function PhotoViewer({
@@ -38,7 +38,7 @@ export function PhotoViewer({
   at: number | null;
   onAt: (position: number) => void;
   onClose: () => void;
-  choicesFor: (photo: MyPhoto, position: number) => PhotoChoice[];
+  choicesFor: (photo: MyPhoto, position: number) => ActionChoice[];
 }) {
   const client = useClient();
   const [menu, setMenu] = useState(false);
@@ -91,21 +91,14 @@ export function PhotoViewer({
     run?.();
   };
 
-  const choose = (choice: PhotoChoice) => {
-    setMenu(false);
+  /** 판은 제 줄을 고르면 스스로 닫는다(`onClose` → `setMenu(false)`) — 여기는 보기를 닫고 그 일을 한다 */
+  const choose = (choice: ActionChoice) => {
     onClose();
     if (Platform.OS === 'ios') after.current = choice.run;
     else choice.run();
   };
 
-  const choices = photo === undefined ? [] : choicesFor(photo, position);
-  const quiet = choices.filter((one) => one.tone !== 'danger');
-  const danger = choices.filter((one) => one.tone === 'danger');
-  const row = (choice: PhotoChoice) => (
-    <Pressable key={choice.label} accessibilityRole="button" onPress={() => choose(choice)} style={styles.choice}>
-      <WordText style={[styles.choiceText, choice.tone === 'danger' && styles.dangerText]}>{choice.label}</WordText>
-    </Pressable>
-  );
+  const choices = photo === undefined ? [] : choicesFor(photo, position).map((choice) => ({ ...choice, run: () => choose(choice) }));
 
   return (
     <Modal
@@ -120,9 +113,7 @@ export function PhotoViewer({
       <SafeAreaView style={styles.screen}>
         <View style={styles.head}>
           <Pressable accessibilityRole="button" accessibilityLabel="닫기" onPress={onClose} style={styles.icon}>
-            <Svg width={24} height={24} viewBox="0 0 24 24">
-              <Path d="M6 6 L18 18 M18 6 L6 18" stroke={COLOR.onPhoto} strokeWidth={2} strokeLinecap="round" />
-            </Svg>
+            <Icon name="close" color={COLOR.onPhoto} />
           </Pressable>
           <View style={styles.count}>
             {position === 1 && <WordText style={styles.lead}>대표</WordText>}
@@ -131,11 +122,7 @@ export function PhotoViewer({
             </WordText>
           </View>
           <Pressable accessibilityRole="button" accessibilityLabel={PHOTO_MENU_LABEL} onPress={() => setMenu(true)} style={styles.icon}>
-            <Svg width={24} height={24} viewBox="0 0 24 24">
-              <Circle cx={5} cy={12} r={1.8} fill={COLOR.onPhoto} />
-              <Circle cx={12} cy={12} r={1.8} fill={COLOR.onPhoto} />
-              <Circle cx={19} cy={12} r={1.8} fill={COLOR.onPhoto} />
-            </Svg>
+            <Icon name="more" color={COLOR.onPhoto} />
           </Pressable>
         </View>
         <View style={styles.stage} {...swipe.panHandlers}>
@@ -157,22 +144,9 @@ export function PhotoViewer({
             </View>
           )}
         </View>
-        {menu && (
-          <View style={styles.scrim}>
-            <Pressable style={StyleSheet.absoluteFill} onPress={() => setMenu(false)} accessibilityElementsHidden importantForAccessibility="no" />
-            <SheetPanel style={styles.sheet} accessibilityViewIsModal accessibilityLabel={PHOTO_MENU_LABEL}>
-              <MenuPanel>
-                {quiet.map(row)}
-                {danger.length > 0 && quiet.length > 0 && <View style={styles.rule} />}
-                {danger.map(row)}
-              </MenuPanel>
-              <Pressable accessibilityRole="button" onPress={() => setMenu(false)} style={styles.cancel}>
-                <WordText style={styles.cancelText}>취소</WordText>
-              </Pressable>
-            </SheetPanel>
-          </View>
-        )}
       </SafeAreaView>
+      {/* 판은 안전 영역 밖, 화면 끝까지 깐다 — 아래 여백은 판이 홈 막대만큼 스스로 비운다 */}
+      <ActionSheet within open={menu} onClose={() => setMenu(false)} label={PHOTO_MENU_LABEL} choices={choices} />
     </Modal>
   );
 }
@@ -187,12 +161,4 @@ const styles = StyleSheet.create({
   stage: { flex: 1 },
   middle: { ...StyleSheet.absoluteFill, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 24 },
   failure: { alignSelf: 'stretch', paddingHorizontal: 20, paddingVertical: 16 },
-  scrim: { ...StyleSheet.absoluteFill, justifyContent: 'flex-end', backgroundColor: COLOR.scrim },
-  sheet: { gap: 12, paddingHorizontal: 16, paddingTop: 16, paddingBottom: 24 },
-  choice: { minHeight: 56, justifyContent: 'center', paddingHorizontal: 16 },
-  choiceText: { fontSize: TYPE.lead, fontFamily: FONT.bold, color: COLOR.foreground },
-  dangerText: { color: COLOR.danger },
-  rule: { height: 1, marginHorizontal: 12, marginVertical: 4, backgroundColor: COLOR.border },
-  cancel: { minHeight: 48, alignItems: 'center', justifyContent: 'center', borderRadius: RADIUS.pill, borderWidth: 1, borderColor: COLOR.borderStrong, backgroundColor: COLOR.surface },
-  cancelText: { fontSize: TYPE.body, fontFamily: FONT.bold, color: COLOR.foreground },
 });

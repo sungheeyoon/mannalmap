@@ -20,6 +20,7 @@ import { useReducer, useState, type ReactNode } from 'react';
 import { Pressable, StyleSheet, TextInput, View } from 'react-native';
 
 import { useClient } from '@/auth/connected';
+import { FailureLine } from '@/ui/failure-line';
 import { SectionErrorLine, useSectionErrors } from '@/ui/section-error';
 import { FoldIcon } from '@/ui/icons';
 import { Card, Paper, Tile } from '@/ui/surfaces';
@@ -175,7 +176,7 @@ export function ReadingFeedback({ target, runId, given }: { target: ReadingTarge
             </WordText>
           </View>
 
-          {failure !== null && <WordText accessibilityRole="alert" style={styles.warn}>{FEEDBACK_FAILED} {failure}</WordText>}
+          {failure !== null && <FailureLine>{FEEDBACK_FAILED} {failure}</FailureLine>}
 
           <PrimaryButton label={saving ? '보내는 중…' : '의견 보내기'} onPress={() => void send()} busy={saving} />
         </View>
@@ -288,7 +289,6 @@ const styles = StyleSheet.create({
   end: { fontFamily: FONT.medium, fontSize: TYPE.fine, color: COLOR.secondary },
   comment: { minHeight: 88, paddingHorizontal: 14, paddingVertical: 10, borderRadius: RADIUS.cell, borderWidth: 1, borderColor: COLOR.border, backgroundColor: COLOR.surface, fontFamily: FONT.medium, fontSize: TYPE.field, lineHeight: 24, color: COLOR.foreground, textAlignVertical: 'top' },
   count: { textAlign: 'right', fontFamily: FONT.medium, fontSize: TYPE.fine, color: COLOR.secondary },
-  warn: { ...TYPE_META, color: COLOR.danger },
   frame: { padding: 0, overflow: 'hidden' },
   off: { opacity: BUTTON_OFF_OPACITY },
 });

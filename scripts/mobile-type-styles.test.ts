@@ -53,7 +53,7 @@ const HAND_WRITTEN: Readonly<Record<string, number>> = {
   'mobile/src/reading/save-self.tsx': 2,
   'mobile/src/settings/parts.tsx': 1,
   'mobile/src/settings/survey-screen.tsx': 2,
-  'mobile/src/share/view.tsx': 2,
+  'mobile/src/share/view.tsx': 1,
   'mobile/src/ui/notice-screen.tsx': 1,
   'mobile/src/ui/section-error.tsx': 1,
 };

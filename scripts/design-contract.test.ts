@@ -3,7 +3,7 @@ import { join } from 'node:path';
 
 import { describe, expect, it } from 'vitest';
 
-import { GALLERY, PARTS } from '../src/lib/design/contract';
+import { GALLERY, PARTS, WEB_ONLY } from '../src/lib/design/contract';
 
 /**
  * **웹과 앱의 공용 부품이 같은 이름 · 같은 변형이다**(ADR 0109 추기 2026-10-31). 표는 `src/lib/design/contract.ts` 이고, 두 쪽 파일을
@@ -45,6 +45,21 @@ describe.each(PARTS.map((part) => [part.name, part] as const))('%s', (_, part) =
       expect(web, `${part.web.file} 의 ${prop}`).toMatch(new RegExp(`\\b${prop}\\b`));
       expect(app, `${part.app.file} 의 ${prop}`).toMatch(new RegExp(`\\b${prop}\\b`));
     }
+  });
+});
+
+describe.each(WEB_ONLY.map((part) => [part.name, part] as const))('웹에만 서는 %s', (_, part) => {
+  it('웹에 그 이름이 있다', () => {
+    for (const symbol of part.web.symbols) expect(defines(read(part.web.file), symbol), `${part.web.file} 의 ${symbol}`).toBe(true);
+  });
+
+  it('앱은 같은 이름을 세우지 않았다 — 세웠으면 `PARTS` 로 옮긴다', () => {
+    expect(defines(read(part.app.file), part.app.symbol), `${part.app.file} 의 ${part.app.symbol}`).toBe(false);
+    expect(PARTS.map((one) => one.name)).not.toContain(part.name);
+  });
+
+  it('까닭을 든다', () => {
+    expect(part.why.length).toBeGreaterThan(20);
   });
 });
 

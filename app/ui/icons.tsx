@@ -5,166 +5,56 @@
  * 그림을 쓰도록 여기 한 곳에 둔다(채택한 부드러움 시안에서 옮겼다 — ADR 0109).
  * 늘 `aria-hidden` 이다 — 이름은 곁의 글자나 단추의 `aria-label` 이 든다.
  *
- * 채팅(`chat-icon.tsx` 다섯) · 사람 메뉴(`person-menu.tsx` 넷) · 지나친 인연(`UndoIcon`)이 같은 격자의 그림을 따로 들고
- * 있었다(2026-09-26 에 모았다). 새 그림은 여기 더한다 — 화면마다 `<svg>` 를 다시 세우지 않는다.
+ * **그림 자료는 `src/lib/design/icons.ts` 하나다**(ADR 0280) — 앱 `mobile/src/ui/icons.tsx` 도 같은 자료로 그린다. 새 그림은 그 자료에 더한다 —
+ * 화면마다 `<svg>` 를 다시 세우지 않는다(`scripts/design-icons.test.ts`).
  *
- * 2026-09-30 에 남은 복제 여섯을 옮겼다 — 고른 표시(`check`, 사이 고르기 · 사람 고르기 · 생년월일 칸)와 아래 꺾쇠(`chevron` 을
- * 90° 돌린다), 출생 정보 수정의 연필, 공유 링크. 작은 자리(12 · 16px)의 그림은 선이 가늘어지지 않게 부르는 쪽이
- * `stroke-*` 로 굵기를 되돌린다 — 선 굵기는 24 격자의 값이라 크기를 줄이면 함께 준다.
+ * 작은 자리(12 · 16px)의 그림은 선이 가늘어지지 않게 부르는 쪽이 `stroke-*` 로 굵기를 되돌린다 — 선 굵기는 24 격자의 값이라 크기를 줄이면 함께 준다.
+ * 아래 꺾쇠는 `chevron` 을 90° 돌린다.
  */
-import { TaijiShapes } from './entry-marks';
+import { ICON_FRAME, ICON_SHAPES, type IconName, type IconPaint, type IconShape } from '@/src/lib/design/icons';
 
-export type IconName =
-  | 'home'
-  | 'people'
-  | 'reading'
-  | 'chat'
-  | 'bell'
-  | 'gear'
-  | 'arrow'
-  | 'back'
-  | 'chevron'
-  | 'close'
-  | 'plus'
-  | 'taiji'
-  | 'search'
-  | 'spark'
-  | 'alert'
-  | 'quote'
-  | 'ticket'
-  | 'undo'
-  | 'send'
-  | 'lock'
-  | 'more'
-  | 'flag'
-  | 'block'
-  | 'manage'
-  | 'pencil'
-  | 'note'
-  | 'remove'
-  | 'check'
-  | 'link'
-  | 'move'
-  | 'exchange';
+export type { IconName };
 
-const PATHS: Record<IconName, React.ReactNode> = {
-  home: <path d="M4 11 12 4.5l8 6.5v8.5a1 1 0 0 1-1 1h-4.5v-6h-5v6H5a1 1 0 0 1-1-1Z" />,
-  people: (
+/** 칠의 낱말 → 웹 값. 태극의 밝은 반은 둘러싼 자리가 `--taiji-light` 를 주면 그 색, 없으면 비친다(`entry-marks.tsx`) */
+const PAINT: Record<IconPaint, string> = { ink: 'currentColor', light: 'var(--taiji-light, transparent)', none: 'none' };
+
+function Shape({ shape }: { shape: IconShape }) {
+  const fill = shape.fill === undefined ? undefined : PAINT[shape.fill];
+  const stroke = shape.stroke === undefined ? undefined : PAINT[shape.stroke];
+  switch (shape.kind) {
+    case 'path':
+      return <path d={shape.d} fill={fill} fillRule={shape.fillRule} stroke={stroke} strokeWidth={shape.strokeWidth} strokeDasharray={shape.strokeDasharray} />;
+    case 'circle':
+      return <circle cx={shape.cx} cy={shape.cy} r={shape.r} fill={fill} stroke={stroke} />;
+    case 'rect':
+      return <rect x={shape.x} y={shape.y} width={shape.width} height={shape.height} rx={shape.rx} fill={fill} stroke={stroke} />;
+  }
+}
+
+/** 그림의 몸만 — 틀(`<svg>`)을 스스로 세우는 자리(첫 화면 입구의 `TaijiMark`)가 부른다 */
+export function IconShapes({ name }: { name: IconName }) {
+  return (
     <>
-      <circle cx="9" cy="8.5" r="3.2" />
-      <path d="M3.5 19.5c.5-3.4 2.4-5.2 5.5-5.2s5 1.8 5.5 5.2M15.5 6a3 3 0 0 1 0 5.6M16.5 14.4c2.5.3 3.8 2 4.1 4.6" />
+      {ICON_SHAPES[name].map((shape, at) => (
+        <Shape key={at} shape={shape} />
+      ))}
     </>
-  ),
-  reading: <path d="M12 6.5C10.2 5 7.6 4.5 4 4.8v13.4c3.6-.3 6.2.2 8 1.8 1.8-1.6 4.4-2.1 8-1.8V4.8c-3.6-.3-6.2.2-8 1.7Zm0 0V20" />,
-  chat: <path d="M5.5 5h13a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H11l-4.5 3.5V17h-1a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2Z" />,
-  bell: (
-    <>
-      <path d="M6.2 10a5.8 5.8 0 0 1 11.6 0c0 5.6 2 6.8 2 7.5H4.2c0-.7 2-1.9 2-7.5Z" />
-      <path d="M10 20.5a2.2 2.2 0 0 0 4 0" />
-    </>
-  ),
-  gear: (
-    <>
-      {/* 톱니는 Lucide `settings`(lucide-static 0.460.0, ISC — https://lucide.dev/license)의 경로 그대로다. 옛 그림은 이가 뾰족하고 잘려 보였다(2026-11-05) */}
-      <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2Z" />
-      <circle cx="12" cy="12" r="3" />
-    </>
-  ),
-  arrow: <path d="M5 12h13m-5-5.5L18.5 12 13 17.5" />,
-  back: <path d="M19 12H6m5-5.5L5.5 12l5.5 5.5" />,
-  chevron: <path d="m9 5.5 6.5 6.5L9 18.5" />,
-  close: <path d="M6 6l12 12M18 6 6 18" />,
-  plus: <path d="M12 5v14M5 12h14" />,
-  /** 궁합 — 첫 화면 입구의 태극과 같은 몸(`entry-marks.tsx`). 궁합 요청 · 요청 소식도 이 그림이다 — 하트는 앱에서 걷었다(운영자 2026-10-26) */
-  taiji: <TaijiShapes />,
-  search: (
-    <>
-      <circle cx="10.5" cy="10.5" r="6" />
-      <path d="m15 15 5 5" />
-    </>
-  ),
-  spark: <path d="M12 3.5 13.9 10l6.6 2-6.6 2L12 20.5 10.1 14l-6.6-2 6.6-2Z" />,
-  alert: (
-    <>
-      <path d="M12 3.8 21 19.5H3Z" />
-      <path d="M12 10v4.2M12 17v.1" />
-    </>
-  ),
-  quote: <path d="M5 17.5c0-4.6 1.4-8 5-10M13.5 17.5c0-4.6 1.4-8 5-10M5 17.5h4.2v-4.3H5M13.5 17.5h4.2v-4.3h-4.2" />,
-  ticket: (
-    <>
-      <path d="M4 7.5A1.5 1.5 0 0 1 5.5 6h13A1.5 1.5 0 0 1 20 7.5V10a2 2 0 0 0 0 4v2.5a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 4 16.5V14a2 2 0 0 0 0-4Z" />
-      <path d="M14.5 6.5v11" strokeDasharray="1.6 2" />
-    </>
-  ),
-  undo: (
-    <>
-      <path d="M9 14 4.5 9.5 9 5" />
-      <path d="M4.5 9.5H14a5.5 5.5 0 0 1 0 11h-3" />
-    </>
-  ),
-  send: <path d="M12 19.5V5m-6 6 6-6 6 6" />,
-  lock: (
-    <>
-      <rect x="5" y="10.5" width="14" height="9.5" rx="2.5" />
-      <path d="M8.5 10.5V8a3.5 3.5 0 0 1 7 0v2.5" />
-    </>
-  ),
-  more: (
-    <>
-      <circle cx="6" cy="12" r="1.2" />
-      <circle cx="12" cy="12" r="1.2" />
-      <circle cx="18" cy="12" r="1.2" />
-    </>
-  ),
-  flag: <path d="M5.5 21V4.5m0 0c4-2 7 2 13 0v9c-6 2-9-2-13 0" />,
-  block: (
-    <>
-      <circle cx="12" cy="12" r="8.5" />
-      <path d="m6 6 12 12" />
-    </>
-  ),
-  /** 연필과 점 둘 — 「고칠 것들이 여기 있다」 */
-  manage: (
-    <>
-      <path d="M4 16.2 14.1 6.1a1.9 1.9 0 0 1 2.7 2.7L6.7 18.9l-3.2.5Z" />
-      <path d="M20 15.5h.01M20 19h.01" strokeWidth="2.4" />
-    </>
-  ),
-  pencil: <path d="M4 16.2 14.1 6.1a1.9 1.9 0 0 1 2.7 2.7L6.7 18.9l-3.2.5Z" />,
-  note: (
-    <>
-      <path d="M5 4.5h14v15H5Z" />
-      <path d="M8.5 9h7M8.5 12.5h7M8.5 16h4" />
-    </>
-  ),
-  remove: (
-    <>
-      <path d="M5 7h14M9.5 7V4.8h5V7M7 7l.9 12.2h8.2L17 7" />
-      <path d="M10.5 10.5v6M13.5 10.5v6" />
-    </>
-  ),
-  check: <path d="M5 12.4 10 17l9-10" />,
-  /** 위치 조정 — 네 쪽 화살표(G-98) */
-  move: <path d="M12 3.5v17M3.5 12h17M9.5 6 12 3.5 14.5 6M9.5 18l2.5 2.5 2.5-2.5M6 9.5 3.5 12 6 14.5M18 9.5l2.5 2.5-2.5 2.5" />,
-  link: <path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1.2 1.2M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1.2-1.2" />,
-  /** 주고받기 — 마주 선 두 화살표(요청 카드의 받는 기운 ⇄ 주는 기운, 대장 matching-10) */
-  exchange: <path d="M5 8.5h13.5M15 5l3.5 3.5L15 12M19 15.5H5.5M9 12l-3.5 3.5L9 19" />,
-};
+  );
+}
 
 export function Icon({ name, className = 'size-5' }: { name: IconName; className?: string }) {
   return (
     <svg
       aria-hidden="true"
-      viewBox="0 0 24 24"
+      viewBox={ICON_FRAME.viewBox}
       className={`${className} shrink-0`}
       fill="none"
       stroke="currentColor"
-      strokeWidth="1.8"
-      strokeLinecap="round"
-      strokeLinejoin="round"
+      strokeWidth={ICON_FRAME.strokeWidth}
+      strokeLinecap={ICON_FRAME.strokeLinecap}
+      strokeLinejoin={ICON_FRAME.strokeLinejoin}
     >
-      {PATHS[name]}
+      <IconShapes name={name} />
     </svg>
   );
 }

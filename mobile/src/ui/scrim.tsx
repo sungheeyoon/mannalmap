@@ -11,6 +11,8 @@ import { COLOR } from './tokens';
  * - `onOutside` — 바깥을 누르면. `null` 이면 바깥 누름으로 안 닫힌다(적은 것이 있는 창). `outsideLabel` 을 주면 화면 읽기도 그 바깥을 「닫기」로 읽는다
  * - `tint` — `false` 면 덮개 색 없이 바깥 누름만 받는다(작은 띄움 판)
  * - `keyboard` — 글을 받는 창은 키보드 위로 올라선다
+ * - `within` — 이미 뜬 전체 화면(`Modal`) 안에 깐다 — 창을 새로 띄우지 않는다. 사진 크게 보기의 「⋯」 판이 쓴다: 판에서 고르면 보기와 판이
+ *   함께 닫히는데, iOS 는 닫히는 창 위에 다음 창을 못 띄운다(`settings/photo-viewer.tsx`). 움직임 · 뒤로는 그 화면의 몫이다
  */
 export function Scrim({
   open = true,
@@ -21,6 +23,7 @@ export function Scrim({
   outsideLabel,
   tint = true,
   keyboard = false,
+  within = false,
   onDismiss,
   children,
 }: {
@@ -33,6 +36,7 @@ export function Scrim({
   outsideLabel?: string;
   tint?: boolean;
   keyboard?: boolean;
+  within?: boolean;
   /** 판이 다 닫힌 뒤 — iOS 는 닫히는 창 위에 다음 창을 못 띄운다 */
   onDismiss?: () => void;
   children: ReactNode;
@@ -44,6 +48,14 @@ export function Scrim({
     ) : (
       <Pressable style={StyleSheet.absoluteFill} onPress={onOutside ?? undefined} accessibilityLabel={outsideLabel} />
     );
+  if (within) {
+    return open ? (
+      <View style={[StyleSheet.absoluteFill, styles[place], tint && styles.tint]}>
+        {outside}
+        {children}
+      </View>
+    ) : null;
+  }
   return (
     <Modal visible={open} transparent animationType={animation} onRequestClose={onRequestClose} onDismiss={onDismiss}>
       <Frame {...(keyboard ? { behavior: 'padding' as const } : {})} style={[styles.fill, styles[place], tint && styles.tint]}>

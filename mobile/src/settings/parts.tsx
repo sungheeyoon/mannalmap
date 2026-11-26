@@ -1,11 +1,11 @@
 import { useCallback, useEffect, useState, type ReactNode } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
-import Svg, { Path } from 'react-native-svg';
 
 import { accountFailureOf, accountNoticeOf, type AccountState } from '@account/index';
 import { SUPPORT_EMAIL } from '@brand';
 
 import { FailureLine } from '@/ui/failure-line';
+import { Icon } from '@/ui/icons';
 import { Switch } from '@/ui/switch';
 import { COLOR, FONT, TYPE, TYPE_BODY, TYPE_META, TYPE_NAME, TYPE_TITLE } from '@/ui/tokens';
 import { CardFrame } from '@/ui/surfaces';
@@ -83,7 +83,7 @@ export function SwitchRow({ label, help, note, checked, onChange, busy }: { labe
   );
 }
 
-/** 다른 화면으로 가는 줄 — 줄 전체가 누를 자리이고 오른쪽은 「›」 하나다 */
+/** 다른 화면으로 가는 줄 — 줄 전체가 누를 자리이고 오른쪽은 「›」 하나다(웹 `app/me/settings/card.tsx` 의 `chevron` · `size-4` · muted) */
 export function LinkRow({ label, help, note, leading, big = false, onPress }: { label: string; help?: string; note?: string; leading?: ReactNode; big?: boolean; onPress: () => void }) {
   return (
     <Pressable accessibilityRole="link" onPress={onPress} style={({ pressed }) => [styles.row, big && styles.bigRow, pressed && styles.pressed]}>
@@ -99,9 +99,7 @@ export function LinkRow({ label, help, note, leading, big = false, onPress }: { 
         )}
         {note !== undefined && <WordText style={styles.note}>{note}</WordText>}
       </View>
-      <Svg width={16} height={16} viewBox="0 0 16 16">
-        <Path d="M6 3 L11 8 L6 13" fill="none" stroke={COLOR.muted} strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" />
-      </Svg>
+      <Icon name="chevron" size={16} color={COLOR.muted} />
     </Pressable>
   );
 }
@@ -121,7 +119,6 @@ export const settingsText = StyleSheet.create({
   section: { fontSize: TYPE.lead, lineHeight: 26, fontFamily: FONT.bold, color: COLOR.foreground },
   body: { ...TYPE_BODY, color: COLOR.secondary },
   bodyStrong: { ...TYPE_BODY, fontFamily: FONT.bold },
-  failure: { fontSize: TYPE.note, lineHeight: 22, fontFamily: FONT.medium, color: COLOR.danger },
   fieldLabel: { fontSize: TYPE.small, fontFamily: FONT.bold, color: COLOR.secondary },
   notice: { gap: 4, paddingHorizontal: 20, paddingVertical: 16 },
 });

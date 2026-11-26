@@ -4,11 +4,10 @@ import { Linking, StyleSheet, View } from 'react-native';
 
 import { SUPPORT_EMAIL } from '@brand';
 
+import { FailureLine } from '@/ui/failure-line';
 import { SecondaryButton } from '@/ui/parts';
-import { COLOR, FONT, TYPE } from '@/ui/tokens';
 
 import { COPY_EMAIL_DONE, COPY_EMAIL_FAILED, COPY_EMAIL_LABEL, MAIL_FAILED, SEND_MAIL_LABEL } from './copy';
-import { WordText } from '@/ui/word-text';
 
 /**
  * 문의는 메일 한 길이다(약관 제29조의 연락처) — 앱 안 문의 창은 없다. 메일 앱이 없는 기기를 위해 주소는 화면의 줄에 고를 수 있게 선다.
@@ -42,9 +41,7 @@ export function SendMail() {
       <SecondaryButton label={SEND_MAIL_LABEL} onPress={open} />
       {failed && (
         <>
-          <WordText accessibilityRole="alert" style={styles.failure}>
-            {copy === 'failed' ? COPY_EMAIL_FAILED : MAIL_FAILED}
-          </WordText>
+          <FailureLine>{copy === 'failed' ? COPY_EMAIL_FAILED : MAIL_FAILED}</FailureLine>
           <SecondaryButton label={copy === 'copied' ? COPY_EMAIL_DONE : COPY_EMAIL_LABEL} onPress={() => void copyAddress()} />
         </>
       )}
@@ -54,5 +51,4 @@ export function SendMail() {
 
 const styles = StyleSheet.create({
   box: { gap: 8 },
-  failure: { fontFamily: FONT.medium, fontSize: TYPE.note, lineHeight: 22, color: COLOR.danger },
 });

@@ -97,7 +97,7 @@ export function CheckRow({ checked, onToggle, refused = false, disabled = false,
  * 같고 보조기기가 「처리 중」을 읽는다. 곁의 단추를 막을 때는 `disabled`.
  *
  * 이름 둘(`SecondaryButton` = `secondary-small`, `TextButton` = `tertiary`)은 웹 상수(`BUTTON_SECONDARY_SMALL` · `BUTTON_TERTIARY`)와
- * 어긋난다 — 약속 표(`src/lib/design/contract.ts`)대로 앱을 웹에 맞추는 일은 G-155 다(부르는 파일 30개에 결제 화면이 든다).
+ * 어긋난다 — 약속 표(`src/lib/design/contract.ts`)대로 앱을 웹에 맞추는 일은 G-184 다(부르는 파일 28개에 결제 화면이 든다).
  */
 type ButtonProps = { label: string; onPress: () => void; disabled?: boolean; busy?: boolean };
 

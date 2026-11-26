@@ -7,6 +7,7 @@ import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Markdown } from '@/reading/markdown';
+import { FailureLine } from '@/ui/failure-line';
 import { Icon } from '@/ui/icons';
 import { Logo } from '@/ui/logo';
 import { ScoreGauge } from '@/ui/score-gauge';
@@ -16,7 +17,6 @@ import { settled } from '@/ui/settled';
 import { TopBar } from '@/ui/top-bar';
 import { Card, Paper, Tile } from '@/ui/surfaces';
 
-import { Mark } from './marks';
 import { readShared, type ShareRead } from './read';
 import { useStart } from './start';
 import { Heading } from '@/ui/heading';
@@ -80,7 +80,7 @@ function OpenScreen({ shared, expect }: { shared: SharedReading; expect: ShareKi
           <Paper style={styles.cover}>
             {metaphor !== null && (
               <View style={styles.metaphor}>
-                <Mark name="quote" color={COLOR.creamInk} />
+                <Icon name="quote" color={COLOR.creamInk} />
                 <WordText style={styles.metaphorText}>{metaphor}</WordText>
               </View>
             )}
@@ -111,7 +111,7 @@ function OpenScreen({ shared, expect }: { shared: SharedReading; expect: ShareKi
             {invitation.heading}
           </Heading>
           <WordText style={styles.note}>{invitation.note}</WordText>
-          {failure !== null && <WordText style={styles.failure}>{failure}</WordText>}
+          {failure !== null && <FailureLine>{failure}</FailureLine>}
           <PrimaryButton label={SHARE_SIGN_IN_START} onPress={start} disabled={going} />
         </Paper>
       </ScrollView>
@@ -206,7 +206,6 @@ const styles = StyleSheet.create({
   /* 두 문장이 제 줄에서 시작한다(운영자 2026-10-03) — 390px 에서 한 문장이 한 줄에 들어가는 크기다 */
   noticeLine: { fontSize: TYPE.note, lineHeight: 24, fontFamily: FONT.medium, color: COLOR.secondary },
   fine: { ...TYPE_META },
-  failure: { fontSize: TYPE.small, lineHeight: 19, fontFamily: FONT.medium, color: COLOR.danger },
   noticeRoom: { flexGrow: 1, justifyContent: 'center', padding: 16 },
   notice: { gap: 16 },
   noticeActions: { gap: 8, marginTop: 8 },

@@ -7,6 +7,7 @@ import { MATCH_OPEN_ALERT_BUTTON, matchOpenAlertStands } from '@matching/opening
 import { useClient } from '@/auth/connected';
 import { NOT_READY } from '@/auth/signup';
 import { readMatchOpenAlert, setMatchOpenAlert, useMatchOpen } from '@/matching/opening';
+import { FailureLine } from '@/ui/failure-line';
 import { Button } from '@/ui/buttons';
 import { Icon } from '@/ui/icons';
 import { settled, settledWhileLive } from '@/ui/settled';
@@ -52,7 +53,7 @@ export function MatchOpenAlert() {
         </View>
         <Button label={label} onPress={() => void flip()} disabled={saving} variant="secondary-small" />
       </View>
-      {failure !== null && <WordText accessibilityRole="alert" style={styles.failure}>{failure}</WordText>}
+      {failure !== null && <FailureLine style={styles.failure}>{failure}</FailureLine>}
     </CardFrame>
   );
 }
@@ -63,5 +64,6 @@ const styles = StyleSheet.create({
   body: { flex: 1, minWidth: 0 },
   name: { fontFamily: FONT.bold, fontSize: TYPE.body, color: COLOR.foreground },
   second: { ...TYPE_META },
-  failure: { paddingHorizontal: 16, paddingBottom: 12, fontFamily: FONT.medium, fontSize: TYPE.small, color: COLOR.danger },
+  /* 웹 `FailureLine className="px-4 pb-3"` */
+  failure: { paddingHorizontal: 16, paddingBottom: 12 },
 });
