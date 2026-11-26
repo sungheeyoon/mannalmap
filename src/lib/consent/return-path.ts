@@ -18,6 +18,8 @@
  * 순수 함수라 관문(`gate.ts`)과 화면 · 문이 같은 것을 부른다 — 이 lib 은 app 을 모르므로 여기 산다.
  */
 
+import { allowedBy, sameSitePath, type PathPolicy } from '../same-site-path';
+
 /** 돌아갈 곳을 모르거나 못 믿을 때 — 내 사주 */
 const DEFAULT_RETURN_PATH = '/me';
 
@@ -57,31 +59,19 @@ const RESUMES: readonly string[] = [RESUME_READING_PATH, RESUME_PAIR_PATH];
  */
 export const RETURN_PATH_HEADER = 'x-saju-return-path';
 
-/** 로그인 · 가입 자신 — 돌아갈 곳이 되면 `next` 가 겹친다 */
-const detour = (pathname: string): boolean =>
-  ['/auth', '/signup'].some((path) => pathname === path || pathname.startsWith(`${path}/`));
+/** 돌아갈 곳의 정책 — 로그인 · 가입 자신은 받지 않는다. 돌아갈 곳이 되면 `next` 가 겹친다 */
+const RETURN_POLICY: PathPolicy = { under: ['/'], notUnder: ['/auth', '/signup'] };
 
 /**
  * 로그인 뒤 돌아갈 **같은 사이트 경로.**
  *
- * 외부 주소 · 프로토콜 상대 주소(`//…`) · 역슬래시로 시작하는 주소(`/\…` — 브라우저가 `//…` 로 읽는다)는
- * 받지 않는다. `next` 는 주소창에서 온 값이므로 그대로 redirect 하면 열린 리다이렉트가 된다.
+ * 같은 사이트 경로인가는 `sameSitePath` 한 벌이 가른다 — `next` 는 주소창에서 온 값이므로 그대로 redirect 하면 열린 리다이렉트가 된다.
  */
 export function safeReturnPath(value: string | string[] | null | undefined): string {
-  const candidate = Array.isArray(value) ? value[0] : value;
-  if (!candidate?.startsWith('/') || candidate.startsWith('//') || candidate.includes('\\')) {
-    return DEFAULT_RETURN_PATH;
-  }
-
-  try {
-    const parsed = new URL(candidate, 'https://local.invalid');
-    if (parsed.origin !== 'https://local.invalid') return DEFAULT_RETURN_PATH;
-    if (detour(parsed.pathname)) return DEFAULT_RETURN_PATH;
-    const path = `${parsed.pathname}${parsed.search}${parsed.hash}`;
-    return path === LEGACY_RESUME_READING_PATH ? RESUME_READING_PATH : path;
-  } catch {
-    return DEFAULT_RETURN_PATH;
-  }
+  const parsed = sameSitePath(value);
+  if (parsed === null || !allowedBy(parsed.pathname, RETURN_POLICY)) return DEFAULT_RETURN_PATH;
+  const path = `${parsed.pathname}${parsed.search}${parsed.hash}`;
+  return path === LEGACY_RESUME_READING_PATH ? RESUME_READING_PATH : path;
 }
 
 /**

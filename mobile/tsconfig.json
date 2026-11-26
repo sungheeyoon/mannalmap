@@ -93,6 +93,9 @@
       "@people/words": [
         "../src/lib/people/words.ts"
       ],
+      "@people/edit-form": [
+        "../src/lib/people/edit-form.ts"
+      ],
       "@matching": [
         "../src/lib/matching/index.ts"
       ],

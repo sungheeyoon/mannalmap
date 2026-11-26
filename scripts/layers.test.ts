@@ -31,8 +31,10 @@ const ALLOWED_LIB_EDGES = new Set([
   'consent → discovery',
   'consent → input',
   'consent → presence',
+  'consent → profile',
   'consent → reading',
   'consent → saju',
+  'consent → same-site-path',
   'discovery → saju',
   'input → local-env',
   'input → saju',
@@ -48,6 +50,7 @@ const ALLOWED_LIB_EDGES = new Set([
   'reading → input',
   'reading → people',
   'reading → saju',
+  'reading → same-site-path',
   'reading → uuid',
 ]);
 

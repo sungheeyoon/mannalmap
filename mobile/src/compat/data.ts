@@ -12,8 +12,9 @@ import { mapModelOf, type HomePerson, type MapModel } from '@reading/relation-ma
 import type { ReadingEntry } from '@reading/entry';
 
 import type { Client } from '@/auth/client';
+import type { Loaded } from '@/answer';
 import { readAccount } from '@/auth/account';
-import { findSameChart, readEdges, readInputs, readReadings, readSlots, signedIn, type MyReading, type Read, type SameChart } from '@/people/data';
+import { findSameChart, readEdges, readInputs, readReadings, readSlots, signedIn, type MyReading, type SameChart } from '@/people/data';
 import { COMPAT_OPEN_FAILED } from '@people/words';
 
 /** 고를 수 있는 사람 — 그 사람의 얼굴에 쓸 일간까지만 */
@@ -38,7 +39,7 @@ const mapEntries = (readings: readonly MyReading[]): ReadingEntry[] =>
   readings.map((one) => ({ ...one, matchId: null }));
 
 /** 궁합의 첫 걸음이 읽는 것 — 목록에 선 사람만 고르고 맨 위는 「나」다(`app/compat/page.tsx`) */
-export async function readPicker(client: Client): Promise<Read<PickerData>> {
+export async function readPicker(client: Client): Promise<Loaded<PickerData>> {
   const session = await signedIn(client);
   if (session.kind !== 'ok') return session;
 
@@ -192,7 +193,7 @@ export type PairOutcome =
     };
 
 /** 궁합 결과가 읽는 것 — 없는 사람과 못 보는 사람이 같은 답이고, 못 읽는 입력은 메우지 않는다(`app/me/compat/screen.tsx`) */
-export async function readPair(client: Client, a: string, b: string): Promise<Read<PairOutcome>> {
+export async function readPair(client: Client, a: string, b: string): Promise<Loaded<PairOutcome>> {
   const session = await signedIn(client);
   if (session.kind !== 'ok') return session;
   if (a === b) return { kind: 'ok', value: { kind: 'same' } };

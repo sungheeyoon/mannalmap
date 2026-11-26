@@ -9,16 +9,15 @@ import { readPicker, type PickerData } from '@/compat/data';
 import { CompatPicker } from '@/compat/picker';
 import { RelationMap } from '@/compat/relation-map';
 import { CompatResultStep } from '@/compat/result-step';
-import type { Read } from '@/people/data';
 import { AccountNotice, LoadingFrame, ScreenFrame, go, styles as shared } from '@/people/parts';
 import { FailureLine } from '@/ui/failure-line';
 import { Icon } from '@/ui/icons';
 import { COLOR, FONT, TYPE } from '@/ui/tokens';
 import { RowLine } from '@/ui/surfaces';
 import { settled } from '@/ui/settled';
-import { UNREACHABLE } from '@/auth/signup';
 import { WordText } from '@/ui/word-text';
 import { COMPAT_DIRECT_NOT_SAVED, COMPAT_NEW } from '@people/words';
+import { unreachedLoad, type Loaded } from '@/answer';
 
 /**
  * 궁합 — 앱에는 `/compat` 이 없어(입구 결정) 이 주소가 두 걸음을 다 든다. `a` · `b` 가 있으면 두 명식을 보고, 없으면 두 사람을 정한다.
@@ -38,10 +37,10 @@ function Loading() {
 
 function PickStep({ pickA, pickB, typeB }: { pickA?: string; pickB?: string; typeB: boolean }) {
   const client = useClient();
-  const [read, setRead] = useState<Read<PickerData> | null>(null);
+  const [read, setRead] = useState<Loaded<PickerData> | null>(null);
 
   const load = useCallback(() => {
-    void settled(readPicker(client), 'readPicker', () => ({ kind: 'failed', message: UNREACHABLE }) as const).then((next) => {
+    void settled(readPicker(client), 'readPicker', unreachedLoad).then((next) => {
       if (next.kind === 'signed-out') router.replace('/');
       else setRead((now) => (now?.kind === 'ok' && next.kind === 'failed' ? now : next));
     });
