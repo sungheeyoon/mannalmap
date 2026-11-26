@@ -19,7 +19,6 @@ import type { ReadingTarget } from './api';
 import { Heading } from '@/ui/heading';
 import { WordText } from '@/ui/word-text';
 import { READING_PAIR_TITLE } from '@reading/words';
-import { AiBadge } from '@/ui/ai-badge';
 
 const softOf = (element: Element | null | undefined) => (element ? ELEMENT_TONE[element].soft : COLOR.noneSoft);
 
@@ -74,20 +73,16 @@ export function Result({
   const body = named(reading.output);
   const titles = useMemo(() => headingsOf(body), [body]);
 
-  /* 머리 줄 첫 자리에 「AI 풀이」 딱지(ADR 0276) — 크림 판(궁합 표지 · 색을 모르는 표지) 위에서는 흰 바탕 + 테다. 웹 `reading-result.tsx` 와 같다 */
-  const meta = (onCream: boolean) => (
-    <View style={[styles.metaRow, pair !== undefined && styles.metaRowCenter]}>
-      <AiBadge onCream={onCream} />
-      <WordText style={styles.meta}>
-        {createdLabel} 생성{' · '}읽는 데 약 {minutes}분
-      </WordText>
-    </View>
+  const meta = (
+    <WordText style={styles.meta}>
+      {createdLabel} 생성{' · '}읽는 데 약 {minutes}분
+    </WordText>
   );
 
   return (
     <View style={styles.result}>
       {pair !== undefined ? (
-        <PairCover pair={pair} score={reading.score} metaphor={metaphor} meta={meta(true)} action={coverAction} />
+        <PairCover pair={pair} score={reading.score} metaphor={metaphor} meta={meta} action={coverAction} />
       ) : reading.score !== null || metaphor !== null ? (
         <Paper style={styles.cover}>
           <CoverFace tones={tones} />
@@ -103,7 +98,7 @@ export function Result({
             <WordText style={styles.coverTitle}>풀이 결과</WordText>
           )}
           <View style={styles.caption}>
-            <View style={styles.grow}>{meta(tones === undefined)}</View>
+            <View style={styles.grow}>{meta}</View>
             {reading.score !== null && (
               <View style={styles.score}>
                 <WordText style={styles.scoreLabel}>{COMPAT_SCORE_LABEL}</WordText>
@@ -115,7 +110,7 @@ export function Result({
           </View>
         </Paper>
       ) : (
-        meta(false)
+        meta
       )}
 
       {belowCover}
@@ -249,8 +244,6 @@ const styles = StyleSheet.create({
   metaphor: { marginTop: 8, fontFamily: FONT.bold, fontSize: TYPE.title, lineHeight: 36, color: COLOR.foreground },
   coverTitle: { fontFamily: FONT.bold, fontSize: TYPE.small, color: COLOR.secondary },
   caption: { flexDirection: 'row', alignItems: 'flex-end', gap: 16, marginTop: 32, paddingTop: 16, borderTopWidth: 1, borderTopColor: COLOR.border },
-  metaRow: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 8 },
-  metaRowCenter: { justifyContent: 'center' },
   meta: { ...TYPE_META },
   score: { alignItems: 'flex-end' },
   scoreLabel: { fontFamily: FONT.bold, fontSize: TYPE.small, color: COLOR.secondary },

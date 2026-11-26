@@ -203,7 +203,7 @@ describe('무료 · 예외 풀이권의 기한 — 없다 (ADR 0235)', () => {
     expect(revisedLine).toEqual([
       '개정 약관(제13조⑥ · 제14조④)은 2026-11-07부터 시행합니다.',
       ...(TERMS_REVISED_ON
-        ? [`개정 약관(제10조 · 제16조③ · 제18조 · 제25조① · 제30조②)은 ${TERMS_REVISED_ON}부터 시행합니다.`, `개정 약관(제4조② · 제23조②)은 ${TERMS_REVISED_LATER_ON}부터 시행합니다.`]
+        ? [`개정 약관(제10조 · 제16조③ · 제18조① · 제25조① · 제30조②)은 ${TERMS_REVISED_ON}부터 시행합니다.`, `개정 약관(제4조② · 제6조③ · 제18조② · 제18조③ · 제23조②)은 ${TERMS_REVISED_LATER_ON}부터 시행합니다.`]
         : []),
     ]);
   });
@@ -213,7 +213,7 @@ describe('무료 · 예외 풀이권의 기한 — 없다 (ADR 0235)', () => {
  * ADR 0275 — 근거 문서(`docs/legal/terms-grounds.md` 「변호사 물음을 갈음한 근거 — 약관」)의 권고를 옮긴 다섯 조항과 그 공지.
  * 이용자에게 불리하지 않은 변경이라 시행 7일 전 공지(제4조②)다 — 공지는 약관 · 환불정책 머리의 「개정 안내」다.
  */
-describe('2026-12 개정 — 일곱 조항과 개정 안내 (ADR 0275)', () => {
+describe('2026-12 개정 — 여덟 조항과 개정 안내 (ADR 0275 · 0277)', () => {
   const termsDoc = termsFor(businessInfoFrom(FULL), SITE);
   const terms = textsOf(termsDoc);
   const refund = textsOf(refundPolicyFor(businessInfoFrom(FULL)));
@@ -236,6 +236,31 @@ describe('2026-12 개정 — 일곱 조항과 개정 안내 (ADR 0275)', () => {
     expect(article18).toContain('취소하려면 이메일(help@example.com)로 알려 주십시오');
   });
 
+  it('제18조②③은 취소할 수 없는 네 경우와 판단 · 증빙을 들고, 그때 쓴 몫은 취소하지 않는다 — ①은 결제 유의사항 문장으로 시작한다 (ADR 0278)', () => {
+    const article18 = termsDoc.parts.flatMap((part) => part.sections).find((section) => section.title.startsWith('제18조'));
+    const list = article18?.blocks[0]?.kind === 'numbered' ? article18.blocks[0].items : [];
+    const items = list.map((item) => item.text);
+    expect(items).toHaveLength(3);
+    expect(items[1]).toBe('다음 어느 하나에 해당하면 제1항의 취소를 할 수 없습니다.');
+    const cases = list[1]?.bullets ?? [];
+    expect(cases).toHaveLength(4);
+    expect(cases[0]).toContain('법정대리인이 그 결제에 동의한 경우');
+    expect(cases[1]).toContain('처분을 허락한 재산(용돈 등)');
+    expect(cases[2]).toContain('성년자의 결제수단을 그 사람의 동의 없이');
+    expect(cases[3]).toContain('속임수를 써서');
+    /* 대비표의 「이후」 칸은 머리 문장과 네 경우를 한 칸에 잇는다 */
+    const compare = termsDoc.parts[0].sections[0].blocks.find((block) => block.kind === 'table');
+    const row = compare?.kind === 'table' ? compare.table.rows.find((one) => one[0] === '제18조②') : undefined;
+    expect(row?.[2]).toBe(`${items[1]} ${cases.join(' / ')}`);
+    expect(items[2]).toContain('증명하는 서류를 요청할 수 있습니다');
+    expect(items[2]).toContain('이미 쓴 풀이권 몫은 취소하지 않고');
+  });
+
+  it('제6조③은 생성 사실을 약관으로 알리고 풀이 화면의 표시를 약속하지 않는다 — 옛 약속은 개정 안내의 「이전」 칸에만 남는다 (ADR 0277)', () => {
+    expect(terms).toContain('풀이 글은 생성형 인공지능이 만듭니다. 회사는 이 사실을 이용 전에 이 약관으로 알립니다.');
+    expect(textsOf({ ...termsDoc, parts: termsDoc.parts.slice(1) }).join(' ')).not.toContain('만들어진 풀이에 그 사실을 표시합니다');
+  });
+
   it('통지 셋(제4조② · 제10조 · 제23조②)은 전자우편이 먼저이고 없거나 보낼 수 없으면 서비스 안 알림이며, 조정기관에 한국저작권위원회가 든다', () => {
     expect(terms.some((text) => text.startsWith('회사는 조치를 하면 그 사실과 사유를 곧바로 계정의 전자우편으로 알리고, 전자우편이 없거나 보낼 수 없으면 서비스 안 알림으로 알리며'))).toBe(true);
     expect(terms.some((text) => text.includes('계정의 전자우편으로 따로 알리되 전자우편이 없거나 보낼 수 없으면 서비스 안 알림으로 알립니다'))).toBe(true);
@@ -253,9 +278,12 @@ describe('2026-12 개정 — 일곱 조항과 개정 안내 (ADR 0275)', () => {
     const compare = blocks.find((block) => block.kind === 'table');
     expect(compare?.kind === 'table' ? compare.table.rows.map((row) => [row[0], row[3]]) : []).toEqual([
       ['제4조②', TERMS_REVISED_LATER_ON],
+      ['제6조③', TERMS_REVISED_LATER_ON],
       ['제10조', TERMS_REVISED_ON],
       ['제16조③', TERMS_REVISED_ON],
-      ['제18조', TERMS_REVISED_ON],
+      ['제18조①', TERMS_REVISED_ON],
+      ['제18조②', TERMS_REVISED_LATER_ON],
+      ['제18조③', TERMS_REVISED_LATER_ON],
       ['제23조②', TERMS_REVISED_LATER_ON],
       ['제25조①', TERMS_REVISED_ON],
       ['제30조②', TERMS_REVISED_ON],
@@ -264,6 +292,8 @@ describe('2026-12 개정 — 일곱 조항과 개정 안내 (ADR 0275)', () => {
     expect((Date.parse(TERMS_REVISED_LATER_ON) - Date.parse(TERMS_REVISED_ON ?? '')) / 86_400_000).toBeGreaterThanOrEqual(23);
     for (const row of compare?.kind === 'table' ? compare.table.rows : []) {
       expect(row[1]).not.toBe(row[2]);
+      /* 제18조② 는 머리 문장 + 점 넷이라 한 칸에 이었다 — 따로 잰다(ADR 0278) */
+      if (row[0] === '제18조②') continue;
       expect(terms.filter((text) => text === row[2]).length).toBeGreaterThanOrEqual(2);
     }
     expect(terms.some((text) => text.includes(`${TERMS_REVISED_ON}부터 시행합니다`))).toBe(true);

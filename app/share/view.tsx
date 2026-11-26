@@ -6,7 +6,6 @@ import { SHARE_COPY, sharedTitle, type SharedReading } from '@/src/lib/reading/s
 
 import { Markdown } from '../me/reading/markdown';
 import { BUTTON_PRIMARY } from '../ui/buttons';
-import { AiBadge } from '../ui/ai-badge';
 import { Icon } from '../ui/icons';
 import { Logo } from '../ui/logo';
 import { ScoreGauge } from '../ui/score-gauge';
@@ -74,11 +73,7 @@ export function SharedReadingBody({ shared, token, expect }: { shared: SharedRea
         다 읽은 자리의 초대 판 하나다.
       */}
       <header className="flex min-w-0 flex-col gap-1.5">
-          {/* 밖으로 보낸 글이라 머리에 「AI 풀이」 딱지가 선다(ADR 0276) — 받은 사람은 보낸 사람의 표지를 안 본다 */}
-          <p className="flex flex-wrap items-center gap-2 text-small font-semibold text-cream-ink">
-            <span>{eyebrow}</span>
-            <AiBadge />
-          </p>
+          <p className="text-small font-semibold text-cream-ink">{eyebrow}</p>
           {/*
             **누구 것인지가 제목이다.**
 
