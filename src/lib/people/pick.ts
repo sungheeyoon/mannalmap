@@ -1,5 +1,5 @@
 import type { Query } from '../input/query';
-import { birthSectionErrors, type BirthSection, type SectionError } from '../input/section-errors';
+import { birthSectionErrors, prefixed, type BirthSection, type SectionError } from '../input/section-errors';
 
 /**
  * 저장한 사람을 **이름으로 찾아 고르는** 판단 — 궁합의 두 칸과 사람 목록 위의 찾는 칸이 쓴다.
@@ -152,4 +152,96 @@ export function seatSectionErrors(
   if (seat.from === 'typed') return birthSectionErrors(seat.query);
   if (!stillListed(people, seat.personId)) return [{ section: 'pick', message: `${who}을 골라 주세요.` }];
   return sameAsOther ? [{ section: 'pick', message: SAME_PERSON_TWICE }] : [];
+}
+
+/*
+ * # 궁합 고르기 판의 판단(G-182)
+ *
+ * 웹 `app/compat-picker.tsx` 와 앱 `mobile/src/compat/picker.tsx` 가 같은 갈래(같은 사람 둘 · 걸린 문단 · 쌍 이름 · 사이를 보낼지 ·
+ * 고르는 칸의 줄이 걷히는 때 · 연 뒤의 갈래)를 저마다 적던 것을 여기로 내렸다. 처음 서는 칸(`firstSlot` · `secondSlot`)은 웹은 주소의 `#`,
+ * 앱은 경로 인자에서 읽어 두 벌로 둔다(G-172 기록). 그리기 · 스크롤 · 초점과 여는 부름은 화면이 한다.
+ */
+
+/** 판의 두 칸 — 이름은 `CompatSide` 와 같다(`src/lib/saju`) */
+type PairSeatSide = 'a' | 'b';
+const PAIR_SEAT_SIDES: readonly PairSeatSide[] = ['a', 'b'];
+
+/** 판의 한 칸 — 고른 사람이거나 적어 넣은 입력이다. 여는 문의 `PairSide` 와 같은 모양이다 */
+export type PairSeat = { readonly from: 'saved'; readonly personId: string } | { readonly from: 'typed'; readonly query: Query };
+export type PairSeats = Readonly<Record<PairSeatSide, PairSeat>>;
+
+/** 두 칸에 같은 사람을 골랐다 — 말은 둘째 칸의 고르는 칸 아래다 */
+export const sameSeatTwice = ({ a, b }: PairSeats): boolean =>
+  a.from === 'saved' && b.from === 'saved' && a.personId !== '' && a.personId === b.personId;
+
+/**
+ * 판의 **걸린 문단 전부**(ADR 0252) — 두 칸의 것이 다 함께 서고, 이름 앞에 칸(`a.` · `b.`)이 붙는다. 비어 있다는 말은 누른 뒤에만 선다.
+ *
+ * `typed` 는 직접 입력 칸이 제 폼에서 올린 오류다 — 앱의 칸은 시 · 분 숫자까지 알아 「25시」 같은 것도 잡는다. 없으면 입력에서 센다.
+ */
+export function pairSeatErrors(
+  seats: PairSeats,
+  {
+    people,
+    who,
+    typed = {},
+  }: {
+    people: readonly Pickable[];
+    who: Readonly<Record<PairSeatSide, string>>;
+    typed?: Partial<Record<PairSeatSide, readonly SectionError<BirthSection>[]>>;
+  },
+): SectionError<`${PairSeatSide}.${SeatSection}`>[] {
+  const twice = sameSeatTwice(seats);
+  return PAIR_SEAT_SIDES.flatMap((side) => {
+    const seat = seats[side];
+    const fromForm = seat.from === 'typed' ? typed[side] : undefined;
+    return prefixed(side, fromForm ?? seatSectionErrors(seat, { people, who: who[side], sameAsOther: side === 'b' && twice }));
+  });
+}
+
+/**
+ * 차례를 안 타는 **쌍 이름** — 첫째 · 둘째를 바꿔 골라도 같은 쌍이다(DB 와 같은 규율). 두 칸 다 고른 사람이고 걸린 문단이 없을 때만 있고,
+ * 아니면 `''` 다 — 직접 적은 칸이 끼면 그 사람이 아직 없으므로 적어 둔 사이도 없다.
+ */
+export const pairKeyOf = (seats: PairSeats, chosen: boolean): string =>
+  seats.a.from === 'saved' && seats.b.from === 'saved' && chosen && !sameSeatTwice(seats)
+    ? [seats.a.personId, seats.b.personId].sort().join('|')
+    : '';
+
+/**
+ * 여는 문에 보낼 사이 — **`undefined` 는 「안 건드렸다」다.** 칸은 늘 「관계 선택 안 함」에서 시작해서, 안 건드린 것을 답으로 보내면 지난번에
+ * 「가족」이라 답해 둔 두 사람을 다시 고르기만 해도 그 답이 지워진다. `answered` 는 사용자가 사이를 고를 때의 쌍 이름이다.
+ */
+export const relationToSend = <R>(relation: R, answered: string | null, pairKey: string): R | undefined =>
+  answered === pairKey || pairKey === '' ? relation : undefined;
+
+/** 칸을 바꾸면 그 칸의 고르는 줄이 걷히는가 — 방식을 바꾸거나 사람을 골랐을 때. 출생 정보 칸의 줄은 폼이 제 문단마다 걷는다 */
+export const seatChangeClearsPick = (before: PairSeat, next: PairSeat): boolean => next.from === 'saved' || before.from !== next.from;
+
+/** 여는 문의 답 — 웹 · 앱의 문이 같은 모양을 낸다(거절된 칸 `side` 는 웹의 문만 안다) */
+type PairOpenAnswer<S> =
+  | { readonly ok: true; readonly personA: string; readonly personB: string }
+  | { readonly ok: false; readonly kind: 'failed'; readonly message: string; readonly side?: PairSeatSide }
+  | { readonly ok: false; readonly kind: 'same-chart'; readonly side: PairSeatSide; readonly same: S };
+
+/** 「이미 저장된 그 사람인가요?」에 답한 쪽 — `null` 은 아직 안 물었거나 「아니다」다 */
+type PairAnswered = { readonly a?: string | null; readonly b?: string | null };
+
+/**
+ * 연 뒤의 갈래 — 열렸으면 두 사람의 궁합 화면으로(`go`), 거절이면 그 말(`failed`, 한 사람의 입력이면 그 칸), 이미 저장된 사람과 같은
+ * 입력이면 묻는다(`ask` — 답하면 `answer` 가 낸 답으로 다시 연다). 둘 다 이미 있을 수 있어 물음은 두 번 갈 수 있다.
+ */
+export type PairOpenNext =
+  | { readonly kind: 'go'; readonly personA: string; readonly personB: string }
+  | { readonly kind: 'failed'; readonly message: string; readonly side?: PairSeatSide }
+  | { readonly kind: 'ask'; readonly label: string; readonly answer: (sameperson: boolean) => PairAnswered };
+
+export function pairOpenNext<S extends { readonly label: string; readonly personId: string }>(
+  opened: PairOpenAnswer<S>,
+  answers: PairAnswered,
+): PairOpenNext {
+  if (opened.ok) return { kind: 'go', personA: opened.personA, personB: opened.personB };
+  if (opened.kind === 'failed') return { kind: 'failed', message: opened.message, side: opened.side };
+  const { side, same } = opened;
+  return { kind: 'ask', label: same.label, answer: (sameperson) => ({ ...answers, [side]: sameperson ? same.personId : null }) };
 }

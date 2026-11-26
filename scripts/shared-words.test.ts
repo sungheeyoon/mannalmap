@@ -18,10 +18,25 @@ const code = (dir: string, without = '') =>
     .filter((file) => /\.tsx?$/.test(file) && !/\.test\.tsx?$/.test(file) && file !== join(ROOT, without))
     .map((file) => withoutComments(read(relative(ROOT, file))))
     .join('\n');
-const web = code('app') + code('src/lib/reading', 'src/lib/reading/words.ts');
-const app = code('mobile/src');
+/**
+ * 웹 · 앱이 **함께 부르는 판단 모듈**(G-182) — 폼의 갈래가 내려간 자리다. 글자를 거기서 고르면 두 쪽이 다 그 글자를 부르는 것이다.
+ * 두 쪽이 정말 그 모듈을 부르는지는 아래 첫 시험이 잰다.
+ */
+const SHARED_JUDGEMENTS = ['src/lib/people/edit-form.ts', 'src/lib/people/pick.ts', 'src/lib/consent/signup-form.ts', 'src/lib/reading/feedback-form.ts'];
+const judged = SHARED_JUDGEMENTS.map((file) => withoutComments(read(file))).join('\n');
+const web = code('app') + code('src/lib/reading', 'src/lib/reading/words.ts') + judged;
+const app = code('mobile/src') + judged;
 
 describe('함께 쓰는 화면 글자', () => {
+  it.each(SHARED_JUDGEMENTS)('함께 부르는 판단 %s 를 웹과 앱이 다 부른다', (file) => {
+    const name = file.replace(/^src\/lib\//, '').replace(/\.ts$/, '');
+    const webImport = new RegExp(`from '@/src/lib/${name}'`);
+    const [domain, leaf] = name.split('/');
+    const appImport = new RegExp(`from '@${domain}/${leaf}'`);
+    expect(webImport.test(code('app')), `웹(app/)이 ${file} 을 안 부른다`).toBe(true);
+    expect(appImport.test(code('mobile/src')), `앱(mobile/src)이 ${file} 을 안 부른다`).toBe(true);
+  });
+
   for (const source of SOURCES) {
     const names = [...read(source).matchAll(/^export const (\w+) =/gm)].map((match) => match[1]);
 

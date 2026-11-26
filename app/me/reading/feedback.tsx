@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef, useState, useTransition } from 'react';
+import { useReducer, useRef, useState, useTransition } from 'react';
 
 import {
   FEEDBACK_COMMENT,
@@ -16,10 +16,9 @@ import {
   feedbackQuestions,
   type FeedbackQuestion,
   type FeedbackScore,
-  type FeltLength,
-  type IssueTag,
   type ReadingAnswer,
 } from '@/src/lib/reading/feedback';
+import { feedbackFormOf, feedbackFormReducer, feedbackToSend, feedbackView } from '@/src/lib/reading/feedback-form';
 
 import { actionAnswer } from '../../ui/action-answer';
 import { BUTTON_PRIMARY, BUTTON_TERTIARY } from '../../ui/buttons';
@@ -57,19 +56,12 @@ export function ReadingFeedback({
   runId: string;
   given: ReadingAnswer | null;
 }) {
-  const [answer, setAnswer] = useState(given);
-  const [open, setOpen] = useState(given === null);
   /**
-   * **처음에는 한 줄로 접혀 선다**(2026-10-26 운영자 결정 「안 A」) — 글 끝에 설문 전체(폰 한 화면 남짓)가 늘 펼쳐져 있으면 다 읽은
-   * 사람이 글의 끝을 찾지 못했다. 머리 한 줄(「이 풀이는 어떠셨어요?」 · 몇 문항인지)을 누르면 그 자리에서 펼친다. 이미 답한
-   * 사람의 「답 고치기」는 펼친 채로 연다.
+   * 상태와 갈래는 `feedbackFormReducer` 한 벌이다(앱과 같다). **처음에는 한 줄로 접혀 선다**(2026-10-26 운영자 결정 「안 A」) — 글 끝에
+   * 설문 전체(폰 한 화면 남짓)가 늘 펼쳐져 있으면 다 읽은 사람이 글의 끝을 찾지 못했다.
    */
-  const [unfolded, setUnfolded] = useState(false);
-  const [usefulness, setUsefulness] = useState<FeedbackScore | null>(given?.usefulness ?? null);
-  const [fit, setFit] = useState<FeedbackScore | null>(given?.perceivedFit ?? null);
-  const [feltLength, setFeltLength] = useState<FeltLength | null>(given?.feltLength ?? null);
-  const [tags, setTags] = useState<IssueTag[]>([...(given?.issueTags ?? [])]);
-  const [comment, setComment] = useState(given?.comment ?? '');
+  const [state, dispatch] = useReducer(feedbackFormReducer, given, feedbackFormOf);
+  const { usefulness, fit, feltLength, tags, comment } = state.draft;
   const [failure, setFailure] = useState<string | null>(null);
   const [saving, startSaving] = useTransition();
   const form = useRef<HTMLFormElement>(null);
@@ -77,42 +69,29 @@ export function ReadingFeedback({
   const sections = useSectionErrors(feedbackSectionErrors({ usefulness, fit, feltLength }), form);
   /* 첫 질문의 대상(나를 · 이 사람을 · 두 사람을)은 풀이의 kind 가 고른다 — 열과 보낼 수 있는 조건은 그대로다 */
   const questions = feedbackQuestions(target.kind);
+  const { thanked, foldable, shown, ready } = feedbackView(state, given);
 
-  if (answer !== null && !open) {
+  if (thanked) {
     return (
       <div className={`flex flex-wrap items-center justify-between gap-2 ${PAPER_FACE} px-5 py-3`}>
         <p className="text-body text-cream-ink">{FEEDBACK_THANKS}</p>
-        <button type="button" onClick={() => setOpen(true)} className={BUTTON_TERTIARY}>
+        <button type="button" onClick={() => dispatch({ type: 'reopen' })} className={BUTTON_TERTIARY}>
           답 고치기
         </button>
       </div>
     );
   }
 
-  /*
-    **셋을 다 골라야 보낼 수 있다.** 눈금을 비운 채 보내게 두면 「안 고른 것」이 어느
-    값으로든 저장되고, 그 값은 실제 답과 구별되지 않는다. 아쉬운 점과 적는 칸은
-    비워도 된다 — 아쉬운 것이 없는 것도 답이다.
-  */
-  const ready = usefulness !== null && fit !== null && feltLength !== null;
-
   /**
    * **단추를 잠그지 않는다**(운영자 결정 2026-10-18 G-97 ④, ADR 0160 의 3) — 다 고르기 전에 누르면 안 고른 질문마다 그 아래에 붉은
    * 줄을 세우고 맨 위 안 고른 질문으로 데려간다(ADR 0252).
    */
   const send = () => {
-    if (!sections.press() || usefulness === null || fit === null || feltLength === null) return;
+    const sent = feedbackToSend(state.draft);
+    if (!sections.press() || sent === null) return;
     setFailure(null);
 
     startSaving(async () => {
-      const sent: ReadingAnswer = {
-        usefulness,
-        perceivedFit: fit,
-        feltLength,
-        issueTags: tags,
-        comment: comment.trim() === '' ? null : comment.trim(),
-      };
-
       const result = await actionAnswer(submitReadingFeedback(target, { runId, ...sent }));
 
       if (result.ok) {
@@ -121,17 +100,13 @@ export function ReadingFeedback({
           하지만, 그것을 기다려 화면을 바꾸면 무르는 왕복이 늦은 순간에 「보냈는데
           아무 일도 안 일어난」 화면이 선다. 방금 보낸 것이 무엇인지는 이 자리가 안다.
         */
-        setAnswer(sent);
-        setOpen(false);
+        dispatch({ type: 'sent', answer: sent });
         return;
       }
       setFailure(result.message);
     });
   };
 
-  /* 처음 답하는 사람은 접힌 한 줄에서 시작한다 — 답을 고치러 온 사람(`open`)은 펼친 채다 */
-  const foldable = given === null && answer === null;
-  const shown = foldable ? unfolded : true;
   const head = (
     <span className="flex min-w-0 flex-1 flex-col">
       <span className={TYPE_NAME}>{FEEDBACK_QUESTION}</span>
@@ -150,7 +125,7 @@ export function ReadingFeedback({
           type="button"
           aria-expanded={shown}
           aria-controls={`feedback-${runId}`}
-          onClick={() => setUnfolded(!shown)}
+          onClick={() => dispatch({ type: 'fold', shown })}
           className="flex w-full items-center gap-3 px-5 py-4 text-left hover:bg-surface-soft sm:px-7"
         >
           {head}
@@ -184,7 +159,7 @@ export function ReadingFeedback({
             question={questions.usefulness}
             value={usefulness}
             onChange={(next) => {
-              setUsefulness(next);
+              dispatch({ type: 'usefulness', score: next });
               sections.edit('usefulness');
             }}
             error={sections.shown.usefulness}
@@ -194,7 +169,7 @@ export function ReadingFeedback({
             question={questions.perceivedFit}
             value={fit}
             onChange={(next) => {
-              setFit(next);
+              dispatch({ type: 'fit', score: next });
               sections.edit('fit');
             }}
             error={sections.shown.fit}
@@ -217,7 +192,7 @@ export function ReadingFeedback({
                   picked={feltLength === choice}
                   wrong={sections.shown.length !== undefined}
                   onPick={() => {
-                    setFeltLength(choice);
+                    dispatch({ type: 'length', choice });
                     sections.edit('length');
                   }}
                 >
@@ -241,11 +216,7 @@ export function ReadingFeedback({
                   name={`tag-${runId}-${tag}`}
                   type="checkbox"
                   picked={tags.includes(tag)}
-                  onPick={() =>
-                    setTags((current) =>
-                      current.includes(tag) ? current.filter((one) => one !== tag) : [...current, tag],
-                    )
-                  }
+                  onPick={() => dispatch({ type: 'tag', tag })}
                 >
                   {ISSUE_TAG_LABEL[tag]}
                 </Chip>
@@ -266,7 +237,7 @@ export function ReadingFeedback({
           <textarea
             id={`comment-${runId}`}
             value={comment}
-            onChange={(event) => setComment(event.target.value.slice(0, FEEDBACK_COMMENT.limit))}
+            onChange={(event) => dispatch({ type: 'comment', text: event.target.value })}
             maxLength={FEEDBACK_COMMENT.limit}
             rows={3}
             className={`mt-1.5 ${FLAT_CARD_FACE} px-4 py-3 text-field leading-6 focus-visible:outline focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-[color-mix(in_srgb,var(--accent)_55%,transparent)]`}

@@ -3,9 +3,9 @@ import { Fragment, useEffect, useRef, useState } from 'react';
 import { BackHandler, Pressable, StyleSheet, View } from 'react-native';
 
 import { DEFAULT_QUERY, type Query } from '@input/query';
-import { birthSectionErrors, prefixed, type BirthSection, type SectionError } from '@input/section-errors';
+import { birthSectionErrors, type BirthSection, type SectionError } from '@input/section-errors';
 import { RELATIONS, RELATION_LABEL, RELATION_NONE_LABEL, RELATION_QUESTION, RELATION_WHY, type Relation } from '@people';
-import { dropUnlisted, findsInList, pickable, seatSectionErrors, type SeatSection } from '@people/pick';
+import { dropUnlisted, findsInList, pairKeyOf, pairOpenNext, pairSeatErrors, pickable, relationToSend, seatChangeClearsPick, type SeatSection } from '@people/pick';
 import type { CompatSide } from '@saju';
 
 import { useClient } from '@/auth/connected';
@@ -74,21 +74,14 @@ export function CompatPicker({ people, pickA, pickB, typeB = false }: { people: 
     b: birthSectionErrors(DEFAULT_QUERY),
   }));
 
-  const sameTwice = slots.a.from === 'saved' && slots.b.from === 'saved' && slots.a.personId !== '' && slots.a.personId === slots.b.personId;
   /**
    * **빈 칸의 말은 누른 뒤에만, 그 칸의 문단 아래에 선다**(웹 `app/compat-picker.tsx`, ADR 0252) — 두 칸의 걸린 문단이 다 함께 서고,
-   * 같은 사람 둘은 둘째 칸의 고르는 칸 아래다.
+   * 같은 사람 둘은 둘째 칸의 고르는 칸 아래다. 갈래는 웹과 같은 `pairSeatErrors` 다 — 직접 입력 칸은 제 폼이 올린 오류를 쓴다.
    */
-  const errors = SIDES.flatMap((side) => {
-    const slot = slots[side];
-    return prefixed(
-      side,
-      slot.from === 'typed' ? typedErrors[side] : seatSectionErrors(slot, { people, who: SIDE_PERSON[side], sameAsOther: side === 'b' && sameTwice }),
-    );
-  });
+  const errors = pairSeatErrors(slots, { people, who: SIDE_PERSON, typed: typedErrors });
   const sections = useSectionErrors<`${CompatSide}.${SeatSection}`>(errors);
   const chosen = errors.length === 0;
-  const pairKey = slots.a.from === 'saved' && slots.b.from === 'saved' && chosen && !sameTwice ? [slots.a.personId, slots.b.personId].sort().join('|') : '';
+  const pairKey = pairKeyOf(slots, chosen);
 
   /* 적어 둔 답을 칸에 세운다 — 못 읽었으면 칸을 안 건드린다. 「못 읽었다」를 「모른다」로 세우지 않는다 */
   useEffect(() => {
@@ -107,29 +100,21 @@ export function CompatPicker({ people, pickA, pickB, typeB = false }: { people: 
   const setSlot = (side: CompatSide, next: Slot) => {
     setFailure(null);
     /* 방식을 바꾸거나 사람을 고르면 그 칸의 고르는 줄이 걷힌다 — 출생 정보 칸의 줄은 폼이 제 문단마다 걷는다 */
-    if (next.from === 'saved' || slots[side].from !== next.from) sections.edit(`${side}.pick`);
+    if (seatChangeClearsPick(slots[side], next)) sections.edit(`${side}.pick`);
     setSlots((now) => ({ ...dropUnlisted(now, people), [side]: next }));
   };
 
   const open = async (answers: PairAnswers) => {
     setOpening(true);
     setFailure(null);
-    const opened = await openPair(client, sideOf(slots.a), sideOf(slots.b), answered.current === pairKey || pairKey === '' ? relation : undefined, answers);
+    const opened = await openPair(client, sideOf(slots.a), sideOf(slots.b), relationToSend(relation, answered.current, pairKey), answers);
     setOpening(false);
     setQuestion(null);
+    const next = pairOpenNext(opened, answers);
 
-    if (opened.ok) {
-      router.push({ pathname: '/me/compat', params: { a: opened.personA, b: opened.personB } });
-      return;
-    }
-    if (opened.kind === 'failed') {
-      setFailure(opened.message);
-      return;
-    }
-    setQuestion({
-      label: opened.same.label,
-      answer: (sameperson) => void open({ ...answers, [opened.side]: sameperson ? opened.same.personId : null }),
-    });
+    if (next.kind === 'go') router.push({ pathname: '/me/compat', params: { a: next.personA, b: next.personB } });
+    else if (next.kind === 'failed') setFailure(next.message);
+    else setQuestion({ label: next.label, answer: (sameperson) => void open(next.answer(sameperson)) });
   };
 
   /** 잠긴 모양이어도 누름을 받는다 — 걸린 문단이 있으면 그 아래에서 말하고 맨 위 칸으로 데려간다 */
