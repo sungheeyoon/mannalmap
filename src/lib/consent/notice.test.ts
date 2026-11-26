@@ -2,8 +2,10 @@ import { describe, expect, it } from 'vitest';
 
 import { DISCOVERY_DISCLOSURE } from '../discovery';
 import {
+  LAWFUL_BASIS_LINE,
   MATCH_DETAIL_DISCLOSURE,
   NOTICE_VERSION,
+  SEPARATE_KEEP_BASIS_LINE,
   UNDER_14_PRIVACY_LINE,
   OPTIONAL_CONSENT_NOTE,
   OPTIONAL_CONSENTS,
@@ -11,6 +13,7 @@ import {
   noticeFor,
 } from './notice';
 import { NOTICE_UNREAD } from './gate';
+import { PRIVACY_OPTIONAL_BASIS, PRIVACY_REVISION_NOTE } from './privacy-page';
 import { scheduleOf } from './schedule';
 
 /** 서버의 재확인 기준(`public.notice_ack_floor()`, ADR 0237) — 마이그레이션의 값과 같은지는 `scripts/notice-floor.test.ts` 가 잰다 */
@@ -237,7 +240,7 @@ describe('선택 항목', () => {
 
 /** 문구가 바뀌면 판본도 바뀐다 — 「보여 준 적 있다」가 아니라 「무엇을 보여 줬나」다 */
 it('안내 판본이 값으로 서 있다', () => {
-  expect(NOTICE_VERSION).toBe('notice-v19');
+  expect(NOTICE_VERSION).toBe('notice-v20');
 });
 
 /**
@@ -328,7 +331,7 @@ describe('첫 화면의 짧은 사주 문단', () => {
     expect(outward).toContain('미국, 그리고 하위 처리자가 있는 여러 나라');
     expect(outward).not.toContain('미국에서만');
     expect(outward).toContain('가입하지 않거나 설정에서 탈퇴를 신청하시면 됩니다');
-    expect(text).toContain('풀이와 첫 화면의 짧은 사주 문단 생성은 OpenAI 에 맡깁니다');
+    expect(text).toContain('풀이와 첫 화면의 짧은 사주 문단 생성은 OpenAI(OpenAI OpCo, LLC)에 맡깁니다');
   });
 
   /**
@@ -337,7 +340,7 @@ describe('첫 화면의 짧은 사주 문단', () => {
    */
   it('서울 리전과 국외에서 처리되는 것을 갈라 적는다', () => {
     const entrusted = sections.find((section) => section.title === '맡겨서 처리하는 곳')?.lines.join(' ') ?? '';
-    expect(entrusted).toContain('Supabase 에 맡기고 서울 리전에서 처리·보관합니다');
+    expect(entrusted).toContain('Supabase(Supabase Pte. Ltd.)에 맡기고 서울 리전에서 처리·보관합니다');
     expect(entrusted).toContain('서버 처리(함수 실행)는 서울 리전에서 합니다');
     /* 저장 위치와 전달 경로를 가른다 — 실시간 신호는 저장(3일)만 서울이라고 말한다 */
     expect(entrusted).toContain('실시간으로 갱신하는 신호의 기록도 이 데이터베이스에 3일 남습니다');
@@ -353,7 +356,7 @@ describe('첫 화면의 짧은 사주 문단', () => {
   });
 
   /**
-   * **안전성 확보 조치**(시행령 제31조 ① 3) — 확인되는 조치만. 운영자 2단계 인증은 운영에 오르고 등록이 확인되기 전이라(ADR 0209 · G-65) 적지 않는다. 저장 암호화는
+   * **안전성 확보 조치**(시행령 제31조 ① 3) — 확인되는 조치만. 운영자 2단계 인증은 2026-10-28 에 운영에 섰고(ADR 0209 · G-65) `notice-v20` 이 적는다(ADR 0275). 저장 암호화는
    * Supabase 보안 페이지가 든다(「encrypted at rest with AES-256」).
    */
   it('확인되는 안전 조치만 적는다', () => {
@@ -361,7 +364,7 @@ describe('첫 화면의 짧은 사주 문단', () => {
     expect(safety).toContain('행 단위 접근 정책');
     expect(safety).toContain('누가·언제·무엇을 열람했는지 기록');
     expect(safety).toContain('HTTPS');
-    expect(safety).not.toContain('2단계');
+    expect(safety).toContain('일회용 비밀번호로 한 번 더 확인(2단계 인증)');
     expect(safety).toContain('데이터베이스에서 암호화해 보관합니다');
   });
 
@@ -590,7 +593,7 @@ describe('풀이 완성 알림 (notice-v18)', () => {
   });
 
   it('보내는 회사는 위탁 절과 국외 이전 절에 선다 — 나라는 Firebase 문서의 말로, 법인 소재지로 대신하지 않는다', () => {
-    expect(lines('맡겨서 처리하는 곳')).toContain('풀이 완성 알림 발송은 Google(Firebase 클라우드 메시징)에 맡깁니다');
+    expect(lines('맡겨서 처리하는 곳')).toContain('풀이 완성 알림 발송은 Google(Google LLC, Firebase 클라우드 메시징)에 맡깁니다');
     const abroad = lines('국외로 나가는 것');
     expect(abroad).toContain('Google LLC(Google 과 그 대리인의 시설이 있는 여러 나라');
     expect(abroad).toContain('길어야 1시간만 보관하도록 요청합니다');
@@ -646,6 +649,62 @@ describe('프로필 사진 · 소개 (notice-v19)', () => {
 
   it('기준은 v18 그대로다 — v18 을 본 회원은 다시 안 보고, 새 판도 기준을 넘는다', () => {
     expect(noticeAckHolds('notice-v18', FLOOR)).toBe(true);
+    expect(noticeAckHolds(NOTICE_VERSION, FLOOR)).toBe(true);
+  });
+});
+
+/**
+ * v20 — 근거 문서(`docs/legal/privacy-grounds.md` 「변호사 물음을 갈음한 근거 — 처리방침」의 「처리방침에서 고칠 자리」)를 옮긴 고지 보완
+ * (운영자의 「전부 적용」, ADR 0275). 처리하는 것은 그대로라 기준은 v18 이다.
+ */
+describe('근거 호 · 수탁자 법인명 · 2단계 인증 (notice-v20)', () => {
+  const sections = noticeFor({ name: '만세력 운영자', officer: '홍길동', contact: 'ops@example.com' });
+  const lines = (title: string) => sections.find((section) => section.title === title)?.lines ?? [];
+
+  it('동의 없이 처리하는 것마다 제15조 ① 의 호를 적는다 — 계약 ①4 · 정당한 이익 ①6 · 법령 ①2', () => {
+    expect(lines('무엇을 받고 무엇에 쓰나요')).toContain(LAWFUL_BASIS_LINE);
+    expect(LAWFUL_BASIS_LINE).toContain('로그인하지 않고 첫 화면에 넣으신 입력');
+    expect(LAWFUL_BASIS_LINE).toContain('제15조 제1항 제4호');
+    expect(lines('풀이권을 결제하실 때').join(' ')).toContain('제15조 제1항 제4호');
+    expect(lines('풀이 완성 알림을 켜시면').join(' ')).toContain('제15조 제1항 제4호');
+    const keep = lines('언제까지 두나요').join(' ');
+    expect(keep).toContain('전자상거래법 시행령 제6조 제1항 제2호 · 제3호에 따라 각 결제의 결제일 또는 마지막 환불일부터 5년');
+    expect(keep).toContain('제15조 제1항 제2호');
+    expect(keep).toContain('24시간 뒤 지웁니다. 가입하지 않으셔도 이 기간 동안은 요청 한도와 남용을 막는 데 필요해 동의 없이 둡니다(개인정보 보호법 제15조 제1항 제6호)');
+    for (const title of ['신고 기록은 따로 둡니다', '이용 정지 기록은 따로 둡니다', '구매 제한 기록은 따로 둡니다']) expect(lines(title), title).toContain(SEPARATE_KEEP_BASIS_LINE);
+    expect(SEPARATE_KEEP_BASIS_LINE).toContain('제15조 제1항 제6호');
+  });
+
+  /* 프로필 사진 · 소개의 근거는 이 판이 정하지 않는다(G-153) — 근거 줄이 그 둘을 들면 정하지 않은 것을 정한 것으로 읽힌다 */
+  it('근거 줄은 프로필 사진 · 소개를 들지 않고, 그 셋 줄보다 앞에 선다', () => {
+    expect(LAWFUL_BASIS_LINE).not.toMatch(/사진|소개/);
+    const collected = lines('무엇을 받고 무엇에 쓰나요');
+    expect(collected.indexOf(LAWFUL_BASIS_LINE)).toBeLessThan(collected.findIndex((line) => line.startsWith('프로필 사진과 소개는')));
+  });
+
+  it('국외 이전의 근거 호(제28조의8 ①3 가목)를 첫 화면 문단 · Google · Supabase · Vercel 까지 적는다', () => {
+    const abroad = lines('국외로 나가는 것').join(' ');
+    expect(abroad).toContain('사주풀이·궁합풀이와 첫 화면의 짧은 사주 문단 생성을 위한 OpenAI 로의 이전은 개인정보 보호법 제28조의8 제1항 제3호 가목');
+    expect(abroad).toContain('풀이 완성 알림을 위한 Google 로의 이전도 같은 조항(제28조의8 제1항 제3호 가목)');
+    expect(abroad).toContain('Vercel 의 지원 접근은 서비스를 운영하는 데 필요한 처리위탁 · 보관이라 같은 조항(제28조의8 제1항 제3호 가목)');
+  });
+
+  it('맡기는 곳을 법인명으로 적는다 — AWS 는 계약 법인을 확인하기 전이라 그대로다', () => {
+    const entrusted = lines('맡겨서 처리하는 곳').join(' ');
+    for (const name of ['Supabase(Supabase Pte. Ltd.)', 'Vercel(Vercel Inc.)', 'OpenAI(OpenAI OpCo, LLC)', 'Google(Google LLC, Firebase 클라우드 메시징)']) expect(entrusted, name).toContain(name);
+    expect(entrusted).toContain('Amazon Web Services 에 맡기고');
+  });
+
+  it('처리방침 머리의 개정 안내는 약관 · 환불정책과 같은 시행일을 말하고, 처리하는 것이 그대로라고 말한다', () => {
+    /* 약관 · 환불정책의 개정 시행일과 같은 날인지는 `scripts/legal-revision.test.ts` 가 잰다 — `consent` 는 `brand` 를 부르지 않는다(층 시험) */
+    expect(PRIVACY_REVISION_NOTE).toMatch(/^\d{4}-\d{2}-\d{2} 시행 개정 — /);
+    expect(PRIVACY_REVISION_NOTE).toContain('받는 정보와 쓰는 목적, 보관 기간, 국외로 나가는 것은 바뀌지 않습니다');
+    expect(PRIVACY_OPTIONAL_BASIS).toContain('제15조 제1항 제1호');
+  });
+
+  it('기준은 v18 그대로다 — 처리 항목 · 목적 · 기간 · 국외 이전이 그대로인 보완이다(ADR 0095)', () => {
+    expect(noticeAckHolds('notice-v18', FLOOR)).toBe(true);
+    expect(noticeAckHolds('notice-v19', FLOOR)).toBe(true);
     expect(noticeAckHolds(NOTICE_VERSION, FLOOR)).toBe(true);
   });
 });

@@ -5,7 +5,9 @@ import {
   OPTIONAL_CONSENTS,
   OPTIONAL_CONSENT_NOTE,
   PRIVACY_INTRO,
+  PRIVACY_OPTIONAL_BASIS,
   PRIVACY_OPTIONAL_TITLE,
+  PRIVACY_REVISION_NOTE,
   PRIVACY_RIGHTS_LINES,
   PRIVACY_RIGHTS_TITLE,
   noticeFor,
@@ -61,6 +63,7 @@ export default async function PrivacyPage() {
         <p className="text-small font-semibold text-cream-ink">처리방침</p>
         <h1 className={`mt-1 ${TYPE_TITLE}`}>개인정보 처리방침</h1>
         <p className="mt-2 text-body leading-7 text-secondary">{PRIVACY_INTRO}</p>
+        <p className="mt-2 text-small leading-6 text-secondary">{PRIVACY_REVISION_NOTE}</p>
       </header>
 
       {!schedule.ok ? (
@@ -111,6 +114,7 @@ export default async function PrivacyPage() {
           <section id={`privacy-${sections.length + 1}`} className={`${CARD} flex scroll-mt-20 flex-col gap-3`}>
             <h2 className={TYPE_NAME}>{PRIVACY_OPTIONAL_TITLE}</h2>
             <p className="text-body leading-7 text-secondary">{OPTIONAL_CONSENT_NOTE}</p>
+            <p className="text-body leading-7 text-secondary">{PRIVACY_OPTIONAL_BASIS}</p>
             <ul className="flex flex-col gap-3">
               {OPTIONAL_CONSENTS.map((one) => (
                 <li key={one.key} className={`${SOFT_CARD_FACE} px-4 py-3`}>
