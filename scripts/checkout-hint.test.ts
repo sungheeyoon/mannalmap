@@ -5,7 +5,15 @@ import { join } from 'node:path';
 
 import { afterAll, describe, expect, it } from 'vitest';
 
-import { REMINDER, commitDirsOf, responseOf, touchesMainCheckout } from './checkout-hint.mjs';
+import {
+  REMINDER,
+  commitDirsOf,
+  missingModulesOf,
+  modulesReminderOf,
+  nodeToolDirsOf,
+  responseOf,
+  touchesMainCheckout,
+} from './checkout-hint.mjs';
 
 // 진짜 저장소를 세운다 — 메인 체크아웃인지는 경로가 아니라 git 이 답한다
 const BASE = realpathSync(mkdtempSync(join(tmpdir(), 'checkout-hint-')));
@@ -26,6 +34,11 @@ git('-C', ROOT, 'worktree', 'add', '-q', '--detach', TREE);
 git('-C', ROOT, 'worktree', 'add', '-q', '--detach', LINKED);
 mkdirSync(join(ROOT, 'docs'));
 mkdirSync(PLAIN);
+// TREE 는 node_modules 를 갖췄고(뿌리 · 앱 둘 다) LINKED 는 비었다 — 껍데기(`.vite` 만)는 없는 것과 같다
+mkdirSync(join(TREE, 'node_modules', '.bin'), { recursive: true });
+mkdirSync(join(TREE, 'mobile', 'node_modules', '.bin'), { recursive: true });
+mkdirSync(join(LINKED, 'node_modules', '.vite'), { recursive: true });
+mkdirSync(join(LINKED, 'mobile', 'src'), { recursive: true });
 
 afterAll(() => rmSync(BASE, { recursive: true, force: true }));
 
@@ -124,6 +137,46 @@ describe('checkout-hint — 메인 체크아웃에 쓸 때 한 줄을 일러 준
     expect(ours[0].matcher.split('|').sort()).toEqual(['Bash', 'Edit', 'NotebookEdit', 'Write']);
   });
 
+  it('워크트리에서 노드 도구를 부르는데 node_modules 가 없으면 메인의 자리를 넣은 한 줄을 건넨다 — 껍데기(.vite 만)도', () => {
+    const hint = modulesReminderOf(ROOT);
+    const run = (command: string, cwd: string) => missingModulesOf({ tool_name: 'Bash', tool_input: { command }, cwd });
+    expect(run('npx vitest run scripts/x.test.ts', LINKED)).toBe(hint);
+    expect(run('npm run typecheck', LINKED)).toBe(hint);
+    expect(run(`cd ${LINKED} && npm test`, ROOT)).toBe(hint);
+    expect(run('node scripts/heavy.mjs npx playwright test', LINKED)).toBe(hint);
+    expect(run('npx tsc --noEmit', `${LINKED}/mobile/src`)).toBe(hint);
+    expect(hint).toContain(`ln -s ${ROOT}/node_modules .`);
+    expect(hint).toContain('docs/agents/delegation/local-env.md 「로컬 환경의 함정」');
+    expect(hint).not.toContain('\n');
+  });
+
+  it('node_modules 를 갖춘 워크트리 · 메인 체크아웃 · 저장소 밖 · 설치하는 명령 · 노드 도구가 아닌 명령은 지난다', () => {
+    const run = (command: string, cwd: string) => missingModulesOf({ tool_name: 'Bash', tool_input: { command }, cwd });
+    expect(run('npx vitest run', TREE)).toBeNull();
+    expect(run('npx tsc --noEmit', `${TREE}/mobile`)).toBeNull();
+    expect(run('npx vitest run', ROOT)).toBeNull();
+    expect(run('npx vitest run', PLAIN)).toBeNull();
+    expect(run('npm ci', `${LINKED}/mobile`)).toBeNull();
+    expect(run(`ln -s ${ROOT}/node_modules . && npx vitest run`, LINKED)).toBeNull();
+    expect(run('git status && ls', LINKED)).toBeNull();
+    expect(run('cd $WT && npx vitest run', ROOT)).toBeNull();
+    expect(missingModulesOf({ tool_name: 'Edit', tool_input: { file_path: `${LINKED}/a.md` }, cwd: LINKED })).toBeNull();
+  });
+
+  it('노드 도구의 자리는 cd 를 따라가고 감싼 heavy.mjs 를 벗긴다', () => {
+    expect(nodeToolDirsOf('cd /a && npx vitest; cd /b; npm run lint', '/c')).toEqual(['/a', '/b']);
+    expect(nodeToolDirsOf('CI=1 node scripts/heavy.mjs npm run test:e2e', '/c')).toEqual(['/c']);
+    expect(nodeToolDirsOf('node scripts/session-status.mjs', '/c')).toEqual([]);
+    expect(nodeToolDirsOf('npm install', '/c')).toEqual([]);
+  });
+
+  it('두 줄이 함께 걸리면 한 답에 둘 다 싣는다', () => {
+    const out = JSON.parse(responseOf(true, modulesReminderOf(ROOT)));
+    expect(out.hookSpecificOutput.additionalContext).toBe(`${REMINDER}\n${modulesReminderOf(ROOT)}`);
+    expect(JSON.parse(responseOf(false, 'x')).hookSpecificOutput.additionalContext).toBe('x');
+    expect(responseOf(false, null)).toBe('');
+  });
+
   it('스크립트로 돌리면 stdin 의 훅 입력을 읽어 답을 찍는다', () => {
     const run = (input: object) =>
       execFileSync('node', [join(__dirname, 'checkout-hint.mjs')], {
@@ -133,5 +186,9 @@ describe('checkout-hint — 메인 체크아웃에 쓸 때 한 줄을 일러 준
     expect(JSON.parse(run({ tool_name: 'Write', tool_input: { file_path: `${ROOT}/a.md` }, cwd: ROOT })).hookSpecificOutput.additionalContext).toBe(REMINDER);
     expect(run({ tool_name: 'Write', tool_input: { file_path: `${TREE}/a.md` }, cwd: TREE })).toBe('');
     expect(run({ tool_name: 'Write', tool_input: { file_path: `${LINKED}/a.md` }, cwd: LINKED })).toBe('');
+    expect(JSON.parse(run({ tool_name: 'Bash', tool_input: { command: 'npx vitest run' }, cwd: LINKED })).hookSpecificOutput.additionalContext).toBe(
+      modulesReminderOf(ROOT),
+    );
+    expect(run({ tool_name: 'Bash', tool_input: { command: 'npx vitest run' }, cwd: TREE })).toBe('');
   });
 });
