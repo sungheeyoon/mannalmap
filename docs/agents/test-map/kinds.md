@@ -42,3 +42,12 @@ vitest 는 `.tsx` 를 불러올 수는 있어도 그리지 못한다 — 시험 
 
 **훅이 시간 초과면 그 안의 시험은 실패로 안 세어지고 건너뛰어진다** — 끝 줄의 `Tests` 는 failed 를 덜 세고 `skipped` 가 는다. 끝 줄을 읽을 때 `Test Files … failed` 와
 `skipped` 수를 함께 본다(평소 `skipped` 는 잠긴 백필 시험의 것뿐이다).
+
+## e2e 의 다시 돌리기 — CI 는 두 번까지, 흔들림은 job 요약에 선다
+
+CI 의 e2e 는 실패한 시험을 두 번까지 다시 돌린다(`playwright.config.ts` 의 `retries`, 로컬은 0). 다시 돌아 통과하면 job 은 초록이고 Playwright 는
+그 시험을 flaky 로 센다. 그 수는 차선마다 job 요약의 「e2e 흔들림 N건」 줄에 0 이어도 서고, 1건 이상이면 「e2e 흔들림」 경고 알림이 붙는다
+(`playwright.flaky-reporter.ts`). 시험마다의 실패 위치는 `github` 리포터의 오류 알림이고, 첫 재시도의 `trace.zip` 은 실패한 job 의 `test-results/` 에만 남는다.
+
+- **흔들림은 초록이어도 고칠 일이다** — 같은 시험이 여러 실행에서 서면 그 시험의 기다림 · 경합을 고친다. `retries` 를 늘려 덮지 않는다
+- 흔들림으로 실패를 만들지는 않는다 — 문턱(무엇이 붉은가)은 그대로다

@@ -160,7 +160,36 @@ describe('Google Play 구매 — 확인 · 지급 · 소비', () => {
   it('이용 중이 아닌 계정도 같다', async () => {
     const deps = fakes({ ok: true, value: bought() }, 'inactive');
     expect(await settle(deps)).toEqual({ kind: 'refused', why: 'inactive' });
+    expect(deps.play.refundAndRevoke).toHaveBeenCalledWith('GPA.1111-2222-3333-44444');
     expect(deps.play.consume).not.toHaveBeenCalled();
+    expect(deps.ledger.consumed).not.toHaveBeenCalled();
+  });
+
+  /** 못 돌려줘도 소비하지 않은 채 두므로 3일 뒤 Google 이 돌려준다 — 거절은 그대로 서고, 소비 · 소비 기록으로 새지 않는다 */
+  it('거절한 구매의 환불이 실패해도 거절이고 소비하지 않는다 — 실패는 기록에 남긴다', async () => {
+    for (const outcome of ['restricted', 'inactive'] as const) {
+      const deps = fakes({ ok: true, value: bought() }, outcome);
+      deps.play.refundAndRevoke.mockResolvedValue({ ok: false, status: 500 });
+      vi.mocked(console.error).mockClear();
+      expect(await settle(deps), outcome).toEqual({ kind: 'refused', why: outcome });
+      expect(deps.play.refundAndRevoke, outcome).toHaveBeenCalledTimes(1);
+      expect(deps.play.consume, outcome).not.toHaveBeenCalled();
+      expect(deps.ledger.consumed, outcome).not.toHaveBeenCalled();
+      expect(deps.ledger.missed, outcome).not.toHaveBeenCalled();
+      expect(console.error, outcome).toHaveBeenCalledWith('store purchase: refund of a refused purchase failed', 500);
+    }
+  });
+
+  /** 주문 번호가 없으면 돌려줄 주문을 가리킬 수 없다 — 부르지 않고 소비하지 않은 채 두어 Google 의 3일 환불에 맡긴다 */
+  it('주문 번호가 없는 거절된 구매는 환불을 부르지 않고 소비하지 않는다', async () => {
+    for (const outcome of ['restricted', 'inactive'] as const) {
+      const deps = fakes({ ok: true, value: bought({ orderId: null }) }, outcome);
+      expect(await settle(deps), outcome).toEqual({ kind: 'refused', why: outcome });
+      expect(deps.ledger.grant, outcome).toHaveBeenCalledWith(expect.objectContaining({ orderId: null }));
+      expect(deps.play.refundAndRevoke, outcome).not.toHaveBeenCalled();
+      expect(deps.play.consume, outcome).not.toHaveBeenCalled();
+      expect(deps.ledger.consumed, outcome).not.toHaveBeenCalled();
+    }
   });
 });
 

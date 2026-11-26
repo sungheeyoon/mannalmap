@@ -6,6 +6,31 @@ import { describe, expect, it } from 'vitest';
 import { OUT_OF_CREDITS_REFUSALS, refusedForCredits } from './refusal';
 
 const MIGRATIONS = resolve(__dirname, '../../../supabase/migrations');
+/** 잔액이 없어 풀이를 막는 문의 정의 — `grant · revoke … on function` 줄은 정의가 아니라 뺀다 */
+const DOOR = /create\s+(?:or\s+replace\s+)?function\s+public\.start_reading_run_for\(/gi;
+
+/**
+ * `start_reading_run_for` 의 가장 최근 정의 — 마이그레이션은 이름(시각) 차례로 서므로 마지막 파일의 마지막 정의다(`bundle-price.test.ts` 와 같은 꼴).
+ * 옛 마이그레이션 전부를 훑으면 문이 그 문장을 버린 뒤에도 옛 파일이 들고 있어 늘 참이다.
+ */
+const latestDefinition = (): string => {
+  const read = (one: string) => readFileSync(resolve(MIGRATIONS, one), 'utf8');
+  const last = readdirSync(MIGRATIONS)
+    .filter((one) => one.endsWith('.sql'))
+    .sort()
+    .filter((one) => [...read(one).matchAll(DOOR)].length > 0)
+    .at(-1);
+  expect(last).toBeDefined();
+  const source = read(last ?? '');
+  const start = [...source.matchAll(DOOR)].at(-1)?.index ?? -1;
+  /* 몸은 `as $tag$` 와 같은 `$tag$` 사이다 — 파일마다 `$$` · `$function$` 이 갈린다 */
+  const tag = /\bas\s+(\$\w*\$)/i.exec(source.slice(start));
+  expect(tag).not.toBeNull();
+  const open = start + (tag?.index ?? 0) + (tag?.[0].length ?? 0);
+  const close = source.indexOf(tag?.[1] ?? '$$', open);
+  expect(close).toBeGreaterThan(open);
+  return source.slice(open, close);
+};
 
 describe('refusedForCredits', () => {
   it('풀이를 여는 문이 잔액으로 막은 거절을 알아본다', () => {
@@ -42,13 +67,11 @@ describe('refusedForCredits', () => {
     expect(refusedForCredits({ code: null, message: null })).toBe(false);
   });
 
-  /** 앞머리는 DB 가 쓴 문장이다 — 마이그레이션이 그 문장을 바꾸면 여기서 붉다 */
-  it('앞머리마다 그 문장을 check_violation 으로 던지는 마이그레이션이 있다', () => {
-    const sources = readdirSync(MIGRATIONS)
-      .filter((one) => one.endsWith('.sql'))
-      .map((one) => readFileSync(resolve(MIGRATIONS, one), 'utf8'));
+  /** 앞머리는 DB 가 쓴 문장이다 — 문의 마지막 정의가 그 문장을 바꾸거나 버리면 여기서 붉다 */
+  it('앞머리마다 풀이를 여는 문의 마지막 정의가 그 문장을 check_violation 으로 던진다', () => {
+    const body = latestDefinition();
     for (const lead of OUT_OF_CREDITS_REFUSALS) {
-      expect(sources.some((source) => source.includes(`raise exception '${lead}`)), lead).toBe(true);
+      expect(body, lead).toMatch(new RegExp(`raise exception '${lead}[^']*'\\s+using errcode = 'check_violation'`));
     }
   });
 });
