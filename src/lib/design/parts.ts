@@ -67,6 +67,11 @@ export const BUTTON_PRESSED_SCALE = 0.97;
  */
 export const TEXT_STYLE = {
   TYPE_TITLE: { fontSize: TEXT.title, lineHeight: 35, color: COLOR.foreground },
+  TYPE_SECTION: { fontSize: TEXT.heading, lineHeight: 29, color: COLOR.foreground },
+  TYPE_NAME: { fontSize: TEXT.lead, lineHeight: 24, color: COLOR.foreground },
+  TYPE_BODY: { fontSize: TEXT.body, lineHeight: 24, color: COLOR.foreground },
+  TYPE_META: { fontSize: TEXT.small, lineHeight: 20, color: COLOR.secondary },
+  TYPE_CAPTION: { fontSize: TEXT.fine, lineHeight: 16, color: COLOR.muted },
 } as const;
 
 /** 확인 상자 한 변 — 앱 `CheckRow`, 웹 `size-5` */

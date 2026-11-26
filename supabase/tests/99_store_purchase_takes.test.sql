@@ -205,7 +205,7 @@ select is(
   '0:0:0', '이력의 금액도 모두 0');
 select throws_ok(
   $$insert into public.reading_order (user_id, bundle_credits, amount, provider, provider_order_id, idempotency_key)
-    values ((select op from folks), 1, 0, 'portone', 'rdo_zero', 'zero-amount-web')$$,
+    values ((select op from folks), 1, 0, 'dev', 'rdo_zero', 'zero-amount-web')$$,
   '23514', null, '0원 주문은 스토어 구매에만 선다');
 
 -- ── 7. 시험 · 프로모션 구매는 매출이 아니다 ──────────────────────────────────────────────

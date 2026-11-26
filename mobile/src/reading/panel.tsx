@@ -11,7 +11,7 @@ import { StyleSheet, View } from 'react-native';
 import { useClient } from '@/auth/connected';
 import { Card, CardFrame, Tile } from '@/ui/surfaces';
 import { PrimaryButton, SecondaryButton, TextButton } from '@/ui/parts';
-import { COLOR, FONT, TYPE } from '@/ui/tokens';
+import { COLOR, FONT, TYPE, TYPE_BODY, TYPE_META } from '@/ui/tokens';
 import { latestCalls, settled } from '@/ui/settled';
 
 import { readReadingView, type DoorRefusal, type ReadingTarget, type ReadingView } from './api';
@@ -251,10 +251,10 @@ const styles = StyleSheet.create({
   halves: { flexDirection: 'row', gap: 8 },
   half: { flex: 1, minWidth: 0 },
   lead: { fontFamily: FONT.bold, fontSize: TYPE.lead, color: COLOR.foreground },
-  small: { marginTop: 2, fontFamily: FONT.medium, fontSize: TYPE.small, lineHeight: 20, color: COLOR.secondary },
-  line: { fontFamily: FONT.medium, fontSize: TYPE.body, lineHeight: 24, color: COLOR.foreground },
+  small: { ...TYPE_META, marginTop: 2 },
+  line: { ...TYPE_BODY },
   alert: { paddingHorizontal: 16, paddingVertical: 14 },
-  alertText: { fontFamily: FONT.medium, fontSize: TYPE.body, lineHeight: 24, color: COLOR.danger },
+  alertText: { ...TYPE_BODY, color: COLOR.danger },
   notice: { paddingHorizontal: 16, paddingVertical: 14 },
-  noticeText: { fontFamily: FONT.medium, fontSize: TYPE.body, lineHeight: 24, color: COLOR.foreground },
+  noticeText: { ...TYPE_BODY },
 });

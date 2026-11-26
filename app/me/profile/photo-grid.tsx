@@ -293,7 +293,7 @@ export function PhotoGrid({
                 move(position, position + 1);
               }
             },
-            className: `block h-full w-full cursor-grab touch-manipulation select-none rounded-cell bg-surface outline-none [-webkit-touch-callout:none] focus-visible:ring-4 focus-visible:ring-[color-mix(in_srgb,var(--accent)_55%,transparent)] ${
+            className: `block h-full w-full cursor-grab touch-manipulation select-none rounded-cell bg-surface outline-none [-webkit-touch-callout:none] focus-visible:focus-ring ${
               target ? 'ring-4 ring-accent' : ''
             }`,
           }}
@@ -388,9 +388,9 @@ export function PhotoGrid({
         aria-hidden={first ? undefined : true}
         className={`grid h-full w-full cursor-pointer place-items-center rounded-cell border-2 border-dashed border-border-strong bg-surface text-muted hover:border-accent hover:text-foreground ${
           first
-            ? 'has-[:focus-visible]:outline has-[:focus-visible]:outline-3 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-[color-mix(in_srgb,var(--accent)_55%,transparent)]'
+            ? 'has-[:focus-visible]:focus-ring'
             : ''
-        } ${busy ? 'cursor-progress opacity-60' : ''}`}
+        } ${busy ? 'cursor-progress opacity-55' : ''}`}
       >
         <span className="flex flex-col items-center gap-2">
           {/* + 는 동그란 면 위에 — 빈 칸이 「누르는 자리」로 읽힌다. 다음에 찰 칸만 먹색, 나머지는 옅게 */}

@@ -11,7 +11,7 @@ import { markNotificationsRead, readInbox, type Read } from '@/matching/doors';
 import { Icon, type IconName } from '@/ui/icons';
 import { EmptyState } from '@/ui/empty-state';
 import { LoadingDots } from '@/ui/loading';
-import { COLOR, FONT, RADIUS, TYPE } from '@/ui/tokens';
+import { COLOR, FONT, RADIUS, TYPE, TYPE_BODY } from '@/ui/tokens';
 import { TopBar } from '@/ui/top-bar';
 import { CardFrame } from '@/ui/surfaces';
 import { WordText } from '@/ui/word-text';
@@ -138,7 +138,7 @@ const styles = StyleSheet.create({
   iconWarn: { backgroundColor: COLOR.warningWash },
   iconNew: { backgroundColor: COLOR.cream },
   iconOld: { backgroundColor: COLOR.surfaceSunken },
-  text: { fontFamily: FONT.medium, fontSize: TYPE.body, lineHeight: 24, color: COLOR.secondary },
+  text: { ...TYPE_BODY, color: COLOR.secondary },
   textNew: { fontFamily: FONT.bold, color: COLOR.foreground },
   meta: { fontFamily: FONT.medium, fontSize: TYPE.small, color: COLOR.muted },
   dot: { width: 8, height: 8, marginTop: 8, borderRadius: RADIUS.pill, backgroundColor: COLOR.danger },

@@ -7,7 +7,7 @@ import { SUPPORT_EMAIL } from '@brand';
 
 import { FailureLine } from '@/ui/failure-line';
 import { Switch } from '@/ui/switch';
-import { COLOR, FONT, TYPE, TYPE_TITLE } from '@/ui/tokens';
+import { COLOR, FONT, TYPE, TYPE_BODY, TYPE_META, TYPE_NAME, TYPE_TITLE } from '@/ui/tokens';
 import { CardFrame } from '@/ui/surfaces';
 import { WordText } from '@/ui/word-text';
 
@@ -117,10 +117,10 @@ export function TextRow({ label, onPress, disabled = false }: { label: string; o
 
 export const settingsText = StyleSheet.create({
   title: { ...TYPE_TITLE },
-  meta: { fontSize: TYPE.small, lineHeight: 20, fontFamily: FONT.medium, color: COLOR.secondary },
+  meta: { ...TYPE_META },
   section: { fontSize: TYPE.lead, lineHeight: 26, fontFamily: FONT.bold, color: COLOR.foreground },
-  body: { fontSize: TYPE.body, lineHeight: 24, fontFamily: FONT.medium, color: COLOR.secondary },
-  bodyStrong: { fontSize: TYPE.body, lineHeight: 24, fontFamily: FONT.bold, color: COLOR.foreground },
+  body: { ...TYPE_BODY, color: COLOR.secondary },
+  bodyStrong: { ...TYPE_BODY, fontFamily: FONT.bold },
   failure: { fontSize: TYPE.note, lineHeight: 22, fontFamily: FONT.medium, color: COLOR.danger },
   fieldLabel: { fontSize: TYPE.small, fontFamily: FONT.bold, color: COLOR.secondary },
   notice: { gap: 4, paddingHorizontal: 20, paddingVertical: 16 },
@@ -132,7 +132,7 @@ const styles = StyleSheet.create({
   noticeTitle: { fontSize: TYPE.body, fontFamily: FONT.bold, color: COLOR.foreground },
   group: { paddingVertical: 8, backgroundColor: COLOR.surfaceRaised },
   groupHead: { gap: 2, paddingHorizontal: PAD, paddingTop: 12, paddingBottom: 4 },
-  groupTitle: { fontSize: TYPE.small, lineHeight: 20, fontFamily: FONT.bold, color: COLOR.secondary },
+  groupTitle: { ...TYPE_META, fontFamily: FONT.bold },
   row: { flexDirection: 'row', alignItems: 'center', gap: 16, minHeight: 56, paddingHorizontal: PAD, paddingVertical: 12 },
   bigRow: { minHeight: 80, paddingVertical: 16 },
   switchRow: { gap: 4, minHeight: 56, justifyContent: 'center', paddingHorizontal: PAD, paddingVertical: 12 },
@@ -140,8 +140,8 @@ const styles = StyleSheet.create({
   textRow: { minHeight: 56, justifyContent: 'center', paddingHorizontal: PAD },
   pressed: { backgroundColor: COLOR.surfaceSunken },
   off: { opacity: 0.55 },
-  label: { fontSize: TYPE.body, lineHeight: 24, fontFamily: FONT.bold, color: COLOR.foreground },
-  bigLabel: { fontSize: TYPE.lead, lineHeight: 24, fontFamily: FONT.bold, color: COLOR.foreground },
-  help: { fontSize: TYPE.small, lineHeight: 20, fontFamily: FONT.medium, color: COLOR.secondary },
-  note: { fontSize: TYPE.small, lineHeight: 20, fontFamily: FONT.medium, color: COLOR.muted },
+  label: { ...TYPE_BODY, fontFamily: FONT.bold },
+  bigLabel: { ...TYPE_NAME },
+  help: { ...TYPE_META },
+  note: { ...TYPE_META, color: COLOR.muted },
 });

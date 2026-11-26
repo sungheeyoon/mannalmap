@@ -46,6 +46,8 @@ export const PARTS: readonly PartContract[] = [
   { name: 'RowLine', web: { file: WEB_SURFACES, symbols: ['ROW_LINE'] }, app: { file: APP_SURFACES, symbol: 'RowLine' } },
   { name: 'EmptySlot', web: { file: WEB_SURFACES, symbols: ['EMPTY_SLOT'] }, app: { file: APP_SURFACES, symbol: 'EmptySlot' } },
   { name: 'Badge', web: { file: WEB_SURFACES, symbols: ['BADGE'] }, app: { file: APP_SURFACES, symbol: 'Badge' } },
+  /** 화면 제목 · 구역 제목 — 웹은 `h1` · `h2` 에 글자 모양 상수를, 앱은 역할과 모양을 함께 드는 부품을 쓴다(ADR 0274) */
+  { name: 'Heading', web: { file: WEB_SURFACES, symbols: ['TYPE_TITLE', 'TYPE_SECTION'] }, app: { file: 'mobile/src/ui/heading.tsx', symbol: 'Heading' } },
   {
     name: 'Button',
     web: { file: WEB_BUTTONS, symbols: ['BUTTON_PRIMARY', 'BUTTON_SECONDARY', 'BUTTON_TERTIARY', 'BUTTON_DANGER', 'BUTTON_PRIMARY_WOOD'] },

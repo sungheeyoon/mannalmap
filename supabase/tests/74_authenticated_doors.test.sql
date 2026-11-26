@@ -25,6 +25,8 @@
 -- 옛 웹 · 앱 때문에 기본값을 들고 남았다 — 서명은 그대로다(G-160 이 걷는다).
 -- 2026-11-21 에 결제 내역의 구매 · 사용 두 탭이 읽는 풀이권 이력 문(`my_reading_credit_history`, `20270121090000`, ADR 0263)이 더했다 —
 -- 인자가 없고 부른 사람 제 줄만 낸다.
+-- 2026-11-26 에 웹의 판매 판정 · 주문 하나 · 주문을 여는 문 셋(`my_reading_sale_is_open` · `my_reading_order` · `open_reading_order`)을
+-- `20270124090000` 이 걷었다(ADR 0272) — 주문은 서버의 스토어 구매만 세운다.
 begin;
 select plan(1);
 
@@ -81,9 +83,7 @@ select set_eq(
            ('my_reading_artifacts(p_kind text, p_person_a uuid, p_person_b uuid, p_match_id uuid)'),
            ('my_reading_credit_history()'),
            ('my_reading_credits()'),
-           ('my_reading_order(p_order_id uuid)'),
            ('my_reading_orders()'),
-           ('my_reading_sale_is_open()'),
            ('my_readings()'),
            ('my_running_readings()'),
            ('my_service_survey()'),
@@ -92,7 +92,6 @@ select set_eq(
            ('nickname_is_available(p_nickname text)'),
            ('note_operator_denial(p_action text, p_report_id uuid)'),
            ('note_operator_refusal(p_action text, p_code text, p_report_id uuid, p_user_id uuid, p_order_id uuid)'),
-           ('open_reading_order(p_bundle_credits integer, p_provider text, p_idempotency_key text)'),
            ('operator_audit_export_status()'),
            ('operator_book_reading_refund(p_hold_id uuid, p_provider_refund_id text)'),
            ('operator_grant_reading_credits(p_user_id uuid, p_credits integer, p_reason text, p_note text, p_report_id uuid, p_seen_version integer, p_request_id uuid)'),

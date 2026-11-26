@@ -9,7 +9,7 @@ import { useClient } from '@/auth/connected';
 import { saveFailureOf, setParticipation } from '@/reading/chart-writes';
 import { followRefusal } from '@/reading/follow-refusal';
 import { FailureLine } from '@/ui/failure-line';
-import { COLOR, FONT, RADIUS, TYPE } from '@/ui/tokens';
+import { COLOR, FONT, RADIUS, TYPE, TYPE_BODY, TYPE_META } from '@/ui/tokens';
 import { KEEP_VIEW } from '@/ui/keep-view';
 
 import { SwitchRow, useDoneNote, FAILURE_INSET } from './parts';
@@ -132,12 +132,12 @@ export function PreferenceRow({ current }: { current: PreferGender }) {
 const styles = StyleSheet.create({
   box: { gap: 8, paddingHorizontal: 24, paddingVertical: 12 },
   head: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12 },
-  label: { fontSize: TYPE.body, lineHeight: 24, fontFamily: FONT.bold, color: COLOR.foreground },
+  label: { ...TYPE_BODY, fontFamily: FONT.bold },
   progress: { fontSize: TYPE.fine, fontFamily: FONT.medium, color: COLOR.muted },
   choices: { flexDirection: 'row', gap: 4, padding: 4, borderRadius: RADIUS.cell, backgroundColor: COLOR.surfaceSunken },
   choice: { flex: 1, minHeight: 44, alignItems: 'center', justifyContent: 'center', borderRadius: RADIUS.cell },
   chosen: { backgroundColor: COLOR.surfaceRaised },
   choiceText: { fontSize: TYPE.note, fontFamily: FONT.medium, color: COLOR.secondary },
   chosenText: { color: COLOR.foreground, fontFamily: FONT.bold },
-  help: { fontSize: TYPE.small, lineHeight: 20, fontFamily: FONT.medium, color: COLOR.secondary },
+  help: { ...TYPE_META },
 });

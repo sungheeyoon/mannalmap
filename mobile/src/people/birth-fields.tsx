@@ -13,7 +13,7 @@ import { FoldIcon } from '@/ui/icons';
 import { Choices, DigitField, Field, FieldLabel, Select } from '@/ui/parts';
 import { SectionErrorLine, type SectionErrors } from '@/ui/section-error';
 import { CardFrame } from '@/ui/surfaces';
-import { COLOR, FONT, RADIUS, TYPE } from '@/ui/tokens';
+import { COLOR, FONT, RADIUS, TYPE, TYPE_CAPTION } from '@/ui/tokens';
 import { WordText } from '@/ui/word-text';
 
 const HOUR_CHOICES = [
@@ -281,7 +281,7 @@ const styles = StyleSheet.create({
   refused: { color: COLOR.danger },
   off: { opacity: BUTTON_OFF_OPACITY },
   disclosure: { minHeight: 44, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 14, borderRadius: RADIUS.cell, borderWidth: 1, borderColor: COLOR.borderStrong, backgroundColor: COLOR.surface },
-  choiceHint: { marginLeft: 72, fontFamily: FONT.medium, fontSize: TYPE.fine, lineHeight: 16, color: COLOR.secondary },
+  choiceHint: { ...TYPE_CAPTION, marginLeft: 72, color: COLOR.secondary },
   advancedIntro: { fontFamily: FONT.medium, fontSize: TYPE.fine, lineHeight: 20, color: COLOR.secondary },
   disclosureLabel: { flexShrink: 0, fontSize: TYPE.body, fontFamily: FONT.bold, color: COLOR.foreground },
   /* 요약이 남은 폭을 차지하고 오른쪽에 붙는다 — 화살표와는 8(웹 `.disclosure` 의 gap) */

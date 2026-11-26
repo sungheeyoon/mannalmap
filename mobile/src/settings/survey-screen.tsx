@@ -43,7 +43,7 @@ import { FailureLine } from '@/ui/failure-line';
 import { useLeaveGuard } from '@/ui/leave-guard';
 import { LoadingDots } from '@/ui/loading';
 import { CheckRow, PrimaryButton, SecondaryButton } from '@/ui/parts';
-import { COLOR, FONT, RADIUS, TYPE } from '@/ui/tokens';
+import { COLOR, FONT, RADIUS, TYPE, TYPE_BODY, TYPE_META } from '@/ui/tokens';
 import { settled } from '@/ui/settled';
 import { TopBar } from '@/ui/top-bar';
 import { CardFrame, Paper } from '@/ui/surfaces';
@@ -345,21 +345,21 @@ const styles = StyleSheet.create({
   content: { flexGrow: 1, gap: 16, padding: 16, paddingBottom: 40 },
   header: { gap: 8 },
   intro: { fontSize: TYPE.body, lineHeight: 26, fontFamily: FONT.medium, color: COLOR.creamInk },
-  editable: { fontSize: TYPE.small, lineHeight: 20, fontFamily: FONT.medium, color: COLOR.creamInk },
+  editable: { ...TYPE_META, color: COLOR.creamInk },
   section: { gap: 16, padding: 20 },
   tight: { gap: 4 },
   sm: { fontSize: TYPE.note, lineHeight: 22, fontFamily: FONT.medium, color: COLOR.secondary },
   consent: { gap: 8, paddingTop: 16, borderTopWidth: 1, borderTopColor: COLOR.border },
-  small: { fontSize: TYPE.small, lineHeight: 20, fontFamily: FONT.medium, color: COLOR.muted },
-  meta: { paddingHorizontal: 4, fontSize: TYPE.small, lineHeight: 20, fontFamily: FONT.medium, color: COLOR.secondary },
+  small: { ...TYPE_META, color: COLOR.muted },
+  meta: { ...TYPE_META, paddingHorizontal: 4 },
   form: { gap: 20 },
   panel: { gap: 12, padding: 20 },
-  step: { fontSize: TYPE.small, lineHeight: 20, fontFamily: FONT.bold, color: COLOR.muted },
+  step: { ...TYPE_META, fontFamily: FONT.bold, color: COLOR.muted },
   ask: { fontSize: TYPE.lead, lineHeight: 26, fontFamily: FONT.bold, color: COLOR.foreground },
-  nestedAsk: { fontSize: TYPE.body, lineHeight: 24, fontFamily: FONT.bold, color: COLOR.foreground },
-  subject: { fontSize: TYPE.body, lineHeight: 24, fontFamily: FONT.bold, color: COLOR.foreground },
+  nestedAsk: { ...TYPE_BODY, fontFamily: FONT.bold },
+  subject: { ...TYPE_BODY, fontFamily: FONT.bold },
   options: { gap: 8 },
-  choice: { fontSize: TYPE.body, lineHeight: 24, fontFamily: FONT.medium, color: COLOR.foreground },
+  choice: { ...TYPE_BODY },
   ruled: { gap: 8, paddingTop: 16, borderTopWidth: 1, borderTopColor: COLOR.border },
   writing: { gap: 8 },
   radio: { flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: 48, paddingHorizontal: 16, paddingVertical: 10, borderRadius: RADIUS.cell, borderWidth: 1, borderColor: COLOR.border, backgroundColor: COLOR.surface },
@@ -369,7 +369,7 @@ const styles = StyleSheet.create({
   dotInner: { width: 10, height: 10, borderRadius: RADIUS.pill, backgroundColor: COLOR.accent },
   area: { minHeight: 112, paddingHorizontal: 16, paddingVertical: 12, borderRadius: RADIUS.cell, borderWidth: 1, borderColor: COLOR.borderStrong, backgroundColor: COLOR.surface, fontFamily: FONT.medium, fontSize: TYPE.field, lineHeight: 24, color: COLOR.foreground, textAlignVertical: 'top' },
   send: { gap: 12, paddingHorizontal: 4 },
-  draftFailed: { fontSize: TYPE.small, lineHeight: 20, fontFamily: FONT.bold, color: COLOR.danger },
+  draftFailed: { ...TYPE_META, fontFamily: FONT.bold, color: COLOR.danger },
   failed: { padding: 20 },
   off: { opacity: BUTTON_OFF_OPACITY },
 });

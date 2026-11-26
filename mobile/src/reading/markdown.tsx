@@ -2,9 +2,10 @@ import { chipsOf, CHIP_LABELS, inlineParts, markdownBlocks, type MarkdownBlock }
 import type { ComponentRef, ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { COLOR, FONT, RADIUS, TYPE } from '@/ui/tokens';
+import { COLOR, FONT, RADIUS, TYPE, TYPE_SECTION } from '@/ui/tokens';
 
 import { useContentsMarks } from './contents';
+import { Heading } from '@/ui/heading';
 import { WordText } from '@/ui/word-text';
 
 /**
@@ -70,9 +71,9 @@ function Block({ block, first, anchor }: { block: Exclude<MarkdownBlock, { kind:
       return block.depth <= 2 ? (
         <View ref={anchor} collapsable={false} style={[styles.heading, !first && styles.headingGap]}>
           <View style={styles.headingBar} />
-          <WordText accessibilityRole="header" style={styles.headingText}>
+          <Heading style={styles.headingText}>
             {inline(block.text)}
-          </WordText>
+          </Heading>
         </View>
       ) : (
         <View style={styles.smallHeading}>
@@ -158,7 +159,7 @@ const styles = StyleSheet.create({
   heading: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   headingGap: { marginTop: 16 },
   headingBar: { width: 6, height: 24, borderRadius: RADIUS.pill, backgroundColor: COLOR.borderStrong },
-  headingText: { flex: 1, fontFamily: FONT.bold, fontSize: TYPE.heading, lineHeight: 29, color: COLOR.foreground },
+  headingText: { ...TYPE_SECTION, flex: 1 },
   smallHeading: { flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 4, marginBottom: -12 },
   smallHeadingDot: { width: 6, height: 6, borderRadius: RADIUS.pill, backgroundColor: COLOR.borderStrong },
   smallHeadingText: { flex: 1, fontFamily: FONT.bold, fontSize: TYPE.lead, color: COLOR.foreground },

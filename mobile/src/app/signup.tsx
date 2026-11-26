@@ -35,10 +35,11 @@ import { Logo } from '@/ui/logo';
 import { FailureLine } from '@/ui/failure-line';
 import { SectionErrorLine, SectionScrollView, useSectionErrors } from '@/ui/section-error';
 import { CheckRow, Field, FieldLabel, PrimaryButton, SecondaryButton, TextButton } from '@/ui/parts';
-import { COLOR, FONT, TYPE, TYPE_TITLE } from '@/ui/tokens';
+import { COLOR, FONT, TYPE, TYPE_BODY, TYPE_META, TYPE_TITLE } from '@/ui/tokens';
 import { settledWhileLive } from '@/ui/settled';
 import { goBack } from '@/ui/top-bar';
 import { Card, CardFrame, Paper, Tile } from '@/ui/surfaces';
+import { Heading } from '@/ui/heading';
 import { WordText } from '@/ui/word-text';
 import { SIGN_OUT_FAILED } from '@account/words';
 import { unreachedLoad } from '@/answer';
@@ -97,7 +98,7 @@ function Signup() {
           <Paper style={styles.head}>
             <Logo size={44} />
             <WordText style={styles.eyebrow}>{head.eyebrow}</WordText>
-            <WordText style={styles.title}>{head.title}</WordText>
+            <Heading level="title" style={styles.title}>{head.title}</Heading>
             <WordText style={styles.headNote}>{head.note}</WordText>
           </Paper>
 
@@ -322,13 +323,13 @@ const styles = StyleSheet.create({
   head: { gap: 12 },
   eyebrow: { fontSize: TYPE.small, fontFamily: FONT.bold, color: COLOR.creamInk },
   title: { ...TYPE_TITLE },
-  headNote: { fontSize: TYPE.body, lineHeight: 24, fontFamily: FONT.medium, color: COLOR.creamInk },
+  headNote: { ...TYPE_BODY, color: COLOR.creamInk },
   line: { fontSize: TYPE.note, lineHeight: 22, fontFamily: FONT.medium, color: COLOR.foreground },
   form: { gap: 20, padding: 20 },
   group: { gap: 6 },
   nameRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   nameField: { flex: 1 },
-  fine: { fontSize: TYPE.small, lineHeight: 20, fontFamily: FONT.medium, color: COLOR.muted },
+  fine: { ...TYPE_META, color: COLOR.muted },
   note: { fontSize: TYPE.note, lineHeight: 21, fontFamily: FONT.medium, color: COLOR.secondary },
   failure: { fontSize: TYPE.small, lineHeight: 19, fontFamily: FONT.medium, color: COLOR.danger },
   notice: { gap: 6 },

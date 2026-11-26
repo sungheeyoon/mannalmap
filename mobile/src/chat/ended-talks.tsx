@@ -5,9 +5,10 @@ import { Pressable, StyleSheet, View } from 'react-native';
 
 import { useClient } from '@/auth/connected';
 import { readEndedTalkMessages, type EndedTalk } from '@/matching/talk-doors';
-import { COLOR, CONTROL, FONT, RADIUS, TYPE } from '@/ui/tokens';
+import { COLOR, CONTROL, FONT, RADIUS, TYPE, TYPE_META } from '@/ui/tokens';
 
 import { ReportDialog, type ReportableMessage } from './dialogs';
+import { Heading } from '@/ui/heading';
 import { WordText } from '@/ui/word-text';
 
 /** 끝난 대화의 신고 길(ADR 0215) — 말은 누른 뒤에만 읽고 방은 다시 안 연다. 대화방과 같은 신고 창이고, 이미 끝나 차단으로 넘어가는 길은 없다 */
@@ -23,7 +24,7 @@ export function EndedTalks({ talks }: { talks: readonly EndedTalk[] }) {
   return (
     <View style={styles.section}>
       <View style={styles.head}>
-        <WordText style={styles.title}>{ENDED_TALKS_TITLE}</WordText>
+        <Heading style={styles.title}>{ENDED_TALKS_TITLE}</Heading>
         <WordText style={styles.meta}>{ENDED_TALKS_NOTE}</WordText>
       </View>
       {talks.map((talk) => (
@@ -48,7 +49,7 @@ const styles = StyleSheet.create({
   section: { gap: 12 },
   head: { gap: 4 },
   title: { fontFamily: FONT.bold, fontSize: TYPE.heading, color: COLOR.foreground },
-  meta: { fontFamily: FONT.medium, fontSize: TYPE.small, lineHeight: 20, color: COLOR.muted },
+  meta: { ...TYPE_META, color: COLOR.muted },
   row: { flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: 56, paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: COLOR.border },
   flex: { flex: 1, minWidth: 0 },
   name: { fontFamily: FONT.bold, fontSize: TYPE.note, color: COLOR.foreground },

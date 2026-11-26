@@ -20,6 +20,7 @@ import { Icon } from '@/ui/icons';
 import { LoadingDots } from '@/ui/loading';
 import { COLOR, FONT, RADIUS, TYPE, TYPE_TITLE } from '@/ui/tokens';
 import { CardFrame, RowCard } from '@/ui/surfaces';
+import { Heading } from '@/ui/heading';
 import { WordText } from '@/ui/word-text';
 
 type Loaded = { finishedMatchIds: readonly string[]; endedTalks: number; account: AccountState; deck: Read<DeckPlace>; matches: Read<readonly InboxMatch[]> };
@@ -124,9 +125,9 @@ function Deck({ place, tail, onRecheck, onRequested }: { place: Extract<DeckPlac
       <View style={styles.head}>
         <View style={styles.flex}>
           <WordText style={styles.date}>{todayLabel()}</WordText>
-          <WordText style={styles.title} accessibilityRole="header">
+          <Heading level="title" style={styles.title}>
             오늘의 인연
-          </WordText>
+          </Heading>
         </View>
         <Pressable accessibilityRole="button" onPress={() => setView(view === 'today' ? 'passed' : 'today')} style={styles.pill}>
           <Icon name={view === 'today' ? 'undo' : 'people'} size={16} />
@@ -204,9 +205,9 @@ function Frame({ children }: { children: React.ReactNode }) {
 
 function Title() {
   return (
-    <WordText style={styles.title} accessibilityRole="header">
+    <Heading level="title" style={styles.title}>
       오늘의 인연
-    </WordText>
+    </Heading>
   );
 }
 

@@ -151,7 +151,7 @@ export function AddPerson({ slots }: { slots: PersonSlots | null }) {
     return (
       <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
         <button type="button" onClick={() => setOpen(true)} className={BUTTON_PRIMARY}>
-          <Icon name="plus" className="size-[18px]" />
+          <Icon name="plus" className="size-4.5" />
           사람 추가
         </button>
         {remaining !== null && remaining <= 5 && (

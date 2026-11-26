@@ -116,7 +116,7 @@ export function PeopleFinder({ people }: { people: Findable[] }) {
             {PLACEHOLDER}
           </label>
           <div className="relative w-full sm:max-w-sm">
-            <Icon name="search" className="pointer-events-none absolute left-4 top-1/2 size-[18px] -translate-y-1/2 text-secondary" />
+            <Icon name="search" className="pointer-events-none absolute left-4 top-1/2 size-4.5 -translate-y-1/2 text-secondary" />
             {/*
               **`outline-none` 을 안 단다** — 초점에 두르는 것이 옅은 `ring`(`accent-wash`)과 한 단계 짙은 테두리뿐이라
               그것만으로는 초점이 거의 안 보인다. 전역 초점 테두리(`globals.css` 의 `@layer base`)가 선다.
@@ -162,7 +162,7 @@ export function PeopleFinder({ people }: { people: Findable[] }) {
               key={one.personId}
               hidden={!shown.has(one.personId)}
               data-panel-open={opened.includes(one.personId) || undefined}
-              className="min-w-0 rounded-card data-[panel-open]:outline-[3px] data-[panel-open]:outline-[color-mix(in_srgb,var(--accent)_55%,transparent)] data-[panel-open]:outline-solid"
+              className="min-w-0 rounded-card data-[panel-open]:focus-ring"
             >
               {one.card}
             </li>,

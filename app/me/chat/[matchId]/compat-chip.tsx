@@ -40,9 +40,9 @@ export function CompatChip({
   return (
     <Link href={href} aria-label={compatChipName(compat)} data-compat={compat.kind} className={`${shape} ${size}`}>
       {compat.kind === 'failed' ? (
-        <Icon name="alert" className="size-[18px] text-danger" />
+        <Icon name="alert" className="size-4.5 text-danger" />
       ) : (
-        <Icon name="taiji" className="size-[18px]" />
+        <Icon name="taiji" className="size-4.5" />
       )}
       {compat.kind === 'ready' && <span className="tabular-nums">{compat.score}점</span>}
       {compat.kind === 'making' && (
@@ -76,9 +76,9 @@ export function CompatRow({ compat, href }: { compat: RoomCompat; href: string }
     >
       <span className="inline-flex min-w-0 items-center gap-1.5 text-body font-bold text-foreground">
         {compat.kind === 'failed' ? (
-          <Icon name="alert" className="size-[18px] shrink-0 text-danger" />
+          <Icon name="alert" className="size-4.5 shrink-0 text-danger" />
         ) : (
-          <Icon name="taiji" className="size-[18px] shrink-0" />
+          <Icon name="taiji" className="size-4.5 shrink-0" />
         )}
         {lead.map((word, at) => (
           <span key={word} className={at === 0 ? '' : compat.kind === 'making' ? 'font-medium text-secondary' : 'tabular-nums'}>

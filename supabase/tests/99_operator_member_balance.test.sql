@@ -32,8 +32,6 @@ select
 grant select on folks to authenticated, service_role, anon;
 
 insert into public.operator (user_id, note) values ((select operator from folks), '시험 — 회원 잔액');
-insert into public.reading_sale_reviewer (user_id, note) values ((select member from folks), '시험 — 회원 잔액');
-
 /** 그 사람이 제 화면에서 보는 잔액 — 부르고 나면 운영자로 돌아온다 */
 create or replace function pg_temp.mine()
 returns integer language plpgsql as $$
@@ -122,7 +120,7 @@ select results_eq(
 select pg_temp.acting((select member from folks));
 create temporary table ord (order_id uuid);
 grant select, insert on ord to authenticated, service_role;
-insert into ord select order_id from public.open_reading_order(3, 'portone', 'mb-order-0001');
+insert into ord select order_id from tests.open_order(3, 'dev', 'mb-order-0001');
 set local role service_role;
 select public.approve_reading_order((select order_id from ord), 'tx-mb-3', 12900, 'whk-mb-3');
 set local role authenticated;

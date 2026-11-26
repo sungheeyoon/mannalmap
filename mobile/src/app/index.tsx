@@ -18,9 +18,10 @@ import { SunMark } from '@/share/marks';
 import { SectionScrollView, useSectionErrors } from '@/ui/section-error';
 import { Icon } from '@/ui/icons';
 import { Logo } from '@/ui/logo';
-import { COLOR, FONT, RADIUS, TYPE, TYPE_TITLE } from '@/ui/tokens';
+import { COLOR, FONT, RADIUS, TYPE, TYPE_BODY, TYPE_SECTION, TYPE_TITLE } from '@/ui/tokens';
 import { Paper } from '@/ui/surfaces';
 import { KEEP_VIEW } from '@/ui/keep-view';
+import { Heading } from '@/ui/heading';
 import { WordText } from '@/ui/word-text';
 import { ENTER_BIRTH, HERO_QUESTION, SEE_MY_SAJU_FREE } from '@brand/words';
 
@@ -152,17 +153,17 @@ function BirthScreen({ signedOut }: { signedOut: boolean }) {
           <Paper style={styles.paper}>
             {signedOut ? (
               <View style={styles.head}>
-                <WordText accessibilityRole="header" style={styles.title}>{HERO_QUESTION}</WordText>
+                <Heading level="title" style={styles.title}>{HERO_QUESTION}</Heading>
                 <EntryTabs value={doorway} onPick={setDoorway} />
               </View>
             ) : (
-              <WordText style={[styles.title, styles.titleAlone]}>{ENTER_BIRTH}</WordText>
+              <Heading level="title" style={[styles.title, styles.titleAlone]}>{ENTER_BIRTH}</Heading>
             )}
 
             {/* 궁합 쪽 — 앱에는 로그인 전 궁합 결과가 없어 로그인으로 잇는다(ADR 0213 의 11 · ADR 0226). 입력 판은 내려 두지 않고 숨긴다 — 적던 값이 남는다 */}
             {pair && (
               <View style={styles.compat}>
-                <WordText style={styles.compatTitle}>{COMPAT_SIGN_IN_TITLE}</WordText>
+                <Heading style={styles.compatTitle}>{COMPAT_SIGN_IN_TITLE}</Heading>
                 <WordText style={styles.compatNote}>{COMPAT_CREDIT_NOTE}</WordText>
                 <View style={styles.compatAction}>
                   <PrimaryButton label={COMPAT_SIGN_IN_ACTION} onPress={() => router.push(withReturnPath('/auth', '/me/compat') as never)} />
@@ -228,14 +229,14 @@ const styles = StyleSheet.create({
   hidden: { display: 'none' },
   compat: { gap: 8, marginHorizontal: 4, paddingTop: 8 },
   compatAction: { paddingTop: 12 },
-  compatTitle: { fontSize: TYPE.heading, lineHeight: 29, fontFamily: FONT.bold, color: COLOR.foreground },
-  compatNote: { fontSize: TYPE.body, lineHeight: 24, fontFamily: FONT.medium, color: COLOR.secondary },
+  compatTitle: { ...TYPE_SECTION },
+  compatNote: { ...TYPE_BODY, color: COLOR.secondary },
   member: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 4, marginTop: -6 },
   memberAsk: { fontSize: TYPE.small, fontFamily: FONT.medium, color: COLOR.secondary },
   memberSignIn: { minHeight: 44, justifyContent: 'center', paddingHorizontal: 4 },
   memberSignInText: { fontSize: TYPE.small, fontFamily: FONT.bold, color: COLOR.foreground, textDecorationLine: 'underline' },
   retry: { alignItems: 'center', justifyContent: 'center', gap: 12, padding: 24 },
-  retryLine: { fontSize: TYPE.body, lineHeight: 24, fontFamily: FONT.medium, color: COLOR.foreground, textAlign: 'center' },
+  retryLine: { ...TYPE_BODY, textAlign: 'center' },
   title: { ...TYPE_TITLE },
   action: { marginTop: 'auto', paddingTop: 12, gap: 10 },
 });

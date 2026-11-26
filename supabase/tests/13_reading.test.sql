@@ -943,7 +943,6 @@ select is(
     'audit_export_begin',
     'audit_export_done',
     'audit_export_finish',
-    'cancel_reading_order',
     /** 웹 푸시의 배달 문이 대기 줄을 잡고 결과를 적는 문 둘 — endpoint · 열쇠 · match_id 만, 본문은 없다(ADR 0156) */
     'claim_push_deliveries',
     'claim_reading_job',
@@ -1014,15 +1013,10 @@ select is(
     'refund_reading_order',
     'release_reading_job',
     /**
-     * 환불 확보를 손으로 푸는 문 — 앱이 PortOne 조회를 못 할 때 운영자가 콘솔을 보고 사유를 남겨 부른다(`20261211090000`,
-     * ADR 0184). 로그인한 사람은 못 부른다 — 운영자의 화면 문은 PortOne 확인을 거친다.
+     * 환불 확보를 손으로 푸는 문 — 앱이 결제한 곳의 취소를 조회하지 못할 때 운영자가 콘솔을 보고 사유를 남겨 부른다(`20261211090000`,
+     * ADR 0184 · 0272). 로그인한 사람은 못 부른다 — 운영자의 화면 문은 그 조회를 거친다.
      */
     'release_reading_refund_by_hand',
-    /**
-     * 결제 이상을 운영자에게 알리는 문(`20261213090000`, G-110 ④) — 종류 · 결제 번호 · ASCII 까닭 한 줄만 받고 결제마다
-     * 하루 한 줄이다. 결제 알림의 문이 서명을 맞힌 뒤에만 부른다(`98_payment_trouble_alerts`).
-     */
-    'report_payment_trouble',
     /**
      * 서버 오류를 운영자에게 알리는 문(`20261108090000`) — 라우트 파일 무늬 · 자리 · digest 만 받고 하루 한 줄이다.
      * 로그인한 사람이 부를 수 있으면 알림함을 채울 수 있다(`77_ops_alerts`).

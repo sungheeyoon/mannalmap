@@ -2,7 +2,7 @@ import { MATCHING_START_HEAD, MATCHING_START_LEAVE, matchingStartSteps, type Mat
 import { StyleSheet, View } from 'react-native';
 
 import { Tile } from '@/ui/surfaces';
-import { COLOR, FONT, TYPE } from '@/ui/tokens';
+import { COLOR, FONT, TYPE, TYPE_META } from '@/ui/tokens';
 import { WordText } from '@/ui/word-text';
 
 /** 인연으로 가는 길에 서는 남은 단계 — 끝낸 단계는 안 보인다. 그만둬도 사주는 그대로라는 것까지 시작 전에 말한다(ADR 0213) */
@@ -27,5 +27,5 @@ const styles = StyleSheet.create({
   row: { flexDirection: 'row', gap: 8 },
   number: { fontFamily: FONT.bold, fontSize: TYPE.note, lineHeight: 22, color: COLOR.secondary },
   text: { flex: 1, fontFamily: FONT.medium, fontSize: TYPE.note, lineHeight: 22, color: COLOR.foreground },
-  leave: { fontFamily: FONT.medium, fontSize: TYPE.small, lineHeight: 20, color: COLOR.secondary },
+  leave: { ...TYPE_META },
 });

@@ -20,18 +20,14 @@ begin
 end;
 $$;
 
-/** 판매를 연다 — 이 트랜잭션 안에서만 */
-create or replace function public.reading_sale_is_open()
-returns boolean language sql immutable set search_path = '' as $$ select true $$;
-
 set local role authenticated;
 select pg_temp.acting((select buyer from folks));
 create temporary table ords as
-select 'a' as name, o.* from public.open_reading_order(3, 'dev', 'per-order-a') o
+select 'a' as name, o.* from tests.open_order(3, 'dev', 'per-order-a') o
 union all
-select 'b', o.* from public.open_reading_order(3, 'dev', 'per-order-b') o
+select 'b', o.* from tests.open_order(3, 'dev', 'per-order-b') o
 union all
-select 'c', o.* from public.open_reading_order(3, 'dev', 'per-order-c') o;
+select 'c', o.* from tests.open_order(3, 'dev', 'per-order-c') o;
 grant select on ords to authenticated, service_role;
 
 create or replace function pg_temp.ord(n text)

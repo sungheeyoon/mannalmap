@@ -13,13 +13,14 @@ import { IconButton } from '@/ui/buttons';
 import { Icon } from '@/ui/icons';
 import { LoadingDots } from '@/ui/loading';
 import { KeyboardDoneBar } from '@/ui/parts';
-import { alpha, COLOR, ELEMENT_TONE, FONT, mix, RADIUS, TYPE, TYPE_TITLE } from '@/ui/tokens';
+import { alpha, COLOR, ELEMENT_TONE, FONT, mix, RADIUS, TYPE, TYPE_BODY, TYPE_META, TYPE_NAME, TYPE_SECTION, TYPE_TITLE } from '@/ui/tokens';
 
 import { StemSymbol } from '@/ui/stem-symbol';
 import { FailureLine } from '@/ui/failure-line';
 import { Scrim } from '@/ui/scrim';
 import { SectionScrollView } from '@/ui/section-error';
 import { CardFrame, SheetPanel } from '@/ui/surfaces';
+import { Heading } from '@/ui/heading';
 import { WordText } from '@/ui/word-text';
 import { PERSON_NOT_FOUND, PERSON_PICK_AGAIN } from '@people/words';
 
@@ -83,7 +84,7 @@ export function AccountNotice({ state, onRetry }: { state: AccountState; onRetry
 export function NotFound({ children }: { children: ReactNode }) {
   return (
     <View style={styles.notFound}>
-      <WordText style={styles.title}>찾을 수 없어요</WordText>
+      <Heading level="title" style={styles.title}>찾을 수 없어요</Heading>
       <WordText style={styles.noticeBody}>{PERSON_NOT_FOUND}</WordText>
       <WordText style={styles.noticeBody}>{PERSON_PICK_AGAIN}</WordText>
       <View style={styles.notFoundActions}>{children}</View>
@@ -175,11 +176,11 @@ export const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: COLOR.background },
   content: { padding: 16, gap: 14, paddingBottom: 40 },
   title: { ...TYPE_TITLE },
-  section: { fontSize: TYPE.heading, lineHeight: 29, fontFamily: FONT.bold, color: COLOR.foreground },
-  name: { fontSize: TYPE.lead, lineHeight: 24, fontFamily: FONT.bold, color: COLOR.foreground },
-  body: { fontSize: TYPE.body, lineHeight: 24, fontFamily: FONT.medium, color: COLOR.secondary },
+  section: { ...TYPE_SECTION },
+  name: { ...TYPE_NAME },
+  body: { ...TYPE_BODY, color: COLOR.secondary },
   bodyStrong: { fontFamily: FONT.bold, color: COLOR.foreground },
-  meta: { fontSize: TYPE.small, lineHeight: 20, fontFamily: FONT.medium, color: COLOR.secondary },
+  meta: { ...TYPE_META },
   notice: { gap: 4, paddingHorizontal: 20, paddingVertical: 16 },
   noticeTitle: { fontSize: TYPE.body, lineHeight: 22, fontFamily: FONT.bold, color: COLOR.foreground },
   noticeBody: { fontSize: TYPE.note, lineHeight: 20, fontFamily: FONT.medium, color: COLOR.secondary },
@@ -190,7 +191,7 @@ export const styles = StyleSheet.create({
   strip: { flexDirection: 'row', gap: 6 },
   pillar: { flex: 1, alignItems: 'center', gap: 2, paddingHorizontal: 4, paddingTop: 4, paddingBottom: 6, borderRadius: RADIUS.cell, backgroundColor: alpha(COLOR.surface, 0.78) },
   pillarDay: { borderWidth: 2, borderColor: alpha(COLOR.foreground, 0.22) },
-  pillarLabel: { fontSize: 11, fontFamily: FONT.bold, color: COLOR.secondary },
+  pillarLabel: { fontSize: TYPE.tag, fontFamily: FONT.bold, color: COLOR.secondary },
   pillarRow: { flexDirection: 'row' },
   glyph: { fontSize: TYPE.lead, lineHeight: 22, fontWeight: '600', fontFamily: GLYPH_FONT, textAlign: 'center' },
   glyphLarge: { fontSize: TYPE.title, lineHeight: 32 },

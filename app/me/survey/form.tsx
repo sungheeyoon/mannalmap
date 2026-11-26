@@ -77,7 +77,7 @@ const CHOICE_BOX_TOP = { marginTop: checkBoxTop(24) };
  * 한 줄일 때 48px 을 채우는 값(테 2px 와 한 줄 `1lh` 를 뺀 절반)이라, 두 줄이 되어도 상자는 첫 줄에 남는다.
  */
 const CHOICE =
-  'flex min-h-12 cursor-pointer items-start gap-3 rounded-cell border border-border bg-surface px-4 py-[calc((3rem_-_2px_-_1lh)/2)] text-body leading-6 hover:border-border-strong has-checked:border-foreground has-checked:bg-cream has-focus-visible:outline has-focus-visible:outline-3 has-focus-visible:outline-offset-2 has-focus-visible:outline-[color-mix(in_srgb,var(--accent)_55%,transparent)] has-disabled:cursor-default has-disabled:hover:border-border [&:has(:disabled:not(:checked))]:opacity-55';
+  'flex min-h-12 cursor-pointer items-start gap-3 rounded-cell border border-border bg-surface px-4 py-[calc((3rem_-_2px_-_1lh)/2)] text-body leading-6 hover:border-border-strong has-checked:border-foreground has-checked:bg-cream has-focus-visible:focus-ring has-disabled:cursor-default has-disabled:hover:border-border [&:has(:disabled:not(:checked))]:opacity-55';
 
 export function SurveyForm({ context, given }: { context: SurveyContext; given: MySurvey | null }) {
   const [answers, setAnswers] = useState<SurveyAnswers>(given?.answers ?? EMPTY_ANSWERS);

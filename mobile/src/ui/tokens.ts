@@ -42,8 +42,22 @@ export const FONT = { medium: 'BusanDandiMyeongjoM', bold: 'BusanDandiMyeongjoB'
 
 export const TYPE = TEXT;
 
-/** 화면 제목 — 웹 `TYPE_TITLE`(26 · 줄 높이 35 · 굵게). 화면은 `...TYPE_TITLE` 로 펴고 줄 높이를 다시 적지 않는다 */
+/**
+ * **글자 모양 여섯 벌** — 웹 `app/ui/surfaces.ts` 의 같은 이름(크기 · 줄 높이 · 색은 `TEXT_STYLE`, 굵기는 앱 글꼴 이름). 화면은 `...TYPE_BODY` 처럼
+ * 스타일 맨 앞에 펴고 줄 높이를 다시 적지 않는다 — 뒤에 적은 색 · 글꼴이 이긴다. 손으로 적은 짝은 `scripts/mobile-type-styles.test.ts` 의 줄어들기 표가 센다(ADR 0274).
+ * 화면 제목 · 구역 제목은 글자만 펴지 않고 제목 부품(`./heading`)으로 세운다 — 낭독기 제목 역할이 함께 선다.
+ */
 export const TYPE_TITLE = { ...TEXT_STYLE.TYPE_TITLE, fontFamily: FONT.bold } as const;
+/** 구역 제목 — 웹 `TYPE_SECTION`(20 · 29 · 굵게) */
+export const TYPE_SECTION = { ...TEXT_STYLE.TYPE_SECTION, fontFamily: FONT.bold } as const;
+/** 카드 제목 — 웹 `TYPE_NAME`(17 · 24 · 굵게) */
+export const TYPE_NAME = { ...TEXT_STYLE.TYPE_NAME, fontFamily: FONT.bold } as const;
+/** 본문 — 웹 `TYPE_BODY`(15 · 24) */
+export const TYPE_BODY = { ...TEXT_STYLE.TYPE_BODY, fontFamily: FONT.medium } as const;
+/** 보조 — 웹 `TYPE_META`(13 · 20 · secondary) */
+export const TYPE_META = { ...TEXT_STYLE.TYPE_META, fontFamily: FONT.medium } as const;
+/** 캡션 — 웹 `TYPE_CAPTION`(12 · 16 · muted) */
+export const TYPE_CAPTION = { ...TEXT_STYLE.TYPE_CAPTION, fontFamily: FONT.medium } as const;
 
 export const CONTROL = 44;
 

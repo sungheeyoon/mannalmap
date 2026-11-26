@@ -5,7 +5,7 @@ import { CONTROL, FIELD, GALLERY, TONE } from '@design';
 
 import { Button, type ButtonVariant } from '@/ui/buttons';
 import { Card, CardFrame, Cell, DialogPanel, EmptySlot, MenuPanel, Paper, RowCard, RowLine, Tile } from '@/ui/surfaces';
-import { COLOR, FONT, TYPE } from '@/ui/tokens';
+import { COLOR, FONT, TYPE_BODY } from '@/ui/tokens';
 
 /** 나란히 재는 그림의 앱 쪽(`scripts/design-compare.mjs`) — 개발 빌드에서만 선다. 차례 · 글자는 웹 쪽과 같은 `GALLERY` 다 */
 const FACES = { Card, CardFrame, Paper, Cell, MenuPanel, RowCard, RowLine, EmptySlot, DialogPanel };
@@ -35,7 +35,7 @@ export default function DevPartsScreen() {
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: COLOR.background },
   content: { padding: 16, gap: 16 },
-  text: { fontFamily: FONT.medium, fontSize: TYPE.body, lineHeight: 24, color: COLOR.foreground },
+  text: { ...TYPE_BODY },
   inner: { padding: 16 },
   button: { alignItems: 'flex-start', minHeight: CONTROL },
   field: { ...FIELD, fontFamily: FONT.medium, color: COLOR.foreground },

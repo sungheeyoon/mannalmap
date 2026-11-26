@@ -8,7 +8,7 @@ import { CONTACT_LABEL, SUPPORT_MAIL_LINE, SUPPORT_TITLE } from '@/info/copy';
 import { InfoScreen } from '@/info/frame';
 import { LinkRow } from '@/settings/parts';
 import { Card, CardFrame } from '@/ui/surfaces';
-import { COLOR, FONT, TYPE } from '@/ui/tokens';
+import { COLOR, FONT, TYPE, TYPE_BODY } from '@/ui/tokens';
 import { WordText } from '@/ui/word-text';
 
 /** 고객센터 — 로그인 없이 열린다. 답 시한을 말하지 않는다: 약속할 기능이 없다 */
@@ -35,6 +35,6 @@ export default function SupportScreen() {
 
 const styles = StyleSheet.create({
   card: { gap: 12 },
-  head: { fontFamily: FONT.bold, fontSize: TYPE.body, lineHeight: 24, color: COLOR.foreground },
+  head: { ...TYPE_BODY, fontFamily: FONT.bold },
   line: { fontFamily: FONT.medium, fontSize: TYPE.body, lineHeight: 26, color: COLOR.secondary },
 });

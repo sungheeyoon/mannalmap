@@ -18,10 +18,11 @@ import { PrimaryButton } from '@/ui/parts';
 import { ConfirmDialog, DialogText } from '@/ui/confirm-dialog';
 import { DetailSheet } from '@/ui/sheet';
 import { ELEVATION } from '@design';
-import { alpha, COLOR, ELEMENT_TONE, FIXED, FONT, RADIUS, TYPE } from '@/ui/tokens';
+import { alpha, COLOR, ELEMENT_TONE, FIXED, FONT, RADIUS, TYPE, TYPE_BODY, TYPE_CAPTION, TYPE_META, TYPE_NAME, TYPE_SECTION } from '@/ui/tokens';
 import { Card, CardFrame, Paper, RowCard, Tile } from '@/ui/surfaces';
 
 import { PersonPhoto, PhotoBars, ReportBlock } from './people';
+import { Heading } from '@/ui/heading';
 import { WordText } from '@/ui/word-text';
 
 const tileOf = (element: Element | null) => (element === null ? COLOR.noneSoft : ELEMENT_TONE[element].soft);
@@ -263,7 +264,7 @@ export function EmptyDeck({ onRecheck }: { onRecheck: () => void }) {
   ];
   return (
     <Paper style={styles.quiet}>
-      <WordText style={styles.quietTitle}>{DISCOVERY_EMPTY.title}</WordText>
+      <Heading style={styles.quietTitle}>{DISCOVERY_EMPTY.title}</Heading>
       <WordText style={styles.body}>{DISCOVERY_EMPTY.line}</WordText>
       <PrimaryButton label={DISCOVERY_EMPTY.recheck} onPress={onRecheck} />
       {links.map((link) => (
@@ -280,7 +281,7 @@ export function EmptyDeck({ onRecheck }: { onRecheck: () => void }) {
 export function QuietPlace({ title, line, href, action }: { title: string; line: string; href: string; action: string }) {
   return (
     <Paper style={styles.quiet}>
-      <WordText style={styles.quietTitle}>{title}</WordText>
+      <Heading style={styles.quietTitle}>{title}</Heading>
       <WordText style={styles.body}>{line}</WordText>
       <PrimaryButton label={action} onPress={() => router.push(href as never)} />
     </Paper>
@@ -309,7 +310,7 @@ export function PassedConnections({
   return (
     <View style={styles.passed}>
       <View style={styles.passedHead}>
-        <WordText style={styles.quietTitle} accessibilityRole="header">
+        <Heading style={styles.quietTitle}>
           지나친 인연
           {cards.length > 0 && (
             <WordText style={styles.count}>
@@ -317,7 +318,7 @@ export function PassedConnections({
               {cards.length} / {PASSED_LIMIT}
             </WordText>
           )}
-        </WordText>
+        </Heading>
         {cards.length > 0 && <WordText style={styles.body}>잠깐 지나쳤어도, 다시 궁금해질 수 있으니까요.</WordText>}
       </View>
       {cards.length === 0 ? (
@@ -409,12 +410,12 @@ const styles = StyleSheet.create({
   nickname: { fontFamily: FONT.bold, fontSize: 32, lineHeight: 40, color: COLOR.onPhoto },
   activity: { fontFamily: FONT.bold, fontSize: TYPE.small, color: COLOR.onPhotoSoft },
   scoreTalk: { fontFamily: FONT.bold, fontSize: TYPE.lead, lineHeight: 28, color: COLOR.onPhoto },
-  verdict: { fontFamily: FONT.medium, fontSize: TYPE.lead, lineHeight: 24, color: COLOR.onPhotoStrong },
+  verdict: { ...TYPE_NAME, fontFamily: FONT.medium, color: COLOR.onPhotoStrong },
   supply: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   dots: { flexDirection: 'row', paddingLeft: 4 },
   dot: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center', borderRadius: RADIUS.pill, borderWidth: 2, borderColor: COLOR.surface },
-  supplyHead: { fontFamily: FONT.bold, fontSize: TYPE.fine, lineHeight: 16, color: COLOR.onPhotoFaint },
-  supplyNames: { fontFamily: FONT.bold, fontSize: TYPE.heading, lineHeight: 28, color: COLOR.onPhoto },
+  supplyHead: { ...TYPE_CAPTION, fontFamily: FONT.bold, color: COLOR.onPhotoFaint },
+  supplyNames: { ...TYPE_SECTION, color: COLOR.onPhoto },
   introLine: { fontFamily: FONT.medium, fontSize: TYPE.note, lineHeight: 20, color: COLOR.onPhotoSoft },
   buttons: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   undo: { width: 56, height: 56, alignItems: 'center', justifyContent: 'center', borderRadius: RADIUS.pill, borderWidth: 1, borderColor: COLOR.border, backgroundColor: COLOR.surface },
@@ -423,20 +424,20 @@ const styles = StyleSheet.create({
   request: { flex: 1.3, minHeight: 56, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 12, borderRadius: RADIUS.pill, backgroundColor: COLOR.accent },
   requestText: { fontFamily: FONT.bold, fontSize: TYPE.field, color: COLOR.onAccent },
   reasonBox: { gap: 4 },
-  detailVerdict: { fontFamily: FONT.bold, fontSize: TYPE.heading, lineHeight: 28, color: COLOR.foreground },
-  body: { fontFamily: FONT.medium, fontSize: TYPE.body, lineHeight: 24, color: COLOR.secondary },
+  detailVerdict: { ...TYPE_SECTION },
+  body: { ...TYPE_BODY, color: COLOR.secondary },
   supplyBox: { gap: 8, padding: 16 },
   supplyTitle: { fontFamily: FONT.bold, fontSize: TYPE.small, color: COLOR.foreground },
   supplyRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   supplyDot: { width: 40, height: 40, alignItems: 'center', justifyContent: 'center', borderRadius: RADIUS.pill, borderWidth: 1, borderColor: COLOR.border },
   supplyName: { fontFamily: FONT.bold, fontSize: TYPE.lead, lineHeight: 22 },
-  small: { fontFamily: FONT.medium, fontSize: TYPE.small, lineHeight: 20, color: COLOR.secondary },
+  small: { ...TYPE_META },
   note: { paddingTop: 12, borderTopWidth: 1, borderTopColor: COLOR.border, fontFamily: FONT.medium, fontSize: TYPE.fine, lineHeight: 20, color: COLOR.secondary },
   letter: { gap: 8, paddingHorizontal: 20, paddingVertical: 16 },
   letterText: { fontFamily: FONT.medium, fontSize: TYPE.field, lineHeight: 28, color: COLOR.foreground },
   signature: { alignSelf: 'flex-end', fontFamily: FONT.medium, fontSize: TYPE.body, color: COLOR.creamInk },
   fine: { fontFamily: FONT.medium, fontSize: TYPE.fine, lineHeight: 20, color: COLOR.secondary },
-  meta: { fontFamily: FONT.medium, fontSize: TYPE.small, lineHeight: 20, color: COLOR.muted },
+  meta: { ...TYPE_META, color: COLOR.muted },
   failureBox: { gap: 4 },
   failure: { fontFamily: FONT.medium, fontSize: TYPE.small, lineHeight: 19, color: COLOR.danger },
   textLink: { minHeight: 44, justifyContent: 'center' },
@@ -444,7 +445,7 @@ const styles = StyleSheet.create({
   flashBox: { alignSelf: 'center', paddingHorizontal: 12, paddingVertical: 6, borderRadius: RADIUS.pill, borderWidth: 1, borderColor: COLOR.border, backgroundColor: COLOR.surface },
   flash: { fontFamily: FONT.medium, fontSize: TYPE.small, color: COLOR.foreground },
   quiet: { gap: 24 },
-  quietTitle: { fontFamily: FONT.bold, fontSize: TYPE.heading, lineHeight: 28, color: COLOR.foreground },
+  quietTitle: { ...TYPE_SECTION },
   quietLink: { flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: 56, paddingHorizontal: 16, paddingVertical: 12 },
   quietLinkText: { fontFamily: FONT.bold, fontSize: TYPE.body, color: COLOR.foreground },
   passed: { gap: 20 },

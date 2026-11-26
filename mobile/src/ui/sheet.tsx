@@ -4,8 +4,8 @@ import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { Icon } from './icons';
 import { Scrim } from './scrim';
 import { SheetPanel } from './surfaces';
-import { COLOR, FONT, RADIUS, TYPE } from './tokens';
-import { WordText } from './word-text';
+import { COLOR, RADIUS, TYPE_SECTION } from './tokens';
+import { Heading } from './heading';
 
 const CLOSE_LABEL = '닫기';
 
@@ -31,9 +31,9 @@ export function DetailSheet({
       <SheetPanel style={styles.sheet} accessibilityViewIsModal>
         <View style={styles.grip} />
         <View style={[styles.head, wrapTitle && styles.headTop]}>
-          <WordText style={[styles.title, wrapTitle && styles.titleWrap]} numberOfLines={wrapTitle ? 2 : 1} accessibilityRole="header">
+          <Heading style={[styles.title, wrapTitle && styles.titleWrap]} numberOfLines={wrapTitle ? 2 : 1}>
             {title}
-          </WordText>
+          </Heading>
           {menu}
           <Pressable accessibilityRole="button" accessibilityLabel={CLOSE_LABEL} onPress={onClose} style={styles.icon}>
             <Icon size={20} name="close" color={COLOR.secondary} />
@@ -53,7 +53,7 @@ const styles = StyleSheet.create({
   head: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingLeft: 20, paddingRight: 8, paddingTop: 8, paddingBottom: 4 },
   headTop: { alignItems: 'flex-start' },
   titleWrap: { paddingTop: 7 },
-  title: { flex: 1, fontFamily: FONT.bold, fontSize: TYPE.heading, lineHeight: 29, color: COLOR.foreground },
+  title: { ...TYPE_SECTION, flex: 1 },
   icon: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center' },
   body: { paddingHorizontal: 20, paddingBottom: 40, gap: 16 },
 });

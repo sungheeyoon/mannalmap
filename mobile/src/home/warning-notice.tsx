@@ -6,7 +6,7 @@ import { SUPPORT_EMAIL } from '@brand';
 
 import { useClient } from '@/auth/connected';
 import { PrimaryButton } from '@/ui/parts';
-import { COLOR, FONT, TYPE } from '@/ui/tokens';
+import { COLOR, FONT, TYPE, TYPE_BODY } from '@/ui/tokens';
 import { CardFrame } from '@/ui/surfaces';
 
 import { acknowledgeWarning, readWarningNotice } from './warning';
@@ -61,6 +61,6 @@ const styles = StyleSheet.create({
   card: { gap: 12, padding: 20, borderColor: COLOR.dangerLine, backgroundColor: COLOR.dangerWash },
   title: { fontFamily: FONT.bold, fontSize: TYPE.lead, color: COLOR.danger },
   lines: { gap: 4 },
-  line: { fontFamily: FONT.medium, fontSize: TYPE.body, lineHeight: 24, color: COLOR.foreground },
+  line: { ...TYPE_BODY },
   failure: { fontFamily: FONT.medium, fontSize: TYPE.small, color: COLOR.danger },
 });
