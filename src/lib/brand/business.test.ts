@@ -4,7 +4,7 @@ import { BUSINESS, BUSINESS_INFO, PRIVACY_OPERATOR, type RawBusinessInfo, busine
 import { SUPPORT_EMAIL } from './index';
 import type { LegalDocument } from './legal-text';
 import { REFUND_EFFECTIVE_DATE, REFUND_REVISED_ON, checkoutRefundLine, refundPolicyFor, refundRequestLine } from './refund';
-import { TERMS_EFFECTIVE_DATE, TERMS_REVISED_ON, termsFor } from './terms';
+import { TERMS_EFFECTIVE_DATE, TERMS_REVISED_LATER_ON, TERMS_REVISED_ON, termsFor } from './terms';
 
 /** 시험용 값 — 실제 사업자 값(`BUSINESS`)과 따로 둔다. 고르는 규칙만 잰다 */
 const FULL: RawBusinessInfo = {
@@ -202,7 +202,9 @@ describe('무료 · 예외 풀이권의 기한 — 없다 (ADR 0235)', () => {
     const revisedLine = terms.filter((text) => text.startsWith('개정 약관'));
     expect(revisedLine).toEqual([
       '개정 약관(제13조⑥ · 제14조④)은 2026-11-07부터 시행합니다.',
-      ...(TERMS_REVISED_ON ? [`개정 약관(제16조③ · 제18조 · 제23조② · 제25조① · 제30조②)은 ${TERMS_REVISED_ON}부터 시행합니다.`] : []),
+      ...(TERMS_REVISED_ON
+        ? [`개정 약관(제10조 · 제16조③ · 제18조 · 제25조① · 제30조②)은 ${TERMS_REVISED_ON}부터 시행합니다.`, `개정 약관(제4조② · 제23조②)은 ${TERMS_REVISED_LATER_ON}부터 시행합니다.`]
+        : []),
     ]);
   });
 });
@@ -211,7 +213,7 @@ describe('무료 · 예외 풀이권의 기한 — 없다 (ADR 0235)', () => {
  * ADR 0275 — 근거 문서(`docs/legal/terms-grounds.md` 「변호사 물음을 갈음한 근거 — 약관」)의 권고를 옮긴 다섯 조항과 그 공지.
  * 이용자에게 불리하지 않은 변경이라 시행 7일 전 공지(제4조②)다 — 공지는 약관 · 환불정책 머리의 「개정 안내」다.
  */
-describe('2026-12 개정 — 다섯 조항과 개정 안내 (ADR 0275)', () => {
+describe('2026-12 개정 — 일곱 조항과 개정 안내 (ADR 0275)', () => {
   const termsDoc = termsFor(businessInfoFrom(FULL), SITE);
   const terms = textsOf(termsDoc);
   const refund = textsOf(refundPolicyFor(businessInfoFrom(FULL)));
@@ -231,11 +233,15 @@ describe('2026-12 개정 — 다섯 조항과 개정 안내 (ADR 0275)', () => {
     const article18 = terms.findLast((text) => text.startsWith('미성년자가 법정대리인의 동의 없이'));
     expect(article18).toContain('이미 쓴 풀이권 몫까지 모두 돌려드리고');
     expect(article18).toContain('위약금이나 환불수수료를 받지 않으며, 제16조의2제1항의 금액도 청구하지 않습니다');
-    expect(article18).toContain('취소는 이메일(help@example.com)로 알립니다');
+    expect(article18).toContain('취소하려면 이메일(help@example.com)로 알려 주십시오');
   });
 
-  it('이용 제한의 통지는 전자우편 또는 서비스 안 알림이고, 조정기관에 한국저작권위원회가 든다', () => {
-    expect(terms.some((text) => text.startsWith('회사는 조치를 하면 그 사실과 사유를 곧바로 계정의 전자우편 또는 서비스 안 알림(제10조)으로 알리고'))).toBe(true);
+  it('통지 셋(제4조② · 제10조 · 제23조②)은 전자우편이 먼저이고 없거나 보낼 수 없으면 서비스 안 알림이며, 조정기관에 한국저작권위원회가 든다', () => {
+    expect(terms.some((text) => text.startsWith('회사는 조치를 하면 그 사실과 사유를 곧바로 계정의 전자우편으로 알리고, 전자우편이 없거나 보낼 수 없으면 서비스 안 알림으로 알리며'))).toBe(true);
+    expect(terms.some((text) => text.includes('계정의 전자우편으로 따로 알리되 전자우편이 없거나 보낼 수 없으면 서비스 안 알림으로 알립니다'))).toBe(true);
+    expect(terms.some((text) => text.startsWith('회사는 개별 통지를 계정의 전자우편으로 하고, 전자우편이 없거나 보낼 수 없으면 서비스 안 알림으로 합니다'))).toBe(true);
+    /* 옛 글은 개정 안내의 「이전」 칸에만 남는다 */
+    expect(textsOf({ ...termsDoc, parts: termsDoc.parts.slice(1) }).join(' ')).not.toContain('계정의 전자우편으로도 알립니다.');
     expect(terms.some((text) => text.includes('「저작권법」에 따른 한국저작권위원회, 「콘텐츠산업진흥법」에 따른 콘텐츠분쟁조정위원회'))).toBe(true);
   });
 
@@ -245,13 +251,23 @@ describe('2026-12 개정 — 다섯 조항과 개정 안내 (ADR 0275)', () => {
     expect(notice.title).toBe('개정 안내');
     const blocks = notice.sections[0].blocks;
     const compare = blocks.find((block) => block.kind === 'table');
-    expect(compare?.kind === 'table' ? compare.table.rows.map((row) => row[0]) : []).toEqual(['제16조③', '제18조', '제23조②', '제25조①', '제30조②']);
+    expect(compare?.kind === 'table' ? compare.table.rows.map((row) => [row[0], row[3]]) : []).toEqual([
+      ['제4조②', TERMS_REVISED_LATER_ON],
+      ['제10조', TERMS_REVISED_ON],
+      ['제16조③', TERMS_REVISED_ON],
+      ['제18조', TERMS_REVISED_ON],
+      ['제23조②', TERMS_REVISED_LATER_ON],
+      ['제25조①', TERMS_REVISED_ON],
+      ['제30조②', TERMS_REVISED_ON],
+    ]);
+    /* 불리한 쪽(30일)은 7일 쪽보다 23일 이상 늦다 — 같은 공지일에서 7일 · 30일 */
+    expect((Date.parse(TERMS_REVISED_LATER_ON) - Date.parse(TERMS_REVISED_ON ?? '')) / 86_400_000).toBeGreaterThanOrEqual(23);
     for (const row of compare?.kind === 'table' ? compare.table.rows : []) {
       expect(row[1]).not.toBe(row[2]);
       expect(terms.filter((text) => text === row[2]).length).toBeGreaterThanOrEqual(2);
     }
     expect(terms.some((text) => text.includes(`${TERMS_REVISED_ON}부터 시행합니다`))).toBe(true);
-    expect(terms.some((text) => text.startsWith('시행일 전날까지') && text.includes('위약금을 받지 않습니다(제4조③)'))).toBe(true);
+    expect(terms.some((text) => text.startsWith('각 조항의 시행일 전날까지') && text.includes('위약금을 받지 않습니다(제4조③)'))).toBe(true);
     expect(refund.some((text) => text.startsWith(`이 환불정책은 ${REFUND_REVISED_ON}부터 아래처럼 바뀌어요`))).toBe(true);
   });
 });
