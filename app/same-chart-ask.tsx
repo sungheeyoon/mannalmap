@@ -70,7 +70,7 @@ export function SameChartAsk({
     >
       <div>
         <p className="text-body font-semibold leading-6">
-          저장된 {question.label} 님과 같은 사람인가요?
+          저장된 {question.label}님과 같은 사람인가요?
         </p>
         {/*
           무엇이 같아서 묻는지 한 문장만 적는다(2026-11-08 운영자 결정) — 고르면 어떻게 되는지는 두 단추가 말한다.

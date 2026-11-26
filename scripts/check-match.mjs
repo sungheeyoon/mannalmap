@@ -243,7 +243,7 @@ try {
   {
     const news = plain(await body('/me/requests', bCookie));
     check('대화가 왔다는 소식이 종의 소식에 뜨고 그 방으로 간다',
-      news.includes(`${NAME.a} 님이 대화를 시작했어요`) && news.includes(`href="/me/chat/${roomId}"`));
+      news.includes(`${NAME.a}님이 대화를 시작했어요`) && news.includes(`href="/me/chat/${roomId}"`));
     check('받은 대화의 도착은 종의 수에 선다', (await bell(b)) === '1', await bell(b));
     check('연 쪽에는 알림이 서지 않는다 — 자기가 한 일이다',
       (await bell(a)) === '0', await bell(a));
@@ -336,13 +336,13 @@ try {
 
     const asker = plain(await body('/me/requests', aCookie));
     check('출생 정보를 고치면 기다리던 상세 요청이 무효가 된다',
-      asker.includes(`${NAME.c} 님과의 요청이 출생 정보가 바뀌어 무효가 됐어요`));
+      asker.includes(`${NAME.c}님과의 요청이 출생 정보가 바뀌어 무효가 됐어요`));
     check('대화는 명식에 안 매여 그대로다',
       sql(`select status from public.match_request where id = '${asked2.data}'`) === 'accepted');
 
     const other = plain(await body('/me/requests', cCookie));
     check('무효화는 양쪽 다 알림을 받는다',
-      other.includes(`${NAME.a} 님과의 요청이 출생 정보가 바뀌어 무효가 됐어요`));
+      other.includes(`${NAME.a}님과의 요청이 출생 정보가 바뀌어 무효가 됐어요`));
   }
 
   // ── 9. 차단은 대화와 성립한 Match 까지 거둔다 ───────────────────────────────

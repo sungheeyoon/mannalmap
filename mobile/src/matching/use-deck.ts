@@ -111,7 +111,7 @@ export function useDeck({
       return result.message;
     }
     dispatch({ type: 'restore', card: result.card, passed: result.passed });
-    setFlash(`${back.nickname} 님을 카드 맨 앞으로 가져왔어요.`);
+    setFlash(`${back.nickname}님을 카드 맨 앞으로 가져왔어요.`);
     return null;
   };
 
@@ -122,7 +122,7 @@ export function useDeck({
   /** 차단했다 — 덱에서 뺀다(`seen` 에도 적혀 다시 안 선다) */
   const blocked = (card: DeckCard) => {
     dispatch({ type: 'leave', id: card.candidateUserId });
-    setFlash(`${card.nickname} 님을 차단했어요.`);
+    setFlash(`${card.nickname}님을 차단했어요.`);
   };
 
   return {

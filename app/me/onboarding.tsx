@@ -60,7 +60,7 @@ export function Onboarding({ nickname }: { nickname: string }) {
       <header className="flex flex-col gap-2 max-sm:px-3">
         <h2 className={TYPE_TITLE}>내 사주 등록</h2>
         <p className="max-w-prose text-body leading-6 text-secondary">
-          <strong className="font-semibold text-foreground">{nickname}</strong> 님의 출생 정보를 입력해 주세요.
+          <strong className="font-semibold text-foreground">{nickname}</strong>님의 출생 정보를 입력해 주세요.
         </p>
       </header>
 

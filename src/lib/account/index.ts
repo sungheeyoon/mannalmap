@@ -64,12 +64,12 @@ const suspensionReasonText = (reason: string | null): string | null =>
 /**
  * 정지 화면의 본문 — 운영자 확정 문구 그대로다(2026-10-17, 후보 C 이용제한형과 그날의 답, 대장 `all-03`).
  *
- * 「{닉네임} 님은 {갈래} 사유로 이용제한 중이에요. 저장된 자료는 그대로 있어요. 이의가 있으면 {고객 문의 이메일}으로 소명해 주세요.」
- * 갈래를 모르면 「{갈래} 사유로 」를, 닉네임을 모르면(문을 못 읽었을 때 — 확정 문구에서 뺀 모양) 「{닉네임} 님은 」을 뺀다. 고객 문의 이메일은 화면이
+ * 「{닉네임}님은 {갈래} 사유로 이용제한 중이에요. 저장된 자료는 그대로 있어요. 이의가 있으면 {고객 문의 이메일}으로 소명해 주세요.」
+ * 갈래를 모르면 「{갈래} 사유로 」를, 닉네임을 모르면(문을 못 읽었을 때 — 확정 문구에서 뺀 모양) 「{닉네임}님은 」을 뺀다. 고객 문의 이메일은 화면이
  * `SUPPORT_EMAIL`(`src/lib/brand`)을 읽어 넘긴다 — `account` 는 `brand` 를 부르지 않는다(경고 안내와 같다).
  */
 function suspendedDetail(suspension: Suspension | null, supportEmail: string): string {
-  const who = suspension?.nickname ? `${suspension.nickname} 님은 ` : '';
+  const who = suspension?.nickname ? `${suspension.nickname}님은 ` : '';
   const phrase = suspensionReasonText(suspension?.reason ?? null);
   const why = phrase === null ? '' : `${phrase} 사유로 `;
   return `${who}${why}이용제한 중이에요. 저장된 자료는 그대로 있어요. 이의가 있으면 ${supportEmail}으로 소명해 주세요.`;

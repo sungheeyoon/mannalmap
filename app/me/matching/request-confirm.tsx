@@ -40,7 +40,7 @@ export function RequestConfirm({
           </span>
         </div>
       }
-      title={`${profile.nickname} ${TALK_START_TITLE}`}
+      title={`${profile.nickname}${TALK_START_TITLE}`}
       confirmLabel={TALK_START_LABEL}
       onConfirm={onConfirm}
       busy={busy}

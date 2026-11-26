@@ -340,7 +340,7 @@ test.describe('초대된 사람의 로그인 흐름', () => {
     await expect(page.getByRole('heading', { name: '내 사주 등록' })).toBeVisible();
 
     await expect(page.getByLabel('이름')).toHaveCount(0);
-    await expect(page.getByText(`${newcomer.label} 님의 출생 정보를 입력해 주세요.`)).toBeVisible();
+    await expect(page.getByText(`${newcomer.label}님의 출생 정보를 입력해 주세요.`)).toBeVisible();
     await fillBirthDate(page, '1990-05-15');
     await fillBirthTime(page, '14:30');
 
@@ -1305,7 +1305,7 @@ test.describe('초대된 사람의 로그인 흐름', () => {
     /* ← 는 판 밖 위의 작은 글자 「홈」(2026-10-26) — 머리글의 「홈」 탭과 갈라 본문 안에서 찾는다 */
     await page.getByRole('main').getByRole('link', { name: '홈', exact: true }).click();
     await expect(page).toHaveURL(/\/me$/);
-    await expect(page.getByRole('heading', { level: 1, name: `${signedIn.nickname} 님, 오늘도 반가워요` })).toBeVisible();
+    await expect(page.getByRole('heading', { level: 1, name: `${signedIn.nickname}님, 오늘도 반가워요` })).toBeVisible();
   });
 
   /**
@@ -1317,7 +1317,7 @@ test.describe('초대된 사람의 로그인 흐름', () => {
     await page.goto('/privacy');
     await page.goto('/');
     await expect(page).toHaveURL(/\/me$/);
-    await expect(page.getByRole('heading', { level: 1, name: `${signedIn.nickname} 님, 오늘도 반가워요` })).toBeAttached();
+    await expect(page.getByRole('heading', { level: 1, name: `${signedIn.nickname}님, 오늘도 반가워요` })).toBeAttached();
 
     await page.goBack();
     await expect(page).toHaveURL(/\/privacy$/);
@@ -1570,7 +1570,7 @@ test.describe('초대된 사람의 로그인 흐름', () => {
     await page.getByRole('button', { name: '사주풀이 받기', exact: true }).click();
 
     const ask = page.getByRole('group', { name: '같은 사람인지 확인' });
-    await expect(ask).toContainText('저장된 어머니 님과 같은 사람인가요?');
+    await expect(ask).toContainText('저장된 어머니님과 같은 사람인가요?');
     // 무엇이 같아서 묻는지 한 문장만 선다 — 풀이권 이야기는 걷었다(2026-11-08 운영자 결정)
     await expect(ask).toContainText('여덟 글자와 태어난 시각이 같습니다.');
     await expect(ask).not.toContainText('풀이권');

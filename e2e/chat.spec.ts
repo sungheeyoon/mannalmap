@@ -135,12 +135,12 @@ test.describe('매칭된 한 쌍의 채팅', () => {
 
     const { a, b, tag, room } = await pair(openAs);
 
-    // 목록에 상대가 서고, 눌러 들어가면 제목이 「{닉네임} 님」이다
+    // 목록에 상대가 서고, 눌러 들어가면 제목이 「{닉네임}님」이다
     await a.page.goto('/me/chat');
     await expect(a.page.getByText(CHAT_EMPTY_TITLE)).toHaveCount(0);
     await a.page.getByRole('link', { name: new RegExp(`나${tag}`) }).click();
     await expect(a.page).toHaveURL(new RegExp(`${room}$`));
-    await expect(a.page.getByRole('heading', { name: `나${tag} 님` })).toBeVisible();
+    await expect(a.page.getByRole('heading', { name: `나${tag}님` })).toBeVisible();
 
     const hello = `안녕하세요 ${tag}`;
     await a.page.getByPlaceholder(CHAT_INPUT_PLACEHOLDER).fill(hello);
@@ -150,7 +150,7 @@ test.describe('매칭된 한 쌍의 채팅', () => {
     await expect(a.page.getByPlaceholder(CHAT_INPUT_PLACEHOLDER)).toHaveValue('');
     await openRoomMenu(a);
     await a.page.getByRole('button', { name: '신고', exact: true }).click();
-    const reportDialog = a.page.getByRole('dialog', { name: `나${tag} 님 신고` });
+    const reportDialog = a.page.getByRole('dialog', { name: `나${tag}님 신고` });
     await expect(reportDialog.getByLabel('신고 사유')).toBeVisible();
     await expect(reportDialog.getByRole('button', { name: '신고하기' })).toBeVisible();
     await expect(reportDialog.getByRole('group', { name: '신고할 메시지를 골라 주세요' })).toHaveCount(0);
@@ -204,15 +204,15 @@ test.describe('매칭된 한 쌍의 채팅', () => {
     const card = a.page.getByRole('region', { name: DETAIL_DOOR_LABEL });
     await expect(card).toHaveAttribute('data-detail-state', 'ready');
     await expect(card.getByRole('link', { name: DETAIL_ACTION_SEE })).toHaveAttribute('href', `/me/match/${matchId}?from=chat`);
-    await a.page.locator('[data-chat-room] header').getByRole('button', { name: `나${tag} 님 자세히`, exact: true }).click();
-    const sheet = a.page.getByRole('dialog', { name: `나${tag} 님 자세히` });
+    await a.page.locator('[data-chat-room] header').getByRole('button', { name: `나${tag}님 자세히`, exact: true }).click();
+    const sheet = a.page.getByRole('dialog', { name: `나${tag}님 자세히` });
     await expect(sheet).toBeVisible();
     const sheetRow = sheet.getByRole('link', { name: /^궁합/ });
     await expect(sheetRow).toHaveAttribute('href', `/me/match/${matchId}?from=chat`);
     await sheetRow.click();
     await expect(a.page).toHaveURL(new RegExp(`/me/match/${matchId}\\?from=chat$`));
     /* 제목이 상대를 부른다(화면 점검 C12) */
-    await expect(a.page.getByRole('heading', { name: `나${tag} 님 궁합 결과`, exact: true })).toBeVisible();
+    await expect(a.page.getByRole('heading', { name: `나${tag}님 궁합 결과`, exact: true })).toBeVisible();
     await expect(lit).toHaveCount(1);
     await expect(lit).toContainText(/^인연/);
 
@@ -238,7 +238,7 @@ test.describe('매칭된 한 쌍의 채팅', () => {
     await b.page.goto(room);
     await roomMenuOf(b).click();
     await b.page.locator('[data-chat-room] header').getByRole('button', { name: '내 프로필', exact: true }).click();
-    const sheet = b.page.getByRole('dialog', { name: `나${tag} 님 자세히` });
+    const sheet = b.page.getByRole('dialog', { name: `나${tag}님 자세히` });
     await expect(sheet).toBeVisible();
     await expect(sheet.getByLabel('신고 · 차단', { exact: true })).toHaveCount(0);
     await sheet.getByRole('link', { name: MY_PROFILE_EDIT_LABEL, exact: true }).click();

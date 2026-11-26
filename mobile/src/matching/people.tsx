@@ -89,7 +89,7 @@ export function PartnerSheet({ partner, open, onClose, menu }: { partner: Partne
   const [at, setAt] = useState(0);
   const intro = partner.intro !== null && partner.intro.trim() !== '' ? partner.intro : null;
   return (
-    <DetailSheet open={open} title={`${partner.nickname} 님 자세히`} onClose={onClose} menu={menu}>
+    <DetailSheet open={open} title={`${partner.nickname}님 자세히`} onClose={onClose} menu={menu}>
       <Tile tone={COLOR.surfaceSunken} style={styles.photoFrame}>
         <PersonPhoto
           userId={partner.userId}
@@ -160,7 +160,7 @@ export function BlockDialog({ userId, nickname, open, onClose, onBlocked }: { us
         setFailure(null);
         onClose();
       }}
-      title={`${nickname} 님을 차단할까요?`}
+      title={`${nickname}님을 차단할까요?`}
       confirmLabel={working ? '차단하는 중…' : '차단하기'}
       onConfirm={block}
       danger
@@ -200,7 +200,7 @@ export function ReportDialog({ userId, nickname, open, onClose, onBlock }: { use
   };
 
   return (
-    <DetailSheet open={open} title={`${nickname} 님 신고`} onClose={close}>
+    <DetailSheet open={open} title={`${nickname}님 신고`} onClose={close}>
       {reported ? (
         <WordText style={styles.body} accessibilityRole="alert">
           {REPORT_DONE}

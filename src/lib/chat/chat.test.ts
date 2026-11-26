@@ -86,7 +86,7 @@ describe('보내기 전에 앱이 막는 둘', () => {
 
 describe('화면의 글자', () => {
   it('방 제목은 닉네임 뒤에 「님」', () => {
-    expect(roomTitleOf('지영')).toBe('지영 님');
+    expect(roomTitleOf('지영')).toBe('지영님');
   });
 
   /** 기계의 시간대가 무엇이든 한국 시각이다 — CI 와 Vercel 은 UTC 다 */

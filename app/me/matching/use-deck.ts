@@ -124,7 +124,7 @@ export function useDeck({
     /* 꽉 찬 보관함에서는 지나침이 끝 사람을 밀어낸다 — 실패하면 그 사람까지 되세우게 지나치기 전 목록을 든다 */
     const before = { passed: deck.passed, history: deck.history };
     dispatch({ type: 'pass', card: passing });
-    leave('left', `${passing.nickname} 님을 지나친 인연에 두었어요.`, passing.candidateUserId);
+    leave('left', `${passing.nickname}님을 지나친 인연에 두었어요.`, passing.candidateUserId);
     const putBack = (message: string) => {
       cancelLeave();
       dispatch({ type: 'unpass', card: passing, before });
@@ -170,8 +170,8 @@ export function useDeck({
         if (!result.ok) { message = result.message; setFailure(message); return; }
         cancelLeave();
         dispatch({ type: 'restore', card: result.card, passed: result.passed });
-        setAnnouncement(`${back.nickname} 님을 카드 맨 앞으로 가져왔어요.`);
-        setFlash(`${back.nickname} 님을 카드 맨 앞으로 가져왔어요.`);
+        setAnnouncement(`${back.nickname}님을 카드 맨 앞으로 가져왔어요.`);
+        setFlash(`${back.nickname}님을 카드 맨 앞으로 가져왔어요.`);
       } catch {
         message = '카드를 되돌리지 못했어요. 잠시 뒤 다시 시도해 주세요.';
         setFailure(message);
@@ -191,7 +191,7 @@ export function useDeck({
    */
   function blocked(card: DeckCard) {
     dispatch({ type: 'leave', id: card.candidateUserId });
-    const said = `${card.nickname} 님을 차단했어요.`;
+    const said = `${card.nickname}님을 차단했어요.`;
     setAnnouncement(said);
     setFlash(said);
   }

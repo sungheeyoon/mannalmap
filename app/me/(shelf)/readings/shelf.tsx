@@ -152,7 +152,7 @@ export function MakingMatchRow({ match, href, kind }: { match: InboxMatch; href:
       <MakingMini />
       <span className="flex min-w-0 flex-1 flex-col gap-1">
         {kind !== undefined && <span className={KIND_TAG}>{kind}</span>}
-        <span className="truncate text-body font-semibold text-foreground">{match.nickname} 님과의 궁합풀이</span>
+        <span className="truncate text-body font-semibold text-foreground">{match.nickname}님과의 궁합풀이</span>
         <span className="text-small font-semibold text-cream-ink">궁합풀이 {READING_MAKING}</span>
         <Supplied match={match} />
       </span>
@@ -245,7 +245,7 @@ function MakingMini() {
  * 궁합 = 두 사람의 색이 비스듬히 만나는 표지. 점수가 크게 선다.
  *
  * `source` 는 궁합 탭의 보관함만 단다(ADR 0129) — 직접 본 궁합과 인연 궁합이 한 줄에 섞여 서므로 어디서 왔는지 작은
- * 딱지로 가른다. 책장은 제목(「… 님과의 궁합풀이」)이 이미 말하므로 안 단다.
+ * 딱지로 가른다. 책장은 제목(「…님과의 궁합풀이」)이 이미 말하므로 안 단다.
  */
 export function PairCover({
   book,
@@ -396,7 +396,7 @@ export function MakingShelf({
                   <Avatar userId={match.partnerUserId} nickname={match.nickname} hasPhoto={match.hasPhoto} focus={match.photoFocus} size={56} />
                   <span className="min-w-0 flex-1">
                     <span className="block truncate text-lead font-semibold text-foreground">
-                      {match.nickname} 님과의 궁합풀이
+                      {match.nickname}님과의 궁합풀이
                     </span>
                     {supplied.length > 0 && (
                       <span className="mt-0.5 flex items-center gap-1 text-small text-cream-ink">

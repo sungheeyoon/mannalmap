@@ -148,7 +148,7 @@ try {
     const opened = await get(ROOM, cookie.b);
     const html = plain(await opened.text());
     check('방이 열린다', opened.status === 200, String(opened.status));
-    check('제목은 「{닉네임} 님」이다', html.includes(`${NAME.a} 님`));
+    check('제목은 「{닉네임}님」이다', html.includes(`${NAME.a}님`));
     check('메시지가 선다', html.includes(hello));
     check('입력 칸과 보내기가 선다', html.includes(CHAT_INPUT_PLACEHOLDER) && html.includes(CHAT_SEND_LABEL));
     check('상대의 이메일과 출생 원문은 방 화면에 새지 않는다',

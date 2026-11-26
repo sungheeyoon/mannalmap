@@ -205,28 +205,28 @@ export function notificationText({
       return creditText('회수', credits);
     /* 대화가 열렸다 — 받은 사람의 소식이다(ADR 0215) */
     case 'request_received':
-      return who === '' ? '대화가 시작됐어요' : `${who} 님이 대화를 시작했어요`;
+      return who === '' ? '대화가 시작됐어요' : `${who}님이 대화를 시작했어요`;
     case 'detail_requested':
       return who === ''
         ? '상세 궁합을 함께 만들자는 요청이 왔어요'
-        : `${who} 님이 상세 궁합을 함께 만들자고 했어요`;
+        : `${who}님이 상세 궁합을 함께 만들자고 했어요`;
     /* 옛 앱의 수락 단추가 대화에 답했다 — 방은 이미 열려 있다 */
     case 'request_accepted':
-      return who === '' ? '채팅방이 열렸어요' : `${who} 님과 채팅방이 열렸어요`;
+      return who === '' ? '채팅방이 열렸어요' : `${who}님과 채팅방이 열렸어요`;
     case 'request_rejected':
-      return who === '' ? '상대가 요청을 거절했어요' : `${who} 님이 요청을 거절했어요`;
+      return who === '' ? '상대가 요청을 거절했어요' : `${who}님이 요청을 거절했어요`;
     case 'request_invalidated':
       return who === ''
         ? '출생 정보가 바뀌어 요청이 무효가 됐어요'
-        : `${who} 님과의 요청이 출생 정보가 바뀌어 무효가 됐어요`;
+        : `${who}님과의 요청이 출생 정보가 바뀌어 무효가 됐어요`;
     case 'request_expired':
       return who === ''
         ? '답이 없어 요청이 만료됐어요. 잡고 있던 풀이권은 돌아왔어요.'
-        : `${who} 님에게 보낸 요청이 만료됐어요. 잡고 있던 풀이권은 돌아왔어요.`;
+        : `${who}님에게 보낸 요청이 만료됐어요. 잡고 있던 풀이권은 돌아왔어요.`;
     case 'reading_ready': {
       /* 상세 궁합 — 완성 소식은 시도 대신 Match 를 가리켜 `readingKind` 가 없다. 두 사람 다 같은 문장으로 상대를 부른다 */
       if (readingKind === null || readingKind === 'match') {
-        return who === '' ? '상세 궁합이 완성됐어요' : `${who} 님과의 상세 궁합이 완성됐어요`;
+        return who === '' ? '상세 궁합이 완성됐어요' : `${who}님과의 상세 궁합이 완성됐어요`;
       }
       return `${readyReadingName(readingKind, readingLabels)}가 완성됐어요`;
     }
@@ -243,7 +243,7 @@ export function notificationText({
         const retry = tappable ? '이 알림을 눌러 다시 시도해 주세요.' : '대화방에서 다시 시도해 주세요.';
         return who === ''
           ? `상세 궁합을 만들지 못했어요. ${retry}`
-          : `${who} 님과의 상세 궁합을 만들지 못했어요. ${retry}`;
+          : `${who}님과의 상세 궁합을 만들지 못했어요. ${retry}`;
       }
       const retry = tappable ? '이 알림을 눌러 다시 시도해 주세요.' : '만들던 풀이 화면에서 다시 시도해 주세요.';
       return `${FAILED_READING_NAME[readingKind ?? 'unknown']}를 만들지 못했어요. ${retry}`;

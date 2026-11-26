@@ -115,12 +115,12 @@ export default function MatchScreen() {
           </>
         }
       >
-        <Pressable accessibilityRole="button" accessibilityLabel={`${result.partnerNickname} 님 자세히`} onPress={() => setSheet(true)}>
+        <Pressable accessibilityRole="button" accessibilityLabel={`${result.partnerNickname}님 자세히`} onPress={() => setSheet(true)}>
           <Face userId={result.partnerUserId} nickname={result.partnerNickname} hasPhoto={result.partnerPhotoCount > 0} focus={result.partnerPhotoFocus[0]} size={40} tone={null} />
         </Pressable>
         <View style={styles.flex}>
           <WordText style={styles.name} numberOfLines={1} accessibilityRole="header">
-            {result.partnerNickname} 님
+            {result.partnerNickname}님
           </WordText>
           <WordText style={styles.meta}>궁합 결과</WordText>
         </View>

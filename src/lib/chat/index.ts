@@ -97,8 +97,8 @@ export const CHAT_TAB_LABEL = '채팅';
 /** 안 읽은 수 뒤에 보조기기가 읽는 말 — 웹의 딱지(`site-header.tsx` · `room-list.tsx`)와 앱의 종 · 탭 이름이 같은 글자를 쓴다 */
 export const UNREAD_WORDS = '건 안 읽음';
 
-/** 방 제목 — `{닉네임} 님` */
-export const roomTitleOf = (nickname: string): string => `${nickname} 님`;
+/** 방 제목 — `{닉네임}님` */
+export const roomTitleOf = (nickname: string): string => `${nickname}님`;
 
 /**
  * 방 안의 제목 — 상대가 떠났으면 **「탈퇴한 사용자」 그대로** 선다. 「님」을 붙이지 않는다 —
