@@ -379,7 +379,7 @@ export const tasteBlockingOf = (findings: readonly TasteCheckFinding[]): TasteCh
   findings.filter((finding) => TASTE_BLOCKING_CODES.has(finding.code));
 
 const HANJA = /[一-鿿]/;
-/** 화면에 「AI」를 새로 세우지 않는다(운영자 2026-09-29) — 글 안에서도 */
+/** 모델 글 안에는 「AI」를 쓰지 않는다(운영자 2026-09-29) — 결과물 표시는 화면 틀의 「AI 풀이」 딱지가 든다(ADR 0276) */
 const AI_WORD = /\bAI\b|인공지능/;
 const MARKUP = /(^|\n)\s*(#|[-*] |\d+\. )|\*\*|__|`/;
 /**

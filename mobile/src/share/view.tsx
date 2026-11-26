@@ -7,6 +7,7 @@ import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Markdown } from '@/reading/markdown';
+import { AiBadge } from '@/ui/ai-badge';
 import { Icon } from '@/ui/icons';
 import { Logo } from '@/ui/logo';
 import { ScoreGauge } from '@/ui/score-gauge';
@@ -61,7 +62,11 @@ function OpenScreen({ shared, expect }: { shared: SharedReading; expect: ShareKi
         </Pressable>
 
         <View style={styles.head}>
-          <WordText style={styles.eyebrow}>{eyebrow}</WordText>
+          {/* 밖으로 보낸 글이라 머리에 「AI 풀이」 딱지(ADR 0276) — 웹 `app/share/view.tsx` 와 같다 */}
+          <View style={styles.eyebrowRow}>
+            <WordText style={styles.eyebrow}>{eyebrow}</WordText>
+            <AiBadge />
+          </View>
         </View>
 
         {expect === 'private' && (metaphor !== null || score !== null) ? (
@@ -182,6 +187,7 @@ const styles = StyleSheet.create({
   brandRow: { flexDirection: 'row', alignItems: 'center', gap: 8, minHeight: 44, marginHorizontal: 4 },
   brand: { fontSize: TYPE.heading, fontFamily: FONT.bold, color: COLOR.foreground },
   head: { gap: 6 },
+  eyebrowRow: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 8 },
   eyebrow: { fontSize: TYPE.small, fontFamily: FONT.bold, color: COLOR.creamInk },
   title: { ...TYPE_TITLE },
   cover: { padding: 0, overflow: 'hidden' },

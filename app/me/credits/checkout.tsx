@@ -11,7 +11,7 @@ import {
   won,
 } from '@/src/lib/reading/bundle';
 
-import { CHECKOUT_FREE_FIRST_NOTE, CHECKOUT_PROVIDED_NOTE, CHECKOUT_REFUND_NOTE } from '@/src/lib/reading/notes';
+import { CHECKOUT_FREE_FIRST_NOTE, CHECKOUT_MINOR_NOTE, CHECKOUT_PROVIDED_NOTE, CHECKOUT_REFUND_NOTE } from '@/src/lib/reading/notes';
 
 import { BUTTON_TERTIARY_FACE } from '../../ui/buttons';
 import { TYPE_META, TYPE_NAME } from '../../ui/surfaces';
@@ -21,7 +21,7 @@ import { LEARN_MORE } from '@/src/lib/account/words';
 /**
  * **풀이권 묶음 · 유의사항** (G-21, ADR 0175 · 0212).
  *
- * 리디 충전 화면의 꼴이다(ADR 0175) — 묶음 목록 → 그 아래 작은 글씨 유의사항 네 줄과 「자세히 알아보기」(`/refund`). 이용약관 ·
+ * 리디 충전 화면의 꼴이다(ADR 0175) — 묶음 목록 → 그 아래 작은 글씨 유의사항 다섯 줄(다섯째는 미성년자 취소 고지, ADR 0276)과 「자세히 알아보기」(`/refund`). 이용약관 ·
  * 처리방침은 바닥글이 든다. 유의사항의 환불 신청 줄(`refundLine`)은 서버가 사업자 이메일로 지어 넘긴다(`checkoutRefundLine`).
  *
  * 유효기간 줄은 두지 않는다 — 산 몫은 무기한이다(ADR 0212, 대장 credits-11). 무료 몫도 기한이 없다(ADR 0235).
@@ -79,6 +79,7 @@ export function Checkout({ refundLine, back }: { refundLine: string; back: Retur
           <li>{refundLine}</li>
           <li>{CHECKOUT_PROVIDED_NOTE}</li>
           <li>{CHECKOUT_FREE_FIRST_NOTE}</li>
+          <li>{CHECKOUT_MINOR_NOTE}</li>
         </ul>
         <Link href={withReturnTo('/refund?from=credits', back)} className={`${BUTTON_TERTIARY_FACE} self-start text-fine font-medium text-secondary`}>
           {LEARN_MORE}

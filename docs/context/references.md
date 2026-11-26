@@ -90,6 +90,9 @@
 | 포스텔러 | 「내 포스 내역」 — 잔액 한 줄 아래 「충전 내역 / 사용 내역」 탭 | [웹](https://www.forceteller.com/force/history) | 2026-11-21 | B′ | credits-18 · ADR 0263 |
 | 밀리의서재 | 결제 내역의 상태 「환불 완료」 | [웹](https://www.millie.co.kr/v3/order/history) | 2026-11-21 | B′ | ADR 0263 |
 | 토스 TDS | 목록의 보조 정보 · 상태를 오른쪽에 맞춘다 | [문서](https://tossmini-docs.toss.im/tds-mobile/llms-full.txt) | 2026-11-21 | A | credits-18 · ADR 0263 |
+| TVING | 이용권 화면 「계정 및 결제」 둘째 줄 「미성년자가 콘텐츠를 구매할 경우 반드시 법정대리인의 동의가 필요하며, 동의 없이 구매한 경우에는 법정대리인이 취소할 수 있습니다.」 — 결제 유의사항 목록의 한 줄 | [이용권](https://www.tving.com/membership/tving) | 2026-11-26 | A | credits-21 · ADR 0276 |
+| 웨이브 | 이용권 유의사항 「만 20세 미만의 미성년자의 유료서비스 이용은 법정대리인이 이를 취소할 수 있습니다. (단, 결제 수단의 명의자가 성년인 경우에는 취소 제한)」 | [이용권](https://www.wavve.com/voucher) | 2026-11-26 | A | credits-21 · ADR 0276 |
+| 라프텔 | 멤버십 유의사항 「미성년자 회원은 법정대리인의 명의 또는 동의를 통해 결제해야 하며, 동의 없이 결제된 경우 법정대리인이 이를 취소할 수 있습니다.」 | [멤버십](https://laftel.net/membership) | 2026-11-26 | A | credits-21 |
 
 ### 확인 창 · 시트 · 스낵바
 
@@ -253,6 +256,9 @@
 | 헬로우봇 | 「사주를 처음 접하는 사람도 이해하기 쉽게 풀이」 · 「200개 이상 사주, 타로 평생 무료 제공」 | [App Store](https://apps.apple.com/kr/app/id1294957719) | 2026-11-02 | B | 11-02 노트 §2 |
 | 점신 | 용어 설명 「세운(世運): 해마다 바뀌는 간지가 …」 · 「지지 속에 숨은 천간의 힘」 · 궁위 표 「일주 — 나 자신 …」 | [웹](https://www.jeomsin.co.kr/) | 2026-11-07 | — | first-05 · compat-01 |
 | Apple 지원 (해외) | 문서 끝 「도움이 되었습니까?」 한 줄 — 접힌 풀이 의견의 가장 가까운 사례 | [지원](https://support.apple.com/ko-kr/105071) | 2026-10-26 | — | home-08 |
+| 네이버 검색 | 생성형 답의 머리 표시 「AI 브리핑」(아이콘 + 글자) · 펼친 끝 「AI 답변으로 정확하지 않은 정보가 포함될 수 있어요.」 — 390 · 1280 둘 다 머리 왼쪽 | [검색](https://m.search.naver.com/search.naver?query=%EC%82%AC%EC%A3%BC%20%EC%98%A4%ED%96%89%EC%9D%B4%EB%9E%80) | 2026-11-26 | A | home-20 · first-09 · ADR 0276 |
+| 줌 검색 | 생성형 답의 머리 딱지 「AI 1초 요약」 · 끝 「AI 답변으로 부정확한 정보가 포함될 수 있습니다.」 | [검색](https://m.search.zum.com/search.zum?query=%EC%82%AC%EC%A3%BC%20%EC%98%A4%ED%96%89) | 2026-11-26 | A | home-20 · first-09 · ADR 0276 |
+| 헬로우봇 | 「AI가 생성한 이미지는 1년간 유효하니 미리 다운받아주세요.」 — 화면은 못 봤다 | [문구 파일](https://hellobot.co/assets/i18n/ko.json) | 2026-11-26 | B′ | home-20 |
 
 ### 호칭 · 표기
 
