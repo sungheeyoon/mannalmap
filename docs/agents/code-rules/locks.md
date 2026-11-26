@@ -22,7 +22,7 @@ CI 가 왜 그 차선을 돌았나는 `plan` 로그의 `reason` 에 있다. 결�
 | `import/no-default-export` | 웹 `src/` · `scripts/` · `e2e/`, 앱 `mobile/src/app` 밖(Expo Router 는 라우트의 default export 를 화면으로 읽는다) | `export default` |
 | `NO_TYPE_ESCAPES` · `reportUnusedDisableDirectives` | 웹 · 앱 | `any` · `@ts-ignore` · `@ts-nocheck` · 안 걸리는 예외 표시 |
 | `--max-warnings 0` | 웹 `npm run lint` · 정책 차선 `npx eslint scripts/` · 앱 `npx expo lint`(`.github/workflows/verify.yml`) | 경고 하나도 실패다. `_` 로 시작하는 이름 · `...rest` 로 버린 칸은 안 센다 |
-| `scripts/code-rules.test.ts` | — | 이름 규약 · ADR 이름과 참조 · 입구 문서와 운영 주석의 경로 · 탈출구 지문 · `@ts-expect-error` 0 · 주석의 TODO 류와 날짜 · import 따옴표 · `CLAUDE.md` 600 바이트 · 문구 대장 「확인 전」의 출처 · 대장 절 번호 · ADR 추기 수 · 라운드 노트의 `→ 놓은 자리`. 주석만 바뀐 PR 은 정책 차선만 돌아 린트가 `app/` 을 안 보니 이 시험이 확인한다 |
+| `scripts/code-rules.test.ts` | — | 이름 규약 · ADR 이름과 참조 · 입구 문서와 운영 주석의 경로 · 탈출구 지문 · `@ts-expect-error` 0 · 주석의 TODO 류와 날짜 · import 따옴표 · `CLAUDE.md` + `AGENTS.md` 4,000 바이트 · 문구 대장 「확인 전」의 출처 · 대장 절 번호 · ADR 추기 수. 주석만 바뀐 PR 은 정책 차선만 돌아 린트가 `app/` 을 안 보니 이 시험이 확인한다 |
 | `app/db-error.boundary.test.ts` | 웹 `src/` · `app/`, 앱 `mobile/src/` | 오류 원문을 집는 파일 — `docs/agents/code-rules/failures.md` 「실패를 말하는 법」 |
 | `scripts/mobile-closure.test.ts` | `mobile/src` 에서 import 로 닿는 파일 | 앱 번들에서 안 풀리는 것(웹 별칭 `@/` · `next` · Node 내장 · 없는 패키지 · Hermes 에 없는 내장), 뿌리가 `mobile/` 을 import 하는 것 |
 | `scripts/mobile-screen-db.test.ts` | `mobile/src` | 앱 화면의 `.rpc()` · `.from()`, 같은 RPC 를 앱의 문 둘 이상이 부르는 것 |

@@ -40,8 +40,6 @@
 
 ## 닿을 때 여는 것
 
-손대기 전에 다 읽지 않는다 — 일이 그 자리에 닿을 때 연다(ADR 0147).
-
 - 잠긴 자리와 볼 자리를 가르려면 → [무엇이 잠겨 있나](../architecture.md#무엇이-잠겨-있나--그리고-무엇이-아닌가) — 잠기지 않은 자리가 볼 곳이다
 - 머지 전 PR 의 코드를 넓게 읽거나 판정 함수를 그 PR 의 코드로 돌리려면 → [일하는 법](../agents/delegation/working.md#일하는-법--세션마다-다시-배우던-것) — `git fetch origin pull/<N>/head:pr-<N>` 뒤 `git archive -o <스크래치>/x.tar pr-<N>` · `tar -xf`. 그 사본에서는 `git ls-files` 잠금이 늘 붉다 — 판정이 아니다
 - 셸 명령이 `cannot be shown …` · `… too complex to verify …` 로 거절되면 → [로컬 환경의 함정](../agents/delegation/local-env.md#로컬-환경의-함정) — 워크트리 격리가 막는 명령과 돌아가는 길

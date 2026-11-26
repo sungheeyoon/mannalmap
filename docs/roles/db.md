@@ -24,8 +24,6 @@
 
 ## 닿을 때 여는 것
 
-손대기 전에 다 읽지 않는다 — 일이 그 자리에 닿을 때 연다(ADR 0147).
-
 - 운영 데이터가 필요하면 → [개인정보는 화면으로만](../ops/runbook/access.md#개인정보는-화면으로만--원격-sql-의-경계-adr-0105) — 원격 SQL 의 경계 · 접속기록
 - 표 · 함수의 모양을 바꾸면 → [ADR 0084](../adr/0084-the-shape-is-asserted-not-only-the-behaviour.md) — 모양을 잠근다
 - pgTAP 이 어디까지 닿나 궁금하면 → [시험은 넷이고](../agents/test-map/kinds.md#시험은-넷이고-층마다-닿는-것이-다르다)
