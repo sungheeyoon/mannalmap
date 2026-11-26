@@ -11,8 +11,8 @@ import { describe, expect, it } from 'vitest';
 import { analyzeCompatibility, computeSaju } from '../saju';
 import { buildMatchPreview, matchBasisOf, type MatchBasis } from '.';
 
-const ROMANTIC: MatchBasis = { version: 'v2-beta', policy: 'romantic' };
-const GENERAL: MatchBasis = { version: 'v2-beta', policy: 'general' };
+const ROMANTIC: MatchBasis = { version: 'v3-beta', policy: 'romantic' };
+const GENERAL: MatchBasis = { version: 'v3-beta', policy: 'general' };
 const LEGACY: MatchBasis = { version: 'discovery-v1' };
 
 const chart = (year: number, month: number, day: number, hour: number | null) =>
@@ -44,7 +44,7 @@ describe('궁합 베타 지표', () => {
       ROMANTIC,
     );
 
-    expect(preview.policyVersion).toBe('v2-beta');
+    expect(preview.policyVersion).toBe('v3-beta');
     expect(preview.policy).toBe('romantic');
     expect(preview.status).toBe('beta');
 
@@ -131,6 +131,26 @@ describe('궁합 베타 지표', () => {
     );
   });
 
+  /**
+   * **옮기기 전의 판(`v2-beta`) 풀이는 그 판으로 그린다**(ADR 0279). 축 · 무게는 지금 판과 같고, 기준점을 안 들었으면 옮김
+   * 없이 다시 잰다 — 그 풀이 점수가 움직여 나온 자리다. 사이는 알던 판이라 딱지가 선다.
+   */
+  it('옛 판 v2-beta 는 지금 판의 축으로, 옮기지 않은 수로 그린다', () => {
+    const charts = { a: chart(1990, 5, 15, 14), b: chart(1992, 8, 20, 9) };
+    const compat = analyzeCompatibility(charts.a, charts.b);
+    const names = { a: '민수', b: '지영' };
+    const old = buildMatchPreview(charts, compat, names, { version: 'v2-beta', policy: 'romantic' });
+    const now = buildMatchPreview(charts, compat, names, ROMANTIC);
+
+    expect(old.policyVersion).toBe('v2-beta');
+    expect(old.policy).toBe('romantic');
+    expect(old.dimensions).toEqual(now.dimensions);
+    expect(old.index).toBe(
+      previewScoreOf(scoreSideOf(charts.a), scoreSideOf(charts.b), { policy: 'romantic', version: 'v2-beta' }),
+    );
+    expect(now.index - old.index).toBe(DISCOVERY_POLICY.offset.romantic);
+  });
+
   /** 풀이가 들고 있는 기준점이 곧 지표다 — 지금 다시 재지 않는다 */
   it('저장된 기준점이 오면 그 수를 세운다', () => {
     const charts = { a: chart(1990, 5, 15, 14), b: chart(1992, 8, 20, 9) };
@@ -186,13 +206,23 @@ describe('지표의 판은 풀이가 정한다', () => {
   it('새 판 풀이는 그때의 사이와 기준점으로 그린다 — 지금 고친 사이를 따르지 않는다', () => {
     expect(
       matchBasisOf(
-        { version: 'v2-beta', baseline: 58, relation: 'family' },
+        { version: 'v3-beta', baseline: 58, relation: 'family' },
         { matched: false, relation: 'partner' },
       ),
     ).toEqual({ ...GENERAL, index: 58 });
     expect(
-      matchBasisOf({ version: 'v2-beta', baseline: 70, relation: null }, { matched: true, relation: null }),
+      matchBasisOf({ version: 'v3-beta', baseline: 70, relation: null }, { matched: true, relation: null }),
     ).toEqual({ ...ROMANTIC, index: 70 });
+  });
+
+  /** 옮기기 전에 만든 풀이 — 그 판 그대로 다시 연다. 지금 판의 옮긴 수를 옆에 세우지 않는다(ADR 0279) */
+  it('v2-beta 풀이는 v2-beta 로, 그 풀이가 든 기준점으로 다시 연다', () => {
+    expect(
+      matchBasisOf({ version: 'v2-beta', baseline: 56, relation: 'partner' }, { matched: false, relation: 'family' }),
+    ).toEqual({ version: 'v2-beta', policy: 'romantic', index: 56 });
+    expect(
+      matchBasisOf({ version: 'v2-beta', baseline: null, relation: null }, { matched: false, relation: 'partner' }),
+    ).toEqual({ version: 'v2-beta', policy: 'general' });
   });
 
   it('판이 안 적힌 풀이는 옛 판이다', () => {

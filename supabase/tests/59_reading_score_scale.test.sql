@@ -1,14 +1,14 @@
--- 궁합풀이가 **그 점수를 잰 눈금**을 든다 (ADR 0113, `20261025150000`)
+-- 궁합풀이가 **그 점수를 잰 눈금**을 든다 (ADR 0113, `20261025150000` · ADR 0279, `20270125090000`)
 --
--- 여기서 잠그는 것 다섯.
+-- 여기서 잠그는 것 다섯. 새 앱이 적는 판은 `v3-beta` 다 — 옮기기 전의 `v2-beta` 는 옛 앱이 계속 적는다.
 --
 --   1. `prepare_reading_job` 이 적은 기준점 · 판 · 사이가 저장하는 문을 지나 풀이에 그대로 옮겨진다
 --   2. `my_reading` 이 끝의 세 칸으로 그것을 내준다
 --   3. 눈금 없이 얼린 작업(옛 앱)의 풀이는 세 칸이 비고 — 그것이 옛 판 `discovery-v1` 이다
---   4. 모르는 판 · 모르는 사이 · 범위 밖 기준점은 막힌다
+--   4. 모르는 판 · 모르는 사이 · 범위 밖 기준점은 막힌다 — 옛 판 이름(`v2-beta`)은 받는다
 --   5. 한 사람 풀이에는 눈금이 없다
 begin;
-select plan(9);
+select plan(10);
 
 /** 풀이권은 여기서 안 잰다 — 시도를 여는 것이 목적이다(58번과 같은 손잡이) */
 create or replace function public.reading_credit_limit()
@@ -74,14 +74,14 @@ grant select on runs to authenticated, service_role;
 -- ── 1 · 2. 얼린 눈금이 풀이로, 풀이에서 읽는 문으로 ─────────────────────────
 
 reset role;
-select ok(pg_temp.prepare((select fresh from runs), 58::smallint, 'v2-beta', 'family'),
+select ok(pg_temp.prepare((select fresh from runs), 58::smallint, 'v3-beta', 'family'),
   '프롬프트와 같은 걸음에 눈금을 얼린다');
 select isnt(pg_temp.save((select fresh from runs), 61::smallint), null, '궁합풀이를 저장한다');
 
 select is(
   (select array[score_baseline::text, score_version, score_relation] from public.reading
    where source_run_id = (select fresh from runs)),
-  array['58', 'v2-beta', 'family'],
+  array['58', 'v3-beta', 'family'],
   '풀이 행이 얼린 기준점 · 판 · 사이를 그대로 든다');
 
 set local role authenticated;
@@ -91,7 +91,7 @@ select is(
    from public.my_reading('private',
      least((select mom from kin), (select dad from kin)),
      greatest((select mom from kin), (select dad from kin)))),
-  array['61', '58', 'v2-beta', 'family'],
+  array['61', '58', 'v3-beta', 'family'],
   '읽는 문이 점수 옆에 그 점수를 잰 눈금을 낸다');
 
 -- ── 3. 눈금 없이 얼린 작업 — 옛 앱 ─────────────────────────────────────────
@@ -133,6 +133,9 @@ select throws_ok(
 select throws_ok(
   $$select pg_temp.prepare((select run from odd), 58::smallint, 'v2-beta', 'lover')$$,
   '23514', null, '모르는 사이는 얼리지 못한다');
+-- 막는 셋 뒤에 둔다 — 얼리고 나면 작업이 `submitting` 이라 다시 얼리는 문이 행을 못 찾는다
+select ok(pg_temp.prepare((select run from odd), 56::smallint, 'v2-beta', null),
+  '옮기기 전의 판 이름도 받는다 — 배포 사이의 옛 앱이 적는다');
 
 -- ── 5. 한 사람 풀이에는 눈금이 없다 ───────────────────────────────────────
 

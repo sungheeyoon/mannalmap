@@ -4,6 +4,7 @@ import {
   DISCOVERY_DISCLOSURE,
   DISCOVERY_POLICY,
   DISCOVERY_V1,
+  DISCOVERY_V2_BETA,
   SCORE_POLICIES,
   boardNotes,
   balanceLabelOf,
@@ -30,17 +31,18 @@ import { computeSaju, type Element } from '../saju';
  * `supabase/tests/09_discovery_board.test.sql` 이 잰다. 여기 남은 것은 정책의 선언과
  * 말이다 — 값(가중치·밴드 경계)은 SQL 에도 하나씩 있어서 양쪽이 같은 수를 든다.
  */
-describe('v2-beta 는 정책을 값으로 든다', () => {
+describe('v3-beta 는 정책을 값으로 든다', () => {
   /**
-   * 사이로 가른 두 공식(ADR 0113). 연인용 40 · 40 · 20, 일반 60 · 40(운영자 2026-09-25).
-   * 무게는 근거가 아니라 가설이라 **값으로 여기 붙든다** — 고치면 이 기대값이 깨져 사람이 한 번 본다.
+   * 사이로 가른 두 공식(ADR 0113). 연인용 40 · 40 · 20, 일반 60 · 40(운영자 2026-09-25). 평균을 60 에 두는 옮김은 연인용 +4 ·
+   * 일반 −1(ADR 0279). 무게도 옮김도 근거가 아니라 가설 · 잰 값이라 **값으로 여기 붙든다** — 고치면 이 기대값이 깨져 사람이 한 번 본다.
    */
-  it('연인용은 일주 40 · 보완 40 · 균형 20, 일반은 보완 60 · 균형 40 을 쓴다', () => {
-    expect(DISCOVERY_POLICY.version).toBe('v2-beta');
+  it('연인용은 일주 40 · 보완 40 · 균형 20, 일반은 보완 60 · 균형 40 을 쓰고, 평균을 60 에 두려 4 · −1 을 더한다', () => {
+    expect(DISCOVERY_POLICY.version).toBe('v3-beta');
     expect(DISCOVERY_POLICY.weights).toEqual({
       romantic: { dayPillar: 0.4, needComplement: 0.4, combinedBalance: 0.2 },
       general: { needComplement: 0.6, combinedBalance: 0.4 },
     });
+    expect(DISCOVERY_POLICY.offset).toEqual({ romantic: 4, general: -1 });
     for (const policy of SCORE_POLICIES) {
       const sum = Object.values(DISCOVERY_POLICY.weights[policy]).reduce((total, w) => total + w, 0);
       expect(sum, policy).toBeCloseTo(1, 10);
@@ -57,6 +59,11 @@ describe('v2-beta 는 정책을 값으로 든다', () => {
       version: 'discovery-v1',
       weights: { complement: 0.3, combinedBalance: 0.7 },
     });
+  });
+
+  /** 옮기기 전의 판 — 무게는 지금 판과 같고 옮김이 없다(ADR 0279) */
+  it('옛 판 v2-beta 는 옮김이 없다', () => {
+    expect(DISCOVERY_V2_BETA).toEqual({ version: 'v2-beta', offset: { romantic: 0, general: 0 } });
   });
 
   it('정렬만 한다 — 문턱이 없다', () => {
@@ -198,23 +205,24 @@ describe('previewSummaryFor 는 점수를 말로 옮긴다', () => {
 
   /**
    * **경계는 분포를 일곱으로 나눈 자리다** — 좋은 궁합의 객관적 경계가 아니다. `v2-beta` 연인용 점수(중앙값 56 ·
-   * sd 11.3)를 옛 `discovery-v1` 경계가 받던 몫대로 잘랐다(`adults` 5000 쌍). 점수 계산을 고치면 이 일곱 수도
+   * sd 11.3)를 옛 `discovery-v1` 경계가 받던 몫대로 자른 75·66·58·50·43·33 에, `v3-beta` 가 더한 4 를 그대로 더했다 —
+   * 칸마다의 몫이 한 자리도 안 바뀐다(ADR 0279, `adults` 5000 쌍). 점수 계산을 고치면 이 일곱 수도
    * 다시 재야 하므로, 경계를 값으로 여기 붙든다.
    */
   it('일곱 구간을 분포에 맞춘 경계로 가른다', () => {
     expect(verdictAt(100)).toBe('아주 좋은 궁합일 수 있어요.');
-    expect(verdictAt(75)).toBe('아주 좋은 궁합일 수 있어요.');
-    expect(verdictAt(74)).toBe('좋은 궁합에 가까워요.');
-    expect(verdictAt(66)).toBe('좋은 궁합에 가까워요.');
-    expect(verdictAt(65)).toBe('꽤 잘 맞는 편이에요.');
-    expect(verdictAt(58)).toBe('꽤 잘 맞는 편이에요.');
-    expect(verdictAt(57)).toBe('무난하게 어울리는 편이에요.');
-    expect(verdictAt(50)).toBe('무난하게 어울리는 편이에요.');
-    expect(verdictAt(49)).toBe('조금 엇갈리는 부분이 있어요.');
-    expect(verdictAt(43)).toBe('조금 엇갈리는 부분이 있어요.');
-    expect(verdictAt(42)).toBe('잘 맞지 않는 부분이 있는 편이에요.');
-    expect(verdictAt(33)).toBe('잘 맞지 않는 부분이 있는 편이에요.');
-    expect(verdictAt(32)).toBe('서로 다른 부분이 많은 편이에요.');
+    expect(verdictAt(79)).toBe('아주 좋은 궁합일 수 있어요.');
+    expect(verdictAt(78)).toBe('좋은 궁합에 가까워요.');
+    expect(verdictAt(70)).toBe('좋은 궁합에 가까워요.');
+    expect(verdictAt(69)).toBe('꽤 잘 맞는 편이에요.');
+    expect(verdictAt(62)).toBe('꽤 잘 맞는 편이에요.');
+    expect(verdictAt(61)).toBe('무난하게 어울리는 편이에요.');
+    expect(verdictAt(54)).toBe('무난하게 어울리는 편이에요.');
+    expect(verdictAt(53)).toBe('조금 엇갈리는 부분이 있어요.');
+    expect(verdictAt(47)).toBe('조금 엇갈리는 부분이 있어요.');
+    expect(verdictAt(46)).toBe('잘 맞지 않는 부분이 있는 편이에요.');
+    expect(verdictAt(37)).toBe('잘 맞지 않는 부분이 있는 편이에요.');
+    expect(verdictAt(36)).toBe('서로 다른 부분이 많은 편이에요.');
     expect(verdictAt(0)).toBe('서로 다른 부분이 많은 편이에요.');
   });
 
@@ -226,7 +234,7 @@ describe('previewSummaryFor 는 점수를 말로 옮긴다', () => {
    * 단정형으로 새도 나머지 여섯의 조심이 무너진다.
    */
   it('일곱 칸 모두 단정하지 않는 꼴로 닫는다', () => {
-    for (const score of [100, 75, 66, 58, 50, 43, 33, 0]) {
+    for (const score of [100, 79, 70, 62, 54, 47, 37, 0]) {
       expect(verdictAt(score), String(score)).toMatch(
         /(일 수 있어요|에 가까워요|편이에요|부분이 있어요)\.$/,
       );
@@ -278,15 +286,43 @@ describe('previewScoreOf 는 정책을 받아 한 자로 잰다', () => {
     [chartOf(2000, 2, 29, 6), chartOf(1999, 12, 31, 12)],
   ] as const;
 
-  it('연인용은 세 축에 40 · 40 · 20, 일반은 두 축에 60 · 40 을 곱한다', () => {
+  it('연인용은 세 축에 40 · 40 · 20, 일반은 두 축에 60 · 40 을 곱하고, 다 더한 뒤 4 · −1 을 더한다', () => {
     for (const [a, b] of pairs) {
       const axes = scoreAxesOf(scoreSideOf(a), scoreSideOf(b));
       expect(previewScoreOf(scoreSideOf(a), scoreSideOf(b), { policy: 'romantic' })).toBe(
-        Math.round(0.4 * axes.dayPillar + 0.4 * axes.needComplement + 0.2 * axes.combinedBalance),
+        Math.round(0.4 * axes.dayPillar + 0.4 * axes.needComplement + 0.2 * axes.combinedBalance + 4),
       );
       expect(previewScoreOf(scoreSideOf(a), scoreSideOf(b), { policy: 'general' })).toBe(
+        Math.round(0.6 * axes.needComplement + 0.4 * axes.combinedBalance - 1),
+      );
+    }
+  });
+
+  /** 옮기기 전의 판으로 만든 풀이를 다시 여는 자리 — 같은 축 · 같은 무게, 옮김만 없다(ADR 0279) */
+  it('v2-beta 로 재면 옮김 없이 가중합만 반올림한다', () => {
+    for (const [a, b] of pairs) {
+      const axes = scoreAxesOf(scoreSideOf(a), scoreSideOf(b));
+      expect(previewScoreOf(scoreSideOf(a), scoreSideOf(b), { policy: 'romantic', version: 'v2-beta' })).toBe(
+        Math.round(0.4 * axes.dayPillar + 0.4 * axes.needComplement + 0.2 * axes.combinedBalance),
+      );
+      expect(previewScoreOf(scoreSideOf(a), scoreSideOf(b), { policy: 'general', version: 'v2-beta' })).toBe(
         Math.round(0.6 * axes.needComplement + 0.4 * axes.combinedBalance),
       );
+    }
+  });
+
+  /** 일반의 −1 이 가중합 0 근처를 0 아래로 보내지 않는다 — 점수는 0~100 이다(풀이의 기준점 칸도 0~100) */
+  it('옮긴 수는 0~100 으로 자른다', () => {
+    const empty = { 木: 0, 火: 0, 土: 0, 金: 0, 水: 0 };
+    const side = {
+      pillars: scoreSideOf(pairs[0][0]).pillars,
+      summary: { glyphCount: 8, counts: { ...empty, 土: 8 }, ratios: { ...empty, 土: 1 } },
+      need: { primary: '水', heaviest: '土' },
+    } as const;
+    for (const policy of SCORE_POLICIES) {
+      const score = previewScoreOf(side, side, { policy });
+      expect(score, policy).toBeGreaterThanOrEqual(0);
+      expect(score, policy).toBeLessThanOrEqual(100);
     }
   });
 

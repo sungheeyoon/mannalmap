@@ -482,7 +482,7 @@ describe('궁합은 기준점의 눈금을 함께 얼린다', () => {
   it('가족 사이는 일반 눈금이고, 실은 기준점은 프롬프트의 수다', async () => {
     const args = await scaleOf({ names: null, relation: 'family' });
 
-    expect(args?.p_score_version).toBe('v2-beta');
+    expect(args?.p_score_version).toBe('v3-beta');
     expect(args?.p_score_relation).toBe('family');
     expect(args?.p_score_baseline).toBe(baselineIn(args?.p_prompt as string));
   });
@@ -490,7 +490,7 @@ describe('궁합은 기준점의 눈금을 함께 얼린다', () => {
   it('사이를 모르면 사이 칸을 싣지 않는다 — DB 기본값 null 이 모른다이다', async () => {
     const args = await scaleOf({ names: null, relation: null });
 
-    expect(args?.p_score_version).toBe('v2-beta');
+    expect(args?.p_score_version).toBe('v3-beta');
     expect(args).not.toHaveProperty('p_score_relation');
   });
 });

@@ -91,8 +91,9 @@ describe('인연 소개 (#940)', () => {
 
   it('예시의 판정은 그 점수 칸의 실제 글자다', () => {
     const table = read('src/lib/discovery/index.ts');
-    expect(table).toContain(`[75, '${MATCHING_INTRO_EXAMPLE.verdict}']`);
-    expect(MATCHING_INTRO_EXAMPLE.score).toBeGreaterThanOrEqual(75);
+    // 맨 위 칸의 경계 — 평균을 60 에 둔 뒤로 79 다(ADR 0279). 예시 80 은 그대로 그 칸이다
+    expect(table).toContain(`[79, '${MATCHING_INTRO_EXAMPLE.verdict}']`);
+    expect(MATCHING_INTRO_EXAMPLE.score).toBeGreaterThanOrEqual(79);
   });
 
   it('규칙은 카드 · 방 · 약관과 같은 상수를 읽고, 없는 본인인증을 약속하지 않는다', () => {

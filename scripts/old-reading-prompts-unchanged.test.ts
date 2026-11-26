@@ -27,15 +27,19 @@ const privateOf = (relation: 'partner' | 'family' | 'friend'): string =>
  *
  * **옛 컷(원복 조립)의 지문은 뺐다**(ADR 0239) — 운영이 부르지 않는 그 조립을 지웠다. 남은 여섯은 지우기 전 main(`dc074b06`)의
  * 값 그대로다 — 지우기와 파일 나누기가 운영 글자를 한 바이트도 안 바꿨다는 뜻이다.
+ *
+ * **궁합 넷의 지문은 기준점의 수가 바꿨다**(ADR 0279) — 이 표본의 기준점이 연인용 73 → 77 · 일반 72 → 71 이 됐다(평균을 60 에 두는
+ * 옮김). 지시는 한 글자도 안 바뀌었다 — 기준점 블록의 수를 옛 수로 되돌리면 옛 지문(`73744d34…` · `75602aae…` · `357ed101…` ·
+ * `feb2ae68…`)이 그대로 선다. 그래서 판 이름을 안 올렸다 — 기준점의 눈금은 풀이의 `score_version` 이 든다.
  */
 const UNCHANGED_AT: Readonly<Record<string, Readonly<Record<string, string>>>> = {
   'reading-prompt-v25|reading-prompt-v23|reading-prompt-detail-v1': {
     self: '2f0cc082c78e94985ab354cf4739ce3b6ea21a7ad69823dd21d0539a94efb63c',
     private: 'b6377ce9a19ed5e412272597489a321d39ac97e5ec41eaf2ce138b036bd8be11',
-    match: '73744d348e98f5ce60b41b2d132973295df751b8917045a4334efa9fdc89d31f',
-    partner: '75602aae354340a1b8663dddcc59235786c2589eed24085b5831ceab0159ff32',
-    family: '357ed101b19b5694fc5e6bccf9b66dafff2f607018e829e869c1be6f051c7735',
-    friend: 'feb2ae683c89559ec012b2cc15b2fc0300916baeee5b557a9edc9f58e7872031',
+    match: '39899dee314da489479b8e73076063184de60bfcccdac2c328fb831b8880cbd5',
+    partner: '33b95d9e9044a71124410de101724d3809b7a15039728afb5e7049178483daf7',
+    family: 'e0d9d2ccdb3ff7d20a57a50b0d2e1807ec2bba5430f251cda155c2aa4bbf8aba',
+    friend: '0f8dad6393f47f03ea3016704a2958a6aa269223b1d9e1f8fe29aa32fe0482f9',
   },
 };
 

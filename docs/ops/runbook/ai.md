@@ -79,6 +79,48 @@ npm run db:remote -- --purpose "검사를 적은 시도 수" \
 `select check_findings from public.reading_run where id = '<시도 id>';` `reading_run` 은 이용자의 시도라 일상 집계에 열지 않는다
 (`docs/ops/runbook/access.md` 「개인정보는 화면으로만」). 뷰는 `service_role` 에도 닫혀 있다 — `db:remote` 로만 본다.
 
+## 궁합 점수의 분포 — 집계만 (ADR 0279)
+
+궁합풀이의 점수 · 기준점이 운영에서 어떻게 퍼졌나 — 판(`score_version`) · 정책(사이에서 다시 가른 것) · 상세 궁합 여부 · 검증 계정 여부로 묶은 집계다.
+**개인 칸이 없다** — 사람 · 계정 · 글 · 시각을 찍지 않고, 다섯 건 밑의 묶음은 내지 않는다. 사람이 검토해 보낸다(에이전트는 보내지 않는다).
+`moved` 는 모델이 기준점에서 움직인 몫(항목 조정 + 재량, ADR 0060 · 0065)이다 — 옛 판(`null`)은 기준점이 없어 비고, 판이 섞이지 않게 판으로 가른다.
+
+```bash
+npm run db:remote -- --purpose "궁합 점수 분포 집계" \
+  "with s as (
+     select r.kind,
+       coalesce(r.score_version, 'discovery-v1') as score_version,
+       case when r.score_version in ('v2-beta', 'v3-beta')
+            then case when r.kind = 'match' or r.score_relation = 'partner' then 'romantic' else 'general' end
+       end as policy,
+       r.prompt_version like 'reading-prompt-detail%' as detail,
+       exists (select 1 from public.verification_account v
+               where v.user_id in (r.owner_user_id,
+                 (select m.user_low from public.match m where m.id = r.match_id),
+                 (select m.user_high from public.match m where m.id = r.match_id))) as verification,
+       r.score, r.score_baseline
+     from public.reading r
+     where r.kind in ('private', 'match') and r.score is not null)
+   select kind, score_version, policy, detail, verification,
+     count(*) as n,
+     round(avg(score), 1) as score_mean,
+     round(stddev_pop(score), 1) as score_sd,
+     percentile_disc(array[0.05, 0.1, 0.25, 0.5, 0.75, 0.9, 0.95, 0.99]) within group (order by score) as score_q,
+     min(score) as score_min,
+     max(score) as score_max,
+     round(avg(score_baseline), 1) as baseline_mean,
+     percentile_disc(array[0.05, 0.5, 0.95]) within group (order by score_baseline) as baseline_q,
+     round(avg(score - score_baseline), 1) as moved_mean,
+     percentile_disc(array[0.05, 0.5, 0.95]) within group (order by score - score_baseline) as moved_q
+   from s
+   group by kind, score_version, policy, detail, verification
+   having count(*) >= 5
+   order by kind, score_version, policy, detail, verification;"
+```
+
+견줄 값은 비교기의 기준점 분포다(ADR 0279 「지금 분포」 — `v2-beta` 연인용 평균 55.6 · 일반 61.1, `v3-beta` 는 59.6 · 60.1). `score_mean` 이
+`baseline_mean` 보다 늘 높거나 낮으면 모델이 한쪽으로 움직이는 것이고, `moved_q` 의 끝이 ±25 에 붙으면 조정 폭이 좁다는 뜻이다.
+
 
 ---
 

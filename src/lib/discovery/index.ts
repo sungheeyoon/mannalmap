@@ -10,7 +10,8 @@ import { ELEMENTS, ELEMENT_KO, type Element, type Pillars } from '../saju';
  * 인연 찾기 — 아직 선택되지 않은 후보의 **노출 순서와 예측 궁합 점수**.
  *
  * 옛 `match-v0` 의 네 축 중 둘을 **일부러 뺐다**(ADR 0003) — 까닭은 아래 둘이다. 점수는
- * 궁합풀이의 기준점으로도 쓰인다(ADR 0060). 지금 판은 `v2-beta` 다(ADR 0113).
+ * 궁합풀이의 기준점으로도 쓰인다(ADR 0060). 지금 판은 `v3-beta` 다 — `v2-beta`(ADR 0113)의 무게 그대로, 평균을 60 에 맞춰
+ * 옮겼다(ADR 0279).
  *
  * - `dataCompleteness` — 사람의 적합성이 아니라 **우리 자료의 완성도**다. 순위에
  *   넣으면 출생시간을 모르는 사람이 사주가 안 맞아서가 아니라 입력이 덜 차서 덜
@@ -62,7 +63,8 @@ export type ScorePolicy = (typeof SCORE_POLICIES)[number];
  * - **일반** — 필요한 기운 보완 60 · 오행 균형 40(운영자가 2026-09-25 에 70 · 30 에서 고쳤다). 일주 · 일지는 풀이 글에서만 쓴다
  *
  * 세 축의 셈은 `compat-axes.ts`(일주 · 일지 · 필요한 기운 보완)와 `element-axes.ts`(오행 균형)에 있다.
- * 옛 `discovery-v1`(균형 70 · 개수 보완 30)은 저장된 옛 풀이를 읽는 자리에만 남는다(`DISCOVERY_V1`).
+ * 옛 `discovery-v1`(균형 70 · 개수 보완 30)과 옮기기 전의 `v2-beta` 는 저장된 옛 풀이를 읽는 자리에만 남는다
+ * (`DISCOVERY_V1` · `DISCOVERY_V2_BETA`).
  *
  * **줄 세우기는 SQL 이 한다.** 그 셈은 후보 카드에서 `예측 궁합 점수`로 보인다.
  *
@@ -72,7 +74,7 @@ export type ScorePolicy = (typeof SCORE_POLICIES)[number];
  * 참고 점수라고 밝힌다. 정확성은 그 한 줄이 들고, 이름은 무엇인지 말하는 일만 한다.
  */
 export const DISCOVERY_POLICY = {
-  version: 'v2-beta',
+  version: 'v3-beta',
   status: 'beta',
   /** 정렬만 하고 사람을 지우지 않는다 */
   behavior: 'rank-only',
@@ -82,6 +84,15 @@ export const DISCOVERY_POLICY = {
     romantic: { dayPillar: 0.4, needComplement: 0.4, combinedBalance: 0.2 },
     general: { needComplement: 0.6, combinedBalance: 0.4 },
   },
+  /**
+   * 가중합에 더하는 정수 — **평균을 60 에 맞춘다**(ADR 0279). 무게도 축도 그대로라 차례 · 퍼짐 · 두 쌍의 간격이 안 바뀐다.
+   *
+   * 수는 비교기(`src/lab/matching/formula-comparison/calibration.ts`)의 `adults` 5000 쌍에서 잰 가중합 평균(연인용 55.57 ·
+   * 일반 61.06)을 60 에서 뺀 값의 반올림이다 — 옮긴 뒤 59.6 · 60.1. 시나리오 여섯이 평균을 ±0.1 안에서만 움직인다.
+   * **무게나 축을 고치면 이 두 수도 다시 잰다**(`calibration.test.ts` 가 든다). 후보 카드는 연인용이라 SQL
+   * `discovery_preview_score_v2_of` 가 연인용 수 하나를 든다.
+   */
+  offset: { romantic: 4, general: -1 },
   /** 순위에 쓰지 않는 것 — 뺀 이유는 위 주석과 ADR 0003 에 있다 */
   excluded: [
     'dataCompleteness',
@@ -140,8 +151,27 @@ export const DISCOVERY_V1 = {
   },
 } as const;
 
+/**
+ * **옛 판 `v2-beta`** — 무게 · 축은 지금 판과 같고 평균을 옮기지 않은 판(ADR 0113).
+ *
+ * 남은 자리는 `DISCOVERY_V1` 과 같다 — 이 판으로 만든 궁합풀이를 다시 여는 화면 하나. 풀이는 만든 때의 기준점을 들고 있어서
+ * (ADR 0060) 그 옆에 옮긴 수를 세우면 같은 화면에 눈금이 둘이 된다. 새 점수를 이것으로 내지 않는다.
+ */
+export const DISCOVERY_V2_BETA = {
+  version: 'v2-beta',
+  offset: { romantic: 0, general: 0 },
+} as const;
+
+/** 무게가 사이를 따르는 판 — 지금 판과 옮기기 전의 판. 축과 무게가 같고 옮김만 다르다 */
+export type PolicyScoreVersion = typeof DISCOVERY_POLICY.version | typeof DISCOVERY_V2_BETA.version;
+
 /** 점수 판의 이름 — 풀이에 적힌 값을 읽는 자리가 모르는 이름을 옛 판으로 눕힌다 */
-export type ScoreVersion = typeof DISCOVERY_POLICY.version | typeof DISCOVERY_V1.version;
+export type ScoreVersion = PolicyScoreVersion | typeof DISCOVERY_V1.version;
+
+const OFFSET_OF: Record<PolicyScoreVersion, Record<ScorePolicy, number>> = {
+  [DISCOVERY_POLICY.version]: DISCOVERY_POLICY.offset,
+  [DISCOVERY_V2_BETA.version]: DISCOVERY_V2_BETA.offset,
+};
 
 /** 풀이에 적힌 점수의 출처 — 이 열들이 생기기 전 풀이는 셋 다 `null` 이고 그것이 옛 판이다 */
 export type StoredScore = {
@@ -210,20 +240,26 @@ export const scorePolicyOf = (pair: { matched: boolean; relation: string | null 
  *
  * 가중치는 `DISCOVERY_POLICY.weights` 에서 읽는다 — 손으로 옮겨 적으면 정책만 바뀌고 이 함수가 안
  * 따라오는 날이 온다.
+ *
+ * **옮김은 가중합을 다 더한 뒤 맨 끝에 더한다**(ADR 0279) — SQL 이 같은 차례로 더해야 두 셈이 같은 비트다. 옮기면 일반의
+ * 가중합 0 근처가 0 아래로 가므로 0~100 으로 자른다(카드의 SQL 도 같은 자리에서 자른다). `version` 은 옮기기 전의 판으로
+ * 만든 풀이를 다시 여는 자리만 넘긴다(`matchBasisOf`).
  */
 export function previewScoreOf(
   a: ScoreSide,
   b: ScoreSide,
-  { policy }: { policy: ScorePolicy },
+  {
+    policy,
+    version = DISCOVERY_POLICY.version,
+  }: { policy: ScorePolicy; version?: PolicyScoreVersion },
 ): number {
   const axes = scoreAxesOf(a, b);
   const weights: Partial<Record<keyof ScoreAxes, number>> = DISCOVERY_POLICY.weights[policy];
-  return Math.round(
-    (Object.keys(axes) as (keyof ScoreAxes)[]).reduce(
-      (sum, key) => sum + (weights[key] ?? 0) * axes[key],
-      0,
-    ),
+  const sum = (Object.keys(axes) as (keyof ScoreAxes)[]).reduce(
+    (total, key) => total + (weights[key] ?? 0) * axes[key],
+    0,
   );
+  return Math.max(0, Math.min(100, Math.round(sum + OFFSET_OF[version][policy])));
 }
 
 /**
@@ -271,7 +307,7 @@ type BoardRow = {
   /** 내 비율이 20%보다 낮은 오행 중 이 후보가 가진 것. 상대의 전체 구성이 아니다 */
   suppliedElements: readonly Element[];
   balanceBand: BalanceBand;
-  /** 예측 궁합 점수 — 연인용 정책(ADR 0113)의 참고값 */
+  /** 예측 궁합 점수 — 연인용 정책(ADR 0113)의 참고값, 평균 60 의 눈금(ADR 0279) */
   previewScore: number;
 };
 
@@ -302,26 +338,27 @@ const BALANCE_LABEL: Record<BalanceBand, string> = {
  * 왔다 — 일곱 칸이 저마다 대략 같은 몫의 쌍을 받도록 자른 자리다.
  *
  * `discovery-v1`(중앙값 64 · sd 8.8)에서 잰 옛 경계 78·72·66·60·54·46 은 위에서부터
- * 4.4% · 15.7% · 24.7% · 24.8% · 17.8% · 9.8% · 2.8% 를 받았다. `v2-beta` 연인용(중앙값 56 · sd 11.3 — 카드의
- * 점수다)에 그 몫을 그대로 옮기면 75·66·58·50·43·33 이고, 받는 몫은 4.4% · 15.3% · 24.5% · 26.4% · 16.6% ·
- * 10.3% · 2.5% 다. 잰 곳은 비교기의 `adults` 시나리오 5000 쌍(시드 20260925), 세기는 옛 엔진 기본과
- * 지금 기본(월지 ×2 · 지장간 60:30:10, ADR 0114) 두 벌이 같은 경계를 냈다(`docs/notes/archive/2026-Q3/2026-09-25-compat-formula-comparison.md`).
+ * 4.4% · 15.7% · 24.7% · 24.8% · 17.8% · 9.8% · 2.8% 를 받았다. `v2-beta` 연인용(중앙값 56 · sd 11.3)에 그 몫을
+ * 그대로 옮긴 경계가 75·66·58·50·43·33 이었고, 받는 몫은 4.4% · 15.3% · 24.5% · 26.4% · 16.6% · 10.3% · 2.5% 다.
+ * `v3-beta` 는 그 점수에 정수 4 를 더한 것이라(ADR 0279) 경계도 4 씩 올라 79·70·62·54·47·37 이고 칸마다의 몫은 한 자리도
+ * 안 바뀐다(중앙값 60 · sd 11.3 — 카드의 점수다). 잰 곳은 비교기의 `adults` 시나리오 5000 쌍(시드 20260925,
+ * `src/lab/matching/formula-comparison/calibration.ts`).
  * **점수 계산을 고치면 이 일곱 수도 다시 잰다** — 말이 분포를 따라가지 못하면 같은 카드에서 수와 문장이
  * 서로 다른 말을 한다. 문장은 그대로다.
  *
  * 문장은 모두 「-일 수 있어요 / -에 가까워요 / -편이에요」로 닫는다. 88점이 객관적인
  * 최고 궁합이라는 확정 판정은 이 제품이 낼 수 있는 말이 아니다.
  *
- * 경계는 **위쪽이 닫힌다**(75 이상, 66 이상 …) — 일곱 칸이 모두 한쪽 방향으로 읽히도록.
+ * 경계는 **위쪽이 닫힌다**(79 이상, 70 이상 …) — 일곱 칸이 모두 한쪽 방향으로 읽히도록.
  * 위에서 아래로 읽으니 `find` 가 처음 걸리는 칸이 곧 그 점수의 칸이다.
  */
 const PREVIEW_VERDICT: readonly (readonly [number, string])[] = [
-  [75, '아주 좋은 궁합일 수 있어요.'],
-  [66, '좋은 궁합에 가까워요.'],
-  [58, '꽤 잘 맞는 편이에요.'],
-  [50, '무난하게 어울리는 편이에요.'],
-  [43, '조금 엇갈리는 부분이 있어요.'],
-  [33, '잘 맞지 않는 부분이 있는 편이에요.'],
+  [79, '아주 좋은 궁합일 수 있어요.'],
+  [70, '좋은 궁합에 가까워요.'],
+  [62, '꽤 잘 맞는 편이에요.'],
+  [54, '무난하게 어울리는 편이에요.'],
+  [47, '조금 엇갈리는 부분이 있어요.'],
+  [37, '잘 맞지 않는 부분이 있는 편이에요.'],
   [0, '서로 다른 부분이 많은 편이에요.'],
 ];
 /** 이유 문장의 뒷 절 — 균형을 **어우러짐의 말로** 옮긴다 */
