@@ -8,6 +8,10 @@
  * - Bash: `git commit` 이 메인 체크아웃에서 돌면 — 앞의 `cd <곳>` 과 `git -C <곳>` 을 따라간다. 펼 수 없는 곳(`cd $WT` · `cd "$(…)"`)
  *   뒤의 commit 은 어디서 도는지 모르니 조용히 지난다 — 그 자리를 cwd 아래의 없는 폴더로 읽어 메인 체크아웃이라고 헛경고했다(G-173)
  * - 연결된 워크트리(어디에 섰든) · 저장소 밖 · 다른 저장소 · git 이 실패한 자리는 아무것도 안 찍는다
+ * - **연결된 워크트리에서 노드 도구를 부르는데 그 자리에 `node_modules/.bin` 이 없으면** 링크 · 복사 한 줄을 따로 건넨다 — 워크트리에는
+ *   `node_modules` 가 없고(있어도 `.vite` 만 든 껍데기일 수 있다), 2026-11-26 라운드에서 에이전트 다섯이 vitest · `next` 문서에서 같은
+ *   자리에 넘어졌다(`docs/notes/2026-11-26-full-audit-round.md` 「헤맨 것」). 앱 폴더(`mobile/`) 안이면 그 폴더의 것을 본다.
+ *   설치 · 링크 · 복사를 하는 명령(`npm ci` · 글자 `node_modules` 가 든 명령)과 펼 수 없는 `cd` 뒤는 지난다
  *
  * 메인 체크아웃인지는 경로가 아니라 git 이 답한다 — 메인 체크아웃은 `--git-dir` 이 `--git-common-dir` 과 같고, 연결된
  * 워크트리는 제 git-dir(`.git/worktrees/<이름>`)을 가진다. 같은 저장소인지는 세션의 자리(`CLAUDE_PROJECT_DIR`, 없으면 `cwd`)의
@@ -18,11 +22,15 @@
 import { execFileSync } from 'node:child_process';
 import { readFileSync, statSync } from 'node:fs';
 import { homedir } from 'node:os';
-import { dirname, isAbsolute, resolve } from 'node:path';
+import { dirname, isAbsolute, join, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 export const REMINDER =
   '메인 체크아웃에 쓰려 한다 — 워크트리에서 한다. 역할은 docs/start.md 「역할 고르기」, 까닭은 docs/agents/delegation/coordinator.md 「조율자 세션」.';
+
+/** 워크트리에 `node_modules` 가 없을 때의 한 줄 — 메인 체크아웃의 자리를 글자로 넣어 그대로 붙여 쓰게 한다 */
+export const modulesReminderOf = (main) =>
+  `이 워크트리에 node_modules 가 없다(또는 .vite 만 든 껍데기다) — 단위 · 타입 · 린트면 \`ln -s ${main}/node_modules .\`, dev 서버 · 흐름 · e2e 면 복사한다(WSL \`cp -a --reflink=auto ${main}/node_modules .\` · 맥 \`cp -Rc\`). 앱(mobile/)은 그 폴더에서 \`npm ci\`. 까닭은 docs/agents/delegation/local-env.md 「로컬 환경의 함정」.`;
 
 const isDirectory = (path) => {
   try {
@@ -133,9 +141,77 @@ export function touchesMainCheckout(input, projectDir) {
   return false;
 }
 
-/** PreToolUse 의 답 — 권한 결정 없이 일러 줄 한 줄만. 안 걸리면 아무것도 안 찍는다 */
-export function responseOf(touches) {
-  return touches ? JSON.stringify({ hookSpecificOutput: { hookEventName: 'PreToolUse', additionalContext: REMINDER } }) : '';
+/** `node_modules` 가 있어야 도는 명령의 첫 낱말 */
+const NODE_TOOLS = new Set(['npx', 'npm', 'vitest', 'tsc', 'next', 'eslint', 'playwright', 'expo']);
+/** 그 자리에 `node_modules` 를 까는 `npm` 의 둘째 낱말 — 일러 줄 까닭이 없다 */
+const NPM_INSTALLS = new Set(['ci', 'install', 'i', 'link']);
+
+/** 명령이 노드 도구를 도는 디렉터리들 — 앞의 `cd` 를 따라가고, `node scripts/heavy.mjs …` 는 감싼 명령으로 본다 */
+export function nodeToolDirsOf(command, cwd) {
+  if (command.includes('node_modules')) return [];
+  const dirs = [];
+  /** @type {string | null} 펼 수 없는 `cd` 뒤에는 null */
+  let here = cwd;
+  for (const raw of command.split(/&&|\|\||[;|\n]/)) {
+    const words = raw.trim().split(/\s+/).filter(Boolean);
+    if (words[0] === 'cd' && words[1]) {
+      here = follow(words[1], here);
+      continue;
+    }
+    while (words.length > 0 && /^[A-Za-z_][A-Za-z0-9_]*=/.test(words[0])) words.shift();
+    if (words[0] === 'node' && /(^|\/)scripts\/heavy\.mjs$/.test(words[1] ?? '')) words.splice(0, 2);
+    if (!NODE_TOOLS.has(words[0] ?? '')) continue;
+    if (words[0] === 'npm' && NPM_INSTALLS.has(words[1] ?? '')) continue;
+    if (here !== null) dirs.push(here);
+  }
+  return dirs;
+}
+
+/** 디렉터리가 든 연결된 워크트리의 뿌리와 메인 체크아웃 — 메인 체크아웃 · 저장소 밖 · git 실패면 null */
+export function linkedTreeOf(dir) {
+  try {
+    const [gitDir, commonDir, top] = execFileSync(
+      'git',
+      ['-C', existingDirOf(dir), 'rev-parse', '--path-format=absolute', '--git-dir', '--git-common-dir', '--show-toplevel'],
+      { encoding: 'utf8', env: gitEnv(), stdio: ['ignore', 'pipe', 'ignore'], timeout: 2000 },
+    )
+      .trim()
+      .split('\n');
+    if (!gitDir || !commonDir || !top || gitDir === commonDir) return null;
+    return { top, main: dirname(commonDir) };
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * @param {{ tool_name?: string, tool_input?: Record<string, unknown>, cwd?: string }} input 훅이 stdin 으로 받는 것
+ * @returns {string | null} 워크트리에 `node_modules` 가 없을 때 일러 줄 한 줄
+ */
+export function missingModulesOf(input) {
+  const command = input.tool_input?.command;
+  if (input.tool_name !== 'Bash' || typeof command !== 'string') return null;
+  for (const dir of nodeToolDirsOf(command, input.cwd ?? process.cwd())) {
+    const tree = linkedTreeOf(dir);
+    if (tree === null) continue;
+    const app = join(tree.top, 'mobile');
+    const base = dir === app || dir.startsWith(app + sep) ? app : tree.top;
+    if (!isDirectory(join(base, 'node_modules', '.bin'))) return modulesReminderOf(tree.main);
+  }
+  return null;
+}
+
+/**
+ * PreToolUse 의 답 — 권한 결정 없이 일러 줄 줄만. 안 걸리면 아무것도 안 찍는다
+ *
+ * @param {boolean} touches 메인 체크아웃에 쓰는 호출인가
+ * @param {string | null} [modules] 워크트리에 `node_modules` 가 없을 때의 한 줄(`missingModulesOf`)
+ */
+export function responseOf(touches, modules = null) {
+  const lines = [touches ? REMINDER : null, modules].filter((line) => typeof line === 'string' && line !== '');
+  return lines.length > 0
+    ? JSON.stringify({ hookSpecificOutput: { hookEventName: 'PreToolUse', additionalContext: lines.join('\n') } })
+    : '';
 }
 
 function main() {
@@ -145,7 +221,7 @@ function main() {
   } catch {
     return; // 못 읽으면 조용히 지난다 — 이 훅은 담이 아니라 알림이다
   }
-  const out = responseOf(touchesMainCheckout(input, process.env.CLAUDE_PROJECT_DIR));
+  const out = responseOf(touchesMainCheckout(input, process.env.CLAUDE_PROJECT_DIR), missingModulesOf(input));
   if (out) process.stdout.write(`${out}\n`);
 }
 
