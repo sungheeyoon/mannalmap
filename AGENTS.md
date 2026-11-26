@@ -27,6 +27,8 @@ herdr(`hc`) 터미널에서 돌거나 띄우면 `docs/agents/delegation/herdr.md
 
 남은 일은 `docs/product/gaps.md`, 결정은 ADR, 규약은 `docs/agents/delegation/` · `docs/roles/`, 절차는 `docs/ops/runbook/`, 사정만 `docs/notes/`.
 
+기억 · 인계 글 · 메모는 가설이다 — 저장소가 원본이니 그대로 따르기 전에 저장소에서 확인하고, 어긋나면 저장소를 따른다.
+
 ## Agent skills
 
 This section is here, not in `CLAUDE.md`, so Codex reads it too — `CLAUDE.md` pulls this file in with `@AGENTS.md`.
