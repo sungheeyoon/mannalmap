@@ -150,6 +150,7 @@ export function CompatPicker({ people, pickA, pickB, typeB = false }: { people: 
             {slots[side].from === 'saved' && (
               <View ref={sections.anchor(`${side}.pick`)}>
               <PersonChoice
+                label={SIDE_PERSON[side]}
                 people={people}
                 taken={(() => {
                   const other = slots[side === 'a' ? 'b' : 'a'];
@@ -225,8 +226,8 @@ function TypedSlot({ onChange, errors }: { onChange: (query: Query, errors: Sect
   return <BirthFields form={form} namePlaceholder="이름" errors={errors} />;
 }
 
-/** 찾아 고르는 칸 — 이름을 누르면 펼치고, 여섯부터 찾는 칸이 선다. 다른 칸에서 고른 사람은 빠진다(`app/person-combobox.tsx`) */
-function PersonChoice({ people, taken, chosenId, onChoose, refused = false }: { people: readonly Choosable[]; taken: string | null; chosenId: string; onChoose: (personId: string) => void; refused?: boolean }) {
+/** 찾아 고르는 칸 — 이름을 누르면 펼치고, 여섯부터 찾는 칸이 선다. 다른 칸에서 고른 사람은 빠진다(`app/person-combobox.tsx`). 펼친 목록은 이름 붙은 radiogroup, 줄은 radio 와 checked 다 — 고른 사람이 색으로만 갈리지 않게(ADR 0274) */
+function PersonChoice({ label, people, taken, chosenId, onChoose, refused = false }: { label: string; people: readonly Choosable[]; taken: string | null; chosenId: string; onChoose: (personId: string) => void; refused?: boolean }) {
   const [open, setOpen] = useState(false);
   const [typed, setTyped] = useState('');
   const chosen = people.find((one) => one.personId === chosenId) ?? null;
@@ -251,7 +252,7 @@ function PersonChoice({ people, taken, chosenId, onChoose, refused = false }: { 
         <FoldIcon open={open} size={12} color={COLOR.secondary} strokeWidth={3.2} />
       </Pressable>
       {open && (
-        <View style={styles.menu}>
+        <View style={styles.menu} accessibilityRole="radiogroup" accessibilityLabel={label}>
           {findsInList(people.length) && (
             <View style={styles.menuFind}>
               <Field value={typed} onChange={setTyped} placeholder="이름으로 찾기" label="이름으로 찾기" />
@@ -261,6 +262,8 @@ function PersonChoice({ people, taken, chosenId, onChoose, refused = false }: { 
           {candidates.map((one) => (
             <Pressable
               key={one.personId}
+              accessibilityRole="radio"
+              accessibilityState={{ checked: one.personId === chosenId }}
               onPress={() => {
                 onChoose(one.personId);
                 setOpen(false);

@@ -63,6 +63,27 @@ describe('앱 Select 의 낭독', () => {
   });
 });
 
+describe('궁합 고르기 목록의 낭독(ADR 0274)', () => {
+  const picker = read('mobile/src/compat/picker.tsx');
+  const choice = (() => {
+    const from = picker.search(/function PersonChoice\(/);
+    expect(from).toBeGreaterThanOrEqual(0);
+    const next = picker.slice(from + 1).search(/\n(export )?function /);
+    return picker.slice(from, from + 1 + next);
+  })();
+
+  it('펼친 목록은 이름 붙은 radiogroup, 사람 줄은 radio 와 checked 상태 — 고른 사람이 배경색으로만 갈리지 않는다', () => {
+    const menu = choice.slice(choice.indexOf('{open &&'));
+    expect(menu).toMatch(/accessibilityRole="radiogroup" accessibilityLabel=\{label\}/);
+    expect(menu).toContain('accessibilityRole="radio"');
+    expect(menu).toMatch(/accessibilityState=\{\{ checked: one\.personId === chosenId \}\}/);
+  });
+
+  it('부르는 자리는 칸 이름(첫 번째 · 두 번째 사람)을 넘긴다', () => {
+    expect(picker).toMatch(/<PersonChoice\s+label=\{SIDE_PERSON\[side\]\}/);
+  });
+});
+
 describe('Select 를 부르는 자리', () => {
   const callers = [
     'mobile/src/people/birth-fields.tsx',

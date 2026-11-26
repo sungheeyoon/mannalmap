@@ -240,7 +240,7 @@ export function ReadingFeedback({
             onChange={(event) => dispatch({ type: 'comment', text: event.target.value })}
             maxLength={FEEDBACK_COMMENT.limit}
             rows={3}
-            className={`mt-1.5 ${FLAT_CARD_FACE} px-4 py-3 text-field leading-6 focus-visible:outline focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-[color-mix(in_srgb,var(--accent)_55%,transparent)]`}
+            className={`mt-1.5 ${FLAT_CARD_FACE} px-4 py-3 text-field leading-6 focus-visible:focus-ring`}
           />
           <p className="text-right text-fine tabular-nums text-secondary">
             {comment.length} / {FEEDBACK_COMMENT.limit}자
@@ -358,7 +358,7 @@ function Chip({
   return (
     <label
       htmlFor={id}
-      className={`relative flex min-h-11 min-w-11 cursor-pointer items-center justify-center rounded-full border px-3.5 py-2 text-center text-note active:scale-[0.97] has-[:focus-visible]:outline has-[:focus-visible]:outline-3 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-[color-mix(in_srgb,var(--accent)_55%,transparent)] ${
+      className={`relative flex min-h-11 min-w-11 cursor-pointer items-center justify-center rounded-full border px-3.5 py-2 text-center text-note active:scale-[0.97] has-[:focus-visible]:focus-ring ${
         picked
           ? 'border-accent bg-accent font-semibold text-on-accent'
           : wrong

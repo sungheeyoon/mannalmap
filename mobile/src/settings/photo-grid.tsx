@@ -11,7 +11,7 @@ import { useClient } from '@/auth/connected';
 import { FailureLine } from '@/ui/failure-line';
 import { Paper } from '@/ui/surfaces';
 import { ConfirmDialog } from '@/ui/confirm-dialog';
-import { alpha, COLOR, FONT, RADIUS, TYPE } from '@/ui/tokens';
+import { alpha, COLOR, FONT, RADIUS, TYPE, TYPE_META } from '@/ui/tokens';
 import { settled, settledWhileLive } from '@/ui/settled';
 
 import { useDoneNote } from './parts';
@@ -514,9 +514,9 @@ const styles = StyleSheet.create({
   headRow: { flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between', gap: 12 },
   title: { fontSize: TYPE.body, fontFamily: FONT.bold, color: COLOR.foreground },
   count: { fontSize: TYPE.small, fontFamily: FONT.medium, color: COLOR.creamInk },
-  line: { fontSize: TYPE.small, lineHeight: 20, fontFamily: FONT.medium, color: COLOR.creamInk },
+  line: { ...TYPE_META, color: COLOR.creamInk },
   /* 판의 마지막 줄이다(아래 공개 안내를 걷었다, 대장 all-21) — 빈 한 줄이 판 바닥을 띄우지 않게 위아래로 8 씩 당긴다. 웹의 `-my-2` 와 같다 */
-  status: { minHeight: 20, marginVertical: -8, fontSize: TYPE.small, lineHeight: 20, fontFamily: FONT.medium, color: COLOR.foreground },
+  status: { ...TYPE_META, minHeight: 20, marginVertical: -8, color: COLOR.foreground },
   slot: { position: 'absolute', overflow: 'hidden', borderRadius: RADIUS.cell, backgroundColor: COLOR.surface },
   target: { borderWidth: 4, borderColor: COLOR.accent },
   empty: { alignItems: 'center', justifyContent: 'center', gap: 8, borderWidth: 2, borderStyle: 'dashed', borderColor: COLOR.borderStrong },

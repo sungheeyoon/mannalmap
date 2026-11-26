@@ -9,7 +9,8 @@ import { filesUnder } from './source-files';
  * **앱 글자는 글자 모양 여섯 벌(`TYPE_TITLE` … `TYPE_CAPTION`)을 편다**(ADR 0274). 웹 `TYPE_*` 와 크기가 같은 글을 화면이 `fontSize` ·
  * `lineHeight` 로 손으로 적으면 줄 높이가 화면마다 갈렸다(2026-11-26 감사: 같은 20px 구역 제목이 28 · 29). 웹과 같은 값은 2026-11-26 에
  * 상수로 옮겼고, 남은 손 짝은 아래 **줄어들기 표**가 파일마다 센다 — 늘면 붉고, 줄면 표도 같은 PR 에서 줄인다(0 이 되면 줄을 지운다).
- * 표에 남은 것은 웹과 값이 다른 자리(운영자가 화면마다 그림을 보고 접는다)와, 나란히 도는 G-182 가 고치는 파일의 같은 값 자리다.
+ * 표에 남은 것은 웹과 값이 다른 자리(운영자가 화면마다 그림을 보고 접는다)와, 약속 표(`src/lib/design/contract.ts` 의 `values`)가 글자를 그대로 재는
+ * `ui/section-error.tsx` 다.
  *
  * 14px(`TYPE.note`) · 16px(`TYPE.field`) 은 웹에 짝 모양이 없어 세지 않는다. 앱 화면은 react-native 를 들여 vitest 에서 그릴 수 없어 글자로 읽는다.
  */
@@ -19,18 +20,15 @@ const code = (text: string) => text.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\
 
 /** 파일 → 손으로 적은 짝(`fontSize: TYPE.<여섯 단>` 과 `lineHeight` 가 한 스타일에 선 것)의 수 */
 const HAND_WRITTEN: Readonly<Record<string, number>> = {
-  'mobile/src/app/about.tsx': 1,
+'mobile/src/app/about.tsx': 1,
   'mobile/src/app/help.tsx': 1,
   'mobile/src/app/matching-intro.tsx': 3,
-  'mobile/src/app/me/(tabs)/chat/index.tsx': 1,
-  'mobile/src/app/me/(tabs)/index.tsx': 2,
   'mobile/src/app/me/(tabs)/matching/index.tsx': 2,
   'mobile/src/app/me/match/[matchId].tsx': 2,
   'mobile/src/app/me/matching/adult-check.tsx': 2,
-  'mobile/src/app/me/people/[personId].tsx': 5,
-  'mobile/src/app/me/readings/index.tsx': 2,
+  'mobile/src/app/me/people/[personId].tsx': 4,
   'mobile/src/app/me/requests.tsx': 1,
-  'mobile/src/app/signup.tsx': 3,
+  'mobile/src/app/signup.tsx': 1,
   'mobile/src/app/support.tsx': 1,
   'mobile/src/chart/fortune.tsx': 1,
   'mobile/src/chart/parts.tsx': 1,
@@ -40,9 +38,8 @@ const HAND_WRITTEN: Readonly<Record<string, number>> = {
   'mobile/src/chat/room.tsx': 3,
   'mobile/src/compat/relation-map.tsx': 3,
   'mobile/src/compat/result.tsx': 1,
-  'mobile/src/credits/credits.tsx': 7,
+  'mobile/src/credits/credits.tsx': 5,
   'mobile/src/credits/store-section.tsx': 1,
-  'mobile/src/home/match-open-alert.tsx': 1,
   'mobile/src/home/self-card.tsx': 1,
   'mobile/src/matching/people.tsx': 2,
   'mobile/src/matching/today.tsx': 5,
@@ -50,15 +47,12 @@ const HAND_WRITTEN: Readonly<Record<string, number>> = {
   'mobile/src/people/parts.tsx': 3,
   'mobile/src/people/person-sheets.tsx': 2,
   'mobile/src/reading/contents.tsx': 1,
-  'mobile/src/reading/feedback.tsx': 4,
+  'mobile/src/reading/feedback.tsx': 1,
   'mobile/src/reading/markdown.tsx': 7,
-  'mobile/src/reading/panel.tsx': 4,
   'mobile/src/reading/result.tsx': 1,
   'mobile/src/reading/save-self.tsx': 2,
-  'mobile/src/settings/discovery-rows.tsx': 2,
   'mobile/src/settings/parts.tsx': 1,
-  'mobile/src/settings/photo-grid.tsx': 2,
-  'mobile/src/settings/survey-screen.tsx': 10,
+  'mobile/src/settings/survey-screen.tsx': 2,
   'mobile/src/share/view.tsx': 2,
   'mobile/src/ui/notice-screen.tsx': 1,
   'mobile/src/ui/section-error.tsx': 1,

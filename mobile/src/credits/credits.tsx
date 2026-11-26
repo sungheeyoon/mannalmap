@@ -25,7 +25,7 @@ import { LinkRow, SettingsGroup, settingsText } from '@/settings/parts';
 import { FailureLine } from '@/ui/failure-line';
 import { LoadingDots } from '@/ui/loading';
 import { TextButton } from '@/ui/parts';
-import { COLOR, FONT, TYPE } from '@/ui/tokens';
+import { COLOR, FONT, TYPE, TYPE_CAPTION } from '@/ui/tokens';
 import { settled } from '@/ui/settled';
 import { TopBar } from '@/ui/top-bar';
 import { CardFrame, Paper, Tile } from '@/ui/surfaces';
@@ -237,8 +237,8 @@ const styles = StyleSheet.create({
   rowTitle: { flexShrink: 1, fontSize: TYPE.body, lineHeight: 22, fontFamily: FONT.bold, color: COLOR.foreground },
   rowValue: { flexShrink: 0, fontSize: TYPE.body, lineHeight: 22, fontFamily: FONT.bold, color: COLOR.foreground, fontVariant: ['tabular-nums'] },
   struck: { color: COLOR.muted, textDecorationLine: 'line-through' },
-  caption: { fontSize: TYPE.fine, lineHeight: 16, fontFamily: FONT.medium, color: COLOR.muted, fontVariant: ['tabular-nums'] },
-  status: { flexShrink: 0, fontSize: TYPE.fine, lineHeight: 16, fontFamily: FONT.bold, color: COLOR.secondary },
+  caption: { ...TYPE_CAPTION, fontVariant: ['tabular-nums'] },
+  status: { ...TYPE_CAPTION, flexShrink: 0, fontFamily: FONT.bold, color: COLOR.secondary },
   danger: { color: COLOR.danger },
   refund: { gap: 6, paddingHorizontal: 20 },
   refundTitle: { fontSize: TYPE.body, lineHeight: 22, fontFamily: FONT.bold, color: COLOR.foreground },

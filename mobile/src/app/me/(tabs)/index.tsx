@@ -20,10 +20,11 @@ import { followRefusal } from '@/reading/follow-refusal';
 import { ElementSymbol } from '@/ui/element-symbol';
 import { LoadingDots } from '@/ui/loading';
 import { PrimaryButton, SecondaryButton } from '@/ui/parts';
-import { COLOR, FONT, TYPE, TYPE_TITLE } from '@/ui/tokens';
+import { COLOR, FONT, TYPE, TYPE_BODY, TYPE_META, TYPE_TITLE } from '@/ui/tokens';
 import { CardFrame, Paper } from '@/ui/surfaces';
 import { useLatestReads } from '@/ui/latest-reads';
 import { settled } from '@/ui/settled';
+import { Heading } from '@/ui/heading';
 import { WordText } from '@/ui/word-text';
 import { SAVE_AS_SELF } from '@reading/words';
 
@@ -183,7 +184,7 @@ function NoSelf({ nickname, onSaved }: { nickname: string; onSaved: () => void }
         ))}
       </View>
       <View style={styles.paperHead}>
-        <WordText accessibilityRole="header" style={styles.paperTitle}>내 사주 등록</WordText>
+        <Heading level="title" style={styles.paperTitle}>내 사주 등록</Heading>
         <WordText style={styles.paperDetail}>
           <WordText style={styles.strong}>{nickname}</WordText>님의 출생 정보를 입력해 주세요.
         </WordText>
@@ -202,7 +203,7 @@ const styles = StyleSheet.create({
   failureText: { fontFamily: FONT.medium, fontSize: TYPE.small, color: COLOR.danger },
   noticeTitle: { fontFamily: FONT.bold, fontSize: TYPE.body, color: COLOR.foreground },
   noticeDetail: { fontFamily: FONT.medium, fontSize: TYPE.note, lineHeight: 20, color: COLOR.secondary },
-  meta: { fontFamily: FONT.medium, fontSize: TYPE.small, lineHeight: 20, color: COLOR.secondary },
+  meta: { ...TYPE_META },
   paper: { gap: 24 },
   symbols: { flexDirection: 'row', gap: 8 },
   paperHead: { gap: 8 },
@@ -210,5 +211,5 @@ const styles = StyleSheet.create({
   paperTitle: { ...TYPE_TITLE },
   notice: { gap: 4, paddingHorizontal: 20, paddingVertical: 16 },
   unreadable: { gap: 8, padding: 20 },
-  paperDetail: { fontFamily: FONT.medium, fontSize: TYPE.body, lineHeight: 24, color: COLOR.secondary },
+  paperDetail: { ...TYPE_BODY, color: COLOR.secondary },
 });

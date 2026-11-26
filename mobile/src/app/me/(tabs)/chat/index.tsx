@@ -18,8 +18,9 @@ import { settled } from '@/ui/settled';
 import { noteActivity, readRoomListScreen, type ChatRoom, type RoomListScreen } from '@/chat/reads';
 import { Icon } from '@/ui/icons';
 import { LoadingDots } from '@/ui/loading';
-import { COLOR, FONT, RADIUS, TYPE, TYPE_TITLE } from '@/ui/tokens';
+import { COLOR, FONT, RADIUS, TYPE, TYPE_NAME, TYPE_TITLE } from '@/ui/tokens';
 import { KEEP_VIEW } from '@/ui/keep-view';
+import { Heading } from '@/ui/heading';
 import { WordText } from '@/ui/word-text';
 import { unreachedLoad } from '@/answer';
 
@@ -88,9 +89,9 @@ export default function ChatRoomsScreen() {
 
   return (
     <View style={styles.screen}>
-      <WordText accessibilityRole="header" style={styles.title}>
+      <Heading level="title" style={styles.title}>
         {CHAT_TAB_LABEL}
-      </WordText>
+      </Heading>
       {withdrawn !== undefined && !noteGone && (
         <View style={styles.snack} accessibilityLiveRegion="polite">
           <WordText style={styles.snackText}>{TALK_WITHDRAWN}</WordText>
@@ -197,7 +198,7 @@ const styles = StyleSheet.create({
   pressed: { backgroundColor: COLOR.surfaceSoft },
   rowBody: { flex: 1, gap: 2 },
   rowTop: { flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between', gap: 8 },
-  name: { flexShrink: 1, fontSize: TYPE.lead, lineHeight: 24, fontFamily: FONT.bold, color: COLOR.foreground },
+  name: { ...TYPE_NAME, flexShrink: 1 },
   quiet: { color: COLOR.secondary },
   time: { fontSize: TYPE.fine, fontFamily: FONT.medium, color: COLOR.secondary },
   timeUnread: { fontFamily: FONT.bold, color: COLOR.foreground },

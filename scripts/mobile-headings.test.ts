@@ -35,14 +35,6 @@ const NOT_HEADING: readonly { file: string; key: string; why: string }[] = [
   { file: 'mobile/src/share/view.tsx', key: 'metaphorText', why: '공유 그림의 비유 문장' },
 ];
 
-/** 아직 옮기지 않은 제목 — 나란히 도는 G-182 가 이 파일을 고친다. 그 PR 이 든 뒤 `Heading` 으로 옮기고 줄을 지운다 */
-const PENDING: readonly { file: string; key: string }[] = [
-  { file: 'mobile/src/app/me/(tabs)/chat/index.tsx', key: 'title' },
-  { file: 'mobile/src/app/me/(tabs)/index.tsx', key: 'paperTitle' },
-  { file: 'mobile/src/app/me/readings/index.tsx', key: 'groupTitle' },
-  { file: 'mobile/src/app/signup.tsx', key: 'title' },
-];
-
 const BIG = /\.\.\.TYPE_(?:TITLE|SECTION)\b|\bfontSize:\s*TYPE\.(?:title|heading)\b/;
 
 const files = filesUnder(SRC)
@@ -68,14 +60,14 @@ describe('앱 제목', () => {
 
   it('20px 이상 글은 `Heading` 으로 선다 — 제목이 아니면 표가 까닭과 함께 든다', () => {
     const listed = (one: { file: string; key: string }) =>
-      [...NOT_HEADING, ...PENDING].some((row) => row.file === one.file && row.key === one.key);
+      NOT_HEADING.some((row) => row.file === one.file && row.key === one.key);
     const found = files.flatMap(({ file, text }) => bigTexts(file, text)).filter((one) => !listed(one));
     expect(found).toEqual([]);
   });
 
   it('표의 줄마다 그 큰 글이 아직 있다', () => {
     const all = files.flatMap(({ file, text }) => bigTexts(file, text));
-    for (const row of [...NOT_HEADING, ...PENDING]) {
+    for (const row of NOT_HEADING) {
       expect(all.some((one) => one.file === row.file && one.key === row.key), `${row.file} ${row.key}`).toBe(true);
     }
   });

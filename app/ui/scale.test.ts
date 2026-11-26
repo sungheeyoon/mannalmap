@@ -127,7 +127,7 @@ describe('글자 크기 · 모서리의 단', () => {
 
   it('크기(`size-`)를 px 임의값으로 적지 않는다 — `size-[18px]` 은 `size-4.5` 다(ADR 0274)', () => {
     const found = sources().flatMap((path) => [...code(path).matchAll(/(?<![\w-])size-\[[\d.]+px\]/g)].map((match) => `${path} — ${match[0]}`));
-    expect(found).toEqual(['app/compat-picker.tsx — size-[18px]']);
+    expect(found).toEqual([]);
   });
 
   it('토큰 이름이 색 이름과 겹치지 않는다 — `text-secondary` 는 색이라 크기 토큰이 같은 이름이면 둘 중 하나가 진다', () => {
