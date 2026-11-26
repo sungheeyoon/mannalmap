@@ -167,8 +167,8 @@ flowchart LR
 | **사람이 할 걸음** | 등급 3 이라 운영자가 해야 하는 단계(배포 · 실호출 · 문구 확인 등) | [끝났다는 것](agents/delegation/done.md) |
 | **전후 그림** | 화면이 바뀐 PR 에 붙이는 바뀌기 전 · 후 스크린샷 | [끝났다는 것](agents/delegation/done.md) |
 | **맡길 이슈 · 칸 아홉** | 에이전트에게 맡길 수 있게 정리된 이슈(`ready-for-agent`)와 그 양식의 항목 아홉 | [맡길 이슈](agents/delegation/issues.md) |
-| **운영자 할 일 이슈** | 사람만 할 수 있는 일(계정 · 사업자 정보 · 변호사 등)을 모아 둔 이슈 | [조율자 역할](roles/coordinator.md) |
-| **`[변호사 검토 필요]`** | 법무 판단이 필요해 비워 둔 자리 표시 | [조율자 세션](agents/delegation/coordinator.md) |
+| **운영자 할 일 이슈** | 사람만 할 수 있는 일(계정 · 사업자 정보 등)을 모아 둔 이슈 | [조율자 역할](roles/coordinator.md) |
+| **법률 근거 문서** | 법률 물음마다 1차 출처 · 서비스 대조 · 결론을 든 `docs/legal/*-grounds.md` — 변호사 검토 대신(ADR 0273). 옛 `[변호사 검토 필요]` 표지는 그 절이 답한다 | [법무 입구](legal/README.md) |
 
 ### 병렬 · 로컬 환경
 

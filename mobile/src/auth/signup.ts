@@ -1,4 +1,4 @@
-import { accountFailureOf, type AccountState } from '@account/index';
+import type { AccountState } from '@account/index';
 import { gateAccountOf, serviceIsOver, signupDone } from '@consent/gate';
 import { NOTICE_NOT_READY, NOTICE_VERSION } from '@consent/notice';
 import { refusedField, signupRequest, type SignupChoices, type SignupField } from '@consent/signup';
@@ -9,8 +9,6 @@ import type { Client } from './client';
 import { readSchedule } from './schedule';
 
 export const NOT_READY = '이 빌드에서는 로그인할 수 없어요.';
-/** 읽기가 답 없이 던진 때 — 계정을 못 물은 때와 같은 글자로 다시 시도를 세운다 */
-export const UNREACHABLE = accountFailureOf({ kind: 'unreachable' })?.line ?? NOT_READY;
 export const FAILED = '로그인을 끝내지 못했어요. 잠시 뒤 다시 시도해 주세요.';
 
 export type SignupState =

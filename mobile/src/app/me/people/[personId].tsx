@@ -23,8 +23,7 @@ import { resumeAskCleared, resumeAskOf, type ResumeAsk } from '@reading/resume-a
 import { STEM_INFO, type Stem } from '@saju';
 
 import { useClient } from '@/auth/connected';
-import { UNREACHABLE } from '@/auth/signup';
-import { readPersonDetail, type PersonDetail, type Read } from '@/people/data';
+import { readPersonDetail, type PersonDetail } from '@/people/data';
 import { AccountNotice, DayMasterChip, LoadingFrame, NotFound, PillarStrip, ScreenFrame, go, styles as shared } from '@/people/parts';
 import { useCompatAdd, useReadingAsk } from '@/people/person-sheets';
 import { SajuSections } from '@/people/saju-sections';
@@ -39,6 +38,7 @@ import { CardFrame, Tile } from '@/ui/surfaces';
 import { TopBar } from '@/ui/top-bar';
 import { alpha, COLOR, ELEMENT_TONE, FONT, RADIUS, TYPE } from '@/ui/tokens';
 import { WordText } from '@/ui/word-text';
+import { unreachedLoad, type Loaded } from '@/answer';
 
 /** 받기 시트 · 받은 카드가 쓰는 이 사람의 풀이 칸 — 풀이권 · 읽는 시간 · 도는 시도. 못 읽으면 `null` 이고 카드는 받기로 선다(부속 정보) */
 type ReadingSide = { credits: ReadingCredits | null; minutes: number | null; running: boolean };
@@ -50,12 +50,12 @@ type ReadingSide = { credits: ReadingCredits | null; minutes: number | null; run
 export default function PersonScreen() {
   const client = useClient();
   const params = useLocalSearchParams<{ personId: string; from?: string; tab?: string; ask?: string; b?: string; rel?: string }>();
-  const [read, setRead] = useState<Read<PersonDetail> | null>(null);
+  const [read, setRead] = useState<Loaded<PersonDetail> | null>(null);
   const [side, setSide] = useState<ReadingSide | null>(null);
   const chart = params.tab === 'chart';
 
   const load = useCallback(() => {
-    void settled(readPersonDetail(client, params.personId), 'readPersonDetail', () => ({ kind: 'failed', message: UNREACHABLE }) as const).then((next) => {
+    void settled(readPersonDetail(client, params.personId), 'readPersonDetail', unreachedLoad).then((next) => {
       if (next.kind === 'signed-out') router.replace('/');
       /* 선 화면을 다시 읽다 못 읽으면 가진 것을 그대로 둔다 — 다음에 돌아올 때 메운다(채팅 목록과 같다) */
       else setRead((now) => (now?.kind === 'ok' && next.kind === 'failed' ? now : next));

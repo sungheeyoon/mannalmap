@@ -46,7 +46,7 @@
 | 앱 빌드 · 트랙 · Play 콘솔이 지금 어디인가 | `docs/ops/runbook/mobile-release.md` 「지금 나간 빌드」 · `docs/ops/runbook/play-console.md` 「지금 어디까지 왔나」 | 다른 문서는 값을 다시 적지 않고 이 두 절을 가리킨다 |
 | 운영 주소 · 도메인 | `docs/ops/runbook/domain.md` 맨 위 | 다른 곳은 주소를 적지 않고 가리킨다 — 시험이 잰다 |
 | 풀이 문장이 무엇까지 말하나 | `docs/text/` | — |
-| 법무 · 변호사 검토 | `docs/legal/README.md` | — |
+| 법무 · 법률 물음의 근거 | `docs/legal/README.md` | 변호사에게 넘기지 않는다 — 1차 출처로 근거 문서에 절을 쓴다(ADR 0273) |
 | 코드가 왜 이 모양이 됐나(사정) | `docs/notes/README.md` | 요구사항도 규칙도 아니다 — 코드가 맞다 |
 
 `docs/product/prd-archive.md` 는 요구사항이 아니다 — 코드 주석의 US 번호가 가리키는 곳으로만 남았다.

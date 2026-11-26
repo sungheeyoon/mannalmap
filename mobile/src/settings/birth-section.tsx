@@ -9,7 +9,6 @@ import { CALENDAR_KO, GENDER_KO } from '@saju';
 import type { Client } from '@/auth/client';
 import { readAccount } from '@/auth/account';
 import { useClient } from '@/auth/connected';
-import { UNREACHABLE } from '@/auth/signup';
 import { readPersonDetail } from '@/people/data';
 import { EditInputForm } from '@/people/edit-input';
 import { FailureLine } from '@/ui/failure-line';
@@ -18,6 +17,7 @@ import { COLOR, CONTROL, FONT, RADIUS, TYPE } from '@/ui/tokens';
 import { CardFrame } from '@/ui/surfaces';
 import { WordText } from '@/ui/word-text';
 import { BIRTH_EDIT } from '@people/words';
+import { UNREACHABLE } from '@/answer';
 
 
 type MyBirth = { kind: 'none' } | { kind: 'failed' } | { kind: 'unreadable'; message: string } | { kind: 'ready'; personId: string; query: Query };

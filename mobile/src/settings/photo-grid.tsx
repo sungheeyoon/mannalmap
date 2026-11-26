@@ -12,8 +12,7 @@ import { FailureLine } from '@/ui/failure-line';
 import { Paper } from '@/ui/surfaces';
 import { ConfirmDialog } from '@/ui/confirm-dialog';
 import { alpha, COLOR, FONT, RADIUS, TYPE } from '@/ui/tokens';
-import { UNREACHABLE } from '@/auth/signup';
-import { settled } from '@/ui/settled';
+import { settled, settledWhileLive } from '@/ui/settled';
 
 import { useDoneNote } from './parts';
 import { PHOTO_FRAME_TITLE, PhotoFramer, contentPositionOf } from './photo-framer';
@@ -22,6 +21,7 @@ import { PhotoViewer, type PhotoChoice } from './photo-viewer';
 import { addPhoto, movePhoto, photoSource, pickPhotos, removePhoto, replacePhoto, setPhotoFocus, type MyPhoto } from './photos';
 import { WordText } from '@/ui/word-text';
 import { FOCUS_SAVED, PHOTO_CHANGED, PHOTO_REORDER_HINT, PHOTO_SAVED, PHOTO_SAVES_ITSELF, PHOTO_SAVING, UNREADABLE_PHOTO } from '@account/words';
+import { UNREACHABLE, unreachedDone } from '@/answer';
 
 const PHOTO_SECTION_TITLE = '프로필 사진';
 
@@ -236,7 +236,7 @@ export function PhotoGrid({
     /* 서버의 자리로 보낸다 — 칸 번호가 아니다. 다시 받은 목록이 칸을 잇는다. 실패하면 차례는 곧바로 돌아가고 다시 읽기는 그 뒤다 */
     const serverTo = photos[to - 1]?.position ?? to;
     const result = await moveShownFirst(order, from, to, setOrder, () =>
-      settled(movePhoto(client, photo, serverTo), 'movePhoto', () => ({ ok: false, message: UNREACHABLE }) as const),
+      settled(movePhoto(client, photo, serverTo), 'movePhoto', unreachedDone),
     );
     if (result.ok) await reload();
     else failed(result.message);
@@ -496,15 +496,7 @@ function Saving() {
 function PhotoFace({ photo, focus, userId, cover }: { photo: MyPhoto; focus: PhotoFocus; userId: string | null; cover: { uri: string; focus: PhotoFocus } | null }) {
   const client = useClient();
   const [source, setSource] = useState<string | null>(null);
-  useEffect(() => {
-    let live = true;
-    void settled(photoSource(client, photo, userId ?? undefined), 'photoSource', () => null).then((next) => {
-      if (live) setSource(next);
-    });
-    return () => {
-      live = false;
-    };
-  }, [client, photo, userId]);
+  useEffect(() => settledWhileLive(photoSource(client, photo, userId ?? undefined), 'photoSource', () => null, setSource), [client, photo, userId]);
   if (cover !== null) {
     return (
       <>
