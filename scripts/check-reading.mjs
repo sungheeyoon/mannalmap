@@ -198,9 +198,11 @@ const headerChipOf = (html) => {
  * 글 화면 머리의 첫 「다시 받기」가 주 단추(`bg-accent`)인가 — 못 찾으면 `null`.
  * 아래 만드는 칸의 같은 이름 단추는 늘 주 단추라, 머리의 것 하나만 본다.
  */
-const headerMakeIsPrimary = (html) => {
-  const found = /<button[^>]*class="([^"]*)"[^>]*>(?:(?!<\/button>).)*?다시 받기/s.exec(html);
-  return found === null ? null : found[1].split(/\s+/).includes('bg-accent');
+/** 「다시 받기」 단추가 글(`bodyText`)보다 앞(머리)에 하나도 없는가 — 수정 전 글도 글 끝에만 선다(ADR 0282). 수는 닫힌 확인 창의 단추까지 센 참고값이다 */
+const makeAtEndOnly = (html, bodyText) => {
+  const buttons = [...html.matchAll(/<button[^>]*>(?:(?!<\/button>).)*?다시 받기/gs)];
+  const body = html.indexOf(bodyText);
+  return { count: buttons.length, afterBody: buttons.length > 0 && body >= 0 && (buttons[0].index ?? -1) > body };
 };
 
 /** 책장의 한 권 — 그 주소로 가는 표지 링크의 판과 글자 */
@@ -743,10 +745,11 @@ try {
      */
     const stemBefore = sql(`select current_chart->>'dayMaster' from public.person where id = '${selfId}'`);
 
-    /** 고치기 전 — 글이 지금 명식으로 만든 것이라 머리의 다시 받기는 주 단추가 아니다 */
+    /** 고치기 전 — 지금 명식으로 만든 글의 다시 받기는 글 끝에 하나만 선다 */
     const current = await body('/me/readings/self', cookie.a);
-    check('지금 명식으로 만든 글이면 머리의 다시 받기가 주 단추가 아니다',
-      headerMakeIsPrimary(current) === false, String(headerMakeIsPrimary(current)));
+    const currentMake = makeAtEndOnly(current, '스스로 정한 규칙 안에서');
+    check('지금 명식으로 만든 글의 다시 받기는 글 끝에 선다 — 머리에는 없다',
+      currentMake.afterBody, JSON.stringify(currentMake));
 
     /*
       **고친 뒤의 일간이 다른 오행이어야 아래가 무엇을 잰다.** 화면이 세우는 지금 일간은 저장된 출생 정보를
@@ -786,8 +789,9 @@ try {
     const cover = /class="(tone-[a-z]+) relative (?:overflow-hidden )?rounded-card/.exec(edited)?.[1];
     check('글 표지는 풀이를 만들 때의 오행 색이다', cover === TONE_OF_STEM[stemBefore],
       `${cover ?? '표지 없음'} — 그때 ${TONE_OF_STEM[stemBefore]}, 지금 ${TONE_OF_STEM[stemAfter]}`);
-    check('수정 전 글이면 머리의 다시 받기가 주 단추다',
-      headerMakeIsPrimary(edited) === true, String(headerMakeIsPrimary(edited)));
+    const make = makeAtEndOnly(edited, '스스로 정한 규칙 안에서');
+    check('수정 전 글도 다시 받기는 글 끝에 선다 — 머리에는 없다',
+      make.afterBody, JSON.stringify(make));
 
     /** 책장 — 고친 사람의 책에만 「수정 전」이 서고, 안 고친 사람의 책에는 안 선다 */
     const shelf = await body('/me/readings', cookie.a);

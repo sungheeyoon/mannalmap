@@ -63,7 +63,7 @@ export default async function ProfilePage() {
   if (isBlocked(state) || account === null) {
     return (
       <main className={`app-shell flex w-full ${COLUMN} flex-1 flex-col gap-7 py-8 sm:py-12`}>
-        <AccountNotice state={state} />
+        <AccountNotice state={state} whole />
       </main>
     );
   }

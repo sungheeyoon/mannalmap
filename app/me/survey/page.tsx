@@ -46,7 +46,7 @@ export default async function SurveyPage() {
   if (isBlocked(state)) {
     return (
       <main className={`app-shell flex w-full ${COLUMN} flex-1 flex-col gap-6 py-8 sm:py-12`}>
-        <AccountNotice state={state} />
+        <AccountNotice state={state} whole />
       </main>
     );
   }

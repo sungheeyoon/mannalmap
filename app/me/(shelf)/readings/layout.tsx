@@ -77,7 +77,7 @@ export default async function ReadingsLayout({ children }: { children: ReactNode
   if (isBlocked(state)) {
     return (
       <main className="app-shell flex flex-1 flex-col gap-6 py-8 sm:py-12">
-        <AccountNotice state={state} />
+        <AccountNotice state={state} whole />
       </main>
     );
   }

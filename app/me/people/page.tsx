@@ -156,7 +156,7 @@ export default async function PeoplePage() {
       </header>
 
       {blocked ? (
-        <AccountNotice state={state} />
+        <AccountNotice state={state} whole />
       ) : (
         <>
           <AddPerson slots={slots} />
