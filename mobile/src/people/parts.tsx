@@ -27,11 +27,14 @@ import { PERSON_NOT_FOUND, PERSON_PICK_AGAIN } from '@people/words';
 /** 아직 없는 경로도 그대로 잇는다 — 나란히 짓는 화면이 그 자리에 선다 */
 export const go = (path: string) => router.push(path as Href);
 
-/** 한 화면의 틀 — `bar` 는 스크롤 밖 맨 위 줄이다. `/me` 아래 틀이라 위는 머리나 맨 위 줄이, 아래는 탭이 안전 영역을 낸다 */
-export function ScreenFrame({ children, keyboard = false, bar }: { children: ReactNode; keyboard?: boolean; bar?: ReactNode }) {
+/**
+ * 한 화면의 틀 — `bar` 는 스크롤 밖 맨 위 줄이다. `/me` 아래 틀이라 위는 머리나 맨 위 줄이, 아래는 탭이 안전 영역을 낸다.
+ * `fill` 은 본문이 남은 높이를 채운다 — 통째로 못 읽은 화면의 실패 줄(`FailureLine` 의 `whole`)이 그 가운데에 서게(ADR 0282)
+ */
+export function ScreenFrame({ children, keyboard = false, bar, fill = false }: { children: ReactNode; keyboard?: boolean; bar?: ReactNode; fill?: boolean }) {
   const body = (
     /* 누른 뒤 걸린 문단으로 데려가는 스크롤(ADR 0252) — 안은 그대로 `ScrollView` 다 */
-    <SectionScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled" keyboardDismissMode="on-drag">
+    <SectionScrollView contentContainerStyle={[styles.content, fill && styles.fill]} keyboardShouldPersistTaps="handled" keyboardDismissMode="on-drag">
       {children}
     </SectionScrollView>
   );
@@ -175,6 +178,8 @@ const GLYPH_FONT = Platform.select({ ios: 'System', android: 'sans-serif', defau
 export const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: COLOR.background },
   content: { padding: 16, gap: 14, paddingBottom: 40 },
+  /* 위아래 여백을 같게 — 가운데에 서는 실패 줄이 맨 위 줄 아래 남은 높이의 한가운데다(처음 읽는 동안의 `LoadingFrame` 과 같은 자리) */
+  fill: { flexGrow: 1, paddingBottom: 16 },
   title: { ...TYPE_TITLE },
   section: { ...TYPE_SECTION },
   name: { ...TYPE_NAME },

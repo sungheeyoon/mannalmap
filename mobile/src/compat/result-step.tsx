@@ -42,8 +42,8 @@ export function CompatResultStep({ a, b, back: to }: { a: string; b: string; bac
 
   if (read.kind === 'failed') {
     return (
-      <ScreenFrame bar={bar}>
-        <FailureLine onRetry={load}>{read.message}</FailureLine>
+      <ScreenFrame bar={bar} fill>
+        <FailureLine whole onRetry={load}>{read.message}</FailureLine>
       </ScreenFrame>
     );
   }

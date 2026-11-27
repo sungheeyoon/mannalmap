@@ -35,9 +35,9 @@ export default function ReadingScreen() {
   return (
     <SafeAreaView style={styles.screen} edges={['left', 'right']}>
       <TopBar title={view?.view === 'reading' ? view.subject?.name : undefined} fallback={from === 'shelf' ? '/me/readings' : '/me'} />
-      <ReadingScrollView contentContainerStyle={[styles.content, answer === null && styles.waiting]}>
+      <ReadingScrollView contentContainerStyle={[styles.content, (answer === null || 'refused' in answer) && styles.waiting]}>
         {answer === null && <LoadingDots />}
-        {answer !== null && 'refused' in answer && <ReadFailure refused={answer.refused} onRetry={reload} />}
+        {answer !== null && 'refused' in answer && <ReadFailure refused={answer.refused} onRetry={reload} whole />}
 
         {view?.view === 'blocked' && (
           <Card>
@@ -60,7 +60,7 @@ export default function ReadingScreen() {
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: COLOR.background },
   content: { gap: 20, padding: 16, paddingBottom: 48 },
-  /* 처음 읽는 동안은 위아래 여백을 같게 — 오행 다섯 점이 맨 위 줄 아래 남은 높이의 가운데에 선다(`ui/loading.tsx`) */
+  /* 처음 읽는 동안 · 통째로 못 읽었을 때는 위아래 여백을 같게 — 오행 다섯 점과 실패 줄이 맨 위 줄 아래 남은 높이의 가운데에 선다(`ui/loading.tsx` · ADR 0282) */
   waiting: { flexGrow: 1, paddingBottom: 16 },
   eyebrow: { fontFamily: FONT.bold, fontSize: TYPE.small, color: COLOR.secondary },
   noticeTitle: { fontFamily: FONT.bold, fontSize: TYPE.lead, color: COLOR.foreground },

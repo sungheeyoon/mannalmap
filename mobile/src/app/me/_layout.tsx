@@ -90,11 +90,11 @@ export default function MeLayout() {
       </ConnectedClient>
     );
   }
-  /* 못 읽었으면 웹의 같은 자리(`AccountNotice` 의 `FailureLine`)처럼 붉은 줄과 「다시 시도하기」가 화면 맨 위 단에 선다 */
+  /* 못 읽었으면 웹의 같은 자리(`AccountNotice` 의 `FailureLine`)처럼 붉은 줄과 「다시 시도하기」가 화면 가운데에 선다 — 화면 통째 실패(ADR 0282) */
   const failure =
     gate.kind === 'failed' ? (
       <SafeAreaView style={[styles.screen, styles.failed, held !== null && styles.over]}>
-        <FailureLine onRetry={retry}>{gate.message}</FailureLine>
+        <FailureLine whole onRetry={retry}>{gate.message}</FailureLine>
       </SafeAreaView>
     ) : null;
   /* 한 번도 못 들어온 사람은 안내만 본다. 들어와 있던 사람은 안내가 화면을 가릴 뿐 아래 스택은 살아 있다 — 다시 시도하면 쓰던 글과 스크롤이 그대로다 */
@@ -188,8 +188,8 @@ export default function MeLayout() {
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: COLOR.background },
   over: StyleSheet.absoluteFill,
-  /* 웹 `main` 의 단(옆 16 · 위 32)에 실패 줄 하나 — 다른 화면의 실패 줄과 같은 자리 · 같은 꼴이다 */
-  failed: { paddingHorizontal: 16, paddingTop: 32 },
+  /* 실패 줄 하나가 남은 높이의 가운데에 선다(`whole`) — 옆 여백은 다른 화면의 단(16)과 같다 */
+  failed: { padding: 16 },
   checking: { alignItems: 'center', justifyContent: 'center' },
   header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingLeft: 16, paddingRight: 4, backgroundColor: COLOR.background },
   /* 로고(32)는 왼쪽 끝에 두고 누를 자리만 오른쪽으로 44 까지 편다 — 글자 없는 로고라 폭이 누를 자리보다 좁았다 */
