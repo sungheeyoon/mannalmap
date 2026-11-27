@@ -6,8 +6,12 @@ import {
   isScored,
   detailFindingsOf,
   isDetailPromptVersion,
+  manualAskedIn,
+  manualFindingsOf,
+  manualOfOutput,
   metaphorToStore,
   withDiscovery,
+  withManual,
   withoutLeakedPaths,
   type BirthSecret,
   type CheckFinding,
@@ -242,6 +246,17 @@ export async function collectReadingResult(responseId: string): Promise<CollectO
   const detail = isDetailPromptVersion(job.prompt_version);
   const discovery = retrieved.output.discovery ?? '';
   if (detail) markdown = withDiscovery(markdown, discovery);
+
+  /**
+   * **궁합풀이면 사용 설명서를 본문 끝(근거 절 앞)의 절 하나로 접는다**(ADR 0283) — 얼린 프롬프트가 시켰는지로 안다(`manualAskedIn`). 칸이 비었거나
+   * 모양이 아니면 접지 않고 글을 그대로 세운다(품질로 적는다, ADR 0163). 접은 뒤의 글을 걷고 검사하므로 그 절도 본문과 같은 검사를 받는다.
+   * 시키지 않은 시도(옛 판 궁합풀이 · 개인 풀이 · 인연 궁합)는 이 칸을 안 받고 글자도 안 바뀐다.
+   */
+  if (job.kind === 'private' && manualAskedIn(job.prompt)) {
+    const manual = manualOfOutput(retrieved.output.manual);
+    if (manual !== null) markdown = withManual(markdown, manual);
+    findings.push(...manualFindingsOf(manual));
+  }
 
   const unleaked = withoutLeakedPaths(markdown, job.evidence);
   markdown = unleaked.markdown;

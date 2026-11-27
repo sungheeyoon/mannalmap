@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { READING_POLICY, baselineIn } from '@/src/lib/reading';
+import { READING_POLICY, baselineIn, withManual, type PairManual } from '@/src/lib/reading';
 import { CITY_LONGITUDES, computeSaju } from '@/src/lib/saju';
 
 import { readingInputOf } from './generator';
@@ -75,7 +75,7 @@ const B = computeSaju(
 );
 
 /** 얼려 둔 일감 한 줄 — `claim_reading_job` 이 내주는 모양 그대로 */
-const jobOf = (kind: 'self' | 'match') => {
+const jobOf = (kind: 'self' | 'private' | 'match') => {
   const made =
     kind === 'self'
       ? readingInputOf({ kind, charts: { a: A }, viewedAt: VIEWED_AT })
@@ -632,5 +632,57 @@ describe('상세 궁합의 회수', () => {
     retrieve.mockResolvedValue(answered({ markdown, score: SCORE(), discovery: '접으면 안 된다' } as never));
     await expect(collectReadingResult('resp-1')).resolves.toMatchObject({ done: 'saved' });
     expect(called('save_reading')?.[1].p_output).toBe(markdown);
+  });
+});
+
+describe('궁합풀이의 사용 설명서 회수(ADR 0283)', () => {
+  const MANUAL: PairManual = {
+    first: {
+      ask: '고마움부터 말해 주세요. 당연하게 여기면 속으로 서운해하기 쉬워요.',
+      apologize: '걱정을 덜어 주는 말과 함께요. 다음 약속이 마음을 놓게 하는 편이에요.',
+      upset: '따지기보다 바라던 것을 말해 주세요. 그 마음을 잘 알아듣는 편이에요.',
+      delight: '먼저 챙겨 주세요. 받을 때 크게 감동하는 편이에요.',
+    },
+    second: {
+      ask: '하고 싶은 말부터 짧게요. 이유를 늘이면 미심쩍어하기 쉬워요.',
+      apologize: '잘못부터 인정해 주세요. 변명이 앞서면 사과로 듣지 않기 쉬워요.',
+      upset: '그날 안에 짧고 또렷하게요. 미루면 덮고 넘어가는 편이에요.',
+      delight: '그 판단이 옳았다고 말해 주세요. 인정받을 때 크게 웃는 편이에요.',
+    },
+    us: '서로를 끌어당기는 사이예요. 한 번 풀리면 금방 가까워지는 편이에요.',
+    clash: '사소한 말에 마음이 상하기 쉬워요. 중요한 얘기는 얼굴 보고 하는 게 나아요.',
+  };
+  const SCORE = () => baselineIn(jobOf('private').prompt) ?? 60;
+  const WITH_GROUNDING = `${GOOD}\n\n---\n\n### 근거 (검사용)\n\n한 줄로 — 결론 「버틴다」 | 자료: compatibility.relations [fact] | 넘어간 것: 없음`;
+
+  it('칸이 오면 본문 끝(근거 절 앞)의 절 하나로 접어 저장하고, 아무것도 안 적는다', async () => {
+    job = jobOf('private');
+    retrieve.mockResolvedValue(answered({ markdown: WITH_GROUNDING, score: SCORE(), manual: MANUAL } as never));
+    await expect(collectReadingResult('resp-1')).resolves.toMatchObject({ done: 'saved' });
+    expect(called('save_reading')?.[1].p_output).toBe(withManual(WITH_GROUNDING, MANUAL));
+    expect(noted()?.p_findings.map((f) => f.code) ?? []).not.toContain('manual-out-of-contract');
+  });
+
+  it('칸이 비었으면 글은 그대로 저장하고 적는다 — 반쪽 사용 설명서를 세우지 않는다', async () => {
+    job = jobOf('private');
+    retrieve.mockResolvedValue(answered({ markdown: GOOD, score: SCORE(), manual: { ...MANUAL, us: ' ' } } as never));
+    await expect(collectReadingResult('resp-1')).resolves.toMatchObject({ done: 'saved' });
+    expect(called('save_reading')?.[1].p_output).toBe(GOOD);
+    expect(noted()?.p_findings.map((f) => f.code)).toContain('manual-out-of-contract');
+  });
+
+  it('사용 설명서를 안 시킨 옛 판 시도는 칸이 와도 접지 않는다 — 얼린 프롬프트로 안다', async () => {
+    const fresh = jobOf('private');
+    job = { ...fresh, prompt: fresh.prompt.replace(/^## 사용 설명서$/m, '## 다른 절') };
+    retrieve.mockResolvedValue(answered({ markdown: GOOD, score: SCORE(), manual: MANUAL } as never));
+    await expect(collectReadingResult('resp-1')).resolves.toMatchObject({ done: 'saved' });
+    expect(called('save_reading')?.[1].p_output).toBe(GOOD);
+    expect(noted()?.p_findings.map((f) => f.code) ?? []).not.toContain('manual-out-of-contract');
+  });
+
+  it('한 사람 풀이 · 인연 궁합에는 칸이 와도 접지 않는다', async () => {
+    retrieve.mockResolvedValue(answered({ markdown: GOOD, score: null, manual: MANUAL } as never));
+    await expect(collectReadingResult('resp-1')).resolves.toMatchObject({ done: 'saved' });
+    expect(called('save_reading')?.[1].p_output).toBe(GOOD);
   });
 });

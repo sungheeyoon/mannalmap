@@ -130,6 +130,8 @@ export type ReadingCheckCode =
   | 'example-copied'
   /** 상세 궁합의 발견 한 줄이 비었다 — 줄 없이 저장한다(`detailFindingsOf`) */
   | 'discovery-out-of-contract'
+  /** 궁합풀이의 사용 설명서 칸이 비었거나 계약(길이 · 호칭 · 본보기 · 사주 이름)을 어겼다 — 비면 사용 설명서 없이 저장한다(`manualFindingsOf`, ADR 0283) */
+  | 'manual-out-of-contract'
   /** 상세 궁합의 사용자 글이 두 사람의 실제 기둥 두 글자를 직접 썼다(`detailFindingsOf`) — 막는다. 옛 흐름에서는 안 난다 */
   | 'pillar-named-in-reading';
 

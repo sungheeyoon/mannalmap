@@ -464,12 +464,12 @@ describe('개인 풀이는 쉬운 말로 가르친다', () => {
     expect(legacy).not.toContain('## 이 자료를 읽는 법');
   });
 
-  it('개인 풀이는 v25, 비공개 궁합은 v23, 인연 궁합은 상세 v1 이다(ADR 0208 추기 「v25」)', () => {
+  it('개인 풀이는 v25, 비공개 궁합은 v26(사용 설명서, ADR 0283), 인연 궁합은 상세 v1 이다', () => {
     expect(READING_POLICY.version).toBe('reading-prompt-v25');
-    expect(READING_POLICY.pairVersion).toBe('reading-prompt-v23');
+    expect(READING_POLICY.pairVersion).toBe('reading-prompt-v26');
     expect(READING_POLICY.detailVersion).toBe('reading-prompt-detail-v1');
     for (const kind of READING_KINDS) {
-      const expected = isSolo(kind) ? 'reading-prompt-v25' : kind === 'match' ? 'reading-prompt-detail-v1' : 'reading-prompt-v23';
+      const expected = isSolo(kind) ? 'reading-prompt-v25' : kind === 'match' ? 'reading-prompt-detail-v1' : 'reading-prompt-v26';
       expect(promptVersionOf(kind), kind).toBe(expected);
     }
   });

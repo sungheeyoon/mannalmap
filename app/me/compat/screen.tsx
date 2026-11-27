@@ -1,10 +1,11 @@
 import type { ReactNode } from 'react';
 import { notFound, redirect } from 'next/navigation';
 
-import { isBlocked } from '@/src/lib/account';
+import { isBlocked, selfPersonIdOf } from '@/src/lib/account';
 import { matchBasisOf } from '@/src/lib/matching';
 import { relationOf } from '@/src/lib/people';
 import { pairSeatsOf } from '@/src/lib/reading/display';
+import { manualSeatsOf } from '@/src/lib/reading/manual';
 import { analyzeCompatibility, STEM_INFO, type Stem } from '@/src/lib/saju';
 
 import { supabaseOnServer } from '../../auth/server-client';
@@ -110,7 +111,15 @@ export async function CompatScreen({ params, frame }: { params: CompatQuery; fra
     const from = firstOf(params.p);
     const person = [outcome.first, outcome.second].find((one) => one.personId === from);
     const back = backOf('compat', { ...place, person: person === undefined ? undefined : { personId: person.personId, name: person.name } });
-    return <ResultPage outcome={outcome} back={back} frame={frame} besideShelf={place.from === 'shelf'} />;
+    return (
+      <ResultPage
+        outcome={outcome}
+        back={back}
+        frame={frame}
+        besideShelf={place.from === 'shelf'}
+        selfPersonId={selfPersonIdOf(state)}
+      />
+    );
   }
 
   /**
@@ -162,12 +171,15 @@ async function ResultPage({
   back,
   frame,
   besideShelf,
+  selfPersonId,
 }: {
   outcome: Extract<Outcome, { kind: 'ok' }>;
   back: Back;
   frame: CompatFrame;
   /** ← 가 보관함으로 가고 그 책장이 옆에 서 있다 — 넓은 화면에서는 ← 를 안 세운다(사주풀이의 `ReadingBack` 과 같다) */
   besideShelf: boolean;
+  /** 내 사주의 Person — 사용 설명서가 「{상대} 사용 설명서」로 설지 정한다(ADR 0283). 없으면 `null` */
+  selfPersonId: string | null;
 }) {
   /*
     **받은 궁합풀이가 있으면 두 사람 줄은 그 표지 안에 선다**(시안 A, 운영자 승인 2026-11-13) — 머리에는 ← 와 「궁합」만 남고, 제목(두 사람)은
@@ -195,7 +207,7 @@ async function ResultPage({
         </TopBar>
       </header>
 
-      <Result outcome={outcome} reading={reading} />
+      <Result outcome={outcome} reading={reading} selfPersonId={selfPersonId} />
     </Frame>
   );
 }
@@ -307,7 +319,16 @@ async function pairOutcome(a: string | null, b: string | null): Promise<Outcome>
   };
 }
 
-async function Result({ outcome, reading: preloaded }: { outcome: Outcome; reading?: CurrentReading | null }) {
+async function Result({
+  outcome,
+  reading: preloaded,
+  selfPersonId = null,
+}: {
+  outcome: Outcome;
+  reading?: CurrentReading | null;
+  /** 내 사주의 Person — 사용 설명서의 자리를 고른다(`manualSeatsOf`) */
+  selfPersonId?: string | null;
+}) {
   /**
    * **아직 안 골랐으면 아무것도 안 그린다.**
    *
@@ -404,6 +425,8 @@ async function Result({ outcome, reading: preloaded }: { outcome: Outcome; readi
               { name: first.name, stem: first.saju.pillars.dayMaster },
               { name: second.name, stem: second.saju.pillars.dayMaster },
             ]}
+            /* 사용 설명서 — 내 사주가 끼면 상대를 대하는 법, 남 둘이면 서로의 것(ADR 0283). 자리는 글과 같은 Person id 차례다 */
+            manualSeats={manualSeatsOf(first, second, selfPersonId)}
             /**
              * **여기서는 사이를 다시 묻지 않는다**(ADR 0054).
              *

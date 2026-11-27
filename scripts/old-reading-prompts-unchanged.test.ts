@@ -29,13 +29,17 @@ const privateOf = (relation: 'partner' | 'family' | 'friend'): string =>
  * 값 그대로다 — 지우기와 파일 나누기가 운영 글자를 한 바이트도 안 바꿨다는 뜻이다.
  */
 const UNCHANGED_AT: Readonly<Record<string, Readonly<Record<string, string>>>> = {
-  'reading-prompt-v25|reading-prompt-v23|reading-prompt-detail-v1': {
+  /**
+   * 궁합풀이 v26 — 사용 설명서의 지시 · 재료 · 출력 계약이 선다(ADR 0283). 바뀐 것은 비공개 궁합 넷뿐이고 개인 풀이 · 인연 궁합의 지문은 v23 판
+   * (`b6377ce9…` 를 쓰던 표)과 한 글자도 같다 — 사용 설명서가 다른 kind 의 글자를 안 건드렸다는 뜻이다.
+   */
+  'reading-prompt-v25|reading-prompt-v26|reading-prompt-detail-v1': {
     self: '2f0cc082c78e94985ab354cf4739ce3b6ea21a7ad69823dd21d0539a94efb63c',
-    private: 'b6377ce9a19ed5e412272597489a321d39ac97e5ec41eaf2ce138b036bd8be11',
+    private: 'd34f989126e5acad000a5f948c6eaaf301347c3e736ee2e667730cfaef156fa7',
     match: '73744d348e98f5ce60b41b2d132973295df751b8917045a4334efa9fdc89d31f',
-    partner: '75602aae354340a1b8663dddcc59235786c2589eed24085b5831ceab0159ff32',
-    family: '357ed101b19b5694fc5e6bccf9b66dafff2f607018e829e869c1be6f051c7735',
-    friend: 'feb2ae683c89559ec012b2cc15b2fc0300916baeee5b557a9edc9f58e7872031',
+    partner: 'a2ae8afe0efcce93c6829dc868a80e3aa8b3a4d0673a3206b5ef06c8c66ea0f1',
+    family: 'fd8207af52552f470c0516464e1bf2902bdf841c0c2511856f655526e940b640',
+    friend: 'bac6e5aec368bd734931290f30ed40d5e2ec1e7c719405cf777928c4f45f95e5',
   },
 };
 

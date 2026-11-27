@@ -233,6 +233,14 @@ export const isDetailFlow = (kind: ReadingKind, assembly: PromptAssembly): boole
   kind === 'match' && voiceOf(kind, assembly) === 'pair-guided';
 
 /**
+ * 궁합풀이의 **사용 설명서**를 시키는가 — 운영 비공개 궁합(읽는 법 4판)이면 늘 시킨다(ADR 0283). 지시 절(`MANUAL_BLOCK`) · 짝마다의 재료 ·
+ * 출력 스키마의 `manual` 칸이 이 한 답을 읽는다 — 지시와 칸이 갈리면 모델은 받을 칸이 없는 것을 쓰라는 말을 듣는다.
+ * 인연 궁합(상세 궁합)과 옛 궁합 세대는 안 받는다 — 인연 궁합은 닫혀 있고(G-135) 글자가 한 바이트도 안 바뀐다.
+ */
+export const asksManual = (kind: ReadingKind, assembly: PromptAssembly = CONTROL): boolean =>
+  kind === 'private' && voiceOf(kind, assembly) === 'pair-guided';
+
+/**
  * 한 줄 요약을 **본문 뒤에** 짓는 세대인가 — 지시문(`metaphorSection`)과 출력 스키마의 차례(`writesSummaryLast`)가 이 하나를 읽는다.
  *
  * 개인 풀이와 읽는 법 4판의 두 궁합이 그렇다(ADR 0067 · ADR 0207 추기 「v21」). 옛 궁합(`pair-legacy`)은 실험의 견줄 짝이라

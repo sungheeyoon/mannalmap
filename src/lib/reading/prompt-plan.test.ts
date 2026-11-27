@@ -86,7 +86,7 @@ const CASES: readonly Case[] = [
     id: 'private/control',
     kind: 'private',
     assembly: CONTROL,
-    slots: ['role', 'rules', 'guide', 'voice', 'body', 'summary', 'output'],
+    slots: ['role', 'rules', 'guide', 'voice', 'body', 'manual', 'summary', 'output'],
   },
   {
     id: 'match/control',
@@ -122,7 +122,7 @@ const CASES: readonly Case[] = [
     id: 'private/guided+sections',
     kind: 'private',
     assembly: { ...CONTROL, pairShape: 'sections-v1' },
-    slots: ['role', 'rules', 'guide', 'voice', 'personality', 'body', 'summary', 'output'],
+    slots: ['role', 'rules', 'guide', 'voice', 'personality', 'body', 'manual', 'summary', 'output'],
   },
 ];
 
@@ -141,6 +141,8 @@ const OPTIONAL_MARKERS = {
   personality: '## 성격을 읽는 순서',
   claimStrength: '## 얼마나 세게 말할까',
   precedence: '## 무엇을 쓰면 좋은지가 갈릴 때',
+  /** 궁합풀이의 사용 설명서(ADR 0283) — 머리 뒤 첫 줄까지 잰다. 짝마다의 재료(`## 사용 설명서의 재료`)도 같은 머리로 시작한다 */
+  manual: '## 사용 설명서\n\n**본문을 다 쓴 뒤에**',
 } as const satisfies Partial<Record<PromptSlot, string>>;
 
 /**
@@ -260,7 +262,7 @@ describe('운영 네 판의 소제목 차례', () => {
     '구조화 출력의 뜻',
   ];
 
-  /** 두 궁합은 「이 자료의 범위」와 상세 궁합의 두 절만 다르다 — 인연 궁합에만 선다 */
+  /** 두 궁합은 「이 자료의 범위」 · 상세 궁합의 두 절(인연 궁합에만)과 사용 설명서의 두 절(궁합풀이에만)이 다르다 */
   const pairHeadings = (match: boolean) => [
     '한눈에',
     '자리가 붙은 사실',
@@ -282,10 +284,12 @@ describe('운영 네 판의 소제목 차례', () => {
     '무엇을 쓸까',
     '낼 것',
     '점수',
-    ...(match ? ['발견 한 줄', '천간·지지 글자를 쓰지 않는다'] : []),
+    ...(match ? ['발견 한 줄', '천간·지지 글자를 쓰지 않는다'] : ['사용 설명서']),
     '한 줄 요약',
     '구조화 출력의 뜻',
     '기준점',
+    /* 짝마다의 재료는 기준점 뒤에 붙는다 — 궁합풀이에만(ADR 0283) */
+    ...(match ? [] : ['사용 설명서의 재료']),
   ];
 
   it('자기 풀이와 저장된 사람 풀이는 같은 차례다', () => {

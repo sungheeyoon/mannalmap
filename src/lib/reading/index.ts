@@ -135,8 +135,10 @@ export * from './policy';
 export * from './feedback';
 export * from './notes';
 export {
+  asksManual,
   baselineIn,
   CONTROL,
+  manualAskedIn,
   NOTHING_KNOWN,
   READING_PROMPTS,
   readingPromptOf,
@@ -168,6 +170,7 @@ export {
   withDiscovery,
   type DetailReadingOutput,
 } from './detail';
+export { manualFindingsOf, manualOfOutput, withManual, type PairManual } from './manual';
 export { sectionCounter, type SectionCount } from './progress';
 export type { CurrentReading } from './current-reading';
 export type { ReadingEntry } from './entry';

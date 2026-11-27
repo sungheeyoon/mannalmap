@@ -424,6 +424,8 @@ describe('브라우저로 가는 그래프', () => {
     'src/lib/reading/prompt-pair.ts',
     'src/lib/reading/prompt-self.ts',
     'src/lib/reading/prompt-voice.ts',
+    // 궁합풀이의 사용 설명서 지시와 재료(ADR 0283) — 화면은 칸의 모양 · 접기 · 되읽기(`manual.ts`)만 부른다
+    'src/lib/reading/prompt-manual.ts',
     // 열쇠와 그것을 드는 풀의 쓰기(G-64, ADR 0136) — `server-only` 가 빌드를 세우지만, 길을 보여 주는 것은 여기다
     'app/keyed-client.ts',
     'app/me/keyed-chart-writes.ts',

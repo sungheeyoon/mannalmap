@@ -2,6 +2,7 @@ import type { CurrentReading } from '@reading/current-reading';
 import { seatNicknamesOf, withNicknames, type PairNicknames } from '@reading/display';
 import { READING_STALE_LABEL, READING_STALE_NOTE } from '@reading/notes';
 import { COMPAT_SCORE_LABEL } from '@reading/copy';
+import { manualCardOf, manualOf, type ManualSeats } from '@reading/manual';
 import { ELEMENTS, STEM_INFO, type Element, type Stem } from '@saju';
 import { useMemo, useState, type ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
@@ -14,6 +15,7 @@ import { StemSymbol } from '@/ui/stem-symbol';
 import { COLOR, CONTROL, ELEMENT_TONE, FONT, RADIUS, TYPE, TYPE_META, TYPE_NAME, TYPE_SECTION } from '@/ui/tokens';
 
 import { Markdown } from './markdown';
+import { PairManual } from './manual';
 import { ReadingContents, headingsOf } from './contents';
 import type { ReadingTarget } from './api';
 import { Heading } from '@/ui/heading';
@@ -52,9 +54,12 @@ export function Result({
   coverAction,
   belowCover,
   pair,
+  manualSeats,
 }: {
   /** 궁합풀이 표지(시안 A, 운영자 승인 2026-11-13) — 두 사람 · 반원 게이지 · 비유 · 날짜를 가운데로. 비공개 궁합만 넘긴다 */
   pair?: readonly [CoverPerson, CoverPerson];
+  /** 궁합풀이의 두 자리 — 사용 설명서 카드가 「{상대} 사용 설명서」로 설지 정한다(웹 `reading-result.tsx` 와 같다, ADR 0283). 안 넘기면 둘을 다 세운다 */
+  manualSeats?: ManualSeats;
   reading: CurrentReading;
   target: ReadingTarget;
   createdLabel: string | null;
@@ -72,7 +77,13 @@ export function Result({
   const seats = nicknames === undefined ? null : seatNicknamesOf(nicknames, reading.viewerIsFirst);
   const named = (text: string) => (seats === null ? text : withNicknames(text, seats));
   const metaphor = reading.metaphor === null ? null : named(reading.metaphor);
-  const body = named(reading.output);
+  /* 궁합풀이의 사용 설명서는 글에서 떼어 카드로 세운다 — 호칭을 바꾸기 전의 글에서 뗀다(웹과 같다, ADR 0283). 옛 글은 그대로다 */
+  const manual = target.kind === 'private' ? manualOf(reading.output) : { manual: null, rest: reading.output };
+  const card =
+    manual.manual === null || seats === null
+      ? null
+      : manualCardOf(manual.manual, seats, manualSeats ?? { shown: ['first', 'second'], own: null }, named);
+  const body = named(manual.rest);
   const titles = useMemo(() => headingsOf(body), [body]);
 
   const meta = (
@@ -127,6 +138,9 @@ export function Result({
       )}
 
       {betweenSummaryAndBody}
+
+      {/* 표지 다음 · 본문 앞 — 그 사람을 대하는 법을 먼저 꺼내 쓴다(웹과 같은 자리) */}
+      {card !== null && <PairManual card={card} />}
 
       {target.kind === 'match' && (
         <View>

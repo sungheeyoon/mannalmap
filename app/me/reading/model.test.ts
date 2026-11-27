@@ -134,3 +134,35 @@ describe('상세 궁합의 모양', () => {
     await expect(propertiesOf({})).resolves.toEqual(['score', 'metaphor', 'markdown']);
   });
 });
+
+describe('궁합풀이의 사용 설명서 칸(ADR 0283)', () => {
+  type Schema = { properties: Record<string, Schema>; required: string[]; additionalProperties?: boolean; type?: string };
+  const schemaOf = async (options: Parameters<typeof callModel>[1]): Promise<Schema> => {
+    await callModel('프롬프트', options);
+    const output = generateText.mock.calls.at(-1)?.[0].output as { responseFormat: Promise<{ schema: Schema }> };
+    return (await output.responseFormat).schema;
+  };
+
+  it('본문 → 점수 → 사용 설명서 → 한 줄 요약 차례다', async () => {
+    const schema = await schemaOf({ summaryLast: true, manual: true });
+    expect(Object.keys(schema.properties)).toEqual(['markdown', 'score', 'manual', 'metaphor']);
+    expect(schema.required).toEqual(Object.keys(schema.properties));
+  });
+
+  /** strict 구조화 출력은 칸마다 모든 키를 `required` 에 두고 `additionalProperties: false` 여야 받는다 — 안쪽 칸까지 잰다 */
+  it('사용 설명서 칸은 안쪽까지 strict 모양이다 — 두 사람마다 상황 넷 · 우리 둘은 · 자꾸 부딪히는 자리', async () => {
+    const { manual } = (await schemaOf({ summaryLast: true, manual: true })).properties;
+    expect(Object.keys(manual.properties)).toEqual(['first', 'second', 'us', 'clash']);
+    expect(manual.required).toEqual(Object.keys(manual.properties));
+    expect(manual.additionalProperties).toBe(false);
+    for (const seat of ['first', 'second']) {
+      expect(Object.keys(manual.properties[seat].properties)).toEqual(['ask', 'apologize', 'upset', 'delight']);
+      expect(manual.properties[seat].required).toEqual(['ask', 'apologize', 'upset', 'delight']);
+      expect(manual.properties[seat].additionalProperties).toBe(false);
+    }
+  });
+
+  it('상세 궁합의 모양이 이긴다 — 둘이 한 시도에 함께 오지 않는다', async () => {
+    expect(Object.keys((await schemaOf({ summaryLast: true, discovery: true, manual: true })).properties)).toEqual(['markdown', 'score', 'discovery', 'metaphor']);
+  });
+});

@@ -3,6 +3,7 @@ import type { ReactNode } from 'react';
 import { READING_STALE_LABEL, READING_STALE_NOTE } from '@/src/lib/reading/notes';
 import { seatNicknamesOf, withNicknames, type PairNicknames } from '@/src/lib/reading/display';
 import { COMPAT_SCORE_LABEL } from '@/src/lib/reading/copy';
+import { manualCardOf, manualOf, type ManualSeats } from '@/src/lib/reading/manual';
 import { ELEMENTS, STEM_INFO, type Element, type Stem } from '@/src/lib/saju';
 
 import { elementScope } from '../../ui/element-tone';
@@ -15,6 +16,7 @@ import type { CurrentReading } from '@/src/lib/reading';
 import { coverFace, readingMinutes } from './essay';
 import { discoveryLeadOf } from './discovery-lead';
 import { Markdown, READING_COLUMN } from './markdown';
+import { PairManual } from './pair-manual';
 import { PairNames } from './pair-names';
 import { ShareReadingButton } from './share-button';
 import { when } from '@/src/lib/reading/when';
@@ -35,7 +37,13 @@ export function Result({
   canShare = false,
   discoveryInCover = false,
   pair,
+  manualSeats,
 }: {
+  /**
+   * 궁합풀이의 두 자리 — 고른 차례와 내 사주가 앉은 자리(`manualSeatsOf`). 사용 설명서 카드가 「{상대} 사용 설명서」로 설지 「서로의 사용 설명서」로
+   * 설지를 정한다(ADR 0283). 안 넘기면 둘을 다 세운다 — 누가 「나」인지 모르는 자리에서 한쪽만 세우면 틀린 사람의 설명서가 선다
+   */
+  manualSeats?: ManualSeats;
   /**
    * 궁합풀이 표지(시안 A, 운영자 승인 2026-11-13) — 두 사람 · 반원 게이지 · 비유 · 날짜를 가운데로 세운다. 화면 머리에 서던 두 사람 줄이
    * 표지 안으로 들어온다. 비공개 궁합(`/me/compat`)만 넘긴다 — 인연 궁합은 일간 그림을 안 세운다(ADR 0215)
@@ -63,9 +71,18 @@ export function Result({
   */
   const seats = nicknames === undefined ? null : seatNicknamesOf(nicknames, reading.viewerIsFirst);
   const named = (text: string): string => (seats === null ? text : withNicknames(text, seats));
+  /*
+    **궁합풀이의 사용 설명서는 글에서 떼어 카드로 세운다**(ADR 0283) — 회수가 본문 끝에 접은 절이고, 우리가 쓴 꼴만 되읽는다(`manualOf`). 호칭을
+    바꾸기 전의 글에서 뗀다 — 그 절의 소제목이 자리 호칭으로 자리를 가린다. 못 읽거나 옛 글이면 글 그대로다.
+  */
+  const manual = target.kind === 'private' ? manualOf(reading.output) : { manual: null, rest: reading.output };
+  const card =
+    manual.manual === null || seats === null
+      ? null
+      : manualCardOf(manual.manual, seats, manualSeats ?? { shown: ['first', 'second'], own: null }, named);
   const { lead: discovery, rest: body } = discoveryInCover
-    ? discoveryLeadOf(named(reading.output))
-    : { lead: null, rest: named(reading.output) };
+    ? discoveryLeadOf(named(manual.rest))
+    : { lead: null, rest: named(manual.rest) };
   const metaphor = reading.metaphor === null ? null : named(reading.metaphor);
 
   /*
@@ -192,6 +209,8 @@ export function Result({
         </p>
       )}
       {betweenSummaryAndBody}
+      {/* 표지 다음 · 본문 앞 — 그 사람을 대하는 법을 먼저 꺼내 쓰고, 긴 글은 그 아래에서 읽는다(ADR 0283) */}
+      {card !== null && <PairManual card={card} />}
       <div className={`${elementScope(firstTone)} flex flex-col gap-2 pt-4 sm:pt-8`}>
         {target.kind === 'match' && (
           <header className={READING_COLUMN}>

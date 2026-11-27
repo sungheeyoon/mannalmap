@@ -7,6 +7,7 @@ import { READING_POLICY, isScored, type PairKind, type ReadingKind } from './pol
 import {
   CONTROL,
   NOTHING_KNOWN,
+  asksManual,
   guideScopeOf,
   isDetailFlow,
   summaryLastFor,
@@ -16,7 +17,15 @@ import {
   type PromptVoice,
   type ReadingAbout,
 } from './prompt-assembly';
-import { DETAIL_BLOCK, DETAIL_OUTPUT_CONTRACT, PAIR_OUTPUT_CONTRACT, pairCustomerVoice, pairRules } from './prompt-guided';
+import {
+  DETAIL_BLOCK,
+  DETAIL_OUTPUT_CONTRACT,
+  MANUAL_OUTPUT_CONTRACT,
+  PAIR_OUTPUT_CONTRACT,
+  pairCustomerVoice,
+  pairRules,
+} from './prompt-guided';
+import { MANUAL_BLOCK, manualFactsBlock, manualFactsOf } from './prompt-manual';
 import { JUDGEMENT_PRECEDENCE, LEAD_SUMMARY, STRENGTH_TITLE, selfSections } from './prompt-self';
 import { baselineBlock, compatSections, matchScope } from './prompt-pair';
 import { relationshipCustomerVoice, selfCustomerVoice } from './prompt-voice';
@@ -24,13 +33,14 @@ import { relationshipCustomerVoice, selfCustomerVoice } from './prompt-voice';
 /**
  * **풀이 프롬프트의 입구** — 자리 표(`SLOT_ORDER`)에 조각을 세워 한 판을 짓고(`planOf`), 자료를 붙여 실제로 보낼 글을 낸다
  * (`readingPromptOf`). 조각은 의미 단위로 나눠 산다 — 조립과 세대 `prompt-assembly.ts`, 말투와 용어 `prompt-voice.ts`,
- * 4판 궁합의 제 벌 `prompt-guided.ts`, 개인 풀이 절 `prompt-self.ts`, 궁합 본문 절 `prompt-pair.ts`.
- * 바깥은 이 파일(과 `index.ts`)로만 부른다.
+ * 4판 궁합의 제 벌 `prompt-guided.ts`, 개인 풀이 절 `prompt-self.ts`, 궁합 본문 절 `prompt-pair.ts`, 궁합풀이의 사용 설명서
+ * `prompt-manual.ts`. 바깥은 이 파일(과 `index.ts`)로만 부른다.
  */
 
-export { CONTROL, NOTHING_KNOWN, writesSummaryLast, type PromptAssembly, type ReadingAbout } from './prompt-assembly';
+export { CONTROL, NOTHING_KNOWN, asksManual, writesSummaryLast, type PromptAssembly, type ReadingAbout } from './prompt-assembly';
 export { LEAD_SUMMARY, selfSectionCount, selfSectionTexts, selfSectionTitlesOf } from './prompt-self';
 export { baselineIn, pairSectionTexts } from './prompt-pair';
+export { manualAskedIn } from './prompt-manual';
 
 /**
  * 개인 · 궁합이 갈리는 말 — **한 표에 둔다.** 자리마다 삼항으로 물으면 한 자리만 고쳐지는 날이 온다.
@@ -180,6 +190,7 @@ const SLOT_ORDER = [
   'extra',
   'body',
   'detail',
+  'manual',
   'summary',
   'output',
 ] as const;
@@ -240,12 +251,16 @@ const planOf = (kind: ReadingKind, assembly: PromptAssembly, about: ReadingAbout
       ? selfSections(assembly)
       : compatSections(kind as PairKind, assembly, about, voice),
     detail: isDetailFlow(kind, assembly) ? DETAIL_BLOCK : null,
+    /** 궁합풀이의 사용 설명서 — 운영 비공개 궁합에만 선다(ADR 0283). 출력 계약도 같은 술어로 칸 하나를 더 말한다 */
+    manual: asksManual(kind, assembly) ? MANUAL_BLOCK : null,
     summary: metaphorSection(voice),
     output: isDetailFlow(kind, assembly)
       ? DETAIL_OUTPUT_CONTRACT
-      : guided
-        ? PAIR_OUTPUT_CONTRACT
-        : OUTPUT_CONTRACT(kind),
+      : asksManual(kind, assembly)
+        ? MANUAL_OUTPUT_CONTRACT
+        : guided
+          ? PAIR_OUTPUT_CONTRACT
+          : OUTPUT_CONTRACT(kind),
   };
 };
 
@@ -312,7 +327,14 @@ export function readingPromptOf(
    */
   const baseline =
     'baseline' in readingEvidence ? `\n\n${baselineBlock(readingEvidence.baseline)}` : '';
-  const prompt = `${head}${baseline}
+  /**
+   * **사용 설명서의 재료도 짝마다 다르다** — 기준점 뒤에 붙는다(ADR 0283). 자료의 글자에서 엔진 함수로 다시 지으므로 얼린 프롬프트와
+   * 저장한 근거가 같은 답을 낸다.
+   */
+  const facts =
+    readingEvidence.kind === 'private' && asksManual('private', assembly) ? manualFactsOf(readingEvidence.evidence) : null;
+  const manual = facts === null ? '' : `\n\n${manualFactsBlock(facts)}`;
+  const prompt = `${head}${baseline}${manual}
 
 ## 자료 (${EVIDENCE_CONTRACT.version})
 

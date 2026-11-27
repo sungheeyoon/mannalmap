@@ -6,6 +6,7 @@ import type { Database } from '@/src/lib/db';
 import { relationOf } from '@/src/lib/people';
 import type { Saju } from '@/src/lib/saju';
 import {
+  asksManual,
   promptVersionOf,
   sectionCounter,
   writesSummaryLast,
@@ -184,6 +185,8 @@ export async function submitFrozen(
     summaryLast: writesSummaryLast(kind),
     continuation: continued,
     discovery: detail,
+    /* 궁합풀이는 사용 설명서 칸을 함께 받는다 — 지시와 같은 술어다(ADR 0283). 회수는 얼린 프롬프트에서 시켰는지 되읽는다(`manualAskedIn`) */
+    manual: asksManual(kind),
   });
   /**
    * **답을 못 받은 제출은 닫지 않는다.** provider 가 받았으면 응답이 돌고 있고, 그 webhook 이 이름표(`metadata.reading_run_id`)로
