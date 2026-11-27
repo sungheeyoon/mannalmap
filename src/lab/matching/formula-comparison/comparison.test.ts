@@ -87,8 +87,10 @@ describe('공식 표', () => {
   /**
    * 비교기의 v2 두 줄은 무게를 손으로 적었다 — 운영 셈(`previewScoreOf`)과 한 점이라도 갈리면 비교기가 재는 것이
    * 카드 · 풀이의 점수가 아니게 된다. 사람은 운영과 같은 길(`scoreSideOf`)로 한 번 더 세워 필요 대상까지 견준다.
+   * 견주는 판은 옮기기 전의 `v2-beta` 다 — 지금 판(`v3-beta`)은 그 수에 정수 하나를 더한 것이고(ADR 0279), 그 옮김은
+   * `calibration.test.ts` 가 잰다. 공식의 서열 · 분포를 재는 이 표는 옮김 없이 무게만 견준다.
    */
-  it('v2 두 줄은 운영의 previewScoreOf(연인용 · 일반)와 한 점도 다르지 않다', () => {
+  it('v2 두 줄은 운영의 previewScoreOf(연인용 · 일반, 옮기기 전 v2-beta)와 한 점도 다르지 않다', () => {
     const formula = (id: string) => {
       const found = FORMULAS.find((f) => f.id === id);
       if (!found) throw new Error(`${id} 가 없다`);
@@ -101,8 +103,8 @@ describe('공식 표', () => {
       const axes = axesOf(a, b);
       const [x, y] = [sideOf(a), sideOf(b)];
       expect(x.need).toEqual(a.targets.engine);
-      expect(scoreOf(formula('v2-romantic'), axes)).toBe(previewScoreOf(x, y, { policy: 'romantic' }));
-      expect(scoreOf(formula('v2-general'), axes)).toBe(previewScoreOf(x, y, { policy: 'general' }));
+      expect(scoreOf(formula('v2-romantic'), axes)).toBe(previewScoreOf(x, y, { policy: 'romantic', version: 'v2-beta' }));
+      expect(scoreOf(formula('v2-general'), axes)).toBe(previewScoreOf(x, y, { policy: 'general', version: 'v2-beta' }));
     }
   });
 

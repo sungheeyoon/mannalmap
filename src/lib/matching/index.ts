@@ -15,11 +15,13 @@ import {
 import {
   DISCOVERY_POLICY,
   DISCOVERY_V1,
+  DISCOVERY_V2_BETA,
   legacyPreviewScoreOf,
   previewScoreOf,
   scoreAxesOf,
   scorePolicyOf,
   scoreSideOf,
+  type PolicyScoreVersion,
   type ScorePolicy,
   type ScoreVersion,
   type StoredScore,
@@ -60,15 +62,22 @@ export type MatchPreview = {
  * `index` 는 **저장된 기준점**이다 — 풀이가 있으면 그 풀이를 만든 때의 수를 세운다(ADR 0060). 없으면 지금 잰다.
  */
 export type MatchBasis =
-  | { version: typeof DISCOVERY_POLICY.version; policy: ScorePolicy; index?: number }
+  | { version: PolicyScoreVersion; policy: ScorePolicy; index?: number }
   | { version: typeof DISCOVERY_V1.version; index?: number };
+
+/** 사이로 가른 판 둘 — 지금 판과 옮기기 전의 `v2-beta`(ADR 0279). 축 · 무게가 같고 옮김만 다르다 */
+const POLICY_VERSIONS: readonly string[] = [DISCOVERY_POLICY.version, DISCOVERY_V2_BETA.version];
+
+const isPolicyVersion = (version: string | null): version is PolicyScoreVersion =>
+  version !== null && POLICY_VERSIONS.includes(version);
 
 /**
  * 지표를 **무슨 판으로** 그릴지 — 풀이가 있으면 그 풀이의 판이다.
  *
  * **옛 풀이 옆에 새 판의 수를 세우지 않는다.** 풀이 점수는 만든 때의 기준점에서 움직인 값이라, 그 위에 새 판의
  * 지표가 서면 한 화면에 눈금이 둘이 된다(PRD 「한 화면에 점수가 둘이면」). 새 판을 지금 재는 것은 풀이가 아직
- * 없을 때뿐이다 — 새 풀이는 그 수를 기준점으로 받는다.
+ * 없을 때뿐이다 — 새 풀이는 그 수를 기준점으로 받는다. `v2-beta` 풀이는 `v2-beta` 로 다시 열린다 — 축은 지금 판과 같고
+ * 기준점은 그 풀이가 든 옮기기 전의 수다.
  *
  * 모르는 판 이름은 옛 판으로 읽는다 — 이 열이 생기기 전 풀이가 `null` 이고, 그 풀이는 옛 판으로 났다.
  */
@@ -79,9 +88,9 @@ export function matchBasisOf(
   if (stored === null) {
     return { version: DISCOVERY_POLICY.version, policy: scorePolicyOf(pair) };
   }
-  if (stored.version === DISCOVERY_POLICY.version) {
+  if (isPolicyVersion(stored.version)) {
     return {
-      version: DISCOVERY_POLICY.version,
+      version: stored.version,
       policy: scorePolicyOf({ matched: pair.matched, relation: stored.relation }),
       ...(stored.baseline === null ? {} : { index: stored.baseline }),
     };
@@ -152,7 +161,7 @@ function scaleOf(
   const order: readonly (keyof typeof axes)[] = ['dayPillar', 'needComplement', 'combinedBalance'];
 
   return {
-    index: basis.index ?? previewScoreOf(a, b, { policy: basis.policy }),
+    index: basis.index ?? previewScoreOf(a, b, { policy: basis.policy, version: basis.version }),
     dimensions: order.flatMap((key) => {
       const weight = weights[key];
       return weight === undefined ? [] : [dimensionOf(key, axes[key], weight)];
@@ -218,7 +227,7 @@ export function buildMatchPreview(
 
   return {
     policyVersion: basis.version,
-    policy: basis.version === DISCOVERY_POLICY.version ? basis.policy : null,
+    policy: basis.version === DISCOVERY_V1.version ? null : basis.policy,
     status: DISCOVERY_POLICY.status,
     index,
     dimensions,

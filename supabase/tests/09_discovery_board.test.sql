@@ -116,8 +116,8 @@ select * from public.discovery_candidate_slot where snapshot_id = (select id fro
 
 select is(
   (select policy_version from public.discovery_candidate where id = (select id from first_id)),
-  'v2-beta',
-  '새 덱은 v2-beta 정책을 기록한다');
+  'v3-beta',
+  '새 덱은 v3-beta 정책을 기록한다');
 
 select is((select count(*)::int from board), 6, '덱에는 여섯이 선다');
 
@@ -467,7 +467,8 @@ select hasnt_function('public', 'my_discovery_snapshot', array[]::name[],
 select hasnt_function('public', 'discovery_refresh_cooldown', array[]::name[],
   '5분 쿨다운도 없다');
 
-update public.discovery_candidate set policy_version = 'discovery-v1'
+-- 옮기기 전의 판(`v2-beta`, ADR 0279)으로 선 덱도 옛 판이다 — 배포 뒤 처음 읽을 때 새로 선다
+update public.discovery_candidate set policy_version = 'v2-beta'
 where user_id = (select uid from me);
 
 set local role authenticated;
@@ -478,7 +479,7 @@ reset role;
 select is(
   (select policy_version from public.discovery_candidate where user_id = (select uid from me)
    order by seq desc limit 1),
-  'v2-beta',
+  'v3-beta',
   '이전 정책 덱은 읽을 때 즉시 다시 만든다');
 
 set local role authenticated;

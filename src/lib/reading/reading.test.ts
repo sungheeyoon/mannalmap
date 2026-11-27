@@ -199,7 +199,7 @@ describe('프롬프트는 출생 원문을 들고 나가지 않는다', () => {
       const evidence = readingEvidenceOf(kind, { a: A, b: B }, VIEWED_AT, undefined, relation);
       if (!('scoring' in evidence)) throw new Error('궁합에는 눈금이 있어야 합니다.');
 
-      expect(evidence.scoring, `${kind} ${relation}`).toEqual({ version: 'v2-beta', policy, relation });
+      expect(evidence.scoring, `${kind} ${relation}`).toEqual({ version: 'v3-beta', policy, relation });
       expect(evidence.baseline, `${kind} ${relation}`).toBe(
         previewScoreOf(scoreSideOf(A), scoreSideOf(B), { policy }),
       );
