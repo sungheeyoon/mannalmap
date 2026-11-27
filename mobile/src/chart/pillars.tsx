@@ -20,9 +20,10 @@ import {
 import { PALACE, PILLAR_COLUMNS } from '@saju-view';
 
 import { ElementSymbol } from '@/ui/element-symbol';
+import { Card } from '@/ui/surfaces';
 import { alpha, COLOR, ELEMENT_TONE, RADIUS, TYPE } from '@/ui/tokens';
 
-import { Card, Disclosure, T, Tabs, type Tab } from './parts';
+import { Disclosure, T, Tabs, type Tab } from './parts';
 
 /** 사주팔자 — 여덟 글자는 언제나 한눈에, 부가 표식은 한 종류씩(웹 `pillars.tsx`) */
 export function PillarChart({ saju }: { saju: Saju }) {
@@ -42,8 +43,8 @@ export function PillarChart({ saju }: { saju: Saju }) {
               return (
                 <View style={styles.hiddenList}>
                   {hiddenStems.map((hidden) => (
-                    <T key={hidden.stem + hidden.role} size="xs" tone="secondary" style={styles.center}>
-                      <T size="xs" glyph>{hidden.stem}</T> {TEN_GOD_KO[hidden.tenGod]}
+                    <T key={hidden.stem + hidden.role} size="caption" tone="secondary" style={styles.center}>
+                      <T size="caption" glyph>{hidden.stem}</T> {TEN_GOD_KO[hidden.tenGod]}
                     </T>
                   ))}
                 </View>
@@ -108,13 +109,13 @@ export function PillarChart({ saju }: { saju: Saju }) {
   return (
     <Card>
       <View style={styles.head}>
-        <T size="heading" bold>사주팔자</T>
+        <T size="section" bold>사주팔자</T>
         <View style={[styles.dayBadge, { backgroundColor: ELEMENT_TONE[dayElement].soft }]}>
           <View style={styles.dayBadgeIcon}>
             <ElementSymbol element={dayElement} size={20} />
           </View>
-          <T size="small" bold color={ELEMENT_TONE[dayElement].ink}>
-            일간 <T size="base" glyph bold color={ELEMENT_TONE[dayElement].ink}>{pillars.dayMaster}</T> · {STEM_INFO[pillars.dayMaster].ko}{ELEMENT_KO[dayElement]}
+          <T size="meta" bold color={ELEMENT_TONE[dayElement].ink}>
+            일간 <T size="field" glyph bold color={ELEMENT_TONE[dayElement].ink}>{pillars.dayMaster}</T> · {STEM_INFO[pillars.dayMaster].ko}{ELEMENT_KO[dayElement]}
           </T>
         </View>
       </View>
@@ -124,13 +125,13 @@ export function PillarChart({ saju }: { saju: Saju }) {
       {(pillars.meta.sajuYear !== saju.meta.inputTime.year || pillars.meta.lateNightShiftApplied) && (
         <View accessibilityLabel="사주를 바꾼 입력 안내" style={styles.notice}>
           {pillars.meta.sajuYear !== saju.meta.inputTime.year && (
-            <T size="small" tone="secondary">
-              <T size="small" bold>사주년 {pillars.meta.sajuYear}년</T> · 입춘 전이라 달력연도 {saju.meta.inputTime.year}년과 다릅니다.
+            <T size="meta" tone="secondary">
+              <T size="meta" bold>사주년 {pillars.meta.sajuYear}년</T> · 입춘 전이라 달력연도 {saju.meta.inputTime.year}년과 다릅니다.
             </T>
           )}
           {pillars.meta.lateNightShiftApplied && (
-            <T size="small" tone="secondary">
-              <T size="small" bold>조자시 적용</T> · 일주를 다음 날로 넘겼습니다.
+            <T size="meta" tone="secondary">
+              <T size="meta" bold>조자시 적용</T> · 일주를 다음 날로 넘겼습니다.
             </T>
           )}
         </View>
@@ -144,12 +145,12 @@ export function PillarChart({ saju }: { saju: Saju }) {
         <View style={styles.palaces}>
           {PILLAR_COLUMNS.map(({ key, label }) => (
             <View key={key} style={styles.palace}>
-              <T size="small" bold>{label} · {PALACE[key].period}</T>
-              <T size="small" tone="secondary" style={styles.palaceMeaning}>{PALACE[key].meaning}</T>
+              <T size="meta" bold>{label} · {PALACE[key].period}</T>
+              <T size="meta" tone="secondary" style={styles.palaceMeaning}>{PALACE[key].meaning}</T>
             </View>
           ))}
         </View>
-        <T size="xs" tone="secondary" style={styles.palaceNote}>
+        <T size="caption" tone="secondary" style={styles.palaceNote}>
           궁은 계산값이 아니라 자리에 붙는 전통적 상징입니다. 관계와 연령 구간은 넓게 참고해 주세요.
         </T>
       </Disclosure>
@@ -188,8 +189,8 @@ function PillarTable({ saju }: { saju: Saju }) {
         const tenGods = analysis.tenGods[key];
         return (
           <View key={key} style={styles.column}>
-            <T size="xs" tone="secondary" style={styles.center}>{PALACE[key].period}</T>
-            <T size="sm" bold tone={key === 'day' ? 'foreground' : 'secondary'} style={styles.columnLabel}>{label}</T>
+            <T size="caption" tone="secondary" style={styles.center}>{PALACE[key].period}</T>
+            <T size="note" bold tone={key === 'day' ? 'foreground' : 'secondary'} style={styles.columnLabel}>{label}</T>
             <View accessibilityLabel={`${label} 천간과 지지`} style={[styles.stack, key === 'day' && styles.stackDay]}>
               <Glyph
                 glyph={pillar ? pillar.stem : null}
@@ -234,19 +235,19 @@ function Glyph({
     <View style={[styles.glyphBox, { backgroundColor: soft }, glyph === null && styles.glyphUnknown]}>
       {dayMaster ? (
         <View style={styles.me}>
-          <T size="xs" bold color={COLOR.background}>나</T>
+          <T size="caption" bold color={COLOR.background}>나</T>
         </View>
       ) : (
-        <T size="xs" bold color={ink} style={styles.tenGod}>{tenGod ? TEN_GOD_KO[tenGod] : glyph === null ? '—' : ''}</T>
+        <T size="caption" bold color={ink} style={styles.tenGod}>{tenGod ? TEN_GOD_KO[tenGod] : glyph === null ? '—' : ''}</T>
       )}
       <T glyph bold color={glyph === null ? COLOR.muted : ink} style={styles.glyph}>{glyph ?? '?'}</T>
       <View style={styles.captionRow}>
         {glyph !== null && <ElementSymbol element={element} size={14} />}
-        <T size="xs" bold color={ink} style={styles.caption}>{caption}</T>
+        <T size="caption" bold color={ink} style={styles.caption}>{caption}</T>
       </View>
       {relationshipSeat && (
         <View style={styles.seat}>
-          <T size="xs" bold style={styles.center}>배우자</T>
+          <T size="caption" bold style={styles.center}>배우자</T>
         </View>
       )}
     </View>
@@ -265,7 +266,7 @@ function Term({ label, children }: { label: string; children: ReactNode }) {
 function DetailPanel({ note, children }: { note: string; children: ReactNode }) {
   return (
     <View>
-      <T size="small" tone="secondary" style={styles.detailNote}>{note}</T>
+      <T size="meta" tone="secondary" style={styles.detailNote}>{note}</T>
       {children}
     </View>
   );
@@ -278,11 +279,11 @@ function ValueGrid({ values }: { values: (position: PillarPosition) => ReactNode
         const value = values(key);
         return (
           <View key={key} style={[styles.gridCell, key === 'day' && styles.gridCellDay]}>
-            <T size="xs" tone="secondary" bold style={styles.gridLabel}>{label}</T>
+            <T size="caption" tone="secondary" bold style={styles.gridLabel}>{label}</T>
             {value === null ? (
-              <T size="xs" tone="secondary" style={styles.dot}>·</T>
+              <T size="caption" tone="secondary" style={styles.dot}>·</T>
             ) : typeof value === 'string' ? (
-              <T size="xs" tone={key === 'day' ? 'foreground' : 'secondary'} style={styles.center}>{value}</T>
+              <T size="caption" tone={key === 'day' ? 'foreground' : 'secondary'} style={styles.center}>{value}</T>
             ) : (
               value
             )}
@@ -296,7 +297,7 @@ function ValueGrid({ values }: { values: (position: PillarPosition) => ReactNode
 function BasisBlock({ label, children }: { label: string; children: ReactNode }) {
   return (
     <View>
-      <T size="xs" tone="secondary" bold style={styles.basisLabel}>{label}</T>
+      <T size="caption" tone="secondary" bold style={styles.basisLabel}>{label}</T>
       {children}
     </View>
   );
@@ -320,7 +321,7 @@ const styles = StyleSheet.create({
   glyph: { fontSize: TYPE.figure, lineHeight: 46 },
   captionRow: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'center', gap: 2 },
   /* 같은 까닭 — 「사·화」보다 조금 넓게 잡는다 */
-  caption: { minWidth: TYPE.fine * 2.75, lineHeight: 16, textAlign: 'center' },
+  caption: { minWidth: TYPE.fine * 2.75, textAlign: 'center' },
   /* 일주 칸은 테두리 · 안쪽 여백만큼 좁다 — 글자에 꼭 맞는 폭에 좌우 여백을 더하면 360 폭에서 두 줄로 꺾인다(「관계 자 / 리」, 2026-11-11). 칸 폭을 다 쓴다 */
   seat: { alignSelf: 'stretch', borderRadius: RADIUS.pill, backgroundColor: COLOR.surface },
   notice: { marginTop: 16, gap: 6, borderRadius: RADIUS.cell, borderWidth: 1, borderColor: COLOR.warningLineSoft, backgroundColor: COLOR.warningWash, paddingHorizontal: 16, paddingVertical: 12 },

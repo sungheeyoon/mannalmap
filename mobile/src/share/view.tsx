@@ -12,7 +12,7 @@ import { Icon } from '@/ui/icons';
 import { Logo } from '@/ui/logo';
 import { ScoreGauge } from '@/ui/score-gauge';
 import { PrimaryButton, SecondaryButton } from '@/ui/parts';
-import { COLOR, ELEMENT_TONE, FONT, RADIUS, TYPE, TYPE_META, TYPE_SECTION, TYPE_TITLE } from '@/ui/tokens';
+import { COLOR, CONTROL, ELEMENT_TONE, FONT, RADIUS, TYPE, TYPE_META, TYPE_SECTION, TYPE_TITLE } from '@/ui/tokens';
 import { settled } from '@/ui/settled';
 import { TopBar } from '@/ui/top-bar';
 import { Card, Paper, Tile } from '@/ui/surfaces';
@@ -180,7 +180,7 @@ function BrandCircle({ size, mark }: { size: number; mark: number }) {
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: COLOR.background },
   content: { flexGrow: 1, padding: 16, gap: 24 },
-  brandRow: { flexDirection: 'row', alignItems: 'center', gap: 8, minHeight: 44, marginHorizontal: 4 },
+  brandRow: { flexDirection: 'row', alignItems: 'center', gap: 8, minHeight: CONTROL, marginHorizontal: 4 },
   brand: { fontSize: TYPE.heading, fontFamily: FONT.bold, color: COLOR.foreground },
   head: { gap: 6 },
   eyebrow: { fontSize: TYPE.small, fontFamily: FONT.bold, color: COLOR.creamInk },

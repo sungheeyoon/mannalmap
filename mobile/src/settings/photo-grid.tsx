@@ -12,7 +12,7 @@ import { FailureLine } from '@/ui/failure-line';
 import { Icon } from '@/ui/icons';
 import { Paper } from '@/ui/surfaces';
 import { ConfirmDialog } from '@/ui/confirm-dialog';
-import { alpha, COLOR, FONT, RADIUS, TYPE, TYPE_META } from '@/ui/tokens';
+import { alpha, COLOR, CONTROL, FONT, RADIUS, TYPE, TYPE_META } from '@/ui/tokens';
 import { settled, settledWhileLive } from '@/ui/settled';
 
 import { useDoneNote } from './parts';
@@ -526,7 +526,7 @@ const styles = StyleSheet.create({
   plusRest: { backgroundColor: COLOR.surfaceSunken },
   addText: { fontSize: TYPE.body, fontFamily: FONT.bold, color: COLOR.secondary },
   lead: { position: 'absolute', left: 8, top: 8, overflow: 'hidden', paddingHorizontal: 8, paddingVertical: 2, borderRadius: RADIUS.pill, backgroundColor: COLOR.surface, fontSize: TYPE.fine, fontFamily: FONT.bold, color: COLOR.foreground },
-  remove: { position: 'absolute', right: 0, top: 0, width: 44, height: 44, alignItems: 'center', justifyContent: 'center' },
+  remove: { position: 'absolute', right: 0, top: 0, width: CONTROL, height: CONTROL, alignItems: 'center', justifyContent: 'center' },
   removeFace: { width: 26, height: 26, borderRadius: RADIUS.pill, alignItems: 'center', justifyContent: 'center', backgroundColor: COLOR.photoFace, borderWidth: 1, borderColor: COLOR.photoLine },
   saving: { ...StyleSheet.absoluteFill, alignItems: 'center', justifyContent: 'center', backgroundColor: alpha(COLOR.foreground, 0.45) },
   savingText: { fontSize: TYPE.small, fontFamily: FONT.bold, color: COLOR.surface },

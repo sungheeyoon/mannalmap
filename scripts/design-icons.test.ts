@@ -41,7 +41,6 @@ const DRAWING_EXCEPTIONS: readonly { file: string; why: string }[] = [
   { file: 'mobile/src/compat/relation-map.tsx', why: '관계 지도 — 그림이 곧 화면이다' },
   { file: 'mobile/src/reading/result.tsx', why: '궁합풀이 표지의 두 색 면(웹 `app/me/reading/essay.ts` 의 `coverFace`)' },
   { file: 'mobile/src/chat/empty.tsx', why: '빈 대화방의 말풍선 그림(웹 `ChatIllustration`) — 인연 · 채팅은 닫혀 있다(G-135)' },
-  { file: 'mobile/src/chart/parts.tsx', why: '만세력 화면의 손그림 꺾쇠 — G-165 가 든다. 경로가 `chevron` 과 같아 아래 「베끼지 않는다」에서도 빠진다' },
 ];
 
 /** 자료의 경로 글자 — 짧은 것(`m15 15 5 5`)은 다른 그림과 우연히 같을 수 있어 열 자 넘는 것만 본다 */
@@ -71,7 +70,7 @@ describe('선 아이콘 한 벌', () => {
   });
 
   it('자료의 경로를 다른 파일에 베끼지 않는다 — 그림은 `Icon` 을 부른다', () => {
-    const allowed = new Set(['src/lib/design/icons.ts', ...DRAWING_EXCEPTIONS.filter((one) => one.file === 'mobile/src/chart/parts.tsx').map((one) => one.file)]);
+    const allowed = new Set(['src/lib/design/icons.ts']);
     const copied = SOURCES.filter(({ file }) => !allowed.has(file)).flatMap(({ file, code }) => PATHS.filter((d) => code.includes(d)).map((d) => `${file} — ${d}`));
     expect(copied).toEqual([]);
   });

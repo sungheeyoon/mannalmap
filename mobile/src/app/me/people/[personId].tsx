@@ -36,7 +36,7 @@ import { settled } from '@/ui/settled';
 import { StemSymbol } from '@/ui/stem-symbol';
 import { CardFrame, Tile } from '@/ui/surfaces';
 import { TopBar } from '@/ui/top-bar';
-import { alpha, COLOR, ELEMENT_TONE, FONT, RADIUS, TYPE, TYPE_META } from '@/ui/tokens';
+import { alpha, COLOR, CONTROL, ELEMENT_TONE, FONT, RADIUS, TYPE, TYPE_META } from '@/ui/tokens';
 import { WordText } from '@/ui/word-text';
 import { unreachedLoad, type Loaded } from '@/answer';
 
@@ -313,7 +313,7 @@ const styles = StyleSheet.create({
   header: { gap: 12, padding: 20, overflow: 'hidden' },
   watermark: { position: 'absolute', right: -32, top: 24 },
   names: { gap: 4 },
-  detail: { alignSelf: 'flex-end', minHeight: 44, flexDirection: 'row', alignItems: 'center', gap: 2 },
+  detail: { alignSelf: 'flex-end', minHeight: CONTROL, flexDirection: 'row', alignItems: 'center', gap: 2 },
   detailText: { fontFamily: FONT.bold, fontSize: TYPE.small },
   part: { gap: 10 },
   reading: { gap: 8, paddingHorizontal: 20, paddingTop: 18, paddingBottom: 16 },

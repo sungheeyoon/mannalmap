@@ -9,7 +9,7 @@ import { useClient } from '@/auth/connected';
 import { saveFailureOf, setParticipation } from '@/reading/chart-writes';
 import { followRefusal } from '@/reading/follow-refusal';
 import { FailureLine } from '@/ui/failure-line';
-import { COLOR, FONT, RADIUS, TYPE, TYPE_BODY, TYPE_META } from '@/ui/tokens';
+import { COLOR, CONTROL, FONT, RADIUS, TYPE, TYPE_BODY, TYPE_META } from '@/ui/tokens';
 import { KEEP_VIEW } from '@/ui/keep-view';
 
 import { SwitchRow, useDoneNote, FAILURE_INSET } from './parts';
@@ -135,7 +135,7 @@ const styles = StyleSheet.create({
   label: { ...TYPE_BODY, fontFamily: FONT.bold },
   progress: { fontSize: TYPE.fine, fontFamily: FONT.medium, color: COLOR.muted },
   choices: { flexDirection: 'row', gap: 4, padding: 4, borderRadius: RADIUS.cell, backgroundColor: COLOR.surfaceSunken },
-  choice: { flex: 1, minHeight: 44, alignItems: 'center', justifyContent: 'center', borderRadius: RADIUS.cell },
+  choice: { flex: 1, minHeight: CONTROL, alignItems: 'center', justifyContent: 'center', borderRadius: RADIUS.cell },
   chosen: { backgroundColor: COLOR.surfaceRaised },
   choiceText: { fontSize: TYPE.note, fontFamily: FONT.medium, color: COLOR.secondary },
   chosenText: { color: COLOR.foreground, fontFamily: FONT.bold },

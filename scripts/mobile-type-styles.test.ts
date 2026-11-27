@@ -31,7 +31,6 @@ const HAND_WRITTEN: Readonly<Record<string, number>> = {
   'mobile/src/app/signup.tsx': 1,
   'mobile/src/app/support.tsx': 1,
   'mobile/src/chart/fortune.tsx': 1,
-  'mobile/src/chart/parts.tsx': 1,
   'mobile/src/chat/detail-panel.tsx': 1,
   'mobile/src/chat/dialogs.tsx': 1,
   'mobile/src/chat/profile-sheet.tsx': 1,
@@ -60,7 +59,7 @@ const HAND_WRITTEN: Readonly<Record<string, number>> = {
 
 /** 단 밖 글자 크기 — 큰 장식 숫자 · 사진 위 큰 이름. 웹 `app/ui/scale.test.ts` 의 `OUTSIDE_SCALE` 와 같은 꼴 */
 const RAW_SIZE: readonly { at: string; value: number; why: string }[] = [
-  { at: 'mobile/src/reading/result.tsx', value: 64, why: '비유 앞 큰 따옴표(장식) — 웹 `reading-result.tsx` 의 5rem 짝' },
+  { at: 'mobile/src/reading/result.tsx', value: 80, why: '비유 앞 큰 따옴표(장식) — 웹 `reading-result.tsx` 의 5rem 과 같은 값' },
   { at: 'mobile/src/matching/today.tsx', value: 32, why: '오늘의 인연 사진 위의 큰 이름 — 웹 `today-card.tsx` 의 2.25rem 짝' },
   { at: 'mobile/src/compat/result.tsx', value: 56, why: '궁합 지수 숫자 강조 — 웹 `match-index.tsx` 의 3.5rem 짝' },
 ];

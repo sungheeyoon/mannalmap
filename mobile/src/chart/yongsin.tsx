@@ -53,24 +53,24 @@ function Johu({ johu }: { johu: Saju['analysis']['johu'] }) {
     <View>
       <View style={shared.wrapBaseline}>
         <FactTag>참고표</FactTag>
-        <T size="xs" tone="muted">조후 후보 천간</T>
-        <T size="lead" glyph>{(johu.halfStems ?? johu.stems).join(' · ')}</T>
-        <T size="xs" tone="secondary">
+        <T size="caption" tone="muted">조후 후보 천간</T>
+        <T size="name" glyph>{(johu.halfStems ?? johu.stems).join(' · ')}</T>
+        <T size="caption" tone="secondary">
           {johu.dayMaster}일간 · {johu.monthBranch}월
           {johu.half && (
             <>
               {' · '}
               {johu.half === 'first' ? '상반월' : '하반월'}
               {johu.midTerm && (
-                <T size="xs" tone="muted"> ({johu.midTerm.name} {johu.half === 'first' ? '전' : '후'})</T>
+                <T size="caption" tone="muted"> ({johu.midTerm.name} {johu.half === 'first' ? '전' : '후'})</T>
               )}
             </>
           )}
         </T>
       </View>
-      <T size="xs" tone="secondary" style={styles.m6}>{johu.note}</T>
+      <T size="caption" tone="secondary" style={styles.m6}>{johu.note}</T>
       {johu.halfStems && <Rich parts={johuHalfNote(johu.stems)} tone="secondary" style={styles.m4} />}
-      <T size="xs" tone="muted" style={styles.m8}>{JOHU_NOTE}</T>
+      <T size="caption" tone="muted" style={styles.m8}>{JOHU_NOTE}</T>
     </View>
   );
 }
@@ -80,13 +80,13 @@ function Eokbu({ eokbu, agreement }: { eokbu: Saju['analysis']['eokbu']; agreeme
     <View>
       <View style={shared.wrapBaseline}>
         <FactTag>시험</FactTag>
-        <T size="xs" tone="muted">억부 관점의 후보</T>
-        <T size="lead" glyph>{eokbu.suggestedElement}</T>
+        <T size="caption" tone="muted">억부 관점의 후보</T>
+        <T size="name" glyph>{eokbu.suggestedElement}</T>
         <T bold>{ELEMENT_KO[eokbu.suggestedElement]}</T>
         <T tone="secondary">{ELEMENT_ROLE_KO[eokbu.role]}</T>
-        {!eokbu.presentInChart && <T size="xs" tone="muted">여덟 글자에 없는 오행</T>}
+        {!eokbu.presentInChart && <T size="caption" tone="muted">여덟 글자에 없는 오행</T>}
       </View>
-      <T size="xs" tone="secondary" style={styles.m6}>{eokbu.reason}</T>
+      <T size="caption" tone="secondary" style={styles.m6}>{eokbu.reason}</T>
       <View style={styles.agreement}>
         <Rich parts={agreementNote(agreement)} tone="secondary" />
       </View>
@@ -101,18 +101,18 @@ function Precedence({ precedence }: { precedence: Saju['analysis']['precedence']
     <View>
       <View style={shared.wrapBaseline}>
         <FactTag>사실</FactTag>
-        <T size="xs" tone="muted">판정이 어긋날 때</T>
+        <T size="caption" tone="muted">판정이 어긋날 때</T>
         <T bold>{JUDGEMENT_KO[precedence.primary]}를 봅니다</T>
         {shaken.length > 0 && <T tone="secondary">지금 어긋나는 것 {shaken.map((row) => row.ko).join(' · ')}</T>}
       </View>
       <View style={styles.rows}>
         {precedence.rows.map((row) => (
           <View key={row.key} style={shared.wrapBaseline}>
-            <T size="xs" bold={row.key === precedence.primary} tone={row.key === precedence.primary ? 'foreground' : 'secondary'} style={styles.rowName}>{row.ko}</T>
-            <T size="xs" tone={row.overrides ? 'foreground' : 'muted'}>{row.overrides ? '기준' : '안 뒤집음'}</T>
-            <T size="xs" tone="muted">{PRECEDENCE_REASON_KO[row.reason]}</T>
+            <T size="caption" bold={row.key === precedence.primary} tone={row.key === precedence.primary ? 'foreground' : 'secondary'} style={styles.rowName}>{row.ko}</T>
+            <T size="caption" tone={row.overrides ? 'foreground' : 'muted'}>{row.overrides ? '기준' : '안 뒤집음'}</T>
+            <T size="caption" tone="muted">{PRECEDENCE_REASON_KO[row.reason]}</T>
             {row.disagrees !== false && (
-              <T size="xs" tone="secondary">{row.disagrees === null ? '견줄 수 없음' : '지금 억부와 어긋남'}</T>
+              <T size="caption" tone="secondary">{row.disagrees === null ? '견줄 수 없음' : '지금 억부와 어긋남'}</T>
             )}
           </View>
         ))}
@@ -128,12 +128,12 @@ function Tonggwan({ tonggwan }: { tonggwan: Saju['analysis']['tonggwan'] }) {
     <View>
       <View style={shared.wrapBaseline}>
         <FactTag>사실</FactTag>
-        <T size="xs" tone="muted">가장 팽팽한 대치</T>
-        <T size="lead" glyph>{tightest.controller} → {tightest.controlled}</T>
+        <T size="caption" tone="muted">가장 팽팽한 대치</T>
+        <T size="name" glyph>{tightest.controller} → {tightest.controlled}</T>
         <T tone="secondary" num>
           {ELEMENT_KO[tightest.controller]} {percent1(tightest.shares.controller)} ↔ {ELEMENT_KO[tightest.controlled]} {percent1(tightest.shares.controlled)}
         </T>
-        <T size="xs" tone="muted">점수 기준(지장간·국 반영)</T>
+        <T size="caption" tone="muted">점수 기준(지장간·국 반영)</T>
       </View>
       <Rich parts={tonggwanBridgeNote(tightest)} tone="secondary" style={styles.m6} />
       <Rich parts={tonggwanNote(tightest)} style={styles.m8} />
@@ -148,8 +148,8 @@ function Following({ saju }: { saju: Saju }) {
     <View>
       <View style={shared.wrapBaseline}>
         <FactTag>시험</FactTag>
-        <T size="xs" tone="muted">종격</T>
-        <T size="lead">{FOLLOWING_PATTERN_STATUS_KO[following.verdict]}</T>
+        <T size="caption" tone="muted">종격</T>
+        <T size="name">{FOLLOWING_PATTERN_STATUS_KO[following.verdict]}</T>
         <T tone="secondary">
           내 편 기운(비겁·인성) 비율 <T tone="secondary" num>{percent1(following.selfShare)}</T>
           <T tone="muted"> (밖으로 종 ≤{percentOfRatio(dominance.outwardMaxSelfShare)} · 안으로 종 ≥{percentOfRatio(dominance.inwardMinSelfShare)})</T>
@@ -158,7 +158,7 @@ function Following({ saju }: { saju: Saju }) {
       </View>
       <View style={[shared.wrapBaseline, styles.m8]}>
         <FactTag>사실</FactTag>
-        <T size="xs" tone="muted">판정의 재료</T>
+        <T size="caption" tone="muted">판정의 재료</T>
         <T>
           일간 {candidacy.dayMasterRootless ? '무근' : '유근'}
           <T tone="muted"> · </T>

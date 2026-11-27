@@ -37,16 +37,17 @@ import {
   fortuneTabsNote,
 } from '@saju-view/notes';
 
+import { Card } from '@/ui/surfaces';
 import { COLOR, ELEMENT_TONE, RADIUS, TYPE } from '@/ui/tokens';
 
-import { Card, CardTabs, Rich, Ruled, ScrollHint, T, shared } from './parts';
+import { CardTabs, Rich, Ruled, ScrollHint, T, shared } from './parts';
 
 /** 지금 운에서 원국의 관계가 같은 자리에 다시 생긴 것 — 겹칠 것이 없으면 안 선다(웹 `NowOverlaps`) */
 export function NowOverlaps({ now }: { now: CurrentFortune }) {
   if (now.overlaps.length === 0) return null;
   return (
     <Card>
-      <T size="lead" bold>{NOW_OVERLAPS_TITLE}</T>
+      <T size="name" bold>{NOW_OVERLAPS_TITLE}</T>
       <View style={styles.overlaps}>
         {[...groupOverlaps(now.overlaps)].map(([key, group]) => (
           <T key={key} tone="secondary">
@@ -56,7 +57,7 @@ export function NowOverlaps({ now }: { now: CurrentFortune }) {
           </T>
         ))}
       </View>
-      <T size="xs" tone="muted" style={styles.overlapNote}>{OVERLAPS_NOTE}</T>
+      <T size="caption" tone="muted" style={styles.overlapNote}>{OVERLAPS_NOTE}</T>
     </Card>
   );
 }
@@ -130,13 +131,13 @@ function FortuneCell({
 }) {
   return (
     <View style={[styles.cell, current && styles.cellCurrent]}>
-      <T size="xs" tone="muted">{TEN_GOD_KO[entry.tenGods.stem]}</T>
+      <T size="caption" tone="muted">{TEN_GOD_KO[entry.tenGods.stem]}</T>
       <T glyph bold color={ELEMENT_TONE[STEM_INFO[entry.pillar.stem].element].ink} style={styles.cellGlyph}>{entry.pillar.stem}</T>
       <T glyph bold color={ELEMENT_TONE[BRANCH_INFO[entry.pillar.branch].element].ink} style={styles.cellGlyph}>{entry.pillar.branch}</T>
-      <T size="xs" tone="muted">{TEN_GOD_KO[entry.tenGods.branch]}</T>
-      <T size="xs" tone="secondary" style={styles.stage}>{TWELVE_STAGE_KO[entry.stage]}</T>
+      <T size="caption" tone="muted">{TEN_GOD_KO[entry.tenGods.branch]}</T>
+      <T size="caption" tone="secondary" style={styles.stage}>{TWELVE_STAGE_KO[entry.stage]}</T>
       {showSpirits && (
-        <T size="xs" tone="muted" style={styles.center}>{TWELVE_SPIRIT_ALIAS[entry.spirits.year] ?? TWELVE_SPIRIT_KO[entry.spirits.year]}</T>
+        <T size="caption" tone="muted" style={styles.center}>{TWELVE_SPIRIT_ALIAS[entry.spirits.year] ?? TWELVE_SPIRIT_KO[entry.spirits.year]}</T>
       )}
     </View>
   );
@@ -146,10 +147,10 @@ function RelationLines({ relations, selfChartId }: { relations: readonly Relatio
   return relations.map((relation) => {
     const crossed = selfChartId === undefined ? null : crossedChartsKo(relation, selfChartId);
     return (
-      <T key={relationKey(relation)} size="xs" tone="secondary" style={styles.center}>
+      <T key={relationKey(relation)} size="caption" tone="secondary" style={styles.center}>
         {relation.ko}
-        {crossed !== null && <T size="xs" tone="muted"> · {crossed}</T>}
-        {relation.scope === 'combinedFormation' && <T size="xs" tone="muted"> · 합쳐서</T>}
+        {crossed !== null && <T size="caption" tone="muted"> · {crossed}</T>}
+        {relation.scope === 'combinedFormation' && <T size="caption" tone="muted"> · 합쳐서</T>}
       </T>
     );
   });
@@ -157,7 +158,7 @@ function RelationLines({ relations, selfChartId }: { relations: readonly Relatio
 
 function HeadLine({ current, children }: { current: boolean; children: ReactNode }) {
   return (
-    <T size="xs" tone={current ? 'foreground' : 'secondary'} bold={current} style={styles.center}>
+    <T size="caption" tone={current ? 'foreground' : 'secondary'} bold={current} style={styles.center}>
       {children}
       {current && ' 현재'}
     </T>
@@ -167,7 +168,7 @@ function HeadLine({ current, children }: { current: boolean; children: ReactNode
 function TableHead({ title, value }: { title: string; value: ReactNode }) {
   return (
     <View style={shared.wrapBaseline}>
-      <T size="base" bold>{title}</T>
+      <T size="field" bold>{title}</T>
       {value}
     </View>
   );
@@ -178,7 +179,7 @@ function SaeunTable({ saju, now }: { saju: Saju; now: CurrentFortune }) {
   return (
     <View>
       <TableHead title="세운" value={<T tone="secondary">{entries[0].year}년 ~ {entries[entries.length - 1].year}년</T>} />
-      <T size="xs" tone="secondary" style={styles.lead}>{SAEUN_BOUNDARY_NOTE}</T>
+      <T size="caption" tone="secondary" style={styles.lead}>{SAEUN_BOUNDARY_NOTE}</T>
       <FortuneScroll
         headHeight={62}
         columns={entries.map((entry) => {
@@ -189,8 +190,8 @@ function SaeunTable({ saju, now }: { saju: Saju; now: CurrentFortune }) {
             head: (
               <>
                 <HeadLine current={current}>{entry.year}</HeadLine>
-                <T size="xs" tone="muted" style={styles.center}>{ageRangeLabel(entry.ageAtStart, entry.ageAtEnd)}</T>
-                <T size="xs" tone="muted" style={styles.center}>
+                <T size="caption" tone="muted" style={styles.center}>{ageRangeLabel(entry.ageAtStart, entry.ageAtEnd)}</T>
+                <T size="caption" tone="muted" style={styles.center}>
                   {daeunSpanLabel(entry.daeunSpans) ?? (entry.daeunAbsence ? DAEUN_ABSENCE_KO[entry.daeunAbsence] : '')}
                 </T>
               </>
@@ -213,7 +214,7 @@ function WolunTable({ saju, now }: { saju: Saju; now: CurrentFortune }) {
   return (
     <View>
       <TableHead title="월운" value={<T tone="secondary">{year}년 (사주년)</T>} />
-      <T size="xs" tone="secondary" style={styles.lead}>{WOLUN_BOUNDARY_NOTE}</T>
+      <T size="caption" tone="secondary" style={styles.lead}>{WOLUN_BOUNDARY_NOTE}</T>
       <FortuneScroll
         headHeight={44}
         columns={entries.map((entry) => {
@@ -224,7 +225,7 @@ function WolunTable({ saju, now }: { saju: Saju; now: CurrentFortune }) {
             head: (
               <>
                 <HeadLine current={current}>{entry.startTerm.name}</HeadLine>
-                <T size="xs" tone="muted" style={styles.center}>{koreaMonthDay(entry.startTerm.date)}</T>
+                <T size="caption" tone="muted" style={styles.center}>{koreaMonthDay(entry.startTerm.date)}</T>
               </>
             ),
             cell: <FortuneCell entry={entry} current={current} showSpirits={false} />,
@@ -252,11 +253,11 @@ function DaeunTable({ saju, now }: { saju: Saju; now: CurrentFortune }) {
             <T bold>{DAEUN_DIRECTION_KO[daeun.direction]}</T>
             <T tone="muted"> · </T>
             대운수 <T bold num>{daeun.startAge}</T>
-            {daeun.approximate && <T size="xs" tone="muted"> 근사</T>}
+            {daeun.approximate && <T size="caption" tone="muted"> 근사</T>}
           </T>
         }
       />
-      <T size="xs" tone="secondary" style={styles.lead}>{daeunReasonNote(daeun)}</T>
+      <T size="caption" tone="secondary" style={styles.lead}>{daeunReasonNote(daeun)}</T>
       <FortuneScroll
         headHeight={44}
         columns={daeun.entries.map((entry) => {
@@ -267,7 +268,7 @@ function DaeunTable({ saju, now }: { saju: Saju; now: CurrentFortune }) {
             head: (
               <>
                 <HeadLine current={current}>{entry.startAge}세</HeadLine>
-                <T size="xs" tone="muted" style={styles.center}>{entry.startYear}년</T>
+                <T size="caption" tone="muted" style={styles.center}>{entry.startYear}년</T>
               </>
             ),
             cell: <FortuneCell entry={entry} current={current} />,
