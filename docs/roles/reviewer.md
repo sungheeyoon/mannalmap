@@ -27,6 +27,7 @@
   - 문서 규칙 · 프로세스 — `docs/start.md` 「원본 — 무엇이 무엇을 답하나」 · `docs/agents/delegation.md` 의 차례에서 [그 주제 파일](../agents/delegation/) · `docs/agents/domain.md` 「Writing an ADR」 · 저장소 밖의 규칙 자리(`~/.claude/settings.json` 의 `autoMode` · `~/.claude/projects/` 아래 이 저장소의 `memory/` · `~/.codex/memories/` · `docs/agents/delegation/herdr.md` 「herdr 로 돌릴 때」의 표) — 저장소에 없는 규칙이 거기 있으면 발견이다
   - CI · 워크플로 — `docs/agents/test-map/ci.md` 「CI」 · `docs/agents/test-map/what-to-run.md` · `.github/workflows/`
   - 모바일(Expo) — `mobile/AGENTS.md` · `docs/ops/runbook/mobile-release.md` · ADR 0211 · ADR 0230 · ADR 0233
+  - 앱 화면 감사(기기에서 눈으로 확인한다) — `docs/agents/delegation/local-env.md` 「앱을 네이티브로 재기」 · 「앱을 웹 번들로 재기」 · ADR 0109 · `mobile/AGENTS.md` — 깔린 출시 빌드는 운영 DB 를 보니 확인하기 전에 멈춘다
   - 세션 잔재 — `docs/agents/delegation/coordinator.md` 「라운드 끝 정리」 · `docs/agents/delegation/local-env.md` 「로컬 환경의 함정」
   - UI 집중화(디자인 체계) — ADR 0109 · `docs/adr/README.md` 「디자인 체계 · 화면 문구」 · `docs/architecture.md` 「그 밖의 자리」 · `src/lib/design/contract.ts` · `scripts/design-contract.test.ts` · `scripts/design-icons.test.ts` · `scripts/mobile-surfaces.test.ts` · `scripts/mobile-design-tokens.test.ts` · `app/ui/scale.test.ts`
   - 사용자 약속 · 게시 문구 · 법적 절차 — `docs/legal/README.md` · `docs/legal/terms-grounds.md` · 약관 원본(`src/lib/brand/`)
@@ -42,8 +43,8 @@
 
 - 잠긴 자리와 볼 자리를 가르려면 → [무엇이 잠겨 있나](../architecture.md#무엇이-잠겨-있나--그리고-무엇이-아닌가) — 잠기지 않은 자리가 볼 곳이다
 - 머지 전 PR 의 코드를 넓게 읽거나 판정 함수를 그 PR 의 코드로 돌리려면 → [일하는 법](../agents/delegation/working.md#일하는-법--세션마다-다시-배우던-것) — `git fetch origin pull/<N>/head:pr-<N>` 뒤 `git archive -o <스크래치>/x.tar pr-<N>` · `tar -xf`. 그 사본에서는 `git ls-files` 잠금이 늘 붉다 — 판정이 아니다
-- 셸 명령이 `cannot be shown …` · `… too complex to verify …` 로 거절되면 → [로컬 환경의 함정](../agents/delegation/local-env.md#로컬-환경의-함정) — 워크트리 격리가 막는 명령과 돌아가는 길
-- 감사에서 최근 커밋의 파일 목록이 필요하면 → [로컬 환경의 함정](../agents/delegation/local-env.md#로컬-환경의-함정) — 커밋마다 `git show --stat <SHA>`, 보고 끝에 마지막으로 본 SHA
+- 셸 명령이 `cannot be shown …` · `… too complex to verify …` 로 거절되면 → [로컬 환경의 함정](../agents/delegation/local-env.md#로컬-환경의-함정) — 워크트리 격리가 막는 명령과 돌아가는 길. 감사에 최근 커밋의 파일 목록이 필요하면 커밋마다 `git show --stat <SHA>`, 보고 끝에 마지막으로 본 SHA
+- 다른 관점에서도 앱 화면을 에뮬레이터에서 봐야 하면 → [앱을 네이티브로 재기](../agents/delegation/local-env.md#앱을-네이티브로-재기) — 굵은 첫 줄(출시 빌드를 멈추고 맨 위 앱을 본다)부터
 - 발견의 꼴 예시나 규모(몇 건 · 몇 %)를 적는 법이 필요하면 → [감사 노트의 팀](../notes/archive/2026-Q3/2026-09-28-overnight-audit.md#팀--감사읽기만)
-- 프런트 관점에서 흐름 · 문구를 한국 서비스 사례와 견주려면 → [한국 서비스 사례 표](../notes/2026-11-02-korean-app-flow-references.md) — 요구사항이 아니라 재료다
+- 프런트 관점에서 흐름 · 문구를 한국 서비스 사례와 견주려면 → [레퍼런스 모음](../context/references.md) — 요구사항이 아니라 재료다
 - CI 기록을 읽으려면 → [CI](../agents/test-map/ci.md#ci) — 붉은 job 의 기록 · 빈 출력일 때 API 로 여는 길

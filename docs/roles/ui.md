@@ -42,7 +42,7 @@
 - e2e 를 돌려야 하나 망설이거나 CI 의 차선이 붉으면 → [CI](../agents/test-map/ci.md#ci)
 - 대장에 없는 글자나 새 배치 · 흐름의 사례를 찾으면 → [레퍼런스 모음](../context/references.md) — 새로 찾은 것은 그 꼴에 한 줄
 - `mobile/` 화면을 고치면 → [Expo 앱 인계 노트](../notes/2026-10-30-expo-app-round.md) · [`mobile/AGENTS.md`](../../mobile/AGENTS.md) — 번들이 옛 글자를 주면 Metro 를 `--clear` 로 다시 띄운다
-- 문구 상수를 판정 · 프롭에서 부르고 싶으면 → [`scripts/ci-plan.test.ts`](../../scripts/ci-plan.test.ts) — `src/lib/*/copy.ts` 는 화면만 부른다
+- 주석을 옮기거나 고치면 → [주석과 ADR 참조](../agents/code-rules/comments.md#주석과-adr-참조) — 날짜가 있는 주석은 다른 파일로 옮기면 새 지문(`scripts/dated-comments.json`)으로 잡혀 `scripts/code-rules.test.ts` 가 실패한다
 - 시드(`scripts/ui-seed.mjs`)가 멈추거나 dev 서버 · `next build` 가 이상하면 → [로컬 환경의 함정](../agents/delegation/local-env.md)
 - 전후 그림을 찍으면 → [워크트리에서 전후 그림 찍기](../agents/delegation/local-env.md#워크트리에서-전후-그림-찍기)
 - 무인(밤) 라운드로 맡았으면 → [무인 라운드](../agents/delegation/unattended.md) — 뜻을 바꾸지 않는 다듬기의 경계

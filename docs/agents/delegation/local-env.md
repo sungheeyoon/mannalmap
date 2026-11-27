@@ -21,7 +21,7 @@
 | 앱 워크트리에 뿌리 `node_modules` 가 없다 | `mobile/` 의 Metro · `tsc` 는 메인의 것을 위로 찾아 돌지만 `scripts/` 시험은 못 돈다 | 뿌리에도 링크하거나 `npm ci` |
 | 워크트리에서 `db:remote` · `migration list` · `db push` 가 `LegacyProjectNotLinkedError` | 원격 연결(project-ref)은 `supabase/` 아래 무시되는 `.temp` 폴더에 있어 새 워크트리에 없다 | 메인의 그 `.temp` 의 `project-ref` 가 운영 프로젝트인지 본 뒤 `cp -a` 로 폴더째 복사한다 |
 | `supabase: command not found` · 워크트리의 `npx supabase db push` 가 로컬을 대상으로 잡는다 | `npx` 가 새 CLI(3.x)를 받아 온다 — 그 판은 `db push` 의 기본 대상이 로컬이다. `npm run db:push` 도 속에서 `npx` 를 부른다 | 메인의 `node_modules/.bin/supabase`(2.x)를 절대경로로, 잠금에 감싸 — 워크트리의 push 는 `node scripts/remote-lock.mjs <메인>/node_modules/.bin/supabase db push --linked --dry-run` 뒤 `--dry-run` 없이, `migration list` 도 같은 꼴(원격에 닿는 길은 `working.md` 「일하는 법」) |
-| 에이전트 워크트리에서 명령이 `cannot be shown …` · `… too complex to verify …` 로 거절된다 | Claude Code 의 워크트리 격리가 실행 때 정해지는 명령을 막는다 — `$()` · 변수 · heredoc · `for` · `xargs` · `git` 출력을 받는 파이프 · `&&` 나 `cd …;` 로 이은 `git` · `gh` · `gh … -q` · 뿌리 glob · 이름에 `GIT` 이 든 변수 · 남의 워크트리를 겨눈 `git -C` · `git worktree add` | `git` · `gh` 는 하나씩 따로 부르고 값은 글자로 옮긴다. 긴 본문은 파일로 써서 `-F` · `--body-file`. 이어진 걸음은 제 워크트리 안의 스크립트 파일(`node` · `sh`)에 절대 경로를 주고 돌린다. `worktree add` 는 `git -C <제 워크트리> worktree add --detach ~/saju-wt/<이름> <SHA>` |
+| 에이전트 워크트리에서 명령이 `cannot be shown …` · `… too complex to verify …` 로 거절된다 · 서브에이전트가 워크트리를 여는 도구를 못 쓴다 | Claude Code 의 워크트리 격리가 실행 때 정해지는 명령을 막는다 — `$()` · 변수 · heredoc · `for` · `xargs` · `git` 출력을 받는 파이프 · `&&` 나 `cd …;` 로 이은 `git` · `gh` · `gh … -q` · 뿌리 glob · 이름에 `GIT` 이 든 변수 · 남의 워크트리를 겨눈 `git -C` · `git worktree add` | `git` · `gh` 는 하나씩 따로 부르고 값은 글자로 옮긴다. 긴 본문은 파일로 써서 `-F` · `--body-file`. 이어진 걸음은 제 워크트리 안의 스크립트 파일(`node` · `sh`)에 절대 경로를 주고 돌린다 — 엔진(TS)을 부르는 임시 스크립트는 `node <메인>/node_modules/jiti/lib/jiti-cli.mjs <파일>`. 워크트리는 `git -C <제 체크아웃> worktree add --detach ~/saju-wt/<이름> <SHA>` 로 연다 |
 | PR 가지를 rebase 한 뒤 push 가 거절된다 | 격리가 원격 가지를 다시 쓰는 push 를 막고, force push 는 등급 4 다 | rebase 하지 않는다. `DIRTY` 이거나 새 main 의 코드가 필요할 때만 `git fetch origin main` 뒤 `git merge origin/main` 으로 올려 보통 push 한다. squash 본문에서 merge 메시지를 지운다 |
 | `gh pr merge --auto` 가 `BLOCKED` | gate 가 아직 안 끝났다 — 실패가 아니다. `UNSTABLE` 도 도는 중일 수 있다 | `gh pr checks <n>` 으로 본다 |
 | `mergeStateStatus` 가 `BEHIND` | 가지가 최신 main 을 안 품었을 뿐이다 — 보호 규칙의 strict 는 껐다 | 할 것이 없다. 안 들면 `BLOCKED` · `DIRTY`(충돌 — 가지에서 main 을 merge)를 본다 |
@@ -60,16 +60,28 @@
 4. 부품을 웹과 나란히 보려면 띄운 채 `APP_URL=http://localhost:<포트> node scripts/design-compare.mjs <폴더>` — `compare.png` 한 장을 낸다.
 5. 코드를 고쳤는데 번들이 옛 글자를 주면 Metro 를 `--clear` 로 다시 띄운다. `CI=1` 로 띄운 Metro 는 파일 변경을 아예 받지 않는다.
 6. 풀이권 구매 칸은 웹에서 안 그려진다(`storeAvailable` 거짓). 찍으려면 `expo-iap` 를 가짜 모듈로 잠시 바꾸고 찍은 뒤 지운다 — 커밋하지 않는다. 스크래치 폴더는 제 하위 폴더를 쓴다.
-7. 이것은 네이티브가 아니다 — 구글 로그인 · 사진 고르기 · 딥 링크 · 키보드는 안 돈다. PR 의 「안 돌린 것」에 적는다.
+7. Playwright 로 찍을 때의 함정 — 「전」 그림은 같은 Metro · 가짜 서버에 main 의 앱 코드를 물려 찍는다.
+   - 앱의 어절 줄바꿈(`WordText`)이 웹에서는 빠져 낱말 가운데서 꺾인다 — 찍는 쪽에서 `word-break: keep-all` 을 넣고 PR 에 그렇다고 적는다.
+   - 개발 오류 토스트는 그림자 DOM 의 `#error-toast` 다 — CSS 로 가린다.
+   - 스크롤이 안쪽 칸이라 통짜 찍기(`fullPage`)가 첫 화면만 담는다 — 창 높이를 늘려 찍는다.
+   - `accessibilityState.expanded` 는 `aria-expanded` 로 옮겨지지 않는다 — 접이칸은 `aria-expanded` 로 찾지 말고 단추 이름으로 눌러 연다.
+8. 이것은 네이티브가 아니다 — 구글 로그인 · 사진 고르기 · 딥 링크 · 키보드는 안 돈다. PR 의 「안 돌린 것」에 적는다.
 
 ## 앱을 네이티브로 재기
 
 안드로이드 에뮬레이터의 Expo Go 에 가짜 서버를 물려 라우트를 전수로 잰다. 도구는 `mobile/scripts/measure/` 다. 실제 DB · 구글 로그인 · iOS 는 못 잰다 — PR 의 「안 돌린 것」에 적는다. 그림은 저장소 밖(`MEASURE_DIR`)에 둔다.
 
+**깔린 출시 · `preview` 빌드(`com.mannalmap.app`)는 운영 DB 를 본다 — 시작하기 전에 멈추고, 찍기 · 글자 읽기 · 누르기 전마다 맨 위 앱을 본다.**
+빠른 부팅 스냅숏으로 뜬 에뮬레이터에는 지난 세션의 그 앱이 남아 있어, Expo Go 를 멈추는 순간 그 앱이 앞으로 나온다. 에뮬레이터를 `-no-snapshot-load` 로
+켜거나 `adb shell am force-stop com.mannalmap.app` 하고, `adb shell dumpsys activity activities | grep -m1 topResumedActivity` 가
+`host.exp.exponent` 가 아니면 그 걸음을 하지 않는다.
+
 1. 에뮬레이터를 띄우고 SDK 와 맞는 Expo Go 를 깐다 — `adb install -r -g <apk>`(WSL 은 `adb.exe` 에 Windows 경로의 apk). API 37 은 `adb shell pm grant host.exp.exponent android.permission.ACCESS_LOCAL_NETWORK` 도.
 2. `adb reverse tcp:8081 tcp:8081` · `adb reverse tcp:18999 tcp:18999`.
 3. `mobile/.env.local` 을 가짜로 — `EXPO_PUBLIC_SUPABASE_URL` · `EXPO_PUBLIC_SITE_URL` 은 `http://localhost:18999`, 키는 아무 글자. **운영 값을 넣지 않는다.**
 4. `node mobile/scripts/measure/fake-server.mjs` — 상태는 `curl 'localhost:18999/__set?m=<상태>'`(`reset` · `empty` · `unsigned` · `closed` · `suspended` · `warning` · `no-credits` · `no-self` · `match-shut` · `no-readings`, 망은 `down` · `broken` · `slow` · `up`, 화면 하나만은 `screens-down` · `screens-slow`).
+   가짜 서버로 확인할 수 없는 자리 넷 — `reset` 은 망을 안 되돌린다(`m=up` 을 따로) · `warning` 줄에 `warning_ref` 가 없어 「안내번호 undefined」가 보인다 ·
+   `closed` 는 종료일만 옮겨 관문이 안 닫힌다(ADR 0234) · `/api/mobile/reading/run` 은 늘 `run: null` 이다. 그 화면은 PR 의 「안 돌린 것」에 적거나 `fake-server.mjs` 에 답을 더한다.
 5. `mobile/` 에서 `REACT_EDITOR=none EXPO_NO_TELEMETRY=1 npx expo start --clear --port 8081 --go > "$MEASURE_DIR/metro.log" 2>&1`.
 6. `mobile/scripts/measure/dev-seed.tsx.txt` 를 `mobile/src/app/dev-seed.tsx` 로 잠시 복사하고 `python3 mobile/scripts/measure/device.py link /dev-seed`. **복사본과 `.env.local` 은 끝나면 지운다 — 커밋하지 않는다.** 있는 동안 `scripts/` 시험 넷(`code-rules` 의 `!` 지문 · `mobile-back` · `mobile-supabase-env` · `mobile-word-text`)이 붉다.
 7. `python3 mobile/scripts/measure/sweep.py me=/me chat=/me/chat …` 가 그림 · 글자 · 로그를 모은다. 누르는 흐름은 `device.py` 의 `tap` · `input` · `type` · `key` 로 스크립트 파일에 적는다.
@@ -80,7 +92,11 @@
 | --- | --- | --- |
 | Expo Go 에서 `ExpoCrypto` 를 못 찾는다 | 깔린 Expo Go 판에 그 모듈이 없다 | 맞는 판이 없으면 웹 번들 + 가짜 서버로 잰다 |
 | API 37 에서 Expo Go 가 Metro 에 못 붙는다 | `ACCESS_LOCAL_NETWORK` 권한이 없다 | 1 의 `pm grant` |
-| 딥 링크가 앱으로 안 가거나 깔린 `preview` · 출시 빌드를 연다 | `am start` 끝에 패키지 인자를 붙였다 · 그 빌드도 `exp://` 를 받는다 | `device.py link`(`-p host.exp.exponent` 로 묶는다). 누르기 전에 `topResumedActivity` 가 Expo Go 인지 본다 |
+| 딥 링크가 앱으로 안 가거나 깔린 `preview` · 출시 빌드를 연다 | `am start` 끝에 패키지 인자를 붙였다 · 그 빌드도 `exp://` 를 받는다 | `device.py link`(`-p host.exp.exponent` 로 묶는다) |
+| `device.py link /` 가 화면을 안 바꾼다 | 길이 빈 주소라 Expo Go 가 지금 화면에 머문다 | 첫 화면은 `link '/?x=1'` 처럼 쿼리를 붙여 연다 |
+| 코드를 고쳤는데 Expo Go 가 옛 화면을 보인다 | 스냅숏으로 뜬 Expo Go 의 JS 가 같은 주소면 새 번들을 받지 않는다 | 에뮬레이터를 `-no-snapshot-load` 로 다시 켠다 |
+| 붉은 개발 오류 창 — 로그아웃 때 `RNGoogleSignin`, 로그인 뒤 `ExpoIap` | Expo Go 에 없는 네이티브 모듈이다 — 출시 빌드에는 안 보인다. 그림 아래 검은 토스트도 개발 빌드의 LogBox 다 | 「Dismiss」로 닫고 이어 간다. 그 모듈의 화면(구글 로그인 · 결제)은 PR 의 「안 돌린 것」 |
+| 오래 쉰 뒤 `adb devices` 가 `offline` 이다 | 확인 전 — 아래 「`adb` 가 결과 없이 멈춘다」 줄의 `kill-server` 로는 안 풀린다 | 에뮬레이터 창을 닫고 `-no-snapshot-load` 로 다시 켠다 |
 | 붉은 화면 「expo-notifications … removed from Expo Go」 | 안드로이드 Expo Go 가 푸시 토큰 호출에서 던진다 | 재는 동안만 제 워크트리의 `mobile/node_modules/expo-notifications/build/warnOfExpoGoPushUsage.js` 의 `throw` 를 `console.warn` 으로 바꾸고 Expo Go 를 다시 연다. 푸시는 못 잰다 |
 | 첫 화면(로고)에서 멈춘다 | `mobile/src/app/_layout.tsx` 의 `<ReadyPushOpener />` 가 없는 푸시를 기다린다 | 재는 동안만 그 줄을 주석으로 뺀다. **끝나면 되돌린다** |
 | 붉은 화면 「Cannot find native module 'ExpoApplication'」 | `mobile/src/release/floor.ts` 가 부르는 `expo-application` 이 Expo Go 에 없다 | 재는 동안만 그 import 를 `const Application = { nativeBuildVersion: null as string \| null };` 로. **끝나면 되돌린다** |
