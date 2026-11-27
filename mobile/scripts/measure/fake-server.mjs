@@ -163,6 +163,8 @@ const rpc = {
   my_reading: readingRow,
   my_last_reading_run: () => [{ status: 'succeeded', created_at: ago(500), failure_code: null, failure_detail: null, job_status: null, sections_begun: 0, body_written: true }],
   pair_relation_of: () => 'family',
+  /** 받아 주는 가장 옛 안드로이드 빌드(ADR 0237) — 없으면 막지 않는다(`buildIsBelowFloor`) */
+  android_min_version_code: () => null,
   service_survey_context: () => [{ beta_over: false, consented: true, credits_left: 3, read_pair: true, read_solo: true, schedule_id: 1 }],
   my_service_survey: () => db.survey,
   nickname_is_available: () => true,
