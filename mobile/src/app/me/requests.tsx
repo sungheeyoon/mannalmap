@@ -69,9 +69,9 @@ export default function RequestsScreen() {
     <View style={styles.screen}>
       <TopBar title="소식" fallback="/me" />
       <ScrollView contentContainerStyle={styles.content}>
-        {/* 못 읽은 줄은 웹과 같은 실패 줄이다(`app/me/requests/page.tsx` · `manage.tsx` 의 `FailureLine`) */}
+        {/* 못 읽은 줄은 웹과 같은 실패 줄이다(`app/me/requests/page.tsx` · `manage.tsx` 의 `FailureLine`) — 통째로 못 읽으면 오행 다섯 점의 자리, 가운데다(ADR 0282) */}
         {inbox === null ? <LoadingDots /> : !inbox.ok ? (
-          <FailureLine onRetry={() => void load()}>{`소식을 불러오지 못했어요. ${inbox.reason}`}</FailureLine>
+          <FailureLine whole onRetry={() => void load()}>{`소식을 불러오지 못했어요. ${inbox.reason}`}</FailureLine>
         ) : (
           <>
             {readFailed && <FailureLine>소식을 읽은 것으로 표시하지 못했어요.</FailureLine>}

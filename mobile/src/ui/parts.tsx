@@ -28,10 +28,27 @@ export function FieldLabel({ children, 'aria-hidden': hidden }: { children: Reac
  * **적는 칸의 초점 · 오류 꼴** — 웹 출생 정보 폼의 칸(`app/birth-form.module.css` 「초점 · 오류 — 모든 칸이 같은 고리」)과 같다. 초점이면 테가
  * 크림 먹색이 되고 둘레에 3 의 옅은 고리가 선다. 누른 뒤 걸린 칸(`refused`)은 붉은 테 2 가 이기고, 그 칸에 초점이 오면 고리도 옅은 붉은색이다.
  * 앱의 적는 칸은 이 둘(`Field` · `DigitField`)이 한 벌이라 웹 `FIELD`(가입 · 프로필의 칸 — 먹색 테 · 2 고리)와는 테 색 · 고리 두께가 조금 다르다.
+ *
+ * **고리는 칸(`TextInput`)이 아니라 칸을 싼 틀이 칠한다**(`ringLook`). 틀은 칸보다 사방으로 고리 두께만큼 크고 바깥 여백을 그만큼 거둬, 칸의
+ * 자리 · 크기는 틀이 없을 때와 같다. 초점이면 틀의 바탕이 고리 색이 되어 칸 둘레 3 에 보인다 — 웹의 `box-shadow: 0 0 0 3px` 와 같은 모양이다.
+ * 그림자(`boxShadow`)로 그리지 않는 까닭은 안드로이드의 둘이다.
+ * - 칸에 그림자를 주면 RN 이 칸의 바탕 그림을 새로 갈아 끼우고, 안드로이드는 그때 칸의 안쪽 여백을 그 바탕 그림(테마의 입력칸 바탕)의 여백으로
+ *   되돌린다. 레이아웃의 여백은 그대로라 RN 이 다시 보내지 않아, 한 번 초점이 갔던 칸은 글자 · 커서가 왼쪽 테에 붙은 채 남았다(초점이 빠진 뒤에도).
+ * - 틀에 그림자를 주면 고리가 틀 밖에 그려지는데, 칸을 옮겨 누를 때 안드로이드가 그 바깥을 다시 그리지 않아 고리가 앞 칸에 남고 새 칸에는 늦게 섰다.
+ *
+ * 테 색은 있던 테 그림을 고쳐 칠할 뿐이라 칸에 둔다. 틀은 납작하게 접히지 않는다(`collapsable={false}`) — 고리가 서고 빠질 때 틀이 생겼다
+ * 없어지면 칸이 다른 부모로 옮겨 앉아 초점을 잃는다. `scripts/mobile-text-input-shadow.test.ts` 가 칸의 그림자를 잠근다.
  */
 function focusLook(focused: boolean, refused: boolean) {
-  return [focused && styles.focus, refused && styles.wrong, focused && refused && styles.focusWrong];
+  return [focused && styles.focus, refused && styles.wrong];
 }
+
+function ringLook(focused: boolean, refused: boolean) {
+  return [styles.ring, focused && (refused ? styles.ringWrong : styles.ringOn)];
+}
+
+/** 초점 고리의 두께 — 웹 출생 정보 폼의 `0 0 0 3px` */
+const RING = 3;
 
 /** 글을 적는 칸 */
 export function Field({
@@ -59,24 +76,26 @@ export function Field({
 }) {
   const [focused, setFocused] = useState(false);
   return (
-    <TextInput
-      ref={inputRef}
-      editable={!disabled}
-      accessibilityState={{ disabled }}
-      onFocus={() => setFocused(true)}
-      onBlur={() => setFocused(false)}
-      style={[styles.control, ...focusLook(focused, refused), disabled && styles.off]}
-      value={value}
-      onChangeText={onChange}
-      maxLength={maxLength}
-      placeholder={placeholder}
-      placeholderTextColor={COLOR.muted}
-      accessibilityLabel={label}
-      autoCapitalize={autoCapitalize}
-      autoCorrect={false}
-      spellCheck={false}
-      autoComplete="off"
-    />
+    <View collapsable={false} style={ringLook(focused, refused)}>
+      <TextInput
+        ref={inputRef}
+        editable={!disabled}
+        accessibilityState={{ disabled }}
+        onFocus={() => setFocused(true)}
+        onBlur={() => setFocused(false)}
+        style={[styles.control, ...focusLook(focused, refused), disabled && styles.off]}
+        value={value}
+        onChangeText={onChange}
+        maxLength={maxLength}
+        placeholder={placeholder}
+        placeholderTextColor={COLOR.muted}
+        accessibilityLabel={label}
+        autoCapitalize={autoCapitalize}
+        autoCorrect={false}
+        spellCheck={false}
+        autoComplete="off"
+      />
+    </View>
   );
 }
 
@@ -161,29 +180,31 @@ export function DigitField({
 }) {
   const [focused, setFocused] = useState(false);
   return (
-    <View style={styles.digit}>
-      <TextInput
-        ref={inputRef}
-        editable={!disabled}
-        accessibilityState={{ disabled }}
-        onFocus={() => setFocused(true)}
-        onBlur={() => setFocused(false)}
-        style={[styles.control, styles.digitInput, ...focusLook(focused, refused), disabled && styles.off]}
-        value={value}
-        onChangeText={(typed) => {
-          const next = typed.replace(/\D/g, '').slice(0, digits);
-          onChange(next);
-          const done = next.length === digits || (advanceEarly && next !== '' && Number(next) * 10 > max);
-          if (done && !digitOutOfRange(next, digits, min, max)) onFull?.();
-        }}
-        placeholder={placeholder}
-        placeholderTextColor={COLOR.muted}
-        keyboardType="number-pad"
-        returnKeyType="done"
-        inputAccessoryViewID={Platform.OS === 'ios' ? KEYBOARD_DONE : undefined}
-        accessibilityLabel={label}
-      />
-      <Text style={styles.unit}>{unit}</Text>
+    <View collapsable={false} style={[styles.digitRing, ...ringLook(focused, refused)]}>
+      <View style={styles.digit}>
+        <TextInput
+          ref={inputRef}
+          editable={!disabled}
+          accessibilityState={{ disabled }}
+          onFocus={() => setFocused(true)}
+          onBlur={() => setFocused(false)}
+          style={[styles.control, styles.digitInput, ...focusLook(focused, refused), disabled && styles.off]}
+          value={value}
+          onChangeText={(typed) => {
+            const next = typed.replace(/\D/g, '').slice(0, digits);
+            onChange(next);
+            const done = next.length === digits || (advanceEarly && next !== '' && Number(next) * 10 > max);
+            if (done && !digitOutOfRange(next, digits, min, max)) onFull?.();
+          }}
+          placeholder={placeholder}
+          placeholderTextColor={COLOR.muted}
+          keyboardType="number-pad"
+          returnKeyType="done"
+          inputAccessoryViewID={Platform.OS === 'ios' ? KEYBOARD_DONE : undefined}
+          accessibilityLabel={label}
+        />
+        <Text style={styles.unit}>{unit}</Text>
+      </View>
     </View>
   );
 }
@@ -321,11 +342,16 @@ const styles = StyleSheet.create({
   label: { fontSize: TYPE.small, fontFamily: FONT.bold, color: COLOR.secondary, marginBottom: 2 },
   control: { ...FIELD, fontFamily: FONT.medium, color: COLOR.foreground },
   wrong: { borderColor: COLOR.danger, borderWidth: 2 },
-  focus: { borderColor: COLOR.creamInk, boxShadow: `0 0 0 3px ${COLOR.accentSoft}` },
-  focusWrong: { boxShadow: `0 0 0 3px ${COLOR.dangerWash}` },
+  focus: { borderColor: COLOR.creamInk },
+  /* 칸을 싼 틀 — 사방 고리 두께만큼 크고 그만큼 바깥 여백을 거둔다. 모서리는 칸의 모서리 + 고리라 고리가 칸의 둥근 테를 따라 선다 */
+  ring: { margin: -RING, padding: RING, borderRadius: RADIUS.cell + RING },
+  ringOn: { backgroundColor: COLOR.accentSoft },
+  ringWrong: { backgroundColor: COLOR.dangerWash },
   doneBar: { alignItems: 'flex-end', backgroundColor: COLOR.surfaceSunken, borderTopWidth: 1, borderTopColor: COLOR.border },
   doneButton: { minHeight: 44, justifyContent: 'center', paddingHorizontal: 16 },
   doneText: { fontFamily: FONT.bold, fontSize: TYPE.field, color: COLOR.foreground },
+  /* 숫자칸의 틀이 줄의 한 칸을 차지한다 — 안의 칸 · 단위 자리(`digit`)는 틀이 없을 때와 같다 */
+  digitRing: { flex: 1 },
   digit: { flex: 1, justifyContent: 'center' },
   digitInput: { paddingLeft: 12, paddingRight: 34 },
   unit: { position: 'absolute', right: 14, fontFamily: FONT.medium, fontSize: TYPE.body, color: COLOR.secondary },

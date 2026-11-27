@@ -30,9 +30,10 @@ import { unreachedDoor } from '@/answer';
 
 /**
  * 못 읽은 칸 — 웹의 같은 자리(보관함 · 풀이 화면의 `AccountNotice`)처럼 실패 줄(`FailureLine`)에 까닭 한 줄과 다시 시도다. 화면 통째 실패는
- * 앱 어디서나 이 꼴이다(ADR 0281)
+ * 앱 어디서나 이 꼴이다(ADR 0281). `whole` 은 이 줄이 화면의 전부일 때(보관함 · 풀이 화면) — 남은 높이의 가운데에 선다(ADR 0282). 궁합 결과처럼
+ * 다른 것이 선 화면의 풀이 칸이면 제자리다
  */
-export function ReadFailure({ refused, onRetry }: { refused: DoorRefusal; onRetry: () => void }) {
+export function ReadFailure({ refused, onRetry, whole = false }: { refused: DoorRefusal; onRetry: () => void; whole?: boolean }) {
   if (refused.refused === 'not-found') {
     return (
       <Card>
@@ -41,7 +42,11 @@ export function ReadFailure({ refused, onRetry }: { refused: DoorRefusal; onRetr
     );
   }
   if (refused.refused !== 'unavailable') return null;
-  return <FailureLine onRetry={onRetry}>{refused.message}</FailureLine>;
+  return (
+    <FailureLine whole={whole} onRetry={onRetry}>
+      {refused.message}
+    </FailureLine>
+  );
 }
 
 /** 대상의 풀이 칸을 읽는다 — 화면 머리가 값을 쓰려면 이것으로 먼저 읽고 `ReadingPanel` 에 넘긴다 */

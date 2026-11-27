@@ -28,12 +28,17 @@ export const FAILURE_TEXT = 'text-sm leading-6 text-danger';
  * 간다(G-103). 「새로고침한 뒤 …에서 확인해 주세요」처럼 길을 글로만 말하지 않는다.
  *
  * 문장 없이 다시 로그인이 답인 자리(계정 행을 못 찾음 — `app/me/account-notice.tsx`)는 `signIn` 으로 같은 링크를 단다.
+ *
+ * **화면 통째 실패(`whole`)는 같은 줄이 가운데에 선다**(ADR 0282) — 본문에 이 줄 말고 설 것이 없을 때(제목 밖에). 본문(`main`)의 남은 높이의
+ * 세로 · 가로 가운데다 — 화면을 못 그린 오류 경계(`app/error-screen.tsx`)가 서는 자리와 같다. 글자 · 단추는 그대로이고 두 줄로 꺾이면 줄마다
+ * 가운데다. 부모는 세로 flex 이고 높이를 가져야 한다(`main` 의 `flex-1 flex-col`). 앱 `mobile/src/ui/failure-line.tsx` 의 `whole` 과 같다.
  */
 export function FailureLine({
   children,
   retry = false,
   action,
   signIn = false,
+  whole = false,
   id,
   className = '',
 }: {
@@ -46,6 +51,8 @@ export function FailureLine({
   action?: ReactNode;
   /** 「다시 로그인」 링크를 단다 — 다시 받아 그려도 안 풀리고 로그인해야 풀리는 자리에만 */
   signIn?: boolean;
+  /** 화면 통째 실패 — 본문의 남은 높이 가운데에 선다 */
+  whole?: boolean;
   className?: string;
 }) {
   const router = useRouter();
@@ -53,8 +60,12 @@ export function FailureLine({
   const [refreshing, startRefreshing] = useTransition();
   const signedOut = signIn || textOf(children).includes(SIGN_IN_AGAIN_NOTE);
 
-  return (
-    <div id={id} role="alert" className={`flex flex-wrap items-center gap-x-3 gap-y-1 ${FAILURE_TEXT} ${className}`}>
+  const line = (
+    <div
+      id={id}
+      role="alert"
+      className={`flex flex-wrap items-center gap-x-3 gap-y-1 ${FAILURE_TEXT} ${whole ? 'justify-center text-center' : ''} ${className}`}
+    >
       <p>{children}</p>
       {signedOut ? (
         <Link href={signInFrom(pathname)} className={BUTTON_TERTIARY}>
@@ -73,6 +84,7 @@ export function FailureLine({
       {!signedOut && action}
     </div>
   );
+  return whole ? <div className="flex flex-1 flex-col items-center justify-center">{line}</div> : line;
 }
 
 /** 줄에 든 글자 — 문장이 조각(`저장하지 못했어요. {failure}`)으로 와도 이어 붙여 본다 */

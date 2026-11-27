@@ -84,8 +84,8 @@ export default function PersonScreen() {
   if (read === null || read.kind === 'signed-out') return <LoadingFrame bar={before} />;
   if (read.kind === 'failed') {
     return (
-      <ScreenFrame bar={before}>
-        <FailureLine onRetry={load}>{read.message}</FailureLine>
+      <ScreenFrame bar={before} fill>
+        <FailureLine whole onRetry={load}>{read.message}</FailureLine>
       </ScreenFrame>
     );
   }

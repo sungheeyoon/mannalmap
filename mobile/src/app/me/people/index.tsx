@@ -54,8 +54,8 @@ export default function PeopleScreen() {
   }
   if (read.kind === 'failed') {
     return (
-      <ScreenFrame bar={<TopBar title="저장한 사람" fallback="/me" />}>
-        <FailureLine onRetry={load}>{read.message}</FailureLine>
+      <ScreenFrame bar={<TopBar title="저장한 사람" fallback="/me" />} fill>
+        <FailureLine whole onRetry={load}>{read.message}</FailureLine>
       </ScreenFrame>
     );
   }

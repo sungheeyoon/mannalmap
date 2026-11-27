@@ -16,12 +16,15 @@ import { FLAT_CARD_FACE } from '../ui/surfaces';
  *
  * `active` 와 `onboarding` 에는 아무것도 안 그린다. 온보딩은 막힌 것이 아니라 아직 안
  * 한 것이라, 회색 안내문이 아니라 자기 카드를 편다(`Onboarding`).
+ *
+ * `whole` — 이 안내가 본문의 전부인 화면(제목 밖에 다른 것이 안 서는 화면)이면 실패 줄이 본문의 가운데에 선다(화면 통째 실패, ADR 0282).
+ * 정지 · 탈퇴 대기의 상자는 실패가 아니라 상태라 제자리다.
  */
-export function AccountNotice({ state }: { state: AccountState }) {
+export function AccountNotice({ state, whole = false }: { state: AccountState; whole?: boolean }) {
   const failure = accountFailureOf(state);
   if (failure !== null) {
     return (
-      <FailureLine retry={failure.next === 'retry'} signIn={failure.next === 'signIn'}>
+      <FailureLine retry={failure.next === 'retry'} signIn={failure.next === 'signIn'} whole={whole}>
         {failure.line}
       </FailureLine>
     );

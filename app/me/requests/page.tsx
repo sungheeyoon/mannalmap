@@ -44,7 +44,7 @@ export default async function RequestsPage() {
     <main className={`app-shell flex w-full ${COLUMN} flex-1 flex-col gap-8 py-8 sm:py-12`}>
       <h1 className={TYPE_TITLE}>소식</h1>
 
-      {isBlocked(state) ? <AccountNotice state={state} /> : <InboxSections />}
+      {isBlocked(state) ? <AccountNotice state={state} whole /> : <InboxSections />}
     </main>
   );
 }
@@ -59,7 +59,9 @@ async function InboxSections() {
       있어 기록에만 보내고 일반 문장이 선다(`answerOfThrown`). 전에는 `error.message` 를 그대로 세웠다.
     */
     return (
-      <FailureLine retry>소식을 불러오지 못했어요. {answerOfThrown(thrown, 'inbox')}</FailureLine>
+      <FailureLine retry whole>
+        소식을 불러오지 못했어요. {answerOfThrown(thrown, 'inbox')}
+      </FailureLine>
     );
   }
 

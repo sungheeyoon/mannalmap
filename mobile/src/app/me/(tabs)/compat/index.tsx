@@ -52,9 +52,9 @@ function PickStep({ pickA, pickB, typeB }: { pickA?: string; pickB?: string; typ
   if (read === null || read.kind === 'signed-out') return <Loading />;
   if (read.kind === 'failed') {
     return (
-      <ScreenFrame>
+      <ScreenFrame fill>
         <WordText style={shared.section}>{COMPAT_NEW}</WordText>
-        <FailureLine onRetry={load}>{read.message}</FailureLine>
+        <FailureLine whole onRetry={load}>{read.message}</FailureLine>
       </ScreenFrame>
     );
   }
