@@ -259,6 +259,7 @@
 | 네이버 검색 | 생성형 답의 머리 표시 「AI 브리핑」(아이콘 + 글자) · 펼친 끝 「AI 답변으로 정확하지 않은 정보가 포함될 수 있어요.」 — 390 · 1280 둘 다 머리 왼쪽 | [검색](https://m.search.naver.com/search.naver?query=%EC%82%AC%EC%A3%BC%20%EC%98%A4%ED%96%89%EC%9D%B4%EB%9E%80) | 2026-11-26 | A | home-20 · first-09 · ADR 0276(딱지는 걷었다 — ADR 0277) |
 | 줌 검색 | 생성형 답의 머리 딱지 「AI 1초 요약」 · 끝 「AI 답변으로 부정확한 정보가 포함될 수 있습니다.」 | [검색](https://m.search.zum.com/search.zum?query=%EC%82%AC%EC%A3%BC%20%EC%98%A4%ED%96%89) | 2026-11-26 | A | home-20 · first-09 · ADR 0276(딱지는 걷었다 — ADR 0277) |
 | 헬로우봇 | 「AI가 생성한 이미지는 1년간 유효하니 미리 다운받아주세요.」 — 화면은 못 봤다 | [문구 파일](https://hellobot.co/assets/i18n/ko.json) | 2026-11-26 | B′ | home-20 |
+| 아이매뉴얼 | 앱 이름 「나사용설명서」 · 기능 소개 「관계사용설명서 연인, 가족, 친구 등 두 사람의 조합을 분석해서 잘 지낼 수 있는 방법을 알려드려요」 — 화면은 못 봤다 | [App Store](https://apps.apple.com/kr/app/id1489667152) | 2026-11-27 | B | compat-03 · ADR 0283 |
 
 ### 호칭 · 표기
 
