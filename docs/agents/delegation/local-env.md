@@ -86,7 +86,7 @@
 6. `mobile/scripts/measure/dev-seed.tsx.txt` 를 `mobile/src/app/dev-seed.tsx` 로 잠시 복사하고 `python3 mobile/scripts/measure/device.py link /dev-seed`. **복사본과 `.env.local` 은 끝나면 지운다 — 커밋하지 않는다.** 있는 동안 `scripts/` 시험 넷(`code-rules` 의 `!` 지문 · `mobile-back` · `mobile-supabase-env` · `mobile-word-text`)이 붉다.
 7. `python3 mobile/scripts/measure/sweep.py me=/me chat=/me/chat …` 가 그림 · 글자 · 로그를 모은다. 누르는 흐름은 `device.py` 의 `tap` · `input` · `type` · `key` 로 스크립트 파일에 적는다.
 
-환경값은 `ADB`(WSL 은 Windows SDK 의 `adb.exe` 전체 경로) · `MEASURE_DIR` · `FAKE_PORT` · `METRO_PORT`. 나란히 쓰면 포트를 저마다 잡고 기기는 잠금으로 차례를 지킨다. 개발 번들의 홈은 수십 초 걸리니 글자를 기다린다. 가짜 서버 기록에 `!! 없는 rpc` 가 찍히면 그 답을 `fake-server.mjs` 에 더한다.
+환경값은 `ADB`(WSL 은 Windows SDK 의 `adb.exe` 전체 경로) · `MEASURE_DIR` · `FAKE_PORT` · `METRO_PORT`. 나란히 쓰면 포트를 저마다 잡는다. 기기는 한 번에 한 세션만 쓴다 — 기기를 잠그는 도구는 없으니, 쓰기 전에 다른 세션의 Metro · 가짜 서버 포트(`ss -ltn`)와 측정 도구(`device.py` · `sweep.py`) 프로세스가 있는지 보고, 있으면 그 세션이 끝나기를 기다린다. 개발 번들의 홈은 수십 초 걸리니 글자를 기다린다. 가짜 서버 기록에 `!! 없는 rpc` 가 찍히면 그 답을 `fake-server.mjs` 에 더한다.
 
 | 증상 | 원인 | 하는 일 |
 | --- | --- | --- |
