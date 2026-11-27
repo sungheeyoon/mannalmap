@@ -97,6 +97,7 @@
 | 코드를 고쳤는데 Expo Go 가 옛 화면을 보인다 | 스냅숏으로 뜬 Expo Go 의 JS 가 같은 주소면 새 번들을 받지 않는다 | 에뮬레이터를 `-no-snapshot-load` 로 다시 켠다 |
 | 붉은 개발 오류 창 — 로그아웃 때 `RNGoogleSignin`, 로그인 뒤 `ExpoIap` | Expo Go 에 없는 네이티브 모듈이다 — 출시 빌드에는 안 보인다. 그림 아래 검은 토스트도 개발 빌드의 LogBox 다 | 「Dismiss」로 닫고 이어 간다. 그 모듈의 화면(구글 로그인 · 결제)은 PR 의 「안 돌린 것」 |
 | 오래 쉰 뒤 `adb devices` 가 `offline` 이다 | 확인 전 — 아래 「`adb` 가 결과 없이 멈춘다」 줄의 `kill-server` 로는 안 풀린다 | 에뮬레이터 창을 닫고 `-no-snapshot-load` 로 다시 켠다 |
+| 웹 번들 그림과 기기 그림이 서로 다른 상태를 찍는다 | 둘이 한 가짜 서버를 함께 쓰면 한쪽의 `__set` 이 다른 쪽 상태를 바꾼다 | 나란히 찍을 때는 가짜 서버를 둘 띄워 저마다 `FAKE_PORT` 를 준다 |
 | 붉은 화면 「expo-notifications … removed from Expo Go」 | 안드로이드 Expo Go 가 푸시 토큰 호출에서 던진다 | 재는 동안만 제 워크트리의 `mobile/node_modules/expo-notifications/build/warnOfExpoGoPushUsage.js` 의 `throw` 를 `console.warn` 으로 바꾸고 Expo Go 를 다시 연다. 푸시는 못 잰다 |
 | 첫 화면(로고)에서 멈춘다 | `mobile/src/app/_layout.tsx` 의 `<ReadyPushOpener />` 가 없는 푸시를 기다린다 | 재는 동안만 그 줄을 주석으로 뺀다. **끝나면 되돌린다** |
 | 붉은 화면 「Cannot find native module 'ExpoApplication'」 | `mobile/src/release/floor.ts` 가 부르는 `expo-application` 이 Expo Go 에 없다 | 재는 동안만 그 import 를 `const Application = { nativeBuildVersion: null as string \| null };` 로. **끝나면 되돌린다** |
