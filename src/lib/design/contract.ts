@@ -4,6 +4,7 @@
  * 이름이 다르면 앱을 웹에 맞춘다 — 웹 쪽 글자 · 동작은 이 표 때문에 바꾸지 않는다.
  *
  * `pending` 은 앱에 아직 그 이름으로 서지 않은 부품이고, 값은 그 까닭이다. 이 줄은 앱 쪽 이름을 재지 않는다 — 나란히 도는 PR 이 그 부품을 세워도 main 이 붉어지지 않게 한다(#912 · #913). 서고 나면 그 줄을 지운다.
+ * 앱에 세우지 않기로 정한 웹 부품은 아래 `WEB_ONLY` 가 까닭과 함께 든다.
  */
 export type PartContract = {
   name: string;
@@ -129,13 +130,27 @@ export const PARTS: readonly PartContract[] = [
     name: 'ActionSheet',
     web: { file: 'app/ui/action-sheet.tsx', symbols: ['ActionSheet'] },
     app: { file: 'mobile/src/ui/action-sheet.tsx', symbol: 'ActionSheet' },
-    pending: '앱의 고르기 판은 아직 자리마다 다르다 — 사진 보기의 「⋯」 판(`settings/photo-viewer.tsx`) · 사람 관리 시트(`people/parts.tsx` 의 `Sheet`). 둘을 웹 `ActionChoice` 꼴로 모으는 일은 G-155',
-  },
-  {
-    name: 'Skeleton',
-    web: { file: 'app/ui/skeleton.tsx', symbols: ['SkeletonMain', 'Bone'] },
-    app: { file: 'mobile/src/ui/loading.tsx', symbol: 'Skeleton' },
-    pending: '앱은 첫 읽기를 뼈대 대신 오행 다섯 점(`LoadingDots`)으로 기다린다 — 뼈대를 세우면 반짝임 시간은 `MOTION.shimmer` 다. G-155',
+    props: ['open', 'onClose', 'label', 'choices'],
+    /* 웹은 JSX 에 클래스를 적는다 — 손잡이 · 줄 묶음 · 줄 · 선 · 「취소」의 값(ADR 0280) */
+    values: {
+      'pt-3': 'paddingTop: 12',
+      'gap-3': 'gap: 12',
+      'px-4': 'paddingHorizontal: 16',
+      'pb-[max(1.25rem,env(safe-area-inset-bottom))]': 'Math.max(20, insets.bottom)',
+      'h-1.5': 'height: 6',
+      'w-10': 'width: 40',
+      'bg-border-strong': 'backgroundColor: COLOR.borderStrong',
+      PLAIN_CARD_FACE: 'SURFACE.PLAIN_CARD_FACE',
+      'p-1.5': 'padding: 6',
+      'min-h-14': 'minHeight: 56',
+      'text-lead': 'fontSize: TYPE.lead',
+      'hover:bg-surface-sunken': 'backgroundColor: COLOR.surfaceSunken',
+      'text-danger': 'COLOR.danger',
+      'size-5': 'size={20}',
+      'mx-3': 'marginHorizontal: 12',
+      'my-1': 'marginVertical: 4',
+      BUTTON_SECONDARY: 'variant="secondary"',
+    },
   },
   {
     name: 'LoadingDots',
@@ -148,11 +163,24 @@ export const PARTS: readonly PartContract[] = [
     app: { file: 'mobile/src/ui/loading.tsx', symbol: 'LoadingOrbit' },
     props: ['decorative'],
   },
+];
+
+/**
+ * **웹에만 서는 부품 — 앱에 세우지 않기로 정한 것**(ADR 0280). 까닭이 풀리면 `PARTS` 로 옮긴다. `scripts/design-contract.test.ts` 가 웹에 그 이름이 있고
+ * 앱이 같은 이름을 세우지 않았는지 잰다 — 앱에 세웠으면 이 줄을 `PARTS` 로 옮긴다.
+ */
+export const WEB_ONLY: readonly { name: string; web: { file: string; symbols: readonly string[] }; app: { file: string; symbol: string }; why: string }[] = [
+  {
+    name: 'Skeleton',
+    web: { file: 'app/ui/skeleton.tsx', symbols: ['SkeletonMain', 'Bone'] },
+    app: { file: 'mobile/src/ui/loading.tsx', symbol: 'Skeleton' },
+    why: '웹의 뼈대는 Next 의 서버 화면 이동 때문에 섰다 — `loading.tsx` 가 없으면 동적 화면을 미리 받지 않고 누른 뒤 서버 답이 다 올 때까지 앞 화면에 머문다(ADR 0116). 앱은 누르면 곧 다음 화면이고 그 화면이 첫 읽기를 오행 다섯 점(`LoadingDots`)으로 기다린다 — 웹의 화면 안 기다림과 같은 꼴이다',
+  },
   {
     name: 'Snackbar',
     web: { file: 'app/ui/snackbar.tsx', symbols: ['SnackbarHost'] },
     app: { file: 'mobile/src/ui/snackbar.tsx', symbol: 'SnackbarHost' },
-    pending: '앱은 끝난 일을 제자리 글자로 잠깐 말한다(`settings/parts.tsx` 의 `useDoneNote`) — 바닥 스낵바는 아직 없다. G-155',
+    why: '웹에서 바닥 스낵바를 부르는 곳은 대화방 둘(`app/me/chat/[matchId]/room.tsx` · `detail-card.tsx`)뿐이고 인연 · 채팅은 닫혀 있다(G-135). 열린 앱 화면은 끝난 일을 곁의 한 줄로 말하고(`settings/parts.tsx` 의 `useDoneNote` — 웹 `DoneNote` 의 「곁의 한 줄이 먼저다」), 공유는 기기의 공유 창이다. 채팅을 열 때 세운다 — G-172',
   },
 ];
 
@@ -193,6 +221,6 @@ export const SURFACE_EXCEPTIONS: readonly { file: string; found: string; why: st
   {
     file: 'mobile/src/settings/photo-viewer.tsx',
     found: '<Modal',
-    why: '사진 크게 보기 — 덮개가 아니라 불투명한 전체 화면이다(웹 `<dialog>` 의 `backdrop:bg-black`). 쓸어넘기는 손길과 iOS 의 「닫힌 뒤 다음 창」(`onDismiss`) 차례가 `Modal` 의 전체 화면 표시에 걸려 있어 `Scrim` 으로 옮기면 동작이 바뀐다(ADR 0241). 안의 「⋯」 판 덮개는 `COLOR.scrim` 이다',
+    why: '사진 크게 보기 — 덮개가 아니라 불투명한 전체 화면이다(웹 `<dialog>` 의 `backdrop:bg-black`). 쓸어넘기는 손길과 iOS 의 「닫힌 뒤 다음 창」(`onDismiss`) 차례가 `Modal` 의 전체 화면 표시에 걸려 있어 `Scrim` 으로 옮기면 동작이 바뀐다(ADR 0241). 안의 「⋯」 판은 고르기 판(`ActionSheet`)을 창을 새로 띄우지 않고 이 화면 안에 깐다(`within`, ADR 0280)',
   },
 ];

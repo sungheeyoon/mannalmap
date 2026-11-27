@@ -403,7 +403,8 @@ const styles = StyleSheet.create({
   exploration: { position: 'absolute', left: 16, flexDirection: 'row', alignItems: 'center', gap: 6, minHeight: 32, paddingHorizontal: 12, borderRadius: RADIUS.pill, backgroundColor: COLOR.surface },
   explorationText: { fontFamily: FONT.bold, fontSize: TYPE.small, color: COLOR.foreground },
   onPhoto: { position: 'absolute', right: 12, flexDirection: 'row', gap: 8 },
-  info: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center', borderRadius: RADIUS.pill, backgroundColor: alpha(FIXED.black, 0.42) },
+  /* 사진 위의 동그란 단추 — 웹 `ICON_BUTTON_ON_PHOTO` 의 `bg-photo-face`(검정 50%), 신고 · 차단 「⋯」(`people.tsx` 의 `moreOnPhoto`)와 한 벌 */
+  info: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center', borderRadius: RADIUS.pill, backgroundColor: COLOR.photoFace },
   infoText: { fontFamily: FONT.bold, fontStyle: 'italic', fontSize: TYPE.heading, color: COLOR.onPhoto },
   face: { position: 'absolute', left: 0, right: 0, bottom: 0, gap: 10, paddingHorizontal: 20, paddingTop: 96, paddingBottom: 20 },
   faceHead: { flexDirection: 'row', alignItems: 'flex-end', gap: 12 },

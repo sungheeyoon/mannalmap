@@ -5,6 +5,7 @@ import { WARNING_ACKNOWLEDGE_LABEL, WARNING_NOTICE_TITLE, warningNoticeLines, ty
 import { SUPPORT_EMAIL } from '@brand';
 
 import { useClient } from '@/auth/connected';
+import { FailureLine } from '@/ui/failure-line';
 import { PrimaryButton } from '@/ui/parts';
 import { COLOR, FONT, TYPE, TYPE_BODY } from '@/ui/tokens';
 import { CardFrame } from '@/ui/surfaces';
@@ -50,7 +51,7 @@ export function WarningNotice() {
           ))}
         </View>
         <PrimaryButton label={WARNING_ACKNOWLEDGE_LABEL} onPress={() => void acknowledge()} busy={saving} />
-        {failure !== null && <WordText accessibilityRole="alert" style={styles.failure}>{failure}</WordText>}
+        {failure !== null && <FailureLine>{failure}</FailureLine>}
       </CardFrame>
     </View>
   );
@@ -62,5 +63,4 @@ const styles = StyleSheet.create({
   title: { fontFamily: FONT.bold, fontSize: TYPE.lead, color: COLOR.danger },
   lines: { gap: 4 },
   line: { ...TYPE_BODY },
-  failure: { fontFamily: FONT.medium, fontSize: TYPE.small, color: COLOR.danger },
 });

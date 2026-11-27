@@ -208,7 +208,7 @@ function SignupForm({ form, onDone }: { form: Extract<SignupState, { kind: 'form
           </View>
           {view.answer !== null && <WordText style={view.answer.available ? styles.note : styles.failure}>{view.answer.note}</WordText>}
           <SectionErrorLine message={view.line} gap={6} />
-          {view.refused !== null && <WordText style={styles.failure}>{view.refused}</WordText>}
+          {view.refused !== null && <FailureLine>{view.refused}</FailureLine>}
           <WordText style={styles.fine}>{SIGNUP_LABEL.nicknameNote}</WordText>
         </View>
       )}
@@ -273,7 +273,7 @@ function SignupForm({ form, onDone }: { form: Extract<SignupState, { kind: 'form
       ))}
 
       <View style={styles.action}>
-        {view.failure !== null && <WordText style={styles.failure}>{view.failure}</WordText>}
+        {view.failure !== null && <FailureLine>{view.failure}</FailureLine>}
         <PrimaryButton
           label={working ? SIGNUP_LABEL.signingUp : again ? SIGNUP_LABEL.confirm : SIGNUP_LABEL.signUp}
           onPress={send}
@@ -312,7 +312,7 @@ function LeaveLink() {
   return (
     <View style={styles.leave}>
       <TextButton label={leaving ? SIGN_OUT_PENDING : SIGNUP_LABEL.otherAccount} onPress={leave} disabled={leaving} />
-      {failed && <WordText style={styles.failure}>{SIGN_OUT_FAILED}</WordText>}
+      {failed && <FailureLine>{SIGN_OUT_FAILED}</FailureLine>}
     </View>
   );
 }

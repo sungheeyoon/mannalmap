@@ -2,13 +2,14 @@ import { BUTTON_OFF_OPACITY } from '@design';
 import { Image } from 'expo-image';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { PanResponder, Pressable, StyleSheet, View } from 'react-native';
-import Svg, { Path } from 'react-native-svg';
 
 import { PHOTO_ADD, PHOTO_UPLOADS_PAUSED } from '@account/copy';
 import { FOCUS_CENTER, PHOTO_LOAD_FAILED_NOTE, PHOTO_MAX_COUNT, PHOTO_REMOVED, PHOTO_REMOVE_CONFIRM, PHOTO_REMOVE_NOTE, PHOTO_REMOVE_TITLE, type PhotoFocus, type PhotoUploadMode } from '@profile';
 
 import { useClient } from '@/auth/connected';
+import type { ActionChoice } from '@/ui/action-sheet';
 import { FailureLine } from '@/ui/failure-line';
+import { Icon } from '@/ui/icons';
 import { Paper } from '@/ui/surfaces';
 import { ConfirmDialog } from '@/ui/confirm-dialog';
 import { alpha, COLOR, CONTROL, FONT, RADIUS, TYPE, TYPE_META } from '@/ui/tokens';
@@ -17,7 +18,7 @@ import { settled, settledWhileLive } from '@/ui/settled';
 import { useDoneNote } from './parts';
 import { PHOTO_FRAME_TITLE, PhotoFramer, contentPositionOf } from './photo-framer';
 import { moveShownFirst } from './photo-move';
-import { PhotoViewer, type PhotoChoice } from './photo-viewer';
+import { PhotoViewer } from './photo-viewer';
 import { addPhoto, movePhoto, photoSource, pickPhotos, removePhoto, replacePhoto, setPhotoFocus, type MyPhoto } from './photos';
 import { WordText } from '@/ui/word-text';
 import { FOCUS_SAVED, PHOTO_CHANGED, PHOTO_REORDER_HINT, PHOTO_SAVED, PHOTO_SAVES_ITSELF, PHOTO_SAVING, UNREADABLE_PHOTO } from '@account/words';
@@ -266,11 +267,12 @@ export function PhotoGrid({
     setAsking(photo);
   };
 
-  const choicesFor = (photo: MyPhoto, position: number): PhotoChoice[] => [
-    ...(position > 1 ? [{ label: '대표로 설정', run: () => void move(position, 1) }] : []),
-    ...(paused ? [] : [{ label: '사진 변경', run: () => void replace(photo) }]),
-    { label: PHOTO_FRAME_TITLE, run: () => void adjust(photo) },
-    { label: '삭제', tone: 'danger' as const, run: () => ask(photo) },
+  /* 줄의 그림은 웹 `app/me/profile/photo-grid.tsx` 의 `choicesFor` 와 같다 */
+  const choicesFor = (photo: MyPhoto, position: number): ActionChoice[] => [
+    ...(position > 1 ? [{ icon: 'spark' as const, label: '대표로 설정', run: () => void move(position, 1) }] : []),
+    ...(paused ? [] : [{ icon: 'pencil' as const, label: '사진 변경', run: () => void replace(photo) }]),
+    { icon: 'move', label: PHOTO_FRAME_TITLE, run: () => void adjust(photo) },
+    { icon: 'remove', label: '삭제', tone: 'danger' as const, run: () => ask(photo) },
   ];
 
   const slot = (position: number) => {
@@ -304,9 +306,7 @@ export function PhotoGrid({
           </Liftable>
           <Pressable accessibilityRole="button" accessibilityLabel="사진 지우기" disabled={busy} onPress={() => ask(photo)} style={[styles.remove, busy && styles.off]}>
             <View style={styles.removeFace}>
-              <Svg width={12} height={12} viewBox="0 0 12 12">
-                <Path d="M2 2 L10 10 M10 2 L2 10" stroke={COLOR.onPhoto} strokeWidth={1.6} strokeLinecap="round" />
-              </Svg>
+              <Icon name="close" size={14} color={COLOR.onPhoto} />
             </View>
           </Pressable>
         </View>
@@ -336,9 +336,7 @@ export function PhotoGrid({
         style={[styles.slot, box, styles.empty, busy && styles.off]}
       >
         <View style={[styles.plus, first ? styles.plusNext : styles.plusRest, bare && styles.plusBig]}>
-          <Svg width={bare ? 24 : 18} height={bare ? 24 : 18} viewBox="0 0 24 24">
-            <Path d="M12 5 V19 M5 12 H19" stroke={first ? COLOR.surface : COLOR.secondary} strokeWidth={2} strokeLinecap="round" />
-          </Svg>
+          <Icon name="plus" size={bare ? 24 : 18} color={first ? COLOR.surface : COLOR.secondary} />
         </View>
         {bare && <WordText style={styles.addText}>{PHOTO_ADD}</WordText>}
       </Pressable>

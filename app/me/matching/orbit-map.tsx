@@ -6,6 +6,7 @@ import { ELEMENTS, ELEMENT_PICTURE_KO, type Element } from '@/src/lib/saju';
 
 import { elementScope } from '../../ui/element-tone';
 import { ElementSymbol } from '../../ui/element-symbol';
+import { Icon } from '../../ui/icons';
 import { DotsMark, ORBIT_GLOW, ORBIT_LABEL_PAD, ORBIT_NAME_TAG, ORBIT_RING, ThreadMark } from '../../ui/orbit';
 import { StemSymbol } from '../../ui/stem-symbol';
 import { CandidatePhoto } from './candidate-photo';
@@ -382,7 +383,7 @@ export function ApproachMap({
             </button>
             {card.exploration && (
               <span className="pointer-events-none absolute -right-1 -top-1 grid size-5 place-items-center rounded-full bg-[var(--surface)] text-[var(--ink)] shadow-soft ring-1 ring-[var(--border)]">
-                <Spark />
+                <Icon name="spark" className="size-3 stroke-2" />
               </span>
             )}
             {!arc && !now && status === 'waiting' && (
@@ -577,14 +578,6 @@ function Bead({
         className={`${small ? 'size-5' : 'size-7'} relative transition-opacity duration-700 ${low && !lit ? (unknown ? 'opacity-35' : 'opacity-55') : 'opacity-100'}`}
       />
     </span>
-  );
-}
-
-function Spark() {
-  return (
-    <svg aria-hidden="true" viewBox="0 0 24 24" className="size-3 fill-none stroke-current" strokeWidth="2" strokeLinejoin="round">
-      <path d="M12 3.5 13.9 10l6.6 2-6.6 2L12 20.5 10.1 14l-6.6-2 6.6-2Z" />
-    </svg>
   );
 }
 
