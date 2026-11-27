@@ -19,7 +19,7 @@ export default function SupportScreen() {
         <WordText accessibilityRole="header" style={styles.head}>
           {CONTACT_LABEL}
         </WordText>
-        <WordText selectable style={styles.line}>
+        <WordText selectable sentence style={styles.line}>
           {SUPPORT_MAIL_LINE}
         </WordText>
         <SendMail />

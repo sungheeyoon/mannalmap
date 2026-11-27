@@ -1,6 +1,6 @@
 import { router } from 'expo-router';
 import { Fragment, useEffect, useRef, useState } from 'react';
-import { BackHandler, Pressable, StyleSheet, View } from 'react-native';
+import { BackHandler, StyleSheet, View } from 'react-native';
 
 import { DEFAULT_QUERY, type Query } from '@input/query';
 import { birthSectionErrors, type BirthSection, type SectionError } from '@input/section-errors';
@@ -15,10 +15,11 @@ import { SameChartAsk, type SameChartQuestion } from '@/people/same-chart-ask';
 import { FailureLine } from '@/ui/failure-line';
 import { SectionErrorLine, sideSections, useSectionErrors, type SectionErrors } from '@/ui/section-error';
 import { FoldIcon, Icon } from '@/ui/icons';
+import { Press } from '@/ui/press';
 import { StemSymbol } from '@/ui/stem-symbol';
 import { ElementSymbol } from '@/ui/element-symbol';
 import { Choices, Field, PrimaryButton } from '@/ui/parts';
-import { COLOR, CONTROL, FONT, RADIUS, TYPE } from '@/ui/tokens';
+import { alpha, COLOR, CONTROL, FONT, RADIUS, TYPE } from '@/ui/tokens';
 import { CardFrame } from '@/ui/surfaces';
 import { settledWhileLive } from '@/ui/settled';
 
@@ -184,8 +185,9 @@ export function CompatPicker({ people, pickA, pickB, typeB = false }: { people: 
           {[...RELATIONS, null].map((choice) => {
             const picked = relation === choice;
             return (
-              <Pressable
+              <Press
                 key={choice ?? 'unknown'}
+                feel="shrink"
                 accessibilityRole="radio"
                 accessibilityState={{ checked: picked }}
                 onPress={() => {
@@ -195,7 +197,7 @@ export function CompatPicker({ people, pickA, pickB, typeB = false }: { people: 
                 style={[styles.chip, picked && styles.chipOn]}
               >
                 <WordText style={[styles.chipText, picked && styles.chipTextOn]}>{choice === null ? RELATION_NONE_LABEL : RELATION_LABEL[choice]}</WordText>
-              </Pressable>
+              </Press>
             );
           })}
         </View>
@@ -245,12 +247,12 @@ function PersonChoice({ label, people, taken, chosenId, onChoose, refused = fals
 
   return (
     <View style={styles.choice}>
-      <Pressable accessibilityRole="button" accessibilityState={{ expanded: open }} onPress={() => setOpen(!open)} style={[styles.choiceHead, open && styles.choiceOpen, refused && styles.choiceWrong]}>
+      <Press feel="row" accessibilityRole="button" accessibilityState={{ expanded: open }} onPress={() => setOpen(!open)} style={[styles.choiceHead, open && styles.choiceOpen, refused && styles.choiceWrong]}>
         {chosen !== null && <Face person={chosen} />}
         <WordText style={[styles.choiceText, chosen === null && styles.choiceEmpty]} numberOfLines={1}>{chosen?.label ?? COMPAT_PICK_OTHER}</WordText>
         {/* 웹의 같은 칸(`app/person-combobox.tsx`) — 12px · 굵기 3.2 · secondary */}
         <FoldIcon open={open} size={12} color={COLOR.secondary} strokeWidth={3.2} />
-      </Pressable>
+      </Press>
       {open && (
         <View style={styles.menu} accessibilityRole="radiogroup" accessibilityLabel={label}>
           {findsInList(people.length) && (
@@ -260,8 +262,9 @@ function PersonChoice({ label, people, taken, chosenId, onChoose, refused = fals
           )}
           {candidates.length === 0 && people.length > 0 && <WordText style={[shared.meta, styles.menuEmpty]}>{PERSON_SEARCH_EMPTY}</WordText>}
           {candidates.map((one) => (
-            <Pressable
+            <Press
               key={one.personId}
+              feel="row"
               accessibilityRole="radio"
               accessibilityState={{ checked: one.personId === chosenId }}
               onPress={() => {
@@ -273,7 +276,7 @@ function PersonChoice({ label, people, taken, chosenId, onChoose, refused = fals
             >
               <Face person={one} />
               <WordText style={styles.choiceText} numberOfLines={1}>{one.label}</WordText>
-            </Pressable>
+            </Press>
           ))}
         </View>
       )}
@@ -293,7 +296,7 @@ const styles = StyleSheet.create({
   join: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 20 },
   joinLine: { flex: 1, height: 1, backgroundColor: COLOR.border },
   joinMark: { width: 28, height: 28, alignItems: 'center', justifyContent: 'center', borderRadius: RADIUS.pill, backgroundColor: COLOR.surfaceSoft },
-  relation: { gap: 10, padding: 20, borderTopWidth: 1, borderTopColor: COLOR.border, backgroundColor: `${COLOR.surfaceSoft}99` },
+  relation: { gap: 10, padding: 20, borderTopWidth: 1, borderTopColor: COLOR.border, backgroundColor: alpha(COLOR.surfaceSoft, 0.6) },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
   /* 같은 너비의 2열 — 넷이 두 줄로 고르게 선다(운영자 확정 2026-11-08, 대장 all-11) */
   chip: { flexBasis: '40%', flexGrow: 1, minHeight: CONTROL, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 14, borderRadius: RADIUS.pill, borderWidth: 1, borderColor: COLOR.border, backgroundColor: COLOR.surface },

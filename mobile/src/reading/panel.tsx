@@ -9,6 +9,7 @@ import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
 import { StyleSheet, View } from 'react-native';
 
 import { useClient } from '@/auth/connected';
+import { FailureLine } from '@/ui/failure-line';
 import { Card, CardFrame, Tile } from '@/ui/surfaces';
 import { PrimaryButton, SecondaryButton, TextButton } from '@/ui/parts';
 import { COLOR, FONT, TYPE, TYPE_BODY, TYPE_META } from '@/ui/tokens';
@@ -27,7 +28,10 @@ import { LoadingState } from './waiting';
 import { WordText } from '@/ui/word-text';
 import { unreachedDoor } from '@/answer';
 
-/** 못 읽은 칸 — 웹의 `FailureLine` 처럼 까닭 한 줄과 다시 시도 */
+/**
+ * 못 읽은 칸 — 웹의 같은 자리(보관함 · 풀이 화면의 `AccountNotice`)처럼 실패 줄(`FailureLine`)에 까닭 한 줄과 다시 시도다. 화면 통째 실패는
+ * 앱 어디서나 이 꼴이다(ADR 0281)
+ */
 export function ReadFailure({ refused, onRetry }: { refused: DoorRefusal; onRetry: () => void }) {
   if (refused.refused === 'not-found') {
     return (
@@ -37,12 +41,7 @@ export function ReadFailure({ refused, onRetry }: { refused: DoorRefusal; onRetr
     );
   }
   if (refused.refused !== 'unavailable') return null;
-  return (
-    <Tile tone={COLOR.dangerWash} accessibilityRole="alert" style={styles.alert}>
-      <WordText style={styles.alertText}>{refused.message}</WordText>
-      <TextButton label="다시 시도하기" onPress={onRetry} />
-    </Tile>
-  );
+  return <FailureLine onRetry={onRetry}>{refused.message}</FailureLine>;
 }
 
 /** 대상의 풀이 칸을 읽는다 — 화면 머리가 값을 쓰려면 이것으로 먼저 읽고 `ReadingPanel` 에 넘긴다 */
@@ -156,7 +155,7 @@ export function ReadingPanel({
   return (
     <View style={styles.panel}>
       {makeAtTop && (
-        <View style={styles.group}>
+        <View style={styles.stack}>
           {makeButton('primary')}
           {ask}
           {note}
@@ -164,7 +163,7 @@ export function ReadingPanel({
       )}
 
       {!chrome.hideMake && !chrome.makeInHeader && (
-        <CardFrame style={styles.group}>
+        <CardFrame style={styles.card}>
           {ask}
           {reading === null && (
             <View>
@@ -207,11 +206,14 @@ export function ReadingPanel({
         />
       )}
 
-      {/* 다 읽은 뒤에 하는 일은 글 끝에 선다 — 보내기와 다시 받기가 반반, 그 아래 접힌 의견(`app/me/reading/panel.tsx`) */}
+      {/*
+        다 읽은 뒤에 하는 일은 글 끝에 선다 — 보내기와 다시 받기가 반반, 그 아래 접힌 의견(`app/me/reading/panel.tsx`). 판이 아니라 글과 같은 단이라
+        안쪽 여백이 없다(웹 `READING_COLUMN` 의 `gap-4` · `gap-3`) — 단추 · 의견 카드의 가장자리가 글의 가장자리와 같다
+      */}
       {reading !== null && phase !== 'loading' && (chrome.canShare || makeAtEnd || chrome.asksFeedback) && (
-        <View style={styles.group}>
+        <View style={styles.end}>
           {(chrome.canShare || makeAtEnd) && (
-            <View style={styles.group}>
+            <View style={styles.stack}>
               <View style={styles.halves}>
                 {chrome.canShare && (
                   <View style={styles.half}>
@@ -247,7 +249,12 @@ export function ReadingPanel({
 
 const styles = StyleSheet.create({
   panel: { gap: 24 },
-  group: { gap: 12, padding: 20 },
+  /* 판 안의 묶음 — 받기 카드 */
+  card: { gap: 12, padding: 20 },
+  /* 판 없이 글의 단에 서는 묶음 — 머리의 다시 받기(웹 `header` 의 `gap-3`) · 끝의 단추 줄(웹 `gap-3`) */
+  stack: { gap: 12 },
+  /* 글 끝의 묶음 — 단추 줄과 의견 사이(웹 `gap-4`) */
+  end: { gap: 16 },
   halves: { flexDirection: 'row', gap: 8 },
   half: { flex: 1, minWidth: 0 },
   lead: { fontFamily: FONT.bold, fontSize: TYPE.lead, color: COLOR.foreground },

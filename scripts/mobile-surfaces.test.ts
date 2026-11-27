@@ -28,6 +28,8 @@ const HAND_MADE: readonly { what: string; pattern: RegExp }[] = [
   { what: '옛 판 `Panel`', pattern: /<Panel(?=[\s>])(?!\s*\|)/g },
   { what: '색 날값 hex', pattern: /['"`]#[0-9a-fA-F]{3,8}['"`]/g },
   { what: '색 날값 rgba', pattern: /\brgba?\(\s*\d/g },
+  /* 토큰 색 뒤에 손으로 붙인 투명도(`${COLOR.surfaceSoft}99` · `tone.ink + '2e'`) — `alpha(COLOR.x, 0.6)` 로 얹는다(2026-11-27 앱 점검) */
+  { what: '색 글자 뒤 손 투명도', pattern: /\$\{[^}`]+\}[0-9a-fA-F]{2}(?:[0-9a-fA-F]{2})?`|\+\s*['"][0-9a-fA-F]{2}(?:[0-9a-fA-F]{2})?['"]/g },
   { what: '`Modal` 직접 — `Scrim` 위에 세운다', pattern: /<Modal\b/g },
 ];
 
@@ -73,10 +75,32 @@ describe('앱 화면의 면', () => {
   });
 
   it('색 날값 · `Modal` 이 표기를 달리 써도 걸리고, 주석 · 토큰에 얹은 투명도는 안 걸린다', () => {
-    for (const bad of ["color: '#fff'", 'stroke="#ffffff"', 'fill={`#000`}', "backgroundColor: 'rgba(0, 0, 0, 0.4)'", "color: 'rgb(1,2,3)'", '<Modal transparent visible>']) {
+    for (const bad of [
+      "color: '#fff'",
+      'stroke="#ffffff"',
+      'fill={`#000`}',
+      "backgroundColor: 'rgba(0, 0, 0, 0.4)'",
+      "color: 'rgb(1,2,3)'",
+      '<Modal transparent visible>',
+      'backgroundColor: `${COLOR.surfaceSoft}99`',
+      'borderColor: `${tone?.ink ?? COLOR.none}2e`',
+      'borderColor: `${ink}2E80`',
+      "borderColor: tone.ink + '2e'",
+      'color: COLOR.foreground + "99"',
+    ]) {
       expect(handMadeIn(bad), bad).not.toEqual([]);
     }
-    for (const fine of ['/** 웹의 `rgba(0, 0, 0, 0.4)` · (#936) */', '// stroke="#fff" 였다', 'backgroundColor: alpha(COLOR.surface, 0.55)', 'color: COLOR.onPhoto', '{/* <Modal 이었다 */}']) {
+    for (const fine of [
+      '/** 웹의 `rgba(0, 0, 0, 0.4)` · (#936) */',
+      '// stroke="#fff" 였다',
+      'backgroundColor: alpha(COLOR.surface, 0.55)',
+      'color: COLOR.onPhoto',
+      '{/* <Modal 이었다 */}',
+      'borderColor: alpha(tone?.ink ?? COLOR.none, 0.18)',
+      'label={`${count}개`}',
+      'viewBox={`${-BLEED} ${-BLEED} ${100 + BLEED * 2} ${100 + BLEED * 2}`}',
+      'key={`${person.id}:${index}`}',
+    ]) {
       expect(handMadeIn(fine), fine).toEqual([]);
     }
   });

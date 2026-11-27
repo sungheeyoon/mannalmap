@@ -1,6 +1,6 @@
 import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 import { isBlocked } from '@account/index';
 import { birthLineOf } from '@input/birth-line';
@@ -31,6 +31,7 @@ import { readReadingView, type ReadingTarget } from '@/reading/api';
 import { Button } from '@/ui/buttons';
 import { FailureLine } from '@/ui/failure-line';
 import { Icon } from '@/ui/icons';
+import { Press } from '@/ui/press';
 import { PrimaryButton } from '@/ui/parts';
 import { settled } from '@/ui/settled';
 import { StemSymbol } from '@/ui/stem-symbol';
@@ -222,39 +223,39 @@ function PersonPage({
         </View>
         <DayMasterChip stem={person.stem} />
         <View style={styles.names}>
-          <WordText style={shared.title} accessibilityRole="header">{person.name}</WordText>
+          {/*
+            한 줄보다 긴 이름은 두 줄이 고르게 나뉜다(안드로이드 `balanced`) — 띄어쓰기 없는 긴 이름(12자 넘게, ADR 0250 의 3)은 글자 단위로 꺾이는데
+            끝 한 글자만 둘째 줄로 떨어졌다(「…친구입니 / 다」, ADR 0281)
+          */}
+          <WordText style={shared.title} accessibilityRole="header" textBreakStrategy="balanced">{person.name}</WordText>
           <WordText style={shared.meta}>{birthLineOf(saju)}</WordText>
         </View>
         <PillarStrip pillars={saju.pillars} name={person.name} over={tone.soft} />
-        <Pressable accessibilityRole="link" onPress={() => go(`/me/people/${person.personId}?tab=chart`)} style={styles.detail}>
+        <Press feel="fade" accessibilityRole="link" onPress={() => go(`/me/people/${person.personId}?tab=chart`)} style={styles.detail}>
           <WordText style={[styles.detailText, { color: tone.ink }]}>{CHART_DETAIL_LABEL}</WordText>
           <Icon name="chevron" size={14} color={tone.ink} />
-        </Pressable>
+        </Press>
       </Tile>
 
       <View style={styles.part}>
         <WordText style={shared.section}>{PERSON_READING_SECTION}</WordText>
         {own !== null ? (
-          <Pressable accessibilityRole="link" onPress={() => go(readingHref)}>
-            <CardFrame style={styles.reading}>
-              <WordText style={[styles.quote, { color: tone.ink }]}>“</WordText>
-              <WordText style={styles.metaphor}>{own.metaphor ?? READING_CONTINUE_NOTE}</WordText>
-              <View style={styles.readingFoot}>
-                <WordText style={shared.meta}>{readingReceivedLine(own.createdAt, side?.minutes ?? null)}</WordText>
-                <View style={styles.open}>
-                  <WordText style={styles.openText}>{READING_OPEN_LABEL}</WordText>
-                  <Icon name="chevron" size={14} color={COLOR.foreground} />
-                </View>
+          <CardFrame accessibilityRole="link" onPress={() => go(readingHref)} style={styles.reading}>
+            <WordText style={[styles.quote, { color: tone.ink }]}>“</WordText>
+            <WordText style={styles.metaphor}>{own.metaphor ?? READING_CONTINUE_NOTE}</WordText>
+            <View style={styles.readingFoot}>
+              <WordText style={shared.meta}>{readingReceivedLine(own.createdAt, side?.minutes ?? null)}</WordText>
+              <View style={styles.open}>
+                <WordText style={styles.openText}>{READING_OPEN_LABEL}</WordText>
+                <Icon name="chevron" size={14} color={COLOR.foreground} />
               </View>
-            </CardFrame>
-          </Pressable>
+            </View>
+          </CardFrame>
         ) : making ? (
-          <Pressable accessibilityRole="link" onPress={() => go(readingHref)}>
-            <CardFrame style={styles.making}>
-              <WordText style={styles.rowTitle}>{SELF_READING_MAKING}</WordText>
-              <Icon name="chevron" size={16} color={COLOR.muted} />
-            </CardFrame>
-          </Pressable>
+          <CardFrame accessibilityRole="link" onPress={() => go(readingHref)} style={styles.making}>
+            <WordText style={styles.rowTitle}>{SELF_READING_MAKING}</WordText>
+            <Icon name="chevron" size={16} color={COLOR.muted} />
+          </CardFrame>
         ) : (
           <Tile tone={COLOR.accent} style={styles.invite}>
             <WordText style={styles.inviteTitle}>{readingInviteTitle(person.name)}</WordText>
@@ -271,7 +272,7 @@ function PersonPage({
           <WordText style={shared.section}>{PERSON_COMPAT_SECTION}</WordText>
           <CardFrame>
             {pairs.map((pair) => (
-              <Pressable key={pair.key} accessibilityRole="link" onPress={() => go(pair.href)} style={styles.row}>
+              <Press key={pair.key} feel="row" accessibilityRole="link" onPress={() => go(pair.href)} style={styles.row}>
                 <View style={styles.faces}>
                   <Circle stem={person.stem} />
                   <Circle stem={pair.stem} shifted />
@@ -281,14 +282,14 @@ function PersonPage({
                   {pair.metaphor !== null && <WordText style={shared.meta} numberOfLines={1}>{pair.metaphor}</WordText>}
                 </View>
                 {pair.score !== null && <WordText style={styles.score}>{`${pair.score}점`}</WordText>}
-              </Pressable>
+              </Press>
             ))}
-            <Pressable accessibilityRole="button" onPress={add.open} style={styles.row}>
+            <Press feel="row" accessibilityRole="button" onPress={add.open} style={styles.row}>
               <View style={styles.plus}>
                 <Icon name="plus" size={16} color={COLOR.secondary} />
               </View>
               <WordText style={styles.addText}>{pairs.length > 0 ? COMPAT_OTHER_LABEL : compatWithLabel(person.name)}</WordText>
-            </Pressable>
+            </Press>
           </CardFrame>
         </View>
       )}

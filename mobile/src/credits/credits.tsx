@@ -202,7 +202,7 @@ function HistoryRow({ line, first }: { line: HistoryLine; first: boolean }) {
         <WordText style={[styles.rowValue, line.struck && styles.struck]}>{line.value}</WordText>
       </View>
       {line.notes.map((note) => (
-        <WordText key={note} selectable style={styles.caption}>
+        <WordText key={note} selectable sentence style={styles.caption}>
           {note}
         </WordText>
       ))}

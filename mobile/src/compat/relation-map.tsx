@@ -13,6 +13,7 @@ import { PrimaryButton } from '@/ui/parts';
 import { useReducedMotion } from '@/ui/motion';
 import { StemSymbol } from '@/ui/stem-symbol';
 import { Icon } from '@/ui/icons';
+import { Press } from '@/ui/press';
 import { alpha, COLOR, CONTROL, ELEMENT_TONE, FONT, RADIUS as CORNER, reach, TYPE } from '@/ui/tokens';
 import { CardFrame, Paper } from '@/ui/surfaces';
 import { Heading } from '@/ui/heading';
@@ -23,6 +24,10 @@ import { MAP_EMPTY_HINT, MAP_OTHERS_COMPAT, MAP_PAIR_UNSEEN, MAP_PEOPLE_COMPAT, 
 const BEAT = { depart: 900, travel: 900 } as const;
 const BEND = 3;
 const MAX_WIDTH = 384;
+/** 오행 번짐의 반지름 — 웹 `Zones` 의 `cqw(46)` 지름 */
+const ZONE = 23;
+/** 번짐이 지도 틀(0–100) 밖으로 나가는 폭 — 궤도 반지름 42 에 번짐 23 이면 50 - 42 - 23 = -15 까지 간다 */
+const BLEED = 16;
 
 const go = (href: string) => router.push(href as never);
 const toneOf = (element: Element | null | undefined) => (element ? ELEMENT_TONE[element] : { ink: COLOR.none, soft: COLOR.noneSoft, mid: COLOR.noneMid });
@@ -123,7 +128,17 @@ export function RelationMap({ model, canAdd }: { model: MapModel; canAdd: boolea
         <View onLayout={(event) => setWidth(event.nativeEvent.layout.width)} style={styles.map}>
           {width > 0 && (
             <>
-              <Svg pointerEvents="none" width={width} height={width} viewBox="0 0 100 100" style={styles.layer}>
+              {/*
+                오행의 번짐은 지도 틀 밖까지 번지고 판의 가장자리에서만 잘린다(웹 `Zones` 의 `radial-gradient` 는 판의 `overflow-hidden` 에서만 잘린다).
+                안드로이드는 `overflow: 'visible'` 이어도 Svg 가 제 틀 밖을 잘라 번짐이 네모로 섰다(ADR 0281) — 번짐만 사방 `BLEED` 넓은 Svg 에 그린다
+              */}
+              <Svg
+                pointerEvents="none"
+                width={px(100 + BLEED * 2)}
+                height={px(100 + BLEED * 2)}
+                viewBox={`${-BLEED} ${-BLEED} ${100 + BLEED * 2} ${100 + BLEED * 2}`}
+                style={[styles.bleed, { left: px(-BLEED), top: px(-BLEED) }]}
+              >
                 <Defs>
                   {ELEMENTS.map((element) => (
                     <RadialGradient key={element} id={`zone-${ELEMENT_ANGLE[element]}`}>
@@ -136,9 +151,10 @@ export function RelationMap({ model, canAdd }: { model: MapModel; canAdd: boolea
                   const at = pointAt(ELEMENT_ANGLE[element], RADIUS);
                   const seated = model.people.some((person) => person.day?.element === element);
                   const strength = chosen !== null ? (element === chosen.day?.element ? 1 : 0.25) : seated ? 1 : 0.45;
-                  return <Circle key={element} cx={at.x} cy={at.y} r={23} fill={`url(#zone-${ELEMENT_ANGLE[element]})`} opacity={strength} />;
+                  return <Circle key={element} cx={at.x} cy={at.y} r={ZONE} fill={`url(#zone-${ELEMENT_ANGLE[element]})`} opacity={strength} />;
                 })}
-
+              </Svg>
+              <Svg pointerEvents="none" width={width} height={width} viewBox="0 0 100 100" style={styles.layer}>
                 {/* 나와 본 궁합은 늘 이어져 있다 — 가만있을 때는 가늘고 옅게, 누르면 그 사람의 것만 진하게 */}
                 {chosen === null &&
                   model.people.map((person) =>
@@ -289,12 +305,12 @@ function AddSeat({ width }: { width: number }) {
   const cx = (at.x / 100) * width;
   const cy = (at.y / 100) * width;
   return (
-    <Pressable accessibilityRole="link" onPress={() => go('/me/people')} style={[styles.add, { left: cx - CONTROL / 2, top: cy - CONTROL / 2 }]}>
+    <Press feel="icon" accessibilityRole="link" onPress={() => go('/me/people')} style={[styles.add, { left: cx - CONTROL / 2, top: cy - CONTROL / 2 }]}>
       <WordText style={styles.addLabel}>사람 추가</WordText>
       <View style={styles.addFace}>
         <Icon name="plus" size={20} />
       </View>
-    </Pressable>
+    </Press>
   );
 }
 
@@ -344,9 +360,9 @@ function PersonCard({ person, links, onClose }: { person: MapPerson; links: Retu
             </WordText>
           </View>
         )}
-        <Pressable accessibilityRole="button" accessibilityLabel="닫기" onPress={onClose} style={styles.cardClose}>
+        <Press feel="icon" accessibilityRole="button" accessibilityLabel="닫기" onPress={onClose} style={styles.cardClose}>
           <Icon name="close" color={COLOR.secondary} size={20} />
-        </Pressable>
+        </Press>
       </View>
 
       {person.unreadable !== null ? (
@@ -358,17 +374,18 @@ function PersonCard({ person, links, onClose }: { person: MapPerson; links: Retu
             {compat.seen ? compat.metaphor : <WordText style={{ color: tone.ink }}>{MAP_PAIR_UNSEEN}</WordText>}
           </WordText>
           <PrimaryButton label={compat.seen ? '궁합풀이 보기' : '궁합 보러 가기'} onPress={() => go(compat.href)} />
-          <Pressable accessibilityRole="link" onPress={() => go(person.detailHref)} style={styles.tertiary}>
+          <Press feel="fade" accessibilityRole="link" onPress={() => go(person.detailHref)} style={styles.tertiary}>
             <WordText style={styles.tertiaryText}>{person.label} 사주 보기</WordText>
             <Icon name="chevron" size={16} color={COLOR.secondary} />
-          </Pressable>
+          </Press>
 
           {links.length > 0 && (
             <View style={styles.links}>
               <WordText style={styles.note}>{MAP_OTHERS_COMPAT}</WordText>
               {links.map((link) => (
-                <Pressable
+                <Press
                   key={link.href}
+                  feel="shrink"
                   accessibilityRole="link"
                   accessibilityLabel={`${person.label} · ${link.otherLabel} 궁합${link.score === null ? '' : ` ${link.score}점`}`}
                   onPress={() => go(link.href)}
@@ -376,7 +393,7 @@ function PersonCard({ person, links, onClose }: { person: MapPerson; links: Retu
                 >
                   <WordText numberOfLines={1} style={styles.chipText}>{link.otherLabel}</WordText>
                   {link.score !== null && <WordText style={styles.chipScore}>{link.score}점</WordText>}
-                </Pressable>
+                </Press>
               ))}
             </View>
           )}
@@ -389,12 +406,14 @@ function PersonCard({ person, links, onClose }: { person: MapPerson; links: Retu
 const styles = StyleSheet.create({
   panel: { padding: 0, overflow: 'hidden' },
   head: { flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between', gap: 12, paddingHorizontal: 20, paddingTop: 20 },
-  title: { fontFamily: FONT.bold, fontSize: TYPE.heading, color: COLOR.foreground },
-  count: { fontFamily: FONT.medium, fontSize: TYPE.small, color: COLOR.secondary },
+  /* 제목과 수가 줄을 반씩 나눠 쓴다 — 글자에 꼭 맞는 폭을 받으면 안드로이드가 끝 어절을 다음 줄로 밀어 자른다(홈 묶음 머리와 같은 까닭, `home/lists.tsx`) */
+  title: { flex: 1, fontFamily: FONT.bold, fontSize: TYPE.heading, color: COLOR.foreground },
+  count: { flex: 1, textAlign: 'right', fontFamily: FONT.medium, fontSize: TYPE.small, color: COLOR.secondary },
   countStrong: { fontFamily: FONT.bold, color: COLOR.foreground },
   mapRoom: { alignItems: 'center', paddingHorizontal: '8%', paddingVertical: 28 },
   map: { width: '100%', maxWidth: MAX_WIDTH, aspectRatio: 1 },
   layer: { position: 'absolute', left: 0, top: 0, right: 0, bottom: 0, overflow: 'visible' },
+  bleed: { position: 'absolute' },
   me: { position: 'absolute', zIndex: 5, alignItems: 'center', justifyContent: 'center', borderWidth: 3, borderColor: COLOR.surface },
   meTag: { position: 'absolute', bottom: -6, paddingHorizontal: 6, borderRadius: CORNER.pill },
   meTagText: { fontFamily: FONT.bold, fontSize: TYPE.tag, lineHeight: 16 },

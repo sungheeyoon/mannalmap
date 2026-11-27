@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 import { UNREADABLE_INPUT_NOTE } from '@input/stored';
 import { HOUR_UNKNOWN_LABEL } from '@input/query';
@@ -8,6 +8,7 @@ import { READING_CONTINUE_NOTE, SELF_READING_MAKING } from '@web-home/making';
 import { CALENDAR_KO, GENDER_KO, STEM_INFO } from '@saju';
 
 import { ElementSymbol } from '@/ui/element-symbol';
+import { Press } from '@/ui/press';
 import { alpha, COLOR, CONTROL, ELEMENT_TONE, FONT, RADIUS, TYPE, TYPE_META } from '@/ui/tokens';
 
 import type { MyReading, PersonRow } from './data';
@@ -106,20 +107,22 @@ export function PersonCard({
               </WordText>
             )}
             <View style={styles.buttons}>
-              <Pressable
+              <Press
+                feel="shrink"
                 accessibilityRole="link"
                 onPress={() => go(`/me/readings/${person.personId}`)}
-                style={[styles.button, styles.grow, reading === null ? styles.buttonPrimary : [styles.buttonPlain, { borderColor: `${tone?.ink ?? COLOR.none}2e` }]]}
+                style={[styles.button, styles.grow, reading === null ? styles.buttonPrimary : [styles.buttonPlain, { borderColor: alpha(tone?.ink ?? COLOR.none, 0.18) }]]}
               >
                 <WordText style={[styles.buttonText, { color: tone?.ink ?? COLOR.none }, reading === null && styles.buttonPrimaryText]} numberOfLines={1}>
                   {reading !== null ? '사주풀이 보기' : making ? SELF_READING_MAKING : '사주풀이 받기'}
                 </WordText>
-              </Pressable>
-              <Pressable
+              </Press>
+              <Press
+                feel="shrink"
                 accessibilityRole="link"
                 accessibilityLabel={pair?.score != null ? `나와 궁합 ${pair.score}점` : '나와 궁합'}
                 onPress={() => go(pair !== null ? `/me/compat?a=${pair.personA}&b=${pair.personB}` : compatPickHref(selfPersonId, person.personId))}
-                style={[styles.button, styles.buttonPlain, { borderColor: `${tone?.ink ?? COLOR.none}2e` }]}
+                style={[styles.button, styles.buttonPlain, { borderColor: alpha(tone?.ink ?? COLOR.none, 0.18) }]}
               >
                 {/* 점수가 있으면 「궁합 82점」 — 무슨 점수인지 말하는 「궁합」은 작고 옅게 선다(운영자 확정 2026-11-08, 대장 all-11) */}
                 <WordText style={[styles.buttonText, { color: tone?.ink ?? COLOR.none }]} numberOfLines={1}>
@@ -132,7 +135,7 @@ export function PersonCard({
                     '궁합'
                   )}
                 </WordText>
-              </Pressable>
+              </Press>
             </View>
           </>
         ) : (
