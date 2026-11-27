@@ -4,17 +4,18 @@ import { GROUNDING_HEADING, SEAT_NAMES, hasSeatName, sitsFirst, type SeatNicknam
 /**
  * **사용 설명서** — 궁합풀이(비공개 궁합)가 본문과 함께 내는 「그 사람을 대하는 법」(ADR 0283).
  *
- * 모델이 두 사람의 사주를 보고 직접 쓴다 — 상황 넷(부탁할 때 · 사과할 때 · 서운할 때 · 기쁘게 하려면)마다 사람마다 한 줄,
- * 「우리 둘은」 한 줄, 「자꾸 부딪히는 자리」 한 줄. 구조화 출력의 `manual` 칸으로 받고, 회수가 본문 끝(근거 절 앞)의 절 하나로
+ * 모델이 두 사람의 사주를 보고 직접 쓴다 — 사람마다 「한 줄 사용법」과 상황 넷(부탁할 때 · 사과할 때 · 서운할 때 · 기쁘게 하려면)의 한 줄,
+ * 그리고 「우리 둘은」 · 「자꾸 부딪히는 자리」 한 줄. 구조화 출력의 `manual` 칸으로 받고, 회수가 본문 끝(근거 절 앞)의 절 하나로
  * 접는다(`withManual`) — 새 DB 칸 없이 본문이 받는 검사(경로 · 출생 원문 · 간지)를 같이 받는다. 화면은 그 절을 우리가 쓴 꼴
- * 그대로 되읽어(`manualOf`) 칩 카드로 세우고, 못 읽으면 글 그대로 둔다 — 이 절이 없는 옛 궁합풀이도 지금처럼 선다.
+ * 그대로 되읽어(`manualOf`) 표지 아래 결론 한 줄과 글 끝의 두 칸 카드로 세우고, 못 읽으면 글 그대로 둔다 — 이 절이 없는 옛 궁합풀이도
+ * 지금처럼 선다.
  *
  * **모델은 누가 「나」인지 모른다** — 얼린 작업에 그 칸이 없다(`FrozenJob`). 그래서 두 방향을 다 받는다: `first` 는 첫번째님을
- * 대하는 법(두번째님이 첫번째님에게), `second` 는 그 반대다. 내 사주가 낀 쌍이면 화면이 상대 쪽 한 벌만 「{상대} 사용 설명서」로,
- * 아니면(남 둘) 두 벌을 「서로의 사용 설명서」로 세운다(`manualCardOf`).
+ * 대하는 법(두번째님이 첫번째님에게), `second` 는 그 반대다. 화면은 두 칸으로 둘 다 세운다 — 내 사주가 낀 쌍이면 「{상대} 사용 설명서 |
+ * 내 사용 설명서」(내 것 = 그 사람이 나를 대하는 법), 남 둘이면 「{A} 사용 설명서 | {B} 사용 설명서」(`manualCardOf`).
  *
  * **이름은 문장 안에 없다** — 화면이 자리 호칭을 「닉네임님」으로 바꾸므로(`withNicknames`) 줄 안의 이름은 「엄마님」이 된다.
- * 이름은 화면이 칸 머리(제목 · 줄 이름)에만 세운다.
+ * 이름은 화면이 칸 머리(제목 · 칸 이름)에만 세운다.
  */
 
 /** 상황 넷 — 칩의 차례 */
@@ -29,17 +30,20 @@ export const MANUAL_SITUATION_LABEL: Readonly<Record<ManualSituation, string>> =
   delight: '기쁘게 하려면',
 };
 
-/** 한 사람을 대하는 법 — 상황마다 한 줄 */
-export type ManualLines = Readonly<Record<ManualSituation, string>>;
+/** 한 사람을 대하는 법 — 「한 줄 사용법」과 상황마다 한 줄 */
+export type ManualSide = Readonly<Record<ManualSituation, string>> & {
+  /** 그 사람을 대할 때 가장 쓸모 있는 한 줄 — 표지 아래 결론 한 줄이 이것이다 */
+  readonly core: string;
+};
 
 /** 자리 — `first` 가 `charts.a`(첫번째님), `second` 가 `charts.b`(두번째님)다 */
 export type ManualSeat = 'first' | 'second';
 
 export type PairManual = {
   /** 첫번째님을 대하는 법 — 두번째님이 첫번째님에게 */
-  readonly first: ManualLines;
+  readonly first: ManualSide;
   /** 두번째님을 대하는 법 — 첫번째님이 두번째님에게 */
-  readonly second: ManualLines;
+  readonly second: ManualSide;
   /** 「우리 둘은」 — 두 사람 모두에게 맞는 한 줄 */
   readonly us: string;
   /** 「자꾸 부딪히는 자리」 — 한 줄 */
@@ -70,17 +74,27 @@ export const MANUAL_POLICY = {
 // 화면의 글자 — 웹 · 앱이 함께 쓴다(대장 compat-03, 확인 전)
 // ---------------------------------------------------------------------------
 
-/** 내 사주가 낀 쌍의 제목 — 이름은 그 사람을 부르는 말 그대로다(「님」을 안 붙인다) */
-export const manualTitleOf = (name: string): string => `${name} 사용 설명서`;
-/** 남 둘의 제목 */
-export const MANUAL_BOTH_TITLE = '서로의 사용 설명서';
+/** 카드 · 접은 절의 이름 */
+export const MANUAL_TITLE = '사용 설명서';
+/** 칸 제목 — 그 사람을 대하는 법. 이름은 「님」 없이 그 사람을 부르는 말 그대로다 */
+export const manualTitleOf = (name: string): string => `${name} ${MANUAL_TITLE}`;
+/** 내 사주가 낀 쌍의 둘째 칸 — 그 사람이 나를 대하는 법 */
+export const MANUAL_MINE_TITLE = `내 ${MANUAL_TITLE}`;
+/** 「한 줄 사용법」 줄의 이름 */
+export const MANUAL_CORE_LABEL = '한 줄 사용법';
+/** 표지 아래 결론 한 줄의 이름 — 첫 칸의 사람 */
+export const manualLeadLabelOf = (name: string): string => `${name} ${MANUAL_CORE_LABEL}`;
+/** 표지 아래에서 글 끝의 카드로 내려가는 누름 */
+export const MANUAL_JUMP_LABEL = `${MANUAL_TITLE} ›`;
 /** 「우리 둘은」 칸의 이름 — 내가 끼면 「우리 둘은」, 남 둘이면 「두 사람은」 */
 export const MANUAL_US_LABEL: Readonly<Record<'own' | 'both', string>> = { own: '우리 둘은', both: '두 사람은' };
 export const MANUAL_CLASH_LABEL = '자꾸 부딪히는 자리';
-/** 남 둘에서 사람마다의 줄 이름 */
-export const manualRowLabelOf = (name: string): string => `${name}에게`;
-/** 칩 묶음의 이름 — 화면 낭독기에만 */
+/** 칩 묶음 · 두 칸 묶음의 이름 — 화면 낭독기에만 */
 export const MANUAL_CHIPS_LABEL = '상황 고르기';
+export const MANUAL_TABS_LABEL = '누구의 사용 설명서';
+
+/** 접은 절에서 사람마다의 소제목 — 그 사람에게 */
+const toWhom = (name: string): string => `${name}에게`;
 
 // ---------------------------------------------------------------------------
 // 구조화 출력의 칸
@@ -88,29 +102,30 @@ export const MANUAL_CHIPS_LABEL = '상황 고르기';
 
 const lineProperty = (description: string) => ({ type: 'string' as const, description });
 
-const linesProperty = (whom: string, from: string) => ({
+const sideProperty = (whom: string, from: string) => ({
   type: 'object' as const,
-  description: `${whom}을 대하는 법 — ${from}에게. 상황마다 한두 문장, 띄어쓰기 포함 ${MANUAL_POLICY.lineMax}자 이하`,
+  description: `${whom}을 대하는 법 — ${from}에게. 줄마다 한두 문장, 띄어쓰기 포함 ${MANUAL_POLICY.lineMax}자 이하`,
   properties: {
+    core: lineProperty(`${MANUAL_CORE_LABEL} — 그 사람을 대할 때 가장 쓸모 있는 한 줄`),
     ask: lineProperty(MANUAL_SITUATION_LABEL.ask),
     apologize: lineProperty(MANUAL_SITUATION_LABEL.apologize),
     upset: lineProperty(MANUAL_SITUATION_LABEL.upset),
     delight: lineProperty(MANUAL_SITUATION_LABEL.delight),
   },
-  required: [...MANUAL_SITUATIONS] as string[],
+  required: ['core', ...MANUAL_SITUATIONS] as string[],
   additionalProperties: false as const,
 });
 
 /**
- * 구조화 출력에 더하는 칸 — JSON Schema 의 날값. 모양을 입히는 것은 `app/me/reading/model.ts` 다. 차례는 `score` 뒤 · `metaphor` 앞이다
- * (본문에 기댄다 — 발견 한 줄 `DISCOVERY_PROPERTY` 와 같은 자리). strict 구조화 출력이라 칸마다 모든 키가 `required` 다.
+ * 구조화 출력에 더하는 칸 — JSON Schema 의 날값. 모양을 입히는 것은 `app/me/reading/model.ts` 다. 차례는 `score` 뒤다(본문에 기댄다 —
+ * 발견 한 줄 `DISCOVERY_PROPERTY` 와 같은 자리). strict 구조화 출력이라 칸마다 모든 키가 `required` 다.
  */
 export const MANUAL_PROPERTY = {
   type: 'object' as const,
   description: '사용 설명서 — 본문을 다 쓴 뒤에 쓴다. 이름 · 호칭 · 사주 용어 없이 해요체',
   properties: {
-    first: linesProperty(SEAT_NAMES.first, SEAT_NAMES.second),
-    second: linesProperty(SEAT_NAMES.second, SEAT_NAMES.first),
+    first: sideProperty(SEAT_NAMES.first, SEAT_NAMES.second),
+    second: sideProperty(SEAT_NAMES.second, SEAT_NAMES.first),
     us: lineProperty(`${MANUAL_US_LABEL.own} — 두 사람 모두에게 맞는 한 줄`),
     clash: lineProperty(`${MANUAL_CLASH_LABEL} — 한 줄`),
   },
@@ -125,12 +140,13 @@ const lineOf = (value: unknown): string | null => {
   return line === '' ? null : line;
 };
 
-const linesOf = (value: unknown): ManualLines | null => {
+const sideOf = (value: unknown): ManualSide | null => {
   if (value === null || typeof value !== 'object') return null;
   const record = value as Record<string, unknown>;
+  const core = lineOf(record.core);
   const [ask, apologize, upset, delight] = MANUAL_SITUATIONS.map((situation) => lineOf(record[situation]));
-  if (ask === null || apologize === null || upset === null || delight === null) return null;
-  return { ask, apologize, upset, delight };
+  if (core === null || ask === null || apologize === null || upset === null || delight === null) return null;
+  return { core, ask, apologize, upset, delight };
 };
 
 /**
@@ -140,8 +156,8 @@ const linesOf = (value: unknown): ManualLines | null => {
 export function manualOfOutput(value: unknown): PairManual | null {
   if (value === null || typeof value !== 'object') return null;
   const record = value as Record<string, unknown>;
-  const first = linesOf(record.first);
-  const second = linesOf(record.second);
+  const first = sideOf(record.first);
+  const second = sideOf(record.second);
   const us = lineOf(record.us);
   const clash = lineOf(record.clash);
   if (first === null || second === null || us === null || clash === null) return null;
@@ -153,44 +169,41 @@ export function manualOfOutput(value: unknown): PairManual | null {
 // ---------------------------------------------------------------------------
 
 /** 접은 절의 머리 — 화면이 이 줄로 절을 찾는다 */
-export const MANUAL_HEADING = '## 사용 설명서';
+export const MANUAL_HEADING = `## ${MANUAL_TITLE}`;
 const SEAT_HEADING: Readonly<Record<ManualSeat, string>> = {
-  first: `### ${manualRowLabelOf(SEAT_NAMES.first)}`,
-  second: `### ${manualRowLabelOf(SEAT_NAMES.second)}`,
+  first: `### ${toWhom(SEAT_NAMES.first)}`,
+  second: `### ${toWhom(SEAT_NAMES.second)}`,
 };
 /** 접은 글에서는 늘 「두 사람은」이다 — 누가 읽는지 글이 모른다. 화면은 내가 끼면 「우리 둘은」으로 부른다 */
 const US_HEADING = `### ${MANUAL_US_LABEL.both}`;
 const CLASH_HEADING = `### ${MANUAL_CLASH_LABEL}`;
 const SUB_HEADINGS = [SEAT_HEADING.first, SEAT_HEADING.second, US_HEADING, CLASH_HEADING] as const;
+/** 사람마다의 줄 차례 — 「한 줄 사용법」 다음에 상황 넷 */
+const SIDE_KEYS = ['core', ...MANUAL_SITUATIONS] as const;
+const SIDE_LABEL: Readonly<Record<(typeof SIDE_KEYS)[number], string>> = { core: MANUAL_CORE_LABEL, ...MANUAL_SITUATION_LABEL };
 
-const rowOf = (situation: ManualSituation, line: string): string => `- ${MANUAL_SITUATION_LABEL[situation]}: ${line}`;
+const rowsOf = (side: ManualSide): string => SIDE_KEYS.map((key) => `- ${SIDE_LABEL[key]}: ${side[key]}`).join('\n');
 
 const sectionOf = (manual: PairManual): string =>
-  [
-    MANUAL_HEADING,
-    SEAT_HEADING.first,
-    MANUAL_SITUATIONS.map((situation) => rowOf(situation, manual.first[situation])).join('\n'),
-    SEAT_HEADING.second,
-    MANUAL_SITUATIONS.map((situation) => rowOf(situation, manual.second[situation])).join('\n'),
-    US_HEADING,
-    manual.us,
-    CLASH_HEADING,
-    manual.clash,
-  ].join('\n\n');
+  [MANUAL_HEADING, SEAT_HEADING.first, rowsOf(manual.first), SEAT_HEADING.second, rowsOf(manual.second), US_HEADING, manual.us, CLASH_HEADING, manual.clash].join(
+    '\n\n',
+  );
 
-/**
- * 사용 설명서를 **본문 끝(근거 절 앞)의 절 하나로 접는다** — 근거 절이 없으면 글 끝이다. 접은 글은 Markdown 그대로도 읽힌다 — 이 절을
- * 되읽지 못하는 화면(옛 앱 · 공유본)은 소제목과 목록으로 세운다. 칸에서 글로 한 방향이고, 되읽는 것은 우리가 쓴 이 꼴뿐이다(`manualOf`).
- */
-export function withManual(markdown: string, manual: PairManual): string {
-  const section = sectionOf(manual);
+/** 근거 절 앞(없으면 글 끝)에 절 하나를 넣는다 — 사용 설명서 · 흐름이 같은 자리를 쓴다 */
+export function beforeGrounding(markdown: string, section: string): string {
   const grounding = GROUNDING_HEADING.exec(markdown);
   if (grounding === null) return `${markdown.trimEnd()}\n\n${section}\n`;
   return `${markdown.slice(0, grounding.index).trimEnd()}\n\n${section}\n\n${markdown.slice(grounding.index)}`;
 }
 
-/** 절 안의 줄을 칸으로 — 우리가 쓴 꼴이 아니면 `null` */
-function manualIn(lines: readonly string[]): PairManual | null {
+/**
+ * 사용 설명서를 **본문 끝(근거 절 앞)의 절 하나로 접는다** — 근거 절이 없으면 글 끝이다. 접은 글은 Markdown 그대로도 읽힌다 — 이 절을
+ * 되읽지 못하는 화면(옛 앱 · 공유본)은 소제목과 목록으로 세운다. 칸에서 글로 한 방향이고, 되읽는 것은 우리가 쓴 이 꼴뿐이다(`manualOf`).
+ */
+export const withManual = (markdown: string, manual: PairManual): string => beforeGrounding(markdown, sectionOf(manual));
+
+/** 절 안의 줄을 소제목마다 — 우리가 쓴 소제목 넷이 아니면 `null` */
+function blocksOf(lines: readonly string[], headings: readonly string[]): Map<string, string[]> | null {
   const blocks = new Map<string, string[]>();
   let current: string[] | null = null;
   for (const raw of lines) {
@@ -205,21 +218,29 @@ function manualIn(lines: readonly string[]): PairManual | null {
     if (current === null) return null;
     current.push(line);
   }
-  if ([...blocks.keys()].join('\n') !== SUB_HEADINGS.join('\n')) return null;
+  return [...blocks.keys()].join('\n') === headings.join('\n') ? blocks : null;
+}
 
-  const rowsOf = (seat: ManualSeat): ManualLines | null => {
+/** 절 안의 줄을 칸으로 — 우리가 쓴 꼴이 아니면 `null` */
+function manualIn(lines: readonly string[]): PairManual | null {
+  const blocks = blocksOf(lines, SUB_HEADINGS);
+  if (blocks === null) return null;
+
+  const sideAt = (seat: ManualSeat): ManualSide | null => {
     const rows = blocks.get(SEAT_HEADING[seat]) ?? [];
-    if (rows.length !== MANUAL_SITUATIONS.length) return null;
-    const said = MANUAL_SITUATIONS.map((situation, at) => {
-      const head = `- ${MANUAL_SITUATION_LABEL[situation]}: `;
-      return rows[at].startsWith(head) ? lineOf(rows[at].slice(head.length)) : null;
-    });
-    return linesOf(Object.fromEntries(MANUAL_SITUATIONS.map((situation, at) => [situation, said[at]])));
+    if (rows.length !== SIDE_KEYS.length) return null;
+    const said = Object.fromEntries(
+      SIDE_KEYS.map((key, at) => {
+        const head = `- ${SIDE_LABEL[key]}: `;
+        return [key, rows[at].startsWith(head) ? lineOf(rows[at].slice(head.length)) : null];
+      }),
+    );
+    return sideOf(said);
   };
   const textOf = (heading: string): string | null => lineOf((blocks.get(heading) ?? []).join(' '));
 
-  const first = rowsOf('first');
-  const second = rowsOf('second');
+  const first = sideAt('first');
+  const second = sideAt('second');
   const us = textOf(US_HEADING);
   const clash = textOf(CLASH_HEADING);
   if (first === null || second === null || us === null || clash === null) return null;
@@ -227,15 +248,17 @@ function manualIn(lines: readonly string[]): PairManual | null {
 }
 
 /**
- * 글에서 **사용 설명서 절을 떼어 낸다** — 화면이 카드로 세우고 남은 글(`rest`)을 본문으로 세운다.
- *
- * 맨 뒤의 머리 줄을 찾는다 — 모델이 본문에 같은 소제목을 지어 썼어도 우리가 접은 절은 본문 끝에 있다. 절은 다음 `##` 머리나
- * 근거 절 앞에서 끝난다. 우리가 쓴 꼴이 아니면 떼지 않고 글 그대로 돌려준다(`manual: null`) — 옛 궁합풀이도 그 갈래다.
+ * 글에서 **우리가 접은 절 하나를 떼어 낸다** — 맨 뒤의 그 머리 줄부터 다음 `##` 머리나 근거 절 앞까지. 모델이 본문에 같은 소제목을 지어
+ * 썼어도 우리가 접은 절은 본문 끝에 있다. `read` 가 `null` 을 내면(우리 꼴이 아니면) 떼지 않고 글 그대로다.
  */
-export function manualOf(source: string): { readonly manual: PairManual | null; readonly rest: string } {
+export function sectionOutOf<T>(
+  source: string,
+  heading: string,
+  read: (lines: readonly string[]) => T | null,
+): { readonly value: T | null; readonly rest: string } {
   const lines = source.split('\n');
-  const start = lines.map((line) => line.trim()).lastIndexOf(MANUAL_HEADING);
-  if (start < 0) return { manual: null, rest: source };
+  const start = lines.map((line) => line.trim()).lastIndexOf(heading);
+  if (start < 0) return { value: null, rest: source };
 
   let end = lines.length;
   for (let at = start + 1; at < lines.length; at += 1) {
@@ -245,10 +268,16 @@ export function manualOf(source: string): { readonly manual: PairManual | null; 
     }
   }
 
-  const manual = manualIn(lines.slice(start + 1, end));
-  if (manual === null) return { manual: null, rest: source };
+  const value = read(lines.slice(start + 1, end));
+  if (value === null) return { value: null, rest: source };
   const rest = [...lines.slice(0, start), ...lines.slice(end)].join('\n').replace(/\n{3,}/g, '\n\n').trim();
-  return { manual, rest };
+  return { value, rest };
+}
+
+/** 글에서 **사용 설명서 절을 떼어 낸다** — 화면이 카드로 세우고 남은 글(`rest`)을 본문으로 세운다. 옛 궁합풀이는 `manual: null` 이다 */
+export function manualOf(source: string): { readonly manual: PairManual | null; readonly rest: string } {
+  const { value, rest } = sectionOutOf(source, MANUAL_HEADING, manualIn);
+  return { manual: value, rest };
 }
 
 // ---------------------------------------------------------------------------
@@ -274,13 +303,19 @@ export function manualSeatsOf(
   return { shown, own };
 }
 
-/** 칸 하나에 서는 줄 — 남 둘이면 사람마다 이름이 붙는다 */
-export type ManualRow = { readonly label: string | null; readonly text: string };
+/** 두 칸의 한 칸 — 그 사람을 대하는 법 */
+export type ManualTab = {
+  readonly seat: ManualSeat;
+  readonly title: string;
+  readonly core: string;
+  readonly lines: Readonly<Record<ManualSituation, string>>;
+};
 
 export type ManualCard = {
-  readonly title: string;
-  /** 상황마다 선 줄 — 내가 끼면 하나(그 사람을 대하는 법), 아니면 고른 차례로 둘 */
-  readonly lines: Readonly<Record<ManualSituation, readonly ManualRow[]>>;
+  /** 두 칸 — 내가 끼면 [상대 · 나], 남 둘이면 고른 차례 */
+  readonly tabs: readonly [ManualTab, ManualTab];
+  /** 표지 아래 결론 한 줄 — 첫 칸의 「한 줄 사용법」 */
+  readonly lead: { readonly label: string; readonly text: string };
   readonly us: { readonly label: string; readonly text: string };
   readonly clash: { readonly label: string; readonly text: string };
 };
@@ -290,7 +325,7 @@ const other = (seat: ManualSeat): ManualSeat => (seat === 'first' ? 'second' : '
 /**
  * 사용 설명서를 화면이 세울 카드로 — 웹 · 앱이 같은 답을 그린다.
  *
- * @param names 두 자리의 지금 이름(`pairSeatsOf`) — 제목 · 줄 이름에만 선다
+ * @param names 두 자리의 지금 이름(`pairSeatsOf`) — 제목 · 칸 이름에만 선다
  * @param named 글의 자리 호칭을 지금 이름으로 바꾸는 일(`withNicknames`) — 줄에 호칭이 새어 들었을 때만 일한다
  */
 export function manualCardOf(
@@ -299,23 +334,24 @@ export function manualCardOf(
   seats: ManualSeats,
   named: (text: string) => string = (text) => text,
 ): ManualCard {
-  const lineFor = (seat: ManualSeat, situation: ManualSituation) => named(manual[seat][situation]);
-  const lines = (rows: (situation: ManualSituation) => readonly ManualRow[]) =>
-    Object.fromEntries(MANUAL_SITUATIONS.map((situation) => [situation, rows(situation)])) as Record<ManualSituation, readonly ManualRow[]>;
+  const tabOf = (seat: ManualSeat, title: string): ManualTab => ({
+    seat,
+    title,
+    core: named(manual[seat].core),
+    lines: Object.fromEntries(MANUAL_SITUATIONS.map((situation) => [situation, named(manual[seat][situation])])) as Record<
+      ManualSituation,
+      string
+    >,
+  });
+  const tabs: [ManualTab, ManualTab] =
+    seats.own !== null
+      ? [tabOf(other(seats.own), manualTitleOf(names[other(seats.own)])), tabOf(seats.own, MANUAL_MINE_TITLE)]
+      : [tabOf(seats.shown[0], manualTitleOf(names[seats.shown[0]])), tabOf(seats.shown[1], manualTitleOf(names[seats.shown[1]]))];
 
-  if (seats.own !== null) {
-    const them = other(seats.own);
-    return {
-      title: manualTitleOf(names[them]),
-      lines: lines((situation) => [{ label: null, text: lineFor(them, situation) }]),
-      us: { label: MANUAL_US_LABEL.own, text: named(manual.us) },
-      clash: { label: MANUAL_CLASH_LABEL, text: named(manual.clash) },
-    };
-  }
   return {
-    title: MANUAL_BOTH_TITLE,
-    lines: lines((situation) => seats.shown.map((seat) => ({ label: manualRowLabelOf(names[seat]), text: lineFor(seat, situation) }))),
-    us: { label: MANUAL_US_LABEL.both, text: named(manual.us) },
+    tabs,
+    lead: { label: manualLeadLabelOf(names[tabs[0].seat]), text: tabs[0].core },
+    us: { label: seats.own !== null ? MANUAL_US_LABEL.own : MANUAL_US_LABEL.both, text: named(manual.us) },
     clash: { label: MANUAL_CLASH_LABEL, text: named(manual.clash) },
   };
 }
@@ -325,8 +361,8 @@ export function manualCardOf(
 // ---------------------------------------------------------------------------
 
 const linesIn = (manual: PairManual): readonly string[] => [
-  ...MANUAL_SITUATIONS.map((situation) => manual.first[situation]),
-  ...MANUAL_SITUATIONS.map((situation) => manual.second[situation]),
+  ...SIDE_KEYS.map((key) => manual.first[key]),
+  ...SIDE_KEYS.map((key) => manual.second[key]),
   manual.us,
   manual.clash,
 ];

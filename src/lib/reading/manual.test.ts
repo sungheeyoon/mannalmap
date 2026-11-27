@@ -5,9 +5,9 @@ import { blockingFindingsOf, checkReading, plainTermsIn } from './check';
 import { SEAT_NAMES, readingBody, readingGrounding, withNicknames } from './display';
 import { readingEvidenceOf } from '.';
 import {
-  MANUAL_BOTH_TITLE,
   MANUAL_CLASH_LABEL,
   MANUAL_HEADING,
+  MANUAL_MINE_TITLE,
   MANUAL_POLICY,
   MANUAL_SITUATIONS,
   MANUAL_US_LABEL,
@@ -26,12 +26,14 @@ import {
  */
 const SAMPLE_MANUAL: PairManual = {
   first: {
+    core: '먼저 챙겨 주고, 고맙다는 말을 아끼지 마세요. 늘 주는 쪽이라 받을 때 마음이 풀리는 편이에요.',
     ask: '고마움부터 말해 주세요. 늘 챙기는 쪽이라 당연하게 여기면 속으로 서운해하기 쉬워요.',
     apologize: '걱정을 덜어 주는 말과 함께요. 「다음엔 이렇게 할게」가 마음을 놓게 하는 편이에요.',
     upset: '따지기보다 「나도 챙김받고 싶었어」로 꺼내 주세요. 그 마음을 잘 알아듣는 편이에요.',
     delight: '먼저 챙겨 주세요. 늘 주던 쪽이라 받을 때 크게 감동하는 편이에요.',
   },
   second: {
+    core: '결론부터 짧게, 고마움은 그 자리에서 말해 주세요. 돌려 말하면 미심쩍어하기 쉬워요.',
     ask: '하고 싶은 말부터 짧게 꺼내 주세요. 이유를 길게 늘이면 미심쩍어하기 쉬워요.',
     apologize: '「내가 잘못했어」를 먼저요. 변명이 앞서면 사과로 듣지 않기 쉬워요.',
     upset: '그날 안에 짧고 또렷하게요. 미루면 「다 지난 일」로 덮고 넘어가는 편이에요.',
@@ -64,7 +66,7 @@ const GROUNDING = `### 근거 (검사용)
 const FULL = `${BODY}\n\n${GROUNDING}`;
 
 describe('모델이 낸 칸을 사용 설명서로 고른다', () => {
-  it('열 줄이 다 차 있으면 그대로 — 공백은 한 칸, 머리의 Markdown 표식은 걷는다', () => {
+  it('열두 줄이 다 차 있으면 그대로 — 공백은 한 칸, 머리의 Markdown 표식은 걷는다', () => {
     const raw = {
       ...SAMPLE_MANUAL,
       first: { ...SAMPLE_MANUAL.first, ask: `  - ${SAMPLE_MANUAL.first.ask}\n` },
@@ -78,6 +80,7 @@ describe('모델이 낸 칸을 사용 설명서로 고른다', () => {
     ['문자열이다', '사용 설명서'],
     ['한 사람 몫이 없다', { ...SAMPLE_MANUAL, second: undefined }],
     ['한 줄이 비었다', { ...SAMPLE_MANUAL, first: { ...SAMPLE_MANUAL.first, upset: '   ' } }],
+    ['한 줄 사용법이 없다', { ...SAMPLE_MANUAL, second: { ...SAMPLE_MANUAL.second, core: undefined } }],
     ['표식만 있다', { ...SAMPLE_MANUAL, clash: '- ' }],
   ])('%s → 없다(`null`) — 반쪽만 세우지 않는다', (_why, raw) => {
     expect(manualOfOutput(raw)).toBeNull();
@@ -128,6 +131,7 @@ describe('본문 끝의 절 하나로 접고 우리가 쓴 꼴만 되읽는다',
     ['줄이 빠졌다', (section: string) => section.replace(/^- 사과할 때: .*\n/m, '')],
     ['소제목 차례가 다르다', (section: string) => section.replace('### 두 사람은', '### 자꾸 부딪히는 자리 ')],
     ['칸 이름이 다르다', (section: string) => section.replace('- 부탁할 때: ', '- 부탁할때: ')],
+    ['한 줄 사용법이 빠졌다', (section: string) => section.replace(/^- 한 줄 사용법: .*\n/m, '')],
   ])('우리 꼴이 아니면(%s) 떼지 않고 글 그대로 세운다', (_why, broke) => {
     const shown = broke(readingBody(withManual(BODY, SAMPLE_MANUAL)));
     expect(manualOf(shown)).toEqual({ manual: null, rest: shown });
@@ -147,41 +151,54 @@ describe('화면이 세우는 카드', () => {
     expect(manualSeatsOf({ personId: MOM }, { personId: SELF }, null)).toEqual({ shown: ['second', 'first'], own: null });
   });
 
-  it('내가 끼면 「{상대} 사용 설명서」 — 상대를 대하는 법 한 벌과 「우리 둘은」', () => {
+  it('내가 끼면 두 칸 — 「{상대} 사용 설명서 | 내 사용 설명서」, 내 것은 그 사람이 나를 대하는 법이다', () => {
     const card = manualCardOf(SAMPLE_MANUAL, NAMES, { shown: ['first', 'second'], own: 'first' });
 
-    expect(card.title).toBe('엄마 사용 설명서');
+    expect(card.tabs.map(({ seat, title }) => [seat, title])).toEqual([
+      ['second', '엄마 사용 설명서'],
+      ['first', MANUAL_MINE_TITLE],
+    ]);
     for (const situation of MANUAL_SITUATIONS) {
-      expect(card.lines[situation]).toEqual([{ label: null, text: SAMPLE_MANUAL.second[situation] }]);
+      expect(card.tabs[0].lines[situation]).toBe(SAMPLE_MANUAL.second[situation]);
+      expect(card.tabs[1].lines[situation]).toBe(SAMPLE_MANUAL.first[situation]);
     }
     expect(card.us).toEqual({ label: MANUAL_US_LABEL.own, text: SAMPLE_MANUAL.us });
     expect(card.clash).toEqual({ label: MANUAL_CLASH_LABEL, text: SAMPLE_MANUAL.clash });
   });
 
-  it('내가 둘째 자리면 첫째 자리를 대하는 법이다', () => {
-    const card = manualCardOf(SAMPLE_MANUAL, NAMES, { shown: ['second', 'first'], own: 'second' });
+  it('표지 아래 결론 한 줄은 첫 칸 사람의 「한 줄 사용법」이다', () => {
+    const card = manualCardOf(SAMPLE_MANUAL, NAMES, { shown: ['first', 'second'], own: 'first' });
 
-    expect(card.title).toBe('윤하늘 사용 설명서');
-    expect(card.lines.ask).toEqual([{ label: null, text: SAMPLE_MANUAL.first.ask }]);
+    expect(card.lead).toEqual({ label: '엄마 한 줄 사용법', text: SAMPLE_MANUAL.second.core });
+    expect(card.tabs[0].core).toBe(SAMPLE_MANUAL.second.core);
   });
 
-  it('남 둘이면 「서로의 사용 설명서」 — 상황마다 고른 차례로 두 줄과 「두 사람은」', () => {
+  it('내가 둘째 자리면 첫 칸이 첫째 자리를 대하는 법이다', () => {
+    const card = manualCardOf(SAMPLE_MANUAL, NAMES, { shown: ['second', 'first'], own: 'second' });
+
+    expect(card.tabs.map(({ title }) => title)).toEqual(['윤하늘 사용 설명서', MANUAL_MINE_TITLE]);
+    expect(card.tabs[0].lines.ask).toBe(SAMPLE_MANUAL.first.ask);
+    expect(card.lead.label).toBe('윤하늘 한 줄 사용법');
+  });
+
+  it('남 둘이면 고른 차례로 「{A} 사용 설명서 | {B} 사용 설명서」와 「두 사람은」', () => {
     const card = manualCardOf(SAMPLE_MANUAL, NAMES, { shown: ['second', 'first'], own: null });
 
-    expect(card.title).toBe(MANUAL_BOTH_TITLE);
-    expect(card.lines.upset).toEqual([
-      { label: '엄마에게', text: SAMPLE_MANUAL.second.upset },
-      { label: '윤하늘에게', text: SAMPLE_MANUAL.first.upset },
-    ]);
+    expect(card.tabs.map(({ title }) => title)).toEqual(['엄마 사용 설명서', '윤하늘 사용 설명서']);
+    expect(card.tabs[1].lines.upset).toBe(SAMPLE_MANUAL.first.upset);
     expect(card.us.label).toBe(MANUAL_US_LABEL.both);
   });
 
-  it('줄에 자리 호칭이 새어 들면 지금 이름으로 바꿔 세운다 — 제목 · 줄 이름은 「님」 없이 그 사람을 부르는 말 그대로다', () => {
-    const leaked = { ...SAMPLE_MANUAL, second: { ...SAMPLE_MANUAL.second, ask: `${SEAT_NAMES.second}은 결론을 먼저 들어요.` } };
+  it('줄에 자리 호칭이 새어 들면 지금 이름으로 바꿔 세운다 — 칸 이름은 「님」 없이 그 사람을 부르는 말 그대로다', () => {
+    const leaked = {
+      ...SAMPLE_MANUAL,
+      second: { ...SAMPLE_MANUAL.second, ask: `${SEAT_NAMES.second}은 결론을 먼저 들어요.`, core: `${SEAT_NAMES.second}에게는 짧게요.` },
+    };
     const card = manualCardOf(leaked, NAMES, { shown: ['first', 'second'], own: 'first' }, (text) => withNicknames(text, NAMES));
 
-    expect(card.lines.ask[0].text).toBe('엄마님은 결론을 먼저 들어요.');
-    expect(card.title).not.toContain('님');
+    expect(card.tabs[0].lines.ask).toBe('엄마님은 결론을 먼저 들어요.');
+    expect(card.lead.text).toBe('엄마님에게는 짧게요.');
+    expect(card.tabs.map(({ title }) => title).join(' ')).not.toContain('님');
   });
 });
 

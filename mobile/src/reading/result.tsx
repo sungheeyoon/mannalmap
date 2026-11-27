@@ -2,9 +2,10 @@ import type { CurrentReading } from '@reading/current-reading';
 import { seatNicknamesOf, withNicknames, type PairNicknames } from '@reading/display';
 import { READING_STALE_LABEL, READING_STALE_NOTE } from '@reading/notes';
 import { COMPAT_SCORE_LABEL } from '@reading/copy';
-import { manualCardOf, manualOf, type ManualSeats } from '@reading/manual';
+import { flowOf } from '@reading/flow';
+import { manualCardOf, manualOf, type ManualSeat, type ManualSeats } from '@reading/manual';
 import { ELEMENTS, STEM_INFO, type Element, type Stem } from '@saju';
-import { useMemo, useState, type ReactNode } from 'react';
+import { useRef, useState, type ComponentRef, type ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Svg, { Polygon } from 'react-native-svg';
 
@@ -15,7 +16,9 @@ import { StemSymbol } from '@/ui/stem-symbol';
 import { COLOR, CONTROL, ELEMENT_TONE, FONT, RADIUS, TYPE, TYPE_META, TYPE_NAME, TYPE_SECTION } from '@/ui/tokens';
 
 import { Markdown } from './markdown';
-import { PairManual } from './manual';
+import { PairFlow } from './flow';
+import { ManualLead, PairManual } from './manual';
+import { useScrollToView } from '@/ui/section-error';
 import { ReadingContents, headingsOf } from './contents';
 import type { ReadingTarget } from './api';
 import { Heading } from '@/ui/heading';
@@ -58,7 +61,7 @@ export function Result({
 }: {
   /** 궁합풀이 표지(시안 A, 운영자 승인 2026-11-13) — 두 사람 · 반원 게이지 · 비유 · 날짜를 가운데로. 비공개 궁합만 넘긴다 */
   pair?: readonly [CoverPerson, CoverPerson];
-  /** 궁합풀이의 두 자리 — 사용 설명서 카드가 「{상대} 사용 설명서」로 설지 정한다(웹 `reading-result.tsx` 와 같다, ADR 0283). 안 넘기면 둘을 다 세운다 */
+  /** 궁합풀이의 두 자리 — 사용 설명서의 두 칸과 흐름 곡선의 차례를 정한다(웹 `reading-result.tsx` 와 같다, ADR 0283 · 0284). 안 넘기면 남 둘처럼 세운다 */
   manualSeats?: ManualSeats;
   reading: CurrentReading;
   target: ReadingTarget;
@@ -74,17 +77,26 @@ export function Result({
   /** 표지 바로 아래에 세울 줄 — 표지 아이콘의 실패 줄. 표지 위에 띄우면 비유 글을 덮는다 */
   belowCover?: ReactNode;
 }) {
+  /* 표지 아래 「사용 설명서 ›」가 글 끝의 카드로 내린다 — 훅은 맨 앞에서 부른다 */
+  const cardAt = useRef<ComponentRef<typeof View>>(null);
+  const scrollTo = useScrollToView();
   const seats = nicknames === undefined ? null : seatNicknamesOf(nicknames, reading.viewerIsFirst);
   const named = (text: string) => (seats === null ? text : withNicknames(text, seats));
   const metaphor = reading.metaphor === null ? null : named(reading.metaphor);
-  /* 궁합풀이의 사용 설명서는 글에서 떼어 카드로 세운다 — 호칭을 바꾸기 전의 글에서 뗀다(웹과 같다, ADR 0283). 옛 글은 그대로다 */
+  /* 궁합풀이의 사용 설명서 · 흐름은 글에서 떼어 따로 세운다 — 호칭을 바꾸기 전의 글에서 뗀다(웹과 같다, ADR 0283 · 0284). 옛 글은 그대로다 */
   const manual = target.kind === 'private' ? manualOf(reading.output) : { manual: null, rest: reading.output };
-  const card =
-    manual.manual === null || seats === null
-      ? null
-      : manualCardOf(manual.manual, seats, manualSeats ?? { shown: ['first', 'second'], own: null }, named);
-  const body = named(manual.rest);
-  const titles = useMemo(() => headingsOf(body), [body]);
+  const flow = target.kind === 'private' ? flowOf(manual.rest) : { flow: null, rest: manual.rest };
+  const places: ManualSeats = manualSeats ?? { shown: ['first', 'second'], own: null };
+  const card = manual.manual === null || seats === null ? null : manualCardOf(manual.manual, seats, places, named);
+  /* 곡선의 색은 표지의 동그라미와 같은 일간 색 — `pair` 는 고른 차례다 */
+  const toneAt = (at: 0 | 1): Element | null => {
+    const stem = pair?.[at].stem ?? null;
+    return stem === null ? null : STEM_INFO[stem].element;
+  };
+  const flowTones = { [places.shown[0]]: toneAt(0), [places.shown[1]]: toneAt(1) } as Record<ManualSeat, Element | null>;
+  const body = named(flow.rest);
+  /* 손으로 묶지 않는다 — 컴파일러가 본문이 같으면 같은 목록을 돌려준다 */
+  const titles = headingsOf(body);
 
   const meta = (
     <WordText style={styles.meta}>
@@ -128,6 +140,9 @@ export function Result({
 
       {belowCover}
 
+      {/* 표지 바로 아래 — 결론 한 줄과 글 끝 카드로 내리는 누름뿐이다(웹과 같은 자리, ADR 0283) */}
+      {card !== null && <ManualLead card={card} onJump={() => scrollTo(cardAt.current)} />}
+
       {target.kind !== 'match' && !reading.fromCurrentChart && (
         <Tile tone={COLOR.warningWash} style={styles.stale}>
           <WordText style={styles.staleText}>
@@ -138,9 +153,6 @@ export function Result({
       )}
 
       {betweenSummaryAndBody}
-
-      {/* 표지 다음 · 본문 앞 — 그 사람을 대하는 법을 먼저 꺼내 쓴다(웹과 같은 자리) */}
-      {card !== null && <PairManual card={card} />}
 
       {target.kind === 'match' && (
         <View>
@@ -153,11 +165,19 @@ export function Result({
 
       <Markdown source={body} />
 
+      {/* 글의 마지막 덩어리 — 두 사람의 열 해(ADR 0284) */}
+      {flow.flow !== null && seats !== null && (
+        <PairFlow flow={flow.flow} shown={places.shown} names={seats} tones={flowTones} line={named(flow.flow.line)} />
+      )}
+
       <View aria-hidden style={styles.end}>
         {ELEMENTS.map((element) => (
           <ElementSymbol key={element} element={element} size={20} />
         ))}
       </View>
+
+      {/* 글 끝 · 공유와 다시 받기 바로 위 — 표지 아래 「사용 설명서 ›」가 이리로 내린다(웹과 같은 자리, ADR 0283) */}
+      {card !== null && <PairManual card={card} anchor={cardAt} />}
     </View>
   );
 }

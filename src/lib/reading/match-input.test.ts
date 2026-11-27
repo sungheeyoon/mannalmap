@@ -307,6 +307,8 @@ describe('비공개 궁합 4판의 읽는 법', () => {
 
   it('제한형 A 로 줄이지 않는다 — 각자의 판정과 지금의 운이 실린다', () => {
     for (const path of ['charts.*.relations', 'charts.*.now']) expect(paths.has(path), path).toBe(true);
-    expect(head).toContain('## 글을 나누는 법');
+    /* 정한 차례로 쓴다(ADR 0283) — 나누는 법 대신 차례와 문단의 규칙이 선다 */
+    expect(head).toContain('## 글의 차례');
+    expect(head).toContain('## 글을 쓰는 법');
   });
 });

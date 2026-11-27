@@ -86,7 +86,7 @@ const CASES: readonly Case[] = [
     id: 'private/control',
     kind: 'private',
     assembly: CONTROL,
-    slots: ['role', 'rules', 'guide', 'voice', 'body', 'manual', 'summary', 'output'],
+    slots: ['role', 'rules', 'guide', 'voice', 'body', 'manual', 'flow', 'summary', 'output'],
   },
   {
     id: 'match/control',
@@ -122,7 +122,7 @@ const CASES: readonly Case[] = [
     id: 'private/guided+sections',
     kind: 'private',
     assembly: { ...CONTROL, pairShape: 'sections-v1' },
-    slots: ['role', 'rules', 'guide', 'voice', 'personality', 'body', 'manual', 'summary', 'output'],
+    slots: ['role', 'rules', 'guide', 'voice', 'personality', 'body', 'manual', 'flow', 'summary', 'output'],
   },
 ];
 
@@ -143,6 +143,8 @@ const OPTIONAL_MARKERS = {
   precedence: '## 무엇을 쓰면 좋은지가 갈릴 때',
   /** 궁합풀이의 사용 설명서(ADR 0283) — 머리 뒤 첫 줄까지 잰다. 짝마다의 재료(`## 사용 설명서의 재료`)도 같은 머리로 시작한다 */
   manual: '## 사용 설명서\n\n**본문을 다 쓴 뒤에**',
+  /** 우리 둘의 흐름(ADR 0284) — 같은 까닭으로 첫 줄까지. 짝마다의 재료는 `## 흐름의 재료` 다 */
+  flow: '## 우리 둘의 흐름\n\n**본문을 다 쓴 뒤에**',
 } as const satisfies Partial<Record<PromptSlot, string>>;
 
 /**
@@ -262,7 +264,10 @@ describe('운영 네 판의 소제목 차례', () => {
     '구조화 출력의 뜻',
   ];
 
-  /** 두 궁합은 「이 자료의 범위」 · 상세 궁합의 두 절(인연 궁합에만)과 사용 설명서의 두 절(궁합풀이에만)이 다르다 */
+  /**
+   * 두 궁합은 「이 자료의 범위」 · 상세 궁합의 두 절(인연 궁합에만)과, 궁합풀이의 정한 차례(「이야기가 나오는 자리」 · 「글을 쓰는 법」 ·
+   * 「글의 차례」, ADR 0283) · 사용 설명서와 흐름의 네 절(ADR 0283 · 0284)이 다르다
+   */
   const pairHeadings = (match: boolean) => [
     '한눈에',
     '자리가 붙은 사실',
@@ -272,8 +277,7 @@ describe('운영 네 판의 소제목 차례', () => {
     ...(match ? ['이 자료의 범위'] : []),
     '이 자료를 읽는 법',
     '틀리면 안 되는 것',
-    '이 두 사람에게서 두드러지는 이야기를 고른다',
-    '글을 나누는 법',
+    ...(match ? ['이 두 사람에게서 두드러지는 이야기를 고른다', '글을 나누는 법'] : ['이야기가 나오는 자리', '글을 쓰는 법']),
     '본문에 옮기지 않는 것',
     '문장을 어떻게 닫을 것인가',
     '고객에게 말하는 말투',
@@ -281,15 +285,15 @@ describe('운영 네 판의 소제목 차례', () => {
     '이름 대신 그 이름이 가리키는 것을 쓴다',
     '두 사람을 부르는 말',
     '두 사람은 무슨 사이인가',
-    '무엇을 쓸까',
+    match ? '무엇을 쓸까' : '글의 차례',
     '낼 것',
     '점수',
-    ...(match ? ['발견 한 줄', '천간·지지 글자를 쓰지 않는다'] : ['사용 설명서']),
+    ...(match ? ['발견 한 줄', '천간·지지 글자를 쓰지 않는다'] : ['사용 설명서', '우리 둘의 흐름']),
     '한 줄 요약',
     '구조화 출력의 뜻',
     '기준점',
-    /* 짝마다의 재료는 기준점 뒤에 붙는다 — 궁합풀이에만(ADR 0283) */
-    ...(match ? [] : ['사용 설명서의 재료']),
+    /* 짝마다의 재료는 기준점 뒤에 붙는다 — 궁합풀이에만(ADR 0283 · 0284) */
+    ...(match ? [] : ['사용 설명서의 재료', '흐름의 재료']),
   ];
 
   it('자기 풀이와 저장된 사람 풀이는 같은 차례다', () => {

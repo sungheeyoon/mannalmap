@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import { BRANCHES, SEXAGENARY, computeSaju, findCompatRelations, type Branch, type Pillar } from '../saju';
 import type { RedactedEvidence } from '../saju/evidence/redacted';
-import { CONTROL, READING_PROMPTS, asksManual, isSolo, manualAskedIn, readingEvidenceOf, readingPromptOf, type ReadingKind } from '.';
+import { CONTROL, READING_PROMPTS, asksPairExtras, isSolo, manualAskedIn, readingEvidenceOf, readingPromptOf, type ReadingKind } from '.';
 import { MANUAL_POLICY, MANUAL_SITUATION_LABEL } from './manual';
 import { MANUAL_BLOCK, manualFactsBlock, manualFactsOf } from './prompt-manual';
 
@@ -110,14 +110,14 @@ describe('사용 설명서는 운영 궁합풀이에만 선다', () => {
   ])('%s → %s — 지시 · 재료 · 얼린 프롬프트의 표식이 한 답이다', (kind, asked) => {
     const prompt = promptFor(kind);
 
-    expect(asksManual(kind)).toBe(asked);
+    expect(asksPairExtras(kind)).toBe(asked);
     expect(READING_PROMPTS[kind].includes(MANUAL_BLOCK)).toBe(asked);
     expect(prompt.includes('## 사용 설명서의 재료')).toBe(asked);
     expect(manualAskedIn(prompt)).toBe(asked);
   });
 
   it('옛 궁합 세대(실험의 견줄 짝)는 안 받는다', () => {
-    expect(asksManual('private', { ...CONTROL, pairReading: 'plain-v1' })).toBe(false);
+    expect(asksPairExtras('private', { ...CONTROL, pairReading: 'plain-v1' })).toBe(false);
   });
 
   it('재료는 기준점 뒤 · 자료 앞에 선다', () => {
@@ -135,9 +135,10 @@ describe('사용 설명서는 운영 궁합풀이에만 선다', () => {
     for (const { line } of MANUAL_POLICY.examples) expect(MANUAL_BLOCK).toContain(line);
   });
 
-  it('출력 계약이 사용 설명서 칸을 점수 뒤 · 한 줄 요약 앞으로 말한다', () => {
+  it('출력 계약이 사용 설명서 · 흐름 칸을 점수 뒤 · 한 줄 요약 앞으로 말한다', () => {
     expect(READING_PROMPTS.private).toContain('그다음 `score` 에');
-    expect(READING_PROMPTS.private).toContain('그다음 `manual` 에 사용 설명서를, 마지막으로 `metaphor` 에');
+    expect(READING_PROMPTS.private).toContain('그다음 `manual` 에 사용 설명서를, 그다음 `flow` 에 우리 둘의 흐름을, 마지막으로 `metaphor` 에');
     expect(READING_PROMPTS.match).not.toContain('`manual`');
+    expect(READING_PROMPTS.match).not.toContain('`flow`');
   });
 });

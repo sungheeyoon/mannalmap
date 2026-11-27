@@ -11,10 +11,13 @@ import { join } from 'node:path';
  *
  * `call.live.test.ts` 와 `backfill-chart.live.test.ts` 가 같은 파일을 같은 규칙으로 읽는다.
  * 두 벌로 두면 아래 따옴표 교훈을 한쪽만 배운 채로 남는다.
+ *
+ * **워크트리에서는 파일을 옮기지 않고 가리킨다** — `LOCAL_ENV_FILE` 이 있으면 그 경로를 읽는다(메인 체크아웃의 파일). 비밀 파일을 워크트리마다
+ * 베끼면 지울 때를 놓친 사본이 남는다.
  */
 export function loadLocalEnv(): void {
   try {
-    for (const line of readFileSync('.env.development.local', 'utf8').split('\n')) {
+    for (const line of readFileSync(process.env.LOCAL_ENV_FILE ?? '.env.development.local', 'utf8').split('\n')) {
       const [key, ...rest] = line.split('=');
       if (key && !key.startsWith('#') && rest.length > 0 && !process.env[key.trim()]) {
         /**

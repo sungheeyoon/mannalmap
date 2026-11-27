@@ -135,7 +135,7 @@ describe('상세 궁합의 모양', () => {
   });
 });
 
-describe('궁합풀이의 사용 설명서 칸(ADR 0283)', () => {
+describe('궁합풀이의 사용 설명서 · 흐름 칸(ADR 0283 · 0284)', () => {
   type Schema = { properties: Record<string, Schema>; required: string[]; additionalProperties?: boolean; type?: string };
   const schemaOf = async (options: Parameters<typeof callModel>[1]): Promise<Schema> => {
     await callModel('프롬프트', options);
@@ -143,26 +143,37 @@ describe('궁합풀이의 사용 설명서 칸(ADR 0283)', () => {
     return (await output.responseFormat).schema;
   };
 
-  it('본문 → 점수 → 사용 설명서 → 한 줄 요약 차례다', async () => {
-    const schema = await schemaOf({ summaryLast: true, manual: true });
-    expect(Object.keys(schema.properties)).toEqual(['markdown', 'score', 'manual', 'metaphor']);
+  it('본문 → 점수 → 사용 설명서 → 흐름 → 한 줄 요약 차례다', async () => {
+    const schema = await schemaOf({ summaryLast: true, extras: true });
+    expect(Object.keys(schema.properties)).toEqual(['markdown', 'score', 'manual', 'flow', 'metaphor']);
     expect(schema.required).toEqual(Object.keys(schema.properties));
   });
 
   /** strict 구조화 출력은 칸마다 모든 키를 `required` 에 두고 `additionalProperties: false` 여야 받는다 — 안쪽 칸까지 잰다 */
-  it('사용 설명서 칸은 안쪽까지 strict 모양이다 — 두 사람마다 상황 넷 · 우리 둘은 · 자꾸 부딪히는 자리', async () => {
-    const { manual } = (await schemaOf({ summaryLast: true, manual: true })).properties;
+  it('사용 설명서 칸은 안쪽까지 strict 모양이다 — 두 사람마다 한 줄 사용법과 상황 넷 · 우리 둘은 · 자꾸 부딪히는 자리', async () => {
+    const { manual } = (await schemaOf({ summaryLast: true, extras: true })).properties;
     expect(Object.keys(manual.properties)).toEqual(['first', 'second', 'us', 'clash']);
     expect(manual.required).toEqual(Object.keys(manual.properties));
     expect(manual.additionalProperties).toBe(false);
     for (const seat of ['first', 'second']) {
-      expect(Object.keys(manual.properties[seat].properties)).toEqual(['ask', 'apologize', 'upset', 'delight']);
-      expect(manual.properties[seat].required).toEqual(['ask', 'apologize', 'upset', 'delight']);
+      expect(Object.keys(manual.properties[seat].properties)).toEqual(['core', 'ask', 'apologize', 'upset', 'delight']);
+      expect(manual.properties[seat].required).toEqual(['core', 'ask', 'apologize', 'upset', 'delight']);
       expect(manual.properties[seat].additionalProperties).toBe(false);
     }
   });
 
+  it('흐름 칸도 안쪽까지 strict 모양이다 — 해마다 두 사람의 단계 셋 가운데 하나와 한 문장', async () => {
+    const { flow } = (await schemaOf({ summaryLast: true, extras: true })).properties;
+    expect(Object.keys(flow.properties)).toEqual(['years', 'line']);
+    expect(flow.required).toEqual(['years', 'line']);
+    expect(flow.additionalProperties).toBe(false);
+    const year = (flow.properties.years as unknown as { items: Schema & { properties: Record<string, { enum?: string[] }> } }).items;
+    expect(year.required).toEqual(['year', 'first', 'second']);
+    expect(year.additionalProperties).toBe(false);
+    expect(year.properties.first.enum).toEqual(['lift', 'even', 'rest']);
+  });
+
   it('상세 궁합의 모양이 이긴다 — 둘이 한 시도에 함께 오지 않는다', async () => {
-    expect(Object.keys((await schemaOf({ summaryLast: true, discovery: true, manual: true })).properties)).toEqual(['markdown', 'score', 'discovery', 'metaphor']);
+    expect(Object.keys((await schemaOf({ summaryLast: true, discovery: true, extras: true })).properties)).toEqual(['markdown', 'score', 'discovery', 'metaphor']);
   });
 });

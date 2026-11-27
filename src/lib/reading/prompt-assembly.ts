@@ -170,7 +170,8 @@ export type PromptAssembly = {
 export const CONTROL: PromptAssembly = {
   selfLength: { min: 3500, max: 6000 },
   compatLength: {
-    private: { min: 3500, max: 5500 },
+    /* 정한 차례(ADR 0283)가 열한 절을 여섯으로 줄였다 — 생활 장면 · 오래 가려면 · 각자 · 지금의 때가 본문에서 빠진다 */
+    private: { min: 2200, max: 3600 },
     match: { min: 3000, max: 4800 },
   },
   selfPresentation: 'expert-v4',
@@ -233,11 +234,11 @@ export const isDetailFlow = (kind: ReadingKind, assembly: PromptAssembly): boole
   kind === 'match' && voiceOf(kind, assembly) === 'pair-guided';
 
 /**
- * 궁합풀이의 **사용 설명서**를 시키는가 — 운영 비공개 궁합(읽는 법 4판)이면 늘 시킨다(ADR 0283). 지시 절(`MANUAL_BLOCK`) · 짝마다의 재료 ·
- * 출력 스키마의 `manual` 칸이 이 한 답을 읽는다 — 지시와 칸이 갈리면 모델은 받을 칸이 없는 것을 쓰라는 말을 듣는다.
- * 인연 궁합(상세 궁합)과 옛 궁합 세대는 안 받는다 — 인연 궁합은 닫혀 있고(G-135) 글자가 한 바이트도 안 바뀐다.
+ * 궁합풀이의 **사용 설명서와 우리 둘의 흐름**을 시키는가 — 운영 비공개 궁합(읽는 법 4판)이면 늘 시킨다(ADR 0283 · 0284). 정한 차례(「글의 차례」) ·
+ * 두 지시 절 · 짝마다의 재료 둘 · 출력 스키마의 `manual` · `flow` 칸이 이 한 답을 읽는다 — 지시와 칸이 갈리면 모델은 받을 칸이 없는 것을 쓰라는
+ * 말을 듣는다. 인연 궁합(상세 궁합)과 옛 궁합 세대는 안 받는다 — 인연 궁합은 닫혀 있고(G-135) 글자가 한 바이트도 안 바뀐다.
  */
-export const asksManual = (kind: ReadingKind, assembly: PromptAssembly = CONTROL): boolean =>
+export const asksPairExtras = (kind: ReadingKind, assembly: PromptAssembly = CONTROL): boolean =>
   kind === 'private' && voiceOf(kind, assembly) === 'pair-guided';
 
 /**

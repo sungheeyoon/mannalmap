@@ -16,6 +16,7 @@ import { RELATION_KIND_KO, type Relation, type RelationInput } from '../saju/rel
 import { SEAT_NAMES } from './display';
 import {
   MANUAL_CLASH_LABEL,
+  MANUAL_CORE_LABEL,
   MANUAL_POLICY,
   MANUAL_SITUATION_LABEL,
   MANUAL_US_LABEL,
@@ -42,9 +43,11 @@ const L = MANUAL_SITUATION_LABEL;
  */
 export const MANUAL_BLOCK = `## 사용 설명서
 
-**본문을 다 쓴 뒤에** 쓴다. 구조화 출력의 \`manual\` 칸이다. 화면은 이 칸을 본문과 따로, 상황을 고르는 칩이 붙은 카드로 세운다. 읽는 사람이 그 사람을 다음에 마주할 때 바로 꺼내 쓰는 **그 사람을 대하는 법**이다 — 본문을 줄이지 말고, 본문이 그린 두 사람으로 쓴다.
+**본문을 다 쓴 뒤에** 쓴다. 구조화 출력의 \`manual\` 칸이다. 화면은 이 칸을 본문과 따로 세운다 — 「한 줄 사용법」은 표지 바로 아래 결론 한 줄로, 나머지는 글 끝에 두 사람의 칸(상황을 고르는 칩이 붙은)으로. 읽는 사람이 그 사람을 다음에 마주할 때 바로 꺼내 쓰는 **그 사람을 대하는 법**이다 — 본문을 줄이지 말고, 본문이 그린 두 사람으로 쓴다.
 
-- \`first\` 는 **${withParticle(SEAT_NAMES.first, '을', '를')} 대하는 법**(${withParticle(SEAT_NAMES.second, '이', '가')} ${SEAT_NAMES.first}에게), \`second\` 는 **${withParticle(SEAT_NAMES.second, '을', '를')} 대하는 법**(${withParticle(SEAT_NAMES.first, '이', '가')} ${SEAT_NAMES.second}에게)이다. 상황 넷마다 한 줄씩 — \`ask\` ${L.ask} · \`apologize\` ${L.apologize} · \`upset\` ${L.upset}(서운한 마음을 그 사람에게 꺼낼 때) · \`delight\` ${L.delight}.
+- \`first\` 는 **${withParticle(SEAT_NAMES.first, '을', '를')} 대하는 법**(${withParticle(SEAT_NAMES.second, '이', '가')} ${SEAT_NAMES.first}에게), \`second\` 는 **${withParticle(SEAT_NAMES.second, '을', '를')} 대하는 법**(${withParticle(SEAT_NAMES.first, '이', '가')} ${SEAT_NAMES.second}에게)이다. 두 칸 다 화면에 선다.
+- 칸마다 \`core\` 「${MANUAL_CORE_LABEL}」 — 그 사람을 대할 때 **가장 쓸모 있는 한 줄**. 상황 넷을 줄인 것이 아니라, 하나만 기억한다면 이것인 말이다.
+- 칸마다 상황 넷의 한 줄씩 — \`ask\` ${L.ask} · \`apologize\` ${L.apologize} · \`upset\` ${L.upset}(서운한 마음을 그 사람에게 꺼낼 때) · \`delight\` ${L.delight}.
 - \`us\` 는 「${MANUAL_US_LABEL.own}」 한 줄 — 두 사람이 서로를 어떻게 당기고 어디서 한쪽으로 기우는지. \`clash\` 는 「${MANUAL_CLASH_LABEL}」 한 줄 — 어디서 되풀이해 부딪히고 그때 무엇이 약인지.
 
 줄마다:

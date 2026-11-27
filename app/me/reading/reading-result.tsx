@@ -3,7 +3,8 @@ import type { ReactNode } from 'react';
 import { READING_STALE_LABEL, READING_STALE_NOTE } from '@/src/lib/reading/notes';
 import { seatNicknamesOf, withNicknames, type PairNicknames } from '@/src/lib/reading/display';
 import { COMPAT_SCORE_LABEL } from '@/src/lib/reading/copy';
-import { manualCardOf, manualOf, type ManualSeats } from '@/src/lib/reading/manual';
+import { flowOf } from '@/src/lib/reading/flow';
+import { manualCardOf, manualOf, type ManualSeat, type ManualSeats } from '@/src/lib/reading/manual';
 import { ELEMENTS, STEM_INFO, type Element, type Stem } from '@/src/lib/saju';
 
 import { elementScope } from '../../ui/element-tone';
@@ -16,7 +17,8 @@ import type { CurrentReading } from '@/src/lib/reading';
 import { coverFace, readingMinutes } from './essay';
 import { discoveryLeadOf } from './discovery-lead';
 import { Markdown, READING_COLUMN } from './markdown';
-import { PairManual } from './pair-manual';
+import { PairFlow } from './pair-flow';
+import { ManualLead, PairManual, manualAnchorOf } from './pair-manual';
 import { PairNames } from './pair-names';
 import { ShareReadingButton } from './share-button';
 import { when } from '@/src/lib/reading/when';
@@ -40,8 +42,9 @@ export function Result({
   manualSeats,
 }: {
   /**
-   * 궁합풀이의 두 자리 — 고른 차례와 내 사주가 앉은 자리(`manualSeatsOf`). 사용 설명서 카드가 「{상대} 사용 설명서」로 설지 「서로의 사용 설명서」로
-   * 설지를 정한다(ADR 0283). 안 넘기면 둘을 다 세운다 — 누가 「나」인지 모르는 자리에서 한쪽만 세우면 틀린 사람의 설명서가 선다
+   * 궁합풀이의 두 자리 — 고른 차례와 내 사주가 앉은 자리(`manualSeatsOf`). 사용 설명서의 두 칸이 「{상대} 사용 설명서 | 내 사용 설명서」로 설지
+   * 「{A} | {B}」로 설지, 흐름 그래프의 두 곡선이 어느 차례로 설지를 정한다(ADR 0283 · 0284). 안 넘기면 남 둘처럼 세운다 — 누가 「나」인지
+   * 모르는 자리에서 「내 사용 설명서」를 세우면 틀린 사람의 것이 된다
    */
   manualSeats?: ManualSeats;
   /**
@@ -72,17 +75,23 @@ export function Result({
   const seats = nicknames === undefined ? null : seatNicknamesOf(nicknames, reading.viewerIsFirst);
   const named = (text: string): string => (seats === null ? text : withNicknames(text, seats));
   /*
-    **궁합풀이의 사용 설명서는 글에서 떼어 카드로 세운다**(ADR 0283) — 회수가 본문 끝에 접은 절이고, 우리가 쓴 꼴만 되읽는다(`manualOf`). 호칭을
-    바꾸기 전의 글에서 뗀다 — 그 절의 소제목이 자리 호칭으로 자리를 가린다. 못 읽거나 옛 글이면 글 그대로다.
+    **궁합풀이의 사용 설명서 · 흐름은 글에서 떼어 따로 세운다**(ADR 0283 · 0284) — 회수가 본문 끝에 접은 절이고, 우리가 쓴 꼴만 되읽는다
+    (`manualOf` · `flowOf`). 호칭을 바꾸기 전의 글에서 뗀다 — 두 절이 자리 호칭으로 자리를 가린다. 못 읽거나 옛 글이면 글 그대로다.
   */
   const manual = target.kind === 'private' ? manualOf(reading.output) : { manual: null, rest: reading.output };
-  const card =
-    manual.manual === null || seats === null
-      ? null
-      : manualCardOf(manual.manual, seats, manualSeats ?? { shown: ['first', 'second'], own: null }, named);
+  const flow = target.kind === 'private' ? flowOf(manual.rest) : { flow: null, rest: manual.rest };
+  const places: ManualSeats = manualSeats ?? { shown: ['first', 'second'], own: null };
+  const card = manual.manual === null || seats === null ? null : manualCardOf(manual.manual, seats, places, named);
+  const anchor = manualAnchorOf(reading.id);
+  /* 곡선의 색은 표지의 동그라미와 같은 일간 색 — `pair` 는 고른 차례다 */
+  const toneAt = (at: 0 | 1): Element | null => {
+    const stem = pair?.[at].stem ?? null;
+    return stem === null ? null : STEM_INFO[stem].element;
+  };
+  const flowTones = { [places.shown[0]]: toneAt(0), [places.shown[1]]: toneAt(1) } as Record<ManualSeat, Element | null>;
   const { lead: discovery, rest: body } = discoveryInCover
-    ? discoveryLeadOf(named(manual.rest))
-    : { lead: null, rest: named(manual.rest) };
+    ? discoveryLeadOf(named(flow.rest))
+    : { lead: null, rest: named(flow.rest) };
   const metaphor = reading.metaphor === null ? null : named(reading.metaphor);
 
   /*
@@ -194,6 +203,8 @@ export function Result({
       ) : (
         <p className="flex flex-wrap items-center gap-x-2.5 gap-y-1.5 text-small text-secondary">{meta}</p>
       )}
+      {/* 표지 바로 아래 — 결론 한 줄과 글 끝 카드로 내리는 누름뿐이다(ADR 0283). 카드는 글 끝에 선다 */}
+      {card !== null && <ManualLead card={card} anchor={anchor} />}
       {/*
         **늘 참인 사실은 여기 안 적는다.** 여기 서는 것은 **실제로 갈리는** 한 줄뿐이다 — 지금과 다른
         명식으로 만든 글. 새로 만들면 지금 것이 사라진다는 경고는 되돌릴 수 없는 누름 **직전**에 필요한
@@ -209,8 +220,6 @@ export function Result({
         </p>
       )}
       {betweenSummaryAndBody}
-      {/* 표지 다음 · 본문 앞 — 그 사람을 대하는 법을 먼저 꺼내 쓰고, 긴 글은 그 아래에서 읽는다(ADR 0283) */}
-      {card !== null && <PairManual card={card} />}
       <div className={`${elementScope(firstTone)} flex flex-col gap-2 pt-4 sm:pt-8`}>
         {target.kind === 'match' && (
           <header className={READING_COLUMN}>
@@ -220,6 +229,10 @@ export function Result({
         )}
         <article id={`reading-${reading.id}`}>
           <Markdown source={body} />
+          {/* 글의 마지막 덩어리 — 두 사람의 열 해(ADR 0284). 한 문장은 다른 글처럼 자리 호칭을 지금 이름으로 바꾼다 */}
+          {flow.flow !== null && seats !== null && (
+            <PairFlow flow={flow.flow} shown={places.shown} names={seats} tones={flowTones} line={named(flow.flow.line)} />
+          )}
         </article>
         {/* 글의 끝 — 다섯 상징이 마침표 자리에 선다 */}
         <span aria-hidden="true" className="mt-12 flex justify-center gap-3 opacity-80">
@@ -228,6 +241,8 @@ export function Result({
           ))}
         </span>
       </div>
+      {/* 글 끝 · 공유와 다시 받기 바로 위 — 그 사람을 대하는 법을 꺼내 쓰는 카드(ADR 0283). 표지 아래 「사용 설명서 ›」가 이리로 내린다 */}
+      {card !== null && <PairManual card={card} anchor={anchor} />}
     </div>
   );
 }

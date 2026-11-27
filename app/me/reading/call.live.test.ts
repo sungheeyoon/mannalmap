@@ -10,22 +10,37 @@ import {
   CONTROL,
   MATCH_INPUT_FIELDS,
   READING_POLICY,
-  asksManual,
+  asksPairExtras,
   blockingFindingsOf,
   checkReading,
+  flowRuleIn,
   isScored,
-  manualFindingsOf,
-  manualOfOutput,
+  manualAskedIn,
+  metaphorToStore,
   readingEvidenceOf,
   readingPromptOf,
   groundingTiers,
   positionSlips,
   promptVersionOf,
-  withManual,
+  withPairExtras,
+  withoutLeakedPaths,
   writesSummaryLast,
+  type CheckFinding,
+  type PairFlow,
   type ReadingOutput,
 } from '@/src/lib/reading';
-import { MANUAL_SITUATIONS, MANUAL_SITUATION_LABEL, manualCardOf, type ManualCard } from '@/src/lib/reading/manual';
+import { readingBody } from '@/src/lib/reading/display';
+import { FLOW_LEVEL_LABEL, FLOW_TITLE, flowOf } from '@/src/lib/reading/flow';
+import {
+  MANUAL_CORE_LABEL,
+  MANUAL_MINE_TITLE,
+  MANUAL_SITUATIONS,
+  MANUAL_SITUATION_LABEL,
+  manualCardOf,
+  manualOf,
+  manualTitleOf,
+  type ManualCard,
+} from '@/src/lib/reading/manual';
 import { measureMarkdown, outputDeviations, pairOutputDeviations, type OutputDeviation } from '@/src/lab/reading/measure';
 import { MATCH_INPUT_VARIANTS, PAIR_VARIANTS, PROMPT_VARIANTS } from '@/src/lab/reading/variants';
 
@@ -41,7 +56,7 @@ import type { ModelCall } from './generator';
  *   READING_LIVE=1 npx vitest run app/me/reading/call.live.test.ts
  *   READING_VARIANTS_LIVE=1 npx vitest run app/me/reading/call.live.test.ts
  *   READING_PAIR_LIVE=1 npx vitest run app/me/reading/call.live.test.ts
- *   READING_MANUAL_LIVE=1 npx vitest run app/me/reading/call.live.test.ts
+ *   READING_MANUAL_LIVE=1 npx vitest run app/me/reading/call.live.test.ts   (READING_MANUAL_DRY=1 이면 부르지 않는다)
  *
  * 재는 것은 글의 품질이 아니라 **파이프라인이 이어져 있는가**다. 품질은 사람이
  * 본다(`prd-archive`: 최종 출시 판단은 제품 담당자의 blind review).
@@ -83,8 +98,10 @@ const pairLive = process.env.READING_PAIR_LIVE === '1';
 const matchInputLive = process.env.READING_MATCH_INPUT_LIVE === '1';
 /** 상세 궁합 — 운영자가 돌린다. 끄기가 기본이다 */
 const detailLive = process.env.READING_DETAIL_LIVE === '1';
-/** 궁합풀이의 사용 설명서 — 운영자가 돌린다. 한 번 부른다(ADR 0283) */
+/** 궁합풀이의 본문 · 사용 설명서 · 흐름 — 운영자가 돌린다. 한 번 부른다(ADR 0283 · 0284) */
 const manualLive = process.env.READING_MANUAL_LIVE === '1';
+/** 위의 마른 실행 — 부르지 않고 부르기 직전까지와 부른 뒤의 길을 꾸민 칸으로 잰다. 토큰이 안 나간다 */
+const manualDry = process.env.READING_MANUAL_DRY === '1';
 
 /**
  * 변형끼리 견줄 때의 **고정 기준 시각.**
@@ -213,13 +230,14 @@ describe.skipIf(!live)('OpenAI API 까지 실제로 닿는다', () => {
         : { a: computeSaju(hourless ? HOURLESS : INPUT) };
       const viewedAt = new Date();
       const evidence = readingEvidenceOf(kind, charts, viewedAt);
+      const prompt = readingPromptOf(evidence);
       /*
-        운영 제출과 같은 차례로 받는다 — 개인 풀이와 4판 궁합은 본문이 먼저다(`writesSummaryLast`, ADR 0207 추기 「v21」). 궁합풀이는 사용 설명서
-        칸도 함께 받는다(`asksManual`, ADR 0283)
+        운영 제출과 같은 차례로 받는다 — 개인 풀이와 4판 궁합은 본문이 먼저다(`writesSummaryLast`, ADR 0207 추기 「v21」). 궁합풀이는 사용 설명서 ·
+        흐름 칸도 함께 받는다(`asksPairExtras`, ADR 0283 · 0284)
       */
-      const called = await callModel<ReadingOutput & { manual?: unknown }>(readingPromptOf(evidence), {
+      const called = await callModel<ReadingOutput & { manual?: unknown; flow?: unknown }>(prompt, {
         summaryLast: writesSummaryLast(kind),
-        manual: asksManual(kind),
+        extras: asksPairExtras(kind),
       });
 
       // 실패도 값으로 오므로 무엇이 막았는지 그대로 보인다.
@@ -284,18 +302,21 @@ describe.skipIf(!live)('OpenAI API 까지 실제로 닿는다', () => {
         console.info(`[근거 층 초과] ${label} — ${one.path} [${one.tier}] > ${one.key} ${one.polarity} ${one.ceiling}`);
       }
 
-      /* 회수와 같이 사용 설명서를 본문 끝에 접은 글로 잰다 — 칸이 다 찼는지는 따로 본다(`collect.ts`) */
-      const manual = asksManual(kind) ? manualOfOutput(called.output.manual) : null;
+      /* 회수와 같이 사용 설명서 · 흐름을 본문 끝에 접은 글로 잰다 — 칸이 다 찼는지는 따로 본다(`collect.ts`) */
+      const extras = withPairExtras({ kind, prompt, markdown: called.output.markdown, output: called.output });
       const verdict = checkReading({
         kind,
-        output: manual === null ? called.output : { ...called.output, markdown: withManual(called.output.markdown, manual) },
+        output: { ...called.output, markdown: extras.markdown },
         evidenceText: JSON.stringify(evidence.evidence),
         secrets: pair ? PAIR_SECRETS : hourless ? HOURLESS_SECRETS : SECRETS,
       });
 
       expect(verdict.ok ? [] : verdict.failures).toEqual([]);
       expect(slips).toEqual([]);
-      expect(asksManual(kind) && manual === null, '궁합풀이의 사용 설명서 칸이 비었다').toBe(false);
+      expect(
+        extras.findings.filter(({ detail }) => detail.includes('없이 저장')).map(({ detail }) => detail),
+        '궁합풀이의 사용 설명서 · 흐름 칸이 비었다',
+      ).toEqual([]);
 
       /**
        * **점수는 있어야 할 때 있고 없어야 할 때 없다** — 구조화 출력 스키마가 그 자리를
@@ -475,8 +496,8 @@ describe.skipIf(!pairLive)('비공개 궁합 두 판이 같은 자료에서 실�
         variant,
         result: await callModel(readingPromptOf(evidence, variant.assembly), {
           summaryLast: writesSummaryLast('private', variant.assembly),
-          /* 운영 판(`control`)은 사용 설명서 칸을 함께 받는다 — 지시가 시키는 칸을 스키마도 연다(ADR 0283) */
-          manual: asksManual('private', variant.assembly),
+          /* 운영 판(`control`)은 사용 설명서 · 흐름 칸을 함께 받는다 — 지시가 시키는 칸을 스키마도 연다(ADR 0283 · 0284) */
+          extras: asksPairExtras('private', variant.assembly),
         }),
       })),
     );
@@ -1199,7 +1220,7 @@ describe.skipIf(!matchInputLive)('인연 궁합 입력 A/B 를 같은 조건으�
   });
 });
 
-/** 사용 설명서 실호출의 두 사람 — 앱 가짜 서버(`mobile/scripts/measure/fake-server.mjs`)의 지어낸 둘. 윤하늘이 첫 자리다(Person id 차례) */
+/** 사용 설명서 · 흐름 실호출의 두 사람 — 앱 가짜 서버(`mobile/scripts/measure/fake-server.mjs`)의 지어낸 둘. 윤하늘이 첫 자리다(Person id 차례) */
 const MANUAL_PAIR = {
   a: { year: 1990, month: 3, day: 15, hour: 7, minute: 30, second: 0, gender: 'female' },
   b: { year: 1962, month: 11, day: 2, hour: 13, minute: 10, second: 0, gender: 'female' },
@@ -1208,31 +1229,139 @@ const MANUAL_SECRETS = [
   { originalDate: '1990-03-15', solarDate: '1990-03-15', birthTime: '07:30:00', city: '서울' },
   { originalDate: '1962-11-02', solarDate: '1962-11-02', birthTime: '13:10:00', city: '서울' },
 ] as const;
+const MANUAL_NAMES = { first: '윤하늘', second: '엄마' } as const;
 
-/** 화면이 세울 카드를 읽을 글로 — 칩마다 한 줄씩 펴 둔다 */
-const cardText = (card: ManualCard): string =>
+/** 화면이 세울 카드를 읽을 글로 — 두 칸마다 한 줄 사용법과 칩마다 한 줄씩 펴 둔다 */
+const cardText = (card: ManualCard, heading: string): string =>
   [
-    `## ${card.title}`,
-    ...MANUAL_SITUATIONS.map(
-      (situation) =>
-        `- **${MANUAL_SITUATION_LABEL[situation]}** — ${card.lines[situation].map((row) => (row.label === null ? row.text : `${row.label}: ${row.text}`)).join(' / ')}`,
-    ),
+    `## ${heading}`,
+    `- **${card.lead.label}**(표지 아래) — ${card.lead.text}`,
+    ...card.tabs.flatMap((tab) => [
+      `### ${tab.title}`,
+      `- **${MANUAL_CORE_LABEL}** — ${tab.core}`,
+      ...MANUAL_SITUATIONS.map((situation) => `- **${MANUAL_SITUATION_LABEL[situation]}** — ${tab.lines[situation]}`),
+    ]),
     `- **${card.us.label}** — ${card.us.text}`,
     `- **${card.clash.label}** — ${card.clash.text}`,
   ].join('\n');
 
+/** 흐름을 읽을 글로 — 해마다 두 사람의 단계와 한 문장 */
+const flowText = (flow: PairFlow): string =>
+  [
+    `## ${FLOW_TITLE}`,
+    flow.line,
+    '',
+    `| 해 | ${MANUAL_NAMES.first} | ${MANUAL_NAMES.second} |`,
+    '| --- | --- | --- |',
+    ...flow.years.map((one) => `| ${one.year} | ${FLOW_LEVEL_LABEL[one.first]} | ${FLOW_LEVEL_LABEL[one.second]} |`),
+  ].join('\n');
+
+type PairExtrasOutput = ReadingOutput & { manual?: unknown; flow?: unknown };
+
 /**
- * **궁합풀이의 사용 설명서를 운영과 같은 조립으로 한 번 부른다**(ADR 0283) — 위 두 사람을 가족 사이로. 운영자가 돌린다.
+ * **부른 뒤의 길 — 회수와 같은 차례로 접고 걷고 잰 뒤 저장되는 꼴로 떨군다.** 실호출과 마른 실행이 이 한 함수를 지난다 — 마른 실행이 이 길을
+ * 꾸민 칸으로 먼저 지나 두므로, 돈을 낸 뒤에 파일 쓰기에서 넘어지지 않는다.
  *
- *   READING_MANUAL_LIVE=1 npx vitest run app/me/reading/call.live.test.ts
- *
- * 남는 것: `.reading-live/manual-<시각>/` 의 `output.json`(원문 · 토큰) · `manual.md`(화면이 세울 두 카드 — 「엄마 사용 설명서」 · 「서로의 사용 설명서」 —
- * 와 접은 본문). 판정은 칸이 다 찼는지와 막는 검사뿐이다. 길이 · 호칭 · 본보기 · 사주 이름과 품질 검사는 `[기록]` 으로 찍는다 — 말투는 사람이 읽는다.
+ * 남는 것: `stored.json`(`p_output` 은 `save_reading` 이 받는 값, `output` 은 화면 API 가 내는 값 — 가짜 서버의 `my_reading` 줄에 그대로
+ * 넣는다) · `reading.md`(사람이 읽을 글 — 표지 · 결론 한 줄 · 본문 · 흐름 표 · 두 화면의 카드).
  */
-describe.skipIf(!manualLive)('궁합풀이의 사용 설명서를 운영과 같은 조립으로 부른다', () => {
-  it('칸이 다 차고, 접은 글이 막는 검사를 지난다', { timeout: 300_000 }, async () => {
+function afterManualCall({
+  dir,
+  prompt,
+  evidenceText,
+  baseline,
+  output,
+  viewedAt,
+}: {
+  dir: string;
+  prompt: string;
+  evidenceText: string;
+  baseline: number | undefined;
+  output: PairExtrasOutput;
+  viewedAt: Date;
+}) {
+  const extras = withPairExtras({ kind: 'private', prompt, markdown: output.markdown, output });
+  const unleaked = withoutLeakedPaths(extras.markdown, evidenceText);
+  const verdict = checkReading({
+    kind: 'private',
+    output: { score: output.score, metaphor: output.metaphor, markdown: unleaked.markdown },
+    evidenceText,
+    secrets: MANUAL_SECRETS,
+    baseline,
+  });
+  const findings: CheckFinding[] = [
+    ...extras.findings,
+    ...(unleaked.stripped.length > 0 ? [{ code: 'evidence-path-stripped' as const, detail: `괄호째 걷음: ${unleaked.stripped.join('·')}` }] : []),
+    ...(verdict.ok ? [] : verdict.failures),
+  ];
+
+  const stored = {
+    kind: 'private',
+    relation: 'family',
+    promptVersion: promptVersionOf('private'),
+    viewedAt: viewedAt.toISOString(),
+    p_output: unleaked.markdown,
+    output: readingBody(unleaked.markdown),
+    metaphor: metaphorToStore(output.metaphor),
+    score: output.score,
+    findings,
+  };
+  writeFileSync(`${dir}/stored.json`, JSON.stringify(stored, null, 2));
+
+  const { manual, rest } = manualOf(stored.output);
+  const { flow, rest: body } = flowOf(rest);
+  const cards =
+    manual === null
+      ? []
+      : [
+          cardText(manualCardOf(manual, MANUAL_NAMES, { shown: ['first', 'second'], own: 'first' }), `윤하늘이 보는 화면 — 「${manualTitleOf('엄마')} | ${MANUAL_MINE_TITLE}」`),
+          cardText(manualCardOf(manual, MANUAL_NAMES, { shown: ['first', 'second'], own: null }), `남 둘로 보는 화면 — 「${manualTitleOf('윤하늘')} | ${manualTitleOf('엄마')}」`),
+        ];
+  writeFileSync(
+    `${dir}/reading.md`,
+    [
+      `# 윤하늘 × 엄마 (가족) — ${stored.promptVersion}`,
+      `> ${stored.metaphor ?? '(비유 없음)'} · ${stored.score ?? '-'}점`,
+      body,
+      flow === null ? '## 우리 둘의 흐름\n\n(못 읽음 — 그래프 없이 선다)' : flowText(flow),
+      ...cards,
+      '## 걸린 것',
+      findings.length === 0 ? '(없음)' : findings.map((one) => `- ${one.code}: ${one.detail}`).join('\n'),
+    ].join('\n\n'),
+  );
+
+  return { stored, findings, manual, flow, body };
+}
+
+/** 마른 실행이 길을 재는 꾸민 칸 — 모델 글이 아니다. 저장 꼴을 재는 데만 쓰고 화면에는 안 넣는다 */
+const dryOutputOf = (prompt: string, baseline: number | undefined): PairExtrasOutput => {
+  const rule = flowRuleIn(prompt);
+  const years = rule === null ? [] : Array.from({ length: rule.window.to - rule.window.from + 1 }, (_, at) => rule.window.from + at);
+  const side = { core: '마른 실행의 줄이에요.', ask: '마른 실행의 줄이에요.', apologize: '마른 실행의 줄이에요.', upset: '마른 실행의 줄이에요.', delight: '마른 실행의 줄이에요.' };
+  return {
+    markdown: `마른 실행의 본문이에요.\n\n## 마른 실행\n\n${'저장 꼴을 재는 꾸민 문단이에요. '.repeat(30)}`,
+    score: baseline ?? 60,
+    metaphor: '마른 실행의 비유',
+    manual: { first: side, second: side, us: '마른 실행의 줄이에요.', clash: '마른 실행의 줄이에요.' },
+    flow: { years: years.map((year) => ({ year, first: 'lift', second: 'rest' })), line: '마른 실행의 한 문장이에요.' },
+  };
+};
+
+/**
+ * **궁합풀이를 운영과 같은 조립으로 한 번 부른다** — 본문(정한 차례) · 사용 설명서(ADR 0283) · 우리 둘의 흐름(ADR 0284)을 한 번에. 위 두 사람을
+ * 가족 사이로. 운영자가 돌린다. 워크트리에서는 비밀 파일을 옮기지 않고 가리킨다(`LOCAL_ENV_FILE`):
+ *
+ *   LOCAL_ENV_FILE=<메인 체크아웃>/.env.development.local READING_MANUAL_LIVE=1 npx vitest run app/me/reading/call.live.test.ts
+ *
+ * `READING_MANUAL_DRY=1` 이면 **부르지 않고** 부르기 직전까지 잰다 — 프롬프트 · 보낼 모양 · 흐름의 해와 누를 해를 떨구고, 꾸민 칸으로 부른 뒤의
+ * 길(접기 · 걷기 · 검사 · 저장 꼴)을 지난다. 열쇠는 있으면 값 없이 쓸 수 있는지만 본다.
+ *
+ * 남는 것: `.reading-live/manual-<시각>/` 의 `output.json`(원문 · 토큰) · `stored.json`(저장되는 꼴 — 가짜 서버에 넣는다) · `reading.md`(읽을 글).
+ * 판정은 칸이 다 찼는지와 막는 검사뿐이다. 길이 · 호칭 · 사주 이름 · 눌린 칸은 `[기록]` 으로 찍는다 — 말투는 사람이 읽는다.
+ */
+describe.skipIf(!manualLive && !manualDry)('궁합풀이의 본문 · 사용 설명서 · 흐름을 운영과 같은 조립으로 부른다', () => {
+  it('칸이 다 차고, 접은 글이 막는 검사를 지나며, 저장되는 꼴로 남는다', { timeout: 300_000 }, async () => {
     loadLocalEnv();
-    const { callModel } = await import('@/app/me/reading/model');
     const { readingInputOf } = await import('@/app/me/reading/generator');
     const { GENERATION } = await import('@/app/me/reading/generation');
 
@@ -1244,17 +1373,42 @@ describe.skipIf(!manualLive)('궁합풀이의 사용 설명서를 운영과 같�
       about: { relation: 'family' },
     });
     if (!made.ok) throw new Error(made.detail);
+    const { prompt, evidenceText } = made.input;
+    const baseline = made.input.score?.baseline;
+    const options = { summaryLast: writesSummaryLast('private'), extras: asksPairExtras('private') };
 
-    const called = await callModel<ReadingOutput & { manual?: unknown }>(made.input.prompt, {
-      summaryLast: writesSummaryLast('private'),
-      manual: asksManual('private'),
-    });
+    /* 부르기 전에 잰다 — 시킨 칸과 회수가 되읽는 표식이 한 답이어야 돈을 낸다 */
+    const rule = flowRuleIn(prompt);
+    expect(manualAskedIn(prompt), '프롬프트가 사용 설명서를 안 시킨다').toBe(true);
+    expect(rule, '프롬프트에 흐름의 해가 없다').not.toBeNull();
+    expect(options.extras, '제출이 사용 설명서 · 흐름 칸을 안 연다').toBe(true);
+
+    const dir = `${OUTPUT_ROOT}/manual-${manualDry ? 'dry-' : ''}${runStamp(viewedAt)}`;
+    mkdirSync(dir, { recursive: true });
+    console.info(`[흐름의 해] ${rule?.window.from}~${rule?.window.to} · 누르는 해 — 윤하늘 ${rule?.pressed.first.join('·') || '없음'} / 엄마 ${rule?.pressed.second.join('·') || '없음'}`);
+    console.info(`[프롬프트] ${prompt.length}자 · 판 ${promptVersionOf('private')}`);
+
+    if (manualDry) {
+      const { fixedShapeOf } = await import('@/app/me/reading/model');
+      writeFileSync(`${dir}/prompt.md`, prompt);
+      writeFileSync(`${dir}/schema.json`, JSON.stringify(fixedShapeOf(options), null, 2));
+      const keyProblem = process.env.OPENAI_API_KEY === undefined ? null : openAiKeyProblem(process.env.OPENAI_API_KEY);
+      console.info(`[열쇠] ${process.env.OPENAI_API_KEY === undefined ? '없음 — 마른 실행이라 건너뜀' : (keyProblem ?? '쓸 수 있다')}`);
+
+      const after = afterManualCall({ dir, prompt, evidenceText, baseline, output: dryOutputOf(prompt, baseline), viewedAt });
+      console.info(`[마른 실행] ${dir} — stored.json · reading.md · prompt.md · schema.json`);
+      expect(after.manual, '꾸민 칸이 사용 설명서로 안 읽힌다').not.toBeNull();
+      expect(after.flow?.years.length, '꾸민 흐름이 열 해로 안 읽힌다').toBe(10);
+      expect(blockingFindingsOf(after.findings).map(({ code }) => code)).toEqual([]);
+      return;
+    }
+
+    const { callModel } = await import('@/app/me/reading/model');
+    const called = await callModel<PairExtrasOutput>(prompt, options);
     expect(called.ok ? '' : `${called.code}: ${called.detail}`).toBe('');
     if (!called.ok) return;
 
     /* 부른 값을 먼저 떨군다 — 판정하다 던져도 돈을 낸 원문이 남는다 */
-    const dir = `${OUTPUT_ROOT}/manual-${runStamp(viewedAt)}`;
-    mkdirSync(dir, { recursive: true });
     writeFileSync(
       `${dir}/output.json`,
       JSON.stringify(
@@ -1264,32 +1418,14 @@ describe.skipIf(!manualLive)('궁합풀이의 사용 설명서를 운영과 같�
       ),
     );
 
-    const manual = manualOfOutput(called.output.manual);
-    const markdown = manual === null ? called.output.markdown : withManual(called.output.markdown, manual);
-    const verdict = checkReading({
-      kind: 'private',
-      output: { score: called.output.score, metaphor: called.output.metaphor, markdown },
-      evidenceText: made.input.evidenceText,
-      secrets: MANUAL_SECRETS,
-      baseline: made.input.score?.baseline,
-    });
-    const failures = verdict.ok ? [] : verdict.failures;
-
-    const names = { first: '윤하늘', second: '엄마' };
-    const cards =
-      manual === null
-        ? []
-        : [
-            manualCardOf(manual, names, { shown: ['first', 'second'], own: 'first' }),
-            manualCardOf(manual, names, { shown: ['first', 'second'], own: null }),
-          ];
-    writeFileSync(`${dir}/manual.md`, ['# 사용 설명서 — 윤하늘 × 엄마 (가족)', ...cards.map(cardText), '---', markdown].join('\n\n'));
-
-    for (const one of [...failures, ...manualFindingsOf(manual)]) console.info(`[기록] ${one.code}: ${one.detail}`);
+    const after = afterManualCall({ dir, prompt, evidenceText, baseline, output: called.output, viewedAt });
+    for (const one of after.findings) console.info(`[기록] ${one.code}: ${one.detail}`);
     console.info(`[토큰] 출력 ${called.usage?.outputTokens ?? '?'}(추론 ${called.reasoningTokens ?? '?'}) · 입력 ${called.usage?.inputTokens ?? '?'}`);
-    console.info(`[읽을 자리] ${dir}/manual.md`);
+    console.info(`[본문] ${after.body.length}자 · 절 ${after.body.split(/^## /m).length - 1}`);
+    console.info(`[읽을 자리] ${dir}/reading.md · 저장 꼴 ${dir}/stored.json`);
 
-    expect(manual, '사용 설명서 칸이 비었거나 모양이 아니다').not.toBeNull();
-    expect(blockingFindingsOf(failures).map(({ code }) => code)).toEqual([]);
+    expect(after.manual, '사용 설명서 칸이 비었거나 모양이 아니다').not.toBeNull();
+    expect(after.flow, '흐름 칸이 비었거나 열 해가 맞지 않는다').not.toBeNull();
+    expect(blockingFindingsOf(after.findings).map(({ code }) => code)).toEqual([]);
   });
 });

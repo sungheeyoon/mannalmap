@@ -132,6 +132,8 @@ export type ReadingCheckCode =
   | 'discovery-out-of-contract'
   /** 궁합풀이의 사용 설명서 칸이 비었거나 계약(길이 · 호칭 · 본보기 · 사주 이름)을 어겼다 — 비면 사용 설명서 없이 저장한다(`manualFindingsOf`, ADR 0283) */
   | 'manual-out-of-contract'
+  /** 궁합풀이의 흐름 칸이 비었거나 열 해가 맞지 않거나 · 두 기준이 엇갈린 해에 끝값을 썼거나(보통으로 누른다) · 한 문장이 길거나 사주 이름을 썼다(`flowFindingsOf`, ADR 0284) */
+  | 'flow-out-of-contract'
   /** 상세 궁합의 사용자 글이 두 사람의 실제 기둥 두 글자를 직접 썼다(`detailFindingsOf`) — 막는다. 옛 흐름에서는 안 난다 */
   | 'pillar-named-in-reading';
 

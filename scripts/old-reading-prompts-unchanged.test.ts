@@ -30,16 +30,17 @@ const privateOf = (relation: 'partner' | 'family' | 'friend'): string =>
  */
 const UNCHANGED_AT: Readonly<Record<string, Readonly<Record<string, string>>>> = {
   /**
-   * 궁합풀이 v26 — 사용 설명서의 지시 · 재료 · 출력 계약이 선다(ADR 0283). 바뀐 것은 비공개 궁합 넷뿐이고 개인 풀이 · 인연 궁합의 지문은 v23 판
-   * (`b6377ce9…` 를 쓰던 표)과 한 글자도 같다 — 사용 설명서가 다른 kind 의 글자를 안 건드렸다는 뜻이다.
+   * 궁합풀이 v27 — 정한 차례 · 사용 설명서(한 줄 사용법) · 우리 둘의 흐름의 지시 · 재료 · 출력 계약이 선다(ADR 0283 · 0284). 바뀐 것은 비공개
+   * 궁합 넷뿐이고 개인 풀이 · 인연 궁합의 지문은 v23 판(`b6377ce9…` 를 쓰던 표)과 한 글자도 같다 — 궁합풀이의 새 절이 다른 kind 의 글자를 안
+   * 건드렸다는 뜻이다.
    */
-  'reading-prompt-v25|reading-prompt-v26|reading-prompt-detail-v1': {
+  'reading-prompt-v25|reading-prompt-v27|reading-prompt-detail-v1': {
     self: '2f0cc082c78e94985ab354cf4739ce3b6ea21a7ad69823dd21d0539a94efb63c',
-    private: 'd34f989126e5acad000a5f948c6eaaf301347c3e736ee2e667730cfaef156fa7',
+    private: '71ca44538804551ef8df1931dd05a296d16ca6ba59ba1ed7f004062d6848db6f',
     match: '73744d348e98f5ce60b41b2d132973295df751b8917045a4334efa9fdc89d31f',
-    partner: 'a2ae8afe0efcce93c6829dc868a80e3aa8b3a4d0673a3206b5ef06c8c66ea0f1',
-    family: 'fd8207af52552f470c0516464e1bf2902bdf841c0c2511856f655526e940b640',
-    friend: 'bac6e5aec368bd734931290f30ed40d5e2ec1e7c719405cf777928c4f45f95e5',
+    partner: '85ee9c0dd30bcab13095ebaacdf89f103c344ca6dddaf974f2f2a39f7976e894',
+    family: '4a44fe9e8b3efef67e7a4c66197a89d9d6de49515f114bccc120c11a6eaed5b6',
+    friend: '8e03a556743874d8d8899a80f126fa7d52d03010fb439df7db9c41e2d9f03577',
   },
 };
 

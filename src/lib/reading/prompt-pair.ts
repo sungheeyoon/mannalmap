@@ -411,6 +411,32 @@ ${pairNeeds(kind, meeting).map((need) => `- ${need}`).join('\n')}
 
 소제목은 네가 붙인다. 번호로 세지 말고, 그 대목이 무슨 이야기인지가 드러나는 말로 단다.`;
 
+/**
+ * **운영 궁합풀이의 차례**(ADR 0283 추기 — 운영자 「글이 너무 길다」) — 옛 열한 절 가운데 여섯을 남기고 줄였다. 한 줄 요약 · 서로에게 무엇인가 ·
+ * 만남(두세 문장) · 잘 맞는 곳 둘과 부딪히는 곳 둘(한 절) · 서로의 보완 · 함께일 때 두드러지는 특징. 생활 장면 · 오래 가려면은 걷었고, 각자 어떤 사람인가는
+ * 사용 설명서(`manual`)와 겹쳐, 지금 두 사람이 지나는 때는 「우리 둘의 흐름」(`flow`, ADR 0284)으로 옮겼다. 다룰 것만 주고 나누기를 맡기던 판
+ * (`PAIR_NEEDS_BLOCK`)은 인연 궁합이 그대로 쓴다.
+ */
+const PRIVATE_LAYOUT_BLOCK = (meeting: string, scene: string): string => {
+  const { first: a, second: b } = SEAT_NAMES;
+  return `## 글의 차례
+
+이 궁합풀이는 아래 차례로 쓴다. **다른 절을 더하지 않는다** — 생활에서 되풀이될 장면 · 오래 가려면 무엇이 필요한가 · 각자가 어떤 사람인가 · 지금 두 사람이 지나는 때는 본문에 세우지 않는다(뒤의 둘은 \`manual\` · \`flow\` 칸이 든다).
+
+1. **맨 앞 한 문장** — 소제목 없이, 이 관계에서 실제로 되풀이되는 핵심 작동 방식을 한 문장으로.
+2. **서로에게 무엇인가** — ${withParticle(a, '이', '가')} ${withParticle(b, '을', '를')} 보는 자리와 그 반대가 **다르다**(\`tenGods.aSeesB\` · \`bSeesA\`). 그 비대칭이 일상에서 어떻게 보이는지.
+3. **${meeting}** — **두세 문장으로 짧게.**
+4. **잘 맞는 곳 둘 · 부딪히는 곳 둘** — 한 절에. 잘 맞는 곳은 「어디서 맞는가 → 그래서 무엇이 쉬워지는가」 한두 문장씩, 부딪히는 곳은 「어디서 → 어떤 상황에서 터지는가 → 그때 두 사람이 각자 무엇을 하면 되는가」.
+5. **서로의 보완** — \`elementSupport\` 와 \`eokbuMatch\`. 한쪽에 적은 기운을 다른 쪽이 갖고 있으면 그것이 관계에서 무엇으로 나타나는지, 둘 다 없는 것은 밖에서 구해야 한다는 것까지.
+6. **함께일 때 더 두드러지는 특징** — \`combinedFormations\`. 있으면 충분히 풀고, 없으면 없다고 적은 뒤 대신 어디서 힘이 나는지.
+
+2~6 은 절마다 소제목을 \`##\` 로 하나씩 달고, 그 대목에서 벌어지는 장면이나 마음이 보이는 말로 단다 — 번호도 위의 굵은 이름도 그대로 옮기지 않는다.
+
+사람 · 자리 · 방향은 어느 사이든 똑같이 정확히 읽는다. 그 사실을 **어떤 장면으로 옮길지는 두 사람의 사이가 정한다** — ${scene}. 이것은 채워야 할 목차가 아니다. 위 차례의 절마다 고른 이야기를 이 사이에서 실제로 일어날 장면으로 옮기는 기준이다.
+
+관계 이름(합·충·형·해 같은 분류명)은 본문에 내놓지 말고, 연락 방식·결정 속도·갈등 반응처럼 **두 사람 사이에서 실제로 보이는 말**로 쓴다.`;
+};
+
 export const compatSections = (
   kind: PairKind,
   assembly: PromptAssembly,
@@ -445,16 +471,20 @@ export const compatSections = (
   const detail = isDetailFlow(kind, assembly);
   const relationKey: RelationKey = kind === 'match' && relation === null ? 'match' : (relation ?? 'unknown');
 
+  /** 운영 궁합풀이는 정한 차례로 쓴다(ADR 0283) — 인연 궁합과 옛 판은 지금처럼 다룰 것만 받는다 */
+  const laidOut = guided && kind === 'private';
   const plan = needsShape
     ? `${
-        guided
-          ? PAIR_NEEDS_BLOCK(PAIR_MEETING_NEED[relationKey], kind, RELATION_SCENE[relationKey], detail)
-          : NEEDS_BLOCK(kind, MEETING_NEED[relationKey])
+        laidOut
+          ? PRIVATE_LAYOUT_BLOCK(PAIR_MEETING_NEED[relationKey], RELATION_SCENE[relationKey])
+          : guided
+            ? PAIR_NEEDS_BLOCK(PAIR_MEETING_NEED[relationKey], kind, RELATION_SCENE[relationKey], detail)
+            : NEEDS_BLOCK(kind, MEETING_NEED[relationKey])
       }
 
 ## 낼 것
 
-Markdown으로 쓰고 소제목은 \`##\`로 단다. **소제목의 수와 차례는 네가 정한다.**`
+Markdown으로 쓰고 소제목은 \`##\`로 단다. ${laidOut ? '**차례는 위 「글의 차례」 그대로다.**' : '**소제목의 수와 차례는 네가 정한다.**'}`
     : `## 낼 것
 
 Markdown으로 쓰고 소제목은 \`##\`로 단다.

@@ -40,6 +40,7 @@ const DRAWING_EXCEPTIONS: readonly { file: string; why: string }[] = [
   { file: 'mobile/src/auth/kakao-button.tsx', why: '카카오 상징 — 카카오가 정한 그림이다(`src/lib/brand` 의 `KAKAO_SYMBOL`)' },
   { file: 'mobile/src/compat/relation-map.tsx', why: '관계 지도 — 그림이 곧 화면이다' },
   { file: 'mobile/src/reading/result.tsx', why: '궁합풀이 표지의 두 색 면(웹 `app/me/reading/essay.ts` 의 `coverFace`)' },
+  { file: 'mobile/src/reading/flow.tsx', why: '「우리 둘의 흐름」 곡선 — 그림이 곧 덩어리다(웹 `app/me/reading/pair-flow.tsx`, ADR 0284)' },
   { file: 'mobile/src/chat/empty.tsx', why: '빈 대화방의 말풍선 그림(웹 `ChatIllustration`) — 인연 · 채팅은 닫혀 있다(G-135)' },
 ];
 

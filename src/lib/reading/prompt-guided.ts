@@ -205,8 +205,10 @@ export const DETAIL_OUTPUT_CONTRACT = PAIR_OUTPUT_CONTRACT.replace(
   '그다음 \`discovery\` 에 발견 한 줄을, 마지막으로 \`metaphor\` 에',
 );
 
-/** 비공개 궁합이 사용 설명서를 함께 받을 때의 출력 계약 — 칸의 차례는 본문 → 점수 → 사용 설명서 → 한 줄 요약이다(ADR 0283) */
-export const MANUAL_OUTPUT_CONTRACT = PAIR_OUTPUT_CONTRACT.replace(
+/**
+ * 운영 궁합풀이의 출력 계약 — 칸의 차례는 본문 → 점수 → 사용 설명서 → 우리 둘의 흐름 → 한 줄 요약이다(ADR 0283 · 0284). 둘 다 방금 쓴 본문에 기댄다.
+ */
+export const PAIR_EXTRAS_OUTPUT_CONTRACT = PAIR_OUTPUT_CONTRACT.replace(
   '마지막으로 \`metaphor\` 에',
-  '그다음 \`manual\` 에 사용 설명서를, 마지막으로 \`metaphor\` 에',
+  '그다음 \`manual\` 에 사용 설명서를, 그다음 \`flow\` 에 우리 둘의 흐름을, 마지막으로 \`metaphor\` 에',
 );
