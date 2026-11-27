@@ -108,7 +108,7 @@ export default function MeLayout() {
         <LiveChannel client={client} />
         {appHeadStands(pathname, search) && (
         <View style={[styles.header, { paddingTop: insets.top }]}>
-          <Pressable accessibilityRole="link" accessibilityLabel={`${SERVICE_NAME} 홈`} hitSlop={{ top: reach(CONTROL), bottom: reach(CONTROL) }} onPress={() => goTab('/me')} style={styles.logo}>
+          <Pressable accessibilityRole="link" accessibilityLabel={`${SERVICE_NAME} 홈`} hitSlop={reach(CONTROL)} onPress={() => goTab('/me')} style={styles.logo}>
             <Logo size={32} />
           </Pressable>
           <View style={styles.tools}>
@@ -189,10 +189,11 @@ const styles = StyleSheet.create({
   checking: { alignItems: 'center', justifyContent: 'center' },
   failure: { fontFamily: FONT.medium, fontSize: TYPE.small, color: COLOR.danger, textAlign: 'center' },
   header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingLeft: 16, paddingRight: 4, backgroundColor: COLOR.background },
-  logo: { minHeight: 44, justifyContent: 'center' },
+  /* 로고(32)는 왼쪽 끝에 두고 누를 자리만 오른쪽으로 44 까지 편다 — 글자 없는 로고라 폭이 누를 자리보다 좁았다 */
+  logo: { minHeight: CONTROL, minWidth: CONTROL, alignItems: 'flex-start', justifyContent: 'center' },
   tools: { flexDirection: 'row', alignItems: 'center' },
-  tool: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center' },
-  credits: { width: undefined, minWidth: 44, flexDirection: 'row', gap: 4, paddingHorizontal: 8 },
+  tool: { width: CONTROL, height: CONTROL, alignItems: 'center', justifyContent: 'center' },
+  credits: { width: undefined, minWidth: CONTROL, flexDirection: 'row', gap: 4, paddingHorizontal: 8 },
   creditsCount: { fontFamily: FONT.bold, fontSize: TYPE.small, color: COLOR.foreground },
   body: { flex: 1 },
   dock: { flexDirection: 'row', paddingHorizontal: 6, paddingTop: 6, borderTopWidth: 1, borderTopColor: COLOR.border, backgroundColor: COLOR.surface },

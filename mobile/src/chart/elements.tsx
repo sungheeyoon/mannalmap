@@ -6,9 +6,11 @@ import { blockedLine, boundSeatsLine, boundStemsOf, bureauMoveLine, countShareLi
 import { SIX_COMBINATION_NOTE, WEIGHT_SHIFTS_NOTE } from '@saju-view/notes';
 
 import { ElementSymbol } from '@/ui/element-symbol';
+import { Icon } from '@/ui/icons';
+import { Card } from '@/ui/surfaces';
 import { COLOR, CONTROL, ELEMENT_TONE, RADIUS } from '@/ui/tokens';
 
-import { Card, Chevron, Rich, Ruled, T, shared } from './parts';
+import { Rich, Ruled, T, shared } from './parts';
 
 /** 무엇이 세력을 옮겼고 무엇은 안 옮겼는가 — 답할 것이 있을 때만 서고 접힌다 */
 function WeightShifts({ saju }: { saju: Saju }) {
@@ -22,7 +24,10 @@ function WeightShifts({ saju }: { saju: Saju }) {
   return (
     <View style={styles.shifts}>
       <Pressable accessibilityRole="button" accessibilityState={{ expanded: open }} onPress={() => setOpen(!open)} style={styles.shiftsHead}>
-        <Chevron open={open} size={14} closedDeg={0} />
+        {/* 웹의 「▸」처럼 닫히면 오른쪽, 열리면 아래를 본다 — 그림은 아이콘 한 벌의 꺾쇠다 */}
+        <View aria-hidden importantForAccessibility="no-hide-descendants" style={open && styles.shiftsMarkOpen}>
+          <Icon name="chevron" size={14} color={COLOR.secondary} strokeWidth={2} />
+        </View>
         <T>세력에 반영한 합과 안 한 합</T>
       </Pressable>
       {open && (
@@ -70,17 +75,17 @@ export function ElementChart({ saju }: { saju: Saju }) {
 
   return (
     <Card>
-      <T size="lead" bold>오행 분포</T>
-      <T size="xs" tone="secondary" style={styles.lead}>
+      <T size="name" bold>오행 분포</T>
+      <T size="caption" tone="secondary" style={styles.lead}>
         개수는 {glyphCount === 8 ? '여덟' : '여섯'} 글자, 점수는 글자 속 숨은 기운까지 더한 값입니다
-        {glyphCount !== 8 && <T size="xs" tone="muted"> · 시주 제외</T>}
+        {glyphCount !== 8 && <T size="caption" tone="muted"> · 시주 제외</T>}
       </T>
 
       <View style={styles.tableHead}>
-        <T size="xs" tone="muted" style={styles.colName}>오행</T>
-        <T size="xs" tone="muted" style={styles.colCount}>개수</T>
-        <T size="xs" tone="muted" style={styles.colScore}>점수</T>
-        <T size="xs" tone="muted" style={styles.colBar}>비중</T>
+        <T size="caption" tone="muted" style={styles.colName}>오행</T>
+        <T size="caption" tone="muted" style={styles.colCount}>개수</T>
+        <T size="caption" tone="muted" style={styles.colScore}>점수</T>
+        <T size="caption" tone="muted" style={styles.colBar}>비중</T>
       </View>
 
       {ELEMENTS.map((element) => (
@@ -90,21 +95,21 @@ export function ElementChart({ saju }: { saju: Saju }) {
               <View style={styles.chipIcon}>
                 <ElementSymbol element={element} size={20} />
               </View>
-              <T size="base" glyph bold color={ELEMENT_TONE[element].ink}>{element}</T>
-              <T size="small" bold color={ELEMENT_TONE[element].ink}>{ELEMENT_KO[element]}</T>
+              <T size="field" glyph bold color={ELEMENT_TONE[element].ink}>{element}</T>
+              <T size="meta" bold color={ELEMENT_TONE[element].ink}>{ELEMENT_KO[element]}</T>
             </View>
-            {element === strongest && <T size="xs" tone="muted" style={styles.strongest}>최강</T>}
+            {element === strongest && <T size="caption" tone="muted" style={styles.strongest}>최강</T>}
           </View>
           <T num tone={counts[element] === 0 ? 'muted' : 'foreground'} style={styles.colCount}>
             {counts[element]}
-            <T size="xs" tone="muted"> {countShareLine(counts[element], glyphCount)}</T>
+            <T size="caption" tone="muted"> {countShareLine(counts[element], glyphCount)}</T>
           </T>
-          <T num tone="secondary" size="small" style={styles.colScore}>{scores[element].toFixed(2)}</T>
+          <T num tone="secondary" size="meta" style={styles.colScore}>{scores[element].toFixed(2)}</T>
           <View style={[styles.colBar, styles.barCell]}>
             <View style={styles.track}>
               <View style={[styles.fill, { backgroundColor: ELEMENT_TONE[element].ink, width: `${(ratios[element] / max) * 100}%` }]} />
             </View>
-            <T num size="xs" tone="secondary" style={styles.barValue}>{Math.round(ratios[element] * 100)}%</T>
+            <T num size="caption" tone="secondary" style={styles.barValue}>{Math.round(ratios[element] * 100)}%</T>
           </View>
         </View>
       ))}
@@ -113,10 +118,10 @@ export function ElementChart({ saju }: { saju: Saju }) {
 
       {missing.length > 0 && (
         <Ruled>
-          <T size="xs" tone="secondary">
+          <T size="caption" tone="secondary">
             여덟 글자에 없는 오행 {missing.map((element) => ELEMENT_KO[element]).join(', ')}
-            <T size="xs" tone="muted"> (숨은 기운으로는 있을 수 있습니다 — 점수 칸을 보세요)</T>
-            {glyphCount !== 8 && <T size="xs" tone="muted"> · 시주에 있었을지는 알 수 없습니다</T>}
+            <T size="caption" tone="muted"> (숨은 기운으로는 있을 수 있습니다 — 점수 칸을 보세요)</T>
+            {glyphCount !== 8 && <T size="caption" tone="muted"> · 시주에 있었을지는 알 수 없습니다</T>}
           </T>
         </Ruled>
       )}
@@ -141,5 +146,6 @@ const styles = StyleSheet.create({
   barValue: { width: 28, textAlign: 'right' },
   shifts: { marginTop: 16, borderTopWidth: 1, borderTopColor: COLOR.border },
   shiftsHead: { minHeight: CONTROL, flexDirection: 'row', alignItems: 'center', gap: 6 },
+  shiftsMarkOpen: { transform: [{ rotate: '90deg' }] },
   shiftsBody: { gap: 6 },
 });

@@ -5,9 +5,10 @@ import type { Saju } from '@saju';
 import { appliedBasisOf, clockLine, signedMinutes } from '@saju-view';
 import { HOUR_UNKNOWN_CORRECTION_NOTE } from '@saju-view/notes';
 
+import { Card } from '@/ui/surfaces';
 import { COLOR } from '@/ui/tokens';
 
-import { Card, Fold, T } from './parts';
+import { Fold, T } from './parts';
 
 /** 적용된 보정 — 폰에서는 세 칸을 가로로 못 두어 줄마다 값 아래에 설명이 선다(웹 `corrections.tsx`) */
 export function TimeCorrections({ saju }: { saju: Saju }) {
@@ -18,7 +19,7 @@ export function TimeCorrections({ saju }: { saju: Saju }) {
     <Fold
       title={
         <>
-          적용된 보정 <T size="lead" bold tone="secondary">{TIME_BASIS[appliedBasisOf(saju)].label}</T>
+          적용된 보정 <T size="name" bold tone="secondary">{TIME_BASIS[appliedBasisOf(saju)].label}</T>
         </>
       }
     >
@@ -50,7 +51,7 @@ export function Warnings({ saju }: { saju: Saju }) {
   if (saju.meta.warnings.length === 0) return null;
   return (
     <Card style={styles.warning}>
-      <T size="lead" bold>경계 주의</T>
+      <T size="name" bold>경계 주의</T>
       <View style={styles.warnings}>
         {saju.meta.warnings.map((warning) => (
           <View key={warning} style={styles.warningRow}>

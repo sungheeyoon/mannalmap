@@ -17,8 +17,9 @@ import { KeyboardDoneBar, PrimaryButton, SecondaryButton } from '@/ui/parts';
 import { SunMark } from '@/share/marks';
 import { SectionScrollView, useSectionErrors } from '@/ui/section-error';
 import { Icon } from '@/ui/icons';
+import { LoadingOrbit } from '@/ui/loading';
 import { Logo } from '@/ui/logo';
-import { COLOR, FONT, RADIUS, TYPE, TYPE_BODY, TYPE_SECTION, TYPE_TITLE } from '@/ui/tokens';
+import { COLOR, CONTROL, FONT, RADIUS, TYPE, TYPE_BODY, TYPE_SECTION, TYPE_TITLE } from '@/ui/tokens';
 import { Paper } from '@/ui/surfaces';
 import { KEEP_VIEW } from '@/ui/keep-view';
 import { Heading } from '@/ui/heading';
@@ -88,7 +89,14 @@ export default function EntryScreen() {
 
   useFocusEffect(check);
 
-  if (entry === 'checking') return <View style={styles.screen} />;
+  /* 계정을 읽는 동안 — 들어온 뒤의 첫 진입(`me/_layout.tsx`)과 같은 로고 궤도다. 빈 바탕만 두면 멈춘 앱처럼 보였다 */
+  if (entry === 'checking') {
+    return (
+      <View style={[styles.screen, styles.checking]}>
+        <LoadingOrbit />
+      </View>
+    );
+  }
   if (entry === 'home') return <Redirect href={'/me' as never} />;
   if (entry === 'signup') return <Redirect href={'/signup' as never} />;
   if (entry === 'retry') {
@@ -213,15 +221,15 @@ const styles = StyleSheet.create({
   paper: { flexGrow: 1, paddingHorizontal: 12, paddingTop: 20, paddingBottom: 20, gap: 12 },
   brandRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginHorizontal: 4, marginBottom: 12 },
   brand: { fontSize: TYPE.heading, fontFamily: FONT.bold, color: COLOR.foreground },
-  signIn: { minHeight: 44, justifyContent: 'center', marginLeft: 'auto', paddingLeft: 12 },
+  signIn: { minHeight: CONTROL, justifyContent: 'center', marginLeft: 'auto', paddingLeft: 12 },
   signInText: { fontSize: TYPE.body, fontFamily: FONT.bold, color: COLOR.secondary },
   links: { flexDirection: 'row', flexWrap: 'wrap', columnGap: 20, marginTop: 12, marginHorizontal: 4 },
-  link: { minHeight: 44, justifyContent: 'center' },
+  link: { minHeight: CONTROL, justifyContent: 'center' },
   linkText: { fontSize: TYPE.small, fontFamily: FONT.bold, color: COLOR.secondary },
   titleAlone: { marginHorizontal: 4 },
   head: { gap: 20, marginHorizontal: 4, marginBottom: 4 },
   tabs: { flexDirection: 'row', gap: 2, padding: 2, borderRadius: RADIUS.cell, backgroundColor: COLOR.surfaceSunken },
-  tab: { flex: 1, minHeight: 44, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, borderRadius: RADIUS.cell, paddingHorizontal: 8 },
+  tab: { flex: 1, minHeight: CONTROL, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, borderRadius: RADIUS.cell, paddingHorizontal: 8 },
   tabOn: { backgroundColor: COLOR.surface, boxShadow: ELEVATION.card },
   tabText: { fontSize: TYPE.body, fontFamily: FONT.bold, color: COLOR.secondary },
   tabTextOn: { color: COLOR.foreground },
@@ -233,8 +241,9 @@ const styles = StyleSheet.create({
   compatNote: { ...TYPE_BODY, color: COLOR.secondary },
   member: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 4, marginTop: -6 },
   memberAsk: { fontSize: TYPE.small, fontFamily: FONT.medium, color: COLOR.secondary },
-  memberSignIn: { minHeight: 44, justifyContent: 'center', paddingHorizontal: 4 },
+  memberSignIn: { minHeight: CONTROL, justifyContent: 'center', paddingHorizontal: 4 },
   memberSignInText: { fontSize: TYPE.small, fontFamily: FONT.bold, color: COLOR.foreground, textDecorationLine: 'underline' },
+  checking: { alignItems: 'center', justifyContent: 'center' },
   retry: { alignItems: 'center', justifyContent: 'center', gap: 12, padding: 24 },
   retryLine: { ...TYPE_BODY, textAlign: 'center' },
   title: { ...TYPE_TITLE },

@@ -25,7 +25,7 @@ import { LinkRow, SettingsGroup, settingsText } from '@/settings/parts';
 import { FailureLine } from '@/ui/failure-line';
 import { LoadingDots } from '@/ui/loading';
 import { TextButton } from '@/ui/parts';
-import { COLOR, FONT, TYPE, TYPE_CAPTION } from '@/ui/tokens';
+import { COLOR, CONTROL, FONT, TYPE, TYPE_CAPTION } from '@/ui/tokens';
 import { settled } from '@/ui/settled';
 import { TopBar } from '@/ui/top-bar';
 import { CardFrame, Paper, Tile } from '@/ui/surfaces';
@@ -226,7 +226,7 @@ const styles = StyleSheet.create({
   held: { fontFamily: FONT.bold, color: COLOR.foreground, fontVariant: ['tabular-nums'] },
   history: { gap: 16 },
   tabs: { flexDirection: 'row', borderBottomWidth: 1, borderBottomColor: COLOR.border },
-  tab: { flex: 1, alignItems: 'center', minHeight: 44, justifyContent: 'flex-end', paddingBottom: 10, marginBottom: -1, borderBottomWidth: 2, borderBottomColor: 'transparent' },
+  tab: { flex: 1, alignItems: 'center', minHeight: CONTROL, justifyContent: 'flex-end', paddingBottom: 10, marginBottom: -1, borderBottomWidth: 2, borderBottomColor: 'transparent' },
   tabOn: { borderBottomColor: COLOR.foreground },
   tabText: { fontSize: TYPE.body, lineHeight: 22, fontFamily: FONT.bold, color: COLOR.muted },
   tabTextOn: { color: COLOR.foreground },

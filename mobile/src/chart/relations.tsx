@@ -29,14 +29,14 @@ export function UtteranceList({ utterances }: { utterances: readonly Utterance[]
       {spoken.map((utterance, index) => (
         <View key={`${utterance.key}:${index}`} style={shared.wrapBaseline}>
           <View style={styles.strength}>
-            <T size="xs" tone="secondary">{CLAIM_STRENGTH_KO[utterance.strength as SpokenStrength]}</T>
+            <T size="caption" tone="secondary">{CLAIM_STRENGTH_KO[utterance.strength as SpokenStrength]}</T>
           </View>
           <T tone={isRowUtterance(utterance) ? 'foreground' : 'secondary'}>{utterance.text}</T>
         </View>
       ))}
       {silentNote !== null && (
         <Ruled>
-          <T size="xs" tone="muted">{silentNote}</T>
+          <T size="caption" tone="muted">{silentNote}</T>
         </Ruled>
       )}
     </View>
@@ -53,11 +53,11 @@ export function RelationTable({ saju, coverage }: { saju: Saju; coverage: readon
           <ScrollView horizontal showsHorizontalScrollIndicator={false}>
             <View>
               <View style={styles.row}>
-                <T size="xs" tone="secondary" bold style={styles.kind}>종류</T>
-                <T size="xs" tone="secondary" bold style={styles.chars}>글자</T>
-                <T size="xs" tone="secondary" bold style={styles.name}>이름</T>
-                <T size="xs" tone="secondary" bold style={styles.seats}>자리</T>
-                <T size="xs" tone="secondary" bold style={styles.remarks}>비고</T>
+                <T size="caption" tone="secondary" bold style={styles.kind}>종류</T>
+                <T size="caption" tone="secondary" bold style={styles.chars}>글자</T>
+                <T size="caption" tone="secondary" bold style={styles.name}>이름</T>
+                <T size="caption" tone="secondary" bold style={styles.seats}>자리</T>
+                <T size="caption" tone="secondary" bold style={styles.remarks}>비고</T>
               </View>
               {relations.map((relation) => {
                 const cells = relationCells(relation);
@@ -65,23 +65,23 @@ export function RelationTable({ saju, coverage }: { saju: Saju; coverage: readon
                 return (
                   <View key={relationKey(relation)} style={[styles.row, styles.rule]}>
                     <T tone="secondary" style={styles.kind}>{cells.kind}</T>
-                    <T size="base" glyph style={styles.chars}>{cells.chars}</T>
+                    <T size="field" glyph style={styles.chars}>{cells.chars}</T>
                     <T style={styles.name}>
                       {relation.ko}
-                      {relation.name && <T size="xs" tone="muted"> {relation.name}</T>}
+                      {relation.name && <T size="caption" tone="muted"> {relation.name}</T>}
                     </T>
                     <T tone="secondary" style={styles.seats}>{cells.seats}</T>
                     <View style={[styles.remarks, styles.remarkList]}>
-                      {remarks.target !== null && <T size="xs" tone="secondary">{remarks.target}</T>}
-                      {remarks.arrow !== null && <T size="xs" tone="muted">{remarks.arrow}</T>}
+                      {remarks.target !== null && <T size="caption" tone="secondary">{remarks.target}</T>}
+                      {remarks.arrow !== null && <T size="caption" tone="muted">{remarks.arrow}</T>}
                       {remarks.cycle !== null && (
-                        <T size="xs" tone="muted">
-                          <T size="xs" tone="muted" glyph>{remarks.cycle}</T> 순환
+                        <T size="caption" tone="muted">
+                          <T size="caption" tone="muted" glyph>{remarks.cycle}</T> 순환
                         </T>
                       )}
-                      {remarks.twoLetters !== null && <T size="xs" tone="muted">{remarks.twoLetters}</T>}
-                      {remarks.distance !== null && <T size="xs" tone="muted">{remarks.distance}</T>}
-                      {remarks.contested !== null && <T size="xs">{remarks.contested}</T>}
+                      {remarks.twoLetters !== null && <T size="caption" tone="muted">{remarks.twoLetters}</T>}
+                      {remarks.distance !== null && <T size="caption" tone="muted">{remarks.distance}</T>}
+                      {remarks.contested !== null && <T size="caption">{remarks.contested}</T>}
                     </View>
                   </View>
                 );
@@ -99,7 +99,7 @@ export function RelationTable({ saju, coverage }: { saju: Saju; coverage: readon
       )}
 
       <Ruled>
-        <T size="xs" tone="muted">{RELATIONS_NOTE}</T>
+        <T size="caption" tone="muted">{RELATIONS_NOTE}</T>
       </Ruled>
     </Fold>
   );

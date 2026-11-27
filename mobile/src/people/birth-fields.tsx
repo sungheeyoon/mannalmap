@@ -13,7 +13,7 @@ import { FoldIcon } from '@/ui/icons';
 import { Choices, DigitField, Field, FieldLabel, Select } from '@/ui/parts';
 import { SectionErrorLine, type SectionErrors } from '@/ui/section-error';
 import { CardFrame } from '@/ui/surfaces';
-import { COLOR, FONT, RADIUS, TYPE, TYPE_CAPTION } from '@/ui/tokens';
+import { COLOR, CONTROL, FONT, RADIUS, TYPE, TYPE_CAPTION } from '@/ui/tokens';
 import { WordText } from '@/ui/word-text';
 
 const HOUR_CHOICES = [
@@ -280,7 +280,7 @@ const styles = StyleSheet.create({
   converted: { fontFamily: FONT.medium, fontSize: TYPE.small, color: COLOR.secondary, marginVertical: 2 },
   refused: { color: COLOR.danger },
   off: { opacity: BUTTON_OFF_OPACITY },
-  disclosure: { minHeight: 44, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 14, borderRadius: RADIUS.cell, borderWidth: 1, borderColor: COLOR.borderStrong, backgroundColor: COLOR.surface },
+  disclosure: { minHeight: CONTROL, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 14, borderRadius: RADIUS.cell, borderWidth: 1, borderColor: COLOR.borderStrong, backgroundColor: COLOR.surface },
   choiceHint: { ...TYPE_CAPTION, marginLeft: 72, color: COLOR.secondary },
   advancedIntro: { fontFamily: FONT.medium, fontSize: TYPE.fine, lineHeight: 20, color: COLOR.secondary },
   disclosureLabel: { flexShrink: 0, fontSize: TYPE.body, fontFamily: FONT.bold, color: COLOR.foreground },

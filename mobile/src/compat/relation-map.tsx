@@ -13,7 +13,7 @@ import { PrimaryButton } from '@/ui/parts';
 import { useReducedMotion } from '@/ui/motion';
 import { StemSymbol } from '@/ui/stem-symbol';
 import { Icon } from '@/ui/icons';
-import { alpha, COLOR, ELEMENT_TONE, FONT, RADIUS as CORNER, TYPE } from '@/ui/tokens';
+import { alpha, COLOR, CONTROL, ELEMENT_TONE, FONT, RADIUS as CORNER, reach, TYPE } from '@/ui/tokens';
 import { CardFrame, Paper } from '@/ui/surfaces';
 import { Heading } from '@/ui/heading';
 import { WordText } from '@/ui/word-text';
@@ -265,7 +265,7 @@ function Seat({ person, at, angle, phase, width, state, onPress }: { person: Map
       accessibilityRole="button"
       accessibilityState={{ expanded: near }}
       accessibilityLabel={`${person.label}${person.day === null ? '' : `, 일간 ${person.day.stem} ${person.day.picture}`}${score !== null ? `, 나와 본 궁합 ${score}점` : ''}`}
-      hitSlop={8}
+      hitSlop={reach(size)}
       onPress={onPress}
       style={[styles.seat, { left: cx - size / 2, top: cy - size / 2, width: size, height: size, zIndex: near ? 10 : 1, opacity: state === 'receded' ? 0.35 : 1 }]}
     >
@@ -289,7 +289,7 @@ function AddSeat({ width }: { width: number }) {
   const cx = (at.x / 100) * width;
   const cy = (at.y / 100) * width;
   return (
-    <Pressable accessibilityRole="link" onPress={() => go('/me/people')} style={[styles.add, { left: cx - 22, top: cy - 22 }]}>
+    <Pressable accessibilityRole="link" onPress={() => go('/me/people')} style={[styles.add, { left: cx - CONTROL / 2, top: cy - CONTROL / 2 }]}>
       <WordText style={styles.addLabel}>사람 추가</WordText>
       <View style={styles.addFace}>
         <Icon name="plus" size={20} />
@@ -408,8 +408,8 @@ const styles = StyleSheet.create({
   seatName: { flexShrink: 1, fontFamily: FONT.bold, fontSize: TYPE.fine, lineHeight: 20, color: COLOR.secondary },
   seatNameNear: { fontSize: TYPE.body, color: COLOR.foreground },
   seatScore: { fontFamily: FONT.bold, fontSize: TYPE.fine, lineHeight: 20 },
-  add: { position: 'absolute', width: 44, height: 44, alignItems: 'center', overflow: 'visible' },
-  addFace: { width: 44, height: 44, borderRadius: CORNER.pill, alignItems: 'center', justifyContent: 'center', borderWidth: 2, borderStyle: 'dashed', borderColor: COLOR.borderStrong, backgroundColor: COLOR.surface },
+  add: { position: 'absolute', width: CONTROL, height: CONTROL, alignItems: 'center', overflow: 'visible' },
+  addFace: { width: CONTROL, height: CONTROL, borderRadius: CORNER.pill, alignItems: 'center', justifyContent: 'center', borderWidth: 2, borderStyle: 'dashed', borderColor: COLOR.borderStrong, backgroundColor: COLOR.surface },
   addLabel: { position: 'absolute', top: -24, width: 80, textAlign: 'center', fontFamily: FONT.bold, fontSize: TYPE.small, color: COLOR.foreground },
   legendRoom: { paddingHorizontal: 20, paddingBottom: 20, paddingTop: 4 },
   legend: { gap: 8 },
@@ -427,13 +427,13 @@ const styles = StyleSheet.create({
   cardScoreHead: { fontFamily: FONT.bold, fontSize: TYPE.tag, color: COLOR.secondary },
   cardScoreValue: { fontFamily: FONT.bold, fontSize: TYPE.heading },
   cardScoreUnit: { fontFamily: FONT.medium, fontSize: TYPE.fine, color: COLOR.secondary },
-  cardClose: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center' },
+  cardClose: { width: CONTROL, height: CONTROL, alignItems: 'center', justifyContent: 'center' },
   cardLine: { fontFamily: FONT.medium, fontSize: TYPE.field, lineHeight: 24, color: COLOR.foreground },
   stale: { fontFamily: FONT.medium, fontSize: TYPE.fine, color: COLOR.creamInk },
-  tertiary: { minHeight: 44, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 4 },
+  tertiary: { minHeight: CONTROL, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 4 },
   tertiaryText: { fontFamily: FONT.bold, fontSize: TYPE.small, color: COLOR.secondary },
   links: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 6 },
-  chip: { minHeight: 44, maxWidth: '100%', flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 12, borderRadius: CORNER.pill, borderWidth: 1, borderColor: COLOR.border, backgroundColor: COLOR.surface },
+  chip: { minHeight: CONTROL, maxWidth: '100%', flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 12, borderRadius: CORNER.pill, borderWidth: 1, borderColor: COLOR.border, backgroundColor: COLOR.surface },
   chipText: { flexShrink: 1, fontFamily: FONT.bold, fontSize: TYPE.small, color: COLOR.foreground },
   chipScore: { fontFamily: FONT.medium, fontSize: TYPE.small, color: COLOR.secondary },
 });

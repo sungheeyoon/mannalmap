@@ -12,7 +12,7 @@ import { READING_CONTINUE_NOTE, SELF_READING_MAKING } from '@web-home/making';
 import { ElementSymbol } from '@/ui/element-symbol';
 import { Icon } from '@/ui/icons';
 import { StemSymbol } from '@/ui/stem-symbol';
-import { COLOR, ELEMENT_TONE, FONT, RADIUS, TYPE, TYPE_BODY, TYPE_META } from '@/ui/tokens';
+import { COLOR, CONTROL, ELEMENT_TONE, FONT, RADIUS, TYPE, TYPE_BODY, TYPE_META } from '@/ui/tokens';
 import { CardFrame } from '@/ui/surfaces';
 
 import type { HomePerson, ReadingRow, RunningLine } from './read';
@@ -208,7 +208,8 @@ const styles = StyleSheet.create({
   headTitle: { flexDirection: 'row', alignItems: 'baseline', gap: 6 },
   title: { fontFamily: FONT.bold, fontSize: TYPE.heading, color: COLOR.foreground },
   count: { fontFamily: FONT.medium, fontSize: TYPE.small, color: COLOR.secondary },
-  headLink: { minHeight: 44, flexDirection: 'row', alignItems: 'center', gap: 2 },
+  /* 「관리」처럼 짧은 글자도 누를 자리는 44 다 — 글자는 오른쪽 끝에 그대로 선다 */
+  headLink: { minHeight: CONTROL, minWidth: CONTROL, flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-end', gap: 2 },
   headLinkText: { fontFamily: FONT.medium, fontSize: TYPE.small, color: COLOR.secondary },
   row: { minHeight: 64, flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 16, paddingVertical: 12, borderTopWidth: 1, borderTopColor: COLOR.border, marginTop: -1 },
   pressed: { backgroundColor: COLOR.surfaceSunken },
