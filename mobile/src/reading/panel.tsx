@@ -139,9 +139,8 @@ export function ReadingPanel({
     onReadingChanged?.();
   }, [reading?.id, onReadingChanged]);
 
-  const stale = reading !== null && target.kind !== 'match' && !reading.fromCurrentChart;
-  const makeAtTop = chrome.makeInHeader && stale;
-  const makeAtEnd = chrome.makeInHeader && !stale;
+  /* 글이 있을 때 다시 받기는 언제나 글 끝 — 수정 전 글도 머리에 주 단추로 올리지 않는다(ADR 0282, 웹 `app/me/reading/panel.tsx` 와 같다) */
+  const makeAtEnd = chrome.makeInHeader;
   const makeButton = (emphasis: 'primary' | 'secondary') =>
     emphasis === 'primary' ? (
       <PrimaryButton label={chrome.makeLabel} onPress={panel.press} disabled={chrome.makeDisabled} />
@@ -154,14 +153,6 @@ export function ReadingPanel({
 
   return (
     <View style={styles.panel}>
-      {makeAtTop && (
-        <View style={styles.stack}>
-          {makeButton('primary')}
-          {ask}
-          {note}
-        </View>
-      )}
-
       {!chrome.hideMake && !chrome.makeInHeader && (
         <CardFrame style={styles.card}>
           {ask}

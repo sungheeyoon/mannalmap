@@ -188,19 +188,15 @@ export function ReadingPanel({
    *
    * 글이 아직 없으면 권하는 말과 함께 칸 안에(`block`), 글이 이미 있으면 **글 끝의 공유
    * 단추 옆에** 반반으로(`half`, 안 A) 선다 — 그 둘이 글을 읽고 나서 하는 두 가지이고, 나란히 있어야
-   * 고르기가 된다. 수정 전 글이면 머리에 주 단추로 선다(`pill`).
+   * 고르기가 된다. 수정 전 글도 같다(ADR 0282).
    */
-  const makeButton = (shape: 'block' | 'pill' | 'half', emphasis: 'primary' | 'secondary') => (
+  const makeButton = (shape: 'block' | 'half', emphasis: 'primary' | 'secondary') => (
     <button
       type="button"
       onClick={press}
       disabled={chrome.makeDisabled}
       className={`${emphasis === 'primary' ? BUTTON_PRIMARY_FACE : BUTTON_SECONDARY_FACE} ${
-        shape === 'pill'
-          ? 'w-full whitespace-nowrap px-3 sm:w-auto sm:px-5'
-          : shape === 'half'
-            ? 'w-full whitespace-nowrap px-3'
-            : 'w-full shrink-0 px-5 sm:w-auto'
+        shape === 'half' ? 'w-full whitespace-nowrap px-3' : 'w-full shrink-0 px-5 sm:w-auto'
       }`}
     >
       <Icon name="spark" className="size-4.5" />
@@ -209,14 +205,11 @@ export function ReadingPanel({
   );
 
   /**
-   * **수정 전 정보로 만든 글이면 다시 받기가 주 단추가 된다.** 지금 명식과 다른 글을 들고 있는 사람에게는 새로 받는 것이
-   * 먼저다(시안 3차 warm). 평소에는 머리에 주 단추가 없다 — 보내기는 늘 보조다(2026-10-10 화면 점검 B12: 읽으러 온 사람에게
-   * 글보다 먼저 공유를 권했다). 한 영역에 주 단추는 하나 이하다.
+   * **글이 있을 때 다시 받기는 언제나 글 끝에 선다**(안 A). 수정 전 정보로 만든 글도 같다 — 머리에 주 단추로 올리던 것을
+   * 걷었다(운영자 결정, ADR 0282). 수정 전이라는 사실은 결과 화면 머리의 안내 줄(`READING_STALE_NOTE`)이 말한다. 머리에는 주 단추가
+   * 없다 — 보내기도 글 끝이다.
    */
-  const stale = reading !== null && target.kind !== 'match' && !reading.fromCurrentChart;
-  /** 글이 있을 때 다시 받기가 서는 자리 — 수정 전 글이면 머리(읽기 전에 정한다), 아니면 글 끝(안 A) */
-  const makeAtTop = chrome.makeInHeader && stale;
-  const makeAtEnd = chrome.makeInHeader && !stale;
+  const makeAtEnd = chrome.makeInHeader;
 
   const makeBlock = chrome.hideMake ? null : (
     <div className={`flex flex-col gap-3 ${FLAT_CARD_FACE} px-5 py-5 sm:px-6`}>
@@ -280,17 +273,9 @@ export function ReadingPanel({
   return (
     <>
       {/* 부르는 화면이 제목을 이미 세웠고(`heading === null`) 누를 것도 없으면 머리는 통째로 안 선다 — 빈 칸이 틈만 남긴다 */}
-      {(heading !== null || makeAtTop) && (
-      <header className={headingHidden && !makeAtTop ? 'sr-only' : 'flex flex-col gap-3'}>
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-6">
-          {heading !== null && <h2 className={headingHidden ? 'sr-only' : TYPE_NAME}>{heading}</h2>}
-          {/* 수정 전 글일 때만 — 글을 읽기 전에 정하는 일이라 머리에 주 단추로 선다(시안 3차 warm). 공유는 글 끝에 그대로다 */}
-          {makeAtTop && <div className="flex items-center justify-end sm:shrink-0">{makeButton('pill', 'primary')}</div>}
-        </div>
-
-        {/* 다음 글에 대한 말은 그 버튼 아래다 — 사이 물음과 풀이권 이야기 */}
-        {makeAtTop && ask}
-        {makeAtTop && creditsNote !== null && <p className="text-small leading-5 text-secondary">{creditsNote}</p>}
+      {heading !== null && (
+      <header className={headingHidden ? 'sr-only' : 'flex flex-col gap-3'}>
+        <h2 className={headingHidden ? 'sr-only' : TYPE_NAME}>{heading}</h2>
       </header>
       )}
 
@@ -331,8 +316,8 @@ export function ReadingPanel({
 
       {/*
         **다 읽은 뒤에 하는 일은 글 끝에 선다**(2026-10-26 운영자 결정 「안 A」 — 브런치 글 끝 · 네이버 뉴스 기사 끝의 줄). 보내기와 다시
-        받기가 반반으로 나란히 서고(같은 일에 손잡이는 하나 — 머리에는 이제 없다), 그 아래 의견이 한 줄로 접혀 선다. 수정 전 글이면
-        다시 받기는 머리에 남는다(`makeAtTop`) — 여기는 보내기 하나다. 만드는 동안 · 글이 없을 때는 아무것도 안 선다.
+        받기가 반반으로 나란히 서고(같은 일에 손잡이는 하나 — 머리에는 없다), 그 아래 의견이 한 줄로 접혀 선다. 수정 전 글도
+        같다(ADR 0282). 만드는 동안 · 글이 없을 때는 아무것도 안 선다.
       */}
       {reading !== null && phase !== 'loading' && (chrome.canShare || makeAtEnd || chrome.asksFeedback) && (
         <div className={`${READING_COLUMN} flex flex-col gap-4`}>
