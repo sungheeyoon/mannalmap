@@ -1,6 +1,6 @@
 import { Redirect, Stack, router, useGlobalSearchParams, usePathname } from 'expo-router';
 import { useEffect } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { SERVICE_NAME } from '@brand';
@@ -23,7 +23,8 @@ import { goTab, useTabHost } from '@/ui/go-tab';
 import { Icon } from '@/ui/icons';
 import { LoadingOrbit } from '@/ui/loading';
 import { Logo } from '@/ui/logo';
-import { SecondaryButton } from '@/ui/parts';
+import { FailureLine } from '@/ui/failure-line';
+import { Press } from '@/ui/press';
 import { Badge } from '@/ui/surfaces';
 import { COLOR, CONTROL, ELEMENT_TONE, FONT, RADIUS, reach, TYPE } from '@/ui/tokens';
 import { KEEP_VIEW } from '@/ui/keep-view';
@@ -89,11 +90,11 @@ export default function MeLayout() {
       </ConnectedClient>
     );
   }
+  /* 못 읽었으면 웹의 같은 자리(`AccountNotice` 의 `FailureLine`)처럼 붉은 줄과 「다시 시도하기」가 화면 맨 위 단에 선다 */
   const failure =
     gate.kind === 'failed' ? (
       <SafeAreaView style={[styles.screen, styles.failed, held !== null && styles.over]}>
-        <WordText style={styles.failure}>{gate.message}</WordText>
-        <SecondaryButton label="다시 시도하기" onPress={retry} />
+        <FailureLine onRetry={retry}>{gate.message}</FailureLine>
       </SafeAreaView>
     ) : null;
   /* 한 번도 못 들어온 사람은 안내만 본다. 들어와 있던 사람은 안내가 화면을 가릴 뿐 아래 스택은 살아 있다 — 다시 시도하면 쓰던 글과 스크롤이 그대로다 */
@@ -108,13 +109,14 @@ export default function MeLayout() {
         <LiveChannel client={client} />
         {appHeadStands(pathname, search) && (
         <View style={[styles.header, { paddingTop: insets.top }]}>
-          <Pressable accessibilityRole="link" accessibilityLabel={`${SERVICE_NAME} 홈`} hitSlop={reach(CONTROL)} onPress={() => goTab('/me')} style={styles.logo}>
+          <Press feel="icon" accessibilityRole="link" accessibilityLabel={`${SERVICE_NAME} 홈`} hitSlop={reach(CONTROL)} onPress={() => goTab('/me')} style={styles.logo}>
             <Logo size={32} />
-          </Pressable>
+          </Press>
           <View style={styles.tools}>
             {counts.credits !== null && (
               /* 표 아이콘 곁에 남은 장수만 붙인다 — 설명 글은 안 넣는다(운영자 확정 2026-11-08, 대장 all-11) */
-              <Pressable
+              <Press
+                feel="icon"
                 accessibilityRole="button"
                 accessibilityLabel={readingCreditsLabel({ available: counts.credits })}
                 onPress={() => router.push('/me/credits' as never)}
@@ -123,16 +125,16 @@ export default function MeLayout() {
               >
                 <Icon name="ticket" size={20} />
                 <WordText style={styles.creditsCount}>{counts.credits}</WordText>
-              </Pressable>
+              </Press>
             )}
             {/* 읽는 이름은 웹 종과 같다 — 「소식」 뒤에 안 읽은 수(웹 `site-header.tsx` 의 `NewsBell` · `UnreadBadge`) */}
-            <Pressable accessibilityRole="link" accessibilityLabel={counts.news > 0 ? `소식 ${counts.news}${UNREAD_WORDS}` : '소식'} onPress={() => router.push('/me/requests' as never)} hitSlop={reach(CONTROL)} style={styles.tool}>
+            <Press feel="icon" accessibilityRole="link" accessibilityLabel={counts.news > 0 ? `소식 ${counts.news}${UNREAD_WORDS}` : '소식'} onPress={() => router.push('/me/requests' as never)} hitSlop={reach(CONTROL)} style={styles.tool}>
               <Icon name="bell" size={20} />
               <Badge count={counts.news} style={styles.toolBadge} />
-            </Pressable>
-            <Pressable accessibilityRole="link" accessibilityLabel="설정" onPress={() => router.push('/me/settings' as never)} hitSlop={reach(CONTROL)} style={styles.tool}>
+            </Press>
+            <Press feel="icon" accessibilityRole="link" accessibilityLabel="설정" onPress={() => router.push('/me/settings' as never)} hitSlop={reach(CONTROL)} style={styles.tool}>
               <Icon name="gear" size={20} />
-            </Pressable>
+            </Press>
           </View>
         </View>
         )}
@@ -157,8 +159,9 @@ export default function MeLayout() {
               const active = isActive(pathname, tab.href);
               const count = badges[tab.href] ?? 0;
               return (
-                <Pressable
+                <Press
                   key={tab.href}
+                  feel="icon"
                   accessibilityRole="tab"
                   accessibilityLabel={count > 0 ? `${tab.label} ${count}${UNREAD_WORDS}` : tab.label}
                   accessibilityState={{ selected: active }}
@@ -170,7 +173,7 @@ export default function MeLayout() {
                   </View>
                   <WordText style={[styles.tabLabel, active && styles.tabLabelOn]}>{tab.label}</WordText>
                   <Badge count={count} style={styles.tabBadge} />
-                </Pressable>
+                </Press>
               );
             })}
           </View>
@@ -185,9 +188,9 @@ export default function MeLayout() {
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: COLOR.background },
   over: StyleSheet.absoluteFill,
-  failed: { alignItems: 'center', justifyContent: 'center', gap: 12, padding: 24 },
+  /* 웹 `main` 의 단(옆 16 · 위 32)에 실패 줄 하나 — 다른 화면의 실패 줄과 같은 자리 · 같은 꼴이다 */
+  failed: { paddingHorizontal: 16, paddingTop: 32 },
   checking: { alignItems: 'center', justifyContent: 'center' },
-  failure: { fontFamily: FONT.medium, fontSize: TYPE.small, color: COLOR.danger, textAlign: 'center' },
   header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingLeft: 16, paddingRight: 4, backgroundColor: COLOR.background },
   /* 로고(32)는 왼쪽 끝에 두고 누를 자리만 오른쪽으로 44 까지 편다 — 글자 없는 로고라 폭이 누를 자리보다 좁았다 */
   logo: { minHeight: CONTROL, minWidth: CONTROL, alignItems: 'flex-start', justifyContent: 'center' },

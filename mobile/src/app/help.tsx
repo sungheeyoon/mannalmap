@@ -1,12 +1,13 @@
 import { router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useRef, useState, type ComponentRef } from 'react';
-import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { ScrollView, StyleSheet, View } from 'react-native';
 
 import { HELP_GROUPS } from '@brand/guide';
 
 import { CONTACT_LABEL } from '@/info/copy';
 import { InfoScreen } from '@/info/frame';
 import { Icon } from '@/ui/icons';
+import { Press } from '@/ui/press';
 import { SecondaryButton } from '@/ui/parts';
 import { COLOR, CONTROL, FONT, RADIUS, TYPE, TYPE_BODY, TYPE_SECTION } from '@/ui/tokens';
 import { Card } from '@/ui/surfaces';
@@ -69,8 +70,9 @@ export default function HelpScreen() {
 
       <View style={styles.chips}>
         {GROUPS.map((group) => (
-          <Pressable
+          <Press
             key={group.title}
+            feel="shrink"
             accessibilityRole="link"
             onPress={() => {
               open(group.items[0].id);
@@ -79,7 +81,7 @@ export default function HelpScreen() {
             style={styles.chip}
           >
             <WordText style={styles.chipText}>{group.title}</WordText>
-          </Pressable>
+          </Press>
         ))}
       </View>
 
@@ -96,7 +98,8 @@ export default function HelpScreen() {
                     style={index > 0 && styles.divided}
                     onLayout={(event) => place(`item:${item.id}`, event.nativeEvent.layout.y)}
                   >
-                    <Pressable
+                    <Press
+                      feel="fade"
                       accessibilityRole="button"
                       accessibilityState={{ expanded: isOpen }}
                       onPress={() =>
@@ -113,7 +116,7 @@ export default function HelpScreen() {
                       <View style={isOpen && styles.chevronOpen}>
                         <Icon name="chevron" size={16} color={COLOR.secondary} />
                       </View>
-                    </Pressable>
+                    </Press>
                     {isOpen && (
                       <View style={styles.answers}>
                         {(item.inApp ?? item.a).map((line) => (
@@ -122,9 +125,9 @@ export default function HelpScreen() {
                           </WordText>
                         ))}
                         {item.link && (
-                          <Pressable accessibilityRole="link" onPress={() => router.push(item.link!.href as never)} style={styles.link}>
+                          <Press feel="fade" accessibilityRole="link" onPress={() => router.push(item.link!.href as never)} style={styles.link}>
                             <WordText style={styles.linkText}>{item.link.label} →</WordText>
-                          </Pressable>
+                          </Press>
                         )}
                       </View>
                     )}

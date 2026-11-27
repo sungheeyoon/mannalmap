@@ -11,6 +11,7 @@ import { READING_CONTINUE_NOTE, SELF_READING_MAKING } from '@web-home/making';
 
 import { ElementSymbol } from '@/ui/element-symbol';
 import { Icon } from '@/ui/icons';
+import { Press } from '@/ui/press';
 import { StemSymbol } from '@/ui/stem-symbol';
 import { COLOR, CONTROL, ELEMENT_TONE, FONT, RADIUS, TYPE, TYPE_BODY, TYPE_META } from '@/ui/tokens';
 import { CardFrame } from '@/ui/surfaces';
@@ -45,15 +46,19 @@ function Row({ onPress, children }: { onPress?: () => void; children: ReactNode 
 function SectionHead({ title, count, link }: { title: string; count: string | null; link?: { label: string; name: string; href: string } }) {
   return (
     <View style={styles.head}>
-      <View style={styles.headTitle}>
-        <Heading style={styles.title}>{title}</Heading>
+      {/*
+        개수는 제목 글자 안에 선다 — 웹의 `h2` 안 `span` 과 같고 읽는 이름도 「저장한 사람 2/10명」 하나다. 제목은 줄의 남은 폭을 다 쓴다 — 글자에 꼭
+        맞는 폭을 받으면 안드로이드가 끝 어절을 다음 줄로 밀어 잘랐다(「저장한 사람」→「저장한」, ADR 0281 · `chart/pillars.tsx` 의 `tenGod`)
+      */}
+      <Heading style={[styles.title, styles.headTitle]}>
+        {count === null ? title : `${title} `}
         {count !== null && <WordText style={styles.count}>{count}</WordText>}
-      </View>
+      </Heading>
       {link !== undefined && (
-        <Pressable accessibilityRole="link" accessibilityLabel={link.name} onPress={() => go(link.href)} style={styles.headLink}>
+        <Press feel="fade" accessibilityRole="link" accessibilityLabel={link.name} onPress={() => go(link.href)} style={styles.headLink}>
           <WordText style={styles.headLinkText}>{link.label}</WordText>
           <Icon name="chevron" size={16} color={COLOR.secondary} />
-        </Pressable>
+        </Press>
       )}
     </View>
   );
@@ -68,9 +73,9 @@ function MoreList({ shown, rows, tail }: { shown: number; rows: readonly ReactNo
       {open || !more ? rows : rows.slice(0, shown)}
       {tail}
       {more && (
-        <Pressable accessibilityRole="button" accessibilityState={{ expanded: open }} onPress={() => setOpen(!open)} style={styles.more}>
+        <Press feel="row" accessibilityRole="button" accessibilityState={{ expanded: open }} onPress={() => setOpen(!open)} style={styles.more}>
           <WordText style={styles.moreText}>{open ? '접기' : '더보기'}</WordText>
-        </Pressable>
+        </Press>
       )}
     </CardFrame>
   );
@@ -205,7 +210,7 @@ export function SavedPeople({ people, slots }: { people: readonly HomePerson[]; 
 const styles = StyleSheet.create({
   section: { gap: 8 },
   head: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 16 },
-  headTitle: { flexDirection: 'row', alignItems: 'baseline', gap: 6 },
+  headTitle: { flex: 1, minWidth: 0 },
   title: { fontFamily: FONT.bold, fontSize: TYPE.heading, color: COLOR.foreground },
   count: { fontFamily: FONT.medium, fontSize: TYPE.small, color: COLOR.secondary },
   /* 「관리」처럼 짧은 글자도 누를 자리는 44 다 — 글자는 오른쪽 끝에 그대로 선다 */

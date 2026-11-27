@@ -1,6 +1,6 @@
 import { router, useFocusEffect } from 'expo-router';
 import { useCallback, useRef, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { ScrollView, StyleSheet, View } from 'react-native';
 
 import type { NotificationKind } from '@consent/index';
 import type { Inbox } from '@matching/inbox';
@@ -10,8 +10,10 @@ import { useClient } from '@/auth/connected';
 import { markNotificationsRead, readInbox, type Read } from '@/matching/doors';
 import { Icon, type IconName } from '@/ui/icons';
 import { EmptyState } from '@/ui/empty-state';
+import { FailureLine } from '@/ui/failure-line';
 import { LoadingDots } from '@/ui/loading';
-import { COLOR, CONTROL, FONT, RADIUS, TYPE, TYPE_BODY } from '@/ui/tokens';
+import { Press } from '@/ui/press';
+import { alpha, COLOR, FONT, RADIUS, TYPE, TYPE_BODY } from '@/ui/tokens';
 import { TopBar } from '@/ui/top-bar';
 import { CardFrame } from '@/ui/surfaces';
 import { WordText } from '@/ui/word-text';
@@ -67,22 +69,12 @@ export default function RequestsScreen() {
     <View style={styles.screen}>
       <TopBar title="소식" fallback="/me" />
       <ScrollView contentContainerStyle={styles.content}>
+        {/* 못 읽은 줄은 웹과 같은 실패 줄이다(`app/me/requests/page.tsx` · `manage.tsx` 의 `FailureLine`) */}
         {inbox === null ? <LoadingDots /> : !inbox.ok ? (
-          <View>
-            <WordText style={styles.failure} accessibilityRole="alert">
-              소식을 불러오지 못했어요. {inbox.reason}
-            </WordText>
-            <Pressable accessibilityRole="button" onPress={load} style={styles.retry}>
-              <WordText style={styles.retryText}>다시 시도하기</WordText>
-            </Pressable>
-          </View>
+          <FailureLine onRetry={() => void load()}>{`소식을 불러오지 못했어요. ${inbox.reason}`}</FailureLine>
         ) : (
           <>
-            {readFailed && (
-              <WordText style={styles.failure} accessibilityRole="alert">
-                소식을 읽은 것으로 표시하지 못했어요.
-              </WordText>
-            )}
+            {readFailed && <FailureLine>소식을 읽은 것으로 표시하지 못했어요.</FailureLine>}
             {inbox.value.notifications.length === 0 ? (
               <EmptyState icon="bell" title="새로운 소식이 없어요">
                 새 요청이나 풀이 결과가 생기면 여기에 알려드릴게요.
@@ -110,9 +102,9 @@ export default function RequestsScreen() {
                       {body}
                     </View>
                   ) : (
-                    <Pressable key={item.notificationId} accessibilityRole="link" onPress={() => router.push(item.href as never)} style={rowStyle}>
+                    <Press key={item.notificationId} feel="row" accessibilityRole="link" onPress={() => router.push(item.href as never)} style={rowStyle}>
                       {body}
-                    </Pressable>
+                    </Press>
                   );
                 })}
               </CardFrame>
@@ -128,18 +120,17 @@ const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: COLOR.background },
   content: { flexGrow: 1, gap: 24, padding: 16 },
   flex: { flex: 1, minWidth: 0, gap: 2 },
-  failure: { fontFamily: FONT.medium, fontSize: TYPE.small, lineHeight: 19, color: COLOR.danger },
-  retry: { minHeight: CONTROL, justifyContent: 'center', alignSelf: 'flex-start' },
-  retryText: { fontFamily: FONT.bold, fontSize: TYPE.note, color: COLOR.foreground },
   row: { flexDirection: 'row', alignItems: 'flex-start', gap: 12, paddingHorizontal: 16, paddingVertical: 14 },
   rowLine: { borderTopWidth: 1, borderTopColor: COLOR.border },
-  rowNew: { backgroundColor: COLOR.cream },
+  /* 안 읽은 줄은 크림을 옅게(웹 `bg-cream/60`) — 크림 그대로면 같은 크림의 그림 동그라미가 줄에 묻혔다 */
+  rowNew: { backgroundColor: alpha(COLOR.cream, 0.6) },
   icon: { width: 40, height: 40, alignItems: 'center', justifyContent: 'center', borderRadius: RADIUS.pill },
-  iconWarn: { backgroundColor: COLOR.warningWash },
+  iconWarn: { backgroundColor: COLOR.dangerWash },
   iconNew: { backgroundColor: COLOR.cream },
   iconOld: { backgroundColor: COLOR.surfaceSunken },
   text: { ...TYPE_BODY, color: COLOR.secondary },
   textNew: { fontFamily: FONT.bold, color: COLOR.foreground },
   meta: { fontFamily: FONT.medium, fontSize: TYPE.small, color: COLOR.muted },
-  dot: { width: 8, height: 8, marginTop: 8, borderRadius: RADIUS.pill, backgroundColor: COLOR.danger },
+  /* 안 읽음 점은 딱지 색이다(웹 `bg-badge`) */
+  dot: { width: 8, height: 8, marginTop: 8, borderRadius: RADIUS.pill, backgroundColor: COLOR.badge },
 });

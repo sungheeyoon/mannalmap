@@ -27,7 +27,6 @@ const HAND_WRITTEN: Readonly<Record<string, number>> = {
   'mobile/src/app/me/match/[matchId].tsx': 2,
   'mobile/src/app/me/matching/adult-check.tsx': 2,
   'mobile/src/app/me/people/[personId].tsx': 4,
-  'mobile/src/app/me/requests.tsx': 1,
   'mobile/src/app/signup.tsx': 1,
   'mobile/src/app/support.tsx': 1,
   'mobile/src/chart/fortune.tsx': 1,

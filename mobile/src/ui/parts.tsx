@@ -4,7 +4,6 @@ import {
   InputAccessoryView,
   Keyboard,
   Platform,
-  Pressable,
   StyleSheet,
   Text,
   TextInput,
@@ -17,11 +16,21 @@ import { digitOutOfRange } from '@input/entry';
 
 import { Button } from './buttons';
 import { FoldIcon } from './icons';
+import { Press } from './press';
 import { COLOR, FONT, CONTROL, RADIUS, TYPE } from './tokens';
 
 /** 칸 위의 이름 — 칸이 같은 이름을 제 낭독 이름으로 들면(`Select`) `aria-hidden` 으로 두 번 읽히지 않게 한다 */
 export function FieldLabel({ children, 'aria-hidden': hidden }: { children: ReactNode; 'aria-hidden'?: boolean }) {
   return <Text aria-hidden={hidden} style={styles.label}>{children}</Text>;
+}
+
+/**
+ * **적는 칸의 초점 · 오류 꼴** — 웹 출생 정보 폼의 칸(`app/birth-form.module.css` 「초점 · 오류 — 모든 칸이 같은 고리」)과 같다. 초점이면 테가
+ * 크림 먹색이 되고 둘레에 3 의 옅은 고리가 선다. 누른 뒤 걸린 칸(`refused`)은 붉은 테 2 가 이기고, 그 칸에 초점이 오면 고리도 옅은 붉은색이다.
+ * 앱의 적는 칸은 이 둘(`Field` · `DigitField`)이 한 벌이라 웹 `FIELD`(가입 · 프로필의 칸 — 먹색 테 · 2 고리)와는 테 색 · 고리 두께가 조금 다르다.
+ */
+function focusLook(focused: boolean, refused: boolean) {
+  return [focused && styles.focus, refused && styles.wrong, focused && refused && styles.focusWrong];
 }
 
 /** 글을 적는 칸 */
@@ -48,12 +57,15 @@ export function Field({
   /** 저장하는 동안 잠근다 — 그 사이 적은 것은 저장이 끝나 폼이 비면 사라진다 */
   disabled?: boolean;
 }) {
+  const [focused, setFocused] = useState(false);
   return (
     <TextInput
       ref={inputRef}
       editable={!disabled}
       accessibilityState={{ disabled }}
-      style={[styles.control, refused && styles.wrong, disabled && styles.off]}
+      onFocus={() => setFocused(true)}
+      onBlur={() => setFocused(false)}
+      style={[styles.control, ...focusLook(focused, refused), disabled && styles.off]}
       value={value}
       onChangeText={onChange}
       maxLength={maxLength}
@@ -73,7 +85,8 @@ export function Field({
 /** 상자는 글 첫 줄의 가운데에 선다 — `firstLine` 은 첫 글의 스타일이다(그 줄 높이로 위 여백을 낸다, `checkBoxTop`) */
 export function CheckRow({ checked, onToggle, refused = false, disabled = false, firstLine, children }: { checked: boolean; onToggle: (next: boolean) => void; refused?: boolean; disabled?: boolean; firstLine: { lineHeight: number }; children: ReactNode }) {
   return (
-    <Pressable
+    <Press
+      feel="row"
       accessibilityRole="checkbox"
       accessibilityState={{ checked, disabled }}
       disabled={disabled}
@@ -88,7 +101,7 @@ export function CheckRow({ checked, onToggle, refused = false, disabled = false,
         )}
       </View>
       <View style={styles.checkBody}>{children}</View>
-    </Pressable>
+    </Press>
   );
 }
 
@@ -146,14 +159,16 @@ export function DigitField({
   label: string;
   disabled?: boolean;
 }) {
-  const wrong = refused;
+  const [focused, setFocused] = useState(false);
   return (
     <View style={styles.digit}>
       <TextInput
         ref={inputRef}
         editable={!disabled}
         accessibilityState={{ disabled }}
-        style={[styles.control, styles.digitInput, wrong && styles.wrong, disabled && styles.off]}
+        onFocus={() => setFocused(true)}
+        onBlur={() => setFocused(false)}
+        style={[styles.control, styles.digitInput, ...focusLook(focused, refused), disabled && styles.off]}
         value={value}
         onChangeText={(typed) => {
           const next = typed.replace(/\D/g, '').slice(0, digits);
@@ -181,9 +196,9 @@ export function KeyboardDoneBar() {
   return (
     <InputAccessoryView nativeID={KEYBOARD_DONE}>
       <View style={styles.doneBar}>
-        <Pressable accessibilityRole="button" onPress={Keyboard.dismiss} style={styles.doneButton}>
+        <Press feel="fade" accessibilityRole="button" onPress={Keyboard.dismiss} style={styles.doneButton}>
           <Text style={styles.doneText}>완료</Text>
-        </Pressable>
+        </Press>
       </View>
     </InputAccessoryView>
   );
@@ -206,8 +221,9 @@ export function Choices<T extends string>({
       {options.map((option) => {
         const chosen = option.value === value;
         return (
-          <Pressable
+          <Press
             key={option.value}
+            feel="shrink"
             accessibilityRole="radio"
             accessibilityState={{ checked: chosen, disabled }}
             disabled={disabled}
@@ -217,7 +233,7 @@ export function Choices<T extends string>({
             <Text style={[styles.optionText, chosen && styles.optionTextChosen]} numberOfLines={1}>
               {option.label}{chosen ? ' •' : ''}
             </Text>
-          </Pressable>
+          </Press>
         );
       })}
     </View>
@@ -260,7 +276,8 @@ export function Select<T extends string>({
   }, [open]);
   return (
     <View style={styles.selectBox}>
-      <Pressable
+      <Press
+        feel="row"
         accessibilityRole="button"
         accessibilityLabel={label}
         accessibilityValue={{ text: current?.label }}
@@ -271,12 +288,13 @@ export function Select<T extends string>({
       >
         <Text style={styles.selectText}>{current?.label}</Text>
         <FoldIcon open={open} />
-      </Pressable>
+      </Press>
       {open && (
         <View accessibilityRole="radiogroup" accessibilityLabel={name} style={styles.menu}>
           {options.map((option) => (
-            <Pressable
+            <Press
               key={option.value}
+              feel="row"
               accessibilityRole="radio"
               accessibilityState={{ checked: option.value === value }}
               onPress={() => {
@@ -287,7 +305,7 @@ export function Select<T extends string>({
             >
               <Text style={styles.selectText}>{option.label}</Text>
               {option.hint !== undefined && <Text style={styles.hint}>{option.hint}</Text>}
-            </Pressable>
+            </Press>
           ))}
         </View>
       )}
@@ -303,6 +321,8 @@ const styles = StyleSheet.create({
   label: { fontSize: TYPE.small, fontFamily: FONT.bold, color: COLOR.secondary, marginBottom: 2 },
   control: { ...FIELD, fontFamily: FONT.medium, color: COLOR.foreground },
   wrong: { borderColor: COLOR.danger, borderWidth: 2 },
+  focus: { borderColor: COLOR.creamInk, boxShadow: `0 0 0 3px ${COLOR.accentSoft}` },
+  focusWrong: { boxShadow: `0 0 0 3px ${COLOR.dangerWash}` },
   doneBar: { alignItems: 'flex-end', backgroundColor: COLOR.surfaceSunken, borderTopWidth: 1, borderTopColor: COLOR.border },
   doneButton: { minHeight: 44, justifyContent: 'center', paddingHorizontal: 16 },
   doneText: { fontFamily: FONT.bold, fontSize: TYPE.field, color: COLOR.foreground },

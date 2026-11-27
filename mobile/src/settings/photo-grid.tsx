@@ -350,8 +350,8 @@ export function PhotoGrid({
     <Paper style={styles.panel}>
       <View style={styles.head}>
         <View style={styles.headRow}>
-          <WordText style={styles.title}>{PHOTO_SECTION_TITLE}</WordText>
-          <WordText style={styles.count}>
+          <WordText style={[styles.title, styles.halfStart]}>{PHOTO_SECTION_TITLE}</WordText>
+          <WordText style={[styles.count, styles.halfEnd]}>
             {total}/{PHOTO_MAX_COUNT}
           </WordText>
         </View>
@@ -512,6 +512,9 @@ const styles = StyleSheet.create({
   headRow: { flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between', gap: 12 },
   title: { fontSize: TYPE.body, fontFamily: FONT.bold, color: COLOR.foreground },
   count: { fontSize: TYPE.small, fontFamily: FONT.medium, color: COLOR.creamInk },
+  /* 머리 줄에서는 제목과 수가 줄을 반씩 나눠 쓴다 — 글자에 꼭 맞는 폭을 받으면 안드로이드가 끝 어절을 다음 줄로 밀어 자른다(홈 묶음 머리와 같은 까닭, `home/lists.tsx`) */
+  halfStart: { flex: 1 },
+  halfEnd: { flex: 1, textAlign: 'right' },
   line: { ...TYPE_META, color: COLOR.creamInk },
   /* 판의 마지막 줄이다(아래 공개 안내를 걷었다, 대장 all-21) — 빈 한 줄이 판 바닥을 띄우지 않게 위아래로 8 씩 당긴다. 웹의 `-my-2` 와 같다 */
   status: { ...TYPE_META, minHeight: 20, marginVertical: -8, color: COLOR.foreground },

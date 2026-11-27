@@ -48,7 +48,7 @@ describe('앱 Select 의 낭독', () => {
   });
 
   it('머리는 button · 펼침 상태 · 칸 이름 · 지금 값을 준다', () => {
-    const head = selectBody.slice(selectBody.indexOf('<Pressable'), selectBody.indexOf('{open &&'));
+    const head = selectBody.slice(selectBody.indexOf('<Press'), selectBody.indexOf('{open &&'));
     expect(head).toContain('accessibilityRole="button"');
     expect(head).toMatch(/accessibilityState=\{\{ expanded: open, disabled \}\}/);
     expect(head).toContain('accessibilityLabel={label}');

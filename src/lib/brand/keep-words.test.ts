@@ -60,4 +60,19 @@ describe('keepWords — 앱의 어절 단위 줄바꿈', () => {
     const short = keepWordsIn(['엄마', '의']);
     expect(short[1]).toBe('\u2060의');
   });
+  /*
+    값을 품은 문장(앱 `WordText` 의 `selectable sentence` — 고객센터의 문의 줄 · 결제 내역의 주문 번호)은 어절을 묶어도 값만 골라 복사하면
+    깨끗해야 한다. 금지 글자는 한글 곁에만 서므로 한글 없는 값(메일 주소 · 주문 번호 · 금액의 숫자) 안에는 안 든다(2026-11-27 앱 점검)
+  */
+  it('값을 품은 문장 — 어절은 묶고 한글 없는 값 안에는 끼우지 않는다', () => {
+    const mail = 'mannalmap@gmail.com';
+    const line = `궁금한 점은 ${mail}으로 보내 주세요.`;
+    expect(keepWords(line)).toContain(mail);
+    expect(shown(line).endsWith('보|내 주|세|요|.')).toBe(true);
+    const short = 'a@b.co';
+    expect(keepWords(`${short}로 보내 주세요.`).startsWith(`${short}\u2060로`)).toBe(true);
+    const order = 'GPA.3345-1234-5678-12345';
+    expect(keepWords(`주문 번호 ${order}`)).toBe(`주\u2060문 번\u2060호 ${order}`);
+    expect(keepWords('환불 금액 1,100원')).toBe('환\u2060불 금\u2060액 1,100\u2060원');
+  });
 });

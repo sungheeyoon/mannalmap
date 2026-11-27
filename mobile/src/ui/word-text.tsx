@@ -16,12 +16,14 @@ const plainOf = (node: ReactNode): string => {
  * 화면은 RN `Text` 대신 이것을 쓴다 — `scripts/mobile-word-text.test.ts` 가 잰다.
  *
  * - 읽어 주는 글자(`accessibilityLabel`)는 원문이다. 화면이 따로 주면 그 값이 이긴다.
- * - **긁어 복사하는 글자(`selectable`)에는 끼우지 않는다** — 붙여 넣은 주소 · 번호에 보이지 않는 글자가 섞이지 않게.
+ * - **긁어 복사하는 글자(`selectable`)는 통째로 값이라 끼우지 않는다** — 붙여 넣은 주소 · 번호 · 이름에 보이지 않는 글자가 섞이지 않게.
+ * - **값을 품은 문장이면 `sentence` 를 함께 준다** — 한글 어절은 묶여 띄어쓰기에서만 꺾이고(「보내 주세 / 요.」가 아니다), 금지 글자는 한글 곁에만
+ *   서므로 한글 없는 값(메일 주소 · 주문 번호 · 금액의 숫자)은 그대로다. 값만 골라 복사하면 깨끗하다(ADR 0281).
  * - 안에 글자를 또 두면 그 글자도 이 부품으로 둔다 — 문자열만 고친다.
  */
-export function WordText({ children, ...props }: TextProps) {
+export function WordText({ children, sentence = false, ...props }: TextProps & { sentence?: boolean }) {
   if (Platform.OS !== 'android') return <Text lineBreakStrategyIOS="hangul-word" {...props}>{children}</Text>;
-  if (props.selectable === true) return <Text {...props}>{children}</Text>;
+  if (props.selectable === true && !sentence) return <Text {...props}>{children}</Text>;
   const plain = plainOf(children);
   return (
     <Text accessibilityLabel={plain === '' ? undefined : plain} {...props}>
