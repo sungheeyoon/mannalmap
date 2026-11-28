@@ -272,20 +272,20 @@ npm run db:remote -- --purpose "로그인 전 사주 문단 날짜별 수" \
 
 ### 비용 — 토큰 × 공식 단가
 
-DB 는 금액을 내지 않는다. 공식 단가(gpt-5.6-luna, https://developers.openai.com/api/docs/models/gpt-5.6-luna, 2026-10-03 확인) —
-입력 $0.20 · 캐시 입력 $0.02 · **캐시 쓰기는 입력의 1.25배($0.25)** · 출력 $1.20 /1M 토큰. 추론 토큰은 출력에 이미 든다(따로
+DB 는 금액을 내지 않는다. 공식 단가(gpt-6-luna, https://developers.openai.com/api/docs/models/gpt-6-luna · https://developers.openai.com/api/docs/pricing, 2026-11-28 확인) —
+입력 $0.10 · 캐시 입력 $0.01 · **캐시 쓰기는 입력의 1.25배($0.125, 30분 보관)** · 출력 $0.50 /1M 토큰. 추론 토큰은 출력에 이미 든다(따로
 곱하지 않는다).
 
 ```
 캐시 아닌 입력 = input_tokens − cache_read_tokens − cache_write_tokens
-하루 $ = (캐시 아닌 입력 × 0.20 + cache_read_tokens × 0.02 + cache_write_tokens × 0.25 + output_tokens × 1.20) / 1,000,000
+하루 $ = (캐시 아닌 입력 × 0.10 + cache_read_tokens × 0.01 + cache_write_tokens × 0.125 + output_tokens × 0.50) / 1,000,000
 ```
 
 `input_tokens` 는 캐시 읽기 · 쓰기를 **포함한** 입력 전체이고, `output_tokens` 는 추론을 **포함한** 출력 전체다
 (`reasoning_tokens` 는 그 안의 몫이라 따로 곱하지 않는다). 근거는 앱이 받는 사용량의 변환 —
 `@ai-sdk/openai` 의 `convertOpenAIResponsesUsage` 가 `inputTokens.total = usage.input_tokens` 로 두고 캐시 읽기 · 쓰기를 그 안의
 몫(`cacheRead` · `cacheWrite`, `noCache` 는 둘을 뺀 값)으로, `outputTokens.total = usage.output_tokens` 에 추론을 그 안의 몫으로
-나눈다. 앱은 그 `total` 을 `finish_taste` 에 넘긴다(#441). 실측(2026-10-03 실호출)은 한 번 약 4원 · 4~6초였고, 하루 2,000 을 다 써도 하루 약 8천원
+나눈다. 앱은 그 `total` 을 `finish_taste` 에 넘긴다(#441). 옛 모델(`gpt-5.6-luna` — 단가가 지금의 두 배)의 실측(2026-10-03 실호출)은 한 번 약 4원 · 4~6초였고, 하루 2,000 을 다 써도 하루 약 8천원
 이하다. 청구의 원본은 OpenAI 대시보드이고 바깥 벽(월 예산)도 거기다 — 위 「AI 비용 한도」.
 
 ### 가용성 — Vercel WAF 속도 제한은 운영자 몫

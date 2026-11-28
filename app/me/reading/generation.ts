@@ -18,7 +18,7 @@
  * 결과를 견주게 된다.
  */
 export const GENERATION = {
-  model: 'gpt-5.6-luna',
+  model: 'gpt-6-luna',
   provider: 'openai-responses-api',
   settings: {
     /** OpenAI Responses API 에 응답을 별도로 저장하지 않는다 */
