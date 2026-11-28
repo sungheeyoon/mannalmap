@@ -169,3 +169,6 @@ const styles = StyleSheet.create({
   pointTitle: { fontFamily: FONT.bold, fontSize: TYPE.lead, lineHeight: 28, color: COLOR.foreground },
   pointText: { fontFamily: FONT.medium, fontSize: TYPE.body, lineHeight: 26, color: COLOR.secondary },
 });
+
+/** 본문 문단의 글자 — 본문 밖에서 본문처럼 읽혀야 하는 한 문장(「우리 둘의 흐름」의 한 문장, `flow.tsx`)이 같은 값을 쓴다 */
+export const BODY_TEXT = styles.body;

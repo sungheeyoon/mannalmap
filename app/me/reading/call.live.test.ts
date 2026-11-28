@@ -10,16 +10,42 @@ import {
   CONTROL,
   MATCH_INPUT_FIELDS,
   READING_POLICY,
+  asksPairExtras,
+  blockingFindingsOf,
   checkReading,
+  flowRuleIn,
   isScored,
+  layoutIn,
+  manualAskedIn,
+  metaphorToStore,
   readingEvidenceOf,
   readingPromptOf,
   groundingTiers,
   positionSlips,
   promptVersionOf,
+  shapeAskedIn,
+  withPairExtras,
+  withoutLeakedPaths,
   writesSummaryLast,
+  type CheckFinding,
+  type PairFlow,
   type ReadingOutput,
 } from '@/src/lib/reading';
+import { readingBody } from '@/src/lib/reading/display';
+import { FLOW_LEVEL_LABEL, FLOW_TITLE, flowOf } from '@/src/lib/reading/flow';
+import {
+  MANUAL_CORE_LABEL,
+  MANUAL_MINE_TITLE,
+  MANUAL_SITUATIONS,
+  MANUAL_SITUATION_LABEL,
+  MANUAL_TITLE,
+  manualCardOf,
+  manualOf,
+  manualSlotOf,
+  manualTitleOf,
+  type ManualCard,
+} from '@/src/lib/reading/manual';
+import { LEAD_POINTS, LEAD_TITLE, bodyShapeOf } from '@/src/lib/reading/shape';
 import { measureMarkdown, outputDeviations, pairOutputDeviations, type OutputDeviation } from '@/src/lab/reading/measure';
 import { MATCH_INPUT_VARIANTS, PAIR_VARIANTS, PROMPT_VARIANTS } from '@/src/lab/reading/variants';
 
@@ -35,6 +61,7 @@ import type { ModelCall } from './generator';
  *   READING_LIVE=1 npx vitest run app/me/reading/call.live.test.ts
  *   READING_VARIANTS_LIVE=1 npx vitest run app/me/reading/call.live.test.ts
  *   READING_PAIR_LIVE=1 npx vitest run app/me/reading/call.live.test.ts
+ *   READING_MANUAL_LIVE=1 npx vitest run app/me/reading/call.live.test.ts -t '이럴 땐 이렇게'   (READING_MANUAL_DRY=1 이면 부르지 않는다)
  *
  * 재는 것은 글의 품질이 아니라 **파이프라인이 이어져 있는가**다. 품질은 사람이
  * 본다(`prd-archive`: 최종 출시 판단은 제품 담당자의 blind review).
@@ -76,6 +103,10 @@ const pairLive = process.env.READING_PAIR_LIVE === '1';
 const matchInputLive = process.env.READING_MATCH_INPUT_LIVE === '1';
 /** 상세 궁합 — 운영자가 돌린다. 끄기가 기본이다 */
 const detailLive = process.env.READING_DETAIL_LIVE === '1';
+/** 궁합풀이의 본문 · 이럴 땐 이렇게 · 흐름 — 운영자가 돌린다. 한 번 부른다(ADR 0283 · 0284). 값의 이름은 그 칸의 코드 이름(`manual`)이다 */
+const manualLive = process.env.READING_MANUAL_LIVE === '1';
+/** 위의 마른 실행 — 부르지 않고 부르기 직전까지와 부른 뒤의 길을 꾸민 칸으로 잰다. 토큰이 안 나간다 */
+const manualDry = process.env.READING_MANUAL_DRY === '1';
 
 /**
  * 변형끼리 견줄 때의 **고정 기준 시각.**
@@ -204,8 +235,15 @@ describe.skipIf(!live)('OpenAI API 까지 실제로 닿는다', () => {
         : { a: computeSaju(hourless ? HOURLESS : INPUT) };
       const viewedAt = new Date();
       const evidence = readingEvidenceOf(kind, charts, viewedAt);
-      /* 운영 제출과 같은 차례로 받는다 — 개인 풀이와 4판 궁합은 본문이 먼저다(`writesSummaryLast`, ADR 0207 추기 「v21」) */
-      const called = await callModel(readingPromptOf(evidence), { summaryLast: writesSummaryLast(kind) });
+      const prompt = readingPromptOf(evidence);
+      /*
+        운영 제출과 같은 차례로 받는다 — 개인 풀이와 4판 궁합은 본문이 먼저다(`writesSummaryLast`, ADR 0207 추기 「v21」). 궁합풀이는 「이럴 땐
+        이렇게」 · 흐름 칸도 함께 받는다(`asksPairExtras`, ADR 0283 · 0284)
+      */
+      const called = await callModel<ReadingOutput & { manual?: unknown; flow?: unknown }>(prompt, {
+        summaryLast: writesSummaryLast(kind),
+        extras: asksPairExtras(kind),
+      });
 
       // 실패도 값으로 오므로 무엇이 막았는지 그대로 보인다.
       expect(called.ok ? '' : `${called.code}: ${called.detail}`).toBe('');
@@ -269,15 +307,21 @@ describe.skipIf(!live)('OpenAI API 까지 실제로 닿는다', () => {
         console.info(`[근거 층 초과] ${label} — ${one.path} [${one.tier}] > ${one.key} ${one.polarity} ${one.ceiling}`);
       }
 
+      /* 회수와 같이 「이럴 땐 이렇게」 · 흐름을 본문 끝에 접은 글로 잰다 — 칸이 다 찼는지는 따로 본다(`collect.ts`) */
+      const extras = withPairExtras({ kind, prompt, markdown: called.output.markdown, output: called.output });
       const verdict = checkReading({
         kind,
-        output: called.output,
+        output: { ...called.output, markdown: extras.markdown },
         evidenceText: JSON.stringify(evidence.evidence),
         secrets: pair ? PAIR_SECRETS : hourless ? HOURLESS_SECRETS : SECRETS,
       });
 
       expect(verdict.ok ? [] : verdict.failures).toEqual([]);
       expect(slips).toEqual([]);
+      expect(
+        extras.findings.filter(({ detail }) => detail.includes('없이 저장')).map(({ detail }) => detail),
+        '궁합풀이의 「이럴 땐 이렇게」 · 흐름 칸이 비었다',
+      ).toEqual([]);
 
       /**
        * **점수는 있어야 할 때 있고 없어야 할 때 없다** — 구조화 출력 스키마가 그 자리를
@@ -457,6 +501,8 @@ describe.skipIf(!pairLive)('비공개 궁합 두 판이 같은 자료에서 실�
         variant,
         result: await callModel(readingPromptOf(evidence, variant.assembly), {
           summaryLast: writesSummaryLast('private', variant.assembly),
+          /* 운영 판(`control`)은 「이럴 땐 이렇게」 · 흐름 칸을 함께 받는다 — 지시가 시키는 칸을 스키마도 연다(ADR 0283 · 0284) */
+          extras: asksPairExtras('private', variant.assembly),
         }),
       })),
     );
@@ -1176,5 +1222,276 @@ describe.skipIf(!matchInputLive)('인연 궁합 입력 A/B 를 같은 조건으�
     /** 호출이 하나라도 실패했으면 이 실험은 성공이 아니다 */
     expect(fresh.filter((line) => !line.ok).map((line) => `${line.fixture}/${line.variant}/${line.rep} ${line.failure}`), dir).toEqual([]);
     expect(fresh).toHaveLength(planned.length);
+  });
+});
+
+/** 궁합풀이 실호출의 두 사람 — 앱 가짜 서버(`mobile/scripts/measure/fake-server.mjs`)의 지어낸 둘. 윤하늘이 첫 자리다(Person id 차례) */
+const MANUAL_PAIR = {
+  a: { year: 1990, month: 3, day: 15, hour: 7, minute: 30, second: 0, gender: 'female' },
+  b: { year: 1962, month: 11, day: 2, hour: 13, minute: 10, second: 0, gender: 'female' },
+} as const;
+const MANUAL_SECRETS = [
+  { originalDate: '1990-03-15', solarDate: '1990-03-15', birthTime: '07:30:00', city: '서울' },
+  { originalDate: '1962-11-02', solarDate: '1962-11-02', birthTime: '13:10:00', city: '서울' },
+] as const;
+const MANUAL_NAMES = { first: '윤하늘', second: '엄마' } as const;
+
+/** 화면이 세울 카드를 읽을 글로 — 두 칸마다 가장 통하는 한마디와 칩마다 한 줄씩 펴 둔다 */
+const cardText = (card: ManualCard, heading: string): string =>
+  [
+    `## ${heading}`,
+    ...card.tabs.flatMap((tab) => [
+      `### ${tab.title}`,
+      `- **${MANUAL_CORE_LABEL}** — ${tab.core}`,
+      ...MANUAL_SITUATIONS.map((situation) => `- **${MANUAL_SITUATION_LABEL[situation]}** — ${tab.lines[situation]}`),
+    ]),
+    `- **${card.us.label}** — ${card.us.text}`,
+    `- **${card.clash.label}** — ${card.clash.text}`,
+  ].join('\n');
+
+/** 흐름을 읽을 글로 — 해마다 두 사람의 단계와 한 문장 */
+const flowText = (flow: PairFlow): string =>
+  [
+    `## ${FLOW_TITLE}`,
+    flow.line,
+    '',
+    `| 해 | ${MANUAL_NAMES.first} | ${MANUAL_NAMES.second} |`,
+    '| --- | --- | --- |',
+    ...flow.years.map((one) => `| ${one.year} | ${FLOW_LEVEL_LABEL[one.first]} | ${FLOW_LEVEL_LABEL[one.second]} |`),
+  ].join('\n');
+
+type PairExtrasOutput = ReadingOutput & { manual?: unknown; flow?: unknown };
+
+/**
+ * **부른 뒤의 길 — 회수와 같은 차례로 접고 걷고 잰 뒤 저장되는 꼴로 떨군다.** 실호출과 마른 실행이 이 한 함수를 지난다 — 마른 실행이 이 길을
+ * 꾸민 칸으로 먼저 지나 두므로, 돈을 낸 뒤에 파일 쓰기에서 넘어지지 않는다.
+ *
+ * 남는 것: `stored.json`(`p_output` 은 `save_reading` 이 받는 값, `output` 은 화면 API 가 내는 값 — 가짜 서버의 `my_reading` 줄에 그대로
+ * 넣는다) · `reading.md`(사람이 읽을 글 — 화면이 세우는 차례다: 표지 · 핵심 세 가지와 「부딪히는 곳」 절까지 · 두 화면의 카드 · 나머지 절 ·
+ * 흐름의 한 문장과 표).
+ */
+function afterManualCall({
+  dir,
+  prompt,
+  evidenceText,
+  baseline,
+  output,
+  viewedAt,
+}: {
+  dir: string;
+  prompt: string;
+  evidenceText: string;
+  baseline: number | undefined;
+  output: PairExtrasOutput;
+  viewedAt: Date;
+}) {
+  const extras = withPairExtras({ kind: 'private', prompt, markdown: output.markdown, output });
+  const unleaked = withoutLeakedPaths(extras.markdown, evidenceText);
+  const verdict = checkReading({
+    kind: 'private',
+    output: { score: output.score, metaphor: output.metaphor, markdown: unleaked.markdown },
+    evidenceText,
+    secrets: MANUAL_SECRETS,
+    baseline,
+  });
+  const findings: CheckFinding[] = [
+    ...extras.findings,
+    ...(unleaked.stripped.length > 0 ? [{ code: 'evidence-path-stripped' as const, detail: `괄호째 걷음: ${unleaked.stripped.join('·')}` }] : []),
+    ...(verdict.ok ? [] : verdict.failures),
+  ];
+
+  const stored = {
+    kind: 'private',
+    relation: 'family',
+    promptVersion: promptVersionOf('private'),
+    viewedAt: viewedAt.toISOString(),
+    p_output: unleaked.markdown,
+    output: readingBody(unleaked.markdown),
+    metaphor: metaphorToStore(output.metaphor),
+    score: output.score,
+    findings,
+  };
+  writeFileSync(`${dir}/stored.json`, JSON.stringify(stored, null, 2));
+
+  const { manual, rest } = manualOf(stored.output);
+  const { flow, rest: body } = flowOf(rest);
+  /* 화면이 읽는 길 그대로 — 카드 · 흐름을 뗀 본문의 꼴과, 카드가 서는 자리(「잘 맞는 곳 · 부딪히는 곳」 절 다음) */
+  const shape = bodyShapeOf(body);
+  const slot = manualSlotOf(body);
+  const cards =
+    manual === null
+      ? []
+      : [
+          cardText(
+            manualCardOf(manual, MANUAL_NAMES, { shown: ['first', 'second'], own: 'first' }),
+            `${MANUAL_TITLE} — 윤하늘이 보는 화면 「${manualTitleOf('엄마')} | ${MANUAL_MINE_TITLE}」`,
+          ),
+          cardText(
+            manualCardOf(manual, MANUAL_NAMES, { shown: ['first', 'second'], own: null }),
+            `${MANUAL_TITLE} — 남 둘로 보는 화면 「${manualTitleOf('윤하늘')} | ${manualTitleOf('엄마')}」`,
+          ),
+        ];
+  writeFileSync(
+    `${dir}/reading.md`,
+    [
+      `# 윤하늘 × 엄마 (가족) — ${stored.promptVersion}`,
+      `> ${stored.metaphor ?? '(비유 없음)'} · ${stored.score ?? '-'}점`,
+      slot.before,
+      ...cards,
+      ...(slot.after === '' ? [] : [slot.after]),
+      flow === null ? `## ${FLOW_TITLE}\n\n(못 읽음 — 그래프 없이 선다)` : flowText(flow),
+      '## 걸린 것',
+      findings.length === 0 ? '(없음)' : findings.map((one) => `- ${one.code}: ${one.detail}`).join('\n'),
+    ].join('\n\n'),
+  );
+
+  return { stored, findings, manual, flow, body, shape, slot };
+}
+
+/** 본문의 꼴을 한 줄로 — 핵심 세 가지의 번호 카드 수, 나머지 절과 그 가운데 요약 줄이 선 절의 수, 카드가 서는 자리 */
+const shapeLine = ({ shape, slot }: Pick<ReturnType<typeof afterManualCall>, 'shape' | 'slot'>): string => {
+  const lead = shape.sections.find((section) => section.lead);
+  const rest = shape.sections.filter((section) => !section.lead);
+  return [
+    lead === undefined ? `「${LEAD_TITLE}」 없음` : `「${LEAD_TITLE}」 번호 카드 ${lead.points}${shape.opensWithLead ? '' : '(맨 앞 아님)'}`,
+    `절 ${rest.length}(요약 줄 ${rest.filter((section) => section.summarized).length})`,
+    `카드 자리 — ${slot.after === '' ? '글 끝' : '「부딪히는 곳」 절 다음'}`,
+  ].join(' · ');
+};
+
+/** 마른 실행의 꾸민 본문 — 프롬프트가 시킨 꼴 그대로: 「먼저 볼 핵심 세 가지」 번호 카드 셋과, 요약 줄이 붙은 절(차례의 수만큼) */
+const dryMarkdownOf = (sections: number): string =>
+  [
+    `## ${LEAD_TITLE}\n\n${Array.from({ length: LEAD_POINTS }, (_, at) => `${at + 1}. **마른 실행의 제목 ${at + 1}** — 꼴을 재는 꾸민 설명이에요.`).join('\n')}`,
+    ...Array.from(
+      { length: sections - 1 },
+      (_, at) => `## 마른 실행의 절 ${at + 1}\n> 마른 실행의 요약 줄 ${at + 1}이에요.\n\n${'저장 꼴을 재는 꾸민 문단이에요. '.repeat(8)}`,
+    ),
+  ].join('\n\n');
+
+/** 꼴을 어긴 꾸민 본문 — 옛 꼴이다: 맨 앞 한 문장으로 열고 절에 요약 줄이 없다. 검사가 알아보는지 마른 실행이 함께 잰다 */
+const DRY_UNSHAPED = `마른 실행의 본문이에요.\n\n## 마른 실행\n\n${'저장 꼴을 재는 꾸민 문단이에요. '.repeat(30)}`;
+
+/** 마른 실행이 길을 재는 꾸민 칸 — 모델 글이 아니다. 저장 꼴을 재는 데만 쓰고 화면에는 안 넣는다 */
+const dryOutputOf = (prompt: string, baseline: number | undefined): PairExtrasOutput => {
+  const rule = flowRuleIn(prompt);
+  const years = rule === null ? [] : Array.from({ length: rule.window.to - rule.window.from + 1 }, (_, at) => rule.window.from + at);
+  const side = { core: '마른 실행의 줄이에요.', ask: '마른 실행의 줄이에요.', apologize: '마른 실행의 줄이에요.', upset: '마른 실행의 줄이에요.', delight: '마른 실행의 줄이에요.' };
+  return {
+    markdown: dryMarkdownOf(layoutIn(prompt)?.sections ?? 1),
+    score: baseline ?? 60,
+    metaphor: '마른 실행의 비유',
+    manual: { first: side, second: side, us: '마른 실행의 줄이에요.', clash: '마른 실행의 줄이에요.' },
+    flow: { years: years.map((year) => ({ year, first: 'lift', second: 'rest' })), line: '마른 실행의 한 문장이에요.' },
+  };
+};
+
+/**
+ * **궁합풀이를 운영과 같은 조립으로 한 번 부른다** — 본문(핵심 세 가지와 절 여섯) · 이럴 땐 이렇게(ADR 0283) · 우리 둘의 흐름(ADR 0284)을 한 번에.
+ * 위 두 사람을 가족 사이로. 운영자가 돌린다. 워크트리에서는 비밀 파일을 옮기지 않고 가리킨다(`LOCAL_ENV_FILE`):
+ *
+ *   LOCAL_ENV_FILE=<메인 체크아웃>/.env.development.local READING_MANUAL_LIVE=1 npx vitest run app/me/reading/call.live.test.ts -t '이럴 땐 이렇게'
+ *
+ * `READING_MANUAL_DRY=1` 이면 **부르지 않고** 부르기 직전까지 잰다 — 프롬프트 · 보낼 모양 · 흐름의 해와 누를 해를 떨구고, 꾸민 칸으로 부른 뒤의
+ * 길(꼴 재기 · 접기 · 걷기 · 검사 · 저장 꼴 · 화면이 읽는 길)을 지난다. 꼴을 지킨 꾸민 글은 아무것도 안 걸리고, 옛 꼴의 꾸민 글은 검사가
+ * 알아봐야 한다. 열쇠는 있으면 값 없이 쓸 수 있는지만 본다.
+ *
+ * 남는 것: `.reading-live/manual-<시각>/` 의 `output.json`(원문 · 토큰) · `stored.json`(저장되는 꼴 — 가짜 서버에 넣는다) · `reading.md`(읽을 글).
+ * 판정은 칸이 다 찼는지와 막는 검사뿐이다. 꼴 · 길이 · 호칭 · 사주 이름 · 눌린 칸은 `[기록]` 으로 찍는다 — 말투는 사람이 읽는다.
+ */
+describe.skipIf(!manualLive && !manualDry)('궁합풀이를 운영과 같은 조립으로 한 번 부른다 — 본문 · 이럴 땐 이렇게 · 흐름', () => {
+  it('칸이 다 차고, 접은 글이 막는 검사를 지나며, 저장되는 꼴로 남는다', { timeout: 300_000 }, async () => {
+    loadLocalEnv();
+    const { readingInputOf } = await import('@/app/me/reading/generator');
+    const { GENERATION } = await import('@/app/me/reading/generation');
+
+    const viewedAt = new Date();
+    const made = readingInputOf({
+      kind: 'private',
+      charts: { a: computeSaju(MANUAL_PAIR.a), b: computeSaju(MANUAL_PAIR.b) },
+      viewedAt,
+      about: { relation: 'family' },
+    });
+    if (!made.ok) throw new Error(made.detail);
+    const { prompt, evidenceText } = made.input;
+    const baseline = made.input.score?.baseline;
+    const options = { summaryLast: writesSummaryLast('private'), extras: asksPairExtras('private') };
+
+    /* 부르기 전에 잰다 — 시킨 칸 · 꼴과 회수가 되읽는 표식이 한 답이어야 돈을 낸다 */
+    const rule = flowRuleIn(prompt);
+    const layout = layoutIn(prompt);
+    expect(manualAskedIn(prompt), '프롬프트가 「이럴 땐 이렇게」를 안 시킨다').toBe(true);
+    expect(rule, '프롬프트에 흐름의 해가 없다').not.toBeNull();
+    expect(shapeAskedIn(prompt), '프롬프트가 글의 모양을 안 시킨다').toBe(true);
+    expect(layout, '프롬프트에 글의 차례가 없다').not.toBeNull();
+    expect(options.extras, '제출이 「이럴 땐 이렇게」 · 흐름 칸을 안 연다').toBe(true);
+
+    const dir = `${OUTPUT_ROOT}/manual-${manualDry ? 'dry-' : ''}${runStamp(viewedAt)}`;
+    mkdirSync(dir, { recursive: true });
+    console.info(`[흐름의 해] ${rule?.window.from}~${rule?.window.to} · 누르는 해 — 윤하늘 ${rule?.pressed.first.join('·') || '없음'} / 엄마 ${rule?.pressed.second.join('·') || '없음'}`);
+    console.info(`[프롬프트] ${prompt.length}자 · 판 ${promptVersionOf('private')} · 차례 — 「${LEAD_TITLE}」와 절 ${(layout?.sections ?? 1) - 1}`);
+
+    if (manualDry) {
+      const { fixedShapeOf } = await import('@/app/me/reading/model');
+      writeFileSync(`${dir}/prompt.md`, prompt);
+      writeFileSync(`${dir}/schema.json`, JSON.stringify(fixedShapeOf(options), null, 2));
+      const keyProblem = process.env.OPENAI_API_KEY === undefined ? null : openAiKeyProblem(process.env.OPENAI_API_KEY);
+      console.info(`[열쇠] ${process.env.OPENAI_API_KEY === undefined ? '없음 — 마른 실행이라 건너뜀' : (keyProblem ?? '쓸 수 있다')}`);
+
+      const dry = dryOutputOf(prompt, baseline);
+      const after = afterManualCall({ dir, prompt, evidenceText, baseline, output: dry, viewedAt });
+      for (const one of after.findings) console.info(`[기록] ${one.code}: ${one.detail}`);
+      console.info(`[꼴] ${shapeLine(after)}`);
+      console.info(`[마른 실행] ${dir} — stored.json · reading.md · prompt.md · schema.json`);
+
+      /* 꼴을 지킨 꾸민 글 — 핵심 세 가지 · 절마다의 요약 줄이 화면이 읽는 길로 읽히고, 꼴로는 아무것도 안 걸린다 */
+      const [lead, ...rest] = after.shape.sections;
+      expect(after.shape.opensWithLead, '꾸민 글이 핵심 세 가지로 안 열린다').toBe(true);
+      expect(lead?.points, '핵심 세 가지가 번호 카드 셋으로 안 읽힌다').toBe(LEAD_POINTS);
+      expect(rest.length, '절의 수가 차례와 다르다').toBe((layout?.sections ?? 0) - 1);
+      expect(rest.every((section) => section.summarized), '요약 줄이 없는 절이 있다').toBe(true);
+      expect(after.findings.filter(({ code }) => code === 'shape-out-of-contract')).toEqual([]);
+      /* 카드 · 흐름 — 새 이름의 절로 접히고 되읽히며, 카드는 「부딪히는 곳」 절 다음에 선다(뒤에 절이 남는다) */
+      expect(after.stored.output, '접은 절의 머리가 카드의 이름이 아니다').toContain(`## ${MANUAL_TITLE}\n`);
+      expect(after.manual, '꾸민 칸이 「이럴 땐 이렇게」로 안 읽힌다').not.toBeNull();
+      expect(after.flow?.years.length, '꾸민 흐름이 열 해로 안 읽힌다').toBe(10);
+      expect(after.slot.after, '카드의 자리 뒤에 남은 절이 없다').not.toBe('');
+      expect(blockingFindingsOf(after.findings).map(({ code }) => code)).toEqual([]);
+
+      /* 옛 꼴의 꾸민 글 — 핵심 세 가지가 빠지고 요약 줄이 없는 것을 검사가 알아본다(적기만 한다) */
+      const unshaped = withPairExtras({ kind: 'private', prompt, markdown: DRY_UNSHAPED, output: dry }).findings.filter(({ code }) => code === 'shape-out-of-contract');
+      for (const one of unshaped) console.info(`[꼴을 어긴 글] ${one.detail}`);
+      expect(unshaped.map(({ detail }) => detail)).toEqual([
+        `「${LEAD_TITLE}」 절이 없다`,
+        '요약 줄이 없는 절 1개 — 절 1개 가운데',
+        `절이 1개다 — 차례는 ${layout?.sections}개다`,
+      ]);
+      return;
+    }
+
+    const { callModel } = await import('@/app/me/reading/model');
+    const called = await callModel<PairExtrasOutput>(prompt, options);
+    expect(called.ok ? '' : `${called.code}: ${called.detail}`).toBe('');
+    if (!called.ok) return;
+
+    /* 부른 값을 먼저 떨군다 — 판정하다 던져도 돈을 낸 원문이 남는다 */
+    writeFileSync(
+      `${dir}/output.json`,
+      JSON.stringify(
+        { kind: 'private', relation: 'family', promptVersion: promptVersionOf('private'), viewedAt: viewedAt.toISOString(), generation: GENERATION, ...called },
+        null,
+        2,
+      ),
+    );
+
+    const after = afterManualCall({ dir, prompt, evidenceText, baseline, output: called.output, viewedAt });
+    for (const one of after.findings) console.info(`[기록] ${one.code}: ${one.detail}`);
+    console.info(`[토큰] 출력 ${called.usage?.outputTokens ?? '?'}(추론 ${called.reasoningTokens ?? '?'}) · 입력 ${called.usage?.inputTokens ?? '?'}`);
+    console.info(`[본문] ${after.body.length}자 · ${shapeLine(after)}`);
+    console.info(`[읽을 자리] ${dir}/reading.md · 저장 꼴 ${dir}/stored.json`);
+
+    expect(after.manual, '「이럴 땐 이렇게」 칸이 비었거나 모양이 아니다').not.toBeNull();
+    expect(after.flow, '흐름 칸이 비었거나 열 해가 맞지 않는다').not.toBeNull();
+    expect(blockingFindingsOf(after.findings).map(({ code }) => code)).toEqual([]);
   });
 });

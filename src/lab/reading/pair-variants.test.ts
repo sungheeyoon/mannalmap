@@ -4,6 +4,7 @@ import { computeSaju } from '@/src/lib/saju';
 import {
   CONTROL,
   READING_POLICY,
+  layoutIn,
   pairSectionTexts,
   readingEvidenceOf,
   readingPromptOf,
@@ -177,20 +178,53 @@ describe('기준판은 구성만 놓는다', () => {
     expect(promptOf('pair-sections-v1')).toContain('## 성격을 읽는 순서');
   });
 
-  it('알고 싶은 것을 목차 아닌 한 문단으로 다 든다', () => {
+  /**
+   * **운영 궁합풀이는 정한 차례로 쓴다**(ADR 0283) — 개인 풀이와 같은 꼴이다: 「먼저 볼 핵심 세 가지」로 열고 절 여섯이 뒤따른다. 옛 열한 절
+   * 가운데 생활 장면은 걷었고, 각자 · 지금의 때는 「이럴 땐 이렇게」 · 흐름 칸으로 옮겼다. 번호 절(`**1. `)은 여전히 없다 — 차례가 소제목을
+   * 그대로 주지 않는다(핵심 세 가지만 이름 그대로다).
+   */
+  it('핵심 세 가지와 절 여섯의 차례로 쓰고, 걷은 셋은 본문에 세우지 않는다', () => {
     const prompt = promptOf('control');
 
     for (const need of [
-      '두 사람이 서로에게 어떤 사람이고',
-      '어디서 잘 맞고 어디서 부딪히며',
-      '함께 지내면 어떤 장면이 되풀이되고',
-      '오래 가려면 무엇이 필요한가',
-      '각자가 가까운 사이에서 어떤 사람인지',
-      '지금이 이 관계에 어떤 시기인지',
-      '이것을 절 목록으로 삼지 마라',
+      '## 글의 차례',
+      '1. **먼저 볼 핵심 세 가지** — ',
+      '2. **서로에게 무엇인가** — ',
+      '**두세 문장으로 짧게.**',
+      '4. **잘 맞는 곳 둘 · 부딪히는 곳 둘** — ',
+      '5. **서로의 보완** — ',
+      '6. **함께일 때 더 두드러지는 특징** — ',
+      '7. **오래 가려면 무엇이 필요한가** — ',
+      '생활에서 되풀이될 장면 · 각자가 어떤 사람인가 · 지금 두 사람이 지나는 때는 본문에 세우지 않는다',
+      '1 의 소제목은 「먼저 볼 핵심 세 가지」 그대로 단다.',
     ]) {
       expect(prompt, need).toContain(need);
     }
+    /* 맨 앞 한 문장은 핵심 세 가지가 대신한다 — 걷은 넷 가운데 「오래 가려면」은 절로 돌아왔다 */
+    for (const gone of ['**맨 앞 한 문장**', '오래 가려면 무엇이 필요한가 · 각자가 어떤 사람인가', '8. **']) {
+      expect(prompt, gone).not.toContain(gone);
+    }
+    expect(layoutIn(prompt)).toEqual({ sections: 7 });
+    expect(prompt).not.toContain('이것을 절 목록으로 삼지 마라');
+  });
+
+  /**
+   * **핵심 세 가지의 세 축** — 궁합풀이는 셋을 고르게 두지 않는다: 가장 잘 맞는 곳 · 가장 부딪히는 곳 · 이렇게 하면 통한다. 셋째가 표지 아래에
+   * 서던 결론 한 줄의 일을 한다(ADR 0283). 실제 문장 본보기는 두지 않는다 — 꼴 그림은 자리 표시뿐이다.
+   */
+  it('핵심 세 가지의 축 셋을 차례와 꼴 그림이 같은 이름으로 말한다', () => {
+    const prompt = promptOf('control');
+
+    expect(prompt).toContain('첫째는 **가장 잘 맞는 곳**, 둘째는 **가장 부딪히는 곳**, 셋째는 **이렇게 하면 통한다**');
+    expect(prompt).toContain('제목은 축의 이름이 아니라 그 축에서 이 두 사람에게 나온 결론이다.');
+    for (const placeholder of ['(가장 잘 맞는 곳의 결론 한 마디)', '(가장 부딪히는 곳의 결론 한 마디)', '(이렇게 하면 통한다는 결론 한 마디)']) {
+      expect(prompt, placeholder).toContain(`**${placeholder}** — (`);
+    }
+  });
+
+  it('차례를 안 시킨 판은 되읽을 차례가 없다 — 인연 궁합 · 옛 궁합 세대', () => {
+    expect(layoutIn(promptOf('control', 'match'))).toBeNull();
+    expect(layoutIn(promptOf('pair-sections-v1'))).toBeNull();
   });
 
   /**
@@ -221,7 +255,7 @@ describe('기준판은 구성만 놓는다', () => {
     }
 
     /* 분량과 점수는 절이 아니라 계약이다 — 구조를 놔도 남는다 */
-    expect(prompt).toContain('사용자 본문은 3500~5500자');
+    expect(prompt).toContain('사용자 본문은 2900~4500자');
     expect(prompt).toContain('점수');
     /* 맨 끝 검사용 근거 절 — 이것이 없으면 경로 검사가 본문 전체를 재게 된다 */
     expect(prompt).toContain('### 근거 (검사용)');

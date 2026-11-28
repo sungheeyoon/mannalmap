@@ -424,6 +424,14 @@ describe('브라우저로 가는 그래프', () => {
     'src/lib/reading/prompt-pair.ts',
     'src/lib/reading/prompt-self.ts',
     'src/lib/reading/prompt-voice.ts',
+    // 두 풀이가 함께 쓰는 글의 모양 지시(ADR 0283) — 화면은 그 꼴을 되읽는 잎(`shape.ts`)만 부른다
+    'src/lib/reading/prompt-shape.ts',
+    // 궁합풀이의 「이럴 땐 이렇게」 지시와 재료(ADR 0283) — 화면은 칸의 모양 · 접기 · 되읽기(`manual.ts`)만 부른다
+    'src/lib/reading/prompt-manual.ts',
+    // 우리 둘의 흐름 지시 · 재료와 그 재료를 짓는 엔진 셈, 두 칸을 접는 회수의 한 벌(ADR 0284) — 화면은 칸의 모양 · 되읽기 · 그래프(`flow.ts`)만 부른다
+    'src/lib/reading/prompt-flow.ts',
+    'src/lib/reading/flow-facts.ts',
+    'src/lib/reading/pair-extras.ts',
     // 열쇠와 그것을 드는 풀의 쓰기(G-64, ADR 0136) — `server-only` 가 빌드를 세우지만, 길을 보여 주는 것은 여기다
     'app/keyed-client.ts',
     'app/me/keyed-chart-writes.ts',

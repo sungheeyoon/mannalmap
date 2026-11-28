@@ -143,6 +143,8 @@ export const CONFIG_ENV = [
    */
   'GOOGLE_PLAY_PUBSUB_AUDIENCE',
   'GOOGLE_PLAY_PUBSUB_SERVICE_ACCOUNT',
+  /** 잠긴 시험이 읽을 접속값 파일의 경로 — 워크트리가 메인 체크아웃의 파일을 옮기지 않고 가리킨다(`loadLocalEnv`). 값이 아니라 경로다 */
+  'LOCAL_ENV_FILE',
 ];
 
 /** 제 안에서 비밀을 읽는 패키지 — 이것을 부르는 모듈도 비밀을 읽는 모듈이다 */

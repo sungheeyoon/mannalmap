@@ -10,6 +10,7 @@ import {
 } from '../saju/evidence/shared';
 import type { Saju } from '../saju';
 
+import { flowFactsOf, type FlowFacts } from './flow-facts';
 import { isSolo, type ReadingKind } from './policy';
 
 /**
@@ -37,7 +38,11 @@ export type ReadingEvidence =
    * `evidence` 안이 아니라 **옆에** 선다. 안에 넣으면 `evidenceText` 에 실려서 경로 유출
    * 검사가 이 수를 자료로 세고, 엔진이 점수를 낸 것처럼 읽힌다.
    */
-  | { kind: 'private'; evidence: RedactedEvidence; baseline: number; scoring: ReadingScoring }
+  /**
+   * 궁합풀이에는 **흐름의 재료**도 딸려 온다(ADR 0284) — 자료에 없는 해마다의 표(세운 · 대운)와 억부 · 조후 판정에서 나와 두 명식이 있는 이 자리에서만
+   * 지을 수 있다. 기준점처럼 자료 옆에 서고 프롬프트에만 실린다.
+   */
+  | { kind: 'private'; evidence: RedactedEvidence; baseline: number; scoring: ReadingScoring; flow: FlowFacts }
   | { kind: 'match'; evidence: SharedEvidence; baseline: number; scoring: ReadingScoring };
 
 /**
@@ -120,7 +125,7 @@ export function readingEvidenceOf(
     policy: scoring.policy,
   });
 
-  if (kind === 'private') return { kind, evidence: redacted, baseline, scoring };
+  if (kind === 'private') return { kind, evidence: redacted, baseline, scoring, flow: flowFactsOf(charts.a, charts.b, viewedAt) };
 
   const shared = shareEvidence(redacted, matchInput);
   if (shared === null) {
@@ -135,11 +140,16 @@ export * from './policy';
 export * from './feedback';
 export * from './notes';
 export {
+  asksPairExtras,
   baselineIn,
   CONTROL,
+  flowRuleIn,
+  layoutIn,
+  manualAskedIn,
   NOTHING_KNOWN,
   READING_PROMPTS,
   readingPromptOf,
+  shapeAskedIn,
   writesSummaryLast,
   pairSectionTexts,
   promptSlotsOf,
@@ -168,6 +178,9 @@ export {
   withDiscovery,
   type DetailReadingOutput,
 } from './detail';
+export { manualFindingsOf, manualOfOutput, withManual, type PairManual } from './manual';
+export { flowOfOutput, pressedFlow, withFlow, type PairFlow } from './flow';
+export { withPairExtras } from './pair-extras';
 export { sectionCounter, type SectionCount } from './progress';
 export type { CurrentReading } from './current-reading';
 export type { ReadingEntry } from './entry';

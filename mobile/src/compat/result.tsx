@@ -4,6 +4,7 @@ import { ScrollView, StyleSheet, View } from 'react-native';
 import { buildMatchPreview, matchBasisOf } from '@matching';
 import { MATCH_INDEX_BADGE, MATCH_INDEX_NOTE, MATCH_INDEX_POLICY_BADGE, MATCH_INDEX_SCALE, MATCH_INDEX_UNSCALED } from '@matching/copy';
 import { pairSeatsOf } from '@reading-display';
+import { manualSeatsOf } from '@reading/manual';
 import { RELATION_LABEL, relationOf, type Relation } from '@people';
 import {
   ELEMENT_KO,
@@ -46,7 +47,7 @@ const SIDE_PERSON: Record<CompatSide, string> = { a: '첫 번째 사람', b: '�
 
 /** 궁합 결과 — 베타 지표(궁합풀이를 받기 전) → 참고 문단 → 풀이 칸 → 접힌 두 명식 · 표, 웹과 같은 차례다(`app/me/compat/screen.tsx`) */
 export function CompatResult({ outcome, onReadingChanged }: { outcome: Ok; onReadingChanged: () => void }) {
-  const { charts, names, relation, reading, personA, personB } = outcome;
+  const { charts, names, relation, reading, personA, personB, selfPersonId } = outcome;
   const compat = analyzeCompatibility(charts.a, charts.b);
   /* 눈금은 풀이가 정한다 — 있으면 그 풀이를 잰 판, 없으면 지금 적어 둔 사이로 지금 잰다(ADR 0113) */
   const basis = matchBasisOf(reading?.scoreScale ?? null, { matched: false, relation: relation.ok ? relation.relation : null });
@@ -114,6 +115,7 @@ export function CompatResult({ outcome, onReadingChanged }: { outcome: Ok; onRea
       <PairReadingPanel
         personA={personA}
         personB={personB}
+        selfPersonId={selfPersonId}
         names={names}
         pair={[
           { name: names.a, stem: charts.a.pillars.dayMaster },
@@ -146,6 +148,7 @@ export function CompatResult({ outcome, onReadingChanged }: { outcome: Ok; onRea
 function PairReadingPanel({
   personA,
   personB,
+  selfPersonId,
   names,
   pair,
   ask,
@@ -153,6 +156,8 @@ function PairReadingPanel({
 }: {
   personA: string;
   personB: string;
+  /** 내 사주의 Person — 사용 설명서가 「{상대} 사용 설명서」로 설지 정한다(ADR 0283). 없으면 `null` */
+  selfPersonId: string | null;
   names: { a: string; b: string };
   pair: readonly [CoverPerson, CoverPerson];
   ask: ReactNode;
@@ -178,6 +183,8 @@ function PairReadingPanel({
       view={answer.view}
       nicknames={pairSeatsOf({ personId: personA, name: names.a }, { personId: personB, name: names.b })}
       pair={pair}
+      /* 사용 설명서 — 내 사주가 끼면 상대를 대하는 법, 남 둘이면 서로의 것. 자리는 글과 같은 Person id 차례다(웹 `app/me/compat/screen.tsx`) */
+      manualSeats={manualSeatsOf({ personId: personA }, { personId: personB }, selfPersonId)}
       ask={ask}
       onReadingChanged={onReadingChanged}
     />

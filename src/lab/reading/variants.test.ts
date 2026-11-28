@@ -508,15 +508,22 @@ describe('고객이 읽는 글의 계약', () => {
       expect(shared, outOfScope).not.toContain(outOfScope);
     }
 
-    // 비공개는 같은 것을 궁금증 문단으로 든다
-    for (const need of ['각자가 가까운 사이에서 어떤 사람인지', '지금이 이 관계에 어떤 시기인지']) {
+    /*
+      비공개는 같은 것을 본문 밖의 두 칸으로 든다 — 각자는 「이럴 땐 이렇게」, 지금의 때는 우리 둘의 흐름이다(ADR 0283 · 0284). 본문은 정한 차례만
+      쓴다 — 함께 지내는 장면은 걷었고, 오래 가려면은 마지막 절이다(ADR 0283)
+    */
+    for (const need of [
+      '## 이럴 땐 이렇게',
+      '## 우리 둘의 흐름',
+      '각자가 어떤 사람인가 · 지금 두 사람이 지나는 때는 본문에 세우지 않는다',
+      '**오래 가려면 무엇이 필요한가** — ',
+    ]) {
       expect(own, need).toContain(need);
     }
 
-    // 둘이 함께 쓰는 것은 양쪽 모두 같은 궁금증 문단으로 든다
+    // 공유 궁합은 둘이 함께 쓰는 것을 궁금증 문단으로 든다
     for (const need of ['두 사람이 서로에게 어떤 사람이고', '함께 지내면 어떤 장면이 되풀이되고', '오래 가려면 무엇이 필요한가']) {
       expect(shared, need).toContain(need);
-      expect(own, need).toContain(need);
     }
 
     expect(sectionCountOf(shared)).toBe(0);
@@ -789,7 +796,7 @@ describe('고객이 읽는 글의 계약', () => {
     expect(CONTROL.selfPresentation).toBe('expert-v4');
     expect(CONTROL.terminology).toBe('plain');
     expect(READING_POLICY.version).toBe('reading-prompt-v25');
-    expect(READING_POLICY.pairVersion).toBe('reading-prompt-v23');
+    expect(READING_POLICY.pairVersion).toBe('reading-prompt-v28');
     expect(selfPrompt()).toContain('이 사주의 핵심');
     expect(selfPrompt()).not.toContain('살림법');
     expect(selfPrompt()).toContain('analysis.strength');
@@ -896,7 +903,8 @@ describe('고객이 읽는 글의 계약', () => {
       */
       expect(compat).toContain('이름 대신 그 이름이 가리키는 것을 쓴다');
       expect(compat).not.toContain('각자의 대운·세운이 지금 어느 자리인지');
-      expect(compat).toContain('지금이 이 관계에 어떤 시기인지');
+      /* 지금의 때는 본문이 아니라 흐름 칸이 든다(ADR 0284) */
+      expect(compat).toContain('지금 두 사람에게 도는 운은 본문에 쓰지 않는다');
 
       /*
         **절 문장이 갈리던 자리는 없어졌다.** 「흐름의 분류명은 쓰지 말고」는 비공개

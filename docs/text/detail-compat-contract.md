@@ -24,7 +24,7 @@
 | 다룰 것 | 서로에게 어떤 사람인지 · 맞는 곳과 부딪히는 곳 · 반복될 장면 · 오래 가려면 · 처음 알아 갈 때 무엇이 눈에 들어오는지. 「절 목록으로 삼지 마라」 | `prompt.ts:643-657` · `:670` |
 | 소제목 | 모델이 짓는다. 4~5개가 기본이고 구체적인 특징을 드러낸다. 「다 답해야 하는 목차가 아니다」, 두드러지는 이야기 두세 개를 고른다 | `prompt.ts:657` · `src/lib/reading/match-reading-guide.ts:179-190` · `:228-229` |
 | 분량 | 3000~4800자 | `prompt.ts:187` |
-| 판본 | `reading-prompt-v23`. `private` 와 한 이름이다 | `src/lib/reading/policy.ts:138` · `:287-288` |
+| 판본 | `reading-prompt-detail-v1` — 궁합풀이(`private`, `reading-prompt-v28`)와 따로 센다 | `src/lib/reading/policy.ts` 의 `detailVersion` · `promptVersionOf` |
 
 ### 나오는 칸 · 저장 · 나가는 것
 

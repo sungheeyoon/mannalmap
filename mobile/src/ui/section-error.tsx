@@ -44,6 +44,21 @@ export function SectionScrollHost({ scroll, children }: { scroll: RefObject<Comp
   return <ScrollHost.Provider value={scroll}>{children}</ScrollHost.Provider>;
 }
 
+/**
+ * 이 스크롤 안의 한 자리로 내리는 일 — 궁합풀이 표지 아래 「사용 설명서 ›」가 글 끝의 카드로 데려간다(ADR 0283, 웹은 `#` 고리). 내린 뒤 낭독기의
+ * 초점도 그 자리로 옮긴다. 스크롤 밖이면 아무것도 안 한다.
+ */
+export function useScrollToView(gap = 12) {
+  const scroll = useContext(ScrollHost);
+  return (view: ComponentRef<typeof View> | null) => {
+    const inner = scroll?.current?.getInnerViewRef();
+    if (view == null || inner == null) return;
+    view.measureLayout(inner, (_x, y) => scroll?.current?.scrollTo({ y: Math.max(0, y - gap), animated: true }));
+    const node = findNodeHandle(view);
+    if (node != null) AccessibilityInfo.setAccessibilityFocus(node);
+  };
+}
+
 /** 데려갈 자리 — 문단을 감싼 `View` 이거나 문단의 첫 적는 칸(`TextInput`, 그때는 그 칸이 초점을 받는다) */
 type AnchorNode = ComponentRef<typeof View> | ComponentRef<typeof TextInput>;
 type Anchor = { view: AnchorNode | null; focus?: () => void };

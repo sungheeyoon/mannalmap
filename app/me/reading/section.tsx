@@ -9,6 +9,7 @@ import { readReadingCredits } from '../credits/remaining';
 import { currentReading, improvementConsented, lastReadingRun } from './current';
 import { ReadingPanel } from './panel';
 import type { CoverPerson } from './reading-result';
+import type { ManualSeats } from '@/src/lib/reading/manual';
 import type { TasteCarryView } from '../../taste/taste-carry';
 import { CARD } from '../../ui/surfaces';
 import type { ReadingTarget } from '@/src/lib/reading/target';
@@ -35,6 +36,7 @@ export async function ReadingSection({
   nicknames,
   tones,
   pair,
+  manualSeats,
   reading: preloaded,
   carry = null,
 }: {
@@ -73,6 +75,8 @@ export async function ReadingSection({
   tones?: readonly (Element | null)[];
   /** 궁합풀이 표지의 두 사람 — 비공개 궁합만 넘긴다(`Result`, 시안 A 2026-11-13) */
   pair?: readonly [CoverPerson, CoverPerson];
+  /** 궁합풀이의 두 자리 — 사용 설명서 카드가 「{상대} 사용 설명서」로 설지 정한다(`Result`, ADR 0283). 비공개 궁합만 넘긴다 */
+  manualSeats?: ManualSeats;
   /**
    * 부르는 화면이 이미 읽은 글 — 머리에 그 글의 일간을 세우려고 먼저 읽은 화면이 넘긴다. 같은 글을 두 번 묻지 않는다.
    * `null` 은 「읽었고 글이 없다」이고, 안 넘기면 여기서 읽는다.
@@ -131,6 +135,7 @@ export async function ReadingSection({
         nicknames={nicknames}
         tones={cover}
         pair={pair}
+        manualSeats={manualSeats}
         carry={carry}
       />
     </section>

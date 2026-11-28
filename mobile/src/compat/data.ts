@@ -186,6 +186,8 @@ export type PairOutcome =
       kind: 'ok';
       personA: string;
       personB: string;
+      /** 내 사주의 Person — 사용 설명서가 「{상대} 사용 설명서」로 설지 정한다(ADR 0283). 계정에 없으면 `null` */
+      selfPersonId: string | null;
       names: { a: string; b: string };
       charts: { a: Saju; b: Saju };
       relation: RelationRead;
@@ -231,6 +233,7 @@ export async function readPair(client: Client, a: string, b: string): Promise<Lo
       kind: 'ok',
       personA: first.personId,
       personB: second.personId,
+      selfPersonId: account.row?.self_person_id ?? null,
       names: { a: first.label, b: second.label },
       charts: { a: chartA.saju, b: chartB.saju },
       relation,

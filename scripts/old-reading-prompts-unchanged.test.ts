@@ -29,13 +29,19 @@ const privateOf = (relation: 'partner' | 'family' | 'friend'): string =>
  * 값 그대로다 — 지우기와 파일 나누기가 운영 글자를 한 바이트도 안 바꿨다는 뜻이다.
  */
 const UNCHANGED_AT: Readonly<Record<string, Readonly<Record<string, string>>>> = {
-  'reading-prompt-v25|reading-prompt-v23|reading-prompt-detail-v1': {
+  /**
+   * 궁합풀이 v28 — 개인 풀이와 같은 꼴(「먼저 볼 핵심 세 가지」 · 절마다 요약 줄)과 정한 차례 · 「이럴 땐 이렇게」 · 우리 둘의 흐름의 지시 · 재료 ·
+   * 출력 계약이 선다(ADR 0283 · 0284). 바뀐 것은 비공개 궁합 넷뿐이고 개인 풀이 · 인연 궁합의 지문은 v23 판(`b6377ce9…` 를 쓰던 표)과 한
+   * 글자도 같다 — 글의 모양 규칙을 두 풀이가 한 조각(`src/lib/reading/prompt-shape.ts`)으로 나눠 써도 개인 풀이의 글자가 한 바이트도 안
+   * 바뀌었다는 뜻이다. 그 조각을 고치면 `self` 와 궁합풀이 넷이 함께 붉어진다 — 두 판본을 같이 올린다.
+   */
+  'reading-prompt-v25|reading-prompt-v28|reading-prompt-detail-v1': {
     self: '2f0cc082c78e94985ab354cf4739ce3b6ea21a7ad69823dd21d0539a94efb63c',
-    private: 'b6377ce9a19ed5e412272597489a321d39ac97e5ec41eaf2ce138b036bd8be11',
+    private: '8d61f5ff8db04b74d352fca29a5c229f02e4d747072a8f013e68d299b6b5bea8',
     match: '73744d348e98f5ce60b41b2d132973295df751b8917045a4334efa9fdc89d31f',
-    partner: '75602aae354340a1b8663dddcc59235786c2589eed24085b5831ceab0159ff32',
-    family: '357ed101b19b5694fc5e6bccf9b66dafff2f607018e829e869c1be6f051c7735',
-    friend: 'feb2ae683c89559ec012b2cc15b2fc0300916baeee5b557a9edc9f58e7872031',
+    partner: '23961c6c6d43f044bc1b37a004fcfc3ceeb62e18302658a3bd834710766e482c',
+    family: '06b8a28136bafc0bd27aa608e7a3d2788e56a2ecf2ac1111164276352e8c8840',
+    friend: 'b0d1372a0e87218650f22f2f6c98be0773c1612683d7d6f99c21b54e3da968c5',
   },
 };
 

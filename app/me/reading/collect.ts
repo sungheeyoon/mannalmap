@@ -8,6 +8,7 @@ import {
   isDetailPromptVersion,
   metaphorToStore,
   withDiscovery,
+  withPairExtras,
   withoutLeakedPaths,
   type BirthSecret,
   type CheckFinding,
@@ -242,6 +243,16 @@ export async function collectReadingResult(responseId: string): Promise<CollectO
   const detail = isDetailPromptVersion(job.prompt_version);
   const discovery = retrieved.output.discovery ?? '';
   if (detail) markdown = withDiscovery(markdown, discovery);
+
+  /**
+   * **궁합풀이면 글의 모양을 재고, 흐름과 「이럴 땐 이렇게」를 본문 끝(근거 절 앞)의 절로 접는다**(ADR 0283 · 0284) — 얼린 프롬프트가 시켰는지로
+   * 알고, 두 기준이 엇갈린 해는 보통으로 누른 뒤 접는다(`withPairExtras`). 꼴을 어겼거나 칸을 못 읽으면 글을 그대로 세운다(품질로 적는다,
+   * ADR 0163). 접은 뒤의 글을 걷고 검사하므로 그 절도 본문과 같은 검사를 받는다. 시키지 않은 시도(옛 판 궁합풀이 · 개인 풀이 · 인연 궁합)는 글자가
+   * 안 바뀐다.
+   */
+  const extras = withPairExtras({ kind: job.kind, prompt: job.prompt, markdown, output: retrieved.output });
+  markdown = extras.markdown;
+  findings.push(...extras.findings);
 
   const unleaked = withoutLeakedPaths(markdown, job.evidence);
   markdown = unleaked.markdown;

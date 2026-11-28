@@ -1,4 +1,5 @@
 import type { PairNicknames } from '@reading/display';
+import type { ManualSeats } from '@reading/manual';
 import { creditAskShape } from '@reading/credit-ask';
 import { readingCostLine, readingNoneNote } from '@reading/notes';
 import { readingOutline } from '@reading/outline';
@@ -95,6 +96,7 @@ export function ReadingPanel({
   tones,
   nicknames,
   pair,
+  manualSeats,
   automatic = false,
   ask,
   betweenSummaryAndBody,
@@ -107,6 +109,8 @@ export function ReadingPanel({
   nicknames?: PairNicknames;
   /** 궁합풀이 표지의 두 사람 — 비공개 궁합만 넘긴다(`Result`) */
   pair?: readonly [CoverPerson, CoverPerson];
+  /** 궁합풀이의 두 자리 — 사용 설명서 카드가 누구의 설명서로 설지 정한다(`Result`, ADR 0283). 비공개 궁합만 넘긴다 */
+  manualSeats?: ManualSeats;
   /** 이 글을 동의가 만드는가(ADR 0038) — 인연 궁합. 글이 있으면 누를 것이 없다 */
   automatic?: boolean;
   /** 다음 풀이를 위해 먼저 정할 것 — 궁합의 「무슨 사이인가」 */
@@ -199,6 +203,7 @@ export function ReadingPanel({
           coverAction={chrome.canShare ? <ShareReadingIcon share={coverShare} /> : undefined}
           belowCover={chrome.canShare ? coverShare.trouble : undefined}
           pair={pair}
+          manualSeats={manualSeats}
         />
       )}
 
