@@ -1,6 +1,8 @@
 import type { Relation } from '../people';
 import { EVIDENCE_CONTRACT } from '../saju/evidence';
 import { SEAT_NAMES } from './display';
+import { FLOW_TITLE } from './flow';
+import { MANUAL_TITLE } from './manual';
 import { termNames } from './vocabulary';
 import { READING_POLICY, type PairKind } from './policy';
 import { CUSTOMER_TONE, elementGlossLines, termsRule } from './prompt-voice';
@@ -206,9 +208,9 @@ export const DETAIL_OUTPUT_CONTRACT = PAIR_OUTPUT_CONTRACT.replace(
 );
 
 /**
- * 운영 궁합풀이의 출력 계약 — 칸의 차례는 본문 → 점수 → 사용 설명서 → 우리 둘의 흐름 → 한 줄 요약이다(ADR 0283 · 0284). 둘 다 방금 쓴 본문에 기댄다.
+ * 운영 궁합풀이의 출력 계약 — 칸의 차례는 본문 → 점수 → 이럴 땐 이렇게 → 우리 둘의 흐름 → 한 줄 요약이다(ADR 0283 · 0284). 둘 다 방금 쓴 본문에 기댄다.
  */
 export const PAIR_EXTRAS_OUTPUT_CONTRACT = PAIR_OUTPUT_CONTRACT.replace(
   '마지막으로 \`metaphor\` 에',
-  '그다음 \`manual\` 에 사용 설명서를, 그다음 \`flow\` 에 우리 둘의 흐름을, 마지막으로 \`metaphor\` 에',
+  `그다음 \`manual\` 에 「${MANUAL_TITLE}」를, 그다음 \`flow\` 에 「${FLOW_TITLE}」을, 마지막으로 \`metaphor\` 에`,
 );

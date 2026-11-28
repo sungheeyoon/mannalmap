@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { READING_POLICY, baselineIn, flowRuleIn, withFlow, withManual, type PairFlow, type PairManual } from '@/src/lib/reading';
+import { READING_POLICY, baselineIn, flowRuleIn, layoutIn, withFlow, withManual, type PairFlow, type PairManual } from '@/src/lib/reading';
+import { LEAD_TITLE } from '@/src/lib/reading/shape';
 import { CITY_LONGITUDES, computeSaju } from '@/src/lib/saju';
 
 import { readingInputOf } from './generator';
@@ -635,7 +636,7 @@ describe('상세 궁합의 회수', () => {
   });
 });
 
-describe('궁합풀이의 사용 설명서 · 흐름 회수(ADR 0283 · 0284)', () => {
+describe('궁합풀이의 「이럴 땐 이렇게」 · 흐름 회수(ADR 0283 · 0284)', () => {
   const MANUAL: PairManual = {
     first: {
       core: '먼저 챙겨 주세요. 받을 때 마음이 풀리는 편이에요.',
@@ -665,7 +666,7 @@ describe('궁합풀이의 사용 설명서 · 흐름 회수(ADR 0283 · 0284)', 
     expect(noted()?.p_findings.map((f) => f.code) ?? []).not.toContain('manual-out-of-contract');
   });
 
-  it('칸이 비었으면 글은 그대로 저장하고 적는다 — 반쪽 사용 설명서를 세우지 않는다', async () => {
+  it('칸이 비었으면 글은 그대로 저장하고 적는다 — 반쪽 카드를 세우지 않는다', async () => {
     job = jobOf('private');
     retrieve.mockResolvedValue(answered({ markdown: GOOD, score: SCORE(), manual: { ...MANUAL, us: ' ' } } as never));
     await expect(collectReadingResult('resp-1')).resolves.toMatchObject({ done: 'saved' });
@@ -673,9 +674,10 @@ describe('궁합풀이의 사용 설명서 · 흐름 회수(ADR 0283 · 0284)', 
     expect(noted()?.p_findings.map((f) => f.code)).toContain('manual-out-of-contract');
   });
 
-  it('사용 설명서를 안 시킨 옛 판 시도는 칸이 와도 접지 않는다 — 얼린 프롬프트로 안다', async () => {
+  it('「이럴 땐 이렇게」를 안 시킨 옛 판 시도는 칸이 와도 접지 않는다 — 얼린 프롬프트로 안다', async () => {
     const fresh = jobOf('private');
-    job = { ...fresh, prompt: fresh.prompt.replace(/^## 사용 설명서$/m, '## 다른 절') };
+    job = { ...fresh, prompt: fresh.prompt.replace(/^## 이럴 땐 이렇게$/m, '## 다른 절') };
+    expect(job.prompt).not.toBe(fresh.prompt);
     retrieve.mockResolvedValue(answered({ markdown: GOOD, score: SCORE(), manual: MANUAL } as never));
     await expect(collectReadingResult('resp-1')).resolves.toMatchObject({ done: 'saved' });
     expect(called('save_reading')?.[1].p_output).toBe(GOOD);
@@ -702,7 +704,7 @@ describe('궁합풀이의 사용 설명서 · 흐름 회수(ADR 0283 · 0284)', 
     };
   };
 
-  it('흐름이 오면 두 기준이 엇갈린 해를 「보통」으로 누르고 본문 끝에 접는다 — 흐름 · 사용 설명서 · 근거 절 차례', async () => {
+  it('흐름이 오면 두 기준이 엇갈린 해를 「보통」으로 누르고 본문 끝에 접는다 — 흐름 · 이럴 땐 이렇게 · 근거 절 차례', async () => {
     job = jobOf('private');
     const { pressed } = ruleOf();
     const flow = allLift();
@@ -719,14 +721,16 @@ describe('궁합풀이의 사용 설명서 · 흐름 회수(ADR 0283 · 0284)', 
     };
     const saved = called('save_reading')?.[1].p_output as string;
     expect(saved).toBe(withManual(withFlow(WITH_GROUNDING, expected), MANUAL));
-    expect(saved.indexOf('## 우리 둘의 흐름')).toBeLessThan(saved.indexOf('## 사용 설명서'));
+    expect(saved.indexOf('## 우리 둘의 흐름')).toBeGreaterThan(-1);
+    expect(saved.indexOf('## 우리 둘의 흐름')).toBeLessThan(saved.indexOf('## 이럴 땐 이렇게'));
+    expect(saved.indexOf('## 이럴 땐 이렇게')).toBeLessThan(saved.indexOf('### 근거 (검사용)'));
 
     const count = pressed.first.length + pressed.second.length;
     const flowFindings = noted()?.p_findings.filter((f) => f.code === 'flow-out-of-contract') ?? [];
     expect(flowFindings.map((f) => f.detail)).toEqual(count === 0 ? [] : [expect.stringContaining(`끝값을 쓴 칸 ${count}`)]);
   });
 
-  it('한 해라도 빠진 흐름은 접지 않고 적는다 — 글과 사용 설명서는 선다', async () => {
+  it('한 해라도 빠진 흐름은 접지 않고 적는다 — 글과 「이럴 땐 이렇게」는 선다', async () => {
     job = jobOf('private');
     const flow = allLift();
     retrieve.mockResolvedValue(answered({ markdown: GOOD, score: SCORE(), manual: MANUAL, flow: { ...flow, years: flow.years.slice(1) } } as never));
@@ -742,5 +746,59 @@ describe('궁합풀이의 사용 설명서 · 흐름 회수(ADR 0283 · 0284)', 
     await expect(collectReadingResult('resp-1')).resolves.toMatchObject({ done: 'saved' });
     expect(called('save_reading')?.[1].p_output).toBe(withManual(GOOD, MANUAL));
     expect(noted()?.p_findings.map((f) => f.code) ?? []).not.toContain('flow-out-of-contract');
+  });
+
+  /**
+   * **글의 모양**(ADR 0283) — 궁합풀이는 개인 풀이와 같은 꼴로 쓴다: 「먼저 볼 핵심 세 가지」로 열고 절마다 요약 줄. 어긴 글도 저장하고
+   * 화면은 문단으로 세운다 — 적기만 한다(`shape-out-of-contract`). 꼴은 접기 전의 글로 잰다 — 접은 두 절에는 요약 줄이 없다.
+   */
+  const shaped = (sections: number) =>
+    [
+      `## ${LEAD_TITLE}\n1. **하나예요** — 설명이에요.\n2. **둘이에요** — 설명이에요.\n3. **셋이에요** — 설명이에요.`,
+      ...Array.from({ length: sections - 1 }, (_, at) => `## ${at + 1}번째 이야기\n> 그 절의 결론 한 줄이에요.\n\n${'꾸민 문단이에요. '.repeat(12)}`),
+    ].join('\n\n');
+  const shapeFindings = () => (noted()?.p_findings ?? []).filter((f) => f.code === 'shape-out-of-contract').map((f) => f.detail);
+
+  it('꼴을 지킨 글은 꼴로 아무것도 안 적는다 — 흐름 · 카드를 접어도', async () => {
+    job = jobOf('private');
+    const asked = layoutIn(job.prompt);
+    expect(asked).toEqual({ sections: 7 });
+    const markdown = shaped(asked?.sections ?? 0);
+    retrieve.mockResolvedValue(answered({ markdown, score: SCORE(), manual: MANUAL, flow: allLift() } as never));
+    await expect(collectReadingResult('resp-1')).resolves.toMatchObject({ done: 'saved' });
+
+    expect(shapeFindings()).toEqual([]);
+    expect(called('save_reading')?.[1].p_output).toContain('## 이럴 땐 이렇게');
+  });
+
+  it('핵심 세 가지가 빠지고 요약 줄이 없는 글도 저장하고, 무엇이 빠졌는지 적는다 — 막지 않는다', async () => {
+    job = jobOf('private');
+    retrieve.mockResolvedValue(answered({ markdown: GOOD, score: SCORE(), manual: MANUAL } as never));
+    await expect(collectReadingResult('resp-1')).resolves.toMatchObject({ done: 'saved' });
+
+    expect(shapeFindings()).toEqual([
+      `「${LEAD_TITLE}」 절이 없다`,
+      '요약 줄이 없는 절 1개 — 절 1개 가운데',
+      '절이 1개다 — 차례는 7개다',
+    ]);
+    expect(JSON.stringify(noted())).not.toContain('스스로 정한 규칙');
+  });
+
+  it('꼴을 안 시킨 옛 판 시도는 꼴을 재지 않는다 — 얼린 프롬프트의 「글의 모양」 절로 안다', async () => {
+    const fresh = jobOf('private');
+    job = { ...fresh, prompt: fresh.prompt.replace(/^## 글의 모양$/m, '## 다른 절') };
+    expect(job.prompt).not.toBe(fresh.prompt);
+    retrieve.mockResolvedValue(answered({ markdown: GOOD, score: SCORE(), manual: MANUAL } as never));
+    await expect(collectReadingResult('resp-1')).resolves.toMatchObject({ done: 'saved' });
+
+    expect(shapeFindings()).toEqual([]);
+  });
+
+  it('개인 풀이는 꼴을 재지 않는다 — 같은 「글의 모양」 절이 실려 있어도 궁합풀이의 검사다', async () => {
+    retrieve.mockResolvedValue(answered({ markdown: GOOD, score: null }));
+    await expect(collectReadingResult('resp-1')).resolves.toMatchObject({ done: 'saved' });
+
+    expect(job.prompt).toContain('## 글의 모양');
+    expect(shapeFindings()).toEqual([]);
   });
 });

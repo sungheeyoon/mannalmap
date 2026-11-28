@@ -4,24 +4,30 @@ import { computeSaju } from '../saju';
 import { blockingFindingsOf, checkReading, plainTermsIn } from './check';
 import { SEAT_NAMES, readingBody, readingGrounding, withNicknames } from './display';
 import { readingEvidenceOf } from '.';
+import { flowOf, withFlow } from './flow';
 import {
+  MANUAL_AFTER_SECTION,
   MANUAL_CLASH_LABEL,
+  MANUAL_CORE_LABEL,
   MANUAL_HEADING,
   MANUAL_MINE_TITLE,
   MANUAL_POLICY,
   MANUAL_SITUATIONS,
+  MANUAL_TITLE,
   MANUAL_US_LABEL,
   manualCardOf,
   manualFindingsOf,
   manualOf,
   manualOfOutput,
   manualSeatsOf,
+  manualSlotOf,
   withManual,
   type PairManual,
 } from './manual';
+import { LEAD_TITLE } from './shape';
 
 /**
- * **꾸민 사용 설명서** — 조율자 시안의 고정 문장 말투로 지은 시험 글이다(ADR 0283). 첫번째님은 윤하늘(1990-03-15 · 己卯일), 두번째님은
+ * **꾸민 「이럴 땐 이렇게」** — 조율자 시안의 고정 문장 말투로 지은 시험 글이다(ADR 0283). 첫번째님은 윤하늘(1990-03-15 · 己卯일), 두번째님은
  * 엄마(1962-11-02 · 甲辰일) — 앱 가짜 서버의 두 사람이고, 저장한 사람의 id 차례로 윤하늘이 첫 자리다.
  */
 const SAMPLE_MANUAL: PairManual = {
@@ -65,7 +71,7 @@ const GROUNDING = `### 근거 (검사용)
 
 const FULL = `${BODY}\n\n${GROUNDING}`;
 
-describe('모델이 낸 칸을 사용 설명서로 고른다', () => {
+describe('모델이 낸 칸을 「이럴 땐 이렇게」로 고른다', () => {
   it('열두 줄이 다 차 있으면 그대로 — 공백은 한 칸, 머리의 Markdown 표식은 걷는다', () => {
     const raw = {
       ...SAMPLE_MANUAL,
@@ -77,10 +83,10 @@ describe('모델이 낸 칸을 사용 설명서로 고른다', () => {
 
   it.each([
     ['칸이 없다', undefined],
-    ['문자열이다', '사용 설명서'],
+    ['문자열이다', '이럴 땐 이렇게'],
     ['한 사람 몫이 없다', { ...SAMPLE_MANUAL, second: undefined }],
     ['한 줄이 비었다', { ...SAMPLE_MANUAL, first: { ...SAMPLE_MANUAL.first, upset: '   ' } }],
-    ['한 줄 사용법이 없다', { ...SAMPLE_MANUAL, second: { ...SAMPLE_MANUAL.second, core: undefined } }],
+    ['가장 통하는 한마디가 없다', { ...SAMPLE_MANUAL, second: { ...SAMPLE_MANUAL.second, core: undefined } }],
     ['표식만 있다', { ...SAMPLE_MANUAL, clash: '- ' }],
   ])('%s → 없다(`null`) — 반쪽만 세우지 않는다', (_why, raw) => {
     expect(manualOfOutput(raw)).toBeNull();
@@ -98,6 +104,22 @@ describe('본문 끝의 절 하나로 접고 우리가 쓴 꼴만 되읽는다',
 
   it('근거 절이 없으면 글 끝에 접는다', () => {
     expect(withManual(BODY, SAMPLE_MANUAL).trimEnd().endsWith(SAMPLE_MANUAL.clash)).toBe(true);
+  });
+
+  it('접은 절의 머리 · 사람마다의 소제목 · 첫 줄 이름이 카드의 글자와 같다 — 「이럴 땐 이렇게」 · 「{그 사람}에게」 · 「가장 통하는 한마디」', () => {
+    const section = readingBody(withManual(BODY, SAMPLE_MANUAL)).slice(readingBody(BODY).length).trim();
+
+    expect(MANUAL_HEADING).toBe(`## ${MANUAL_TITLE}`);
+    expect(section.split('\n').filter((line) => line.startsWith('#'))).toEqual([
+      '## 이럴 땐 이렇게',
+      `### ${SEAT_NAMES.first}에게`,
+      `### ${SEAT_NAMES.second}에게`,
+      '### 두 사람은',
+      '### 자꾸 부딪히는 자리',
+    ]);
+    expect(section).toContain(`- ${MANUAL_CORE_LABEL}: ${SAMPLE_MANUAL.first.core}`);
+    expect(section).not.toContain('사용 설명서');
+    expect(section).not.toContain('한 줄 사용법');
   });
 
   it('접은 글을 되읽으면 같은 칸이고, 남은 글은 접기 전의 본문이다', () => {
@@ -131,10 +153,63 @@ describe('본문 끝의 절 하나로 접고 우리가 쓴 꼴만 되읽는다',
     ['줄이 빠졌다', (section: string) => section.replace(/^- 사과할 때: .*\n/m, '')],
     ['소제목 차례가 다르다', (section: string) => section.replace('### 두 사람은', '### 자꾸 부딪히는 자리 ')],
     ['칸 이름이 다르다', (section: string) => section.replace('- 부탁할 때: ', '- 부탁할때: ')],
-    ['한 줄 사용법이 빠졌다', (section: string) => section.replace(/^- 한 줄 사용법: .*\n/m, '')],
+    ['가장 통하는 한마디가 빠졌다', (section: string) => section.replace(/^- 가장 통하는 한마디: .*\n/m, '')],
+    ['옛 이름의 머리다', (section: string) => section.replace('## 이럴 땐 이렇게', '## 사용 설명서')],
   ])('우리 꼴이 아니면(%s) 떼지 않고 글 그대로 세운다', (_why, broke) => {
     const shown = broke(readingBody(withManual(BODY, SAMPLE_MANUAL)));
     expect(manualOf(shown)).toEqual({ manual: null, rest: shown });
+  });
+});
+
+/**
+ * **카드는 「잘 맞는 곳 · 부딪히는 곳」 절 다음에 선다**(ADR 0283) — 웹 · 앱이 같은 자리를 쓰도록 본문을 그 자리에서 둘로 가른다. 글은 꾸민 글이다 —
+ * 운영 궁합풀이의 차례(핵심 세 가지 + 절 여섯)대로 소제목만 세웠다.
+ */
+describe('카드가 서는 자리 — 본문을 둘로 가른다', () => {
+  const section = (title: string) => `## ${title}\n> ${title}의 요약이에요.\n\n${title}의 문단이에요.`;
+  const LEAD = `## ${LEAD_TITLE}\n1. **하나** — 설명이에요.\n2. **둘** — 설명이에요.\n3. **셋** — 설명이에요.`;
+  const TITLES = ['서로에게', '오래 되풀이된 것', '맞는 곳과 부딪히는 곳', '서로의 보완', '함께일 때', '오래 가려면'];
+  const SHAPED = [LEAD, ...TITLES.map(section)].join('\n\n');
+
+  it('핵심 세 가지 다음의 셋째 절 뒤에서 가른다 — 앞은 부딪히는 곳까지, 뒤는 보완부터다', () => {
+    const { before, after } = manualSlotOf(SHAPED);
+
+    expect(MANUAL_AFTER_SECTION).toBe(3);
+    expect(before).toBe([LEAD, ...TITLES.slice(0, 3).map(section)].join('\n\n'));
+    expect(after).toBe(TITLES.slice(3).map(section).join('\n\n'));
+    expect(`${before}\n\n${after}`).toBe(SHAPED);
+  });
+
+  it('회수가 접은 글에서 카드 · 흐름을 뗀 본문도 같은 자리에서 갈린다 — 화면이 읽는 차례 그대로', () => {
+    const flow = { years: [2026, 2027].map((year) => ({ year, first: 'lift' as const, second: 'even' as const })), line: '한 문장이에요.' };
+    const stored = readingBody(withManual(withFlow(`${SHAPED}\n\n---\n\n${GROUNDING}`, flow), SAMPLE_MANUAL));
+    const body = flowOf(manualOf(stored).rest).rest;
+
+    expect(manualSlotOf(body)).toEqual(manualSlotOf(SHAPED));
+  });
+
+  it('핵심 세 가지 없이 시작한 글은 첫 절부터 센다 — 셋째 절 뒤다', () => {
+    const { before, after } = manualSlotOf(TITLES.map(section).join('\n\n'));
+
+    expect(before).toBe(TITLES.slice(0, 3).map(section).join('\n\n'));
+    expect(after).toBe(TITLES.slice(3).map(section).join('\n\n'));
+  });
+
+  it.each([
+    ['부딪히는 곳이 마지막 절이다', [LEAD, ...TITLES.slice(0, 3).map(section)].join('\n\n')],
+    ['절이 모자라다', [LEAD, section(TITLES[0])].join('\n\n')],
+    ['소제목이 없다', '소제목 없이 쓴 글이에요.'],
+  ])('그 자리가 없으면(%s) 글 전체가 앞이다 — 카드가 글 끝에 선다', (_why, body) => {
+    expect(manualSlotOf(body)).toEqual({ before: body, after: '' });
+  });
+
+  it('작은 제목(`###`)과 검사용 근거 절은 절로 세지 않는다', () => {
+    const nested = SHAPED.replace('서로에게의 문단이에요.', '### 작은 제목\n\n서로에게의 문단이에요.');
+    expect(manualSlotOf(nested).after).toBe(manualSlotOf(SHAPED).after);
+
+    const short = [LEAD, ...TITLES.slice(0, 3).map(section)].join('\n\n');
+    const withGrounding = `${short}\n\n## 근거 (검사용)\n\n한 줄`;
+    expect(manualSlotOf(withGrounding)).toEqual({ before: withGrounding, after: '' });
   });
 });
 
@@ -151,12 +226,13 @@ describe('화면이 세우는 카드', () => {
     expect(manualSeatsOf({ personId: MOM }, { personId: SELF }, null)).toEqual({ shown: ['second', 'first'], own: null });
   });
 
-  it('내가 끼면 두 칸 — 「{상대} 사용 설명서 | 내 사용 설명서」, 내 것은 그 사람이 나를 대하는 법이다', () => {
+  it('내가 끼면 두 칸 — 「{상대}에게 | 나에게」, 「나에게」는 그 사람이 나를 대하는 법이다', () => {
     const card = manualCardOf(SAMPLE_MANUAL, NAMES, { shown: ['first', 'second'], own: 'first' });
 
+    expect(MANUAL_MINE_TITLE).toBe('나에게');
     expect(card.tabs.map(({ seat, title }) => [seat, title])).toEqual([
-      ['second', '엄마 사용 설명서'],
-      ['first', MANUAL_MINE_TITLE],
+      ['second', '엄마에게'],
+      ['first', '나에게'],
     ]);
     for (const situation of MANUAL_SITUATIONS) {
       expect(card.tabs[0].lines[situation]).toBe(SAMPLE_MANUAL.second[situation]);
@@ -166,25 +242,26 @@ describe('화면이 세우는 카드', () => {
     expect(card.clash).toEqual({ label: MANUAL_CLASH_LABEL, text: SAMPLE_MANUAL.clash });
   });
 
-  it('표지 아래 결론 한 줄은 첫 칸 사람의 「한 줄 사용법」이다', () => {
+  /** 걷는 줄이다 — 화면이 `ManualLead` 를 걷을 때 이 시험과 `ManualCard.lead` 도 함께 걷는다(ADR 0283) */
+  it('표지 아래 결론 한 줄은 첫 칸 사람의 「가장 통하는 한마디」다 — 화면이 그 줄을 걷을 때까지', () => {
     const card = manualCardOf(SAMPLE_MANUAL, NAMES, { shown: ['first', 'second'], own: 'first' });
 
-    expect(card.lead).toEqual({ label: '엄마 한 줄 사용법', text: SAMPLE_MANUAL.second.core });
+    expect(card.lead).toEqual({ label: '엄마에게 가장 통하는 한마디', text: SAMPLE_MANUAL.second.core });
     expect(card.tabs[0].core).toBe(SAMPLE_MANUAL.second.core);
   });
 
   it('내가 둘째 자리면 첫 칸이 첫째 자리를 대하는 법이다', () => {
     const card = manualCardOf(SAMPLE_MANUAL, NAMES, { shown: ['second', 'first'], own: 'second' });
 
-    expect(card.tabs.map(({ title }) => title)).toEqual(['윤하늘 사용 설명서', MANUAL_MINE_TITLE]);
+    expect(card.tabs.map(({ title }) => title)).toEqual(['윤하늘에게', MANUAL_MINE_TITLE]);
     expect(card.tabs[0].lines.ask).toBe(SAMPLE_MANUAL.first.ask);
-    expect(card.lead.label).toBe('윤하늘 한 줄 사용법');
+    expect(card.tabs[0].core).toBe(SAMPLE_MANUAL.first.core);
   });
 
-  it('남 둘이면 고른 차례로 「{A} 사용 설명서 | {B} 사용 설명서」와 「두 사람은」', () => {
+  it('남 둘이면 고른 차례로 「{A}에게 | {B}에게」와 「두 사람은」', () => {
     const card = manualCardOf(SAMPLE_MANUAL, NAMES, { shown: ['second', 'first'], own: null });
 
-    expect(card.tabs.map(({ title }) => title)).toEqual(['엄마 사용 설명서', '윤하늘 사용 설명서']);
+    expect(card.tabs.map(({ title }) => title)).toEqual(['엄마에게', '윤하늘에게']);
     expect(card.tabs[1].lines.upset).toBe(SAMPLE_MANUAL.first.upset);
     expect(card.us.label).toBe(MANUAL_US_LABEL.both);
   });
@@ -203,12 +280,12 @@ describe('화면이 세우는 카드', () => {
 });
 
 describe('회수의 검사 — 걸려도 내보낸다', () => {
-  it('꾸민 사용 설명서는 아무것도 안 걸린다', () => {
+  it('꾸민 「이럴 땐 이렇게」는 아무것도 안 걸린다', () => {
     expect(manualFindingsOf(SAMPLE_MANUAL)).toEqual([]);
   });
 
-  it('칸이 없으면 적고 사용 설명서 없이 저장한다', () => {
-    expect(manualFindingsOf(null)).toEqual([{ code: 'manual-out-of-contract', detail: expect.stringContaining('사용 설명서 없이 저장') }]);
+  it('칸이 없으면 적고 그 칸 없이 저장한다', () => {
+    expect(manualFindingsOf(null)).toEqual([{ code: 'manual-out-of-contract', detail: expect.stringContaining('「이럴 땐 이렇게」 없이 저장') }]);
   });
 
   it('긴 줄 · 자리 호칭 · 본보기 그대로 · 사주 이름을 갈래마다 적는다 — 줄 원문은 안 적는다', () => {
@@ -239,7 +316,7 @@ describe('회수의 검사 — 걸려도 내보낸다', () => {
 });
 
 /**
- * **문장 층 검사가 새 절을 지나간다** — 접은 글을 저장 전 검사(`checkReading`)에 그대로 넣어, 막는 코드가 없고 사용 설명서 절이 새 검사를
+ * **문장 층 검사가 새 절을 지나간다** — 접은 글을 저장 전 검사(`checkReading`)에 그대로 넣어, 막는 코드가 없고 「이럴 땐 이렇게」 절이 새 검사를
  * 하나도 더하지 않는지 잰다. 자료는 꾸민 글과 같은 두 사람의 실제 근거다.
  */
 describe('접은 글이 저장 전 검사를 지나간다', () => {
@@ -268,11 +345,11 @@ describe('접은 글이 저장 전 검사를 지나간다', () => {
     expect(verdict.ok ? [] : blockingFindingsOf(verdict.failures)).toEqual([]);
   });
 
-  it('접기 전과 같은 검사만 걸린다 — 사용 설명서 절이 더하는 것이 없다', () => {
+  it('접기 전과 같은 검사만 걸린다 — 「이럴 땐 이렇게」 절이 더하는 것이 없다', () => {
     expect(codesOf(withManual(FULL, SAMPLE_MANUAL))).toEqual(codesOf(FULL));
   });
 
-  it('사용 설명서 절에 사주 이름이 없다 — 쉬운 말 판의 자가 0 을 센다', () => {
+  it('「이럴 땐 이렇게」 절에 사주 이름이 없다 — 쉬운 말 판의 자가 0 을 센다', () => {
     const section = readingBody(withManual(FULL, SAMPLE_MANUAL)).slice(readingBody(FULL).length);
     expect(plainTermsIn(section)).toEqual([]);
   });

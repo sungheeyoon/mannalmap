@@ -113,7 +113,7 @@ const DETAIL_SHAPE = {
 } satisfies JSONSchema7;
 
 /**
- * **궁합풀이의 모양** — 본문 → 점수 → 사용 설명서 → 우리 둘의 흐름 → 한 줄 요약(ADR 0283 · 0284). 두 칸은 방금 쓴 본문에 기대므로 본문 뒤다. 회수가
+ * **궁합풀이의 모양** — 본문 → 점수 → 이럴 땐 이렇게(`manual`) → 우리 둘의 흐름 → 한 줄 요약(ADR 0283 · 0284). 두 칸은 방금 쓴 본문에 기대므로 본문 뒤다. 회수가
  * 두 칸을 본문 끝의 절로 접는다(`withPairExtras`). 시키지 않는 판(옛 궁합 세대 · 인연 궁합)은 이 모양을 안 쓴다(`asksPairExtras`).
  */
 const PAIR_EXTRAS_SHAPE = {
@@ -146,7 +146,7 @@ type CallOptions = {
   continuation?: boolean;
   /** 상세 궁합의 모양으로 받는가 — 운영 제출과 같은 모양이다(`DETAIL_SHAPE`) */
   discovery?: boolean;
-  /** 궁합풀이의 사용 설명서 · 흐름 칸을 받는가 — 운영 제출과 같은 규칙(`asksPairExtras`)으로 넘긴다(`PAIR_EXTRAS_SHAPE`) */
+  /** 궁합풀이의 「이럴 땐 이렇게」 · 흐름 칸을 받는가 — 운영 제출과 같은 규칙(`asksPairExtras`)으로 넘긴다(`PAIR_EXTRAS_SHAPE`) */
   extras?: boolean;
   /** 모양을 통째로 갈아 끼운다 — 맛보기(`tasteRunShapeOf`). 주면 위 둘은 안 본다 */
   shape?: JSONSchema7;
@@ -168,7 +168,7 @@ type CallOptions = {
 };
 
 /**
- * 운영의 다섯 모양 가운데 하나 — 기다리는 길과 제출이 같은 차례로 고른다(이어쓰기 → 상세 궁합 → 사용 설명서 · 흐름 → 차례). 실호출의 마른
+ * 운영의 다섯 모양 가운데 하나 — 기다리는 길과 제출이 같은 차례로 고른다(이어쓰기 → 상세 궁합 → 이럴 땐 이렇게 · 흐름 → 차례). 실호출의 마른
  * 실행(`READING_MANUAL_DRY`)이 보낼 모양을 적으려고 밖에도 낸다.
  */
 export const fixedShapeOf = (options: Pick<CallOptions, 'summaryLast' | 'continuation' | 'discovery' | 'extras'>) =>
@@ -359,7 +359,7 @@ export async function submitBackgroundReading(
     continuation?: boolean;
     /** 상세 궁합의 모양으로 받는가 — 얼린 시도가 상세일 때만. 안 넘기면 옛 모양 그대로다 */
     discovery?: boolean;
-    /** 궁합풀이의 사용 설명서 · 흐름 칸을 받는가 — 운영 비공개 궁합일 때만(`asksPairExtras`, ADR 0283 · 0284) */
+    /** 궁합풀이의 「이럴 땐 이렇게」 · 흐름 칸을 받는가 — 운영 비공개 궁합일 때만(`asksPairExtras`, ADR 0283 · 0284) */
     extras?: boolean;
   } = {},
 ): Promise<ModelSubmission> {

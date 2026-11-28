@@ -34,13 +34,14 @@ import { relationshipCustomerVoice, selfCustomerVoice } from './prompt-voice';
 /**
  * **풀이 프롬프트의 입구** — 자리 표(`SLOT_ORDER`)에 조각을 세워 한 판을 짓고(`planOf`), 자료를 붙여 실제로 보낼 글을 낸다
  * (`readingPromptOf`). 조각은 의미 단위로 나눠 산다 — 조립과 세대 `prompt-assembly.ts`, 말투와 용어 `prompt-voice.ts`,
- * 4판 궁합의 제 벌 `prompt-guided.ts`, 개인 풀이 절 `prompt-self.ts`, 궁합 본문 절 `prompt-pair.ts`, 궁합풀이의 사용 설명서
- * `prompt-manual.ts`, 우리 둘의 흐름 `prompt-flow.ts`. 바깥은 이 파일(과 `index.ts`)로만 부른다.
+ * 4판 궁합의 제 벌 `prompt-guided.ts`, 개인 풀이 절 `prompt-self.ts`, 궁합 본문 절 `prompt-pair.ts`, 두 풀이가 함께 쓰는 글의 모양
+ * `prompt-shape.ts`, 궁합풀이의 「이럴 땐 이렇게」 `prompt-manual.ts`, 우리 둘의 흐름 `prompt-flow.ts`. 바깥은 이 파일(과 `index.ts`)로만 부른다.
  */
 
 export { CONTROL, NOTHING_KNOWN, asksPairExtras, writesSummaryLast, type PromptAssembly, type ReadingAbout } from './prompt-assembly';
 export { LEAD_SUMMARY, selfSectionCount, selfSectionTexts, selfSectionTitlesOf } from './prompt-self';
-export { baselineIn, pairSectionTexts } from './prompt-pair';
+export { baselineIn, layoutIn, pairSectionTexts } from './prompt-pair';
+export { shapeAskedIn } from './prompt-shape';
 export { manualAskedIn } from './prompt-manual';
 export { flowRuleIn } from './prompt-flow';
 
@@ -254,7 +255,7 @@ const planOf = (kind: ReadingKind, assembly: PromptAssembly, about: ReadingAbout
       ? selfSections(assembly)
       : compatSections(kind as PairKind, assembly, about, voice),
     detail: isDetailFlow(kind, assembly) ? DETAIL_BLOCK : null,
-    /** 궁합풀이의 사용 설명서 · 우리 둘의 흐름 — 운영 비공개 궁합에만 선다(ADR 0283 · 0284). 출력 계약도 같은 술어로 칸 둘을 더 말한다 */
+    /** 궁합풀이의 「이럴 땐 이렇게」 · 우리 둘의 흐름 — 운영 비공개 궁합에만 선다(ADR 0283 · 0284). 출력 계약도 같은 술어로 칸 둘을 더 말한다 */
     manual: asksPairExtras(kind, assembly) ? MANUAL_BLOCK : null,
     flow: asksPairExtras(kind, assembly) ? FLOW_BLOCK : null,
     summary: metaphorSection(voice),
@@ -332,7 +333,7 @@ export function readingPromptOf(
   const baseline =
     'baseline' in readingEvidence ? `\n\n${baselineBlock(readingEvidence.baseline)}` : '';
   /**
-   * **사용 설명서의 재료도 짝마다 다르다** — 기준점 뒤에 붙는다(ADR 0283). 자료의 글자에서 엔진 함수로 다시 지으므로 얼린 프롬프트와
+   * **「이럴 땐 이렇게」의 재료도 짝마다 다르다** — 기준점 뒤에 붙는다(ADR 0283). 자료의 글자에서 엔진 함수로 다시 지으므로 얼린 프롬프트와
    * 저장한 근거가 같은 답을 낸다.
    */
   const extras = readingEvidence.kind === 'private' && asksPairExtras('private', assembly);

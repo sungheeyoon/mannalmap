@@ -15,6 +15,8 @@ import {
   readingPromptOf,
 } from '.';
 import { FORMER_EXAMPLE_LINES } from './check';
+import { LEAD_PURPOSE, LEAD_WITHOUT_GROUNDS, POINT_SHAPE, SHAPE_RULES, onOneLine, shapeAskedIn } from './prompt-shape';
+import { LEAD_POINTS, LEAD_TITLE } from './shape';
 import { measureMarkdown, outputDeviations, pairOutputDeviations } from '@/src/lab/reading/measure';
 import { MATCH_INPUT_VARIANTS } from '@/src/lab/reading/variants';
 
@@ -464,12 +466,12 @@ describe('개인 풀이는 쉬운 말로 가르친다', () => {
     expect(legacy).not.toContain('## 이 자료를 읽는 법');
   });
 
-  it('개인 풀이는 v25, 비공개 궁합은 v26(사용 설명서, ADR 0283), 인연 궁합은 상세 v1 이다', () => {
+  it('개인 풀이는 v25, 궁합풀이는 v28(개인 풀이와 같은 꼴 · 「이럴 땐 이렇게」, ADR 0283), 인연 궁합은 상세 v1 이다', () => {
     expect(READING_POLICY.version).toBe('reading-prompt-v25');
-    expect(READING_POLICY.pairVersion).toBe('reading-prompt-v27');
+    expect(READING_POLICY.pairVersion).toBe('reading-prompt-v28');
     expect(READING_POLICY.detailVersion).toBe('reading-prompt-detail-v1');
     for (const kind of READING_KINDS) {
-      const expected = isSolo(kind) ? 'reading-prompt-v25' : kind === 'match' ? 'reading-prompt-detail-v1' : 'reading-prompt-v27';
+      const expected = isSolo(kind) ? 'reading-prompt-v25' : kind === 'match' ? 'reading-prompt-detail-v1' : 'reading-prompt-v28';
       expect(promptVersionOf(kind), kind).toBe(expected);
     }
   });
@@ -480,17 +482,42 @@ describe('개인 풀이는 쉬운 말로 가르친다', () => {
     }
   });
 
-  it('개인 풀이에만 글의 모양이 선다 — 요약 줄 · 번호 제목 · 라벨 세 줄(ADR 0208)', () => {
+  /**
+   * **글의 모양은 개인 풀이와 궁합풀이가 한 벌로 쓴다**(ADR 0208 · 0283) — 절마다의 요약 줄 · 문단 · 굵게의 규칙과, 핵심 세 가지의 항목 꼴 ·
+   * 하는 일 · 근거를 안 대는 것이 같은 글자다(`prompt-shape.ts`). 갈리는 것은 제 몫뿐이다 — 개인 풀이는 강점 · 조심할 점의 갈래와 라벨 줄,
+   * 궁합풀이는 핵심 세 가지의 세 축. 인연 궁합은 소제목과 나누기를 모델이 정하므로 모양 절이 없다.
+   */
+  it('글의 모양은 개인 풀이와 궁합풀이에 선다 — 규칙은 같은 글자이고, 인연 궁합에는 없다', () => {
     for (const kind of READING_KINDS) {
       const prompt = READING_PROMPTS[kind];
+      if (kind === 'match') {
+        expect(prompt, kind).not.toContain('## 글의 모양');
+        expect(shapeAskedIn(prompt), kind).toBe(false);
+        continue;
+      }
+      expect(shapeAskedIn(prompt), kind).toBe(true);
+      expect(prompt, kind).toContain(SHAPE_RULES);
+      expect(prompt, kind).toContain(`「${LEAD_TITLE}」를 뺀 모든 절은 소제목 바로 다음 줄이 \`> \`로 시작하는 **한 줄 요약**이다`);
+      expect(prompt, kind).toContain(POINT_SHAPE);
+      expect(prompt, kind).toContain('`1. **제목** — 설명`');
+      expect(prompt, kind).toContain(LEAD_WITHOUT_GROUNDS);
+      /* 개인 풀이는 꺾인 줄 그대로, 궁합풀이는 「글의 차례」의 한 줄로 편 것 — 같은 문장이다 */
+      expect(prompt, kind).toContain(isSolo(kind) ? LEAD_PURPOSE : onOneLine(LEAD_PURPOSE));
+      /* 실제 문장 본보기 없이 자리 표시만 — 꼴 그림의 절 머리 */
+      expect(prompt, kind).toContain('    ## (절 이름)\n    > (그 절의 결론 한 줄)');
+
       if (isSolo(kind)) {
-        expect(prompt, kind).toContain('## 글의 모양');
         expect(prompt, kind).toContain('`- 상황: 초기에 알아챌 모습`');
         expect(prompt, kind).toContain('`- 잘 맞는 일: 가, 나, 다`');
-        expect(prompt, kind).toContain('`1. **제목** — 설명`');
         expect(prompt, kind).toContain('올해 · 이번 달의 흐름은 셋에 넣지 않는다');
+        expect(prompt, kind).toContain('    ### (강점 · 조심할 점의 갈래 이름)');
       } else {
-        expect(prompt, kind).not.toContain('## 글의 모양');
+        expect(prompt, kind).toContain(`    ## ${LEAD_TITLE}\n    1. **(가장 잘 맞는 곳의 결론 한 마디)**`);
+        expect(prompt, kind).toContain('    3. **(이렇게 하면 통한다는 결론 한 마디)**');
+        /* 꼴 그림의 번호 카드 수가 검사가 세는 수와 같다 — 축을 더하거나 빼면 `LEAD_POINTS` 도 함께 고친다 */
+        expect(prompt.match(/^ {4}\d+\. \*\*\(/gm), kind).toHaveLength(LEAD_POINTS);
+        expect(prompt, kind).not.toContain('강점 · 조심할 점의 갈래 이름');
+        expect(prompt, kind).not.toContain('`- 상황: 초기에 알아챌 모습`');
       }
     }
   });

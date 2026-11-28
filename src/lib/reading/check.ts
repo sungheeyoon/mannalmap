@@ -130,7 +130,9 @@ export type ReadingCheckCode =
   | 'example-copied'
   /** 상세 궁합의 발견 한 줄이 비었다 — 줄 없이 저장한다(`detailFindingsOf`) */
   | 'discovery-out-of-contract'
-  /** 궁합풀이의 사용 설명서 칸이 비었거나 계약(길이 · 호칭 · 본보기 · 사주 이름)을 어겼다 — 비면 사용 설명서 없이 저장한다(`manualFindingsOf`, ADR 0283) */
+  /** 궁합풀이의 글이 시킨 꼴이 아니다 — 「먼저 볼 핵심 세 가지」가 없거나 맨 앞이 아니거나 셋이 아니다 · 요약 줄 없는 절이 있다 · 절의 수가 차례와 다르다(`shapeFindingsOf`, ADR 0283) */
+  | 'shape-out-of-contract'
+  /** 궁합풀이의 「이럴 땐 이렇게」 칸(`manual`)이 비었거나 계약(길이 · 호칭 · 본보기 · 사주 이름)을 어겼다 — 비면 그 칸 없이 저장한다(`manualFindingsOf`, ADR 0283) */
   | 'manual-out-of-contract'
   /** 궁합풀이의 흐름 칸이 비었거나 열 해가 맞지 않거나 · 두 기준이 엇갈린 해에 끝값을 썼거나(보통으로 누른다) · 한 문장이 길거나 사주 이름을 썼다(`flowFindingsOf`, ADR 0284) */
   | 'flow-out-of-contract'

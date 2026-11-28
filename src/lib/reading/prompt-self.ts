@@ -1,5 +1,16 @@
 import { PROMPT_PARTS } from './parts';
 import { CONTROL, type PromptAssembly, type SelfPresentation, type Terminology } from './prompt-assembly';
+import {
+  LEAD_PURPOSE,
+  LEAD_WITHOUT_GROUNDS,
+  PARAGRAPH_SHAPE,
+  POINT_SHAPE,
+  SECTION_SHAPE,
+  SHAPE_RULES,
+  notForAnyone,
+  shapeLegend,
+} from './prompt-shape';
+import { LEAD_TITLE } from './shape';
 
 /**
  * **개인 풀이의 절** — 절 목록 · 글의 모양 · 판정 서열과, 화면 · 실험이 절을 세는 함수.
@@ -35,14 +46,12 @@ export const STRENGTH_TITLE = '강점과 타고난 복';
  * 읽게 만들고, 그러면 정작 걸리는 이야기를 적어 둔 절까지 함께 가벼워진다.
  */
 export const LEAD_SUMMARY: Section = {
-  title: '먼저 볼 핵심 세 가지',
+  title: LEAD_TITLE,
   body: `이 사람에게 지금 **가장 두드러지는 것 셋**을 번호 붙인 목록으로 적는다. 항목마다
-\`1. **제목** — 설명\` 꼴이다: 제목은 그 항목의 결론 한 마디, 설명은 한두 문장. 아래에서 길게 풀 이야기 중 가장 중요한 셋을 먼저 보여 주는
-자리다 — 다 읽지 못하는 사람도 이 셋은 가져간다.
+${POINT_SHAPE} ${LEAD_PURPOSE}
 
-**여기서는 근거를 대지 않는다.** 어디서 나온 말인지도, 왜 그런지도 아래 절이 푼다.
-셋이 한 이야기의 세 조각이 되지 않게 서로 다른 축에서 고르고, 다른 사람에게 그대로
-붙여도 맞는 문장이면 지운다. **좋은 말만 모으는 자리도 아니다** — 걸리는 이야기가 이 사람의 타고난
+${LEAD_WITHOUT_GROUNDS}
+셋이 한 이야기의 세 조각이 되지 않게 서로 다른 축에서 고르고, ${notForAnyone('다른 사람')}. **좋은 말만 모으는 자리도 아니다** — 걸리는 이야기가 이 사람의 타고난
 결에서 나오면 그것을 셋 중 하나로 놓는다. **올해 · 이번 달의 흐름은 셋에 넣지 않는다** — 같은 해를 사는 모두에게
 비슷하게 걸리는 이야기라 이 사람을 가르지 못한다. 때의 이야기는 「앞으로의 흐름」 절이 한다.
 
@@ -232,23 +241,17 @@ ${PROMPT_PARTS.closing}
  * **실제 문장 본보기는 두지 않는다**(v25) — v24 운영 실호출 두 건이 핵심 세 가지 1번 제목을 본보기 「혼자 판단할 때 실력이
  * 또렷해져요」 그대로 냈다(서로 다른 사람, 2026-10-28). 「이렇게 써라」로 보인 문장은 모델이 정답으로 옮긴다 — 자리 표시(괄호)만
  * 보인다. 옛 본보기 문장은 검사가 잡는다(`check.ts` 의 `FORMER_EXAMPLE_LINES`).
+ *
+ * 규칙 세 줄과 꼴 그림의 조각은 궁합풀이와 한 벌이다(`prompt-shape.ts`) — 여기서 더하는 것은 강점 · 조심할 점의 갈래(`###`)뿐이다.
  */
-const SELF_SHAPE = `## 글의 모양
+const SELF_SHAPE = `${SHAPE_RULES}
 
-폰에서 훑어 읽힌다. 소제목만 따라 읽어도 줄거리가 잡히게 쓴다.
+${shapeLegend('이 사람의')}
 
-- 「${LEAD_SUMMARY.title}」를 뺀 모든 절은 소제목 바로 다음 줄이 \`> \`로 시작하는 **한 줄 요약**이다. 그 절을 안 읽어도
-  이 줄만 읽으면 되게 결론부터 쓴다.
-- 문단은 서너 문장까지.
-- 굵게는 아껴 쓴다 — 한 절에 한두 번, 그 절에서 꼭 남길 구절만.
-
-꼴(들여 쓴 것은 모양을 보이려는 것이고 괄호 안은 자리 표시다 — 본문은 들여 쓰지 않고 이 사람의 문장을 지어 넣는다) —
-
-    ## (절 이름)
-    > (그 절의 결론 한 줄)
+${SECTION_SHAPE}
 
     ### (강점 · 조심할 점의 갈래 이름)
-    (문단 — 그 절에서 꼭 남길 구절이 있으면 **굵게**)`;
+${PARAGRAPH_SHAPE}`;
 
 /**
  * 판정이 서로 다른 답을 낼 때 — **어느 쪽을 볼지는 자료가 들고 온다.**

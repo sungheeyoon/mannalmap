@@ -509,10 +509,15 @@ describe('고객이 읽는 글의 계약', () => {
     }
 
     /*
-      비공개는 같은 것을 본문 밖의 두 칸으로 든다 — 각자는 사용 설명서, 지금의 때는 우리 둘의 흐름이다(ADR 0283 · 0284). 본문은 정한 차례만
-      쓴다 — 함께 지내는 장면 · 오래 가려면도 걷었다(ADR 0283 추기 — 운영자 「글이 너무 길다」)
+      비공개는 같은 것을 본문 밖의 두 칸으로 든다 — 각자는 「이럴 땐 이렇게」, 지금의 때는 우리 둘의 흐름이다(ADR 0283 · 0284). 본문은 정한 차례만
+      쓴다 — 함께 지내는 장면은 걷었고, 오래 가려면은 마지막 절이다(ADR 0283)
     */
-    for (const need of ['## 사용 설명서', '## 우리 둘의 흐름', '각자가 어떤 사람인가 · 지금 두 사람이 지나는 때는 본문에 세우지 않는다']) {
+    for (const need of [
+      '## 이럴 땐 이렇게',
+      '## 우리 둘의 흐름',
+      '각자가 어떤 사람인가 · 지금 두 사람이 지나는 때는 본문에 세우지 않는다',
+      '**오래 가려면 무엇이 필요한가** — ',
+    ]) {
       expect(own, need).toContain(need);
     }
 
@@ -791,7 +796,7 @@ describe('고객이 읽는 글의 계약', () => {
     expect(CONTROL.selfPresentation).toBe('expert-v4');
     expect(CONTROL.terminology).toBe('plain');
     expect(READING_POLICY.version).toBe('reading-prompt-v25');
-    expect(READING_POLICY.pairVersion).toBe('reading-prompt-v27');
+    expect(READING_POLICY.pairVersion).toBe('reading-prompt-v28');
     expect(selfPrompt()).toContain('이 사주의 핵심');
     expect(selfPrompt()).not.toContain('살림법');
     expect(selfPrompt()).toContain('analysis.strength');

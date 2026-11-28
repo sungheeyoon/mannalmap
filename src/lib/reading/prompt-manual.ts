@@ -19,13 +19,15 @@ import {
   MANUAL_CORE_LABEL,
   MANUAL_POLICY,
   MANUAL_SITUATION_LABEL,
+  MANUAL_TITLE,
   MANUAL_US_LABEL,
   type ManualSeat,
 } from './manual';
+import { LASTING } from './prompt-pair';
 import { withParticle } from './prompt-voice';
 
 /**
- * **궁합풀이의 사용 설명서를 시키는 조각**(ADR 0283) — 지시 한 절(`MANUAL_BLOCK`)과, 짝마다 엔진이 낸 재료 한 절(`manualFactsBlock`).
+ * **궁합풀이의 「이럴 땐 이렇게」를 시키는 조각**(ADR 0283) — 지시 한 절(`MANUAL_BLOCK`)과, 짝마다 엔진이 낸 재료 한 절(`manualFactsBlock`).
  *
  * 재료는 **자료가 아니라 프롬프트에 싣는다** — 기준점(`baselineBlock`)과 같은 자리다. 이 칸이 읽을 사실을 고른 것이라 지시이고, 자료(`Evidence`)에
  * 칸을 더하면 같은 자료를 받는 다른 풀이의 근거가 함께 바뀐다. 고른 사실은 자료에 이미 있다(`compatibility.relations` · `tenGods` ·
@@ -37,16 +39,23 @@ const SEATS: readonly ManualSeat[] = ['first', 'second'];
 const SEAT_NAME: Readonly<Record<ManualSeat, string>> = { first: SEAT_NAMES.first, second: SEAT_NAMES.second };
 const L = MANUAL_SITUATION_LABEL;
 
-/**
- * **사용 설명서 지시** — 본문을 다 쓴 뒤 `manual` 칸에 쓴다. 본보기는 말투 · 길이 · 꼴만 보이고 어느 사주의 줄인지는 안 적는다(정답표가 된다).
- * 운영자 결정(ADR 0283)으로 더한 절이다 — 프롬프트 실험 보류(ADR 0139)를 다시 연 것이 아니다.
- */
-export const MANUAL_BLOCK = `## 사용 설명서
+/** 지시 절과 재료 절의 머리 — 회수는 지시 절의 머리로 시켰는지 안다(`manualAskedIn`) */
+const MANUAL_HEADING = `## ${MANUAL_TITLE}`;
+const FACTS_NAME = `「${MANUAL_TITLE}」의 재료`;
 
-**본문을 다 쓴 뒤에** 쓴다. 구조화 출력의 \`manual\` 칸이다. 화면은 이 칸을 본문과 따로 세운다 — 「한 줄 사용법」은 표지 바로 아래 결론 한 줄로, 나머지는 글 끝에 두 사람의 칸(상황을 고르는 칩이 붙은)으로. 읽는 사람이 그 사람을 다음에 마주할 때 바로 꺼내 쓰는 **그 사람을 대하는 법**이다 — 본문을 줄이지 말고, 본문이 그린 두 사람으로 쓴다.
+/**
+ * **「이럴 땐 이렇게」 지시** — 본문을 다 쓴 뒤 `manual` 칸에 쓴다. 본보기는 말투 · 길이 · 꼴만 보이고 어느 사주의 줄인지는 안 적는다(정답표가 된다).
+ * 운영자 결정(ADR 0283)으로 더한 절이다 — 프롬프트 실험 보류(ADR 0139)를 다시 연 것이 아니다.
+ *
+ * 본문의 「오래 가려면」 절(`prompt-pair.ts` 의 `LASTING`)과 제 몫을 가른다 — 그 절은 관계 전체의 모습과 신호, 이 칸은 상황마다 그 사람에게 건넬
+ * 한 줄이다.
+ */
+export const MANUAL_BLOCK = `${MANUAL_HEADING}
+
+**본문을 다 쓴 뒤에** 쓴다. 구조화 출력의 \`manual\` 칸이다. 화면은 이 칸을 본문과 따로 「${MANUAL_TITLE}」라는 카드로 세운다 — 두 사람의 칸마다 「${MANUAL_CORE_LABEL}」가 서고, 상황을 고르면 그 줄이 선다. 읽는 사람이 그 사람을 다음에 마주할 때 바로 꺼내 쓰는 **그 사람을 대하는 법**이다 — 본문을 줄이지 말고, 본문이 그린 두 사람으로 쓴다.
 
 - \`first\` 는 **${withParticle(SEAT_NAMES.first, '을', '를')} 대하는 법**(${withParticle(SEAT_NAMES.second, '이', '가')} ${SEAT_NAMES.first}에게), \`second\` 는 **${withParticle(SEAT_NAMES.second, '을', '를')} 대하는 법**(${withParticle(SEAT_NAMES.first, '이', '가')} ${SEAT_NAMES.second}에게)이다. 두 칸 다 화면에 선다.
-- 칸마다 \`core\` 「${MANUAL_CORE_LABEL}」 — 그 사람을 대할 때 **가장 쓸모 있는 한 줄**. 상황 넷을 줄인 것이 아니라, 하나만 기억한다면 이것인 말이다.
+- 칸마다 \`core\` 「${MANUAL_CORE_LABEL}」 — 그 사람에게 **가장 잘 통하는 한 줄**. 상황 넷을 줄인 것이 아니라, 하나만 기억한다면 이것인 말이다.
 - 칸마다 상황 넷의 한 줄씩 — \`ask\` ${L.ask} · \`apologize\` ${L.apologize} · \`upset\` ${L.upset}(서운한 마음을 그 사람에게 꺼낼 때) · \`delight\` ${L.delight}.
 - \`us\` 는 「${MANUAL_US_LABEL.own}」 한 줄 — 두 사람이 서로를 어떻게 당기고 어디서 한쪽으로 기우는지. \`clash\` 는 「${MANUAL_CLASH_LABEL}」 한 줄 — 어디서 되풀이해 부딪히고 그때 무엇이 약인지.
 
@@ -56,17 +65,17 @@ export const MANUAL_BLOCK = `## 사용 설명서
 - **이름과 호칭을 쓰지 않는다** — 「${SEAT_NAMES.first}」·「${SEAT_NAMES.second}」도, 「그분」도 안 쓴다. 누구를 대하는 법인지는 칸이 말한다. \`us\`·\`clash\` 는 한쪽에 서서 말하지 않고 두 사람 모두에게 맞게 쓴다.
 - **사주의 이름을 쓰지 않는다** — 관계 이름 · 일간 · 오행 이름도. 생활의 말로만 쓴다.
 - 단정하지 않는다 — 「~편이에요」·「~쉬워요」·「~가까워요」처럼 기울기로 닫는다. 해요체다.
-- 그 사람의 결을 일간 하나로 정하지 않는다. 아래 「사용 설명서의 재료」의 태어난 계절(온도 · 습도)을 함께 본다 — 같은 나무라도 한겨울에 난 나무와 한여름에 난 나무는 반기는 말이 다르다.
+- 그 사람의 결을 일간 하나로 정하지 않는다. 아래 ${FACTS_NAME}에 적힌 태어난 계절(온도 · 습도)을 함께 본다 — 같은 나무라도 한겨울에 난 나무와 한여름에 난 나무는 반기는 말이 다르다.
 - \`us\` 는 두 일간의 사이에서, \`clash\` 는 두 일지의 사이에서 시작한다. 걸린 것이 없으면 없는 대로 쓰고 지어내지 않는다.
 - 장면은 두 사람의 사이를 따른다(위 「두 사람은 무슨 사이인가」). 본문이 그린 두 사람과 어긋나지 않는다.
 
 본보기 — **그대로 쓰지 않는다.** 말투 · 길이 · 꼴만 본다. 어느 사주에서 나온 줄인지는 적지 않았다:
 ${MANUAL_POLICY.examples.map(({ label, line }) => `- ${label} — 「${line}」`).join('\n')}
 
-본문에는 이 칸을 다시 적지 않는다 — 화면이 따로 세운다.`;
+오래 갈 때의 모습과 먼저 볼 신호는 본문의 「${LASTING.name}」 절이 말한다. 이 칸은 그 말을 되풀이하지 않고 **상황마다 그 사람에게 건넬 한 줄**을 쓴다. 본문에는 이 칸을 다시 적지 않는다 — 화면이 따로 세운다.`;
 
-/** 얼린 프롬프트가 사용 설명서를 시켰는가 — 회수가 이것으로 칸을 기다린다(`baselineIn` 과 같은 까닭: 시킨 자리에서 되읽는다) */
-export const manualAskedIn = (prompt: string): boolean => /^## 사용 설명서$/m.test(prompt);
+/** 얼린 프롬프트가 「이럴 땐 이렇게」를 시켰는가 — 회수가 이것으로 칸을 기다린다(`baselineIn` 과 같은 까닭: 시킨 자리에서 되읽는다) */
+export const manualAskedIn = (prompt: string): boolean => new RegExp(`^${MANUAL_HEADING}$`, 'm').test(prompt);
 
 // ---------------------------------------------------------------------------
 // 재료 — 짝마다
@@ -91,7 +100,7 @@ type SeatFacts = {
   readonly season: JohuJudgement['season'];
 };
 
-/** 사용 설명서가 읽을 사실 — 두 일주의 사이와 두 사람이 태어난 달 */
+/** 「이럴 땐 이렇게」가 읽을 사실 — 두 일주의 사이와 두 사람이 태어난 달 */
 export type ManualFacts = {
   readonly first: SeatFacts;
   readonly second: SeatFacts;
@@ -109,7 +118,7 @@ const dayOnly = (stem: Stem, branch: Branch): RelationInput | null => {
 };
 
 /**
- * 비공개 궁합의 자료에서 사용 설명서의 재료를 짓는다 — **관계는 엔진이 판정한다.** 두 일주만 든 계산판 둘을 `findCompatRelations` 에 넣어
+ * 비공개 궁합의 자료에서 「이럴 땐 이렇게」의 재료를 짓는다 — **관계는 엔진이 판정한다.** 두 일주만 든 계산판 둘을 `findCompatRelations` 에 넣어
  * 궁합 화면과 같은 규칙(반합은 왕지를 낀 것만 · 두 글자만 모인 삼형도 형)으로 받는다. 일주는 날짜로 정해지므로 시각을 몰라도 선다.
  *
  * @returns 두 사람의 명식이 다 없으면(한 사람 자료) `null`
@@ -173,7 +182,7 @@ const seasonOf = ({ monthBranch, season }: SeatFacts): string =>
  */
 export function manualFactsBlock(facts: ManualFacts): string {
   const { first, second } = facts;
-  return `## 사용 설명서의 재료
+  return `## ${FACTS_NAME}
 
 두 사람의 일주와 태어난 달에서 엔진이 낸 것이다. 관계는 자료의 \`compatibility.relations\` · \`compatibility.tenGods\` 에도 그대로 있다.
 

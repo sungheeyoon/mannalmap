@@ -185,7 +185,7 @@ export async function submitFrozen(
     summaryLast: writesSummaryLast(kind),
     continuation: continued,
     discovery: detail,
-    /* 궁합풀이는 사용 설명서 · 흐름 칸을 함께 받는다 — 지시와 같은 술어다(ADR 0283 · 0284). 회수는 얼린 프롬프트에서 시켰는지 되읽는다 */
+    /* 궁합풀이는 「이럴 땐 이렇게」 · 흐름 칸을 함께 받는다 — 지시와 같은 술어다(ADR 0283 · 0284). 회수는 얼린 프롬프트에서 시켰는지 되읽는다 */
     extras: asksPairExtras(kind),
   });
   /**

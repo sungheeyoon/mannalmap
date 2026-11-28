@@ -6,11 +6,23 @@ import { termNames } from './vocabulary';
 import { READING_POLICY, type PairKind } from './policy';
 import { PAIR_CLOSING, PAIR_MEETING_NEED, PAIR_NEEDS_BLOCK, RELATION_SCENE, type RelationKey } from './prompt-guided';
 import { type PromptAssembly, type PromptVoice, type ReadingAbout, carriesEokbu, isDetailFlow } from './prompt-assembly';
+import {
+  LEAD_PURPOSE,
+  LEAD_WITHOUT_GROUNDS,
+  PARAGRAPH_SHAPE,
+  POINT_SHAPE,
+  SECTION_SHAPE,
+  SHAPE_RULES,
+  notForAnyone,
+  onOneLine,
+  shapeLegend,
+} from './prompt-shape';
 import { particleOf, withParticle } from './prompt-voice';
+import { LEAD_TITLE } from './shape';
 
 /**
- * **궁합의 본문 절** — 점수표와 기준점, 절판(`sections-v1`)의 절 목록, 다룰 것의 목록(`needs-v1`), 사이 · 호칭 블록,
- * 인연 궁합 자료의 범위. 두 세대(`pair-legacy` · `pair-guided`)가 여기서 갈린다 — 세대는 받아서 쓰고 다시 묻지 않는다.
+ * **궁합의 본문 절** — 점수표와 기준점, 절판(`sections-v1`)의 절 목록, 다룰 것의 목록(`needs-v1`), 운영 궁합풀이의 정한 차례와 글의 모양,
+ * 사이 · 호칭 블록, 인연 궁합 자료의 범위. 두 세대(`pair-legacy` · `pair-guided`)가 여기서 갈린다 — 세대는 받아서 쓰고 다시 묻지 않는다.
  */
 
 /**
@@ -222,6 +234,17 @@ const MEETING_SECTION: Record<Relation | 'match' | 'unknown', string> = {
 마라** — 어느 사이에나 해당하는 장면으로 쓴다.`,
 };
 
+/**
+ * **「오래 가려면」이 묻는 것** — 옛 절판의 9번과 운영 궁합풀이의 마지막 절이 같은 물음을 쓴다(ADR 0283). 운영 궁합풀이가 옛 열한 절에서 덜어 낸
+ * 것 가운데 이것은 대신할 자리가 없어 절로 남는다 — 각자가 어떤 사람인가는 「이럴 땐 이렇게」(`manual`)가, 지금의 때는 「우리 둘의 흐름」(`flow`)이
+ * 든다.
+ */
+export const LASTING = {
+  name: '오래 가려면 무엇이 필요한가',
+  ask: `이 관계가 잘 흘렀을 때의 모습과, 틀어질 때 **가장 먼저
+보이는 신호**. 그리고 그 신호가 왔을 때 무엇을 하면 되는지. 「노력하면 된다」는 답이 아니다.`,
+} as const;
+
 const COMPAT_SHARED_SECTIONS = (a: string, b: string, meeting: string, eokbu: boolean) => [
   `**1. 한 줄 요약** — 이 관계에서 실제로 반복되는 핵심 작동 방식을 한 문장으로 직접 쓴다.`,
   `**2. 서로에게 무엇인가** — ${withParticle(a, '이', '가')} ${withParticle(b, '을', '를')} 보는 자리와 그 반대가 **다르다**
@@ -241,8 +264,7 @@ const COMPAT_SHARED_SECTIONS = (a: string, b: string, meeting: string, eokbu: bo
 대신 어디서 힘이 나는지 말한다.`,
   `**8. 생활에서 반복될 장면** — 돈 쓰는 방식·연락의 속도·계획과 즉흥·집안일과 약속처럼
 **실제로 부딪히는 자리**에서 두 사람이 어떻게 다른지. 앞 절을 요약하지 말고 장면으로 옮긴다.`,
-  `**9. 오래 가려면 무엇이 필요한가** — 이 관계가 잘 흘렀을 때의 모습과, 틀어질 때 **가장 먼저
-보이는 신호**. 그리고 그 신호가 왔을 때 무엇을 하면 되는지. 「노력하면 된다」는 답이 아니다.`,
+  `**9. ${LASTING.name}** — ${LASTING.ask}`,
 ];
 
 /**
@@ -411,31 +433,103 @@ ${pairNeeds(kind, meeting).map((need) => `- ${need}`).join('\n')}
 
 소제목은 네가 붙인다. 번호로 세지 말고, 그 대목이 무슨 이야기인지가 드러나는 말로 단다.`;
 
+/** 「글의 차례」 절의 머리 — 회수가 얼린 프롬프트에서 이 절의 번호 줄을 되읽는다(`layoutIn`) */
+const LAYOUT_HEADING = '## 글의 차례';
+
 /**
- * **운영 궁합풀이의 차례**(ADR 0283 추기 — 운영자 「글이 너무 길다」) — 옛 열한 절 가운데 여섯을 남기고 줄였다. 한 줄 요약 · 서로에게 무엇인가 ·
- * 만남(두세 문장) · 잘 맞는 곳 둘과 부딪히는 곳 둘(한 절) · 서로의 보완 · 함께일 때 두드러지는 특징. 생활 장면 · 오래 가려면은 걷었고, 각자 어떤 사람인가는
- * 사용 설명서(`manual`)와 겹쳐, 지금 두 사람이 지나는 때는 「우리 둘의 흐름」(`flow`, ADR 0284)으로 옮겼다. 다룰 것만 주고 나누기를 맡기던 판
- * (`PAIR_NEEDS_BLOCK`)은 인연 궁합이 그대로 쓴다.
+ * 「이럴 땐 이렇게」 카드가 뒤따르는 절의 이름 — 화면이 카드를 세우는 자리(`manual.ts` 의 `MANUAL_AFTER_SECTION`)와 이 절의 차례를 시험이 견준다.
  */
-const PRIVATE_LAYOUT_BLOCK = (meeting: string, scene: string): string => {
+export const CLASH_SECTION = '잘 맞는 곳 둘 · 부딪히는 곳 둘';
+
+/**
+ * **핵심 세 가지의 세 축** — 궁합풀이는 셋을 고르게 두지 않고 축을 정한다. 셋째(이렇게 하면 통한다)가 표지 아래에 서던 결론 한 줄의 일을 한다
+ * (ADR 0283). `title` · `text` 는 꼴 그림의 자리 표시다 — 실제 문장이 아니다.
+ */
+const LEAD_AXES = [
+  { axis: '가장 잘 맞는 곳', title: '가장 잘 맞는 곳의 결론 한 마디', text: '그것이 두 사람 사이에서 드러나는 모습 한두 문장' },
+  { axis: '가장 부딪히는 곳', title: '가장 부딪히는 곳의 결론 한 마디', text: '어떤 때 어떻게 부딪히는지 한두 문장' },
+  { axis: '이렇게 하면 통한다', title: '이렇게 하면 통한다는 결론 한 마디', text: '무엇부터 하면 되는지 한두 문장' },
+] as const;
+
+/**
+ * **운영 궁합풀이의 차례**(ADR 0283) — 개인 풀이와 같은 꼴이다: 「먼저 볼 핵심 세 가지」로 열고 절 여섯이 뒤따른다. 서로에게 무엇인가 · 만남(두세
+ * 문장) · 잘 맞는 곳 둘과 부딪히는 곳 둘(한 절) · 서로의 보완 · 함께일 때 두드러지는 특징 · 오래 가려면. 옛 열한 절 가운데 생활 장면은 걷었고, 각자
+ * 어떤 사람인가는 「이럴 땐 이렇게」(`manual`)가, 지금 두 사람이 지나는 때는 「우리 둘의 흐름」(`flow`, ADR 0284)이 든다. 다룰 것만 주고 나누기를
+ * 맡기던 판(`PAIR_NEEDS_BLOCK`)은 인연 궁합이 그대로 쓴다.
+ *
+ * 핵심 세 가지의 항목 꼴 · 하는 일 · 근거를 안 대는 것은 개인 풀이와 한 벌의 글자다(`prompt-shape.ts`). 마지막 절은 카드와 겹치지 않게 제 몫을
+ * 말한다 — 절은 관계 전체의 모습과 신호, 카드는 상황마다의 한 줄.
+ */
+const privateLayout = (meeting: string): readonly { readonly name: string; readonly ask: string }[] => {
   const { first: a, second: b } = SEAT_NAMES;
-  return `## 글의 차례
+  const [fits, clashes, works] = LEAD_AXES;
+  return [
+    {
+      name: LEAD_TITLE,
+      ask: `이 두 사람 사이에서 **가장 먼저 알아야 할 셋**을 번호 붙인 목록으로 적는다. 항목마다 ${POINT_SHAPE} 셋의 축은 정해져 있다 — 첫째는 **${fits.axis}**, 둘째는 **${clashes.axis}**, 셋째는 **${works.axis}**(두 사람이 서로에게 통하는 길 하나. 한쪽에 서서 말하지 않고 두 사람 모두에게 맞게 쓴다). 제목은 축의 이름이 아니라 그 축에서 이 두 사람에게 나온 결론이다. ${onOneLine(LEAD_PURPOSE)} ${LEAD_WITHOUT_GROUNDS} ${onOneLine(notForAnyone('다른 두 사람'))}.`,
+    },
+    {
+      name: '서로에게 무엇인가',
+      ask: `${withParticle(a, '이', '가')} ${withParticle(b, '을', '를')} 보는 자리와 그 반대가 **다르다**(\`tenGods.aSeesB\` · \`bSeesA\`). 그 비대칭이 일상에서 어떻게 보이는지.`,
+    },
+    { name: meeting, ask: '**두세 문장으로 짧게.**' },
+    {
+      name: CLASH_SECTION,
+      ask: '한 절에. 잘 맞는 곳은 「어디서 맞는가 → 그래서 무엇이 쉬워지는가」 한두 문장씩, 부딪히는 곳은 「어디서 → 어떤 상황에서 터지는가 → 그때 두 사람이 각자 무엇을 하면 되는가」.',
+    },
+    {
+      name: '서로의 보완',
+      ask: '`elementSupport` 와 `eokbuMatch`. 한쪽에 적은 기운을 다른 쪽이 갖고 있으면 그것이 관계에서 무엇으로 나타나는지, 둘 다 없는 것은 밖에서 구해야 한다는 것까지.',
+    },
+    { name: '함께일 때 더 두드러지는 특징', ask: '`combinedFormations`. 있으면 충분히 풀고, 없으면 없다고 적은 뒤 대신 어디서 힘이 나는지.' },
+    {
+      name: LASTING.name,
+      ask: `${onOneLine(LASTING.ask)} 이 절은 관계 전체의 모습과 신호를 말한다 — 상황마다 그 사람에게 건넬 한 줄은 \`manual\` 칸이 든다.`,
+    },
+  ];
+};
 
-이 궁합풀이는 아래 차례로 쓴다. **다른 절을 더하지 않는다** — 생활에서 되풀이될 장면 · 오래 가려면 무엇이 필요한가 · 각자가 어떤 사람인가 · 지금 두 사람이 지나는 때는 본문에 세우지 않는다(뒤의 둘은 \`manual\` · \`flow\` 칸이 든다).
+const PRIVATE_LAYOUT_BLOCK = (meeting: string, scene: string): string => `${LAYOUT_HEADING}
 
-1. **맨 앞 한 문장** — 소제목 없이, 이 관계에서 실제로 되풀이되는 핵심 작동 방식을 한 문장으로.
-2. **서로에게 무엇인가** — ${withParticle(a, '이', '가')} ${withParticle(b, '을', '를')} 보는 자리와 그 반대가 **다르다**(\`tenGods.aSeesB\` · \`bSeesA\`). 그 비대칭이 일상에서 어떻게 보이는지.
-3. **${meeting}** — **두세 문장으로 짧게.**
-4. **잘 맞는 곳 둘 · 부딪히는 곳 둘** — 한 절에. 잘 맞는 곳은 「어디서 맞는가 → 그래서 무엇이 쉬워지는가」 한두 문장씩, 부딪히는 곳은 「어디서 → 어떤 상황에서 터지는가 → 그때 두 사람이 각자 무엇을 하면 되는가」.
-5. **서로의 보완** — \`elementSupport\` 와 \`eokbuMatch\`. 한쪽에 적은 기운을 다른 쪽이 갖고 있으면 그것이 관계에서 무엇으로 나타나는지, 둘 다 없는 것은 밖에서 구해야 한다는 것까지.
-6. **함께일 때 더 두드러지는 특징** — \`combinedFormations\`. 있으면 충분히 풀고, 없으면 없다고 적은 뒤 대신 어디서 힘이 나는지.
+이 궁합풀이는 아래 차례로 쓴다. **다른 절을 더하지 않는다** — 생활에서 되풀이될 장면 · 각자가 어떤 사람인가 · 지금 두 사람이 지나는 때는 본문에 세우지 않는다(뒤의 둘은 \`manual\` · \`flow\` 칸이 든다).
 
-2~6 은 절마다 소제목을 \`##\` 로 하나씩 달고, 그 대목에서 벌어지는 장면이나 마음이 보이는 말로 단다 — 번호도 위의 굵은 이름도 그대로 옮기지 않는다.
+${privateLayout(meeting)
+  .map(({ name, ask }, at) => `${at + 1}. **${name}** — ${ask}`)
+  .join('\n')}
+
+1 의 소제목은 「${LEAD_TITLE}」 그대로 단다. 나머지는 절마다 소제목을 \`##\` 로 하나씩 달고, 그 대목에서 벌어지는 장면이나 마음이 보이는 말로 단다 — 번호도 위의 굵은 이름도 그대로 옮기지 않는다.
 
 사람 · 자리 · 방향은 어느 사이든 똑같이 정확히 읽는다. 그 사실을 **어떤 장면으로 옮길지는 두 사람의 사이가 정한다** — ${scene}. 이것은 채워야 할 목차가 아니다. 위 차례의 절마다 고른 이야기를 이 사이에서 실제로 일어날 장면으로 옮기는 기준이다.
 
 관계 이름(합·충·형·해 같은 분류명)은 본문에 내놓지 말고, 연락 방식·결정 속도·갈등 반응처럼 **두 사람 사이에서 실제로 보이는 말**로 쓴다.`;
-};
+
+/**
+ * 얼린 프롬프트가 시킨 차례 — 절의 수(핵심 세 가지 포함). 차례를 안 시킨 시도(옛 판 궁합풀이 · 인연 궁합 · 개인 풀이)면 `null`. 회수가 이 수로 글의
+ * 절 수를 견준다(`shapeFindingsOf`) — 시킨 자리에서 되읽으므로(`baselineIn` 과 같은 까닭) 차례를 고친 뒤에 회수되는 시도도 제가 받은 수로 잰다.
+ */
+export function layoutIn(prompt: string): { readonly sections: number } | null {
+  const from = prompt.search(new RegExp(`^${LAYOUT_HEADING}$`, 'm'));
+  if (from < 0) return null;
+  const rest = prompt.slice(from + LAYOUT_HEADING.length);
+  const until = rest.search(/^## /m);
+  const sections = ((until < 0 ? rest : rest.slice(0, until)).match(/^\d+\. \*\*/gm) ?? []).length;
+  return sections === 0 ? null : { sections };
+}
+
+/**
+ * **궁합풀이의 글의 모양** — 규칙은 개인 풀이와 한 벌이고(`prompt-shape.ts` 의 `SHAPE_RULES`), 꼴 그림만 궁합풀이의 것이다: 핵심 세 가지의 세 축과
+ * 절 하나. 괄호 안은 자리 표시다 — 실제 문장 본보기는 두지 않는다(본보기로 보인 문장은 모델이 정답으로 옮긴다, `prompt-self.ts` 의 `SELF_SHAPE`).
+ */
+const PAIR_SHAPE = `${SHAPE_RULES}
+
+${shapeLegend('이 두 사람의')}
+
+    ## ${LEAD_TITLE}
+${LEAD_AXES.map(({ title, text }, at) => `    ${at + 1}. **(${title})** — (${text})`).join('\n')}
+
+${SECTION_SHAPE}
+
+${PARAGRAPH_SHAPE}`;
 
 export const compatSections = (
   kind: PairKind,
@@ -471,7 +565,10 @@ export const compatSections = (
   const detail = isDetailFlow(kind, assembly);
   const relationKey: RelationKey = kind === 'match' && relation === null ? 'match' : (relation ?? 'unknown');
 
-  /** 운영 궁합풀이는 정한 차례로 쓴다(ADR 0283) — 인연 궁합과 옛 판은 지금처럼 다룰 것만 받는다 */
+  /**
+   * 운영 궁합풀이는 정한 차례와 글의 모양으로 쓴다(ADR 0283) — 인연 궁합과 옛 판은 지금처럼 다룰 것만 받는다. 모양 절은 개인 풀이처럼 「낼 것」
+   * 다음 · 근거 칸 앞에 선다.
+   */
   const laidOut = guided && kind === 'private';
   const plan = needsShape
     ? `${
@@ -484,7 +581,7 @@ export const compatSections = (
 
 ## 낼 것
 
-Markdown으로 쓰고 소제목은 \`##\`로 단다. ${laidOut ? '**차례는 위 「글의 차례」 그대로다.**' : '**소제목의 수와 차례는 네가 정한다.**'}`
+Markdown으로 쓰고 소제목은 \`##\`로 단다. ${laidOut ? `**차례는 위 「글의 차례」 그대로다.**\n\n${PAIR_SHAPE}` : '**소제목의 수와 차례는 네가 정한다.**'}`
     : `## 낼 것
 
 Markdown으로 쓰고 소제목은 \`##\`로 단다.

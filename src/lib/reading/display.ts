@@ -130,7 +130,7 @@ export function pairSeatsOf(
   return sitsFirst(one, other) ? { first: one.name, second: other.name } : { first: other.name, second: one.name };
 }
 
-/** 내 궁합에서 `one` 이 첫 자리(`charts.a`)인가 — 두 사람을 자리 차례로 세우는 비교는 이 하나다(`pairSeatsOf` · 사용 설명서의 자리) */
+/** 내 궁합에서 `one` 이 첫 자리(`charts.a`)인가 — 두 사람을 자리 차례로 세우는 비교는 이 하나다(`pairSeatsOf` · 「이럴 땐 이렇게」 카드의 자리) */
 export const sitsFirst = (one: { readonly personId: string }, other: { readonly personId: string }): boolean =>
   one.personId.toLowerCase() < other.personId.toLowerCase();
 

@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { computeSaju } from '../saju';
 import { CONTROL, READING_PROMPTS, flowRuleIn, isSolo, readingEvidenceOf, readingPromptOf, type ReadingKind } from '.';
 import { SEAT_NAMES } from './display';
-import { FLOW_LEVEL_LABEL, FLOW_POLICY } from './flow';
+import { FLOW_LEVEL_LABEL, FLOW_POLICY, FLOW_PROPERTY } from './flow';
 import { flowFactsOf } from './flow-facts';
 import { FLOW_BLOCK, flowFactsBlock } from './prompt-flow';
 
@@ -71,10 +71,11 @@ describe('흐름은 운영 궁합풀이에만 선다', () => {
     expect(flowRuleIn(old)).toBeNull();
   });
 
-  it('재료는 자료 앞, 사용 설명서의 재료 뒤에 선다', () => {
+  it('재료는 자료 앞, 「이럴 땐 이렇게」의 재료 뒤에 선다', () => {
     const prompt = promptFor('private');
     const at = (heading: string) => prompt.indexOf(heading);
-    expect(at('## 사용 설명서의 재료')).toBeLessThan(at('## 흐름의 재료'));
+    expect(at('## 「이럴 땐 이렇게」의 재료')).toBeGreaterThan(-1);
+    expect(at('## 「이럴 땐 이렇게」의 재료')).toBeLessThan(at('## 흐름의 재료'));
     expect(at('## 흐름의 재료')).toBeLessThan(at('## 자료 ('));
   });
 });
@@ -86,5 +87,12 @@ describe('흐름 지시 — 칸과 같은 말을 쓴다', () => {
     }
     expect(FLOW_BLOCK).toContain(`많아도 ${FLOW_POLICY.lineMax}자`);
     expect(FLOW_BLOCK).toContain('「두 기준이 엇갈림」이라고 적은 해는 `even` 이다');
+  });
+
+  /** 한 문장이 곡선보다 먼저 선다(ADR 0284) — 지시와 칸의 설명이 같은 자리를 말한다 */
+  it('한 문장은 곡선 위에 선다고 말한다 — 「그래프 밑」이 아니다', () => {
+    expect(FLOW_BLOCK).toContain('`line` 은 곡선보다 먼저 읽히는 한 문장이다 — 화면이 제목 아래, 곡선 위에 세운다.');
+    expect(FLOW_PROPERTY.properties.line.description).toContain('곡선 위에 서는 한 문장');
+    for (const text of [FLOW_BLOCK, FLOW_PROPERTY.description, FLOW_PROPERTY.properties.line.description]) expect(text).not.toContain('그래프 밑');
   });
 });

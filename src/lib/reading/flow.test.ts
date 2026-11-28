@@ -107,7 +107,7 @@ describe('본문 끝의 절 하나로 접고 우리가 쓴 꼴만 되읽는다',
     expect(rest).toBe(readingBody(FULL).replace(/\n+---$/, ''));
   });
 
-  it('흐름 · 사용 설명서를 함께 접으면 둘 다 떼어지고 본문만 남는다 — 회수의 차례(흐름 → 사용 설명서)', () => {
+  it('흐름 · 「이럴 땐 이렇게」를 함께 접으면 둘 다 떼어지고 본문만 남는다 — 회수의 차례(흐름 → 이럴 땐 이렇게)', () => {
     const shown = readingBody(withManual(withFlow(FULL, SAMPLE), MANUAL));
     const manual = manualOf(shown);
     const flow = flowOf(manual.rest);

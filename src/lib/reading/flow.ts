@@ -7,9 +7,10 @@ import { beforeGrounding, sectionOutOf, type ManualSeat } from './manual';
  *
  * 곡선의 높낮이는 모델이 매긴다 — 엔진이 해마다의 글자와 두 기준(억부 · 조후)에 무엇이 드는지를 주고(`flow-facts.ts`), 모델이 기후까지 읽어 해마다
  * 세 단계(받쳐 줌 · 보통 · 쉬어 감) 가운데 하나를 고른다. 두 기준이 그해에 반대쪽을 가리키면 회수가 그해를 「보통」으로 누른다(`pressedFlow`) —
- * 끝값을 못 써 곡선이 완만해진다. 화면에 붙는 글자는 「지금」 · 꼭대기 · 바닥 · 이름 둘 · 한 문장 · 「확정이 아니에요」뿐이고 눈금 숫자가 없다.
+ * 끝값을 못 써 곡선이 완만해진다. 화면에 붙는 글자는 「지금」 · 꼭대기 · 바닥 · 이름 둘 · 한 문장 · 「확정이 아니에요」뿐이고 눈금 숫자가 없다. 차례는
+ * 제목 → 한 문장 → 곡선 → 고지다 — 한 문장이 곡선보다 먼저 선다.
  *
- * 저장은 사용 설명서와 같은 길이다 — 본문 끝(근거 절 앞)의 절 하나로 접고(`withFlow`) 화면이 우리가 쓴 꼴만 되읽는다(`flowOf`). 못 읽으면 그래프만
+ * 저장은 「이럴 땐 이렇게」와 같은 길이다 — 본문 끝(근거 절 앞)의 절 하나로 접고(`withFlow`) 화면이 우리가 쓴 꼴만 되읽는다(`flowOf`). 못 읽으면 그래프만
  * 없고 글은 선다.
  */
 
@@ -22,11 +23,11 @@ export const FLOW_LEVEL_LABEL: Readonly<Record<FlowLevel, string>> = { lift: '�
 export type FlowYear = { readonly year: number; readonly first: FlowLevel; readonly second: FlowLevel };
 export type PairFlow = { readonly years: readonly FlowYear[]; readonly line: string };
 
-/** 그래프 밑 한 문장의 길이 — 시키는 값과 적는 값이 같다(넘어도 내보낸다, ADR 0163) */
+/** 곡선 위 한 문장의 길이 — 시키는 값과 적는 값이 같다(넘어도 내보낸다, ADR 0163) */
 export const FLOW_POLICY = { lineMax: 80 } as const;
 
 // ---------------------------------------------------------------------------
-// 화면의 글자(대장 compat-03, 확인 전)
+// 화면의 글자(대장 compat-04, 확인 전)
 // ---------------------------------------------------------------------------
 
 export const FLOW_TITLE = '우리 둘의 흐름';
@@ -48,10 +49,10 @@ const levelProperty = (whom: string) => ({
   description: `${whom} — ${FLOW_LEVELS.map((level) => `${level} ${FLOW_LEVEL_LABEL[level]}`).join(' · ')}`,
 });
 
-/** 구조화 출력에 더하는 칸 — 차례는 사용 설명서 뒤 · 한 줄 요약 앞이다 */
+/** 구조화 출력에 더하는 칸 — 차례는 「이럴 땐 이렇게」(`manual`) 뒤 · 한 줄 요약 앞이다 */
 export const FLOW_PROPERTY = {
   type: 'object' as const,
-  description: '우리 둘의 흐름 — 본문을 다 쓴 뒤에 쓴다. 재료의 열 해마다 두 사람의 단계와, 그래프 밑 한 문장',
+  description: '우리 둘의 흐름 — 본문을 다 쓴 뒤에 쓴다. 재료의 열 해마다 두 사람의 단계와, 곡선 위에 서는 한 문장',
   properties: {
     years: {
       type: 'array' as const,
@@ -63,7 +64,7 @@ export const FLOW_PROPERTY = {
         additionalProperties: false as const,
       },
     },
-    line: { type: 'string' as const, description: `그래프 밑 한 문장 — 누가 언제 끌어 주나 · 언제 하고 언제 쉬나. 띄어쓰기 포함 ${FLOW_POLICY.lineMax}자 이하` },
+    line: { type: 'string' as const, description: `곡선 위에 서는 한 문장 — 누가 언제 끌어 주나 · 언제 하고 언제 쉬나. 띄어쓰기 포함 ${FLOW_POLICY.lineMax}자 이하` },
   },
   required: ['years', 'line'] as string[],
   additionalProperties: false as const,
