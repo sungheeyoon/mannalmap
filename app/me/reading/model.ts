@@ -132,7 +132,8 @@ type CallOptions = {
   shape?: JSONSchema7;
   /**
    * 추론 세기 — `@ai-sdk/openai` 의 Responses 선택값 `reasoningEffort`(그 패키지 안의 문서 03-openai.mdx 「Responses」 절: GPT-5.6 은
-   * `none` · `low` · `medium` · `high` · `xhigh` · `max`). 안 넘기면 보내지 않는다.
+   * `none` · `low` · `medium` · `high` · `xhigh` · `max` — 지금 모델 `gpt-6-luna` 의 모델 페이지도 같은 여섯이고 기본은 `medium` 이다, 확인 2026-11-28).
+   * 안 넘기면 보내지 않는다.
    */
   reasoningEffort?: ReasoningEffort;
   /** 출력 토큰 상한 — 추론 토큰을 포함한다(Responses `max_output_tokens`) */

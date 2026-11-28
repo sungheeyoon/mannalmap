@@ -70,10 +70,10 @@ const OUTPUT_ROOT = '.taste-run-live';
 const TASTE_CALL = { maxOutputTokens: 1_500, timeoutMs: 20_000 } as const;
 
 /**
- * 공식 단가(USD / 1M 토큰) — gpt-5.6-luna, https://developers.openai.com/api/docs/models/gpt-5.6-luna (2026-10-03 확인).
+ * 공식 단가(USD / 1M 토큰) — gpt-6-luna, https://developers.openai.com/api/docs/models/gpt-6-luna (확인 2026-11-28).
  * 캐시 쓰기는 입력의 1.25배다. 청구의 원본은 대시보드다 — 여기 값은 견주기용이다.
  */
-const PRICE_PER_MILLION = { input: 0.2, cacheRead: 0.02, cacheWrite: 0.25, output: 1.2 } as const;
+const PRICE_PER_MILLION = { input: 0.1, cacheRead: 0.01, cacheWrite: 0.125, output: 0.5 } as const;
 const KRW_PER_USD = 1_400;
 
 type SampleInput = Parameters<typeof computeSaju>[0];
