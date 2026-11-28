@@ -54,7 +54,7 @@
 2. `mobile/` 에서 `npx expo start --web` 을 띄우고 390px 폭으로 연다.
 3. Supabase 응답은 Playwright 가로채기나 `mobile/scripts/measure/fake-server.mjs` 로 가짜를 끼운다 — 개발 빌드도 운영 Supabase 를 보니 운영을 밟지 않는다. 로그인은 `__DEV__` 가 건너뛴다.
    - 가짜 서버에는 CORS 답이 없다 — 브라우저를 `--disable-web-security` 로 띄운다.
-   - 데이터가 찬 화면은 `localStorage` 에 가짜 세션(`sb-<주소의 첫 토막>-auth-token`)을 넣는다. 가짜 값도 진짜 꼴이어야 명식이 선다(`late_night_rule` 은 `jo` · `ya`, `time_basis` 는 `record` 등). `EXPO_PUBLIC_SITE_URL` 쪽 앱용 문도 가로챈다.
+   - 데이터가 찬 화면은 `localStorage` 에 가짜 세션(`sb-<주소의 첫 토막>-auth-token` — 가짜 서버가 `localhost` 면 `sb-localhost-auth-token`, 값은 가짜 서버의 `POST /auth/v1/token` 답)을 넣는다. 가짜 값도 진짜 꼴이어야 명식이 선다(`late_night_rule` 은 `jo` · `ya`, `time_basis` 는 `record` 등). `EXPO_PUBLIC_SITE_URL` 쪽 앱용 문도 가로챈다.
    - 가짜 서버를 복사해 쓰면 `current_beta_schedule` 의 `notice_ack_floor` 와 「인연 닫힘」 모드를 채워야 오류 화면에서 안 멈춘다.
    - `mobile/.env.local` 에 운영 값이 있으면 셸 환경값을 이긴다 — 가짜 주소는 `mobile/.env.development.local` 에 잠시 두고 끝나면 지운다. localhost 밖 요청은 브라우저에서 끊는다.
 4. 부품을 웹과 나란히 보려면 띄운 채 `APP_URL=http://localhost:<포트> node scripts/design-compare.mjs <폴더>` — `compare.png` 한 장을 낸다.
@@ -64,6 +64,8 @@
    - 앱의 어절 줄바꿈(`WordText`)이 웹에서는 빠져 낱말 가운데서 꺾인다 — 찍는 쪽에서 `word-break: keep-all` 을 넣고 PR 에 그렇다고 적는다.
    - 개발 오류 토스트는 그림자 DOM 의 `#error-toast` 다 — CSS 로 가린다.
    - 스크롤이 안쪽 칸이라 통짜 찍기(`fullPage`)가 첫 화면만 담는다 — 창 높이를 늘려 찍는다.
+   - 「몇째 화면」은 창 높이가 아니라 머리 띠 · 아래 탭 막대를 뺀 보이는 높이로 센다(390×844 에서 731) — 넘김 그림도 그 높이만큼 내려 찍는다.
+   - 차례를 바꾸는 시안이 글을 가를 때 `Markdown` 을 절마다 따로 그리지 않는다 — 글 전체의 첫 문단 자리 하나만 큰 글자(리드)라(`src/lib/reading/markdown-blocks.ts`) 절마다 첫 문단이 커지고 절 머리의 위 간격이 사라진다. 두 덩이로만 가르고 둘째 덩이의 리드를 끈다.
    - `accessibilityState.expanded` 는 `aria-expanded` 로 옮겨지지 않는다 — 접이칸은 `aria-expanded` 로 찾지 말고 단추 이름으로 눌러 연다.
 8. 이것은 네이티브가 아니다 — 구글 로그인 · 사진 고르기 · 딥 링크 · 키보드는 안 돈다. PR 의 「안 돌린 것」에 적는다.
 
